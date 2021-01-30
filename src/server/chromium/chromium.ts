@@ -24,15 +24,15 @@ import { BrowserType } from '../browserType';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
 import type { BrowserDescriptor } from '../../utils/browserPaths';
 import { CRDevTools } from './crDevTools';
-import { BrowserOptions } from '../browser';
+import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
 import { isDebugMode } from '../../utils/utils';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
 
-  constructor(packagePath: string, browser: BrowserDescriptor) {
-    super(packagePath, browser);
+  constructor(packagePath: string, browser: BrowserDescriptor, playwrightOptions: PlaywrightOptions) {
+    super(packagePath, browser, playwrightOptions);
     if (isDebugMode())
       this._devtools = this._createDevTools();
   }

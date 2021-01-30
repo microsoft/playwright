@@ -72,7 +72,7 @@ export class FFBrowser extends Browser {
   }
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this._options);
+    validateBrowserContextOptions(options, this.options);
     if (options.isMobile)
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this._connection.send('Browser.createBrowserContext', { removeOnDetach: true });
@@ -149,12 +149,12 @@ export class FFBrowserContext extends BrowserContext {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [ super._initialize() ];
-    if (this._browser._options.downloadsPath) {
+    if (this._browser.options.downloadsPath) {
       promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
         browserContextId,
         downloadOptions: {
           behavior: this._options.acceptDownloads ? 'saveToDisk' : 'cancel',
-          downloadsDir: this._browser._options.downloadsPath,
+          downloadsDir: this._browser.options.downloadsPath,
         },
       }));
     }

@@ -70,7 +70,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
 
     this._browser = browser;
     this._wsEndpoint = '';
-    this._process = browser._options.browserProcess.process!;
+    this._process = browser.options.browserProcess.process!;
 
     let readyCallback = () => {};
     this._ready = new Promise<void>(f => readyCallback = f);
@@ -86,7 +86,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       this._clientAttached(socket);
     });
 
-    browser._options.browserProcess.onclose = (exitCode, signal) => {
+    browser.options.browserProcess.onclose = (exitCode, signal) => {
       this._server.close();
       this.emit('close', exitCode, signal);
     };
@@ -101,11 +101,11 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   }
 
   async close(): Promise<void> {
-    await this._browser._options.browserProcess.close();
+    await this._browser.options.browserProcess.close();
   }
 
   async kill(): Promise<void> {
-    await this._browser._options.browserProcess.kill();
+    await this._browser.options.browserProcess.kill();
   }
 
   private _clientAttached(socket: ws) {
@@ -158,7 +158,7 @@ class ConnectedBrowser extends BrowserDispatcher {
   async newContext(params: channels.BrowserNewContextParams): Promise<{ context: channels.BrowserContextChannel }> {
     if (params.recordVideo) {
       // TODO: we should create a separate temp directory or accept a launchServer parameter.
-      params.recordVideo.dir = this._object._options.downloadsPath!;
+      params.recordVideo.dir = this._object.options.downloadsPath!;
     }
     const result = await super.newContext(params);
     const dispatcher = result.context as BrowserContextDispatcher;

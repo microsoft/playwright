@@ -15,7 +15,7 @@
  */
 
 import * as types from './types';
-import { BrowserContext, Video } from './browserContext';
+import { BrowserContext, ContextListener, Video } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
@@ -30,7 +30,11 @@ export interface BrowserProcess {
   close(): Promise<void>;
 }
 
-export type BrowserOptions = types.UIOptions & {
+export type PlaywrightOptions = {
+  contextListeners: ContextListener[]
+};
+
+export type BrowserOptions = PlaywrightOptions & {
   name: string,
   isChromium: boolean,
   downloadsPath?: string,
@@ -40,6 +44,7 @@ export type BrowserOptions = types.UIOptions & {
   proxy?: ProxySettings,
   protocolLogger: types.ProtocolLogger,
   browserLogsCollector: RecentLogsCollector,
+  slowMo?: number,
 };
 
 export abstract class Browser extends EventEmitter {
@@ -47,7 +52,7 @@ export abstract class Browser extends EventEmitter {
     Disconnected: 'disconnected',
   };
 
-  readonly _options: BrowserOptions;
+  readonly options: BrowserOptions;
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
@@ -55,7 +60,7 @@ export abstract class Browser extends EventEmitter {
 
   constructor(options: BrowserOptions) {
     super();
-    this._options = options;
+    this.options = options;
   }
 
   abstract newContext(options?: types.BrowserContextOptions): Promise<BrowserContext>;
@@ -71,7 +76,7 @@ export abstract class Browser extends EventEmitter {
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
-    const download = new Download(page, this._options.downloadsPath || '', uuid, url, suggestedFilename);
+    const download = new Download(page, this.options.downloadsPath || '', uuid, url, suggestedFilename);
     this._downloads.set(uuid, download);
   }
 
@@ -117,7 +122,7 @@ export abstract class Browser extends EventEmitter {
   async close() {
     if (!this._startedClosing) {
       this._startedClosing = true;
-      await this._options.browserProcess.close();
+      await this.options.browserProcess.close();
     }
     if (this.isConnected())
       await new Promise(x => this.once(Browser.Events.Disconnected, x));

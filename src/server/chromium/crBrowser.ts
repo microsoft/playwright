@@ -98,7 +98,7 @@ export class CRBrowser extends Browser {
   }
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this._options);
+    validateBrowserContextOptions(options, this.options);
     const { browserContextId } = await this._session.send('Target.createBrowserContext', {
       disposeOnDetach: true,
       proxyServer: options.proxy ? options.proxy.server : undefined,
@@ -119,7 +119,7 @@ export class CRBrowser extends Browser {
   }
 
   isClank(): boolean {
-    return this._options.name === 'clank';
+    return this.options.name === 'clank';
   }
 
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
@@ -293,11 +293,11 @@ export class CRBrowserContext extends BrowserContext {
   async _initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
     const promises: Promise<any>[] = [ super._initialize() ];
-    if (this._browser._options.downloadsPath) {
+    if (this._browser.options.downloadsPath) {
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',
         browserContextId: this._browserContextId,
-        downloadPath: this._browser._options.downloadsPath
+        downloadPath: this._browser.options.downloadsPath
       }));
     }
     if (this._options.permissions)

@@ -94,8 +94,6 @@ export interface ContextListener {
   onContextDidDestroy(context: BrowserContext): Promise<void>;
 }
 
-export const contextListeners = new Set<ContextListener>();
-
 export abstract class BrowserContext extends EventEmitter {
   static Events = {
     Close: 'close',
@@ -140,7 +138,7 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async _initialize() {
-    for (const listener of contextListeners)
+    for (const listener of this._browser.options.contextListeners)
       await listener.onContextCreated(this);
   }
 
@@ -259,7 +257,7 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   protected _authenticateProxyViaHeader() {
-    const proxy = this._options.proxy || this._browser._options.proxy || { username: undefined, password: undefined };
+    const proxy = this._options.proxy || this._browser.options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;
     if (username) {
       this._options.httpCredentials = { username, password: password! };
@@ -272,7 +270,7 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   protected _authenticateProxyViaCredentials() {
-    const proxy = this._options.proxy || this._browser._options.proxy;
+    const proxy = this._options.proxy || this._browser.options.proxy;
     if (!proxy)
       return;
     const { username, password } = proxy;
@@ -294,7 +292,7 @@ export abstract class BrowserContext extends EventEmitter {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      for (const listener of contextListeners)
+      for (const listener of this._browser.options.contextListeners)
         await listener.onContextWillDestroy(this);
 
       // Collect videos/downloads that we will await.
@@ -323,7 +321,7 @@ export abstract class BrowserContext extends EventEmitter {
         await this._browser.close();
 
       // Bookkeeping.
-      for (const listener of contextListeners)
+      for (const listener of this._browser.options.contextListeners)
         await listener.onContextDidDestroy(this);
       this._didCloseInternal();
     }

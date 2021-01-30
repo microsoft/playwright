@@ -18,15 +18,12 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { installInspectorController } from '../server/supplements/inspectorController';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { installBrowsersWithProgressBar } from '../install/installer';
 import { Transport } from '../protocol/transport';
-import { Playwright } from '../server/playwright';
+import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
-import { installHarTracer } from '../trace/harTracer';
-import { installTracer } from '../trace/tracer';
 import { BrowserName } from '../utils/browserPaths';
 
 export function printApiJson() {
@@ -38,10 +35,6 @@ export function printProtocol() {
 }
 
 export function runServer() {
-  installInspectorController();
-  installTracer();
-  installHarTracer();
-
   const dispatcherConnection = new DispatcherConnection();
   const transport = new Transport(process.stdout, process.stdin);
   transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
@@ -56,7 +49,7 @@ export function runServer() {
     process.exit(0);
   };
 
-  const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
+  const playwright = createPlaywright();
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
 

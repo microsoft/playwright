@@ -28,7 +28,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _context: BrowserContext;
 
   constructor(scope: DispatcherScope, context: BrowserContext) {
-    super(scope, context, 'BrowserContext', { isChromium: context._browser._options.isChromium }, true);
+    super(scope, context, 'BrowserContext', { isChromium: context._browser.options.isChromium }, true);
     this._context = context;
 
     for (const page of context.pages())
@@ -41,7 +41,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     context.on(BrowserContext.Events.StdOut, data => this._dispatchEvent('stdout', { data: Buffer.from(data, 'utf8').toString('base64') }));
     context.on(BrowserContext.Events.StdErr, data => this._dispatchEvent('stderr', { data: Buffer.from(data, 'utf8').toString('base64') }));
 
-    if (context._browser._options.name === 'chromium') {
+    if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
         this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) });
       context.on(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) }));
@@ -139,7 +139,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async pause() {
-    if (!this._context._browser._options.headful)
+    if (!this._context._browser.options.headful)
       return;
     const recorder = await RecorderSupplement.getOrCreate(this._context, 'pause', {
       language: 'javascript',
@@ -149,7 +149,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {
-    if (!this._object._browser._options.isChromium)
+    if (!this._object._browser.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ActionListener, ActionMetadata, BrowserContext, ContextListener, contextListeners, Video } from '../server/browserContext';
+import { ActionListener, ActionMetadata, BrowserContext, ContextListener, Video } from '../server/browserContext';
 import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import * as trace from './traceTypes';
 import * as path from 'path';
@@ -34,11 +34,7 @@ const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
 const fsAccessAsync = util.promisify(fs.access.bind(fs));
 const envTrace = getFromENV('PW_TRACE_DIR');
 
-export function installTracer() {
-  contextListeners.add(new Tracer());
-}
-
-class Tracer implements ContextListener {
+export class Tracer implements ContextListener {
   private _contextTracers = new Map<BrowserContext, ContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
@@ -93,7 +89,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     const event: trace.ContextCreatedTraceEvent = {
       timestamp: monotonicTime(),
       type: 'context-created',
-      browserName: context._browser._options.name,
+      browserName: context._browser.options.name,
       contextId: this._contextId,
       isMobile: !!context._options.isMobile,
       deviceScaleFactor: context._options.deviceScaleFactor || 1,

@@ -16,19 +16,15 @@
 
 import * as fs from 'fs';
 import * as util from 'util';
-import { BrowserContext, ContextListener, contextListeners } from '../server/browserContext';
-import { helper } from '../server/helper';
-import * as network from '../server/network';
-import { Page } from '../server/page';
+import { BrowserContext, ContextListener } from '../../browserContext';
+import { helper } from '../../helper';
+import * as network from '../../network';
+import { Page } from '../../page';
 import * as har from './har';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
-export function installHarTracer() {
-  contextListeners.add(new HarTracer());
-}
-
-class HarTracer implements ContextListener {
+export class HarTracer implements ContextListener {
   private _contextTracers = new Map<BrowserContext, HarContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
@@ -68,10 +64,10 @@ class HarContextTracer {
       version: '1.2',
       creator: {
         name: 'Playwright',
-        version: require('../../package.json')['version'],
+        version: require('../../../../package.json')['version'],
       },
       browser: {
-        name: context._browser._options.name,
+        name: context._browser.options.name,
         version: context._browser.version()
       },
       pages: [],
