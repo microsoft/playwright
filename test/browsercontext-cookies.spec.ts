@@ -40,6 +40,24 @@ it('should get a cookie', async ({context, page, server}) => {
   }]);
 });
 
+it('should get a httpOnly cookie', async ({context, page, server}) => {
+  server.setRoute('/httponly', ((req, res) => {
+    res.setHeader('Set-Cookie', 'foo=bar; HttpOnly');
+    res.end('cookie');
+  }));
+  await page.goto(server.PREFIX + '/httponly');
+  expect(await context.cookies()).toEqual([{
+    name: 'foo',
+    value: 'bar',
+    domain: 'localhost',
+    path: '/',
+    expires: -1,
+    httpOnly: true,
+    secure: false,
+    sameSite: 'None'
+  }]);
+});
+
 it('should get a non-session cookie', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
