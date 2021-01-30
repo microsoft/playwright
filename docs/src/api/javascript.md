@@ -14,3 +14,5 @@
 ### param: Page.waitForFunction.expression = %%-js-evaluate-pagefunction-%%
 ### param: Worker.evaluate.expression = %%-js-worker-evaluate-workerfunction-%%
 ### param: Worker.evaluateHandle.expression = %%-js-worker-evaluate-workerfunction-%%
+### param: ElectronApplication.evaluate.expression = %%-js-electron-evaluate-workerfunction-%%
+### param: ElectronApplication.evaluateHandle.expression = %%-js-electron-evaluate-workerfunction-%%

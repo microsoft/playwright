@@ -132,7 +132,7 @@ composite selectors. To use this:
 
 ### Evaluate Source Maps
 
-PWDEBUG also enables source maps for [`page.evaluate` executions](./core-concepts.md#evaluation).
+PWDEBUG also enables source maps for [`method: Page.evaluate`] [executions](./core-concepts.md#evaluation).
 This improves the debugging experience for JavaScript executions in the page context.
 
 <a href="https://user-images.githubusercontent.com/284612/86857568-a6c63100-c073-11ea-82a4-bfd531a4ec87.png"><img src="https://user-images.githubusercontent.com/284612/86857568-a6c63100-c073-11ea-82a4-bfd531a4ec87.png" width="500" alt="Highlight selectors"></img></a>

@@ -300,7 +300,7 @@ Optional event-specific initialization properties.
   - alias-js: $eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: expression`]
+Returns the return value of [`param: expression`].
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
 [`param: expression`]. See [Working with selectors](./selectors.md) for more details. If no
@@ -344,7 +344,7 @@ Optional argument to pass to [`param: expression`]
   - alias-js: $$eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: expression`]
+Returns the return value of [`param: expression`].
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
 as a first argument to [`param: expression`]. See [Working with selectors](./selectors.md) for
@@ -379,14 +379,14 @@ Optional argument to pass to [`param: expression`]
 ## async method: Frame.evaluate
 - returns: <[Serializable]>
 
-Returns the return value of [`param: expression`]
+Returns the return value of [`param: expression`].
 
 If the function passed to the [`method: Frame.evaluate`] returns a [Promise], then [`method: Frame.evaluate`] would wait for the promise to
 resolve and return its value.
 
 If the function passed to the [`method: Frame.evaluate`] returns a non-[Serializable] value, then
-[`method: Frame.evaluate`] returns `undefined`. DevTools Protocol also supports transferring some additional values that
-are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+[`method: Frame.evaluate`] returns `undefined`. Playwright also supports transferring some 
+additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
 
 ```js
 const result = await frame.evaluate(([x, y]) => {
@@ -455,10 +455,10 @@ Optional argument to pass to [`param: expression`]
 ## async method: Frame.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the return value of [`param: expression`] as in-page object (JSHandle).
+Returns the return value of [`param: expression`] as a [JSHandle].
 
 The only difference between [`method: Frame.evaluate`] and [`method: Frame.evaluateHandle`] is that
-[method: Frame.evaluateHandle`] returns in-page object (JSHandle).
+[method: Frame.evaluateHandle`] returns [JSHandle].
 
 If the function, passed to the [`method: Frame.evaluateHandle`], returns a [Promise], then
 [`method: Frame.evaluateHandle`] would wait for the promise to resolve and return its value.

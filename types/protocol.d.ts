@@ -14827,7 +14827,7 @@ other objects in their object group.
     export type RemoteObjectId = string;
     /**
      * Primitive value which cannot be JSON-stringified. Includes values `-0`, `NaN`, `Infinity`,
-`-Infinity`, and bigint literals.
+`-Infinity`.
      */
     export type UnserializableValue = string;
     /**

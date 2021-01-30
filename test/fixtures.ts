@@ -20,7 +20,7 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import os from 'os';
-import type { Browser, BrowserContext, BrowserType, Page } from '../index';
+import type { Browser, BrowserContext, BrowserType, Electron, Page } from '../index';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
@@ -28,7 +28,6 @@ import { folio as httpFolio } from './http.fixtures';
 import { folio as playwrightFolio } from './playwright.fixtures';
 import { PlaywrightClient } from '../lib/remote/playwrightClient';
 import type { Android } from '../types/android';
-import type { ElectronLauncher } from '../types/electron';
 export { expect, config } from 'folio';
 
 const removeFolderAsync = util.promisify(require('rimraf'));
@@ -134,7 +133,7 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
       stdio: 'pipe'
     });
     spawnedProcess.stderr.pipe(process.stderr);
-    await new Promise(f => {
+    await new Promise<void>(f => {
       spawnedProcess.stdout.on('data', data => {
         if (data.toString().includes('Listening on'))
           f();
@@ -195,5 +194,5 @@ export const afterAll = folio.afterAll;
 
 declare module '../index' {
   const _android: Android;
-  const _electron: ElectronLauncher;
+  const _electron: Electron;
 }

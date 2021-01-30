@@ -247,7 +247,7 @@ Optional event-specific initialization properties.
   - alias-js: $eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: expression`]
+Returns the return value of [`param: expression`].
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
 argument to [`param: expression`]. See [Working with selectors](./selectors.md) for more
@@ -291,7 +291,7 @@ Optional argument to pass to [`param: expression`]
   - alias-js: $$eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: expression`]
+Returns the return value of [`param: expression`].
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
 matched elements as a first argument to [`param: expression`]. See

@@ -37,7 +37,7 @@ The `jsHandle.dispose` method stops referencing the element handle.
 ## async method: JSHandle.evaluate
 - returns: <[Serializable]>
 
-Returns the return value of [`param: expression`]
+Returns the return value of [`param: expression`].
 
 This method passes this handle as the first argument to [`param: expression`].
 
@@ -71,12 +71,11 @@ Optional argument to pass to [`param: expression`]
 ## async method: JSHandle.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the return value of [`param: expression`] as in-page object (JSHandle).
+Returns the return value of [`param: expression`] as a [JSHandle].
 
 This method passes this handle as the first argument to [`param: expression`].
 
-The only difference between `jsHandle.evaluate` and `jsHandle.evaluateHandle` is that `jsHandle.evaluateHandle` returns
-in-page object (JSHandle).
+The only difference between `jsHandle.evaluate` and `jsHandle.evaluateHandle` is that `jsHandle.evaluateHandle` returns [JSHandle].
 
 If the function passed to the `jsHandle.evaluateHandle` returns a [Promise], then `jsHandle.evaluateHandle` would wait
 for the promise to resolve and return its value.

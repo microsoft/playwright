@@ -1,4 +1,3 @@
-
 # class: Dialog
 
 [Dialog] objects are dispatched by page via the [`event: Page.dialog`] event.

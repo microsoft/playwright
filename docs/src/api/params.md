@@ -157,32 +157,39 @@ Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `nul
 ## evaluate-expression
 - `expression` <[string]>
 
-JavaScript expression to be evaluated in the browser context. If it looks like a function declaration,
-it is interpreted as a function. Otherwise, evaluated as an expression.
+JavaScript expression to be evaluated in the browser context. If it looks like
+a function declaration, it is interpreted as a function. Otherwise, evaluated
+as an expression.
 
 ## js-evaluate-pagefunction
 * langs: js
 - `pageFunction` <[function]|[string]>
 
-Function to be evaluated in the page context
+Function to be evaluated in the page context.
 
 ## js-evalonselector-pagefunction
 * langs: js
 - `pageFunction` <[function]\([Element]\)>
 
-Function to be evaluated in the page context
+Function to be evaluated in the page context.
 
 ## js-evalonselectorall-pagefunction
 * langs: js
 - `pageFunction` <[function]\([Array]<[Element]>\)>
 
-Function to be evaluated in the page context
+Function to be evaluated in the page context.
 
 ## js-worker-evaluate-workerfunction
 * langs: js
 - `pageFunction` <[function]|[string]>
 
-Function to be evaluated in the worker context
+Function to be evaluated in the worker context.
+
+## js-electron-evaluate-workerfunction
+* langs: js
+- `pageFunction` <[function]|[Electron]>
+
+Function to be evaluated in the worker context.
 
 ## python-context-option-viewport
 * langs: python

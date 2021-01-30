@@ -911,17 +911,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.CDPSessionDetachParams = tOptional(tObject({}));
   scheme.ElectronLaunchParams = tObject({
-    executablePath: tString,
+    executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     cwd: tOptional(tString),
     env: tOptional(tArray(tType('NameValue'))),
-    handleSIGINT: tOptional(tBoolean),
-    handleSIGTERM: tOptional(tBoolean),
-    handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
-  });
-  scheme.ElectronApplicationNewBrowserWindowParams = tObject({
-    arg: tType('SerializedArgument'),
   });
   scheme.ElectronApplicationEvaluateExpressionParams = tObject({
     expression: tString,
