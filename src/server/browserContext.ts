@@ -244,8 +244,6 @@ export abstract class BrowserContext extends EventEmitter {
 
   async _loadDefaultContext(progress: Progress) {
     const pages = await this._loadDefaultContextAsIs(progress);
-    if (pages.length !== 1 || pages[0].mainFrame().url() !== 'about:blank')
-      throw new Error(`Arguments can not specify page to be opened (first url is ${pages[0].mainFrame().url()})`);
     if (this._options.isMobile || this._options.locale) {
       // Workaround for:
       // - chromium fails to change isMobile for existing page;

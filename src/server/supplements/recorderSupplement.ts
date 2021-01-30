@@ -30,12 +30,12 @@ import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
 import { BufferedOutput, FileOutput, FlushingTerminalOutput, OutputMultiplexer, RecorderOutput, TerminalOutput, Writable } from './recorder/outputs';
 import type { State, UIState } from './recorder/state';
+import { RecorderApp } from './recorder/recorderApp';
 
 type BindingSource = { frame: Frame, page: Page };
 type App = 'codegen' | 'debug' | 'pause';
 
 const symbol = Symbol('RecorderSupplement');
-
 
 export class RecorderSupplement {
   private _generator: CodeGenerator;
@@ -50,6 +50,8 @@ export class RecorderSupplement {
   private _app: App;
   private _output: OutputMultiplexer;
   private _bufferedOutput: BufferedOutput;
+  private _recorderApp: Promise<RecorderApp> | null = null;
+  private _highlighterType: string;
 
   static getOrCreate(context: BrowserContext, app: App, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<RecorderSupplement> {
     let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
@@ -66,7 +68,6 @@ export class RecorderSupplement {
     this._app = app;
     this._recorderUIState = {
       mode: app === 'codegen' ? 'recording' : 'none',
-      drawerVisible: false
     };
     let languageGenerator: LanguageGenerator;
     switch (params.language) {
@@ -84,7 +85,13 @@ export class RecorderSupplement {
       write: (text: string) => context.emit(BrowserContext.Events.StdOut, text)
     };
     const outputs: RecorderOutput[] = [params.terminal ? new TerminalOutput(writable, highlighterType) : new FlushingTerminalOutput(writable)];
-    this._bufferedOutput = new BufferedOutput(highlighterType);
+    this._highlighterType = highlighterType;
+    this._bufferedOutput = new BufferedOutput(async text => {
+      if (this._recorderApp) {
+        const app = await this._recorderApp;
+        await app.setScript(text, highlighterType).catch(e => {});
+      }
+    });
     outputs.push(this._bufferedOutput);
     if (params.outputFile)
       outputs.push(new FileOutput(params.outputFile));
@@ -120,33 +127,32 @@ export class RecorderSupplement {
     await this._context.exposeBinding('playwrightRecorderCommitAction', false,
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
-    await this._context.exposeBinding('playwrightRecorderClearScript', false,
-        (source: BindingSource, action: actions.Action) => {
-          this._bufferedOutput.clear();
-          this._generator.restart();
-          if (this._app === 'codegen') {
-            for (const page of this._context.pages())
-              this._onFrameNavigated(page.mainFrame(), page);
-          }
+    await this._context.exposeBinding('playwrightRecorderShowRecorderPage', false, ({ page }) => {
+      if (this._recorderApp) {
+        this._recorderApp.then(p => p.bringToFront()).catch(() => {});
+        return;
+      }
+      this._recorderApp = RecorderApp.open(page);
+      this._recorderApp.then(app => {
+        app.once('close', () => {
+          this._recorderApp = null;
         });
+        app.on('clear', () => this._clearScript());
+        return app.setScript(this._bufferedOutput.buffer(), this._highlighterType);
+      }).catch(e => console.error(e));
+    });
 
     await this._context.exposeBinding('playwrightRecorderState', false, ({ page }) => {
       const state: State = {
-        isController: page === this._context.pages()[0],
         uiState: this._recorderUIState,
         canResume: this._app === 'pause',
         isPaused: this._paused,
-        codegenScript: this._bufferedOutput.buffer()
       };
       return state;
     });
 
     await this._context.exposeBinding('playwrightRecorderSetUIState', false, (source, state: UIState) => {
-      const isController = source.page === this._context.pages()[0];
-      if (isController)
-        this._recorderUIState = { ...this._recorderUIState, ...state };
-      else
-        this._recorderUIState = { ...this._recorderUIState, mode: state.mode };
+      this._recorderUIState = { ...this._recorderUIState, ...state };
       this._output.setEnabled(state.mode === 'recording');
     });
 
@@ -164,7 +170,7 @@ export class RecorderSupplement {
 
   async pause() {
     this._paused = true;
-    return new Promise(f => this._resumeCallback = f);
+    return new Promise<void>(f => this._resumeCallback = f);
   }
 
   private async _onPage(page: Page) {
@@ -205,6 +211,15 @@ export class RecorderSupplement {
           signals: [],
         }
       });
+    }
+  }
+
+  private _clearScript(): void {
+    this._bufferedOutput.clear();
+    this._generator.restart();
+    if (this._app === 'codegen') {
+      for (const page of this._context.pages())
+        this._onFrameNavigated(page.mainFrame(), page);
     }
   }
 
@@ -274,4 +289,3 @@ export class RecorderSupplement {
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: String(++this._lastDialogOrdinal) });
   }
 }
-

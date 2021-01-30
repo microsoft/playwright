@@ -122,7 +122,7 @@ export class Chromium extends BrowserType {
   }
 }
 
-const DEFAULT_ARGS = [
+export const DEFAULT_ARGS = [
   '--disable-background-networking',
   '--enable-features=NetworkService,NetworkServiceInProcess',
   '--disable-background-timer-throttling',

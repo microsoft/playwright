@@ -122,4 +122,11 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
+// Copy images.
+steps.push({
+  command: process.platform === 'win32' ? 'copy' : 'cp',
+  args: ['src/web/recorder/*.png'.replace(/\//g, path.sep), 'lib/web/recorder/'.replace(/\//g, path.sep)],
+  shell: true,
+});
+
 watchMode ? runWatch() : runBuild();

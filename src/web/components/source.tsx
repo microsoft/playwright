@@ -21,18 +21,20 @@ import '../../third_party/highlightjs/highlightjs/tomorrow.css';
 
 export interface SourceProps {
   text: string,
+  language: string,
   highlightedLine?: number
 }
 
 export const Source: React.FC<SourceProps> = ({
-  text = '',
+  text,
+  language,
   highlightedLine = -1
 }) => {
   const lines = React.useMemo<string[]>(() => {
     const result = [];
     let continuation: any;
     for (const line of text.split('\n')) {
-      const highlighted = highlightjs.highlight('javascript', line, true, continuation);
+      const highlighted = highlightjs.highlight(language, line, true, continuation);
       continuation = highlighted.top;
       result.push(highlighted.value);
     }

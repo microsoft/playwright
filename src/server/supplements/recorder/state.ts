@@ -16,18 +16,14 @@
 
 export type UIState = {
   mode: 'inspecting' | 'recording' | 'none',
-  drawerVisible: boolean
 }
 
 export type SetUIState = {
   mode?: 'inspecting' | 'recording' | 'none',
-  drawerVisible?: boolean
 }
 
 export type State = {
   canResume: boolean,
-  isController: boolean,
   isPaused: boolean,
-  codegenScript: string,
   uiState: UIState,
 }

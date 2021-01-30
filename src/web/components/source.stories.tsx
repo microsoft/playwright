@@ -33,11 +33,13 @@ const Template: Story<SourceProps> = args => <Source {...args} />;
 
 export const Primary = Template.bind({});
 Primary.args = {
+  language: 'javascript',
   text: exampleText()
 };
 
 export const HighlightLine = Template.bind({});
 HighlightLine.args = {
+  language: 'javascript',
   text: exampleText(),
   highlightedLine: 11
 };

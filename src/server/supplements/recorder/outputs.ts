@@ -64,15 +64,16 @@ export class OutputMultiplexer implements RecorderOutput {
 export class BufferedOutput implements RecorderOutput {
   private _lines: string[] = [];
   private _buffer: string | null = null;
-  private _language: string | null = null;
+  private _onUpdate: ((text: string) => void);
 
-  constructor(language?: string) {
-    this._language = language || null;
+  constructor(onUpdate: (text: string) => void = () => {}) {
+    this._onUpdate = onUpdate;
   }
 
   printLn(text: string) {
     this._buffer = null;
     this._lines.push(...text.trimEnd().split('\n'));
+    this._onUpdate(this.buffer());
   }
 
   popLn(text: string) {
@@ -81,17 +82,15 @@ export class BufferedOutput implements RecorderOutput {
   }
 
   buffer(): string {
-    if (this._buffer === null) {
+    if (this._buffer === null)
       this._buffer = this._lines.join('\n');
-      if (this._language)
-        this._buffer = hljs.highlight(this._language, this._buffer).value;
-    }
     return this._buffer;
   }
 
   clear() {
     this._lines = [];
     this._buffer = null;
+    this._onUpdate(this.buffer());
   }
 
   flush() {
