@@ -727,10 +727,10 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 - returns: <[Serializable]>
 
 The method finds an element matching the specified selector within the page and passes it as a first argument to
-[`param: pageFunction`]. If no elements match the selector, the method throws an error. Returns the value of
-[`param: pageFunction`].
+[`param: expression`]. If no elements match the selector, the method throws an error. Returns the value of
+[`param: expression`].
 
-If [`param: pageFunction`] returns a [Promise], then [`method: Page.evalOnSelector`] would wait for the promise to resolve and
+If [`param: expression`] returns a [Promise], then [`method: Page.evalOnSelector`] would wait for the promise to resolve and
 return its value.
 
 Examples:
@@ -762,7 +762,7 @@ Shortcut for main frame's [`method: Frame.evalOnSelector`].
 ### param: Page.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Page.evalOnSelectorAll
 * langs:
@@ -771,9 +771,9 @@ Optional argument to pass to [`param: pageFunction`]
 - returns: <[Serializable]>
 
 The method finds all elements matching the specified selector within the page and passes an array of matched elements as
-a first argument to [`param: pageFunction`]. Returns the result of [`param: pageFunction`] invocation.
+a first argument to [`param: expression`]. Returns the result of [`param: expression`] invocation.
 
-If [`param: pageFunction`] returns a [Promise], then [`method: Page.evalOnSelectorAll`] would wait for the promise to resolve and
+If [`param: expression`] returns a [Promise], then [`method: Page.evalOnSelectorAll`] would wait for the promise to resolve and
 return its value.
 
 Examples:
@@ -797,12 +797,12 @@ div_counts = page.eval_on_selector_all("div", "(divs, min) => divs.length >= min
 ### param: Page.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Page.evaluate
 - returns: <[Serializable]>
 
-Returns the value of the [`param: pageFunction`] invocation.
+Returns the value of the [`param: expression`] invocation.
 
 If the function passed to the [`method: Page.evaluate`] returns a [Promise], then [`method: Page.evaluate`] would wait
 for the promise to resolve and return its value.
@@ -811,7 +811,7 @@ If the function passed to the [`method: Page.evaluate`] returns a non-[Serializa
 [`method: Page.evaluate`] resolves to `undefined`. DevTools Protocol also supports transferring some additional values
 that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
-Passing argument to [`param: pageFunction`]:
+Passing argument to [`param: expression`]:
 
 ```js
 const result = await page.evaluate(([x, y]) => {
@@ -877,12 +877,12 @@ Shortcut for main frame's [`method: Frame.evaluate`].
 ### param: Page.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Page.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the value of the [`param: pageFunction`] invocation as in-page object (JSHandle).
+Returns the value of the [`param: expression`] invocation as in-page object (JSHandle).
 
 The only difference between [`method: Page.evaluate`] and [`method: Page.evaluateHandle`] is that [`method: Page.evaluateHandle`] returns in-page
 object (JSHandle).
@@ -947,7 +947,7 @@ result_handle.dispose()
 ### param: Page.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Page.exposeBinding
 
@@ -2197,7 +2197,7 @@ Either a predicate that receives an event or an options object. Optional.
 ## async method: Page.waitForFunction
 - returns: <[JSHandle]>
 
-Returns when the [`param: pageFunction`] returns a truthy value. It resolves to a JSHandle of the truthy value.
+Returns when the [`param: expression`] returns a truthy value. It resolves to a JSHandle of the truthy value.
 
 The [`method: Page.waitForFunction`] can be used to observe viewport size change:
 
@@ -2271,12 +2271,12 @@ Shortcut for main frame's [`method: Frame.waitForFunction`].
 ### param: Page.waitForFunction.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ### option: Page.waitForFunction.polling
 - `polling` <[float]|"raf">
 
-If [`option: polling`] is `'raf'`, then [`param: pageFunction`] is constantly executed in `requestAnimationFrame`
+If [`option: polling`] is `'raf'`, then [`param: expression`] is constantly executed in `requestAnimationFrame`
 callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
 would be executed. Defaults to `raf`.
 

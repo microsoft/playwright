@@ -35,7 +35,7 @@ Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs
 ## async method: Worker.evaluate
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]
+Returns the return value of [`param: expression`]
 
 If the function passed to the `worker.evaluate` returns a [Promise], then `worker.evaluate` would wait for the promise
 to resolve and return its value.
@@ -49,12 +49,12 @@ If the function passed to the `worker.evaluate` returns a non-[Serializable] val
 ### param: Worker.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Worker.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the return value of [`param: pageFunction`] as in-page object (JSHandle).
+Returns the return value of [`param: expression`] as in-page object (JSHandle).
 
 The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns
 in-page object (JSHandle).
@@ -67,7 +67,7 @@ the promise to resolve and return its value.
 ### param: Worker.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## method: Worker.url
 - returns: <[string]>
