@@ -315,7 +315,7 @@ function extractLangs(spec) {
         aliases[match[1].trim()] = match[2].trim();
     }
     return {
-      only: only ? only.split(',').map(l => l.trim()) : undefined,
+      only: only ? only.split(',') : undefined,
       aliases,
       types: {},
       overrides: {}

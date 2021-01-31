@@ -594,8 +594,6 @@ Attribute name to get the value for.
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
 
 ## async method: Frame.goto
-* langs:
-  - alias-java: navigate
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the

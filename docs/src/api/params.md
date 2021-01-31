@@ -147,7 +147,7 @@ Whether to ignore HTTPS errors during navigation. Defaults to `false`.
 Toggles bypassing page's Content-Security-Policy.
 
 ## context-option-viewport
-* langs: java, js
+* langs: js
 - `viewport` <[null]|[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
@@ -292,7 +292,7 @@ Logger sink for Playwright logging.
 **DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-recordhar
-* langs: java, js
+* langs: js
 - `recordHar` <[Object]>
   - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`.
@@ -315,7 +315,7 @@ Optional setting to control whether to omit request content from the HAR. Defaul
 Path on the filesystem to write the HAR file to.
 
 ## context-option-recordvideo
-* langs: java, js
+* langs: js
 - `recordVideo` <[Object]>
   - `dir` <[path]> Path to the directory to put videos into.
   - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`.
@@ -356,7 +356,7 @@ option to work. If all contexts override the proxy, global proxy will be never u
 `launch({ proxy: { server: 'per-context' } })`.
 
 ## select-options-values
-* langs: java, js
+* langs: js
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
   - `value` <[string]> Matches by `option.value`. Optional.
   - `label` <[string]> Matches by `option.label`. Optional.

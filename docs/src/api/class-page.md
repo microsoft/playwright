@@ -1261,7 +1261,7 @@ frame = page.frame(url=r".*domain.*")
 ```
 
 ### param: Page.frame.frameSelector
-* langs: java, js
+* langs: js
 - `frameSelector` <[string]|[Object]>
   - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
   - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving
@@ -1313,8 +1313,6 @@ Navigate to the next page in history.
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 
 ## async method: Page.goto
-* langs:
-  - alias-java: navigate
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -2159,7 +2157,7 @@ Video object associated with this page.
   - `height` <[int]> page height in pixels.
 
 ## async method: Page.waitForEvent
-* langs: csharp, js, python
+* langs:
   - alias-python: expect_event
 - returns: <[any]>
 

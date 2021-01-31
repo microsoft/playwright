@@ -39,7 +39,7 @@ not performed and user has no access to the downloaded files.
 :::
 
 ## async method: Download.createReadStream
-* langs: java, js
+* langs: js
 - returns: <[null]|[Readable]>
 
 Returns readable stream for current download or `null` if download failed.
