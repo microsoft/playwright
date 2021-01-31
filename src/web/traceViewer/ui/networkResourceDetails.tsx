@@ -19,6 +19,7 @@ import * as React from 'react';
 import { Expandable } from './helpers';
 import { NetworkResourceTraceEvent } from '../../../trace/traceTypes';
 
+const utf8Encoder = new TextDecoder('utf-8');
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: NetworkResourceTraceEvent,
@@ -28,7 +29,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 }> = ({ resource, index, selected, setSelected }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [requestBody, setRequestBody] = React.useState<string | null>(null);
-  const [responseBody, setResponseBody] = React.useState<string | null>(null);
+  const [responseBody, setResponseBody] = React.useState<ArrayBuffer | null>(null);
 
   React.useEffect(() => {
     setExpanded(false);
@@ -38,12 +39,14 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   React.useEffect(() => {
     const readResources = async  () => {
       if (resource.requestSha1 !== 'none') {
-        const requestResource = await fetch(`/sha1/${resource.requestSha1}`).then(response => response.text());
+        const response = await fetch(`/sha1/${resource.requestSha1}`);
+        const requestResource = await response.text();
         setRequestBody(requestResource);
       }
 
       if (resource.responseSha1 !== 'none') {
-        const responseResource = await fetch(`/sha1/${resource.responseSha1}`).then(response => response.text());
+        const response = await fetch(`/sha1/${resource.responseSha1}`);
+        const responseResource = await response.arrayBuffer();
         setResponseBody(responseResource);
       }
     };
@@ -108,8 +111,8 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         {resource.requestSha1 !== 'none' ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
         <h4>Response Body</h4>
         {resource.responseSha1 === 'none' ? <div className='network-request-response-body'>Response body is not available for this request.</div> : ''}
-        {responseBody !== null && resource.contentType.includes('image') ? <img src={`data:${resource.contentType};base64,${responseBody}`} /> : ''}
-        {responseBody !== null && !resource.contentType.includes('image') ? <div className='network-request-response-body'>{formatBody(responseBody, resource.contentType)}</div> : ''}
+        {responseBody !== null && resource.contentType.includes('image') ? <img src={`data:${resource.contentType};base64,${btoa(String.fromCharCode(...new Uint8Array(responseBody)))}`} /> : ''}
+        {responseBody !== null && !resource.contentType.includes('image') ? <div className='network-request-response-body'>{formatBody(utf8Encoder.decode(responseBody), resource.contentType)}</div> : ''}
       </div>
     }/>
   </div>;
