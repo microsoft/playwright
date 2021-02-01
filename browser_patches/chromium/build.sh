@@ -60,6 +60,7 @@ compile_chromium() {
     CHROMIUM_FOLDER_NAME="chrome-mac"
     CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
   elif [[ $1 == "--compile-mac" ]]; then
+    export DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer
     CHROMIUM_FOLDER_NAME="chrome-mac"
     CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
   elif [[ $1 == "--compile-linux" ]]; then
