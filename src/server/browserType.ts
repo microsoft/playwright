@@ -66,7 +66,7 @@ export abstract class BrowserType {
     const controller = new ProgressController();
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
-      return this._innerLaunch(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
+      return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
     }, TimeoutSettings.timeout(options));
     return browser;
   }
@@ -77,9 +77,22 @@ export abstract class BrowserType {
     const controller = new ProgressController();
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
-      return this._innerLaunch(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
+      return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
     }, TimeoutSettings.timeout(options));
     return browser._defaultContext!;
+  }
+
+  async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
+    try {
+      return this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
+    } catch (e) {
+      // @see https://github.com/microsoft/playwright/issues/5214
+      if (e.includes('Inconsistency detected by ld.so')) {
+        progress.log(`<restarting browser due to hitting race condition in glibc>`);
+        return this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
+      }
+      throw e;
+    }
   }
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
