@@ -177,7 +177,7 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 When no [`event: Page.dialog`] listeners are present, all dialogs are automatically dismissed.
 :::
 
-## event: Page.domcontentloaded
+## event: Page.DOMContentLoaded
 - type: <[Page]>
 
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
@@ -195,7 +195,7 @@ downloaded content. If [`option: acceptDownloads`] is not set, download events a
 not performed and user has no access to the downloaded files.
 :::
 
-## event: Page.filechooser
+## event: Page.fileChooser
 - type: <[FileChooser]>
 
 Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
@@ -211,17 +211,17 @@ page.on('filechooser', async (fileChooser) => {
 page.on("filechooser", lambda file_chooser: file_chooser.set_files("/tmp/myfile.pdf"))
 ```
 
-## event: Page.frameattached
+## event: Page.frameAttached
 - type: <[Frame]>
 
 Emitted when a frame is attached.
 
-## event: Page.framedetached
+## event: Page.frameDetached
 - type: <[Frame]>
 
 Emitted when a frame is detached.
 
-## event: Page.framenavigated
+## event: Page.frameNavigated
 - type: <[Frame]>
 
 Emitted when a frame is navigated to a new url.
@@ -231,12 +231,12 @@ Emitted when a frame is navigated to a new url.
 
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
-## event: Page.pageerror
+## event: Page.pageError
 - type: <[Error]>
 
 Emitted when an uncaught exception happens within the page.
 
-## event: Page.popup
+## event: Page.popUp
 - type: <[Page]>
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the
@@ -279,7 +279,7 @@ cases).
 Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
 [`method: Page.route`] or [`method: BrowserContext.route`].
 
-## event: Page.requestfailed
+## event: Page.requestFailed
 - type: <[Request]>
 
 Emitted when a request fails, for example by timing out.
@@ -289,7 +289,7 @@ HTTP Error responses, such as 404 or 503, are still successful responses from HT
 with [`event: Page.requestfinished`] event and not with [`event: Page.requestfailed`].
 :::
 
-## event: Page.requestfinished
+## event: Page.requestFinished
 - type: <[Request]>
 
 Emitted when a request finishes successfully after downloading the response body. For a successful response, the
@@ -301,7 +301,7 @@ sequence of events is `request`, `response` and `requestfinished`.
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
 is `request`, `response` and `requestfinished`.
 
-## event: Page.websocket
+## event: Page.webSocket
 - type: <[WebSocket]>
 
 Emitted when <[WebSocket]> request is sent.
