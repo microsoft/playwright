@@ -27,7 +27,7 @@ export const parameters = {
 
 addDecorator(storyFn => {
   applyTheme();
-  return <div style={{backgroundColor: 'var(--background)', display: 'flex'}}>
+  return <div style={{backgroundColor: 'var(--background)', display: 'flex', flex: 'auto'}}>
     {storyFn()}
   </div>
 });

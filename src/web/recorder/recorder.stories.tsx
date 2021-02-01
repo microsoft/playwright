@@ -17,7 +17,6 @@
 import { Story, Meta } from '@storybook/react/types-6-0';
 import React from 'react';
 import { Recorder, RecorderProps } from './recorder';
-import { exampleText } from '../components/exampleText';
 
 export default {
   title: 'Recorder/Recorder',
@@ -33,5 +32,4 @@ const Template: Story<RecorderProps> = args => <Recorder {...args} />;
 
 export const Primary = Template.bind({});
 Primary.args = {
-  text: exampleText()
 };

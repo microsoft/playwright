@@ -31,7 +31,8 @@ export interface BrowserProcess {
 }
 
 export type PlaywrightOptions = {
-  contextListeners: ContextListener[]
+  contextListeners: ContextListener[],
+  isInternal: boolean
 };
 
 export type BrowserOptions = PlaywrightOptions & {

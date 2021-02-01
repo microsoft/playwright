@@ -28,5 +28,5 @@ declare global {
 
 (async () => {
   applyTheme();
-  ReactDOM.render(<Recorder text=""/>, document.querySelector('#root'));
+  ReactDOM.render(<Recorder/>, document.querySelector('#root'));
 })();

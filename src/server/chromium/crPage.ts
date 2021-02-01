@@ -41,6 +41,7 @@ import { VideoRecorder } from './videoRecorder';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
+export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
 
 export class CRPage implements PageDelegate {
   readonly _mainFrameSession: FrameSession;
@@ -63,6 +64,11 @@ export class CRPage implements PageDelegate {
   // of their Page.windowOpen events is not guaranteed to match the order
   // of new popup targets.
   readonly _nextWindowOpenPopupFeatures: string[][] = [];
+
+  static mainFrameSession(page: Page): FrameSession {
+    const crPage = page._delegate as CRPage;
+    return crPage._mainFrameSession;
+  }
 
   constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean) {
     this._targetId = targetId;
@@ -380,8 +386,8 @@ class FrameSession {
 
   async _initialize(hasUIWindow: boolean) {
     if (hasUIWindow &&
-        !this._crPage._browserContext._browser.isClank() &&
-        !this._crPage._browserContext._options.noDefaultViewport) {
+      !this._crPage._browserContext._browser.isClank() &&
+      !this._crPage._browserContext._options.noDefaultViewport) {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
       this._windowId = windowId;
     }
@@ -855,12 +861,26 @@ class FrameSession {
         else if (process.platform === 'darwin')
           insets = { width: 2, height: 80 };
       }
-      promises.push(this._client.send('Browser.setWindowBounds', {
-        windowId: this._windowId,
-        bounds: { width: viewportSize.width + insets.width, height: viewportSize.height + insets.height }
+      promises.push(this.setWindowBounds({
+        width: viewportSize.width + insets.width,
+        height: viewportSize.height + insets.height
       }));
     }
     await Promise.all(promises);
+  }
+
+  async windowBounds(): Promise<WindowBounds> {
+    const { bounds } = await this._client.send('Browser.getWindowBounds', {
+      windowId: this._windowId!
+    });
+    return bounds;
+  }
+
+  async setWindowBounds(bounds: WindowBounds) {
+    return await this._client.send('Browser.setWindowBounds', {
+      windowId: this._windowId!,
+      bounds
+    });
   }
 
   async _updateEmulateMedia(initial: boolean): Promise<void> {

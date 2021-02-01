@@ -19,6 +19,7 @@ import { Tracer } from '../trace/tracer';
 import * as browserPaths from '../utils/browserPaths';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
+import { PlaywrightOptions } from './browser';
 import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
@@ -34,15 +35,17 @@ export class Playwright {
   readonly electron: Electron;
   readonly firefox: Firefox;
   readonly webkit: WebKit;
-  readonly options = {
-    contextListeners: [
-      new InspectorController(),
-      new Tracer(),
-      new HarTracer()
-    ]
-  };
+  readonly options: PlaywrightOptions;
 
-  constructor(packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
+  constructor(isInternal: boolean, packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
+    this.options = {
+      isInternal,
+      contextListeners: isInternal ? [] : [
+        new InspectorController(),
+        new Tracer(),
+        new HarTracer()
+      ]
+    };
     const chromium = browsers.find(browser => browser.name === 'chromium');
     this.chromium = new Chromium(packagePath, chromium!, this.options);
 
@@ -57,6 +60,6 @@ export class Playwright {
   }
 }
 
-export function createPlaywright() {
-  return new Playwright(path.join(__dirname, '..', '..'), require('../../browsers.json')['browsers']);
+export function createPlaywright(isInternal = false) {
+  return new Playwright(isInternal, path.join(__dirname, '..', '..'), require('../../browsers.json')['browsers']);
 }

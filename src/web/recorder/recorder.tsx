@@ -20,20 +20,42 @@ import { Toolbar } from '../components/toolbar';
 import { ToolbarButton } from '../components/toolbarButton';
 import { Source } from '../components/source';
 
+declare global {
+  interface Window {
+    playwrightClear(): Promise<void>
+    playwrightSetSource: (params: { text: string, language: string }) => void
+  }
+}
+
 export interface RecorderProps {
-  text: string
 }
 
 export const Recorder: React.FC<RecorderProps> = ({
-  text
 }) => {
+  const [source, setSource] = React.useState({ language: 'javascript', text: '' });
+  window.playwrightSetSource = setSource;
+
   return <div className="recorder">
     <Toolbar>
-      <ToolbarButton icon="clone" title="Copy" onClick={() => {}}></ToolbarButton>
-      <ToolbarButton icon="trashcan" title="Erase" onClick={() => {}}></ToolbarButton>
+      <ToolbarButton icon="clone" title="Copy" onClick={() => {
+        copy(source.text);
+      }}></ToolbarButton>
+      <ToolbarButton icon="trashcan" title="Clear" onClick={() => {
+        window.playwrightClear().catch(e => console.error(e));
+      }}></ToolbarButton>
       <div style={{flex: "auto"}}></div>
-      <ToolbarButton icon="close" title="Close" onClick={() => {}}></ToolbarButton>
     </Toolbar>
-    <Source text={text}></Source>
+    <Source text={source.text} language={source.language}></Source>
   </div>;
 };
+
+function copy(text: string) {
+  const textArea = document.createElement('textarea');
+  textArea.style.position = 'absolute';
+  textArea.style.zIndex = '-1000';
+  textArea.value = text;
+  document.body.appendChild(textArea);
+  textArea.select();
+  document.execCommand('copy');
+  textArea.remove();
+}
