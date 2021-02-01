@@ -110,7 +110,7 @@ async def main():
             permissions=['geolocation'],
             color_scheme='dark',
         )
-        page = await browser.newPage()
+        page = await browser.new_page()
         await browser.close()
 
 asyncio.run(main())
