@@ -257,7 +257,12 @@ function generateNameDefault(member, name, t, parent) {
 
       return probableName;
     }
+
+    if (member.kind === 'event') {
+      return `${name}Payload`;
+    }
   }
+
   return enumName || t.name;
 }
 
@@ -277,6 +282,10 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
  * @param {Function} output
  */
 function renderMethod(member, parent, output, name) {
+  let typeResolve = (type) => translateType(type, parent, (t) => {
+    return `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
+  });
+
   /** @type {string} */
   let type = null;
   // need to check the original one
@@ -294,9 +303,7 @@ function renderMethod(member, parent, output, name) {
     } else if (!innerType.properties) {
       type = `dynamic`;
     } else {
-      type = translateType(innerType, parent, (t) => {
-        return `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
-      });
+      type = typeResolve(innerType);
       additionalTypes.set(type, innerType);
 
       if (isArray)
@@ -304,7 +311,7 @@ function renderMethod(member, parent, output, name) {
     }
   }
 
-  type = type || translateType(member.type, parent);
+  type = type || typeResolve(member.type); //translateType(member.type, parent);
   // TODO: this is something that will probably go into the docs
   if (member.args.size == 0
     && type !== 'void'
@@ -343,7 +350,7 @@ function renderMethod(member, parent, output, name) {
 
       args.push(`${leftArgType} ${argName}`);
       args.push(`${rightArgType} ${argName}Values`);
-      
+
       return;
     }
 
@@ -377,6 +384,11 @@ function translateType(type, parent, generateNameCallback = null) {
     generateNameCallback = (t) => {
       return t.name;
     }
+  }
+
+  // a few special cases we can fix automatically
+  if (type.expression === '[null]|[Error]') {
+    return 'void';
   }
 
   if (type.union) {
@@ -434,7 +446,9 @@ function translateType(type, parent, generateNameCallback = null) {
       return translateType(type.union[1], parent, generateNameCallback);
     else if (type.expression === '[float]|"raf"')
       return `Polling`; // hardcoded because there's no other way to denote this
-    console.log(`Not sure how to parse union ${type.name} in ${parent.name}:`);
+
+
+    console.log(`Not sure how to parse union ${type.name} in ${parent ? parent.name : '<<no parent>>'}:`);
     console.log(type);
 
     return `Union`;
@@ -476,6 +490,25 @@ function translateType(type, parent, generateNameCallback = null) {
 
     // this is an additional type that we need to generate
     let objectName = generateNameCallback(type);
+    if (objectName === 'Object' && !type.properties) {
+      return 'object';
+    } else if (objectName === 'Object') {
+      console.log(type);
+      // throw 'Object unexpected';
+    }
+
+    console.log(`Generating name for ${type.name} -> ${objectName}`);
+    if (['object'].includes(objectName))
+      return objectName;
+
+    let potentialType = additionalTypes.get(objectName);
+    if (!potentialType) {
+      additionalTypes.set(objectName, type);
+    } else {
+      // console.log(type);
+      // throw `This type ${objectName} is already registered, panicing.`;
+    }
+
     return objectName;
   }
 

@@ -36,10 +36,10 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using PlaywrightSharp.Input;
 
 namespace PlaywrightSharp
 {
