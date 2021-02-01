@@ -18,9 +18,7 @@ const playwright = require('playwright-electron');
 const path = require('path');
 
 (async () => {
-  const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
-  const electronPath = path.join(__dirname, 'node_modules', '.bin', electronName);
-  const application = await playwright.electron.launch(electronPath, {
+  const application = await playwright.electron.launch({
     args: [path.join(__dirname, 'electron-app.js')],
   });
   const appPath = await application.evaluate(async ({ app }) => app.getAppPath());

@@ -85,8 +85,8 @@ export interface Page {
    * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#pageevaluatepagefunction-arg) returns a
    * non-[Serializable] value, then
    * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#pageevaluatepagefunction-arg) resolves
-   * to `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-   * `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+   * to `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`: `-0`,
+   * `NaN`, `Infinity`, `-Infinity`.
    * 
    * Passing argument to `pageFunction`:
    * 
@@ -116,21 +116,21 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatepagefunction-arg).
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
   evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
 
   /**
-   * Returns the value of the `pageFunction` invocation as in-page object (JSHandle).
+   * Returns the value of the `pageFunction` invocation as a [JSHandle].
    * 
    * The only difference between
    * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#pageevaluatepagefunction-arg) and
    * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#pageevaluatehandlepagefunction-arg)
    * is that
    * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#pageevaluatehandlepagefunction-arg)
-   * returns in-page object (JSHandle).
+   * returns [JSHandle].
    * 
    * If the function passed to the
    * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#pageevaluatehandlepagefunction-arg)
@@ -159,7 +159,7 @@ export interface Page {
    * await resultHandle.dispose();
    * ```
    * 
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
@@ -204,7 +204,7 @@ export interface Page {
    * Shortcut for main frame's
    * [frame.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevalselector-pagefunction-arg).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
@@ -227,7 +227,7 @@ export interface Page {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
@@ -266,7 +266,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#framewaitforfunctionpagefunction-arg-options).
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    * @param options 
    */
@@ -3178,7 +3178,7 @@ export interface Page {
  */
 export interface Frame {
   /**
-   * Returns the return value of `pageFunction`
+   * Returns the return value of `pageFunction`.
    * 
    * If the function passed to the
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatepagefunction-arg) returns
@@ -3190,8 +3190,8 @@ export interface Frame {
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatepagefunction-arg) returns
    * a non-[Serializable] value, then
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatepagefunction-arg) returns
-   * `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-   * `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+   * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`: `-0`,
+   * `NaN`, `Infinity`, `-Infinity`.
    * 
    * ```js
    * const result = await frame.evaluate(([x, y]) => {
@@ -3215,19 +3215,19 @@ export interface Frame {
    * await bodyHandle.dispose();
    * ```
    * 
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
   evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
 
   /**
-   * Returns the return value of `pageFunction` as in-page object (JSHandle).
+   * Returns the return value of `pageFunction` as a [JSHandle].
    * 
    * The only difference between
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatepagefunction-arg) and
    * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatehandlepagefunction-arg)
-   * is that [method: Frame.evaluateHandle`] returns in-page object (JSHandle).
+   * is that [method: Frame.evaluateHandle`] returns [JSHandle].
    * 
    * If the function, passed to the
    * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatehandlepagefunction-arg),
@@ -3256,7 +3256,7 @@ export interface Frame {
    * await resultHandle.dispose();
    * ```
    * 
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
@@ -3283,7 +3283,7 @@ export interface Frame {
   $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]>;
 
   /**
-   * Returns the return value of `pageFunction`
+   * Returns the return value of `pageFunction`.
    * 
    * The method finds an element matching the specified selector within the frame and passes it as a first argument to
    * `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, the
@@ -3302,7 +3302,7 @@ export interface Frame {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
@@ -3311,7 +3311,7 @@ export interface Frame {
   $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
   /**
-   * Returns the return value of `pageFunction`
+   * Returns the return value of `pageFunction`.
    * 
    * The method finds all elements matching the specified selector within the frame and passes an array of matched elements
    * as a first argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -3327,7 +3327,7 @@ export interface Frame {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
@@ -3362,7 +3362,7 @@ export interface Frame {
    * await frame.waitForFunction(selector => !!document.querySelector(selector), selector);
    * ```
    * 
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    * @param options 
    */
@@ -5102,29 +5102,42 @@ export interface BrowserContext {
  */
 export interface Worker {
   /**
-   * Returns the return value of `pageFunction`
+   * Returns the return value of `pageFunction`.
    * 
-   * If the function passed to the `worker.evaluate` returns a [Promise], then `worker.evaluate` would wait for the promise
-   * to resolve and return its value.
+   * If the function passed to the
+   * [worker.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatepagefunction-arg)
+   * returns a [Promise], then
+   * [worker.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatepagefunction-arg)
+   * would wait for the promise to resolve and return its value.
    * 
-   * If the function passed to the `worker.evaluate` returns a non-[Serializable] value, then `worker.evaluate` returns
-   * `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-   * `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
-   * @param pageFunction Function to be evaluated in the worker context
+   * If the function passed to the
+   * [worker.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatepagefunction-arg)
+   * returns a non-[Serializable] value, then
+   * [worker.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatepagefunction-arg)
+   * returns `undefined`. Playwright also supports transferring some  additional values that are not serializable by `JSON`:
+   * `-0`, `NaN`, `Infinity`, `-Infinity`.
+   * @param pageFunction Function to be evaluated in the worker context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
   evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
 
   /**
-   * Returns the return value of `pageFunction` as in-page object (JSHandle).
+   * Returns the return value of `pageFunction` as a [JSHandle].
    * 
-   * The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns
-   * in-page object (JSHandle).
+   * The only difference between
+   * [worker.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatepagefunction-arg) and
+   * [worker.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatehandlepagefunction-arg)
+   * is that
+   * [worker.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatehandlepagefunction-arg)
+   * returns [JSHandle].
    * 
-   * If the function passed to the `worker.evaluateHandle` returns a [Promise], then `worker.evaluateHandle` would wait for
-   * the promise to resolve and return its value.
-   * @param pageFunction Function to be evaluated in the worker context
+   * If the function passed to the
+   * [worker.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatehandlepagefunction-arg)
+   * returns a [Promise], then
+   * [worker.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatehandlepagefunction-arg)
+   * would wait for the promise to resolve and return its value.
+   * @param pageFunction Function to be evaluated in the worker context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
@@ -5178,7 +5191,7 @@ export interface Worker {
  */
 export interface JSHandle<T = any> {
   /**
-   * Returns the return value of `pageFunction`
+   * Returns the return value of `pageFunction`.
    * 
    * This method passes this handle as the first argument to `pageFunction`.
    * 
@@ -5192,19 +5205,19 @@ export interface JSHandle<T = any> {
    * expect(await tweetHandle.evaluate(node => node.innerText)).toBe('10 retweets');
    * ```
    * 
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg): Promise<R>;
   evaluate<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any): Promise<R>;
 
   /**
-   * Returns the return value of `pageFunction` as in-page object (JSHandle).
+   * Returns the return value of `pageFunction` as a [JSHandle].
    * 
    * This method passes this handle as the first argument to `pageFunction`.
    * 
    * The only difference between `jsHandle.evaluate` and `jsHandle.evaluateHandle` is that `jsHandle.evaluateHandle` returns
-   * in-page object (JSHandle).
+   * [JSHandle].
    * 
    * If the function passed to the `jsHandle.evaluateHandle` returns a [Promise], then `jsHandle.evaluateHandle` would wait
    * for the promise to resolve and return its value.
@@ -5212,7 +5225,7 @@ export interface JSHandle<T = any> {
    * See
    * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#pageevaluatehandlepagefunction-arg)
    * for more details.
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
@@ -5300,7 +5313,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]>;
 
   /**
-   * Returns the return value of `pageFunction`
+   * Returns the return value of `pageFunction`.
    * 
    * The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
    * argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the
@@ -5319,7 +5332,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
@@ -5328,7 +5341,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
   /**
-   * Returns the return value of `pageFunction`
+   * Returns the return value of `pageFunction`.
    * 
    * The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
    * matched elements as a first argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -5352,7 +5365,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
@@ -6952,6 +6965,179 @@ type AccessibilityNode = {
 export const selectors: Selectors;
 export const devices: Devices & DeviceDescriptor[];
 
+/**
+ * Electron application representation. You can use
+ * [electron.launch([options])](https://playwright.dev/docs/api/class-electron#electronlaunchoptions) to obtain the
+ * application instance. This instance you can control main electron process as well as work with Electron windows:
+ * 
+ * ```js
+ * const { _electron: electron } = require('playwright');
+ * 
+ * (async () => {
+ *   // Launch Electron app.
+ *   const electronApp = await electron.launch({ args: ['main.js'] });
+ * 
+ *   // Evaluation expression in the Electron context.
+ *   const appPath = await electronApp.evaluate(async (electron) => {
+ *     // This runs in the main Electron process, |electron| parameter
+ *     // here is always the result of the require('electron') in the main
+ *     // app script.
+ *     return electron.getAppPath();
+ *   });
+ * 
+ *   // Get the first window that the app opens, wait if necessary.
+ *   const window = await electronApp.firstWindow();
+ *   // Print the title.
+ *   console.log(await window.title());
+ *   // Capture a screenshot.
+ *   await window.screenshot({ path: 'intro.png' });
+ *   // Direct Electron console to Node terminal.
+ *   window.on('console', console.log);
+ *   // Click button.
+ *   await window.click('text=Click me');
+ * })();
+ * ```
+ * 
+ */
+export interface ElectronApplication {
+  /**
+   * Returns the return value of `pageFunction`.
+   * 
+   * If the function passed to the
+   * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatepagefunction-arg)
+   * returns a [Promise], then
+   * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatepagefunction-arg)
+   * would wait for the promise to resolve and return its value.
+   * 
+   * If the function passed to the
+   * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatepagefunction-arg)
+   * returns a non-[Serializable] value, then
+   * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatepagefunction-arg)
+   * returns `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
+   * `-0`, `NaN`, `Infinity`, `-Infinity`.
+   * @param pageFunction Function to be evaluated in the worker context.
+   * @param arg Optional argument to pass to `pageFunction`.
+   */
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<typeof import('electron'), Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<typeof import('electron'), void, R>, arg?: any): Promise<R>;
+
+  /**
+   * Returns the return value of `pageFunction` as a [JSHandle].
+   * 
+   * The only difference between
+   * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatepagefunction-arg)
+   * and
+   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatehandlepagefunction-arg)
+   * is that
+   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatehandlepagefunction-arg)
+   * returns [JSHandle].
+   * 
+   * If the function passed to the
+   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatehandlepagefunction-arg)
+   * returns a [Promise], then
+   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electronapplicationevaluatehandlepagefunction-arg)
+   * would wait for the promise to resolve and return its value.
+   * @param pageFunction Function to be evaluated in the worker context.
+   * @param arg 
+   */
+  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<typeof import('electron'), Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunctionOn<typeof import('electron'), void, R>, arg?: any): Promise<SmartHandle<R>>;
+  /**
+   * This event is issued when the application closes.
+   */
+  on(event: 'close', listener: () => void): this;
+
+  /**
+   * This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can be used
+   * for Playwright automation.
+   */
+  on(event: 'window', listener: (page: Page) => void): this;
+
+  /**
+   * This event is issued when the application closes.
+   */
+  once(event: 'close', listener: () => void): this;
+
+  /**
+   * This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can be used
+   * for Playwright automation.
+   */
+  once(event: 'window', listener: (page: Page) => void): this;
+
+  /**
+   * This event is issued when the application closes.
+   */
+  addListener(event: 'close', listener: () => void): this;
+
+  /**
+   * This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can be used
+   * for Playwright automation.
+   */
+  addListener(event: 'window', listener: (page: Page) => void): this;
+
+  /**
+   * This event is issued when the application closes.
+   */
+  removeListener(event: 'close', listener: () => void): this;
+
+  /**
+   * This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can be used
+   * for Playwright automation.
+   */
+  removeListener(event: 'window', listener: (page: Page) => void): this;
+
+  /**
+   * This event is issued when the application closes.
+   */
+  off(event: 'close', listener: () => void): this;
+
+  /**
+   * This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can be used
+   * for Playwright automation.
+   */
+  off(event: 'window', listener: (page: Page) => void): this;
+
+  /**
+   * Closes Electron application.
+   */
+  close(): Promise<void>;
+
+  /**
+   * This method returns browser context that can be used for setting up context-wide routing, etc.
+   */
+  context(): BrowserContext;
+
+  /**
+   * Convenience method that waits for the first application window to be opened. Typically your script will start with:
+   * 
+   * ```js
+   *   const electronApp = await electron.launch({
+   *     args: ['main.js']
+   *   });
+   *   const window = await electronApp.firstWindow();
+   *   // ...
+   * ```
+   * 
+   */
+  firstWindow(): Promise<Page>;
+
+  /**
+   * This event is issued when the application closes.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+
+  /**
+   * This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can be used
+   * for Playwright automation.
+   */
+  waitForEvent(event: 'window', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+
+
+  /**
+   * Convenience method that returns all the opened windows.
+   */
+  windows(): Array<Page>;}
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
 
@@ -7977,6 +8163,80 @@ export interface Download {
    * Returns downloaded url.
    */
   url(): string;
+}
+
+/**
+ * Playwright has **experimental** support for Electron automation. You can access electron namespace via:
+ * 
+ * ```js
+ * const { _electron } = require('playwright');
+ * ```
+ * 
+ * An example of the Electron automation script would be:
+ * 
+ * ```js
+ * const { _electron: electron } = require('playwright');
+ * 
+ * (async () => {
+ *   // Launch Electron app.
+ *   const electronApp = await electron.launch({ args: ['main.js'] });
+ * 
+ *   // Evaluation expression in the Electron context.
+ *   const appPath = await electronApp.evaluate(async (electron) => {
+ *     // This runs in the main Electron process, |electron| parameter
+ *     // here is always the result of the require('electron') in the main
+ *     // app script.
+ *     return electron.getAppPath();
+ *   });
+ * 
+ *   // Get the first window that the app opens, wait if necessary.
+ *   const window = await electronApp.firstWindow();
+ *   // Print the title.
+ *   console.log(await window.title());
+ *   // Capture a screenshot.
+ *   await window.screenshot({ path: 'intro.png' });
+ *   // Direct Electron console to Node terminal.
+ *   window.on('console', console.log);
+ *   // Click button.
+ *   await window.click('text=Click me');
+ * })();
+ * ```
+ * 
+ * Note that since you don't need Playwright to install web browsers when testing Electron, you can omit browser download
+ * via setting the following environment variable when installing Playwright:
+ * 
+ * ```sh js
+ * $ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
+ * ```
+ * 
+ */
+export interface Electron {
+  /**
+   * Launches electron application specified with the `executablePath`.
+   * @param options 
+   */
+  launch(options?: {
+    /**
+     * Additional arguments to pass to the application when launching. You typically pass the main script name here.
+     */
+    args?: Array<string>;
+
+    /**
+     * Current working directory to launch application from.
+     */
+    cwd?: string;
+
+    /**
+     * Specifies environment variables that will be visible to Electron. Defaults to `process.env`.
+     */
+    env?: { [key: string]: string; };
+
+    /**
+     * Launches given Electron application. If not specified, launches the default Electron executable installed in this
+     * package, located at `node_modules/.bin/electron`.
+     */
+    executablePath?: string;
+  }): Promise<ElectronApplication>;
 }
 
 /**

@@ -35,12 +35,10 @@ import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 
 export type ElectronLaunchOptionsBase = {
+  executablePath?: string,
   args?: string[],
   cwd?: string,
   env?: types.EnvArray,
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
 };
 
@@ -95,21 +93,6 @@ export class ElectronApplication extends EventEmitter {
     this.emit(ElectronApplication.Events.Window, page);
   }
 
-  async newBrowserWindow(options: any): Promise<Page> {
-    const windowId = await this._nodeElectronHandle!.evaluate(async ({ BrowserWindow }, options) => {
-      const win = new BrowserWindow(options);
-      win.loadURL('about:blank');
-      return win.id;
-    }, options);
-
-    for (const page of this._windows) {
-      if (page._browserWindowId === windowId)
-        return page;
-    }
-
-    return await this._waitForEvent(ElectronApplication.Events.Window, (page: ElectronPage) => page._browserWindowId === windowId);
-  }
-
   context(): BrowserContext {
     return this._browserContext;
   }
@@ -145,12 +128,9 @@ export class Electron  {
     this._playwrightOptions = playwrightOptions;
   }
 
-  async launch(executablePath: string, options: ElectronLaunchOptionsBase = {}): Promise<ElectronApplication> {
+  async launch(options: ElectronLaunchOptionsBase = {}): Promise<ElectronApplication> {
     const {
       args = [],
-      handleSIGINT = true,
-      handleSIGTERM = true,
-      handleSIGHUP = true,
     } = options;
     const controller = new ProgressController();
     controller.setLogName('browser');
@@ -166,12 +146,9 @@ export class Electron  {
 
       const browserLogsCollector = new RecentLogsCollector();
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-        executablePath,
+        executablePath: options.executablePath || require('electron/index.js'),
         args: electronArguments,
         env: options.env ? envArrayToObject(options.env) : process.env,
-        handleSIGINT,
-        handleSIGTERM,
-        handleSIGHUP,
         log: (message: string) => {
           progress.log(message);
           browserLogsCollector.log(message);

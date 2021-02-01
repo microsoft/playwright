@@ -222,5 +222,13 @@ type AccessibilityNode = {
 export const selectors: Selectors;
 export const devices: Devices & DeviceDescriptor[];
 
+export interface ElectronApplication {
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<typeof import('electron'), Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<typeof import('electron'), void, R>, arg?: any): Promise<R>;
+
+  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<typeof import('electron'), Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunctionOn<typeof import('electron'), void, R>, arg?: any): Promise<SmartHandle<R>>;
+}
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

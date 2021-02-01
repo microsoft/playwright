@@ -44,8 +44,12 @@ class ApiParser {
     md.visitAll(api, node => {
       if (node.type === 'h1')
         this.parseClass(node);
+    });
+    md.visitAll(api, node => {
       if (node.type === 'h2')
         this.parseMember(node);
+    });
+    md.visitAll(api, node => {
       if (node.type === 'h3')
         this.parseArgument(node);
     });
@@ -131,6 +135,8 @@ class ApiParser {
       arg.name = name;
       const existingArg = method.argsArray.find(m => m.name === arg.name);
       if (existingArg) {
+        if (!arg.langs || !arg.langs.only)
+          throw new Error('Override does not have lang: ' + spec.text);
         for (const lang of arg.langs.only) {
           existingArg.langs.overrides = existingArg.langs.overrides || {};
           existingArg.langs.overrides[lang] = arg;

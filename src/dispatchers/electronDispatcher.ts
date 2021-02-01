@@ -28,7 +28,7 @@ export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronIn
   }
 
   async launch(params: channels.ElectronLaunchParams): Promise<channels.ElectronLaunchResult> {
-    const electronApplication = await this._object.launch(params.executablePath, params);
+    const electronApplication = await this._object.launch(params);
     return { electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication) };
   }
 }
@@ -47,11 +47,6 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
         browserWindow: createHandle(this._scope, page.browserWindow),
       });
     });
-  }
-
-  async newBrowserWindow(params: channels.ElectronApplicationNewBrowserWindowParams): Promise<channels.ElectronApplicationNewBrowserWindowResult> {
-    const page = await this._object.newBrowserWindow(parseArgument(params.arg));
-    return { page: lookupDispatcher<PageDispatcher>(page) };
   }
 
   async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams): Promise<channels.ElectronApplicationEvaluateExpressionResult> {

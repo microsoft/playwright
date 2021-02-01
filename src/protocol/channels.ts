@@ -2452,22 +2452,17 @@ export interface ElectronChannel extends Channel {
   launch(params: ElectronLaunchParams, metadata?: Metadata): Promise<ElectronLaunchResult>;
 }
 export type ElectronLaunchParams = {
-  executablePath: string,
+  executablePath?: string,
   args?: string[],
   cwd?: string,
   env?: NameValue[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
 };
 export type ElectronLaunchOptions = {
+  executablePath?: string,
   args?: string[],
   cwd?: string,
   env?: NameValue[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
 };
 export type ElectronLaunchResult = {
@@ -2480,7 +2475,6 @@ export interface ElectronApplicationChannel extends Channel {
   on(event: 'context', callback: (params: ElectronApplicationContextEvent) => void): this;
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   on(event: 'window', callback: (params: ElectronApplicationWindowEvent) => void): this;
-  newBrowserWindow(params: ElectronApplicationNewBrowserWindowParams, metadata?: Metadata): Promise<ElectronApplicationNewBrowserWindowResult>;
   evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: Metadata): Promise<ElectronApplicationEvaluateExpressionResult>;
   evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, metadata?: Metadata): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
   close(params?: ElectronApplicationCloseParams, metadata?: Metadata): Promise<ElectronApplicationCloseResult>;
@@ -2492,15 +2486,6 @@ export type ElectronApplicationCloseEvent = {};
 export type ElectronApplicationWindowEvent = {
   page: PageChannel,
   browserWindow: JSHandleChannel,
-};
-export type ElectronApplicationNewBrowserWindowParams = {
-  arg: SerializedArgument,
-};
-export type ElectronApplicationNewBrowserWindowOptions = {
-
-};
-export type ElectronApplicationNewBrowserWindowResult = {
-  page: PageChannel,
 };
 export type ElectronApplicationEvaluateExpressionParams = {
   expression: string,

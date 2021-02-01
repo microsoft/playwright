@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
+import * as structs from '../../types/structs';
+import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { Page } from './page';
-import { serializeArgument, parseResult, JSHandle } from './jsHandle';
-import { TimeoutSettings } from '../utils/timeoutSettings';
-import { Waiter } from './waiter';
-import { Events } from './events';
-import { WaitForEventOptions, Env, Logger } from './types';
-import { envObjectToArray } from './clientHelper';
-import * as electronApi from '../../types/electron';
-import * as structs from '../../types/structs';
 import type { ChromiumBrowserContext } from './chromiumBrowserContext';
+import { envObjectToArray } from './clientHelper';
+import { Events } from './events';
+import { JSHandle, parseResult, serializeArgument } from './jsHandle';
+import { Page } from './page';
+import { Env, WaitForEventOptions } from './types';
+import { Waiter } from './waiter';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'> & {
   env?: Env,
-  logger?: Logger,
 };
 
 type ElectronAppType = typeof import('electron');
 
-export class Electron extends ChannelOwner<channels.ElectronChannel, channels.ElectronInitializer> implements electronApi.ElectronLauncher {
+export class Electron extends ChannelOwner<channels.ElectronChannel, channels.ElectronInitializer> implements api.Electron {
   static from(electron: channels.ElectronChannel): Electron {
     return (electron as any)._object;
   }
@@ -44,21 +43,18 @@ export class Electron extends ChannelOwner<channels.ElectronChannel, channels.El
     super(parent, type, guid, initializer);
   }
 
-  async launch(executablePath: string, options: ElectronOptions = {}): Promise<ElectronApplication> {
-    const logger = options.logger;
-    options = { ...options, logger: undefined };
+  async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     return this._wrapApiCall('electron.launch', async () => {
       const params: channels.ElectronLaunchParams = {
         ...options,
-        env: options.env ? envObjectToArray(options.env) : undefined,
-        executablePath,
+        env: envObjectToArray(options.env ? options.env : process.env),
       };
       return ElectronApplication.from((await this._channel.launch(params)).electronApplication);
-    }, logger);
+    });
   }
 }
 
-export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel, channels.ElectronApplicationInitializer> implements electronApi.ElectronApplication {
+export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel, channels.ElectronApplicationInitializer> implements api.ElectronApplication {
   private _context?: BrowserContext;
   private _windows = new Set<Page>();
   private _timeoutSettings = new TimeoutSettings();
@@ -80,23 +76,16 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     this._channel.on('close', () => this.emit(Events.ElectronApplication.Close));
   }
 
-  windows(): electronApi.ElectronPage[] {
+  windows(): Page[] {
     // TODO: add ElectronPage class inherting from Page.
-    return [...this._windows] as any as electronApi.ElectronPage[];
+    return [...this._windows];
   }
 
-  async firstWindow(): Promise<electronApi.ElectronPage> {
+  async firstWindow(): Promise<Page> {
     return this._wrapApiCall('electronApplication.firstWindow', async () => {
       if (this._windows.size)
         return this._windows.values().next().value;
       return this.waitForEvent('window');
-    });
-  }
-
-  async newBrowserWindow(options: any): Promise<electronApi.ElectronPage> {
-    return this._wrapApiCall('electronApplication.newBrowserWindow', async () => {
-      const result = await this._channel.newBrowserWindow({ arg: serializeArgument(options) });
-      return Page.from(result.page) as any as electronApi.ElectronPage;
     });
   }
 

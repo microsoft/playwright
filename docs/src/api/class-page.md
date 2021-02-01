@@ -808,8 +808,8 @@ If the function passed to the [`method: Page.evaluate`] returns a [Promise], the
 for the promise to resolve and return its value.
 
 If the function passed to the [`method: Page.evaluate`] returns a non-[Serializable] value, then
-[`method: Page.evaluate`] resolves to `undefined`. DevTools Protocol also supports transferring some additional values
-that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+[`method: Page.evaluate`] resolves to `undefined`. Playwright also supports transferring some 
+additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
 
 Passing argument to [`param: expression`]:
 
@@ -882,10 +882,9 @@ Optional argument to pass to [`param: expression`]
 ## async method: Page.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the value of the [`param: expression`] invocation as in-page object (JSHandle).
+Returns the value of the [`param: expression`] invocation as a [JSHandle].
 
-The only difference between [`method: Page.evaluate`] and [`method: Page.evaluateHandle`] is that [`method: Page.evaluateHandle`] returns in-page
-object (JSHandle).
+The only difference between [`method: Page.evaluate`] and [`method: Page.evaluateHandle`] is that [`method: Page.evaluateHandle`] returns [JSHandle].
 
 If the function passed to the [`method: Page.evaluateHandle`] returns a [Promise], then [`method: Page.evaluateHandle`] would wait for the
 promise to resolve and return its value.

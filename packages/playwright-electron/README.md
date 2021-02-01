@@ -61,7 +61,6 @@ app.whenReady().then(createWindow);
 ```js
 const { electron  } = require('playwright-electron');
 const assert = require('assert');
-const electronPath = require('electron');
 const path = require('path')
 
 describe('Sanity checks', function () {
@@ -69,8 +68,7 @@ describe('Sanity checks', function () {
 
   beforeEach(async () => {
     // Before each test start Electron application.
-    this.app = await electron.launch(electronPath, {
-      path: electronPath,
+    this.app = await electron.launch({
       args: [path.join(__dirname, '..')]  // loads index.js
     });
   });

@@ -311,7 +311,7 @@ function test_electron_types {
   npm install electron@9.0
   npm install -D typescript@3.8
   npm install -D @types/node@10.17
-  echo "import { Page, electron, ElectronApplication, ElectronLauncher } from 'playwright-electron';" > "test.ts"
+  echo "import { Page, electron, ElectronApplication, Electron } from 'playwright-electron';" > "test.ts"
 
   echo "Running tsc"
   npx tsc "test.ts"

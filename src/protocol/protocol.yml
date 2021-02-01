@@ -2080,7 +2080,6 @@ CDPSession:
         params: json?
 
 
-
 Electron:
   type: interface
 
@@ -2088,7 +2087,7 @@ Electron:
 
     launch:
       parameters:
-        executablePath: string
+        executablePath: string?
         args:
           type: array?
           items: string
@@ -2096,25 +2095,15 @@ Electron:
         env:
           type: array?
           items: NameValue
-        handleSIGINT: boolean?
-        handleSIGTERM: boolean?
-        handleSIGHUP: boolean?
         timeout: number?
       returns:
         electronApplication: ElectronApplication
-
 
 
 ElectronApplication:
   type: interface
 
   commands:
-
-    newBrowserWindow:
-      parameters:
-        arg: SerializedArgument
-      returns:
-        page: Page
 
     evaluateExpression:
       parameters:

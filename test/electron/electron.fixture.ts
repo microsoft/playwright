@@ -15,30 +15,44 @@
  */
 
 import { folio as base } from '../fixtures';
-import type { ElectronApplication, ElectronPage } from '../../types/electron';
 import path from 'path';
-
-const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
+import { ElectronApplication, Page } from '../..';
 
 type TestState = {
-  application: ElectronApplication;
-  window: ElectronPage;
+  electronApp: ElectronApplication;
+  window: Page;
+  newWindow: () => Promise<Page>;
 };
 const fixtures = base.extend<TestState>();
 
-fixtures.application.init(async ({ playwright }, run) => {
-  const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
-  const application = await playwright._electron.launch(electronPath, {
+fixtures.electronApp.init(async ({ playwright }, run) => {
+  const application = await playwright._electron.launch({
     args: [path.join(__dirname, 'testApp.js')],
   });
   await run(application);
   await application.close();
 });
 
-fixtures.window.init(async ({ application }, run) => {
-  const page = await application.newBrowserWindow({ width: 800, height: 600 });
-  await run(page);
-  await page.close();
+fixtures.newWindow.init(async ({ electronApp }, run) => {
+  const windows = [];
+  const newWindow = async () => {
+    const [ window ] = await Promise.all([
+      electronApp.waitForEvent('window'),
+      electronApp.evaluate(electron => {
+        const window = new electron.BrowserWindow({ width: 800, height: 600 });
+        window.loadURL('data:text/html,<title>Hello World 1</title>');
+      })
+    ]);
+    windows.push(window);
+    return window;
+  };
+  await run(newWindow);
+  for (const window of windows)
+    await window.close();
+});
+
+fixtures.window.init(async ({ newWindow }, run) => {
+  await run(await newWindow());
 });
 
 export const folio = fixtures.build();
