@@ -137,7 +137,8 @@ export async function downloadBrowserWithProgressBar(browsersPath: string, brows
       const {error} = await downloadFile(url, zipPath, progress);
       if (!error)
         break;
-      if (attempt < N && error && typeof error === 'object' && typeof error.message === 'string' && error.message.includes('ECONNRESET')) {
+      const errorMessage = typeof error === 'object' && typeof error.message === 'string' ? error.message : '';
+      if (attempt < N && (errorMessage.includes('ECONNRESET') || errorMessage.includes('ETIMEDOUT'))) {
         // Maximum delay is 3rd retry: 1337.5ms
         const millis = (Math.random() * 200) + (250 * Math.pow(1.5, attempt));
         await new Promise(c => setTimeout(c, millis));
