@@ -203,6 +203,13 @@ export class SnapshotServer {
       }
 
       const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
+      const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
+      function escapeAttribute(s: string): string {
+        return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
+      }
+      function escapeText(s: string): string {
+        return s.replace(/[&<]/ug, char => (escaped as any)[char]);
+      }
 
       function snapshotNodes(snapshot: trace.FrameSnapshot): NodeSnapshot[] {
         if (!(snapshot as any)._nodes) {
@@ -211,9 +218,9 @@ export class SnapshotServer {
             if (typeof n === 'string') {
               nodes.push(n);
             } else if (typeof n[0] === 'string') {
-              nodes.push(n);
               for (let i = 2; i < n.length; i++)
                 visit(n[i]);
+              nodes.push(n);
             }
           };
           visit(snapshot.html);
@@ -226,7 +233,7 @@ export class SnapshotServer {
         const visit = (n: trace.NodeSnapshot, snapshotIndex: number): string => {
           // Text node.
           if (typeof n === 'string')
-            return n;
+            return escapeText(n);
 
           if (!(n as any)._string) {
             if (Array.isArray(n[0])) {
@@ -243,7 +250,7 @@ export class SnapshotServer {
               const builder: string[] = [];
               builder.push('<', n[0]);
               for (const [attr, value] of Object.entries(n[1] || {}))
-                builder.push(' ', attr, '="', value, '"');
+                builder.push(' ', attr, '="', escapeAttribute(value), '"');
               builder.push('>');
               for (let i = 2; i < n.length; i++)
                 builder.push(visit(n[i], snapshotIndex));

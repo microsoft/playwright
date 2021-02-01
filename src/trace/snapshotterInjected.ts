@@ -18,7 +18,7 @@ export type NodeSnapshot =
   // Text node.
   string |
   // Subtree reference, "x snapshots ago, node #y". Could point to a text node.
-  // Only nodes that are not references are counted, starting from zero.
+  // Only nodes that are not references are counted, starting from zero, using post-order traversal.
   [ [number, number] ] |
   // Just node name.
   [ string ] |
@@ -56,8 +56,9 @@ export function frameSnapshotStreamer() {
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
   const kCachedData = Symbol('__playwright_snapshot_cache_');
   type CachedData = {
+    cached?: any[], // Cached values to determine whether the snapshot will be the same.
     ref?: [number, number], // Previous snapshotNumber and nodeIndex.
-    value?: string, // Value for input/textarea elements.
+    attributesCached?: boolean, // Whether node attributes have not changed.
     cssText?: string, // Text for stylesheets.
     cssRef?: number, // Previous snapshotNumber for overridden stylesheets.
   };
@@ -65,14 +66,6 @@ export function frameSnapshotStreamer() {
     if (!obj[kCachedData])
       obj[kCachedData] = {};
     return obj[kCachedData];
-  }
-
-  const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
-  function escapeAttribute(s: string): string {
-    return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
-  }
-  function escapeText(s: string): string {
-    return s.replace(/[&<]/ug, char => (escaped as any)[char]);
   }
 
   function removeHash(url: string) {
@@ -89,10 +82,11 @@ export function frameSnapshotStreamer() {
     private _removeNoScript = true;
     private _timer: NodeJS.Timeout | undefined;
     private _lastSnapshotNumber = 0;
-    private _observer: MutationObserver;
     private _staleStyleSheets = new Set<CSSStyleSheet>();
     private _allStyleSheetsWithUrlOverride = new Set<CSSStyleSheet>();
     private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
+    private _fakeBase: HTMLBaseElement;
+    private _observer: MutationObserver;
 
     constructor() {
       this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'insertRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
@@ -102,13 +96,11 @@ export function frameSnapshotStreamer() {
       this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'rules', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
       this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'cssRules', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
 
+      this._fakeBase = document.createElement('base');
+
       this._observer = new MutationObserver(list => this._handleMutations(list));
-      const observerConfig = { attributes: true, childList: true, subtree: true, characterData: true };
+      const observerConfig = { attributes: true, subtree: true };
       this._observer.observe(document, observerConfig);
-      this._interceptNativeMethod(window.Element.prototype, 'attachShadow', (node: Node, shadowRoot: ShadowRoot) => {
-        this._invalidateNode(node);
-        this._observer.observe(shadowRoot, observerConfig);
-      });
 
       this._streamSnapshot();
     }
@@ -136,14 +128,17 @@ export function frameSnapshotStreamer() {
       });
     }
 
+    private _handleMutations(list: MutationRecord[]) {
+      for (const mutation of list)
+        ensureCachedData(mutation.target).attributesCached = undefined;
+    }
+
     private _invalidateStyleSheet(sheet: CSSStyleSheet) {
       if (this._readingStyleSheet)
         return;
       this._staleStyleSheets.add(sheet);
       if (sheet.href !== null)
         this._allStyleSheetsWithUrlOverride.add(sheet);
-      if (sheet.ownerNode && sheet.ownerNode.nodeName === 'STYLE')
-        this._invalidateNode(sheet.ownerNode);
     }
 
     private _updateStyleElementStyleSheetTextIfNeeded(sheet: CSSStyleSheet): string | undefined {
@@ -173,21 +168,6 @@ export function frameSnapshotStreamer() {
         }
       }
       return data.cssRef === undefined ? undefined : snapshotNumber - data.cssRef;
-    }
-
-    private _invalidateNode(node: Node | null) {
-      while (node) {
-        ensureCachedData(node).ref = undefined;
-        if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (node as ShadowRoot).host)
-          node = (node as ShadowRoot).host;
-        else
-          node = node.parentNode;
-      }
-    }
-
-    private _handleMutations(list: MutationRecord[]) {
-      for (const mutation of list)
-        this._invalidateNode(mutation.target);
     }
 
     markIframe(iframeElement: HTMLIFrameElement | HTMLFrameElement, frameId: string) {
@@ -260,21 +240,13 @@ export function frameSnapshotStreamer() {
 
     private _captureSnapshot(snapshotId?: string): SnapshotData {
       const snapshotNumber = ++this._lastSnapshotNumber;
-      const win = window;
-      const doc = win.document;
-
-      // Ensure we are up-to-date.
-      this._handleMutations(this._observer.takeRecords());
-      for (const input of doc.querySelectorAll('input, textarea')) {
-        const value = (input as HTMLInputElement | HTMLTextAreaElement).value;
-        const data = ensureCachedData(input);
-        if (data.value !== value)
-          this._invalidateNode(input);
-      }
-
       let nodeCounter = 0;
+      let shadowDomNesting = 0;
 
-      const visit = (node: Node | ShadowRoot): NodeSnapshot | undefined => {
+      // Ensure we are up to date.
+      this._handleMutations(this._observer.takeRecords());
+
+      const visitNode = (node: Node | ShadowRoot): { equals: boolean, n: NodeSnapshot } | undefined => {
         const nodeType = node.nodeType;
         const nodeName = nodeType === Node.DOCUMENT_FRAGMENT_NODE ? 'template' : node.nodeName;
 
@@ -282,33 +254,60 @@ export function frameSnapshotStreamer() {
             nodeType !== Node.DOCUMENT_FRAGMENT_NODE &&
             nodeType !== Node.TEXT_NODE)
           return;
-        if (nodeName === 'SCRIPT' || nodeName === 'BASE')
+        if (nodeName === 'SCRIPT')
           return;
         if (this._removeNoScript && nodeName === 'NOSCRIPT')
           return;
 
         const data = ensureCachedData(node);
-        if (data.ref)
-          return [[ snapshotNumber - data.ref[0], data.ref[1] ]];
-        nodeCounter++;
-        data.ref = [snapshotNumber, nodeCounter - 1];
-        // ---------- No returns without the data after this point -----------
-        // ---------- Otherwise nodeCounter is wrong               -----------
+        const values: any[] = [];
+        let equals = !!data.cached;
+        let extraNodes = 0;
 
-        if (nodeType === Node.TEXT_NODE)
-          return escapeText(node.nodeValue || '');
+        const expectValue = (value: any) => {
+          equals = equals && data.cached![values.length] === value;
+          values.push(value);
+        };
+
+        const checkAndReturn = (n: NodeSnapshot): { equals: boolean, n: NodeSnapshot } => {
+          data.attributesCached = true;
+          if (equals)
+            return { equals: true, n: [[ snapshotNumber - data.ref![0], data.ref![1] ]] };
+          nodeCounter += extraNodes;
+          data.ref = [snapshotNumber, nodeCounter++];
+          data.cached = values;
+          return { equals: false, n };
+        };
+
+        if (nodeType === Node.TEXT_NODE) {
+          const value = node.nodeValue || '';
+          expectValue(value);
+          return checkAndReturn(value);
+        }
 
         if (nodeName === 'STYLE') {
           const sheet = (node as HTMLStyleElement).sheet;
           let cssText: string | undefined;
           if (sheet)
             cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet);
-          nodeCounter++;  // Compensate for the extra text node in the list.
-          return ['style', {}, escapeText(cssText || node.textContent || '')];
+          cssText = cssText || node.textContent || '';
+          expectValue(cssText);
+          // Compensate for the extra 'cssText' text node.
+          extraNodes++;
+          return checkAndReturn(['style', {}, cssText]);
         }
 
         const attrs: { [attr: string]: string } = {};
         const result: NodeSnapshot = [nodeName, attrs];
+
+        const visitChild = (child: Node) => {
+          const snapshotted = visitNode(child);
+          if (snapshotted) {
+            result.push(snapshotted.n);
+            expectValue(child);
+            equals = equals && snapshotted.equals;
+          }
+        };
 
         if (nodeType === Node.DOCUMENT_FRAGMENT_NODE)
           attrs[kShadowAttribute] = 'open';
@@ -317,15 +316,66 @@ export function frameSnapshotStreamer() {
           const element = node as Element;
           // if (node === target)
           //   attrs[' __playwright_target__] = '';
+          if (nodeName === 'INPUT') {
+            const value = (element as HTMLInputElement).value;
+            expectValue('value');
+            expectValue(value);
+            attrs['value'] = value;
+            if ((element as HTMLInputElement).checked) {
+              expectValue('checked');
+              attrs['checked'] = '';
+            }
+          }
+          if (element === document.scrollingElement) {
+            // TODO: restoring scroll positions of all elements
+            // is somewhat expensive. Figure this out.
+            if (element.scrollTop) {
+              expectValue(kScrollTopAttribute);
+              expectValue(element.scrollTop);
+              attrs[kScrollTopAttribute] = '' + element.scrollTop;
+            }
+            if (element.scrollLeft) {
+              expectValue(kScrollLeftAttribute);
+              expectValue(element.scrollLeft);
+              attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
+            }
+          }
+          if (element.shadowRoot) {
+            ++shadowDomNesting;
+            visitChild(element.shadowRoot);
+            --shadowDomNesting;
+          }
+        }
+
+        if (nodeName === 'TEXTAREA') {
+          const value = (node as HTMLTextAreaElement).value;
+          expectValue(value);
+          extraNodes++; // Compensate for the extra text node.
+          result.push(value);
+        } else {
+          if (nodeName === 'HEAD') {
+            // Insert fake <base> first, to ensure all <link> elements use the proper base uri.
+            this._fakeBase.setAttribute('href', document.baseURI);
+            visitChild(this._fakeBase);
+          }
+          for (let child = node.firstChild; child; child = child.nextSibling)
+            visitChild(child);
+        }
+
+        // We can skip attributes comparison because nothing else has changed,
+        // and mutation observer didn't tell us about the attributes.
+        if (equals && data.attributesCached && !shadowDomNesting)
+          return checkAndReturn(result);
+
+        if (nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
           for (let i = 0; i < element.attributes.length; i++) {
             const name = element.attributes[i].name;
-            let value = element.attributes[i].value;
             if (name === 'value' && (nodeName === 'INPUT' || nodeName === 'TEXTAREA'))
-              continue;
-            if (name === 'checked' || name === 'disabled' || name === 'checked')
               continue;
             if (nodeName === 'LINK' && name === 'integrity')
               continue;
+            let value = element.attributes[i].value;
             if (name === 'src' && (nodeName === 'IFRAME' || nodeName === 'FRAME')) {
               // TODO: handle srcdoc?
               const frameId = (element as any)[kSnapshotFrameId];
@@ -341,69 +391,30 @@ export function frameSnapshotStreamer() {
             } else if (name.startsWith('on')) {
               value = '';
             }
-            attrs[name] = escapeAttribute(value);
-          }
-          if (nodeName === 'INPUT') {
-            const value = (element as HTMLInputElement).value;
-            data.value = value;
-            attrs['value'] = escapeAttribute(value);
-          }
-          if ((element as any).checked)
-            attrs['checked'] = '';
-          if ((element as any).disabled)
-            attrs['disabled'] = '';
-          if ((element as any).readOnly)
-            attrs['readonly'] = '';
-          if (element.scrollTop)
-            attrs[kScrollTopAttribute] = '' + element.scrollTop;
-          if (element.scrollLeft)
-            attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
-
-          if (element.shadowRoot) {
-            const child = visit(element.shadowRoot);
-            if (child)
-              result.push(child);
-          }
-        }
-
-        if (nodeName === 'HEAD') {
-          const base: NodeSnapshot = ['base', { 'href': document.baseURI }];
-          for (let child = node.firstChild; child; child = child.nextSibling) {
-            if (child.nodeName === 'BASE') {
-              base[1]['href'] = escapeAttribute((child as HTMLBaseElement).href);
-              base[1]['target'] = escapeAttribute((child as HTMLBaseElement).target);
-            }
-          }
-          nodeCounter++;  // Compensate for the extra 'base' node in the list.
-          result.push(base);
-        }
-
-        if (nodeName === 'TEXTAREA') {
-          nodeCounter++;  // Compensate for the extra text node in the list.
-          const value = (node as HTMLTextAreaElement).value;
-          data.value = value;
-          result.push(escapeText(value));
-        } else {
-          for (let child = node.firstChild; child; child = child.nextSibling) {
-            const snapshotted = visit(child);
-            if (snapshotted)
-              result.push(snapshotted);
+            expectValue(name);
+            expectValue(value);
+            attrs[name] = value;
           }
         }
 
         if (result.length === 2 && !Object.keys(attrs).length)
           result.pop();  // Remove empty attrs when there are no children.
-        return result;
+        return checkAndReturn(result);
       };
 
-      const html = doc.documentElement ? visit(doc.documentElement)! : (['html', {}] as NodeSnapshot);
+      let html: NodeSnapshot;
+      if (document.documentElement)
+        html = visitNode(document.documentElement)!.n;
+      else
+        html = ['html'];
+
       const result: SnapshotData = {
         html,
-        doctype: doc.doctype ? doc.doctype.name : undefined,
+        doctype: document.doctype ? document.doctype.name : undefined,
         resourceOverrides: [],
         viewport: {
-          width: Math.max(doc.body ? doc.body.offsetWidth : 0, doc.documentElement ? doc.documentElement.offsetWidth : 0),
-          height: Math.max(doc.body ? doc.body.offsetHeight : 0, doc.documentElement ? doc.documentElement.offsetHeight : 0),
+          width: Math.max(document.body ? document.body.offsetWidth : 0, document.documentElement ? document.documentElement.offsetWidth : 0),
+          height: Math.max(document.body ? document.body.offsetHeight : 0, document.documentElement ? document.documentElement.offsetHeight : 0),
         },
         url: location.href,
         snapshotId,

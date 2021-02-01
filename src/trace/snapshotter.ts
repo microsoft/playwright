@@ -62,6 +62,7 @@ export class Snapshotter {
     ];
     this._context.exposeBinding(kSnapshotBinding, false, (source, data: SnapshotData) => {
       const snapshot: FrameSnapshot = {
+        doctype: data.doctype,
         html: data.html,
         viewport: data.viewport,
         resourceOverrides: [],
