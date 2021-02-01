@@ -87,7 +87,8 @@ export abstract class BrowserType {
       return this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
     } catch (e) {
       // @see https://github.com/microsoft/playwright/issues/5214
-      if (e.includes('Inconsistency detected by ld.so')) {
+      const errorMessage = typeof error === 'object' && typeof error.message === 'string' ? error.message : '';
+      if (errorMessage.includes('Inconsistency detected by ld.so')) {
         progress.log(`<restarting browser due to hitting race condition in glibc>`);
         return this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
       }
