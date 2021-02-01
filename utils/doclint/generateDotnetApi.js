@@ -24,6 +24,7 @@ const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { type } = require('os');
 const { check } = require('proper-lockfile');
+const { Type } = require('./documentation');
 // const { visitAll } = require('../markdown'); // TODO: consider using this instead of manual parsing
 
 const maxDocumentationColumnWidth = 120;
@@ -79,7 +80,7 @@ let classNameMap;
   classNameMap = new Map(documentation.classesArray.map(x => [x.name, translateMemberName('interface', x.name, null)]));
 
   let writeFile = (name, out, folder) => {
-    let content = template.replace('[CONTENT]', out.join("\n\t"));
+    let content = template.replace('[CONTENT]', out.join("\r\n\t"));
     fs.writeFileSync(`${path.join(folder, name)}.cs`, content);
   }
 
@@ -130,7 +131,8 @@ let classNameMap;
         throw 'Array at this stage is unexpected.';
       } else if (type.properties) {
         for (const member of type.properties) {
-          renderMember(member, null, out);
+          let fakeType = new Type(name, null);
+          renderMember(member, fakeType, out);
         }
       } else {
         console.log(type);
@@ -199,7 +201,7 @@ function translateMemberName(memberKind, name, member = null) {
 /**
  * 
  * @param {Documentation.Member} member 
- * @param {Documentation.Class} parent 
+ * @param {Documentation.Class|Documentation.Type} parent 
  * @param {string[]} out
  */
 function renderMember(member, parent, out) {
@@ -236,13 +238,16 @@ function renderMember(member, parent, out) {
  * @param {*} parent 
  */
 function generateNameDefault(member, name, t, parent) {
+  if (!t.properties
+    && !t.templates
+    && !t.union
+    && t.expression === '[Object]')
+    return 'object';
+
   // we'd get this call for enums, primarily
   let enumName = generateEnumNameIfApplicable(member, name, t, parent);
   if (!enumName && member) {
-    if (member.kind === 'method') {
-      if (t.expression === '[Object]')
-        return 'object';
-
+    if (member.kind === 'method' || member.kind === 'property') {
       // this should be easy to name... let's call it the same as the argument (eternal optimist)
       let probableName = `${parent.name}${translateMemberName(``, name, null)}`;
       let probableType = additionalTypes.get(probableName);
@@ -278,7 +283,7 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
  * Rendering a method is so _special_, with so many weird edge cases, that it
  * makes sense to put it separate from the other logic. 
  * @param {Documentation.Member} member 
- * @param {Documentation.Class} parent 
+ * @param {Documentation.Class|Documentation.Type} parent 
  * @param {Function} output
  */
 function renderMethod(member, parent, output, name) {
@@ -375,7 +380,7 @@ function renderMethod(member, parent, output, name) {
 
 /**
  *  @param {Documentation.Type} type 
- *  @param {Documentation.Class} parent
+ *  @param {Documentation.Class|Documentation.Type} parent
  *  @param {generateNameCallback} generateNameCallback
 */
 function translateType(type, parent, generateNameCallback = null) {
@@ -474,6 +479,9 @@ function translateType(type, parent, generateNameCallback = null) {
   if (type.name === 'function')
     return 'Action';
 
+  if (type.name === 'path')
+    return 'string';
+
   if (type.name === 'Object') {
     // take care of some common cases
     // TODO: this can be genericized
@@ -484,30 +492,21 @@ function translateType(type, parent, generateNameCallback = null) {
       return `IEnumerable<KeyValuePair<${keyType}, ${valueType}>>`;
     }
 
-    // else {
-    // throw 'Trying to generate a KeyValuePair of length that is not 2. Panicing.';
-    // }
-
+    if (type.name === 'Object'
+      && !type.properties
+      && !type.union) {
+      return 'object';
+    }
     // this is an additional type that we need to generate
     let objectName = generateNameCallback(type);
-    if (objectName === 'Object' && !type.properties) {
-      return 'object';
-    } else if (objectName === 'Object') {
-      console.log(type);
-      // throw 'Object unexpected';
+    if (objectName === 'Object') {
+      throw 'Object unexpected';
+    } else if (type.name === 'Object') {
+      registerAdditionalType(objectName, type);
     }
 
-    console.log(`Generating name for ${type.name} -> ${objectName}`);
     if (['object'].includes(objectName))
       return objectName;
-
-    let potentialType = additionalTypes.get(objectName);
-    if (!potentialType) {
-      additionalTypes.set(objectName, type);
-    } else {
-      // console.log(type);
-      // throw `This type ${objectName} is already registered, panicing.`;
-    }
 
     return objectName;
   }
@@ -515,4 +514,22 @@ function translateType(type, parent, generateNameCallback = null) {
   // there's a chance this is a name we've already seen before, so check
   let name = classNameMap.get(type.name) || type.name;
   return `${name}`;
+}
+
+/**
+ * 
+ * @param {string} typeName 
+ * @param {Documentation.Type} type 
+ */
+function registerAdditionalType(typeName, type) {
+  if (['object', 'string', 'int'].includes(typeName))
+    return;
+
+  let potentialType = additionalTypes.get(typeName);
+  if (potentialType) {
+    console.log(`Type ${typeName} already exists, so skipping...`);
+    return;
+  }
+
+  additionalTypes.set(typeName, type);
 }
