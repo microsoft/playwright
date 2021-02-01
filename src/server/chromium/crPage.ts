@@ -93,7 +93,17 @@ export class CRPage implements PageDelegate {
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
-    await Promise.all(Array.from(this._sessions.values()).map(frame => cb(frame)));
+    const frameSessions = Array.from(this._sessions.values());
+    await Promise.all(frameSessions.map(frameSession => {
+      if (frameSession._isMainFrame())
+        return cb(frameSession);
+      return cb(frameSession).catch(e => {
+        // Broadcasting a message to the closed iframe shoule be a noop.
+        if (e.message && (e.message.includes('Target closed.') || e.message.includes('Session closed.')))
+          return;
+        throw e;
+      });
+    }));
   }
 
   private _sessionForFrame(frame: frames.Frame): FrameSession {
@@ -348,7 +358,7 @@ class FrameSession {
     });
   }
 
-  private _isMainFrame(): boolean {
+  _isMainFrame(): boolean {
     return this._targetId === this._crPage._targetId;
   }
 
