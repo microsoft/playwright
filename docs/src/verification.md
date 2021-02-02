@@ -108,7 +108,7 @@ page.goto("data:text/html,<script>throw new Error('test')</script>")
 
 ### API reference
 - [Page]
-- [`event: Page.pageerror`]
+- [`event: Page.pageError`]
 
 <br/>
 
@@ -161,6 +161,6 @@ popup = popup_info.value
 
 ### API reference
 - [Page]
-- [`event: Page.requestfailed`]
+- [`event: Page.requestFailed`]
 - [`event: Page.dialog`]
 - [`event: Page.popup`]

@@ -236,7 +236,7 @@ Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/We
 
 Emitted when an uncaught exception happens within the page.
 
-## event: Page.popUp
+## event: Page.popup
 - type: <[Page]>
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the
@@ -286,7 +286,7 @@ Emitted when a request fails, for example by timing out.
 
 :::note
 HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete
-with [`event: Page.requestfinished`] event and not with [`event: Page.requestfailed`].
+with [`event: Page.requestFinished`] event and not with [`event: Page.requestFailed`].
 :::
 
 ## event: Page.requestFinished

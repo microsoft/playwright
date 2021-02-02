@@ -4,10 +4,10 @@ At every point of time, page exposes its current frame tree via the [`method: Pa
 [`method: Frame.childFrames`] methods.
 
 [Frame] object's lifecycle is controlled by three events, dispatched on the page object:
-* [`event: Page.frameattached`] - fired when the frame gets attached to the page. A Frame can be attached to the page
+* [`event: Page.frameAttached`] - fired when the frame gets attached to the page. A Frame can be attached to the page
   only once.
-* [`event: Page.framenavigated`] - fired when the frame commits navigation to a different URL.
-* [`event: Page.framedetached`] - fired when the frame gets detached from the page.  A Frame can be detached from the
+* [`event: Page.frameNavigated`] - fired when the frame commits navigation to a different URL.
+* [`event: Page.frameDetached`] - fired when the frame gets detached from the page.  A Frame can be detached from the
   page only once.
 
 An example of dumping frame tree:

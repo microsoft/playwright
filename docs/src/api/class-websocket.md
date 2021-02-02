@@ -19,7 +19,7 @@ Fired when the websocket recieves a frame.
 
 Fired when the websocket sends a frame.
 
-## event: WebSocket.sockEterror
+## event: WebSocket.socketError
 - type: <[String]>
 
 Fired when the websocket has an error.
