@@ -85,10 +85,6 @@ Raw script content.
 * langs: python
 - returns: <[null]|[string]>
 
-## async method: Response.finished
-* langs: python
-- returns: <[null]|[string]>
-
 ## async method: Page.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
