@@ -319,21 +319,42 @@ export class InjectedScript {
     });
   }
 
+  private _isFillableElement(element: Element) {
+    return element.nodeName.toLowerCase() === 'input' ||
+      element.nodeName.toLowerCase() === 'textarea' ||
+      (element as HTMLElement).isContentEditable;
+  }
+
   waitForEnabledAndFill(node: Node, value: string): InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {
+    let lastTarget: Element | undefined;
+
     return this.pollRaf((progress, continuePolling) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
 
-      if (node && node.nodeName.toLowerCase() !== 'input' &&
-          node.nodeName.toLowerCase() !== 'textarea' &&
-          !(node as any).isContentEditable) {
+      let element: Element | undefined = node as Element;
+      if (!this._isFillableElement(element)) {
         // Go up to the label that might be connected to the input/textarea.
-        node = (node as Element).closest('label') || node;
+        element = element.closest('label') || element;
       }
-      const element = this.findLabelTarget(node as Element);
+      element = this.findLabelTarget(element);
+      if (element && !this._isFillableElement(element)) {
+        let child = element;
+        // Go down a single child route to find the input/textarea.
+        while (child.childElementCount === 1)
+          child = child.firstElementChild!;
+        if (this._isFillableElement(child))
+          element = child;
+      }
 
       if (element && !element.isConnected)
         return 'error:notconnected';
+
+      if (element && element !== node && element !== lastTarget) {
+        lastTarget = element;
+        progress.log(`    retargeted to ${this.previewNode(element)}`);
+      }
+
       if (!element || !this.isVisible(element)) {
         progress.logRepeating('    element is not visible - waiting...');
         return continuePolling;

@@ -64,6 +64,26 @@ it('should fill textarea with label', async ({page}) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some value');
 });
 
+it('should fill input in the wrapper', async ({page}) => {
+  await page.setContent(`<div><div><div><div><span><input></span></div></div></div></div>`);
+  await page.fill('span', 'some value');
+  expect(await page.$eval('input', input => input.value)).toBe('some value');
+  await page.fill('div', 'another');
+  expect(await page.$eval('input', input => input.value)).toBe('another');
+});
+
+it('should not fill input in the container when not unique', async ({page}) => {
+  await page.setContent(`<div><input><span>Hello</span></div>`);
+  const error = await page.fill('div', 'some value').catch(e => e);
+  expect(error.message).toContain('Element is not an <input>');
+});
+
+it('should fill textarea in the wrapper', async ({page}) => {
+  await page.setContent(`<div><span><textarea>hey</textarea></span></div>`);
+  await page.fill('div', 'some value');
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some value');
+});
+
 it('should throw on unsupported inputs', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   for (const type of ['button', 'checkbox', 'file', 'image', 'radio', 'range', 'reset', 'submit']) {
@@ -189,7 +209,7 @@ it('should fill elements with existing value and selection', async ({page, serve
 it('should throw when element is not an <input>, <textarea> or [contenteditable]', async ({page, server}) => {
   let error = null;
   await page.goto(server.PREFIX + '/input/textarea.html');
-  await page.fill('body', '').catch(e => error = e);
+  await page.fill('div.plain', '').catch(e => error = e);
   expect(error.message).toContain('Element is not an <input>');
 });
 
