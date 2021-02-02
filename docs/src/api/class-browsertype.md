@@ -149,7 +149,15 @@ deleted when browser is closed.
 Enable Chromium sandboxing. Defaults to `false`.
 
 ### option: BrowserType.launch.firefoxUserPrefs
+* langs: js, python
 - `firefoxUserPrefs` <[Object]<[string], [string]|[float]|[boolean]>>
+
+Firefox user preferences. Learn more about the Firefox user preferences at
+[`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+
+### option: BrowserType.launch.firefoxUserPrefs
+* langs: csharp, java
+- `firefoxUserPrefs` <[Object]<[string], [string]>>
 
 Firefox user preferences. Learn more about the Firefox user preferences at
 [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
