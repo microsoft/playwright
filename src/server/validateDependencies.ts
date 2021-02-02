@@ -42,6 +42,7 @@ const DL_OPEN_LIBRARIES = {
   webkit: ['libGLESv2.so.2', 'libx264.so'],
   firefox: [],
   clank: [],
+  ffmpeg: [],
 };
 
 function isSupportedWindowsVersion(): boolean {

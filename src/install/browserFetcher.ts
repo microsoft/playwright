@@ -47,6 +47,7 @@ function getDownloadHost(browserName: BrowserName, revision: number): string {
     chromium: 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
     firefox: 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
     webkit: 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
+    ffmpeg: 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST',
   };
   return getFromENV(envDownloadHost[browserName]) ||
          getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||
@@ -93,6 +94,20 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
       ['mac11-arm64', '%s/builds/webkit/%s/webkit-mac-11.0-arm64.zip'],
       ['win32', '%s/builds/webkit/%s/webkit-win64.zip'],
       ['win64', '%s/builds/webkit/%s/webkit-win64.zip'],
+    ]).get(platform);
+  }
+
+  if (browserName === 'ffmpeg') {
+    return new Map<BrowserPlatform, string | undefined>([
+      ['ubuntu18.04', '%s/builds/ffmpeg/%s/ffmpeg-linux.zip'],
+      ['ubuntu20.04', '%s/builds/ffmpeg/%s/ffmpeg-linux.zip'],
+      ['mac10.13', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
+      ['mac10.14', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
+      ['mac10.15', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
+      ['mac11', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
+      ['mac11-arm64', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
+      ['win32', '%s/builds/ffmpeg/%s/ffmpeg-win32.zip'],
+      ['win64', '%s/builds/ffmpeg/%s/ffmpeg-win64.zip'],
     ]).get(platform);
   }
 }

@@ -19,15 +19,14 @@ import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { PNG } from 'pngjs';
+import * as browserPaths from '../src/utils/browserPaths';
 
-let ffmpegName = '';
-if (process.platform === 'win32')
-  ffmpegName = process.arch === 'ia32' ? 'ffmpeg-win32' : 'ffmpeg-win64';
-else if (process.platform === 'darwin')
-  ffmpegName = 'ffmpeg-mac';
-else if (process.platform === 'linux')
-  ffmpegName = 'ffmpeg-linux';
-const ffmpeg = path.join(__dirname, '..', 'third_party', 'ffmpeg', ffmpegName);
+
+const browsersJSON = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'browsers.json'), 'utf8'));
+const ffmpegDescriptor = browsersJSON.browsers.find(({name}) => name === 'ffmpeg');
+const browsersPath = browserPaths.browsersPath(path.join(__dirname, '..'));
+const browserPath = browserPaths.browserDirectory(browsersPath, ffmpegDescriptor);
+const ffmpeg = browserPaths.executablePath(browserPath, ffmpegDescriptor) || '';
 
 export class VideoPlayer {
   fileName: string;

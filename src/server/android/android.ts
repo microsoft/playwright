@@ -22,6 +22,7 @@ import * as stream from 'stream';
 import * as util from 'util';
 import * as ws from 'ws';
 import { createGuid, makeWaitForNextTask } from '../../utils/utils';
+import * as browserPaths from '../../utils/browserPaths';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import { ProgressController } from '../progress';
@@ -56,10 +57,14 @@ export interface SocketBackend extends EventEmitter {
 export class Android {
   private _backend: Backend;
   private _devices = new Map<string, AndroidDevice>();
+  readonly _ffmpegPath: string | null;
   readonly _timeoutSettings: TimeoutSettings;
   readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(backend: Backend, playwrightOptions: PlaywrightOptions) {
+  constructor(packagePath: string, backend: Backend, playwrightOptions: PlaywrightOptions, ffmpeg: browserPaths.BrowserDescriptor) {
+    const browsersPath = browserPaths.browsersPath(packagePath);
+    const browserPath = browserPaths.browserDirectory(browsersPath, ffmpeg);
+    this._ffmpegPath = browserPaths.executablePath(browserPath, ffmpeg) || null;
     this._backend = backend;
     this._playwrightOptions = playwrightOptions;
     this._timeoutSettings = new TimeoutSettings();
@@ -270,7 +275,7 @@ export class AndroidDevice extends EventEmitter {
     };
     validateBrowserContextOptions(options, browserOptions);
 
-    const browser = await CRBrowser.connect(androidBrowser, browserOptions);
+    const browser = await CRBrowser.connect(androidBrowser, browserOptions, this._android._ffmpegPath);
     const controller = new ProgressController();
     const defaultContext = browser._defaultContext!;
     await controller.run(async progress => {

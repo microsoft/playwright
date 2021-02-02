@@ -788,7 +788,10 @@ class FrameSession {
 
   async _startScreencast(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
     assert(!this._screencastId);
-    this._videoRecorder = await VideoRecorder.launch(options);
+    const ffmpegPath = this._crPage._browserContext._browser._ffmpegPath;
+    if (!ffmpegPath)
+      throw new Error('ffmpeg executable was not found');
+    this._videoRecorder = await VideoRecorder.launch(ffmpegPath, options);
     this._screencastId = screencastId;
     const gotFirstFrame = new Promise(f => this._client.once('Page.screencastFrame', f));
     await this._client.send('Page.startScreencast', {

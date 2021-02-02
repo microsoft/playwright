@@ -21,6 +21,7 @@ import { CRExecutionContext } from '../chromium/crExecutionContext';
 import * as js from '../javascript';
 import { Page } from '../page';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
+import * as browserPaths from '../../utils/browserPaths';
 import { WebSocketTransport } from '../transport';
 import * as types from '../types';
 import { launchProcess, envArrayToObject } from '../processLauncher';
@@ -123,8 +124,12 @@ export class ElectronApplication extends EventEmitter {
 
 export class Electron  {
   private _playwrightOptions: PlaywrightOptions;
+  private _ffmpegPath: string | null;
 
-  constructor(playwrightOptions: PlaywrightOptions) {
+  constructor(packagePath: string, playwrightOptions: PlaywrightOptions, ffmpeg: browserPaths.BrowserDescriptor) {
+    const browsersPath = browserPaths.browsersPath(packagePath);
+    const browserPath = browserPaths.browserDirectory(browsersPath, ffmpeg);
+    this._ffmpegPath = browserPaths.executablePath(browserPath, ffmpeg) || null;
     this._playwrightOptions = playwrightOptions;
   }
 
@@ -182,7 +187,7 @@ export class Electron  {
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,
       };
-      const browser = await CRBrowser.connect(chromeTransport, browserOptions);
+      const browser = await CRBrowser.connect(chromeTransport, browserOptions, this._ffmpegPath);
       app = new ElectronApplication(browser, nodeConnection);
       await app._init();
       return app;
