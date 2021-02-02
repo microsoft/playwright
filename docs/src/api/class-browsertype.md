@@ -157,7 +157,7 @@ Firefox user preferences. Learn more about the Firefox user preferences at
 
 ### option: BrowserType.launch.firefoxUserPrefs
 * langs: csharp, java
-- `firefoxUserPrefs` <[Object]<[string], [string]>>
+- `firefoxUserPrefs` <[Object]<[string], [any]>>
 
 Firefox user preferences. Learn more about the Firefox user preferences at
 [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
