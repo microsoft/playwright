@@ -145,7 +145,15 @@ deleted when browser is closed.
 Enable Chromium sandboxing. Defaults to `false`.
 
 ### option: BrowserType.launch.firefoxUserPrefs
+* langs: js, python
 - `firefoxUserPrefs` <[Object]<[string], [string]|[float]|[boolean]>>
+
+Firefox user preferences. Learn more about the Firefox user preferences at
+[`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+
+### option: BrowserType.launch.firefoxUserPrefs
+* langs: csharp, java
+- `firefoxUserPrefs` <[Object]<[string], [any]>>
 
 Firefox user preferences. Learn more about the Firefox user preferences at
 [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
@@ -177,17 +185,9 @@ Logger sink for Playwright logging.
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
-### option: BrowserType.launch.env
-* langs: csharp, java
-- `env` <[Object]<[string], [string]>>
+### option: BrowserType.launch.env = %%-csharp-java-browser-option-env-%%
 
-Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-
-### option: BrowserType.launch.env
-* langs: js, python
-- `env` <[Object]<[string], [string]|[float]|[boolean]>>
-
-Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+### option: BrowserType.launch.env = %%-js-python-browser-option-env-%%
 
 ### option: BrowserType.launch.devtools
 - `devtools` <[boolean]>
@@ -272,10 +272,9 @@ Close the browser process on SIGHUP. Defaults to `true`.
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
-### option: BrowserType.launchPersistentContext.env
-- `env` <[Object]<[string], [string]|[float]|[boolean]>>
+### option: BrowserType.launchPersistentContext.env = %%-csharp-java-browser-option-env-%%
 
-Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+### option: BrowserType.launchPersistentContext.env = %%-js-python-browser-option-env-%%
 
 ### option: BrowserType.launchPersistentContext.devtools
 - `devtools` <[boolean]>
@@ -387,10 +386,7 @@ Logger sink for Playwright logging.
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
-### option: BrowserType.launchServer.env
-- `env` <[Object]<[string], [string]|[float]|[boolean]>>
-
-Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+### option: BrowserType.launchServer.env = %%-js-python-browser-option-env-%%
 
 ### option: BrowserType.launchServer.devtools
 - `devtools` <[boolean]>
