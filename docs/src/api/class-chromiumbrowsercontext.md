@@ -1,4 +1,5 @@
 # class: ChromiumBrowserContext
+* langs: js, python
 * extends: [BrowserContext]
 
 Chromium-specific features including background pages, service worker support, etc.
