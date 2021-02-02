@@ -52,9 +52,38 @@ export class VideoRecorder {
   }
 
   private async _launch(options: types.PageScreencastOptions) {
+    // How to tune the codec:
+    // 1. Read vp8 documentation to figure out the options.
+    //   https://www.webmproject.org/docs/encoder-parameters/
+    // 2. Use the following command to map the options to ffmpeg arguments.
+    //   $ ./third_party/ffmpeg/ffmpeg-mac -h encoder=vp8
+    // 3. A bit more about passing vp8 options to ffmpeg.
+    //   https://trac.ffmpeg.org/wiki/Encode/VP8
+    //
+    // We use the following vp8 options:
+    //   "-qmin 0 -qmax 50" - quality variation from 0 to 50.
+    //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
+    //   "-crf 8" - constant quality mode, 4-63, lower means better quality.
+    //   "-deadline realtime" - do not use too much cpu to keep up with incoming frames.
+    //   "-b:v 1M" - video bitrate. Default value is too low for vp8
+    //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
+    //
+    // We use "pad" and "crop" video filters (-vf option) to resize incoming frames
+    // that might be of the different size to the desired video size.
+    //   https://ffmpeg.org/ffmpeg-filters.html#pad-1
+    //   https://ffmpeg.org/ffmpeg-filters.html#crop
+    //
+    // We use "image2pipe" mode to pipe frames and get a single video.
+    // "-f image2pipe -c:v mjpeg -i -" forces input to be read from standard input, and forces
+    // mjpeg input image format.
+    //   https://trac.ffmpeg.org/wiki/Slideshow
+    //
+    // "-y" means overwrite output.
+    // "-an" means no audio.
+
     const w = options.width;
     const h = options.height;
-    const args = `-loglevel error -f image2pipe -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -b:v 1M -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
+    const args = `-loglevel error -f image2pipe -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -b:v 1M -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(options.outputFile);
     const progress = this._progress;
 
