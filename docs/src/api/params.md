@@ -98,6 +98,27 @@ Defaults to `'visible'`. Can be either:
 * `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`.
   This is opposite to the `'visible'` option.
 
+## browser-option-ignoredefaultargs
+* langs: chsharp, js, python
+- `ignoreDefaultArgs` <[boolean]|[Array]<[string]>>
+
+If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`]. If an
+array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+
+## java-browser-option-ignoredefaultargs
+* langs: java
+- `ignoreDefaultArgs` <[Array]<[string]>>
+
+If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`].
+Dangerous option; use with care.
+
+## java-browser-option-ignorealldefaultargs
+* langs: java
+- `ignoreAllDefaultArgs` <[boolean]>
+
+If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`].
+Dangerous option; use with care. Defaults to `false`.
+
 ## browser-option-proxy
 - `proxy` <[Object]>
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
