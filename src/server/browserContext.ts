@@ -119,6 +119,7 @@ export abstract class BrowserContext extends EventEmitter {
   private _selectors?: Selectors;
   readonly _actionListeners = new Set<ActionListener>();
   private _origins = new Set<string>();
+  terminalSize: { rows?: number, columns?: number } = {};
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();

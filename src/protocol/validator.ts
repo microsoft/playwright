@@ -351,6 +351,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });
+  scheme.BrowserContextSetTerminalSizeNoReplyParams = tObject({
+    rows: tOptional(tNumber),
+    columns: tOptional(tNumber),
+  });
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });

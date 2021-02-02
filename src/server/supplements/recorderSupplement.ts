@@ -82,7 +82,8 @@ export class RecorderSupplement {
       highlighterType = 'python';
 
     const writable: Writable = {
-      write: (text: string) => context.emit(BrowserContext.Events.StdOut, text)
+      write: (text: string) => context.emit(BrowserContext.Events.StdOut, text),
+      columns: () => context.terminalSize.columns || 80
     };
     const outputs: RecorderOutput[] = [params.terminal ? new TerminalOutput(writable, highlighterType) : new FlushingTerminalOutput(writable)];
     this._highlighterType = highlighterType;
@@ -142,7 +143,11 @@ export class RecorderSupplement {
       }).catch(e => console.error(e));
     });
 
-    await this._context.exposeBinding('playwrightRecorderState', false, ({ page }) => {
+    await this._context.exposeBinding('playwrightRecorderPrintSelector', false, (_, text) => {
+      this._context.emit(BrowserContext.Events.StdOut, `Selector: \x1b[38;5;130m${text}\x1b[0m\n`);
+    });
+
+    await this._context.exposeBinding('playwrightRecorderState', false, () => {
       const state: State = {
         uiState: this._recorderUIState,
         canResume: this._app === 'pause',
