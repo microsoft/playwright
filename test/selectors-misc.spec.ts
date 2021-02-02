@@ -184,3 +184,24 @@ it('should escape the scope with >>', async ({ page }) => {
   await page.setContent(`<div><label>Test</label><input id='myinput'></div>`);
   expect(await page.$eval(`label >> xpath=.. >> input`, e => e.id)).toBe('myinput');
 });
+
+it('xpath should be relative', async ({ page }) => {
+  await page.setContent(`
+    <span class="find-me" id=target1>1</span>
+    <div>
+      <span class="find-me" id=target2>2</span>
+    </div>
+  `);
+  expect(await page.$eval(`//*[@class="find-me"]`, e => e.id)).toBe('target1');
+
+  const div = await page.$('div');
+  expect(await div.$eval(`xpath=./*[@class="find-me"]`, e => e.id)).toBe('target2');
+  expect(await div.$eval(`xpath=.//*[@class="find-me"]`, e => e.id)).toBe('target2');
+  expect(await div.$eval(`//*[@class="find-me"]`, e => e.id)).toBe('target2');
+  expect(await div.$eval(`xpath=/*[@class="find-me"]`, e => e.id)).toBe('target2');
+
+  expect(await page.$eval(`div >> xpath=./*[@class="find-me"]`, e => e.id)).toBe('target2');
+  expect(await page.$eval(`div >> xpath=.//*[@class="find-me"]`, e => e.id)).toBe('target2');
+  expect(await page.$eval(`div >> //*[@class="find-me"]`, e => e.id)).toBe('target2');
+  expect(await page.$eval(`div >> xpath=/*[@class="find-me"]`, e => e.id)).toBe('target2');
+});
