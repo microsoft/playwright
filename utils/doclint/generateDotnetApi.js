@@ -25,6 +25,7 @@ const { parseApi } = require('./api_parser');
 const { type } = require('os');
 const { check } = require('proper-lockfile');
 const { Type } = require('./documentation');
+const { threadId } = require('worker_threads');
 // const { visitAll } = require('../markdown'); // TODO: consider using this instead of manual parsing
 
 const maxDocumentationColumnWidth = 120;
@@ -320,7 +321,8 @@ function renderMethod(member, parent, output, name) {
   // TODO: this is something that will probably go into the docs
   if (member.args.size == 0
     && type !== 'void'
-    && !name.startsWith('Is')) {
+    && !name.startsWith('Is')
+    && !name.startsWith('Get')) {
     name = `Get${name}`;
   }
 
@@ -470,7 +472,7 @@ function translateType(type, parent, generateNameCallback = null) {
   if (type.name === 'boolean')
     return 'bool';
 
-  if (type.name === 'Serializable')
+  if (type.name === 'Serializable' || type.name === 'any')
     return 'T';
 
   if (type.name === 'Buffer')
@@ -509,6 +511,17 @@ function translateType(type, parent, generateNameCallback = null) {
       return objectName;
 
     return objectName;
+  }
+
+  if (type.name === 'Map') {
+    if (type.templates && type.templates.length == 2) {
+      // we map to a dictionary
+      let keyType = translateType(type.templates[0], parent, generateNameCallback);
+      let valueType = translateType(type.templates[1], parent, generateNameCallback);
+      return `Dictionary<${keyType}, ${valueType}>`;
+    } else {
+      throw 'Map has invalid number of templates.';
+    }
   }
 
   // there's a chance this is a name we've already seen before, so check
