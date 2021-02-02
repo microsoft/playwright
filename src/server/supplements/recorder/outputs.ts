@@ -26,6 +26,7 @@ export interface RecorderOutput {
 
 export interface Writable {
   write(data: string): void;
+  columns(): number;
 }
 
 export class OutputMultiplexer implements RecorderOutput {
@@ -156,7 +157,7 @@ export class TerminalOutput implements RecorderOutput {
   }
 
   popLn(text: string) {
-    const terminalWidth = process.stdout.columns || 80;
+    const terminalWidth = this._output.columns();
     for (const line of text.split('\n')) {
       const terminalLines = ((line.length - 1) / terminalWidth | 0) + 1;
       for (let i = 0; i < terminalLines; ++i)

@@ -29,6 +29,7 @@ declare global {
     playwrightRecorderSetUIState: (state: SetUIState) => Promise<void>;
     playwrightRecorderResume: () => Promise<boolean>;
     playwrightRecorderShowRecorderPage: () => Promise<void>;
+    playwrightRecorderPrintSelector: (text: string) => Promise<void>;
   }
 }
 
@@ -276,8 +277,10 @@ export class Recorder {
 
   private _onClick(event: MouseEvent) {
     if (this._state.uiState.mode === 'inspecting' && !this._isInToolbar(event.target as HTMLElement)) {
-      if (this._hoveredModel)
+      if (this._hoveredModel) {
         copy(this._hoveredModel.selector);
+        window.playwrightRecorderPrintSelector(this._hoveredModel.selector);
+      }
     }
     if (this._shouldIgnoreMouseEvent(event))
       return;

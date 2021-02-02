@@ -66,9 +66,19 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
     this._stdout = process.stdout;
     this._stderr = process.stderr;
-    this._channel.on('stdout', ({ data }) => this._stdout.write(Buffer.from(data, 'base64')));
-    this._channel.on('stderr', ({ data }) => this._stderr.write(Buffer.from(data, 'base64')));
+    this._channel.on('stdout', ({ data }) => {
+      this._stdout.write(Buffer.from(data, 'base64'));
+      this._pushTerminalSize();
+    });
+    this._channel.on('stderr', ({ data }) => {
+      this._stderr.write(Buffer.from(data, 'base64'));
+      this._pushTerminalSize();
+    });
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
+  }
+
+  private _pushTerminalSize() {
+    this._channel.setTerminalSizeNoReply({ rows: process.stdout.rows, columns: process.stdout.columns }).catch(() => {});
   }
 
   private _onPage(page: Page): void {
@@ -279,6 +289,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       terminal?: boolean,
       outputFile?: string
   }) {
+    this._pushTerminalSize();
     await this._channel.recorderSupplementEnable(params);
   }
 }

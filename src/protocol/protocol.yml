@@ -624,6 +624,11 @@ BrowserContext:
       returns:
         session: CDPSession
 
+    setTerminalSizeNoReply:
+      parameters:
+        rows: number?
+        columns: number?
+
   events:
 
     bindingCall:

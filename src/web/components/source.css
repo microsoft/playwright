@@ -40,6 +40,10 @@
   user-select: none;
 }
 
+.source-line-number {
+  flex: none;
+}
+
 .source-line-highlighted {
   background-color: #ffc0cb7f;
 }

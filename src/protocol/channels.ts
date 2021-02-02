@@ -562,6 +562,7 @@ export interface BrowserContextChannel extends Channel {
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
+  setTerminalSizeNoReply(params: BrowserContextSetTerminalSizeNoReplyParams, metadata?: Metadata): Promise<BrowserContextSetTerminalSizeNoReplyResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -741,6 +742,15 @@ export type BrowserContextCrNewCDPSessionOptions = {
 export type BrowserContextCrNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
+export type BrowserContextSetTerminalSizeNoReplyParams = {
+  rows?: number,
+  columns?: number,
+};
+export type BrowserContextSetTerminalSizeNoReplyOptions = {
+  rows?: number,
+  columns?: number,
+};
+export type BrowserContextSetTerminalSizeNoReplyResult = void;
 
 // ----------- Page -----------
 export type PageInitializer = {
