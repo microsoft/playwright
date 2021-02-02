@@ -8,7 +8,7 @@
 Returns the buffer with response body.
 
 ## async method: Response.finished
-- returns: <[null]|[Error]>
+- returns: <[null]|[string]>
 
 Waits for this response to finish, returns failure error if request failed.
 

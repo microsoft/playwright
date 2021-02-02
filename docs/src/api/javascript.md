@@ -1,3 +1,7 @@
+## async method: Response.finished
+* langs: js
+- returns: <[null]|[Error]>
+
 ### param: ElementHandle.evalOnSelector.expression = %%-js-evalonselector-pagefunction-%%
 ### param: ElementHandle.evalOnSelectorAll.expression = %%-js-evalonselectorall-pagefunction-%%
 ### param: Frame.evalOnSelector.expression = %%-js-evalonselector-pagefunction-%%
