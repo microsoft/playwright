@@ -129,11 +129,7 @@ Firefox or WebKit, use at your own risk.
 Additional arguments to pass to the browser instance. The list of Chromium flags can be found
 [here](http://peter.sh/experiments/chromium-command-line-switches/).
 
-### option: BrowserType.launch.ignoreDefaultArgs
-- `ignoreDefaultArgs` <[boolean]|[Array]<[string]>>
-
-If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`]. If an
-array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+### option: BrowserType.launch.ignoreDefaultArgs = %%-browser-option-ignoredefaultargs-%%
 
 ### option: BrowserType.launch.proxy = %%-browser-option-proxy-%%
 
@@ -240,11 +236,7 @@ bundled Chromium, Firefox or WebKit, use at your own risk.
 Additional arguments to pass to the browser instance. The list of Chromium flags can be found
 [here](http://peter.sh/experiments/chromium-command-line-switches/).
 
-### option: BrowserType.launchPersistentContext.ignoreDefaultArgs
-- `ignoreDefaultArgs` <[boolean]|[Array]<[string]>>
-
-If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default
-arguments. Dangerous option; use with care. Defaults to `false`.
+### option: BrowserType.launchPersistentContext.ignoreDefaultArgs = %%-browser-option-ignoredefaultargs-%%
 
 ### option: BrowserType.launchPersistentContext.proxy = %%-browser-option-proxy-%%
 
@@ -347,11 +339,7 @@ bundled Chromium, Firefox or WebKit, use at your own risk.
 Additional arguments to pass to the browser instance. The list of Chromium flags can be found
 [here](http://peter.sh/experiments/chromium-command-line-switches/).
 
-### option: BrowserType.launchServer.ignoreDefaultArgs
-- `ignoreDefaultArgs` <[boolean]|[Array]<[string]>>
-
-If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default
-arguments. Dangerous option; use with care. Defaults to `false`.
+### option: BrowserType.launchServer.ignoreDefaultArgs = %%-browser-option-ignoredefaultargs-%%
 
 ### option: BrowserType.launchServer.proxy = %%-browser-option-proxy-%%
 
