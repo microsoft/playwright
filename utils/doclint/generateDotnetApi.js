@@ -55,7 +55,9 @@ let classNameMap;
 
   documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   documentation.filterForLanguage('csharp');
-  documentation.copyDocsFromSuperclasses([]);
+
+  // we'll handle this natively
+  // documentation.copyDocsFromSuperclasses([]);
 
   documentation.setLinkRenderer(item => {
     if (item.clazz) {
@@ -80,6 +82,20 @@ let classNameMap;
   // let name = translateMemberName('interface', element.name, undefined);
   classNameMap = new Map(documentation.classesArray.map(x => [x.name, translateMemberName('interface', x.name, null)]));
 
+  // map some types that we know of
+  classNameMap.set('Error', 'Exception');
+  classNameMap.set('TimeoutError', 'TimeoutException');
+  classNameMap.set('EvaluationArgument', 'object');
+  classNameMap.set('boolean', 'bool');
+  classNameMap.set('Serializable', 'T');
+  classNameMap.set('any', 'T');
+  classNameMap.set('Buffer', 'byte[]');
+  classNameMap.set('function', 'Action');
+  classNameMap.set('path', 'string');
+
+  // this are types that we don't explicility render even if we get the specs
+  const ignoredTypes = ['TimeoutException'];
+
   let writeFile = (name, out, folder) => {
     let content = template.replace('[CONTENT]', out.join("\r\n\t"));
     fs.writeFileSync(`${path.join(folder, name)}.cs`, content);
@@ -92,14 +108,19 @@ let classNameMap;
    * @param {Documentation.MarkdownNode[]} spec
    * @param {Function} callback 
    * @param {string} folder
+   * @param {string} extendsName
    */
-  let innerRenderElement = (kind, name, spec, callback, folder = typesDir) => {
+  let innerRenderElement = (kind, name, spec, callback, folder = typesDir, extendsName = null) => {
     const out = [];
     console.log(`Generating ${name}`);
 
     if (spec)
       out.push(...XmlDoc.renderXmlDoc(spec, maxDocumentationColumnWidth));
-    out.push(`public ${kind} ${name}`);
+
+    if (extendsName === 'IEventEmitter')
+      extendsName = null;
+
+    out.push(`public ${kind} ${name}${extendsName ? ` : ${extendsName}` : ''}`);
     out.push('{');
 
     callback(out);
@@ -111,16 +132,18 @@ let classNameMap;
 
   for (const element of documentation.classesArray) {
     const name = classNameMap.get(element.name);
+    if (ignoredTypes.includes(name))
+      continue;
+
     innerRenderElement('interface', name, element.spec, (out) => {
       for (const member of element.membersArray) {
         renderMember(member, element, out);
       }
-    });
+    }, typesDir, translateMemberName('interface', element.extends, null));
   }
 
   additionalTypes.forEach((type, name) =>
     innerRenderElement('class', name, null, (out) => {
-
       // TODO: consider how this could be merged with the `translateType` check
       if (type.union
         && type.union[0].name === 'null'
@@ -161,6 +184,7 @@ let classNameMap;
  * @param {string} name 
  * @param {Documentation.Member} member */
 function translateMemberName(memberKind, name, member = null) {
+  if (!name) return name;
 
   // we strip it for special chars, like @ because we might get called back with it in some special cases
   // like, when generating classes inside methods for params
@@ -185,6 +209,10 @@ function translateMemberName(memberKind, name, member = null) {
 
   switch (memberKind) {
     case "interface":
+      // apply name mapping if the map exists
+      let mappedName = classNameMap ? classNameMap.get(assumedName) : null;
+      if (mappedName)
+        return mappedName;
       return `I${assumedName}`;
     case "method":
       if (member && member.async)
@@ -469,21 +497,6 @@ function translateType(type, parent, generateNameCallback = null) {
     return `${innerType}[]`;
   }
 
-  if (type.name === 'boolean')
-    return 'bool';
-
-  if (type.name === 'Serializable' || type.name === 'any')
-    return 'T';
-
-  if (type.name === 'Buffer')
-    return 'byte[]';
-
-  if (type.name === 'function')
-    return 'Action';
-
-  if (type.name === 'path')
-    return 'string';
-
   if (type.name === 'Object') {
     // take care of some common cases
     // TODO: this can be genericized
@@ -494,7 +507,7 @@ function translateType(type, parent, generateNameCallback = null) {
       return `IEnumerable<KeyValuePair<${keyType}, ${valueType}>>`;
     }
 
-    if (type.name === 'Object'
+    if ((type.name === 'Object')
       && !type.properties
       && !type.union) {
       return 'object';
@@ -525,6 +538,7 @@ function translateType(type, parent, generateNameCallback = null) {
   }
 
   // there's a chance this is a name we've already seen before, so check
+  // this is also where we map known types, like boolean -> bool, etc.
   let name = classNameMap.get(type.name) || type.name;
   return `${name}`;
 }
