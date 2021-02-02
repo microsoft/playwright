@@ -99,21 +99,21 @@ Defaults to `'visible'`. Can be either:
   This is opposite to the `'visible'` option.
 
 ## browser-option-ignoredefaultargs
-* langs: chsharp, js, python
+* langs: js, python
 - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>>
 
 If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`]. If an
 array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
 
-## java-browser-option-ignoredefaultargs
-* langs: java
+## csharp-java-browser-option-ignoredefaultargs
+* langs: csharp, java
 - `ignoreDefaultArgs` <[Array]<[string]>>
 
 If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`].
 Dangerous option; use with care.
 
-## java-browser-option-ignorealldefaultargs
-* langs: java
+## csharp-java-browser-option-ignorealldefaultargs
+* langs: csharp, java
 - `ignoreAllDefaultArgs` <[boolean]>
 
 If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`].
