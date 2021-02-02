@@ -110,6 +110,18 @@ Defaults to `'visible'`. Can be either:
 
 Network proxy settings.
 
+## csharp-java-browser-option-env
+* langs: csharp, java
+- `env` <[Object]<[string], [string]>>
+
+Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+
+## js-python-browser-option-env
+* langs: js, python
+- `env` <[Object]<[string], [string]|[float]|[boolean]>>
+
+Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+
 ## context-option-storage-state
 - `storageState` <[path]|[Object]>
   - `cookies` <[Array]<[Object]>> Optional cookies to set for context
