@@ -15,7 +15,6 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { ffmpegExecutable } from '../../utils/binaryPaths';
 import { assert, monotonicTime } from '../../utils/utils';
 import { launchProcess } from '../processLauncher';
 import { Progress, ProgressController } from '../progress';
@@ -33,22 +32,24 @@ export class VideoRecorder {
   private readonly _progress: Progress;
   private _frameQueue: Buffer[] = [];
   private _isStopped = false;
+  private _ffmpegPath: string;
 
-  static async launch(options: types.PageScreencastOptions): Promise<VideoRecorder> {
+  static async launch(ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
     const controller = new ProgressController();
     controller.setLogName('browser');
     return await controller.run(async progress => {
-      const recorder = new VideoRecorder(progress);
+      const recorder = new VideoRecorder(ffmpegPath, progress);
       await recorder._launch(options);
       return recorder;
     });
   }
 
-  private constructor(progress: Progress) {
+  private constructor(ffmpegPath: string, progress: Progress) {
     this._progress = progress;
+    this._ffmpegPath = ffmpegPath;
   }
 
   private async _launch(options: types.PageScreencastOptions) {
@@ -87,11 +88,8 @@ export class VideoRecorder {
     args.push(options.outputFile);
     const progress = this._progress;
 
-    const executablePath = ffmpegExecutable();
-    if (!executablePath)
-      throw new Error('ffmpeg executable was not found');
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath,
+      executablePath: this._ffmpegPath,
       args,
       stdio: 'stdin',
       log: (message: string) => progress.log(message),

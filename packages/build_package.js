@@ -29,14 +29,13 @@ const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
 const PLAYWRIGHT_CORE_FILES = ['bin/PrintDeps.exe', 'lib', 'types', 'NOTICE', 'LICENSE'];
-const FFMPEG_FILES = ['third_party/ffmpeg'];
 
 const PACKAGES = {
   'playwright': {
     description: 'A high-level API to automate web browsers',
-    browsers: ['chromium', 'firefox', 'webkit'],
+    browsers: ['chromium', 'firefox', 'webkit', 'ffmpeg'],
     // We copy README.md additionally for Playwright so that it looks nice on NPM.
-    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'README.md'],
+    files: [...PLAYWRIGHT_CORE_FILES, 'README.md'],
   },
   'playwright-core': {
     description: 'A high-level API to automate web browsers',
@@ -55,20 +54,20 @@ const PACKAGES = {
   },
   'playwright-chromium': {
     description: 'A high-level API to automate Chromium',
-    browsers: ['chromium'],
-    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES],
+    browsers: ['chromium', 'ffmpeg'],
+    files: [...PLAYWRIGHT_CORE_FILES],
   },
   'playwright-electron': {
     version: '0.4.0', // Manually manage playwright-electron version.
     description: 'A high-level API to automate Electron',
-    browsers: [],
-    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES],
+    browsers: ['ffmpeg'],
+    files: [...PLAYWRIGHT_CORE_FILES],
   },
   'playwright-android': {
     version: '0.0.8', // Manually manage playwright-android version.
     description: 'A high-level API to automate Chrome for Android',
-    browsers: [],
-    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'bin/android-driver.apk', 'bin/android-driver-target.apk'],
+    browsers: ['ffmpeg'],
+    files: [...PLAYWRIGHT_CORE_FILES, 'bin/android-driver.apk', 'bin/android-driver-target.apk'],
   },
 };
 

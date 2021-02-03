@@ -47,7 +47,8 @@ export class Playwright {
       ]
     };
     const chromium = browsers.find(browser => browser.name === 'chromium');
-    this.chromium = new Chromium(packagePath, chromium!, this.options);
+    const ffmpeg = browsers.find(browser => browser.name === 'ffmpeg');
+    this.chromium = new Chromium(packagePath, chromium!, ffmpeg!, this.options);
 
     const firefox = browsers.find(browser => browser.name === 'firefox');
     this.firefox = new Firefox(packagePath, firefox!, this.options);
@@ -55,8 +56,8 @@ export class Playwright {
     const webkit = browsers.find(browser => browser.name === 'webkit');
     this.webkit = new WebKit(packagePath, webkit!, this.options);
 
-    this.electron = new Electron(this.options);
-    this.android = new Android(new AdbBackend(), this.options);
+    this.electron = new Electron(packagePath, this.options, ffmpeg!);
+    this.android = new Android(packagePath, new AdbBackend(), this.options, ffmpeg!);
   }
 }
 

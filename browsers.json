@@ -15,6 +15,11 @@
       "name": "webkit",
       "revision": "1428",
       "download": true
+    },
+    {
+      "name": "ffmpeg",
+      "revision": "1004",
+      "download": true
     }
   ]
 }

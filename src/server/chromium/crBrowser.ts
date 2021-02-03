@@ -40,14 +40,15 @@ export class CRBrowser extends Browser {
   _devtools?: CRDevTools;
   _isMac = false;
   private _version = '';
+  readonly _ffmpegPath: string | null;
 
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
 
-  static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
+  static async connect(transport: ConnectionTransport, options: BrowserOptions, ffmpegPath: string | null, devtools?: CRDevTools): Promise<CRBrowser> {
     const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
-    const browser = new CRBrowser(connection, options);
+    const browser = new CRBrowser(connection, options, ffmpegPath);
     browser._devtools = devtools;
     const session = connection.rootSession;
     const version = await session.send('Browser.getVersion');
@@ -88,8 +89,9 @@ export class CRBrowser extends Browser {
     return browser;
   }
 
-  constructor(connection: CRConnection, options: BrowserOptions) {
+  constructor(connection: CRConnection, options: BrowserOptions, ffmpegPath: string | null) {
     super(options);
+    this._ffmpegPath = ffmpegPath;
     this._connection = connection;
     this._session = this._connection.rootSession;
     this._connection.on(ConnectionEvents.Disconnected, () => this._didClose());
