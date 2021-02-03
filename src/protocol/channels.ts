@@ -1261,11 +1261,11 @@ export type FrameNavigatedEvent = {
 export type FrameEvalOnSelectorParams = {
   selector: string,
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type FrameEvalOnSelectorOptions = {
-
+  isFunction?: boolean,
 };
 export type FrameEvalOnSelectorResult = {
   value: SerializedValue,
@@ -1273,11 +1273,11 @@ export type FrameEvalOnSelectorResult = {
 export type FrameEvalOnSelectorAllParams = {
   selector: string,
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type FrameEvalOnSelectorAllOptions = {
-
+  isFunction?: boolean,
 };
 export type FrameEvalOnSelectorAllResult = {
   value: SerializedValue,
@@ -1377,11 +1377,12 @@ export type FrameDispatchEventOptions = {
 export type FrameDispatchEventResult = void;
 export type FrameEvaluateExpressionParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
   world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionOptions = {
+  isFunction?: boolean,
   world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionResult = {
@@ -1389,11 +1390,12 @@ export type FrameEvaluateExpressionResult = {
 };
 export type FrameEvaluateExpressionHandleParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
   world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionHandleOptions = {
+  isFunction?: boolean,
   world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionHandleResult = {
@@ -1680,12 +1682,13 @@ export type FrameUncheckOptions = {
 export type FrameUncheckResult = void;
 export type FrameWaitForFunctionParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
   timeout?: number,
   pollingInterval?: number,
 };
 export type FrameWaitForFunctionOptions = {
+  isFunction?: boolean,
   timeout?: number,
   pollingInterval?: number,
 };
@@ -1717,22 +1720,22 @@ export interface WorkerChannel extends Channel {
 export type WorkerCloseEvent = {};
 export type WorkerEvaluateExpressionParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type WorkerEvaluateExpressionOptions = {
-
+  isFunction?: boolean,
 };
 export type WorkerEvaluateExpressionResult = {
   value: SerializedValue,
 };
 export type WorkerEvaluateExpressionHandleParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type WorkerEvaluateExpressionHandleOptions = {
-
+  isFunction?: boolean,
 };
 export type WorkerEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
@@ -1759,22 +1762,22 @@ export type JSHandleDisposeOptions = {};
 export type JSHandleDisposeResult = void;
 export type JSHandleEvaluateExpressionParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type JSHandleEvaluateExpressionOptions = {
-
+  isFunction?: boolean,
 };
 export type JSHandleEvaluateExpressionResult = {
   value: SerializedValue,
 };
 export type JSHandleEvaluateExpressionHandleParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type JSHandleEvaluateExpressionHandleOptions = {
-
+  isFunction?: boolean,
 };
 export type JSHandleEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
@@ -1844,11 +1847,11 @@ export interface ElementHandleChannel extends JSHandleChannel {
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type ElementHandleEvalOnSelectorOptions = {
-
+  isFunction?: boolean,
 };
 export type ElementHandleEvalOnSelectorResult = {
   value: SerializedValue,
@@ -1856,11 +1859,11 @@ export type ElementHandleEvalOnSelectorResult = {
 export type ElementHandleEvalOnSelectorAllParams = {
   selector: string,
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type ElementHandleEvalOnSelectorAllOptions = {
-
+  isFunction?: boolean,
 };
 export type ElementHandleEvalOnSelectorAllResult = {
   value: SerializedValue,
@@ -2499,22 +2502,22 @@ export type ElectronApplicationWindowEvent = {
 };
 export type ElectronApplicationEvaluateExpressionParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type ElectronApplicationEvaluateExpressionOptions = {
-
+  isFunction?: boolean,
 };
 export type ElectronApplicationEvaluateExpressionResult = {
   value: SerializedValue,
 };
 export type ElectronApplicationEvaluateExpressionHandleParams = {
   expression: string,
-  isFunction: boolean,
+  isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type ElectronApplicationEvaluateExpressionHandleOptions = {
-
+  isFunction?: boolean,
 };
 export type ElectronApplicationEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,

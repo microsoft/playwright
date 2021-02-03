@@ -17,17 +17,23 @@
 import { serializeAsCallArgument, parseEvaluationResultValue } from '../common/utilityScriptSerializers';
 
 export default class UtilityScript {
-  evaluate(returnByValue: boolean, expression: string) {
-    const result = global.eval(expression);
-    return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
-  }
-
-  callFunction(returnByValue: boolean, functionText: string, argCount: number, ...argsAndHandles: any[]) {
+  evaluate(isFunction: boolean | undefined, returnByValue: boolean, expression: string, argCount: number, ...argsAndHandles: any[]) {
     const args = argsAndHandles.slice(0, argCount);
     const handles = argsAndHandles.slice(argCount);
     const parameters = args.map(a => parseEvaluationResultValue(a, handles));
-    const func = global.eval('(' + functionText + ')');
-    const result = func(...parameters);
+    expression = expression.trim();
+    if (expression.startsWith('function ') || expression.startsWith('async function '))
+      expression = '(' + expression + ')';
+    let result = global.eval(expression);
+    if (isFunction === true) {
+      result = result(...parameters);
+    } else if (isFunction === false) {
+      result = result;
+    } else {
+      // auto detect.
+      if (typeof result === 'function')
+        result = result(...parameters);
+    }
     return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
   }
 

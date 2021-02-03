@@ -139,7 +139,7 @@ export class FrameManager {
     await barrier.waitFor();
     this._signalBarriers.delete(barrier);
     // Resolve in the next task, after all waitForNavigations.
-    await new Promise(makeWaitForNextTask());
+    await new Promise<void>(makeWaitForNextTask());
     return result;
   }
 
@@ -579,7 +579,7 @@ export class Frame extends EventEmitter {
     return this._context('utility');
   }
 
-  async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any, world: types.World = 'main'): Promise<any> {
+  async _evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
     const handle = await context.evaluateExpressionHandleInternal(expression, isFunction, arg);
     if (world === 'main')
@@ -587,7 +587,7 @@ export class Frame extends EventEmitter {
     return handle;
   }
 
-  async _evaluateExpression(expression: string, isFunction: boolean, arg: any, world: types.World = 'main'): Promise<any> {
+  async _evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
     const value = await context.evaluateExpressionInternal(expression, isFunction, arg);
     if (world === 'main')
@@ -632,7 +632,7 @@ export class Frame extends EventEmitter {
     await this._page._doSlowMo();
   }
 
-  async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
+  async _$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const handle = await this.$(selector);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -641,7 +641,7 @@ export class Frame extends EventEmitter {
     return result;
   }
 
-  async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
+  async _$$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this, selector);
     const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
@@ -805,7 +805,7 @@ export class Frame extends EventEmitter {
     let result: dom.ElementHandle;
     let error: Error | undefined;
     let cspMessage: ConsoleMessage | undefined;
-    const actionPromise = new Promise<dom.ElementHandle>(async resolve => {
+    const actionPromise = new Promise<void>(async resolve => {
       try {
         result = await func();
       } catch (e) {
@@ -813,7 +813,7 @@ export class Frame extends EventEmitter {
       }
       resolve();
     });
-    const errorPromise = new Promise(resolve => {
+    const errorPromise = new Promise<void>(resolve => {
       listeners.push(helper.addEventListener(this._page, Page.Events.Console, (message: ConsoleMessage) => {
         if (message.type() === 'error' && message.text().includes('Content Security Policy')) {
           cspMessage = message;
@@ -1016,7 +1016,7 @@ export class Frame extends EventEmitter {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _waitForFunctionExpression<R>(expression: string, isFunction: boolean, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
+  async _waitForFunctionExpression<R>(expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
     if (typeof options.pollingInterval === 'number')
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
     const predicateBody = isFunction ? 'return (' + expression + ')(arg)' :  'return (' + expression + ')';
