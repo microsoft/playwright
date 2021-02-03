@@ -118,7 +118,7 @@ if node:
 
 ## async method: Accessibility.snapshot
 * langs: csharp, java
-- returns: <[null]|[Map]<[string], [any]>>
+- returns: <[null]|[string]>
 
 ### option: Accessibility.snapshot.interestingOnly
 - `interestingOnly` <[boolean]>
