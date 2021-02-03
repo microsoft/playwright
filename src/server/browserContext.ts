@@ -123,6 +123,7 @@ export abstract class BrowserContext extends EventEmitter {
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
+    this.setMaxListeners(0);
     this._browser = browser;
     this._options = options;
     this._browserContextId = browserContextId;

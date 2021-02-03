@@ -61,6 +61,7 @@ export abstract class Browser extends EventEmitter {
 
   constructor(options: BrowserOptions) {
     super();
+    this.setMaxListeners(0);
     this.options = options;
   }
 

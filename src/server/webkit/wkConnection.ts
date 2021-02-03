@@ -111,6 +111,7 @@ export class WKSession extends EventEmitter {
 
   constructor(connection: WKConnection, sessionId: string, errorText: string, rawSend: (message: any) => void) {
     super();
+    this.setMaxListeners(0);
     this.connection = connection;
     this.sessionId = sessionId;
     this._rawSend = rawSend;
