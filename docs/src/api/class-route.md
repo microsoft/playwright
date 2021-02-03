@@ -30,8 +30,9 @@ Optional error code. Defaults to `failed`, could be one of the following:
 
 ## async method: Route.continue
 * langs:
+  - alias-csharp: resume
   - alias-java: resume
-  - alias-python: resume
+  - alias-python: continue_
 
 Continues route's request with optional overrides.
 
