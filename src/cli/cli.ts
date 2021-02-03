@@ -129,6 +129,13 @@ program
     .command('install [browserType...]')
     .description('Ensure browsers necessary for this version of Playwright are installed')
     .action(function(browserType) {
+      const allBrowsers = new Set(['chromium', 'firefox', 'webkit']);
+      for (const type of browserType) {
+        if (!allBrowsers.has(type)) {
+          console.log(`Invalid browser name: '${type}'. Expecting 'chromium', 'firefox' or 'webkit'.`);
+          process.exit(1);
+        }
+      }
       installBrowsers(browserType.length ? browserType : undefined).catch((e: any) => {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
