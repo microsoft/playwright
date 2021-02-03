@@ -17,8 +17,7 @@ If request gets a 'redirect' response, the request is successfully finished with
 request is  issued to a redirected url.
 
 ## method: Request.failure
-- returns: <[null]|[Object]>
-  - `errorText` <[string]> Human-readable error message, e.g. `'net::ERR_FAILED'`.
+- returns: <[null]|[string]>
 
 The method returns `null` unless this request has failed, as reported by `requestfailed` event.
 

@@ -2,6 +2,11 @@
 * langs: js
 - returns: <[null]|[Error]>
 
+## method: Request.failure
+* langs: js
+- returns: <[null]|[Object]>
+  - `errorText` <[string]> Human-readable error message, e.g. `'net::ERR_FAILED'`.
+
 ### param: ElementHandle.evalOnSelector.expression = %%-js-evalonselector-pagefunction-%%
 ### param: ElementHandle.evalOnSelectorAll.expression = %%-js-evalonselectorall-pagefunction-%%
 ### param: Frame.evalOnSelector.expression = %%-js-evalonselector-pagefunction-%%

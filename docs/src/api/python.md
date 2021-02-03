@@ -81,10 +81,6 @@ Path to the JavaScript file. If `path` is a relative path, then it is resolved r
 
 Raw script content.
 
-## method: Request.failure
-* langs: python
-- returns: <[null]|[string]>
-
 ## async method: Page.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
