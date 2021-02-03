@@ -712,6 +712,10 @@ Whether to emulate network being offline for the browser context.
 
 Returns storage state for this browser context, contains current cookies and local storage snapshot.
 
+## async method: BrowserContext.storageState
+* langs: charp, java
+- returns: <[string]>
+
 ### option: BrowserContext.storageState.path
 - `path` <[path]>
 
