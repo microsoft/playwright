@@ -109,6 +109,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
 
   constructor(command: string, socket: net.Socket) {
     super();
+    this.setMaxListeners(0);
     this._command = command;
     this._socket = socket;
     this._connectPromise = new Promise(f => this._socket.on('connect', f));

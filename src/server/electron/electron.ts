@@ -65,6 +65,7 @@ export class ElectronApplication extends EventEmitter {
 
   constructor(browser: CRBrowser, nodeConnection: CRConnection) {
     super();
+    this.setMaxListeners(0);
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._browserContext.on(BrowserContext.Events.Close, () => {
       // Emit application closed after context closed.

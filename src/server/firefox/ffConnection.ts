@@ -49,6 +49,7 @@ export class FFConnection extends EventEmitter {
 
   constructor(transport: ConnectionTransport, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
     super();
+    this.setMaxListeners(0);
     this._transport = transport;
     this._protocolLogger = protocolLogger;
     this._browserLogsCollector = browserLogsCollector;
@@ -162,6 +163,7 @@ export class FFSession extends EventEmitter {
 
   constructor(connection: FFConnection, targetType: string, sessionId: string, rawSend: (message: any) => void) {
     super();
+    this.setMaxListeners(0);
     this._callbacks = new Map();
     this._connection = connection;
     this._targetType = targetType;

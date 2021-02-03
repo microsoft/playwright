@@ -508,6 +508,7 @@ export class Worker extends EventEmitter {
 
   constructor(url: string) {
     super();
+    this.setMaxListeners(0);
     this._url = url;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);

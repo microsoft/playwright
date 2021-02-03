@@ -28,11 +28,11 @@ import { DEFAULT_ARGS } from '../../chromium/chromium';
 const readFileAsync = util.promisify(fs.readFile);
 
 export class RecorderApp extends EventEmitter {
-
   private _page: Page;
 
   constructor(page: Page) {
     super();
+    this.setMaxListeners(0);
     this._page = page;
   }
 

@@ -355,6 +355,7 @@ export class WebSocket extends EventEmitter {
 
   constructor(url: string) {
     super();
+    this.setMaxListeners(0);
     this._url = url;
   }
 

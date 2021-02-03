@@ -119,6 +119,7 @@ export class AndroidDevice extends EventEmitter {
 
   constructor(android: Android, backend: DeviceBackend, model: string) {
     super();
+    this.setMaxListeners(0);
     this._android = android;
     this._backend = backend;
     this.model = model;
@@ -385,6 +386,7 @@ class AndroidBrowser extends EventEmitter {
 
   constructor(device: AndroidDevice, socket: SocketBackend) {
     super();
+    this.setMaxListeners(0);
     this.device = device;
     this._socket = socket;
     this._socket.on('close', () => {
