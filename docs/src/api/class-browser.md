@@ -132,7 +132,11 @@ page.goto("https://example.com")
 
 ### option: Browser.newContext.proxy = %%-context-option-proxy-%%
 
-### option: Browser.newContext.storageState = %%-context-option-storage-state-%%
+### option: Browser.newContext.storageState = %%-js-python-context-option-storage-state-%%
+
+### option: Browser.newContext.storageState = %%-csharp-java-context-option-storage-state-%%
+
+### option: Browser.newContext.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 
 ## async method: Browser.newPage
 - returns: <[Page]>
@@ -147,7 +151,11 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ### option: Browser.newPage.proxy = %%-context-option-proxy-%%
 
-### option: Browser.newPage.storageState = %%-context-option-storage-state-%%
+### option: Browser.newPage.storageState = %%-js-python-context-option-storage-state-%%
+
+### option: Browser.newPage.storageState = %%-csharp-java-context-option-storage-state-%%
+
+### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 
 ## method: Browser.version
 - returns: <[string]>

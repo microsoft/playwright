@@ -7431,7 +7431,7 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * Populates context with given storage state. This method can be used to initialize context with logged-in information
+     * Populates context with given storage state. This option can be used to initialize context with logged-in information
      * obtained via
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browsercontextstoragestateoptions).
      * Either a path to the file with saved storage, or an object with the following fields:
@@ -9506,7 +9506,7 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * Populates context with given storage state. This method can be used to initialize context with logged-in information
+   * Populates context with given storage state. This option can be used to initialize context with logged-in information
    * obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browsercontextstoragestateoptions).
    * Either a path to the file with saved storage, or an object with the following fields:

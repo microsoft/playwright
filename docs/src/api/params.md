@@ -143,7 +143,8 @@ Specify environment variables that will be visible to the browser. Defaults to `
 
 Specify environment variables that will be visible to the browser. Defaults to `process.env`.
 
-## context-option-storage-state
+## js-python-context-option-storage-state
+* langs: js, python
 - `storageState` <[path]|[Object]>
   - `cookies` <[Array]<[Object]>> Optional cookies to set for context
     - `name` <[string]>
@@ -161,8 +162,22 @@ Specify environment variables that will be visible to the browser. Defaults to `
       - `name` <[string]>
       - `value` <[string]>
 
-Populates context with given storage state. This method can be used to initialize context with logged-in information
+Populates context with given storage state. This option can be used to initialize context with logged-in information
 obtained via [`method: BrowserContext.storageState`]. Either a path to the file with saved storage, or an object with the following fields:
+
+## csharp-java-context-option-storage-state
+* langs: csharp, java
+- `storageState` <[string]>
+
+Populates context with given storage state. This option can be used to initialize context with logged-in information
+obtained via [`method: BrowserContext.storageState`].
+
+## csharp-java-context-option-storage-state-path
+* langs: csharp, java
+- `storageStatePath` <[path]>
+
+Populates context with given storage state. This option can be used to initialize context with logged-in information
+obtained via [`method: BrowserContext.storageState`]. Path to the file with saved storage state.
 
 ## context-option-acceptdownloads
 - `acceptDownloads` <[boolean]>
