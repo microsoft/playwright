@@ -23,8 +23,7 @@ export type NodeSnapshot =
   // Just node name.
   [ string ] |
   // Node name, attributes, child nodes.
-  // Unfortunately, we cannot make this type definition recursive, therefore "any".
-  [ string, { [attr: string]: string }, ...any ];
+  [ string, { [attr: string]: string }, ...NodeSnapshot[] ];
 
 export type SnapshotData = {
   doctype?: string,
@@ -54,7 +53,7 @@ export function frameSnapshotStreamer() {
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
-  const kCachedData = Symbol('__playwright_snapshot_cache_');
+  let cachedData = new WeakMap<any, CachedData>();
   type CachedData = {
     cached?: any[], // Cached values to determine whether the snapshot will be the same.
     ref?: [number, number], // Previous snapshotNumber and nodeIndex.
@@ -63,9 +62,9 @@ export function frameSnapshotStreamer() {
     cssRef?: number, // Previous snapshotNumber for overridden stylesheets.
   };
   function ensureCachedData(obj: any): CachedData {
-    if (!obj[kCachedData])
-      obj[kCachedData] = {};
-    return obj[kCachedData];
+    if (!cachedData.has(obj))
+      cachedData.set(obj, {});
+    return cachedData.get(obj)!;
   }
 
   function removeHash(url: string) {
@@ -184,7 +183,7 @@ export function frameSnapshotStreamer() {
         this._timer = undefined;
       }
       try {
-        const snapshot = this._captureSnapshot(snapshotId);
+        const snapshot = this.captureSnapshot(snapshotId);
         (window as any)[kSnapshotBinding](snapshot).catch((e: any) => {});
       } catch (e) {
       }
@@ -238,7 +237,10 @@ export function frameSnapshotStreamer() {
       }
     }
 
-    private _captureSnapshot(snapshotId?: string): SnapshotData {
+    captureSnapshot(snapshotId?: string, noCache = false): SnapshotData {
+      const oldCache = cachedData;
+      if (noCache)
+        cachedData = new WeakMap();
       const snapshotNumber = ++this._lastSnapshotNumber;
       let nodeCounter = 0;
       let shadowDomNesting = 0;
@@ -431,6 +433,7 @@ export function frameSnapshotStreamer() {
         result.resourceOverrides.push({ url, content });
       }
 
+      cachedData = oldCache;
       return result;
     }
   }

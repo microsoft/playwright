@@ -23,6 +23,7 @@ import { Frame } from '../server/frames';
 import { SnapshotData, frameSnapshotStreamer, kSnapshotBinding, kSnapshotStreamer } from './snapshotterInjected';
 import { calculateSha1 } from '../utils/utils';
 import { FrameSnapshot } from './traceTypes';
+import { serializeSnapshot } from './serializeSnapshot';
 
 export type SnapshotterResource = {
   pageId: string,
@@ -165,4 +166,32 @@ export class Snapshotter {
     if (body)
       this._delegate.onBlob({ sha1: responseSha1, buffer: body });
   }
+}
+
+export async function takeSnapshot(page: Page) {
+  const snapshotPromises = page.frames().map(async frame => {
+    const context = await frame._mainContext();
+    if (!await context.evaluateInternal(({kSnapshotStreamer}) => !!(window as any)[kSnapshotStreamer], {kSnapshotStreamer}))
+      await context.evaluateInternal('(' + frameSnapshotStreamer.toString() + ')()');
+    return await context.evaluateInternal(({ kSnapshotStreamer }) => {
+      return (window as any)[kSnapshotStreamer].captureSnapshot(undefined, true) as SnapshotData;
+    }, { kSnapshotStreamer });
+  });
+
+  const snapshotData = await Promise.all(snapshotPromises);
+
+  const html = serializeSnapshot(page.frames().map((frame, index) => {
+    const snapshot = snapshotData[index];
+    return {
+      contextId: '<unimplemented>',
+      frameId: '<unimplemented>',
+      frameUrl: '<unimplemented>',
+      pageId: '<unimplemented>',
+      snapshot,
+      timestamp: 0,
+      type: 'snapshot',
+      snapshotId: snapshot.snapshotId,
+    };
+  }), 0);
+  return html;
 }

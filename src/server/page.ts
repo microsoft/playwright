@@ -32,6 +32,7 @@ import { ProgressController, runAbortableTask } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
+import { takeSnapshot } from '../trace/snapshotter';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -413,6 +414,15 @@ export class Page extends EventEmitter {
       return;
     }
     route.continue();
+  }
+
+  async snapshot() {
+    return takeSnapshot(this);
+  }
+
+  async loadSnapshot(snapshot: string) {
+    const controller = new ProgressController();
+    await this.mainFrame().setContent(controller, snapshot);
   }
 
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
