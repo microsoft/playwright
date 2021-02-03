@@ -116,6 +116,10 @@ if node:
     print(node["name"])
 ```
 
+## async method: Accessibility.snapshot
+* langs: csharp, java
+- returns: <[null]|[Map]<[string], [any]>>
+
 ### option: Accessibility.snapshot.interestingOnly
 - `interestingOnly` <[boolean]>
 
