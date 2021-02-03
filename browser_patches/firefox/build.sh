@@ -78,7 +78,12 @@ OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 
 if [[ $1 == "--full" ]]; then
-  SHELL=/bin/sh ./mach bootstrap --application-choice=browser --no-interactive --no-system-changes
+  if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
+    ./mach artifact toolchain --from-build macosx64-node
+    mv node "$HOME/.mozbuild"
+  elif [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
+    SHELL=/bin/sh ./mach bootstrap --application-choice=browser --no-interactive --no-system-changes
+  fi
 fi
 
 if ! [[ -f "$HOME/.mozbuild/_virtualenvs/mach/bin/python" ]]; then
