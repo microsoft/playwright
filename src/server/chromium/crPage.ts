@@ -445,8 +445,9 @@ class FrameSession {
       }),
       this._networkManager.initialize(),
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
-      this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }),
     ];
+    if (this._isMainFrame())
+      promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
     const options = this._crPage._browserContext._options;
     if (options.bypassCSP)
       promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
