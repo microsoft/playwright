@@ -284,6 +284,7 @@ async function launchContext(options: Options, headless: boolean): Promise<{ bro
   }
 
   context.on('page', page => {
+    page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.
     page.on('close', () => {
       const hasPage = browser.contexts().some(context => context.pages().length > 0);
       if (hasPage)
