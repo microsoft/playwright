@@ -31,7 +31,7 @@ Optional error code. Defaults to `failed`, could be one of the following:
 ## async method: Route.continue
 * langs:
   - alias-java: resume
-  - alias-python: continue_
+  - alias-python: resume
 
 Continues route's request with optional overrides.
 
