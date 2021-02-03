@@ -64,6 +64,7 @@ Request's post body, if any.
 Request's post body in a binary form, if any.
 
 ## method: Request.postDataJSON
+* langs: js, python
 - returns: <[null]|[any]>
 
 Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
