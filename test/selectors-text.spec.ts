@@ -34,13 +34,13 @@ it('should work', async ({page}) => {
   expect(await page.$eval(`text=/^\\s*heLLo/i`, e => e.outerHTML)).toBe('<div> hello world! </div>');
 
   await page.setContent(`<div>yo<div>ya</div>hey<div>hey</div></div>`);
-  expect(await page.$eval(`text=hey`, e => e.outerHTML)).toBe('<div>yo<div>ya</div>hey<div>hey</div></div>');
-  expect(await page.$eval(`text="yo">>text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
-  expect(await page.$eval(`text='yo'>> text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
-  expect(await page.$eval(`text="yo" >>text='ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
-  expect(await page.$eval(`text='yo' >> text='ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
-  expect(await page.$eval(`'yo'>>"ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
-  expect(await page.$eval(`"yo" >> 'ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`text=hey`, e => e.outerHTML)).toBe('<div>hey</div>');
+  expect(await page.$eval(`text=yo>>text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`text=yo>> text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`text=yo >>text='ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`text=yo >> text='ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`'yoyaheyhey'>>"ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`"yoyaheyhey" >> 'ya'`, e => e.outerHTML)).toBe('<div>ya</div>');
 
   await page.setContent(`<div>yo<span id="s1"></span></div><div>yo<span id="s2"></span><span id="s3"></span></div>`);
   expect(await page.$$eval(`text=yo`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div>yo<span id="s1"></span></div>\n<div>yo<span id="s2"></span><span id="s3"></span></div>');
@@ -78,10 +78,12 @@ it('should work', async ({page}) => {
   await page.setContent(`<div>a<br>b</div><div>a</div>`);
   expect(await page.$eval(`text=a`, e => e.outerHTML)).toBe('<div>a<br>b</div>');
   expect(await page.$eval(`text=b`, e => e.outerHTML)).toBe('<div>a<br>b</div>');
-  expect(await page.$(`text=ab`)).toBe(null);
+  expect(await page.$eval(`text=ab`, e => e.outerHTML)).toBe('<div>a<br>b</div>');
+  expect(await page.$(`text=abc`)).toBe(null);
   expect(await page.$$eval(`text=a`, els => els.length)).toBe(2);
   expect(await page.$$eval(`text=b`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`text=ab`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`text=ab`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`text=abc`, els => els.length)).toBe(0);
 
   await page.setContent(`<div></div><span></span>`);
   await page.$eval('div', div => {
@@ -127,6 +129,64 @@ it('should work with :text', async ({page}) => {
   expect(error2.message).toContain(`"text" engine expects a single string`);
 });
 
+it('should work across nodes', async ({page}) => {
+  await page.setContent(`<div id=target1>Hello<i>,</i> <span id=target2>world</span><b>!</b></div>`);
+
+  expect(await page.$eval(`:text("Hello, world!")`, e => e.id)).toBe('target1');
+  expect(await page.$eval(`:text("Hello")`, e => e.id)).toBe('target1');
+  expect(await page.$eval(`:text("world")`, e => e.id)).toBe('target2');
+  expect(await page.$$eval(`:text("world")`, els => els.length)).toBe(1);
+  expect(await page.$(`:text("hello world")`)).toBe(null);
+  expect(await page.$(`div:text("world")`)).toBe(null);
+  expect(await page.$eval(`text=Hello, world!`, e => e.id)).toBe('target1');
+  expect(await page.$eval(`text=Hello`, e => e.id)).toBe('target1');
+  expect(await page.$eval(`text=world`, e => e.id)).toBe('target2');
+  expect(await page.$$eval(`text=world`, els => els.length)).toBe(1);
+  expect(await page.$(`text=hello world`)).toBe(null);
+
+  expect(await page.$eval(`:text-is("Hello, world!")`, e => e.id)).toBe('target1');
+  expect(await page.$(`:text-is("Hello")`)).toBe(null);
+  expect(await page.$eval(`:text-is("world")`, e => e.id)).toBe('target2');
+  expect(await page.$$eval(`:text-is("world")`, els => els.length)).toBe(1);
+  expect(await page.$eval(`text="Hello, world!"`, e => e.id)).toBe('target1');
+  expect(await page.$(`text="Hello"`)).toBe(null);
+  expect(await page.$eval(`text="world"`, e => e.id)).toBe('target2');
+  expect(await page.$$eval(`text="world"`, els => els.length)).toBe(1);
+
+  expect(await page.$eval(`:text-matches(".*")`, e => e.nodeName)).toBe('I');
+  expect(await page.$eval(`:text-matches("world?")`, e => e.id)).toBe('target2');
+  expect(await page.$$eval(`:text-matches("world")`, els => els.length)).toBe(1);
+  expect(await page.$(`div:text(".*")`)).toBe(null);
+  expect(await page.$eval(`text=/.*/`, e => e.nodeName)).toBe('I');
+  expect(await page.$eval(`text=/world?/`, e => e.id)).toBe('target2');
+  expect(await page.$$eval(`text=/world/`, els => els.length)).toBe(1);
+});
+
+it('should clear caches', async ({page}) => {
+  await page.setContent(`<div id=target1>text</div><div id=target2>text</div>`);
+  const div = await page.$('#target1');
+
+  await div.evaluate(div => div.textContent = 'text');
+  expect(await page.$eval(`text=text`, e => e.id)).toBe('target1');
+  await div.evaluate(div => div.textContent = 'foo');
+  expect(await page.$eval(`text=text`, e => e.id)).toBe('target2');
+
+  await div.evaluate(div => div.textContent = 'text');
+  expect(await page.$eval(`:text("text")`, e => e.id)).toBe('target1');
+  await div.evaluate(div => div.textContent = 'foo');
+  expect(await page.$eval(`:text("text")`, e => e.id)).toBe('target2');
+
+  await div.evaluate(div => div.textContent = 'text');
+  expect(await page.$$eval(`text=text`, els => els.length)).toBe(2);
+  await div.evaluate(div => div.textContent = 'foo');
+  expect(await page.$$eval(`text=text`, els => els.length)).toBe(1);
+
+  await div.evaluate(div => div.textContent = 'text');
+  expect(await page.$$eval(`:text("text")`, els => els.length)).toBe(2);
+  await div.evaluate(div => div.textContent = 'foo');
+  expect(await page.$$eval(`:text("text")`, els => els.length)).toBe(1);
+});
+
 it('should work with :has-text', async ({page}) => {
   await page.setContent(`
     <input id=input2>
@@ -154,7 +214,7 @@ it('should work with :has-text', async ({page}) => {
   expect(error2.message).toContain(`"has-text" engine expects a single string`);
 });
 
-it(':text and :has-text should work with large DOM', async ({page}) => {
+it('should work with large DOM', async ({page}) => {
   await page.evaluate(() => {
     let id = 0;
     const next = (tag: string) => {
@@ -185,6 +245,10 @@ it(':text and :has-text should work with large DOM', async ({page}) => {
     ':text("id18")',
     ':text("id12345")',
     ':text("id")',
+    ':text-matches("id12345", "i")',
+    'text=id18',
+    'text=id12345',
+    'text=id',
     '#id18',
     '#id12345',
     '*',
