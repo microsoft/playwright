@@ -50,7 +50,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     });
   }
 
-  async evaluateExpressionInternal(expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+  async evaluateExpressionInternal(expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, ...args);
     });
@@ -64,7 +64,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     });
   }
 
-  async evaluateExpressionHandleInternal(expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+  async evaluateExpressionHandleInternal(expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, ...args);
     });
@@ -628,7 +628,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page.selectors._queryAll(this._context.frame, selector, this, true /* adoptToMain */);
   }
 
-  async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
+  async _$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const handle = await this._page.selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -637,7 +637,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
+  async _$$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this._context.frame, selector, this);
     const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();

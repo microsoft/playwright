@@ -503,7 +503,7 @@ export class Worker extends EventEmitter {
 
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
-  private _executionContextCallback: (value?: js.ExecutionContext) => void;
+  private _executionContextCallback: (value: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
 
   constructor(url: string) {
@@ -522,11 +522,11 @@ export class Worker extends EventEmitter {
     return this._url;
   }
 
-  async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
+  async _evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     return js.evaluateExpression(await this._executionContextPromise, true /* returnByValue */, expression, isFunction, arg);
   }
 
-  async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any): Promise<any> {
+  async _evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     return js.evaluateExpression(await this._executionContextPromise, false /* returnByValue */, expression, isFunction, arg);
   }
 }

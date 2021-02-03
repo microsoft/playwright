@@ -16,7 +16,6 @@
 
 import * as dom from './dom';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
-import * as sourceMap from '../utils/sourceMap';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
 import type UtilityScript from './injected/utilityScript';
 
@@ -114,7 +113,7 @@ export class JSHandle<T = any> {
     return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
-  async _evaluateExpression(expression: string, isFunction: boolean, returnByValue: boolean, arg: any) {
+  async _evaluateExpression(expression: string, isFunction: boolean | undefined, returnByValue: boolean, arg: any) {
     const value = await evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);
     await this._context.doSlowMo();
     return value;
@@ -174,28 +173,25 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
   return evaluateExpression(context, returnByValue, String(pageFunction), typeof pageFunction === 'function', ...args);
 }
 
-export async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
+export async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
   const utilityScript = await context.utilityScript();
-  if (!isFunction) {
-    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
-    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, expression], []);
-  }
 
-  let functionText = expression;
-  try {
-    new Function('(' + functionText + ')');
-  } catch (e1) {
-    // This means we might have a function shorthand. Try another
-    // time prefixing 'function '.
-    if (functionText.startsWith('async '))
-      functionText = 'async function ' + functionText.substring('async '.length);
-    else
-      functionText = 'function ' + functionText;
+  if (isFunction) {
     try {
-      new Function('(' + functionText  + ')');
-    } catch (e2) {
-      // We tried hard to serialize, but there's a weird beast here.
-      throw new Error('Passed function is not well-serializable!');
+      new Function('(' + expression + ')');
+    } catch (e1) {
+      // This means we might have a function shorthand. Try another
+      // time prefixing 'function '.
+      if (expression.startsWith('async '))
+        expression = 'async function ' + expression.substring('async '.length);
+      else
+        expression = 'function ' + expression;
+      try {
+        new Function('(' + expression  + ')');
+      } catch (e2) {
+        // We tried hard to serialize, but there's a weird beast here.
+        throw new Error('Passed function is not well-serializable!');
+      }
     }
   }
 
@@ -228,11 +224,10 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
     utilityScriptObjectIds.push(handle._objectId!);
   }
 
-  functionText += await sourceMap.generateSourceMapUrl(expression, functionText);
   // See UtilityScript for arguments.
-  const utilityScriptValues = [returnByValue, functionText, args.length, ...args];
+  const utilityScriptValues = [isFunction, returnByValue, expression, args.length, ...args];
 
-  const script = `(utilityScript, ...args) => utilityScript.callFunction(...args)`;
+  const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
   try {
     return await context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
   } finally {

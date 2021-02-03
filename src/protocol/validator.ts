@@ -488,13 +488,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameEvalOnSelectorParams = tObject({
     selector: tString,
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.FrameEvalOnSelectorAllParams = tObject({
     selector: tString,
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.FrameAddScriptTagParams = tObject({
@@ -542,13 +542,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameEvaluateExpressionParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
     world: tOptional(tEnum(['main', 'utility'])),
   });
   scheme.FrameEvaluateExpressionHandleParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
     world: tOptional(tEnum(['main', 'utility'])),
   });
@@ -680,7 +680,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameWaitForFunctionParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
     timeout: tOptional(tNumber),
     pollingInterval: tOptional(tNumber),
@@ -692,25 +692,25 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.WorkerEvaluateExpressionParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.WorkerEvaluateExpressionHandleParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.JSHandleDisposeParams = tOptional(tObject({}));
   scheme.ElementHandleDisposeParams = tType('JSHandleDisposeParams');
   scheme.JSHandleEvaluateExpressionParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.ElementHandleEvaluateExpressionParams = tType('JSHandleEvaluateExpressionParams');
   scheme.JSHandleEvaluateExpressionHandleParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.ElementHandleEvaluateExpressionHandleParams = tType('JSHandleEvaluateExpressionHandleParams');
@@ -725,13 +725,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElementHandleEvalOnSelectorParams = tObject({
     selector: tString,
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.ElementHandleEvalOnSelectorAllParams = tObject({
     selector: tString,
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.ElementHandleBoundingBoxParams = tOptional(tObject({}));
@@ -923,12 +923,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElectronApplicationEvaluateExpressionParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.ElectronApplicationEvaluateExpressionHandleParams = tObject({
     expression: tString,
-    isFunction: tBoolean,
+    isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
   });
   scheme.ElectronApplicationCloseParams = tOptional(tObject({}));

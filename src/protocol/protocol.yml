@@ -1050,7 +1050,7 @@ Frame:
       parameters:
         selector: string
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -1059,7 +1059,7 @@ Frame:
       parameters:
         selector: string
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -1149,7 +1149,7 @@ Frame:
     evaluateExpression:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?  
         arg: SerializedArgument
         world:
           type: enum?
@@ -1162,7 +1162,7 @@ Frame:
     evaluateExpressionHandle:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
         world:
           type: enum?
@@ -1396,7 +1396,7 @@ Frame:
     waitForFunction:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
         timeout: number?
         # When present, polls on interval. Otherwise, polls on raf.
@@ -1458,7 +1458,7 @@ Worker:
     evaluateExpression:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -1466,7 +1466,7 @@ Worker:
     evaluateExpressionHandle:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         handle: JSHandle
@@ -1489,7 +1489,7 @@ JSHandle:
     evaluateExpression:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -1497,7 +1497,7 @@ JSHandle:
     evaluateExpressionHandle:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         handle: JSHandle
@@ -1541,7 +1541,7 @@ ElementHandle:
       parameters:
         selector: string
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -1550,7 +1550,7 @@ ElementHandle:
       parameters:
         selector: string
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -2113,7 +2113,7 @@ ElectronApplication:
     evaluateExpression:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -2121,7 +2121,7 @@ ElectronApplication:
     evaluateExpressionHandle:
       parameters:
         expression: string
-        isFunction: boolean
+        isFunction: boolean?
         arg: SerializedArgument
       returns:
         handle: JSHandle
