@@ -266,20 +266,3 @@ Will throw an error if the socket is closed before the `event` is fired.
 ### param: WebSocket.waitForEvent2.event = %%-wait-for-event-event-%%
 ### option: WebSocket.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
 ### option: WebSocket.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
-
-### param: ElementHandle.evalOnSelector.foce_expression = %%-python-evaluate-force-expression-%%
-### param: ElementHandle.evalOnSelectorAll.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Frame.evalOnSelector.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Frame.evalOnSelectorAll.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Frame.evaluate.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Frame.evaluateHandle.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Frame.waitForFunction.foce_expression = %%-python-evaluate-force-expression-%%
-### param: JSHandle.evaluate.foce_expression = %%-python-evaluate-force-expression-%%
-### param: JSHandle.evaluateHandle.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Page.evalOnSelector.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Page.evalOnSelectorAll.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Page.evaluate.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Page.evaluateHandle.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Page.waitForFunction.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Worker.evaluate.foce_expression = %%-python-evaluate-force-expression-%%
-### param: Worker.evaluateHandle.foce_expression = %%-python-evaluate-force-expression-%%
