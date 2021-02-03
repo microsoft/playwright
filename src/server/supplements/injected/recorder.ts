@@ -198,7 +198,8 @@ export class Recorder {
       }, true),
     ];
     document.documentElement.appendChild(this._outerGlassPaneElement);
-    document.documentElement.appendChild(this._outerToolbarElement);
+    if (window.top === window)
+      document.documentElement.appendChild(this._outerToolbarElement);
   }
 
   private _toggleRecording() {
