@@ -77,6 +77,10 @@ fi
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 
+if [[ $1 == "--full" ]]; then
+  SHELL=/bin/sh ./mach bootstrap --application-choice=browser --no-interactive --no-system-changes
+fi
+
 if ! [[ -f "$HOME/.mozbuild/_virtualenvs/mach/bin/python" ]]; then
   ./mach create-mach-environment
 fi
