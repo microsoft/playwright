@@ -9,7 +9,7 @@ Playwright can interact with the web page dialogs such as [`alert`](https://deve
 
 ## alert(), confirm(), prompt() dialogs
 
-You can register a dialog handler before the action that triggers the dialog to accept or decline it.
+By default, dialogs are auto-dismissed by Playwright, so you don't have to handle them. However, you can register a dialog handler before the action that triggers the dialog to accept or decline it.
 
 ```js
 page.on('dialog', dialog => dialog.accept());
@@ -27,7 +27,7 @@ page.click("button")
 ```
 
 :::note
-If your action, be it [`method: Page.click`], [`method: Page.evaluate`] or any other, results in a dialog, the action will stall until the dialog is handled. That's because dialogs in Web are modal and block further page execution until they are handled.
+[`event: Page.dialog`] listener **must handle** the dialog. Otherwise your action will stall, be it [`method: Page.click`], [`method: Page.evaluate`] or any other. That's because dialogs in Web are modal and block further page execution until they are handled.
 :::
 
 As a result, following snippet will never resolve:
@@ -37,23 +37,23 @@ WRONG!
 :::
 
 ```js
+page.on('dialog', dialog => console.log(dialog.message()));
 await page.click('button'); // Will hang here
-page.on('dialog', dialog => dialog.accept())
 ```
 
-:::warn
-WRONG!
-:::
-
 ```python async
+page.on("dialog", lambda dialog: print(dialog.message))
 await page.click("button") # Will hang here
-page.on("dialog", lambda dialog: dialog.accept())
 ```
 
 ```python sync
+page.on("dialog", lambda dialog: print(dialog.message))
 page.click("button") # Will hang here
-page.on("dialog", lambda dialog: dialog.accept())
 ```
+
+:::note
+If there is no listener for [`event: Page.dialog`], all dialogs are automatically dismissed.
+:::
 
 ### API reference
 

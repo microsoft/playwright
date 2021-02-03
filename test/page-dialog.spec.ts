@@ -62,9 +62,7 @@ it('should dismiss the confirm prompt', async ({page}) => {
   expect(result).toBe(false);
 });
 
-it('should be able to close context with open alert', (test, { browserName, platform }) => {
-  test.fixme(browserName === 'webkit' && platform === 'darwin');
-}, async ({context}) => {
+it('should be able to close context with open alert', async ({context}) => {
   const page = await context.newPage();
   const alertPromise = page.waitForEvent('dialog');
   await page.evaluate(() => {
@@ -101,4 +99,15 @@ it('should handle multiple confirms', async ({page}) => {
     </script>
   `);
   expect(await page.textContent('p')).toBe('Hello World');
+});
+
+it('should auto-dismiss the prompt without listeners', async ({page}) => {
+  const result = await page.evaluate(() => prompt('question?'));
+  expect(result).toBe(null);
+});
+
+it('should auto-dismiss the alert without listeners', async ({page}) => {
+  await page.setContent(`<div onclick="window.alert(123); window._clicked=true">Click me</div>`);
+  await page.click('div');
+  expect(await page.evaluate('window._clicked')).toBe(true);
 });

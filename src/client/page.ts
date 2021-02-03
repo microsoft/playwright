@@ -116,7 +116,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('close', () => this._onClose());
     this._channel.on('console', ({ message }) => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('crash', () => this._onCrash());
-    this._channel.on('dialog', ({ dialog }) => this.emit(Events.Page.Dialog, Dialog.from(dialog)));
+    this._channel.on('dialog', ({ dialog }) => {
+      if (!this.emit(Events.Page.Dialog, Dialog.from(dialog)))
+        dialog.dismiss().catch(() => {});
+    });
     this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded, this));
     this._channel.on('download', ({ download }) => this.emit(Events.Page.Download, Download.from(download)));
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));

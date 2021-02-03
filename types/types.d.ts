@@ -411,9 +411,14 @@ export interface Page {
   on(event: 'crash', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-   * to the dialog via [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) methods.
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) the dialog - otherwise the page will
+   * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
+   * actions like click will never finish.
+   * 
+   * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) listeners are present, all
+   * dialogs are automatically dismissed.
    */
   on(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -580,9 +585,14 @@ export interface Page {
   once(event: 'crash', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-   * to the dialog via [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) methods.
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) the dialog - otherwise the page will
+   * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
+   * actions like click will never finish.
+   * 
+   * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) listeners are present, all
+   * dialogs are automatically dismissed.
    */
   once(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -749,9 +759,14 @@ export interface Page {
   addListener(event: 'crash', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-   * to the dialog via [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) methods.
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) the dialog - otherwise the page will
+   * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
+   * actions like click will never finish.
+   * 
+   * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) listeners are present, all
+   * dialogs are automatically dismissed.
    */
   addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -918,9 +933,14 @@ export interface Page {
   removeListener(event: 'crash', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-   * to the dialog via [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) methods.
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) the dialog - otherwise the page will
+   * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
+   * actions like click will never finish.
+   * 
+   * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) listeners are present, all
+   * dialogs are automatically dismissed.
    */
   removeListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -1087,9 +1107,14 @@ export interface Page {
   off(event: 'crash', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-   * to the dialog via [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) methods.
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) the dialog - otherwise the page will
+   * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
+   * actions like click will never finish.
+   * 
+   * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) listeners are present, all
+   * dialogs are automatically dismissed.
    */
   off(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -2856,9 +2881,14 @@ export interface Page {
   waitForEvent(event: 'crash', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
   /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-   * to the dialog via [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) methods.
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) the dialog - otherwise the page will
+   * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
+   * actions like click will never finish.
+   * 
+   * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) listeners are present, all
+   * dialogs are automatically dismissed.
    */
   waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean, timeout?: number } | ((dialog: Dialog) => boolean)): Promise<Dialog>;
 
@@ -8074,6 +8104,12 @@ export interface ConsoleMessage {
  * })();
  * ```
  * 
+ * > NOTE: Dialogs are dismissed automatically, unless there is a
+ * [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) listener. When listener is present, it
+ * **must** either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialogacceptprompttext) or
+ * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialogdismiss) the dialog - otherwise the page will
+ * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
+ * actions like click will never finish.
  */
 export interface Dialog {
   /**

@@ -171,8 +171,11 @@ except Error as e:
 ## event: Page.dialog
 - type: <[Dialog]>
 
-Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-to the dialog via [`method: Dialog.accept`] or [`method: Dialog.dismiss`] methods.
+Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and actions like click will never finish.
+
+:::note
+When no [`event: Page.dialog`] listeners are present, all dialogs are automatically dismissed.
+:::
 
 ## event: Page.domcontentloaded
 - type: <[Page]>
@@ -808,7 +811,7 @@ If the function passed to the [`method: Page.evaluate`] returns a [Promise], the
 for the promise to resolve and return its value.
 
 If the function passed to the [`method: Page.evaluate`] returns a non-[Serializable] value, then
-[`method: Page.evaluate`] resolves to `undefined`. Playwright also supports transferring some 
+[`method: Page.evaluate`] resolves to `undefined`. Playwright also supports transferring some
 additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
 
 Passing argument to [`param: expression`]:
