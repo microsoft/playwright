@@ -558,7 +558,6 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
-  consoleSupplementExpose(params?: BrowserContextConsoleSupplementExposeParams, metadata?: Metadata): Promise<BrowserContextConsoleSupplementExposeResult>;
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
@@ -709,14 +708,12 @@ export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
 };
-export type BrowserContextConsoleSupplementExposeParams = {};
-export type BrowserContextConsoleSupplementExposeOptions = {};
-export type BrowserContextConsoleSupplementExposeResult = void;
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
 export type BrowserContextRecorderSupplementEnableParams = {
   language: string,
+  startRecording?: boolean,
   launchOptions?: any,
   contextOptions?: any,
   device?: string,
@@ -725,6 +722,7 @@ export type BrowserContextRecorderSupplementEnableParams = {
   outputFile?: string,
 };
 export type BrowserContextRecorderSupplementEnableOptions = {
+  startRecording?: boolean,
   launchOptions?: any,
   contextOptions?: any,
   device?: string,

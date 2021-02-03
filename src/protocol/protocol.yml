@@ -601,9 +601,6 @@ BrowserContext:
           type: array
           items: OriginStorage
 
-    consoleSupplementExpose:
-      experimental: True
-
     pause:
       experimental: True
 
@@ -611,6 +608,7 @@ BrowserContext:
       experimental: True
       parameters:
         language: string
+        startRecording: boolean?
         launchOptions: json?
         contextOptions: json?
         device: string?

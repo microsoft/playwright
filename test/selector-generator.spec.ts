@@ -19,7 +19,7 @@ import type { Page, Frame } from '..';
 
 const fixtures = folio.extend();
 fixtures.context.override(async ({ context }, run) => {
-  await (context as any)._enableConsoleApi();
+  await (context as any)._enableRecorder({ language: 'javascript' });
   await run(context);
 });
 const { describe, it, expect } = fixtures.build();

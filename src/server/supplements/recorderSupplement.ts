@@ -47,27 +47,27 @@ export class RecorderSupplement {
   private _resumeCallback: (() => void) | null = null;
   private _recorderUIState: UIState;
   private _paused = false;
-  private _app: App;
   private _output: OutputMultiplexer;
   private _bufferedOutput: BufferedOutput;
   private _recorderApp: Promise<RecorderApp> | null = null;
   private _highlighterType: string;
+  private _params: channels.BrowserContextRecorderSupplementEnableParams;
 
-  static getOrCreate(context: BrowserContext, app: App, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<RecorderSupplement> {
+  static getOrCreate(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<RecorderSupplement> {
     let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
     if (!recorderPromise) {
-      const recorder = new RecorderSupplement(context, app, params);
+      const recorder = new RecorderSupplement(context, params);
       recorderPromise = recorder.install().then(() => recorder);
       (context as any)[symbol] = recorderPromise;
     }
     return recorderPromise;
   }
 
-  constructor(context: BrowserContext, app: App, params: channels.BrowserContextRecorderSupplementEnableParams) {
+  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
     this._context = context;
-    this._app = app;
+    this._params = params;
     this._recorderUIState = {
-      mode: app === 'codegen' ? 'recording' : 'none',
+      mode: params.startRecording ? 'recording' : 'none',
     };
     let languageGenerator: LanguageGenerator;
     switch (params.language) {
@@ -97,10 +97,10 @@ export class RecorderSupplement {
     if (params.outputFile)
       outputs.push(new FileOutput(params.outputFile));
     this._output = new OutputMultiplexer(outputs);
-    this._output.setEnabled(app === 'codegen');
+    this._output.setEnabled(!!params.startRecording);
     context.on(BrowserContext.Events.BeforeClose, () => this._output.flush());
 
-    const generator = new CodeGenerator(context._browser.options.name, app === 'codegen', params.launchOptions || {}, params.contextOptions || {}, this._output, languageGenerator, params.device, params.saveStorage);
+    const generator = new CodeGenerator(context._browser.options.name, !!params.startRecording, params.launchOptions || {}, params.contextOptions || {}, this._output, languageGenerator, params.device, params.saveStorage);
     this._generator = generator;
   }
 
@@ -117,18 +117,18 @@ export class RecorderSupplement {
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
-    await this._context.exposeBinding('playwrightRecorderPerformAction', false,
+    await this._context.exposeBinding('_playwrightRecorderPerformAction', false,
         (source: BindingSource, action: actions.Action) => this._performAction(source.frame, action));
 
     // Other non-essential actions are simply being recorded.
-    await this._context.exposeBinding('playwrightRecorderRecordAction', false,
+    await this._context.exposeBinding('_playwrightRecorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
     // Commits last action so that no further signals are added to it.
-    await this._context.exposeBinding('playwrightRecorderCommitAction', false,
+    await this._context.exposeBinding('_playwrightRecorderCommitAction', false,
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
-    await this._context.exposeBinding('playwrightRecorderShowRecorderPage', false, ({ page }) => {
+    await this._context.exposeBinding('_playwrightRecorderShowRecorderPage', false, ({ page }) => {
       if (this._recorderApp) {
         this._recorderApp.then(p => p.bringToFront()).catch(() => {});
         return;
@@ -143,25 +143,24 @@ export class RecorderSupplement {
       }).catch(e => console.error(e));
     });
 
-    await this._context.exposeBinding('playwrightRecorderPrintSelector', false, (_, text) => {
+    await this._context.exposeBinding('_playwrightRecorderPrintSelector', false, (_, text) => {
       this._context.emit(BrowserContext.Events.StdOut, `Selector: \x1b[38;5;130m${text}\x1b[0m\n`);
     });
 
-    await this._context.exposeBinding('playwrightRecorderState', false, () => {
+    await this._context.exposeBinding('_playwrightRecorderState', false, () => {
       const state: State = {
         uiState: this._recorderUIState,
-        canResume: this._app === 'pause',
         isPaused: this._paused,
       };
       return state;
     });
 
-    await this._context.exposeBinding('playwrightRecorderSetUIState', false, (source, state: UIState) => {
+    await this._context.exposeBinding('_playwrightRecorderSetUIState', false, (source, state: UIState) => {
       this._recorderUIState = { ...this._recorderUIState, ...state };
       this._output.setEnabled(state.mode === 'recording');
     });
 
-    await this._context.exposeBinding('playwrightRecorderResume', false, () => {
+    await this._context.exposeBinding('_playwrightResume', false, () => {
       if (this._resumeCallback) {
         this._resumeCallback();
         this._resumeCallback = null;
@@ -222,7 +221,7 @@ export class RecorderSupplement {
   private _clearScript(): void {
     this._bufferedOutput.clear();
     this._generator.restart();
-    if (this._app === 'codegen') {
+    if (!!this._params.startRecording) {
       for (const page of this._context.pages())
         this._onFrameNavigated(page.mainFrame(), page);
     }

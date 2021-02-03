@@ -61,7 +61,7 @@ export class RecorderApp extends EventEmitter {
       await route.continue();
     });
 
-    await this._page.exposeBinding('playwrightClear', false, (_, text: string) => {
+    await this._page.exposeBinding('_playwrightClear', false, (_, text: string) => {
       this.emit('clear');
     });
 
@@ -103,7 +103,7 @@ export class RecorderApp extends EventEmitter {
 
   async setScript(text: string, language: string): Promise<void> {
     await this._page.mainFrame()._evaluateExpression(((param: { text: string, language: string }) => {
-      (window as any).playwrightSetSource(param);
+      (window as any)._playwrightSetSource(param);
     }).toString(), true, { text, language }, 'main');
   }
 

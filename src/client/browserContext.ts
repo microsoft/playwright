@@ -276,16 +276,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _enableConsoleApi() {
-    await this._channel.consoleSupplementExpose();
-  }
-
   async _enableRecorder(params: {
       language: string,
       launchOptions?: LaunchOptions,
       contextOptions?: BrowserContextOptions,
       device?: string,
       saveStorage?: string,
+      startRecording?: boolean,
       terminal?: boolean,
       outputFile?: string
   }) {

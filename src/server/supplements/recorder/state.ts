@@ -23,7 +23,6 @@ export type SetUIState = {
 }
 
 export type State = {
-  canResume: boolean,
   isPaused: boolean,
   uiState: UIState,
 }

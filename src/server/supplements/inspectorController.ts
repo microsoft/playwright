@@ -16,16 +16,13 @@
 
 import { BrowserContext, ContextListener } from '../browserContext';
 import { isDebugMode } from '../../utils/utils';
-import { ConsoleApiSupplement } from './consoleApiSupplement';
 import { RecorderSupplement } from './recorderSupplement';
 
 export class InspectorController implements ContextListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode()) {
-      const consoleApi = new ConsoleApiSupplement(context);
-      await consoleApi.install();
-      RecorderSupplement.getOrCreate(context, 'debug', {
-        language: 'javascript',
+      RecorderSupplement.getOrCreate(context, {
+        language: process.env.PW_CLI_TARGET_LANG || 'javascript',
         terminal: true,
       });
     }

@@ -2081,6 +2081,18 @@ export interface Page {
   opener(): Promise<null|Page>;
 
   /**
+   * Pauses script execution. Playwright will stop executing the script and wait for the user to either press 'Resume' button
+   * in the page overlay or to call `playwright.resume()` in the DevTools console.
+   * 
+   * User can inspect selectors or perform manual steps while paused. Resume will continue running the original script from
+   * the place it was paused.
+   * 
+   * > NOTE: This method requires Playwright to be started in a headed mode, with a falsy [`options: headless`] value in the
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browsertypelaunchoptions).
+   */
+  pause(): Promise<void>;
+
+  /**
    * Returns the PDF buffer.
    * 
    * > NOTE: Generating a pdf is currently only supported in Chromium headless.
