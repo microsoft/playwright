@@ -6186,6 +6186,18 @@ index 8e70507d5fced0979c53affd02f0faeee0dd3bf1..cfb118bb1c8368ed08838dfc7e86d612
  #endif
  
  #if PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebCore/platform/graphics/ColorSpace.h b/Source/WebCore/platform/graphics/ColorSpace.h
+index 134d7e1a7253df78cc7b17ef74dffc07a9cdc82c..f6a80291648a30e0b4db94a6a1f626a4634c1b39 100644
+--- a/Source/WebCore/platform/graphics/ColorSpace.h
++++ b/Source/WebCore/platform/graphics/ColorSpace.h
+@@ -26,6 +26,7 @@
+ #pragma once
+ 
+ #include "ColorTypes.h"
++#include <functional>
+ 
+ namespace WTF {
+ class TextStream;
 diff --git a/Source/WebCore/platform/graphics/FontCascade.h b/Source/WebCore/platform/graphics/FontCascade.h
 index 60af6f35ae4eb71a400cf136ac80636d7f609c00..166587852574282df30ab76a848314671064263c 100644
 --- a/Source/WebCore/platform/graphics/FontCascade.h
