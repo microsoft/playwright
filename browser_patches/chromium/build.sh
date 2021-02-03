@@ -134,6 +134,10 @@ EOF
   gn gen out/Default
   autoninja -C out/Default chrome
 
+  if [[ $1 == "--compile-linux" ]]; then
+    autoninja -C out/Default chrome_sandbox clear_key_cdm
+  fi
+
   # Prepare resulting archive.
   cd "$SCRIPT_PATH"
   rm -rf output
