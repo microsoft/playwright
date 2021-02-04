@@ -1037,7 +1037,7 @@ async def run(playwright):
     webkit = playwright.webkit
     browser = await webkit.launch()
     page = await browser.new_page()
-    await page.evaluate("window.x = 0; setTimeout(() => { window.x = 100 }, 1000);", force_expr=True)
+    await page.evaluate("window.x = 0; setTimeout(() => { window.x = 100 }, 1000);")
     await page.main_frame.wait_for_function("() => window.x > 0")
     await browser.close()
 
@@ -1054,7 +1054,7 @@ def run(playwright):
     webkit = playwright.webkit
     browser = webkit.launch()
     page = browser.new_page()
-    page.evaluate("window.x = 0; setTimeout(() => { window.x = 100 }, 1000);", force_expr=True)
+    page.evaluate("window.x = 0; setTimeout(() => { window.x = 100 }, 1000);")
     page.main_frame.wait_for_function("() => window.x > 0")
     browser.close()
 
