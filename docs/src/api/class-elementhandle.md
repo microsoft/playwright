@@ -283,7 +283,7 @@ assert tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "1
 ### param: ElementHandle.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: ElementHandle.evalOnSelectorAll
 * langs:
@@ -331,7 +331,7 @@ assert feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.inn
 ### param: ElementHandle.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: ElementHandle.fill
 

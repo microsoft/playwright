@@ -765,7 +765,7 @@ Shortcut for main frame's [`method: Frame.evalOnSelector`].
 ### param: Page.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Page.evalOnSelectorAll
 * langs:
@@ -800,7 +800,7 @@ div_counts = page.eval_on_selector_all("div", "(divs, min) => divs.length >= min
 ### param: Page.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Page.evaluate
 - returns: <[Serializable]>
@@ -880,7 +880,7 @@ Shortcut for main frame's [`method: Frame.evaluate`].
 ### param: Page.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Page.evaluateHandle
 - returns: <[JSHandle]>
@@ -949,7 +949,7 @@ result_handle.dispose()
 ### param: Page.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Page.exposeBinding
 
@@ -2288,7 +2288,7 @@ Shortcut for main frame's [`method: Frame.waitForFunction`].
 ### param: Page.waitForFunction.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ### option: Page.waitForFunction.polling
 - `polling` <[float]|"raf">
