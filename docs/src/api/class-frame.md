@@ -336,7 +336,7 @@ html = frame.eval_on_selector(".main-container", "(e, suffix) => e.outerHTML + s
 ### param: Frame.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.evalOnSelectorAll
 * langs:
@@ -374,7 +374,7 @@ divs_counts = frame.eval_on_selector_all("div", "(divs, min) => divs.length >= m
 ### param: Frame.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.evaluate
 - returns: <[Serializable]>
@@ -450,7 +450,7 @@ body_handle.dispose()
 ### param: Frame.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.evaluateHandle
 - returns: <[JSHandle]>
@@ -520,7 +520,7 @@ result_handle.dispose()
 ### param: Frame.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.fill
 
@@ -1084,7 +1084,7 @@ frame.wait_for_function("selector => !!document.querySelector(selector)", select
 ### param: Frame.waitForFunction.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ### option: Frame.waitForFunction.polling
 - `polling` <[float]|"raf">

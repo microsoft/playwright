@@ -48,7 +48,7 @@ additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, 
 ### param: Worker.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: Worker.evaluateHandle
 - returns: <[JSHandle]>
@@ -67,7 +67,7 @@ the promise to resolve and return its value.
 ### param: Worker.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## method: Worker.url
 - returns: <[string]>

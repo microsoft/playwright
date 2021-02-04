@@ -66,7 +66,7 @@ assert tweet_handle.evaluate("node => node.innerText") == "10 retweets"
 ### param: JSHandle.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: JSHandle.evaluateHandle
 - returns: <[JSHandle]>
@@ -87,7 +87,7 @@ See [`method: Page.evaluateHandle`] for more details.
 ### param: JSHandle.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: expression`]
+Optional argument to pass to [`param: expression`].
 
 ## async method: JSHandle.getProperties
 - returns: <[Map]<[string], [JSHandle]>>
