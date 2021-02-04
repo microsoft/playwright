@@ -43,16 +43,20 @@ if [[ -t 0 ]]; then
   dockerflags="-it"
 fi
 
+LICENSE_FILE="COPYING.LGPLv2.1"
+
 if [[ "$1" == "--mac" ]]; then
   bash ./build-mac.sh
-  cd output && zip ffmpeg.zip ffmpeg-mac
+  cp ffmpeg-license/"${LICENSE_FILE}" output
+  cd output && zip ffmpeg.zip ffmpeg-mac "${LICENSE_FILE}"
 elif [[ "$1" == "--linux" ]]; then
   if ! command -v docker >/dev/null; then
     echo "ERROR: docker is required for the script"
     exit 1
   fi
   time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/build-linux.sh /host/output/ffmpeg-linux
-  cd output && zip ffmpeg.zip ffmpeg-linux
+  cp ffmpeg-license/"${LICENSE_FILE}" output
+  cd output && zip ffmpeg.zip ffmpeg-linux "${LICENSE_FILE}"
 elif [[ "$1" == --cross-compile-win* ]]; then
   if ! command -v docker >/dev/null; then
     echo "ERROR: docker is required for the script"
@@ -61,10 +65,12 @@ elif [[ "$1" == --cross-compile-win* ]]; then
 
   if [[ "$1" == "--cross-compile-win32" ]]; then
     time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux-to-win.sh --win32 /host/output/ffmpeg-win32.exe
-    cd output && zip ffmpeg.zip ffmpeg-win32.exe
+    cp ffmpeg-license/"${LICENSE_FILE}" output
+    cd output && zip ffmpeg.zip ffmpeg-win32.exe "${LICENSE_FILE}"
   elif [[ "$1" == "--cross-compile-win64" ]]; then
     time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux-to-win.sh --win64 /host/output/ffmpeg-win64.exe
-    cd output && zip ffmpeg.zip ffmpeg-win64.exe
+    cp ffmpeg-license/"${LICENSE_FILE}" output
+    cd output && zip ffmpeg.zip ffmpeg-win64.exe "${LICENSE_FILE}"
   else
     echo "ERROR: unsupported platform - $1"
     exit 1
