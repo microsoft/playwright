@@ -22,14 +22,14 @@ import type { State, SetUIState } from '../recorder/state';
 
 declare global {
   interface Window {
-    playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
-    playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
-    playwrightRecorderCommitAction: () => Promise<void>;
-    playwrightRecorderState: () => Promise<State>;
-    playwrightRecorderSetUIState: (state: SetUIState) => Promise<void>;
-    playwrightRecorderResume: () => Promise<boolean>;
-    playwrightRecorderShowRecorderPage: () => Promise<void>;
-    playwrightRecorderPrintSelector: (text: string) => Promise<void>;
+    _playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
+    _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
+    _playwrightRecorderCommitAction: () => Promise<void>;
+    _playwrightRecorderState: () => Promise<State>;
+    _playwrightRecorderSetUIState: (state: SetUIState) => Promise<void>;
+    _playwrightRecorderShowRecorderPage: () => Promise<void>;
+    _playwrightRecorderPrintSelector: (text: string) => Promise<void>;
+    _playwrightResume: () => Promise<void>;
   }
 }
 
@@ -52,7 +52,6 @@ export class Recorder {
   private _outerToolbarElement: HTMLElement;
   private _toolbar: Element$;
   private _state: State = {
-    canResume: false,
     uiState: {
       mode: 'none',
     },
@@ -167,13 +166,13 @@ export class Recorder {
       if (this._toolbar.$('#pw-button-resume').classList.contains('disabled'))
         return;
       this._updateUIState({ mode: 'none' });
-      window.playwrightRecorderResume().catch(() => {});
+      window._playwrightResume().catch(() => {});
     });
     this._toolbar.$('#pw-button-playwright').addEventListener('click', () => {
       if (this._toolbar.$('#pw-button-playwright').classList.contains('disabled'))
         return;
       this._toolbar.$('#pw-button-playwright').classList.toggle('toggled');
-      window.playwrightRecorderShowRecorderPage().catch(() => {});
+      window._playwrightRecorderShowRecorderPage().catch(() => {});
     });
   }
 
@@ -211,19 +210,19 @@ export class Recorder {
   }
 
   private async _updateUIState(uiState: SetUIState) {
-    window.playwrightRecorderSetUIState(uiState).then(() => this._pollRecorderMode());
+    window._playwrightRecorderSetUIState(uiState).then(() => this._pollRecorderMode());
   }
 
   private async _pollRecorderMode(skipAnimations: boolean = false) {
     if (this._pollRecorderModeTimer)
       clearTimeout(this._pollRecorderModeTimer);
-    const state = await window.playwrightRecorderState().catch(e => null);
+    const state = await window._playwrightRecorderState().catch(e => null);
     if (!state) {
       this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), 250);
       return;
     }
 
-    const { canResume, isPaused, uiState } = state;
+    const { isPaused, uiState } = state;
     if (uiState.mode !== this._state.uiState.mode) {
       this._state.uiState.mode = uiState.mode;
       this._toolbar.$('#pw-button-inspect').classList.toggle('toggled', uiState.mode === 'inspecting');
@@ -234,13 +233,7 @@ export class Recorder {
 
     if (isPaused !== this._state.isPaused) {
       this._state.isPaused = isPaused;
-      this._toolbar.$('#pw-button-resume-group').classList.toggle('hidden', false);
-      this._toolbar.$('#pw-button-resume').classList.toggle('disabled', !isPaused);
-    }
-
-    if (canResume !== this._state.canResume) {
-      this._state.canResume = canResume;
-      this._toolbar.$('#pw-button-resume-group').classList.toggle('hidden', !canResume);
+      this._toolbar.$('#pw-button-resume-group').classList.toggle('hidden', !isPaused);
     }
 
     this._state = state;
@@ -280,7 +273,7 @@ export class Recorder {
     if (this._state.uiState.mode === 'inspecting' && !this._isInToolbar(event.target as HTMLElement)) {
       if (this._hoveredModel) {
         copy(this._hoveredModel.selector);
-        window.playwrightRecorderPrintSelector(this._hoveredModel.selector);
+        window._playwrightRecorderPrintSelector(this._hoveredModel.selector);
       }
     }
     if (this._shouldIgnoreMouseEvent(event))
@@ -389,7 +382,7 @@ export class Recorder {
     const { selector, elements } = generateSelector(this._injectedScript, hoveredElement);
     if ((this._hoveredModel && this._hoveredModel.selector === selector) || this._hoveredElement !== hoveredElement)
       return;
-    window.playwrightRecorderCommitAction();
+    window._playwrightRecorderCommitAction();
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
     if ((window as any)._highlightUpdatedForTest)
@@ -483,7 +476,7 @@ export class Recorder {
       }
 
       if (elementType === 'file') {
-        window.playwrightRecorderRecordAction({
+        window._playwrightRecorderRecordAction({
           name: 'setInputFiles',
           selector: this._activeModel!.selector,
           signals: [],
@@ -495,7 +488,7 @@ export class Recorder {
       // Non-navigating actions are simply recorded by Playwright.
       if (this._consumedDueWrongTarget(event))
         return;
-      window.playwrightRecorderRecordAction({
+      window._playwrightRecorderRecordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
@@ -592,7 +585,7 @@ export class Recorder {
 
   private async _performAction(action: actions.Action) {
     this._performingAction = true;
-    await window.playwrightRecorderPerformAction(action).catch(() => {});
+    await window._playwrightRecorderPerformAction(action).catch(() => {});
     this._performingAction = false;
 
     // Action could have changed DOM, update hovered model selectors.

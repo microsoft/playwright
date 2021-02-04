@@ -22,7 +22,6 @@ import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
-import { ConsoleApiSupplement } from '../server/supplements/consoleApiSupplement';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -129,19 +128,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.close();
   }
 
-  async consoleSupplementExpose(): Promise<void> {
-    const consoleApi = new ConsoleApiSupplement(this._context);
-    await consoleApi.install();
-  }
-
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
-    await RecorderSupplement.getOrCreate(this._context, 'codegen', params);
+    await RecorderSupplement.getOrCreate(this._context, params);
   }
 
   async pause() {
     if (!this._context._browser.options.headful)
       return;
-    const recorder = await RecorderSupplement.getOrCreate(this._context, 'pause', {
+    const recorder = await RecorderSupplement.getOrCreate(this._context, {
       language: 'javascript',
       terminal: true
     });

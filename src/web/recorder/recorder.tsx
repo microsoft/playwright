@@ -22,8 +22,8 @@ import { Source } from '../components/source';
 
 declare global {
   interface Window {
-    playwrightClear(): Promise<void>
-    playwrightSetSource: (params: { text: string, language: string }) => void
+    _playwrightClear(): Promise<void>
+    _playwrightSetSource: (params: { text: string, language: string }) => void
   }
 }
 
@@ -33,7 +33,7 @@ export interface RecorderProps {
 export const Recorder: React.FC<RecorderProps> = ({
 }) => {
   const [source, setSource] = React.useState({ language: 'javascript', text: '' });
-  window.playwrightSetSource = setSource;
+  window._playwrightSetSource = setSource;
 
   return <div className="recorder">
     <Toolbar>
@@ -41,7 +41,7 @@ export const Recorder: React.FC<RecorderProps> = ({
         copy(source.text);
       }}></ToolbarButton>
       <ToolbarButton icon="trashcan" title="Clear" onClick={() => {
-        window.playwrightClear().catch(e => console.error(e));
+        window._playwrightClear().catch(e => console.error(e));
       }}></ToolbarButton>
       <div style={{flex: "auto"}}></div>
     </Toolbar>

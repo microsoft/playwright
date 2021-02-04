@@ -51,7 +51,7 @@ program
     .command('open [url]')
     .description('open page in browser specified via -b, --browser')
     .action(function(url, command) {
-      open(command.parent, url);
+      open(command.parent, url, language());
     }).on('--help', function() {
       console.log('');
       console.log('Examples:');
@@ -70,8 +70,9 @@ for (const {alias, name, type} of browsers) {
   program
       .command(`${alias} [url]`)
       .description(`open page in ${name}`)
+      .option('--target <language>', `language to use, one of javascript, python, python-async, csharp`, language())
       .action(function(url, command) {
-        open({ ...command.parent, browser: type }, url);
+        open({ ...command.parent, browser: type }, url, command.target);
       }).on('--help', function() {
         console.log('');
         console.log('Examples:');
@@ -84,7 +85,7 @@ program
     .command('codegen [url]')
     .description('open page and generate code for user actions')
     .option('-o, --output <file name>', 'saves the generated script to a file')
-    .option('--target <language>', `language to use, one of javascript, python, python-async, csharp`, process.env.PW_CLI_TARGET_LANG || 'javascript')
+    .option('--target <language>', `language to use, one of javascript, python, python-async, csharp`, language())
     .action(function(url, command) {
       codegen(command.parent, url, command.target, command.output);
     }).on('--help', function() {
@@ -316,9 +317,16 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
   return page;
 }
 
-async function open(options: Options, url: string | undefined) {
-  const { context } = await launchContext(options, false);
-  await context._enableConsoleApi();
+async function open(options: Options, url: string | undefined, language: string) {
+  const { context, launchOptions, contextOptions } = await launchContext(options, false);
+  await context._enableRecorder({
+    language,
+    launchOptions,
+    contextOptions,
+    device: options.device,
+    saveStorage: options.saveStorage,
+    terminal: !!process.stdout.columns,
+  });
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));
@@ -334,6 +342,7 @@ async function codegen(options: Options, url: string | undefined, language: stri
     contextOptions,
     device: options.device,
     saveStorage: options.saveStorage,
+    startRecording: true,
     terminal: !!process.stdout.columns,
     outputFile: outputFile ? path.resolve(outputFile) : undefined
   });
@@ -408,4 +417,8 @@ function validateOptions(options: Options) {
     console.log('Invalid color scheme, should be one of "light", "dark"');
     process.exit(0);
   }
+}
+
+function language(): string {
+  return process.env.PW_CLI_TARGET_LANG || 'javascript';
 }

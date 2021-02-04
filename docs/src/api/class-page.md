@@ -1479,6 +1479,19 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 
 Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
 
+## async method: Page.pause
+
+Pauses script execution. Playwright will stop executing the script and wait for the user to either press 'Resume'
+button in the page overlay or to call `playwright.resume()` in the DevTools console.
+
+User can inspect selectors or perform manual steps while paused. Resume will continue running the original script from
+the place it was paused.
+
+:::note
+This method requires Playwright to be started in a headed mode, with a falsy [`options: headless`] value in
+the [`method: BrowserType.launch`].
+:::
+
 ## async method: Page.pdf
 - returns: <[Buffer]>
 

@@ -17,18 +17,35 @@
 import type InjectedScript from '../../injected/injectedScript';
 import { generateSelector } from './selectorGenerator';
 
+type ConsoleAPIInterface = {
+  $: (selector: string) => void;
+  $$: (selector: string) => void;
+  inspect: (selector: string) => void;
+  selector: (element: Element) => void;
+  resume: () => void;
+};
+
+declare global {
+  interface Window {
+    playwright?: ConsoleAPIInterface;
+    inspect: (element: Element | undefined) => void;
+    _playwrightResume: () => Promise<void>;
+  }
+}
+
 export class ConsoleAPI {
   private _injectedScript: InjectedScript;
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
-    if ((window as any).playwright)
+    if (window.playwright)
       return;
-    (window as any).playwright = {
+    window.playwright = {
       $: (selector: string) => this._querySelector(selector),
       $$: (selector: string) => this._querySelectorAll(selector),
       inspect: (selector: string) => this._inspect(selector),
       selector: (element: Element) => this._selector(element),
+      resume: () => this._resume(),
     };
   }
 
@@ -47,17 +64,19 @@ export class ConsoleAPI {
   }
 
   private _inspect(selector: string) {
-    if (typeof (window as any).inspect !== 'function')
-      return;
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.inspect('Playwright >> selector').`);
-    (window as any).inspect(this._querySelector(selector));
+    window.inspect(this._querySelector(selector));
   }
 
   private _selector(element: Element) {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.selector(element).`);
     return generateSelector(this._injectedScript, element).selector;
+  }
+
+  private _resume() {
+    window._playwrightResume().catch(() => {});
   }
 }
 
