@@ -229,7 +229,7 @@ Documentation.Class = class {
       const member2 = this.membersArray[i + 1];
       if (member1.kind !== 'event' || member2.kind !== 'event')
         continue;
-      if (member1.name > member2.name)
+      if (member1.name.localeCompare(member2.name, 'en', { sensitivity: 'base' }) > 0)
         errors.push(`Event '${member1.name}' in class ${this.name} breaks alphabetic ordering of events`);
     }
 
@@ -241,7 +241,7 @@ Documentation.Class = class {
         continue;
       if (member1.kind === 'method' && member1.name === 'constructor')
         continue;
-      if (member1.name.replace(/^\$+/, '$') > member2.name.replace(/^\$+/, '$')) {
+      if (member1.name.replace(/^\$+/, '$').localeCompare(member2.name.replace(/^\$+/, '$'), 'en', { sensitivity: 'base' }) > 0) {
         let memberName1 = `${this.name}.${member1.name}`;
         if (member1.kind === 'method')
           memberName1 += '()';
