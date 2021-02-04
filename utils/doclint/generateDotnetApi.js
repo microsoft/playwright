@@ -22,10 +22,8 @@ const XmlDoc = require('./xmlDocumentation')
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
-const { type } = require('os');
-const { check } = require('proper-lockfile');
 const { Type } = require('./documentation');
-const { threadId } = require('worker_threads');
+const { args } = require('commander');
 // const { visitAll } = require('../markdown'); // TODO: consider using this instead of manual parsing
 
 const maxDocumentationColumnWidth = 120;
@@ -90,8 +88,12 @@ let classNameMap;
   classNameMap.set('Serializable', 'T');
   classNameMap.set('any', 'T');
   classNameMap.set('Buffer', 'byte[]');
-  classNameMap.set('function', 'Action');
+  // classNameMap.set('function', 'Action');
   classNameMap.set('path', 'string');
+  classNameMap.set('URL', 'Uri');
+  classNameMap.set('RegExp', 'Regex');
+  classNameMap.set('float', 'decimal');
+
 
   // this are types that we don't explicility render even if we get the specs
   const ignoredTypes = ['TimeoutException'];
@@ -135,7 +137,7 @@ let classNameMap;
     if (ignoredTypes.includes(name))
       continue;
 
-    innerRenderElement('interface', name, element.spec, (out) => {
+    innerRenderElement('partial interface', name, element.spec, (out) => {
       for (const member of element.membersArray) {
         renderMember(member, element, out);
       }
@@ -219,7 +221,7 @@ function translateMemberName(memberKind, name, member = null) {
         return `${assumedName}Async`;
       return assumedName;
     case "event":
-      return `On${assumedName}`;
+      return `${assumedName}`;
     case "enum":
       return `${assumedName}`;
     default:
@@ -392,6 +394,26 @@ function renderMethod(member, parent, output, name) {
     const argName = translateMemberName('argument', arg.name, null);
     const argType = translateType(arg.type, parent, (t) => generateNameDefault(member, argName, t, parent));
 
+    if (argType === null && arg.type.union) {
+      // we might have to split this into multiple arguments
+      let translatedArguments = arg.type.union.map(t => translateType(t, parent, (x) => generateNameDefault(member, argName, x, parent)));
+      if (translatedArguments.includes(null))
+        throw 'Unexpected null in translated argument types. Aborting.';
+
+      let argSuffix = argName[0].toUpperCase() + argName.substring(1);
+      for (const newArg of translatedArguments) {
+        let argPrefix = newArg[0].toLowerCase();
+        args.push(`${newArg} ${argPrefix}${argSuffix}`);
+      }
+
+      return;
+    }
+
+    if (argName === 'timeout' && argType === 'decimal') {
+      args.push(`int timeout`);
+      return;
+    }
+
     args.push(`${argType} ${argName}`);
   };
 
@@ -422,9 +444,10 @@ function translateType(type, parent, generateNameCallback = null) {
   }
 
   // a few special cases we can fix automatically
-  if (type.expression === '[null]|[Error]') {
+  if (type.expression === '[null]|[Error]')
     return 'void';
-  }
+  else if (type.expression === '[boolean]|"mixed"')
+    return 'MixedState';
 
   if (type.union) {
     if (type.union[0].name === 'null') {
@@ -482,11 +505,7 @@ function translateType(type, parent, generateNameCallback = null) {
     else if (type.expression === '[float]|"raf"')
       return `Polling`; // hardcoded because there's no other way to denote this
 
-
-    console.log(`Not sure how to parse union ${type.name} in ${parent ? parent.name : '<<no parent>>'}:`);
-    console.log(type);
-
-    return `Union`;
+    return null;
   }
 
   if (type.name === 'Array') {
@@ -534,6 +553,32 @@ function translateType(type, parent, generateNameCallback = null) {
       return `Dictionary<${keyType}, ${valueType}>`;
     } else {
       throw 'Map has invalid number of templates.';
+    }
+  }
+
+  if (type.name === 'function') {
+    if (type.expression === '[function]')
+      return 'Action'; // super simple mapping
+
+    let argsList = '';
+    if (type.args) {
+      let translatedCallbackArguments = type.args.map(t => translateType(t, parent, generateNameCallback));
+      if (translatedCallbackArguments.includes(null))
+        throw 'There was an argument we could not parse. Aborting.';
+
+      argsList = translatedCallbackArguments.join(', ');
+      console.log(argsList);
+    }
+
+    if (!type.returnType) {
+      // this is an Action
+      return `Action<${argsList}>`;
+    } else {
+      let returnType = translateType(type.returnType, parent, generateNameCallback);
+      if (returnType == null)
+        throw 'Unexpected null as return type.';
+
+      return `Func<${argsList}, ${returnType}>`;
     }
   }
 
