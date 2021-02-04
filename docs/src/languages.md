@@ -23,7 +23,7 @@ npm i -D playwright
 [Playwright for Python](https://playwright.dev/python/docs/intro/) is available.
 
 ```
-pip install playwright==1.8.0a1
+pip install playwright
 ```
 * [Documentation](https://playwright.dev/python/docs/intro/)
 * [API](https://playwright.dev/python/docs/api/class-playwright)
