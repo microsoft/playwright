@@ -138,7 +138,7 @@ export class Recorder {
         </x-pw-button-group>
       </x-pw-toolbar>`;
 
-    this._outerToolbarElement = html`<x-pw-div style="position: fixed; top: 100px; left: 10px; flex-direction: column; z-index: 2147483647;"></x-pw-div>`;
+    this._outerToolbarElement = html`<x-pw-div style="position: fixed; top: 100px; left: 10px; flex-direction: column; z-index: 2147483646;"></x-pw-div>`;
     const toolbarShadow = this._outerToolbarElement.attachShadow({ mode: 'open' });
     toolbarShadow.appendChild(this._toolbar);
 
@@ -153,6 +153,37 @@ export class Recorder {
   }
 
   private _hydrate() {
+    this._toolbar.addEventListener('mousedown', e => {
+      if (e.target !== this._toolbar)
+        return;
+      this._outerGlassPaneElement.style.pointerEvents = 'initial';
+      this._outerGlassPaneElement.style.cursor = 'grab';
+      this._outerGlassPaneElement.setAttribute('tabIndex', '0');
+      const offsetLeft = e.pageX - this._outerToolbarElement.offsetLeft;
+      const offsetTop = e.pageY - this._outerToolbarElement.offsetTop;
+      const toolbarWidth = this._outerToolbarElement.offsetWidth;
+      const toolbarHeight = this._outerToolbarElement.offsetHeight;
+      const glassWidth = this._outerGlassPaneElement.offsetWidth;
+      const glassHeight = this._outerGlassPaneElement.offsetHeight;
+      const maxX = glassWidth - toolbarWidth;
+      const maxY = glassHeight - toolbarHeight;
+      const onMouseMove = (e: MouseEvent) => {
+        this._outerToolbarElement.style.top = Math.min(maxY, Math.max(e.pageY - offsetTop, 0)) + 'px';
+        this._outerToolbarElement.style.left = Math.min(maxX, Math.max(e.pageX - offsetLeft, 0)) + 'px';
+      };
+      const onMouseUp = () => {
+        this._outerGlassPaneElement.removeEventListener('mousemove', onMouseMove);
+        this._outerGlassPaneElement.removeEventListener('mouseup', onMouseUp);
+        this._outerGlassPaneElement.removeEventListener('blur', onMouseUp);
+        this._outerGlassPaneElement.style.pointerEvents = 'none';
+        this._outerGlassPaneElement.style.background = 'initial';
+        this._outerGlassPaneElement.removeAttribute('tabIndex');
+        this._outerGlassPaneElement.style.cursor = 'initial';
+      };
+      this._outerGlassPaneElement.addEventListener('mousemove', onMouseMove);
+      this._outerGlassPaneElement.addEventListener('mouseup', onMouseUp);
+      this._outerGlassPaneElement.addEventListener('blur', onMouseUp);
+    });
     this._toolbar.$('#pw-button-inspect').addEventListener('click', () => {
       if (this._toolbar.$('#pw-button-inspect').classList.contains('disabled'))
         return;
@@ -197,7 +228,19 @@ export class Recorder {
       }, true),
     ];
     document.documentElement.appendChild(this._outerGlassPaneElement);
-    if (window.top === window)
+    if (window.top === window) {
+      let moveCount = 0;
+      this._listeners.push(addEventListener(document, 'mousedown', e => moveCount = 0));
+      this._listeners.push(addEventListener(document, 'mousemove', e => {
+        ++moveCount;
+        if (++moveCount === 10)
+          this._ensureToolbarVisible();
+      }));
+    }
+  }
+
+  private _ensureToolbarVisible() {
+    if (!this._outerToolbarElement.parentElement)
       document.documentElement.appendChild(this._outerToolbarElement);
   }
 
@@ -233,6 +276,8 @@ export class Recorder {
 
     if (isPaused !== this._state.isPaused) {
       this._state.isPaused = isPaused;
+      if (isPaused)
+        this._ensureToolbarVisible();
       this._toolbar.$('#pw-button-resume-group').classList.toggle('hidden', !isPaused);
     }
 
@@ -680,6 +725,8 @@ x-pw-toolbar {
   align-items: center;
   fill: #333;
   flex: none;
+  padding-top: 10px;
+  cursor: grab;
 }
 x-pw-toolbar.vertical {
   flex-direction: column;
