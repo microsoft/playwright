@@ -104,7 +104,7 @@ Raw script content.
 - returns: <[EventContextManager]<[Download]>>
 
 Performs action and waits for `download` event to fire. If predicate is provided, it passes
-[Download] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
+[Download] value into the `predicate` function and waits for `predicate(download)` to return a truthy value.
 Will throw an error if the page is closed before the download event is fired.
 
 ### option: Page.expectDownload.predicate =
@@ -166,7 +166,6 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 
 ### option: Page.expectConsoleMessage.timeout = %%-python-wait-for-event-timeout-%%
 
-
 ## async method: Page.expectFileChooser
 * langs: python
 - returns: <[EventContextManager]<[FileChooser]>>
@@ -183,22 +182,9 @@ Receives the [FileChooser] object and resolves to truthy value when the waiting 
 
 ### option: Page.expectFileChooser.timeout = %%-python-wait-for-event-timeout-%%
 
-
-## async method: BrowserContext.expectPage
+## async method: BrowserContext.waitForPage
 * langs: python
 - returns: <[EventContextManager]<[Page]>>
-
-Performs action and waits for `page` event to fire. If predicate is provided, it passes
-[Page] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
-
-### option: BrowserContext.expectPage.predicate =
-* langs: python
-- `predicate` <[function]\([Page]\):[bool]>
-
-Receives the [Page] object and resolves to truthy value when the waiting should resolve.
-
-### option: BrowserContext.expectPage.timeout = %%-python-wait-for-event-timeout-%%
 
 ## async method: Frame.waitForNavigation
 * langs: python

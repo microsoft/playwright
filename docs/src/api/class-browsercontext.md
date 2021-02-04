@@ -779,3 +779,20 @@ Event name, same one would pass into `browserContext.on(event)`.
     disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
+
+## async method: BrowserContext.waitForPage
+* langs: csharp, java, python
+  - alias-python: expect_page
+- returns: <[Page]>
+
+Performs action and waits for a new [Page] to be created in the context. If predicate is provided, it passes
+[Page] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
+Will throw an error if the page is closed before the worker event is fired.
+
+### option: BrowserContext.waitForPage.predicate =
+* langs: csharp, java, python
+- `predicate` <[function]\([Page]\):[bool]>
+
+Receives the [Page] object and resolves to truthy value when the waiting should resolve.
+
+### option: BrowserContext.waitForPage.timeout = %%-wait-for-event-timeout-%%

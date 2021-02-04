@@ -3,14 +3,6 @@
 
 Terminates this instance of Playwright, will also close all created browsers if they are still running.
 
-## method: BrowserContext.waitForPage
-* langs: java
-- returns: <[Page]>
-
-Runs callback and waits for a new Page.
-
-### option: BrowserContext.waitForPage.timeout = %%-java-wait-for-event-timeout-%%
-
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
 ## method: Page.waitForClose

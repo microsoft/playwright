@@ -451,7 +451,7 @@ disable timeout. The default value can be changed by using the [`method: Browser
 * langs: java
 - `callback` <[Runnable]>
 
-Callback to run while waiting, it usually contains the code that should trigger the event.
+Callback to perform the action that trigger the event.
 
 ## python-select-options-element
 * langs: python
@@ -487,6 +487,12 @@ Receives the event data and resolves to truthy value when the waiting should res
 
 ## python-wait-for-event-timeout
 * langs: python
+- `timeout` <[float]>
+
+Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+
+## wait-for-event-timeout
 - `timeout` <[float]>
 
 Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
