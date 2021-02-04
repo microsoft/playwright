@@ -21,7 +21,7 @@ configurations for common CI providers.
    $ npm install
    ```
    ```sh python
-   $ pip install playwright==1.8.0a1
+   $ pip install playwright
    $ playwright install
    ```
 
@@ -56,7 +56,7 @@ steps:
   - name: Install dependencies
     run: |
       python -m pip install --upgrade pip
-      pip install playwright==1.8.0a1
+      pip install playwright
       pip install -e .
   - name: Ensure browsers are installed
     run: python -m playwright install
