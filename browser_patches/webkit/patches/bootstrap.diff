@@ -17946,7 +17946,7 @@ index 0000000000000000000000000000000000000000..9b413bb8150a1633d29b6e2606127c9c
 +
 +#endif // ENABLE(DRAG_SUPPORT)
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index 682c9717e1d788f93d6a04f62aff10856acc3e5a..1d87174a6e85cdd287b947a33ab9146f204763b4 100644
+index 682c9717e1d788f93d6a04f62aff10856acc3e5a..a6ebf5ea12eac73577671fbdcb601727bac32afe 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 @@ -36,7 +36,9 @@
@@ -17959,24 +17959,7 @@ index 682c9717e1d788f93d6a04f62aff10856acc3e5a..1d87174a6e85cdd287b947a33ab9146f
  #include <WebCore/Page.h>
  #include <WebCore/PageOverlayController.h>
  #include <WebCore/Settings.h>
-@@ -122,6 +124,16 @@ void DrawingAreaCoordinatedGraphics::scroll(const IntRect& scrollRect, const Int
-         ASSERT(m_scrollRect.isEmpty());
-         ASSERT(m_scrollOffset.isEmpty());
-         ASSERT(m_dirtyRegion.isEmpty());
-+// Playwright begin
-+#if !PLATFORM(WIN)
-+        if (m_webPage.mainFrameView() && m_webPage.mainFrameView()->useFixedLayout()) {
-+            IntRect visibleRect;
-+            visibleRect.move(-scrollDelta.width(), -scrollDelta.height());
-+            m_layerTreeHost->scrollNonCompositedContents(visibleRect);
-+            return;
-+        }
-+#endif
-+// Playwright end
-         m_layerTreeHost->scrollNonCompositedContents(scrollRect);
-         return;
-     }
-@@ -252,6 +264,7 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
+@@ -252,6 +254,7 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
          settings.setAcceleratedCompositingEnabled(false);
      }
  #endif
@@ -17984,7 +17967,7 @@ index 682c9717e1d788f93d6a04f62aff10856acc3e5a..1d87174a6e85cdd287b947a33ab9146f
      settings.setForceCompositingMode(store.getBoolValueForKey(WebPreferencesKey::forceCompositingModeKey()));
      // Fixed position elements need to be composited and create stacking contexts
      // in order to be scrolled by the ScrollingCoordinator.
-@@ -621,6 +634,11 @@ void DrawingAreaCoordinatedGraphics::enterAcceleratedCompositingMode(GraphicsLay
+@@ -621,6 +624,11 @@ void DrawingAreaCoordinatedGraphics::enterAcceleratedCompositingMode(GraphicsLay
      m_scrollOffset = IntSize();
      m_displayTimer.stop();
      m_isWaitingForDidUpdate = false;
@@ -17996,7 +17979,7 @@ index 682c9717e1d788f93d6a04f62aff10856acc3e5a..1d87174a6e85cdd287b947a33ab9146f
  }
  
  void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
-@@ -670,6 +688,11 @@ void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
+@@ -670,6 +678,11 @@ void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
          // UI process, we still need to let it know about the new contents, so send an Update message.
          send(Messages::DrawingAreaProxy::Update(m_backingStoreStateID, updateInfo));
      }
