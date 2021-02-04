@@ -52,7 +52,7 @@ Example:
     process.exit(1);
   }
   const browserName = args[0].toLowerCase();
-  if (!['chromium', 'firefox', 'webkit'].includes(browserName)) {
+  if (!['chromium', 'firefox', 'webkit', 'ffmpeg'].includes(browserName)) {
     console.log(`Unknown browser "${browserName}"`);
     console.log(`Try running ${SCRIPT_NAME} --help`);
     process.exit(1);

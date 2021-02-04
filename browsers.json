@@ -18,7 +18,7 @@
     },
     {
       "name": "ffmpeg",
-      "revision": "1004",
+      "revision": "1005",
       "download": true
     }
   ]
