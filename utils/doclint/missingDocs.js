@@ -18,6 +18,7 @@
 const ts = require('typescript');
 const EventEmitter = require('events');
 const Documentation = require('./documentation');
+const path = require('path');
 
 /** @typedef {import('../../markdown').MarkdownNode} MarkdownNode */
 
@@ -92,8 +93,7 @@ function listMethods(rootNames, apiFileName) {
   const checker = program.getTypeChecker();
   const apiClassNames = new Set();
   const apiMethods = new Map();
-  const apiSource = program.getSourceFiles().find(f => f.fileName === apiFileName);
-
+  const apiSource = program.getSourceFiles().find(f => f.fileName === apiFileName.split(path.sep).join(path.posix.sep));
   /**
    * @param {ts.Type} type
    */
