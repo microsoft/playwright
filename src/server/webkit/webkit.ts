@@ -21,10 +21,14 @@ import * as path from 'path';
 import { kBrowserCloseMessageId } from './wkConnection';
 import { BrowserType } from '../browserType';
 import { ConnectionTransport } from '../transport';
-import { BrowserOptions } from '../browser';
+import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
 
 export class WebKit extends BrowserType {
+  constructor(playwrightOptions: PlaywrightOptions) {
+    super('webkit', playwrightOptions);
+  }
+
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(transport, options);
   }

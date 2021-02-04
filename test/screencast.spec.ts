@@ -19,14 +19,10 @@ import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { PNG } from 'pngjs';
-import * as browserPaths from '../src/utils/browserPaths';
+import * as registry from '../src/utils/registry';
 
-
-const browsersJSON = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'browsers.json'), 'utf8'));
-const ffmpegDescriptor = browsersJSON.browsers.find(({name}) => name === 'ffmpeg');
-const browsersPath = browserPaths.browsersPath(path.join(__dirname, '..'));
-const browserPath = browserPaths.browserDirectory(browsersPath, ffmpegDescriptor);
-const ffmpeg = browserPaths.executablePath(browserPath, ffmpegDescriptor) || '';
+const registry = new Registry(path.join(__dirname, '..'));
+const ffmpeg = registry.executablePath('ffmpeg') || '';
 
 export class VideoPlayer {
   fileName: string;

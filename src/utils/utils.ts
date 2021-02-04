@@ -136,7 +136,7 @@ export function monotonicTime(): number {
   return seconds * 1000 + (nanoseconds / 1000 | 0) / 1000;
 }
 
-export function calculateSha1(buffer: Buffer): string {
+export function calculateSha1(buffer: Buffer | string): string {
   const hash = crypto.createHash('sha1');
   hash.update(buffer);
   return hash.digest('hex');

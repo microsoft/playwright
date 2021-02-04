@@ -16,7 +16,6 @@
 
 import * as path from 'path';
 import { Tracer } from '../trace/tracer';
-import * as browserPaths from '../utils/browserPaths';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
 import { PlaywrightOptions } from './browser';
@@ -27,6 +26,7 @@ import { serverSelectors } from './selectors';
 import { HarTracer } from './supplements/har/harTracer';
 import { InspectorController } from './supplements/inspectorController';
 import { WebKit } from './webkit/webkit';
+import { Registry } from '../utils/registry';
 
 export class Playwright {
   readonly selectors = serverSelectors;
@@ -37,30 +37,25 @@ export class Playwright {
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
 
-  constructor(isInternal: boolean, packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
+  constructor(isInternal: boolean) {
     this.options = {
       isInternal,
+      registry: new Registry(path.join(__dirname, '..', '..')),
+
       contextListeners: isInternal ? [] : [
         new InspectorController(),
         new Tracer(),
         new HarTracer()
       ]
     };
-    const chromium = browsers.find(browser => browser.name === 'chromium');
-    const ffmpeg = browsers.find(browser => browser.name === 'ffmpeg');
-    this.chromium = new Chromium(packagePath, chromium!, ffmpeg!, this.options);
-
-    const firefox = browsers.find(browser => browser.name === 'firefox');
-    this.firefox = new Firefox(packagePath, firefox!, this.options);
-
-    const webkit = browsers.find(browser => browser.name === 'webkit');
-    this.webkit = new WebKit(packagePath, webkit!, this.options);
-
-    this.electron = new Electron(packagePath, this.options, ffmpeg!);
-    this.android = new Android(packagePath, new AdbBackend(), this.options, ffmpeg!);
+    this.chromium = new Chromium(this.options);
+    this.firefox = new Firefox(this.options);
+    this.webkit = new WebKit(this.options);
+    this.electron = new Electron(this.options);
+    this.android = new Android(new AdbBackend(), this.options);
   }
 }
 
 export function createPlaywright(isInternal = false) {
-  return new Playwright(isInternal, path.join(__dirname, '..', '..'), require('../../browsers.json')['browsers']);
+  return new Playwright(isInternal);
 }

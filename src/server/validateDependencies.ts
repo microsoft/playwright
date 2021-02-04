@@ -19,7 +19,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { spawn } from 'child_process';
 import { getUbuntuVersion } from '../utils/ubuntuVersion';
-import { linuxLddDirectories, windowsExeAndDllDirectories, BrowserDescriptor } from '../utils/browserPaths.js';
+import * as registry from '../utils/registry';
 import { printDepsWindowsExecutable } from '../utils/binaryPaths';
 
 const accessAsync = util.promisify(fs.access.bind(fs));
@@ -27,14 +27,14 @@ const checkExecutable = (filePath: string) => accessAsync(filePath, fs.constants
 const statAsync = util.promisify(fs.stat.bind(fs));
 const readdirAsync = util.promisify(fs.readdir.bind(fs));
 
-export async function validateHostRequirements(browserPath: string, browser: BrowserDescriptor) {
+export async function validateHostRequirements(registry: registry.Registry, browserName: registry.BrowserName) {
   const ubuntuVersion = await getUbuntuVersion();
-  if (browser.name === 'firefox' && ubuntuVersion === '16.04')
+  if (browserName === 'firefox' && ubuntuVersion === '16.04')
     throw new Error(`Cannot launch firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
   if (os.platform() === 'linux')
-    return await validateDependenciesLinux(browserPath, browser);
+    return await validateDependenciesLinux(registry, browserName);
   if (os.platform() === 'win32' && os.arch() === 'x64')
-    return await validateDependenciesWindows(browserPath, browser);
+    return await validateDependenciesWindows(registry, browserName);
 }
 
 const DL_OPEN_LIBRARIES = {
@@ -55,8 +55,8 @@ function isSupportedWindowsVersion(): boolean {
   return major > 6 || (major === 6 && minor > 1);
 }
 
-async function validateDependenciesWindows(browserPath: string, browser: BrowserDescriptor) {
-  const directoryPaths = windowsExeAndDllDirectories(browserPath, browser);
+async function validateDependenciesWindows(registry: registry.Registry, browserName: registry.BrowserName) {
+  const directoryPaths = registry.windowsExeAndDllDirectories(browserName);
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
@@ -116,8 +116,8 @@ async function validateDependenciesWindows(browserPath: string, browser: Browser
   }
 }
 
-async function validateDependenciesLinux(browserPath: string, browser: BrowserDescriptor) {
-  const directoryPaths = linuxLddDirectories(browserPath, browser);
+async function validateDependenciesLinux(registry: registry.Registry, browserName: registry.BrowserName) {
+  const directoryPaths = registry.linuxLddDirectories(browserName);
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
@@ -127,7 +127,7 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
     for (const dep of deps)
       missingDeps.add(dep);
   }
-  for (const dep of (await missingDLOPENLibraries(browser)))
+  for (const dep of (await missingDLOPENLibraries(browserName)))
     missingDeps.add(dep);
   if (!missingDeps.size)
     return;
@@ -240,8 +240,8 @@ async function missingFileDependencies(filePath: string, extraLDPaths: string[])
   return missingDeps;
 }
 
-async function missingDLOPENLibraries(browser: BrowserDescriptor): Promise<string[]> {
-  const libraries = DL_OPEN_LIBRARIES[browser.name];
+async function missingDLOPENLibraries(browserName: registry.BrowserName): Promise<string[]> {
+  const libraries = DL_OPEN_LIBRARIES[browserName];
   if (!libraries.length)
     return [];
   // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the

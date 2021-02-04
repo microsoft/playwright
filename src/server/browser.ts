@@ -22,6 +22,7 @@ import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
 import { RecentLogsCollector } from '../utils/debugLogger';
+import * as registry from '../utils/registry';
 
 export interface BrowserProcess {
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
@@ -32,6 +33,7 @@ export interface BrowserProcess {
 
 export type PlaywrightOptions = {
   contextListeners: ContextListener[],
+  registry: registry.Registry,
   isInternal: boolean
 };
 
