@@ -89,25 +89,19 @@ export class SnapshotServer {
           let next = document.createElement('iframe');
           document.body.appendChild(next);
           next.style.visibility = 'hidden';
+          const onload = () => {
+            let temp = current;
+            current = next;
+            next = temp;
+            current.style.visibility = 'visible';
+            next.style.visibility = 'hidden';
+          };
+          current.onload = onload;
+          next.onload = onload;
 
-          let nextUrl;
-          window.showSnapshot = url => {
-            if (!nextUrl) {
-              showPromise = showPromise.then(async () => {
-                const url = nextUrl;
-                nextUrl = undefined;
-                const loaded = new Promise(f => next.onload = f);
-                next.src = url;
-                await loaded;
-                let temp = current;
-                current = next;
-                next = temp;
-                current.style.visibility = 'visible';
-                next.style.visibility = 'hidden';
-              });
-            }
-            nextUrl = url;
-            return showPromise;
+          window.showSnapshot = async url => {
+            await showPromise;
+            next.src = url;
           };
         </script>
       </body>
@@ -437,6 +431,7 @@ export class SnapshotServer {
       response.setHeader('Access-Control-Allow-Origin', '*');
       response.removeHeader('Content-Length');
       response.setHeader('Content-Length', content.byteLength);
+      response.setHeader('Cache-Control', 'public, max-age=31536000');
       response.end(content);
       return true;
     } catch (e) {
