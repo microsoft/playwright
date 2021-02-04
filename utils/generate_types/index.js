@@ -54,7 +54,7 @@ let hadChanges = false;
     if (member.kind === 'method')
       return createMemberLink(member.clazz, `${member.clazz.varName}.${member.alias}(${renderJSSignature(member.argsArray)})`);
     if (member.kind === 'event')
-      return createMemberLink(member.clazz, `${member.clazz.varName}.on('${member.alias}')`);
+      return createMemberLink(member.clazz, `${member.clazz.varName}.on('${member.alias.toLowerCase()}')`);
     if (member.kind === 'property')
       return createMemberLink(member.clazz, `${member.clazz.varName}.${member.alias}`);
     throw new Error('Unknown member kind ' + member.kind);
@@ -184,7 +184,8 @@ function createEventDescriptions(classDesc) {
   if (!hasUniqueEvents(classDesc))
     return [];
   const descriptions = [];
-  for (const [eventName, value] of classDesc.events) {
+  for (let [eventName, value] of classDesc.events) {
+    eventName = eventName.toLowerCase();
     const type = stringifyComplexType(value && value.type, '', classDesc.name, eventName, 'payload');
     const argName = argNameForType(type);
     const params = argName ? `${argName}: ${type}` : '';

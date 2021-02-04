@@ -3,10 +3,10 @@
 Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
 * [`event: Page.request`] emitted when the request is issued by the page.
 * [`event: Page.response`] emitted when/if the response status and headers are received for the request.
-* [`event: Page.requestfinished`] emitted when the response body is downloaded and the request is complete.
+* [`event: Page.requestFinished`] emitted when the response body is downloaded and the request is complete.
 
 If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event),
-the  [`event: Page.requestfailed`] event is emitted.
+the  [`event: Page.requestFailed`] event is emitted.
 
 :::note
 HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete

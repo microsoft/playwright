@@ -487,7 +487,7 @@ page.set_input_files(
 )
 ```
 
-If you don't have input element in hand (it is created dynamically), you can handle the [`event: Page.filechooser`] event
+If you don't have input element in hand (it is created dynamically), you can handle the [`event: Page.fileChooser`] event
 or use a corresponding waiting method upon your action:
 
 ```js

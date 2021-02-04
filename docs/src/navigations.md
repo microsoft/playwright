@@ -21,7 +21,7 @@ navigation succeeds, page starts **loading** the document.
 events:
 - [`method: Page.url`] is set to the new url
 - document content is loaded over network and parsed
-- [`event: Page.domcontentloaded`] event is fired
+- [`event: Page.DOMContentLoaded`] event is fired
 - page executes some scripts and loads resources like stylesheets and images
 - [`event: Page.load`] event is fired
 - page executes dynamically loaded scripts

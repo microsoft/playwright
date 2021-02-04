@@ -1,6 +1,6 @@
 # class: FileChooser
 
-[FileChooser] objects are dispatched by the page in the [`event: Page.filechooser`] event.
+[FileChooser] objects are dispatched by the page in the [`event: Page.fileChooser`] event.
 
 ```js
 const [fileChooser] = await Promise.all([

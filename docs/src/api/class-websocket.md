@@ -7,19 +7,19 @@ The [WebSocket] class represents websocket connections in the page.
 
 Fired when the websocket closes.
 
-## event: WebSocket.framereceived
+## event: WebSocket.frameReceived
 - type: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket recieves a frame.
 
-## event: WebSocket.framesent
+## event: WebSocket.frameSent
 - type: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket sends a frame.
 
-## event: WebSocket.socketerror
+## event: WebSocket.socketError
 - type: <[String]>
 
 Fired when the websocket has an error.
