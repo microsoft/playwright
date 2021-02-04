@@ -115,6 +115,50 @@ it('should work when file input is not attached to DOM', async ({page, server}) 
   expect(chooser).toBeTruthy();
 });
 
+it('should not throw when filechooser belongs to iframe', (test, { browserName }) => {
+  test.skip(browserName === 'firefox', 'Firefox ignores filechooser from child frame');
+}, async ({page, server}) => {
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  const frame = page.mainFrame().childFrames()[0];
+  await frame.setContent(`
+    <div>Click me</div>
+    <script>
+      document.querySelector('div').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.click();
+        window.parent.__done = true;
+      });
+    </script>
+  `);
+  await Promise.all([
+    page.waitForEvent('filechooser'),
+    frame.click('div')
+  ]);
+  await page.waitForFunction(() => (window as any).__done);
+});
+
+it('should not throw when frame is detached immediately', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  const frame = page.mainFrame().childFrames()[0];
+  await frame.setContent(`
+    <div>Click me</div>
+    <script>
+      document.querySelector('div').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.click();
+        window.parent.__done = true;
+        const iframe = window.parent.document.querySelector('iframe');
+        iframe.remove();
+      });
+    </script>
+  `);
+  page.on('filechooser', () => {});  // To ensure we handle file choosers.
+  await frame.click('div');
+  await page.waitForFunction(() => (window as any).__done);
+});
+
 it('should work with CSP', async ({page, server}) => {
   server.setCSP('/empty.html', 'default-src "none"');
   await page.goto(server.EMPTY_PAGE);

@@ -532,14 +532,25 @@ class FrameSession {
     if (frameSession && frameId !== this._targetId) {
       // This is a remote -> local frame transition.
       frameSession._swappedIn = true;
-      const frame = this._page._frameManager.frame(frameId)!;
-      this._page._frameManager.removeChildFramesRecursively(frame);
+      const frame = this._page._frameManager.frame(frameId);
+      // Frame or even a whole subtree may be already gone, because some ancestor did navigate.
+      if (frame)
+        this._page._frameManager.removeChildFramesRecursively(frame);
+      return;
+    }
+    if (parentFrameId && !this._page._frameManager.frame(parentFrameId)) {
+      // Parent frame may be gone already because some ancestor frame navigated and
+      // destroyed the whole subtree of some oopif, while oopif's process is still sending us events.
+      // Be careful to not confuse this with "main frame navigated cross-process" scenario
+      // where parentFrameId is null.
       return;
     }
     this._page._frameManager.frameAttached(frameId, parentFrameId);
   }
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
+    if (!this._page._frameManager.frame(framePayload.id))
+      return; // Subtree may be already gone because some ancestor navigation destroyed the oopif.
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url + (framePayload.urlFragment || ''), framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
       this._firstNonInitialNavigationCommittedFulfill();
@@ -609,7 +620,9 @@ class FrameSession {
     if (event.targetInfo.type === 'iframe') {
       // Frame id equals target id.
       const targetId = event.targetInfo.targetId;
-      const frame = this._page._frameManager.frame(targetId)!;
+      const frame = this._page._frameManager.frame(targetId);
+      if (!frame)
+        return; // Subtree may be already gone due to renderer/browser race.
       this._page._frameManager.removeChildFramesRecursively(frame);
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
@@ -715,6 +728,8 @@ class FrameSession {
   }
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
+    if (!this._page._frameManager.frame(this._targetId))
+      return; // Our frame/subtree may be gone already.
     this._page.emit(Page.Events.Dialog, new dialog.Dialog(
         this._page,
         event.type,
@@ -749,10 +764,18 @@ class FrameSession {
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
-    const frame = this._page._frameManager.frame(event.frameId)!;
-    const utilityContext = await frame._utilityContext();
-    const handle = await this._adoptBackendNodeId(event.backendNodeId, utilityContext);
-    this._page._onFileChooserOpened(handle);
+    const frame = this._page._frameManager.frame(event.frameId);
+    if (!frame)
+      return;
+    let handle;
+    try {
+      const utilityContext = await frame._utilityContext();
+      handle = await this._adoptBackendNodeId(event.backendNodeId, utilityContext);
+    } catch (e) {
+      // During async processing, frame/context may go away. We should not throw.
+      return;
+    }
+    await this._page._onFileChooserOpened(handle);
   }
 
   _onDownloadWillBegin(payload: Protocol.Page.downloadWillBeginPayload) {
