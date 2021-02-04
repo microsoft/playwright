@@ -22,7 +22,7 @@ export default class UtilityScript {
     const handles = argsAndHandles.slice(argCount);
     const parameters = args.map(a => parseEvaluationResultValue(a, handles));
     expression = expression.trim();
-    if (expression.startsWith('function ') || expression.startsWith('async function '))
+    if (/^(async)?\s*function(\s|\()/.test(expression))
       expression = '(' + expression + ')';
     let result = global.eval(expression);
     if (isFunction === true) {
