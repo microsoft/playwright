@@ -1019,13 +1019,25 @@ export class Frame extends EventEmitter {
   async _waitForFunctionExpression<R>(expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
     if (typeof options.pollingInterval === 'number')
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
-    const predicateBody = isFunction ? 'return (' + expression + ')(arg)' :  'return (' + expression + ')';
-    const task: dom.SchedulableTask<R> = injectedScript => injectedScript.evaluateHandle((injectedScript, { predicateBody, polling, arg }) => {
-      const innerPredicate = new Function('arg', predicateBody) as (arg: any) => R;
+    expression = js.normalizeEvaluationExpression(expression, isFunction);
+    const task: dom.SchedulableTask<R> = injectedScript => injectedScript.evaluateHandle((injectedScript, { expression, isFunction, polling, arg }) => {
+      const predicate = (arg: any): R => {
+        let result = self.eval(expression);
+        if (isFunction === true) {
+          result = result(arg);
+        } else if (isFunction === false) {
+          result = result;
+        } else {
+          // auto detect.
+          if (typeof result === 'function')
+            result = result(arg);
+        }
+        return result;
+      };
       if (typeof polling !== 'number')
-        return injectedScript.pollRaf((progress, continuePolling) => innerPredicate(arg) || continuePolling);
-      return injectedScript.pollInterval(polling, (progress, continuePolling) => innerPredicate(arg) || continuePolling);
-    }, { predicateBody, polling: options.pollingInterval, arg });
+        return injectedScript.pollRaf((progress, continuePolling) => predicate(arg) || continuePolling);
+      return injectedScript.pollInterval(polling, (progress, continuePolling) => predicate(arg) || continuePolling);
+    }, { expression, isFunction, polling: options.pollingInterval, arg });
     return runAbortableTask(
         progress => this._scheduleRerunnableHandleTask(progress, 'main', task),
         this._page._timeoutSettings.timeout(options));

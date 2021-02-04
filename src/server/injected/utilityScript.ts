@@ -21,9 +21,6 @@ export default class UtilityScript {
     const args = argsAndHandles.slice(0, argCount);
     const handles = argsAndHandles.slice(argCount);
     const parameters = args.map(a => parseEvaluationResultValue(a, handles));
-    expression = expression.trim();
-    if (/^(async)?\s*function(\s|\()/.test(expression))
-      expression = '(' + expression + ')';
     let result = global.eval(expression);
     if (isFunction === true) {
       result = result(...parameters);

@@ -175,26 +175,7 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
 
 export async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
   const utilityScript = await context.utilityScript();
-
-  if (isFunction) {
-    try {
-      new Function('(' + expression + ')');
-    } catch (e1) {
-      // This means we might have a function shorthand. Try another
-      // time prefixing 'function '.
-      if (expression.startsWith('async '))
-        expression = 'async function ' + expression.substring('async '.length);
-      else
-        expression = 'function ' + expression;
-      try {
-        new Function('(' + expression  + ')');
-      } catch (e2) {
-        // We tried hard to serialize, but there's a weird beast here.
-        throw new Error('Passed function is not well-serializable!');
-      }
-    }
-  }
-
+  expression = normalizeEvaluationExpression(expression, isFunction);
   const handles: (Promise<JSHandle>)[] = [];
   const toDispose: Promise<JSHandle>[] = [];
   const pushHandle = (handle: Promise<JSHandle>): number => {
@@ -244,4 +225,31 @@ export function parseUnserializableValue(unserializableValue: string): any {
     return -Infinity;
   if (unserializableValue === '-0')
     return -0;
+}
+
+export function normalizeEvaluationExpression(expression: string, isFunction: boolean | undefined): string {
+  expression = expression.trim();
+
+  if (isFunction) {
+    try {
+      new Function('(' + expression + ')');
+    } catch (e1) {
+      // This means we might have a function shorthand. Try another
+      // time prefixing 'function '.
+      if (expression.startsWith('async '))
+        expression = 'async function ' + expression.substring('async '.length);
+      else
+        expression = 'function ' + expression;
+      try {
+        new Function('(' + expression  + ')');
+      } catch (e2) {
+        // We tried hard to serialize, but there's a weird beast here.
+        throw new Error('Passed function is not well-serializable!');
+      }
+    }
+  }
+
+  if (/^(async)?\s*function(\s|\()/.test(expression))
+    expression = '(' + expression + ')';
+  return expression;
 }
