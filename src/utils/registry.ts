@@ -161,7 +161,9 @@ export const registryDirectory = (() => {
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
   if (envDefined === '0')
     return path.join('..', '..', '.local-browsers');
-  return envDefined || path.join(cacheDirectory(), 'ms-playwright');
+  if (envDefined)
+    return path.resolve(process.cwd(), envDefined);
+  return path.join(cacheDirectory(), 'ms-playwright');
 })();
 
 export function isBrowserDirectory(browserDirectory: string): boolean {
