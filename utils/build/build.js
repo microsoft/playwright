@@ -125,7 +125,7 @@ onChanges.push({
 // Copy images.
 steps.push({
   command: process.platform === 'win32' ? 'copy' : 'cp',
-  args: ['src/web/recorder/*.png'.replace(/\//g, path.sep), 'lib/web/recorder/'.replace(/\//g, path.sep)],
+  args: [filePath('src/web/recorder/*.png'), filePath('lib/web/recorder/')],
   shell: true,
 });
 

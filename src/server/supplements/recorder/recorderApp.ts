@@ -37,7 +37,7 @@ export class RecorderApp extends EventEmitter {
   }
 
   private async _init() {
-    const icon = await readFileAsync(require.resolve('../../../../lib/web/recorder/app_icon.png'));
+    const icon = await readFileAsync(require.resolve('../../../web/recorder/app_icon.png'));
     const crPopup = this._page._delegate as CRPage;
     await crPopup._mainFrameSession._client.send('Browser.setDockTile', {
       image: icon.toString('base64')
@@ -46,7 +46,7 @@ export class RecorderApp extends EventEmitter {
     await this._page._setServerRequestInterceptor(async route => {
       if (route.request().url().startsWith('https://playwright/')) {
         const uri = route.request().url().substring('https://playwright/'.length);
-        const file = require.resolve('../../../../lib/web/recorder/' + uri);
+        const file = require.resolve('../../../web/recorder/' + uri);
         const buffer = await readFileAsync(file);
         await route.fulfill({
           status: 200,

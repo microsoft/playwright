@@ -13,5 +13,5 @@
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts", "src/**/*.js"],
-  "exclude": ["node_modules", "src/.eslintrc.js", "src/cli/traceViewer/web/**"]
+  "exclude": ["node_modules", "src/.eslintrc.js", "src/web/**", "src/**/*webpack.config.js"]
 }
