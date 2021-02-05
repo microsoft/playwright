@@ -27,6 +27,21 @@ import { DEFAULT_ARGS } from '../../chromium/chromium';
 
 const readFileAsync = util.promisify(fs.readFile);
 
+export type Mode = 'inspecting' | 'recording' | 'none';
+export type EventData = {
+  event: 'clear' | 'resume' | 'setMode',
+  params: any
+};
+
+declare global {
+  interface Window {
+    playwrightSetMode: (mode: Mode) => void;
+    playwrightSetPaused: (paused: boolean) => void;
+    playwrightSetSource: (params: { text: string, language: string }) => void;
+    dispatch(data: EventData): Promise<void>;
+  }
+}
+
 export class RecorderApp extends EventEmitter {
   private _page: Page;
 
@@ -34,6 +49,10 @@ export class RecorderApp extends EventEmitter {
     super();
     this.setMaxListeners(0);
     this._page = page;
+  }
+
+  async close() {
+    await this._page.context().close();
   }
 
   private async _init() {
@@ -61,9 +80,7 @@ export class RecorderApp extends EventEmitter {
       await route.continue();
     });
 
-    await this._page.exposeBinding('_playwrightClear', false, (_, text: string) => {
-      this.emit('clear');
-    });
+    await this._page.exposeBinding('dispatch', false, (_, data: any) => this.emit('event', data));
 
     this._page.once('close', () => {
       this.emit('close');
@@ -73,18 +90,16 @@ export class RecorderApp extends EventEmitter {
     await this._page.mainFrame().goto(new ProgressController(), 'https://playwright/index.html');
   }
 
-  static async open(inspectedPage: Page): Promise<RecorderApp> {
-    const bounds = await CRPage.mainFrameSession(inspectedPage).windowBounds();
+  static async open(): Promise<RecorderApp> {
     const recorderPlaywright = createPlaywright(true);
     const context = await recorderPlaywright.chromium.launchPersistentContext('', {
       ignoreAllDefaultArgs: true,
       args: [
         ...DEFAULT_ARGS,
-        `--user-data-dir=${path.join(os.homedir(),'.playwright-recorder')}`,
+        `--user-data-dir=${path.join(os.homedir(),'.playwright-app')}`,
         '--remote-debugging-pipe',
         '--app=data:text/html,',
-        `--window-size=300,${bounds.height}`,
-        `--window-position=${bounds.left! + bounds.width! + 1},${bounds.top!}`
+        `--window-size=300,800`,
       ],
       noDefaultViewport: true
     });
@@ -97,14 +112,25 @@ export class RecorderApp extends EventEmitter {
     const [page] = context.pages();
     const result = new RecorderApp(page);
     await result._init();
-    await inspectedPage.bringToFront();
     return result;
   }
 
-  async setScript(text: string, language: string): Promise<void> {
+  async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {
+    await this._page.mainFrame()._evaluateExpression(((mode: Mode) => {
+      window.playwrightSetMode(mode);
+    }).toString(), true, mode, 'main').catch(() => {});
+  }
+
+  async setPaused(paused: boolean): Promise<void> {
+    await this._page.mainFrame()._evaluateExpression(((paused: boolean) => {
+      window.playwrightSetPaused(paused);
+    }).toString(), true, paused, 'main').catch(() => {});
+  }
+
+  async setSource(text: string, language: string): Promise<void> {
     await this._page.mainFrame()._evaluateExpression(((param: { text: string, language: string }) => {
-      (window as any)._playwrightSetSource(param);
-    }).toString(), true, { text, language }, 'main');
+      window.playwrightSetSource(param);
+    }).toString(), true, { text, language }, 'main').catch(() => {});
   }
 
   async bringToFront() {

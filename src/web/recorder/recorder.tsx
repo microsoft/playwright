@@ -20,10 +20,14 @@ import { Toolbar } from '../components/toolbar';
 import { ToolbarButton } from '../components/toolbarButton';
 import { Source } from '../components/source';
 
+type Mode = 'inspecting' | 'recording' | 'none';
+
 declare global {
   interface Window {
-    _playwrightClear(): Promise<void>
-    _playwrightSetSource: (params: { text: string, language: string }) => void
+    playwrightSetMode: (mode: Mode) => void;
+    playwrightSetPaused: (paused: boolean) => void;
+    playwrightSetSource: (params: { text: string, language: string }) => void;
+    dispatch(data: any): Promise<void>;
   }
 }
 
@@ -33,18 +37,36 @@ export interface RecorderProps {
 export const Recorder: React.FC<RecorderProps> = ({
 }) => {
   const [source, setSource] = React.useState({ language: 'javascript', text: '' });
-  window._playwrightSetSource = setSource;
+  const [paused, setPaused] = React.useState(false);
+  const [mode, setMode] = React.useState<Mode>('none');
+
+  window.playwrightSetMode = setMode;
+  window.playwrightSetSource = setSource;
+  window.playwrightSetPaused = setPaused;
 
   return <div className="recorder">
     <Toolbar>
-      <ToolbarButton icon="clone" title="Copy" onClick={() => {
+      <ToolbarButton icon="record" title="Record" toggled={mode == 'recording'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' }}).catch(() => { });
+      }}></ToolbarButton>
+      <ToolbarButton icon="question" title="Inspect" toggled={mode == 'inspecting'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' }}).catch(() => { });
+      }}></ToolbarButton>
+      <ToolbarButton icon="files" title="Copy" disabled={!source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
-      <ToolbarButton icon="trashcan" title="Clear" onClick={() => {
-        window._playwrightClear().catch(e => console.error(e));
-      }}></ToolbarButton>
       <div style={{flex: "auto"}}></div>
+      <ToolbarButton icon="clear-all" title="Clear" disabled={!source.text} onClick={() => {
+        window.dispatch({ event: 'clear' }).catch(() => {});
+      }}></ToolbarButton>
     </Toolbar>
+    <div className="recorder-paused-infobar" hidden={!paused}>
+      <ToolbarButton icon="run" title="Resume" disabled={!paused} onClick={() => {
+        window.dispatch({ event: 'resume' }).catch(() => {});
+      }}></ToolbarButton>
+      <span style={{paddingLeft: 10}}>Paused due to <span className="code">page.pause()</span></span>
+      <div style={{flex: "auto"}}></div>
+    </div>
     <Source text={source.text} language={source.language}></Source>
   </div>;
 };

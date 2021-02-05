@@ -29,11 +29,9 @@ import { ProgressController } from '../progress';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
 import { BufferedOutput, FileOutput, FlushingTerminalOutput, OutputMultiplexer, RecorderOutput, TerminalOutput, Writable } from './recorder/outputs';
-import type { State, UIState } from './recorder/state';
-import { RecorderApp } from './recorder/recorderApp';
+import { EventData, Mode, RecorderApp } from './recorder/recorderApp';
 
 type BindingSource = { frame: Frame, page: Page };
-type App = 'codegen' | 'debug' | 'pause';
 
 const symbol = Symbol('RecorderSupplement');
 
@@ -45,11 +43,11 @@ export class RecorderSupplement {
   private _timers = new Set<NodeJS.Timeout>();
   private _context: BrowserContext;
   private _resumeCallback: (() => void) | null = null;
-  private _recorderUIState: UIState;
+  private _mode: Mode;
   private _paused = false;
   private _output: OutputMultiplexer;
   private _bufferedOutput: BufferedOutput;
-  private _recorderApp: Promise<RecorderApp> | null = null;
+  private _recorderApp: RecorderApp | null = null;
   private _highlighterType: string;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
 
@@ -66,9 +64,7 @@ export class RecorderSupplement {
   constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
     this._context = context;
     this._params = params;
-    this._recorderUIState = {
-      mode: params.startRecording ? 'recording' : 'none',
-    };
+    this._mode = params.startRecording ? 'recording' : 'none';
     let languageGenerator: LanguageGenerator;
     switch (params.language) {
       case 'javascript': languageGenerator = new JavaScriptLanguageGenerator(); break;
@@ -88,10 +84,8 @@ export class RecorderSupplement {
     const outputs: RecorderOutput[] = [params.terminal ? new TerminalOutput(writable, highlighterType) : new FlushingTerminalOutput(writable)];
     this._highlighterType = highlighterType;
     this._bufferedOutput = new BufferedOutput(async text => {
-      if (this._recorderApp) {
-        const app = await this._recorderApp;
-        await app.setScript(text, highlighterType).catch(e => {});
-      }
+      if (this._recorderApp)
+        this._recorderApp.setSource(text, highlighterType);
     });
     outputs.push(this._bufferedOutput);
     if (params.outputFile)
@@ -105,14 +99,45 @@ export class RecorderSupplement {
   }
 
   async install() {
-    this._context.on('page', page => this._onPage(page));
+    const recorderApp = await RecorderApp.open();
+    this._recorderApp = recorderApp;
+    recorderApp.once('close', () => {
+      this._recorderApp = null;
+    });
+    recorderApp.on('event', (data: EventData) => {
+      if (data.event === 'setMode') {
+        this._mode = data.params.mode;
+        recorderApp.setMode(this._mode);
+        this._output.setEnabled(this._mode === 'recording');
+        if (this._mode !== 'none')
+          this._context.pages()[0].bringToFront().catch(() => {});
+        return;
+      }
+      if (data.event === 'resume') {
+        this._resume();
+        return;
+      }
+      if (data.event === 'clear') {
+        this._clearScript();
+        return;
+      }
+    });
+
+    await Promise.all([
+      recorderApp.setMode(this._mode),
+      recorderApp.setPaused(this._paused),
+      recorderApp.setSource(this._bufferedOutput.buffer(), this._highlighterType)
+    ]);
+
+    this._context.on(BrowserContext.Events.Page, page => this._onPage(page));
     for (const page of this._context.pages())
       this._onPage(page);
 
-    this._context.once('close', () => {
+    this._context.once(BrowserContext.Events.Close, () => {
       for (const timer of this._timers)
         clearTimeout(timer);
       this._timers.clear();
+      recorderApp.close().catch(() => {});
     });
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
@@ -128,53 +153,37 @@ export class RecorderSupplement {
     await this._context.exposeBinding('_playwrightRecorderCommitAction', false,
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
-    await this._context.exposeBinding('_playwrightRecorderShowRecorderPage', false, ({ page }) => {
-      if (this._recorderApp) {
-        this._recorderApp.then(p => p.bringToFront()).catch(() => {});
-        return;
-      }
-      this._recorderApp = RecorderApp.open(page);
-      this._recorderApp.then(app => {
-        app.once('close', () => {
-          this._recorderApp = null;
-        });
-        app.on('clear', () => this._clearScript());
-        return app.setScript(this._bufferedOutput.buffer(), this._highlighterType);
-      }).catch(e => console.error(e));
-    });
-
     await this._context.exposeBinding('_playwrightRecorderPrintSelector', false, (_, text) => {
       this._context.emit(BrowserContext.Events.StdOut, `Selector: \x1b[38;5;130m${text}\x1b[0m\n`);
     });
 
     await this._context.exposeBinding('_playwrightRecorderState', false, () => {
-      const state: State = {
-        uiState: this._recorderUIState,
-        isPaused: this._paused,
-      };
-      return state;
-    });
-
-    await this._context.exposeBinding('_playwrightRecorderSetUIState', false, (source, state: UIState) => {
-      this._recorderUIState = { ...this._recorderUIState, ...state };
-      this._output.setEnabled(state.mode === 'recording');
+      return { mode: this._mode };
     });
 
     await this._context.exposeBinding('_playwrightResume', false, () => {
-      if (this._resumeCallback) {
-        this._resumeCallback();
-        this._resumeCallback = null;
-      }
-      this._paused = false;
+      this._resume().catch(() => {});
     });
 
     await this._context.extendInjectedScript(recorderSource.source);
     await this._context.extendInjectedScript(consoleApiSource.source);
+
+    (this._context as any).recorderAppForTest = recorderApp;
   }
 
   async pause() {
     this._paused = true;
+    this._recorderApp!.setPaused(true);
     return new Promise<void>(f => this._resumeCallback = f);
+  }
+
+  private async _resume() {
+    if (this._resumeCallback)
+      this._resumeCallback();
+    this._resumeCallback = null;
+    this._paused = false;
+    if (this._recorderApp)
+      this._recorderApp.setPaused(this._paused);
   }
 
   private async _onPage(page: Page) {

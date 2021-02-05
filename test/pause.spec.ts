@@ -13,56 +13,73 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import { folio } from './fixtures';
-const extended = folio.extend();
-extended.browserOptions.override(({browserOptions}, runTest) => {
-  return runTest({
+import { ProgressController } from '../lib/server/progress';
+
+const extended = folio.extend<{
+  recorderFrame: () => Promise<any>,
+  recorderClick: (selector: string) => Promise<void>
+}>();
+
+extended.browserOptions.override(async ({browserOptions}, runTest) => {
+  await runTest({
     ...browserOptions,
     headless: false,
   });
 });
-const {it, expect } = extended.build();
 
-it('should pause and resume the script', async ({page}) => {
-  let resolved = false;
-  const resumePromise = (page as any).pause().then(() => resolved = true);
-  await new Promise(x => setTimeout(x, 0));
-  expect(resolved).toBe(false);
-  await page.click('#pw-button-resume');
-  await resumePromise;
-  expect(resolved).toBe(true);
+extended.recorderFrame.init(async ({context, toImpl}, runTest) => {
+  await runTest(async () => {
+    while (!toImpl(context).recorderAppForTest)
+      await new Promise(f => setTimeout(f, 100));
+    return toImpl(context).recorderAppForTest._page.mainFrame();
+  });
 });
 
-it('should resume from console', async ({page}) => {
-  let resolved = false;
-  const resumePromise = (page as any).pause().then(() => resolved = true);
-  await new Promise(x => setTimeout(x, 0));
-  expect(resolved).toBe(false);
-  await page.waitForFunction(() => !!(window as any).playwright.resume);
-  await page.evaluate('window.playwright.resume()');
-  await resumePromise;
-  expect(resolved).toBe(true);
+extended.recorderClick.init(async ({ recorderFrame }, runTest) => {
+  await runTest(async (selector: string) => {
+    const frame = await recorderFrame();
+    frame.click(new ProgressController(), selector, {});
+  });
 });
 
-it('should pause through a navigation', async ({page, server}) => {
-  let resolved = false;
-  const resumePromise = (page as any).pause().then(() => resolved = true);
-  await new Promise(x => setTimeout(x, 0));
-  expect(resolved).toBe(false);
-  await page.goto(server.EMPTY_PAGE);
-  await page.click('#pw-button-resume');
-  await resumePromise;
-  expect(resolved).toBe(true);
-});
+const {it, expect, describe} = extended.build();
 
-it('should pause after a navigation', async ({page, server}) => {
-  await page.goto(server.EMPTY_PAGE);
+describe('pause', (suite, { mode }) => {
+  suite.skip(mode !== 'default');
+}, () => {
+  it('should pause and resume the script', async ({ page, recorderClick }) => {
+    await Promise.all([
+      page.pause(),
+      recorderClick('[title=Resume]')
+    ]);
+  });
 
-  let resolved = false;
-  const resumePromise = (page as any).pause().then(() => resolved = true);
-  await new Promise(x => setTimeout(x, 0));
-  expect(resolved).toBe(false);
-  await page.click('#pw-button-resume');
-  await resumePromise;
-  expect(resolved).toBe(true);
+  it('should resume from console', async ({page}) => {
+    await Promise.all([
+      page.pause(),
+      page.waitForFunction(() => (window as any).playwright && (window as any).playwright.resume).then(() => {
+        return page.evaluate('window.playwright.resume()');
+      })
+    ]);
+  });
+
+  it('should pause through a navigation', async ({page, server, recorderClick}) => {
+    let resolved = false;
+    const resumePromise = page.pause().then(() => resolved = true);
+    expect(resolved).toBe(false);
+    await page.goto(server.EMPTY_PAGE);
+    await recorderClick('[title=Resume]');
+    await resumePromise;
+    expect(resolved).toBe(true);
+  });
+
+  it('should pause after a navigation', async ({page, server, recorderClick}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await Promise.all([
+      page.pause(),
+      recorderClick('[title=Resume]')
+    ]);
+  });
 });
