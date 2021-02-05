@@ -2173,6 +2173,46 @@ Video object associated with this page.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
+## method: Page.waitForClose
+* langs: csharp, java
+- returns: <[Page]>
+
+Performs action and waits for the Page to close.
+
+### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
+
+## async method: Page.waitForConsoleMessage
+* langs: csharp, java, python
+  - alias-python: expect_console_message
+- returns: <[ConsoleMessage]>
+
+Performs action and waits for a [ConoleMessage] to be logged by in the page. If predicate is provided, it passes
+[ConsoleMessage] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
+Will throw an error if the page is closed before the console event is fired.
+
+### option: Page.waitForConsoleMessage.predicate =
+- `predicate` <[function]\([ConsoleMessage]\):[bool]>
+
+Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
+
+## async method: Page.waitForDownload
+* langs: csharp, java, python
+  - alias-python: expect_download
+- returns: <[Download]>
+
+Performs action and waits for a new [Download]. If predicate is provided, it passes
+[Download] value into the `predicate` function and waits for `predicate(download)` to return a truthy value.
+Will throw an error if the page is closed before the download event is fired.
+
+### option: Page.waitForDownload.predicate =
+- `predicate` <[function]\([Download]\):[bool]>
+
+Receives the [Download] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForDownload.timeout = %%-wait-for-event-timeout-%%
+
 ## async method: Page.waitForEvent
 * langs: csharp, js, python
   - alias-python: expect_event
@@ -2210,6 +2250,22 @@ frame = event_info.value
     disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
+
+## async method: Page.waitForFileChooser
+* langs: csharp, java, python
+  - alias-python: expect_file_chooser
+- returns: <[FileChooser]>
+
+Performs action and waits for a new [FileChooser] to be created. If predicate is provided, it passes
+[FileChooser] value into the `predicate` function and waits for `predicate(fileChooser)` to return a truthy value.
+Will throw an error if the page is closed before the file chooser is opened.
+
+### option: Page.waitForFileChooser.predicate =
+- `predicate` <[function]\([FileChooser]\):[bool]>
+
+Receives the [FileChooser] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForFileChooser.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForFunction
 - returns: <[JSHandle]>
@@ -2399,6 +2455,22 @@ Shortcut for main frame's [`method: Frame.waitForNavigation`].
 
 ### option: Page.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
 
+## async method: Page.waitForPopup
+* langs: csharp, java, python
+  - alias-python: expect_popup
+- returns: <[Page]>
+
+Performs action and waits for a popup [Page]. If predicate is provided, it passes
+[Popup] value into the `predicate` function and waits for `predicate(page)` to return a truthy value.
+Will throw an error if the page is closed before the popup event is fired.
+
+### option: Page.waitForPopup.predicate =
+- `predicate` <[function]\([Page]\):[bool]>
+
+Receives the [Page] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForPopup.timeout = %%-wait-for-event-timeout-%%
+
 ## async method: Page.waitForRequest
 * langs:
   * alias-python: expect_request
@@ -2582,6 +2654,37 @@ Shortcut for main frame's [`method: Frame.waitForTimeout`].
 - `timeout` <[float]>
 
 A timeout to wait for
+
+## async method: Page.waitForWebSocket
+* langs: csharp, java
+- returns: <[WebSocket]>
+
+Performs action and waits for a new [WebSocket]. If predicate is provided, it passes
+[WebSocket] value into the `predicate` function and waits for `predicate(webSocket)` to return a truthy value.
+Will throw an error if the page is closed before the WebSocket event is fired.
+
+### option: Page.waitForWebSocket.predicate =
+- `predicate` <[function]\([WebSocket]\):[bool]>
+
+Receives the [WebSocket] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForWebSocket.timeout = %%-wait-for-event-timeout-%%
+
+## async method: Page.waitForWorker
+* langs: csharp, java, python
+  - alias-python: expect_worker
+- returns: <[Worker]>
+
+Performs action and waits for a new [Worker]. If predicate is provided, it passes
+[Worker] value into the `predicate` function and waits for `predicate(worker)` to return a truthy value.
+Will throw an error if the page is closed before the worker event is fired.
+
+### option: Page.waitForWorker.predicate =
+- `predicate` <[function]\([Worker]\):[bool]>
+
+Receives the [Worker] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForWorker.timeout = %%-wait-for-event-timeout-%%
 
 ## method: Page.workers
 - returns: <[Array]<[Worker]>>

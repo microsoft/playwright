@@ -85,120 +85,43 @@ Raw script content.
 * langs: python
 - returns: <[EventContextManager]>
 ### option: Page.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: Page.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+### option: Page.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: BrowserContext.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
 ### option: BrowserContext.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: BrowserContext.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+### option: BrowserContext.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: WebSocket.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
 ### option: WebSocket.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: WebSocket.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+### option: WebSocket.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 
-## async method: Page.expectDownload
+## async method: Page.waitForDownload
 * langs: python
 - returns: <[EventContextManager]<[Download]>>
 
-Performs action and waits for `download` event to fire. If predicate is provided, it passes
-[Download] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the download event is fired.
-
-### option: Page.expectDownload.predicate =
-* langs: python
-- `predicate` <[function]\([Download]\):[bool]>
-
-Receives the [Download] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectDownload.timeout = %%-python-wait-for-event-timeout-%%
-
-
-## async method: Page.expectPopup
+## async method: Page.waitForPopup
 * langs: python
 - returns: <[EventContextManager]<[Page]>>
 
-Performs action and waits for `popup` event to fire. If predicate is provided, it passes
-[Popup] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the popup event is fired.
-
-### option: Page.expectPopup.predicate =
-* langs: python
-- `predicate` <[function]\([Page]\):[bool]>
-
-Receives the [Popup] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectPopup.timeout = %%-python-wait-for-event-timeout-%%
-
-
-## async method: Page.expectWorker
+## async method: Page.waitForWorker
 * langs: python
 - returns: <[EventContextManager]<[Worker]>>
 
-Performs action and waits for `worker` event to fire. If predicate is provided, it passes
-[Worker] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
-
-### option: Page.expectWorker.predicate =
-* langs: python
-- `predicate` <[function]\([Worker]\):[bool]>
-
-Receives the [Worker] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectWorker.timeout = %%-python-wait-for-event-timeout-%%
-
-
-## async method: Page.expectConsoleMessage
+## async method: Page.waitForConsoleMessage
 * langs: python
 - returns: <[EventContextManager]<[ConsoleMessage]>>
 
-Performs action and waits for `console` event to fire. If predicate is provided, it passes
-[ConsoleMessage] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
-
-### option: Page.expectConsoleMessage.predicate =
-* langs: python
-- `predicate` <[function]\([ConsoleMessage]\):[bool]>
-
-Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectConsoleMessage.timeout = %%-python-wait-for-event-timeout-%%
-
-
-## async method: Page.expectFileChooser
+## async method: Page.waitForFileChooser
 * langs: python
 - returns: <[EventContextManager]<[FileChooser]>>
 
-Performs action and waits for `filechooser` event to fire. If predicate is provided, it passes
-[FileChooser] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
-
-### option: Page.expectFileChooser.predicate =
-* langs: python
-- `predicate` <[function]\([FileChooser]\):[bool]>
-
-Receives the [FileChooser] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectFileChooser.timeout = %%-python-wait-for-event-timeout-%%
-
-
-## async method: BrowserContext.expectPage
+## async method: BrowserContext.waitForPage
 * langs: python
 - returns: <[EventContextManager]<[Page]>>
-
-Performs action and waits for `page` event to fire. If predicate is provided, it passes
-[Page] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
-
-### option: BrowserContext.expectPage.predicate =
-* langs: python
-- `predicate` <[function]\([Page]\):[bool]>
-
-Receives the [Page] object and resolves to truthy value when the waiting should resolve.
-
-### option: BrowserContext.expectPage.timeout = %%-python-wait-for-event-timeout-%%
 
 ## async method: Frame.waitForNavigation
 * langs: python
@@ -231,7 +154,7 @@ Will throw an error if the socket is closed before the `event` is fired.
 
 ### param: BrowserContext.waitForEvent2.event = %%-wait-for-event-event-%%
 ### option: BrowserContext.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
-### option: BrowserContext.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
+### option: BrowserContext.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForEvent2
 * langs: python
@@ -248,7 +171,7 @@ Will throw an error if the socket is closed before the `event` is fired.
 
 ### param: Page.waitForEvent2.event = %%-wait-for-event-event-%%
 ### option: Page.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
-### option: Page.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
+### option: Page.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: WebSocket.waitForEvent2
 * langs: python
@@ -265,4 +188,4 @@ Will throw an error if the socket is closed before the `event` is fired.
 
 ### param: WebSocket.waitForEvent2.event = %%-wait-for-event-event-%%
 ### option: WebSocket.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
-### option: WebSocket.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
+### option: WebSocket.waitForEvent2.timeout = %%-wait-for-event-timeout-%%

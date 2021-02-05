@@ -440,6 +440,12 @@ method resolves immediately. Can be one of:
   * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
   * `'networkidle'` - wait until there are no network connections for at least `500` ms.
 
+## java-wait-for-event-callback
+* langs: java
+- `callback` <[Runnable]>
+
+Callback that performs the action triggering the event.
+
 ## python-select-options-element
 * langs: python
 - `element` <[ElementHandle]|[Array]<[ElementHandle]>>
@@ -472,8 +478,8 @@ only the first option matching one of the passed options is selected. Optional.
 
 Receives the event data and resolves to truthy value when the waiting should resolve.
 
-## python-wait-for-event-timeout
-* langs: python
+## wait-for-event-timeout
+* langs: csharp, java, python
 - `timeout` <[float]>
 
 Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
