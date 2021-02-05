@@ -712,6 +712,8 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
 ### option: Page.emulateMedia.media
+* langs:
+  - alias-enum: MediaEnum
 - `media` <[null]|"screen"|"print">
 
 Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
@@ -1844,10 +1846,7 @@ The file path to save the image to. The screenshot type will be inferred from fi
 relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
 saved to the disk.
 
-### option: Page.screenshot.type
-- `type` <"png"|"jpeg">
-
-Specify screenshot type, defaults to `png`.
+### option: Page.screenshot.type = %%-screenshot-type-%%
 
 ### option: Page.screenshot.quality
 - `quality` <[int]>

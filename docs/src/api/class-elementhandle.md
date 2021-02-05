@@ -504,10 +504,7 @@ The file path to save the image to. The screenshot type will be inferred from fi
 relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
 saved to the disk.
 
-### option: ElementHandle.screenshot.type
-- `type` <"png"|"jpeg">
-
-Specify screenshot type, defaults to `png`.
+### option: ElementHandle.screenshot.type = %%-screenshot-type-%%
 
 ### option: ElementHandle.screenshot.quality
 - `quality` <[int]>
