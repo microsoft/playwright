@@ -29,7 +29,6 @@ import { Progress, ProgressController, ProgressResult } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 import * as path from 'path';
-import { option } from 'commander';
 
 export class Video {
   readonly _videoId: string;
