@@ -70,6 +70,63 @@ $ python -m playwright --load-storage=auth.json codegen my.web.app
 # Perform actions in authenticated state.
 ```
 
+### Codegen with custom setup
+
+If you would like to use codegen in some non-standard setup (for example, use [`method: BrowserContext.route`]), it is possible to call [`method: Page.pause`] that will open a separate window with codegen controls.
+
+```js
+const { chromium } = require('playwright');
+
+(async () => {
+  // Make sure to run headed.
+  const browser = await chromium.launch({ headless: false });
+
+  // Setup context however you like.
+  const context = await browser.newContext({ /* pass any options */ });
+  await context.route('**/*', route => route.continue());
+
+  // Pause the page, and start recording manually.
+  const page = await context.newPage();
+  await page.pause();
+})();
+```
+
+```python async
+import asyncio
+from playwright.async_api import async_playwright
+
+async def main():
+    async with async_playwright() as p:
+        # Make sure to run headed.
+        browser = await p.chromium.launch(headless=False)
+
+        # Setup context however you like.
+        context = await browser.new_context() # Pass any options
+        await context.route('**/*', lambda route: route.continue_())
+
+        # Pause the page, and start recording manually.
+        page = await context.new_page()
+        await page.pause()
+
+asyncio.run(main())
+```
+
+```python async
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    # Make sure to run headed.
+    browser = p.chromium.launch(headless=False)
+
+    # Setup context however you like.
+    context = browser.new_context() # Pass any options
+    context.route('**/*', lambda route: route.continue_())
+
+    # Pause the page, and start recording manually.
+    page = context.new_page()
+    page.pause()
+```
+
 ## Open pages
 
 With `open`, you can use Playwright bundled browsers to browse web pages. Playwright provides cross-platform WebKit builds that can be used to reproduce Safari rendering across Windows, Linux and macOS.
