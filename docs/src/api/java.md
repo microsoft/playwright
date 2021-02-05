@@ -27,14 +27,6 @@ Runs callback and waits for a console message.
 
 ### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
 
-## method: Page.waitForFileChooser
-* langs: java
-- returns: <[FileChooser]>
-
-Runs callback and waits for a file chooser.
-
-### option: Page.waitForFileChooser.timeout = %%-java-wait-for-event-timeout-%%
-
 ### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
 
 ## method: Page.waitForFrameAttached
@@ -128,14 +120,6 @@ Runs callback and waits for a new WebSocket.
 ### option: Page.waitForWebSocket.timeout = %%-java-wait-for-event-timeout-%%
 
 ### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
-
-## method: Page.waitForWorker
-* langs: java
-- returns: <[Worker]>
-
-Runs callback and waits for a new Worker.
-
-### option: Page.waitForWorker.timeout = %%-java-wait-for-event-timeout-%%
 
 ### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
 

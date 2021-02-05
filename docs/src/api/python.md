@@ -107,21 +107,9 @@ Raw script content.
 * langs: python
 - returns: <[EventContextManager]<[Page]>>
 
-## async method: Page.expectWorker
+## async method: Page.waitForWorker
 * langs: python
 - returns: <[EventContextManager]<[Worker]>>
-
-Performs action and waits for `worker` event to fire. If predicate is provided, it passes
-[Worker] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
-
-### option: Page.expectWorker.predicate =
-* langs: python
-- `predicate` <[function]\([Worker]\):[bool]>
-
-Receives the [Worker] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectWorker.timeout = %%-python-wait-for-event-timeout-%%
 
 ## async method: Page.expectConsoleMessage
 * langs: python
@@ -139,21 +127,9 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 
 ### option: Page.expectConsoleMessage.timeout = %%-python-wait-for-event-timeout-%%
 
-## async method: Page.expectFileChooser
+## async method: Page.waitForFileChooser
 * langs: python
 - returns: <[EventContextManager]<[FileChooser]>>
-
-Performs action and waits for `filechooser` event to fire. If predicate is provided, it passes
-[FileChooser] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
-
-### option: Page.expectFileChooser.predicate =
-* langs: python
-- `predicate` <[function]\([FileChooser]\):[bool]>
-
-Receives the [FileChooser] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectFileChooser.timeout = %%-python-wait-for-event-timeout-%%
 
 ## async method: BrowserContext.waitForPage
 * langs: python

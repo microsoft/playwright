@@ -2227,6 +2227,22 @@ frame = event_info.value
 
 Either a predicate that receives an event or an options object. Optional.
 
+## async method: Page.waitForFileChooser
+* langs: csharp, java, python
+  - alias-python: expect_file_chooser
+- returns: <[FileChooser]>
+
+Performs action and waits for a new [FileChooser] to be created. If predicate is provided, it passes
+[FileChooser] value into the `predicate` function and waits for `predicate(fileChooser)` to return a truthy value.
+Will throw an error if the page is closed before the worker event is fired.
+
+### option: Page.waitForFileChooser.predicate =
+- `predicate` <[function]\([FileChooser]\):[bool]>
+
+Receives the [FileChooser] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForFileChooser.timeout = %%-wait-for-event-timeout-%%
+
 ## async method: Page.waitForFunction
 - returns: <[JSHandle]>
 
@@ -2614,6 +2630,22 @@ Shortcut for main frame's [`method: Frame.waitForTimeout`].
 - `timeout` <[float]>
 
 A timeout to wait for
+
+## async method: Page.waitForWorker
+* langs: csharp, java, python
+  - alias-python: expect_worker
+- returns: <[Worker]>
+
+Performs action and waits for a new [Worker]. If predicate is provided, it passes
+[Worker] value into the `predicate` function and waits for `predicate(worker)` to return a truthy value.
+Will throw an error if the page is closed before the worker event is fired.
+
+### option: Page.waitForWorker.predicate =
+- `predicate` <[function]\([Worker]\):[bool]>
+
+Receives the [Worker] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForWorker.timeout = %%-wait-for-event-timeout-%%
 
 ## method: Page.workers
 - returns: <[Array]<[Worker]>>
