@@ -112,3 +112,8 @@ svg {
 ::-webkit-scrollbar-corner {
   background-color: var(--background);
 }
+
+.code {
+  font-family: var(--monospace-font);
+  color: yellow;
+}

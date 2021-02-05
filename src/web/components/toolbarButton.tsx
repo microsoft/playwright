@@ -21,14 +21,20 @@ import * as React from 'react';
 export interface ToolbarButtonProps {
   title: string,
   icon: string,
+  disabled?: boolean,
+  toggled?: boolean,
   onClick: () => void
 }
 
 export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
   title = '',
   icon = '',
+  disabled = false,
+  toggled = false,
   onClick = () => {},
 }) => {
-  const className = `toolbar-button codicon codicon-${icon}`;
-  return <button className={className} onClick={onClick} title={title}></button>;
+  let className = `toolbar-button codicon codicon-${icon}`;
+  if (toggled)
+    className += ' toggled';
+  return <button className={className} onClick={onClick} title={title} disabled={!!disabled}></button>;
 };
