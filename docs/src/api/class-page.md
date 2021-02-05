@@ -2173,6 +2173,14 @@ Video object associated with this page.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
+## method: Page.waitForClose
+* langs: csharp, java
+- returns: <[Page]>
+
+Performs action and waits for the Page to close.
+
+### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
+
 ## async method: Page.waitForConsoleMessage
 * langs: csharp, java, python
   - alias-python: expect_console_message
@@ -2646,6 +2654,21 @@ Shortcut for main frame's [`method: Frame.waitForTimeout`].
 - `timeout` <[float]>
 
 A timeout to wait for
+
+## async method: Page.waitForWebSocket
+* langs: csharp, java
+- returns: <[WebSocket]>
+
+Performs action and waits for a new [WebSocket]. If predicate is provided, it passes
+[WebSocket] value into the `predicate` function and waits for `predicate(webSocket)` to return a truthy value.
+Will throw an error if the page is closed before the WebSocket event is fired.
+
+### option: Page.waitForWebSocket.predicate =
+- `predicate` <[function]\([WebSocket]\):[bool]>
+
+Receives the [WebSocket] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForWebSocket.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForWorker
 * langs: csharp, java, python
