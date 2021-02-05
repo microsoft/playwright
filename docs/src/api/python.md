@@ -85,19 +85,19 @@ Raw script content.
 * langs: python
 - returns: <[EventContextManager]>
 ### option: Page.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: Page.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+### option: Page.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: BrowserContext.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
 ### option: BrowserContext.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: BrowserContext.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+### option: BrowserContext.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: WebSocket.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
 ### option: WebSocket.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: WebSocket.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+### option: WebSocket.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForDownload
 * langs: python
@@ -154,7 +154,7 @@ Will throw an error if the socket is closed before the `event` is fired.
 
 ### param: BrowserContext.waitForEvent2.event = %%-wait-for-event-event-%%
 ### option: BrowserContext.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
-### option: BrowserContext.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
+### option: BrowserContext.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForEvent2
 * langs: python
@@ -171,7 +171,7 @@ Will throw an error if the socket is closed before the `event` is fired.
 
 ### param: Page.waitForEvent2.event = %%-wait-for-event-event-%%
 ### option: Page.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
-### option: Page.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
+### option: Page.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: WebSocket.waitForEvent2
 * langs: python
@@ -188,4 +188,4 @@ Will throw an error if the socket is closed before the `event` is fired.
 
 ### param: WebSocket.waitForEvent2.event = %%-wait-for-event-event-%%
 ### option: WebSocket.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
-### option: WebSocket.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
+### option: WebSocket.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
