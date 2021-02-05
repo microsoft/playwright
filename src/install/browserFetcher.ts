@@ -23,7 +23,6 @@ import * as ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';
-import { assert, getFromENV } from '../utils/utils';
 import { BrowserName, Registry, hostPlatform } from '../utils/registry';
 
 // `https-proxy-agent` v5 is written in Typescript and exposes generated types.
