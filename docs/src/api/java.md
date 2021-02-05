@@ -23,23 +23,7 @@ Terminates this instance of Playwright, will also close all created browsers if 
 
 ### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
 
-## method: WebSocket.waitForFrameReceived
-* langs: java
-- returns: <[FrameData]>
-
-Performs action and waits for a received frame.
-
-### option: WebSocket.waitForFrameReceived.timeout = %%-wait-for-event-timeout-%%
-
 ### param: WebSocket.waitForFrameReceived.callback = %%-java-wait-for-event-callback-%%
-
-## method: WebSocket.waitForFrameSent
-* langs: java
-- returns: <[FrameData]>
-
-Performs action and waits for a sent frame.
-
-### option: WebSocket.waitForFrameSent.timeout = %%-wait-for-event-timeout-%%
 
 ### param: WebSocket.waitForFrameSent.callback = %%-java-wait-for-event-callback-%%
 
