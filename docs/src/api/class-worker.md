@@ -71,3 +71,11 @@ Optional argument to pass to [`param: expression`].
 
 ## method: Worker.url
 - returns: <[string]>
+
+## method: Worker.waitForClose
+* langs: csharp, java
+- returns: <[Worker]>
+
+Performs action and waits for the Worker to close.
+
+### option: Worker.waitForClose.timeout = %%-wait-for-event-timeout-%%

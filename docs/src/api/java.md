@@ -13,16 +13,6 @@ Terminates this instance of Playwright, will also close all created browsers if 
 
 ### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
 
-## method: Page.waitForFrameNavigated
-* langs: java
-- returns: <[Frame]>
-
-Performs action and waits for navigation in one of the frames in the page.
-
-### option: Page.waitForFrameNavigated.timeout = %%-java-wait-for-event-timeout-%%
-
-### param: Page.waitForFrameNavigated.callback = %%-java-wait-for-event-callback-%%
-
 ### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
@@ -39,7 +29,7 @@ Performs action and waits for navigation in one of the frames in the page.
 
 Performs action and waits for a received frame.
 
-### option: WebSocket.waitForFrameReceived.timeout = %%-java-wait-for-event-timeout-%%
+### option: WebSocket.waitForFrameReceived.timeout = %%-wait-for-event-timeout-%%
 
 ### param: WebSocket.waitForFrameReceived.callback = %%-java-wait-for-event-callback-%%
 
@@ -49,17 +39,9 @@ Performs action and waits for a received frame.
 
 Performs action and waits for a sent frame.
 
-### option: WebSocket.waitForFrameSent.timeout = %%-java-wait-for-event-timeout-%%
+### option: WebSocket.waitForFrameSent.timeout = %%-wait-for-event-timeout-%%
 
 ### param: WebSocket.waitForFrameSent.callback = %%-java-wait-for-event-callback-%%
-
-## method: Worker.waitForClose
-* langs: java
-- returns: <[Worker]>
-
-Performs action and waits for the Worker to close.
-
-### option: Worker.waitForClose.timeout = %%-java-wait-for-event-timeout-%%
 
 ### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
 
