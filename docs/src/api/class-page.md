@@ -712,13 +712,13 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
 ### option: Page.emulateMedia.media
-- `media` <[null]|"screen"|"print">
+- `media` <null|[MediaEnum]<"screen"|"print">>
 
 Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
 Passing `null` disables CSS media emulation.
 
 ### option: Page.emulateMedia.colorScheme
-- `colorScheme` <[null]|"light"|"dark"|"no-preference">
+- `colorScheme` <null|[ColorSchemeEnum]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
 `null` disables color scheme emulation.
@@ -1844,10 +1844,7 @@ The file path to save the image to. The screenshot type will be inferred from fi
 relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
 saved to the disk.
 
-### option: Page.screenshot.type
-- `type` <"png"|"jpeg">
-
-Specify screenshot type, defaults to `png`.
+### option: Page.screenshot.type = %%-screenshot-type-%%
 
 ### option: Page.screenshot.quality
 - `quality` <[int]>

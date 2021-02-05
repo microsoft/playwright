@@ -1,5 +1,5 @@
 ## navigation-wait-until
-- `waitUntil` <"load"|"domcontentloaded"|"networkidle">
+- `waitUntil` <[WaitUntilEnum]<"load"|"domcontentloaded"|"networkidle">>
 
 When to consider operation succeeded, defaults to `load`. Events can be either:
 * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
@@ -56,13 +56,13 @@ A point to use relative to the top-left corner of element padding box. If not sp
 element.
 
 ## input-modifiers
-- `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">>
+- `modifiers` <[Array]<[ModifierEnum]<"Alt"|"Control"|"Meta"|"Shift">>>
 
 Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
 modifiers back. If not specified, currently pressed modifiers are used.
 
 ## input-button
-- `button` <"left"|"right"|"middle">
+- `button` <[ButtonEnum]<"left"|"right"|"middle">>
 
 Defaults to `left`.
 
@@ -88,7 +88,7 @@ defaults to 1. See [UIEvent.detail].
 A selector to query for. See [working with selectors](./selectors.md) for more details.
 
 ## wait-for-selector-state
-- `state` <"attached"|"detached"|"visible"|"hidden">
+- `state` <[ElementStateEnum]<"attached"|"detached"|"visible"|"hidden">>
 
 Defaults to `'visible'`. Can be either:
 * `'attached'` - wait for element to be present in DOM.
@@ -321,7 +321,7 @@ Whether to emulate network being offline. Defaults to `false`.
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 
 ## context-option-colorscheme
-- `colorScheme` <"light"|"dark"|"no-preference">
+- `colorScheme` <[ColorSchemeEnum]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
 [`method: Page.emulateMedia`] for more details. Defaults to '`light`'.
@@ -432,13 +432,18 @@ A glob pattern, regex pattern or predicate receiving [URL] to match while waitin
 Event name, same one typically passed into `*.on(event)`.
 
 ## wait-for-load-state-state
-- `state` <"load"|"domcontentloaded"|"networkidle">
+- `state` <[LoadStateEnum]<"load"|"domcontentloaded"|"networkidle">>
 
 Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
 method resolves immediately. Can be one of:
   * `'load'` - wait for the `load` event to be fired.
   * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
   * `'networkidle'` - wait until there are no network connections for at least `500` ms.
+
+## screenshot-type
+- `type` <[ScreenshotTypeEnum]<"png"|"jpeg">>
+
+Specify screenshot type, defaults to `png`.
 
 ## java-wait-for-event-callback
 * langs: java

@@ -27,6 +27,7 @@ const md = require('../markdown');
   *   retType: ParsedType | null,
   *   template: ParsedType | null,
   *   union: ParsedType | null,
+  *   unionName?: string,
   *   next: ParsedType | null,
   * }} ParsedType
   */
@@ -428,7 +429,8 @@ Documentation.Type = class {
    */
   static fromParsedType(parsedType, inUnion = false) {
     if (!inUnion && parsedType.union) {
-      const type = new Documentation.Type('union');
+      const name = parsedType.unionName || '';
+      const type = new Documentation.Type(name);
       type.union = [];
       for (let t = parsedType; t; t = t.union)
         type.union.push(Documentation.Type.fromParsedType(t, true));
@@ -528,6 +530,21 @@ Documentation.Type = class {
 };
 
 /**
+ * @param {ParsedType} type
+ * @returns {boolean}
+ */
+function isStringUnion(type) {
+  if (!type.union)
+    return false;
+  while (type) {
+    if (!type.name.startsWith('"') || !type.name.endsWith('"'))
+      return false;
+    type = type.union;
+  }
+  return true;
+}
+
+/**
  * @param {string} type
  * @returns {ParsedType}
  */
@@ -571,6 +588,12 @@ function parseTypeExpression(type) {
     union = parseTypeExpression(type.substring(firstTypeLength + 1));
   else if (type[firstTypeLength] === ',')
     next = parseTypeExpression(type.substring(firstTypeLength + 1));
+
+  if (template && !template.unionName && isStringUnion(template)) {
+    template.unionName = name;
+    return template;
+  }
+
   return {
     name,
     args,
