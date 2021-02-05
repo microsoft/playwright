@@ -596,7 +596,14 @@ Enabling routing disables http cache.
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 
 ### param: BrowserContext.route.handler
+* langs: js, python
 - `handler` <[function]\([Route], [Request]\)>
+
+handler function to route the request.
+
+### param: BrowserContext.route.handler
+* langs: csharp, java
+- `handler` <[function]\([Route]\)>
 
 handler function to route the request.
 
@@ -735,7 +742,14 @@ A glob pattern, regex pattern or predicate receiving [URL] used to register a ro
 [`method: BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler
+* langs: js, python
 - `handler` <[function]\([Route], [Request]\)>
+
+Optional handler function used to register a routing with [`method: BrowserContext.route`].
+
+### param: BrowserContext.unroute.handler
+* langs: csharp, java
+- `handler` <[function]\([Route]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
