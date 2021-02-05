@@ -787,7 +787,7 @@ Either a predicate that receives an event or an options object. Optional.
 
 Performs action and waits for a new [Page] to be created in the context. If predicate is provided, it passes
 [Page] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
+Will throw an error if the context closes before new [Page] is created.
 
 ### option: BrowserContext.waitForPage.predicate =
 * langs: csharp, java, python

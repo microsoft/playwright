@@ -61,9 +61,9 @@ Either a predicate that receives an event or an options object. Optional.
 
 Performs action and waits for a frame to be sent. If predicate is provided, it passes
 [WebSocketFrame] value into the `predicate` function and waits for `predicate(webSocketFrame)` to return a truthy value.
-Will throw an error if the WebSocket or Page is closed before the frame is sent.
+Will throw an error if the WebSocket or Page is closed before the frame is received.
 
-### option: WebSocket.waitForFrameReceived.predicate =
+### option: WebSocket.waitForFrameReceived.predicate
 - `predicate` <[function]\([WebSocketFrame]\):[bool]>
 
 Receives the [WebSocketFrame] object and resolves to truthy value when the waiting should resolve.
@@ -78,7 +78,7 @@ Performs action and waits for a frame to be sent. If predicate is provided, it p
 [WebSocketFrame] value into the `predicate` function and waits for `predicate(webSocketFrame)` to return a truthy value.
 Will throw an error if the WebSocket or Page is closed before the frame is sent.
 
-### option: WebSocket.waitForFrameSent.predicate =
+### option: WebSocket.waitForFrameSent.predicate
 - `predicate` <[function]\([WebSocketFrame]\):[bool]>
 
 Receives the [WebSocketFrame] object and resolves to truthy value when the waiting should resolve.

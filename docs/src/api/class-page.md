@@ -2188,7 +2188,7 @@ Performs action and waits for the Page to close.
 
 Performs action and waits for a [ConoleMessage] to be logged by in the page. If predicate is provided, it passes
 [ConsoleMessage] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
+Will throw an error if the page is closed before the console event is fired.
 
 ### option: Page.waitForConsoleMessage.predicate =
 - `predicate` <[function]\([ConsoleMessage]\):[bool]>
@@ -2258,7 +2258,7 @@ Either a predicate that receives an event or an options object. Optional.
 
 Performs action and waits for a new [FileChooser] to be created. If predicate is provided, it passes
 [FileChooser] value into the `predicate` function and waits for `predicate(fileChooser)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
+Will throw an error if the page is closed before the file chooser is opened.
 
 ### option: Page.waitForFileChooser.predicate =
 - `predicate` <[function]\([FileChooser]\):[bool]>
@@ -2467,7 +2467,7 @@ Will throw an error if the page is closed before the popup event is fired.
 ### option: Page.waitForPopup.predicate =
 - `predicate` <[function]\([Page]\):[bool]>
 
-Receives the [Popup] object and resolves to truthy value when the waiting should resolve.
+Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForPopup.timeout = %%-wait-for-event-timeout-%%
 
