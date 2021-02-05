@@ -27,7 +27,7 @@ const { args } = require('commander');
 const { EOL } = require('os');
 // const { visitAll } = require('../markdown'); // TODO: consider using this instead of manual parsing
 
-const maxDocumentationColumnWidth = 120;
+const maxDocumentationColumnWidth = 80;
 
 /** @type {Map<string, Documentation.Type>} */
 const additionalTypes = new Map(); // this will hold types that we discover, because of .NET specifics, like results
@@ -338,9 +338,11 @@ function renderMethod(member, parent, output, name) {
     return `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
   });
 
-  /** @type {Map<string, string>} */
+  /** @type {Map<string, string[]>} */
   const paramDocs = new Map();
   const addParamsDoc = (paramName, docs) => {
+    if (paramName.startsWith('@'))
+      paramName = paramName.substring(1);
     if (paramDocs.get(paramName))
       throw `Parameter ${paramName} already exists in the docs.`;
     paramDocs.set(paramName, docs);
@@ -412,7 +414,7 @@ function renderMethod(member, parent, output, name) {
       args.push(`${leftArgType} ${argName}`);
       args.push(`${rightArgType} ${argName}Values`);
 
-      addParamsDoc(argName, XmlDoc.renderXmlDoc(arg.spec, maxDocumentationColumnWidth));
+      addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
       addParamsDoc(`${argName}Values`, `The values to take into account when <paramref name="${argName}"/> is <code>true</code>.`);
 
       return;
@@ -428,7 +430,7 @@ function renderMethod(member, parent, output, name) {
         throw 'Unexpected null in translated argument types. Aborting.';
 
       let argSuffix = argName[0].toUpperCase() + argName.substring(1);
-      let argDocumentation = XmlDoc.renderXmlDoc(arg.spec, maxDocumentationColumnWidth);
+      let argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
         const newArgName = `${newArg[0].toLowerCase()}${argSuffix}`;
         args.push(`${newArg} ${newArgName}`);
@@ -438,7 +440,7 @@ function renderMethod(member, parent, output, name) {
       return;
     }
 
-    addParamsDoc(argName, XmlDoc.renderXmlDoc(arg.spec, maxDocumentationColumnWidth));
+    addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
 
     if (argName === 'timeout' && argType === 'decimal') {
       args.push(`int timeout`);
@@ -451,7 +453,15 @@ function renderMethod(member, parent, output, name) {
   member.args.forEach(parseArg);
 
   output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(x => `\t${x}`));
-  paramDocs.forEach((val, ind) => output(`/// <param name="${ind}">To be generated.</param>`));
+  paramDocs.forEach((val, ind) => {
+    if(val && val.length === 1)
+      output(`/// <param name="${ind}">${val}</param>`);
+    else {
+      output(`/// <param name="${ind}">`);
+      output(val.map(l => `\t/// ${l}`));
+      output(`/// </param>`);
+    }
+  });
   output(`${type} ${name}(${args.join(', ')});`);
 }
 
