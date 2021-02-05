@@ -24,6 +24,7 @@ const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { Type } = require('./documentation');
 const { args } = require('commander');
+const { EOL } = require('os');
 // const { visitAll } = require('../markdown'); // TODO: consider using this instead of manual parsing
 
 const maxDocumentationColumnWidth = 120;
@@ -54,19 +55,17 @@ let classNameMap;
   documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   documentation.filterForLanguage('csharp');
 
-  // we'll handle this natively
-  // documentation.copyDocsFromSuperclasses([]);
-
   documentation.setLinkRenderer(item => {
-    if (item.clazz) {
+    if (item.clazz)
       return `<see cref="${translateMemberName("interface", item.clazz.name, null)}"/>`;
-    } else if (item.member) {
+    else if (item.member)
       return `<see cref="${translateMemberName("interface", item.member.clazz.name, null)}.${translateMemberName(item.member.kind, item.member.name, item.member)}"/>`;
-    } else if (item.option) {
-      return "{OPTION}";
-    } else if (item.param) {
-      return "{PARAM}";
-    }
+    else if (item.option)
+      return `<paramref name="${item.option}"/>`;
+    else if (item.param)
+      return `<paramref name="${item.param}"/>`;
+    else
+      throw 'Unknown link format.';
   });
 
   // get the template for a class
@@ -99,7 +98,7 @@ let classNameMap;
   const ignoredTypes = ['TimeoutException'];
 
   let writeFile = (name, out, folder) => {
-    let content = template.replace('[CONTENT]', out.join("\r\n\t"));
+    let content = template.replace('[CONTENT]', out.join(`${EOL}\t`));
     fs.writeFileSync(`${path.join(folder, name)}.cs`, content);
   }
 
@@ -126,6 +125,12 @@ let classNameMap;
     out.push('{');
 
     callback(out);
+
+    // we want to separate the items with a space and this is nicer, than holding 
+    // an index in each iterator down the line
+    const lastLine = out.pop();
+    if (lastLine !== '')
+      out.push(lastLine);
 
     out.push('}');
 
@@ -251,7 +256,10 @@ function renderMember(member, parent, out) {
     if (member.kind === 'event') {
       if (!member.type)
         throw `No Event Type for ${name} in ${parent.name}`;
-      // console.log(member.type);
+
+      if (member.spec)
+        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(l => `\t${l}`));
+
       output(`event EventHandler<${type}> ${name};`);
     } else if (member.kind === 'property') {
       output(`${type} ${name} { get; set; }`);
@@ -259,6 +267,9 @@ function renderMember(member, parent, out) {
       throw `Problem rendering a member: ${type} - ${name} (${member.kind})`;
     }
   }
+
+  // we're separating each entry and removing the final blank line when rendering
+  out.push('');
 }
 
 /**
@@ -318,9 +329,17 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
  * @param {Function} output
  */
 function renderMethod(member, parent, output, name) {
-  let typeResolve = (type) => translateType(type, parent, (t) => {
+  const typeResolve = (type) => translateType(type, parent, (t) => {
     return `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
   });
+
+  /** @type {Map<string, string>} */
+  const paramDocs = new Map();
+  const addParamsDoc = (paramName, docs) => {
+    if (paramDocs.get(paramName))
+      throw `Parameter ${paramName} already exists in the docs.`;
+    paramDocs.set(paramName, docs);
+  };
 
   /** @type {string} */
   let type = null;
@@ -388,6 +407,9 @@ function renderMethod(member, parent, output, name) {
       args.push(`${leftArgType} ${argName}`);
       args.push(`${rightArgType} ${argName}Values`);
 
+      addParamsDoc(argName, XmlDoc.renderXmlDoc(arg.spec, maxDocumentationColumnWidth));
+      addParamsDoc(`${argName}Values`, `The values to take into account when <paramref name="${argName}"/> is <code>true</code>.`);
+
       return;
     }
 
@@ -401,13 +423,17 @@ function renderMethod(member, parent, output, name) {
         throw 'Unexpected null in translated argument types. Aborting.';
 
       let argSuffix = argName[0].toUpperCase() + argName.substring(1);
+      let argDocumentation = XmlDoc.renderXmlDoc(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
-        let argPrefix = newArg[0].toLowerCase();
-        args.push(`${newArg} ${argPrefix}${argSuffix}`);
+        const newArgName = `${newArg[0].toLowerCase()}${argSuffix}`;
+        args.push(`${newArg} ${newArgName}`);
+        addParamsDoc(newArgName, argDocumentation);
       }
 
       return;
     }
+
+    addParamsDoc(argName, XmlDoc.renderXmlDoc(arg.spec, maxDocumentationColumnWidth));
 
     if (argName === 'timeout' && argType === 'decimal') {
       args.push(`int timeout`);
@@ -420,6 +446,7 @@ function renderMethod(member, parent, output, name) {
   member.args.forEach(parseArg);
 
   output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(x => `\t${x}`));
+  paramDocs.forEach((val, ind) => output(`/// <param name="${ind}">To be generated.</param>`));
   output(`${type} ${name}(${args.join(', ')});`);
 }
 
@@ -567,7 +594,6 @@ function translateType(type, parent, generateNameCallback = null) {
         throw 'There was an argument we could not parse. Aborting.';
 
       argsList = translatedCallbackArguments.join(', ');
-      console.log(argsList);
     }
 
     if (!type.returnType) {
