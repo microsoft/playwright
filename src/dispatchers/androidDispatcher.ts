@@ -288,4 +288,5 @@ const keyMap = new Map<string, number>([
   ['Menu', 82],
   ['Notification', 83],
   ['Search', 84],
+  ['RecentApps', 187],
 ]);
