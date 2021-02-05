@@ -712,15 +712,13 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
 ### option: Page.emulateMedia.media
-* langs:
-  - alias-enum: MediaEnum
-- `media` <[null]|"screen"|"print">
+- `media` <null|[MediaEnum]<"screen"|"print">>
 
 Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
 Passing `null` disables CSS media emulation.
 
 ### option: Page.emulateMedia.colorScheme
-- `colorScheme` <[null]|"light"|"dark"|"no-preference">
+- `colorScheme` <null|[ColorSchemeEnum]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
 `null` disables color scheme emulation.
