@@ -15,183 +15,126 @@
  */
 
 // @ts-check
-
 const Documentation = require('./documentation');
 const { visitAll } = require('../markdown');
 /**
  * @param {Documentation.MarkdownNode[]} nodes
  * @param {number} maxColumns
  */
-function renderXmlDoc(nodes, maxColumns) {
-    const summary = [];
-    const examples = [];
-    /** @type {Documentation.MarkdownNode} */
-    let lastNode;
-
-    summary.push('<summary>');
-
-    visitAll(nodes, (node, depth) => {
-        lastNode = innerRenderXmlNode(node, lastNode, summary, examples, maxColumns);
-    });
-
-    if (summary.length == 1) { // just the <summary> node 
+function renderXmlDoc(nodes, maxColumns = 80, prefix = '/// ') {
+    if (!nodes)
         return [];
-    }
 
-    // we might have a stray list, if the <li> is the last element
-    if (lastNode && lastNode.type === 'li') {
-        summary.push('</list>');
-    }
-    summary.push('</summary>');
+    let renderResult = _innerRenderNodes(nodes, maxColumns);
 
-    // add examples
-    summary.push(...examples);
-    return summary.map(n => `/// ${n}`);
+    const doc = [];
+    _wrapInNode("summary", renderResult.summary, doc);
+    _wrapInNode("remarks", renderResult.remarks, doc);
+    return doc.map(x => `${prefix}${x}`);
 }
 
-/**
- * @param {Documentation.MarkdownNode} node
- * @param {Documentation.MarkdownNode} lastNode
- * @param {number=} maxColumns
- * @param {string[]} summary
- * @param {string[]} examples
- */
-function innerRenderXmlNode(node, lastNode, summary, examples, maxColumns) {
-    /** @param {string[]} a */
-    const newLine = (a) => {
-        if (a[a.length - 1] !== '')
-            a.push('');
-    };
-
-    let escapedText = node.text;
-    // resolve links (within [])
-
-    if (node.type === 'text') {
-        // clear up the list, if there was one
-        if (lastNode && lastNode.type === 'li') {
+function _innerRenderNodes(nodes, maxColumns = 80, wrapParagraphs = true) {
+    const summary = [];
+    const remarks = [];
+    let handleListItem = (lastNode, node) => {
+        if (node && node.type === 'li' && (!lastNode || lastNode.type !== 'li')) {
+            summary.push(`<list type="${node.liType}">`);
+        } else if (lastNode && lastNode.type === 'li' && (!node || node.type !== 'li')) {
             summary.push('</list>');
         }
+    };
 
-        summary.push(...wrapText(escapedText, maxColumns));
-
-        return node;
-    }
-
-    if (node.type === 'li') {
-        if (escapedText.startsWith('extends: ')) {
-            summary.push(...wrapText(`<seealso cref="${escapedText.substring(9)}"/>`, maxColumns));
-            return undefined;
+    let lastNode;
+    visitAll(nodes, (node) => {
+        // handle special cases first
+        if (_nodeShouldBeIgnored(node))
+            return;
+        if (node.text && node.text.startsWith('extends: ')) {
+            remarks.push('Inherits from ' + node.text.replace('extends: ', ''));
+            return;
         }
+        handleListItem(lastNode, node);
+        if (node.type === 'text')
+            if (wrapParagraphs)
+                _wrapInNode('para', _wrapAndEscape(node, maxColumns), summary);
+            else
+                summary.push(..._wrapAndEscape(node, maxColumns));
+        else if (node.type === 'code' && node.codeLang === 'csharp')
+            _wrapInNode('code', node.lines, summary);
+        else if (node.type === 'li')
+            _wrapInNode('item><description', _wrapAndEscape(node, maxColumns), summary, '/description></item');
+        else if (node.type === 'note')
+            _wrapInNode('para', _wrapAndEscape(node, maxColumns), remarks);
+        lastNode = node;
+    });
+    handleListItem(lastNode, null);
 
-        // if the previous node was not li, start list
-        if (lastNode && lastNode.type !== 'li') {
-            summary.push(`<list>`);
-        }
+    return { summary, remarks };
+}
 
-        summary.push(...wrapText(`<item><description>${escapedText}</description></item>`, maxColumns));
+function _wrapInNode(tag, nodes, target, closingTag = null) {
+    if (nodes.length === 0)
+        return;
+
+    if (!closingTag)
+        closingTag = `/${tag}`;
+
+    if (nodes.length === 1) {
+        target.push(`<${tag}>${nodes[0]}<${closingTag}>`);
+        return;
     }
 
-    // TODO: this should really move to the examples array
-    if (node.type == 'code' && node.codeLang == "csharp") {
-        summary.push('<![CDATA[');
-        summary.push(...node.lines);
-        summary.push(']]>');
-    }
-
-    return node;
+    target.push(`<${tag}>`);
+    target.push(...nodes);
+    target.push(`<${closingTag}>`);
 }
 
 /**
- * @param {string} text
- * @param {number=} maxColumns
- * @param {string=} prefix
+ * 
+ * @param {Documentation.MarkdownNode} node 
  */
-function wrapText(text, maxColumns = 0, prefix = '') {
-    if (!maxColumns) {
-        return prefix + text;
-    }
+function _wrapAndEscape(node, maxColumns = 0) {
+    let lines = [];
+    let pushLine = (text) => {
+        if (text === '')
+            return;
+        text = text.trim();
+        lines.push(text);
+    };
 
-    // we'll apply some fixes, like rendering the links from markdown
-    // TODO: maybe we can move this to either markdown.js or documentation.js?
-    text = text.replace(/\[([^\[\]]*)\]\((.*?)\)/g, function (match, name, url) {
-        return `<a href="${url}">${name}</a>`;
-    });
-
-    const lines = [];
-
-    let insideTag = false;
-    let escapeChar = false;
-    let insideLink = false;
-    let breakOnSpace = false;
-    let insideNode = false;
-
-    let line = "";
-    let currentWidth = 0;
-
-    let prevChar = '';
-    for (let i = 0; i < text.length; i++) {
-        const char = text.charAt(i);
-        let skipThisChar = true;
-
-        if (['<', '['].includes(char)) {
-            // maybe we should break if a node starts, and we're almost at the end of the block
-            if (!insideNode && currentWidth >= maxColumns * 0.85) {
-                lines.push(line);
-                line = "";
-                currentWidth = 0;
-            }
-            insideNode = true;
-            insideTag = true;
-        } else if (['>', ']'].includes(char)) {
-            insideTag = false;
-            if (prevChar === '/') { // self-closing tag
-                insideNode = false;
-            }
-        } else if (char === '/' && prevChar === '<') { // closing node
-            insideNode = false;
-        } else if (char === '(' && prevChar === ']') {
-            insideLink = true;
-        } else if (char === ')' && insideLink) {
-            insideLink = false;
-        } else if (char === `\\`) {
-            escapeChar = true;
-        } else if (char === " " && breakOnSpace) {
-            breakOnSpace = false;
-            lines.push(line);
-            line = "";
-            currentWidth = 0;
-            continue;
-        } else {
-            skipThisChar = false;
-        }
-
-        if (currentWidth == 0 && char === " ") {
-            continue;
-        }
-
-        line += char;
-        currentWidth++;
-
-        prevChar = char;
-        if (skipThisChar) {
-            continue;
-        }
-
-        if (currentWidth >= maxColumns
-            && !insideTag
-            && !escapeChar
-            && !insideLink
-            && !insideNode) {
-            breakOnSpace = true;
+    let text = node.text.replace(/[^\[]`([^\]]*[^\[])`[^\]]/g, (m, g1) => ` <c>${g1}</c> `);
+    let words = text.split(' ');
+    let line = '';
+    for (let i = 0; i < words.length; i++) {
+        line = line + ' ' + words[i];
+        if (line.length >= maxColumns) {
+            pushLine(line);
+            line = '';
         }
     }
 
-    // make sure we push the last line, if it hasn't been pushed yet
-    if (line !== "") {
-        lines.push(line);
-    }
-
+    pushLine(line);
     return lines;
 }
 
-module.exports = { renderXmlDoc }
+/**
+ * 
+ * @param {Documentation.MarkdownNode} node 
+ */
+function _nodeShouldBeIgnored(node) {
+    if (!node
+        || (node.text === 'extends: [EventEmitter]'))
+        return true;
+
+    return false;
+}
+
+/**
+ * @param {Documentation.MarkdownNode[]} nodes 
+ */
+function renderTextOnly(nodes, maxColumns = 80) {
+    var result = _innerRenderNodes(nodes, maxColumns, false);
+    return result.summary;
+}
+
+module.exports = { renderXmlDoc, renderTextOnly }
