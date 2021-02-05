@@ -16,8 +16,6 @@
 
 // @ts-check
 
-const { triggerAsyncId } = require('async_hooks');
-const { isEnumDeclaration } = require('typescript');
 const md = require('../markdown');
 
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
