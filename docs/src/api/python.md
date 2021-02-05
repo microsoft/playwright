@@ -99,22 +99,9 @@ Raw script content.
 ### option: WebSocket.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
 ### option: WebSocket.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
 
-## async method: Page.expectDownload
+## async method: Page.waitForDownload
 * langs: python
 - returns: <[EventContextManager]<[Download]>>
-
-Performs action and waits for `download` event to fire. If predicate is provided, it passes
-[Download] value into the `predicate` function and waits for `predicate(download)` to return a truthy value.
-Will throw an error if the page is closed before the download event is fired.
-
-### option: Page.expectDownload.predicate =
-* langs: python
-- `predicate` <[function]\([Download]\):[bool]>
-
-Receives the [Download] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectDownload.timeout = %%-python-wait-for-event-timeout-%%
-
 
 ## async method: Page.expectPopup
 * langs: python

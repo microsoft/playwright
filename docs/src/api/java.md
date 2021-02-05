@@ -25,14 +25,6 @@ Runs callback and waits for a console message.
 
 ### param: Page.waitForConsole.callback = %%-java-wait-for-event-callback-%%
 
-## method: Page.waitForDownload
-* langs: java
-- returns: <[Download]>
-
-Runs callback and waits for a download.
-
-### option: Page.waitForDownload.timeout = %%-java-wait-for-event-timeout-%%
-
 ### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
 
 ## method: Page.waitForFileChooser

@@ -2173,6 +2173,22 @@ Video object associated with this page.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
+## async method: Page.waitForDownload
+* langs: csharp, java, python
+  - alias-python: expect_download
+- returns: <[Download]>
+
+Performs action and waits for a new [Download]. If predicate is provided, it passes
+[Download] value into the `predicate` function and waits for `predicate(download)` to return a truthy value.
+Will throw an error if the page is closed before the download event is fired.
+
+### option: Page.waitForDownload.predicate =
+- `predicate` <[function]\([Download]\):[bool]>
+
+Receives the [Download] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForDownload.timeout = %%-wait-for-event-timeout-%%
+
 ## async method: Page.waitForEvent
 * langs: csharp, js, python
   - alias-python: expect_event
