@@ -226,7 +226,13 @@ export class Page extends EventEmitter {
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
-    const multiple = await handle.evaluate(element => !!(element as HTMLInputElement).multiple);
+    let multiple;
+    try {
+      multiple = await handle.evaluate(element => !!(element as HTMLInputElement).multiple);
+    } catch (e) {
+      // Frame/context may be gone during async processing. Do not throw.
+      return;
+    }
     if (!this.listenerCount(Page.Events.FileChooser)) {
       handle.dispose();
       return;
