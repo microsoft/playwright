@@ -160,7 +160,7 @@ export const hostPlatform = ((): BrowserPlatform => {
 export const registryDirectory = (() => {
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
   if (envDefined === '0')
-    return path.join('..', '..', '.local-browsers');
+    return path.join(__dirname, '..', '..', '.local-browsers');
   if (envDefined)
     return path.resolve(process.cwd(), envDefined);
   return path.join(cacheDirectory(), 'ms-playwright');
