@@ -111,21 +111,9 @@ Raw script content.
 * langs: python
 - returns: <[EventContextManager]<[Worker]>>
 
-## async method: Page.expectConsoleMessage
+## async method: Page.waitForConsoleMessage
 * langs: python
 - returns: <[EventContextManager]<[ConsoleMessage]>>
-
-Performs action and waits for `console` event to fire. If predicate is provided, it passes
-[ConsoleMessage] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the worker event is fired.
-
-### option: Page.expectConsoleMessage.predicate =
-* langs: python
-- `predicate` <[function]\([ConsoleMessage]\):[bool]>
-
-Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectConsoleMessage.timeout = %%-python-wait-for-event-timeout-%%
 
 ## async method: Page.waitForFileChooser
 * langs: python

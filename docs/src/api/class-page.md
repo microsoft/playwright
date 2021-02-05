@@ -2173,6 +2173,22 @@ Video object associated with this page.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
+## async method: Page.waitForConsoleMessage
+* langs: csharp, java, python
+  - alias-python: expect_console_message
+- returns: <[ConsoleMessage]>
+
+Performs action and waits for a [ConoleMessage] to be logged by in the page. If predicate is provided, it passes
+[ConsoleMessage] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
+Will throw an error if the page is closed before the worker event is fired.
+
+### option: Page.waitForConsoleMessage.predicate =
+- `predicate` <[function]\([ConsoleMessage]\):[bool]>
+
+Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
+
 ## async method: Page.waitForDownload
 * langs: csharp, java, python
   - alias-python: expect_download

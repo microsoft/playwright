@@ -15,15 +15,7 @@ Runs callback and waits until the Page is closed.
 
 ### param: Page.waitForClose.callback = %%-java-wait-for-event-callback-%%
 
-## method: Page.waitForConsole
-* langs: java
-- returns: <[ConsoleMessage]>
-
-Runs callback and waits for a console message.
-
-### option: Page.waitForConsole.timeout = %%-java-wait-for-event-timeout-%%
-
-### param: Page.waitForConsole.callback = %%-java-wait-for-event-callback-%%
+### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
 
