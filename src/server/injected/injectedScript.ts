@@ -15,11 +15,10 @@
  */
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ParsedSelector, ParsedSelectorPart, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
-import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost } from './selectorEvaluator';
+import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
@@ -47,8 +46,8 @@ export class InjectedScript {
     this._enginesV1 = new Map();
     this._enginesV1.set('xpath', XPathEngine);
     this._enginesV1.set('xpath:light', XPathEngine);
-    this._enginesV1.set('text', createTextSelector(true));
-    this._enginesV1.set('text:light', createTextSelector(false));
+    this._enginesV1.set('text', this._createTextEngine(true));
+    this._enginesV1.set('text:light', this._createTextEngine(false));
     this._enginesV1.set('id', this._createAttributeEngine('id', true));
     this._enginesV1.set('id:light', this._createAttributeEngine('id', false));
     this._enginesV1.set('data-testid', this._createAttributeEngine('data-testid', true));
@@ -76,7 +75,9 @@ export class InjectedScript {
   querySelector(selector: ParsedSelector, root: Node): Element | undefined {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
-    return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
+    const result = this._querySelectorRecursively(root as SelectorRoot, selector, 0);
+    this._evaluator.clearCaches();
+    return result;
   }
 
   private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
@@ -111,22 +112,24 @@ export class InjectedScript {
       }
       set = newSet;
     }
-    const candidates = Array.from(set) as Element[];
-    if (!partsToCheckOne.length)
-      return candidates;
-    const partial = { parts: partsToCheckOne };
-    return candidates.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+    let result = Array.from(set) as Element[];
+    if (partsToCheckOne.length) {
+      const partial = { parts: partsToCheckOne };
+      result = result.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+    }
+    this._evaluator.clearCaches();
+    return result;
   }
 
   private _queryEngine(part: ParsedSelectorPart, root: SelectorRoot): Element | undefined {
     if (Array.isArray(part))
-      return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: true }, part)[0];
+      return this._evaluator.query({ scope: root as Document | Element, pierceShadow: true }, part)[0];
     return this._enginesV1.get(part.name)!.query(root, part.body);
   }
 
   private _queryEngineAll(part: ParsedSelectorPart, root: SelectorRoot): Element[] {
     if (Array.isArray(part))
-      return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: true }, part);
+      return this._evaluator.query({ scope: root as Document | Element, pierceShadow: true }, part);
     return this._enginesV1.get(part.name)!.queryAll(root, part.body);
   }
 
@@ -137,10 +140,33 @@ export class InjectedScript {
     };
     return {
       query: (root: SelectorRoot, selector: string): Element | undefined => {
-        return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector))[0];
+        return this._evaluator.query({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector))[0];
       },
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector));
+        return this._evaluator.query({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector));
+      }
+    };
+  }
+
+  private _createTextEngine(shadow: boolean): SelectorEngine {
+    return {
+      query: (root: SelectorRoot, selector: string): Element | undefined => {
+        const matcher = createTextMatcher(selector);
+        if (root.nodeType === Node.ELEMENT_NODE && elementMatchesText(this._evaluator, root as Element, matcher))
+          return root as Element;
+        const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: shadow }, '*');
+        for (const element of elements) {
+          if (elementMatchesText(this._evaluator, element, matcher))
+            return element;
+        }
+      },
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        const matcher = createTextMatcher(selector);
+        const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: shadow }, '*');
+        const result = elements.filter(e => elementMatchesText(this._evaluator, e, matcher));
+        if (root.nodeType === Node.ELEMENT_NODE && elementMatchesText(this._evaluator, root as Element, matcher))
+          result.unshift(root as Element);
+        return result;
       }
     };
   }
@@ -775,5 +801,45 @@ const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'
   ['dragexit', 'drag'],
   ['drop', 'drag'],
 ]);
+
+function unescape(s: string): string {
+  if (!s.includes('\\'))
+    return s;
+  const r: string[] = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === '\\' && i + 1 < s.length)
+      i++;
+    r.push(s[i++]);
+  }
+  return r.join('');
+}
+
+type Matcher = (text: string) => boolean;
+function createTextMatcher(selector: string): Matcher {
+  if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
+    const lastSlash = selector.lastIndexOf('/');
+    const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
+    return text => re.test(text);
+  }
+  let strict = false;
+  if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
+    selector = unescape(selector.substring(1, selector.length - 1));
+    strict = true;
+  }
+  if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
+    selector = unescape(selector.substring(1, selector.length - 1));
+    strict = true;
+  }
+  selector = selector.trim().replace(/\s+/g, ' ');
+  if (!strict)
+    selector = selector.toLowerCase();
+  return text => {
+    text = text.trim().replace(/\s+/g, ' ');
+    if (!strict)
+      return text.toLowerCase().includes(selector);
+    return text === selector;
+  };
+}
 
 export default InjectedScript;
