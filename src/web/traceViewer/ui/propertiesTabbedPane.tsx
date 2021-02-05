@@ -52,18 +52,18 @@ export const PropertiesTabbedPane: React.FunctionComponent<{
           </div>
         </div>
       </div>
-      <div className='properties-tab-content' style={{ display: selected === 'snapshot' ? 'flex' : 'none' }}>
+      { selected === 'snapshot' && <div className='properties-tab-content'>
         <SnapshotTab actionEntry={actionEntry} snapshotSize={snapshotSize} selectedTime={selectedTime} boundaries={boundaries} />
-      </div>
-      <div className='properties-tab-content' style={{ display: selected === 'source' ? 'flex' : 'none' }}>
+      </div> }
+      { selected === 'source' && <div className='properties-tab-content'>
         <SourceTab actionEntry={actionEntry} />
-      </div>
-      <div className='properties-tab-content' style={{ display: selected === 'network' ? 'flex' : 'none' }}>
+      </div> }
+      { selected === 'network' && <div className='properties-tab-content'>
         <NetworkTab actionEntry={actionEntry} />
-      </div>
-      <div className='properties-tab-content' style={{ display: selected === 'logs' ? 'flex' : 'none' }}>
+      </div> }
+      { selected === 'logs' && <div className='properties-tab-content'>
         <LogsTab actionEntry={actionEntry} />
-      </div>
+      </div> }
     </div>
   </div>;
 };
