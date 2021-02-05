@@ -2415,6 +2415,22 @@ Shortcut for main frame's [`method: Frame.waitForNavigation`].
 
 ### option: Page.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
 
+## async method: Page.waitForPopup
+* langs: csharp, java, python
+  - alias-python: expect_popup
+- returns: <[Page]>
+
+Performs action and waits for a popup [Page]. If predicate is provided, it passes
+[Popup] value into the `predicate` function and waits for `predicate(page)` to return a truthy value.
+Will throw an error if the page is closed before the popup event is fired.
+
+### option: Page.waitForPopup.predicate =
+- `predicate` <[function]\([Page]\):[bool]>
+
+Receives the [Popup] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForPopup.timeout = %%-wait-for-event-timeout-%%
+
 ## async method: Page.waitForRequest
 * langs:
   * alias-python: expect_request

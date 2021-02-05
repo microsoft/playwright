@@ -103,22 +103,9 @@ Raw script content.
 * langs: python
 - returns: <[EventContextManager]<[Download]>>
 
-## async method: Page.expectPopup
+## async method: Page.waitForPopup
 * langs: python
 - returns: <[EventContextManager]<[Page]>>
-
-Performs action and waits for `popup` event to fire. If predicate is provided, it passes
-[Popup] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the popup event is fired.
-
-### option: Page.expectPopup.predicate =
-* langs: python
-- `predicate` <[function]\([Page]\):[bool]>
-
-Receives the [Popup] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectPopup.timeout = %%-python-wait-for-event-timeout-%%
-
 
 ## async method: Page.expectWorker
 * langs: python
@@ -135,7 +122,6 @@ Will throw an error if the page is closed before the worker event is fired.
 Receives the [Worker] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.expectWorker.timeout = %%-python-wait-for-event-timeout-%%
-
 
 ## async method: Page.expectConsoleMessage
 * langs: python

@@ -77,14 +77,6 @@ Runs callback and waits for an error.
 
 ### param: Page.waitForPageError.callback = %%-java-wait-for-event-callback-%%
 
-## method: Page.waitForPopup
-* langs: java
-- returns: <[Page]>
-
-Runs callback and waits for a popup.
-
-### option: Page.waitForPopup.timeout = %%-java-wait-for-event-timeout-%%
-
 ### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
 
 ## method: Page.waitForRequest
