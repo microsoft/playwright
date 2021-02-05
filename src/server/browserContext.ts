@@ -29,6 +29,7 @@ import { Progress, ProgressController, ProgressResult } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 import * as path from 'path';
+import { option } from 'commander';
 
 export class Video {
   readonly _videoId: string;
@@ -414,6 +415,20 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
+  if (options.recordVideo && !options.recordVideo.size) {
+    if (options.noDefaultViewport) {
+      options.recordVideo.size = { width: 800, height: 600 };
+    } else {
+      const size = options.viewport!;
+      const scale = 800 / Math.max(size.width, size.height);
+      if (scale < 1) {
+        options.recordVideo.size = {
+          width: Math.floor(size.width * scale),
+          height: Math.floor(size.height * scale)
+        };
+      }
+    }
+  }
   if (options.proxy) {
     if (!browserOptions.proxy)
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'per-context' } })"`);
