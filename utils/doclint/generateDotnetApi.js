@@ -314,7 +314,12 @@ function generateNameDefault(member, name, t, parent) {
 }
 
 function generateEnumNameIfApplicable(member, name, type, parent) {
-  if (!type.union || type.union.filter(u => u.name.startsWith(`"`)).length != type.union.length)
+  if (!type.union)
+    return null;
+
+  const potentialValues = type.union.filter(u => u.name.startsWith('"'));
+  if ((potentialValues.length !== type.union.length)
+    && !(type.union[0].name === 'null' && potentialValues.length === type.union.length - 1))
     return null; // this isn't an enum, so we don't care, we let the caller generate the name
 
   // our enum naming policy leaves a few bits to be desired, but it'll do for now
@@ -476,25 +481,31 @@ function translateType(type, parent, generateNameCallback = null) {
   else if (type.expression === '[boolean]|"mixed"')
     return 'MixedState';
 
+  let isNullableEnum = false;
   if (type.union) {
     if (type.union[0].name === 'null') {
       // for dotnet, this is a nullable type
       // if the other side is a primitive type
-      if (type.union.length > 2)
-        throw `Union (${parent.name}) with null is too long.`;
+      if (type.union.length > 2) {
+        if (type.union.filter(x => x.name.startsWith('"')).length == type.union.length - 1)
+          isNullableEnum = true;
+        else
+          throw `Union (${parent.name}) with null is too long.`;
+      } else {
+        const innerTypeName = translateType(type.union[1], parent, generateNameCallback);
+        // if type is primitive, or an enum, then it's nullable
+        if (innerTypeName === 'bool'
+          || innerTypeName === 'int') {
+          return `${innerTypeName}?`;
+        }
 
-      const innerTypeName = translateType(type.union[1], parent, generateNameCallback);
-      // if type is primitive, or an enum, then it's nullable
-      if (innerTypeName === 'bool'
-        || innerTypeName === 'int') {
-        return `${innerTypeName}?`;
+        // if it's not a value type, it'll be nullable by default, so we can ignore it
+        return `${innerTypeName}`;
       }
-
-      // if it's not a value type, it'll be nullable by default, so we can ignore it
-      return `${innerTypeName}`;
     }
 
-    if (type.union.filter(u => u.name.startsWith(`"`)).length == type.union.length) {
+    if (type.union.filter(u => u.name.startsWith(`"`)).length == type.union.length
+      || isNullableEnum) {
       // this is an enum
       let enumName = generateNameCallback(type);
       if (!enumName)
@@ -502,7 +513,7 @@ function translateType(type, parent, generateNameCallback = null) {
 
       // make sure we map the enum, or invalidate the name, in case it doesn't match well
       const potentialEnum = enumTypes.get(enumName);
-      let enumValues = type.union.map(x => x.name);
+      let enumValues = type.union.filter(x => x.name !== 'null').map(x => x.name);
       if (potentialEnum) {
         // compare values
         if (potentialEnum.join(',') !== enumValues.join(',')) {
@@ -514,6 +525,8 @@ function translateType(type, parent, generateNameCallback = null) {
       } else {
         enumTypes.set(enumName, enumValues);
       }
+      if (isNullableEnum)
+        return `${enumName}?`;
       return enumName;
     }
 
@@ -584,7 +597,7 @@ function translateType(type, parent, generateNameCallback = null) {
   }
 
   if (type.name === 'function') {
-    if (type.expression === '[function]')
+    if (type.expression === '[function]' || !type.args)
       return 'Action'; // super simple mapping
 
     let argsList = '';
