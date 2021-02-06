@@ -33,7 +33,7 @@ const removeFolderAsync = util.promisify(removeFolder);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
-export async function installBrowsersWithProgressBar(browserNames?: BrowserName[]) {
+export async function installBrowsersWithProgressBar(browserNames: BrowserName[] = allBrowserNames) {
   // PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should have a value of 0 or 1
   if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
     browserFetcher.logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
@@ -66,7 +66,7 @@ export async function installBrowsersWithProgressBar(browserNames?: BrowserName[
   }
 }
 
-async function validateCache(linksDir: string, browserNames: BrowserName[] = allBrowserNames) {
+async function validateCache(linksDir: string, browserNames: BrowserName[]) {
   // 1. Collect used downloads and package descriptors.
   const usedBrowserPaths: Set<string> = new Set();
   for (const fileName of await fsReaddirAsync(linksDir)) {
