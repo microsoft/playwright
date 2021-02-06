@@ -48,9 +48,6 @@ fi
 
 NPM_PUBLISH_TAG="next"
 
-if [[ $1 == "--tip-of-tree" ]]; then
-  node utils/build/update_canary_version.js
-fi
 VERSION=$(node -e 'console.log(require("./package.json").version)')
 
 if [[ $1 == "--release" ]]; then
