@@ -42,7 +42,7 @@ module.exports = {
     library: 'pwExport',
     libraryExport: 'default',
     filename: 'recorderSource.js',
-    path: path.resolve(__dirname, '../../../lib/server/injected/packed')
+    path: path.resolve(__dirname, '../../../../lib/server/injected/packed')
   },
   plugins: [
     new InlineSource(path.join(__dirname, '..', '..', '..', 'generated', 'recorderSource.ts')),
