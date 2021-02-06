@@ -429,11 +429,14 @@ Documentation.Type = class {
    */
   static fromParsedType(parsedType, inUnion = false) {
     if (!inUnion && parsedType.union) {
-      const name = parsedType.unionName || '';
-      const type = new Documentation.Type(name);
+      const type = new Documentation.Type(parsedType.unionName || '');
       type.union = [];
-      for (let t = parsedType; t; t = t.union)
-        type.union.push(Documentation.Type.fromParsedType(t, true));
+      for (let t = parsedType; t; t = t.union) {
+        const nestedUnion = !!t.unionName && t !== parsedType;
+        type.union.push(Documentation.Type.fromParsedType(t, !nestedUnion));
+        if (nestedUnion)
+          break;
+      }
       return type;
     }
 
