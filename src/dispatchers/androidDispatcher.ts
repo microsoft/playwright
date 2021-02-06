@@ -281,6 +281,7 @@ const keyMap = new Map<string, number>([
   ['Slash', 76],
   ['/', 76],
   ['At', 77],
+  ['@', 77],
   ['Num', 78],
   ['HeadsetHook', 79],
   ['Focus', 80],
@@ -288,5 +289,9 @@ const keyMap = new Map<string, number>([
   ['Menu', 82],
   ['Notification', 83],
   ['Search', 84],
-  ['RecentApps', 187],
+  ['AppSwitch', 187],
+  ['Assist', 219],
+  ['Cut', 277],
+  ['Copy', 278],
+  ['Paste', 279],
 ]);
