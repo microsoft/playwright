@@ -183,20 +183,16 @@ export class Registry {
     this._descriptors = browsersJSON['browsers'];
   }
 
-  _browser(browserName: BrowserName): BrowserDescriptor {
-    const browser = this._descriptors.find(browser => browser.name === browserName);
-    if (!browser)
-      throw new Error('Unknown browser name: ' + browserName);
-    return browser;
-  }
-
   browserDirectory(browserName: BrowserName): string {
-    const browser = this._browser(browserName);
+    const browser = this._descriptors.find(browser => browser.name === browserName);
+    assert(browser, `ERROR: Playwright does not support ${browserName}`);
     return path.join(registryDirectory, `${browser.name}-${browser.revision}`);
   }
 
   revision(browserName: BrowserName): string {
-    return this._browser(browserName).revision;
+    const browser = this._descriptors.find(browser => browser.name === browserName);
+    assert(browser, `ERROR: Playwright does not support ${browserName}`);
+    return browser.revision;
   }
 
   linuxLddDirectories(browserName: BrowserName): string[] {
@@ -236,7 +232,8 @@ export class Registry {
   }
 
   downloadURL(browserName: BrowserName): string {
-    const browser = this._browser(browserName);
+    const browser = this._descriptors.find(browser => browser.name === browserName);
+    assert(browser, `ERROR: Playwright does not support ${browserName}`);
     const envDownloadHost: { [key: string]: string } = {
       chromium: 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
       firefox: 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
@@ -254,7 +251,8 @@ export class Registry {
   shouldDownload(browserName: BrowserName): boolean {
     // Older versions do not have "download" field. We assume they need all browsers
     // from the list. So we want to skip all browsers that are explicitly marked as "download: false".
-    return this._browser(browserName).download !== false;
+    const browser = this._descriptors.find(browser => browser.name === browserName);
+    return !!browser && browser.download !== false;
   }
 }
 
