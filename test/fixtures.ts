@@ -101,6 +101,12 @@ fixtures.browserOptions.override(async ({ browserName, headful, slowMo }, run) =
   });
 });
 
+fixtures.contextFactory.override(async ({ contextFactory, testInfo }, run) => {
+  require('../lib/utils/utils').setTestOutputPath(testInfo.outputPath());
+  await run(contextFactory);
+  require('../lib/utils/utils').setTestOutputPath(null);
+});
+
 fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mode }, run) => {
   assert(platform); // Depend on platform to generate all tests.
   const { coverage, uninstall } = installCoverageHooks(browserName);
@@ -194,5 +200,4 @@ export const afterAll = folio.afterAll;
 
 declare module '../index' {
   const _android: Android;
-  const _electron: Electron;
 }

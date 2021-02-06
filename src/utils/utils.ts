@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as util from 'util';
@@ -93,6 +94,18 @@ export function setUnderTest() {
 }
 export function isUnderTest(): boolean {
   return _isUnderTest;
+}
+
+let _testOutputPath: string | null = null;
+export function setTestOutputPath(outputPath: string | null) {
+  _testOutputPath = outputPath;
+}
+export function testFriendlyHomedir(): string {
+  if (process.env.PW_OUTPUT_DIR_FOR_TEST)
+    return process.env.PW_OUTPUT_DIR_FOR_TEST;
+  if (_testOutputPath)
+    return _testOutputPath;
+  return os.homedir();
 }
 
 export function getFromENV(name: string): string | undefined {

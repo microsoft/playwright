@@ -19,6 +19,7 @@ import * as path from 'path';
 import { ChildProcess, spawn } from 'child_process';
 import { folio as baseFolio } from '../fixtures';
 import type { Page, BrowserType, Browser, BrowserContext } from '../..';
+import { TestInfo } from 'folio';
 export { config } from 'folio';
 
 type WorkerFixtures = {
@@ -184,10 +185,10 @@ class Recorder {
   }
 }
 
-fixtures.runCLI.init(async ({  }, runTest) => {
+fixtures.runCLI.init(async ({ testInfo }, runTest) => {
   let cli: CLIMock;
   const cliFactory = (args: string[]) => {
-    cli = new CLIMock(args);
+    cli = new CLIMock(args, testInfo);
     return cli;
   };
   await runTest(cliFactory);
@@ -201,7 +202,7 @@ class CLIMock {
   private waitForCallback: () => void;
   exited: Promise<void>;
 
-  constructor(args: string[]) {
+  constructor(args: string[], testInfo: TestInfo) {
     this.data = '';
     this.process = spawn('node', [
       path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
@@ -209,7 +210,8 @@ class CLIMock {
     ], {
       env: {
         ...process.env,
-        PWCLI_EXIT_FOR_TEST: '1'
+        PWCLI_EXIT_FOR_TEST: '1',
+        PW_OUTPUT_DIR_FOR_TEST: testInfo.outputPath()
       },
       stdio: 'pipe'
     });
