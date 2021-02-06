@@ -66,7 +66,7 @@ export async function installBrowsersWithProgressBar(browserNames?: BrowserName[
   }
 }
 
-async function validateCache(linksDir: string, browserNames?: BrowserName[]) {
+async function validateCache(linksDir: string, browserNames: BrowserName[] = allBrowserNames) {
   // 1. Collect used downloads and package descriptors.
   const usedBrowserPaths: Set<string> = new Set();
   for (const fileName of await fsReaddirAsync(linksDir)) {
@@ -107,7 +107,7 @@ async function validateCache(linksDir: string, browserNames?: BrowserName[]) {
 
   // 3. Install missing browsers for this package.
   const myRegistry = new Registry(PACKAGE_PATH);
-  for (const browserName of allBrowserNames) {
+  for (const browserName of browserNames) {
     if (!myRegistry.shouldDownload(browserName))
       continue;
     await browserFetcher.downloadBrowserWithProgressBar(myRegistry, browserName).catch(e => {
