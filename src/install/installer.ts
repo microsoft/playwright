@@ -79,7 +79,7 @@ async function validateCache(linksDir: string, browserNames?: BrowserName[]) {
         if (!linkRegistry.shouldDownload(browserName))
           continue;
         const usedBrowserPath = linkRegistry.browserDirectory(browserName);
-        const browserRevision = parseInt(linkRegistry.revision(browserName), 10);
+        const browserRevision = linkRegistry.revision(browserName);
         // Old browser installations don't have marker file.
         const shouldHaveMarkerFile = (browserName === 'chromium' && browserRevision >= 786218) ||
             (browserName === 'firefox' && browserRevision >= 1128) ||
@@ -106,14 +106,14 @@ async function validateCache(linksDir: string, browserNames?: BrowserName[]) {
   }
 
   // 3. Install missing browsers for this package.
-  const mainRegistry = new Registry(PACKAGE_PATH);
+  const myRegistry = new Registry(PACKAGE_PATH);
   for (const browserName of allBrowserNames) {
-    if (!mainRegistry.shouldDownload(browserName))
+    if (!myRegistry.shouldDownload(browserName))
       continue;
-    await browserFetcher.downloadBrowserWithProgressBar(mainRegistry, browserName).catch(e => {
+    await browserFetcher.downloadBrowserWithProgressBar(myRegistry, browserName).catch(e => {
       throw new Error(`Failed to download ${browserName}, caused by\n${e.stack}`);
     });
-    await fsWriteFileAsync(markerFilePath(mainRegistry.browserDirectory(browserName)), '');
+    await fsWriteFileAsync(markerFilePath(myRegistry.browserDirectory(browserName)), '');
   }
 }
 

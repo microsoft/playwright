@@ -24,8 +24,10 @@ import { getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV } from './utils';
 
 export type BrowserName = 'chromium'|'webkit'|'firefox'|'ffmpeg';
-export type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11'|'mac11-arm64'|'ubuntu18.04'|'ubuntu20.04';
-export type BrowserDescriptor = {
+export const allBrowserNames: BrowserName[] = ['chromium', 'webkit', 'firefox', 'ffmpeg'];
+
+type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11'|'mac11-arm64'|'ubuntu18.04'|'ubuntu20.04';
+type BrowserDescriptor = {
   name: BrowserName,
   revision: string,
   download: boolean,
@@ -125,8 +127,6 @@ const DOWNLOAD_URLS = {
   },
 };
 
-export const allBrowserNames: BrowserName[] = Object.keys(DOWNLOAD_URLS) as BrowserName[];
-
 export const hostPlatform = ((): BrowserPlatform => {
   const platform = os.platform();
   if (platform === 'darwin') {
@@ -189,10 +189,10 @@ export class Registry {
     return path.join(registryDirectory, `${browser.name}-${browser.revision}`);
   }
 
-  revision(browserName: BrowserName): string {
+  revision(browserName: BrowserName): number {
     const browser = this._descriptors.find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
-    return browser.revision;
+    return parseInt(browser.revision, 10);
   }
 
   linuxLddDirectories(browserName: BrowserName): string[] {
