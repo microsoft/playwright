@@ -30,6 +30,10 @@ async function processDashboardRaw(context, report) {
     timestamp: ${report.metadata.commitTimestamp}
   ===== complete in ${Date.now() - timestamp}ms =====
   `);
+  return {
+    reports: dashboardData,
+    commitSHA: report.metadata.commitSHA,
+  };
 }
 
 module.exports = {processDashboardRaw};

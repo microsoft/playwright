@@ -61,7 +61,9 @@ class SimpleBlob {
 
   async uploadGzipped(data) {
     const content = JSON.stringify(data);
-    const zipped = await gzipAsync(content);
+    const zipped = await gzipAsync(content, {
+      level: 9,
+    });
     await this._blockBlobClient.upload(zipped, Buffer.byteLength(zipped), {
       blobHTTPHeaders: {
         blobContentEncoding: 'gzip',
