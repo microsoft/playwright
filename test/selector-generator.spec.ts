@@ -31,19 +31,62 @@ async function generate(pageOrFrame: Page | Frame, target: string): Promise<stri
 describe('selector generator', (suite, { mode }) => {
   suite.skip(mode !== 'default');
 }, () => {
-  it('should generate for text', async ({ page }) => {
-    await page.setContent(`<div>Text</div>`);
-    expect(await generate(page, 'div')).toBe('text="Text"');
+  it('should prefer button over inner span', async ({ page }) => {
+    await page.setContent(`<button id=clickme><span></span></button>`);
+    expect(await generate(page, 'button')).toBe('#clickme');
+  });
+
+  it('should prefer role=button over inner span', async ({ page }) => {
+    await page.setContent(`<div role=button><span></span></div>`);
+    expect(await generate(page, 'div')).toBe('div[role="button"]');
+  });
+
+  it('should generate text and normalize whitespace', async ({ page }) => {
+    await page.setContent(`<div>Text  some\n\n\n more \t text   </div>`);
+    expect(await generate(page, 'div')).toBe('text=Text some more text');
+  });
+
+  it('should generate text for <input type=button>', async ({ page }) => {
+    await page.setContent(`<input type=button value="Click me">`);
+    expect(await generate(page, 'input')).toBe('text=Click me');
+  });
+
+  it('should trim text', async ({ page }) => {
+    await page.setContent(`<div>Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789</div>`);
+    expect(await generate(page, 'div')).toBe('text=Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text012345');
+  });
+
+  it('should escape text with >>', async ({ page }) => {
+    await page.setContent(`<div>text&gt;&gt;text</div>`);
+    expect(await generate(page, 'div')).toBe('text=/.*text\\>\\>text.*/');
+  });
+
+  it('should escape text with quote', async ({ page }) => {
+    await page.setContent(`<div>text"text</div>`);
+    expect(await generate(page, 'div')).toBe('text=/.*text"text.*/');
+  });
+
+  it('should escape text with slash', async ({ page }) => {
+    await page.setContent(`<div>/text</div>`);
+    expect(await generate(page, 'div')).toBe('text=/.*\/text.*/');
+  });
+
+  it('should not use text for select', async ({ page }) => {
+    await page.setContent(`
+      <select><option>foo</option></select>
+      <select mark=1><option>bar</option></select>
+    `);
+    expect(await generate(page, '[mark="1"]')).toBe(':nth-match(select, 2)');
   });
 
   it('should use ordinal for identical nodes', async ({ page }) => {
     await page.setContent(`<div>Text</div><div>Text</div><div mark=1>Text</div><div>Text</div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe('//div[3][normalize-space(.)=\'Text\']');
+    expect(await generate(page, 'div[mark="1"]')).toBe(`:nth-match(:text("Text"), 3)`);
   });
 
   it('should prefer data-testid', async ({ page }) => {
     await page.setContent(`<div>Text</div><div>Text</div><div data-testid=a>Text</div><div>Text</div>`);
-    expect(await generate(page, 'div[data-testid="a"]')).toBe('div[data-testid="a"]');
+    expect(await generate(page, '[data-testid="a"]')).toBe('[data-testid="a"]');
   });
 
   it('should handle first non-unique data-testid', async ({ page }) => {
@@ -54,7 +97,7 @@ describe('selector generator', (suite, { mode }) => {
       <div data-testid=a>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe('div[data-testid="a"]');
+    expect(await generate(page, 'div[mark="1"]')).toBe('[data-testid="a"]');
   });
 
   it('should handle second non-unique data-testid', async ({ page }) => {
@@ -65,7 +108,7 @@ describe('selector generator', (suite, { mode }) => {
       <div data-testid=a mark=1>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe('//div[2][normalize-space(.)=\'Text\']');
+    expect(await generate(page, 'div[mark="1"]')).toBe(`:nth-match([data-testid="a"], 2)`);
   });
 
   it('should use readable id', async ({ page }) => {
@@ -73,7 +116,7 @@ describe('selector generator', (suite, { mode }) => {
       <div></div>
       <div id=first-item mark=1></div>
     `);
-    expect(await generate(page, 'div[mark="1"]')).toBe('div[id="first-item"]');
+    expect(await generate(page, 'div[mark="1"]')).toBe('#first-item');
   });
 
   it('should not use generated id', async ({ page }) => {
@@ -81,7 +124,31 @@ describe('selector generator', (suite, { mode }) => {
       <div></div>
       <div id=aAbBcCdDeE mark=1></div>
     `);
-    expect(await generate(page, 'div[mark="1"]')).toBe('//div[2]');
+    expect(await generate(page, 'div[mark="1"]')).toBe(`:nth-match(div, 2)`);
+  });
+
+  it('should use has-text', async ({ page }) => {
+    await page.setContent(`
+      <div>Hello world</div>
+      <a>Hello <span>world</span></a>
+    `);
+    expect(await generate(page, 'a')).toBe(`a:has-text("Hello world")`);
+  });
+
+  it('should chain text after parent', async ({ page }) => {
+    await page.setContent(`
+      <div>Hello <span>world</span></div>
+      <a>Hello <span mark=1>world</span></a>
+    `);
+    expect(await generate(page, '[mark="1"]')).toBe(`a >> text=world`);
+  });
+
+  it('should use parent text', async ({ page }) => {
+    await page.setContent(`
+      <div>Hello <span>world</span></div>
+      <div>Goodbye <span mark=1>world</span></div>
+    `);
+    expect(await generate(page, '[mark="1"]')).toBe(`text=Goodbye world >> span`);
   });
 
   it('should separate selectors by >>', async ({ page }) => {
@@ -93,7 +160,7 @@ describe('selector generator', (suite, { mode }) => {
         <div>Text</div>
       </div>
     `);
-    expect(await generate(page, '#id > div')).toBe('div[id=\"id\"] >> text=\"Text\"');
+    expect(await generate(page, '#id > div')).toBe('#id >> text=Text');
   });
 
   it('should trim long text', async ({ page }) => {
@@ -105,12 +172,12 @@ describe('selector generator', (suite, { mode }) => {
       <div>Text that goes on and on and on and on and on and on and on and on and on and on and on and on and on and on and on</div>
       </div>
     `);
-    expect(await generate(page, '#id > div')).toBe('div[id=\"id\"] >> text=/.*Text that goes on and on and o.*/');
+    expect(await generate(page, '#id > div')).toBe(`#id >> text=Text that goes on and on and on and on and on and on and on and on and on and on`);
   });
 
   it('should use nested ordinals', async ({ page }) => {
     await page.setContent(`
-      <a><b></b></a>
+      <a><c></c><c></c><c></c><c></c><c></c><b></b></a>
       <a>
         <b>
           <c>
@@ -122,7 +189,7 @@ describe('selector generator', (suite, { mode }) => {
       </a>
       <a><b></b></a>
     `);
-    expect(await generate(page, 'c[mark="1"]')).toBe('//b[2]/c');
+    expect(await generate(page, 'c[mark="1"]')).toBe('b:nth-child(2) c');
   });
 
   it('should not use input[value]', async ({ page }) => {
@@ -131,7 +198,7 @@ describe('selector generator', (suite, { mode }) => {
       <input value="two" mark="1">
       <input value="three">
     `);
-    expect(await generate(page, 'input[mark="1"]')).toBe('//input[2]');
+    expect(await generate(page, 'input[mark="1"]')).toBe(':nth-match(input, 2)');
   });
 
   describe('should prioritise input element attributes correctly', () => {
@@ -141,7 +208,7 @@ describe('selector generator', (suite, { mode }) => {
     });
     it('placeholder', async ({ page }) => {
       await page.setContent(`<input placeholder="foobar" type="text"/>`);
-      expect(await generate(page, 'input')).toBe('input[placeholder="foobar"]');
+      expect(await generate(page, 'input')).toBe('[placeholder="foobar"]');
     });
     it('type', async ({ page }) => {
       await page.setContent(`<input type="text"/>`);
@@ -157,10 +224,10 @@ describe('selector generator', (suite, { mode }) => {
       span.textContent = 'Target';
       shadowRoot.appendChild(span);
     });
-    expect(await generate(page, 'span')).toBe('text="Target"');
+    expect(await generate(page, 'span')).toBe('text=Target');
   });
 
-  it('should fallback to css in shadow dom', async ({ page }) => {
+  it('should match in shadow dom', async ({ page }) => {
     await page.setContent(`<div></div>`);
     await page.$eval('div', div => {
       const shadowRoot = div.attachShadow({ mode: 'open' });
@@ -170,7 +237,7 @@ describe('selector generator', (suite, { mode }) => {
     expect(await generate(page, 'input')).toBe('input');
   });
 
-  it('should fallback to css in deep shadow dom', async ({ page }) => {
+  it('should match in deep shadow dom', async ({ page }) => {
     await page.setContent(`<div></div><div></div><div><input></div>`);
     await page.$eval('div', div1 => {
       const shadowRoot1 = div1.attachShadow({ mode: 'open' });
@@ -185,7 +252,7 @@ describe('selector generator', (suite, { mode }) => {
       input2.setAttribute('value', 'foo');
       shadowRoot2.appendChild(input2);
     });
-    expect(await generate(page, 'input[value=foo]')).toBe('div div:nth-child(3) input');
+    expect(await generate(page, 'input[value=foo]')).toBe(':nth-match(input, 3)');
   });
 
   it('should work in dynamic iframes without navigation', async ({ page }) => {
@@ -203,6 +270,6 @@ describe('selector generator', (suite, { mode }) => {
         });
       }),
     ]);
-    expect(await generate(frame, 'div')).toBe('text="Target"');
+    expect(await generate(frame, 'div')).toBe('text=Target');
   });
 });

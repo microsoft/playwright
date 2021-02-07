@@ -15,74 +15,150 @@
  */
 
 import type InjectedScript from '../../injected/injectedScript';
+import { elementText } from '../../injected/selectorEvaluator';
+
+type SelectorToken = {
+  engine: string;
+  selector: string;
+  score: number;  // Lower is better.
+};
+
+const cacheAllowText = new Map<Element, SelectorToken[] | null>();
+const cacheDisallowText = new Map<Element, SelectorToken[] | null>();
 
 export function generateSelector(injectedScript: InjectedScript, targetElement: Element): { selector: string, elements: Element[] } {
-  const path: SelectorToken[] = [];
-  let numberOfMatchingElements = Number.MAX_SAFE_INTEGER;
-  for (let element: Element | null = targetElement; element && element !== document.documentElement; element = parentElementOrShadowHost(element)) {
-    const selector = buildSelectorCandidate(element);
-    if (!selector)
-      continue;
-    const fullSelector = joinSelector([selector, ...path]);
-    const parsedSelector = injectedScript.parseSelector(fullSelector);
-    const selectorTargets = injectedScript.querySelectorAll(parsedSelector, targetElement.ownerDocument);
-    if (!selectorTargets.length)
-      break;
-    if (selectorTargets[0] === targetElement)
-      return { selector: fullSelector, elements: selectorTargets };
-    if (selectorTargets.length && numberOfMatchingElements > selectorTargets.length) {
-      numberOfMatchingElements = selectorTargets.length;
-      path.unshift(selector);
-    }
-  }
-  if (document.documentElement === targetElement) {
+  injectedScript._evaluator.begin();
+  try {
+    targetElement = targetElement.closest('button,select,input,[role=button],[role=checkbox],[role=radio]') || targetElement;
+    let bestTokens = generateSelectorFor(injectedScript, targetElement);
+
+    const targetLabel = findTargetLabel(targetElement);
+    const labelTokens = targetLabel ? generateSelectorFor(injectedScript, targetLabel) : null;
+    if (labelTokens && combineScores(labelTokens) < combineScores(bestTokens))
+      bestTokens = labelTokens;
+
+    const selector = joinTokens(bestTokens);
+    const parsedSelector = injectedScript.parseSelector(selector);
     return {
-      selector: '/html',
-      elements: [document.documentElement]
+      selector,
+      elements: injectedScript.querySelectorAll(parsedSelector, targetElement.ownerDocument)
     };
+  } finally {
+    cacheAllowText.clear();
+    cacheDisallowText.clear();
+    injectedScript._evaluator.end();
   }
-  const selector =
-      createXPath(document.documentElement, targetElement) ||
-      cssSelectorForElement(injectedScript, targetElement);
-  const parsedSelector = injectedScript.parseSelector(selector);
-  return {
-    selector,
-    elements: injectedScript.querySelectorAll(parsedSelector, targetElement.ownerDocument)
-  };
 }
 
-function buildSelectorCandidate(element: Element): SelectorToken | null {
-  const nodeName = element.nodeName.toLowerCase();
+function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element): SelectorToken[] {
+  if (targetElement.ownerDocument.documentElement === targetElement)
+    return [{ engine: 'css', selector: 'html', score: 1 }];
+
+  const calculate = (element: Element, allowText: boolean): SelectorToken[] | null => {
+    const allowNthMatch = element === targetElement;
+
+    const textCandidates = allowText ? buildTextCandidates(injectedScript, element, element === targetElement).map(token => [token]) : [];
+    const noTextCandidates = buildCandidates(injectedScript, element).map(token => [token]);
+    let result = chooseFirstSelector(injectedScript, targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch);
+
+    const checkWithText = (textCandidatesToUse: SelectorToken[][]) => {
+      const allowParentText = allowText && !textCandidatesToUse.length;
+      const candidates = [...textCandidatesToUse, ...noTextCandidates];
+      for (let parent = parentElementOrShadowHost(element); parent; parent = parentElementOrShadowHost(parent)) {
+        const best = chooseFirstSelector(injectedScript, parent, element, candidates, allowNthMatch);
+        if (!best)
+          continue;
+        if (result && combineScores(best) >= combineScores(result))
+          continue;
+        const parentTokens = find(parent, allowParentText);
+        if (!parentTokens)
+          continue;
+        if (!result || combineScores([...parentTokens, ...best]) < combineScores(result))
+          result = [...parentTokens, ...best];
+      }
+    };
+
+    checkWithText(textCandidates);
+    // Allow skipping text on the target element.
+    if (element === targetElement && textCandidates.length)
+      checkWithText([]);
+
+    return result;
+  };
+
+  const find = (element: Element, allowText: boolean): SelectorToken[] | null => {
+    const cache = allowText ? cacheAllowText : cacheDisallowText;
+    let value = cache.get(element);
+    if (value === undefined) {
+      value = calculate(element, allowText);
+      cache.set(element, value);
+    }
+    return value;
+  };
+
+  const smartTokens = find(targetElement, true);
+  if (smartTokens)
+    return smartTokens;
+
+  return [cssFallback(injectedScript, targetElement)];
+}
+
+function buildCandidates(injectedScript: InjectedScript, element: Element): SelectorToken[] {
+  const candidates: SelectorToken[] = [];
   for (const attribute of ['data-testid', 'data-test-id', 'data-test']) {
     if (element.hasAttribute(attribute))
-      return { engine: 'css', selector: `${nodeName}[${attribute}=${quoteString(element.getAttribute(attribute)!)}]` };
+      candidates.push({ engine: 'css', selector: `[${attribute}=${quoteString(element.getAttribute(attribute)!)}]`, score: 1 });
   }
-  for (const attribute of ['aria-label', 'role']) {
-    if (element.hasAttribute(attribute))
-      return { engine: 'css', selector: `${element.nodeName.toLocaleLowerCase()}[${attribute}=${quoteString(element.getAttribute(attribute)!)}]` };
-  }
-  if (['INPUT', 'TEXTAREA'].includes(element.nodeName)) {
-    const nodeNameLowercase = element.nodeName.toLowerCase();
-    if (element.getAttribute('name'))
-      return { engine: 'css', selector: `${nodeNameLowercase}[name=${quoteString(element.getAttribute('name')!)}]` };
-    if (element.getAttribute('placeholder'))
-      return { engine: 'css', selector: `${nodeNameLowercase}[placeholder=${quoteString(element.getAttribute('placeholder')!)}]` };
-    if (element.getAttribute('type'))
-      return { engine: 'css', selector: `${nodeNameLowercase}[type=${quoteString(element.getAttribute('type')!)}]` };
-  } else if (element.nodeName === 'IMG') {
-    if (element.getAttribute('alt'))
-      return { engine: 'css', selector: `img[alt=${quoteString(element.getAttribute('alt')!)}]` };
-  }
-  const textSelector = textSelectorForElement(element);
-  if (textSelector)
-    return { engine: 'text', selector: textSelector };
 
-  // De-prioritize id, but still use it as a last resort.
+  if (element.nodeName === 'INPUT') {
+    const input = element as HTMLInputElement;
+    if (input.placeholder)
+      candidates.push({ engine: 'css', selector: `[placeholder=${quoteString(input.placeholder)}]`, score: 10 });
+  }
+  if (element.hasAttribute('aria-label'))
+    candidates.push({ engine: 'css', selector: `[aria-label=${quoteString(element.getAttribute('aria-label')!)}]`, score: 10 });
+  if (element.nodeName === 'IMG' && element.getAttribute('alt'))
+    candidates.push({ engine: 'css', selector: `img[alt=${quoteString(element.getAttribute('alt')!)}]`, score: 10 });
+
+  if (element.hasAttribute('role'))
+    candidates.push({ engine: 'css', selector: `${element.nodeName.toLocaleLowerCase()}[role=${quoteString(element.getAttribute('role')!)}]` , score: 50 });
+  if (['INPUT', 'TEXTAREA'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden') {
+    if (element.getAttribute('name'))
+      candidates.push({ engine: 'css', selector: `${element.nodeName.toLowerCase()}[name=${quoteString(element.getAttribute('name')!)}]`, score: 50 });
+    if (element.getAttribute('type'))
+      candidates.push({ engine: 'css', selector: `${element.nodeName.toLowerCase()}[type=${quoteString(element.getAttribute('type')!)}]`, score: 50 });
+  }
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName))
+    candidates.push({ engine: 'css', selector: element.nodeName.toLowerCase(), score: 50 });
+
   const idAttr = element.getAttribute('id');
   if (idAttr && !isGuidLike(idAttr))
-    return { engine: 'css', selector: `${nodeName}[id=${quoteString(idAttr!)}]` };
+    candidates.push({ engine: 'css', selector: `#${idAttr}`, score: 100 });
 
-  return null;
+  candidates.push({ engine: 'css', selector: element.nodeName.toLocaleLowerCase(), score: 200 });
+  return candidates;
+}
+
+function buildTextCandidates(injectedScript: InjectedScript, element: Element, allowHasText: boolean): SelectorToken[] {
+  if (element.nodeName === 'SELECT')
+    return [];
+  const text = elementText(injectedScript._evaluator, element).trim().replace(/\s+/g, ' ').substring(0, 80);
+  if (!text)
+    return [];
+  const candidates: SelectorToken[] = [];
+
+  let escaped = text;
+  if (text.includes('"') || text.includes('>>') || text[0] === '/')
+    escaped = `/.*${escapeForRegex(text)}.*/`;
+
+  candidates.push({ engine: 'text', selector: escaped, score: 10 });
+  if (allowHasText && escaped === text) {
+    let prefix = element.nodeName.toLocaleLowerCase();
+    if (element.hasAttribute('role'))
+      prefix += `[role=${quoteString(element.getAttribute('role')!)}]`;
+    candidates.push({ engine: 'css', selector: `${prefix}:has-text("${text}")`, score: 30 });
+  }
+  return candidates;
 }
 
 function parentElementOrShadowHost(element: Element): Element | null {
@@ -95,7 +171,27 @@ function parentElementOrShadowHost(element: Element): Element | null {
   return null;
 }
 
-function cssSelectorForElement(injectedScript: InjectedScript, targetElement: Element): string {
+function ancestorShadowRoot(element: Element): ShadowRoot | null {
+  while (element.parentElement)
+    element = element.parentElement;
+  if (element.parentNode && element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
+    return element.parentNode as ShadowRoot;
+  return null;
+}
+
+function findTargetLabel(element: Element): Element | null {
+  const docOrShadowRoot = ancestorShadowRoot(element) || element.ownerDocument!;
+  const labels = docOrShadowRoot.querySelectorAll('label');
+  for (const element of labels) {
+    const label = element as HTMLLabelElement;
+    if (label.control === element)
+      return label;
+  }
+  return null;
+}
+
+function cssFallback(injectedScript: InjectedScript, targetElement: Element): SelectorToken {
+  const kFallbackScore = 10000000;
   const root: Node = targetElement.ownerDocument;
   const tokens: string[] = [];
 
@@ -118,7 +214,7 @@ function cssSelectorForElement(injectedScript: InjectedScript, targetElement: El
       const token = /^[a-zA-Z][a-zA-Z0-9\-\_]+$/.test(element.id) ? '#' + element.id : `[id="${element.id}"]`;
       const selector = uniqueCSSSelector(token);
       if (selector)
-        return selector;
+        return { engine: 'css', selector, score: kFallbackScore };
       bestTokenForLevel = token;
     }
 
@@ -130,7 +226,7 @@ function cssSelectorForElement(injectedScript: InjectedScript, targetElement: El
       const token = '.' + classes.slice(0, i + 1).join('.');
       const selector = uniqueCSSSelector(token);
       if (selector)
-        return selector;
+        return { engine: 'css', selector, score: kFallbackScore };
       // Even if not unique, does this subset of classes uniquely identify node as a child?
       if (!bestTokenForLevel && parent) {
         const sameClassSiblings = parent.querySelectorAll(token);
@@ -146,7 +242,7 @@ function cssSelectorForElement(injectedScript: InjectedScript, targetElement: El
       const token = sameTagSiblings.indexOf(element) === 0 ? nodeName : `${nodeName}:nth-child(${1 + siblings.indexOf(element)})`;
       const selector = uniqueCSSSelector(token);
       if (selector)
-        return selector;
+        return { engine: 'css', selector, score: kFallbackScore };
       if (!bestTokenForLevel)
         bestTokenForLevel = token;
     } else if (!bestTokenForLevel) {
@@ -154,56 +250,62 @@ function cssSelectorForElement(injectedScript: InjectedScript, targetElement: El
     }
     tokens.unshift(bestTokenForLevel);
   }
-  return uniqueCSSSelector()!;
-}
-
-function textSelectorForElement(node: Node): string | null {
-  const maxLength = 30;
-  let needsRegex = false;
-  let trimmedText: string | null = null;
-  for (const child of node.childNodes) {
-    if (child.nodeType !== Node.TEXT_NODE)
-      continue;
-    if (child.textContent && child.textContent.trim()) {
-      if (trimmedText)
-        return null;
-      trimmedText = child.textContent.trim().substr(0, maxLength);
-      needsRegex = child.textContent !== trimmedText;
-    } else {
-      needsRegex = true;
-    }
-  }
-  if (!trimmedText)
-    return null;
-  return needsRegex ? `/.*${escapeForRegex(trimmedText)}.*/` : `"${trimmedText}"`;
+  return { engine: 'css', selector: uniqueCSSSelector()!, score: kFallbackScore };
 }
 
 function escapeForRegex(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(/[.*+?^>${}()|[\]\\]/g, '\\$&');
 }
 
 function quoteString(text: string): string {
-  return `"${text.replaceAll(/"/g, '\\"')}"`;
+  return `"${text.replaceAll(/"/g, '\\"').replaceAll(/\n/g, '\\n')}"`;
 }
 
-type SelectorToken = {
-  engine: string;
-  selector: string;
-};
-
-function joinSelector(path: SelectorToken[]): string {
-  const tokens = [];
+function joinTokens(tokens: SelectorToken[]): string {
+  const parts = [];
   let lastEngine = '';
-  for (const { engine, selector } of path) {
-    if (tokens.length  && (lastEngine !== 'css' || engine !== 'css'))
-      tokens.push('>>');
+  for (const { engine, selector } of tokens) {
+    if (parts.length  && (lastEngine !== 'css' || engine !== 'css'))
+      parts.push('>>');
     lastEngine = engine;
     if (engine === 'css')
-      tokens.push(selector);
+      parts.push(selector);
     else
-      tokens.push(`${engine}=${selector}`);
+      parts.push(`${engine}=${selector}`);
   }
-  return tokens.join(' ');
+  return parts.join(' ');
+}
+
+function combineScores(tokens: SelectorToken[]): number {
+  let score = 0;
+  for (let i = 0; i < tokens.length; i++)
+    score += tokens[i].score * (tokens.length - i);
+  return score;
+}
+
+function chooseFirstSelector(injectedScript: InjectedScript, scope: Element | Document, targetElement: Element, selectors: SelectorToken[][], allowNthMatch: boolean): SelectorToken[] | null {
+  const joined = selectors.map(tokens => ({ tokens, score: combineScores(tokens) }));
+  joined.sort((a, b) => a.score - b.score);
+  let bestWithIndex: SelectorToken[] | null = null;
+  for (const { tokens } of joined) {
+    const parsedSelector = injectedScript.parseSelector(joinTokens(tokens));
+    const result = injectedScript.querySelectorAll(parsedSelector, scope);
+    const index = result.indexOf(targetElement);
+    if (index === 0)
+      return tokens;
+    if (!allowNthMatch || bestWithIndex || index === -1 || result.length > 5)
+      continue;
+    const allCss = tokens.map(token => {
+      if (token.engine !== 'text')
+        return token;
+      if (token.selector.startsWith('/') && token.selector.endsWith('/'))
+        return { engine: 'css', selector: `:text-matches("${token.selector.substring(1, token.selector.length - 1)}")`, score: token.score };
+      return { engine: 'css', selector: `:text("${token.selector}")`, score: token.score };
+    });
+    const combined = joinTokens(allCss);
+    bestWithIndex = [{ engine: 'css', selector: `:nth-match(${combined}, ${index + 1})`, score: combineScores(allCss) + 1000 }];
+  }
+  return bestWithIndex;
 }
 
 function isGuidLike(id: string): boolean {
@@ -216,7 +318,7 @@ function isGuidLike(id: string): boolean {
       continue;
     if (c >= 'a' && c <= 'z')
       characterType = 'lower';
-    else  if (c >= 'A' && c <= 'Z')
+    else if (c >= 'A' && c <= 'Z')
       characterType = 'upper';
     else if (c >= '0' && c <= '9')
       characterType = 'digit';
@@ -233,131 +335,4 @@ function isGuidLike(id: string): boolean {
     lastCharacterType = characterType;
   }
   return transitionCount >= id.length / 4;
-}
-
-function createXPath(root: Node, targetElement: Element): string | undefined {
-  const maxTextLength = 80;
-  const minMeaningfulSelectorLegth = 100;
-
-  const maybeDocument = root instanceof Document ? root : root.ownerDocument;
-  if (!maybeDocument)
-    return;
-  const document = maybeDocument;
-
-  const xpathCache = new Map<string, Element[]>();
-  const tokens: string[] = [];
-
-  function evaluateXPath(expression: string): Element[] {
-    let nodes: Element[] | undefined = xpathCache.get(expression);
-    if (!nodes) {
-      nodes = [];
-      try {
-        const result = document.evaluate(expression, root, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
-        for (let node = result.iterateNext(); node; node = result.iterateNext()) {
-          if (node.nodeType === Node.ELEMENT_NODE)
-            nodes.push(node as Element);
-        }
-      } catch (e) {
-      }
-      xpathCache.set(expression, nodes);
-    }
-    return nodes;
-  }
-
-  function uniqueXPathSelector(prefix?: string): string | undefined {
-    const path = tokens.slice();
-    if (prefix)
-      path.unshift(prefix);
-    let selector = '//' + path.join('/');
-    while (selector.includes('///'))
-      selector = selector.replace('///', '//');
-    if (selector.endsWith('/'))
-      selector = selector.substring(0, selector.length - 1);
-    const nodes: Element[] = evaluateXPath(selector);
-    if (nodes[0] === targetElement)
-      return selector;
-
-    // If we are looking at a small set of elements with long selector, fall back to ordinal.
-    if (nodes.length < 5 && selector.length > minMeaningfulSelectorLegth) {
-      const index = nodes.indexOf(targetElement);
-      if (index !== -1)
-        return `(${selector})[${index + 1}]`;
-    }
-    return undefined;
-  }
-
-  function escapeAndCap(text: string) {
-    text = text.substring(0, maxTextLength);
-    // XPath 1.0 does not support quote escaping.
-    // 1. If there are no single quotes - use them.
-    if (text.indexOf(`'`) === -1)
-      return `'${text}'`;
-    // 2. If there are no double quotes - use them to enclose text.
-    if (text.indexOf(`"`) === -1)
-      return `"${text}"`;
-    // 3. Otherwise, use popular |concat| trick.
-    const Q = `'`;
-    return `concat(${text.split(Q).map(token => Q + token + Q).join(`, "'", `)})`;
-  }
-
-  const defaultAttributes = new Set([ 'title', 'aria-label', 'disabled', 'role' ]);
-  const importantAttributes = new Map<string, string[]>([
-    [ 'form', [ 'action' ] ],
-    [ 'img', [ 'alt' ] ],
-    [ 'input', [ 'placeholder', 'type', 'name' ] ],
-    [ 'textarea', [ 'placeholder', 'type', 'name' ] ],
-  ]);
-
-  let usedTextConditions = false;
-  for (let element: Element | null = targetElement; element && element !== root; element = element.parentElement) {
-    const nodeName = element.nodeName.toLowerCase();
-    const tag = nodeName === 'svg' ? '*' : nodeName;
-
-    const tagConditions = [];
-    if (nodeName === 'svg')
-      tagConditions.push('local-name()="svg"');
-
-    const attrConditions: string[] = [];
-    const importantAttrs = [ ...defaultAttributes, ...(importantAttributes.get(tag) || []) ];
-    for (const attr of importantAttrs) {
-      const value = element.getAttribute(attr);
-      if (value && value.length < maxTextLength)
-        attrConditions.push(`normalize-space(@${attr})=${escapeAndCap(value)}`);
-      else if (value)
-        attrConditions.push(`starts-with(normalize-space(@${attr}), ${escapeAndCap(value)})`);
-    }
-
-    const text = document.evaluate('normalize-space(.)', element).stringValue;
-    const textConditions = [];
-    if (tag !== 'select' && text.length && !usedTextConditions) {
-      if (text.length < maxTextLength)
-        textConditions.push(`normalize-space(.)=${escapeAndCap(text)}`);
-      else
-        textConditions.push(`starts-with(normalize-space(.), ${escapeAndCap(text)})`);
-      usedTextConditions = true;
-    }
-
-    // Always retain the last tag.
-    const conditions = [ ...tagConditions, ...textConditions, ...attrConditions ];
-    const token = conditions.length ? `${tag}[${conditions.join(' and ')}]` : (tokens.length ? '' : tag);
-    const selector = uniqueXPathSelector(token);
-    if (selector)
-      return selector;
-
-    const parent = element.parentElement;
-    let ordinal = -1;
-    if (parent) {
-      const siblings = Array.from(parent.children);
-      const sameTagSiblings = siblings.filter(sibling => (sibling).nodeName.toLowerCase() === nodeName);
-      if (sameTagSiblings.length > 1)
-        ordinal = sameTagSiblings.indexOf(element);
-    }
-
-    // Do not include text into this token, only tag / attributes.
-    // Topmost node will get all the text.
-    const conditionsString = conditions.length ? `[${conditions.join(' and ')}]` : '';
-    const ordinalString = ordinal >= 0 ? `[${ordinal + 1}]` : '';
-    tokens.unshift(`${tag}${ordinalString}${conditionsString}`);
-  }
-  return uniqueXPathSelector();
 }

@@ -27,7 +27,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('text="Submit"');
+    expect(selector).toBe('text=Submit');
 
     const [message] = await Promise.all([
       page.waitForEvent('console'),
@@ -35,8 +35,8 @@ describe('cli codegen', (test, { browserName, headful }) => {
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
     expect(recorder.output()).toContain(`
-  // Click text="Submit"
-  await page.click('text="Submit"');`);
+  // Click text=Submit
+  await page.click('text=Submit');`);
     expect(message.text()).toBe('click');
   });
 
@@ -55,7 +55,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await page.waitForTimeout(1000);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('text="Submit"');
+    expect(selector).toBe('text=Submit');
 
     const [message] = await Promise.all([
       page.waitForEvent('console'),
@@ -63,8 +63,8 @@ describe('cli codegen', (test, { browserName, headful }) => {
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
     expect(recorder.output()).toContain(`
-  // Click text="Submit"
-  await page.click('text="Submit"');`);
+  // Click text=Submit
+  await page.click('text=Submit');`);
     expect(message.text()).toBe('click');
   });
 
@@ -83,7 +83,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     });
 
     const selector = await recorder.hoverOverElement('div');
-    expect(selector).toBe('text=/.*Some long text here.*/');
+    expect(selector).toBe('text=Some long text here');
 
     // Sanity check that selector does not match our highlight.
     const divContents = await page.$eval(selector, div => div.outerHTML);
@@ -95,8 +95,8 @@ describe('cli codegen', (test, { browserName, headful }) => {
       page.dispatchEvent('div', 'click', { detail: 1 })
     ]);
     expect(recorder.output()).toContain(`
-  // Click text=/.*Some long text here.*/
-  await page.click('text=/.*Some long text here.*/');`);
+  // Click text=Some long text here
+  await page.click('text=Some long text here');`);
     expect(message.text()).toBe('click');
   });
 
@@ -279,7 +279,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await recorder.setContentAndWait('<select id="age" onchange="console.log(age.selectedOptions[0].value)"><option value="1"><option value="2"></select>');
 
     const selector = await recorder.hoverOverElement('select');
-    expect(selector).toBe('select[id="age"]');
+    expect(selector).toBe('select');
 
     const [message] = await Promise.all([
       page.waitForEvent('console'),
@@ -288,7 +288,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     ]);
     expect(recorder.output()).toContain(`
   // Select 2
-  await page.selectOption('select[id="age"]', '2');`);
+  await page.selectOption('select', '2');`);
     expect(message.text()).toBe('2');
   });
 
@@ -298,7 +298,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await recorder.setContentAndWait('<a target=_blank rel=noopener href="about:blank">link</a>');
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('text="link"');
+    expect(selector).toBe('text=link');
 
     const [popup] = await Promise.all([
       page.context().waitForEvent('page'),
@@ -306,10 +306,10 @@ describe('cli codegen', (test, { browserName, headful }) => {
       page.dispatchEvent('a', 'click', { detail: 1 })
     ]);
     expect(recorder.output()).toContain(`
-  // Click text="link"
+  // Click text=link
   const [page1] = await Promise.all([
     page.waitForEvent('popup'),
-    page.click('text="link"')
+    page.click('text=link')
   ]);`);
     expect(popup.url()).toBe('about:blank');
   });
@@ -318,15 +318,15 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await recorder.setContentAndWait(`<a onclick="window.location.href='about:blank#foo'">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('text="link"');
+    expect(selector).toBe('text=link');
     await Promise.all([
       page.waitForNavigation(),
       recorder.waitForOutput('assert'),
       page.dispatchEvent('a', 'click', { detail: 1 })
     ]);
     expect(recorder.output()).toContain(`
-  // Click text="link"
-  await page.click('text="link"');
+  // Click text=link
+  await page.click('text=link');
   // assert.equal(page.url(), 'about:blank#foo');`);
     expect(page.url()).toContain('about:blank#foo');
   });
@@ -336,7 +336,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await recorder.setContentAndWait(`<a onclick="setTimeout(() => window.location.href='about:blank#foo', 1000)">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('text="link"');
+    expect(selector).toBe('text=link');
 
     await Promise.all([
       page.waitForNavigation(),
@@ -344,10 +344,10 @@ describe('cli codegen', (test, { browserName, headful }) => {
       page.dispatchEvent('a', 'click', { detail: 1 })
     ]);
     expect(recorder.output()).toContain(`
-  // Click text="link"
+  // Click text=link
   await Promise.all([
     page.waitForNavigation(/*{ url: 'about:blank#foo' }*/),
-    page.click('text="link"')
+    page.click('text=link')
   ]);`);
     expect(page.url()).toContain('about:blank#foo');
   });
@@ -371,14 +371,14 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await recorder.waitForOutput('page.close();');
   });
 
-  it('should not lead to an error if /html gets clicked', async ({ contextWrapper, recorder }) => {
+  it('should not lead to an error if html gets clicked', async ({ contextWrapper, recorder }) => {
     await recorder.setContentAndWait('');
     await contextWrapper.context.newPage();
     const errors: any[] = [];
     recorder.page.on('pageerror', e => errors.push(e));
     await recorder.page.evaluate(() => document.querySelector('body').remove());
     const selector = await recorder.hoverOverElement('html');
-    expect(selector).toBe('/html');
+    expect(selector).toBe('html');
     await recorder.page.close();
     await recorder.waitForOutput('page.close();');
     expect(errors.length).toBe(0);
@@ -455,10 +455,10 @@ describe('cli codegen', (test, { browserName, headful }) => {
       page.click('text=Download')
     ]);
     await recorder.waitForOutput(`
-  // Click text="Download"
+  // Click text=Download
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.click('text="Download"')
+    page.click('text=Download')
   ]);`);
   });
 
@@ -470,14 +470,14 @@ describe('cli codegen', (test, { browserName, headful }) => {
     page.once('dialog', async dialog => {
       await dialog.dismiss();
     });
-    await page.click('text="click me"');
+    await page.click('text=click me');
     await recorder.waitForOutput(`
-  // Click text="click me"
+  // Click text=click me
   page.once('dialog', dialog => {
     console.log(\`Dialog message: $\{dialog.message()}\`);
     dialog.dismiss().catch(() => {});
   });
-  await page.click('text="click me"')`);
+  await page.click('text=click me')`);
   });
 
   it('should handle history.postData', async ({ page, recorder, httpServer }) => {
@@ -504,7 +504,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('text="link"');
+    expect(selector).toBe('text=link');
 
     await page.click('a', { modifiers: [ platform === 'darwin' ? 'Meta' : 'Control'] });
     await recorder.waitForOutput('page1');
@@ -515,10 +515,10 @@ describe('cli codegen', (test, { browserName, headful }) => {
   page1.goto('about:blank?foo');`);
     } else if (browserName === 'firefox') {
       expect(recorder.output()).toContain(`
-  // Click text="link"
+  // Click text=link
   const [page1] = await Promise.all([
     page.waitForEvent('popup'),
-    page.click('text="link"', {
+    page.click('text=link', {
       modifiers: ['${platform === 'darwin' ? 'Meta' : 'Control'}']
     })
   ]);`);
@@ -546,8 +546,8 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await popup2.type('input', 'TextB');
     await recorder.waitForOutput('TextB');
 
-    expect(recorder.output()).toContain(`await page1.fill('input[id="name"]', 'TextA');`);
-    expect(recorder.output()).toContain(`await page2.fill('input[id="name"]', 'TextB');`);
+    expect(recorder.output()).toContain(`await page1.fill('input', 'TextA');`);
+    expect(recorder.output()).toContain(`await page2.fill('input', 'TextB');`);
   });
 
   it('click should emit events in order', async ({ page, recorder }) => {
@@ -613,30 +613,30 @@ describe('cli codegen', (test, { browserName, headful }) => {
       frameOne.click('div'),
     ]);
     expect(recorder.output()).toContain(`
-  // Click text="Hi, I'm frame"
+  // Click text=Hi, I'm frame
   await page.frame({
     name: 'one'
-  }).click('text="Hi, I\\'m frame"');`);
+  }).click('text=Hi, I\\'m frame');`);
 
     await Promise.all([
       recorder.waitForOutput('two'),
       frameTwo.click('div'),
     ]);
     expect(recorder.output()).toContain(`
-  // Click text="Hi, I'm frame"
+  // Click text=Hi, I'm frame
   await page.frame({
     name: 'two'
-  }).click('text="Hi, I\\'m frame"');`);
+  }).click('text=Hi, I\\'m frame');`);
 
     await Promise.all([
       recorder.waitForOutput('url: \''),
       otherFrame.click('div'),
     ]);
     expect(recorder.output()).toContain(`
-  // Click text="Hi, I'm frame"
+  // Click text=Hi, I'm frame
   await page.frame({
     url: '${otherFrame.url()}'
-  }).click('text="Hi, I\\'m frame"');`);
+  }).click('text=Hi, I\\'m frame');`);
   });
 
   it('should record navigations after identical pushState', async ({ page, recorder, httpServer }) => {
