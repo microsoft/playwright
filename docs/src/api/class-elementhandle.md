@@ -734,7 +734,7 @@ to pass. This method throws when the element is detached while waiting, unless w
 If the element does not satisfy the condition for the [`option: timeout`] milliseconds, this method will throw.
 
 ### param: ElementHandle.waitForElementState.state
-- `state` <[ElementStateEnum]<"visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable">>
+- `state` <[ElementState]<"visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable">>
 
 A state to wait for, see below for more details.
 
