@@ -71,7 +71,7 @@ export abstract class BrowserType {
     return browser;
   }
 
-  async launchPersistentContext(userDataDir: string, options: types.LaunchPersistentOptions = {}): Promise<BrowserContext> {
+  async launchPersistentContext(userDataDir?: string, options: types.LaunchPersistentOptions = {}): Promise<BrowserContext> {
     options = validateLaunchOptions(options);
     const persistent: types.BrowserContextOptions = options;
     const controller = new ProgressController();
