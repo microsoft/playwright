@@ -436,7 +436,9 @@ describe('screencast', suite => {
     expect(videoPlayer.videoHeight).toBe(450);
   });
 
-  it('should be 800x600 with null viewport', async ({browser, testInfo}) => {
+  it('should be 800x600 with null viewport', (test, { headful, browserName }) => {
+    test.fixme(browserName === 'firefox' && !headful, 'Fails in headless on bots');
+  }, async ({ browser, testInfo }) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
