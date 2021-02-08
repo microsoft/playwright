@@ -57,7 +57,15 @@ export class Keyboard {
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.add(description.key as types.KeyboardModifier);
     const text = description.text;
-    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
+    await Promise.all([
+      this._page.context().notifyInputListeners(this._page, {
+        type: 'keyboard.down',
+        code: description.code,
+        key: description.key,
+        modifiers: new Set(this._pressedModifiers),
+      }),
+      this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text),
+    ]);
     await this._page._doSlowMo();
   }
 
@@ -78,12 +86,23 @@ export class Keyboard {
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.delete(description.key as types.KeyboardModifier);
     this._pressedKeys.delete(description.code);
-    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
+    await Promise.all([
+      this._page.context().notifyInputListeners(this._page, {
+        type: 'keyboard.up',
+      }),
+      this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location),
+    ]);
     await this._page._doSlowMo();
   }
 
   async insertText(text: string) {
-    await this._raw.sendText(text);
+    await Promise.all([
+      this._page.context().notifyInputListeners(this._page, {
+        type: 'keyboard.insertText',
+        text
+      }),
+      this._raw.sendText(text),
+    ]);
     await this._page._doSlowMo();
   }
 
@@ -186,7 +205,15 @@ export class Mouse {
     for (let i = 1; i <= steps; i++) {
       const middleX = fromX + (x - fromX) * (i / steps);
       const middleY = fromY + (y - fromY) * (i / steps);
-      await this._raw.move(middleX, middleY, this._lastButton, this._buttons, this._keyboard._modifiers());
+      await Promise.all([
+        this._page.context().notifyInputListeners(this._page, {
+          type: 'mouse.move',
+          x: middleX,
+          y: middleY,
+          buttons: new Set(this._buttons),
+        }),
+        this._raw.move(middleX, middleY, this._lastButton, this._buttons, this._keyboard._modifiers()),
+      ]);
       await this._page._doSlowMo();
     }
   }
@@ -195,7 +222,16 @@ export class Mouse {
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = button;
     this._buttons.add(button);
-    await this._raw.down(this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount);
+    await Promise.all([
+      this._page.context().notifyInputListeners(this._page, {
+        type: 'mouse.move',
+        x: this._x,
+        y: this._y,
+        buttons: new Set(this._buttons),
+      }),
+      this._raw.down(this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount),
+    ]);
+
     await this._page._doSlowMo();
   }
 
@@ -203,7 +239,15 @@ export class Mouse {
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = 'none';
     this._buttons.delete(button);
-    await this._raw.up(this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
+    await Promise.all([
+      this._page.context().notifyInputListeners(this._page, {
+        type: 'mouse.up',
+        x: this._x,
+        y: this._y,
+        buttons: new Set(this._buttons),
+      }),
+      this._raw.up(this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount),
+    ]);
     await this._page._doSlowMo();
   }
 
@@ -310,7 +354,14 @@ export class Touchscreen {
   async tap(x: number, y: number) {
     if (!this._page._browserContext._options.hasTouch)
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
-    await this._raw.tap(x, y, this._page.keyboard._modifiers());
+    await Promise.all([
+      this._page.context().notifyInputListeners(this._page, {
+        type: 'touchscreen.tap',
+        x,
+        y,
+      }),
+      this._raw.tap(x, y, this._page.keyboard._modifiers()),
+    ]);
     await this._page._doSlowMo();
   }
 }

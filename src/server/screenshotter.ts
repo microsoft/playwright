@@ -140,6 +140,7 @@ export class Screenshotter {
   private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, options: types.ElementScreenshotOptions): Promise<Buffer> {
     if ((options as any).__testHookBeforeScreenshot)
       await (options as any).__testHookBeforeScreenshot();
+    await this._page._browserContext.notifyInputListeners(this._page, {type: 'screenshot'});
     progress.throwIfAborted(); // Screenshotting is expensive - avoid extra work.
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground) {

@@ -220,6 +220,7 @@ export type BrowserTypeLaunchParams = {
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   slowMo?: number,
+  showUserInput?: boolean,
 };
 export type BrowserTypeLaunchOptions = {
   executablePath?: string,
@@ -243,6 +244,7 @@ export type BrowserTypeLaunchOptions = {
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   slowMo?: number,
+  showUserInput?: boolean,
 };
 export type BrowserTypeLaunchResult = {
   browser: BrowserChannel,
@@ -270,6 +272,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   chromiumSandbox?: boolean,
   slowMo?: number,
   noDefaultViewport?: boolean,
+  showUserInput?: boolean,
   viewport?: {
     width: number,
     height: number,
@@ -333,6 +336,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   chromiumSandbox?: boolean,
   slowMo?: number,
   noDefaultViewport?: boolean,
+  showUserInput?: boolean,
   viewport?: {
     width: number,
     height: number,

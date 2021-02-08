@@ -89,15 +89,13 @@ fixtures.launchPersistent.init(async ({ createUserDataDir, browserOptions, brows
     await context.close();
 });
 
-fixtures.browserOptions.override(async ({ browserName, headful, slowMo }, run) => {
+fixtures.browserOptions.override(async ({ browserName, browserOptions }, run) => {
   const executablePath = getExecutablePath(browserName);
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
   await run({
+    ...browserOptions,
     executablePath,
-    handleSIGINT: false,
-    slowMo,
-    headless: !headful,
   });
 });
 

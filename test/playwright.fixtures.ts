@@ -100,6 +100,7 @@ fixtures.browserOptions.init(async ({ headful, slowMo }, run) => {
     handleSIGINT: false,
     slowMo,
     headless: !headful,
+    showUserInput: !!slowMo && headful,
   });
 }, { scope: 'worker' });
 

@@ -6538,6 +6538,13 @@ export interface BrowserType<Browser> {
     };
 
     /**
+     * Show Playwright's mouse cursor, keyboard, and touch indicator. When clicking items with Playwright's synethic mouse, a
+     * mouse cursor will be drawn at the location of the click. Similarly a circle will appear when tapping items with the
+     * touch screen. Key presses will appear as subtitles.
+     */
+    showUserInput?: boolean;
+
+    /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
      * Defaults to 0.
      */
@@ -9793,6 +9800,13 @@ export interface LaunchOptions {
      */
     password?: string;
   };
+
+  /**
+   * Show Playwright's mouse cursor, keyboard, and touch indicator. When clicking items with Playwright's synethic mouse, a
+   * mouse cursor will be drawn at the location of the click. Similarly a circle will appear when tapping items with the
+   * touch screen. Key presses will appear as subtitles.
+   */
+  showUserInput?: boolean;
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { ActionListener, ActionMetadata, BrowserContext, ContextListener, Video } from '../server/browserContext';
+import { ActionListener, ActionMetadata, ContextListener } from '../server/instrumentation';
+import { BrowserContext, Video } from '../server/browserContext';
 import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import * as trace from './traceTypes';
 import * as path from 'path';
@@ -46,8 +47,6 @@ export class Tracer implements ContextListener {
     const contextTracer = new ContextTracer(context, traceStorageDir, tracePath);
     this._contextTracers.set(context, contextTracer);
   }
-
-  async onContextWillDestroy(context: BrowserContext): Promise<void> {}
 
   async onContextDidDestroy(context: BrowserContext): Promise<void> {
     const contextTracer = this._contextTracers.get(context);

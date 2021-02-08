@@ -299,6 +299,7 @@ BrowserType:
         firefoxUserPrefs: json?
         chromiumSandbox: boolean?
         slowMo: number?
+        showUserInput: boolean?
       returns:
         browser: Browser
 
@@ -333,6 +334,7 @@ BrowserType:
         chromiumSandbox: boolean?
         slowMo: number?
         noDefaultViewport: boolean?
+        showUserInput: boolean?
         viewport:
           type: object?
           properties:
@@ -1147,7 +1149,7 @@ Frame:
     evaluateExpression:
       parameters:
         expression: string
-        isFunction: boolean?  
+        isFunction: boolean?
         arg: SerializedArgument
         world:
           type: enum?

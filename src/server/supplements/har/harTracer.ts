@@ -16,7 +16,8 @@
 
 import * as fs from 'fs';
 import * as util from 'util';
-import { BrowserContext, ContextListener } from '../../browserContext';
+import { ContextListener } from '../../instrumentation';
+import { BrowserContext } from '../../browserContext';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
@@ -41,8 +42,6 @@ export class HarTracer implements ContextListener {
       await contextTracer.flush();
     }
   }
-
-  async onContextDidDestroy(context: BrowserContext): Promise<void> { }
 }
 
 type HarOptions = {

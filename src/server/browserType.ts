@@ -107,6 +107,7 @@ export abstract class BrowserType {
       name: this._name,
       isChromium: this._name === 'chromium',
       slowMo: options.slowMo,
+      showUserInput: options.showUserInput,
       persistent,
       headful: !options.headless,
       downloadsPath,

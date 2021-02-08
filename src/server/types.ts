@@ -270,6 +270,7 @@ type LaunchOptionsBase = {
   downloadsPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
+  showUserInput?: boolean,
 };
 export type LaunchOptions = LaunchOptionsBase & {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },

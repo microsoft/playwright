@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { BrowserContext, ContextListener } from '../browserContext';
+import { ContextListener } from '../instrumentation';
+import { BrowserContext } from '../browserContext';
 import { isDebugMode } from '../../utils/utils';
 import { RecorderSupplement } from './recorderSupplement';
 
@@ -27,6 +28,4 @@ export class InspectorController implements ContextListener {
       });
     }
   }
-  async onContextWillDestroy(context: BrowserContext): Promise<void> {}
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {}
 }

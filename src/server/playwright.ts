@@ -15,6 +15,7 @@
  */
 
 import * as path from 'path';
+import { ShowUserInput } from './supplements/showUserInput';
 import { Tracer } from '../trace/tracer';
 import * as browserPaths from '../utils/browserPaths';
 import { Android } from './android/android';
@@ -43,7 +44,8 @@ export class Playwright {
       contextListeners: isInternal ? [] : [
         new InspectorController(),
         new Tracer(),
-        new HarTracer()
+        new HarTracer(),
+        new ShowUserInput(),
       ]
     };
     const chromium = browsers.find(browser => browser.name === 'chromium');

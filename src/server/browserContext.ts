@@ -19,7 +19,6 @@ import { EventEmitter } from 'events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { mkdirIfNeeded } from '../utils/utils';
 import { Browser, BrowserOptions } from './browser';
-import * as dom from './dom';
 import { Download } from './download';
 import * as frames from './frames';
 import { helper } from './helper';
@@ -29,6 +28,7 @@ import { Progress, ProgressController, ProgressResult } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 import * as path from 'path';
+import { ActionListener, ActionMetadata, InputEvent } from './instrumentation';
 
 export class Video {
   readonly _videoId: string;
@@ -58,19 +58,6 @@ export class Video {
   }
 }
 
-export type ActionMetadata = {
-  type: 'click' | 'fill' | 'dblclick' | 'hover' | 'selectOption' | 'setInputFiles' | 'type' | 'press' | 'check' | 'uncheck' | 'goto' | 'setContent' | 'goBack' | 'goForward' | 'reload' | 'tap',
-  page: Page,
-  target?: dom.ElementHandle | string,
-  value?: string,
-  stack?: string,
-};
-
-export interface ActionListener {
-  onActionCheckpoint(name: string, metadata: ActionMetadata): Promise<void>;
-  onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void>;
-}
-
 export async function runAction<T>(task: (controller: ProgressController) => Promise<T>, metadata: ActionMetadata): Promise<T> {
   const controller = new ProgressController();
   controller.setListener({
@@ -87,13 +74,6 @@ export async function runAction<T>(task: (controller: ProgressController) => Pro
   const result = await task(controller);
   return result;
 }
-
-export interface ContextListener {
-  onContextCreated(context: BrowserContext): Promise<void>;
-  onContextWillDestroy(context: BrowserContext): Promise<void>;
-  onContextDidDestroy(context: BrowserContext): Promise<void>;
-}
-
 export abstract class BrowserContext extends EventEmitter {
   static Events = {
     Close: 'close',
@@ -118,6 +98,7 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   readonly _actionListeners = new Set<ActionListener>();
+  readonly _inputListeners = new Set<(page: Page, event: InputEvent) => Promise<void>>();
   private _origins = new Set<string>();
   terminalSize: { rows?: number, columns?: number } = {};
 
@@ -141,7 +122,12 @@ export abstract class BrowserContext extends EventEmitter {
 
   async _initialize() {
     for (const listener of this._browser.options.contextListeners)
-      await listener.onContextCreated(this);
+      await listener.onContextCreated?.(this);
+  }
+
+  async notifyInputListeners(page: Page, event: InputEvent) {
+    for (const listener of this._inputListeners)
+      await listener(page, event);
   }
 
   async _ensureVideosPath() {
@@ -293,7 +279,7 @@ export abstract class BrowserContext extends EventEmitter {
       this._closedStatus = 'closing';
 
       for (const listener of this._browser.options.contextListeners)
-        await listener.onContextWillDestroy(this);
+        await listener.onContextWillDestroy?.(this);
 
       // Collect videos/downloads that we will await.
       const promises: Promise<any>[] = [];
@@ -322,7 +308,7 @@ export abstract class BrowserContext extends EventEmitter {
 
       // Bookkeeping.
       for (const listener of this._browser.options.contextListeners)
-        await listener.onContextDidDestroy(this);
+        await listener.onContextDidDestroy?.(this);
       this._didCloseInternal();
     }
     await this._closePromise;

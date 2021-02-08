@@ -15,13 +15,14 @@
  */
 
 import * as types from './types';
-import { BrowserContext, ContextListener, Video } from './browserContext';
+import { BrowserContext, Video } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
 import { RecentLogsCollector } from '../utils/debugLogger';
+import { ContextListener } from './instrumentation';
 
 export interface BrowserProcess {
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
@@ -46,6 +47,7 @@ export type BrowserOptions = PlaywrightOptions & {
   protocolLogger: types.ProtocolLogger,
   browserLogsCollector: RecentLogsCollector,
   slowMo?: number,
+  showUserInput?: boolean,
 };
 
 export abstract class Browser extends EventEmitter {
