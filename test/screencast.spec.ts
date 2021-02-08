@@ -45,6 +45,8 @@ export class VideoPlayer {
 
     const lines = this.output.split('\n');
     let framesLine = lines.find(l => l.startsWith('frame='))!;
+    if (!framesLine)
+      throw new Error(`No frame data in the output:\n${this.output}`);
     framesLine = framesLine.substring(framesLine.lastIndexOf('frame='));
     const framesMatch = framesLine.match(/frame=\s+(\d+)/);
     const streamLine = lines.find(l => l.trim().startsWith('Stream #0:0'));
