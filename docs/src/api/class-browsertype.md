@@ -101,7 +101,7 @@ option with extreme caution.
 [Chrome Canary](https://www.google.com/chrome/browser/canary.html) or
 [Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
 >
-> Stock browsers like Chrome and Edge are suitable for tests that require proprietary media codecs for video playback. See [this article](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for other differences between Chromium and Chrome.
+> Stock browsers like Google Chrome and Microsoft Edge are suitable for tests that require proprietary media codecs for video playback. See [this article](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for other differences between Chromium and Chrome.
 [This article](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md)
 describes some differences for Linux users.
 
