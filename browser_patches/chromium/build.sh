@@ -35,10 +35,15 @@ compile_chromium() {
     exit 1
   fi
 
-  if [[ ! -d "${SCRIPT_PATH}/depot_tools" ]]; then
-    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git "${SCRIPT_PATH}/depot_tools"
+  # install depot_tools if they are not in system
+  # NOTE: as of Feb 8, 2021, windows requires manual and separate
+  # installation of depot_tools.
+  if ! command -v autoninja >/dev/null; then
+    if [[ ! -d "${SCRIPT_PATH}/depot_tools" ]]; then
+      git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git "${SCRIPT_PATH}/depot_tools"
+    fi
+    export PATH="${SCRIPT_PATH}/depot_tools:$PATH"
   fi
-  export PATH="${SCRIPT_PATH}/depot_tools:$PATH"
 
   CHROMIUM_FOLDER_NAME=""
   CHROMIUM_FILES_TO_ARCHIVE=()
@@ -90,6 +95,32 @@ compile_chromium() {
       "xdg-mime"
       "xdg-settings"
     )
+  elif [[ $1 == "--compile-win"* ]]; then
+    CHROMIUM_FOLDER_NAME="chrome-win"
+    CHROMIUM_FILES_TO_ARCHIVE=( 
+      "chrome.dll"
+      "chrome.exe"
+      "chrome_100_percent.pak"
+      "chrome_200_percent.pak"
+      "chrome_elf.dll"
+      "chrome_proxy.exe"
+      "chrome_pwa_launcher.exe"
+      "D3DCompiler_47.dll"
+      "elevation_service.exe"
+      "eventlog_provider.dll"
+      "First Run"
+      "icudtl.dat"
+      "libEGL.dll"
+      "libGLESv2.dll"
+      "locales"
+      "MEIPreload"
+      "mojo_core.dll"
+      "nacl_irt_x86_64.nexe"
+      "notification_helper.exe"
+      "resources.pak"
+      "swiftshader"
+      "v8_context_snapshot.bin"
+    )
   fi
 
   # Get chromium SHA from the build revision.
@@ -128,11 +159,16 @@ EOF
 
   if [[ $1 == "--compile-mac-arm64" ]]; then
     echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
+  elif [[ $1 == "--compile-win32" ]]; then
+    echo 'target_cpu = "x86"' >> ./out/Default/args.gn
   fi
 
-  # Compile Chromium with correct Xcode version.
-  gn gen out/Default
-  autoninja -C out/Default chrome
+  if [[ $1 == "--compile-win"* ]]; then
+    /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_PATH}/buildwin.bat)"
+  else
+    gn gen out/Default
+    autoninja -C out/Default chrome
+  fi
 
   if [[ $1 == "--compile-linux" ]]; then
     autoninja -C out/Default chrome_sandbox clear_key_cdm
@@ -151,6 +187,10 @@ EOF
   for file in ${CHROMIUM_FILES_TO_ARCHIVE[@]}; do
     $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
   done
+  if [[ $1 == "--compile-win"* ]]; then
+    $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/"*.manifest "output/${CHROMIUM_FOLDER_NAME}/"
+  fi
+
   cd output
   zip --symlinks -r build.zip "${CHROMIUM_FOLDER_NAME}"
 }

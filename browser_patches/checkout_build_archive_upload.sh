@@ -66,6 +66,16 @@ elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win64" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="ffmpeg-win64.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-win32" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-win32"
+  EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="chromium-win32.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-win64" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-win64"
+  EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="chromium-win64.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-mac" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--compile-mac"
