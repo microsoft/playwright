@@ -99,7 +99,8 @@ export class RecorderApp extends EventEmitter {
         `--user-data-dir=${path.join(os.homedir(),'.playwright-app')}`,
         '--remote-debugging-pipe',
         '--app=data:text/html,',
-        `--window-size=300,800`,
+        '--window-size=300,800',
+        '--no-sandbox',
       ],
       noDefaultViewport: true
     });
