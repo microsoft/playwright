@@ -102,7 +102,7 @@ async def main():
 
         # Setup context however you like.
         context = await browser.new_context() # Pass any options
-        await context.route('**/*', lambda route: route.resume())
+        await context.route('**/*', lambda route: route.continue_())
 
         # Pause the page, and start recording manually.
         page = await context.new_page()
@@ -120,7 +120,7 @@ with sync_playwright() as p:
 
     # Setup context however you like.
     context = browser.new_context() # Pass any options
-    context.route('**/*', lambda route: route.resume())
+    context.route('**/*', lambda route: route.continue_())
 
     # Pause the page, and start recording manually.
     page = context.new_page()
