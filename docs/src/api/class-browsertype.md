@@ -93,7 +93,7 @@ browser = playwright.chromium.launch( # or "firefox" or "webkit".
 )
 ```
 
-> **Chromium-only** Playwright can also be used to control the Chrome or Edge browsers, but it works best with the version of
+> **Chromium-only** Playwright can also be used to control the Google Chrome or Microsoft Edge browsers, but it works best with the version of
 Chromium it is bundled with. There is no guarantee it will work with any other version. Use [`option: executablePath`]
 option with extreme caution.
 >
