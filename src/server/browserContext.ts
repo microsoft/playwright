@@ -462,6 +462,10 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
   } catch (e) {
     url = new URL('http://' + server);
   }
+  if (url.protocol === 'socks4:' && (proxy.username || proxy.password))
+    throw new Error(`Socks4 proxy protocol does not support authentication`);
+  if (url.protocol === 'socks5:' && (proxy.username || proxy.password))
+    throw new Error(`Browser does not support socks5 proxy authentication`);
   server = url.protocol + '//' + url.host;
   if (bypass)
     bypass = bypass.split(',').map(t => t.trim()).join(',');

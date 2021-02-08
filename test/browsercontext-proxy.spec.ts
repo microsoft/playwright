@@ -103,6 +103,22 @@ it('should work with IP:PORT notion', async ({contextFactory, contextOptions, se
   await browser.close();
 });
 
+it('should throw for socks5 authentication', async ({contextFactory, contextOptions}) => {
+  const error = await contextFactory({
+    ...contextOptions,
+    proxy: { server: `socks5://localhost:1234`, username: 'user', password: 'secret' }
+  }).catch(e => e);
+  expect(error.message).toContain('Browser does not support socks5 proxy authentication');
+});
+
+it('should throw for socks4 authentication', async ({contextFactory, contextOptions}) => {
+  const error = await contextFactory({
+    ...contextOptions,
+    proxy: { server: `socks4://localhost:1234`, username: 'user', password: 'secret' }
+  }).catch(e => e);
+  expect(error.message).toContain('Socks4 proxy protocol does not support authentication');
+});
+
 it('should authenticate', async ({contextFactory, contextOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     const auth = req.headers['proxy-authorization'];
