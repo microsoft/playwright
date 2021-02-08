@@ -111,7 +111,7 @@ browser_context.add_cookies([cookie_object1, cookie_object2])
   - `expires` <[float]> Unix time in seconds. Optional.
   - `httpOnly` <[boolean]> Optional.
   - `secure` <[boolean]> Optional.
-  - `sameSite` <[SameSiteEnum]<"Strict"|"Lax"|"None">> Optional.
+  - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
 
 ## async method: BrowserContext.addInitScript
 
@@ -217,7 +217,7 @@ The default browser context cannot be closed.
   - `expires` <[float]> Unix time in seconds.
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
-  - `sameSite` <[SameSiteEnum]<"Strict"|"Lax"|"None">>
+  - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
 
 If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those URLs
 are returned.
@@ -710,7 +710,7 @@ Whether to emulate network being offline for the browser context.
     - `expires` <[float]> Unix time in seconds.
     - `httpOnly` <[boolean]>
     - `secure` <[boolean]>
-    - `sameSite` <[SameSiteEnum]<"Strict"|"Lax"|"None">>
+    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
   - `origins` <[Array]<[Object]>>
     - `origin` <[string]>
     - `localStorage` <[Array]<[Object]>>
