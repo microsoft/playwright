@@ -20,7 +20,7 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import os from 'os';
-import type { Browser, BrowserContext, BrowserType, Electron, Page } from '../index';
+import type { Browser, BrowserContext, BrowserType, Page } from '../index';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
@@ -194,5 +194,4 @@ export const afterAll = folio.afterAll;
 
 declare module '../index' {
   const _android: Android;
-  const _electron: Electron;
 }

@@ -20,3 +20,4 @@ export * from './types/types';
 export const webkit: types.BrowserType<types.WebKitBrowser>;
 export const chromium: types.BrowserType<types.ChromiumBrowser>;
 export const firefox: types.BrowserType<types.FirefoxBrowser>;
+export const _electron: types.Electron;
