@@ -111,7 +111,7 @@ async def main():
 asyncio.run(main())
 ```
 
-```python async
+```python sync
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as p:
