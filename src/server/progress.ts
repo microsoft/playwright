@@ -27,7 +27,6 @@ export type ProgressResult = {
 };
 
 export interface Progress {
-  readonly aborted: Promise<void>;
   log(message: string): void;
   timeUntilDeadline(): number;
   isRunning(): boolean;
@@ -52,11 +51,6 @@ export class ProgressController {
   private _forceAbort: (error: Error) => void = () => {};
   private _forceAbortPromise: Promise<any>;
 
-  // Promise and callback that resolve once the progress is aborted.
-  // This includes the force abort and also rejection of the task itself (failure).
-  private _aborted = () => {};
-  private _abortedPromise: Promise<void>;
-
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
@@ -70,7 +64,6 @@ export class ProgressController {
   constructor() {
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
-    this._abortedPromise = new Promise(resolve => this._aborted = resolve);
   }
 
   setLogName(logName: LogName) {
@@ -91,7 +84,6 @@ export class ProgressController {
     this._state = 'running';
 
     const progress: Progress = {
-      aborted: this._abortedPromise,
       log: message => {
         if (this._state === 'running')
           this._logRecording.push(message);
@@ -133,7 +125,6 @@ export class ProgressController {
       this._logRecording = [];
       return result;
     } catch (e) {
-      this._aborted();
       clearTimeout(timer);
       this._state = 'aborted';
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));

@@ -55,9 +55,9 @@ export class WebSocketTransport implements ConnectionTransport {
     progress.log(`<ws connecting> ${url}`);
     const transport = new WebSocketTransport(progress, url);
     let success = false;
-    progress.aborted.then(() => {
+    progress.cleanupWhenAborted(async () => {
       if (!success)
-        transport.closeAndWait().catch(e => null);
+        await transport.closeAndWait().catch(e => null);
     });
     await new Promise<WebSocketTransport>((fulfill, reject) => {
       transport._ws.addEventListener('open', async () => {
