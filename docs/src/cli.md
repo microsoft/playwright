@@ -102,7 +102,7 @@ async def main():
 
         # Setup context however you like.
         context = await browser.new_context() # Pass any options
-        await context.route('**/*', lambda route: route.continue_())
+        await context.route('**/*', lambda route: route.resume())
 
         # Pause the page, and start recording manually.
         page = await context.new_page()
@@ -111,7 +111,7 @@ async def main():
 asyncio.run(main())
 ```
 
-```python async
+```python sync
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as p:
@@ -120,7 +120,7 @@ with sync_playwright() as p:
 
     # Setup context however you like.
     context = browser.new_context() # Pass any options
-    context.route('**/*', lambda route: route.continue_())
+    context.route('**/*', lambda route: route.resume())
 
     # Pause the page, and start recording manually.
     page = context.new_page()
