@@ -24,9 +24,9 @@ import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController, runAbortableTask } from './progress';
-import { EventEmitter } from 'events';
 import { assert, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
+import { SdkObject } from './sdkObject';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
@@ -342,7 +342,7 @@ export class FrameManager {
   }
 
   onWebSocketCreated(requestId: string, url: string) {
-    const ws = new network.WebSocket(url);
+    const ws = new network.WebSocket(this._page, url);
     this._webSockets.set(requestId, ws);
   }
 
@@ -386,7 +386,7 @@ export class FrameManager {
   }
 }
 
-export class Frame extends EventEmitter {
+export class Frame extends SdkObject {
   static Events = {
     Navigation: 'navigation',
     AddLifecycle: 'addlifecycle',
@@ -412,8 +412,8 @@ export class Frame extends EventEmitter {
   private _detachedCallback = () => {};
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
-    super();
-    this.setMaxListeners(0);
+    super(page);
+    this.attribution.frame = this;
     this._id = id;
     this._page = page;
     this._parentFrame = parentFrame;

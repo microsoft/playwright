@@ -18,6 +18,7 @@ import * as dom from './dom';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
 import type UtilityScript from './injected/utilityScript';
+import { SdkObject } from './sdkObject';
 
 type ObjectId = string;
 export type RemoteObject = {
@@ -49,11 +50,12 @@ export interface ExecutionContextDelegate {
   releaseHandle(handle: JSHandle): Promise<void>;
 }
 
-export class ExecutionContext {
+export class ExecutionContext extends SdkObject {
   readonly _delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
 
-  constructor(delegate: ExecutionContextDelegate) {
+  constructor(parent: SdkObject, delegate: ExecutionContextDelegate) {
+    super(parent);
     this._delegate = delegate;
   }
 
@@ -82,7 +84,7 @@ export class ExecutionContext {
   }
 }
 
-export class JSHandle<T = any> {
+export class JSHandle<T = any> extends SdkObject {
   readonly _context: ExecutionContext;
   _disposed = false;
   readonly _objectId: ObjectId | undefined;
@@ -92,6 +94,7 @@ export class JSHandle<T = any> {
   private _previewCallback: ((preview: string) => void) | undefined;
 
   constructor(context: ExecutionContext, type: string, objectId?: ObjectId, value?: any) {
+    super(context);
     this._context = context;
     this._objectId = objectId;
     this._value = value;

@@ -19,6 +19,7 @@ import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
 import { ParsedSelector, parseSelector } from './common/selectorParser';
+import { SdkObject } from './sdkObject';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,
@@ -26,11 +27,12 @@ export type SelectorInfo = {
   selector: string,
 };
 
-export class Selectors {
+export class Selectors extends SdkObject {
   readonly _builtinEngines: Set<string>;
   readonly _engines: Map<string, { source: string, contentScript: boolean }>;
 
-  constructor() {
+  constructor(parent: SdkObject) {
+    super(parent);
     // Note: keep in sync with InjectedScript class.
     this._builtinEngines = new Set([
       'css', 'css:light',
@@ -134,4 +136,6 @@ export class Selectors {
   }
 }
 
-export const serverSelectors = new Selectors();
+export function serverSelectors(parent: SdkObject) {
+  return new Selectors(parent);
+}

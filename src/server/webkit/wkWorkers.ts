@@ -35,7 +35,7 @@ export class WKWorkers {
     this.clear();
     this._sessionListeners = [
       helper.addEventListener(session, 'Worker.workerCreated', (event: Protocol.Worker.workerCreatedPayload) => {
-        const worker = new Worker(event.url);
+        const worker = new Worker(this._page, event.url);
         const workerSession = new WKSession(session.connection, event.workerId, 'Most likely the worker has been closed.', (message: any) => {
           session.send('Worker.sendMessageToWorker', {
             workerId: event.workerId,

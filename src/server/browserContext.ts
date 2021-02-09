@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { mkdirIfNeeded } from '../utils/utils';
 import { Browser, BrowserOptions } from './browser';
@@ -26,9 +25,10 @@ import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding, PageDelegate } from './page';
 import { Progress, ProgressController, ProgressResult } from './progress';
-import { Selectors, serverSelectors } from './selectors';
+import { Selectors } from './selectors';
 import * as types from './types';
 import * as path from 'path';
+import { SdkObject } from './sdkObject';
 
 export class Video {
   readonly _videoId: string;
@@ -94,7 +94,7 @@ export interface ContextListener {
   onContextDidDestroy(context: BrowserContext): Promise<void>;
 }
 
-export abstract class BrowserContext extends EventEmitter {
+export abstract class BrowserContext extends SdkObject {
   static Events = {
     Close: 'close',
     Page: 'page',
@@ -122,8 +122,8 @@ export abstract class BrowserContext extends EventEmitter {
   terminalSize: { rows?: number, columns?: number } = {};
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
-    super();
-    this.setMaxListeners(0);
+    super(browser);
+    this.attribution.context = this;
     this._browser = browser;
     this._options = options;
     this._browserContextId = browserContextId;
@@ -135,8 +135,8 @@ export abstract class BrowserContext extends EventEmitter {
     this._selectors = selectors;
   }
 
-  selectors() {
-    return this._selectors || serverSelectors;
+  selectors(): Selectors {
+    return this._selectors || this._browser.options.selectors;
   }
 
   async _initialize() {

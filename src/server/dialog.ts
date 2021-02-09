@@ -17,12 +17,13 @@
 
 import { assert } from '../utils/utils';
 import { Page } from './page';
+import { SdkObject } from './sdkObject';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
 
 export type DialogType = 'alert' | 'beforeunload' | 'confirm' | 'prompt';
 
-export class Dialog {
+export class Dialog extends SdkObject {
   private _page: Page;
   private _type: string;
   private _message: string;
@@ -31,6 +32,7 @@ export class Dialog {
   private _defaultValue: string;
 
   constructor(page: Page, type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
+    super(page);
     this._page = page;
     this._type = type;
     this._message = message;

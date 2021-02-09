@@ -31,6 +31,7 @@ import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatche
 import { FileChooser } from '../server/fileChooser';
 import { CRCoverage } from '../server/chromium/crCoverage';
 import { JSHandle } from '../server/javascript';
+import { SdkObject } from '../server/sdkObject';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
@@ -264,13 +265,13 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerInitiali
   }
 }
 
-export class BindingCallDispatcher extends Dispatcher<{}, channels.BindingCallInitializer> implements channels.BindingCallChannel {
+export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.BindingCallInitializer> implements channels.BindingCallChannel {
   private _resolve: ((arg: any) => void) | undefined;
   private _reject: ((error: any) => void) | undefined;
   private _promise: Promise<any>;
 
   constructor(scope: DispatcherScope, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
-    super(scope, {}, 'BindingCall', {
+    super(scope, new SdkObject(null), 'BindingCall', {
       frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,
       args: needsHandle ? undefined : args.map(serializeResult),

@@ -35,6 +35,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer) {
     super();
+    this.setMaxListeners(0);
     this._connection = parent instanceof ChannelOwner ? parent._connection : parent;
     this._type = type;
     this._guid = guid;

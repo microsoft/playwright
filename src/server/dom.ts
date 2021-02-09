@@ -31,7 +31,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   readonly world: types.World | null;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame, world: types.World|null) {
-    super(delegate);
+    super(frame, delegate);
     this.frame = frame;
     this.world = world;
   }

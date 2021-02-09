@@ -17,18 +17,27 @@
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as stream from 'stream';
+import { SdkObject } from '../server/sdkObject';
 
-export class StreamDispatcher extends Dispatcher<stream.Readable, channels.StreamInitializer> implements channels.StreamChannel {
-  constructor(scope: DispatcherScope, stream: stream.Readable) {
+export class StreamWrapper extends SdkObject {
+  readonly stream: stream.Readable;
+  constructor(parentObject: SdkObject, stream: stream.Readable) {
+    super(parentObject);
+    this.stream = stream;
+  }
+}
+
+export class StreamDispatcher extends Dispatcher<StreamWrapper, channels.StreamInitializer> implements channels.StreamChannel {
+  constructor(scope: DispatcherScope, stream: StreamWrapper) {
     super(scope, stream, 'Stream', {});
   }
 
   async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
-    const buffer = this._object.read(Math.min(this._object.readableLength, params.size || this._object.readableLength));
+    const buffer = this._object.stream.read(Math.min(this._object.stream.readableLength, params.size || this._object.stream.readableLength));
     return { binary: buffer ? buffer.toString('base64') : '' };
   }
 
   async close() {
-    this._object.destroy();
+    this._object.stream.destroy();
   }
 }

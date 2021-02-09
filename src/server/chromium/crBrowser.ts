@@ -263,7 +263,7 @@ class CRServiceWorker extends Worker {
   readonly _browserContext: CRBrowserContext;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
-    super(url);
+    super(browserContext, url);
     this._browserContext = browserContext;
     session.once('Runtime.executionContextCreated', event => {
       this._createExecutionContext(new CRExecutionContext(session, event.context));

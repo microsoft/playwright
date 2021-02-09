@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "es2018",
     "module": "commonjs",
     "lib": ["esnext", "dom", "DOM.Iterable"],
     "sourceMap": true,
