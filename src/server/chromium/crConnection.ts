@@ -23,6 +23,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 import { helper } from '../helper';
+import { SdkObject } from '../sdkObject';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
@@ -123,7 +124,7 @@ export const CRSessionEvents = {
   Disconnected: Symbol('Events.CDPSession.Disconnected')
 };
 
-export class CRSession extends EventEmitter {
+export class CRSession extends SdkObject {
   _connection: CRConnection | null;
   _eventListener?: (method: string, params?: Object) => void;
   private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
@@ -139,8 +140,7 @@ export class CRSession extends EventEmitter {
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
   constructor(connection: CRConnection, rootSessionId: string, targetType: string, sessionId: string) {
-    super();
-    this.setMaxListeners(0);
+    super(null);
     this._connection = connection;
     this._rootSessionId = rootSessionId;
     this._targetType = targetType;

@@ -17,12 +17,13 @@
 import * as types from './types';
 import { BrowserContext, ContextListener, Video } from './browserContext';
 import { Page } from './page';
-import { EventEmitter } from 'events';
 import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import * as registry from '../utils/registry';
+import { SdkObject } from './sdkObject';
+import { Selectors } from './selectors';
 
 export interface BrowserProcess {
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
@@ -34,7 +35,10 @@ export interface BrowserProcess {
 export type PlaywrightOptions = {
   contextListeners: ContextListener[],
   registry: registry.Registry,
-  isInternal: boolean
+  isInternal: boolean,
+  rootSdkObject: SdkObject,
+  // FIXME, this is suspicious
+  selectors: Selectors
 };
 
 export type BrowserOptions = PlaywrightOptions & {
@@ -50,7 +54,7 @@ export type BrowserOptions = PlaywrightOptions & {
   slowMo?: number,
 };
 
-export abstract class Browser extends EventEmitter {
+export abstract class Browser extends SdkObject {
   static Events = {
     Disconnected: 'disconnected',
   };
@@ -62,8 +66,8 @@ export abstract class Browser extends EventEmitter {
   readonly _idToVideo = new Map<string, Video>();
 
   constructor(options: BrowserOptions) {
-    super();
-    this.setMaxListeners(0);
+    super(options.rootSdkObject);
+    this.attribution.browser = this;
     this.options = options;
   }
 

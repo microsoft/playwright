@@ -31,8 +31,9 @@ import { createGuid } from './utils/utils';
 import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
 import { BrowserContext, Video } from './server/browserContext';
-import { StreamDispatcher } from './dispatchers/streamDispatcher';
+import { StreamDispatcher, StreamWrapper } from './dispatchers/streamDispatcher';
 import { ProtocolLogger } from './server/types';
+import { SdkObject } from './server/sdkObject';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserType;
@@ -118,7 +119,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       connection.dispatch(JSON.parse(Buffer.from(message).toString()));
     });
     socket.on('error', () => {});
-    const selectors = new Selectors();
+    const selectors = new Selectors(this._browser.options.rootSdkObject);
     const scope = connection.rootDispatcher();
     const remoteBrowser = new RemoteBrowserDispatcher(scope, this._browser, selectors);
     socket.on('close', () => {
@@ -130,12 +131,12 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   }
 }
 
-class RemoteBrowserDispatcher extends Dispatcher<{}, channels.RemoteBrowserInitializer> implements channels.PlaywrightChannel {
+class RemoteBrowserDispatcher extends Dispatcher<SdkObject, channels.RemoteBrowserInitializer> implements channels.PlaywrightChannel {
   readonly connectedBrowser: ConnectedBrowser;
 
   constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
     const connectedBrowser = new ConnectedBrowser(scope, browser, selectors);
-    super(scope, {}, 'RemoteBrowser', {
+    super(scope, browser, 'RemoteBrowser', {
       selectors: new SelectorsDispatcher(scope, selectors),
       browser: connectedBrowser,
     }, false, 'remoteBrowser');
@@ -188,7 +189,7 @@ class ConnectedBrowser extends BrowserDispatcher {
     video._waitForCallbackOnFinish(async () => {
       const readable = fs.createReadStream(video._path);
       await new Promise(f => readable.on('readable', f));
-      const stream = new StreamDispatcher(this._remoteBrowser!._scope, readable);
+      const stream = new StreamDispatcher(this._remoteBrowser!._scope, new StreamWrapper(this._object, readable));
       this._remoteBrowser!._dispatchEvent('video', {
         stream,
         context: contextDispatcher,

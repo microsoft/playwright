@@ -21,6 +21,7 @@ import { createScheme, Validator, ValidationError } from '../protocol/validator'
 import { assert, createGuid, debugAssert, isUnderTest } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
+import { SdkObject } from '../server/sdkObject';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -38,7 +39,14 @@ export function lookupNullableDispatcher<DispatcherType>(object: any | null): Di
   return object ? lookupDispatcher(object) : undefined;
 }
 
-export class Dispatcher<Type, Initializer> extends EventEmitter implements channels.Channel {
+export type CallMetadata = channels.Metadata & {
+  object: SdkObject;
+  type: string;
+  method: string;
+  params: any;
+};
+
+export class Dispatcher<Type extends SdkObject, Initializer> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
   private _isScope: boolean;
   // Parent is always "isScope".
@@ -112,10 +120,9 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
 }
 
 export type DispatcherScope = Dispatcher<any, any>;
-
-class Root extends Dispatcher<{}, {}> {
+class Root extends Dispatcher<SdkObject, {}> {
   constructor(connection: DispatcherConnection) {
-    super(connection, {}, '', {}, true, '');
+    super(connection, new SdkObject(null), '', {}, true, '');
   }
 }
 
@@ -178,7 +185,14 @@ export class DispatcherConnection {
       const validated = this._validateParams(dispatcher._type, method, params);
       if (typeof (dispatcher as any)[method] !== 'function')
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
-      const result = await (dispatcher as any)[method](validated, this._validateMetadata(metadata));
+      const callMetadata: CallMetadata = {
+        ...this._validateMetadata(metadata).stack,
+        object: dispatcher._object,
+        type: dispatcher._type,
+        method,
+        params,
+      };
+      const result = await (dispatcher as any)[method](validated, callMetadata);
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });

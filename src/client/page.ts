@@ -97,7 +97,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PageInitializer) {
     super(parent, type, guid, initializer);
-    this.setMaxListeners(0);
     this._browserContext = parent as BrowserContext;
     this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
 

@@ -31,18 +31,21 @@ import { validateHostRequirements } from './validateDependencies';
 import { isDebugMode } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
+import { SdkObject } from './sdkObject';
 
 const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
-export abstract class BrowserType {
+export abstract class BrowserType extends SdkObject {
   private _name: registry.BrowserName;
   readonly _registry: registry.Registry;
   readonly _playwrightOptions: PlaywrightOptions;
 
   constructor(browserName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
+    super(playwrightOptions.rootSdkObject);
+    this.attribution.browserType = this;
     this._playwrightOptions = playwrightOptions;
     this._name = browserName;
     this._registry = playwrightOptions.registry;

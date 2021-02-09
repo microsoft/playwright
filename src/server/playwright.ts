@@ -22,14 +22,15 @@ import { PlaywrightOptions } from './browser';
 import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
-import { serverSelectors } from './selectors';
+import { Selectors } from './selectors';
 import { HarTracer } from './supplements/har/harTracer';
 import { InspectorController } from './supplements/inspectorController';
 import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
+import { SdkObject } from './sdkObject';
 
-export class Playwright {
-  readonly selectors = serverSelectors;
+export class Playwright extends SdkObject {
+  readonly selectors: Selectors;
   readonly chromium: Chromium;
   readonly android: Android;
   readonly electron: Electron;
@@ -38,6 +39,8 @@ export class Playwright {
   readonly options: PlaywrightOptions;
 
   constructor(isInternal: boolean) {
+    super(null);
+    this.selectors = new Selectors(this);
     this.options = {
       isInternal,
       registry: new Registry(path.join(__dirname, '..', '..')),
@@ -46,7 +49,9 @@ export class Playwright {
         new InspectorController(),
         new Tracer(),
         new HarTracer()
-      ]
+      ],
+      rootSdkObject: this,
+      selectors: this.selectors
     };
     this.chromium = new Chromium(this.options);
     this.firefox = new Firefox(this.options);

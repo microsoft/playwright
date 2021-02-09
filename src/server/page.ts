@@ -26,12 +26,12 @@ import * as types from './types';
 import { BrowserContext, Video } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
-import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { ProgressController, runAbortableTask } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
+import { SdkObject } from './sdkObject';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -92,7 +92,7 @@ type PageState = {
   extraHTTPHeaders: types.HeadersArray | null;
 };
 
-export class Page extends EventEmitter {
+export class Page extends SdkObject {
   static Events = {
     Close: 'close',
     Crash: 'crash',
@@ -149,8 +149,8 @@ export class Page extends EventEmitter {
   _video: Video | null = null;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
-    super();
-    this.setMaxListeners(0);
+    super(browserContext);
+    this.attribution.page = this;
     this._delegate = delegate;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
@@ -288,7 +288,7 @@ export class Page extends EventEmitter {
   }
 
   _addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
-    const message = new ConsoleMessage(type, text, args, location);
+    const message = new ConsoleMessage(this, type, text, args, location);
     const intercepted = this._frameManager.interceptConsoleMessage(message);
     if (intercepted || !this.listenerCount(Page.Events.Console))
       args.forEach(arg => arg.dispose());
@@ -502,7 +502,7 @@ export class Page extends EventEmitter {
   }
 }
 
-export class Worker extends EventEmitter {
+export class Worker extends SdkObject {
   static Events = {
     Close: 'close',
   };
@@ -512,16 +512,15 @@ export class Worker extends EventEmitter {
   private _executionContextCallback: (value: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
 
-  constructor(url: string) {
-    super();
-    this.setMaxListeners(0);
+  constructor(parent: SdkObject, url: string) {
+    super(parent);
     this._url = url;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
 
   _createExecutionContext(delegate: js.ExecutionContextDelegate) {
-    this._existingExecutionContext = new js.ExecutionContext(delegate);
+    this._existingExecutionContext = new js.ExecutionContext(this, delegate);
     this._executionContextCallback(this._existingExecutionContext);
   }
 

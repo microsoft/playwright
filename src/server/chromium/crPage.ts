@@ -639,7 +639,7 @@ class FrameSession {
     }
 
     const url = event.targetInfo.url;
-    const worker = new Worker(url);
+    const worker = new Worker(this._page, url);
     this._page._addWorker(event.sessionId, worker);
     session.once('Runtime.executionContextCreated', async event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));
@@ -759,7 +759,7 @@ class FrameSession {
         lineNumber: lineNumber || 0,
         columnNumber: 0,
       };
-      this._page.emit(Page.Events.Console, new ConsoleMessage(level, text, [], location));
+      this._page.emit(Page.Events.Console, new ConsoleMessage(this._page, level, text, [], location));
     }
   }
 
