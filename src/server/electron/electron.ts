@@ -158,6 +158,9 @@ export class Electron  {
         cwd: options.cwd,
         tempDirectories: [],
         attemptToGracefullyClose: () => app!.close(),
+        handleSIGINT: true,
+        handleSIGTERM: true,
+        handleSIGHUP: true,
         onExit: () => {},
       });
 
