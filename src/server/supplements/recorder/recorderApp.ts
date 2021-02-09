@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
@@ -23,7 +22,6 @@ import { Page } from '../../page';
 import { ProgressController } from '../../progress';
 import { createPlaywright } from '../../playwright';
 import { EventEmitter } from 'events';
-import { DEFAULT_ARGS } from '../../chromium/chromium';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -92,15 +90,10 @@ export class RecorderApp extends EventEmitter {
 
   static async open(): Promise<RecorderApp> {
     const recorderPlaywright = createPlaywright(true);
-    const context = await recorderPlaywright.chromium.launchPersistentContext('', {
-      ignoreAllDefaultArgs: true,
+    const context = await recorderPlaywright.chromium.launchPersistentContext(undefined, {
       args: [
-        ...DEFAULT_ARGS,
-        `--user-data-dir=${path.join(os.homedir(),'.playwright-app')}`,
-        '--remote-debugging-pipe',
         '--app=data:text/html,',
         '--window-size=300,800',
-        '--no-sandbox',
       ],
       noDefaultViewport: true
     });
