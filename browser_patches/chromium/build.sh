@@ -173,7 +173,7 @@ EOF
       PLAYWRIGHT_GOMA_PATH=$(cygpath -w "${PLAYWRIGHT_GOMA_PATH}")
     fi
     echo 'use_goma = true' >> ./out/Default/args.gn
-    echo "goma_dir = '${PLAYWRIGHT_GOMA_PATH}'" >> ./out/Default/args.gn
+    echo "goma_dir = \"${PLAYWRIGHT_GOMA_PATH}\"" >> ./out/Default/args.gn
   fi
 
   if [[ $1 == "--compile-win"* ]]; then
