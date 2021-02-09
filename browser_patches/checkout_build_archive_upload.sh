@@ -233,11 +233,7 @@ if ! [[ ($2 == '-f') || ($2 == '--force') ]]; then
   if ./upload.sh "${BUILD_BLOB_PATH}" --check; then
     echo "Build is already uploaded - no changes."
     exit 0
-  elif ./upload.sh "${LOG_BLOB_PATH}" --check; then
-    echo "This build has already been attempted - skip building."
-    exit 0
   fi
-  echo "Build is missing and has not been attempted - rebuilding"
 else
   echo "Force-rebuilding the build."
 fi
