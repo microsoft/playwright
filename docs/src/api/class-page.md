@@ -2051,8 +2051,8 @@ page.set_viewport_size({"width": 640, "height": 480})
 page.goto("https://example.com")
 ```
 
-### param: Page.setViewportSize.viewport
-- `viewport` <[Object]>
+### param: Page.setViewportSize.viewportSize
+- `viewportSize` <[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 

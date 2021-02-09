@@ -2638,9 +2638,9 @@ export interface Page {
    * await page.goto('https://example.com');
    * ```
    * 
-   * @param viewport 
+   * @param viewportSize 
    */
-  setViewportSize(viewport: {
+  setViewportSize(viewportSize: {
     /**
      * page width in pixels.
      */
