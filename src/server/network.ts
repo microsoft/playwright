@@ -17,7 +17,7 @@
 import * as frames from './frames';
 import * as types from './types';
 import { assert } from '../utils/utils';
-import { SdkObject } from './sdkObject';
+import { SdkObject } from './instrumentation';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));

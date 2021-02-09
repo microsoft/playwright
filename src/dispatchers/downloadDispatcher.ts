@@ -17,7 +17,7 @@
 import { Download } from '../server/download';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { StreamDispatcher, StreamWrapper } from './streamDispatcher';
+import { StreamDispatcher } from './streamDispatcher';
 import * as fs from 'fs';
 import * as util from 'util';
 import { mkdirIfNeeded } from '../utils/utils';
@@ -65,7 +65,7 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
         try {
           const readable = fs.createReadStream(localPath);
           await new Promise(f => readable.on('readable', f));
-          const stream = new StreamDispatcher(this._scope, new StreamWrapper(this._object, readable));
+          const stream = new StreamDispatcher(this._scope, readable);
           // Resolve with a stream, so that client starts saving the data.
           resolve({ stream });
           // Block the download until the stream is consumed.
@@ -87,7 +87,7 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
       return {};
     const readable = fs.createReadStream(fileName);
     await new Promise(f => readable.on('readable', f));
-    return { stream: new StreamDispatcher(this._scope, new StreamWrapper(this._object, readable)) };
+    return { stream: new StreamDispatcher(this._scope, readable) };
   }
 
   async failure(): Promise<channels.DownloadFailureResult> {

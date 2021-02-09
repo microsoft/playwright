@@ -759,7 +759,7 @@ class FrameSession {
         lineNumber: lineNumber || 0,
         columnNumber: 0,
       };
-      this._page.emit(Page.Events.Console, new ConsoleMessage(this._page, level, text, [], location));
+      this._page.emit(Page.Events.Console, new ConsoleMessage(level, text, [], location));
     }
   }
 
@@ -814,7 +814,7 @@ class FrameSession {
     const ffmpegPath = this._crPage._browserContext._browser.options.registry.executablePath('ffmpeg');
     if (!ffmpegPath)
       throw new Error('ffmpeg executable was not found');
-    this._videoRecorder = await VideoRecorder.launch(ffmpegPath, options);
+    this._videoRecorder = await VideoRecorder.launch(this._crPage._page, ffmpegPath, options);
     this._screencastId = screencastId;
     const gotFirstFrame = new Promise(f => this._client.once('Page.screencastFrame', f));
     await this._client.send('Page.startScreencast', {

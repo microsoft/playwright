@@ -22,6 +22,7 @@ import { Page } from '../../page';
 import { ProgressController } from '../../progress';
 import { createPlaywright } from '../../playwright';
 import { EventEmitter } from 'events';
+import { internalCallMetadata } from '../../instrumentation';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -85,12 +86,13 @@ export class RecorderApp extends EventEmitter {
       this._page.context().close().catch(e => console.error(e));
     });
 
-    await this._page.mainFrame().goto(new ProgressController(), 'https://playwright/index.html');
+    const mainFrame = this._page.mainFrame();
+    await mainFrame.goto(internalCallMetadata(), 'https://playwright/index.html');
   }
 
   static async open(): Promise<RecorderApp> {
     const recorderPlaywright = createPlaywright(true);
-    const context = await recorderPlaywright.chromium.launchPersistentContext(undefined, {
+    const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), undefined, {
       args: [
         '--app=data:text/html,',
         '--window-size=300,800',
@@ -98,7 +100,7 @@ export class RecorderApp extends EventEmitter {
       noDefaultViewport: true
     });
 
-    const controller = new ProgressController();
+    const controller = new ProgressController(internalCallMetadata(), context._browser);
     await controller.run(async progress => {
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });

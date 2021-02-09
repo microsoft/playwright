@@ -36,6 +36,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   const targetAction = highlightedAction || selectedAction;
   return <div className='action-list'>{actions.map(actionEntry => {
     const { action, actionId, thumbnailUrl } = actionEntry;
+    const selector = action.params.selector;
     return <div
       className={'action-entry' + (actionEntry === targetAction ? ' selected' : '')}
       key={actionId}
@@ -45,9 +46,9 @@ export const ActionList: React.FC<ActionListProps> = ({
     >
       <div className='action-header'>
         <div className={'action-error codicon codicon-issues'} hidden={!actionEntry.action.error} />
-        <div className='action-title'>{action.action}</div>
-        {action.selector && <div className='action-selector' title={action.selector}>{action.selector}</div>}
-        {action.action === 'goto' && action.value && <div className='action-url' title={action.value}>{action.value}</div>}
+        <div className='action-title'>{action.method}</div>
+        {action.params.selector && <div className='action-selector' title={action.params.selector}>{action.params.selector}</div>}
+        {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
       </div>
       <div className='action-thumbnail'>
         <img src={thumbnailUrl} />

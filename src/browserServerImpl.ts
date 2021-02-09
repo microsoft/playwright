@@ -31,9 +31,9 @@ import { createGuid } from './utils/utils';
 import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
 import { BrowserContext, Video } from './server/browserContext';
-import { StreamDispatcher, StreamWrapper } from './dispatchers/streamDispatcher';
+import { StreamDispatcher } from './dispatchers/streamDispatcher';
 import { ProtocolLogger } from './server/types';
-import { SdkObject } from './server/sdkObject';
+import { CallMetadata, internalCallMetadata, SdkObject } from './server/instrumentation';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserType;
@@ -43,7 +43,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServerImpl> {
-    const browser = await this._browserType.launch({
+    const browser = await this._browserType.launch(internalCallMetadata(), {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
@@ -119,7 +119,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       connection.dispatch(JSON.parse(Buffer.from(message).toString()));
     });
     socket.on('error', () => {});
-    const selectors = new Selectors(this._browser.options.rootSdkObject);
+    const selectors = new Selectors();
     const scope = connection.rootDispatcher();
     const remoteBrowser = new RemoteBrowserDispatcher(scope, this._browser, selectors);
     socket.on('close', () => {
@@ -156,12 +156,12 @@ class ConnectedBrowser extends BrowserDispatcher {
     this._selectors = selectors;
   }
 
-  async newContext(params: channels.BrowserNewContextParams): Promise<{ context: channels.BrowserContextChannel }> {
+  async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<{ context: channels.BrowserContextChannel }> {
     if (params.recordVideo) {
       // TODO: we should create a separate temp directory or accept a launchServer parameter.
       params.recordVideo.dir = this._object.options.downloadsPath!;
     }
-    const result = await super.newContext(params);
+    const result = await super.newContext(params, metadata);
     const dispatcher = result.context as BrowserContextDispatcher;
     dispatcher._object.on(BrowserContext.Events.VideoStarted, (video: Video) => this._sendVideo(dispatcher, video));
     dispatcher._object._setSelectors(this._selectors);
@@ -189,7 +189,7 @@ class ConnectedBrowser extends BrowserDispatcher {
     video._waitForCallbackOnFinish(async () => {
       const readable = fs.createReadStream(video._path);
       await new Promise(f => readable.on('readable', f));
-      const stream = new StreamDispatcher(this._remoteBrowser!._scope, new StreamWrapper(this._object, readable));
+      const stream = new StreamDispatcher(this._remoteBrowser!._scope, readable);
       this._remoteBrowser!._dispatchEvent('video', {
         stream,
         context: contextDispatcher,

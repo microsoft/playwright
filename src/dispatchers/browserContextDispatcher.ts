@@ -22,6 +22,7 @@ import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
+import { CallMetadata } from '../server/instrumentation';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -120,8 +121,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
   }
 
-  async storageState(): Promise<channels.BrowserContextStorageStateResult> {
-    return await this._context.storageState();
+  async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {
+    return await this._context.storageState(metadata);
   }
 
   async close(): Promise<void> {

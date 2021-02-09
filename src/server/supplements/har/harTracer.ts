@@ -16,15 +16,16 @@
 
 import * as fs from 'fs';
 import * as util from 'util';
-import { BrowserContext, ContextListener } from '../../browserContext';
+import { BrowserContext } from '../../browserContext';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
+import { InstrumentationListener } from '../../instrumentation';
 import * as har from './har';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
-export class HarTracer implements ContextListener {
+export class HarTracer implements InstrumentationListener {
   private _contextTracers = new Map<BrowserContext, HarContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {

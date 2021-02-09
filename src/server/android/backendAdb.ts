@@ -17,12 +17,12 @@
 import * as assert from 'assert';
 import * as debug from 'debug';
 import * as net from 'net';
-import { SdkObject } from '../sdkObject';
+import { EventEmitter } from 'events';
 import { Backend, DeviceBackend, SocketBackend } from './android';
 
 export class AdbBackend implements Backend {
-  async devices(sdkObject: SdkObject): Promise<DeviceBackend[]> {
-    const result = await runCommand(sdkObject, 'host:devices');
+  async devices(): Promise<DeviceBackend[]> {
+    const result = await runCommand('host:devices');
     const lines = result.toString().trim().split('\n');
     return lines.map(line => {
       const [serial, status] = line.trim().split('\t');
@@ -46,20 +46,20 @@ class AdbDevice implements DeviceBackend {
   async close() {
   }
 
-  runCommand(sdkObject: SdkObject, command: string): Promise<Buffer> {
-    return runCommand(sdkObject, command, this.serial);
+  runCommand(command: string): Promise<Buffer> {
+    return runCommand(command, this.serial);
   }
 
-  async open(sdkObject: SdkObject, command: string): Promise<SocketBackend> {
-    const result = await open(sdkObject, command, this.serial);
+  async open(command: string): Promise<SocketBackend> {
+    const result = await open(command, this.serial);
     result.becomeSocket();
     return result;
   }
 }
 
-async function runCommand(sdkObject: SdkObject, command: string, serial?: string): Promise<Buffer> {
+async function runCommand(command: string, serial?: string): Promise<Buffer> {
   debug('pw:adb:runCommand')(command, serial);
-  const socket = new BufferedSocketWrapper(sdkObject, command, net.createConnection({ port: 5037 }));
+  const socket = new BufferedSocketWrapper(command, net.createConnection({ port: 5037 }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));
     const status = await socket.read(4);
@@ -79,8 +79,8 @@ async function runCommand(sdkObject: SdkObject, command: string, serial?: string
   return commandOutput;
 }
 
-async function open(sdkObject: SdkObject, command: string, serial?: string): Promise<BufferedSocketWrapper> {
-  const socket = new BufferedSocketWrapper(sdkObject, command, net.createConnection({ port: 5037 }));
+async function open(command: string, serial?: string): Promise<BufferedSocketWrapper> {
+  const socket = new BufferedSocketWrapper(command, net.createConnection({ port: 5037 }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));
     const status = await socket.read(4);
@@ -98,7 +98,7 @@ function encodeMessage(message: string): Buffer {
   return Buffer.from(lenHex + message);
 }
 
-class BufferedSocketWrapper extends SdkObject implements SocketBackend {
+class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
   private _socket: net.Socket;
   private _buffer = Buffer.from([]);
   private _isSocket = false;
@@ -107,8 +107,8 @@ class BufferedSocketWrapper extends SdkObject implements SocketBackend {
   private _isClosed = false;
   private _command: string;
 
-  constructor(parent: SdkObject, command: string, socket: net.Socket) {
-    super(parent);
+  constructor(command: string, socket: net.Socket) {
+    super();
     this._command = command;
     this._socket = socket;
     this._connectPromise = new Promise(f => this._socket.on('connect', f));

@@ -19,11 +19,10 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { Page } from './page';
 import { assert } from '../utils/utils';
-import { SdkObject } from './sdkObject';
 
 type SaveCallback = (localPath: string, error?: string) => Promise<void>;
 
-export class Download extends SdkObject {
+export class Download {
   private _downloadsPath: string;
   private _uuid: string;
   private _finishedCallback: () => void;
@@ -38,7 +37,6 @@ export class Download extends SdkObject {
   private _suggestedFilename: string | undefined;
 
   constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
-    super(page);
     this._page = page;
     this._downloadsPath = downloadsPath;
     this._uuid = uuid;

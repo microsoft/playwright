@@ -21,6 +21,7 @@ import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { CRBrowser } from '../server/chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
+import { CallMetadata } from '../server/instrumentation';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {
   constructor(scope: DispatcherScope, browser: Browser) {
@@ -33,10 +34,10 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserIniti
     this._dispose();
   }
 
-  async newContext(params: channels.BrowserNewContextParams): Promise<channels.BrowserNewContextResult> {
+  async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
     const context = await this._object.newContext(params);
     if (params.storageState)
-      await context.setStorageState(params.storageState);
+      await context.setStorageState(metadata, params.storageState);
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }
 

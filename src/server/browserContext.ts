@@ -18,17 +18,16 @@
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { mkdirIfNeeded } from '../utils/utils';
 import { Browser, BrowserOptions } from './browser';
-import * as dom from './dom';
 import { Download } from './download';
 import * as frames from './frames';
 import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding, PageDelegate } from './page';
-import { Progress, ProgressController, ProgressResult } from './progress';
-import { Selectors } from './selectors';
+import { Progress } from './progress';
+import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 import * as path from 'path';
-import { SdkObject } from './sdkObject';
+import { CallMetadata, SdkObject } from './instrumentation';
 
 export class Video {
   readonly _videoId: string;
@@ -58,42 +57,6 @@ export class Video {
   }
 }
 
-export type ActionMetadata = {
-  type: 'click' | 'fill' | 'dblclick' | 'hover' | 'selectOption' | 'setInputFiles' | 'type' | 'press' | 'check' | 'uncheck' | 'goto' | 'setContent' | 'goBack' | 'goForward' | 'reload' | 'tap',
-  page: Page,
-  target?: dom.ElementHandle | string,
-  value?: string,
-  stack?: string,
-};
-
-export interface ActionListener {
-  onActionCheckpoint(name: string, metadata: ActionMetadata): Promise<void>;
-  onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void>;
-}
-
-export async function runAction<T>(task: (controller: ProgressController) => Promise<T>, metadata: ActionMetadata): Promise<T> {
-  const controller = new ProgressController();
-  controller.setListener({
-    onProgressCheckpoint: async (name: string): Promise<void> => {
-      for (const listener of metadata.page._browserContext._actionListeners)
-        await listener.onActionCheckpoint(name, metadata);
-    },
-
-    onProgressDone: async (result: ProgressResult): Promise<void> => {
-      for (const listener of metadata.page._browserContext._actionListeners)
-        await listener.onAfterAction(result, metadata);
-    },
-  });
-  const result = await task(controller);
-  return result;
-}
-
-export interface ContextListener {
-  onContextCreated(context: BrowserContext): Promise<void>;
-  onContextWillDestroy(context: BrowserContext): Promise<void>;
-  onContextDidDestroy(context: BrowserContext): Promise<void>;
-}
-
 export abstract class BrowserContext extends SdkObject {
   static Events = {
     Close: 'close',
@@ -117,7 +80,6 @@ export abstract class BrowserContext extends SdkObject {
   readonly _browser: Browser;
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
-  readonly _actionListeners = new Set<ActionListener>();
   private _origins = new Set<string>();
   terminalSize: { rows?: number, columns?: number } = {};
 
@@ -136,12 +98,11 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   selectors(): Selectors {
-    return this._selectors || this._browser.options.selectors;
+    return this._selectors || serverSelectors;
   }
 
   async _initialize() {
-    for (const listener of this._browser.options.contextListeners)
-      await listener.onContextCreated(this);
+    await this.instrumentation.onContextCreated(this);
   }
 
   async _ensureVideosPath() {
@@ -292,8 +253,7 @@ export abstract class BrowserContext extends SdkObject {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      for (const listener of this._browser.options.contextListeners)
-        await listener.onContextWillDestroy(this);
+      await this.instrumentation.onContextWillDestroy(this);
 
       // Collect videos/downloads that we will await.
       const promises: Promise<any>[] = [];
@@ -321,8 +281,7 @@ export abstract class BrowserContext extends SdkObject {
         await this._browser.close();
 
       // Bookkeeping.
-      for (const listener of this._browser.options.contextListeners)
-        await listener.onContextDidDestroy(this);
+      await this.instrumentation.onContextWillDestroy(this);
       this._didCloseInternal();
     }
     await this._closePromise;
@@ -343,7 +302,7 @@ export abstract class BrowserContext extends SdkObject {
     this._origins.add(origin);
   }
 
-  async storageState(): Promise<types.StorageState> {
+  async storageState(metadata: CallMetadata): Promise<types.StorageState> {
     const result: types.StorageState = {
       cookies: (await this.cookies()).filter(c => c.value !== ''),
       origins: []
@@ -357,7 +316,7 @@ export abstract class BrowserContext extends SdkObject {
         const originStorage: types.OriginStorage = { origin, localStorage: [] };
         result.origins.push(originStorage);
         const frame = page.mainFrame();
-        await frame.goto(new ProgressController(), origin);
+        await frame.goto(metadata, origin);
         const storage = await frame._evaluateExpression(`({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
         })`, false, undefined, 'utility');
@@ -368,7 +327,7 @@ export abstract class BrowserContext extends SdkObject {
     return result;
   }
 
-  async setStorageState(state: types.SetStorageState) {
+  async setStorageState(metadata: CallMetadata, state: types.SetStorageState) {
     if (state.cookies)
       await this.addCookies(state.cookies);
     if (state.origins && state.origins.length)  {
@@ -378,7 +337,7 @@ export abstract class BrowserContext extends SdkObject {
       });
       for (const originState of state.origins) {
         const frame = page.mainFrame();
-        await frame.goto(new ProgressController(), originState.origin);
+        await frame.goto(metadata, originState.origin);
         await frame._evaluateExpression(`
           originState => {
             for (const { name, value } of (originState.localStorage || []))

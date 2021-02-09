@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserContext, runAction, Video } from '../server/browserContext';
+import { BrowserContext, Video } from '../server/browserContext';
 import { Frame } from '../server/frames';
 import { Request } from '../server/network';
 import { Page, Worker } from '../server/page';
@@ -31,7 +31,7 @@ import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatche
 import { FileChooser } from '../server/fileChooser';
 import { CRCoverage } from '../server/chromium/crCoverage';
 import { JSHandle } from '../server/javascript';
-import { SdkObject } from '../server/sdkObject';
+import { CallMetadata } from '../server/instrumentation';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
@@ -80,19 +80,19 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 
-  async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams): Promise<void> {
+  async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams, metadata: CallMetadata): Promise<void> {
     this._page.setDefaultNavigationTimeout(params.timeout);
   }
 
-  async setDefaultTimeoutNoReply(params: channels.PageSetDefaultTimeoutNoReplyParams): Promise<void> {
+  async setDefaultTimeoutNoReply(params: channels.PageSetDefaultTimeoutNoReplyParams, metadata: CallMetadata): Promise<void> {
     this._page.setDefaultTimeout(params.timeout);
   }
 
-  async opener(): Promise<channels.PageOpenerResult> {
+  async opener(params: channels.PageOpenerParams, metadata: CallMetadata): Promise<channels.PageOpenerResult> {
     return { page: lookupNullableDispatcher<PageDispatcher>(await this._page.opener()) };
   }
 
-  async exposeBinding(params: channels.PageExposeBindingParams): Promise<void> {
+  async exposeBinding(params: channels.PageExposeBindingParams, metadata: CallMetadata): Promise<void> {
     await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
       const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
@@ -100,44 +100,38 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     });
   }
 
-  async setExtraHTTPHeaders(params: channels.PageSetExtraHTTPHeadersParams): Promise<void> {
+  async setExtraHTTPHeaders(params: channels.PageSetExtraHTTPHeadersParams, metadata: CallMetadata): Promise<void> {
     await this._page.setExtraHTTPHeaders(params.headers);
   }
 
-  async reload(params: channels.PageReloadParams, metadata?: channels.Metadata): Promise<channels.PageReloadResult> {
-    return await runAction(async controller => {
-      return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(controller, params)) };
-    }, { ...metadata, type: 'reload', page: this._page });
+  async reload(params: channels.PageReloadParams, metadata: CallMetadata): Promise<channels.PageReloadResult> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(metadata, params)) };
   }
 
-  async goBack(params: channels.PageGoBackParams, metadata?: channels.Metadata): Promise<channels.PageGoBackResult> {
-    return await runAction(async controller => {
-      return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(controller, params)) };
-    }, { ...metadata, type: 'goBack', page: this._page });
+  async goBack(params: channels.PageGoBackParams, metadata: CallMetadata): Promise<channels.PageGoBackResult> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(metadata, params)) };
   }
 
-  async goForward(params: channels.PageGoForwardParams, metadata?: channels.Metadata): Promise<channels.PageGoForwardResult> {
-    return await runAction(async controller => {
-      return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(controller, params)) };
-    }, { ...metadata, type: 'goForward', page: this._page });
+  async goForward(params: channels.PageGoForwardParams, metadata: CallMetadata): Promise<channels.PageGoForwardResult> {
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(metadata, params)) };
   }
 
-  async emulateMedia(params: channels.PageEmulateMediaParams): Promise<void> {
+  async emulateMedia(params: channels.PageEmulateMediaParams, metadata: CallMetadata): Promise<void> {
     await this._page.emulateMedia({
       media: params.media === 'null' ? null : params.media,
       colorScheme: params.colorScheme === 'null' ? null : params.colorScheme,
     });
   }
 
-  async setViewportSize(params: channels.PageSetViewportSizeParams): Promise<void> {
+  async setViewportSize(params: channels.PageSetViewportSizeParams, metadata: CallMetadata): Promise<void> {
     await this._page.setViewportSize(params.viewportSize);
   }
 
-  async addInitScript(params: channels.PageAddInitScriptParams): Promise<void> {
+  async addInitScript(params: channels.PageAddInitScriptParams, metadata: CallMetadata): Promise<void> {
     await this._page._addInitScriptExpression(params.source);
   }
 
-  async setNetworkInterceptionEnabled(params: channels.PageSetNetworkInterceptionEnabledParams): Promise<void> {
+  async setNetworkInterceptionEnabled(params: channels.PageSetNetworkInterceptionEnabledParams, metadata: CallMetadata): Promise<void> {
     if (!params.enabled) {
       await this._page._setClientRequestInterceptor(undefined);
       return;
@@ -147,59 +141,59 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     });
   }
 
-  async screenshot(params: channels.PageScreenshotParams): Promise<channels.PageScreenshotResult> {
-    return { binary: (await this._page.screenshot(params)).toString('base64') };
+  async screenshot(params: channels.PageScreenshotParams, metadata: CallMetadata): Promise<channels.PageScreenshotResult> {
+    return { binary: (await this._page.screenshot(metadata, params)).toString('base64') };
   }
 
-  async close(params: channels.PageCloseParams): Promise<void> {
+  async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {
     await this._page.close(params);
   }
 
-  async setFileChooserInterceptedNoReply(params: channels.PageSetFileChooserInterceptedNoReplyParams): Promise<void> {
+  async setFileChooserInterceptedNoReply(params: channels.PageSetFileChooserInterceptedNoReplyParams, metadata: CallMetadata): Promise<void> {
     await this._page._setFileChooserIntercepted(params.intercepted);
   }
 
-  async keyboardDown(params: channels.PageKeyboardDownParams): Promise<void> {
+  async keyboardDown(params: channels.PageKeyboardDownParams, metadata: CallMetadata): Promise<void> {
     await this._page.keyboard.down(params.key);
   }
 
-  async keyboardUp(params: channels.PageKeyboardUpParams): Promise<void> {
+  async keyboardUp(params: channels.PageKeyboardUpParams, metadata: CallMetadata): Promise<void> {
     await this._page.keyboard.up(params.key);
   }
 
-  async keyboardInsertText(params: channels.PageKeyboardInsertTextParams): Promise<void> {
+  async keyboardInsertText(params: channels.PageKeyboardInsertTextParams, metadata: CallMetadata): Promise<void> {
     await this._page.keyboard.insertText(params.text);
   }
 
-  async keyboardType(params: channels.PageKeyboardTypeParams): Promise<void> {
+  async keyboardType(params: channels.PageKeyboardTypeParams, metadata: CallMetadata): Promise<void> {
     await this._page.keyboard.type(params.text, params);
   }
 
-  async keyboardPress(params: channels.PageKeyboardPressParams): Promise<void> {
+  async keyboardPress(params: channels.PageKeyboardPressParams, metadata: CallMetadata): Promise<void> {
     await this._page.keyboard.press(params.key, params);
   }
 
-  async mouseMove(params: channels.PageMouseMoveParams): Promise<void> {
+  async mouseMove(params: channels.PageMouseMoveParams, metadata: CallMetadata): Promise<void> {
     await this._page.mouse.move(params.x, params.y, params);
   }
 
-  async mouseDown(params: channels.PageMouseDownParams): Promise<void> {
+  async mouseDown(params: channels.PageMouseDownParams, metadata: CallMetadata): Promise<void> {
     await this._page.mouse.down(params);
   }
 
-  async mouseUp(params: channels.PageMouseUpParams): Promise<void> {
+  async mouseUp(params: channels.PageMouseUpParams, metadata: CallMetadata): Promise<void> {
     await this._page.mouse.up(params);
   }
 
-  async mouseClick(params: channels.PageMouseClickParams): Promise<void> {
+  async mouseClick(params: channels.PageMouseClickParams, metadata: CallMetadata): Promise<void> {
     await this._page.mouse.click(params.x, params.y, params);
   }
 
-  async touchscreenTap(params: channels.PageTouchscreenTapParams): Promise<void> {
+  async touchscreenTap(params: channels.PageTouchscreenTapParams, metadata: CallMetadata): Promise<void> {
     await this._page.touchscreen.tap(params.x, params.y);
   }
 
-  async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams): Promise<channels.PageAccessibilitySnapshotResult> {
+  async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams, metadata: CallMetadata): Promise<channels.PageAccessibilitySnapshotResult> {
     const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
       root: params.root ? (params.root as ElementHandleDispatcher)._elementHandle : undefined
@@ -207,33 +201,33 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     return { rootAXNode: rootAXNode || undefined };
   }
 
-  async pdf(params: channels.PagePdfParams): Promise<channels.PagePdfResult> {
+  async pdf(params: channels.PagePdfParams, metadata: CallMetadata): Promise<channels.PagePdfResult> {
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
     const buffer = await this._page.pdf(params);
     return { pdf: buffer.toString('base64') };
   }
 
-  async bringToFront(): Promise<void> {
+  async bringToFront(params: channels.PageBringToFrontParams, metadata: CallMetadata): Promise<void> {
     await this._page.bringToFront();
   }
 
-  async crStartJSCoverage(params: channels.PageCrStartJSCoverageParams): Promise<void> {
+  async crStartJSCoverage(params: channels.PageCrStartJSCoverageParams, metadata: CallMetadata): Promise<void> {
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startJSCoverage(params);
   }
 
-  async crStopJSCoverage(): Promise<channels.PageCrStopJSCoverageResult> {
+  async crStopJSCoverage(params: channels.PageCrStopJSCoverageParams, metadata: CallMetadata): Promise<channels.PageCrStopJSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
     return { entries: await coverage.stopJSCoverage() };
   }
 
-  async crStartCSSCoverage(params: channels.PageCrStartCSSCoverageParams): Promise<void> {
+  async crStartCSSCoverage(params: channels.PageCrStartCSSCoverageParams, metadata: CallMetadata): Promise<void> {
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startCSSCoverage(params);
   }
 
-  async crStopCSSCoverage(): Promise<channels.PageCrStopCSSCoverageResult> {
+  async crStopCSSCoverage(params: channels.PageCrStopCSSCoverageParams, metadata: CallMetadata): Promise<channels.PageCrStopCSSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
     return { entries: await coverage.stopCSSCoverage() };
   }
@@ -256,22 +250,22 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerInitiali
     worker.on(Worker.Events.Close, () => this._dispatchEvent('close'));
   }
 
-  async evaluateExpression(params: channels.WorkerEvaluateExpressionParams): Promise<channels.WorkerEvaluateExpressionResult> {
+  async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionResult> {
     return { value: serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams): Promise<channels.WorkerEvaluateExpressionHandleResult> {
+  async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionHandleResult> {
     return { handle: createHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
 
-export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.BindingCallInitializer> implements channels.BindingCallChannel {
+export class BindingCallDispatcher extends Dispatcher<{}, channels.BindingCallInitializer> implements channels.BindingCallChannel {
   private _resolve: ((arg: any) => void) | undefined;
   private _reject: ((error: any) => void) | undefined;
   private _promise: Promise<any>;
 
   constructor(scope: DispatcherScope, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
-    super(scope, new SdkObject(null), 'BindingCall', {
+    super(scope, {}, 'BindingCall', {
       frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,
       args: needsHandle ? undefined : args.map(serializeResult),
@@ -287,11 +281,11 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
     return this._promise;
   }
 
-  async resolve(params: channels.BindingCallResolveParams): Promise<void> {
+  async resolve(params: channels.BindingCallResolveParams, metadata: CallMetadata): Promise<void> {
     this._resolve!(parseArgument(params.result));
   }
 
-  async reject(params: channels.BindingCallRejectParams): Promise<void> {
+  async reject(params: channels.BindingCallRejectParams, metadata: CallMetadata): Promise<void> {
     this._reject!(parseError(params.error));
   }
 }
