@@ -40,7 +40,7 @@ export type InjectedScriptPoll<T> = {
 
 export class InjectedScript {
   private _enginesV1: Map<string, SelectorEngine>;
-  private _evaluator: SelectorEvaluatorImpl;
+  _evaluator: SelectorEvaluatorImpl;
 
   constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
     this._enginesV1 = new Map();
@@ -75,9 +75,12 @@ export class InjectedScript {
   querySelector(selector: ParsedSelector, root: Node): Element | undefined {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
-    const result = this._querySelectorRecursively(root as SelectorRoot, selector, 0);
-    this._evaluator.clearCaches();
-    return result;
+    this._evaluator.begin();
+    try {
+      return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
+    } finally {
+      this._evaluator.end();
+    }
   }
 
   private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
@@ -95,30 +98,34 @@ export class InjectedScript {
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
     if (!(root as any)['querySelectorAll'])
       throw new Error('Node is not queryable.');
-    const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
-    // Query all elements up to the capture.
-    const partsToQueryAll = selector.parts.slice(0, capture + 1);
-    // Check they have a descendant matching everything after the capture.
-    const partsToCheckOne = selector.parts.slice(capture + 1);
-    let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
-    for (const part of partsToQueryAll) {
-      const newSet = new Set<Element>();
-      for (const prev of set) {
-        for (const next of this._queryEngineAll(part, prev)) {
-          if (newSet.has(next))
-            continue;
-          newSet.add(next);
+    this._evaluator.begin();
+    try {
+      const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
+      // Query all elements up to the capture.
+      const partsToQueryAll = selector.parts.slice(0, capture + 1);
+      // Check they have a descendant matching everything after the capture.
+      const partsToCheckOne = selector.parts.slice(capture + 1);
+      let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
+      for (const part of partsToQueryAll) {
+        const newSet = new Set<Element>();
+        for (const prev of set) {
+          for (const next of this._queryEngineAll(part, prev)) {
+            if (newSet.has(next))
+              continue;
+            newSet.add(next);
+          }
         }
+        set = newSet;
       }
-      set = newSet;
+      let result = Array.from(set) as Element[];
+      if (partsToCheckOne.length) {
+        const partial = { parts: partsToCheckOne };
+        result = result.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+      }
+      return result;
+    } finally {
+      this._evaluator.end();
     }
-    let result = Array.from(set) as Element[];
-    if (partsToCheckOne.length) {
-      const partial = { parts: partsToCheckOne };
-      result = result.filter(e => !!this._querySelectorRecursively(e, partial, 0));
-    }
-    this._evaluator.clearCaches();
-    return result;
   }
 
   private _queryEngine(part: ParsedSelectorPart, root: SelectorRoot): Element | undefined {
