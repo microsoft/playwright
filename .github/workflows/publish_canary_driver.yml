@@ -20,7 +20,7 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: node utils/build/update_canary_version.js
+    - run: node utils/build/update_canary_version.js --commit-timestamp
     - run: utils/build/build-playwright-driver.sh
     - run: utils/build/upload-playwright-driver.sh
       env:

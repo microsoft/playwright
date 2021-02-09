@@ -19,10 +19,20 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const timestamp = execSync('git show -s --format=%ct HEAD', {
-  stdio: ['ignore', 'pipe', 'ignore']
-}).toString('utf8').trim() + '000';
 const packageJSON = require('../../package.json');
-packageJSON.version = packageJSON.version + '-' + timestamp;
+if (process.argv[2] === '--today-date') {
+  const date = new Date();
+  const month = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  packageJSON.version = `${packageJSON.version}-alpha-${month}-${day}-${year}`;
+} else if (prcess.argv[2] === '--commit-timestamp') {
+  const timestamp = execSync('git show -s --format=%ct HEAD', {
+    stdio: ['ignore', 'pipe', 'ignore']
+  }).toString('utf8').trim();
+  packageJSON.version = `${packageJSON.version}-${timestamp}000`;
+} else {
+  throw new Error('This script must be run with either --timestamp or --today-date parameter');
+}
 console.log('Setting version to ' + packageJSON.version);
 fs.writeFileSync(path.join(__dirname, '..', '..', 'package.json'), JSON.stringify(packageJSON, undefined, 2) + '\n');

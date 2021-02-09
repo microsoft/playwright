@@ -1,9 +1,10 @@
 name: "devrelease:npm"
 
 on:
+  schedule:
+    - cron: "10 0 * * *"
   push:
     branches:
-      - master
       - release-*
 
 jobs:
@@ -20,7 +21,10 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    # publish_all_packages.sh updates the version automatically
+    - run: node utils/build/update_canary_version.js --today-date
+      if: contains(github.ref, "master")
+    - run: node utils/build/update_canary_version.js --commit-timestamp
+      if: contains(github.ref, "release")
     - run: utils/publish_all_packages.sh --tip-of-tree
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
