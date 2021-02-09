@@ -74,11 +74,11 @@ export class ScreenshotGenerator {
       const snapshots = action.snapshots || [];
       const snapshotId = snapshots.length ? snapshots[0].snapshotId : undefined;
       const snapshotUrl = this._snapshotServer.snapshotUrl(action.pageId!, snapshotId, action.endTime);
-      console.log('Generating screenshot for ' + action.action); // eslint-disable-line no-console
+      console.log('Generating screenshot for ' + action.method); // eslint-disable-line no-console
       await page.evaluate(snapshotUrl => (window as any).showSnapshot(snapshotUrl), snapshotUrl);
 
       try {
-        const element = await page.$(action.selector || '*[__playwright_target__]');
+        const element = await page.$(action.params.selector || '*[__playwright_target__]');
         if (element) {
           await element.evaluate(e => {
             e.style.backgroundColor = '#ff69b460';

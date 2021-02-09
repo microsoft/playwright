@@ -43,11 +43,11 @@ it('should record trace', (test, { browserName, platform }) => {
   expect(pageEvent.contextId).toBe(contextId);
   const pageId = pageEvent.pageId;
 
-  const gotoEvent = traceEvents.find(event => event.type === 'action' && event.action === 'goto') as trace.ActionTraceEvent;
+  const gotoEvent = traceEvents.find(event => event.type === 'action' && event.method === 'goto') as trace.ActionTraceEvent;
   expect(gotoEvent).toBeTruthy();
   expect(gotoEvent.contextId).toBe(contextId);
   expect(gotoEvent.pageId).toBe(pageId);
-  expect(gotoEvent.value).toBe(url);
+  expect(gotoEvent.params.url).toBe(url);
 
   const resourceEvent = traceEvents.find(event => event.type === 'resource' && event.url.endsWith('/frames/style.css')) as trace.NetworkResourceTraceEvent;
   expect(resourceEvent).toBeTruthy();
@@ -59,7 +59,7 @@ it('should record trace', (test, { browserName, platform }) => {
   expect(resourceEvent.requestHeaders.length).toBeGreaterThan(0);
   expect(resourceEvent.requestSha1).toBe('none');
 
-  const clickEvent = traceEvents.find(event => event.type === 'action' && event.action === 'click') as trace.ActionTraceEvent;
+  const clickEvent = traceEvents.find(event => event.type === 'action' && event.method === 'click') as trace.ActionTraceEvent;
   expect(clickEvent).toBeTruthy();
   expect(clickEvent.snapshots.length).toBe(2);
   const snapshotId = clickEvent.snapshots[0].snapshotId;
@@ -93,11 +93,11 @@ it('should record trace with POST', (test, { browserName, platform }) => {
   expect(pageEvent.contextId).toBe(contextId);
   const pageId = pageEvent.pageId;
 
-  const gotoEvent = traceEvents.find(event => event.type === 'action' && event.action === 'goto') as trace.ActionTraceEvent;
+  const gotoEvent = traceEvents.find(event => event.type === 'action' && event.method === 'goto') as trace.ActionTraceEvent;
   expect(gotoEvent).toBeTruthy();
   expect(gotoEvent.contextId).toBe(contextId);
   expect(gotoEvent.pageId).toBe(pageId);
-  expect(gotoEvent.value).toBe(url);
+  expect(gotoEvent.params.url).toBe(url);
 
   const resourceEvent = traceEvents.find(event => event.type === 'resource' && event.url.endsWith('/file.json')) as trace.NetworkResourceTraceEvent;
   expect(resourceEvent).toBeTruthy();

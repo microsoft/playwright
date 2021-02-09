@@ -15,7 +15,7 @@
  */
 
 import { folio } from './fixtures';
-import { ProgressController } from '../lib/server/progress';
+import { internalCallMetadata } from '../lib/server/instrumentation';
 
 const extended = folio.extend<{
   recorderFrame: () => Promise<any>,
@@ -40,7 +40,7 @@ extended.recorderFrame.init(async ({context, toImpl}, runTest) => {
 extended.recorderClick.init(async ({ recorderFrame }, runTest) => {
   await runTest(async (selector: string) => {
     const frame = await recorderFrame();
-    frame.click(new ProgressController(), selector, {});
+    frame.click(internalCallMetadata(), selector, {});
   });
 });
 

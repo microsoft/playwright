@@ -18,6 +18,7 @@ import { Dispatcher, DispatcherScope, existingDispatcher } from './dispatcher';
 import { Android, AndroidDevice, SocketBackend } from '../server/android/android';
 import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { CallMetadata } from '../server/instrumentation';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidInitializer> implements channels.AndroidChannel {
   constructor(scope: DispatcherScope, android: Android) {
@@ -141,7 +142,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     return { result: (await this._object.shell(params.command)).toString('base64') };
   }
 
-  async open(params: channels.AndroidDeviceOpenParams, metadata?: channels.Metadata): Promise<channels.AndroidDeviceOpenResult> {
+  async open(params: channels.AndroidDeviceOpenParams, metadata: CallMetadata): Promise<channels.AndroidDeviceOpenResult> {
     const socket = await this._object.open(params.command);
     return { socket: new AndroidSocketDispatcher(this._scope, socket) };
   }
@@ -182,11 +183,11 @@ export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.
     });
   }
 
-  async write(params: channels.AndroidSocketWriteParams, metadata?: channels.Metadata): Promise<void> {
+  async write(params: channels.AndroidSocketWriteParams, metadata: CallMetadata): Promise<void> {
     await this._object.write(Buffer.from(params.data, 'base64'));
   }
 
-  async close(params: channels.AndroidSocketCloseParams, metadata?: channels.Metadata): Promise<void> {
+  async close(params: channels.AndroidSocketCloseParams, metadata: CallMetadata): Promise<void> {
     await this._object.close();
   }
 }

@@ -18,7 +18,7 @@ import * as dom from './dom';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
 import type UtilityScript from './injected/utilityScript';
-import { SdkObject } from './sdkObject';
+import { SdkObject } from './instrumentation';
 
 type ObjectId = string;
 export type RemoteObject = {

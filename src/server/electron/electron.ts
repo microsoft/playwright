@@ -26,13 +26,13 @@ import * as types from '../types';
 import { launchProcess, envArrayToObject } from '../processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { Progress, ProgressController, runAbortableTask } from '../progress';
+import { Progress, ProgressController } from '../progress';
 import { helper } from '../helper';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
-import { SdkObject } from '../sdkObject';
+import { internalCallMetadata, SdkObject } from '../instrumentation';
 
 export type ElectronLaunchOptionsBase = {
   executablePath?: string,
@@ -89,7 +89,8 @@ export class ElectronApplication extends SdkObject {
     if (!handle)
       return;
     page.browserWindow = handle;
-    await runAbortableTask(progress => page.mainFrame()._waitForLoadState(progress, 'domcontentloaded'), page._timeoutSettings.navigationTimeout({})).catch(e => {}); // can happen after detach
+    const controller = new ProgressController(internalCallMetadata(), this);
+    await controller.run(progress => page.mainFrame()._waitForLoadState(progress, 'domcontentloaded'), page._timeoutSettings.navigationTimeout({})).catch(e => {}); // can happen after detach
     this.emit(ElectronApplication.Events.Window, page);
   }
 
@@ -105,7 +106,7 @@ export class ElectronApplication extends SdkObject {
   }
 
   private async _waitForEvent(event: string, predicate?: Function): Promise<any> {
-    const progressController = new ProgressController();
+    const progressController = new ProgressController(internalCallMetadata(), this);
     if (event !== ElectronApplication.Events.Close)
       this._browserContext._closePromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, predicate).promise, this._timeoutSettings.timeout({}));
@@ -133,7 +134,7 @@ export class Electron extends SdkObject {
     const {
       args = [],
     } = options;
-    const controller = new ProgressController();
+    const controller = new ProgressController(internalCallMetadata(), this);
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;

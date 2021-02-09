@@ -54,17 +54,17 @@ export const Timeline: React.FunctionComponent<{
     const bars: TimelineBar[] = [];
     for (const page of context.pages) {
       for (const entry of page.actions) {
-        let detail = entry.action.selector || '';
-        if (entry.action.action === 'goto')
-          detail = entry.action.value || '';
+        let detail = entry.action.params.selector || '';
+        if (entry.action.method === 'goto')
+          detail = entry.action.params.url || '';
         bars.push({
           entry,
           leftTime: entry.action.startTime,
           rightTime: entry.action.endTime,
           leftPosition: timeToPosition(measure.width, boundaries, entry.action.startTime),
           rightPosition: timeToPosition(measure.width, boundaries, entry.action.endTime),
-          label: entry.action.action + ' ' + detail,
-          type: entry.action.action,
+          label: entry.action.method + ' ' + detail,
+          type: entry.action.method,
           priority: 0,
         });
         if (entry === (highlightedAction || selectedAction))

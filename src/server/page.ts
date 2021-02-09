@@ -27,11 +27,11 @@ import { BrowserContext, Video } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
-import { ProgressController, runAbortableTask } from './progress';
+import { ProgressController } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
-import { SdkObject } from './sdkObject';
+import { CallMetadata, SdkObject } from './instrumentation';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -288,7 +288,7 @@ export class Page extends SdkObject {
   }
 
   _addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
-    const message = new ConsoleMessage(this, type, text, args, location);
+    const message = new ConsoleMessage(type, text, args, location);
     const intercepted = this._frameManager.interceptConsoleMessage(message);
     if (intercepted || !this.listenerCount(Page.Events.Console))
       args.forEach(arg => arg.dispose());
@@ -296,8 +296,8 @@ export class Page extends SdkObject {
       this.emit(Page.Events.Console, message);
   }
 
-  async reload(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
-    this.mainFrame().setupNavigationProgressController(controller);
+  async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
+    const controller = this.mainFrame().setupNavigationProgressController(metadata);
     const response = await controller.run(async progress => {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
@@ -311,8 +311,8 @@ export class Page extends SdkObject {
     return response;
   }
 
-  async goBack(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
-    this.mainFrame().setupNavigationProgressController(controller);
+  async goBack(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
+    const controller = this.mainFrame().setupNavigationProgressController(metadata);
     const response = await controller.run(async progress => {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
@@ -333,8 +333,8 @@ export class Page extends SdkObject {
     return response;
   }
 
-  async goForward(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
-    this.mainFrame().setupNavigationProgressController(controller);
+  async goForward(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
+    const controller = this.mainFrame().setupNavigationProgressController(metadata);
     const response = await controller.run(async progress => {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
@@ -421,8 +421,9 @@ export class Page extends SdkObject {
     route.continue();
   }
 
-  async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
-    return runAbortableTask(
+  async screenshot(metadata: CallMetadata, options: types.ScreenshotOptions = {}): Promise<Buffer> {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(
         progress => this._screenshotter.screenshotPage(progress, options),
         this._timeoutSettings.timeout(options));
   }

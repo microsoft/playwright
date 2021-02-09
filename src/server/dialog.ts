@@ -17,7 +17,7 @@
 
 import { assert } from '../utils/utils';
 import { Page } from './page';
-import { SdkObject } from './sdkObject';
+import { SdkObject } from './instrumentation';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
 

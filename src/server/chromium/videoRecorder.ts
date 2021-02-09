@@ -16,8 +16,10 @@
 
 import { ChildProcess } from 'child_process';
 import { assert, monotonicTime } from '../../utils/utils';
+import { Page } from '../page';
 import { launchProcess } from '../processLauncher';
 import { Progress, ProgressController } from '../progress';
+import { internalCallMetadata } from '../instrumentation';
 import * as types from '../types';
 
 const fps = 25;
@@ -34,11 +36,11 @@ export class VideoRecorder {
   private _isStopped = false;
   private _ffmpegPath: string;
 
-  static async launch(ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
+  static async launch(page: Page, ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
-    const controller = new ProgressController();
+    const controller = new ProgressController(internalCallMetadata(), page);
     controller.setLogName('browser');
     return await controller.run(async progress => {
       const recorder = new VideoRecorder(ffmpegPath, progress);

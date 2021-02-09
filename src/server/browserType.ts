@@ -31,7 +31,7 @@ import { validateHostRequirements } from './validateDependencies';
 import { isDebugMode } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
-import { SdkObject } from './sdkObject';
+import { CallMetadata, SdkObject } from './instrumentation';
 
 const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -59,9 +59,9 @@ export abstract class BrowserType extends SdkObject {
     return this._name;
   }
 
-  async launch(options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
+  async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
     options = validateLaunchOptions(options);
-    const controller = new ProgressController();
+    const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
       return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
@@ -69,10 +69,10 @@ export abstract class BrowserType extends SdkObject {
     return browser;
   }
 
-  async launchPersistentContext(userDataDir?: string, options: types.LaunchPersistentOptions = {}): Promise<BrowserContext> {
+  async launchPersistentContext(metadata: CallMetadata, userDataDir?: string, options: types.LaunchPersistentOptions = {}): Promise<BrowserContext> {
     options = validateLaunchOptions(options);
+    const controller = new ProgressController(metadata, this);
     const persistent: types.BrowserContextOptions = options;
-    const controller = new ProgressController();
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
       return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });

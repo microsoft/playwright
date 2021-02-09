@@ -19,6 +19,7 @@ import { BrowserDispatcher } from './browserDispatcher';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { CallMetadata } from '../server/instrumentation';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer> implements channels.BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserType) {
@@ -28,13 +29,13 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     }, true);
   }
 
-  async launch(params: channels.BrowserTypeLaunchParams): Promise<channels.BrowserTypeLaunchResult> {
-    const browser = await this._object.launch(params);
+  async launch(params: channels.BrowserTypeLaunchParams, metadata: CallMetadata): Promise<channels.BrowserTypeLaunchResult> {
+    const browser = await this._object.launch(metadata, params);
     return { browser: new BrowserDispatcher(this._scope, browser) };
   }
 
-  async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
-    const browserContext = await this._object.launchPersistentContext(params.userDataDir, params);
+  async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams, metadata: CallMetadata): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
+    const browserContext = await this._object.launchPersistentContext(metadata, params.userDataDir, params);
     return { context: new BrowserContextDispatcher(this._scope, browserContext) };
   }
 }

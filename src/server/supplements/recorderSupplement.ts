@@ -25,11 +25,11 @@ import { LanguageGenerator } from './recorder/language';
 import { JavaScriptLanguageGenerator } from './recorder/javascript';
 import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
-import { ProgressController } from '../progress';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
 import { BufferedOutput, FileOutput, FlushingTerminalOutput, OutputMultiplexer, RecorderOutput, TerminalOutput, Writable } from './recorder/outputs';
 import { EventData, Mode, RecorderApp } from './recorder/recorderApp';
+import { internalCallMetadata } from '../instrumentation';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -238,30 +238,30 @@ export class RecorderSupplement {
 
   private async _performAction(frame: Frame, action: actions.Action) {
     const page = frame._page;
-    const controller = new ProgressController();
     const actionInContext: ActionInContext = {
       pageAlias: this._pageAliases.get(page)!,
       ...describeFrame(frame),
       action
     };
     this._generator.willPerformAction(actionInContext);
+    const noCallMetadata = internalCallMetadata();
     try {
       const kActionTimeout = 5000;
       if (action.name === 'click') {
         const { options } = toClickOptions(action);
-        await frame.click(controller, action.selector, { ...options, timeout: kActionTimeout });
+        await frame.click(noCallMetadata, action.selector, { ...options, timeout: kActionTimeout });
       }
       if (action.name === 'press') {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        await frame.press(controller, action.selector, shortcut, { timeout: kActionTimeout });
+        await frame.press(noCallMetadata, action.selector, shortcut, { timeout: kActionTimeout });
       }
       if (action.name === 'check')
-        await frame.check(controller, action.selector, { timeout: kActionTimeout });
+        await frame.check(noCallMetadata, action.selector, { timeout: kActionTimeout });
       if (action.name === 'uncheck')
-        await frame.uncheck(controller, action.selector, { timeout: kActionTimeout });
+        await frame.uncheck(noCallMetadata, action.selector, { timeout: kActionTimeout });
       if (action.name === 'select')
-        await frame.selectOption(controller, action.selector, [], action.options.map(value => ({ value })), { timeout: kActionTimeout });
+        await frame.selectOption(noCallMetadata, action.selector, [], action.options.map(value => ({ value })), { timeout: kActionTimeout });
     } catch (e) {
       this._generator.performedActionFailed(actionInContext);
       return;

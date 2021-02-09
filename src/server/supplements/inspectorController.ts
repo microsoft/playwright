@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { BrowserContext, ContextListener } from '../browserContext';
+import { BrowserContext } from '../browserContext';
 import { isDebugMode } from '../../utils/utils';
 import { RecorderSupplement } from './recorderSupplement';
+import { InstrumentationListener } from '../instrumentation';
 
-export class InspectorController implements ContextListener {
+export class InspectorController implements InstrumentationListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode()) {
       RecorderSupplement.getOrCreate(context, {
