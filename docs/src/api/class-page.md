@@ -1613,21 +1613,46 @@ Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, whic
 Paper format. If set, takes priority over [`option: width`] or [`option: height`] options. Defaults to 'Letter'.
 
 ### option: Page.pdf.width
+* langs: js, python
 - `width` <[string]|[float]>
 
 Paper width, accepts values labeled with units.
 
+### option: Page.pdf.width
+* langs: csharp, java
+- `width` <[string]>
+
+Paper width, accepts values labeled with units.
+
 ### option: Page.pdf.height
+* langs: js, python
 - `height` <[string]|[float]>
 
 Paper height, accepts values labeled with units.
 
+### option: Page.pdf.height
+* langs: csharp, java
+- `height` <[string]>
+
+Paper height, accepts values labeled with units.
+
 ### option: Page.pdf.margin
+* langs: js, python
 - `margin` <[Object]>
   - `top` <[string]|[float]> Top margin, accepts values labeled with units. Defaults to `0`.
   - `right` <[string]|[float]> Right margin, accepts values labeled with units. Defaults to `0`.
   - `bottom` <[string]|[float]> Bottom margin, accepts values labeled with units. Defaults to `0`.
   - `left` <[string]|[float]> Left margin, accepts values labeled with units. Defaults to `0`.
+
+Paper margins, defaults to none.
+
+### option: Page.pdf.margin
+* langs: csharp, java
+- `margin` <[Object]>
+  - `top` <[string]> Top margin, accepts values labeled with units. Defaults to `0`.
+  - `right` <[string]> Right margin, accepts values labeled with units. Defaults to `0`.
+  - `bottom` <[string]> Bottom margin, accepts values labeled with units. Defaults to `0`.
+  - `left` <[string]> Left margin, accepts values labeled with units. Defaults to `0`.
 
 Paper margins, defaults to none.
 
