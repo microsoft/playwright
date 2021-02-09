@@ -22,8 +22,10 @@ if [[ $1 == "--help" ]]; then
 elif [[ $1 == "login" ]]; then
   python ./third_party/goma/goma_auth.py login
 elif [[ $1 == "start" ]]; then
-  if [[ ! -z "$GOMA_LOGIN_COOKIE" ]]; then
-    echo "$GOMA_LOGIN_COOKIE" > "$HOME/.goma_oauth2_config"
+  # We have to prefix ENV with `PLAYWRIGHT` since `GOMA_` env variables
+  # have special treatment by goma.
+  if [[ ! -z "$PLAYWRIGHT_GOMA_LOGIN_COOKIE" ]]; then
+    echo "$PLAYWRIGHT_GOMA_LOGIN_COOKIE" > "$HOME/.goma_oauth2_config"
   fi
   if [[ ! -f "$HOME/.goma_oauth2_config" ]]; then
     echo "ERROR: goma is not logged in!"
