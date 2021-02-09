@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 USAGE=$(cat<<EOF
-  usage: $(basename $0) [--mirror|--mirror-linux|--mirror-win32|--mirror-win64|--mirror-mac|--compile-mac-arm64]
+  usage: $(basename $0) [--mirror|--mirror-linux|--mirror-win32|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-win32|--compile-win64|--compile-mac]
 
   Either compiles chromium or mirrors it from Chromium Continuous Builds CDN.
 EOF
@@ -121,6 +121,9 @@ compile_chromium() {
       "swiftshader"
       "v8_context_snapshot.bin"
     )
+  else
+    echo "ERROR: unknown command, use --help for details"
+    exit 1
   fi
 
   # Get chromium SHA from the build revision.
@@ -163,15 +166,29 @@ EOF
     echo 'target_cpu = "x86"' >> ./out/Default/args.gn
   fi
 
-  if [[ $1 == "--compile-win"* ]]; then
-    /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_PATH}/buildwin.bat)"
-  else
-    gn gen out/Default
-    autoninja -C out/Default chrome
+  if [[ ! -z "$USE_GOMA" ]]; then
+    echo 'use_goma = true' >> ./out/Default/args.gn
+    echo "goma_dir = '${SCRIPT_PATH}/electron-build-tools/third_party/goma'" >> ./out/Default/args.gn
   fi
 
-  if [[ $1 == "--compile-linux" ]]; then
-    autoninja -C out/Default chrome_sandbox clear_key_cdm
+  if [[ $1 == "--compile-win"* ]]; then
+    if [[ -z "$USE_GOMA" ]]; then
+      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_PATH}/buildwin.bat)"
+    else
+      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_PATH}/buildwingoma.bat)"
+    fi
+  else
+    gn gen out/Default
+    if [[ $1 == "--compile-linux" ]]; then
+      TARGETS="chrome chrome_sandbox clear_key_cdm"
+    else
+      TARGETS="chrome"
+    fi
+    if [[ -z "$USE_GOMA" ]]; then
+      autoninja -C out/Default $TARGETS
+    else
+      ninja -j 200 -C out/Default $TARGETS
+    fi
   fi
 
   # Prepare resulting archive.
