@@ -186,7 +186,7 @@ export class DispatcherConnection {
       if (typeof (dispatcher as any)[method] !== 'function')
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
       const callMetadata: CallMetadata = {
-        ...this._validateMetadata(metadata).stack,
+        ...this._validateMetadata(metadata),
         object: dispatcher._object,
         type: dispatcher._type,
         method,
