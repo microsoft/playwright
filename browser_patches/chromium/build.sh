@@ -118,7 +118,8 @@ compile_chromium() {
       "nacl_irt_x86_64.nexe"
       "notification_helper.exe"
       "resources.pak"
-      "swiftshader"
+      "swiftshader/libEGL.dll"
+      "swiftshader/libGLESv2.dll"
       "v8_context_snapshot.bin"
     )
   else
@@ -202,6 +203,7 @@ EOF
     COPY_COMMAND="ditto"
   fi
   for file in ${CHROMIUM_FILES_TO_ARCHIVE[@]}; do
+    mkdir -p "output/${CHROMIUM_FOLDER_NAME}/$(dirname $file)"
     $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
   done
   if [[ $1 == "--compile-win"* ]]; then
