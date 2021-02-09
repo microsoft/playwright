@@ -6263,6 +6263,39 @@ export interface BrowserType<Browser> {
   connect(params: ConnectOptions): Promise<Browser>;
 
   /**
+   * This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+   * 
+   * The default browser context is accessible via
+   * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browsercontexts).
+   * 
+   * > NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
+   * @param params 
+   */
+  connectOverCDP(params: {
+    /**
+     * A CDP websocket endpoint to connect to.
+     */
+    wsEndpoint: string;
+
+    /**
+     * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+     * Defaults to 0.
+     */
+    slowMo?: number;
+
+    /**
+     * Logger sink for Playwright logging. Optional.
+     */
+    logger?: Logger;
+
+    /**
+     * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
+     * disable timeout.
+     */
+    timeout?: number;
+  }): Promise<Browser>;
+
+  /**
    * A path where Playwright expects to find a bundled browser executable.
    */
   executablePath(): string;

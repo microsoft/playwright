@@ -223,6 +223,10 @@ export abstract class BrowserType extends SdkObject {
     return { browserProcess, downloadsPath, transport };
   }
 
+  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, uiOptions: types.UIOptions, timeout?: number): Promise<Browser> {
+    throw new Error('CDP connections are only supported by Chromium');
+  }
+
   abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<Browser>;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;

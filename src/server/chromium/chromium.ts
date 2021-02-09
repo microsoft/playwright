@@ -21,11 +21,16 @@ import { Env } from '../processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserType } from '../browserType';
-import { ConnectionTransport, ProtocolRequest } from '../transport';
+import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
-import { BrowserOptions, PlaywrightOptions } from '../browser';
+import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
 import { isDebugMode } from '../../utils/utils';
+import { RecentLogsCollector } from '../../utils/debugLogger';
+import { ProgressController } from '../progress';
+import { TimeoutSettings } from '../../utils/timeoutSettings';
+import { helper } from '../helper';
+import { CallMetadata } from '../instrumentation';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -35,6 +40,35 @@ export class Chromium extends BrowserType {
 
     if (isDebugMode())
       this._devtools = this._createDevTools();
+  }
+
+  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, uiOptions: types.UIOptions, timeout?: number) {
+    const controller = new ProgressController(metadata, this);
+    controller.setLogName('browser');
+    const browserLogsCollector = new RecentLogsCollector();
+    return controller.run(async progress => {
+      const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint);
+      const browserProcess: BrowserProcess = {
+        close: async () => {
+          await chromeTransport.closeAndWait();
+        },
+        kill: async () => {
+          await chromeTransport.closeAndWait();
+        }
+      };
+      const browserOptions: BrowserOptions = {
+        ...this._playwrightOptions,
+        ...uiOptions,
+        name: 'chromium',
+        isChromium: true,
+        headful: true,
+        persistent: { noDefaultViewport: true },
+        browserProcess,
+        protocolLogger: helper.debugProtocolLogger(),
+        browserLogsCollector,
+      };
+      return await CRBrowser.connect(chromeTransport, browserOptions);
+    }, TimeoutSettings.timeout({timeout}));
   }
 
   private _createDevTools() {

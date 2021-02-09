@@ -156,8 +156,9 @@ export class CRBrowser extends Browser {
     if (targetInfo.type === 'background_page') {
       const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
-      backgroundPage.pageOrError().then(() => {
-        context!.emit(CRBrowserContext.CREvents.BackgroundPage, backgroundPage._page);
+      backgroundPage.pageOrError().then(pageOrError => {
+        if (pageOrError instanceof Page)
+          context!.emit(CRBrowserContext.CREvents.BackgroundPage, backgroundPage._page);
       });
       return;
     }
