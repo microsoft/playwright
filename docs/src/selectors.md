@@ -9,6 +9,117 @@ methods accept [`param: selector`] as their first argument.
 
 <!-- TOC -->
 
+## Quick guide
+
+- Text selector
+  ```js
+  await page.click('text=Log in');
+  ```
+  ```python async
+  await page.click("text=Log in")
+  ```
+  ```python sync
+  page.click("text=Log in")
+  ```
+  Learn more about [text selector][text].
+- CSS selector
+  ```js
+  await page.click('button');
+  await page.click('#nav-bar .contact-us-item');
+  ```
+  ```python async
+  await page.click("button")
+  await page.click("#nav-bar .contact-us-item")
+  ```
+  ```python sync
+  page.click("button")
+  page.click("#nav-bar .contact-us-item")
+  ```
+  Learn more about [css selector][css].
+- Select by attribute, with css selector
+  ```js
+  await page.click('[data-test=login-button]');
+  await page.click('[aria-label="Sign in"]');
+  ```
+  ```python async
+  await page.click("[data-test=login-button]")
+  await page.click("[aria-label='Sign in']")
+  ```
+  ```python sync
+  page.click("[data-test=login-button]")
+  page.click("[aria-label='Sign in']")
+  ```
+  Learn more about [css selector][css].
+- Combine css and text selectors
+  ```js
+  await page.click('article:has-text("Playwright")');
+  await page.click('#nav-bar :text("Contact us")');
+  ```
+  ```python async
+  await page.click("article:has-text('Playwright')")
+  await page.click("#nav-bar :text('Contact us')")
+  ```
+  ```python sync
+  page.click("article:has-text('Playwright')")
+  page.click("#nav-bar :text('Contact us')")
+  ```
+  Learn more about [`:has-text()` and `:text()` pseudo classes](#selecting-elements-by-text).
+- Element that contains another, with css selector
+  ```js
+  await page.click('.item-description:has(.item-promo-banner)');
+  ```
+  ```python async
+  await page.click(".item-description:has(.item-promo-banner)")
+  ```
+  ```python sync
+  page.click(".item-description:has(.item-promo-banner)")
+  ```
+  Learn more about [`:has()` pseudo class](#selecting-elements-that-contain-other-elements).
+- Selecting based on layout, with css selector
+  ```js
+  await page.click('input:right-of(:text("Username"))');
+  ```
+  ```python async
+  await page.click("input:right-of(:text('Username'))")
+  ```
+  ```python sync
+  page.click("input:right-of(:text('Username'))")
+  ```
+  Learn more about [layout selectors](#selecting-elements-based-on-layout).
+- Only visible elements, with css selector
+  ```js
+  await page.click('.login-button:visible');
+  ```
+  ```python async
+  await page.click(".login-button:visible")
+  ```
+  ```python sync
+  page.click(".login-button:visible")
+  ```
+  Learn more about [`:visible` pseudo-class](#selecting-visible-elements).
+- Pick n-th match
+  ```js
+  await page.click(':nth-match(:text("Buy"), 3)');
+  ```
+  ```python async
+  await page.click(":nth-match(:text('Buy'), 3)"
+  ```
+  ```python sync
+  page.click(":nth-match(:text('Buy'), 3)"
+  ```
+  Learn more about [`:nth-match()` pseudo-class](#pick-n-th-match-from-the-query-result).
+- XPath selector
+  ```js
+  await page.click('xpath=//button');
+  ```
+  ```python async
+  await page.click("xpath=//button")
+  ```
+  ```python sync
+  page.click("xpath=//button")
+  ```
+  Learn more about [XPath selector][xpath].
+
 ## Basic text selectors
 
 Text selectors locate elements that contain text nodes with the passed text.
@@ -290,7 +401,7 @@ to compute distance and relative position of the elements.
 
 ```js
 // Fill an input to the right of "Username".
-await page.fill('input:right-of(:text("Username"))');
+await page.fill('input:right-of(:text("Username"))', 'value');
 
 // Click a button near the promo card.
 await page.click('button:near(.promo-card)');
@@ -298,7 +409,7 @@ await page.click('button:near(.promo-card)');
 
 ```python async
 # Fill an input to the right of "Username".
-await page.fill('input:right-of(:text("Username"))')
+await page.fill('input:right-of(:text("Username"))', 'value')
 
 # Click a button near the promo card.
 await page.click('button:near(.promo-card)')
@@ -306,7 +417,7 @@ await page.click('button:near(.promo-card)')
 
 ```python sync
 # Fill an input to the right of "Username".
-page.fill('input:right-of(:text("Username"))')
+page.fill('input:right-of(:text("Username"))', 'value')
 
 # Click a button near the promo card.
 page.click('button:near(.promo-card)')
