@@ -20,7 +20,11 @@ if [[ $1 == "--help" ]]; then
   echo "$(basename $0) [login|start|stop|--help]"
   exit 0
 elif [[ $1 == "login" ]]; then
-  python ./third_party/goma/goma_auth.py login
+  if [[ $(uname) == "MINGW"* ]]; then
+    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/third_party/goma/goma_auth.bat) login"
+  else
+    python ./third_party/goma/goma_auth.py login
+  fi
 elif [[ $1 == "start" ]]; then
   # We have to prefix ENV with `PLAYWRIGHT` since `GOMA_` env variables
   # have special treatment by goma.
@@ -32,9 +36,17 @@ elif [[ $1 == "start" ]]; then
     echo "run '$(basename $0) login'"
     exit 1
   fi
-  python ./third_party/goma/goma_ctl.py ensure_start
+  if [[ $(uname) == "MINGW"* ]]; then
+    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/third_party/goma/goma_ctl.bat) ensure_start"
+  else
+    python ./third_party/goma/goma_ctl.py ensure_start
+  fi
 elif [[ $1 == "stop" ]]; then
-  python ./third_party/goma/goma_ctl.py stop
+  if [[ $(uname) == "MINGW"* ]]; then
+    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/third_party/goma/goma_ctl.bat) stop"
+  else
+    python ./third_party/goma/goma_ctl.py stop
+  fi
 else
   echo "ERROR: unknown command - $1"
   echo "Use --help to list all available commands"
