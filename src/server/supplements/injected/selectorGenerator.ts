@@ -30,13 +30,8 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
   injectedScript._evaluator.begin();
   try {
     targetElement = targetElement.closest('button,select,input,[role=button],[role=checkbox],[role=radio]') || targetElement;
-    let bestTokens = generateSelectorFor(injectedScript, targetElement);
-
-    const targetLabel = findTargetLabel(targetElement);
-    const labelTokens = targetLabel ? generateSelectorFor(injectedScript, targetLabel) : null;
-    if (labelTokens && combineScores(labelTokens) < combineScores(bestTokens))
-      bestTokens = labelTokens;
-
+    const targetTokens = generateSelectorFor(injectedScript, targetElement);
+    const bestTokens = targetTokens || [cssFallback(injectedScript, targetElement)];
     const selector = joinTokens(bestTokens);
     const parsedSelector = injectedScript.parseSelector(selector);
     return {
@@ -50,43 +45,74 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
   }
 }
 
-function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element): SelectorToken[] {
+function filterRegexTokens(textCandidates: SelectorToken[][]): SelectorToken[][] {
+  // Filter out regex-based selectors for better performance.
+  return textCandidates.filter(c => c[0].selector[0] !== '/');
+}
+
+function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element): SelectorToken[] | null {
   if (targetElement.ownerDocument.documentElement === targetElement)
     return [{ engine: 'css', selector: 'html', score: 1 }];
 
   const calculate = (element: Element, allowText: boolean): SelectorToken[] | null => {
     const allowNthMatch = element === targetElement;
 
-    const textCandidates = allowText ? buildTextCandidates(injectedScript, element, element === targetElement).map(token => [token]) : [];
+    let textCandidates = allowText ? buildTextCandidates(injectedScript, element, element === targetElement).map(token => [token]) : [];
+    if (element !== targetElement) {
+      // Do not use regex for parent elements (for performance).
+      textCandidates = filterRegexTokens(textCandidates);
+    }
     const noTextCandidates = buildCandidates(injectedScript, element).map(token => [token]);
+
+    // First check all text and non-text candidates for the element.
     let result = chooseFirstSelector(injectedScript, targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch);
 
+    // Do not use regex for chained selectors (for performance).
+    textCandidates = filterRegexTokens(textCandidates);
+
     const checkWithText = (textCandidatesToUse: SelectorToken[][]) => {
+      // Use the deepest possible text selector - works pretty good and saves on compute time.
       const allowParentText = allowText && !textCandidatesToUse.length;
-      const candidates = [...textCandidatesToUse, ...noTextCandidates];
+
+      const candidates = [...textCandidatesToUse, ...noTextCandidates].filter(c => {
+        if (!result)
+          return true;
+        return combineScores(c) < combineScores(result);
+      });
+
+      // This is best theoretically possible candidate from the current parent.
+      // We use the fact that widening the scope to grand-parent makes any selector
+      // even less likely to match.
+      let bestPossibleInParent: SelectorToken[] | null = candidates[0];
+      if (!bestPossibleInParent)
+        return;
+
       for (let parent = parentElementOrShadowHost(element); parent; parent = parentElementOrShadowHost(parent)) {
-        const best = chooseFirstSelector(injectedScript, parent, element, candidates, allowNthMatch);
-        if (!best)
-          continue;
-        if (result && combineScores(best) >= combineScores(result))
-          continue;
-        const parentTokens = find(parent, allowParentText);
+        const parentTokens = calculateCached(parent, allowParentText);
         if (!parentTokens)
           continue;
-        if (!result || combineScores([...parentTokens, ...best]) < combineScores(result))
-          result = [...parentTokens, ...best];
+        // Even the best selector won't be too good - skip this parent.
+        if (result && combineScores([...parentTokens, ...bestPossibleInParent]) >= combineScores(result))
+          continue;
+        // Update the best candidate that finds "element" in the "parent".
+        bestPossibleInParent = chooseFirstSelector(injectedScript, parent, element, candidates, allowNthMatch);
+        if (!bestPossibleInParent)
+          return;
+        const combined = [...parentTokens, ...bestPossibleInParent];
+        if (!result || combineScores(combined) < combineScores(result))
+          result = combined;
       }
     };
 
     checkWithText(textCandidates);
-    // Allow skipping text on the target element.
+    // Allow skipping text on the target element, and using text on one of the parents.
     if (element === targetElement && textCandidates.length)
       checkWithText([]);
 
     return result;
   };
 
-  const find = (element: Element, allowText: boolean): SelectorToken[] | null => {
+  const calculateCached = (element: Element, allowText: boolean): SelectorToken[] | null => {
     const cache = allowText ? cacheAllowText : cacheDisallowText;
     let value = cache.get(element);
     if (value === undefined) {
@@ -96,11 +122,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
     return value;
   };
 
-  const smartTokens = find(targetElement, true);
-  if (smartTokens)
-    return smartTokens;
-
-  return [cssFallback(injectedScript, targetElement)];
+  return calculateCached(targetElement, true);
 }
 
 function buildCandidates(injectedScript: InjectedScript, element: Element): SelectorToken[] {
@@ -168,25 +190,6 @@ function parentElementOrShadowHost(element: Element): Element | null {
     return null;
   if (element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (element.parentNode as ShadowRoot).host)
     return (element.parentNode as ShadowRoot).host;
-  return null;
-}
-
-function ancestorShadowRoot(element: Element): ShadowRoot | null {
-  while (element.parentElement)
-    element = element.parentElement;
-  if (element.parentNode && element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
-    return element.parentNode as ShadowRoot;
-  return null;
-}
-
-function findTargetLabel(element: Element): Element | null {
-  const docOrShadowRoot = ancestorShadowRoot(element) || element.ownerDocument!;
-  const labels = docOrShadowRoot.querySelectorAll('label');
-  for (const element of labels) {
-    const label = element as HTMLLabelElement;
-    if (label.control === element)
-      return label;
-  }
   return null;
 }
 
@@ -265,7 +268,7 @@ function joinTokens(tokens: SelectorToken[]): string {
   const parts = [];
   let lastEngine = '';
   for (const { engine, selector } of tokens) {
-    if (parts.length  && (lastEngine !== 'css' || engine !== 'css'))
+    if (parts.length  && (lastEngine !== 'css' || engine !== 'css' || selector.startsWith(':nth-match(')))
       parts.push('>>');
     lastEngine = engine;
     if (engine === 'css')
@@ -286,15 +289,22 @@ function combineScores(tokens: SelectorToken[]): number {
 function chooseFirstSelector(injectedScript: InjectedScript, scope: Element | Document, targetElement: Element, selectors: SelectorToken[][], allowNthMatch: boolean): SelectorToken[] | null {
   const joined = selectors.map(tokens => ({ tokens, score: combineScores(tokens) }));
   joined.sort((a, b) => a.score - b.score);
+
   let bestWithIndex: SelectorToken[] | null = null;
   for (const { tokens } of joined) {
     const parsedSelector = injectedScript.parseSelector(joinTokens(tokens));
     const result = injectedScript.querySelectorAll(parsedSelector, scope);
     const index = result.indexOf(targetElement);
-    if (index === 0)
+    if (index === 0) {
+      // We are the first match - found the best selector.
       return tokens;
+    }
+
+    // Otherwise, perhaps we can get nth-match?
     if (!allowNthMatch || bestWithIndex || index === -1 || result.length > 5)
       continue;
+
+    // To use nth-match, we must convert everything to css.
     const allCss = tokens.map(token => {
       if (token.engine !== 'text')
         return token;
