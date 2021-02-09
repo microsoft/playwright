@@ -22,6 +22,7 @@ export type FatalDOMError =
   'error:notfillablenumberinput' |
   'error:notvaliddate' |
   'error:notinput' |
-  'error:notselect';
+  'error:notselect' |
+  'error:notcheckbox';
 
 export type RetargetableDOMError = 'error:notconnected';

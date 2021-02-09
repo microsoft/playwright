@@ -27,6 +27,7 @@ import { Progress, ProgressController } from './progress';
 import { assert, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
+import { ElementStateWithoutStable } from './injected/injectedScript';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
@@ -944,6 +945,17 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  private async _checkElementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const controller = new ProgressController(metadata, this);
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.elementStateTask(info, state);
+    const result = await controller.run(async progress => {
+      progress.log(`  checking "${state}" state of "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+    return dom.throwFatalDOMError(dom.throwRetargetableDOMError(result));
+  }
+
   async isVisible(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
@@ -958,37 +970,19 @@ export class Frame extends SdkObject {
   }
 
   async isDisabled(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
-    const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
-    const task = dom.disabledTask(info);
-    return controller.run(async progress => {
-      progress.log(`  checking disabled state of "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options));
+    return this._checkElementState(metadata, selector, 'disabled', options);
   }
 
   async isEnabled(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
-    return !(await this.isDisabled(metadata, selector, options));
+    return this._checkElementState(metadata, selector, 'enabled', options);
   }
 
   async isEditable(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
-    const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
-    const task = dom.editableTask(info);
-    return controller.run(async progress => {
-      progress.log(`  checking editable state of "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options));
+    return this._checkElementState(metadata, selector, 'editable', options);
   }
 
   async isChecked(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
-    const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
-    const task = dom.checkedTask(info);
-    return controller.run(async progress => {
-      progress.log(`  checking checked state of "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options));
+    return this._checkElementState(metadata, selector, 'checked', options);
   }
 
   async hover(metadata: CallMetadata, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
