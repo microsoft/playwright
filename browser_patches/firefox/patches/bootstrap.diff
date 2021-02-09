@@ -97,6 +97,59 @@ index faf53eff9a46f958890d2c50de4c741fce75f1b1..7ad4b9f2203dbf1706518a0ba372d424
  
    DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
  
+diff --git a/browser/components/newtab/lib/ASRouter.jsm b/browser/components/newtab/lib/ASRouter.jsm
+index 8ba0b526172656b03c55d3f75db8ca4b1d0ef130..544dd6a56f4f8c637c63ffeb8f12eb5a5c7a07c3 100644
+--- a/browser/components/newtab/lib/ASRouter.jsm
++++ b/browser/components/newtab/lib/ASRouter.jsm
+@@ -695,9 +695,11 @@ class _ASRouter {
+    */
+   _resetInitialization() {
+     this.initialized = false;
++    this.initializing = false;
+     this.waitForInitialized = new Promise(resolve => {
+       this._finishInitializing = () => {
+         this.initialized = true;
++        this.initializing = false;
+         resolve();
+       };
+     });
+@@ -899,6 +901,10 @@ class _ASRouter {
+     updateAdminState,
+     dispatchCFRAction,
+   }) {
++    if (this.initializing || this.initialized) {
++      return null;
++    }
++    this.initializing = true;
+     this._storage = storage;
+     this.ALLOWLIST_HOSTS = this._loadSnippetsAllowHosts();
+     this.clearChildMessages = this.toWaitForInitFunc(clearChildMessages);
+diff --git a/browser/components/newtab/lib/ASRouterNewTabHook.jsm b/browser/components/newtab/lib/ASRouterNewTabHook.jsm
+index 779dc4f5c5b2a4b74cbec62b67e58e30befb72c7..b75d525dfb3622c82955263078abc63a60381587 100644
+--- a/browser/components/newtab/lib/ASRouterNewTabHook.jsm
++++ b/browser/components/newtab/lib/ASRouterNewTabHook.jsm
+@@ -53,17 +53,15 @@ class ASRouterNewTabHookInstance {
+     }
+   }
+ 
+-  /**
+-   * Note: Should only ever be called on an initialized instance
+-   */
+   destroy() {
+-    this.disconnect();
+-    this._router.uninit();
++    if (this._router?.initialized) {
++      this.disconnect();
++      this._router.uninit();
++    }
+   }
+ 
+   /**
+    * Connects new tab message handler to hook.
+-   * Note: Should only ever be called on an initialized instance
+    * Params:
+    *    newTabMessageHandler - {
+    *      clearChildMessages: clears child messages and returns Promise
 diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
 index a01e9a49ecac2134ab2d3b28f920fa564d88935f..1b1073ecf0d3ec061fac6d34f9161d0096167821 100644
 --- a/browser/installer/allowed-dupes.mn
