@@ -13,11 +13,19 @@ Fired when the websocket closes.
 
 Fired when the websocket recieves a frame.
 
+## event: WebSocket.frameReceived
+* langs: csharp, java
+- type: <[WebSocketFrame]>
+
 ## event: WebSocket.frameSent
 - type: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket sends a frame.
+
+## event: WebSocket.frameSent
+* langs: csharp, java
+- type: <[WebSocketFrame]>
 
 ## event: WebSocket.socketError
 - type: <[String]>

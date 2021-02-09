@@ -103,7 +103,7 @@ class ApiParser {
         member.async = true;
     }
     const clazz = this.classes.get(match[2]);
-    const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === "method");
+    const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
     if (existingMember) {
       for (const lang of member.langs.only) {
         existingMember.langs.types = existingMember.langs.types || {};
