@@ -23,9 +23,7 @@ import * as ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';
-import { assert, getFromENV } from '../utils/utils';
-import * as browserPaths from '../utils/browserPaths';
-import { BrowserName, BrowserPlatform, BrowserDescriptor } from '../utils/browserPaths';
+import { BrowserName, Registry, hostPlatform } from '../utils/registry';
 
 // `https-proxy-agent` v5 is written in Typescript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -42,88 +40,10 @@ const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => f
 
 export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 
-function getDownloadHost(browserName: BrowserName, revision: number): string {
-  const envDownloadHost: { [key: string]: string } = {
-    chromium: 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
-    firefox: 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
-    webkit: 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
-    ffmpeg: 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST',
-  };
-  return getFromENV(envDownloadHost[browserName]) ||
-         getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||
-         'https://playwright.azureedge.net';
-}
-
-function getDownloadUrl(browserName: BrowserName, revision: number, platform: BrowserPlatform): string | undefined {
-  if (browserName === 'chromium') {
-    return new Map<BrowserPlatform, string>([
-      ['ubuntu18.04', '%s/builds/chromium/%s/chromium-linux.zip'],
-      ['ubuntu20.04', '%s/builds/chromium/%s/chromium-linux.zip'],
-      ['mac10.13', '%s/builds/chromium/%s/chromium-mac.zip'],
-      ['mac10.14', '%s/builds/chromium/%s/chromium-mac.zip'],
-      ['mac10.15', '%s/builds/chromium/%s/chromium-mac.zip'],
-      ['mac11', '%s/builds/chromium/%s/chromium-mac.zip'],
-      ['mac11-arm64', '%s/builds/chromium/%s/chromium-mac-arm64.zip'],
-      ['win32', '%s/builds/chromium/%s/chromium-win32.zip'],
-      ['win64', '%s/builds/chromium/%s/chromium-win64.zip'],
-    ]).get(platform);
-  }
-
-  if (browserName === 'firefox') {
-    return new Map<BrowserPlatform, string>([
-      ['ubuntu18.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
-      ['ubuntu20.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
-      ['mac10.13', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-      ['mac10.14', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-      ['mac10.15', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-      ['mac11', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-      ['mac11-arm64', '%s/builds/firefox/%s/firefox-mac-11.0-arm64.zip'],
-      ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
-      ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
-    ]).get(platform);
-  }
-
-  if (browserName === 'webkit') {
-    return new Map<BrowserPlatform, string | undefined>([
-      ['ubuntu18.04', '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip'],
-      ['ubuntu20.04', '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip'],
-      ['mac10.13', undefined],
-      ['mac10.14', '%s/builds/webkit/%s/webkit-mac-10.14.zip'],
-      ['mac10.15', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
-      ['mac11', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
-      ['mac11-arm64', '%s/builds/webkit/%s/webkit-mac-11.0-arm64.zip'],
-      ['win32', '%s/builds/webkit/%s/webkit-win64.zip'],
-      ['win64', '%s/builds/webkit/%s/webkit-win64.zip'],
-    ]).get(platform);
-  }
-
-  if (browserName === 'ffmpeg') {
-    return new Map<BrowserPlatform, string | undefined>([
-      ['ubuntu18.04', '%s/builds/ffmpeg/%s/ffmpeg-linux.zip'],
-      ['ubuntu20.04', '%s/builds/ffmpeg/%s/ffmpeg-linux.zip'],
-      ['mac10.13', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
-      ['mac10.14', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
-      ['mac10.15', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
-      ['mac11', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
-      ['mac11-arm64', '%s/builds/ffmpeg/%s/ffmpeg-mac.zip'],
-      ['win32', '%s/builds/ffmpeg/%s/ffmpeg-win32.zip'],
-      ['win64', '%s/builds/ffmpeg/%s/ffmpeg-win64.zip'],
-    ]).get(platform);
-  }
-}
-
-function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPlatform): string {
-  const revision = parseInt(browser.revision, 10);
-  const serverHost = getDownloadHost(browser.name, revision);
-  const urlTemplate = getDownloadUrl(browser.name, revision, platform);
-  assert(urlTemplate, `ERROR: Playwright does not support ${browser.name} on ${platform}`);
-  return util.format(urlTemplate, serverHost, browser.revision);
-}
-
-export async function downloadBrowserWithProgressBar(browsersPath: string, browser: BrowserDescriptor): Promise<boolean> {
-  const browserPath = browserPaths.browserDirectory(browsersPath, browser);
-  const progressBarName = `${browser.name} v${browser.revision}`;
-  if (await existsAsync(browserPath)) {
+export async function downloadBrowserWithProgressBar(registry: Registry, browserName: BrowserName): Promise<boolean> {
+  const browserDirectory = registry.browserDirectory(browserName);
+  const progressBarName = `${browserName} v${registry.revision(browserName)}`;
+  if (await existsAsync(browserDirectory)) {
     // Already downloaded.
     return false;
   }
@@ -145,8 +65,8 @@ export async function downloadBrowserWithProgressBar(browsersPath: string, brows
     progressBar.tick(delta);
   }
 
-  const url = revisionURL(browser);
-  const zipPath = path.join(os.tmpdir(), `playwright-download-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}.zip`);
+  const url = registry.downloadURL(browserName);
+  const zipPath = path.join(os.tmpdir(), `playwright-download-${browserName}-${hostPlatform}-${registry.revision(browserName)}.zip`);
   try {
     for (let attempt = 1, N = 3; attempt <= N; ++attempt) {
       const {error} = await downloadFile(url, zipPath, progress);
@@ -161,8 +81,8 @@ export async function downloadBrowserWithProgressBar(browsersPath: string, brows
         throw error;
       }
     }
-    await extract(zipPath, { dir: browserPath});
-    await chmodAsync(browserPaths.executablePath(browserPath, browser)!, 0o755);
+    await extract(zipPath, { dir: browserDirectory});
+    await chmodAsync(registry.executablePath(browserName)!, 0o755);
   } catch (e) {
     process.exitCode = 1;
     throw e;
@@ -170,7 +90,7 @@ export async function downloadBrowserWithProgressBar(browsersPath: string, brows
     if (await existsAsync(zipPath))
       await unlinkAsync(zipPath);
   }
-  logPolitely(`${progressBarName} downloaded to ${browserPath}`);
+  logPolitely(`${progressBarName} downloaded to ${browserDirectory}`);
   return true;
 }
 

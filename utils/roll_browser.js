@@ -17,6 +17,7 @@
  */
 
 const path = require('path');
+const {Registry} = require('../lib/utils/registry');
 const fs = require('fs');
 const protocolGenerator = require('./protocol-types-generator');
 const {execSync} = require('child_process');
@@ -69,14 +70,11 @@ Example:
   // 3. Download new browser.
   console.log('\nDownloading new browser...');
   const { installBrowsersWithProgressBar } = require('../lib/install/installer');
-  await installBrowsersWithProgressBar(ROOT_PATH);
+  await installBrowsersWithProgressBar();
 
   // 4. Generate types.
   console.log('\nGenerating protocol types...');
-  const browser = { name: browserName, revision };
-  const browserPaths = require('../lib/utils/browserPaths');
-  const browserDir = browserPaths.browserDirectory(browserPaths.browsersPath(ROOT_PATH), browser);
-  const executablePath = browserPaths.executablePath(browserDir, browser);
+  const executablePath = new Registry(ROOT_PATH).executablePath(browserName);
   await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);
 
   // 5. Update docs.

@@ -19,7 +19,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
 import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import * as browserPaths from '../utils/browserPaths';
+import * as registry from '../utils/registry';
 import { ConnectionTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
 import { launchProcess, Env, envArrayToObject } from './processLauncher';
@@ -38,23 +38,18 @@ const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => f
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
 export abstract class BrowserType {
-  private _name: browserPaths.BrowserName;
-  private _executablePath: string;
-  private _browserDescriptor: browserPaths.BrowserDescriptor;
-  readonly _browserPath: string;
+  private _name: registry.BrowserName;
+  readonly _registry: registry.Registry;
   readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, playwrightOptions: PlaywrightOptions) {
+  constructor(browserName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
     this._playwrightOptions = playwrightOptions;
-    this._name = browser.name;
-    const browsersPath = browserPaths.browsersPath(packagePath);
-    this._browserDescriptor = browser;
-    this._browserPath = browserPaths.browserDirectory(browsersPath, browser);
-    this._executablePath = browserPaths.executablePath(this._browserPath, browser) || '';
+    this._name = browserName;
+    this._registry = playwrightOptions.registry;
   }
 
   executablePath(): string {
-    return this._executablePath;
+    return this._registry.executablePath(this._name) || '';
   }
 
   name(): string {
@@ -179,7 +174,7 @@ export abstract class BrowserType {
 
     if (!executablePath) {
       // We can only validate dependencies for bundled browsers.
-      await validateHostRequirements(this._browserPath, this._browserDescriptor);
+      await validateHostRequirements(this._registry, this._name);
     }
 
     // Note: it is important to define these variables before launchProcess, so that we don't get

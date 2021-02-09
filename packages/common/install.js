@@ -16,4 +16,4 @@
 
 const { installBrowsersWithProgressBar } = require('./lib/install/installer');
 
-installBrowsersWithProgressBar(__dirname);
+installBrowsersWithProgressBar();

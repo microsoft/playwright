@@ -23,10 +23,14 @@ import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType } from '../browserType';
 import { Env } from '../processLauncher';
 import { ConnectionTransport } from '../transport';
-import { BrowserOptions } from '../browser';
+import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
 
 export class Firefox extends BrowserType {
+  constructor(playwrightOptions: PlaywrightOptions) {
+    super('firefox', playwrightOptions);
+  }
+
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     return FFBrowser.connect(transport, options);
   }

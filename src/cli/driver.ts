@@ -24,7 +24,7 @@ import { installBrowsersWithProgressBar } from '../install/installer';
 import { Transport } from '../protocol/transport';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
-import { BrowserName } from '../utils/browserPaths';
+import { BrowserName } from '../utils/registry';
 
 export function printApiJson() {
   console.log(JSON.stringify(require('../../api.json')));
@@ -54,6 +54,5 @@ export function runServer() {
 }
 
 export async function installBrowsers(browserNames?: BrowserName[]) {
-  const browsersJsonDir = path.join(__dirname, '..', '..');
-  await installBrowsersWithProgressBar(browsersJsonDir, browserNames);
+  await installBrowsersWithProgressBar(browserNames);
 }

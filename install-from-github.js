@@ -27,7 +27,7 @@ try {
 
 console.log(`Downloading browsers...`);
 const { installBrowsersWithProgressBar } = require('./lib/install/installer');
-installBrowsersWithProgressBar(__dirname).catch(e =>  {
+installBrowsersWithProgressBar().catch(e =>  {
   console.error(`Failed to install browsers, caused by\n${e.stack}`);
   process.exit(1);
 });

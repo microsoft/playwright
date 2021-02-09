@@ -4,7 +4,7 @@ const fs = require('fs');
 const util = require('util');
 const path = require('path');
 const {spawn} = require('child_process');
-const browserPaths = require('playwright/lib/utils/browserPaths.js');
+const {registryDirectory} = require('playwright/lib/utils/registry.js');
 
 const readdirAsync = util.promisify(fs.readdir.bind(fs));
 const readFileAsync = util.promisify(fs.readFile.bind(fs));
@@ -27,12 +27,11 @@ const DL_OPEN_LIBRARIES = {
 (async () => {
   console.log('Working on:', await getDistributionName());
   console.log('Started at:', currentTime());
-  const allBrowsersPath = browserPaths.browsersPath();
-  const browserDescriptors = (await readdirAsync(allBrowsersPath)).filter(dir => !dir.startsWith('.')).map(dir => ({
+  const browserDescriptors = (await readdirAsync(registryDirectory)).filter(dir => !dir.startsWith('.')).map(dir => ({
     // Full browser name, e.g. `webkit-1144`
     name: dir,
     // Full patch to browser files
-    path: path.join(allBrowsersPath, dir),
+    path: path.join(registryDirectory, dir),
     // All files that we will try to inspect for missing dependencies.
     filePaths: [],
     // All libraries that are missing for the browser.

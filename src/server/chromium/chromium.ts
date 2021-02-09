@@ -22,7 +22,6 @@ import { kBrowserCloseMessageId } from './crConnection';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserType } from '../browserType';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
-import * as browserPaths from '../../utils/browserPaths';
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
@@ -30,20 +29,16 @@ import { isDebugMode } from '../../utils/utils';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
-  private _ffmpegPath: string | null;
 
-  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, ffmpeg: browserPaths.BrowserDescriptor, playwrightOptions: PlaywrightOptions) {
-    super(packagePath, browser, playwrightOptions);
+  constructor(playwrightOptions: PlaywrightOptions) {
+    super('chromium', playwrightOptions);
 
-    const browsersPath = browserPaths.browsersPath(packagePath);
-    const browserPath = browserPaths.browserDirectory(browsersPath, ffmpeg);
-    this._ffmpegPath = browserPaths.executablePath(browserPath, ffmpeg) || null;
     if (isDebugMode())
       this._devtools = this._createDevTools();
   }
 
   private _createDevTools() {
-    return new CRDevTools(path.join(this._browserPath, 'devtools-preferences.json'));
+    return new CRDevTools(path.join(this._registry.browserDirectory('chromium'), 'devtools-preferences.json'));
   }
 
   async _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
@@ -52,7 +47,7 @@ export class Chromium extends BrowserType {
       devtools = this._createDevTools();
       await (options as any).__testHookForDevTools(devtools);
     }
-    return CRBrowser.connect(transport, options, this._ffmpegPath, devtools);
+    return CRBrowser.connect(transport, options, devtools);
   }
 
   _rewriteStartupError(error: Error): Error {
