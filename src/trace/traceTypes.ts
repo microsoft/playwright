@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { StackFrame } from '../common/types';
 import { NodeSnapshot } from './snapshotterInjected';
 export { NodeSnapshot } from './snapshotterInjected';
 
@@ -81,7 +82,7 @@ export type ActionTraceEvent = {
   objectType: string,
   method: string,
   params: any,
-  stack?: string,
+  stack?: StackFrame[],
   pageId?: string,
   startTime: number,
   endTime: number,

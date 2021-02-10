@@ -24,7 +24,12 @@ export interface Channel extends EventEmitter {
 }
 
 export type Metadata = {
-  stack?: string,
+  stack?: {
+    file: string,
+    line?: number,
+    column?: number,
+    function?: string,
+  }[],
 };
 
 export type Point = {

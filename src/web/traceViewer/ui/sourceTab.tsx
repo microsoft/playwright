@@ -20,14 +20,10 @@ import { useAsyncMemo } from './helpers';
 import './sourceTab.css';
 import '../../../third_party/highlightjs/highlightjs/tomorrow.css';
 import * as highlightjs from '../../../third_party/highlightjs/highlightjs';
+import { StackFrame } from '../../../common/types';
 
 type StackInfo = string | {
-  frames: {
-    filePath: string,
-    fileName: string,
-    lineNumber: number,
-    functionName: string,
-  }[];
+  frames: StackFrame[];
   fileContent: Map<string, string>;
 };
 
@@ -50,41 +46,11 @@ export const SourceTab: React.FunctionComponent<{
     const { action } = actionEntry;
     if (!action.stack)
       return '';
-    let frames = action.stack.split('\n').slice(1);
-    frames = frames.filter(frame => !frame.includes('playwright/lib/') && !frame.includes('playwright/src/'));
-    const info: StackInfo = {
-      frames: [],
+    const frames = action.stack;
+    return {
+      frames,
       fileContent: new Map(),
     };
-    for (const frame of frames) {
-      let filePath: string;
-      let lineNumber: number;
-      let functionName: string;
-      const match1 = frame.match(/at ([^(]+)\(([^:]+):(\d+):\d+\)/);
-      const match2 = frame.match(/at ([^:^(]+):(\d+):\d+/);
-      if (match1) {
-        functionName = match1[1];
-        filePath = match1[2];
-        lineNumber = parseInt(match1[3], 10);
-      } else if (match2) {
-        functionName = '';
-        filePath = match2[1];
-        lineNumber = parseInt(match2[2], 10);
-      } else {
-        continue;
-      }
-      const pathSep = navigator.platform.includes('Win') ? '\\' : '/';
-      const fileName = filePath.substring(filePath.lastIndexOf(pathSep) + 1);
-      info.frames.push({
-        filePath,
-        fileName,
-        lineNumber,
-        functionName: functionName || '(anonymous)',
-      });
-    }
-    if (!info.frames.length)
-      return action.stack;
-    return info;
   }, [actionEntry]);
 
   const content = useAsyncMemo<string[]>(async () => {
@@ -92,7 +58,7 @@ export const SourceTab: React.FunctionComponent<{
     if (typeof stackInfo === 'string') {
       value = stackInfo;
     } else {
-      const filePath = stackInfo.frames[selectedFrame].filePath;
+      const filePath = stackInfo.frames[selectedFrame].file;
       if (!stackInfo.fileContent.has(filePath))
         stackInfo.fileContent.set(filePath, await fetch(`/file?${filePath}`).then(response => response.text()).catch(e => `<Unable to read "${filePath}">`));
       value = stackInfo.fileContent.get(filePath)!;
@@ -107,7 +73,7 @@ export const SourceTab: React.FunctionComponent<{
     return result;
   }, [stackInfo, selectedFrame], []);
 
-  const targetLine = typeof stackInfo === 'string' ? -1 : stackInfo.frames[selectedFrame].lineNumber;
+  const targetLine = typeof stackInfo === 'string' ? -1 : stackInfo.frames[selectedFrame].line;
 
   const targetLineRef = React.createRef<HTMLDivElement>();
   React.useLayoutEffect(() => {
@@ -142,13 +108,13 @@ export const SourceTab: React.FunctionComponent<{
           }}
         >
           <span className='source-stack-frame-function'>
-            {frame.functionName}
+            {frame.function || '(anonymous)'}
           </span>
           <span className='source-stack-frame-location'>
-            {frame.fileName}
+            {frame.file}
           </span>
           <span className='source-stack-frame-line'>
-            {':' + frame.lineNumber}
+            {':' + frame.line}
           </span>
         </div>;
       })

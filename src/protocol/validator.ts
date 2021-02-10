@@ -34,7 +34,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   };
 
   scheme.Metadata = tObject({
-    stack: tOptional(tString),
+    stack: tOptional(tArray(tObject({
+      file: tString,
+      line: tOptional(tNumber),
+      column: tOptional(tNumber),
+      function: tOptional(tString),
+    }))),
   });
   scheme.Point = tObject({
     x: tNumber,

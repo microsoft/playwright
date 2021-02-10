@@ -41,6 +41,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
 import { Android, AndroidSocket, AndroidDevice } from './android';
+import { captureStackTrace } from '../utils/stackTrace';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -71,14 +72,12 @@ export class Connection {
   }
 
   async sendMessageToServer(guid: string, method: string, params: any): Promise<any> {
-    const stackObject: any = {};
-    Error.captureStackTrace(stackObject);
-    const stack = stackObject.stack.startsWith('Error') ? stackObject.stack.substring(5) : stackObject.stack;
+    const { stack, frames } = captureStackTrace();
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.
     debugLogger.log('channel:command', converted);
-    this.onmessage({ ...converted, metadata: { stack } });
+    this.onmessage({ ...converted, metadata: { stack: frames } });
     try {
       return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
     } catch (e) {
