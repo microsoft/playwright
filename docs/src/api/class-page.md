@@ -1477,7 +1477,7 @@ Returns whether the element is [enabled](./actionability.md#enabled).
 ## async method: Page.isHidden
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).
+Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
 
 ### param: Page.isHidden.selector = %%-input-selector-%%
 
@@ -1486,7 +1486,7 @@ Returns whether the element is hidden, the opposite of [visible](./actionability
 ## async method: Page.isVisible
 - returns: <[boolean]>
 
-Returns whether the element is [visible](./actionability.md#visible).
+Returns whether the element is [visible](./actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
 
 ### param: Page.isVisible.selector = %%-input-selector-%%
 
