@@ -370,12 +370,12 @@ Optional setting to control whether to omit request content from the HAR. Defaul
 Path on the filesystem to write the HAR file to.
 
 ## context-option-recordvideo
-* langs: java, js
+* langs: js
 - `recordVideo` <[Object]>
   - `dir` <[path]> Path to the directory to put videos into.
-  - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`.
-    If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be
-    scaled down if necessary to fit the specified size.
+  - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
+    scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
+    Actual picture of each page will be scaled down if necessary to fit the specified size.
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
 
@@ -383,20 +383,24 @@ Enables video recording for all pages into `recordVideo.dir` directory. If not s
 sure to await [`method: BrowserContext.close`] for videos to be saved.
 
 ## python-context-option-recordvideo-dir
-* langs: python
-- `record_video_dir` <[path]>
+* langs: csharp, java, python
+  - alias-python: record_video_dir
+- `recordVideoDir` <[path]>
 
 Path to the directory to put videos into.
 
 ## python-context-option-recordvideo-size
-* langs: python
-- `record_video_size` <[Object]>
-  If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be
+* langs: csharp, java, python
+  - alias-python: record_video_size
+- `recordVideoSize` <[Object]>
+  If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be
   scaled down if necessary to fit the specified size.
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
-Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`.
+Dimensions of the recorded videos. If not specified the size will be equal to `viewport`
+scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
+Actual picture of each page will be scaled down if necessary to fit the specified size.
 
 ## context-option-proxy
 - `proxy` <[Object]>
