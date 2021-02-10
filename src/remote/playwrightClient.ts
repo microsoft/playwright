@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as WebSocket from 'ws';
+import WebSocket from 'ws';
 import { Connection } from '../client/connection';
 import { Playwright } from '../client/playwright';
 

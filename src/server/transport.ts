@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as WebSocket from 'ws';
+import WebSocket from 'ws';
 import { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils/utils';
 

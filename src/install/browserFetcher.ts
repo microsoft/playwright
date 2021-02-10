@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import * as extract from 'extract-zip';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import * as ProgressBar from 'progress';
+import extract from 'extract-zip';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';

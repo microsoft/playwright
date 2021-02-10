@@ -18,10 +18,10 @@
 
 /* eslint-disable no-console */
 
-import * as path from 'path';
+import path from 'path';
 import * as program from 'commander';
 import * as os from 'os';
-import * as fs from 'fs';
+import fs from 'fs';
 import { runServer, printApiJson, installBrowsers } from './driver';
 import { showTraceViewer } from './traceViewer/traceViewer';
 import * as playwright from '../..';

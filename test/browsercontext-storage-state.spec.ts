@@ -16,7 +16,7 @@
  */
 
 import { it, expect } from './fixtures';
-import * as fs from 'fs';
+import fs from 'fs';
 
 it('should capture local storage', async ({ context }) => {
   const page1 = await context.newPage();

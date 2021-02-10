@@ -16,8 +16,8 @@
 
 import { it, expect } from './fixtures';
 import type * as trace from '../src/trace/traceTypes';
-import * as path from 'path';
-import * as fs from 'fs';
+import path from 'path';
+import fs from 'fs';
 
 it('should record trace', (test, { browserName, platform }) => {
   test.fixme();

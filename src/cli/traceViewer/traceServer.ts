@@ -15,8 +15,8 @@
  */
 
 import * as http from 'http';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import type { TraceModel } from './traceModel';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;

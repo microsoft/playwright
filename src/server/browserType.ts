@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import fs from 'fs';
 import * as os from 'os';
-import * as path from 'path';
+import path from 'path';
 import * as util from 'util';
 import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import * as registry from '../utils/registry';

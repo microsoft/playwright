@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import fs from 'fs';
 import * as util from 'util';
 import { CRSession } from './crConnection';
 

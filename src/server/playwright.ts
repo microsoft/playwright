@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import path from 'path';
 import { Tracer } from '../trace/tracer';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';

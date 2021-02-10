@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import path from 'path';
 import { StackFrame } from '../common/types';
-const StackUtils = require('stack-utils');
+import StackUtils from 'stack-utils';
 
 const stackUtils = new StackUtils();
 

@@ -16,9 +16,9 @@
  */
 
 import { execSync } from 'child_process';
-import * as fs from 'fs';
+import fs from 'fs';
 import * as os from 'os';
-import * as path from 'path';
+import path from 'path';
 import * as util from 'util';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV } from './utils';

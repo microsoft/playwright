@@ -15,7 +15,7 @@
  */
 
 import * as http from 'http';
-import * as path from 'path';
+import path from 'path';
 import { ChildProcess, spawn } from 'child_process';
 import { folio as baseFolio } from '../fixtures';
 import type { Page, BrowserType, Browser, BrowserContext } from '../..';

@@ -17,7 +17,7 @@
 
 import { WKBrowser } from '../webkit/wkBrowser';
 import { Env } from '../processLauncher';
-import * as path from 'path';
+import path from 'path';
 import { kBrowserCloseMessageId } from './wkConnection';
 import { BrowserType } from '../browserType';
 import { ConnectionTransport } from '../transport';
