@@ -61,7 +61,6 @@ export class Chromium extends BrowserType {
         ...uiOptions,
         name: 'chromium',
         isChromium: true,
-        headful: true,
         persistent: { noDefaultViewport: true },
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
