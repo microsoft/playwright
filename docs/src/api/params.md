@@ -374,8 +374,8 @@ Path on the filesystem to write the HAR file to.
 - `recordVideo` <[Object]>
   - `dir` <[path]> Path to the directory to put videos into.
   - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
-    scaled down to fit into 800x800. If `viewport` is not configured explicitly it defaults to 1280x720 and video size
-    will be 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
+    scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
+    Actual picture of each page will be scaled down if necessary to fit the specified size.
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
 
@@ -393,14 +393,14 @@ Path to the directory to put videos into.
 * langs: csharp, java, python
   - alias-python: record_video_size
 - `recordVideoSize` <[Object]>
-  If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be
+  If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be
   scaled down if necessary to fit the specified size.
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
 Dimensions of the recorded videos. If not specified the size will be equal to `viewport`
-scaled down to fit into 800x800. If `viewport` is not configured explicitly it defaults to 1280x720 and video size
-will be 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
+scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
+Actual picture of each page will be scaled down if necessary to fit the specified size.
 
 ## context-option-proxy
 - `proxy` <[Object]>

@@ -6521,8 +6521,8 @@ export interface BrowserType<Browser> {
 
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit
-       * into 800x800. If `viewport` is not configured explicitly it defaults to 1280x720 and video size will be 800x450. Actual
-       * picture of each page will be scaled down if necessary to fit the specified size.
+       * into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page
+       * will be scaled down if necessary to fit the specified size.
        */
       size?: {
         /**
@@ -7455,8 +7455,8 @@ export interface Browser extends EventEmitter {
 
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit
-       * into 800x800. If `viewport` is not configured explicitly it defaults to 1280x720 and video size will be 800x450. Actual
-       * picture of each page will be scaled down if necessary to fit the specified size.
+       * into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page
+       * will be scaled down if necessary to fit the specified size.
        */
       size?: {
         /**
@@ -9536,8 +9536,8 @@ export interface BrowserContextOptions {
 
     /**
      * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit
-     * into 800x800. If `viewport` is not configured explicitly it defaults to 1280x720 and video size will be 800x450. Actual
-     * picture of each page will be scaled down if necessary to fit the specified size.
+     * into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page
+     * will be scaled down if necessary to fit the specified size.
      */
     size?: {
       /**
