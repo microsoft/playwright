@@ -30,7 +30,7 @@ export class InspectorController implements InstrumentationListener {
     }
   }
 
-  onLog(logName: string, message: string): void {
+  onCallLog(logName: string, message: string): void {
     debugLogger.log(logName as any, message);
   }
 }

@@ -16,7 +16,6 @@
 
 import { TimeoutError } from '../utils/errors';
 import { assert, monotonicTime } from '../utils/utils';
-import { rewriteErrorMessage } from '../utils/stackTrace';
 import { LogName } from '../utils/debugLogger';
 import { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 
@@ -26,7 +25,8 @@ export interface Progress {
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
   throwIfAborted(): void;
-  checkpoint(name: string): Promise<void>;
+  beforeInputAction(): Promise<void>;
+  afterInputAction(): Promise<void>;
 }
 
 export class ProgressController {
@@ -71,7 +71,7 @@ export class ProgressController {
       log: message => {
         if (this._state === 'running') {
           this.metadata.log.push(message);
-          this.instrumentation.onLog(this._logName, message, this.sdkObject, this.metadata);
+          this.instrumentation.onCallLog(this._logName, message, this.sdkObject, this.metadata);
         }
       },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
@@ -86,8 +86,11 @@ export class ProgressController {
         if (this._state === 'aborted')
           throw new AbortedError();
       },
-      checkpoint: async (name: string) => {
-        await this.instrumentation.onActionCheckpoint(name, this.sdkObject, this.metadata);
+      beforeInputAction: async () => {
+        await this.instrumentation.onBeforeInputAction(this.sdkObject, this.metadata);
+      },
+      afterInputAction: async () => {
+        await this.instrumentation.onAfterInputAction(this.sdkObject, this.metadata);
       },
     };
 
@@ -96,23 +99,15 @@ export class ProgressController {
     try {
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
-      clearTimeout(timer);
       this._state = 'finished';
-      this.metadata.endTime = monotonicTime();
-      await this.instrumentation.onAfterAction(this.sdkObject, this.metadata);
       return result;
     } catch (e) {
-      clearTimeout(timer);
       this._state = 'aborted';
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
-      this.metadata.endTime = monotonicTime();
-      this.metadata.error = e;
-      await this.instrumentation.onAfterAction(this.sdkObject, this.metadata);
-      rewriteErrorMessage(e,
-          e.message +
-          formatLogRecording(this.metadata.log) +
-          kLoggingNote);
       throw e;
+    } finally {
+      clearTimeout(timer);
+      this.metadata.endTime = monotonicTime();
     }
   }
 
@@ -126,18 +121,6 @@ async function runCleanup(cleanup: () => any) {
     await cleanup();
   } catch (e) {
   }
-}
-
-const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable and rerun to capture Playwright logs.`;
-
-function formatLogRecording(log: string[]): string {
-  if (!log.length)
-    return '';
-  const header = ` logs `;
-  const headerLength = 60;
-  const leftLength = (headerLength - header.length) / 2;
-  const rightLength = headerLength - header.length - leftLength;
-  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
 
 class AbortedError extends Error {}

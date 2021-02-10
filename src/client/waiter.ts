@@ -101,7 +101,7 @@ function waitForTimeout(timeout: number): { promise: Promise<void>, dispose: () 
   return { promise, dispose };
 }
 
-const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable and rerun to capture Playwright logs.`;
+const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable to capture Playwright logs.`;
 
 function formatLogRecording(log: string[]): string {
   if (!log.length)

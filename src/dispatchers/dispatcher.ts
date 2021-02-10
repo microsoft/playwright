@@ -21,8 +21,9 @@ import { createScheme, Validator, ValidationError } from '../protocol/validator'
 import { assert, createGuid, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
-import { CallMetadata } from '../server/instrumentation';
+import { CallMetadata, SdkObject } from '../server/instrumentation';
 import { StackFrame } from '../common/types';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -175,23 +176,42 @@ export class DispatcherConnection {
       this.onmessage({ id, result: this._rootDispatcher._debugScopeState() });
       return;
     }
+
+    let validParams: any;
+    let validMetadata: channels.Metadata;
     try {
-      const validated = this._validateParams(dispatcher._type, method, params);
+      validParams = this._validateParams(dispatcher._type, method, params);
+      validMetadata = this._validateMetadata(metadata);
       if (typeof (dispatcher as any)[method] !== 'function')
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
-      const callMetadata: CallMetadata = {
-        ...this._validateMetadata(metadata),
-        startTime: monotonicTime(),
-        endTime: 0,
-        type: dispatcher._type,
-        method,
-        params,
-        log: [],
-      };
-      const result = await (dispatcher as any)[method](validated, callMetadata);
-      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });
+      return;
+    }
+
+    const callMetadata: CallMetadata = {
+      ...validMetadata,
+      startTime: monotonicTime(),
+      endTime: 0,
+      type: dispatcher._type,
+      method,
+      params,
+      log: [],
+    };
+
+    try {
+      if (dispatcher instanceof SdkObject)
+        await dispatcher.instrumentation.onBeforeCall(dispatcher, callMetadata);
+      const result = await (dispatcher as any)[method](validParams, callMetadata);
+      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
+    } catch (e) {
+      // Dispatching error
+      if (callMetadata.log.length)
+        rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log) + kLoggingNote);
+      this.onmessage({ id, error: serializeError(e) });
+    } finally {
+      if (dispatcher instanceof SdkObject)
+        await dispatcher.instrumentation.onAfterCall(dispatcher, callMetadata);
     }
   }
 
@@ -210,4 +230,16 @@ export class DispatcherConnection {
     }
     return payload;
   }
+}
+
+const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable to capture Playwright logs.`;
+
+function formatLogRecording(log: string[]): string {
+  if (!log.length)
+    return '';
+  const header = ` logs `;
+  const headerLength = 60;
+  const leftLength = (headerLength - header.length) / 2;
+  const rightLength = headerLength - header.length - leftLength;
+  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }

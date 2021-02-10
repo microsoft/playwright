@@ -55,19 +55,23 @@ export class Tracer implements InstrumentationListener {
     }
   }
 
-  async onActionCheckpoint(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onActionCheckpoint(name, sdkObject, metadata);
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?.onActionCheckpoint('before', sdkObject, metadata);
   }
 
-  async onAfterAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onAfterAction(sdkObject, metadata);
+  async onAfterInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?.onActionCheckpoint('after', sdkObject, metadata);
+  }
+
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?.onAfterCall(sdkObject, metadata);
   }
 }
 
 const pageIdSymbol = Symbol('pageId');
 const snapshotsSymbol = Symbol('snapshots');
 
-// TODO: this is a hacky way to pass snapshots between onActionCheckpoint and onAfterAction.
+// This is an official way to pass snapshots between onBefore/AfterInputAction and onAfterCall.
 function snapshotsForMetadata(metadata: CallMetadata): { name: string, snapshotId: string }[] {
   if (!(metadata as any)[snapshotsSymbol])
     (metadata as any)[snapshotsSymbol] = [];
@@ -160,7 +164,7 @@ class ContextTracer implements SnapshotterDelegate {
     await this._snapshotter.forceSnapshot(sdkObject.attribution.page, snapshotId);
   }
 
-  async onAfterAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!sdkObject.attribution.page)
       return;
     const event: trace.ActionTraceEvent = {
