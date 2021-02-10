@@ -4,6 +4,7 @@ title: "Getting Started"
 ---
 
 <!-- TOC -->
+- [Release notes](./release-notes.md)
 
 ## Installation
 
