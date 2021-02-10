@@ -928,11 +928,10 @@ export class Frame extends EventEmitter {
   }
 
   async isVisible(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
-    const info = this._page.selectors._parseSelector(selector);
-    const task = dom.visibleTask(info);
     return runAbortableTask(async progress => {
       progress.log(`  checking visibility of "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
+      const element = await this.$(selector);
+      return element ? await element.isVisible() : false;
     }, this._page._timeoutSettings.timeout(options));
   }
 
