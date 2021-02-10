@@ -1488,7 +1488,7 @@ User can inspect selectors or perform manual steps while paused. Resume will con
 the place it was paused.
 
 :::note
-This method requires Playwright to be started in a headed mode, with a falsy [`options: headless`] value in
+This method requires Playwright to be started in a headed mode, with a falsy [`option: headless`] value in
 the [`method: BrowserType.launch`].
 :::
 
