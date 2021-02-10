@@ -570,6 +570,18 @@ it('should wait for select to be enabled', async ({page, server}) => {
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
+it('should wait for div with aria-disabled to be enabled', async ({page, server}) => {
+  await page.setContent('<div onclick="javascript:window.__CLICKED=true;" role="button" aria-disabled="true"><span>Click target</span></div>');
+  let done = false;
+  const clickPromise = page.click('text=Click target').then(() => done = true);
+  await giveItAChanceToClick(page);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
+  expect(done).toBe(false);
+  await page.evaluate(() => document.querySelector('[role=button]').removeAttribute('aria-disabled'));
+  await clickPromise;
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
 it('should click disabled div', async ({page, server}) => {
   await page.setContent('<div onclick="javascript:window.__CLICKED=true;" disabled>Click target</div>');
   await page.click('text=Click target');
