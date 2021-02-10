@@ -156,24 +156,39 @@ export class InjectedScript {
   }
 
   private _createTextEngine(shadow: boolean): SelectorEngine {
+    const queryList = (root: SelectorRoot, selector: string, single: boolean): Element[] => {
+      const { matcher, strict } = createTextMatcher(selector);
+      const result: Element[] = [];
+      let lastDidNotMatchSelf: Element | null = null;
+
+      const checkElement = (element: Element) => {
+        // TODO: replace contains() with something shadow-dom-aware?
+        if (!strict && lastDidNotMatchSelf && lastDidNotMatchSelf.contains(element))
+          return false;
+        const matches = elementMatchesText(this._evaluator, element, matcher);
+        if (matches === 'none')
+          lastDidNotMatchSelf = element;
+        if (matches === 'self')
+          result.push(element);
+        return single && result.length > 0;
+      };
+
+      if (root.nodeType === Node.ELEMENT_NODE && checkElement(root as Element))
+        return result;
+      const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: shadow }, '*');
+      for (const element of elements) {
+        if (checkElement(element))
+          return result;
+      }
+      return result;
+    };
+
     return {
       query: (root: SelectorRoot, selector: string): Element | undefined => {
-        const matcher = createTextMatcher(selector);
-        if (root.nodeType === Node.ELEMENT_NODE && elementMatchesText(this._evaluator, root as Element, matcher))
-          return root as Element;
-        const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: shadow }, '*');
-        for (const element of elements) {
-          if (elementMatchesText(this._evaluator, element, matcher))
-            return element;
-        }
+        return queryList(root, selector, true)[0];
       },
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        const matcher = createTextMatcher(selector);
-        const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: shadow }, '*');
-        const result = elements.filter(e => elementMatchesText(this._evaluator, e, matcher));
-        if (root.nodeType === Node.ELEMENT_NODE && elementMatchesText(this._evaluator, root as Element, matcher))
-          result.unshift(root as Element);
-        return result;
+        return queryList(root, selector, false);
       }
     };
   }
@@ -823,11 +838,11 @@ function unescape(s: string): string {
 }
 
 type Matcher = (text: string) => boolean;
-function createTextMatcher(selector: string): Matcher {
+function createTextMatcher(selector: string): { matcher: Matcher, strict: boolean } {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
-    return text => re.test(text);
+    return { matcher: text => re.test(text), strict: true };
   }
   let strict = false;
   if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
@@ -841,12 +856,13 @@ function createTextMatcher(selector: string): Matcher {
   selector = selector.trim().replace(/\s+/g, ' ');
   if (!strict)
     selector = selector.toLowerCase();
-  return text => {
+  const matcher = (text: string) => {
     text = text.trim().replace(/\s+/g, ' ');
     if (!strict)
       return text.toLowerCase().includes(selector);
     return text === selector;
   };
+  return { matcher, strict };
 }
 
 export default InjectedScript;
