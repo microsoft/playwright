@@ -2037,7 +2037,8 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
-   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).
+   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
+   * match any elements is considered hidden.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options 
    */
@@ -2052,7 +2053,8 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
-   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible).
+   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
+   * considered not visible.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options 
    */
@@ -3992,7 +3994,8 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
-   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).
+   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
+   * match any elements is considered hidden.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options 
    */
@@ -4007,7 +4010,8 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
-   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible).
+   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
+   * considered not visible.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options 
    */
