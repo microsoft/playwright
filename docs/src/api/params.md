@@ -359,17 +359,19 @@ Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all 
 specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be
 saved.
 
-## python-context-option-recordhar-omit-content
-* langs: python
-- `record_har_omit_content` <[boolean]>
-
-Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
-
-## python-context-option-recordhar-path
-* langs: python
-- `record_har_path` <[path]>
+## context-option-recordhar-path
+* langs: csharp, java, python
+  - alias-python: record_har_path
+- `recordHarPath` <[path]>
 
 Path on the filesystem to write the HAR file to.
+
+## context-option-recordhar-omit-content
+* langs: csharp, java, python
+  - alias-python: record_har_omit_content
+- `recordHarOmitContent` <[boolean]>
+
+Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
 
 ## context-option-recordvideo
 * langs: js
@@ -384,14 +386,14 @@ Path on the filesystem to write the HAR file to.
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
 sure to await [`method: BrowserContext.close`] for videos to be saved.
 
-## python-context-option-recordvideo-dir
+## context-option-recordvideo-dir
 * langs: csharp, java, python
   - alias-python: record_video_dir
 - `recordVideoDir` <[path]>
 
 Path to the directory to put videos into.
 
-## python-context-option-recordvideo-size
+## context-option-recordvideo-size
 * langs: csharp, java, python
   - alias-python: record_video_size
 - `recordVideoSize` <[Object]>
@@ -520,8 +522,8 @@ The default value can be changed by using the [`method: BrowserContext.setDefaul
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%
 - %%-context-option-recordhar-%%
-- %%-python-context-option-recordhar-path-%%
-- %%-python-context-option-recordhar-omit-content-%%
+- %%-context-option-recordhar-path-%%
+- %%-context-option-recordhar-omit-content-%%
 - %%-context-option-recordvideo-%%
-- %%-python-context-option-recordvideo-dir-%%
-- %%-python-context-option-recordvideo-size-%%
+- %%-context-option-recordvideo-dir-%%
+- %%-context-option-recordvideo-size-%%
