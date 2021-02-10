@@ -91,7 +91,7 @@ describe('chromium', (suite, { browserName }) => {
     expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
   });
 
-  it('should connect to an existing cdp session 2', (test, {headful}) => {
+  it('should connect to an existing cdp session', (test, {headful}) => {
     test.skip(headful, 'Chromium currently doesn\'t support --remote-debugging-port and --remote-debugging-pipe at the same time.');
   }, async ({browserType, testWorkerIndex, browserOptions, createUserDataDir }) => {
     const port = 9339 + testWorkerIndex;
