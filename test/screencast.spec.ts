@@ -479,4 +479,26 @@ describe('screencast', suite => {
       expectAll(pixels, almostRed);
     }
   });
+
+  it('should emulate an iphone', (test, { browserName }) => {
+    test.skip(browserName === 'firefox', 'isMobile is not supported in Firefox');
+  }, async ({contextFactory, playwright, contextOptions, testInfo}) => {
+    const device = playwright.devices['iPhone 6'];
+    const context = await contextFactory({
+      ...contextOptions,
+      ...device,
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+      },
+    });
+
+    const page = await context.newPage();
+    await new Promise(r => setTimeout(r, 1000));
+    await context.close();
+
+    const videoFile = await page.video().path();
+    const videoPlayer = new VideoPlayer(videoFile);
+    expect(videoPlayer.videoWidth).toBe(374);
+    expect(videoPlayer.videoHeight).toBe(666);
+  });
 });
