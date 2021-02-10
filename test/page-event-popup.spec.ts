@@ -49,7 +49,9 @@ it('should emit for immediately closed popups', async ({browser}) => {
   await context.close();
 });
 
-it('should emit for immediately closed popups 2', async ({page, server}) => {
+it('should emit for immediately closed popups 2', (test, {browserName, video}) => {
+  test.fixme(browserName === 'firefox' && video);
+}, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
