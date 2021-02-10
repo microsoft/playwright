@@ -349,7 +349,7 @@ Logger sink for Playwright logging.
 **DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-recordhar
-* langs: java, js
+* langs: js
 - `recordHar` <[Object]>
   - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`.
