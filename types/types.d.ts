@@ -2089,7 +2089,7 @@ export interface Page {
    * User can inspect selectors or perform manual steps while paused. Resume will continue running the original script from
    * the place it was paused.
    * 
-   * > NOTE: This method requires Playwright to be started in a headed mode, with a falsy [`options: headless`] value in the
+   * > NOTE: This method requires Playwright to be started in a headed mode, with a falsy `headless` value in the
    * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browsertypelaunchoptions).
    */
   pause(): Promise<void>;
