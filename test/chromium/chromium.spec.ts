@@ -1,5 +1,6 @@
 /**
  * Copyright 2018 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
  */
 import { it, expect, describe } from '../fixtures';
 import type { ChromiumBrowserContext } from '../..';
+import http from 'http';
 
 describe('chromium', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');
@@ -87,5 +89,32 @@ describe('chromium', (suite, { browserName }) => {
     // Check for feature URL substring rather than https://www.chromestatus.com to
     // make it work with Edgium.
     expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
+  });
+
+  it('should connect to an existing cdp session 2', (test, {headful}) => {
+    test.skip(headful, 'Chromium currently doesn\'t support --remote-debugging-port and --remote-debugging-pipe at the same time.');
+  }, async ({browserType, testWorkerIndex, browserOptions, createUserDataDir }) => {
+    const port = 9339 + testWorkerIndex;
+    const browserServer = await browserType.launch({
+      ...browserOptions,
+      args: ['--remote-debugging-port=' + port]
+    });
+    try {
+      const json = await new Promise<string>((resolve, reject) => {
+        http.get(`http://localhost:${port}/json/version/`, resp => {
+          let data = '';
+          resp.on('data', chunk => data += chunk);
+          resp.on('end', () => resolve(data));
+        }).on('error', reject);
+      });
+      const cdpBrowser = await browserType.connectOverCDP({
+        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+      });
+      const contexts = cdpBrowser.contexts();
+      expect(contexts.length).toBe(1);
+      await cdpBrowser.close();
+    } finally {
+      await browserServer.close();
+    }
   });
 });

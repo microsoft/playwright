@@ -197,6 +197,7 @@ export type BrowserTypeInitializer = {
 export interface BrowserTypeChannel extends Channel {
   launch(params: BrowserTypeLaunchParams, metadata?: Metadata): Promise<BrowserTypeLaunchResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, metadata?: Metadata): Promise<BrowserTypeLaunchPersistentContextResult>;
+  connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: Metadata): Promise<BrowserTypeConnectOverCDPResult>;
 }
 export type BrowserTypeLaunchParams = {
   executablePath?: string,
@@ -376,6 +377,19 @@ export type BrowserTypeLaunchPersistentContextOptions = {
 };
 export type BrowserTypeLaunchPersistentContextResult = {
   context: BrowserContextChannel,
+};
+export type BrowserTypeConnectOverCDPParams = {
+  wsEndpoint: string,
+  slowMo?: number,
+  timeout?: number,
+};
+export type BrowserTypeConnectOverCDPOptions = {
+  slowMo?: number,
+  timeout?: number,
+};
+export type BrowserTypeConnectOverCDPResult = {
+  browser: BrowserChannel,
+  defaultContext?: BrowserContextChannel,
 };
 
 // ----------- Browser -----------

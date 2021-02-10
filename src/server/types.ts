@@ -254,7 +254,7 @@ export type BrowserContextOptions = {
 
 export type EnvArray = { name: string, value: string }[];
 
-type LaunchOptionsBase = {
+type LaunchOptionsBase = UIOptions & {
   executablePath?: string,
   args?: string[],
   ignoreDefaultArgs?: string[],
@@ -269,7 +269,6 @@ type LaunchOptionsBase = {
   proxy?: ProxySettings,
   downloadsPath?: string,
   chromiumSandbox?: boolean,
-  slowMo?: number,
 };
 export type LaunchOptions = LaunchOptionsBase & {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },
@@ -344,4 +343,8 @@ export type StorageState = {
 export type SetStorageState = {
   cookies?: SetNetworkCookieParam[],
   origins?: OriginStorage[]
+}
+
+export type UIOptions = {
+  slowMo?: number;
 }

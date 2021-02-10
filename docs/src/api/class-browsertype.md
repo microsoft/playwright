@@ -63,6 +63,27 @@ This methods attaches Playwright to an existing browser instance.
   - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to
     `30000` (30 seconds). Pass `0` to disable timeout.
 
+## async method: BrowserType.connectOverCDP
+* langs: js
+- returns: <[Browser]>
+
+This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+
+The default browser context is accessible via [`method: Browser.contexts`].
+
+:::note
+Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
+:::
+
+### param: BrowserType.connectOverCDP.params
+- `params` <[Object]>
+  - `wsEndpoint` <[string]> A CDP websocket endpoint to connect to.
+  - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
+    can see what is going on. Defaults to 0.
+  - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
+  - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to
+    `30000` (30 seconds). Pass `0` to disable timeout.
+
 ## method: BrowserType.executablePath
 - returns: <[string]>
 

@@ -225,6 +225,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
   });
+  scheme.BrowserTypeConnectOverCDPParams = tObject({
+    wsEndpoint: tString,
+    slowMo: tOptional(tNumber),
+    timeout: tOptional(tNumber),
+  });
   scheme.BrowserCloseParams = tOptional(tObject({}));
   scheme.BrowserNewContextParams = tObject({
     noDefaultViewport: tOptional(tBoolean),

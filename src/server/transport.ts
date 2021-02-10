@@ -113,8 +113,8 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   async closeAndWait() {
-    const promise = new Promise(f => this.onclose = f);
+    const promise = new Promise(f => this._ws.once('close', f));
     this.close();
-    return promise; // Make sure to await the actual disconnect.
+    await promise; // Make sure to await the actual disconnect.
   }
 }

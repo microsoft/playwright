@@ -391,6 +391,14 @@ BrowserType:
       returns:
         context: BrowserContext
 
+    connectOverCDP:
+      parameters:
+        wsEndpoint: string
+        slowMo: number?
+        timeout: number?
+      returns:
+        browser: Browser
+        defaultContext: BrowserContext?
 
 Browser:
   type: interface
@@ -1147,7 +1155,7 @@ Frame:
     evaluateExpression:
       parameters:
         expression: string
-        isFunction: boolean?  
+        isFunction: boolean?
         arg: SerializedArgument
         world:
           type: enum?

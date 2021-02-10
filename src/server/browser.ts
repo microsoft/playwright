@@ -25,7 +25,7 @@ import * as registry from '../utils/registry';
 import { SdkObject } from './instrumentation';
 
 export interface BrowserProcess {
-  onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
+  onclose?: ((exitCode: number | null, signal: string | null) => void);
   process?: ChildProcess;
   kill(): Promise<void>;
   close(): Promise<void>;
@@ -37,7 +37,7 @@ export type PlaywrightOptions = {
   rootSdkObject: SdkObject,
 };
 
-export type BrowserOptions = PlaywrightOptions & {
+export type BrowserOptions = PlaywrightOptions & types.UIOptions & {
   name: string,
   isChromium: boolean,
   downloadsPath?: string,
@@ -47,7 +47,6 @@ export type BrowserOptions = PlaywrightOptions & {
   proxy?: ProxySettings,
   protocolLogger: types.ProtocolLogger,
   browserLogsCollector: RecentLogsCollector,
-  slowMo?: number,
 };
 
 export abstract class Browser extends SdkObject {

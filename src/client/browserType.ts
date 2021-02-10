@@ -185,6 +185,25 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       });
     }, logger);
   }
+
+  async connectOverCDP(params: ConnectOptions): Promise<Browser> {
+    if (this.name() !== 'chromium')
+      throw new Error('Connecting over CDP is only supported in Chromium.');
+    const logger = params.logger;
+    return this._wrapApiCall('browserType.connectOverCDP', async () => {
+      const result = await this._channel.connectOverCDP({
+        wsEndpoint: params.wsEndpoint,
+        slowMo: params.slowMo,
+        timeout: params.timeout
+      });
+      const browser = Browser.from(result.browser);
+      if (result.defaultContext)
+        browser._contexts.add(BrowserContext.from(result.defaultContext));
+      browser._isRemote = true;
+      browser._logger = logger;
+      return browser;
+    }, logger);
+  }
 }
 
 export class RemoteBrowser extends ChannelOwner<channels.RemoteBrowserChannel, channels.RemoteBrowserInitializer> {
