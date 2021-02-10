@@ -72,37 +72,17 @@ export interface InstrumentationListener {
   onAfterAction?(result: ActionResult, sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
 }
 
-export class InstrumentationMultiplexer implements Instrumentation {
-  private _listeners: InstrumentationListener[];
-
-  constructor(listeners: InstrumentationListener[]) {
-    this._listeners = listeners;
-  }
-
-  async onContextCreated(context: BrowserContext): Promise<void> {
-    for (const listener of this._listeners)
-      await listener.onContextCreated?.(context);
-  }
-
-  async onContextWillDestroy(context: BrowserContext): Promise<void> {
-    for (const listener of this._listeners)
-      await listener.onContextWillDestroy?.(context);
-  }
-
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {
-    for (const listener of this._listeners)
-      await listener.onContextDidDestroy?.(context);
-  }
-
-  async onActionCheckpoint(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    for (const listener of this._listeners)
-      await listener.onActionCheckpoint?.(name, sdkObject, metadata);
-  }
-
-  async onAfterAction(result: ActionResult, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    for (const listener of this._listeners)
-      await listener.onAfterAction?.(result, sdkObject, metadata);
-  }
+export function multiplexInstrumentation(listeners: InstrumentationListener[]): Instrumentation {
+  return new Proxy({}, {
+    get: (obj: any, prop: string) => {
+      if (!prop.startsWith('on'))
+        return obj[prop];
+      return async (...params: any[]) => {
+        for (const listener of listeners)
+          await (listener as any)[prop]?.(...params);
+      };
+    },
+  });
 }
 
 export function internalCallMetadata(): CallMetadata {
