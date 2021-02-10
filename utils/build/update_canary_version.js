@@ -26,7 +26,7 @@ if (process.argv[2] === '--today-date') {
   const day = date.getDate();
   const year = date.getFullYear();
   packageJSON.version = `${packageJSON.version}-alpha-${month}-${day}-${year}`;
-} else if (prcess.argv[2] === '--commit-timestamp') {
+} else if (process.argv[2] === '--commit-timestamp') {
   const timestamp = execSync('git show -s --format=%ct HEAD', {
     stdio: ['ignore', 'pipe', 'ignore']
   }).toString('utf8').trim();
