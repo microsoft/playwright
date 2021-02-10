@@ -26,6 +26,6 @@ it('should timeout waiting for stable position', async ({page, server}) => {
   });
   const error = await button.click({ timeout: 3000 }).catch(e => e);
   expect(error.message).toContain('elementHandle.click: Timeout 3000ms exceeded.');
-  expect(error.message).toContain('waiting for element to be visible, enabled and not moving');
-  expect(error.message).toContain('element is moving - waiting');
+  expect(error.message).toContain('waiting for element to be visible, enabled and stable');
+  expect(error.message).toContain('element is not stable - waiting');
 });

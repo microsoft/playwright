@@ -38,11 +38,16 @@ export type InjectedScriptPoll<T> = {
   cancel: () => void,
 };
 
+export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked';
+export type ElementState = ElementStateWithoutStable | 'stable';
+
 export class InjectedScript {
   private _enginesV1: Map<string, SelectorEngine>;
   _evaluator: SelectorEvaluatorImpl;
+  private _stableRafCount: number;
+  private _replaceRafWithTimeout: boolean;
 
-  constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(stableRafCount: number, replaceRafWithTimeout: boolean, customEngines: { name: string, engine: SelectorEngine}[]) {
     this._enginesV1 = new Map();
     this._enginesV1.set('xpath', XPathEngine);
     this._enginesV1.set('xpath:light', XPathEngine);
@@ -61,6 +66,8 @@ export class InjectedScript {
 
     // No custom engines in V2 for now.
     this._evaluator = new SelectorEvaluatorImpl(new Map());
+    this._stableRafCount = stableRafCount;
+    this._replaceRafWithTimeout = replaceRafWithTimeout;
   }
 
   parseSelector(selector: string): ParsedSelector {
@@ -319,148 +326,206 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  waitForOptionsAndSelect(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): InjectedScriptPoll<string[] | 'error:notconnected' | FatalDOMError> {
-    return this.pollRaf((progress, continuePolling) => {
-      const element = this.findLabelTarget(node as Element);
-      if (!element || !element.isConnected)
-        return 'error:notconnected';
-      if (element.nodeName.toLowerCase() !== 'select')
-        return 'error:notselect';
-      const select = element as HTMLSelectElement;
-      const options = Array.from(select.options);
-      const selectedOptions = [];
-      let remainingOptionsToSelect = optionsToSelect.slice();
-      for (let index = 0; index < options.length; index++) {
-        const option = options[index];
-        const filter = (optionToSelect: Node | { value?: string, label?: string, index?: number }) => {
-          if (optionToSelect instanceof Node)
-            return option === optionToSelect;
-          let matches = true;
-          if (optionToSelect.value !== undefined)
-            matches = matches && optionToSelect.value === option.value;
-          if (optionToSelect.label !== undefined)
-            matches = matches && optionToSelect.label === option.label;
-          if (optionToSelect.index !== undefined)
-            matches = matches && optionToSelect.index === index;
-          return matches;
-        };
-        if (!remainingOptionsToSelect.some(filter))
+  private _retarget(node: Node): Element | null {
+    let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
+    if (!element)
+      return null;
+    element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
+    if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
+        !(element as any).isContentEditable) {
+      // Go up to the label that might be connected to the input/textarea.
+      element = element.closest('label') || element;
+    }
+    if (element.nodeName === 'LABEL')
+      element = (element as HTMLLabelElement).control || element;
+    return element;
+  }
+
+  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[],
+    callback: (element: Element | null, progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol): InjectedScriptPoll<T | 'error:notconnected' | FatalDOMError> {
+    let lastRect: { x: number, y: number, width: number, height: number } | undefined;
+    let counter = 0;
+    let samePositionCounter = 0;
+    let lastTime = 0;
+
+    const predicate = (progress: InjectedScriptProgress, continuePolling: symbol) => {
+      const element = this._retarget(node);
+
+      for (const state of states) {
+        if (state !== 'stable') {
+          const result = this._checkElementState(element, state);
+          if (typeof result !== 'boolean')
+            return result;
+          if (!result) {
+            progress.logRepeating(`    element is not ${state} - waiting...`);
+            return continuePolling;
+          }
           continue;
-        selectedOptions.push(option);
-        if (select.multiple) {
-          remainingOptionsToSelect = remainingOptionsToSelect.filter(o => !filter(o));
-        } else {
-          remainingOptionsToSelect = [];
-          break;
         }
+
+        if (!element)
+          return 'error:notconnected';
+
+        // First raf happens in the same animation frame as evaluation, so it does not produce
+        // any client rect difference compared to synchronous call. We skip the synchronous call
+        // and only force layout during actual rafs as a small optimisation.
+        if (++counter === 1)
+          return continuePolling;
+
+        // Drop frames that are shorter than 16ms - WebKit Win bug.
+        const time = performance.now();
+        if (this._stableRafCount > 1 && time - lastTime < 15)
+          return continuePolling;
+        lastTime = time;
+
+        const clientRect = element.getBoundingClientRect();
+        const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
+        const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
+        if (samePosition)
+          ++samePositionCounter;
+        else
+          samePositionCounter = 0;
+        const isStable = samePositionCounter >= this._stableRafCount;
+        const isStableForLogs = isStable || !lastRect;
+        lastRect = rect;
+        if (!isStableForLogs)
+          progress.logRepeating(`    element is not stable - waiting...`);
+        if (!isStable)
+          return continuePolling;
       }
-      if (remainingOptionsToSelect.length) {
-        progress.logRepeating('    did not find some options - waiting... ');
-        return continuePolling;
-      }
-      select.value = undefined as any;
-      selectedOptions.forEach(option => option.selected = true);
-      progress.log('    selected specified option(s)');
-      select.dispatchEvent(new Event('input', { 'bubbles': true }));
-      select.dispatchEvent(new Event('change', { 'bubbles': true }));
-      return selectedOptions.map(option => option.value);
-    });
+
+      return callback(element, progress, continuePolling);
+    };
+
+    if (this._replaceRafWithTimeout)
+      return this.pollInterval(16, predicate);
+    else
+      return this.pollRaf(predicate);
   }
 
-  waitForEnabledAndFill(node: Node, value: string): InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {
-    return this.pollRaf((progress, continuePolling) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'error:notelement';
+  private _checkElementState(element: Element | null, state: ElementStateWithoutStable): boolean | 'error:notconnected' | FatalDOMError {
+    if (!element || !element.isConnected) {
+      if (state === 'hidden')
+        return true;
+      return 'error:notconnected';
+    }
+    if (state === 'visible')
+      return this.isVisible(element);
+    if (state === 'hidden')
+      return !this.isVisible(element);
 
-      if (node && node.nodeName.toLowerCase() !== 'input' &&
-          node.nodeName.toLowerCase() !== 'textarea' &&
-          !(node as any).isContentEditable) {
-        // Go up to the label that might be connected to the input/textarea.
-        node = (node as Element).closest('label') || node;
-      }
-      const element = this.findLabelTarget(node as Element);
+    const disabled = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element.nodeName) && element.hasAttribute('disabled');
+    if (state === 'disabled')
+      return disabled;
+    if (state === 'enabled')
+      return !disabled;
 
-      if (element && !element.isConnected)
-        return 'error:notconnected';
-      if (!element || !this.isVisible(element)) {
-        progress.logRepeating('    element is not visible - waiting...');
-        return continuePolling;
-      }
-      if (element.nodeName.toLowerCase() === 'input') {
-        const input = element as HTMLInputElement;
-        const type = input.type.toLowerCase();
-        const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local', 'month', 'week']);
-        const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
-        if (!kTextInputTypes.has(type) && !kDateTypes.has(type)) {
-          progress.log(`    input of type "${type}" cannot be filled`);
-          return 'error:notfillableinputtype';
-        }
-        if (type === 'number') {
-          value = value.trim();
-          if (isNaN(Number(value)))
-            return 'error:notfillablenumberinput';
-        }
-        if (input.disabled) {
-          progress.logRepeating('    element is disabled - waiting...');
-          return continuePolling;
-        }
-        if (input.readOnly) {
-          progress.logRepeating('    element is readonly - waiting...');
-          return continuePolling;
-        }
-        if (kDateTypes.has(type)) {
-          value = value.trim();
-          input.focus();
-          input.value = value;
-          if (input.value !== value)
-            return 'error:notvaliddate';
-          element.dispatchEvent(new Event('input', { 'bubbles': true }));
-          element.dispatchEvent(new Event('change', { 'bubbles': true }));
-          return 'done';  // We have already changed the value, no need to input it.
-        }
-      } else if (element.nodeName.toLowerCase() === 'textarea') {
-        const textarea = element as HTMLTextAreaElement;
-        if (textarea.disabled) {
-          progress.logRepeating('    element is disabled - waiting...');
-          return continuePolling;
-        }
-        if (textarea.readOnly) {
-          progress.logRepeating('    element is readonly - waiting...');
-          return continuePolling;
-        }
-      } else if (!(element as HTMLElement).isContentEditable) {
-        return 'error:notfillableelement';
-      }
-      const result = this._selectText(element);
-      if (result === 'error:notvisible') {
-        progress.logRepeating('    element is not visible - waiting...');
-        return continuePolling;
-      }
-      return 'needsinput';  // Still need to input the value.
-    });
+    const editable = !(['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName) && element.hasAttribute('readonly'));
+    if (state === 'editable')
+      return !disabled && editable;
+
+    if (state === 'checked') {
+      if (element.getAttribute('role') === 'checkbox')
+        return element.getAttribute('aria-checked') === 'true';
+      if (element.nodeName !== 'INPUT')
+        return 'error:notcheckbox';
+      if (!['radio', 'checkbox'].includes((element as HTMLInputElement).type.toLowerCase()))
+        return 'error:notcheckbox';
+      return (element as HTMLInputElement).checked;
+    }
+    throw new Error(`Unexpected element state "${state}"`);
   }
 
-  waitForVisibleAndSelectText(node: Node): InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'done'> {
-    return this.pollRaf((progress, continuePolling) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'error:notelement';
-      if (!node.isConnected)
-        return 'error:notconnected';
-      const element = node as Element;
-      if (!this.isVisible(element)) {
-        progress.logRepeating('    element is not visible - waiting...');
-        return continuePolling;
-      }
-      const result = this._selectText(element);
-      if (result === 'error:notvisible') {
-        progress.logRepeating('    element is not visible - waiting...');
-        return continuePolling;
-      }
-      return result;
-    });
+  checkElementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' | FatalDOMError {
+    const element = this._retarget(node);
+    return this._checkElementState(element, state);
   }
 
-  private _selectText(element: Element): 'error:notvisible' | 'error:notconnected' | 'done' {
+  selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
+    element: Element | null, progress: InjectedScriptProgress, continuePolling: symbol): string[] | 'error:notconnected' | FatalDOMError | symbol {
+    if (!element)
+      return 'error:notconnected';
+    if (element.nodeName.toLowerCase() !== 'select')
+      return 'error:notselect';
+    const select = element as HTMLSelectElement;
+    const options = Array.from(select.options);
+    const selectedOptions = [];
+    let remainingOptionsToSelect = optionsToSelect.slice();
+    for (let index = 0; index < options.length; index++) {
+      const option = options[index];
+      const filter = (optionToSelect: Node | { value?: string, label?: string, index?: number }) => {
+        if (optionToSelect instanceof Node)
+          return option === optionToSelect;
+        let matches = true;
+        if (optionToSelect.value !== undefined)
+          matches = matches && optionToSelect.value === option.value;
+        if (optionToSelect.label !== undefined)
+          matches = matches && optionToSelect.label === option.label;
+        if (optionToSelect.index !== undefined)
+          matches = matches && optionToSelect.index === index;
+        return matches;
+      };
+      if (!remainingOptionsToSelect.some(filter))
+        continue;
+      selectedOptions.push(option);
+      if (select.multiple) {
+        remainingOptionsToSelect = remainingOptionsToSelect.filter(o => !filter(o));
+      } else {
+        remainingOptionsToSelect = [];
+        break;
+      }
+    }
+    if (remainingOptionsToSelect.length) {
+      progress.logRepeating('    did not find some options - waiting... ');
+      return continuePolling;
+    }
+    select.value = undefined as any;
+    selectedOptions.forEach(option => option.selected = true);
+    progress.log('    selected specified option(s)');
+    select.dispatchEvent(new Event('input', { 'bubbles': true }));
+    select.dispatchEvent(new Event('change', { 'bubbles': true }));
+    return selectedOptions.map(option => option.value);
+  }
+
+  fill(value: string, element: Element | null, progress: InjectedScriptProgress): FatalDOMError | 'error:notconnected' | 'needsinput' | 'done' {
+    if (!element)
+      return 'error:notconnected';
+    if (element.nodeName.toLowerCase() === 'input') {
+      const input = element as HTMLInputElement;
+      const type = input.type.toLowerCase();
+      const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local', 'month', 'week']);
+      const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
+      if (!kTextInputTypes.has(type) && !kDateTypes.has(type)) {
+        progress.log(`    input of type "${type}" cannot be filled`);
+        return 'error:notfillableinputtype';
+      }
+      if (type === 'number') {
+        value = value.trim();
+        if (isNaN(Number(value)))
+          return 'error:notfillablenumberinput';
+      }
+      if (kDateTypes.has(type)) {
+        value = value.trim();
+        input.focus();
+        input.value = value;
+        if (input.value !== value)
+          return 'error:notvaliddate';
+        element.dispatchEvent(new Event('input', { 'bubbles': true }));
+        element.dispatchEvent(new Event('change', { 'bubbles': true }));
+        return 'done';  // We have already changed the value, no need to input it.
+      }
+    } else if (element.nodeName.toLowerCase() === 'textarea') {
+      // Nothing to check here.
+    } else if (!(element as HTMLElement).isContentEditable) {
+      return 'error:notfillableelement';
+    }
+    this.selectText(element);
+    return 'needsinput';  // Still need to input the value.
+  }
+
+  selectText(element: Element | null): 'error:notconnected' | 'done' {
+    if (!element)
+      return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       input.select();
@@ -477,68 +542,12 @@ export class InjectedScript {
     const range = element.ownerDocument.createRange();
     range.selectNodeContents(element);
     const selection = element.ownerDocument.defaultView!.getSelection();
-    if (!selection)
-      return 'error:notvisible';
-    selection.removeAllRanges();
-    selection.addRange(range);
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
     (element as HTMLElement | SVGElement).focus();
     return 'done';
-  }
-
-  waitForNodeVisible(node: Node): InjectedScriptPoll<'error:notconnected' | 'done'> {
-    return this.pollRaf((progress, continuePolling) => {
-      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
-      if (!node.isConnected || !element)
-        return 'error:notconnected';
-      if (!this.isVisible(element)) {
-        progress.logRepeating('    element is not visible - waiting...');
-        return continuePolling;
-      }
-      return 'done';
-    });
-  }
-
-  waitForNodeHidden(node: Node): InjectedScriptPoll<'done'> {
-    return this.pollRaf((progress, continuePolling) => {
-      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
-      if (!node.isConnected || !element)
-        return 'done';
-      if (this.isVisible(element)) {
-        progress.logRepeating('    element is visible - waiting...');
-        return continuePolling;
-      }
-      return 'done';
-    });
-  }
-
-  waitForNodeEnabled(node: Node, waitForEditable?: boolean): InjectedScriptPoll<'error:notconnected' | 'done'> {
-    return this.pollRaf((progress, continuePolling) => {
-      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
-      if (!node.isConnected || !element)
-        return 'error:notconnected';
-      if (this.isElementDisabled(element)) {
-        progress.logRepeating('    element is not enabled - waiting...');
-        return continuePolling;
-      }
-      if (waitForEditable && this.isElementReadOnly(element)) {
-        progress.logRepeating('    element is readonly - waiting...');
-        return continuePolling;
-      }
-      return 'done';
-    });
-  }
-
-  waitForNodeDisabled(node: Node): InjectedScriptPoll<'error:notconnected' | 'done'> {
-    return this.pollRaf((progress, continuePolling) => {
-      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
-      if (!node.isConnected || !element)
-        return 'error:notconnected';
-      if (!this.isElementDisabled(element)) {
-        progress.logRepeating('    element is enabled - waiting...');
-        return continuePolling;
-      }
-      return 'done';
-    });
   }
 
   focusNode(node: Node, resetSelectionIfNotFocused?: boolean): FatalDOMError | 'error:notconnected' | 'done' {
@@ -558,24 +567,6 @@ export class InjectedScript {
       }
     }
     return 'done';
-  }
-
-  findLabelTarget(element: Element): Element | undefined {
-    return element.nodeName === 'LABEL' ? (element as HTMLLabelElement).control || undefined : element;
-  }
-
-  isCheckboxChecked(node: Node) {
-    if (node.nodeType !== Node.ELEMENT_NODE)
-      throw new Error('Not a checkbox or radio button');
-    const element = node as Element;
-    if (element.getAttribute('role') === 'checkbox')
-      return element.getAttribute('aria-checked') === 'true';
-    const input = this.findLabelTarget(element);
-    if (!input || input.nodeName !== 'INPUT')
-      throw new Error('Not a checkbox or radio button');
-    if (!['radio', 'checkbox'].includes((input as HTMLInputElement).type.toLowerCase()))
-      throw new Error('Not a checkbox or radio button');
-    return (input as HTMLInputElement).checked;
   }
 
   setInputFiles(node: Node, payloads: { name: string, mimeType: string, buffer: string }[]) {
@@ -599,66 +590,6 @@ export class InjectedScript {
     input.files = dt.files;
     input.dispatchEvent(new Event('input', { 'bubbles': true }));
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
-  }
-
-  waitForDisplayedAtStablePosition(node: Node, rafOptions: { rafCount: number, useTimeout?: boolean }, waitForEnabled: boolean): InjectedScriptPoll<'error:notconnected' | 'done'> {
-    let lastRect: { x: number, y: number, width: number, height: number } | undefined;
-    let counter = 0;
-    let samePositionCounter = 0;
-    let lastTime = 0;
-
-    const predicate = (progress: InjectedScriptProgress, continuePolling: symbol) => {
-      // First raf happens in the same animation frame as evaluation, so it does not produce
-      // any client rect difference compared to synchronous call. We skip the synchronous call
-      // and only force layout during actual rafs as a small optimisation.
-      if (++counter === 1)
-        return continuePolling;
-
-      if (!node.isConnected)
-        return 'error:notconnected';
-      const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-      if (!element)
-        return 'error:notconnected';
-
-      // Drop frames that are shorter than 16ms - WebKit Win bug.
-      const time = performance.now();
-      if (rafOptions.rafCount > 1 && time - lastTime < 15)
-        return continuePolling;
-      lastTime = time;
-
-      // Note: this logic should be similar to isVisible() to avoid surprises.
-      const clientRect = element.getBoundingClientRect();
-      const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-      const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
-      const isDisplayed = rect.width > 0 && rect.height > 0;
-      if (samePosition)
-        ++samePositionCounter;
-      else
-        samePositionCounter = 0;
-      const isStable = samePositionCounter >= rafOptions.rafCount;
-      const isStableForLogs = isStable || !lastRect;
-      lastRect = rect;
-
-      const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
-      const isVisible = !!style && style.visibility !== 'hidden';
-
-      const isDisabled = waitForEnabled && this.isElementDisabled(element);
-
-      if (isDisplayed && isStable && isVisible && !isDisabled)
-        return 'done';
-
-      if (!isDisplayed || !isVisible)
-        progress.logRepeating(`    element is not visible - waiting...`);
-      else if (!isStableForLogs)
-        progress.logRepeating(`    element is moving - waiting...`);
-      else if (isDisabled)
-        progress.logRepeating(`    element is disabled - waiting...`);
-      return continuePolling;
-    };
-    if (rafOptions.useTimeout)
-      return this.pollInterval(16, predicate);
-    else
-      return this.pollRaf(predicate);
   }
 
   checkHitTargetAt(node: Node, point: { x: number, y: number }): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
@@ -706,16 +637,6 @@ export class InjectedScript {
       default: event = new Event(type, eventInit); break;
     }
     node.dispatchEvent(event);
-  }
-
-  isElementDisabled(element: Element): boolean {
-    const elementOrButton = element.closest('button, [role=button]') || element;
-    return ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
-  }
-
-  isElementReadOnly(element: Element): boolean {
-    const target = this.findLabelTarget(element);
-    return !!target && ['INPUT', 'TEXTAREA'].includes(target.nodeName) && target.hasAttribute('readonly');
   }
 
   deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {

@@ -6,6 +6,7 @@
         "moduleResolution": "node",
         "target": "ESNext",
         "strictNullChecks": false,
+        "strictBindCallApply": true,
         "allowSyntheticDefaultImports": true,
     },
     "include": ["**/*.spec.js", "**/*.ts"]
