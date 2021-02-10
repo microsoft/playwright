@@ -12,23 +12,11 @@
   - `lineNumber` <[int]> 0-based line number in the resource.
   - `columnNumber` <[int]> 0-based column number in the resource.
 
-## method: ConsoleMessage.url
+## method: ConsoleMessage.location
 * langs: csharp, java
 - returns: <[string]>
 
-URL of the resource.
-
-## method: ConsoleMessage.lineNumber
-* langs: csharp, java
-- returns: <[int]>
-
-0-based line number in the resource.
-
-## method: ConsoleMessage.columnNumber
-* langs: csharp, java
-- returns: <[int]>
-
-0-based column number in the resource.
+URL of the resource followed by 0-based line and column numbers in the resource formatted as `URL:line:column`.
 
 ## method: ConsoleMessage.text
 - returns: <[string]>
