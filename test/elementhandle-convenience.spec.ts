@@ -159,16 +159,21 @@ it('getAttribute should be atomic', async ({ playwright, page }) => {
 
 it('isVisible and isHidden should work', async ({ page }) => {
   await page.setContent(`<div>Hi</div><span></span>`);
+
   const div = await page.$('div');
   expect(await div.isVisible()).toBe(true);
   expect(await div.isHidden()).toBe(false);
   expect(await page.isVisible('div')).toBe(true);
   expect(await page.isHidden('div')).toBe(false);
+
   const span = await page.$('span');
   expect(await span.isVisible()).toBe(false);
   expect(await span.isHidden()).toBe(true);
   expect(await page.isVisible('span')).toBe(false);
   expect(await page.isHidden('span')).toBe(true);
+
+  expect(await page.isVisible('no-such-element')).toBe(false);
+  expect(await page.isHidden('no-such-element')).toBe(true);
 });
 
 it('isEnabled and isDisabled should work', async ({ page }) => {
