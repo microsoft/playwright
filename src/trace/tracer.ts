@@ -27,7 +27,7 @@ import { helper, RegisteredListener } from '../server/helper';
 import { Dialog } from '../server/dialog';
 import { Frame, NavigationEvent } from '../server/frames';
 import { snapshotScript } from './snapshotterInjected';
-import { ActionResult, CallMetadata, InstrumentationListener, SdkObject } from '../server/instrumentation';
+import { CallMetadata, InstrumentationListener, SdkObject } from '../server/instrumentation';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
@@ -59,8 +59,8 @@ export class Tracer implements InstrumentationListener {
     this._contextTracers.get(sdkObject.attribution.context!)?.onActionCheckpoint(name, sdkObject, metadata);
   }
 
-  async onAfterAction(result: ActionResult, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onAfterAction(result, sdkObject, metadata);
+  async onAfterAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?.onAfterAction(sdkObject, metadata);
   }
 }
 
@@ -160,7 +160,7 @@ class ContextTracer implements SnapshotterDelegate {
     await this._snapshotter.forceSnapshot(sdkObject.attribution.page, snapshotId);
   }
 
-  async onAfterAction(result: ActionResult, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onAfterAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!sdkObject.attribution.page)
       return;
     const event: trace.ActionTraceEvent = {
@@ -173,10 +173,10 @@ class ContextTracer implements SnapshotterDelegate {
       // FIXME: filter out evaluation snippets, binary
       params: metadata.params,
       stack: metadata.stack,
-      startTime: result.startTime,
-      endTime: result.endTime,
-      logs: result.logs.slice(),
-      error: result.error ? result.error.stack : undefined,
+      startTime: metadata.startTime,
+      endTime: metadata.endTime,
+      logs: metadata.log.slice(),
+      error: metadata.error ? metadata.error.stack : undefined,
       snapshots: snapshotsForMetadata(metadata),
     };
     this._appendTraceEvent(event);

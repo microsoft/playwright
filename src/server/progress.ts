@@ -17,7 +17,7 @@
 import { TimeoutError } from '../utils/errors';
 import { assert, monotonicTime } from '../utils/utils';
 import { rewriteErrorMessage } from '../utils/stackTrace';
-import { debugLogger, LogName } from '../utils/debugLogger';
+import { LogName } from '../utils/debugLogger';
 import { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 
 export interface Progress {
@@ -38,11 +38,10 @@ export class ProgressController {
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
-  private _logName: LogName = 'api';
+  private _logName = 'api';
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number = 0;
   private _timeout: number = 0;
-  private _logRecording: string[] = [];
   readonly metadata: CallMetadata;
   readonly instrumentation: Instrumentation;
   readonly sdkObject: SdkObject;
@@ -70,9 +69,10 @@ export class ProgressController {
 
     const progress: Progress = {
       log: message => {
-        if (this._state === 'running')
-          this._logRecording.push(message);
-        debugLogger.log(this._logName, message);
+        if (this._state === 'running') {
+          this.metadata.log.push(message);
+          this.instrumentation.onLog(this._logName, message, this.sdkObject, this.metadata);
+        }
       },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
@@ -93,34 +93,25 @@ export class ProgressController {
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
     const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
-    const startTime = monotonicTime();
     try {
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
       clearTimeout(timer);
       this._state = 'finished';
-      await this.instrumentation.onAfterAction({
-        startTime,
-        endTime: monotonicTime(),
-        logs: this._logRecording,
-      }, this.sdkObject, this.metadata);
-      this._logRecording = [];
+      this.metadata.endTime = monotonicTime();
+      await this.instrumentation.onAfterAction(this.sdkObject, this.metadata);
       return result;
     } catch (e) {
       clearTimeout(timer);
       this._state = 'aborted';
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
-      await this.instrumentation.onAfterAction({
-        startTime,
-        endTime: monotonicTime(),
-        logs: this._logRecording,
-        error: e,
-      }, this.sdkObject, this.metadata);
+      this.metadata.endTime = monotonicTime();
+      this.metadata.error = e;
+      await this.instrumentation.onAfterAction(this.sdkObject, this.metadata);
       rewriteErrorMessage(e,
           e.message +
-          formatLogRecording(this._logRecording) +
+          formatLogRecording(this.metadata.log) +
           kLoggingNote);
-      this._logRecording = [];
       throw e;
     }
   }

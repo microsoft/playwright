@@ -18,6 +18,7 @@ import { BrowserContext } from '../browserContext';
 import { isDebugMode } from '../../utils/utils';
 import { RecorderSupplement } from './recorderSupplement';
 import { InstrumentationListener } from '../instrumentation';
+import { debugLogger } from '../../utils/debugLogger';
 
 export class InspectorController implements InstrumentationListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
@@ -27,5 +28,9 @@ export class InspectorController implements InstrumentationListener {
         terminal: true,
       });
     }
+  }
+
+  onLog(logName: string, message: string): void {
+    debugLogger.log(logName as any, message);
   }
 }

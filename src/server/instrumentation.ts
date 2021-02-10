@@ -31,10 +31,14 @@ export type Attribution = {
 };
 
 export type CallMetadata = {
+  startTime: number;
+  endTime: number;
   type: string;
   method: string;
   params: any;
   stack?: StackFrame[];
+  log: string[];
+  error?: Error;
 };
 
 export class SdkObject extends EventEmitter {
@@ -49,19 +53,13 @@ export class SdkObject extends EventEmitter {
   }
 }
 
-export type ActionResult = {
-  logs: string[],
-  startTime: number,
-  endTime: number,
-  error?: Error,
-};
-
 export interface Instrumentation {
   onContextCreated(context: BrowserContext): Promise<void>;
   onContextWillDestroy(context: BrowserContext): Promise<void>;
   onContextDidDestroy(context: BrowserContext): Promise<void>;
   onActionCheckpoint(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onAfterAction(result: ActionResult, sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onAfterAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
 }
 
 export interface InstrumentationListener {
@@ -69,7 +67,8 @@ export interface InstrumentationListener {
   onContextWillDestroy?(context: BrowserContext): Promise<void>;
   onContextDidDestroy?(context: BrowserContext): Promise<void>;
   onActionCheckpoint?(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onAfterAction?(result: ActionResult, sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onAfterAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
 }
 
 export function multiplexInstrumentation(listeners: InstrumentationListener[]): Instrumentation {
@@ -87,8 +86,11 @@ export function multiplexInstrumentation(listeners: InstrumentationListener[]): 
 
 export function internalCallMetadata(): CallMetadata {
   return {
+    startTime: 0,
+    endTime: 0,
     type: 'Internal',
     method: '',
     params: {},
+    log: [],
   };
 }

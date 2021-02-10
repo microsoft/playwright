@@ -18,10 +18,11 @@ import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
 import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
-import { assert, createGuid, debugAssert, isUnderTest } from '../utils/utils';
+import { assert, createGuid, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata } from '../server/instrumentation';
+import { StackFrame } from '../common/types';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -124,7 +125,7 @@ export class DispatcherConnection {
   private _rootDispatcher: Root;
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
-  private _validateMetadata: (metadata: any) => any;
+  private _validateMetadata: (metadata: any) => { stack?: StackFrame[] };
 
   sendMessageToClient(guid: string, method: string, params: any) {
     this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params) });
@@ -180,9 +181,12 @@ export class DispatcherConnection {
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
       const callMetadata: CallMetadata = {
         ...this._validateMetadata(metadata),
+        startTime: monotonicTime(),
+        endTime: 0,
         type: dispatcher._type,
         method,
         params,
+        log: [],
       };
       const result = await (dispatcher as any)[method](validated, callMetadata);
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });

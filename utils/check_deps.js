@@ -114,7 +114,7 @@ DEPS['src/install/'] = ['src/utils/'];
 // Client depends on chromium protocol for types.
 DEPS['src/client/'] = ['src/common/', 'src/utils/', 'src/protocol/', 'src/server/chromium/protocol.ts'];
 
-DEPS['src/dispatchers/'] = ['src/utils/', 'src/protocol/', 'src/server/**'];
+DEPS['src/dispatchers/'] = ['src/common/', 'src/utils/', 'src/protocol/', 'src/server/**'];
 
 // Generic dependencies for server-side code.
 DEPS['src/server/'] = [
