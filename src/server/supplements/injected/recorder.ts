@@ -16,20 +16,17 @@
 
 import type * as actions from '../recorder/recorderActions';
 import type InjectedScript from '../../injected/injectedScript';
-import { generateSelector } from './selectorGenerator';
+import { generateSelector, querySelector } from './selectorGenerator';
 import { html } from './html';
-
-type Mode = 'inspecting' | 'recording' | 'none';
-type State = {
-  mode: Mode,
-};
+import type { Point } from '../../../common/types';
+import type { UIState } from '../recorder/recorderTypes';
 
 declare global {
   interface Window {
     _playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
     _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
     _playwrightRecorderCommitAction: () => Promise<void>;
-    _playwrightRecorderState: () => Promise<State>;
+    _playwrightRecorderState: () => Promise<UIState>;
     _playwrightRecorderPrintSelector: (text: string) => Promise<void>;
     _playwrightResume: () => Promise<void>;
   }
@@ -52,6 +49,9 @@ export class Recorder {
   private _expectProgrammaticKeyUp = false;
   private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
   private _mode: 'none' | 'inspecting' | 'recording' = 'none';
+  private _actionPointElement: HTMLElement;
+  private _actionPoint: Point | undefined;
+  private _actionSelector: string | undefined;
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -69,6 +69,7 @@ export class Recorder {
       </x-pw-glass>`;
 
     this._tooltipElement = html`<x-pw-tooltip></x-pw-tooltip>`;
+    this._actionPointElement = html`<x-pw-action-point hidden=true></x-pw-action-point>`;
 
     this._innerGlassPaneElement = html`
       <x-pw-glass-inner style="flex: auto">
@@ -78,6 +79,7 @@ export class Recorder {
     // Use a closed shadow root to prevent selectors matching our internal previews.
     this._glassPaneShadow = this._outerGlassPaneElement.attachShadow({ mode: 'closed' });
     this._glassPaneShadow.appendChild(this._innerGlassPaneElement);
+    this._glassPaneShadow.appendChild(this._actionPointElement);
     this._glassPaneShadow.appendChild(html`
       <style>
         x-pw-tooltip {
@@ -103,6 +105,19 @@ export class Recorder {
           position: absolute;
           top: 0;
         }
+        x-pw-action-point {
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          background: red;
+          border-radius: 10px;
+          pointer-events: none;
+          margin: -10px 0 0 -10px;
+          z-index: 2;
+        }
+        *[hidden] {
+          display: none !important;
+        }
       </style>
     `);
     this._refreshListenersIfNeeded();
@@ -112,11 +127,6 @@ export class Recorder {
         (window as any)._recorderScriptReadyForTest();
     }, 500);
     this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
-  }
-
-  private _setMode(mode: Mode): void {
-    this._clearHighlight();
-    this._mode = mode;
   }
 
   private _refreshListenersIfNeeded() {
@@ -136,6 +146,7 @@ export class Recorder {
       addEventListener(document, 'focus', () => this._onFocus(), true),
       addEventListener(document, 'scroll', () => {
         this._hoveredModel = null;
+        this._actionPointElement.hidden = true;
         this._updateHighlight();
       }, true),
     ];
@@ -152,10 +163,34 @@ export class Recorder {
       return;
     }
 
-    const { mode } = state;
+    const { mode, actionPoint, actionSelector } = state;
     if (mode !== this._mode) {
       this._mode = mode;
       this._clearHighlight();
+    }
+    if (actionPoint && this._actionPoint && actionPoint.x === this._actionPoint.x && actionPoint.y === this._actionPoint.y) {
+      // All good.
+    } else if (!actionPoint && !this._actionPoint) {
+      // All good.
+    } else {
+      if (actionPoint) {
+        this._actionPointElement.style.top = actionPoint.y + 'px';
+        this._actionPointElement.style.left = actionPoint.x + 'px';
+        this._actionPointElement.hidden = false;
+      } else {
+        this._actionPointElement.hidden = true;
+      }
+      this._actionPoint = actionPoint;
+    }
+
+    // Race or scroll.
+    if (this._actionSelector && !this._hoveredModel?.elements.length)
+      this._actionSelector = undefined;
+
+    if (actionSelector !== this._actionSelector) {
+      this._hoveredModel = actionSelector ? querySelector(this._injectedScript, actionSelector, document) : null;
+      this._updateHighlight();
+      this._actionSelector = actionSelector;
     }
     this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
   }

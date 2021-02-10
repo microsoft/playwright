@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { StackFrame } from '../common/types';
+import { Point, StackFrame } from '../common/types';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { BrowserType } from './browserType';
@@ -31,6 +31,7 @@ export type Attribution = {
 };
 
 export type CallMetadata = {
+  id: number;
   startTime: number;
   endTime: number;
   type: string;
@@ -39,6 +40,7 @@ export type CallMetadata = {
   stack?: StackFrame[];
   log: string[];
   error?: Error;
+  point?: Point;
 };
 
 export class SdkObject extends EventEmitter {
@@ -92,6 +94,7 @@ export function multiplexInstrumentation(listeners: InstrumentationListener[]): 
 
 export function internalCallMetadata(): CallMetadata {
   return {
+    id: 0,
     startTime: 0,
     endTime: 0,
     type: 'Internal',

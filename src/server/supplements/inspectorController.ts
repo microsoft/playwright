@@ -15,15 +15,51 @@
  */
 
 import { BrowserContext } from '../browserContext';
-import { isDebugMode } from '../../utils/utils';
 import { RecorderSupplement } from './recorderSupplement';
-import { InstrumentationListener } from '../instrumentation';
 import { debugLogger } from '../../utils/debugLogger';
+import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
+import { isDebugMode, isUnderTest } from '../../utils/utils';
 
 export class InspectorController implements InstrumentationListener {
+  private _recorders = new Map<BrowserContext, Promise<RecorderSupplement>>();
+
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode())
-      RecorderSupplement.getOrCreate(context);
+      this._recorders.set(context, RecorderSupplement.getOrCreate(context));
+  }
+
+  async onContextDidDestroy(context: BrowserContext): Promise<void> {
+    this._recorders.delete(context);
+  }
+
+  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    const context = sdkObject.attribution.context;
+    if (!context)
+      return;
+
+    if (metadata.method === 'pause') {
+      // Force create recorder on pause.
+      if (!context._browser.options.headful && !isUnderTest())
+        return;
+      this._recorders.set(context, RecorderSupplement.getOrCreate(context));
+    }
+
+    const recorder = await this._recorders.get(context);
+    await recorder?.onBeforeCall(sdkObject, metadata);
+  }
+
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (!sdkObject.attribution.page)
+      return;
+    const recorder = await this._recorders.get(sdkObject.attribution.context!);
+    await recorder?.onAfterCall(sdkObject, metadata);
+  }
+
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (!sdkObject.attribution.page)
+      return;
+    const recorder = await this._recorders.get(sdkObject.attribution.context!);
+    await recorder?.onBeforeInputAction(sdkObject, metadata);
   }
 
   onCallLog(logName: string, message: string): void {

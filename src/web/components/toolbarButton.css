@@ -41,10 +41,12 @@
   color: #fd1e1e;
 }
 
-.toolbar-button.codicon-run {
-  color: #4bfd1e;
+.toolbar-button.codicon-debug-continue,
+.toolbar-button.codicon-debug-step-over {
+  color: #01bb01;
 }
 
-.toolbar-button.codicon-run:hover {
-  color: #0f0;
+.toolbar-button.codicon-debug-continue:hover,
+.toolbar-button.codicon-debug-step-over:hover {
+  color: #41ca1e;
 }

@@ -18,15 +18,14 @@ import './recorder.css';
 import * as React from 'react';
 import { Toolbar } from '../components/toolbar';
 import { ToolbarButton } from '../components/toolbarButton';
-import { Source } from '../components/source';
-
-type Mode = 'inspecting' | 'recording' | 'none';
+import { Source as SourceView } from '../components/source';
+import type { Mode, PauseDetails, Source } from '../../server/supplements/recorder/recorderTypes';
 
 declare global {
   interface Window {
     playwrightSetMode: (mode: Mode) => void;
-    playwrightSetPaused: (paused: boolean) => void;
-    playwrightSetSource: (params: { text: string, language: string }) => void;
+    playwrightSetPaused: (details: PauseDetails | null) => void;
+    playwrightSetSource: (source: Source) => void;
     dispatch(data: any): Promise<void>;
     playwrightSourceEchoForTest?: (text: string) => Promise<void>;
   }
@@ -37,8 +36,8 @@ export interface RecorderProps {
 
 export const Recorder: React.FC<RecorderProps> = ({
 }) => {
-  const [source, setSource] = React.useState({ language: 'javascript', text: '' });
-  const [paused, setPaused] = React.useState(false);
+  const [source, setSource] = React.useState<Source>({ language: 'javascript', text: '' });
+  const [paused, setPaused] = React.useState<PauseDetails | null>(null);
   const [mode, setMode] = React.useState<Mode>('none');
 
   window.playwrightSetMode = setMode;
@@ -58,19 +57,21 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon="files" title="Copy" disabled={!source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
+      <ToolbarButton icon="debug-continue" title="Resume" disabled={!paused} onClick={() => {
+        window.dispatch({ event: 'resume' }).catch(() => {});
+      }}></ToolbarButton>
+      <ToolbarButton icon="debug-pause" title="Pause" disabled={!!paused} onClick={() => {
+        window.dispatch({ event: 'pause' }).catch(() => {});
+      }}></ToolbarButton>
+      <ToolbarButton icon="debug-step-over" title="Step over" disabled={!paused} onClick={() => {
+        window.dispatch({ event: 'step' }).catch(() => {});
+      }}></ToolbarButton>
       <div style={{flex: "auto"}}></div>
       <ToolbarButton icon="clear-all" title="Clear" disabled={!source.text} onClick={() => {
         window.dispatch({ event: 'clear' }).catch(() => {});
       }}></ToolbarButton>
     </Toolbar>
-    <div className="recorder-paused-infobar" hidden={!paused}>
-      <ToolbarButton icon="run" title="Resume" disabled={!paused} onClick={() => {
-        window.dispatch({ event: 'resume' }).catch(() => {});
-      }}></ToolbarButton>
-      <span style={{paddingLeft: 10}}>Paused due to <span className="code">page.pause()</span></span>
-      <div style={{flex: "auto"}}></div>
-    </div>
-    <Source text={source.text} language={source.language}></Source>
+    <SourceView text={source.text} language={source.language} highlightedLine={source.highlightedLine} paused={!!paused}></SourceView>
   </div>;
 };
 

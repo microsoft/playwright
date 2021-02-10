@@ -45,5 +45,12 @@
 }
 
 .source-line-highlighted {
+  background-color: #6fa8dc7f;
+  z-index: 2;
+}
+
+.source-line-paused {
   background-color: #ffc0cb7f;
+  outline: 1px solid red;
+  z-index: 2;
 }

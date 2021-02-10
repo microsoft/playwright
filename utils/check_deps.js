@@ -154,7 +154,8 @@ DEPS['src/service.ts'] = ['src/remote/'];
 // CLI should only use client-side features.
 DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/install/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/trace/**', 'src/utils/**'];
 
-DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/utils/', 'src/server/', 'src/server/chromium/'];
+DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/common/', 'src/utils/', 'src/server/', 'src/server/chromium/'];
+DEPS['src/web/recorder/recorder.tsx'] = ['src/server/supplements/recorder/recorderTypes.ts'];
 DEPS['src/utils/'] = ['src/common/'];
 
 checkDeps().catch(e => {

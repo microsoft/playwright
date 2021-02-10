@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import { expect } from 'folio';
 import { folio } from './recorder.fixtures';
-const { it, expect, describe} = folio;
+const { it, describe} = folio;
 
 describe('pause', (suite, { mode }) => {
   suite.skip(mode !== 'default');
@@ -36,21 +37,23 @@ describe('pause', (suite, { mode }) => {
     ]);
   });
 
-  it('should pause through a navigation', async ({page, server, recorderClick}) => {
-    let resolved = false;
-    const resumePromise = page.pause().then(() => resolved = true);
-    expect(resolved).toBe(false);
-    await page.goto(server.EMPTY_PAGE);
-    await recorderClick('[title=Resume]');
-    await resumePromise;
-    expect(resolved).toBe(true);
-  });
-
   it('should pause after a navigation', async ({page, server, recorderClick}) => {
     await page.goto(server.EMPTY_PAGE);
     await Promise.all([
       page.pause(),
       recorderClick('[title=Resume]')
     ]);
+  });
+
+  it('should show source', async ({page, server, recorderClick, recorderFrame}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const pausePromise = page.pause();
+    const frame = await recorderFrame();
+    const source = await frame._evaluateExpression((() => {
+      return document.querySelector('.source-line-paused .source-code').textContent;
+    }).toString(), true, undefined, 'main');
+    expect(source).toContain('page.pause()');
+    await recorderClick('[title=Resume]');
+    await pausePromise;
   });
 });

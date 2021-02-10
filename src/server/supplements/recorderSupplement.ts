@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
 import * as actions from './recorder/recorderActions';
 import type * as channels from '../../protocol/channels';
 import { CodeGenerator, ActionInContext } from './recorder/codeGenerator';
@@ -28,8 +29,10 @@ import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
 import { BufferedOutput, FileOutput, OutputMultiplexer, RecorderOutput } from './recorder/outputs';
-import { EventData, Mode, RecorderApp } from './recorder/recorderApp';
-import { internalCallMetadata } from '../instrumentation';
+import { RecorderApp } from './recorder/recorderApp';
+import { CallMetadata, internalCallMetadata, SdkObject } from '../instrumentation';
+import { Point } from '../../common/types';
+import { EventData, Mode, PauseDetails, UIState } from './recorder/recorderTypes';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -44,12 +47,16 @@ export class RecorderSupplement {
   private _context: BrowserContext;
   private _resumeCallback: (() => void) | null = null;
   private _mode: Mode;
-  private _paused = false;
+  private _pauseDetails: PauseDetails | null = null;
   private _output: OutputMultiplexer;
   private _bufferedOutput: BufferedOutput;
   private _recorderApp: RecorderApp | null = null;
   private _highlighterType: string;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
+  private _callMetadata: CallMetadata | null = null;
+  private _pauseOnNextStatement = true;
+  private _sourceCache = new Map<string, string>();
+  private _sdkObject: SdkObject | null = null;
 
   static getOrCreate(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<RecorderSupplement> {
     let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
@@ -78,13 +85,12 @@ export class RecorderSupplement {
     if (highlighterType === 'python-async')
       highlighterType = 'python';
 
-    const outputs: RecorderOutput[] = [];
     this._highlighterType = highlighterType;
     this._bufferedOutput = new BufferedOutput(async text => {
       if (this._recorderApp)
         this._recorderApp.setSource(text, highlighterType);
     });
-    outputs.push(this._bufferedOutput);
+    const outputs: RecorderOutput[] = [ this._bufferedOutput ];
     if (params.outputFile)
       outputs.push(new FileOutput(params.outputFile));
     this._output = new OutputMultiplexer(outputs);
@@ -110,8 +116,16 @@ export class RecorderSupplement {
           this._context.pages()[0].bringToFront().catch(() => {});
         return;
       }
+      if (data.event === 'step') {
+        this._resume(true);
+        return;
+      }
       if (data.event === 'resume') {
-        this._resume();
+        this._resume(false);
+        return;
+      }
+      if (data.event === 'pause') {
+        this._pauseOnNextStatement = true;
         return;
       }
       if (data.event === 'clear') {
@@ -122,7 +136,7 @@ export class RecorderSupplement {
 
     await Promise.all([
       recorderApp.setMode(this._mode),
-      recorderApp.setPaused(this._paused),
+      recorderApp.setPaused(this._pauseDetails),
       recorderApp.setSource(this._bufferedOutput.buffer(), this._highlighterType)
     ]);
 
@@ -150,12 +164,19 @@ export class RecorderSupplement {
     await this._context.exposeBinding('_playwrightRecorderCommitAction', false,
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
-    await this._context.exposeBinding('_playwrightRecorderState', false, () => {
-      return { mode: this._mode };
+    await this._context.exposeBinding('_playwrightRecorderState', false, source => {
+      let actionPoint: Point | undefined = undefined;
+      let actionSelector: string | undefined = undefined;
+      if (source.page === this._sdkObject?.attribution?.page) {
+        actionPoint = this._callMetadata?.point;
+        actionSelector = this._callMetadata?.params.selector;
+      }
+      const uiState: UIState = { mode: this._mode, actionPoint, actionSelector };
+      return uiState;
     });
 
     await this._context.exposeBinding('_playwrightResume', false, () => {
-      this._resume().catch(() => {});
+      this._resume(false).catch(() => {});
     });
 
     await this._context.extendInjectedScript(recorderSource.source);
@@ -165,18 +186,18 @@ export class RecorderSupplement {
   }
 
   async pause() {
-    this._paused = true;
-    this._recorderApp!.setPaused(true);
+    this._pauseDetails = { message: 'paused' };
+    this._recorderApp!.setPaused(this._pauseDetails);
     return new Promise<void>(f => this._resumeCallback = f);
   }
 
-  private async _resume() {
+  private async _resume(step: boolean) {
+    this._pauseOnNextStatement = step;
     if (this._resumeCallback)
       this._resumeCallback();
     this._resumeCallback = null;
-    this._paused = false;
-    if (this._recorderApp)
-      this._recorderApp.setPaused(this._paused);
+    this._pauseDetails = null;
+    this._recorderApp?.setPaused(null);
   }
 
   private async _onPage(page: Page) {
@@ -293,5 +314,51 @@ export class RecorderSupplement {
   private _onDialog(page: Page) {
     const pageAlias = this._pageAliases.get(page)!;
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: String(++this._lastDialogOrdinal) });
+  }
+
+  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._sdkObject = sdkObject;
+    this._callMetadata = metadata;
+    const { source, line } = this._source(metadata);
+    this._recorderApp?.setSource(source, 'javascript', line);
+    if (metadata.method === 'pause' || (this._pauseOnNextStatement && metadata.method === 'goto'))
+      await this.pause();
+  }
+
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._sdkObject = null;
+    this._callMetadata = null;
+  }
+
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (this._pauseOnNextStatement)
+      await this.pause();
+  }
+
+  private _source(metadata: CallMetadata): { source: string, line: number | undefined } {
+    let source = '// No source available';
+    let line: number | undefined = undefined;
+    if (metadata.stack && metadata.stack.length) {
+      try {
+        source = this._readAndCacheSource(metadata.stack[0].file);
+        line = metadata.stack[0].line ? metadata.stack[0].line - 1 : undefined;
+      } catch (e) {
+        source = metadata.stack.join('\n');
+      }
+    }
+    return { source, line };
+  }
+
+  private _readAndCacheSource(fileName: string): string {
+    let source = this._sourceCache.get(fileName);
+    if (source)
+      return source;
+    try {
+      source = fs.readFileSync(fileName, 'utf-8');
+    } catch (e) {
+      source = '// No source available';
+    }
+    this._sourceCache.set(fileName, source);
+    return source;
   }
 }
