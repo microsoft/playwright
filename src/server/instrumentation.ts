@@ -57,18 +57,24 @@ export interface Instrumentation {
   onContextCreated(context: BrowserContext): Promise<void>;
   onContextWillDestroy(context: BrowserContext): Promise<void>;
   onContextDidDestroy(context: BrowserContext): Promise<void>;
-  onActionCheckpoint(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onAfterAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
+
+  onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onAfterInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
+  onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
 }
 
 export interface InstrumentationListener {
   onContextCreated?(context: BrowserContext): Promise<void>;
   onContextWillDestroy?(context: BrowserContext): Promise<void>;
   onContextDidDestroy?(context: BrowserContext): Promise<void>;
-  onActionCheckpoint?(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onAfterAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
+
+  onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onAfterInputAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onCallLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
+  onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
 }
 
 export function multiplexInstrumentation(listeners: InstrumentationListener[]): Instrumentation {

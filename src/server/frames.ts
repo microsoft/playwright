@@ -135,7 +135,7 @@ export class FrameManager {
     if (source === 'input') {
       await this._page._delegate.inputActionEpilogue();
       if (progress)
-        await progress.checkpoint('after');
+        await progress.afterInputAction();
     }
     await barrier.waitFor();
     this._signalBarriers.delete(barrier);

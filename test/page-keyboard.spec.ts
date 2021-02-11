@@ -288,7 +288,7 @@ it('should press Enter', async ({page, server}) => {
 
 it('should throw on unknown keys', async ({page, server}) => {
   let error = await page.keyboard.press('NotARealKey').catch(e => e);
-  expect(error.message).toBe('Unknown key: "NotARealKey"');
+  expect(error.message).toContain('Unknown key: "NotARealKey"');
 
   error = await page.keyboard.press('ё').catch(e => e);
   expect(error && error.message).toBe('Unknown key: "ё"');
