@@ -3,6 +3,30 @@
 
 Terminates this instance of Playwright, will also close all created browsers if they are still running.
 
+### param: Page.exposeBinding.callback
+* langs: java
+- `callback` <[ExposedBinding]>
+
+Callback that will be called in the Playwright's context.
+
+### param: Page.exposeFunction.callback
+* langs: java
+- `callback` <[ExposedFunction]>
+
+Callback that will be called in Playwright's context.
+
+### param: BrowserContext.exposeBinding.callback
+* langs: java
+- `callback` <[ExposedBinding]>
+
+Callback that will be called in the Playwright's context.
+
+### param: BrowserContext.exposeFunction.callback
+* langs: java
+- `callback` <[ExposedFunction]>
+
+Callback that will be called in the Playwright's context.
+
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Page.waitForClose.callback = %%-java-wait-for-event-callback-%%
