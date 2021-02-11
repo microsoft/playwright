@@ -19,7 +19,7 @@ import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Headers, WaitForEventOptions } from './types';
-import * as fs from 'fs';
+import fs from 'fs';
 import * as mime from 'mime';
 import * as util from 'util';
 import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';

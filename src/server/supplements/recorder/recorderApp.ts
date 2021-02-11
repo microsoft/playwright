@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import * as util from 'util';
 import { CRPage } from '../../chromium/crPage';
 import { Page } from '../../page';

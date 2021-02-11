@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 export function printDepsWindowsExecutable(): string | undefined {
   return pathToExecutable(['bin', 'PrintDeps.exe']);

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
+import debug from 'debug';
 import * as types from '../types';
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
+import fs from 'fs';
 import * as stream from 'stream';
 import * as util from 'util';
 import * as ws from 'ws';

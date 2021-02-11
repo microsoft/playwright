@@ -16,7 +16,7 @@
  */
 
 import { folio as baseFolio } from './fixtures';
-import * as fs from 'fs';
+import fs from 'fs';
 import type * as har from '../src/server/supplements/har/har';
 import type { BrowserContext, Page } from '../index';
 

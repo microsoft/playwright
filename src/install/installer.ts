@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as util from 'util';
-import * as removeFolder from 'rimraf';
-import * as lockfile from 'proper-lockfile';
+import fs from 'fs';
+import path from 'path';
+import util from 'util';
+import removeFolder from 'rimraf';
+import lockfile from 'proper-lockfile';
 import {Registry, allBrowserNames, isBrowserDirectory, BrowserName, registryDirectory} from '../utils/registry';
 import * as browserFetcher from './browserFetcher';
 import { getAsBooleanFromENV, calculateSha1 } from '../utils/utils';

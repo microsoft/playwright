@@ -17,9 +17,9 @@
 import { BrowserContext, Video } from '../server/browserContext';
 import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import * as trace from './traceTypes';
-import * as path from 'path';
+import path from 'path';
 import * as util from 'util';
-import * as fs from 'fs';
+import fs from 'fs';
 import { createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../utils/utils';
 import { Page } from '../server/page';
 import { Snapshotter } from './snapshotter';

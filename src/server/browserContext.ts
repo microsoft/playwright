@@ -26,7 +26,7 @@ import { Page, PageBinding, PageDelegate } from './page';
 import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
-import * as path from 'path';
+import path from 'path';
 import { CallMetadata, SdkObject } from './instrumentation';
 
 export class Video {

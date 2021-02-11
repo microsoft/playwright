@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
-import * as fs from 'fs';
+import debug from 'debug';
+import fs from 'fs';
 
 const debugLoggerColorMap = {
   'api': 45, // cyan

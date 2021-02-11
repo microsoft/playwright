@@ -16,8 +16,8 @@
  */
 
 import { EventEmitter } from 'events';
-import * as removeFolder from 'rimraf';
-import * as util from 'util';
+import removeFolder from 'rimraf';
+import util from 'util';
 import * as types from './types';
 import { Progress } from './progress';
 import { debugLogger } from '../utils/debugLogger';

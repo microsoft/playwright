@@ -16,7 +16,7 @@
  */
 
 import * as jpeg from 'jpeg-js';
-import * as path from 'path';
+import path from 'path';
 import * as png from 'pngjs';
 import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray } from '../../utils/utils';
 import * as accessibility from '../accessibility';

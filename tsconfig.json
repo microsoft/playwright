@@ -4,6 +4,7 @@
     "module": "commonjs",
     "lib": ["esnext", "dom", "DOM.Iterable"],
     "sourceMap": true,
+    "esModuleInterop": true,
     "rootDir": "./src",
     "outDir": "./lib",
     "strict": true,

@@ -16,7 +16,7 @@
  */
 
 import { folio } from './remoteServer.fixture';
-import * as fs from 'fs';
+import fs from 'fs';
 const { it, expect, describe } = folio;
 
 describe('connect', (suite, { mode }) => {

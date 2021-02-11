@@ -16,7 +16,7 @@
  */
 
 import * as types from './types';
-import * as fs from 'fs';
+import fs from 'fs';
 import * as util from 'util';
 import { isString, isRegExp } from '../utils/utils';
 

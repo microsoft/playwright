@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import * as playwright from '../../..';
 import * as util from 'util';
 import { ScreenshotGenerator } from './screenshotGenerator';

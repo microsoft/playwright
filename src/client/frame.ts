@@ -20,7 +20,7 @@ import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
-import * as fs from 'fs';
+import fs from 'fs';
 import * as network from './network';
 import * as util from 'util';
 import { Page } from './page';

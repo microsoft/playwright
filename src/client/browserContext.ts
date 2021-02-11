@@ -19,7 +19,7 @@ import { Page, BindingCall } from './page';
 import * as network from './network';
 import * as channels from '../protocol/channels';
 import * as util from 'util';
-import * as fs from 'fs';
+import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
 import { deprecate, evaluationScript, urlMatches } from './clientHelper';
 import { Browser } from './browser';

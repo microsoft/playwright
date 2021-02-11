@@ -15,8 +15,8 @@
  */
 
 import * as http from 'http';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import type { TraceModel, trace, ContextEntry } from './traceModel';
 import { TraceServer } from './traceServer';
 import { NodeSnapshot } from '../../trace/traceTypes';

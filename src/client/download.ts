@@ -20,7 +20,7 @@ import { Readable } from 'stream';
 import { Stream } from './stream';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
-import * as fs from 'fs';
+import fs from 'fs';
 import { mkdirIfNeeded } from '../utils/utils';
 import * as api from '../../types/types';
 

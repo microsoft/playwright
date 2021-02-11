@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import fs from 'fs';
 import * as querystring from 'querystring';
 import * as hljs from '../../../third_party/highlightjs/highlightjs';
 
