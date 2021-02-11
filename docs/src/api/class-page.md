@@ -236,6 +236,10 @@ Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/We
 
 Emitted when an uncaught exception happens within the page.
 
+## event: Page.pageError
+* langs: csharp, java
+- type: <[string]>
+
 ## event: Page.popup
 - type: <[Page]>
 
