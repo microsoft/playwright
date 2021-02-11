@@ -816,12 +816,31 @@ some CSP errors in the future.
       sourceCodeLocation: SourceCodeLocation;
       isWarning: boolean;
     }
+    export type TwaQualityEnforcementViolationType = "kHttpError"|"kUnavailableOffline"|"kDigitalAssetLinks";
+    export interface TrustedWebActivityIssueDetails {
+      /**
+       * The url that triggers the violation.
+       */
+      url: string;
+      violationType: TwaQualityEnforcementViolationType;
+      httpStatusCode?: number;
+      /**
+       * The package name of the Trusted Web Activity client app. This field is
+only used when violation type is kDigitalAssetLinks.
+       */
+      packageName?: string;
+      /**
+       * The signature of the Trusted Web Activity client app. This field is only
+used when violation type is kDigitalAssetLinks.
+       */
+      signature?: string;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferTransferIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferTransferIssue"|"TrustedWebActivityIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -834,6 +853,7 @@ add a new optional field to this type.
       heavyAdIssueDetails?: HeavyAdIssueDetails;
       contentSecurityPolicyIssueDetails?: ContentSecurityPolicyIssueDetails;
       sharedArrayBufferTransferIssueDetails?: SharedArrayBufferTransferIssueDetails;
+      twaQualityEnforcementDetails?: TrustedWebActivityIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -7916,6 +7936,22 @@ this requestId will be the same as the requestId present in the requestWillBeSen
        */
       initiator?: Initiator;
     }
+    /**
+     * Fired when WebTransport handshake is finished.
+     */
+    export type webTransportConnectionEstablishedPayload = {
+      /**
+       * WebTransport identifier.
+       */
+      transportId: RequestId;
+      /**
+       * Timestamp.
+       */
+      timestamp: MonotonicTime;
+    }
+    /**
+     * Fired when WebTransport is disposed.
+     */
     export type webTransportClosedPayload = {
       /**
        * WebTransport identifier.
@@ -14827,7 +14863,7 @@ other objects in their object group.
     export type RemoteObjectId = string;
     /**
      * Primitive value which cannot be JSON-stringified. Includes values `-0`, `NaN`, `Infinity`,
-`-Infinity`.
+`-Infinity`, and bigint literals.
      */
     export type UnserializableValue = string;
     /**
@@ -15862,6 +15898,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.webSocketHandshakeResponseReceived": Network.webSocketHandshakeResponseReceivedPayload;
     "Network.webSocketWillSendHandshakeRequest": Network.webSocketWillSendHandshakeRequestPayload;
     "Network.webTransportCreated": Network.webTransportCreatedPayload;
+    "Network.webTransportConnectionEstablished": Network.webTransportConnectionEstablishedPayload;
     "Network.webTransportClosed": Network.webTransportClosedPayload;
     "Network.requestWillBeSentExtraInfo": Network.requestWillBeSentExtraInfoPayload;
     "Network.responseReceivedExtraInfo": Network.responseReceivedExtraInfoPayload;
