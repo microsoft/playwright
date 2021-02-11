@@ -1840,8 +1840,22 @@ matches both handlers.
 Enabling routing disables http cache.
 :::
 
-### param: Page.route.url
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+### param: Page.route.urlGlob
+- `urlGlob` <[string]>
+
+A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+
+### param: Page.route.urlRegex
+- `urlRegex` <[RegExp]>
+
+A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+
+### param: Page.route.urlPredicate
+- `urlPedicate` <[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+
+### param: Page.route.url = overload(urlGlob, urlRegex, urlPredicate)
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 
@@ -2181,10 +2195,24 @@ Shortcut for main frame's [`method: Frame.uncheck`].
 Removes a route created with [`method: Page.route`]. When [`param: handler`] is not specified, removes all routes for
 the [`param: url`].
 
-### param: Page.unroute.url
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+### param: Page.unroute.urlGlob
+- `urlGlob` <[string]>
 
-A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+A glob pattern used to register a routing with [`method: Page.route`].
+
+### param: Page.unroute.urlRegex
+- `urlRegex` <[RegExp]>
+
+A regex pattern used to register a routing with [`method: Page.route`].
+
+### param: Page.unroute.urlPredicate
+- `urlPedicate` <[function]\([URL]\):[boolean]>
+
+A predicate used to register a routing with [`method: Page.route`].
+
+### param: Page.unroute.url = overload(urlGlob, urlRegex, urlPredicate)
+
+A glob pattern, regex pattern or predicate used to register a routing with [`method: Page.route`].
 
 ### param: Page.unroute.handler
 * langs: js, python

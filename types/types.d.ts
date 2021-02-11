@@ -2823,7 +2823,7 @@ export interface Page {
    * Removes a route created with
    * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler). When `handler` is not
    * specified, removes all routes for the `url`.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+   * @param url A glob pattern, regex pattern or predicate used to register a routing with [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
    * @param handler Optional handler function to route the request.
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
@@ -5092,7 +5092,7 @@ export interface BrowserContext {
    * Removes a route created with
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler).
    * When `handler` is not specified, removes all routes for the `url`.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler).
+   * @param url A glob pattern, regex pattern or predicate used to register a routing with [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler).
    * @param handler Optional handler function used to register a routing with [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler).
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;

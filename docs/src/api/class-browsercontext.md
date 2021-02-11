@@ -590,8 +590,22 @@ handlers.
 Enabling routing disables http cache.
 :::
 
-### param: BrowserContext.route.url
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+### param: BrowserContext.route.urlGlob
+- `urlGlob` <[string]>
+
+A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+
+### param: BrowserContext.route.urlRegex
+- `urlRegex` <[RegExp]>
+
+A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+
+### param: BrowserContext.route.urlPredicate
+- `urlPedicate` <[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+
+### param: BrowserContext.route.url = overload(urlGlob, urlRegex, urlPredicate)
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 
@@ -735,11 +749,24 @@ state is still returned, but won't be saved to the disk.
 Removes a route created with [`method: BrowserContext.route`]. When [`param: handler`] is not specified, removes all
 routes for the [`param: url`].
 
-### param: BrowserContext.unroute.url
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+### param: BrowserContext.unroute.urlGlob
+- `urlGlob` <[string]>
 
-A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with
-[`method: BrowserContext.route`].
+A glob pattern used to register a routing with [`method: BrowserContext.route`]..
+
+### param: BrowserContext.unroute.urlRegex
+- `urlRegex` <[RegExp]>
+
+A regex pattern used to register a routing with [`method: BrowserContext.route`]..
+
+### param: BrowserContext.unroute.urlPredicate
+- `urlPedicate` <[function]\([URL]\):[boolean]>
+
+A predicate used to register a routing with [`method: BrowserContext.route`]..
+
+### param: BrowserContext.unroute.url = overload(urlGlob, urlRegex, urlPredicate)
+
+A glob pattern, regex pattern or predicate used to register a routing with [`method: BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler
 * langs: js, python

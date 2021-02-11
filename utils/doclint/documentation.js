@@ -277,9 +277,8 @@ Documentation.Member = class {
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
-   * @param {string[]=} templates
    */
-  constructor(kind, langs, name, type, argsArray, spec = undefined, required = true, templates = []) {
+  constructor(kind, langs, name, type, argsArray, spec = undefined, required = true) {
     this.kind = kind;
     this.langs = langs;
     this.name = name;
@@ -295,6 +294,8 @@ Documentation.Member = class {
     this.clazz = null;
     /** @type {Documentation.Member=} */
     this.enclosingMethod = undefined;
+    /** @type {string[]=} */
+    this.overloads = undefined;
     this.deprecated = false;
     if (spec) {
       md.visitAll(spec, node => {
@@ -328,8 +329,11 @@ Documentation.Member = class {
       this.alias = this.langs.aliases[lang];
     if (this.langs.types && this.langs.types[lang])
       this.type = this.langs.types[lang];
-    this.type.filterForLanguage(lang);
-    const argsArray = [];
+    if (this.type)
+      this.type.filterForLanguage(lang);
+    else if (!this.overloads)
+      throw new Error("Member without type and overloads: " + this.spec[0].text);
+    let argsArray = [];
     for (const arg of this.argsArray) {
       if (arg.langs.only && !arg.langs.only.includes(lang))
         continue;
@@ -338,6 +342,16 @@ Documentation.Member = class {
       if (overriddenArg.name === 'options' && !overriddenArg.type.properties.length)
         continue;
       argsArray.push(overriddenArg);
+    }
+    if (lang === 'js' || lang === 'python') {
+      const overloadedArg = argsArray.find(m => !!m.overloads);
+      if (overloadedArg) {
+        const argsToMerge = argsArray.filter(a => overloadedArg.overloads.includes(a.name))
+        const unionType = new Documentation.Type('union');
+        unionType.union = argsToMerge.map(a => a.type);
+        overloadedArg.type = unionType;
+        argsArray = argsArray.filter(a => !overloadedArg.overloads.includes(a.name))
+      }
     }
     this.argsArray = argsArray;
   }

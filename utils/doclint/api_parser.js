@@ -131,6 +131,20 @@ class ApiParser {
     if (!name)
       throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
+      const overload = name.match(/([^=]+)=\s*overload\((.+)\)/);
+      if(overload) {
+        const overloadedParams = overload[2].split(',').map(s => s.trim());
+        const comments = extractComments(spec);
+        const overloadName = overload[1].trim();
+        const arg = Documentation.Member.createProperty(extractLangs(spec), overloadName, null, comments, guessRequired(md.render(comments)));
+        arg.overloads = overloadedParams;
+        method.argsArray.push(arg);
+        overloadedParams.forEach(argName => {
+          if (!method.argsArray.some(m => m.name === argName))
+            throw new Error(`Argument '${argName}' not found, referenced from '${spec.text}'`);
+        });
+        return;
+      }
       const arg = this.parseProperty(spec);
       arg.name = name;
       const existingArg = method.argsArray.find(m => m.name === arg.name);
