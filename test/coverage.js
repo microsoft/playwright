@@ -29,7 +29,7 @@ function traceAPICoverage(apiCoverage, api, events) {
       const method = Reflect.get(classType.prototype, methodName);
       if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
         continue;
- 
+
       apiCoverage.set(`${className}.${methodName}`, false);
       const override = function(...args) {
         apiCoverage.set(`${className}.${methodName}`, true);

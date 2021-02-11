@@ -15,6 +15,7 @@
  */
 
 export { Accessibility } from './accessibility';
+export { Android, AndroidDevice, AndroidWebView, AndroidInput, AndroidSocket } from './android';
 export { Browser } from './browser';
 export { BrowserContext } from './browserContext';
 export { BrowserServer } from './browserType';

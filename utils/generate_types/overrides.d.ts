@@ -230,5 +230,87 @@ export interface ElectronApplication {
   evaluateHandle<R>(pageFunction: PageFunctionOn<typeof import('electron'), void, R>, arg?: any): Promise<SmartHandle<R>>;
 }
 
+export type AndroidElementInfo = {
+  clazz: string;
+  desc: string;
+  res: string;
+  pkg: string;
+  text: string;
+  bounds: { x: number, y: number, width: number, height: number };
+  checkable: boolean;
+  checked: boolean;
+  clickable: boolean;
+  enabled: boolean;
+  focusable: boolean;
+  focused: boolean;
+  longClickable: boolean;
+  scrollable: boolean;
+  selected: boolean;
+};
+
+export type AndroidSelector = {
+  checkable?: boolean,
+  checked?: boolean,
+  clazz?: string | RegExp,
+  clickable?: boolean,
+  depth?: number,
+  desc?: string | RegExp,
+  enabled?: boolean,
+  focusable?: boolean,
+  focused?: boolean,
+  hasChild?: { selector: AndroidSelector },
+  hasDescendant?: { selector: AndroidSelector, maxDepth?: number },
+  longClickable?: boolean,
+  pkg?: string | RegExp,
+  res?: string | RegExp,
+  scrollable?: boolean,
+  selected?: boolean,
+  text?: string | RegExp,
+};
+
+export type AndroidKey =
+  'Unknown' |
+  'SoftLeft' | 'SoftRight' |
+  'Home' |
+  'Back' |
+  'Call' | 'EndCall' |
+  '0' |  '1' |  '2' |  '3' |  '4' |  '5' |  '6' |  '7' |  '8' |  '9' |
+  'Star' | 'Pound' | '*' | '#' |
+  'DialUp' | 'DialDown' | 'DialLeft' | 'DialRight' | 'DialCenter' |
+  'VolumeUp' | 'VolumeDown' |
+  'Power' |
+  'Camera' |
+  'Clear' |
+  'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' |
+  'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z' |
+  'Comma' | ',' |
+  'Period' | '.' |
+  'AltLeft' | 'AltRight' |
+  'ShiftLeft' | 'ShiftRight' |
+  'Tab' | '\t' |
+  'Space' | ' ' |
+  'Sym' |
+  'Explorer' |
+  'Envelop' |
+  'Enter' | '\n' |
+  'Del' |
+  'Grave' |
+  'Minus' | '-' |
+  'Equals' | '=' |
+  'LeftBracket' | '(' |
+  'RightBracket' | ')' |
+  'Backslash' | '\\' |
+  'Semicolon' | ';' |
+  'Apostrophe' | '`' |
+  'Slash' | '/' |
+  'At' |
+  'Num' |
+  'HeadsetHook' |
+  'Focus' |
+  'Plus' | '+' |
+  'Menu' |
+  'Notification' |
+  'Search';
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

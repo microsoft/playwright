@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Android, AndroidDevice } from '../../types/android';
+import type { Android, AndroidDevice } from '../..';
 import { folio as baseFolio } from '../fixtures';
 
 const fixtures = baseFolio.extend<{

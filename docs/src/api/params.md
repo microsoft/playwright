@@ -498,6 +498,13 @@ Receives the event data and resolves to truthy value when the waiting should res
 Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
+## android-timeout
+* langs: js
+- `timeout` <[float]>
+
+Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+using the [`method: AndroidDevice.setDefaultTimeout`] method.
+
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%

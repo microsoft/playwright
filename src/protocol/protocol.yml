@@ -2291,10 +2291,6 @@ AndroidDevice:
       returns:
         info: AndroidElementInfo
 
-    tree:
-      returns:
-        tree: AndroidElementInfo
-
     screenshot:
       returns:
         binary: binary

@@ -21,7 +21,7 @@ import * as channels from '../protocol/channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextOptions } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import * as androidApi from '../../types/android';
+import * as api from '../../types/types';
 import * as types from './types';
 import { Page } from './page';
 import { TimeoutSettings } from '../utils/timeoutSettings';
@@ -29,10 +29,10 @@ import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 
-type Direction =  'down' | 'up' | 'left' | 'right';
+type Direction = 'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };
 
-export class Android extends ChannelOwner<channels.AndroidChannel, channels.AndroidInitializer> implements androidApi.Android {
+export class Android extends ChannelOwner<channels.AndroidChannel, channels.AndroidInitializer> implements api.Android {
   readonly _timeoutSettings: TimeoutSettings;
 
   static from(android: channels.AndroidChannel): Android {
@@ -57,7 +57,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel, channels.Andr
   }
 }
 
-export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, channels.AndroidDeviceInitializer> implements androidApi.AndroidDevice {
+export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, channels.AndroidDeviceInitializer> implements api.AndroidDevice {
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<number, AndroidWebView>();
 
@@ -65,11 +65,11 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     return (androidDevice as any)._object;
   }
 
-  input: Input;
+  input: AndroidInput;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidDeviceInitializer) {
     super(parent, type, guid, initializer);
-    this.input = new Input(this);
+    this.input = new AndroidInput(this);
     this._timeoutSettings = new TimeoutSettings((parent as Android)._timeoutSettings);
     this._channel.on('webViewAdded', ({ webView }) => this._onWebViewAdded(webView));
     this._channel.on('webViewRemoved', ({ pid }) => this._onWebViewRemoved(pid));
@@ -115,80 +115,74 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
-  async wait(selector: androidApi.AndroidSelector, options?: { state?: 'gone' } & types.TimeoutOptions) {
+  async wait(selector: api.AndroidSelector, options?: { state?: 'gone' } & types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.wait', async () => {
       await this._channel.wait({ selector: toSelectorChannel(selector), ...options });
     });
   }
 
-  async fill(selector: androidApi.AndroidSelector, text: string, options?: types.TimeoutOptions) {
+  async fill(selector: api.AndroidSelector, text: string, options?: types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.fill', async () => {
       await this._channel.fill({ selector: toSelectorChannel(selector), text, ...options });
     });
   }
 
-  async press(selector: androidApi.AndroidSelector, key: androidApi.AndroidKey, options?: types.TimeoutOptions) {
+  async press(selector: api.AndroidSelector, key: api.AndroidKey, options?: types.TimeoutOptions) {
     await this.tap(selector, options);
     await this.input.press(key);
   }
 
-  async tap(selector: androidApi.AndroidSelector, options?: { duration?: number } & types.TimeoutOptions) {
+  async tap(selector: api.AndroidSelector, options?: { duration?: number } & types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.tap', async () => {
       await this._channel.tap({ selector: toSelectorChannel(selector), ...options });
     });
   }
 
-  async drag(selector: androidApi.AndroidSelector, dest: types.Point, options?: SpeedOptions & types.TimeoutOptions) {
+  async drag(selector: api.AndroidSelector, dest: types.Point, options?: SpeedOptions & types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.drag', async () => {
       await this._channel.drag({ selector: toSelectorChannel(selector), dest, ...options });
     });
   }
 
-  async fling(selector: androidApi.AndroidSelector, direction: Direction, options?: SpeedOptions & types.TimeoutOptions) {
+  async fling(selector: api.AndroidSelector, direction: Direction, options?: SpeedOptions & types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.fling', async () => {
       await this._channel.fling({ selector: toSelectorChannel(selector), direction, ...options });
     });
   }
 
-  async longTap(selector: androidApi.AndroidSelector, options?: types.TimeoutOptions) {
+  async longTap(selector: api.AndroidSelector, options?: types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.longTap', async () => {
       await this._channel.longTap({ selector: toSelectorChannel(selector), ...options });
     });
   }
 
-  async pinchClose(selector: androidApi.AndroidSelector, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
+  async pinchClose(selector: api.AndroidSelector, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.pinchClose', async () => {
       await this._channel.pinchClose({ selector: toSelectorChannel(selector), percent, ...options });
     });
   }
 
-  async pinchOpen(selector: androidApi.AndroidSelector, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
+  async pinchOpen(selector: api.AndroidSelector, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.pinchOpen', async () => {
       await this._channel.pinchOpen({ selector: toSelectorChannel(selector), percent, ...options });
     });
   }
 
-  async scroll(selector: androidApi.AndroidSelector, direction: Direction, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
+  async scroll(selector: api.AndroidSelector, direction: Direction, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.scroll', async () => {
       await this._channel.scroll({ selector: toSelectorChannel(selector), direction, percent, ...options });
     });
   }
 
-  async swipe(selector: androidApi.AndroidSelector, direction: Direction, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
+  async swipe(selector: api.AndroidSelector, direction: Direction, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
     await this._wrapApiCall('androidDevice.swipe', async () => {
       await this._channel.swipe({ selector: toSelectorChannel(selector), direction, percent, ...options });
     });
   }
 
-  async info(selector: androidApi.AndroidSelector): Promise<androidApi.AndroidElementInfo> {
+  async info(selector: api.AndroidSelector): Promise<api.AndroidElementInfo> {
     return await this._wrapApiCall('androidDevice.info', async () => {
       return (await this._channel.info({ selector: toSelectorChannel(selector) })).info;
-    });
-  }
-
-  async tree(): Promise<androidApi.AndroidElementInfo> {
-    return await this._wrapApiCall('androidDevice.tree', async () => {
-      return (await this._channel.tree()).tree;
     });
   }
 
@@ -255,7 +249,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
   }
 }
 
-export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel, channels.AndroidSocketInitializer> implements androidApi.AndroidSocket {
+export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel, channels.AndroidSocketInitializer> implements api.AndroidSocket {
   static from(androidDevice: channels.AndroidSocketChannel): AndroidSocket {
     return (androidDevice as any)._object;
   }
@@ -285,7 +279,7 @@ async function loadFile(file: string | Buffer): Promise<string> {
   return file.toString('base64');
 }
 
-class Input implements androidApi.AndroidInput {
+export class AndroidInput implements api.AndroidInput {
   private _device: AndroidDevice;
 
   constructor(device: AndroidDevice) {
@@ -298,7 +292,7 @@ class Input implements androidApi.AndroidInput {
     });
   }
 
-  async press(key: androidApi.AndroidKey) {
+  async press(key: api.AndroidKey) {
     return this._device._wrapApiCall('androidDevice.inputPress', async () => {
       await this._device._channel.inputPress({ key });
     });
@@ -323,7 +317,7 @@ class Input implements androidApi.AndroidInput {
   }
 }
 
-function toSelectorChannel(selector: androidApi.AndroidSelector): channels.AndroidSelector {
+function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelector {
   const {
     checkable,
     checked,
@@ -373,7 +367,7 @@ function toSelectorChannel(selector: androidApi.AndroidSelector): channels.Andro
   };
 }
 
-export class AndroidWebView extends EventEmitter implements androidApi.AndroidWebView {
+export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
   private _device: AndroidDevice;
   private _data: channels.AndroidWebView;
   private _pagePromise: Promise<Page> | undefined;

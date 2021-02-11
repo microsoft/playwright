@@ -19,7 +19,7 @@ const {installCoverageHooks} = require('./coverage');
 
 const browserName = process.env.BROWSER || 'chromium';
 
-const api = new Set(installCoverageHooks(browserName).coverage.keys());
+let api = new Set(installCoverageHooks(browserName).coverage.keys());
 
 // coverage exceptions
 
@@ -38,8 +38,8 @@ if (browserName !== 'chromium') {
 if (browserName === 'webkit')
   api.delete('browserContext.clearPermissions');
 
-// Screencast APIs that are not publicly available.
-api.delete('browserContext.emit("screencaststarted")');
+// Android coverage is abysmal.
+api = new Set(Array.from(api).filter(name => !name.toLowerCase().startsWith('android')));
 
 const coverageDir = path.join(__dirname, 'coverage-report');
 
