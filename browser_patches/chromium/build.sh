@@ -206,10 +206,13 @@ EOF
   if [[ $(uname) == "Darwin" ]]; then
     COPY_COMMAND="ditto"
   fi
-  for file in ${CHROMIUM_FILES_TO_ARCHIVE[@]}; do
+
+  for ((i = 0; i < ${#CHROMIUM_FILES_TO_ARCHIVE[@]}; i++)) do
+    file="${CHROMIUM_FILES_TO_ARCHIVE[$i]}"
     mkdir -p "output/${CHROMIUM_FOLDER_NAME}/$(dirname $file)"
     $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
   done
+
   if [[ $1 == "--compile-win"* ]]; then
     $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/"*.manifest "output/${CHROMIUM_FOLDER_NAME}/"
   fi
