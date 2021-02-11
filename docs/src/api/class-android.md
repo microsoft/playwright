@@ -1,25 +1,13 @@
----
-id: mobile
-title: "Mobile (experimental)"
----
+# class: Android
+* langs: js
 
-<!-- TOC -->
-:::warning
-Mobile support is experimental and uses prefixed provisional API.
-:::
+Playwright has **experimental** support for Android automation. You can access android namespace via:
 
-You can try Playwright against Android, Chrome for Android and Android WebView today. This support is experimental. Support for devices is tracked in the issue [#1122](https://github.com/microsoft/playwright/issues/1122).
+```js
+const { _android } = require('playwright');
+```
 
-See [Android] for documentation.
-
-## Requirements
-
-- Android device or AVD Emulator.
-- [ADB daemon](https://developer.android.com/studio/command-line/adb) running and authenticated with your device. Typically running `adb devices` is all you need to do.
-- [`Chrome 87`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the device
-- "Enable command line on non-rooted devices" enabled in `chrome://flags`.
-
-## How to run
+An example of the Android automation script would be:
 
 ```js
 const { _android } = require('playwright');
@@ -72,7 +60,22 @@ const { _android } = require('playwright');
 })();
 ```
 
-## Known limitations
-- Raw USB operation is not yet supported, so you need ADB.
-- Device needs to be awake to produce screenshots. Enabling "Stay awake" developer mode will help.
-- We didn't run all the tests against the device, so not everything works.
+Note that since you don't need Playwright to install web browsers when testing Android, you can omit browser download via setting the following environment variable when installing Playwright:
+
+```sh js
+$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
+```
+
+## async method: Android.devices
+- returns: <[Array]<[AndroidDevice]>>
+
+Returns the list of detected Android devices.
+
+## method: Android.setDefaultTimeout
+
+This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
+
+### param: Android.setDefaultTimeout.timeout
+- `timeout` <[float]>
+
+Maximum time in milliseconds
