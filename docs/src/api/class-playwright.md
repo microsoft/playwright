@@ -111,6 +111,10 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+## property: Playwright.devices
+* langs: csharp, java
+- type: <[Map]<[string], [DeviceDescriptor]>>
+
 ## property: Playwright.errors
 * langs: js
 - type: <[Object]>
