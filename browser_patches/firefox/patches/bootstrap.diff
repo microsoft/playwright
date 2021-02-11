@@ -178,7 +178,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index ab330fcd1c3200e0e9dac24181234fd08ea314a7..58a04a47882cbe77f3bea29da36b0b8ca616101a 100644
+index ee271e6d7fd265aea278d841f66340a9c70e59f9..80665230adf04130e5bf79a3a2b09bec2c117442 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -239,7 +239,7 @@ index ab330fcd1c3200e0e9dac24181234fd08ea314a7..58a04a47882cbe77f3bea29da36b0b8c
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1424,6 +1440,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1428,6 +1444,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      }
    }
  
@@ -247,7 +247,7 @@ index ab330fcd1c3200e0e9dac24181234fd08ea314a7..58a04a47882cbe77f3bea29da36b0b8c
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3252,6 +3269,204 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3256,6 +3273,204 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -452,7 +452,7 @@ index ab330fcd1c3200e0e9dac24181234fd08ea314a7..58a04a47882cbe77f3bea29da36b0b8c
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -4860,7 +5075,7 @@ nsDocShell::GetIsOffScreenBrowser(bool* aIsOffScreen) {
+@@ -4864,7 +5079,7 @@ nsDocShell::GetIsOffScreenBrowser(bool* aIsOffScreen) {
  }
  
  void nsDocShell::ActivenessMaybeChanged() {
@@ -461,7 +461,7 @@ index ab330fcd1c3200e0e9dac24181234fd08ea314a7..58a04a47882cbe77f3bea29da36b0b8c
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->SetIsActive(isActive);
    }
-@@ -8585,6 +8800,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8589,6 +8804,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -474,7 +474,7 @@ index ab330fcd1c3200e0e9dac24181234fd08ea314a7..58a04a47882cbe77f3bea29da36b0b8c
        return rv;
      }
  
-@@ -12523,6 +12744,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12548,6 +12769,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -484,7 +484,7 @@ index ab330fcd1c3200e0e9dac24181234fd08ea314a7..58a04a47882cbe77f3bea29da36b0b8c
      return NS_OK;
    }
  
-@@ -12608,6 +12832,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12633,6 +12857,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -1989,7 +1989,7 @@ index 87701f8d2cfee8bd84acd28c62b3be4989c9474c..ae1aa85c019cb21d4f7e79c35e8afe72
 +                             [optional] in unsigned long aFlags);
  };
 diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
-index 2886fd35748ad7ed94e9a2b2506a79d8b6d0fd52..5a7b503a180349fbf02b980f2cfbf2df3fe6c13b 100644
+index b78eac71d5c144c1622d057407ab017c9e6f2e93..a256d6cd896b690099cf8ae495ff171d638b0a8d 100644
 --- a/uriloader/exthandler/nsExternalHelperAppService.cpp
 +++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
 @@ -101,6 +101,7 @@
@@ -2013,7 +2013,7 @@ index 2886fd35748ad7ed94e9a2b2506a79d8b6d0fd52..5a7b503a180349fbf02b980f2cfbf2df
  nsresult nsExternalHelperAppService::GetFileTokenForPath(
      const char16_t* aPlatformAppPath, nsIFile** aFile) {
    nsDependentString platformAppPath(aPlatformAppPath);
-@@ -1588,7 +1595,12 @@ nsresult nsExternalAppHandler::SetUpTempFile(nsIChannel* aChannel) {
+@@ -1589,7 +1596,12 @@ nsresult nsExternalAppHandler::SetUpTempFile(nsIChannel* aChannel) {
    // Strip off the ".part" from mTempLeafName
    mTempLeafName.Truncate(mTempLeafName.Length() - ArrayLength(".part") + 1);
  
@@ -2026,7 +2026,7 @@ index 2886fd35748ad7ed94e9a2b2506a79d8b6d0fd52..5a7b503a180349fbf02b980f2cfbf2df
    mSaver =
        do_CreateInstance(NS_BACKGROUNDFILESAVERSTREAMLISTENER_CONTRACTID, &rv);
    NS_ENSURE_SUCCESS(rv, rv);
-@@ -1761,7 +1773,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+@@ -1762,7 +1774,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
      return NS_OK;
    }
  
@@ -2064,7 +2064,7 @@ index 2886fd35748ad7ed94e9a2b2506a79d8b6d0fd52..5a7b503a180349fbf02b980f2cfbf2df
    if (NS_FAILED(rv)) {
      nsresult transferError = rv;
  
-@@ -1814,6 +1855,11 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+@@ -1815,6 +1856,11 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
  
    bool alwaysAsk = true;
    mMimeInfo->GetAlwaysAskBeforeHandling(&alwaysAsk);
@@ -2076,7 +2076,7 @@ index 2886fd35748ad7ed94e9a2b2506a79d8b6d0fd52..5a7b503a180349fbf02b980f2cfbf2df
    if (alwaysAsk) {
      // But we *don't* ask if this mimeInfo didn't come from
      // our user configuration datastore and the user has said
-@@ -2220,6 +2266,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
+@@ -2221,6 +2267,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
      NotifyTransfer(aStatus);
    }
  
@@ -2093,7 +2093,7 @@ index 2886fd35748ad7ed94e9a2b2506a79d8b6d0fd52..5a7b503a180349fbf02b980f2cfbf2df
    return NS_OK;
  }
  
-@@ -2607,6 +2663,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
+@@ -2608,6 +2664,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
      }
    }
  
