@@ -19,8 +19,8 @@
 /* eslint-disable no-console */
 
 import path from 'path';
-import * as program from 'commander';
-import * as os from 'os';
+import program from 'commander';
+import os from 'os';
 import fs from 'fs';
 import { runServer, printApiJson, installBrowsers } from './driver';
 import { showTraceViewer } from './traceViewer/traceViewer';
