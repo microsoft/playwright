@@ -27,7 +27,7 @@ import { HarTracer } from './supplements/har/harTracer';
 import { InspectorController } from './supplements/inspectorController';
 import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
-import { InstrumentationMultiplexer, SdkObject } from './instrumentation';
+import { InstrumentationListener, multiplexInstrumentation, SdkObject } from './instrumentation';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -39,11 +39,13 @@ export class Playwright extends SdkObject {
   readonly options: PlaywrightOptions;
 
   constructor(isInternal: boolean) {
-    const instrumentation = new InstrumentationMultiplexer(isInternal ? [] : [
-      new InspectorController(),
-      new Tracer(),
-      new HarTracer()
-    ]);
+    const listeners: InstrumentationListener[] = [];
+    if (!isInternal) {
+      listeners.push(new Tracer());
+      listeners.push(new HarTracer());
+      listeners.push(new InspectorController());
+    }
+    const instrumentation = multiplexInstrumentation(listeners);
     super({ attribution: {}, instrumentation } as any);
     this.options = {
       isInternal,

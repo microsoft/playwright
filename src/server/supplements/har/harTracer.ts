@@ -42,8 +42,6 @@ export class HarTracer implements InstrumentationListener {
       await contextTracer.flush();
     }
   }
-
-  async onContextDidDestroy(context: BrowserContext): Promise<void> { }
 }
 
 type HarOptions = {

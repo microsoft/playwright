@@ -28,6 +28,4 @@ export class InspectorController implements InstrumentationListener {
       });
     }
   }
-  async onContextWillDestroy(context: BrowserContext): Promise<void> {}
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {}
 }
