@@ -35,3 +35,9 @@ it('browserType.name should work', async ({browserType, isChromium, isFirefox, i
   else
     throw new Error('Unknown browser');
 });
+it('should throw when trying to connect with not-chromium', (test, {browserName}) => {
+  test.skip(browserName === 'chromium');
+}, async ({browserType }) => {
+  const error = await browserType.connectOverCDP({wsEndpoint: 'foo'}).catch(e => e);
+  expect(error.message).toBe('Connecting over CDP is only supported in Chromium.');
+});
