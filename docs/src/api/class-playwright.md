@@ -54,6 +54,7 @@ with sync_playwright() as playwright:
 This object can be used to launch or connect to Chromium, returning instances of [ChromiumBrowser].
 
 ## property: Playwright.devices
+* langs: js, python
 - type: <[Object]>
 
 Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].
