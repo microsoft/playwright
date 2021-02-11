@@ -22,17 +22,21 @@ const { it, expect } = folio;
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
 
-it('should print the correct imports and context options', async ({ runCLI }) => {
+function capitalize(browserName: string): string {
+  return browserName[0].toUpperCase() + browserName.slice(1);
+}
+
+it('should print the correct imports and context options', async ({ browserName, runCLI }) => {
   const cli = runCLI(['codegen', '--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync(headless: false);
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(headless: false);
 var context = await browser.NewContextAsync();`;
   await cli.waitFor(expectedResult).catch(e => e);
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options for custom settings', async ({ runCLI }) => {
+it('should print the correct context options for custom settings', async ({ browserName, runCLI }) => {
   const cli = runCLI([
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
@@ -47,7 +51,7 @@ it('should print the correct context options for custom settings', async ({ runC
     emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync(
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
     headless: false,
     proxy: new ProxySettings
     {
@@ -79,14 +83,13 @@ it('should print the correct context options when using a device', async ({ runC
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Chromium.LaunchAsync(headless: false);
 var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
-
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
 
 it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
   const cli = runCLI([
-    '--device=Pixel 2',
+    '--device=iPhone 11',
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
     '--lang=es',
@@ -100,13 +103,13 @@ it('should print the correct context options when using a device and additional 
     emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync(
+await using var browser = await playwright.Webkit.LaunchAsync(
     headless: false,
     proxy: new ProxySettings
     {
         Server = "http://myproxy:3128",
     });
-var context = await browser.NewContextAsync(new BrowserContextOptions(playwright.Devices["Pixel 2"])
+var context = await browser.NewContextAsync(new BrowserContextOptions(playwright.Devices["iPhone 11"])
 {
     UserAgent = "hardkodemium",
     Viewport = new ViewportSize
@@ -129,21 +132,20 @@ var context = await browser.NewContextAsync(new BrowserContextOptions(playwright
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print load/save storageState', async ({ runCLI, testInfo }) => {
+it('should print load/save storageState', async ({ browserName, runCLI, testInfo }) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', '--target=csharp', emptyHTML]);
-  const expectedResult = `await Playwright.InstallAsync();
+  const expectedResult1 = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync(headless: false);
-var context = await browser.NewContextAsync(storageState: "${loadFileName}");
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(headless: false);
+var context = await browser.NewContextAsync(storageState: "${loadFileName}");`;
+  await cli.waitFor(expectedResult1);
 
-// Open new page
-var page = await context.NewPageAsync();
-
+  const expectedResult2 = `
 // ---------------------
 await context.StorageStateAsync(path: "${saveFileName}");
 `;
-  await cli.waitFor(expectedResult);
+  await cli.waitFor(expectedResult2);
 });

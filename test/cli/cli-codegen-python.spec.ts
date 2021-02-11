@@ -22,23 +22,23 @@ const { it, expect } = folio;
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
 
-it('should print the correct imports and context options', async ({ runCLI }) => {
+it('should print the correct imports and context options', async ({ runCLI, browserName }) => {
   const cli = runCLI(['codegen', '--target=python', emptyHTML]);
   const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
-    browser = playwright.chromium.launch(headless=False)
+    browser = playwright.${browserName}.launch(headless=False)
     context = browser.new_context()`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options for custom settings', async ({ runCLI }) => {
+it('should print the correct context options for custom settings', async ({ runCLI, browserName }) => {
   const cli = runCLI(['--color-scheme=light', 'codegen', '--target=python', emptyHTML]);
   const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
-    browser = playwright.chromium.launch(headless=False)
+    browser = playwright.${browserName}.launch(headless=False)
     context = browser.new_context(color_scheme="light")`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
@@ -56,17 +56,17 @@ def run(playwright):
 });
 
 it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', '--device=Pixel 2', 'codegen', '--target=python', emptyHTML]);
+  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', 'codegen', '--target=python', emptyHTML]);
   const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
-    browser = playwright.chromium.launch(headless=False)
-    context = browser.new_context(**playwright.devices["Pixel 2"], color_scheme="light")`;
+    browser = playwright.webkit.launch(headless=False)
+    context = browser.new_context(**playwright.devices["iPhone 11"], color_scheme="light")`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should save the codegen output to a file if specified', async ({ runCLI, testInfo }) => {
+it('should save the codegen output to a file if specified', async ({ runCLI, browserName, testInfo }) => {
   const tmpFile = testInfo.outputPath('script.js');
   const cli = runCLI(['codegen', '--target=python', '--output', tmpFile, emptyHTML]);
   await cli.exited;
@@ -74,7 +74,7 @@ it('should save the codegen output to a file if specified', async ({ runCLI, tes
   expect(content.toString()).toBe(`from playwright.sync_api import sync_playwright
 
 def run(playwright):
-    browser = playwright.chromium.launch(headless=False)
+    browser = playwright.${browserName}.launch(headless=False)
     context = browser.new_context()
 
     # Open new page
@@ -94,20 +94,19 @@ with sync_playwright() as playwright:
     run(playwright)`);
 });
 
-it('should print load/save storage_state', async ({ runCLI, testInfo }) => {
+it('should print load/save storage_state', async ({ runCLI, browserName, testInfo }) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', '--target=python', emptyHTML]);
-  const expectedResult = `from playwright.sync_api import sync_playwright
+  const expectedResult1 = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
-    browser = playwright.chromium.launch(headless=False)
-    context = browser.new_context(storage_state="${loadFileName}")
+    browser = playwright.${browserName}.launch(headless=False)
+    context = browser.new_context(storage_state="${loadFileName}")`;
+  await cli.waitFor(expectedResult1);
 
-    # Open new page
-    page = context.new_page()
-
+  const expectedResult2 = `
     # ---------------------
     context.storage_state(path="${saveFileName}")
     context.close()
@@ -115,5 +114,5 @@ def run(playwright):
 
 with sync_playwright() as playwright:
     run(playwright)`;
-  await cli.waitFor(expectedResult);
+  await cli.waitFor(expectedResult2);
 });

@@ -97,7 +97,7 @@ export class CRBrowser extends Browser {
     this._session.on('Target.detachedFromTarget', this._onDetachedFromTarget.bind(this));
   }
 
-  async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+  async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
     const { browserContextId } = await this._session.send('Target.createBrowserContext', {
       disposeOnDetach: true,

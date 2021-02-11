@@ -28,6 +28,7 @@ declare global {
     playwrightSetPaused: (paused: boolean) => void;
     playwrightSetSource: (params: { text: string, language: string }) => void;
     dispatch(data: any): Promise<void>;
+    playwrightSourceEchoForTest?: (text: string) => Promise<void>;
   }
 }
 
@@ -43,6 +44,8 @@ export const Recorder: React.FC<RecorderProps> = ({
   window.playwrightSetMode = setMode;
   window.playwrightSetSource = setSource;
   window.playwrightSetPaused = setPaused;
+  if (window.playwrightSourceEchoForTest)
+    window.playwrightSourceEchoForTest(source.text).catch(e => {});
 
   return <div className="recorder">
     <Toolbar>

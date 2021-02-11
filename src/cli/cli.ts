@@ -332,7 +332,6 @@ async function open(options: Options, url: string | undefined, language: string)
     contextOptions,
     device: options.device,
     saveStorage: options.saveStorage,
-    terminal: !!process.stdout.columns,
   });
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
@@ -350,7 +349,6 @@ async function codegen(options: Options, url: string | undefined, language: stri
     device: options.device,
     saveStorage: options.saveStorage,
     startRecording: true,
-    terminal: !!process.stdout.columns,
     outputFile: outputFile ? path.resolve(outputFile) : undefined
   });
   await openPage(context, url);

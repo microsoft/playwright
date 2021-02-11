@@ -14,37 +14,8 @@
  * limitations under the License.
  */
 
-import { folio } from './fixtures';
-import { internalCallMetadata } from '../lib/server/instrumentation';
-
-const extended = folio.extend<{
-  recorderFrame: () => Promise<any>,
-  recorderClick: (selector: string) => Promise<void>
-}>();
-
-extended.browserOptions.override(async ({browserOptions}, runTest) => {
-  await runTest({
-    ...browserOptions,
-    headless: false,
-  });
-});
-
-extended.recorderFrame.init(async ({context, toImpl}, runTest) => {
-  await runTest(async () => {
-    while (!toImpl(context).recorderAppForTest)
-      await new Promise(f => setTimeout(f, 100));
-    return toImpl(context).recorderAppForTest._page.mainFrame();
-  });
-});
-
-extended.recorderClick.init(async ({ recorderFrame }, runTest) => {
-  await runTest(async (selector: string) => {
-    const frame = await recorderFrame();
-    frame.click(internalCallMetadata(), selector, {});
-  });
-});
-
-const {it, expect, describe} = extended.build();
+import { folio } from './recorder.fixtures';
+const { it, expect, describe} = folio;
 
 describe('pause', (suite, { mode }) => {
   suite.skip(mode !== 'default');

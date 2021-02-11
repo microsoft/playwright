@@ -103,8 +103,8 @@ fixtures.browserOptions.override(async ({ browserName, headful, slowMo }, run) =
 fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mode }, run) => {
   assert(platform); // Depend on platform to generate all tests.
   const { coverage, uninstall } = installCoverageHooks(browserName);
+  require('../lib/utils/utils').setUnderTest();
   if (mode === 'driver') {
-    require('../lib/utils/utils').setUnderTest();
     const connection = new Connection();
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'cli', 'cli.js'), ['run-driver'], {
       stdio: 'pipe',
@@ -126,7 +126,6 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
     spawnedProcess.stderr.destroy();
     await teardownCoverage();
   } else if (mode === 'service') {
-    require('../lib/utils/utils').setUnderTest();
     const port = 9407 + testWorkerIndex * 2;
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'service.js'), [String(port)], {
       stdio: 'pipe'

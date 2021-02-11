@@ -168,6 +168,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     userDataDir: tString,
+    sdkLanguage: tString,
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
@@ -231,12 +232,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
   });
   scheme.BrowserTypeConnectOverCDPParams = tObject({
+    sdkLanguage: tString,
     wsEndpoint: tString,
     slowMo: tOptional(tNumber),
     timeout: tOptional(tNumber),
   });
   scheme.BrowserCloseParams = tOptional(tObject({}));
   scheme.BrowserNewContextParams = tObject({
+    sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
       width: tNumber,
@@ -349,21 +352,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
   scheme.BrowserContextPauseParams = tOptional(tObject({}));
   scheme.BrowserContextRecorderSupplementEnableParams = tObject({
-    language: tString,
+    language: tOptional(tString),
     startRecording: tOptional(tBoolean),
     launchOptions: tOptional(tAny),
     contextOptions: tOptional(tAny),
     device: tOptional(tString),
     saveStorage: tOptional(tString),
-    terminal: tOptional(tBoolean),
     outputFile: tOptional(tString),
   });
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
-  });
-  scheme.BrowserContextSetTerminalSizeNoReplyParams = tObject({
-    rows: tOptional(tNumber),
-    columns: tOptional(tNumber),
   });
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tNumber,
@@ -925,6 +923,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.CDPSessionDetachParams = tOptional(tObject({}));
   scheme.ElectronLaunchParams = tObject({
+    sdkLanguage: tString,
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     cwd: tOptional(tString),
@@ -1030,6 +1029,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     steps: tNumber,
   });
   scheme.AndroidDeviceLaunchBrowserParams = tObject({
+    sdkLanguage: tString,
     pkg: tOptional(tString),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
@@ -1093,6 +1093,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tNumber,
   });
   scheme.AndroidDeviceConnectToWebViewParams = tObject({
+    sdkLanguage: tString,
     pid: tNumber,
   });
   scheme.AndroidDeviceCloseParams = tOptional(tObject({}));

@@ -313,6 +313,7 @@ BrowserType:
     launchPersistentContext:
       parameters:
         userDataDir: string
+        sdkLanguage: string
         executablePath: string?
         args:
           type: array?
@@ -401,6 +402,7 @@ BrowserType:
 
     connectOverCDP:
       parameters:
+        sdkLanguage: string
         wsEndpoint: string
         slowMo: number?
         timeout: number?
@@ -421,6 +423,7 @@ Browser:
 
     newContext:
       parameters:
+        sdkLanguage: string
         noDefaultViewport: boolean?
         viewport:
           type: object?
@@ -623,13 +626,12 @@ BrowserContext:
     recorderSupplementEnable:
       experimental: True
       parameters:
-        language: string
+        language: string?
         startRecording: boolean?
         launchOptions: json?
         contextOptions: json?
         device: string?
         saveStorage: string?
-        terminal: boolean?
         outputFile: string?
 
     crNewCDPSession:
@@ -637,11 +639,6 @@ BrowserContext:
         page: Page
       returns:
         session: CDPSession
-
-    setTerminalSizeNoReply:
-      parameters:
-        rows: number?
-        columns: number?
 
   events:
 
@@ -659,14 +656,6 @@ BrowserContext:
       parameters:
         route: Route
         request: Request
-
-    stdout:
-      parameters:
-        data: binary
-
-    stderr:
-      parameters:
-        data: binary
 
     crBackgroundPage:
       parameters:
@@ -2106,6 +2095,7 @@ Electron:
 
     launch:
       parameters:
+        sdkLanguage: string
         executablePath: string?
         args:
           type: array?
@@ -2322,6 +2312,7 @@ AndroidDevice:
 
     launchBrowser:
       parameters:
+        sdkLanguage: string
         pkg: string?
         ignoreHTTPSErrors: boolean?
         javaScriptEnabled: boolean?
@@ -2415,6 +2406,7 @@ AndroidDevice:
 
     connectToWebView:
       parameters:
+        sdkLanguage: string
         pid: number
       returns:
         context: BrowserContext

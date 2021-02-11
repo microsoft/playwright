@@ -23,6 +23,7 @@ import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
 import { CallMetadata } from '../server/instrumentation';
+import { isUnderTest } from '../utils/utils';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -38,8 +39,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('close');
       this._dispose();
     });
-    context.on(BrowserContext.Events.StdOut, data => this._dispatchEvent('stdout', { data: Buffer.from(data, 'utf8').toString('base64') }));
-    context.on(BrowserContext.Events.StdErr, data => this._dispatchEvent('stderr', { data: Buffer.from(data, 'utf8').toString('base64') }));
 
     if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
@@ -134,12 +133,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async pause() {
-    if (!this._context._browser.options.headful)
+    if (!this._context._browser.options.headful && !isUnderTest())
       return;
-    const recorder = await RecorderSupplement.getOrCreate(this._context, {
-      language: 'javascript',
-      terminal: true
-    });
+    const recorder = await RecorderSupplement.getOrCreate(this._context);
     await recorder.pause();
   }
 
@@ -148,9 +144,5 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };
-  }
-
-  async setTerminalSizeNoReply(params: channels.BrowserContextSetTerminalSizeNoReplyParams): Promise<void> {
-    this._context.terminalSize = params;
   }
 }

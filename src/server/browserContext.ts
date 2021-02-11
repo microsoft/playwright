@@ -63,8 +63,6 @@ export abstract class BrowserContext extends SdkObject {
     Page: 'page',
     VideoStarted: 'videostarted',
     BeforeClose: 'beforeclose',
-    StdOut: 'stdout',
-    StdErr: 'stderr',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();
@@ -81,7 +79,6 @@ export abstract class BrowserContext extends SdkObject {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   private _origins = new Set<string>();
-  terminalSize: { rows?: number, columns?: number } = {};
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser);
@@ -281,7 +278,7 @@ export abstract class BrowserContext extends SdkObject {
         await this._browser.close();
 
       // Bookkeeping.
-      await this.instrumentation.onContextWillDestroy(this);
+      await this.instrumentation.onContextDidDestroy(this);
       this._didCloseInternal();
     }
     await this._closePromise;

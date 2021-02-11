@@ -15,7 +15,7 @@
  */
 
 import * as channels from '../protocol/channels';
-import { BrowserContext, prepareBrowserContextOptions } from './browserContext';
+import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
@@ -47,7 +47,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     return this._wrapApiCall('browser.newContext', async () => {
       if (this._isRemote && options._traceDir)
         throw new Error(`"_traceDir" is not supported in connected browser`);
-      const contextOptions = await prepareBrowserContextOptions(options);
+      const contextOptions = await prepareBrowserContextParams(options);
       const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
       context._options = contextOptions;
       this._contexts.add(context);

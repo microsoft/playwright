@@ -46,6 +46,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel, channels.El
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     return this._wrapApiCall('electron.launch', async () => {
       const params: channels.ElectronLaunchParams = {
+        sdkLanguage: 'javascript',
         ...options,
         env: envObjectToArray(options.env ? options.env : process.env),
       };

@@ -35,6 +35,7 @@ import { RecentLogsCollector } from '../../utils/debugLogger';
 import { internalCallMetadata, SdkObject } from '../instrumentation';
 
 export type ElectronLaunchOptionsBase = {
+  sdkLanguage: string,
   executablePath?: string,
   args?: string[],
   cwd?: string,
@@ -130,7 +131,7 @@ export class Electron extends SdkObject {
     this._playwrightOptions = playwrightOptions;
   }
 
-  async launch(options: ElectronLaunchOptionsBase = {}): Promise<ElectronApplication> {
+  async launch(options: ElectronLaunchOptionsBase): Promise<ElectronApplication> {
     const {
       args = [],
     } = options;
@@ -182,7 +183,7 @@ export class Electron extends SdkObject {
         name: 'electron',
         isChromium: true,
         headful: true,
-        persistent: { noDefaultViewport: true },
+        persistent: { sdkLanguage: options.sdkLanguage, noDefaultViewport: true },
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,

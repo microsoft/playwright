@@ -73,7 +73,7 @@ export class WKBrowser extends Browser {
     this._didClose();
   }
 
-  async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+  async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
     const createOptions = options.proxy ? {
       proxyServer: options.proxy.server,

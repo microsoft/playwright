@@ -48,7 +48,6 @@ export class Playwright extends SdkObject {
     const instrumentation = multiplexInstrumentation(listeners);
     super({ attribution: {}, instrumentation } as any);
     this.options = {
-      isInternal,
       registry: new Registry(path.join(__dirname, '..', '..')),
       rootSdkObject: this,
     };

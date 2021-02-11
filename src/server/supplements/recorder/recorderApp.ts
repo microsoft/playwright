@@ -23,6 +23,8 @@ import { ProgressController } from '../../progress';
 import { createPlaywright } from '../../playwright';
 import { EventEmitter } from 'events';
 import { internalCallMetadata } from '../../instrumentation';
+import { isUnderTest } from '../../../utils/utils';
+import { BrowserContext } from '../../browserContext';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -90,14 +92,17 @@ export class RecorderApp extends EventEmitter {
     await mainFrame.goto(internalCallMetadata(), 'https://playwright/index.html');
   }
 
-  static async open(): Promise<RecorderApp> {
+  static async open(inspectedContext: BrowserContext): Promise<RecorderApp> {
     const recorderPlaywright = createPlaywright(true);
-    const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), undefined, {
+    const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
+      sdkLanguage: inspectedContext._options.sdkLanguage,
       args: [
         '--app=data:text/html,',
-        '--window-size=300,800',
+        '--window-size=600,600',
+        '--window-position=1280,10',
       ],
-      noDefaultViewport: true
+      noDefaultViewport: true,
+      headless: isUnderTest()
     });
 
     const controller = new ProgressController(internalCallMetadata(), context._browser);
@@ -127,6 +132,15 @@ export class RecorderApp extends EventEmitter {
     await this._page.mainFrame()._evaluateExpression(((param: { text: string, language: string }) => {
       window.playwrightSetSource(param);
     }).toString(), true, { text, language }, 'main').catch(() => {});
+
+    // Testing harness for runCLI mode.
+    {
+      if (process.env.PWCLI_EXIT_FOR_TEST) {
+        process.stdout.write('\n-------------8<-------------\n');
+        process.stdout.write(text);
+        process.stdout.write('\n-------------8<-------------\n');
+      }
+    }
   }
 
   async bringToFront() {

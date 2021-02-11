@@ -33,11 +33,10 @@ export interface BrowserProcess {
 
 export type PlaywrightOptions = {
   registry: registry.Registry,
-  isInternal: boolean,
   rootSdkObject: SdkObject,
 };
 
-export type BrowserOptions = PlaywrightOptions & types.UIOptions & {
+export type BrowserOptions = PlaywrightOptions & {
   name: string,
   isChromium: boolean,
   downloadsPath?: string,
@@ -47,6 +46,7 @@ export type BrowserOptions = PlaywrightOptions & types.UIOptions & {
   proxy?: ProxySettings,
   protocolLogger: types.ProtocolLogger,
   browserLogsCollector: RecentLogsCollector,
+  slowMo?: number;
 };
 
 export abstract class Browser extends SdkObject {
@@ -66,12 +66,12 @@ export abstract class Browser extends SdkObject {
     this.options = options;
   }
 
-  abstract newContext(options?: types.BrowserContextOptions): Promise<BrowserContext>;
+  abstract newContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract version(): string;
 
-  async newPage(options?: types.BrowserContextOptions): Promise<Page> {
+  async newPage(options: types.BrowserContextOptions): Promise<Page> {
     const context = await this.newContext(options);
     const page = await context.newPage();
     page._ownedContext = context;
@@ -131,4 +131,3 @@ export abstract class Browser extends SdkObject {
       await new Promise(x => this.once(Browser.Events.Disconnected, x));
   }
 }
-

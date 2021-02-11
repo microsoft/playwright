@@ -19,7 +19,7 @@ import * as util from 'util';
 import { isString } from '../utils/utils';
 import * as channels from '../protocol/channels';
 import { Events } from './events';
-import { BrowserContext, prepareBrowserContextOptions } from './browserContext';
+import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import * as api from '../../types/types';
 import * as types from './types';
@@ -230,7 +230,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
 
   async launchBrowser(options: types.BrowserContextOptions & { pkg?: string  } = {}): Promise<ChromiumBrowserContext> {
     return this._wrapApiCall('androidDevice.launchBrowser', async () => {
-      const contextOptions = await prepareBrowserContextOptions(options);
+      const contextOptions = await prepareBrowserContextParams(options);
       const { context } = await this._channel.launchBrowser(contextOptions);
       return BrowserContext.from(context) as ChromiumBrowserContext;
     });
@@ -394,7 +394,7 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
 
   private async _fetchPage(): Promise<Page> {
     return this._device._wrapApiCall('androidWebView.page', async () => {
-      const { context } = await this._device._channel.connectToWebView({ pid: this._data.pid });
+      const { context } = await this._device._channel.connectToWebView({ pid: this._data.pid, sdkLanguage: 'javascript' });
       return BrowserContext.from(context).pages()[0];
     });
   }
