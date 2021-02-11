@@ -15,49 +15,14 @@
  */
 
 import * as path from 'path';
+import { StackFrame } from '../common/types';
+const StackUtils = require('stack-utils');
 
-// NOTE: update this to point to playwright/lib when moving this file.
-const PLAYWRIGHT_LIB_PATH = path.normalize(path.join(__dirname, '..'));
+const stackUtils = new StackUtils();
 
-type ParsedStackFrame = { filePath: string, functionName: string };
-
-function parseStackFrame(frame: string): ParsedStackFrame | null {
-  frame = frame.trim();
-  if (!frame.startsWith('at '))
-    return null;
-  frame = frame.substring('at '.length);
-  if (frame.startsWith('async '))
-    frame = frame.substring('async '.length);
-  let location: string;
-  let functionName: string;
-  if (frame.endsWith(')')) {
-    const from = frame.indexOf('(');
-    location = frame.substring(from + 1, frame.length - 1);
-    functionName = frame.substring(0, from).trim();
-  } else {
-    location = frame;
-    functionName = '';
-  }
-  const match = location.match(/^(?:async )?([^(]*):(\d+):(\d+)$/);
-  if (!match)
-    return null;
-  const filePath = match[1];
-  return { filePath, functionName };
-}
-
-export function getCallerFilePath(ignorePrefix = PLAYWRIGHT_LIB_PATH): string | null {
-  const error = new Error();
-  const stackFrames = (error.stack || '').split('\n').slice(2);
-  // Find first stackframe that doesn't point to ignorePrefix.
-  for (const frame of stackFrames) {
-    const parsed = parseStackFrame(frame);
-    if (!parsed)
-      return null;
-    if (parsed.filePath.startsWith(ignorePrefix))
-      continue;
-    return parsed.filePath;
-  }
-  return null;
+export function getCallerFilePath(ignorePrefix: string): string | null {
+  const frame = captureStackTrace().frames.find(f => !f.file.startsWith(ignorePrefix));
+  return frame ? frame.file : null;
 }
 
 export function rewriteErrorMessage(e: Error, newMessage: string): Error {
@@ -70,3 +35,27 @@ export function rewriteErrorMessage(e: Error, newMessage: string): Error {
   return e;
 }
 
+export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
+  const stack = new Error().stack!;
+  const frames: StackFrame[] = [];
+  for (const line of stack.split('\n')) {
+    const frame = stackUtils.parseLine(line);
+    if (!frame || !frame.file)
+      continue;
+    if (frame.file.startsWith('internal'))
+      continue;
+    const fileName = path.resolve(process.cwd(), frame.file);
+    if (fileName.includes(path.join('playwright', 'lib')))
+      continue;
+    // for tests.
+    if (fileName.includes(path.join('playwright', 'src')))
+      continue;
+    frames.push({
+      file: fileName,
+      line: frame.line,
+      column: frame.column,
+      function: frame.function,
+    });
+  }
+  return { stack, frames };
+}

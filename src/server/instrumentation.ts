@@ -15,6 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { StackFrame } from '../common/types';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { BrowserType } from './browserType';
@@ -33,7 +34,7 @@ export type CallMetadata = {
   type: string;
   method: string;
   params: any;
-  stack: string;
+  stack?: StackFrame[];
 };
 
 export class SdkObject extends EventEmitter {
@@ -109,6 +110,5 @@ export function internalCallMetadata(): CallMetadata {
     type: 'Internal',
     method: '',
     params: {},
-    stack: ''
   };
 }

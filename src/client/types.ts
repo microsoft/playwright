@@ -23,14 +23,12 @@ export interface Logger {
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
 
-export type Size = { width: number, height: number };
-export type Point = { x: number, y: number };
-export type Rect = Size & Point;
+import { Size } from '../common/types';
+export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
+
 export type Headers = { [key: string]: string };
 export type Env = { [key: string]: string | number | boolean | undefined };
-export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
-export type TimeoutOptions = { timeout?: number };
 export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };
 export type WaitForFunctionOptions = { timeout?: number, polling?: 'raf' | number };
 

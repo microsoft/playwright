@@ -17,7 +17,15 @@
 Metadata:
   type: object
   properties:
-    stack: string?
+    stack:
+      type: array?
+      items:
+        type: object
+        properties:
+          file: string
+          line: number?
+          column: number?
+          function: string?
 
 
 Point:
