@@ -104,19 +104,7 @@ class ApiParser {
     }
     const clazz = this.classes.get(match[2]);
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
-    let isTypeOverride = false;
-    if (existingMember) {
-      if (existingMember.langs.only) {
-        if (member.langs.only.every(l => existingMember.langs.only.includes(l))) {
-          isTypeOverride = true;
-        } else if (member.langs.only.some(l => existingMember.langs.only.includes(l))) {
-          throw new Error(`Ambiguous language override for: ${spec.text}`);
-        }
-      } else {
-        isTypeOverride = true;
-      }
-    }
-    if (isTypeOverride) {
+    if (existingMember && isTypeOverride(existingMember, member)) {
       for (const lang of member.langs.only) {
         existingMember.langs.types = existingMember.langs.types || {};
         existingMember.langs.types[lang] = returnType;
@@ -146,7 +134,7 @@ class ApiParser {
       const arg = this.parseProperty(spec);
       arg.name = name;
       const existingArg = method.argsArray.find(m => m.name === arg.name);
-      if (existingArg) {
+      if (existingArg && isTypeOverride(existingArg, arg)) {
         if (!arg.langs || !arg.langs.only)
           throw new Error('Override does not have lang: ' + spec.text);
         for (const lang of arg.langs.only) {
@@ -348,6 +336,22 @@ function extractLangs(spec) {
  */
 function childrenWithoutProperties(spec) {
   return spec.children.filter(c => c.liType !== 'bullet' || !c.text.startsWith('langs'));
+}
+
+/**
+ * @param {Documentation.Member} existingMember
+ * @param {Documentation.Member} member
+ * @returns {boolean}
+ */
+function isTypeOverride(existingMember, member) {
+  if (!existingMember.langs.only)
+    return true;
+  if (member.langs.only.every(l => existingMember.langs.only.includes(l))) {
+    return true;
+  } else if (member.langs.only.some(l => existingMember.langs.only.includes(l))) {
+    throw new Error(`Ambiguous language override for: ${member.name}`);
+  }
+  return false;
 }
 
 module.exports = { parseApi };
