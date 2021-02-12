@@ -27,7 +27,7 @@ import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
-import { BufferedOutput, FileOutput, FlushingTerminalOutput, OutputMultiplexer, RecorderOutput, TerminalOutput, Writable } from './recorder/outputs';
+import { BufferedOutput, FileOutput, OutputMultiplexer, RecorderOutput } from './recorder/outputs';
 import { EventData, Mode, RecorderApp } from './recorder/recorderApp';
 import { internalCallMetadata } from '../instrumentation';
 
@@ -51,7 +51,7 @@ export class RecorderSupplement {
   private _highlighterType: string;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
 
-  static getOrCreate(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<RecorderSupplement> {
+  static getOrCreate(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<RecorderSupplement> {
     let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
     if (!recorderPromise) {
       const recorder = new RecorderSupplement(context, params);
@@ -66,22 +66,19 @@ export class RecorderSupplement {
     this._params = params;
     this._mode = params.startRecording ? 'recording' : 'none';
     let languageGenerator: LanguageGenerator;
-    switch (params.language) {
+    const language = params.language || context._options.sdkLanguage;
+    switch (language) {
       case 'javascript': languageGenerator = new JavaScriptLanguageGenerator(); break;
       case 'csharp': languageGenerator = new CSharpLanguageGenerator(); break;
       case 'python':
       case 'python-async': languageGenerator = new PythonLanguageGenerator(params.language === 'python-async'); break;
       default: throw new Error(`Invalid target: '${params.language}'`);
     }
-    let highlighterType = params.language;
+    let highlighterType = language;
     if (highlighterType === 'python-async')
       highlighterType = 'python';
 
-    const writable: Writable = {
-      write: (text: string) => context.emit(BrowserContext.Events.StdOut, text),
-      columns: () => context.terminalSize.columns || 80
-    };
-    const outputs: RecorderOutput[] = [params.terminal ? new TerminalOutput(writable, highlighterType) : new FlushingTerminalOutput(writable)];
+    const outputs: RecorderOutput[] = [];
     this._highlighterType = highlighterType;
     this._bufferedOutput = new BufferedOutput(async text => {
       if (this._recorderApp)
@@ -99,7 +96,7 @@ export class RecorderSupplement {
   }
 
   async install() {
-    const recorderApp = await RecorderApp.open();
+    const recorderApp = await RecorderApp.open(this._context);
     this._recorderApp = recorderApp;
     recorderApp.once('close', () => {
       this._recorderApp = null;
@@ -152,10 +149,6 @@ export class RecorderSupplement {
     // Commits last action so that no further signals are added to it.
     await this._context.exposeBinding('_playwrightRecorderCommitAction', false,
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
-
-    await this._context.exposeBinding('_playwrightRecorderPrintSelector', false, (_, text) => {
-      this._context.emit(BrowserContext.Events.StdOut, `Selector: \x1b[38;5;130m${text}\x1b[0m\n`);
-    });
 
     await this._context.exposeBinding('_playwrightRecorderState', false, () => {
       return { mode: this._mode };

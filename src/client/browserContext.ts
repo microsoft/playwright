@@ -43,9 +43,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
-  _options: channels.BrowserNewContextParams = {};
-  private _stdout: NodeJS.WriteStream;
-  private _stderr: NodeJS.WriteStream;
+  _options: channels.BrowserNewContextParams = {
+    sdkLanguage: 'javascript'
+  };
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -64,21 +64,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
-    this._stdout = process.stdout;
-    this._stderr = process.stderr;
-    this._channel.on('stdout', ({ data }) => {
-      this._stdout.write(Buffer.from(data, 'base64'));
-      this._pushTerminalSize();
-    });
-    this._channel.on('stderr', ({ data }) => {
-      this._stderr.write(Buffer.from(data, 'base64'));
-      this._pushTerminalSize();
-    });
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
-  }
-
-  private _pushTerminalSize() {
-    this._channel.setTerminalSizeNoReply({ rows: process.stdout.rows, columns: process.stdout.columns }).catch(() => {});
   }
 
   private _onPage(page: Page): void {
@@ -283,31 +269,30 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       device?: string,
       saveStorage?: string,
       startRecording?: boolean,
-      terminal?: boolean,
       outputFile?: string
   }) {
-    this._pushTerminalSize();
     await this._channel.recorderSupplementEnable(params);
   }
 }
 
-export async function prepareBrowserContextOptions(options: BrowserContextOptions): Promise<channels.BrowserNewContextOptions> {
+export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);
   if (options.extraHTTPHeaders)
     network.validateHeaders(options.extraHTTPHeaders);
-  const contextOptions: channels.BrowserNewContextParams = {
+  const contextParams: channels.BrowserNewContextParams = {
+    sdkLanguage: 'javascript',
     ...options,
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
     storageState: typeof options.storageState === 'string' ? JSON.parse(await fsReadFileAsync(options.storageState, 'utf8')) : options.storageState,
   };
-  if (!contextOptions.recordVideo && options.videosPath) {
-    contextOptions.recordVideo = {
+  if (!contextParams.recordVideo && options.videosPath) {
+    contextParams.recordVideo = {
       dir: options.videosPath,
       size: options.videoSize
     };
   }
-  return contextOptions;
+  return contextParams;
 }

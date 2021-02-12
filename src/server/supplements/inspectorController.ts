@@ -22,12 +22,8 @@ import { debugLogger } from '../../utils/debugLogger';
 
 export class InspectorController implements InstrumentationListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
-    if (isDebugMode()) {
-      RecorderSupplement.getOrCreate(context, {
-        language: process.env.PW_CLI_TARGET_LANG || 'javascript',
-        terminal: true,
-      });
-    }
+    if (isDebugMode())
+      RecorderSupplement.getOrCreate(context);
   }
 
   onCallLog(logName: string, message: string): void {

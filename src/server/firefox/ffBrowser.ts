@@ -71,7 +71,7 @@ export class FFBrowser extends Browser {
     return !this._connection._closed;
   }
 
-  async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+  async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
     if (options.isMobile)
       throw new Error('options.isMobile is not supported in Firefox');

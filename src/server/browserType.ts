@@ -69,7 +69,7 @@ export abstract class BrowserType extends SdkObject {
     return browser;
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir?: string, options: types.LaunchPersistentOptions = {}): Promise<BrowserContext> {
+  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
     options = validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     const persistent: types.BrowserContextOptions = options;
@@ -223,7 +223,7 @@ export abstract class BrowserType extends SdkObject {
     return { browserProcess, downloadsPath, transport };
   }
 
-  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, uiOptions: types.UIOptions, timeout?: number): Promise<Browser> {
+  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
   }
 
