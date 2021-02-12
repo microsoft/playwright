@@ -14,16 +14,16 @@ if [[ ! -d ./electron-build-tools ]]; then
   cd ..
 fi
 
-cd electron-build-tools
+cd electron-build-tools/third_party/goma
 
 if [[ $1 == "--help" ]]; then
   echo "$(basename $0) [login|start|stop|--help]"
   exit 0
 elif [[ $1 == "login" ]]; then
   if [[ $(uname) == "MINGW"* ]]; then
-    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/third_party/goma/goma_auth.bat) login"
+    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_auth.bat) login"
   else
-    python ./third_party/goma/goma_auth.py login
+    python ./goma_auth.py login
   fi
 elif [[ $1 == "start" ]]; then
   # We have to prefix ENV with `PLAYWRIGHT` since `GOMA_` env variables
@@ -37,15 +37,15 @@ elif [[ $1 == "start" ]]; then
     exit 1
   fi
   if [[ $(uname) == "MINGW"* ]]; then
-    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/third_party/goma/goma_ctl.bat) ensure_start"
+    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_ctl.bat) ensure_start"
   else
-    python ./third_party/goma/goma_ctl.py ensure_start
+    python ./goma_ctl.py ensure_start
   fi
 elif [[ $1 == "stop" ]]; then
   if [[ $(uname) == "MINGW"* ]]; then
-    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/third_party/goma/goma_ctl.bat) stop"
+    /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_ctl.bat) stop"
   else
-    python ./third_party/goma/goma_ctl.py stop
+    python ./goma_ctl.py stop
   fi
 else
   echo "ERROR: unknown command - $1"
