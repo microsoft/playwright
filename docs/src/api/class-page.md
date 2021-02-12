@@ -1274,13 +1274,31 @@ frame = page.frame(url=r".*domain.*")
 ```
 
 ### param: Page.frame.frameSelector
-* langs: java, js
+* langs: js
 - `frameSelector` <[string]|[Object]>
   - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
   - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving
     frame's `url` as a [URL] object. Optional.
 
 Frame name or other frame lookup options.
+
+### param: Page.frame.name
+* langs: csharp, java
+- `name` <[string]>
+
+Frame name specified in the `iframe`'s `name` attribute.
+
+## method: Page.frameByUrl
+* langs: csharp, java
+- returns: <[null]|[Frame]>
+
+Returns frame with matching URL.
+
+### param: Page.frameByUrl.url
+* langs: csharp, java
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
 
 ## method: Page.frames
 - returns: <[Array]<[Frame]>>
