@@ -221,6 +221,7 @@ EOF
   zip --symlinks -r build.zip "${CHROMIUM_FOLDER_NAME}"
 }
 
+
 mirror_chromium() {
   cd "$SCRIPT_PATH"
   rm -rf output
