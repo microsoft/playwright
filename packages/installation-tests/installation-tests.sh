@@ -38,6 +38,7 @@ function copy_test_scripts {
   cp "${SCRIPTS_PATH}/esm-playwright-webkit.mjs" .
   cp "${SCRIPTS_PATH}/sanity-electron.js" .
   cp "${SCRIPTS_PATH}/electron-app.js" .
+  cp "${SCRIPTS_PATH}/driver-client.js" .
 }
 
 function run_tests {
@@ -57,6 +58,7 @@ function run_tests {
   test_playwright_cli_screenshot_should_work
   test_playwright_cli_install_should_work
   test_playwright_cli_codegen_should_work
+  test_playwright_driver_should_work
 }
 
 function test_screencast {
@@ -426,6 +428,21 @@ function test_playwright_cli_codegen_should_work {
     echo "ERROR: missing browser.close in the output"
     exit 1
   fi
+
+  echo "${FUNCNAME[0]} success"
+}
+
+function test_playwright_driver_should_work {
+  initialize_test "${FUNCNAME[0]}"
+
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
+
+  echo "Running playwright install"
+  PLAYWRIGHT_BROWSERS_PATH="0" npx playwright install
+
+  copy_test_scripts
+  echo "Running driver-client.js"
+  PLAYWRIGHT_BROWSERS_PATH="0" node driver-client.js
 
   echo "${FUNCNAME[0]} success"
 }
