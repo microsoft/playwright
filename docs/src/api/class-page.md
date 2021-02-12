@@ -357,12 +357,19 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 :::
 
 ### param: Page.addInitScript.script
+* langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
     current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 
 Script to be evaluated in the page.
+
+### param: Page.addInitScript.script
+* langs: csharp, java
+- `script` <[string]|[path]>
+
+Script to be evaluated in all pages in the browser context.
 
 ### param: Page.addInitScript.arg
 * langs: js
