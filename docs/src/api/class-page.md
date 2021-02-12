@@ -2231,7 +2231,7 @@ Performs action and waits for a [ConoleMessage] to be logged by in the page. If 
 Will throw an error if the page is closed before the console event is fired.
 
 ### option: Page.waitForConsoleMessage.predicate =
-- `predicate` <[function]\([ConsoleMessage]\):[bool]>
+- `predicate` <[function]\([ConsoleMessage]\):[boolean]>
 
 Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
 
@@ -2247,7 +2247,7 @@ Performs action and waits for a new [Download]. If predicate is provided, it pas
 Will throw an error if the page is closed before the download event is fired.
 
 ### option: Page.waitForDownload.predicate =
-- `predicate` <[function]\([Download]\):[bool]>
+- `predicate` <[function]\([Download]\):[boolean]>
 
 Receives the [Download] object and resolves to truthy value when the waiting should resolve.
 
@@ -2301,7 +2301,7 @@ Performs action and waits for a new [FileChooser] to be created. If predicate is
 Will throw an error if the page is closed before the file chooser is opened.
 
 ### option: Page.waitForFileChooser.predicate =
-- `predicate` <[function]\([FileChooser]\):[bool]>
+- `predicate` <[function]\([FileChooser]\):[boolean]>
 
 Receives the [FileChooser] object and resolves to truthy value when the waiting should resolve.
 
@@ -2505,7 +2505,7 @@ Performs action and waits for a popup [Page]. If predicate is provided, it passe
 Will throw an error if the page is closed before the popup event is fired.
 
 ### option: Page.waitForPopup.predicate =
-- `predicate` <[function]\([Page]\):[bool]>
+- `predicate` <[function]\([Page]\):[boolean]>
 
 Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
@@ -2704,7 +2704,7 @@ Performs action and waits for a new [WebSocket]. If predicate is provided, it pa
 Will throw an error if the page is closed before the WebSocket event is fired.
 
 ### option: Page.waitForWebSocket.predicate =
-- `predicate` <[function]\([WebSocket]\):[bool]>
+- `predicate` <[function]\([WebSocket]\):[boolean]>
 
 Receives the [WebSocket] object and resolves to truthy value when the waiting should resolve.
 
@@ -2720,7 +2720,7 @@ Performs action and waits for a new [Worker]. If predicate is provided, it passe
 Will throw an error if the page is closed before the worker event is fired.
 
 ### option: Page.waitForWorker.predicate =
-- `predicate` <[function]\([Worker]\):[bool]>
+- `predicate` <[function]\([Worker]\):[boolean]>
 
 Receives the [Worker] object and resolves to truthy value when the waiting should resolve.
 
