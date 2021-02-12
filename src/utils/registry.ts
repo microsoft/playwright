@@ -158,12 +158,35 @@ export const hostPlatform = ((): BrowserPlatform => {
 })();
 
 export const registryDirectory = (() => {
+  let result: string;
+
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
-  if (envDefined === '0')
-    return path.join(__dirname, '..', '..', '.local-browsers');
-  if (envDefined)
-    return path.resolve(process.cwd(), envDefined);
-  return path.join(cacheDirectory(), 'ms-playwright');
+  if (envDefined === '0') {
+    result = path.join(__dirname, '..', '..', '.local-browsers');
+  } else if (envDefined) {
+    result = envDefined;
+  } else {
+    let cacheDirectory: string;
+    if (process.platform === 'linux')
+      cacheDirectory = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
+    else if (process.platform === 'darwin')
+      cacheDirectory = path.join(os.homedir(), 'Library', 'Caches');
+    else if (process.platform === 'win32')
+      cacheDirectory = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+    else
+      throw new Error('Unsupported platform: ' + process.platform);
+    result = path.join(cacheDirectory, 'ms-playwright');
+  }
+
+  if (!path.isAbsolute(result)) {
+    // It is important to resolve to the absolute path:
+    //   - for unzipping to work correctly;
+    //   - so that registry directory matches between installation and execution.
+    // INIT_CWD points to the root of `npm/yarn install` and is probably what
+    // the user meant when typing the relative path.
+    result = path.resolve(getFromENV('INIT_CWD') || process.cwd(), result);
+  }
+  return result;
 })();
 
 export function isBrowserDirectory(browserDirectory: string): boolean {
@@ -255,16 +278,3 @@ export class Registry {
     return !!browser && browser.download !== false;
   }
 }
-
-function cacheDirectory() {
-  if (process.platform === 'linux')
-    return process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
-
-  if (process.platform === 'darwin')
-    return path.join(os.homedir(), 'Library', 'Caches');
-
-  if (process.platform === 'win32')
-    return process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-  throw new Error('Unsupported platform: ' + process.platform);
-}
-
