@@ -187,12 +187,10 @@ if (!args.some(arg => arg === '--no-cleanup')) {
 
 async function writeToPackage(fileName, content) {
   const toPath = path.join(packagePath, fileName);
-  console.error(`- generating: //${path.relative(ROOT_PATH, toPath)}`);
   await writeFileAsync(toPath, content);
 }
 
 async function copyToPackage(fromPath, toPath) {
-  console.error(`- copying: //${path.relative(ROOT_PATH, fromPath)} -> //${path.relative(ROOT_PATH, toPath)}`);
   try {
     fs.mkdirSync(path.dirname(toPath), { recursive: true });
   } catch (e) {
