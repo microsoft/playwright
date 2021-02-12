@@ -71,7 +71,7 @@ compile_chromium() {
     CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
   elif [[ $1 == "--compile-linux" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-linux"
-    CHROMIUM_FILES_TO_ARCHIVE=( 
+    CHROMIUM_FILES_TO_ARCHIVE=(
       "chrome"
       "chrome_100_percent.pak"
       "chrome_200_percent.pak"
@@ -98,7 +98,7 @@ compile_chromium() {
     )
   elif [[ $1 == "--compile-win"* ]]; then
     CHROMIUM_FOLDER_NAME="chrome-win"
-    CHROMIUM_FILES_TO_ARCHIVE=( 
+    CHROMIUM_FILES_TO_ARCHIVE=(
       "chrome.dll"
       "chrome.exe"
       "chrome_100_percent.pak"
