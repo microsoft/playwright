@@ -5,6 +5,8 @@ Terminates this instance of Playwright, will also close all created browsers if 
 
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
+### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
+
 ### param: Page.waitForClose.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
@@ -18,6 +20,8 @@ Terminates this instance of Playwright, will also close all created browsers if 
 ### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Page.waitForResponse.callback = %%-java-wait-for-event-callback-%%
+
+### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
 
