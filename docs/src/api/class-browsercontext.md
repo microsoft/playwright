@@ -805,7 +805,7 @@ Will throw an error if the context closes before new [Page] is created.
 
 ### option: BrowserContext.waitForPage.predicate =
 * langs: csharp, java, python
-- `predicate` <[function]\([Page]\):[bool]>
+- `predicate` <[function]\([Page]\):[boolean]>
 
 Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
