@@ -191,7 +191,6 @@ async function writeToPackage(fileName, content) {
 }
 
 async function copyToPackage(fromPath, toPath) {
-  console.error(`- copying: //${path.relative(ROOT_PATH, fromPath)} -> //${path.relative(ROOT_PATH, toPath)}`);
   try {
     fs.mkdirSync(path.dirname(toPath), { recursive: true });
   } catch (e) {
