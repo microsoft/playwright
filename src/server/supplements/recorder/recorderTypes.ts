@@ -19,18 +19,32 @@ import { Point } from '../../../common/types';
 export type Mode = 'inspecting' | 'recording' | 'none';
 
 export type EventData = {
-  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode',
-  params: any
+  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode';
+  params: any;
 };
-
-export type PauseDetails = {
-  message: string;
-};
-
-export type Source = { text: string, language: string, highlightedLine?: number };
 
 export type UIState = {
-  mode: Mode,
-  actionPoint?: Point,
-  actionSelector?: string
+  mode: Mode;
+  actionPoint?: Point;
+  actionSelector?: string;
+};
+
+export type CallLog = {
+  id: number;
+  title: string;
+  messages: string[];
+  status: 'in-progress' | 'done' | 'error' | 'paused';
+};
+
+export type SourceHighlight = {
+  line: number;
+  type: 'running' | 'paused';
+};
+
+export type Source = {
+  file: string;
+  text: string;
+  language: string;
+  highlight: SourceHighlight[];
+  revealLine?: number;
 };

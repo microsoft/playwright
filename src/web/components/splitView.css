@@ -14,43 +14,29 @@
   limitations under the License.
 */
 
-.source {
+.split-view {
   display: flex;
   flex: auto;
   flex-direction: column;
-  white-space: pre;
-  overflow: auto;
-  font-family: var(--monospace-font);
-  font-size: 11px;
-  line-height: 16px;
-  background: white;
 }
 
-.source-line {
+.split-view-main {
+  display: flex;
+  flex: auto;
+}
+
+.split-view-sidebar {
   display: flex;
   flex: none;
+  border-top: 1px solid #ddd;
 }
 
-.source-line-number {
-  color: #555;
-  padding: 0 8px;
-  width: 30px;
-  text-align: right;
-  background: #edebe9;
-  user-select: none;
-}
-
-.source-line-number {
-  flex: none;
-}
-
-.source-line-running {
-  background-color: #6fa8dc7f;
-  z-index: 2;
-}
-
-.source-line-paused {
-  background-color: #ffc0cb7f;
-  outline: 1px solid red;
-  z-index: 2;
+.split-view-resizer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  cursor: resize;
+  cursor: ns-resize;
+  z-index: 100;
 }

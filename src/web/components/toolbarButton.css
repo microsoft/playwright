@@ -17,7 +17,7 @@
 .toolbar-button {
   border: none;
   outline: none;
-  color: #777;
+  color: var(--toolbar-color);
   background: transparent;
   padding: 0;
   margin-left: 10px;

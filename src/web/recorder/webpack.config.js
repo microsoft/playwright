@@ -34,7 +34,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebPackPlugin({
-      title: 'Playwright Recorder',
+      title: 'Playwright Inspector',
       template: path.join(__dirname, 'index.html'),
     })
   ]
