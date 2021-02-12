@@ -57,11 +57,17 @@ Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=my
 contain `[a-zA-Z0-9_]` characters.
 
 ### param: Selectors.register.script
-* langs: java, js
+* langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
     current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
+
+Script that evaluates to a selector engine instance.
+
+### param: Selectors.register.script
+* langs: csharp, java
+- `script` <[string]|[path]>
 
 Script that evaluates to a selector engine instance.
 
