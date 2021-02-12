@@ -27,6 +27,7 @@ export interface Progress {
   throwIfAborted(): void;
   beforeInputAction(): Promise<void>;
   afterInputAction(): Promise<void>;
+  metadata: CallMetadata;
 }
 
 export class ProgressController {
@@ -92,6 +93,7 @@ export class ProgressController {
       afterInputAction: async () => {
         await this.instrumentation.onAfterInputAction(this.sdkObject, this.metadata);
       },
+      metadata: this.metadata
     };
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);

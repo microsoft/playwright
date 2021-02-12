@@ -22,12 +22,14 @@ import '../../third_party/highlightjs/highlightjs/tomorrow.css';
 export interface SourceProps {
   text: string,
   language: string,
-  highlightedLine?: number
+  highlightedLine?: number,
+  paused?: boolean
 }
 
 export const Source: React.FC<SourceProps> = ({
   text,
   language,
+  paused = false,
   highlightedLine = -1
 }) => {
   const lines = React.useMemo<string[]>(() => {
@@ -51,7 +53,8 @@ export const Source: React.FC<SourceProps> = ({
   return <div className='source'>{
       lines.map((markup, index) => {
         const isHighlighted = index === highlightedLine;
-        const className = isHighlighted ? 'source-line source-line-highlighted' : 'source-line';
+        const highlightType = paused && isHighlighted ? 'source-line-paused' : 'source-line-highlighted';
+        const className = isHighlighted ? `source-line ${highlightType}` : 'source-line';
         return <div key={index} className={className} ref={isHighlighted ? highlightedLineRef : null}>
           <div className='source-line-number'>{index + 1}</div>
           <div className='source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>

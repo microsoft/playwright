@@ -24,6 +24,8 @@
   display: flex;
   color: #eee;
   background-color: #333;
-  height: 24px;
+  line-height: 24px;
   align-items: center;
+  flex: none;
+  white-space: nowrap;
 }

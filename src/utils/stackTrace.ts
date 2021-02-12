@@ -17,6 +17,7 @@
 import path from 'path';
 import { StackFrame } from '../common/types';
 import StackUtils from 'stack-utils';
+import { isUnderTest } from './utils';
 
 const stackUtils = new StackUtils();
 
@@ -49,6 +50,8 @@ export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
       continue;
     // for tests.
     if (fileName.includes(path.join('playwright', 'src')))
+      continue;
+    if (isUnderTest() && fileName.includes(path.join('playwright', 'test', 'coverage.js')))
       continue;
     frames.push({
       file: fileName,

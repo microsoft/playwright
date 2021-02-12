@@ -23,7 +23,6 @@ import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
 import { CallMetadata } from '../server/instrumentation';
-import { isUnderTest } from '../utils/utils';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -132,11 +131,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await RecorderSupplement.getOrCreate(this._context, params);
   }
 
-  async pause() {
-    if (!this._context._browser.options.headful && !isUnderTest())
-      return;
-    const recorder = await RecorderSupplement.getOrCreate(this._context);
-    await recorder.pause();
+  async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
+    // Inspector controller will take care of this.
   }
 
   async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {

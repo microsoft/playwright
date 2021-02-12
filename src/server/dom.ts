@@ -382,6 +382,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
       progress.log(`  performing ${actionName} action`);
+      progress.metadata.point = point;
       await progress.beforeInputAction();
       await action(point);
       progress.log(`  ${actionName} action done`);

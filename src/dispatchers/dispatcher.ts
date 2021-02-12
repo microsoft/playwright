@@ -190,6 +190,7 @@ export class DispatcherConnection {
     }
 
     const callMetadata: CallMetadata = {
+      id,
       ...validMetadata,
       startTime: monotonicTime(),
       endTime: 0,
@@ -199,9 +200,10 @@ export class DispatcherConnection {
       log: [],
     };
 
+    const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
     try {
-      if (dispatcher instanceof SdkObject)
-        await dispatcher.instrumentation.onBeforeCall(dispatcher, callMetadata);
+      if (sdkObject)
+        await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
       const result = await (dispatcher as any)[method](validParams, callMetadata);
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
@@ -210,8 +212,8 @@ export class DispatcherConnection {
         rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log) + kLoggingNote);
       this.onmessage({ id, error: serializeError(e) });
     } finally {
-      if (dispatcher instanceof SdkObject)
-        await dispatcher.instrumentation.onAfterCall(dispatcher, callMetadata);
+      if (sdkObject)
+        await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
   }
 

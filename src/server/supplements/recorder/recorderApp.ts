@@ -23,22 +23,17 @@ import { ProgressController } from '../../progress';
 import { createPlaywright } from '../../playwright';
 import { EventEmitter } from 'events';
 import { internalCallMetadata } from '../../instrumentation';
-import { isUnderTest } from '../../../utils/utils';
+import type { EventData, Mode, PauseDetails, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
+import { isUnderTest } from '../../../utils/utils';
 
 const readFileAsync = util.promisify(fs.readFile);
-
-export type Mode = 'inspecting' | 'recording' | 'none';
-export type EventData = {
-  event: 'clear' | 'resume' | 'setMode',
-  params: any
-};
 
 declare global {
   interface Window {
     playwrightSetMode: (mode: Mode) => void;
-    playwrightSetPaused: (paused: boolean) => void;
-    playwrightSetSource: (params: { text: string, language: string }) => void;
+    playwrightSetPaused: (details: PauseDetails | null) => void;
+    playwrightSetSource: (source: Source) => void;
     dispatch(data: EventData): Promise<void>;
   }
 }
@@ -102,7 +97,7 @@ export class RecorderApp extends EventEmitter {
         '--window-position=1280,10',
       ],
       noDefaultViewport: true,
-      headless: isUnderTest()
+      headless: isUnderTest() && !inspectedContext._browser.options.headful
     });
 
     const controller = new ProgressController(internalCallMetadata(), context._browser);
@@ -122,16 +117,16 @@ export class RecorderApp extends EventEmitter {
     }).toString(), true, mode, 'main').catch(() => {});
   }
 
-  async setPaused(paused: boolean): Promise<void> {
-    await this._page.mainFrame()._evaluateExpression(((paused: boolean) => {
-      window.playwrightSetPaused(paused);
-    }).toString(), true, paused, 'main').catch(() => {});
+  async setPaused(details: PauseDetails | null): Promise<void> {
+    await this._page.mainFrame()._evaluateExpression(((details: PauseDetails | null) => {
+      window.playwrightSetPaused(details);
+    }).toString(), true, details, 'main').catch(() => {});
   }
 
-  async setSource(text: string, language: string): Promise<void> {
-    await this._page.mainFrame()._evaluateExpression(((param: { text: string, language: string }) => {
-      window.playwrightSetSource(param);
-    }).toString(), true, { text, language }, 'main').catch(() => {});
+  async setSource(text: string, language: string, highlightedLine?: number): Promise<void> {
+    await this._page.mainFrame()._evaluateExpression(((source: Source) => {
+      window.playwrightSetSource(source);
+    }).toString(), true, { text, language, highlightedLine }, 'main').catch(() => {});
 
     // Testing harness for runCLI mode.
     {
