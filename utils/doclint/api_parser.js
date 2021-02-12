@@ -104,7 +104,19 @@ class ApiParser {
     }
     const clazz = this.classes.get(match[2]);
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
-    if (existingMember && !existingMember.langs.only) {
+    let isTypeOverride = false;
+    if (existingMember) {
+      if (existingMember.langs.only) {
+        if (member.langs.only.every(l => existingMember.langs.only.includes(l))) {
+          isTypeOverride = true;
+        } else if (member.langs.only.some(l => existingMember.langs.only.includes(l))) {
+          throw new Error(`Ambiguous language override for: ${spec.text}`);
+        }
+      } else {
+        isTypeOverride = true;
+      }
+    }
+    if (isTypeOverride) {
       for (const lang of member.langs.only) {
         existingMember.langs.types = existingMember.langs.types || {};
         existingMember.langs.types[lang] = returnType;
