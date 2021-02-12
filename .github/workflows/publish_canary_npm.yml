@@ -22,9 +22,9 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node utils/build/update_canary_version.js --today-date
-      if: contains(github.ref, "master")
+      if: contains(github.ref, 'master')
     - run: node utils/build/update_canary_version.js --commit-timestamp
-      if: contains(github.ref, "release")
+      if: contains(github.ref, 'release')
     - run: utils/publish_all_packages.sh --tip-of-tree
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
