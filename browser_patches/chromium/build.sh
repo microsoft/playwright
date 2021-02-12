@@ -29,6 +29,7 @@ main() {
   fi
 }
 
+
 compile_chromium() {
   if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
     echo "ERROR: chromium compilation requires CR_CHECKOUT_PATH to be set to reuse checkout."
