@@ -112,6 +112,10 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
       objects: Array.from(this._dispatchers.values()).map(o => o._debugScopeState()),
     };
   }
+
+  async waitForEventInfo(): Promise<void> {
+    // Instrumentation takes care of this.
+  }
 }
 
 export type DispatcherScope = Dispatcher<any, any>;
@@ -151,6 +155,8 @@ export class DispatcherConnection {
     };
     const scheme = createScheme(tChannel);
     this._validateParams = (type: string, method: string, params: any): any => {
+      if (method === 'waitForEventInfo')
+        return tOptional(scheme['WaitForEventInfo'])(params.info, '');
       const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
       if (!scheme[name])
         throw new ValidationError(`Unknown scheme for ${type}.${method}`);

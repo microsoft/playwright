@@ -365,7 +365,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     const timeout = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-    const waiter = new Waiter();
+    const waiter = Waiter.createForEvent(this, event);
     waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
     if (event !== Events.WebSocket.Error)
       waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('Socket error'));

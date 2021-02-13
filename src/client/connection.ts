@@ -81,7 +81,7 @@ export class Connection {
     try {
       return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
     } catch (e) {
-      const innerStack = (isUnderTest() && e.stack) ? e.stack.substring(e.stack.indexOf(e.message) + e.message.length) : '';
+      const innerStack = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? e.stack.substring(e.stack.indexOf(e.message) + e.message.length) : '';
       e.stack = e.message + innerStack + stack;
       throw e;
     }

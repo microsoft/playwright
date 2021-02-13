@@ -217,7 +217,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
-    const waiter = new Waiter();
+    const waiter = Waiter.createForEvent(this, event);
     waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
     if (event !== Events.BrowserContext.Close)
       waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('Context closed'));
