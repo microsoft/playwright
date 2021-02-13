@@ -15,6 +15,9 @@
 */
 
 :root {
+  --toolbar-bg-color: #fafafa;
+  --toolbar-color: #777;
+
   --light-background: #f3f2f1;
   --background: #edebe9;
   --active-background: #333333;
@@ -79,7 +82,7 @@ body {
 }
 
 .codicon {
-  color: #C5C5C5;
+  color: var(--toolbar-color);
 }
 
 svg {

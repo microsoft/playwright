@@ -19,18 +19,24 @@ import * as React from 'react';
 import * as highlightjs from '../../third_party/highlightjs/highlightjs';
 import '../../third_party/highlightjs/highlightjs/tomorrow.css';
 
+export type SourceHighlight = {
+  line: number;
+  type: 'running' | 'paused';
+};
+
 export interface SourceProps {
-  text: string,
-  language: string,
-  highlightedLine?: number,
-  paused?: boolean
+  text: string;
+  language: string;
+  // 1-based
+  highlight?: SourceHighlight[];
+  revealLine?: number;
 }
 
 export const Source: React.FC<SourceProps> = ({
   text,
   language,
-  paused = false,
-  highlightedLine = -1
+  highlight = [],
+  revealLine
 }) => {
   const lines = React.useMemo<string[]>(() => {
     const result = [];
@@ -43,20 +49,19 @@ export const Source: React.FC<SourceProps> = ({
     return result;
   }, [text]);
 
-
-  const highlightedLineRef = React.createRef<HTMLDivElement>();
+  const revealedLineRef = React.createRef<HTMLDivElement>();
   React.useLayoutEffect(() => {
-    if (highlightedLine && highlightedLineRef.current)
-      highlightedLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
-  }, [highlightedLineRef]);
+    if (typeof revealLine === 'number' && revealedLineRef.current)
+      revealedLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }, [revealedLineRef]);
 
   return <div className='source'>{
       lines.map((markup, index) => {
-        const isHighlighted = index === highlightedLine;
-        const highlightType = paused && isHighlighted ? 'source-line-paused' : 'source-line-highlighted';
-        const className = isHighlighted ? `source-line ${highlightType}` : 'source-line';
-        return <div key={index} className={className} ref={isHighlighted ? highlightedLineRef : null}>
-          <div className='source-line-number'>{index + 1}</div>
+        const lineNumber = index + 1;
+        const lineHighlight = highlight.find(h => h.line === lineNumber);
+        const lineClass = lineHighlight ? `source-line source-line-${lineHighlight.type}` : 'source-line';
+        return <div key={lineNumber} className={lineClass} ref={revealLine === lineNumber ? revealedLineRef : null}>
+          <div className='source-line-number'>{lineNumber}</div>
           <div className='source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>
         </div>;
       })

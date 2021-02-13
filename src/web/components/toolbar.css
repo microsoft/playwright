@@ -16,12 +16,13 @@
 
 .toolbar {
   display: flex;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px -1px 0px 0px inset;
-  background: rgb(255, 255, 255);
+  box-shadow: var(--box-shadow);
+  background-color: var(--toolbar-bg-color);
   height: 40px;
   align-items: center;
   padding-right: 10px;
   flex: none;
+  z-index: 2;  
 }
 
 .toolbar-linewrap {

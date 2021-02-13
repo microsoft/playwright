@@ -29,3 +29,52 @@
   flex: none;
   white-space: nowrap;
 }
+
+.recorder-log {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  line-height: 20px;
+  white-space: pre;
+  background: white;
+  overflow: auto;
+}
+
+.recorder-log-message {
+  flex: none;
+  padding: 3px 12px;
+  display: flex;
+  align-items: center;
+}
+
+.recorder-log-message-sub-level {
+  padding-left: 40px;
+}
+
+.recorder-log-header {
+  color: var(--toolbar-color);
+  box-shadow: var(--box-shadow);
+  background-color: var(--toolbar-bg-color);
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  z-index: 10;
+}
+
+.recorder-log-call {
+  color: var(--toolbar-color);
+  background-color: var(--toolbar-bg-color);
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #eee;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  margin-bottom: 3px;
+  z-index: 2;
+}
+
+.recorder-log-call .codicon {
+  padding: 0 4px;
+}

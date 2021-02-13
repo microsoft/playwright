@@ -37,10 +37,7 @@ export const fixtures = baseFolio.extend<TestFixtures, WorkerFixtures>();
 fixtures.recorder.init(async ({ page, recorderFrame }, runTest) => {
   await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
   const recorderFrameInstance = await recorderFrame();
-  const recorder = new Recorder(page, recorderFrameInstance);
-  await recorderFrameInstance._page.context().exposeBinding('playwrightSourceEchoForTest', false,
-      (_: any, text: string) => recorder.setText(text));
-  await runTest(recorder);
+  await runTest(new Recorder(page, recorderFrameInstance));
 });
 
 fixtures.httpServer.init(async ({testWorkerIndex}, runTest) => {
@@ -69,8 +66,7 @@ class Recorder {
   _actionReporterInstalled: boolean
   _actionPerformedCallback: Function
   recorderFrame: any;
-  private _text: string;
-  private _waiters = [];
+  private _text: string = '';
 
   constructor(page: Page, recorderFrame: any) {
     this.page = page;
@@ -101,16 +97,20 @@ class Recorder {
     ]);
   }
 
-  setText(text: string) {
-    this._text = text;
-    for (const waiter of this._waiters) {
-      if (text.includes(waiter.text))
-        waiter.fulfill();
-    }
-  }
-
   async waitForOutput(text: string): Promise<void> {
-    return new Promise(fulfill => this._waiters.push({ text, fulfill }));
+    this._text = await this.recorderFrame._evaluateExpression(((text: string) => {
+      const w = window as any;
+      return new Promise(f => {
+        const poll = () => {
+          if (w.playwrightSourceEchoForTest && w.playwrightSourceEchoForTest.includes(text)) {
+            f(w.playwrightSourceEchoForTest);
+            return;
+          }
+          setTimeout(poll, 300);
+        };
+        setTimeout(poll);
+      });
+    }).toString(), true, text, 'main');
   }
 
   output(): string {

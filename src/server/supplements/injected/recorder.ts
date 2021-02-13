@@ -27,7 +27,6 @@ declare global {
     _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
     _playwrightRecorderCommitAction: () => Promise<void>;
     _playwrightRecorderState: () => Promise<UIState>;
-    _playwrightRecorderPrintSelector: (text: string) => Promise<void>;
     _playwrightResume: () => Promise<void>;
   }
 }
@@ -226,10 +225,8 @@ export class Recorder {
 
   private _onClick(event: MouseEvent) {
     if (this._mode === 'inspecting') {
-      if (this._hoveredModel) {
+      if (this._hoveredModel)
         copy(this._hoveredModel.selector);
-        window._playwrightRecorderPrintSelector(this._hoveredModel.selector);
-      }
     }
     if (this._shouldIgnoreMouseEvent(event))
       return;

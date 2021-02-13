@@ -10,7 +10,8 @@
     "strict": true,
     "allowJs": true,
     "declaration": false,
-    "jsx": "react"
+    "jsx": "react",
+    "downlevelIteration": true,
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts", "src/**/*.js"],

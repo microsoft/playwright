@@ -21,12 +21,12 @@ import * as url from 'url';
 const { it, describe, expect } = folio;
 
 describe('cli codegen', (suite, { mode, browserName, headful }) => {
-  suite.fixme(browserName === 'firefox' && headful, 'Focus is off');
+  // suite.fixme(browserName === 'firefox' && headful, 'Focus is off');
   suite.skip(mode !== 'default');
 }, () => {
   it('should contain open page', async ({ recorder }) => {
     await recorder.setContentAndWait(``);
-    expect(recorder.output()).toContain(`const page = await context.newPage();`);
+    await recorder.waitForOutput(`const page = await context.newPage();`);
   });
 
   it('should contain second page', async ({ context, recorder }) => {
@@ -111,7 +111,7 @@ describe('cli codegen', (suite, { mode, browserName, headful }) => {
   });
 
   it('should download files', (test, {browserName, headful}) => {
-    test.fixme(browserName === 'webkit', 'Generated page.waitForNavigation next to page.waitForEvent(download)');
+    test.fixme(browserName === 'webkit' || browserName === 'firefox', 'Generated page.waitForNavigation next to page.waitForEvent(download)');
   }, async ({ page, recorder, httpServer }) => {
     httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
       const pathName = url.parse(req.url!).path;
