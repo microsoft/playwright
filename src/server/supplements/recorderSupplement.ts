@@ -50,10 +50,9 @@ export class RecorderSupplement {
   private _bufferedOutput: BufferedOutput;
   private _recorderApp: RecorderApp | null = null;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
-  private _currentCallsMetadata = new Set<CallMetadata>();
+  private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _pausedCallsMetadata = new Map<CallMetadata, () => void>();
   private _pauseOnNextStatement = true;
-  private _sdkObject: SdkObject | null = null;
   private _recorderSource: Source;
   private _userSources = new Map<string, Source>();
 
@@ -166,11 +165,10 @@ export class RecorderSupplement {
     await this._context.exposeBinding('_playwrightRecorderState', false, source => {
       let actionPoint: Point | undefined = undefined;
       let actionSelector: string | undefined = undefined;
-      if (source.page === this._sdkObject?.attribution?.page) {
-        if (this._currentCallsMetadata.size) {
-          const metadata = this._currentCallsMetadata.values().next().value;
-          actionPoint = metadata.values().next().value;
-          actionSelector = metadata.params.selector;
+      for (const [metadata, sdkObject] of this._currentCallsMetadata) {
+        if (source.page === sdkObject.attribution.page) {
+          actionPoint = metadata.point || actionPoint;
+          actionSelector = metadata.params.selector || actionSelector;
         }
       }
       const uiState: UIState = { mode: this._mode, actionPoint, actionSelector };
@@ -206,7 +204,7 @@ export class RecorderSupplement {
 
     this._recorderApp?.setPaused(false);
     this._updateUserSources();
-    this.updateCallLog([...this._currentCallsMetadata]);
+    this.updateCallLog([...this._currentCallsMetadata.keys()]);
   }
 
   private async _onPage(page: Page) {
@@ -326,8 +324,7 @@ export class RecorderSupplement {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._sdkObject = sdkObject;
-    this._currentCallsMetadata.add(metadata);
+    this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
     this.updateCallLog([metadata]);
     if (metadata.method === 'pause' || (this._pauseOnNextStatement && metadata.method === 'goto'))
@@ -335,7 +332,6 @@ export class RecorderSupplement {
   }
 
   async onAfterCall(metadata: CallMetadata): Promise<void> {
-    this._sdkObject = null;
     this._currentCallsMetadata.delete(metadata);
     this._pausedCallsMetadata.delete(metadata);
     this._updateUserSources();
@@ -350,7 +346,7 @@ export class RecorderSupplement {
     }
 
     // Apply new decorations.
-    for (const metadata of this._currentCallsMetadata) {
+    for (const metadata of this._currentCallsMetadata.keys()) {
       if (!metadata.stack || !metadata.stack[0])
         continue;
       const { file, line } = metadata.stack[0];
