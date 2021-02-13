@@ -15,25 +15,21 @@
  */
 
 import { folio as baseFolio } from './fixtures';
-import { internalCallMetadata } from '../lib/server/instrumentation';
+import { Page } from '..';
+import { chromium } from '../index';
 
 const fixtures = baseFolio.extend<{
-  recorderFrame: () => Promise<any>,
-  recorderClick: (selector: string) => Promise<void>
+  recorderPageGetter: () => Promise<Page>,
 }>();
 
-fixtures.recorderFrame.init(async ({context, toImpl}, runTest) => {
+fixtures.recorderPageGetter.init(async ({context, toImpl}, runTest) => {
   await runTest(async () => {
     while (!toImpl(context).recorderAppForTest)
       await new Promise(f => setTimeout(f, 100));
-    return toImpl(context).recorderAppForTest._page.mainFrame();
-  });
-});
-
-fixtures.recorderClick.init(async ({ recorderFrame }, runTest) => {
-  await runTest(async (selector: string) => {
-    const frame = await recorderFrame();
-    await frame.click(internalCallMetadata(), selector, {});
+    const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
+    const browser = await chromium.connectOverCDP({ wsEndpoint });
+    const c = browser.contexts()[0];
+    return c.pages()[0] || await c.waitForEvent('page');
   });
 });
 

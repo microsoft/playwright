@@ -34,11 +34,12 @@ export type CallLog = {
   title: string;
   messages: string[];
   status: 'in-progress' | 'done' | 'error' | 'paused';
+  error?: string;
 };
 
 export type SourceHighlight = {
   line: number;
-  type: 'running' | 'paused';
+  type: 'running' | 'paused' | 'error';
 };
 
 export type Source = {

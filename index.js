@@ -14,5 +14,4 @@
  * limitations under the License.
  */
 
-const { setUnderTest } = require('./lib/utils/utils');
 module.exports = require('./lib/inprocess');

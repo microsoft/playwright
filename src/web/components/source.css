@@ -45,12 +45,18 @@
 }
 
 .source-line-running {
-  background-color: #6fa8dc7f;
+  background-color: #b3dbff7f;
   z-index: 2;
 }
 
 .source-line-paused {
-  background-color: #ffc0cb7f;
-  outline: 1px solid red;
+  background-color: #b3dbff7f;
+  outline: 1px solid #009aff;
+  z-index: 2;
+}
+
+.source-line-error {
+  background-color: #fff0f0;
+  outline: 1px solid #ffd6d6;
   z-index: 2;
 }

@@ -214,6 +214,7 @@ export class DispatcherConnection {
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
       // Dispatching error
+      callMetadata.error = e.message;
       if (callMetadata.log.length)
         rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log) + kLoggingNote);
       this.onmessage({ id, error: serializeError(e) });

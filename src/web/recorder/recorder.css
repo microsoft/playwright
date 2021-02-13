@@ -42,13 +42,9 @@
 
 .recorder-log-message {
   flex: none;
-  padding: 3px 12px;
+  padding: 3px 0 3px 36px;
   display: flex;
   align-items: center;
-}
-
-.recorder-log-message-sub-level {
-  padding-left: 40px;
 }
 
 .recorder-log-header {
@@ -63,18 +59,36 @@
 }
 
 .recorder-log-call {
-  color: var(--toolbar-color);
-  background-color: var(--toolbar-bg-color);
-  border-top: 1px solid #ddd;
-  border-bottom: 1px solid #eee;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  border-top: 1px solid #eee;
+}
+
+.recorder-log-call-header {
   height: 24px;
   display: flex;
   align-items: center;
-  padding: 0 9px;
-  margin-bottom: 3px;
+  padding: 0 2px;
   z-index: 2;
 }
 
 .recorder-log-call .codicon {
   padding: 0 4px;
+}
+
+.recorder-log .codicon-check {
+  color: #21a945;
+  font-weight: bold;
+}
+
+.recorder-log-call.error {
+  background-color: #fff0f0;
+  border-top: 1px solid #ffd6d6;
+}
+
+.recorder-log-call.error .recorder-log-call-header,
+.recorder-log-message.error,
+.recorder-log .codicon-error {
+  color: red;
 }

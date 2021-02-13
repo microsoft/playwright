@@ -34,10 +34,10 @@ type TestFixtures = {
 
 export const fixtures = baseFolio.extend<TestFixtures, WorkerFixtures>();
 
-fixtures.recorder.init(async ({ page, recorderFrame }, runTest) => {
+fixtures.recorder.init(async ({ page, recorderPageGetter }, runTest) => {
   await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
-  const recorderFrameInstance = await recorderFrame();
-  await runTest(new Recorder(page, recorderFrameInstance));
+  const recorderPage = await recorderPageGetter();
+  await runTest(new Recorder(page, recorderPage));
 });
 
 fixtures.httpServer.init(async ({testWorkerIndex}, runTest) => {
@@ -65,12 +65,12 @@ class Recorder {
   _highlightInstalled: boolean
   _actionReporterInstalled: boolean
   _actionPerformedCallback: Function
-  recorderFrame: any;
+  recorderPage: Page;
   private _text: string = '';
 
-  constructor(page: Page, recorderFrame: any) {
+  constructor(page: Page, recorderPage: Page) {
     this.page = page;
-    this.recorderFrame = recorderFrame;
+    this.recorderPage = recorderPage;
     this._highlightCallback = () => { };
     this._highlightInstalled = false;
     this._actionReporterInstalled = false;
@@ -98,7 +98,7 @@ class Recorder {
   }
 
   async waitForOutput(text: string): Promise<void> {
-    this._text = await this.recorderFrame._evaluateExpression(((text: string) => {
+    this._text = await this.recorderPage.evaluate((text: string) => {
       const w = window as any;
       return new Promise(f => {
         const poll = () => {
@@ -110,7 +110,7 @@ class Recorder {
         };
         setTimeout(poll);
       });
-    }).toString(), true, text, 'main');
+    }, text);
   }
 
   output(): string {

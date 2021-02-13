@@ -33,6 +33,7 @@ import { RecorderApp } from './recorder/recorderApp';
 import { CallMetadata, internalCallMetadata, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
 import { CallLog, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
+import { isUnderTest } from '../../utils/utils';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -179,7 +180,7 @@ export class RecorderSupplement {
       this._resume(false).catch(() => {});
     });
 
-    await this._context.extendInjectedScript(recorderSource.source);
+    await this._context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest() });
     await this._context.extendInjectedScript(consoleApiSource.source);
 
     (this._context as any).recorderAppForTest = recorderApp;
@@ -332,7 +333,8 @@ export class RecorderSupplement {
   }
 
   async onAfterCall(metadata: CallMetadata): Promise<void> {
-    this._currentCallsMetadata.delete(metadata);
+    if (!metadata.error)
+      this._currentCallsMetadata.delete(metadata);
     this._pausedCallsMetadata.delete(metadata);
     this._updateUserSources();
     this.updateCallLog([metadata]);
@@ -357,7 +359,7 @@ export class RecorderSupplement {
       }
       if (line) {
         const paused = this._pausedCallsMetadata.has(metadata);
-        source.highlight.push({ line, type: paused ? 'paused' : 'running' });
+        source.highlight.push({ line, type: metadata.error ? 'error' : (paused ? 'paused' : 'running') });
         if (paused)
           source.revealLine = line;
       }
@@ -387,7 +389,7 @@ export class RecorderSupplement {
         status = 'paused';
       if (metadata.error)
         status = 'error';
-      logs.push({ id: metadata.id, messages: metadata.log, title, status });
+      logs.push({ id: metadata.id, messages: metadata.log, title, status, error: metadata.error });
     }
     this._recorderApp?.updateCallLogs(logs);
   }
