@@ -110,9 +110,7 @@ describe('cli codegen', (suite, { mode, browserName, headful }) => {
   await page.setInputFiles('input[type="file"]', []);`);
   });
 
-  it('should download files', (test, {browserName, headful}) => {
-    test.fixme(browserName === 'webkit' || browserName === 'firefox', 'Generated page.waitForNavigation next to page.waitForEvent(download)');
-  }, async ({ page, recorder, httpServer }) => {
+  it('should download files', async ({ page, recorder, httpServer }) => {
     httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
       const pathName = url.parse(req.url!).path;
       if (pathName === '/download') {

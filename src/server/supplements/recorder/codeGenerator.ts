@@ -135,6 +135,11 @@ export class CodeGenerator {
       return;
     }
     if (this._lastAction && !this._lastAction.committed) {
+      const signals = this._lastAction.action.signals;
+      if (signal.name === 'navigation' && signals.length && signals[signals.length - 1].name === 'download')
+        return;
+      if (signal.name === 'download' && signals.length && signals[signals.length - 1].name === 'navigation')
+        signals.length = signals.length - 1;
       this._lastAction.action.signals.push(signal);
       this._printAction(this._lastAction, true);
       return;
