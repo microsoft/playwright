@@ -51,8 +51,10 @@ export class Recorder {
   private _actionPointElement: HTMLElement;
   private _actionPoint: Point | undefined;
   private _actionSelector: string | undefined;
+  private _params: { isUnderTest: boolean; };
 
-  constructor(injectedScript: InjectedScript) {
+  constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean }) {
+    this._params = params;
     this._injectedScript = injectedScript;
     this._outerGlassPaneElement = html`
       <x-pw-glass style="
@@ -76,7 +78,7 @@ export class Recorder {
       </x-pw-glass-inner>`;
 
     // Use a closed shadow root to prevent selectors matching our internal previews.
-    this._glassPaneShadow = this._outerGlassPaneElement.attachShadow({ mode: 'closed' });
+    this._glassPaneShadow = this._outerGlassPaneElement.attachShadow({ mode: this._params.isUnderTest ? 'open' : 'closed' });
     this._glassPaneShadow.appendChild(this._innerGlassPaneElement);
     this._glassPaneShadow.appendChild(this._actionPointElement);
     this._glassPaneShadow.appendChild(html`

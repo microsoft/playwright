@@ -79,12 +79,14 @@ export const Recorder: React.FC<RecorderProps> = ({
         copy(source.text);
       }}></ToolbarButton>
       <ToolbarButton icon='debug-continue' title='Resume' disabled={!paused} onClick={() => {
+        setPaused(false);
         window.dispatch({ event: 'resume' }).catch(() => {});
       }}></ToolbarButton>
       <ToolbarButton icon='debug-pause' title='Pause' disabled={paused} onClick={() => {
         window.dispatch({ event: 'pause' }).catch(() => {});
       }}></ToolbarButton>
       <ToolbarButton icon='debug-step-over' title='Step over' disabled={!paused} onClick={() => {
+        setPaused(false);
         window.dispatch({ event: 'step' }).catch(() => {});
       }}></ToolbarButton>
       <div style={{flex: 'auto'}}></div>
@@ -98,15 +100,18 @@ export const Recorder: React.FC<RecorderProps> = ({
         <div className='recorder-log-header' style={{flex: 'none'}}>Log</div>
         <div className='recorder-log' style={{flex: 'auto'}}>
           {[...log.values()].map(callLog => {
-            return <div className='vbox' style={{flex: 'none'}} key={callLog.id}>
-              <div className='recorder-log-call'>
+            return <div className={`recorder-log-call ${callLog.status}`} key={callLog.id}>
+              <div className='recorder-log-call-header'>
                 <span className={'codicon ' + iconClass(callLog)}></span>{ callLog.title }
               </div>
               { callLog.messages.map((message, i) => {
                 return <div className='recorder-log-message' key={i}>
-                  { message }
+                  { message.trim() }
                 </div>;
               })}
+              { callLog.error ? <div className='recorder-log-message error'>
+                { callLog.error }
+              </div> : undefined }
             </div>
           })}
           <div ref={messagesEndRef}></div>

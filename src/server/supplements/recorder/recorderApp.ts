@@ -26,6 +26,7 @@ import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
 import { isUnderTest } from '../../../utils/utils';
+import { RecentLogsCollector } from '../../../utils/debugLogger';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -41,11 +42,13 @@ declare global {
 
 export class RecorderApp extends EventEmitter {
   private _page: Page;
+  readonly wsEndpoint: string | undefined;
 
-  constructor(page: Page) {
+  constructor(page: Page, wsEndpoint: string | undefined) {
     super();
     this.setMaxListeners(0);
     this._page = page;
+    this.wsEndpoint = wsEndpoint;
   }
 
   async close() {
@@ -90,25 +93,42 @@ export class RecorderApp extends EventEmitter {
 
   static async open(inspectedContext: BrowserContext): Promise<RecorderApp> {
     const recorderPlaywright = createPlaywright(true);
+    const args = [
+      '--app=data:text/html,',
+      '--window-size=600,600',
+      '--window-position=1280,10',
+    ];
+    if (isUnderTest())
+      args.push(`--remote-debugging-port=0`);
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
       sdkLanguage: inspectedContext._options.sdkLanguage,
-      args: [
-        '--app=data:text/html,',
-        '--window-size=600,600',
-        '--window-position=1280,10',
-      ],
+      args,
       noDefaultViewport: true,
       headless: isUnderTest() && !inspectedContext._browser.options.headful
     });
-
+    const wsEndpoint = isUnderTest() ? await this._parseWsEndpoint(context._browser.options.browserLogsCollector) : undefined;
     const controller = new ProgressController(internalCallMetadata(), context._browser);
     await controller.run(async progress => {
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });
 
     const [page] = context.pages();
-    const result = new RecorderApp(page);
+    const result = new RecorderApp(page, wsEndpoint);
     await result._init();
+    return result;
+  }
+
+  private static async _parseWsEndpoint(recentLogs: RecentLogsCollector): Promise<string> {
+    let callback: ((log: string) => void) | undefined;
+    const result = new Promise<string>(f => callback = f);
+    const check = (log: string) => {
+      const match = log.match(/DevTools listening on (.*)/);
+      if (match)
+        callback!(match[1]);
+    };
+    for (const log of recentLogs.recentLogs())
+      check(log);
+    recentLogs.on('log', check);
     return result;
   }
 

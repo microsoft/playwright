@@ -21,7 +21,7 @@ import '../../third_party/highlightjs/highlightjs/tomorrow.css';
 
 export type SourceHighlight = {
   line: number;
-  type: 'running' | 'paused';
+  type: 'running' | 'paused' | 'error';
 };
 
 export interface SourceProps {

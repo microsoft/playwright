@@ -39,7 +39,7 @@ export type CallMetadata = {
   params: any;
   stack?: StackFrame[];
   log: string[];
-  error?: Error;
+  error?: string;
   point?: Point;
 };
 

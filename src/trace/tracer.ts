@@ -180,7 +180,7 @@ class ContextTracer implements SnapshotterDelegate {
       startTime: metadata.startTime,
       endTime: metadata.endTime,
       logs: metadata.log.slice(),
-      error: metadata.error ? metadata.error.stack : undefined,
+      error: metadata.error,
       snapshots: snapshotsForMetadata(metadata),
     };
     this._appendTraceEvent(event);

@@ -16,6 +16,7 @@
 
 import debug from 'debug';
 import fs from 'fs';
+import { EventEmitter } from 'events';
 
 const debugLoggerColorMap = {
   'api': 45, // cyan
@@ -63,10 +64,11 @@ class DebugLogger {
 export const debugLogger = new DebugLogger();
 
 const kLogCount = 50;
-export class RecentLogsCollector {
+export class RecentLogsCollector extends EventEmitter {
   private _logs: string[] = [];
 
   log(message: string) {
+    this.emit('log', message);
     this._logs.push(message);
     if (this._logs.length === kLogCount * 2)
       this._logs.splice(0, kLogCount);
