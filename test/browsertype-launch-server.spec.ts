@@ -18,7 +18,7 @@
 import { folio } from './remoteServer.fixture';
 const { it, expect, describe } = folio;
 
-describe('lauch server', (suite, { mode }) => {
+describe('launch server', (suite, { mode }) => {
   suite.skip(mode !== 'default');
 }, () => {
   it('should work', async ({browserType, browserOptions}) => {

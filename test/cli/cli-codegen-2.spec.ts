@@ -20,8 +20,7 @@ import * as url from 'url';
 
 const { it, describe, expect } = folio;
 
-describe('cli codegen', (suite, { mode, browserName, headful }) => {
-  // suite.fixme(browserName === 'firefox' && headful, 'Focus is off');
+describe('cli codegen', (suite, { mode }) => {
   suite.skip(mode !== 'default');
 }, () => {
   it('should contain open page', async ({ recorder }) => {

@@ -146,10 +146,10 @@ class Recorder {
   }
 }
 
-fixtures.runCLI.init(async ({ browserName }, runTest) => {
+fixtures.runCLI.init(async ({ browserName, headful }, runTest) => {
   let cli: CLIMock;
   const cliFactory = (args: string[]) => {
-    cli = new CLIMock(browserName, args);
+    cli = new CLIMock(browserName, !headful, args);
     return cli;
   };
   await runTest(cliFactory);
@@ -163,7 +163,7 @@ class CLIMock {
   private waitForCallback: () => void;
   exited: Promise<void>;
 
-  constructor(browserName, args: string[]) {
+  constructor(browserName: string, headless: boolean, args: string[]) {
     this.data = '';
     this.process = spawn('node', [
       path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
@@ -172,7 +172,8 @@ class CLIMock {
     ], {
       env: {
         ...process.env,
-        PWCLI_EXIT_FOR_TEST: '1'
+        PWCLI_EXIT_FOR_TEST: '1',
+        PWCLI_HEADLESS_FOR_TEST: headless ? '1' : undefined,
       },
       stdio: 'pipe'
     });

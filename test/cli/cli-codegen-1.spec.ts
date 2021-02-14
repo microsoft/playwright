@@ -19,9 +19,9 @@ import * as http from 'http';
 
 const { it, describe, expect } = folio;
 
-describe('cli codegen', (suite, { mode, browserName, headful }) => {
-  suite.fixme(browserName === 'firefox' && headful, 'Focus is off');
+describe('cli codegen', (suite, { browserName, headful, mode }) => {
   suite.skip(mode !== 'default');
+  suite.fixme(browserName === 'firefox' && headful, 'Focus is off');
 }, () => {
   it('should click', async ({ page, recorder }) => {
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);

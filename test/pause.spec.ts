@@ -15,6 +15,7 @@
  */
 
 import { expect } from 'folio';
+import { Page } from '..';
 import { folio } from './recorder.fixtures';
 const { it, describe} = folio;
 
@@ -119,4 +120,116 @@ describe('pause', (suite, { mode }) => {
     await recorderPage.click('[title="Step over"]');
     await scriptPromise;
   });
+
+  it('should skip input when resuming', async ({page, recorderPageGetter}) => {
+    await page.setContent('<button>Submit</button>');
+    const scriptPromise = (async () => {
+      await page.pause();
+      await page.click('button');
+      await page.pause();  // 2
+    })();
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title="Resume"]');
+    await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
+    await recorderPage.click('[title=Resume]');
+    await scriptPromise;
+  });
+
+  it('should populate log', async ({page, recorderPageGetter}) => {
+    await page.setContent('<button>Submit</button>');
+    const scriptPromise = (async () => {
+      await page.pause();
+      await page.click('button');
+      await page.pause();  // 2
+    })();
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title="Resume"]');
+    await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
+    expect(await sanitizeLog(recorderPage)).toEqual([
+      'pause',
+      'click',
+      'waiting for selector "button"',
+      'selector resolved to visible <button>Submit</button>',
+      'attempting click action',
+      'waiting for element to be visible, enabled and stable',
+      'element is visible, enabled and stable',
+      'scrolling into view if needed',
+      'done scrolling',
+      'checking that element receives pointer events at ()',
+      'element does receive pointer events',
+      'performing click action',
+      'click action done',
+      'waiting for scheduled navigations to finish',
+      'navigations have finished',
+      'pause',
+    ]);
+    await recorderPage.click('[title="Resume"]');
+    await scriptPromise;
+  });
+
+  it('should populate log with waitForEvent', async ({page, recorderPageGetter}) => {
+    await page.setContent('<button onclick="console.log(1)">Submit</button>');
+    const scriptPromise = (async () => {
+      await page.pause();
+      await Promise.all([
+        page.waitForEvent('console'),
+        page.click('button'),
+      ]);
+      await page.pause();  // 2
+    })();
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title="Resume"]');
+    await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
+    expect(await sanitizeLog(recorderPage)).toEqual([
+      'pause',
+      'waitForEvent()',
+      'waiting for event \"console\"',
+      'click',
+      'waiting for selector "button"',
+      'selector resolved to visible <button onclick=\"console.log()\">Submit</button>',
+      'attempting click action',
+      'waiting for element to be visible, enabled and stable',
+      'element is visible, enabled and stable',
+      'scrolling into view if needed',
+      'done scrolling',
+      'checking that element receives pointer events at ()',
+      'element does receive pointer events',
+      'performing click action',
+      'click action done',
+      'waiting for scheduled navigations to finish',
+      'navigations have finished',
+      'pause',
+    ]);
+    await recorderPage.click('[title="Resume"]');
+    await scriptPromise;
+  });
+
+  it('should populate log with error', async ({page, recorderPageGetter}) => {
+    await page.setContent('<button onclick="console.log(1)">Submit</button>');
+    const scriptPromise = (async () => {
+      await page.pause();
+      await page.isChecked('button');
+    })().catch(e => e);
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title="Resume"]');
+    await recorderPage.waitForSelector('.source-line-error');
+    expect(await sanitizeLog(recorderPage)).toEqual([
+      'pause',
+      'isChecked',
+      'checking \"checked\" state of \"button\"',
+      'selector resolved to <button onclick=\"console.log()\">Submit</button>',
+      'Not a checkbox or radio button',
+    ]);
+    const error = await scriptPromise;
+    expect(error.message).toContain('Not a checkbox or radio button');
+  });
 });
+
+async function sanitizeLog(recorderPage: Page): Promise<string[]> {
+  const text = await recorderPage.innerText('.recorder-log');
+  return text.split('\n').filter(l => {
+    return l !== 'element is not stable - waiting...';
+  }).map(l => {
+    return l.replace(/\(.*\)/, '()');
+  });
+}

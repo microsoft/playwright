@@ -21,16 +21,11 @@ import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumenta
 import { isDebugMode, isUnderTest } from '../../utils/utils';
 
 export class InspectorController implements InstrumentationListener {
-  private _recorders = new Map<BrowserContext, Promise<RecorderSupplement>>();
   private _waitOperations = new Map<string, CallMetadata>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode())
-      this._recorders.set(context, RecorderSupplement.getOrCreate(context));
-  }
-
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {
-    this._recorders.delete(context);
+      RecorderSupplement.getOrCreate(context);
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -61,10 +56,10 @@ export class InspectorController implements InstrumentationListener {
       // Force create recorder on pause.
       if (!context._browser.options.headful && !isUnderTest())
         return;
-      this._recorders.set(context, RecorderSupplement.getOrCreate(context));
+      RecorderSupplement.getOrCreate(context);
     }
 
-    const recorder = await this._recorders.get(context);
+    const recorder = await RecorderSupplement.getNoCreate(context);
     await recorder?.onBeforeCall(sdkObject, metadata);
   }
 
@@ -87,14 +82,14 @@ export class InspectorController implements InstrumentationListener {
       }
     }
 
-    const recorder = await this._recorders.get(sdkObject.attribution.context);
+    const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
     await recorder?.onAfterCall(metadata);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!sdkObject.attribution.context)
       return;
-    const recorder = await this._recorders.get(sdkObject.attribution.context);
+    const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
     await recorder?.onBeforeInputAction(metadata);
   }
 
@@ -102,7 +97,7 @@ export class InspectorController implements InstrumentationListener {
     debugLogger.log(logName as any, message);
     if (!sdkObject.attribution.context)
       return;
-    const recorder = await this._recorders.get(sdkObject.attribution.context);
+    const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
     await recorder?.updateCallLog([metadata]);
   }
 }
