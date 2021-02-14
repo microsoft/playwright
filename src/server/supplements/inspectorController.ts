@@ -22,6 +22,7 @@ import { isDebugMode, isUnderTest } from '../../utils/utils';
 
 export class InspectorController implements InstrumentationListener {
   private _recorders = new Map<BrowserContext, Promise<RecorderSupplement>>();
+  private _waitOperations = new Map<string, CallMetadata>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode())
@@ -37,6 +38,25 @@ export class InspectorController implements InstrumentationListener {
     if (!context)
       return;
 
+    // Process logs for waitForNavigation/waitForLoadState
+    if (metadata.params?.info?.waitId) {
+      const info = metadata.params.info;
+      switch (info.phase) {
+        case 'before':
+          metadata.method = info.name;
+          metadata.stack = info.stack;
+          this._waitOperations.set(info.waitId, metadata);
+          break;
+        case 'log':
+          const originalMetadata = this._waitOperations.get(info.waitId)!;
+          originalMetadata.log.push(info.message);
+          this.onCallLog('api', info.message, sdkObject, originalMetadata);
+          // Fall through.
+        case 'after':
+          return;
+      }
+    }
+
     if (metadata.method === 'pause') {
       // Force create recorder on pause.
       if (!context._browser.options.headful && !isUnderTest())
@@ -51,22 +71,38 @@ export class InspectorController implements InstrumentationListener {
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!sdkObject.attribution.context)
       return;
-    const recorder = await this._recorders.get(sdkObject.attribution.context!);
+
+    // Process logs for waitForNavigation/waitForLoadState
+    if (metadata.params?.info?.waitId) {
+      const info = metadata.params.info;
+      switch (info.phase) {
+        case 'before':
+          // Fall through.
+        case 'log':
+          return;
+        case 'after':
+          metadata = this._waitOperations.get(info.waitId)!;
+          this._waitOperations.delete(info.waitId);
+          break;
+      }
+    }
+
+    const recorder = await this._recorders.get(sdkObject.attribution.context);
     await recorder?.onAfterCall(metadata);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (!sdkObject.attribution.page)
+    if (!sdkObject.attribution.context)
       return;
-    const recorder = await this._recorders.get(sdkObject.attribution.context!);
+    const recorder = await this._recorders.get(sdkObject.attribution.context);
     await recorder?.onBeforeInputAction(metadata);
   }
 
   async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     debugLogger.log(logName as any, message);
-    if (!sdkObject.attribution.page)
+    if (!sdkObject.attribution.context)
       return;
-    const recorder = await this._recorders.get(sdkObject.attribution.context!);
+    const recorder = await this._recorders.get(sdkObject.attribution.context);
     await recorder?.updateCallLog([metadata]);
   }
 }

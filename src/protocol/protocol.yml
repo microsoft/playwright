@@ -12,20 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+StackFrame:
+  type: object
+  properties:
+    file: string
+    line: number?
+    column: number?
+    function: string?
 
 # This object can be send with any rpc call in the "metadata" field.
+
 Metadata:
   type: object
   properties:
     stack:
       type: array?
-      items:
-        type: object
-        properties:
-          file: string
-          line: number?
-          column: number?
-          function: string?
+      items: StackFrame
+
+
+WaitForEventInfo:
+  type: object
+  properties:
+    waitId: string
+    phase:
+      type: enum
+      literals:
+      - before
+      - after
+      - log
+    name: string?
+    stack:
+      type: array?
+      items: StackFrame
+    message: string?
+    error: string?
 
 
 Point:

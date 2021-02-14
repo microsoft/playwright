@@ -23,13 +23,24 @@ export type Binary = string;
 export interface Channel extends EventEmitter {
 }
 
+export type StackFrame = {
+  file: string,
+  line?: number,
+  column?: number,
+  function?: string,
+};
+
 export type Metadata = {
-  stack?: {
-    file: string,
-    line?: number,
-    column?: number,
-    function?: string,
-  }[],
+  stack?: StackFrame[],
+};
+
+export type WaitForEventInfo = {
+  waitId: string,
+  phase: 'before' | 'after' | 'log',
+  name?: string,
+  stack?: StackFrame[],
+  message?: string,
+  error?: string,
 };
 
 export type Point = {

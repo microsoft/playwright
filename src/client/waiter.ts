@@ -15,15 +15,32 @@
  */
 
 import { EventEmitter } from 'events';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import { captureStackTrace, rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from '../utils/errors';
-import { debugLogger } from '../utils/debugLogger';
+import { createGuid } from '../utils/utils';
+import { ChannelOwner } from './channelOwner';
 
 export class Waiter {
-  private _dispose: (() => void)[] = [];
+  private _dispose: (() => void)[];
   private _failures: Promise<any>[] = [];
   // TODO: can/should we move these logs into wrapApiCall?
   private _logs: string[] = [];
+  private _channelOwner: ChannelOwner;
+  private _waitId: string;
+  private _error: string | undefined;
+
+  constructor(channelOwner: ChannelOwner, name: string) {
+    this._waitId = createGuid();
+    this._channelOwner = channelOwner;
+    this._channelOwner._waitForEventInfoBefore(this._waitId, name, captureStackTrace().frames);
+    this._dispose = [
+      () => this._channelOwner._waitForEventInfoAfter(this._waitId, this._error)
+    ];
+  }
+
+  static createForEvent(channelOwner: ChannelOwner, event: string) {
+    return new Waiter(channelOwner, `waitForEvent(${event})`);
+  }
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean): Promise<T> {
     const { promise, dispose } = waitForEvent(emitter, event, predicate);
@@ -56,6 +73,7 @@ export class Waiter {
     } catch (e) {
       if (dispose)
         dispose();
+      this._error = e.message;
       this.dispose();
       rewriteErrorMessage(e, e.message + formatLogRecording(this._logs) + kLoggingNote);
       throw e;
@@ -64,7 +82,7 @@ export class Waiter {
 
   log(s: string) {
     this._logs.push(s);
-    debugLogger.log('api', s);
+    this._channelOwner._waitForEventInfoLog(this._waitId, s);
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {

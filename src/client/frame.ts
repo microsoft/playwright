@@ -100,21 +100,20 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
-    const waiter = new Waiter();
+  private _setupNavigationWaiter(name: string, options: { timeout?: number }): Waiter {
+    const waiter = new Waiter(this, name);
     waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
     waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
     waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
     const timeout = this._page!._timeoutSettings.navigationTimeout(options);
     waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded.`);
-
     return waiter;
   }
 
   async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('waitForNavigation'), async () => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      const waiter = this._setupNavigationWaiter(options);
+      const waiter = this._setupNavigationWaiter('waitForNavigation', options);
 
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
@@ -151,7 +150,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     if (this._loadStates.has(state))
       return;
     return this._wrapApiCall(this._apiName('waitForLoadState'), async () => {
-      const waiter = this._setupNavigationWaiter(options);
+      const waiter = this._setupNavigationWaiter('waitForLoadState', options);
       await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
         waiter.log(`  "${s}" event fired`);
         return s === state;

@@ -33,13 +33,22 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     };
   };
 
+  scheme.StackFrame = tObject({
+    file: tString,
+    line: tOptional(tNumber),
+    column: tOptional(tNumber),
+    function: tOptional(tString),
+  });
   scheme.Metadata = tObject({
-    stack: tOptional(tArray(tObject({
-      file: tString,
-      line: tOptional(tNumber),
-      column: tOptional(tNumber),
-      function: tOptional(tString),
-    }))),
+    stack: tOptional(tArray(tType('StackFrame'))),
+  });
+  scheme.WaitForEventInfo = tObject({
+    waitId: tString,
+    phase: tEnum(['before', 'after', 'log']),
+    name: tOptional(tString),
+    stack: tOptional(tArray(tType('StackFrame'))),
+    message: tOptional(tString),
+    error: tOptional(tString),
   });
   scheme.Point = tObject({
     x: tNumber,
