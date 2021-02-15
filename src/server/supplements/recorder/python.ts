@@ -131,7 +131,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       case 'fill':
         return `fill(${quote(action.selector)}, ${quote(action.text)})`;
       case 'setInputFiles':
-        return `setInputFiles(${quote(action.selector)}, ${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return `set_input_files(${quote(action.selector)}, ${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
@@ -140,7 +140,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return `selectOption(${quote(action.selector)}, ${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
+        return `select_option(${quote(action.selector)}, ${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
     }
   }
 
