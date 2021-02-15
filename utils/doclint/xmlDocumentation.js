@@ -22,119 +22,120 @@ const { visitAll } = require('../markdown');
  * @param {number} maxColumns
  */
 function renderXmlDoc(nodes, maxColumns = 80, prefix = '/// ') {
-    if (!nodes)
-        return [];
+  if (!nodes)
+    return [];
 
-    let renderResult = _innerRenderNodes(nodes, maxColumns);
+  const renderResult = _innerRenderNodes(nodes, maxColumns);
 
-    const doc = [];
-    _wrapInNode("summary", renderResult.summary, doc);
-    _wrapInNode("remarks", renderResult.remarks, doc);
-    return doc.map(x => `${prefix}${x}`);
+  const doc = [];
+  _wrapInNode('summary', renderResult.summary, doc);
+  _wrapInNode('remarks', renderResult.remarks, doc);
+  return doc.map(x => `${prefix}${x}`);
 }
 
 function _innerRenderNodes(nodes, maxColumns = 80, wrapParagraphs = true) {
-    const summary = [];
-    const remarks = [];
-    let handleListItem = (lastNode, node) => {
-        if (node && node.type === 'li' && (!lastNode || lastNode.type !== 'li')) {
-            summary.push(`<list type="${node.liType}">`);
-        } else if (lastNode && lastNode.type === 'li' && (!node || node.type !== 'li')) {
-            summary.push('</list>');
-        }
-    };
+  const summary = [];
+  const remarks = [];
+  const handleListItem = (lastNode, node) => {
+    if (node && node.type === 'li' && (!lastNode || lastNode.type !== 'li'))
+      summary.push(`<list type="${node.liType}">`);
+    else if (lastNode && lastNode.type === 'li' && (!node || node.type !== 'li'))
+      summary.push('</list>');
 
-    let lastNode;
-    visitAll(nodes, (node) => {
-        // handle special cases first
-        if (_nodeShouldBeIgnored(node))
-            return;
-        if (node.text && node.text.startsWith('extends: ')) {
-            remarks.push('Inherits from ' + node.text.replace('extends: ', ''));
-            return;
-        }
-        handleListItem(lastNode, node);
-        if (node.type === 'text')
-            if (wrapParagraphs)
-                _wrapInNode('para', _wrapAndEscape(node, maxColumns), summary);
-            else
-                summary.push(..._wrapAndEscape(node, maxColumns));
-        else if (node.type === 'code' && node.codeLang === 'csharp')
-            _wrapInNode('code', node.lines, summary);
-        else if (node.type === 'li')
-            _wrapInNode('item><description', _wrapAndEscape(node, maxColumns), summary, '/description></item');
-        else if (node.type === 'note')
-            _wrapInNode('para', _wrapAndEscape(node, maxColumns), remarks);
-        lastNode = node;
-    });
-    handleListItem(lastNode, null);
+  };
 
-    return { summary, remarks };
+  let lastNode;
+  visitAll(nodes, node => {
+    // handle special cases first
+    if (_nodeShouldBeIgnored(node))
+      return;
+    if (node.text && node.text.startsWith('extends: ')) {
+      remarks.push('Inherits from ' + node.text.replace('extends: ', ''));
+      return;
+    }
+    handleListItem(lastNode, node);
+    if (node.type === 'text') {
+      if (wrapParagraphs)
+        _wrapInNode('para', _wrapAndEscape(node, maxColumns), summary);
+      else
+        summary.push(..._wrapAndEscape(node, maxColumns));
+    } else if (node.type === 'code' && node.codeLang === 'csharp') {
+      _wrapInNode('code', node.lines, summary);
+    } else if (node.type === 'li') {
+      _wrapInNode('item><description', _wrapAndEscape(node, maxColumns), summary, '/description></item');
+    } else if (node.type === 'note') {
+      _wrapInNode('para', _wrapAndEscape(node, maxColumns), remarks);
+    }
+    lastNode = node;
+  });
+  handleListItem(lastNode, null);
+
+  return { summary, remarks };
 }
 
 function _wrapInNode(tag, nodes, target, closingTag = null) {
-    if (nodes.length === 0)
-        return;
+  if (nodes.length === 0)
+    return;
 
-    if (!closingTag)
-        closingTag = `/${tag}`;
+  if (!closingTag)
+    closingTag = `/${tag}`;
 
-    if (nodes.length === 1) {
-        target.push(`<${tag}>${nodes[0]}<${closingTag}>`);
-        return;
-    }
+  if (nodes.length === 1) {
+    target.push(`<${tag}>${nodes[0]}<${closingTag}>`);
+    return;
+  }
 
-    target.push(`<${tag}>`);
-    target.push(...nodes);
-    target.push(`<${closingTag}>`);
+  target.push(`<${tag}>`);
+  target.push(...nodes);
+  target.push(`<${closingTag}>`);
 }
 
 /**
- * 
- * @param {Documentation.MarkdownNode} node 
+ *
+ * @param {Documentation.MarkdownNode} node
  */
 function _wrapAndEscape(node, maxColumns = 0) {
-    let lines = [];
-    let pushLine = (text) => {
-        if (text === '')
-            return;
-        text = text.trim();
-        lines.push(text);
-    };
+  const lines = [];
+  const pushLine = text => {
+    if (text === '')
+      return;
+    text = text.trim();
+    lines.push(text);
+  };
 
-    let text = node.text.replace(/[^\[]`([^\]]*[^\[])`[^\]]/g, (m, g1) => ` <c>${g1}</c> `);
-    let words = text.split(' ');
-    let line = '';
-    for (let i = 0; i < words.length; i++) {
-        line = line + ' ' + words[i];
-        if (line.length >= maxColumns) {
-            pushLine(line);
-            line = '';
-        }
+  const text = node.text.replace(/[^\[]`([^\]]*[^\[])`[^\]]/g, (m, g1) => ` <c>${g1}</c> `);
+  const words = text.split(' ');
+  let line = '';
+  for (let i = 0; i < words.length; i++) {
+    line = line + ' ' + words[i];
+    if (line.length >= maxColumns) {
+      pushLine(line);
+      line = '';
     }
+  }
 
-    pushLine(line);
-    return lines;
+  pushLine(line);
+  return lines;
 }
 
 /**
- * 
- * @param {Documentation.MarkdownNode} node 
+ *
+ * @param {Documentation.MarkdownNode} node
  */
 function _nodeShouldBeIgnored(node) {
-    if (!node
-        || (node.text === 'extends: [EventEmitter]'))
-        return true;
+  if (!node
+    || (node.text === 'extends: [EventEmitter]'))
+    return true;
 
-    return false;
+  return false;
 }
 
 /**
- * @param {Documentation.MarkdownNode[]} nodes 
+ * @param {Documentation.MarkdownNode[]} nodes
  */
 function renderTextOnly(nodes, maxColumns = 80) {
-    var result = _innerRenderNodes(nodes, maxColumns, false);
-    return result.summary;
+  const result = _innerRenderNodes(nodes, maxColumns, false);
+  return result.summary;
 }
 
 module.exports = { renderXmlDoc, renderTextOnly }
