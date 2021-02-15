@@ -20,7 +20,7 @@ import path from 'path';
 import * as util from 'util';
 import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import * as registry from '../utils/registry';
-import { ConnectionTransport } from './transport';
+import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
 import { launchProcess, Env, envArrayToObject } from './processLauncher';
 import { PipeTransport } from './pipeTransport';
@@ -112,6 +112,7 @@ export abstract class BrowserType extends SdkObject {
       proxy: options.proxy,
       protocolLogger,
       browserLogsCollector,
+      wsEndpoint: options.useWebSocket ? (transport as WebSocketTransport).wsEndpoint : undefined,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
@@ -180,6 +181,8 @@ export abstract class BrowserType extends SdkObject {
       await validateHostRequirements(this._registry, this._name);
     }
 
+    let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
+    const wsEndpoint = options.useWebSocket ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
@@ -192,6 +195,11 @@ export abstract class BrowserType extends SdkObject {
       handleSIGTERM,
       handleSIGHUP,
       log: (message: string) => {
+        if (wsEndpointCallback) {
+          const match = message.match(/DevTools listening on (.*)/);
+          if (match)
+            wsEndpointCallback(match[1]);
+        }
         progress.log(message);
         browserLogsCollector.log(message);
       },
@@ -217,9 +225,12 @@ export abstract class BrowserType extends SdkObject {
       kill
     };
     progress.cleanupWhenAborted(() => browserProcess && closeOrKill(browserProcess, progress.timeUntilDeadline()));
-
-    const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-    transport = new PipeTransport(stdio[3], stdio[4]);
+    if (options.useWebSocket) {
+      transport = await WebSocketTransport.connect(progress, await wsEndpoint!);
+    } else {
+      const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
+      transport = new PipeTransport(stdio[3], stdio[4]);
+    }
     return { browserProcess, downloadsPath, transport };
   }
 
@@ -242,7 +253,10 @@ function copyTestHooks(from: object, to: object) {
 }
 
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
-  const { devtools = false, headless = !isDebugMode() && !devtools } = options;
+  const { devtools = false } = options;
+  let { headless = !devtools } = options;
+  if (isDebugMode())
+    headless = false;
   return { ...options, devtools, headless };
 }
 

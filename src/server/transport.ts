@@ -50,6 +50,7 @@ export class WebSocketTransport implements ConnectionTransport {
 
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
+  readonly wsEndpoint: string;
 
   static async connect(progress: Progress, url: string): Promise<WebSocketTransport> {
     progress.log(`<ws connecting> ${url}`);
@@ -75,6 +76,7 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   constructor(progress: Progress, url: string) {
+    this.wsEndpoint = url;
     this._ws = new WebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,

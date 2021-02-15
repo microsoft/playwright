@@ -264,7 +264,8 @@ type LaunchOptionsBase = {
   proxy?: ProxySettings,
   downloadsPath?: string,
   chromiumSandbox?: boolean,
-  slowMo?: number;
+  slowMo?: number,
+  useWebSocket?: boolean,
 };
 export type LaunchOptions = LaunchOptionsBase & {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },

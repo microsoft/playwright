@@ -67,6 +67,10 @@ export class RecorderSupplement {
     return recorderPromise;
   }
 
+  static getNoCreate(context: BrowserContext): Promise<RecorderSupplement> | undefined {
+    return (context as any)[symbol] as Promise<RecorderSupplement> | undefined;
+  }
+
   constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
     this._context = context;
     this._params = params;
@@ -325,6 +329,8 @@ export class RecorderSupplement {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (this._mode === 'recording')
+      return;
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
     this.updateCallLog([metadata]);
@@ -333,6 +339,8 @@ export class RecorderSupplement {
   }
 
   async onAfterCall(metadata: CallMetadata): Promise<void> {
+    if (this._mode === 'recording')
+      return;
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._pausedCallsMetadata.delete(metadata);
@@ -372,16 +380,20 @@ export class RecorderSupplement {
   }
 
   async onBeforeInputAction(metadata: CallMetadata): Promise<void> {
+    if (this._mode === 'recording')
+      return;
     if (this._pauseOnNextStatement)
       await this.pause(metadata);
   }
 
   async updateCallLog(metadatas: CallMetadata[]): Promise<void> {
+    if (this._mode === 'recording')
+      return;
     const logs: CallLog[] = [];
     for (const metadata of metadatas) {
       if (!metadata.method)
         continue;
-      const title = metadata.stack?.[0]?.function || metadata.method;
+      const title = metadata.method;
       let status: 'done' | 'in-progress' | 'paused' | 'error' = 'done';
       if (this._currentCallsMetadata.has(metadata))
         status = 'in-progress';

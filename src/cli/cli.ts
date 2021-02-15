@@ -325,7 +325,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 }
 
 async function open(options: Options, url: string | undefined, language: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, false);
+  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWCLI_HEADLESS_FOR_TEST);
   await context._enableRecorder({
     language,
     launchOptions,
@@ -339,7 +339,7 @@ async function open(options: Options, url: string | undefined, language: string)
 }
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, false);
+  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWCLI_HEADLESS_FOR_TEST);
   if (process.env.PWTRACE)
     contextOptions._traceDir = path.join(process.cwd(), '.trace');
   await context._enableRecorder({

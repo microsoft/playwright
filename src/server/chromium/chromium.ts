@@ -119,7 +119,10 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...DEFAULT_ARGS];
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    chromeArguments.push('--remote-debugging-pipe');
+    if (options.useWebSocket)
+      chromeArguments.push('--remote-debugging-port=0');
+    else
+      chromeArguments.push('--remote-debugging-pipe');
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
