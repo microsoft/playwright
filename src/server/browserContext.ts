@@ -252,15 +252,6 @@ export abstract class BrowserContext extends SdkObject {
 
       await this.instrumentation.onContextWillDestroy(this);
 
-      // Collect videos/downloads that we will await.
-      const promises: Promise<any>[] = [];
-      for (const download of this._downloads)
-        promises.push(download.delete());
-      for (const video of this._browser._idToVideo.values()) {
-        if (video._context === this)
-          promises.push(video._finishedPromise);
-      }
-
       if (this._isPersistentContext) {
         // Close all the pages instead of the context,
         // because we cannot close the default context.
@@ -270,7 +261,18 @@ export abstract class BrowserContext extends SdkObject {
         await this._doClose();
       }
 
-      // Wait for the videos/downloads to finish.
+      // Cleanup.
+      const promises: Promise<void>[] = [];
+      for (const video of this._browser._idToVideo.values()) {
+        // Wait for the videos to finish.
+        if (video._context === this)
+          promises.push(video._finishedPromise);
+      }
+      for (const download of this._downloads) {
+        // We delete downloads after context closure
+        // so that browser does not write to the download file anymore.
+        promises.push(download.deleteOnContextClose());
+      }
       await Promise.all(promises);
 
       // Persistent context should also close the browser.
