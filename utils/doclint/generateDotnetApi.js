@@ -85,7 +85,7 @@ let classNameMap;
   classNameMap.set('EvaluationArgument', 'object');
   classNameMap.set('boolean', 'bool');
   classNameMap.set('Serializable', 'T');
-  classNameMap.set('any', 'T');
+  classNameMap.set('any', 'object');
   classNameMap.set('Buffer', 'byte[]');
   // classNameMap.set('function', 'Action');
   classNameMap.set('path', 'string');
