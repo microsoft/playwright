@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from 'events';
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
 import { Frame } from '../../frames';
-import { LanguageGenerator } from './language';
+import { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { Action, Signal } from './recorderActions';
 import { describeFrame } from './utils';
 
@@ -29,56 +30,55 @@ export type ActionInContext = {
   committed?: boolean;
 }
 
-export interface CodeGeneratorOutput {
-  printLn(text: string): void;
-  popLn(text: string): void;
-}
-
-export class CodeGenerator {
+export class CodeGenerator extends EventEmitter {
   private _currentAction: ActionInContext | null = null;
   private _lastAction: ActionInContext | null = null;
-  private _lastActionText: string | undefined;
-  private _languageGenerator: LanguageGenerator;
-  private _output: CodeGeneratorOutput;
-  private _headerText = '';
-  private _footerText = '';
+  private _actions: ActionInContext[] = [];
+  private _enabled: boolean;
+  private _options: LanguageGeneratorOptions;
 
-  constructor(browserName: string, generateHeaders: boolean, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, output: CodeGeneratorOutput, languageGenerator: LanguageGenerator, deviceName: string | undefined, saveStorage: string | undefined) {
-    this._output = output;
-    this._languageGenerator = languageGenerator;
+  constructor(browserName: string, generateHeaders: boolean, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName: string | undefined, saveStorage: string | undefined) {
+    super();
 
     launchOptions = { headless: false, ...launchOptions };
-    if (generateHeaders) {
-      this._headerText = this._languageGenerator.generateHeader(browserName, launchOptions, contextOptions, deviceName);
-      this._footerText = '\n' + this._languageGenerator.generateFooter(saveStorage);
-    }
+    this._enabled = generateHeaders;
+    this._options = { browserName, generateHeaders, launchOptions, contextOptions, deviceName, saveStorage };
     this.restart();
   }
 
   restart() {
     this._currentAction = null;
     this._lastAction = null;
-    if (this._headerText) {
-      this._output.printLn(this._headerText);
-      this._output.printLn(this._footerText);
-    }
+    this._actions = [];
+  }
+
+  setEnabled(enabled: boolean) {
+    this._enabled = enabled;
   }
 
   addAction(action: ActionInContext) {
+    if (!this._enabled)
+      return;
     this.willPerformAction(action);
     this.didPerformAction(action);
   }
 
   willPerformAction(action: ActionInContext) {
+    if (!this._enabled)
+      return;
     this._currentAction = action;
   }
 
   performedActionFailed(action: ActionInContext) {
+    if (!this._enabled)
+      return;
     if (this._currentAction === action)
       this._currentAction = null;
   }
 
   didPerformAction(actionInContext: ActionInContext) {
+    if (!this._enabled)
+      return;
     const { action, pageAlias } = actionInContext;
     let eraseLastAction = false;
     if (this._lastAction && this._lastAction.pageAlias === pageAlias) {
@@ -94,41 +94,39 @@ export class CodeGenerator {
       }
       if (lastAction && action.name === 'navigate' && lastAction.name === 'navigate') {
         if (action.url === lastAction.url) {
+          // Already at a target URL.
           this._currentAction = null;
           return;
         }
       }
       for (const name of ['check', 'uncheck']) {
+        // Check and uncheck erase click.
         if (lastAction && action.name === name && lastAction.name === 'click') {
           if ((action as any).selector === (lastAction as any).selector)
             eraseLastAction = true;
         }
       }
     }
-    this._printAction(actionInContext, eraseLastAction);
+
+    this._lastAction = actionInContext;
+    this._currentAction = null;
+    if (eraseLastAction)
+      this._actions.pop();
+    this._actions.push(actionInContext);
+    this.emit('change');
   }
 
   commitLastAction() {
+    if (!this._enabled)
+      return;
     const action = this._lastAction;
     if (action)
       action.committed = true;
   }
 
-  _printAction(actionInContext: ActionInContext, eraseLastAction: boolean) {
-    if (this._footerText)
-      this._output.popLn(this._footerText);
-    if (eraseLastAction && this._lastActionText)
-      this._output.popLn(this._lastActionText);
-    const performingAction = !!this._currentAction;
-    this._currentAction = null;
-    this._lastAction = actionInContext;
-    this._lastActionText = this._languageGenerator.generateAction(actionInContext, performingAction);
-    this._output.printLn(this._lastActionText);
-    if (this._footerText)
-      this._output.printLn(this._footerText);
-  }
-
   signal(pageAlias: string, frame: Frame, signal: Signal) {
+    if (!this._enabled)
+      return;
     // Signal either arrives while action is being performed or shortly after.
     if (this._currentAction) {
       this._currentAction.action.signals.push(signal);
@@ -140,8 +138,9 @@ export class CodeGenerator {
         return;
       if (signal.name === 'download' && signals.length && signals[signals.length - 1].name === 'navigation')
         signals.length = signals.length - 1;
+      signal.isAsync = true;
       this._lastAction.action.signals.push(signal);
-      this._printAction(this._lastAction, true);
+      this.emit('change');
       return;
     }
 
@@ -154,8 +153,19 @@ export class CodeGenerator {
           name: 'navigate',
           url: frame.url(),
           signals: [],
-        }
+        },
       });
     }
+  }
+
+  generateText(languageGenerator: LanguageGenerator) {
+    const text = [];
+    if (this._options.generateHeaders)
+      text.push(languageGenerator.generateHeader(this._options));
+    for (const action of this._actions)
+      text.push(languageGenerator.generateAction(action));
+    if (this._options.generateHeaders)
+      text.push(languageGenerator.generateFooter(this._options.saveStorage));
+    return text.join('\n');
   }
 }

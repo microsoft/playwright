@@ -16,10 +16,23 @@
 
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
 import { ActionInContext } from './codeGenerator';
+import { Action, DialogSignal, DownloadSignal, NavigationSignal, PopupSignal } from './recorderActions';
+
+export type LanguageGeneratorOptions = {
+  browserName: string;
+  generateHeaders: boolean;
+  launchOptions: LaunchOptions;
+  contextOptions: BrowserContextOptions;
+  deviceName?: string;
+  saveStorage?: string;
+};
 
 export interface LanguageGenerator {
-  generateHeader(browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName?: string): string;
-  generateAction(actionInContext: ActionInContext, performingAction: boolean): string;
+  id: string;
+  fileName: string;
+  highlighter: string;
+  generateHeader(options: LanguageGeneratorOptions): string;
+  generateAction(actionInContext: ActionInContext): string;
   generateFooter(saveStorage: string | undefined): string;
 }
 
@@ -31,4 +44,31 @@ export function sanitizeDeviceOptions(device: any, options: BrowserContextOption
       cleanedOptions[property] = (options as any)[property];
   }
   return cleanedOptions;
+}
+
+export function toSignalMap(action: Action) {
+  let waitForNavigation: NavigationSignal | undefined;
+  let assertNavigation: NavigationSignal | undefined;
+  let popup: PopupSignal | undefined;
+  let download: DownloadSignal | undefined;
+  let dialog: DialogSignal | undefined;
+  for (const signal of action.signals) {
+    if (signal.name === 'navigation' && signal.isAsync)
+      waitForNavigation = signal;
+    else if (signal.name === 'navigation' && !signal.isAsync)
+      assertNavigation = signal;
+    else if (signal.name === 'popup')
+      popup = signal;
+    else if (signal.name === 'download')
+      download = signal;
+    else if (signal.name === 'dialog')
+      dialog = signal;
+  }
+  return {
+    waitForNavigation,
+    assertNavigation,
+    popup,
+    download,
+    dialog,
+  };
 }
