@@ -788,6 +788,7 @@ some CSP errors in the future.
     }
     export type ContentSecurityPolicyViolationType = "kInlineViolation"|"kEvalViolation"|"kURLViolation"|"kTrustedTypesSinkViolation"|"kTrustedTypesPolicyViolation";
     export interface SourceCodeLocation {
+      scriptId?: Runtime.ScriptId;
       url: string;
       lineNumber: number;
       columnNumber: number;
@@ -807,14 +808,16 @@ some CSP errors in the future.
       sourceCodeLocation?: SourceCodeLocation;
       violatingNodeId?: DOM.BackendNodeId;
     }
+    export type SharedArrayBufferIssueType = "TransferIssue"|"CreationIssue";
     /**
      * Details for a request that has been blocked with the BLOCKED_BY_RESPONSE
 code. Currently only used for COEP/COOP, but may be extended to include
 some CSP errors in the future.
      */
-    export interface SharedArrayBufferTransferIssueDetails {
+    export interface SharedArrayBufferIssueDetails {
       sourceCodeLocation: SourceCodeLocation;
       isWarning: boolean;
+      type: SharedArrayBufferIssueType;
     }
     export type TwaQualityEnforcementViolationType = "kHttpError"|"kUnavailableOffline"|"kDigitalAssetLinks";
     export interface TrustedWebActivityIssueDetails {
@@ -835,12 +838,21 @@ used when violation type is kDigitalAssetLinks.
        */
       signature?: string;
     }
+    export interface LowTextContrastIssueDetails {
+      violatingNodeId: DOM.BackendNodeId;
+      violatingNodeSelector: string;
+      contrastRatio: number;
+      thresholdAA: number;
+      thresholdAAA: number;
+      fontSize: string;
+      fontWeight: string;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferTransferIssue"|"TrustedWebActivityIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -852,8 +864,9 @@ add a new optional field to this type.
       blockedByResponseIssueDetails?: BlockedByResponseIssueDetails;
       heavyAdIssueDetails?: HeavyAdIssueDetails;
       contentSecurityPolicyIssueDetails?: ContentSecurityPolicyIssueDetails;
-      sharedArrayBufferTransferIssueDetails?: SharedArrayBufferTransferIssueDetails;
+      sharedArrayBufferIssueDetails?: SharedArrayBufferIssueDetails;
       twaQualityEnforcementDetails?: TrustedWebActivityIssueDetails;
+      lowTextContrastIssueDetails?: LowTextContrastIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -917,6 +930,14 @@ applies to images.
     export type enableParameters = {
     }
     export type enableReturnValue = {
+    }
+    /**
+     * Runs the contrast check for the target page. Found issues are reported
+using Audits.issueAdded event.
+     */
+    export type checkContrastParameters = {
+    }
+    export type checkContrastReturnValue = {
     }
   }
   
@@ -4742,10 +4763,11 @@ resource fetches.
     }
     /**
      * Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+Missing optional values will be filled in by the target with what it would normally use.
      */
     export interface UserAgentMetadata {
-      brands: UserAgentBrandVersion[];
-      fullVersion: string;
+      brands?: UserAgentBrandVersion[];
+      fullVersion?: string;
       platform: string;
       platformVersion: string;
       architecture: string;
@@ -7205,11 +7227,11 @@ module) (0-based).
     /**
      * Types of reasons why a cookie may not be stored from a response.
      */
-    export type SetCookieBlockedReason = "SecureOnly"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"SyntaxError"|"SchemeNotSupported"|"OverwriteSecure"|"InvalidDomain"|"InvalidPrefix"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax";
+    export type SetCookieBlockedReason = "SecureOnly"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"SyntaxError"|"SchemeNotSupported"|"OverwriteSecure"|"InvalidDomain"|"InvalidPrefix"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext"|"SamePartyConflictsWithOtherAttributes";
     /**
      * Types of reasons why a cookie may not be sent with a request.
      */
-    export type CookieBlockedReason = "SecureOnly"|"NotOnPath"|"DomainMismatch"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax";
+    export type CookieBlockedReason = "SecureOnly"|"NotOnPath"|"DomainMismatch"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext";
     /**
      * A cookie which was not stored from a response with the corresponding reason.
      */
@@ -8008,6 +8030,11 @@ are represented by the invalid cookie line string instead of a proper cookie.
        */
       headers: Headers;
       /**
+       * The IP address space of the resource. The address space can only be determined once the transport
+established the connection, so we can't send it in `requestWillBeSentExtraInfo`.
+       */
+      resourceIPAddressSpace: IPAddressSpace;
+      /**
        * Raw response header text as it was received over the wire. The raw text may not always be
 available, such as in the case of HTTP/2 or QUIC.
        */
@@ -8703,6 +8730,23 @@ continueInterceptedRequest call.
       crossAlignment?: LineStyle;
     }
     /**
+     * Configuration data for the highlighting of Flex item elements.
+     */
+    export interface FlexItemHighlightConfig {
+      /**
+       * Style of the box representing the item's base size
+       */
+      baseSizeBox?: BoxStyle;
+      /**
+       * Style of the border around the box representing the item's base size
+       */
+      baseSizeBorder?: LineStyle;
+      /**
+       * Style of the arrow representing if the item grew or shrank
+       */
+      flexibilityArrow?: LineStyle;
+    }
+    /**
      * Style information for drawing a line.
      */
     export interface LineStyle {
@@ -8797,6 +8841,10 @@ continueInterceptedRequest call.
        * The flex container highlight configuration (default: all transparent).
        */
       flexContainerHighlightConfig?: FlexContainerHighlightConfig;
+      /**
+       * The flex item highlight configuration (default: all transparent).
+       */
+      flexItemHighlightConfig?: FlexItemHighlightConfig;
       /**
        * The contrast algorithm to use for the contrast ratio (default: aa).
        */
@@ -16022,6 +16070,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Audits.getEncodedResponse": Audits.getEncodedResponseParameters;
     "Audits.disable": Audits.disableParameters;
     "Audits.enable": Audits.enableParameters;
+    "Audits.checkContrast": Audits.checkContrastParameters;
     "BackgroundService.startObserving": BackgroundService.startObservingParameters;
     "BackgroundService.stopObserving": BackgroundService.stopObservingParameters;
     "BackgroundService.setRecording": BackgroundService.setRecordingParameters;
@@ -16529,6 +16578,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Audits.getEncodedResponse": Audits.getEncodedResponseReturnValue;
     "Audits.disable": Audits.disableReturnValue;
     "Audits.enable": Audits.enableReturnValue;
+    "Audits.checkContrast": Audits.checkContrastReturnValue;
     "BackgroundService.startObserving": BackgroundService.startObservingReturnValue;
     "BackgroundService.stopObserving": BackgroundService.stopObservingReturnValue;
     "BackgroundService.setRecording": BackgroundService.setRecordingReturnValue;
