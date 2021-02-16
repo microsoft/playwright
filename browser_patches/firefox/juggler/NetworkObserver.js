@@ -197,8 +197,13 @@ class NetworkRequest {
   // Public interception API.
   fulfill(status, statusText, headers, base64body) {
     this._interceptedChannel.synthesizeStatus(status, statusText);
-    for (const header of headers)
+    for (const header of headers) {
       this._interceptedChannel.synthesizeHeader(header.name, header.value);
+      if (header.name.toLowerCase() === 'set-cookie') {
+        Services.cookies.QueryInterface(Ci.nsICookieService);
+        Services.cookies.setCookieStringFromHttp(this.httpChannel.URI, header.value, this.httpChannel);
+      }
+    }
     const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
     const body = base64body ? atob(base64body) : '';
     synthesized.data = body;
