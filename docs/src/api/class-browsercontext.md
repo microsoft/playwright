@@ -162,8 +162,15 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 Script to be evaluated in all pages in the browser context.
 
 ### param: BrowserContext.addInitScript.script
-* langs: csharp, java
+* langs: java
 - `script` <[string]|[path]>
+
+Script to be evaluated in all pages in the browser context.
+
+### param: BrowserContext.addInitScript.script
+* langs: csharp
+- `script` <[string]>
+- `path` <[string]>
 
 Script to be evaluated in all pages in the browser context.
 
