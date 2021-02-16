@@ -31,6 +31,7 @@ const readFileAsync = util.promisify(fs.readFile);
 
 declare global {
   interface Window {
+    playwrightSetFile: (file: string) => void;
     playwrightSetMode: (mode: Mode) => void;
     playwrightSetPaused: (paused: boolean) => void;
     playwrightSetSources: (sources: Source[]) => void;
@@ -121,6 +122,12 @@ export class RecorderApp extends EventEmitter {
     await this._page.mainFrame()._evaluateExpression(((mode: Mode) => {
       window.playwrightSetMode(mode);
     }).toString(), true, mode, 'main').catch(() => {});
+  }
+
+  async setFile(file: string): Promise<void> {
+    await this._page.mainFrame()._evaluateExpression(((file: string) => {
+      window.playwrightSetFile(file);
+    }).toString(), true, file, 'main').catch(() => {});
   }
 
   async setPaused(paused: boolean): Promise<void> {

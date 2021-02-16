@@ -51,12 +51,12 @@
 
 .source-line-paused {
   background-color: #b3dbff7f;
-  outline: 1px solid #009aff;
+  outline: 1px solid #008aff;
   z-index: 2;
 }
 
 .source-line-error {
   background-color: #fff0f0;
-  outline: 1px solid #ffd6d6;
+  outline: 1px solid #ff5656;
   z-index: 2;
 }
