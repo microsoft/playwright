@@ -136,7 +136,7 @@ export const hostPlatform = ((): BrowserPlatform => {
     let arm64 = false;
     // BigSur is the first version that might run on Apple Silicon.
     if (major >= 11) {
-      arm64 = execSync('sysctl -in hw.optional.arm64', {
+      arm64 = execSync('/usr/sbin/sysctl -in hw.optional.arm64', {
         stdio: ['ignore', 'pipe', 'ignore']
       }).toString().trim() === '1';
     }
