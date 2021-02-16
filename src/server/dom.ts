@@ -529,8 +529,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const multiple = throwFatalDOMError(await this._evaluateInUtility(([injected, node]): 'error:notinput' | 'error:notconnected' | boolean => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         return 'error:notinput';
-      if (!node.isConnected)
-        return 'error:notconnected';
       const input = node as Node as HTMLInputElement;
       return input.multiple;
     }, {}));
