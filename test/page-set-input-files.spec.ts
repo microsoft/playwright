@@ -104,15 +104,20 @@ it('should work when file input is attached to DOM', async ({page, server}) => {
 });
 
 it('should work when file input is not attached to DOM', async ({page, server}) => {
-  const [chooser] = await Promise.all([
-    page.waitForEvent('filechooser'),
-    page.evaluate(() => {
+  const [,content] = await Promise.all([
+    page.waitForEvent('filechooser').then(chooser => chooser.setFiles(FILE_TO_UPLOAD)),
+    page.evaluate(async () => {
       const el = document.createElement('input');
       el.type = 'file';
       el.click();
+      await new Promise(x => el.oninput = x);
+      const reader = new FileReader();
+      const promise = new Promise(fulfill => reader.onload = fulfill);
+      reader.readAsText(el.files[0]);
+      return promise.then(() => reader.result);
     }),
   ]);
-  expect(chooser).toBeTruthy();
+  expect(content).toBe('contents of the file');
 });
 
 it('should not throw when filechooser belongs to iframe', (test, { browserName }) => {
