@@ -670,6 +670,11 @@ static NSSet *dataTypes()
 {
     LOG(@"decidePolicyForNavigationAction");
 
+    if (navigationAction.shouldPerformDownload) {
+        decisionHandler(WKNavigationActionPolicyDownload);
+        return;
+    }
+
     if (navigationAction._canHandleRequest) {
         decisionHandler(WKNavigationActionPolicyAllow);
         return;
