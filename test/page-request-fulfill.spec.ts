@@ -180,7 +180,6 @@ it('should include the origin header', async ({page, server}) => {
 
 it('should support Set-Cookie header', (test, { browserName }) => {
   test.fixme(browserName === 'webkit');
-  test.fixme(browserName === 'firefox');
 }, async ({context, page, server}) => {
   await page.route('https://example.com/', (route, request) => {
     route.fulfill({
