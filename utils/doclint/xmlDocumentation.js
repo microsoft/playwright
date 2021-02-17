@@ -103,7 +103,12 @@ function _wrapAndEscape(node, maxColumns = 0) {
     lines.push(text);
   };
 
-  const text = node.text.replace(/[^\[]`([^\]]*[^\[])`[^\]]/g, (m, g1) => ` <c>${g1}</c> `);
+
+  let text = node.text;
+  text = text.replace(/`([^`]*)`/g, (match, code) => `<c>${code.replace('<', '&lt;').replace('>', '&gt;')}</c>`);
+  text = text.replace(/\[(.*?)\]\((.*?\))/g, (match, linkName, linkUrl) => { 
+    return `<a href="${linkUrl}">${linkName}</a>`;
+  });
   const words = text.split(' ');
   let line = '';
   for (let i = 0; i < words.length; i++) {
