@@ -368,7 +368,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
         return urlOrPredicate(request);
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
-      const logLine = trimmedUrl ? `waiting for request "${trimmedUrl}"` : undefined;
+      const logLine = trimmedUrl ? `waiting for request ${trimmedUrl}` : undefined;
       return this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout }, logLine);
     });
   }
@@ -381,7 +381,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
         return urlOrPredicate(response);
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
-      const logLine = trimmedUrl ? `waiting for response "${trimmedUrl}"` : undefined;
+      const logLine = trimmedUrl ? `waiting for response ${trimmedUrl}` : undefined;
       return this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout }, logLine);
     });
   }
@@ -699,10 +699,15 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel, chann
   }
 }
 
+function trimEnd(s: string): string {
+  if (s.length > 50)
+    s = s.substring(0, 50) + '\u2026';
+  return s;
+}
+
 function trimUrl(param: any): string | undefined {
-  if (isString(param)) {
-    if (param.length > 50)
-      param = param.substring(0, 50) + '\u2026';
-    return param;
-  }
+  if (isRegExp(param))
+    return `/${trimEnd(param.source)}/${param.flags}`;
+  if (isString(param))
+    return `"${trimEnd(param)}"`;
 }
