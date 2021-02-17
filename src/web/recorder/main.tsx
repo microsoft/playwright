@@ -42,8 +42,10 @@ export const Main: React.FC = ({
   window.playwrightSetPaused = setPaused;
   window.playwrightUpdateLogs = callLogs => {
     const newLog = new Map<number, CallLog>(log);
-    for (const callLog of callLogs)
+    for (const callLog of callLogs) {
+      callLog.reveal = !log.has(callLog.id);
       newLog.set(callLog.id, callLog);
+    }
     setLog(newLog);
   };
 

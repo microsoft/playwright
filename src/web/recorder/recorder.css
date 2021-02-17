@@ -37,3 +37,21 @@
   color: var(--toolbar-color);
   margin-left: 16px;
 }
+
+.recorder .toolbar-button.toggled.question {
+  color: #12a3ff;
+}
+
+.recorder .toolbar-button.toggled.record {
+  color: #fd1e1e;
+}
+
+.recorder .toolbar-button:not([disabled]) .codicon-debug-continue,
+.recorder .toolbar-button:not([disabled]) .codicon-debug-step-over {
+  color: #01bb01;
+}
+
+.recorder .toolbar-button:not([disabled]):hover .codicon-debug-continue,
+.recorder .toolbar-button:not([disabled]):hover .codicon-debug-step-over {
+  color: #41ca1e;
+}

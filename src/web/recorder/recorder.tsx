@@ -57,15 +57,14 @@ export const Recorder: React.FC<RecorderProps> = ({
   React.useLayoutEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
-  
   return <div className='recorder'>
     <Toolbar>
       <ToolbarButton icon='record' title='Record' toggled={mode == 'recording'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' }}).catch(() => { });
-      }}></ToolbarButton>
-      <ToolbarButton icon='question' title='Inspect' toggled={mode == 'inspecting'} onClick={() => {
+      }}>Record</ToolbarButton>
+      <ToolbarButton icon='question' title='Explore' toggled={mode == 'inspecting'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' }}).catch(() => { });
-      }}></ToolbarButton>
+      }}>Explore</ToolbarButton>
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
@@ -78,12 +77,12 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='debug-step-over' title='Step over' disabled={!paused} onClick={() => {
         window.dispatch({ event: 'step' }).catch(() => {});
       }}></ToolbarButton>
-      <select className='recorder-chooser' hidden={!sources.length} onChange={event => {
+      <select className='recorder-chooser' hidden={!sources.length} value={file} onChange={event => {
           setFile(event.target.selectedOptions[0].value);
         }}>{
           sources.map(s => {
             const title = s.file.replace(/.*[/\\]([^/\\]+)/, '$1');
-            return <option key={s.file} value={s.file} selected={s.file === file}>{title}</option>;
+            return <option key={s.file} value={s.file}>{title}</option>;
           })
         }
       </select>

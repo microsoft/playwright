@@ -25,9 +25,9 @@ export default {
 } as Meta;
 
 const Template: Story<ToolbarProps> = () => <Toolbar>
-  <ToolbarButton icon="clone" title="Copy" onClick={() => {}}></ToolbarButton>
-  <ToolbarButton icon="trashcan" title="Erase" onClick={() => {}}></ToolbarButton>
-  <ToolbarButton icon="close" title="Close" onClick={() => {}}></ToolbarButton>
+  <ToolbarButton icon='record' title='Record' onClick={() => {}}>Record</ToolbarButton>
+  <ToolbarButton icon='question' title='Inspect' onClick={() => {}}>Explore</ToolbarButton>
+  <ToolbarButton icon='files' title='Copy' onClick={() => {}}></ToolbarButton>
 </Toolbar>;
 
 export const Primary = Template.bind({});

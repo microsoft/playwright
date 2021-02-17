@@ -50,7 +50,7 @@ export function exampleCallLog(): CallLog[] {
       'status': 'paused'
     },
     {
-      'id': 5,
+      'id': 6,
       'messages': [
         'navigating to "https://github.com/microsoft", waiting until "load"',
       ],

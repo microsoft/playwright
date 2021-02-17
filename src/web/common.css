@@ -81,10 +81,6 @@ body {
   display: none !important;
 }
 
-.codicon {
-  color: var(--toolbar-color);
-}
-
 svg {
   fill: currentColor;
 }

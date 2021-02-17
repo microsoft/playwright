@@ -148,19 +148,6 @@ describe('pause', (suite, { mode }) => {
     expect(await sanitizeLog(recorderPage)).toEqual([
       'pause',
       'click',
-      'waiting for selector "button"',
-      'selector resolved to visible <button>Submit</button>',
-      'attempting click action',
-      'waiting for element to be visible, enabled and stable',
-      'element is visible, enabled and stable',
-      'scrolling into view if needed',
-      'done scrolling',
-      'checking that element receives pointer events at ()',
-      'element does receive pointer events',
-      'performing click action',
-      'click action done',
-      'waiting for scheduled navigations to finish',
-      'navigations have finished',
       'pause',
     ]);
     await recorderPage.click('[title="Resume"]');
@@ -183,21 +170,7 @@ describe('pause', (suite, { mode }) => {
     expect(await sanitizeLog(recorderPage)).toEqual([
       'pause',
       'waitForEvent()',
-      'waiting for event \"console\"',
       'click',
-      'waiting for selector "button"',
-      'selector resolved to visible <button onclick=\"console.log()\">Submit</button>',
-      'attempting click action',
-      'waiting for element to be visible, enabled and stable',
-      'element is visible, enabled and stable',
-      'scrolling into view if needed',
-      'done scrolling',
-      'checking that element receives pointer events at ()',
-      'element does receive pointer events',
-      'performing click action',
-      'click action done',
-      'waiting for scheduled navigations to finish',
-      'navigations have finished',
       'pause',
     ]);
     await recorderPage.click('[title="Resume"]');

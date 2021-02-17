@@ -23,27 +23,37 @@ export interface CallLogProps {
 }
 
 export const CallLogView: React.FC<CallLogProps> = ({
-  log
+  log,
 }) => {
   const messagesEndRef = React.createRef<HTMLDivElement>();
+  const [expandOverrides, setExpandOverrides] = React.useState<Map<number, boolean>>(new Map());
   React.useLayoutEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    if (log.find(callLog => callLog.reveal))
+      messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
-  
+
   return <div className='vbox'>
     <div className='call-log-header' style={{flex: 'none'}}>Log</div>
     <div className='call-log' style={{flex: 'auto'}}>
       {log.map(callLog => {
+        const expandOverride = expandOverrides.get(callLog.id);
+        const isExpanded = typeof expandOverride === 'boolean' ? expandOverride : callLog.status !== 'done';
         return <div className={`call-log-call ${callLog.status}`} key={callLog.id}>
           <div className='call-log-call-header'>
-            <span className={'codicon ' + iconClass(callLog)}></span>{ callLog.title }
+            <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`} style={{ cursor: 'pointer' }}onClick={() => {
+              const newOverrides = new Map(expandOverrides);
+              newOverrides.set(callLog.id, !isExpanded);
+              setExpandOverrides(newOverrides);
+            }}></span>
+            { callLog.title }
+            <span className={'codicon ' + iconClass(callLog)}></span>
           </div>
-          { callLog.messages.map((message, i) => {
+          { (isExpanded ? callLog.messages : []).map((message, i) => {
             return <div className='call-log-message' key={i}>
               { message.trim() }
             </div>;
           })}
-          { callLog.error ? <div className='call-log-message error'>
+          { callLog.error ? <div className='call-log-message error' hidden={!isExpanded}>
             { callLog.error }
           </div> : undefined }
         </div>
