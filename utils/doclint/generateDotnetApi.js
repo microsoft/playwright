@@ -427,8 +427,16 @@ function renderMethod(member, parent, output, name) {
       return;
     }
 
-
-    if (arg.type.expression === '[boolean]|[Array]<[string]>') {
+    if (arg.type.expression === '[string]|[path]') {
+      let argName = translateMemberName('argument', arg.name, null);
+      pushArg("string", argName, arg);
+      pushArg("string", `${argName}Path`, arg);
+      if (arg.spec) {
+        addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
+        addParamsDoc(`${argName}Path`, [`Instead of specifying <paramref name="${argName}"/>, gives the file name to load from.`]);
+      }
+      return;
+    } else if (arg.type.expression === '[boolean]|[Array]<[string]>') {
       // HACK: this hurts my brain too
       // we split this into two args, one boolean, with the logical name
       let argName = translateMemberName('argument', arg.name, null);
@@ -439,7 +447,7 @@ function renderMethod(member, parent, output, name) {
       pushArg(rightArgType, `${argName}Values`, arg);
 
       addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
-      addParamsDoc(`${argName}Values`, `The values to take into account when <paramref name="${argName}"/> is <code>true</code>.`);
+      addParamsDoc(`${argName}Values`, [`The values to take into account when <paramref name="${argName}"/> is <code>true</code>.`]);
 
       return;
     }
@@ -453,14 +461,13 @@ function renderMethod(member, parent, output, name) {
       if (translatedArguments.includes(null))
         throw 'Unexpected null in translated argument types. Aborting.';
 
-      let argSuffix = argName[0].toUpperCase() + argName.substring(1);
       let argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
-        const newArgName = `${newArg[0].toLowerCase()}${argSuffix}`;
+        const sanitizedArgName = newArg.match(/(?<=^[\s"']*)(\w+)/g, '')[0] || newArg;
+        const newArgName = `${argName}${sanitizedArgName[0].toUpperCase() + sanitizedArgName.substring(1)}`;
         pushArg(newArg, newArgName, arg);
         addParamsDoc(newArgName, argDocumentation);
       }
-
       return;
     }
 
