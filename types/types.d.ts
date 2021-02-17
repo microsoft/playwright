@@ -530,7 +530,7 @@ export interface Page {
   on(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Emitted when <[WebSocket]> request is sent.
+   * Emitted when [WebSocket] request is sent.
    */
   on(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
 
@@ -704,7 +704,7 @@ export interface Page {
   once(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Emitted when <[WebSocket]> request is sent.
+   * Emitted when [WebSocket] request is sent.
    */
   once(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
 
@@ -878,7 +878,7 @@ export interface Page {
   addListener(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Emitted when <[WebSocket]> request is sent.
+   * Emitted when [WebSocket] request is sent.
    */
   addListener(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
 
@@ -1052,7 +1052,7 @@ export interface Page {
   removeListener(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Emitted when <[WebSocket]> request is sent.
+   * Emitted when [WebSocket] request is sent.
    */
   removeListener(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
 
@@ -1226,7 +1226,7 @@ export interface Page {
   off(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Emitted when <[WebSocket]> request is sent.
+   * Emitted when [WebSocket] request is sent.
    */
   off(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
 
@@ -3014,7 +3014,7 @@ export interface Page {
   waitForEvent(event: 'response', optionsOrPredicate?: { predicate?: (response: Response) => boolean, timeout?: number } | ((response: Response) => boolean)): Promise<Response>;
 
   /**
-   * Emitted when <[WebSocket]> request is sent.
+   * Emitted when [WebSocket] request is sent.
    */
   waitForEvent(event: 'websocket', optionsOrPredicate?: { predicate?: (webSocket: WebSocket) => boolean, timeout?: number } | ((webSocket: WebSocket) => boolean)): Promise<WebSocket>;
 
