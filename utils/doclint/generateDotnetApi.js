@@ -256,11 +256,12 @@ function renderMember(member, parent, out) {
     if (member.kind === 'event') {
       if (!member.type)
         throw `No Event Type for ${name} in ${parent.name}`;
-
       if (member.spec)
-        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-
-      output(`event EventHandler<${type}> ${name};`);
+        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(x => `\t${x}`));
+      if (parent && (classNameMap.get(parent.name) === type))
+        output(`event EventHandler ${name};`); // event sender will be the type, so we're fine to ignore
+      else
+        output(`event EventHandler<${type}> ${name};`);
     } else if (member.kind === 'property') {
       if (member.spec)
         output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(x => `\t${x}`));
@@ -404,6 +405,20 @@ function renderMethod(member, parent, output, name) {
 
   // render args
   let args = [];
+  /**
+   * 
+   * @param {string} innerArgType 
+   * @param {string} innerArgName 
+   * @param {Documentation.Member} argument 
+   */
+  const pushArg = (innerArgType, innerArgName, argument) => {
+    let isNullable = enumTypes.has(innerArgType)
+      || ['int', 'bool', 'decimal'].includes(innerArgType);
+    const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
+    const requiredSuffix = argument.required ? "" : " = null";
+    args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);
+  };
+
   let parseArg = (/** @type {Documentation.Member} */ arg) => {
     if (arg.name === "options") {
       arg.type.properties.forEach(prop => {
@@ -412,6 +427,7 @@ function renderMethod(member, parent, output, name) {
       return;
     }
 
+
     if (arg.type.expression === '[boolean]|[Array]<[string]>') {
       // HACK: this hurts my brain too
       // we split this into two args, one boolean, with the logical name
@@ -419,8 +435,8 @@ function renderMethod(member, parent, output, name) {
       let leftArgType = translateType(arg.type.union[0], parent, (t) => { throw 'Not supported'; });
       let rightArgType = translateType(arg.type.union[1], parent, (t) => { throw 'Not supported'; });
 
-      args.push(`${leftArgType} ${argName}`);
-      args.push(`${rightArgType} ${argName}Values`);
+      pushArg(leftArgType, argName, arg);
+      pushArg(rightArgType, `${argName}Values`, arg);
 
       addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
       addParamsDoc(`${argName}Values`, `The values to take into account when <paramref name="${argName}"/> is <code>true</code>.`);
@@ -441,7 +457,7 @@ function renderMethod(member, parent, output, name) {
       let argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
         const newArgName = `${newArg[0].toLowerCase()}${argSuffix}`;
-        args.push(`${newArg} ${newArgName}`);
+        pushArg(newArg, newArgName, arg);
         addParamsDoc(newArgName, argDocumentation);
       }
 
@@ -451,11 +467,11 @@ function renderMethod(member, parent, output, name) {
     addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
 
     if (argName === 'timeout' && argType === 'decimal') {
-      args.push(`int timeout`);
+      args.push(`int timeout = 0`); // a special argument, we ignore our convention
       return;
     }
 
-    args.push(`${argType} ${argName}`);
+    pushArg(argType, argName, arg);
   };
 
   member.args.forEach(parseArg);
