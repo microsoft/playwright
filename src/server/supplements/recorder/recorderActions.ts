@@ -92,21 +92,25 @@ export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageActi
 
 // Signals.
 
-export type NavigationSignal = {
+export type BaseSignal = {
+  isAsync?: boolean,
+}
+
+export type NavigationSignal = BaseSignal & {
   name: 'navigation',
   url: string,
 };
 
-export type PopupSignal = {
+export type PopupSignal = BaseSignal & {
   name: 'popup',
   popupAlias: string,
 };
 
-export type DownloadSignal = {
+export type DownloadSignal = BaseSignal & {
   name: 'download',
 };
 
-export type DialogSignal = {
+export type DialogSignal = BaseSignal & {
   name: 'dialog',
   dialogAlias: string,
 };

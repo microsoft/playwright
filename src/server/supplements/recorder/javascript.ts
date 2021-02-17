@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import { LanguageGenerator, sanitizeDeviceOptions } from './language';
+import type { BrowserContextOptions } from '../../../..';
+import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
 import { ActionInContext } from './codeGenerator';
-import { actionTitle, NavigationSignal, PopupSignal, DownloadSignal, DialogSignal, Action } from './recorderActions';
+import { Action, actionTitle } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
 import deviceDescriptors = require('../../deviceDescriptors');
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
+  id = 'javascript';
+  fileName = '<javascript>';
+  highlighter = 'javascript';
 
-  generateAction(actionInContext: ActionInContext, performingAction: boolean): string {
+  generateAction(actionInContext: ActionInContext): string {
     const { action, pageAlias } = actionInContext;
     const formatter = new JavaScriptFormatter(2);
     formatter.newLine();
@@ -41,64 +44,48 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         `${pageAlias}.frame(${formatObject({ name: actionInContext.frameName })})` :
         `${pageAlias}.frame(${formatObject({ url: actionInContext.frameUrl })})`);
 
-    let navigationSignal: NavigationSignal | undefined;
-    let popupSignal: PopupSignal | undefined;
-    let downloadSignal: DownloadSignal | undefined;
-    let dialogSignal: DialogSignal | undefined;
-    for (const signal of action.signals) {
-      if (signal.name === 'navigation')
-        navigationSignal = signal;
-      else if (signal.name === 'popup')
-        popupSignal = signal;
-      else if (signal.name === 'download')
-        downloadSignal = signal;
-      else if (signal.name === 'dialog')
-        dialogSignal = signal;
-    }
+    const signals = toSignalMap(action);
 
-    if (dialogSignal) {
+    if (signals.dialog) {
       formatter.add(`  ${pageAlias}.once('dialog', dialog => {
     console.log(\`Dialog message: $\{dialog.message()}\`);
     dialog.dismiss().catch(() => {});
   });`);
     }
 
-    const waitForNavigation = navigationSignal && !performingAction;
-    const assertNavigation = navigationSignal && performingAction;
-
-    const emitPromiseAll = waitForNavigation || popupSignal || downloadSignal;
+    const emitPromiseAll = signals.waitForNavigation || signals.popup || signals.download;
     if (emitPromiseAll) {
       // Generate either await Promise.all([]) or
       // const [popup1] = await Promise.all([]).
       let leftHandSide = '';
-      if (popupSignal)
-        leftHandSide = `const [${popupSignal.popupAlias}] = `;
-      else if (downloadSignal)
+      if (signals.popup)
+        leftHandSide = `const [${signals.popup.popupAlias}] = `;
+      else if (signals.download)
         leftHandSide = `const [download] = `;
       formatter.add(`${leftHandSide}await Promise.all([`);
     }
 
     // Popup signals.
-    if (popupSignal)
+    if (signals.popup)
       formatter.add(`${pageAlias}.waitForEvent('popup'),`);
 
     // Navigation signal.
-    if (waitForNavigation)
-      formatter.add(`${pageAlias}.waitForNavigation(/*{ url: ${quote(navigationSignal!.url)} }*/),`);
+    if (signals.waitForNavigation)
+      formatter.add(`${pageAlias}.waitForNavigation(/*{ url: ${quote(signals.waitForNavigation.url)} }*/),`);
 
     // Download signals.
-    if (downloadSignal)
+    if (signals.download)
       formatter.add(`${pageAlias}.waitForEvent('download'),`);
 
-    const prefix = (popupSignal || waitForNavigation || downloadSignal) ? '' : 'await ';
+    const prefix = (signals.popup || signals.waitForNavigation || signals.download) ? '' : 'await ';
     const actionCall = this._generateActionCall(action);
-    const suffix = (waitForNavigation || emitPromiseAll) ? '' : ';';
+    const suffix = (signals.waitForNavigation || emitPromiseAll) ? '' : ';';
     formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
 
     if (emitPromiseAll)
       formatter.add(`]);`);
-    else if (assertNavigation)
-      formatter.add(`  // assert.equal(${pageAlias}.url(), ${quote(navigationSignal!.url)});`);
+    else if (signals.assertNavigation)
+      formatter.add(`  // assert.equal(${pageAlias}.url(), ${quote(signals.assertNavigation.url)});`);
     return formatter.format();
   }
 
@@ -143,20 +130,20 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     }
   }
 
-  generateHeader(browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName?: string): string {
+  generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
     formatter.add(`
-      const { ${browserName}${deviceName ? ', devices' : ''} } = require('playwright');
+      const { ${options.browserName}${options.deviceName ? ', devices' : ''} } = require('playwright');
 
       (async () => {
-        const browser = await ${browserName}.launch(${formatObjectOrVoid(launchOptions)});
-        const context = await browser.newContext(${formatContextOptions(contextOptions, deviceName)});`);
+        const browser = await ${options.browserName}.launch(${formatObjectOrVoid(options.launchOptions)});
+        const context = await browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName)});`);
     return formatter.format();
   }
 
   generateFooter(saveStorage: string | undefined): string {
     const storageStateLine = saveStorage ? `\n  await context.storageState({ path: '${saveStorage}' });` : '';
-    return `  // ---------------------${storageStateLine}
+    return `\n  // ---------------------${storageStateLine}
   await context.close();
   await browser.close();
 })();`;

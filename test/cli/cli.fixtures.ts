@@ -20,6 +20,7 @@ import { ChildProcess, spawn } from 'child_process';
 import { folio as baseFolio } from '../recorder.fixtures';
 import type { BrowserType, Browser, Page } from '../..';
 export { config } from 'folio';
+import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
 
 type WorkerFixtures = {
   browserType: BrowserType<Browser>;
@@ -66,7 +67,7 @@ class Recorder {
   _actionReporterInstalled: boolean
   _actionPerformedCallback: Function
   recorderPage: Page;
-  private _text: string = '';
+  private _sources = new Map<string, Source>();
 
   constructor(page: Page, recorderPage: Page) {
     this.page = page;
@@ -97,24 +98,26 @@ class Recorder {
     ]);
   }
 
-  async waitForOutput(text: string): Promise<void> {
-    this._text = await this.recorderPage.evaluate((text: string) => {
+  async waitForOutput(file: string, text: string): Promise<Map<string, Source>> {
+    const sources: Source[] = await this.recorderPage.evaluate((params: { text: string, file: string }) => {
       const w = window as any;
       return new Promise(f => {
         const poll = () => {
-          if (w.playwrightSourceEchoForTest && w.playwrightSourceEchoForTest.includes(text)) {
-            f(w.playwrightSourceEchoForTest);
-            return;
-          }
+          const source = (w.playwrightSourcesEchoForTest || []).find((s: Source) => s.file === params.file);
+          if (source && source.text.includes(params.text))
+            f(w.playwrightSourcesEchoForTest);
           setTimeout(poll, 300);
         };
-        setTimeout(poll);
+        poll();
       });
-    }, text);
+    }, { text, file });
+    for (const source of sources)
+      this._sources.set(source.file, source);
+    return this._sources;
   }
 
-  output(): string {
-    return this._text;
+  sources(): Map<string, Source> {
+    return this._sources;
   }
 
   async waitForHighlight(action: () => Promise<void>): Promise<string> {

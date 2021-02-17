@@ -29,14 +29,28 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.hoverOverElement('button');
     expect(selector).toBe('text=Submit');
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('click'),
+      recorder.waitForOutput('<javascript>', 'click'),
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Click text=Submit
   await page.click('text=Submit');`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Click text=Submit
+    page.click("text=Submit")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Click text=Submit
+    await page.click("text=Submit")`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Click text=Submit
+await page.ClickAsync("text=Submit");`);
+
     expect(message.text()).toBe('click');
   });
 
@@ -57,12 +71,13 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.hoverOverElement('button');
     expect(selector).toBe('text=Submit');
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('click'),
+      recorder.waitForOutput('<javascript>', 'click'),
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Click text=Submit
   await page.click('text=Submit');`);
     expect(message.text()).toBe('click');
@@ -89,12 +104,12 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const divContents = await page.$eval(selector, div => div.outerHTML);
     expect(divContents).toBe(`<div onclick="console.log('click')"> Some long text here </div>`);
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('click'),
+      recorder.waitForOutput('<javascript>', 'click'),
       page.dispatchEvent('div', 'click', { detail: 1 })
     ]);
-    expect(recorder.output()).toContain(`
+    expect(sources.get('<javascript>').text).toContain(`
   // Click text=Some long text here
   await page.click('text=Some long text here');`);
     expect(message.text()).toBe('click');
@@ -105,14 +120,28 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.focusElement('input');
     expect(selector).toBe('input[name="name"]');
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('fill'),
+      recorder.waitForOutput('<javascript>', 'fill'),
       page.fill('input', 'John')
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Fill input[name="name"]
   await page.fill('input[name="name"]', 'John');`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Fill input[name="name"]
+    page.fill(\"input[name=\\\"name\\\"]\", \"John\")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Fill input[name="name"]
+    await page.fill(\"input[name=\\\"name\\\"]\", \"John\")`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Fill input[name="name"]
+await page.FillAsync(\"input[name=\\\"name\\\"]\", \"John\");`);
+
     expect(message.text()).toBe('John');
   });
 
@@ -121,12 +150,12 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.focusElement('textarea');
     expect(selector).toBe('textarea[name="name"]');
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('fill'),
+      recorder.waitForOutput('<javascript>', 'fill'),
       page.fill('textarea', 'John')
     ]);
-    expect(recorder.output()).toContain(`
+    expect(sources.get('<javascript>').text).toContain(`
   // Fill textarea[name="name"]
   await page.fill('textarea[name="name"]', 'John');`);
     expect(message.text()).toBe('John');
@@ -140,14 +169,28 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
 
     const messages: any[] = [];
     page.on('console', message => messages.push(message));
-    await Promise.all([
+    const [, sources] = await Promise.all([
       recorder.waitForActionPerformed(),
-      recorder.waitForOutput('press'),
+      recorder.waitForOutput('<javascript>', 'press'),
       page.press('input', 'Shift+Enter')
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Press Enter with modifiers
   await page.press('input[name="name"]', 'Shift+Enter');`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Press Enter with modifiers
+    page.press(\"input[name=\\\"name\\\"]\", \"Shift+Enter\")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Press Enter with modifiers
+    await page.press(\"input[name=\\\"name\\\"]\", \"Shift+Enter\")`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Press Enter with modifiers
+await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
+
     expect(messages[0].text()).toBe('press');
   });
 
@@ -158,24 +201,25 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     `);
 
     await page.click('input[name="one"]');
-    await recorder.waitForOutput('click');
+    await recorder.waitForOutput('<javascript>', 'click');
     await page.keyboard.type('foobar123');
-    await recorder.waitForOutput('foobar123');
+    await recorder.waitForOutput('<javascript>', 'foobar123');
 
     await page.keyboard.press('Tab');
-    await recorder.waitForOutput('Tab');
+    await recorder.waitForOutput('<javascript>', 'Tab');
     await page.keyboard.type('barfoo321');
-    await recorder.waitForOutput('barfoo321');
+    await recorder.waitForOutput('<javascript>', 'barfoo321');
 
-    expect(recorder.output()).toContain(`
+    const text = recorder.sources().get('<javascript>').text;
+    expect(text).toContain(`
   // Fill input[name="one"]
   await page.fill('input[name="one"]', 'foobar123');`);
 
-    expect(recorder.output()).toContain(`
+    expect(text).toContain(`
   // Press Tab
   await page.press('input[name="one"]', 'Tab');`);
 
-    expect(recorder.output()).toContain(`
+    expect(text).toContain(`
   // Fill input[name="two"]
   await page.fill('input[name="two"]', 'barfoo321');`);
   });
@@ -190,12 +234,12 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     page.on('console', message => {
       messages.push(message);
     });
-    await Promise.all([
+    const [, sources] = await Promise.all([
       recorder.waitForActionPerformed(),
-      recorder.waitForOutput('press'),
+      recorder.waitForOutput('<javascript>', 'press'),
       page.press('input', 'ArrowDown')
     ]);
-    expect(recorder.output()).toContain(`
+    expect(sources.get('<javascript>').text).toContain(`
   // Press ArrowDown
   await page.press('input[name="name"]', 'ArrowDown');`);
     expect(messages[0].text()).toBe('press:ArrowDown');
@@ -211,12 +255,12 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     page.on('console', message => {
       messages.push(message);
     });
-    await Promise.all([
+    const [, sources] = await Promise.all([
       recorder.waitForActionPerformed(),
-      recorder.waitForOutput('press'),
+      recorder.waitForOutput('<javascript>', 'press'),
       page.press('input', 'ArrowDown')
     ]);
-    expect(recorder.output()).toContain(`
+    expect(sources.get('<javascript>').text).toContain(`
   // Press ArrowDown
   await page.press('input[name="name"]', 'ArrowDown');`);
     expect(messages.length).toBe(2);
@@ -230,14 +274,28 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.focusElement('input');
     expect(selector).toBe('input[name="accept"]');
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('check'),
+      recorder.waitForOutput('<javascript>', 'check'),
       page.click('input')
     ]);
-    await recorder.waitForOutput(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Check input[name="accept"]
   await page.check('input[name="accept"]');`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Check input[name="accept"]
+    page.check(\"input[name=\\\"accept\\\"]\")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Check input[name="accept"]
+    await page.check(\"input[name=\\\"accept\\\"]\")`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Check input[name="accept"]
+await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
+
     expect(message.text()).toBe('true');
   });
 
@@ -247,12 +305,13 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.focusElement('input');
     expect(selector).toBe('input[name="accept"]');
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('check'),
+      recorder.waitForOutput('<javascript>', 'check'),
       page.keyboard.press('Space')
     ]);
-    await recorder.waitForOutput(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Check input[name="accept"]
   await page.check('input[name="accept"]');`);
     expect(message.text()).toBe('true');
@@ -264,14 +323,28 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.focusElement('input');
     expect(selector).toBe('input[name="accept"]');
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('uncheck'),
+      recorder.waitForOutput('<javascript>', 'uncheck'),
       page.click('input')
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Uncheck input[name="accept"]
   await page.uncheck('input[name="accept"]');`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Uncheck input[name="accept"]
+    page.uncheck(\"input[name=\\\"accept\\\"]\")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Uncheck input[name="accept"]
+    await page.uncheck(\"input[name=\\\"accept\\\"]\")`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Uncheck input[name="accept"]
+await page.UncheckAsync(\"input[name=\\\"accept\\\"]\");`);
+
     expect(message.text()).toBe('false');
   });
 
@@ -281,14 +354,28 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.hoverOverElement('select');
     expect(selector).toBe('select');
 
-    const [message] = await Promise.all([
+    const [message, sources] = await Promise.all([
       page.waitForEvent('console'),
-      recorder.waitForOutput('select'),
+      recorder.waitForOutput('<javascript>', 'select'),
       page.selectOption('select', '2')
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Select 2
   await page.selectOption('select', '2');`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Select 2
+    page.select_option(\"select\", \"2\")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Select 2
+    await page.select_option(\"select\", \"2\")`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Select 2
+await page.SelectOptionAsync(\"select\", \"2\");`);
+
     expect(message.text()).toBe('2');
   });
 
@@ -300,17 +387,37 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.hoverOverElement('a');
     expect(selector).toBe('text=link');
 
-    const [popup] = await Promise.all([
+    const [popup, sources] = await Promise.all([
       page.context().waitForEvent('page'),
-      recorder.waitForOutput('waitForEvent'),
+      recorder.waitForOutput('<javascript>', 'waitForEvent'),
       page.dispatchEvent('a', 'click', { detail: 1 })
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Click text=link
   const [page1] = await Promise.all([
     page.waitForEvent('popup'),
     page.click('text=link')
   ]);`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Click text=link
+    with page.expect_popup() as popup_info:
+        page.click(\"text=link\")
+    page1 = popup_info.value`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Click text=link
+    async with page.expect_popup() as popup_info:
+        await page.click(\"text=link\")
+    page1 = await popup_info.value`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+var page1Task = page.WaitForEventAsync(PageEvent.Popup)
+await Task.WhenAll(
+    page1Task,
+    page.ClickAsync(\"text=link\"));`);
+
     expect(popup.url()).toBe('about:blank');
   });
 
@@ -319,15 +426,32 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
 
     const selector = await recorder.hoverOverElement('a');
     expect(selector).toBe('text=link');
-    await Promise.all([
+    const [, sources] = await Promise.all([
       page.waitForNavigation(),
-      recorder.waitForOutput('assert'),
+      recorder.waitForOutput('<javascript>', 'assert'),
       page.dispatchEvent('a', 'click', { detail: 1 })
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Click text=link
   await page.click('text=link');
   // assert.equal(page.url(), 'about:blank#foo');`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Click text=link
+    page.click(\"text=link\")
+    # assert page.url == \"about:blank#foo\"`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Click text=link
+    await page.click(\"text=link\")
+    # assert page.url == \"about:blank#foo\"`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Click text=link
+await page.ClickAsync(\"text=link\");
+// Assert.Equal(\"about:blank#foo\", page.Url);`);
+
     expect(page.url()).toContain('about:blank#foo');
   });
 
@@ -338,17 +462,37 @@ describe('cli codegen', (suite, { browserName, headful, mode }) => {
     const selector = await recorder.hoverOverElement('a');
     expect(selector).toBe('text=link');
 
-    await Promise.all([
+    const [, sources] = await Promise.all([
       page.waitForNavigation(),
-      recorder.waitForOutput('waitForNavigation'),
+      recorder.waitForOutput('<javascript>', 'waitForNavigation'),
       page.dispatchEvent('a', 'click', { detail: 1 })
     ]);
-    expect(recorder.output()).toContain(`
+
+    expect(sources.get('<javascript>').text).toContain(`
   // Click text=link
   await Promise.all([
     page.waitForNavigation(/*{ url: 'about:blank#foo' }*/),
     page.click('text=link')
   ]);`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Click text=link
+    # with page.expect_navigation(url=\"about:blank#foo\"):
+    with page.expect_navigation():
+        page.click(\"text=link\")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Click text=link
+    # async with page.expect_navigation(url=\"about:blank#foo\"):
+    async with page.expect_navigation():
+        await page.click(\"text=link\")`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Click text=link
+await Task.WhenAll(
+    page.WaitForNavigationAsync(/*\"about:blank#foo\"*/),
+    page.ClickAsync(\"text=link\"));`);
+
     expect(page.url()).toContain('about:blank#foo');
   });
 });

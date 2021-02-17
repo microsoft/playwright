@@ -136,7 +136,7 @@ export class RecorderApp extends EventEmitter {
 
     // Testing harness for runCLI mode.
     {
-      if (process.env.PWCLI_EXIT_FOR_TEST) {
+      if (process.env.PWCLI_EXIT_FOR_TEST && sources.length) {
         process.stdout.write('\n-------------8<-------------\n');
         process.stdout.write(sources[0].text);
         process.stdout.write('\n-------------8<-------------\n');

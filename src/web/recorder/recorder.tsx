@@ -29,7 +29,7 @@ declare global {
     playwrightSetSources: (sources: Source[]) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
     dispatch(data: any): Promise<void>;
-    playwrightSourceEchoForTest: string;
+    playwrightSourcesEchoForTest: Source[];
   }
 }
 
@@ -38,20 +38,13 @@ export interface RecorderProps {
 
 export const Recorder: React.FC<RecorderProps> = ({
 }) => {
-  const [source, setSource] = React.useState<Source>({ file: '', language: 'javascript', text: '', highlight: [] });
+  const [sources, setSources] = React.useState<Source[]>([]);
   const [paused, setPaused] = React.useState(false);
   const [log, setLog] = React.useState(new Map<number, CallLog>());
   const [mode, setMode] = React.useState<Mode>('none');
 
   window.playwrightSetMode = setMode;
-  window.playwrightSetSources = sources => {
-    let s = sources.find(s => s.revealLine);
-    if (!s)
-      s = sources.find(s => s.file === source.file);
-    if (!s)
-      s = sources[0];
-    setSource(s);
-  };
+  window.playwrightSetSources = setSources;
   window.playwrightSetPaused = setPaused;
   window.playwrightUpdateLogs = callLogs => {
     const newLog = new Map<number, CallLog>(log);
@@ -60,7 +53,20 @@ export const Recorder: React.FC<RecorderProps> = ({
     setLog(newLog);
   };
 
-  window.playwrightSourceEchoForTest = source.text;
+  window.playwrightSourcesEchoForTest = sources;
+  const source = sources.find(source => {
+    let s = sources.find(s => s.revealLine);
+    if (!s)
+      s = sources.find(s => s.file === source.file);
+    if (!s)
+      s = sources[0];
+    return s;
+  }) || {
+    file: 'untitled',
+    text: '',
+    language: 'javascript',
+    highlight: []
+  };
 
   const messagesEndRef = React.createRef<HTMLDivElement>();
   React.useLayoutEffect(() => {

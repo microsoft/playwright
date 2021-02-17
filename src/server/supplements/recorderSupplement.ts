@@ -22,13 +22,11 @@ import { describeFrame, toClickOptions, toModifiers } from './recorder/utils';
 import { Page } from '../page';
 import { Frame } from '../frames';
 import { BrowserContext } from '../browserContext';
-import { LanguageGenerator } from './recorder/language';
 import { JavaScriptLanguageGenerator } from './recorder/javascript';
 import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
-import { BufferedOutput, FileOutput, OutputMultiplexer, RecorderOutput } from './recorder/outputs';
 import { RecorderApp } from './recorder/recorderApp';
 import { CallMetadata, internalCallMetadata, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
@@ -47,14 +45,12 @@ export class RecorderSupplement {
   private _timers = new Set<NodeJS.Timeout>();
   private _context: BrowserContext;
   private _mode: Mode;
-  private _output: OutputMultiplexer;
-  private _bufferedOutput: BufferedOutput;
   private _recorderApp: RecorderApp | null = null;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _pausedCallsMetadata = new Map<CallMetadata, () => void>();
   private _pauseOnNextStatement = true;
-  private _recorderSource: Source;
+  private _recorderSources: Source[];
   private _userSources = new Map<string, Source>();
 
   static getOrCreate(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<RecorderSupplement> {
@@ -75,32 +71,50 @@ export class RecorderSupplement {
     this._context = context;
     this._params = params;
     this._mode = params.startRecording ? 'recording' : 'none';
-    let languageGenerator: LanguageGenerator;
-    let language = params.language || context._options.sdkLanguage;
-    switch (language) {
-      case 'javascript': languageGenerator = new JavaScriptLanguageGenerator(); break;
-      case 'csharp': languageGenerator = new CSharpLanguageGenerator(); break;
-      case 'python':
-      case 'python-async': languageGenerator = new PythonLanguageGenerator(params.language === 'python-async'); break;
-      default: throw new Error(`Invalid target: '${params.language}'`);
-    }
-    if (language === 'python-async')
-      language = 'python';
+    const language = params.language || context._options.sdkLanguage;
 
-    this._recorderSource = { file: '<recorder>', text: '', language, highlight: [] };
-    this._bufferedOutput = new BufferedOutput(async text => {
-      this._recorderSource.text = text;
-      this._recorderSource.revealLine = text.split('\n').length - 1;
+    const languages = new Set([
+      new JavaScriptLanguageGenerator(),
+      new PythonLanguageGenerator(false),
+      new PythonLanguageGenerator(true),
+      new CSharpLanguageGenerator(),
+    ]);
+    const primaryLanguage = [...languages].find(l => l.id === language)!;
+    if (!primaryLanguage)
+      throw new Error(`\n===============================\nInvalid target: '${params.language}'\n===============================\n`);
+
+    languages.delete(primaryLanguage);
+    const orderedLanguages = [primaryLanguage, ...languages];
+
+    this._recorderSources = [];
+    const generator = new CodeGenerator(context._browser.options.name, !!params.startRecording, params.launchOptions || {}, params.contextOptions || {}, params.device, params.saveStorage);
+    let text = '';
+    generator.on('change', () => {
+      this._recorderSources = [];
+      for (const languageGenerator of orderedLanguages) {
+        const source: Source = {
+          file: languageGenerator.fileName,
+          text: generator.generateText(languageGenerator),
+          language: languageGenerator.highlighter,
+          highlight: []
+        };
+        source.revealLine = source.text.split('\n').length - 1;
+        this._recorderSources.push(source);
+        if (languageGenerator === orderedLanguages[0])
+          text = source.text;
+      }
       this._pushAllSources();
     });
-    const outputs: RecorderOutput[] = [ this._bufferedOutput ];
-    if (params.outputFile)
-      outputs.push(new FileOutput(params.outputFile));
-    this._output = new OutputMultiplexer(outputs);
-    this._output.setEnabled(!!params.startRecording);
-    context.on(BrowserContext.Events.BeforeClose, () => this._output.flush());
-
-    const generator = new CodeGenerator(context._browser.options.name, !!params.startRecording, params.launchOptions || {}, params.contextOptions || {}, this._output, languageGenerator, params.device, params.saveStorage);
+    if (params.outputFile) {
+      context.on(BrowserContext.Events.BeforeClose, () => {
+        fs.writeFileSync(params.outputFile!, text);
+        text = '';
+      });
+      process.on('exit', () => {
+        if (text)
+          fs.writeFileSync(params.outputFile!, text);
+      });
+    }
     this._generator = generator;
   }
 
@@ -114,7 +128,7 @@ export class RecorderSupplement {
       if (data.event === 'setMode') {
         this._mode = data.params.mode;
         recorderApp.setMode(this._mode);
-        this._output.setEnabled(this._mode === 'recording');
+        this._generator.setEnabled(this._mode === 'recording');
         if (this._mode !== 'none')
           this._context.pages()[0].bringToFront().catch(() => {});
         return;
@@ -254,7 +268,6 @@ export class RecorderSupplement {
   }
 
   private _clearScript(): void {
-    this._bufferedOutput.clear();
     this._generator.restart();
     if (!!this._params.startRecording) {
       for (const page of this._context.pages())
@@ -376,7 +389,7 @@ export class RecorderSupplement {
   }
 
   private _pushAllSources() {
-    this._recorderApp?.setSources([this._recorderSource, ...this._userSources.values()]);
+    this._recorderApp?.setSources([...this._recorderSources, ...this._userSources.values()]);
   }
 
   async onBeforeInputAction(metadata: CallMetadata): Promise<void> {

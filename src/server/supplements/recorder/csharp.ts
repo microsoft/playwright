@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import { LanguageGenerator, sanitizeDeviceOptions } from './language';
+import type { BrowserContextOptions } from '../../../..';
+import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
 import { ActionInContext } from './codeGenerator';
-import { actionTitle, NavigationSignal, PopupSignal, DownloadSignal, DialogSignal, Action } from './recorderActions';
+import { actionTitle, Action } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
 import deviceDescriptors = require('../../deviceDescriptors');
 
 export class CSharpLanguageGenerator implements LanguageGenerator {
+  id = 'csharp';
+  fileName = '<csharp>';
+  highlighter = 'csharp';
 
-  generateAction(actionInContext: ActionInContext, performingAction: boolean): string {
+  generateAction(actionInContext: ActionInContext): string {
     const { action, pageAlias } = actionInContext;
     const formatter = new CSharpFormatter(0);
     formatter.newLine();
@@ -41,63 +44,47 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         `${pageAlias}.GetFrame(name: ${quote(actionInContext.frameName)})` :
         `${pageAlias}.GetFrame(url: ${quote(actionInContext.frameUrl)})`);
 
-    let navigationSignal: NavigationSignal | undefined;
-    let popupSignal: PopupSignal | undefined;
-    let downloadSignal: DownloadSignal | undefined;
-    let dialogSignal: DialogSignal | undefined;
-    for (const signal of action.signals) {
-      if (signal.name === 'navigation')
-        navigationSignal = signal;
-      else if (signal.name === 'popup')
-        popupSignal = signal;
-      else if (signal.name === 'download')
-        downloadSignal = signal;
-      else if (signal.name === 'dialog')
-        dialogSignal = signal;
-    }
+    const signals = toSignalMap(action);
 
-    if (dialogSignal) {
-      formatter.add(`    void ${pageAlias}_Dialog${dialogSignal.dialogAlias}_EventHandler(object sender, DialogEventArgs e)
+    if (signals.dialog) {
+      formatter.add(`    void ${pageAlias}_Dialog${signals.dialog.dialogAlias}_EventHandler(object sender, DialogEventArgs e)
       {
           Console.WriteLine($"Dialog message: {e.Dialog.Message}");
           e.Dialog.DismissAsync();
-          ${pageAlias}.Dialog -= ${pageAlias}_Dialog${dialogSignal.dialogAlias}_EventHandler;
+          ${pageAlias}.Dialog -= ${pageAlias}_Dialog${signals.dialog.dialogAlias}_EventHandler;
       }
-      ${pageAlias}.Dialog += ${pageAlias}_Dialog${dialogSignal.dialogAlias}_EventHandler;`);
+      ${pageAlias}.Dialog += ${pageAlias}_Dialog${signals.dialog.dialogAlias}_EventHandler;`);
     }
 
-    const waitForNavigation = navigationSignal && !performingAction;
-    const assertNavigation = navigationSignal && performingAction;
-
-    const emitTaskWhenAll = waitForNavigation || popupSignal || downloadSignal;
+    const emitTaskWhenAll = signals.waitForNavigation || signals.popup || signals.download;
     if (emitTaskWhenAll) {
-      if (popupSignal)
-        formatter.add(`var ${popupSignal.popupAlias}Task = ${pageAlias}.WaitForEventAsync(PageEvent.Popup)`);
-      else if (downloadSignal)
+      if (signals.popup)
+        formatter.add(`var ${signals.popup.popupAlias}Task = ${pageAlias}.WaitForEventAsync(PageEvent.Popup)`);
+      else if (signals.download)
         formatter.add(`var downloadTask = ${pageAlias}.WaitForEventAsync(PageEvent.Download);`);
 
       formatter.add(`await Task.WhenAll(`);
     }
 
     // Popup signals.
-    if (popupSignal)
-      formatter.add(`${popupSignal.popupAlias}Task,`);
+    if (signals.popup)
+      formatter.add(`${signals.popup.popupAlias}Task,`);
 
     // Navigation signal.
-    if (waitForNavigation)
-      formatter.add(`${pageAlias}.WaitForNavigationAsync(/*${quote(navigationSignal!.url)}*/),`);
+    if (signals.waitForNavigation)
+      formatter.add(`${pageAlias}.WaitForNavigationAsync(/*${quote(signals.waitForNavigation.url)}*/),`);
 
     // Download signals.
-    if (downloadSignal)
+    if (signals.download)
       formatter.add(`downloadTask,`);
 
-    const prefix = (popupSignal || waitForNavigation || downloadSignal) ? '' : 'await ';
+    const prefix = (signals.popup || signals.waitForNavigation || signals.download) ? '' : 'await ';
     const actionCall = this._generateActionCall(action);
     const suffix = emitTaskWhenAll ? ');' : ';';
     formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
 
-    if (assertNavigation)
-      formatter.add(`  // Assert.Equal(${quote(navigationSignal!.url)}, ${pageAlias}.Url);`);
+    if (signals.assertNavigation)
+      formatter.add(`  // Assert.Equal(${quote(signals.assertNavigation.url)}, ${pageAlias}.Url);`);
     return formatter.format();
   }
 
@@ -142,19 +129,19 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     }
   }
 
-  generateHeader(browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName?: string): string {
+  generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new CSharpFormatter(0);
     formatter.add(`
       await Playwright.InstallAsync();
       using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.${toPascal(browserName)}.LaunchAsync(${formatArgs(launchOptions)});
-      var context = await browser.NewContextAsync(${formatContextOptions(contextOptions, deviceName)});`);
+      await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatArgs(options.launchOptions)});
+      var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
     return formatter.format();
   }
 
   generateFooter(saveStorage: string | undefined): string {
     const storageStateLine = saveStorage ? `\nawait context.StorageStateAsync(path: "${saveStorage}");` : '';
-    return `// ---------------------${storageStateLine}`;
+    return `\n// ---------------------${storageStateLine}`;
   }
 }
 
