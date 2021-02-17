@@ -258,10 +258,12 @@ function renderMember(member, parent, out) {
         throw `No Event Type for ${name} in ${parent.name}`;
 
       if (member.spec)
-        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(l => `\t${l}`));
+        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
 
       output(`event EventHandler<${type}> ${name};`);
     } else if (member.kind === 'property') {
+      if (member.spec)
+        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(x => `\t${x}`));
       output(`${type} ${name} { get; set; }`);
     } else {
       throw `Problem rendering a member: ${type} - ${name} (${member.kind})`;
@@ -379,6 +381,12 @@ function renderMethod(member, parent, output, name) {
     && type !== 'void'
     && !name.startsWith('Is')
     && !name.startsWith('Get')) {
+    if (!member.async) {
+      if (member.spec)
+        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(x => `\t${x}`));
+      output(`${type} ${name} { get; }`);
+      return;
+    }
     name = `Get${name}`;
   }
 
@@ -454,7 +462,7 @@ function renderMethod(member, parent, output, name) {
 
   output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth).map(x => `\t${x}`));
   paramDocs.forEach((val, ind) => {
-    if(val && val.length === 1)
+    if (val && val.length === 1)
       output(`/// <param name="${ind}">${val}</param>`);
     else {
       output(`/// <param name="${ind}">`);
