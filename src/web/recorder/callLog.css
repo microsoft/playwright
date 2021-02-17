@@ -1,0 +1,78 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.call-log {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  line-height: 20px;
+  white-space: pre;
+  background: white;
+  overflow: auto;
+}
+
+.call-log-message {
+  flex: none;
+  padding: 3px 0 3px 36px;
+  display: flex;
+  align-items: center;
+}
+
+.call-log-header {
+  color: var(--toolbar-color);
+  box-shadow: var(--box-shadow);
+  background-color: var(--toolbar-bg-color);
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  z-index: 10;
+}
+
+.call-log-call {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  border-top: 1px solid #eee;
+}
+
+.call-log-call-header {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  z-index: 2;
+}
+
+.call-log-call .codicon {
+  padding: 0 4px;
+}
+
+.call-log .codicon-check {
+  color: #21a945;
+  font-weight: bold;
+}
+
+.call-log-call.error {
+  background-color: #fff0f0;
+  border-top: 1px solid #ffd6d6;
+}
+
+.call-log-call.error .call-log-call-header,
+.call-log-message.error,
+.call-log .codicon-error {
+  color: red;
+}

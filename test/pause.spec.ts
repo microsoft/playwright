@@ -226,7 +226,7 @@ describe('pause', (suite, { mode }) => {
 });
 
 async function sanitizeLog(recorderPage: Page): Promise<string[]> {
-  const text = await recorderPage.innerText('.recorder-log');
+  const text = await recorderPage.innerText('.call-log');
   return text.split('\n').filter(l => {
     return l !== 'element is not stable - waiting...';
   }).map(l => {

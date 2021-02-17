@@ -19,7 +19,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { applyTheme } from '../theme';
 import '../common.css';
-import { Recorder } from './recorder';
+import { Main } from './main';
 
 declare global {
   interface Window {
@@ -28,5 +28,5 @@ declare global {
 
 (async () => {
   applyTheme();
-  ReactDOM.render(<Recorder/>, document.querySelector('#root'));
+  ReactDOM.render(<Main/>, document.querySelector('#root'));
 })();

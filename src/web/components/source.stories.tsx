@@ -17,7 +17,7 @@
 import { Story, Meta } from '@storybook/react/types-6-0';
 import React from 'react';
 import { Source, SourceProps } from './source';
-import { exampleText } from './exampleText';
+import { exampleText } from './source.example';
 
 export default {
   title: 'Components/Source',
@@ -37,9 +37,29 @@ Primary.args = {
   text: exampleText()
 };
 
-export const HighlightLine = Template.bind({});
-HighlightLine.args = {
+export const RunningOnLine = Template.bind({});
+RunningOnLine.args = {
   language: 'javascript',
   text: exampleText(),
-  highlightedLine: 11
+  highlight: [
+    { line: 15, type: 'running' },
+  ]
+};
+
+export const PausedOnLine = Template.bind({});
+PausedOnLine.args = {
+  language: 'javascript',
+  text: exampleText(),
+  highlight: [
+    { line: 15, type: 'paused' },
+  ]
+};
+
+export const ErrorOnLine = Template.bind({});
+ErrorOnLine.args = {
+  language: 'javascript',
+  text: exampleText(),
+  highlight: [
+    { line: 15, type: 'error' },
+  ]
 };

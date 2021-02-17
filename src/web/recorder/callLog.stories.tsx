@@ -14,26 +14,24 @@
   limitations under the License.
 */
 
-.recorder {
-  display: flex;
-  flex-direction: column;
-  flex: auto;
-}
+import { Story, Meta } from '@storybook/react/types-6-0';
+import React from 'react';
+import { CallLogProps, CallLogView } from './callLog';
+import { exampleCallLog } from './callLog.example';
 
-.recorder-paused-infobar {
-  display: flex;
-  color: #eee;
-  background-color: #333;
-  line-height: 24px;
-  align-items: center;
-  flex: none;
-  white-space: nowrap;
-}
+export default {
+  title: 'Recorder/CallLog',
+  component: CallLogView,
+  parameters: {
+    viewport: {
+      defaultViewport: 'recorder'
+    }
+  }
+} as Meta;
 
-.recorder-chooser {
-  border: none;
-  background: none;
-  outline: none;
-  color: var(--toolbar-color);
-  margin-left: 16px;
-}
+const Template: Story<CallLogProps> = args => <CallLogView {...args} />;
+
+export const Primary = Template.bind({});
+Primary.args = {
+  log: exampleCallLog()
+};

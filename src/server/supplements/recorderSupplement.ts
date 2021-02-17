@@ -49,7 +49,7 @@ export class RecorderSupplement {
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _pausedCallsMetadata = new Map<CallMetadata, () => void>();
-  private _pauseOnNextStatement = true;
+  private _pauseOnNextStatement = false;
   private _recorderSources: Source[];
   private _userSources = new Map<string, Source>();
 
@@ -104,6 +104,7 @@ export class RecorderSupplement {
           text = source.text;
       }
       this._pushAllSources();
+      this._recorderApp?.setFile(primaryLanguage.fileName);
     });
     if (params.outputFile) {
       context.on(BrowserContext.Events.BeforeClose, () => {
@@ -216,12 +217,12 @@ export class RecorderSupplement {
 
   private async _resume(step: boolean) {
     this._pauseOnNextStatement = step;
+    this._recorderApp?.setPaused(false);
 
     for (const callback of this._pausedCallsMetadata.values())
       callback();
     this._pausedCallsMetadata.clear();
 
-    this._recorderApp?.setPaused(false);
     this._updateUserSources();
     this.updateCallLog([...this._currentCallsMetadata.keys()]);
   }
@@ -369,6 +370,7 @@ export class RecorderSupplement {
     }
 
     // Apply new decorations.
+    let fileToSelect = undefined;
     for (const metadata of this._currentCallsMetadata.keys()) {
       if (!metadata.stack || !metadata.stack[0])
         continue;
@@ -381,11 +383,13 @@ export class RecorderSupplement {
       if (line) {
         const paused = this._pausedCallsMetadata.has(metadata);
         source.highlight.push({ line, type: metadata.error ? 'error' : (paused ? 'paused' : 'running') });
-        if (paused)
-          source.revealLine = line;
+        source.revealLine = line;
+        fileToSelect = source.file;
       }
     }
     this._pushAllSources();
+    if (fileToSelect)
+      this._recorderApp?.setFile(fileToSelect);
   }
 
   private _pushAllSources() {

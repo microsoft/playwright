@@ -16,6 +16,7 @@
 
 import { Story, Meta } from '@storybook/react/types-6-0';
 import React from 'react';
+import { exampleCallLog } from './callLog.example';
 import { Recorder, RecorderProps } from './recorder';
 
 export default {
@@ -32,4 +33,53 @@ const Template: Story<RecorderProps> = args => <Recorder {...args} />;
 
 export const Primary = Template.bind({});
 Primary.args = {
+  sources: [],
+  paused: false,
+  log: [],
+  mode: 'none'
+};
+
+export const OneSource = Template.bind({});
+OneSource.args = {
+  sources: [
+    {
+      file: '<one>',
+      text: '// Text One',
+      language: 'javascript',
+      highlight: [],  
+    },
+  ],
+  paused: false,
+  log: [],
+  mode: 'none'
+};
+
+export const TwoSources = Template.bind({});
+TwoSources.args = {
+  sources: [
+    {
+      file: '<one>',
+      text: '// Text One',
+      language: 'javascript',
+      highlight: [],  
+    },
+    {
+      file: '<two>',
+      text: '// Text Two',
+      language: 'javascript',
+      highlight: [],  
+    },
+  ],
+  paused: false,
+  log: [],
+  mode: 'none'
+};
+
+export const WithLog = Template.bind({});
+WithLog.args = {
+  sources: [
+  ],
+  paused: false,
+  log: exampleCallLog(),
+  mode: 'none'
 };
