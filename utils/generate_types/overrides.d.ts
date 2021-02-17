@@ -303,14 +303,20 @@ export type AndroidKey =
   'Semicolon' | ';' |
   'Apostrophe' | '`' |
   'Slash' | '/' |
-  'At' |
+  'At' | '@' |
   'Num' |
   'HeadsetHook' |
   'Focus' |
   'Plus' | '+' |
   'Menu' |
   'Notification' |
-  'Search';
+  'Search' |
+  'RecentApps' |
+  'AppSwitch' |
+  'Assist' |
+  'Cut' |
+  'Copy' |
+  'Paste';
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
