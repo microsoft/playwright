@@ -36,6 +36,11 @@ compile_chromium() {
     exit 1
   fi
 
+  if [[ -z "${CR_CHECKOUT_PATH}/src" ]]; then
+    echo "ERROR: CR_CHECKOUT_PATH does not have src/ subfolder; is this a chromium checkout?"
+    exit 1
+  fi
+
   # install depot_tools if they are not in system
   # NOTE: as of Feb 8, 2021, windows requires manual and separate
   # installation of depot_tools.
@@ -46,114 +51,23 @@ compile_chromium() {
     export PATH="${SCRIPT_PATH}/depot_tools:$PATH"
   fi
 
-  CHROMIUM_FOLDER_NAME=""
-  CHROMIUM_FILES_TO_ARCHIVE=()
-
-  if [[ $1 == "--compile-mac-arm64" ]]; then
+  if [[ $1 == "--compile-mac"* ]]; then
     # As of Jan, 2021 Chromium mac compilation requires Xcode12.2
     if [[ ! -d /Applications/Xcode12.2.app ]]; then
-      echo "ERROR: chromium mac arm64 compilation requires XCode 12.2 to be available"
-      echo "in the Applications folder!"
+      echo "ERROR: chromium mac compilation requires /Applications/Xcode12.2.app"
+      echo "Download one from https://developer.apple.com/download/more/"
       exit 1
     fi
     export DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer
     # As of Jan, 2021 Chromium mac compilation is only possible on Intel macbooks.
     # See https://chromium.googlesource.com/chromium/src.git/+/master/docs/mac_arm64.md
-    if [[ $(uname -m) != "x86_64" ]]; then
+    if [[ $1 == "--compile-mac-arm64" && $(uname -m) != "x86_64" ]]; then
       echo "ERROR: chromium mac arm64 compilation is (ironically) only supported on Intel Macbooks"
       exit 1
     fi
-    CHROMIUM_FOLDER_NAME="chrome-mac"
-    CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
-  elif [[ $1 == "--compile-mac" ]]; then
-    export DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer
-    CHROMIUM_FOLDER_NAME="chrome-mac"
-    CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
-  elif [[ $1 == "--compile-linux" ]]; then
-    CHROMIUM_FOLDER_NAME="chrome-linux"
-    CHROMIUM_FILES_TO_ARCHIVE=(
-      "chrome"
-      "chrome_100_percent.pak"
-      "chrome_200_percent.pak"
-      "chrome_sandbox"
-      "chrome-wrapper"
-      "ClearKeyCdm"
-      "crashpad_handler"
-      "icudtl.dat"
-      "libEGL.so"
-      "libGLESv2.so"
-      "locales"
-      "MEIPreload"
-      "nacl_helper"
-      "nacl_helper_bootstrap"
-      "nacl_helper_nonsfi"
-      "nacl_irt_x86_64.nexe"
-      "product_logo_48.png"
-      "resources"
-      "resources.pak"
-      "swiftshader"
-      "v8_context_snapshot.bin"
-      "xdg-mime"
-      "xdg-settings"
-    )
-  elif [[ $1 == "--compile-win"* ]]; then
-    CHROMIUM_FOLDER_NAME="chrome-win"
-    CHROMIUM_FILES_TO_ARCHIVE=(
-      "chrome.dll"
-      "chrome.exe"
-      "chrome_100_percent.pak"
-      "chrome_200_percent.pak"
-      "chrome_elf.dll"
-      "chrome_proxy.exe"
-      "chrome_pwa_launcher.exe"
-      "D3DCompiler_47.dll"
-      "elevation_service.exe"
-      "eventlog_provider.dll"
-      "First Run"
-      "icudtl.dat"
-      "libEGL.dll"
-      "libGLESv2.dll"
-      "locales"
-      "MEIPreload"
-      "mojo_core.dll"
-      "nacl_irt_x86_64.nexe"
-      "notification_helper.exe"
-      "resources.pak"
-      "swiftshader/libEGL.dll"
-      "swiftshader/libGLESv2.dll"
-      "v8_context_snapshot.bin"
-    )
-  else
-    echo "ERROR: unknown command, use --help for details"
-    exit 1
   fi
 
-  # Get chromium SHA from the build revision.
-  # This will get us the last redirect URL from the crrev.com service.
-  REVISION_URL=$(curl -ILs -o /dev/null -w %{url_effective} "https://crrev.com/${CRREV}")
-  CRSHA="${REVISION_URL##*/}"
-
-  # Update Chromium checkout. One might think that this step should go to `prepare_checkout.sh`
-  # script, but the `prepare_checkout.sh` is in fact designed to prepare a fork checkout, whereas
-  # we don't fork Chromium.
-  #
-  # This is based on https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md#get-the-code
-  if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
-    rm -rf "${CR_CHECKOUT_PATH}"
-    mkdir -p "${CR_CHECKOUT_PATH}"
-    cd "${CR_CHECKOUT_PATH}"
-    fetch --nohooks chromium
-    cd src
-    if [[ $(uname) == "Linux" ]]; then
-      ./build/install-build-deps.sh
-    fi
-    gclient runhooks
-  fi
   cd "${CR_CHECKOUT_PATH}/src"
-  git checkout master
-  git pull origin master
-  git checkout "${CRSHA}"
-  gclient sync
 
   # Prepare build folder.
   mkdir -p "./out/Default"
@@ -196,30 +110,6 @@ EOF
       ninja -j 200 -C out/Default $TARGETS
     fi
   fi
-
-  # Prepare resulting archive.
-  cd "$SCRIPT_PATH"
-  rm -rf output
-  mkdir -p "output/${CHROMIUM_FOLDER_NAME}"
-
-  # On Mac, use 'ditto' to copy directories instead of 'cp'.
-  COPY_COMMAND="cp -R"
-  if [[ $(uname) == "Darwin" ]]; then
-    COPY_COMMAND="ditto"
-  fi
-
-  for ((i = 0; i < ${#CHROMIUM_FILES_TO_ARCHIVE[@]}; i++)) do
-    file="${CHROMIUM_FILES_TO_ARCHIVE[$i]}"
-    mkdir -p "output/${CHROMIUM_FOLDER_NAME}/$(dirname $file)"
-    $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
-  done
-
-  if [[ $1 == "--compile-win"* ]]; then
-    $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/"*.manifest "output/${CHROMIUM_FOLDER_NAME}/"
-  fi
-
-  cd output
-  zip --symlinks -r build.zip "${CHROMIUM_FOLDER_NAME}"
 }
 
 mirror_chromium() {
@@ -229,8 +119,6 @@ mirror_chromium() {
   cd output
 
   CHROMIUM_URL=""
-  CHROMIUM_FOLDER_NAME=""
-  CHROMIUM_FILES_TO_REMOVE=()
 
   PLATFORM="$1"
   if [[ "${PLATFORM}" == "--mirror" ]]; then
@@ -249,18 +137,12 @@ mirror_chromium() {
 
   if [[ "${PLATFORM}" == "--mirror-win32" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Win/${CRREV}/chrome-win.zip"
-    CHROMIUM_FOLDER_NAME="chrome-win"
-    CHROMIUM_FILES_TO_REMOVE+=("chrome-win/interactive_ui_tests.exe")
   elif [[ "${PLATFORM}" == "--mirror-win64" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Win_x64/${CRREV}/chrome-win.zip"
-    CHROMIUM_FOLDER_NAME="chrome-win"
-    CHROMIUM_FILES_TO_REMOVE+=("chrome-win/interactive_ui_tests.exe")
   elif [[ "${PLATFORM}" == "--mirror-mac" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Mac/${CRREV}/chrome-mac.zip"
-    CHROMIUM_FOLDER_NAME="chrome-mac"
   elif [[ "${PLATFORM}" == "--mirror-linux" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/${CRREV}/chrome-linux.zip"
-    CHROMIUM_FOLDER_NAME="chrome-linux"
   else
     echo "ERROR: unknown platform to build: $1"
     exit 1
@@ -270,11 +152,6 @@ mirror_chromium() {
 
   curl --output chromium-upstream.zip "${CHROMIUM_URL}"
   unzip chromium-upstream.zip
-  for file in ${CHROMIUM_FILES_TO_REMOVE[@]}; do
-    rm -f "${file}"
-  done
-
-  zip --symlinks -r build.zip "${CHROMIUM_FOLDER_NAME}"
 }
 
 main $1
