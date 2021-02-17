@@ -33,15 +33,25 @@ fi
 
 BROWSER_NAME=""
 EXTRA_BUILD_ARGS=""
+EXTRA_ARCHIVE_ARGS=""
 BUILD_FLAVOR="$1"
 BUILD_BLOB_NAME=""
 EXPECTED_HOST_OS=""
 EXPECTED_HOST_OS_VERSION=""
 EXPECTED_ARCH="x86_64"
+
+# ===========================
+#    WINLDD COMPILATION
+# ===========================
 if [[ "$BUILD_FLAVOR" == "winldd-win64" ]]; then
   BROWSER_NAME="winldd"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="winldd-win64.zip"
+
+
+# ===========================
+#    FFMPEG COMPILATION
+# ===========================
 elif [[ "$BUILD_FLAVOR" == "ffmpeg-mac" ]]; then
   BROWSER_NAME="ffmpeg"
   EXTRA_BUILD_ARGS="--mac"
@@ -66,58 +76,81 @@ elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win64" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="ffmpeg-win64.zip"
+
+# ===========================
+#    CHROMIUM COMPILATION
+# ===========================
 elif [[ "$BUILD_FLAVOR" == "chromium-win32" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--compile-win32"
+  EXTRA_ARCHIVE_ARGS="--compile-win32"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="chromium-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-win64" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--compile-win64"
+  EXTRA_ARCHIVE_ARGS="--compile-win64"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="chromium-win64.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-mac" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--compile-mac"
+  EXTRA_ARCHIVE_ARGS="--compile-mac"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.15"
   BUILD_BLOB_NAME="chromium-mac.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-mac-arm64" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--compile-mac-arm64"
+  EXTRA_ARCHIVE_ARGS="--compile-mac-arm64"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.15"
   BUILD_BLOB_NAME="chromium-mac-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-linux" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--compile-linux"
+  EXTRA_ARCHIVE_ARGS="--compile-linux"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-linux.zip"
+
+
+# ===========================
+#    CHROMIUM MIRRORING
+# ===========================
 elif [[ "$BUILD_FLAVOR" == "chromium-linux-mirror-to-cdn" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--mirror-linux"
+  EXTRA_ARCHIVE_ARGS="--mirror-linux"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-linux.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-mac-mirror-to-cdn" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--mirror-mac"
+  EXTRA_ARCHIVE_ARGS="--mirror-mac"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-mac.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-win32-mirror-to-cdn" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--mirror-win32"
+  EXTRA_ARCHIVE_ARGS="--mirror-win32"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-win64-mirror-to-cdn" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--mirror-win64"
+  EXTRA_ARCHIVE_ARGS="--mirror-win64"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-win64.zip"
+
+
+# ===========================
+#    FIREFOX COMPILATION
+# ===========================
 elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-18.04" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--full"
@@ -146,6 +179,11 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   EXTRA_BUILD_ARGS="--win64"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="firefox-win64.zip"
+
+
+# ===========================
+#    WEBKIT COMPILATION
+# ===========================
 elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--full"
@@ -255,7 +293,7 @@ function generate_and_upload_browser_build {
   fi
 
   echo "-- archiving to $ZIP_PATH"
-  if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH; then
+  if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
     return 23
   fi
 

@@ -4,6 +4,7 @@ set +x
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
+SCRIPT_PATH=$(pwd -P)
 
 REMOTE_BROWSER_UPSTREAM="browser_upstream"
 BUILD_BRANCH="playwright-build"
@@ -26,6 +27,41 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
+function prepare_chromium_checkout {
+  cd "${SCRIPT_PATH}"
+  if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
+    echo "ERROR: chromium compilation requires CR_CHECKOUT_PATH to be set to reuse checkout."
+    echo "NOTE: we expect '\$CR_CHECKOUT_PATH/src' to exist to be a valid chromium checkout."
+    exit 1
+  fi
+
+  # Get chromium SHA from the build revision.
+  # This will get us the last redirect URL from the crrev.com service.
+  CRREV=$(head -1 ./chromium/BUILD_NUMBER)
+  REVISION_URL=$(curl -ILs -o /dev/null -w %{url_effective} "https://crrev.com/${CRREV}")
+  CRSHA="${REVISION_URL##*/}"
+
+  # Update Chromium checkout.
+  #
+  # This is based on https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md#get-the-code
+  if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
+    rm -rf "${CR_CHECKOUT_PATH}"
+    mkdir -p "${CR_CHECKOUT_PATH}"
+    cd "${CR_CHECKOUT_PATH}"
+    fetch --nohooks chromium
+    cd src
+    if [[ $(uname) == "Linux" ]]; then
+      ./build/install-build-deps.sh
+    fi
+    gclient runhooks
+  fi
+  cd "${CR_CHECKOUT_PATH}/src"
+  git checkout master
+  git pull origin master
+  git checkout "${CRSHA}"
+  gclient sync -D
+}
+
 # FRIENDLY_CHECKOUT_PATH is used only for logging.
 FRIENDLY_CHECKOUT_PATH="";
 CHECKOUT_PATH=""
@@ -34,7 +70,7 @@ BUILD_NUMBER=""
 WEBKIT_EXTRA_FOLDER_PATH=""
 FIREFOX_EXTRA_FOLDER_PATH=""
 if [[ ("$1" == "chromium") || ("$1" == "chromium/") || ("$1" == "cr") ]]; then
-  echo "FYI: chromium checkout is not supported. Use '//browser_patches/chromium/build.sh' instead"
+  prepare_chromium_checkout
   exit 0
 elif [[ ("$1" == "ffmpeg") || ("$1" == "ffmpeg/") ]]; then
   echo "FYI: ffmpeg checkout is not supported. Use '//browser_patches/ffmpeg/build.sh' instead"
