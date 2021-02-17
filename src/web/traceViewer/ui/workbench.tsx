@@ -16,11 +16,15 @@
 
 import { ActionEntry, TraceModel } from '../../../cli/traceViewer/traceModel';
 import { ActionList } from './actionList';
-import { PropertiesTabbedPane } from './propertiesTabbedPane';
+import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';
 import './workbench.css';
 import * as React from 'react';
 import { ContextSelector } from './contextSelector';
+import { NetworkTab } from './networkTab';
+import { SourceTab } from './sourceTab';
+import { SnapshotTab } from './snapshotTab';
+import { LogsTab } from './logsTab';
 
 export const Workbench: React.FunctionComponent<{
   traceModel: TraceModel,
@@ -39,6 +43,7 @@ export const Workbench: React.FunctionComponent<{
 
   const snapshotSize = context.created.viewportSize || { width: 1280, height: 720 };
   const boundaries = { minimum: context.startTime, maximum: context.endTime };
+  const snapshotSelection = context.pages.length && selectedTime !== undefined ? { pageId: context.pages[0].created.pageId, time: selectedTime } : undefined;
 
   return <div className='vbox workbench'>
     <div className='hbox header'>
@@ -78,12 +83,12 @@ export const Workbench: React.FunctionComponent<{
           onHighlighted={action => setHighlightedAction(action)}
         />
       </div>
-      <PropertiesTabbedPane
-        actionEntry={selectedAction}
-        snapshotSize={snapshotSize}
-        selectedTime={selectedTime}
-        boundaries={boundaries}
-      />
+      <TabbedPane tabs={[
+        { id: 'snapshot', title: 'Snapshot', render: () => <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} selection={snapshotSelection} boundaries={boundaries} /> },
+        { id: 'source', title: 'Source', render: () => <SourceTab actionEntry={selectedAction} /> },
+        { id: 'network', title: 'Network', render: () => <NetworkTab actionEntry={selectedAction} /> },
+        { id: 'logs', title: 'Logs', render: () => <LogsTab actionEntry={selectedAction} /> },
+      ]}/>
     </div>
   </div>;
 };

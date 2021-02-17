@@ -43,13 +43,12 @@ export const Timeline: React.FunctionComponent<{
 }> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onTimeSelected }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
-  const [hoveredBar, setHoveredBar] = React.useState<TimelineBar | undefined>();
+  const [hoveredBarIndex, setHoveredBarIndex] = React.useState<number | undefined>();
 
   const offsets = React.useMemo(() => {
     return calculateDividerOffsets(measure.width, boundaries);
   }, [measure.width, boundaries]);
 
-  let targetBar: TimelineBar | undefined = hoveredBar;
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];
     for (const page of context.pages) {
@@ -67,8 +66,6 @@ export const Timeline: React.FunctionComponent<{
           type: entry.action.method,
           priority: 0,
         });
-        if (entry === (highlightedAction || selectedAction))
-          targetBar = bars[bars.length - 1];
       }
       let lastDialogOpened: trace.DialogOpenedEvent | undefined;
       for (const event of page.interestingEvents) {
@@ -116,56 +113,55 @@ export const Timeline: React.FunctionComponent<{
     return bars;
   }, [context, boundaries, measure.width]);
 
-  const findHoveredBar = (x: number) => {
+  const hoveredBar = hoveredBarIndex !== undefined ? bars[hoveredBarIndex] : undefined;
+  let targetBar: TimelineBar | undefined = bars.find(bar => bar.entry === (highlightedAction || selectedAction));
+  targetBar = hoveredBar || targetBar;
+
+  const findHoveredBarIndex = (x: number) => {
     const time = positionToTime(measure.width, boundaries, x);
     const time1 = positionToTime(measure.width, boundaries, x - 5);
     const time2 = positionToTime(measure.width, boundaries, x + 5);
-    let bar: TimelineBar | undefined;
+    let index: number | undefined;
     let distance: number | undefined;
-    for (const b of bars) {
-      const left = Math.max(b.leftTime, time1);
-      const right = Math.min(b.rightTime, time2);
-      const middle = (b.leftTime + b.rightTime) / 2;
+    for (let i = 0; i < bars.length; i++) {
+      const bar = bars[i];
+      const left = Math.max(bar.leftTime, time1);
+      const right = Math.min(bar.rightTime, time2);
+      const middle = (bar.leftTime + bar.rightTime) / 2;
       const d = Math.abs(time - middle);
-      if (left <= right && (!bar || d < distance!)) {
-        bar = b;
+      if (left <= right && (index === undefined || d < distance!)) {
+        index = i;
         distance = d;
       }
     }
-    return bar;
+    return index;
   };
 
   const onMouseMove = (event: React.MouseEvent) => {
-    if (ref.current) {
-      const x = event.clientX - ref.current.getBoundingClientRect().left;
-      setPreviewX(x);
-      onTimeSelected(positionToTime(measure.width, boundaries, x));
-      setHoveredBar(findHoveredBar(x));
-    }
+    if (!ref.current)
+      return;
+    const x = event.clientX - ref.current.getBoundingClientRect().left;
+    setPreviewX(x);
+    onTimeSelected(positionToTime(measure.width, boundaries, x));
+    setHoveredBarIndex(findHoveredBarIndex(x));
   };
   const onMouseLeave = () => {
     setPreviewX(undefined);
     onTimeSelected(undefined);
   };
-  const onActionClick = (event: React.MouseEvent) => {
-    if (ref.current) {
-      const x = event.clientX - ref.current.getBoundingClientRect().left;
-      const bar = findHoveredBar(x);
-      if (bar && bar.entry)
-        onSelected(bar.entry);
-      event.stopPropagation();
-    }
-  };
-  const onTimeClick = (event: React.MouseEvent) => {
-    if (ref.current) {
-      const x = event.clientX - ref.current.getBoundingClientRect().left;
-      const time = positionToTime(measure.width, boundaries, x);
-      onTimeSelected(time);
-      event.stopPropagation();
-    }
+  const onClick = (event: React.MouseEvent) => {
+    if (!ref.current)
+      return;
+    const x = event.clientX - ref.current.getBoundingClientRect().left;
+    const index = findHoveredBarIndex(x);
+    if (index === undefined)
+      return;
+    const entry = bars[index].entry;
+    if (entry)
+      onSelected(entry);
   };
 
-  return <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave} onClick={onTimeClick}>
+  return <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave} onClick={onClick}>
     <div className='timeline-grid'>{
       offsets.map((offset, index) => {
         return <div key={index} className='timeline-divider' style={{ left: offset.position + 'px' }}>
@@ -186,7 +182,7 @@ export const Timeline: React.FunctionComponent<{
         </div>;
       })
     }</div>
-    <div className='timeline-lane timeline-bars' onClick={onActionClick}>{
+    <div className='timeline-lane timeline-bars'>{
       bars.map((bar, index) => {
         return <div key={index}
           className={'timeline-bar ' + bar.type + (targetBar === bar ? ' selected' : '')}
