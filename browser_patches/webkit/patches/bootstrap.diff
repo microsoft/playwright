@@ -17928,7 +17928,7 @@ index 0000000000000000000000000000000000000000..9b413bb8150a1633d29b6e2606127c9c
 +
 +#endif // ENABLE(DRAG_SUPPORT)
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index fa17db677ffdf0d4d8c2ff254da528ecb7b96b93..6005c0f309ecbb63580dbf5d4300e7cdc4d623a1 100644
+index fa17db677ffdf0d4d8c2ff254da528ecb7b96b93..3b95a644266ce46be3b773658d39441ee737e172 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 @@ -36,7 +36,9 @@
@@ -17941,7 +17941,24 @@ index fa17db677ffdf0d4d8c2ff254da528ecb7b96b93..6005c0f309ecbb63580dbf5d4300e7cd
  #include <WebCore/Page.h>
  #include <WebCore/PageOverlayController.h>
  #include <WebCore/Settings.h>
-@@ -252,6 +254,7 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
+@@ -122,6 +124,16 @@ void DrawingAreaCoordinatedGraphics::scroll(const IntRect& scrollRect, const Int
+         ASSERT(m_scrollRect.isEmpty());
+         ASSERT(m_scrollOffset.isEmpty());
+         ASSERT(m_dirtyRegion.isEmpty());
++// Playwright begin
++#if !PLATFORM(WIN)
++        if (m_webPage.mainFrameView() && m_webPage.mainFrameView()->useFixedLayout()) {
++            IntRect visibleRect = IntRect(m_layerTreeHost->viewportController().visibleContentsRect());
++            visibleRect.move(-scrollDelta.width(), -scrollDelta.height());
++            m_layerTreeHost->scrollNonCompositedContents(visibleRect);
++            return;
++        }
++#endif
++// Playwright end
+         m_layerTreeHost->scrollNonCompositedContents(scrollRect);
+         return;
+     }
+@@ -252,6 +264,7 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
          settings.setAcceleratedCompositingEnabled(false);
      }
  #endif
@@ -17949,7 +17966,7 @@ index fa17db677ffdf0d4d8c2ff254da528ecb7b96b93..6005c0f309ecbb63580dbf5d4300e7cd
      settings.setForceCompositingMode(store.getBoolValueForKey(WebPreferencesKey::forceCompositingModeKey()));
      // Fixed position elements need to be composited and create stacking contexts
      // in order to be scrolled by the ScrollingCoordinator.
-@@ -621,6 +624,11 @@ void DrawingAreaCoordinatedGraphics::enterAcceleratedCompositingMode(GraphicsLay
+@@ -621,6 +634,11 @@ void DrawingAreaCoordinatedGraphics::enterAcceleratedCompositingMode(GraphicsLay
      m_scrollOffset = IntSize();
      m_displayTimer.stop();
      m_isWaitingForDidUpdate = false;
@@ -17961,7 +17978,7 @@ index fa17db677ffdf0d4d8c2ff254da528ecb7b96b93..6005c0f309ecbb63580dbf5d4300e7cd
  }
  
  void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
-@@ -670,6 +678,11 @@ void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
+@@ -670,6 +688,11 @@ void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
          // UI process, we still need to let it know about the new contents, so send an Update message.
          send(Messages::DrawingAreaProxy::Update(m_backingStoreStateID, updateInfo));
      }
@@ -17974,7 +17991,7 @@ index fa17db677ffdf0d4d8c2ff254da528ecb7b96b93..6005c0f309ecbb63580dbf5d4300e7cd
  
  void DrawingAreaCoordinatedGraphics::scheduleDisplay()
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
-index 407f4f3fb1fc69a6be366a4a5fb37b3dd4bb2252..decc71e149c6881f41279dec7df3a94cf2d8c513 100644
+index 407f4f3fb1fc69a6be366a4a5fb37b3dd4bb2252..ee32e49c7bee97bf4269df1d8e7599edf4a7f1ff 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
 @@ -166,8 +166,16 @@ void LayerTreeHost::setViewOverlayRootLayer(GraphicsLayer* viewOverlayRootLayer)
@@ -17994,6 +18011,34 @@ index 407f4f3fb1fc69a6be366a4a5fb37b3dd4bb2252..decc71e149c6881f41279dec7df3a94c
  
      m_viewportController.didScroll(rect.location());
      if (m_isDiscardable)
+@@ -286,6 +294,10 @@ void LayerTreeHost::didChangeViewport()
+ 
+         if (!view->useFixedLayout())
+             view->notifyScrollPositionChanged(m_lastScrollPosition);
++// Playwright begin
++        else
++            m_viewportController.didScroll(m_lastScrollPosition);
++// Playwright end
+     }
+ 
+     if (m_lastPageScaleFactor != pageScale) {
+diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.h b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.h
+index 6727d16c8c0b86c15ff31af038aa9d7588527545..b9b3c242375c7a8849d973298d680acffbbdd024 100644
+--- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.h
++++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.h
+@@ -97,7 +97,11 @@ public:
+     RefPtr<WebCore::DisplayRefreshMonitor> createDisplayRefreshMonitor(WebCore::PlatformDisplayID);
+ 
+     WebCore::PlatformDisplayID displayID() const { return m_displayID; }
+-
++// Playwright begin
++#if USE(COORDINATED_GRAPHICS)
++    const SimpleViewportController& viewportController() const { return m_viewportController; }
++#endif
++// Playwright end
+ private:
+ #if USE(COORDINATED_GRAPHICS)
+     void layerFlushTimerFired();
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
 index 8444a454c603c671a6813a445550b40761e7fd84..c5cc0d6092c500f0f0bf63700ada1e86bb93346b 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
