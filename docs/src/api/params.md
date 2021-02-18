@@ -287,6 +287,12 @@ Whether or not to enable JavaScript in the context. Defaults to `true`.
 Changes the timezone of the context. See [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
 for a list of supported timezone IDs.
 
+## context-option-timezoneid
+* langs: csharp
+- `timezoneId` <[TimeZoneInfo]>
+
+Changes the timezone of the context.
+
 ## context-option-geolocation
 - `geolocation` <[Object]>
   - `latitude` <[float]> Latitude between -90 and 90.
