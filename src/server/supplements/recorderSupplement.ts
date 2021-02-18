@@ -31,7 +31,7 @@ import { RecorderApp } from './recorder/recorderApp';
 import { CallMetadata, internalCallMetadata, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
 import { CallLog, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
-import { isUnderTest } from '../../utils/utils';
+import { isUnderTest, monotonicTime } from '../../utils/utils';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -210,6 +210,7 @@ export class RecorderSupplement {
       this._pausedCallsMetadata.set(metadata, f);
     });
     this._recorderApp!.setPaused(true);
+    metadata.pauseStartTime = monotonicTime();
     this._updateUserSources();
     this.updateCallLog([metadata]);
     return result;
@@ -219,8 +220,11 @@ export class RecorderSupplement {
     this._pauseOnNextStatement = step;
     this._recorderApp?.setPaused(false);
 
-    for (const callback of this._pausedCallsMetadata.values())
+    const endTime = monotonicTime();
+    for (const [metadata, callback] of this._pausedCallsMetadata) {
+      metadata.pauseEndTime = endTime;
       callback();
+    }
     this._pausedCallsMetadata.clear();
 
     this._updateUserSources();
@@ -418,7 +422,21 @@ export class RecorderSupplement {
         status = 'paused';
       if (metadata.error)
         status = 'error';
-      logs.push({ id: metadata.id, messages: metadata.log, title, status, error: metadata.error });
+      const params = {
+        url: metadata.params?.url,
+        selector: metadata.params?.selector,
+      };
+      let duration = metadata.endTime ? metadata.endTime - metadata.startTime : undefined;
+      if (duration && metadata.pauseStartTime && metadata.pauseEndTime)
+        duration -= (metadata.pauseEndTime - metadata.pauseStartTime);
+      logs.push({
+        id: metadata.id,
+        messages: metadata.log,
+        title, status,
+        error: metadata.error,
+        params,
+        duration
+      });
     }
     this._recorderApp?.updateCallLogs(logs);
   }

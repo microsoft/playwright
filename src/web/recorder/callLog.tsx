@@ -17,6 +17,7 @@
 import './callLog.css';
 import * as React from 'react';
 import type { CallLog } from '../../server/supplements/recorder/recorderTypes';
+import { msToString } from '../uiUtils';
 
 export interface CallLogProps {
   log: CallLog[]
@@ -46,7 +47,10 @@ export const CallLogView: React.FC<CallLogProps> = ({
               setExpandOverrides(newOverrides);
             }}></span>
             { callLog.title }
+            { callLog.params.url ? <span>(<span className='call-log-url'>{callLog.params.url}</span>)</span> : undefined }
+            { callLog.params.selector ? <span>(<span className='call-log-selector'>{callLog.params.selector}</span>)</span> : undefined }
             <span className={'codicon ' + iconClass(callLog)}></span>
+            { typeof callLog.duration === 'number' ? <span className='call-log-time'>— {msToString(callLog.duration)}</span> : undefined}
           </div>
           { (isExpanded ? callLog.messages : []).map((message, i) => {
             return <div className='call-log-message' key={i}>

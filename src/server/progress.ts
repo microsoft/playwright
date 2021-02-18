@@ -109,7 +109,6 @@ export class ProgressController {
       throw e;
     } finally {
       clearTimeout(timer);
-      this.metadata.endTime = monotonicTime();
     }
   }
 

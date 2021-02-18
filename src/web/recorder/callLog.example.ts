@@ -22,7 +22,9 @@ export function exampleCallLog(): CallLog[] {
       'id': 3,
       'messages': [],
       'title': 'newPage',
-      'status': 'done'
+      'status': 'done',
+      'duration': 100,
+      'params': {}
     },
     {
       'id': 4,
@@ -30,7 +32,11 @@ export function exampleCallLog(): CallLog[] {
         'navigating to "https://github.com/microsoft", waiting until "load"',
       ],
       'title': 'goto',
-      'status': 'done'
+      'status': 'done',
+      'params': {
+        'url': 'https://github.com/microsoft'
+      },
+      'duration': 1100,
     },
     {
       'id': 5,
@@ -47,7 +53,10 @@ export function exampleCallLog(): CallLog[] {
         '  performing click action'
       ],
       'title': 'click',
-      'status': 'paused'
+      'status': 'paused',
+      'params': {
+        'selector': 'input[aria-label="Find a repository…"]'
+      },
     },
     {
       'id': 6,
@@ -56,7 +65,9 @@ export function exampleCallLog(): CallLog[] {
       ],
       'error': 'Error occured',
       'title': 'error',
-      'status': 'error'
+      'status': 'error',
+      'params': {
+      },
     },
   ];
 }

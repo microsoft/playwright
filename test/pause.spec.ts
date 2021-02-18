@@ -146,8 +146,8 @@ describe('pause', (suite, { mode }) => {
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
-      'pause',
-      'click',
+      'pause- XXms',
+      'click(button)- XXms',
       'pause',
     ]);
     await recorderPage.click('[title="Resume"]');
@@ -168,9 +168,9 @@ describe('pause', (suite, { mode }) => {
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
-      'pause',
-      'waitForEvent()',
-      'click',
+      'pause- XXms',
+      'waitForEvent(console)- XXms',
+      'click(button)- XXms',
       'pause',
     ]);
     await recorderPage.click('[title="Resume"]');
@@ -187,10 +187,10 @@ describe('pause', (suite, { mode }) => {
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-error');
     expect(await sanitizeLog(recorderPage)).toEqual([
-      'pause',
-      'isChecked',
+      'pause- XXms',
+      'isChecked(button)- XXms',
       'checking \"checked\" state of \"button\"',
-      'selector resolved to <button onclick=\"console.log()\">Submit</button>',
+      'selector resolved to <button onclick=\"console.log(1)\">Submit</button>',
       'Not a checkbox or radio button',
     ]);
     const error = await scriptPromise;
@@ -199,10 +199,15 @@ describe('pause', (suite, { mode }) => {
 });
 
 async function sanitizeLog(recorderPage: Page): Promise<string[]> {
-  const text = await recorderPage.innerText('.call-log');
-  return text.split('\n').filter(l => {
-    return l !== 'element is not stable - waiting...';
-  }).map(l => {
-    return l.replace(/\(.*\)/, '()');
-  });
+  const results = [];
+  for (const entry of await recorderPage.$$('.call-log-call')) {
+    const header = await (await (await entry.$('.call-log-call-header')).textContent()).replace(/— \d+(ms|s)/, '- XXms');
+    results.push(header);
+    results.push(...await entry.$$eval('.call-log-message', ee => ee.map(e => e.textContent)));
+    const errorElement = await entry.$('.call-log-error');
+    const error = errorElement ? await errorElement.textContent() : undefined;
+    if (error)
+      results.push(error);
+  }
+  return results;
 }

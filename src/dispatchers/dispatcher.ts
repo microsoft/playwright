@@ -219,6 +219,7 @@ export class DispatcherConnection {
         rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log) + kLoggingNote);
       this.onmessage({ id, error: serializeError(e) });
     } finally {
+      callMetadata.endTime = monotonicTime();
       if (sdkObject)
         await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
     }

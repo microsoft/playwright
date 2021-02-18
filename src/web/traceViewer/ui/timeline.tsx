@@ -19,7 +19,8 @@ import { ContextEntry, InterestingPageEvent, ActionEntry, trace } from '../../..
 import './timeline.css';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
-import { msToString, useMeasure } from './helpers';
+import { useMeasure } from './helpers';
+import { msToString } from '../../uiUtils';
 
 type TimelineBar = {
   entry?: ActionEntry;
