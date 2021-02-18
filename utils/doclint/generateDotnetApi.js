@@ -87,7 +87,6 @@ let classNameMap;
   classNameMap.set('Serializable', 'T');
   classNameMap.set('any', 'object');
   classNameMap.set('Buffer', 'byte[]');
-  // classNameMap.set('function', 'Action');
   classNameMap.set('path', 'string');
   classNameMap.set('URL', 'Uri');
   classNameMap.set('RegExp', 'Regex');
@@ -173,6 +172,7 @@ let classNameMap;
 
   enumTypes.forEach((values, name) =>
     innerRenderElement('enum', name, null, (out) => {
+      out.push('\tUndefined = 0,');
       values.forEach((v, i) => {
         // strip out the quotes
         v = v.replace(/[\"]/g, ``)
@@ -196,6 +196,11 @@ function translateMemberName(memberKind, name, member = null) {
   // we strip it for special chars, like @ because we might get called back with it in some special cases
   // like, when generating classes inside methods for params
   name = name.replace(/[@-]/g, '');
+
+  // we sanitize some common abbreviations to ensure consistency
+  name = name.replace(/(HTTP[S]?)/g, (m, g) => {
+    return g[0].toUpperCase() + g.substring(1).toLowerCase();
+  });
 
   if (memberKind === 'argument') {
     if (['params', 'event'].includes(name)) { // just in case we want to add others
@@ -365,14 +370,17 @@ function renderMethod(member, parent, output, name) {
 
     if (innerType.expression === '[Object]<[string], [string]>') {
       // do nothing, because this is handled down the road
-    } else if (!innerType.properties) {
+    } else if (!isArray && !innerType.properties) {
       type = `dynamic`;
     } else {
-      type = typeResolve(innerType);
-      additionalTypes.set(type, innerType);
+      type = classNameMap.get(innerType.name);
+      if (!type) {
+        type = typeResolve(innerType);
+        // additionalTypes.set(type, innerType);
+      }
 
       if (isArray)
-        type = `${type}[]`;
+        type = `IReadOnlyCollection<${type}>`;
     }
   }
 
@@ -412,10 +420,10 @@ function renderMethod(member, parent, output, name) {
    * @param {Documentation.Member} argument 
    */
   const pushArg = (innerArgType, innerArgName, argument) => {
-    let isNullable = enumTypes.has(innerArgType)
-      || ['int', 'bool', 'decimal'].includes(innerArgType);
+    let isEnum = enumTypes.has(innerArgType);
+    let isNullable = ['int', 'bool', 'decimal'].includes(innerArgType);
     const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
-    const requiredSuffix = argument.required ? "" : " = null";
+    const requiredSuffix = argument.required ? "" : isEnum ? " = default" : " = null";
     args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);
   };
 
@@ -452,7 +460,7 @@ function renderMethod(member, parent, output, name) {
       return;
     }
 
-    const argName = translateMemberName('argument', arg.name, null);
+    const argName = translateMemberName('argument', arg.alias || arg.name, null);
     const argType = translateType(arg.type, parent, (t) => generateNameDefault(member, argName, t, parent));
 
     if (argType === null && arg.type.union) {
@@ -578,7 +586,7 @@ function translateType(type, parent, generateNameCallback = null) {
       || (type.union && type.union[0].name === 'string' && type.union[1].name === 'float' && type.union[2].name === 'boolean'))
       return 'string'; // because users can send either 100 or 100px for most of these arguments
     else if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
-      return `${type.union[0].name}[]`; // an example of this is [string]|[Array]<[string]>
+      return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
     else if (type.union[0].name === 'path')
       // we don't support path, but we know it's usually an object on the other end, and we expect
       // the dotnet folks to use [NameOfTheObject].LoadFromPath(); method which we can provide separately
@@ -594,7 +602,7 @@ function translateType(type, parent, generateNameCallback = null) {
       throw `Array (${type.name} from ${parent.name}) has more than 1 dimension. Panic.`;
 
     let innerType = translateType(type.templates[0], parent, generateNameCallback);
-    return `${innerType}[]`;
+    return `IEnumerable<${innerType}>`;
   }
 
   if (type.name === 'Object') {
