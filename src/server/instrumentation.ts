@@ -34,6 +34,8 @@ export type CallMetadata = {
   id: number;
   startTime: number;
   endTime: number;
+  pauseStartTime?: number;
+  pauseEndTime?: number;
   type: string;
   method: string;
   params: any;

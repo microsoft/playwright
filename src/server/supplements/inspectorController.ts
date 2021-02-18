@@ -72,12 +72,15 @@ export class InspectorController implements InstrumentationListener {
       const info = metadata.params.info;
       switch (info.phase) {
         case 'before':
+          metadata.endTime = 0;
           // Fall through.
         case 'log':
           return;
         case 'after':
-          metadata = this._waitOperations.get(info.waitId)!;
+          const originalMetadata = this._waitOperations.get(info.waitId)!;
+          originalMetadata.endTime = metadata.endTime;
           this._waitOperations.delete(info.waitId);
+          metadata = originalMetadata;
           break;
       }
     }

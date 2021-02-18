@@ -76,3 +76,16 @@
 .call-log .codicon-error {
   color: red;
 }
+
+.call-log-url {
+  color: var(--blue);
+}
+
+.call-log-selector {
+  color: var(--orange);
+}
+
+.call-log-time {
+  margin-left: 4px;
+  color: var(--gray);
+}

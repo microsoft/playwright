@@ -36,6 +36,11 @@ export type CallLog = {
   status: 'in-progress' | 'done' | 'error' | 'paused';
   error?: string;
   reveal?: boolean;
+  duration?: number;
+  params: {
+    url?: string,
+    selector?: string,
+  };
 };
 
 export type SourceHighlight = {

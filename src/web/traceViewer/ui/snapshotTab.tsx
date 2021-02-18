@@ -18,7 +18,8 @@ import { ActionEntry } from '../../../cli/traceViewer/traceModel';
 import { Boundaries, Size } from '../geometry';
 import './snapshotTab.css';
 import * as React from 'react';
-import { msToString, useMeasure } from './helpers';
+import { useMeasure } from './helpers';
+import { msToString } from '../../uiUtils';
 
 export const SnapshotTab: React.FunctionComponent<{
   actionEntry: ActionEntry | undefined,
