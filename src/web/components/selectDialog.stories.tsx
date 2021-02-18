@@ -14,36 +14,18 @@
   limitations under the License.
 */
 
-.toolbar {
-  display: flex;
-  box-shadow: var(--box-shadow);
-  background-color: var(--toolbar-bg-color);
-  height: 40px;
-  align-items: center;
-  padding-right: 10px;
-  flex: none;
-  z-index: 2;  
-}
+import { Story, Meta } from '@storybook/react/types-6-0';
+import React from 'react';
+import { SelectDialog, SelectDialogProps } from './selectDialog';
 
-.toolbar-linewrap {
-  display: block;
-  flex: auto;
-}
+export default {
+  title: 'Components/SelectDialog',
+  component: SelectDialog,
+} as Meta;
 
-.toolbar input {
-  border: 1px solid #ddd;
-  padding: 0 10px;
-  border-radius: 14px;
-  line-height: 24px;
-  background: white;
-  outline: none;
-  margin-left: 10px;
-  color: var(--toolbar-color);
-}
+const Template: Story<SelectDialogProps> = args => <SelectDialog {...args} />;
 
-.toolbar select {
-  border: none;
-  background: none;
-  outline: none;
-  color: var(--toolbar-color);
-}
+export const Primary = Template.bind({});
+Primary.args = {
+  entries: []
+};

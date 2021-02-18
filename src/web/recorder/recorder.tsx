@@ -77,7 +77,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='debug-step-over' title='Step over' disabled={!paused} onClick={() => {
         window.dispatch({ event: 'step' }).catch(() => {});
       }}></ToolbarButton>
-      <select className='recorder-chooser' hidden={!sources.length} value={file} onChange={event => {
+      <select className='recorder-file-chooser' hidden={!sources.length} value={file} onChange={event => {
           setFile(event.target.selectedOptions[0].value);
         }}>{
           sources.map(s => {

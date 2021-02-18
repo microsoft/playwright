@@ -14,36 +14,15 @@
   limitations under the License.
 */
 
-.toolbar {
+.select-dialog {
   display: flex;
+  flex-direction: column;
+  width: 400px;
+  height: 400px;
+  background-color: white;
   box-shadow: var(--box-shadow);
-  background-color: var(--toolbar-bg-color);
-  height: 40px;
-  align-items: center;
-  padding-right: 10px;
-  flex: none;
-  z-index: 2;  
 }
 
-.toolbar-linewrap {
-  display: block;
+.select-dialog .toolbar input {
   flex: auto;
-}
-
-.toolbar input {
-  border: 1px solid #ddd;
-  padding: 0 10px;
-  border-radius: 14px;
-  line-height: 24px;
-  background: white;
-  outline: none;
-  margin-left: 10px;
-  color: var(--toolbar-color);
-}
-
-.toolbar select {
-  border: none;
-  background: none;
-  outline: none;
-  color: var(--toolbar-color);
 }

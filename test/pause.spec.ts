@@ -201,11 +201,10 @@ describe('pause', (suite, { mode }) => {
 async function sanitizeLog(recorderPage: Page): Promise<string[]> {
   const results = [];
   for (const entry of await recorderPage.$$('.call-log-call')) {
-    const header = await (await (await entry.$('.call-log-call-header')).textContent()).replace(/— \d+(ms|s)/, '- XXms');
+    const header = (await (await entry.$('.call-log-call-header')).textContent()).replace(/— \d+(ms|s)/, '- XXms');
     results.push(header);
     results.push(...await entry.$$eval('.call-log-message', ee => ee.map(e => e.textContent)));
-    const errorElement = await entry.$('.call-log-error');
-    const error = errorElement ? await errorElement.textContent() : undefined;
+    const error = await (await entry.$('.call-log-error'))?.textContent();
     if (error)
       results.push(error);
   }

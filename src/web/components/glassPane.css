@@ -14,36 +14,14 @@
   limitations under the License.
 */
 
-.toolbar {
+.glass-pane {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
   display: flex;
-  box-shadow: var(--box-shadow);
-  background-color: var(--toolbar-bg-color);
-  height: 40px;
+  justify-content: center;
   align-items: center;
-  padding-right: 10px;
-  flex: none;
-  z-index: 2;  
-}
-
-.toolbar-linewrap {
-  display: block;
-  flex: auto;
-}
-
-.toolbar input {
-  border: 1px solid #ddd;
-  padding: 0 10px;
-  border-radius: 14px;
-  line-height: 24px;
-  background: white;
-  outline: none;
-  margin-left: 10px;
-  color: var(--toolbar-color);
-}
-
-.toolbar select {
-  border: none;
-  background: none;
-  outline: none;
-  color: var(--toolbar-color);
 }

@@ -14,36 +14,12 @@
   limitations under the License.
 */
 
-.toolbar {
-  display: flex;
-  box-shadow: var(--box-shadow);
-  background-color: var(--toolbar-bg-color);
-  height: 40px;
-  align-items: center;
-  padding-right: 10px;
-  flex: none;
-  z-index: 2;  
-}
+import './toolbarButton.css';
+import '../third_party/vscode/codicon.css';
+import * as React from 'react';
 
-.toolbar-linewrap {
-  display: block;
-  flex: auto;
-}
-
-.toolbar input {
-  border: 1px solid #ddd;
-  padding: 0 10px;
-  border-radius: 14px;
-  line-height: 24px;
-  background: white;
-  outline: none;
-  margin-left: 10px;
-  color: var(--toolbar-color);
-}
-
-.toolbar select {
-  border: none;
-  background: none;
-  outline: none;
-  color: var(--toolbar-color);
-}
+export const GlassPane: React.FC = ({
+  children,
+}) => {
+  return <div className='glass-pane'>{ children }</div>;
+};
