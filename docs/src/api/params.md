@@ -299,6 +299,13 @@ for a list of supported timezone IDs.
 Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language`
 request header value as well as number and date formatting rules.
 
+## context-option-locale
+* langs: csharp
+- `locale` <[CultureInfo]>
+
+Specify user locale, for example using `CultureInfo.CurrentUICulture`. Locale will affect `navigator.language` value, `Accept-Language`
+request header value as well as number and date formatting rules.
+
 ## context-option-permissions
 - `permissions` <[Array]<[string]>>
 
