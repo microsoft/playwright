@@ -171,6 +171,7 @@ Firefox user preferences. Learn more about the Firefox user preferences at
 
 ### option: BrowserType.launch.firefoxUserPrefs
 * langs: csharp, java
+  - alias-csharp: firefoxUserPreferences
 - `firefoxUserPrefs` <[Object]<[string], [any]>>
 
 Firefox user preferences. Learn more about the Firefox user preferences at
@@ -227,6 +228,8 @@ Launches browser that uses persistent storage located at [`param: userDataDir`] 
 this context will automatically close the browser.
 
 ### param: BrowserType.launchPersistentContext.userDataDir
+* langs:
+  - alias-csharp: userDataDirectory
 - `userDataDir` <[path]>
 
 Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for
@@ -373,6 +376,8 @@ deleted when browser is closed.
 Enable Chromium sandboxing. Defaults to `true`.
 
 ### option: BrowserType.launchServer.firefoxUserPrefs
+* langs:
+  - alias-csharp: firefoxUserPreferences
 - `firefoxUserPrefs` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Firefox user preferences. Learn more about the Firefox user preferences at

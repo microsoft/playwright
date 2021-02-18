@@ -389,6 +389,7 @@ sure to await [`method: BrowserContext.close`] for videos to be saved.
 ## context-option-recordvideo-dir
 * langs: csharp, java, python
   - alias-python: record_video_dir
+  - alias-csharp: recordVideoDirectory
 - `recordVideoDir` <[path]>
 
 Path to the directory to put videos into.
