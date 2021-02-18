@@ -64,6 +64,8 @@ export type VideoMetaInfo = {
   endTime: number;
 };
 
+const kInterestingActions = ['click', 'dblclick', 'hover', 'check', 'uncheck', 'tap', 'fill', 'press', 'type', 'selectOption', 'setInputFiles', 'goto', 'setContent', 'goBack', 'goForward', 'reload'];
+
 export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel, filePath: string) {
   const contextEntries = new Map<string, ContextEntry>();
   const pageEntries = new Map<string, PageEntry>();
@@ -108,6 +110,8 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
         break;
       }
       case 'action': {
+        if (!kInterestingActions.includes(event.method))
+          break;
         const pageEntry = pageEntries.get(event.pageId!)!;
         const actionId = event.contextId + '/' + event.pageId + '/' + pageEntry.actions.length;
         const action: ActionEntry = {
