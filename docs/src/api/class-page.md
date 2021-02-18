@@ -308,7 +308,7 @@ is `request`, `response` and `requestfinished`.
 ## event: Page.webSocket
 - type: <[WebSocket]>
 
-Emitted when <[WebSocket]> request is sent.
+Emitted when [WebSocket] request is sent.
 
 ## event: Page.worker
 - type: <[Worker]>
