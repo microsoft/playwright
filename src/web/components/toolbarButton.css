@@ -22,6 +22,8 @@
   padding: 0;
   margin-left: 10px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
 .toolbar-button:disabled {
@@ -29,24 +31,10 @@
   cursor: default;
 }
 
-.toolbar-button:not(.disabled):hover {
+.toolbar-button:not(.disabled):not(.toggled):hover {
   color: #555;
 }
 
-.toolbar-button.toggled {
-  color: #1ea7fd;
-}
-
-.toolbar-button.codicon-record.toggled {
-  color: #fd1e1e;
-}
-
-.toolbar-button.codicon-debug-continue,
-.toolbar-button.codicon-debug-step-over {
-  color: #01bb01;
-}
-
-.toolbar-button.codicon-debug-continue:hover,
-.toolbar-button.codicon-debug-step-over:hover {
-  color: #41ca1e;
+.toolbar-button .codicon {
+  margin-right: 4px;
 }
