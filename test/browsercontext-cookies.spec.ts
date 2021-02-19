@@ -106,10 +106,9 @@ it('should get multiple cookies', async ({context, page, server}) => {
     document.cookie = 'password=1234';
     return document.cookie.split('; ').sort().join('; ');
   });
-  const cookies = await context.cookies();
-  cookies.sort((a, b) => a.name.localeCompare(b.name));
+  const cookies = new Set(await context.cookies());
   expect(documentCookie).toBe('password=1234; username=John Doe');
-  expect(cookies).toEqual([
+  expect(cookies).toEqual(new Set([
     {
       name: 'password',
       value: '1234',
@@ -130,7 +129,7 @@ it('should get multiple cookies', async ({context, page, server}) => {
       secure: false,
       sameSite: 'None',
     },
-  ]);
+  ]));
 });
 
 it('should get cookies from multiple urls', async ({context}) => {
@@ -147,9 +146,8 @@ it('should get cookies from multiple urls', async ({context}) => {
     name: 'birdo',
     value: 'tweets',
   }]);
-  const cookies = await context.cookies(['https://foo.com', 'https://baz.com']);
-  cookies.sort((a, b) => a.name.localeCompare(b.name));
-  expect(cookies).toEqual([{
+  const cookies = new Set(await context.cookies(['https://foo.com', 'https://baz.com']));
+  expect(cookies).toEqual(new Set([{
     name: 'birdo',
     value: 'tweets',
     domain: 'baz.com',
@@ -167,7 +165,7 @@ it('should get cookies from multiple urls', async ({context}) => {
     httpOnly: false,
     secure: true,
     sameSite: 'None',
-  }]);
+  }]));
 });
 
 it('should work with subdomain cookie', async ({context, page, server}) => {
@@ -210,3 +208,46 @@ it('should not return cookies with empty value', async ({context, page, server})
   expect(cookies.length).toBe(0);
 });
 
+it('should return secure cookies based on HTTP(S) protocol', async ({context}) => {
+  await context.addCookies([{
+    url: 'https://foo.com',
+    name: 'doggo',
+    value: 'woofs',
+    secure: true
+  }, {
+    url: 'http://foo.com',
+    name: 'catto',
+    value: 'purrs',
+    secure: false
+  }]);
+  const cookies = new Set(await context.cookies('https://foo.com'));
+  expect(cookies).toEqual(new Set([{
+    name: 'catto',
+    value: 'purrs',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'None',
+  }, {
+    name: 'doggo',
+    value: 'woofs',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: true,
+    sameSite: 'None',
+  }]));
+  expect(await context.cookies('http://foo.com/')).toEqual([{
+    name: 'catto',
+    value: 'purrs',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'None',
+  }]);
+});
