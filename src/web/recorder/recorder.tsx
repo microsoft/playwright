@@ -26,6 +26,8 @@ import { CallLogView } from './callLog';
 declare global {
   interface Window {
     playwrightSetFile: (file: string) => void;
+    playwrightSetSelector: (selector: string, focus?: boolean) => void;
+    dispatch(data: any): Promise<void>;
   }
 }
 
@@ -33,15 +35,24 @@ export interface RecorderProps {
   sources: Source[],
   paused: boolean,
   log: Map<number, CallLog>,
-  mode: Mode
+  mode: Mode,
+  initialSelector?: string,
 }
 
 export const Recorder: React.FC<RecorderProps> = ({
   sources,
   paused,
   log,
-  mode
+  mode,
+  initialSelector,
 }) => {
+  const [selector, setSelector] = React.useState(initialSelector || '');
+  const [focusSelectorInput, setFocusSelectorInput] = React.useState(false);
+  window.playwrightSetSelector = (selector: string, focus?: boolean) => {
+    setSelector(selector);
+    setFocusSelectorInput(!!focus);
+  };
+
   const [f, setFile] = React.useState<string | undefined>();
   window.playwrightSetFile = setFile;
   const file = f || sources[0]?.file;
@@ -57,14 +68,21 @@ export const Recorder: React.FC<RecorderProps> = ({
   React.useLayoutEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
+
+  const selectorInputRef = React.createRef<HTMLInputElement>();
+  React.useLayoutEffect(() => {
+    if (focusSelectorInput && selectorInputRef.current) {
+      selectorInputRef.current.select();
+      selectorInputRef.current.focus();
+      setFocusSelectorInput(false);
+    }
+  }, [focusSelectorInput, selectorInputRef]);
+
   return <div className='recorder'>
     <Toolbar>
       <ToolbarButton icon='record' title='Record' toggled={mode == 'recording'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' }}).catch(() => { });
       }}>Record</ToolbarButton>
-      <ToolbarButton icon='question' title='Explore' toggled={mode == 'inspecting'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' }}).catch(() => { });
-      }}>Explore</ToolbarButton>
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
@@ -93,7 +111,18 @@ export const Recorder: React.FC<RecorderProps> = ({
     </Toolbar>
     <SplitView sidebarSize={200}>
       <SourceView text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></SourceView>
-      <CallLogView log={[...log.values()]}/>
+      <div className='vbox'>
+        <Toolbar>
+          <ToolbarButton icon='question' title='Explore' toggled={mode == 'inspecting'} onClick={() => {
+            window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' }}).catch(() => { });
+          }}>Explore</ToolbarButton>
+          <input ref={selectorInputRef} className='selector-input' placeholder='Playwright Selector' value={selector} disabled={mode !== 'none'} onChange={event => {
+            setSelector(event.target.value);
+            window.dispatch({ event: 'selectorUpdated', params: { selector: event.target.value } });
+          }} />
+        </Toolbar>
+        <CallLogView log={[...log.values()]}/>
+      </div>
     </SplitView>
   </div>;
 };

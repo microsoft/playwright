@@ -33,37 +33,34 @@ export const CallLogView: React.FC<CallLogProps> = ({
       messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
 
-  return <div className='vbox'>
-    <div className='call-log-header' style={{flex: 'none'}}>Log</div>
-    <div className='call-log' style={{flex: 'auto'}}>
-      {log.map(callLog => {
-        const expandOverride = expandOverrides.get(callLog.id);
-        const isExpanded = typeof expandOverride === 'boolean' ? expandOverride : callLog.status !== 'done';
-        return <div className={`call-log-call ${callLog.status}`} key={callLog.id}>
-          <div className='call-log-call-header'>
-            <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`} style={{ cursor: 'pointer' }}onClick={() => {
-              const newOverrides = new Map(expandOverrides);
-              newOverrides.set(callLog.id, !isExpanded);
-              setExpandOverrides(newOverrides);
-            }}></span>
-            { callLog.title }
-            { callLog.params.url ? <span>(<span className='call-log-url'>{callLog.params.url}</span>)</span> : undefined }
-            { callLog.params.selector ? <span>(<span className='call-log-selector'>{callLog.params.selector}</span>)</span> : undefined }
-            <span className={'codicon ' + iconClass(callLog)}></span>
-            { typeof callLog.duration === 'number' ? <span className='call-log-time'>— {msToString(callLog.duration)}</span> : undefined}
-          </div>
-          { (isExpanded ? callLog.messages : []).map((message, i) => {
-            return <div className='call-log-message' key={i}>
-              { message.trim() }
-            </div>;
-          })}
-          { callLog.error ? <div className='call-log-message error' hidden={!isExpanded}>
-            { callLog.error }
-          </div> : undefined }
+  return <div className='call-log' style={{flex: 'auto'}}>
+    {log.map(callLog => {
+      const expandOverride = expandOverrides.get(callLog.id);
+      const isExpanded = typeof expandOverride === 'boolean' ? expandOverride : callLog.status !== 'done';
+      return <div className={`call-log-call ${callLog.status}`} key={callLog.id}>
+        <div className='call-log-call-header'>
+          <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`} style={{ cursor: 'pointer' }}onClick={() => {
+            const newOverrides = new Map(expandOverrides);
+            newOverrides.set(callLog.id, !isExpanded);
+            setExpandOverrides(newOverrides);
+          }}></span>
+          { callLog.title }
+          { callLog.params.url ? <span>(<span className='call-log-url'>{callLog.params.url}</span>)</span> : undefined }
+          { callLog.params.selector ? <span>(<span className='call-log-selector'>{callLog.params.selector}</span>)</span> : undefined }
+          <span className={'codicon ' + iconClass(callLog)}></span>
+          { typeof callLog.duration === 'number' ? <span className='call-log-time'>— {msToString(callLog.duration)}</span> : undefined}
         </div>
-      })}
-      <div ref={messagesEndRef}></div>
-    </div>
+        { (isExpanded ? callLog.messages : []).map((message, i) => {
+          return <div className='call-log-message' key={i}>
+            { message.trim() }
+          </div>;
+        })}
+        { callLog.error ? <div className='call-log-message error' hidden={!isExpanded}>
+          { callLog.error }
+        </div> : undefined }
+      </div>
+    })}
+    <div ref={messagesEndRef}></div>
   </div>;
 };
 

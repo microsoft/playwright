@@ -19,7 +19,7 @@ import { Point } from '../../../common/types';
 export type Mode = 'inspecting' | 'recording' | 'none';
 
 export type EventData = {
-  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode';
+  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'selectorUpdated';
   params: any;
 };
 

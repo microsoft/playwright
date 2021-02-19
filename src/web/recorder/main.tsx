@@ -25,7 +25,6 @@ declare global {
     playwrightSetPaused: (paused: boolean) => void;
     playwrightSetSources: (sources: Source[]) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
-    dispatch(data: any): Promise<void>;
     playwrightSourcesEchoForTest: Source[];
   }
 }
@@ -36,6 +35,7 @@ export const Main: React.FC = ({
   const [paused, setPaused] = React.useState(false);
   const [log, setLog] = React.useState(new Map<number, CallLog>());
   const [mode, setMode] = React.useState<Mode>('none');
+  const [selector, setSelector] = React.useState('');
 
   window.playwrightSetMode = setMode;
   window.playwrightSetSources = setSources;

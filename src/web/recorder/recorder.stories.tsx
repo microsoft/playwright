@@ -46,7 +46,7 @@ OneSource.args = {
       file: '<one>',
       text: '// Text One',
       language: 'javascript',
-      highlight: [],  
+      highlight: [],
     },
   ],
   paused: false,
@@ -61,13 +61,13 @@ TwoSources.args = {
       file: '<one>',
       text: '// Text One',
       language: 'javascript',
-      highlight: [],  
+      highlight: [],
     },
     {
       file: '<two>',
       text: '// Text Two',
       language: 'javascript',
-      highlight: [],  
+      highlight: [],
     },
   ],
   paused: false,
@@ -82,4 +82,28 @@ WithLog.args = {
   paused: false,
   log: exampleCallLog(),
   mode: 'none'
+};
+
+export const Inspecting = Template.bind({});
+Inspecting.args = {
+  sources: [],
+  paused: false,
+  log: [],
+  mode: 'inspecting',
+  initialSelector: 'text=Find me'
+};
+
+export const Recording = Template.bind({});
+Recording.args = {
+  sources: [
+    {
+      file: '<javascript>',
+      text: `await page.click('button');\n\nawait page.click('button');\n`,
+      language: 'javascript',
+      highlight: [],
+    },
+  ],
+  paused: false,
+  log: [],
+  mode: 'recording',
 };

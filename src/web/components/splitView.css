@@ -18,6 +18,7 @@
   display: flex;
   flex: auto;
   flex-direction: column;
+  position: relative;
 }
 
 .split-view-main {

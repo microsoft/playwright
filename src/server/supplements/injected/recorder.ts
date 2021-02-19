@@ -28,6 +28,7 @@ declare global {
     _playwrightRecorderCommitAction: () => Promise<void>;
     _playwrightRecorderState: () => Promise<UIState>;
     _playwrightResume: () => Promise<void>;
+    _playwrightRecorderSetSelector: (selector: string) => Promise<void>;
   }
 }
 
@@ -226,10 +227,8 @@ export class Recorder {
   }
 
   private _onClick(event: MouseEvent) {
-    if (this._mode === 'inspecting') {
-      if (this._hoveredModel)
-        copy(this._hoveredModel.selector);
-    }
+    if (this._mode === 'inspecting')
+      window._playwrightRecorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -601,15 +600,6 @@ function removeEventListeners(listeners: (() => void)[]) {
   for (const listener of listeners)
     listener();
   listeners.splice(0, listeners.length);
-}
-
-function copy(text: string) {
-  const input = html`<textarea style="position: absolute; z-index: -1000;"></textarea>` as any as HTMLInputElement;
-  input.value = text;
-  document.body.appendChild(input);
-  input.select();
-  document.execCommand('copy');
-  input.remove();
 }
 
 export default Recorder;
