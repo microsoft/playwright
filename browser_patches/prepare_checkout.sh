@@ -29,6 +29,9 @@ fi
 
 function prepare_chromium_checkout {
   cd "${SCRIPT_PATH}"
+
+  source "${SCRIPT_PATH}/chromium/ensure_depot_tools.sh"
+
   if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
     echo "ERROR: chromium compilation requires CR_CHECKOUT_PATH to be set to reuse checkout."
     echo "NOTE: we expect '\$CR_CHECKOUT_PATH/src' to exist to be a valid chromium checkout."
