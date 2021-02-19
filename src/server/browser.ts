@@ -72,13 +72,6 @@ export abstract class Browser extends SdkObject {
   abstract isConnected(): boolean;
   abstract version(): string;
 
-  async newPage(options: types.BrowserContextOptions): Promise<Page> {
-    const context = await this.newContext(options);
-    const page = await context.newPage();
-    page._ownedContext = context;
-    return page;
-  }
-
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
     const download = new Download(page, this.options.downloadsPath || '', uuid, url, suggestedFilename);
     this._downloads.set(uuid, download);

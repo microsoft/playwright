@@ -171,7 +171,7 @@ class ConnectedBrowser extends BrowserDispatcher {
 
   async close(): Promise<void> {
     // Only close our own contexts.
-    await Promise.all(this._contexts.map(context => context.close()));
+    await Promise.all(this._contexts.map(context => context.close({}, internalCallMetadata())));
     this._didClose();
   }
 

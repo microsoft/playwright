@@ -428,7 +428,7 @@ export class Page extends SdkObject {
         this._timeoutSettings.timeout(options));
   }
 
-  async close(options?: { runBeforeUnload?: boolean }) {
+  async close(metadata: CallMetadata, options?: { runBeforeUnload?: boolean }) {
     if (this._closedState === 'closed')
       return;
     const runBeforeUnload = !!options && !!options.runBeforeUnload;
@@ -442,7 +442,7 @@ export class Page extends SdkObject {
     if (!runBeforeUnload)
       await this._closedPromise;
     if (this._ownedContext)
-      await this._ownedContext.close();
+      await this._ownedContext.close(metadata);
   }
 
   private _setIsError() {

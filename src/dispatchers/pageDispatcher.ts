@@ -146,7 +146,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
   }
 
   async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {
-    await this._page.close(params);
+    await this._page.close(metadata, params);
   }
 
   async setFileChooserInterceptedNoReply(params: channels.PageSetFileChooserInterceptedNoReplyParams, metadata: CallMetadata): Promise<void> {

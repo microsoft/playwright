@@ -53,7 +53,7 @@ export class RecorderApp extends EventEmitter {
   }
 
   async close() {
-    await this._page.context().close();
+    await this._page.context().close(internalCallMetadata());
   }
 
   private async _init() {
@@ -85,7 +85,7 @@ export class RecorderApp extends EventEmitter {
 
     this._page.once('close', () => {
       this.emit('close');
-      this._page.context().close().catch(e => console.error(e));
+      this._page.context().close(internalCallMetadata()).catch(e => console.error(e));
     });
 
     const mainFrame = this._page.mainFrame();

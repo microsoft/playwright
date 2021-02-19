@@ -17,11 +17,20 @@
 import { expect } from 'folio';
 import { Page } from '..';
 import { folio } from './recorder.fixtures';
-const { it, describe} = folio;
+const { afterEach, it, describe } = folio;
 
 describe('pause', (suite, { mode }) => {
   suite.skip(mode !== 'default');
 }, () => {
+  afterEach(async ({ recorderPageGetter }) => {
+    try {
+      const recorderPage = await recorderPageGetter();
+      recorderPage.click('[title=Resume]').catch(() => {});
+    } catch (e) {
+      // Some tests close context.
+    }
+  });
+
   it('should pause and resume the script', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       await page.pause();
@@ -117,7 +126,7 @@ describe('pause', (suite, { mode }) => {
     expect(Math.abs(x1 - x2) < 2).toBeTruthy();
     expect(Math.abs(y1 - y2) < 2).toBeTruthy();
 
-    await recorderPage.click('[title="Step over"]');
+    await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
 
@@ -195,6 +204,30 @@ describe('pause', (suite, { mode }) => {
     ]);
     const error = await scriptPromise;
     expect(error.message).toContain('Not a checkbox or radio button');
+  });
+
+  it('should pause on page close', async ({ page, recorderPageGetter }) => {
+    const scriptPromise = (async () => {
+      await page.pause();
+      await page.close();
+    })();
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title="Step over"]');
+    await recorderPage.waitForSelector('.source-line-paused:has-text("page.close();")');
+    await recorderPage.click('[title=Resume]');
+    await scriptPromise;
+  });
+
+  it('should pause on context close', async ({ page, recorderPageGetter }) => {
+    const scriptPromise = (async () => {
+      await page.pause();
+      await page.context().close();
+    })();
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title="Step over"]');
+    await recorderPage.waitForSelector('.source-line-paused:has-text("page.context().close();")');
+    await recorderPage.click('[title=Resume]');
+    await scriptPromise;
   });
 });
 
