@@ -80,6 +80,7 @@ fi
 
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
+echo "ac_add_options --disable-crashreporter" >> .mozconfig
 
 if [[ $1 == "--full" || $2 == "--full" ]]; then
   if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
