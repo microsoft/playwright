@@ -172,7 +172,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index ee271e6d7fd265aea278d841f66340a9c70e59f9..0b3cbdd0a2d1c78c2f1356994a72d2bacb45afc6 100644
+index 277cdf681444fe62be8eeaf586acd33676cc6b01..c294ec335209b47df51bf611c5fca28d59275fb6 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -467,7 +467,7 @@ index ee271e6d7fd265aea278d841f66340a9c70e59f9..0b3cbdd0a2d1c78c2f1356994a72d2ba
        return rv;
      }
  
-@@ -12548,6 +12768,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12575,6 +12795,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -477,7 +477,7 @@ index ee271e6d7fd265aea278d841f66340a9c70e59f9..0b3cbdd0a2d1c78c2f1356994a72d2ba
      return NS_OK;
    }
  
-@@ -12633,6 +12856,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12660,6 +12883,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -802,10 +802,10 @@ index 08e81b1c24a17729ec7b6c9e048c2febe57e18dc..cb09fe30de0a42c89da220e3bf8afe5f
    MOZ_CAN_RUN_SCRIPT
    nsresult SendTouchEventCommon(
 diff --git a/dom/base/nsFocusManager.cpp b/dom/base/nsFocusManager.cpp
-index bc165f897b2bdb4e965ad1796b5ca96c70a1315c..abb06912f0d1e143c5fb25d0ecc65bd2d9ae76c1 100644
+index 79da5e14a623b11726385122e50072a2185e3c9e..bd65179f801e96c35aedcd1844a18ea77bb6459c 100644
 --- a/dom/base/nsFocusManager.cpp
 +++ b/dom/base/nsFocusManager.cpp
-@@ -1541,6 +1541,10 @@ void nsFocusManager::SetFocusInner(Element* aNewContent, int32_t aFlags,
+@@ -1549,6 +1549,10 @@ void nsFocusManager::SetFocusInner(Element* aNewContent, int32_t aFlags,
          (GetActiveBrowsingContext() == newRootBrowsingContext);
    }
  
@@ -816,7 +816,7 @@ index bc165f897b2bdb4e965ad1796b5ca96c70a1315c..abb06912f0d1e143c5fb25d0ecc65bd2
    // Exit fullscreen if a website focuses another window
    if (StaticPrefs::full_screen_api_exit_on_windowRaise() &&
        !isElementInActiveWindow &&
-@@ -2834,7 +2838,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
+@@ -2842,7 +2846,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
      }
    }
  
@@ -1409,7 +1409,7 @@ index 8b1b46d69f2c90d851d292c285a1ba9bdbd4d9b7..dea5259b0a82e5e6d3c431fc78e60d5d
  
  bool IsWorkerGlobal(JSObject* global);
 diff --git a/dom/workers/WorkerPrivate.cpp b/dom/workers/WorkerPrivate.cpp
-index a1434c6b43e57abbccf3003540ce50f5bf6bb5bd..178583e81354d957bcf0058a4c3a416072c99526 100644
+index eb29243c0f7d54b6dc4031717884ad60f71c136e..fe8f81f35d6b0e4689d06a6420b7e9553bfb5c8b 100644
 --- a/dom/workers/WorkerPrivate.cpp
 +++ b/dom/workers/WorkerPrivate.cpp
 @@ -660,6 +660,18 @@ class UpdateContextOptionsRunnable final : public WorkerControlRunnable {
