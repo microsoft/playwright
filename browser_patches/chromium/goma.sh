@@ -16,6 +16,8 @@ fi
 
 cd electron-build-tools/third_party/goma
 
+export GOMA_START_COMPILER_PROXY=true
+
 if [[ $1 == "--help" ]]; then
   echo "$(basename $0) [login|start|stop|--help]"
   exit 0

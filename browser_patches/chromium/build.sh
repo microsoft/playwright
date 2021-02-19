@@ -13,7 +13,6 @@ EOF
 )
 
 SCRIPT_PATH=$(pwd -P)
-CRREV=$(head -1 ./BUILD_NUMBER)
 
 main() {
   if [[ $1 == "--help" || $1 == "-h" ]]; then
@@ -41,15 +40,7 @@ compile_chromium() {
     exit 1
   fi
 
-  # install depot_tools if they are not in system
-  # NOTE: as of Feb 8, 2021, windows requires manual and separate
-  # installation of depot_tools.
-  if ! command -v autoninja >/dev/null; then
-    if [[ ! -d "${SCRIPT_PATH}/depot_tools" ]]; then
-      git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git "${SCRIPT_PATH}/depot_tools"
-    fi
-    export PATH="${SCRIPT_PATH}/depot_tools:$PATH"
-  fi
+  source "${SCRIPT_PATH}/ensure_depot_tools.sh"
 
   if [[ $1 == "--compile-mac"* ]]; then
     # As of Jan, 2021 Chromium mac compilation requires Xcode12.2
@@ -135,6 +126,7 @@ mirror_chromium() {
     fi
   fi
 
+  CRREV=$(head -1 "${SCRIPT_PATH}/BUILD_NUMBER")
   if [[ "${PLATFORM}" == "--mirror-win32" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Win/${CRREV}/chrome-win.zip"
   elif [[ "${PLATFORM}" == "--mirror-win64" ]]; then
