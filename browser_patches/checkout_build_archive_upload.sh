@@ -315,7 +315,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
   if command -v du >/dev/null && command -v awk >/dev/null; then
     UPLOAD_SIZE="$(du -h "$ZIP_PATH" | awk '{print $1}') "
   fi
-  send_telegram_message "$BUILD_ALIAS -- $UPLOAD_SIZE uploaded"
+  send_telegram_message "$BUILD_ALIAS -- ${UPLOAD_SIZE}uploaded"
 
   # Check if we uploaded the last build.
   if ./tools/check_cdn.sh $BROWSER_NAME --has-all-builds; then
