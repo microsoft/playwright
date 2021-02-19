@@ -22,6 +22,8 @@ else
 fi
 
 
+rm .mozconfig
+
 if [[ "$(uname)" == "Darwin" ]]; then
   if [[ $(uname -m) == "arm64" ]]; then
     # Building on Apple Silicon requires XCode12.2 and does not require any extra SDKs.
@@ -45,18 +47,21 @@ if [[ "$(uname)" == "Darwin" ]]; then
       exit 1
     else
       echo "-- configuting .mozconfig with ${MACOS_SDK_VERSION} SDK path"
-      echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk/" > .mozconfig
+      echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk/" >> .mozconfig
     fi
   fi
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
-  echo "ac_add_options --disable-av1" > .mozconfig
+  echo "ac_add_options --disable-av1" >> .mozconfig
 elif [[ "$(uname)" == MINGW* ]]; then
+  echo "ac_add_options --disable-update-agent" >> .mozconfig
+  echo "ac_add_options --disable-default-browser-agent" >> .mozconfig
+
   DLL_FILE=""
   if [[ $1 == "--win64" ]]; then
     echo "-- building win64 build on MINGW"
-    echo "ac_add_options --target=x86_64-pc-mingw32" > .mozconfig
+    echo "ac_add_options --target=x86_64-pc-mingw32" >> .mozconfig
     echo "ac_add_options --host=x86_64-pc-mingw32" >> .mozconfig
     DLL_FILE=$("C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
   else
@@ -68,7 +73,6 @@ elif [[ "$(uname)" == MINGW* ]]; then
     echo "ERROR: cannot find MS VS C++ redistributable $WIN32_REDIST_DIR"
     exit 1;
   fi
-  echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
 else
   echo "ERROR: cannot upload on this platform!" 1>&2
   exit 1;
@@ -77,13 +81,17 @@ fi
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 
-if [[ $1 == "--full" ]]; then
+if [[ $1 == "--full" || $2 == "--full" ]]; then
   if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
     ./mach artifact toolchain --from-build macosx64-node
     rm -rf "$HOME/.mozbuild/node"
     mv node "$HOME/.mozbuild/"
   elif [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
     SHELL=/bin/sh ./mach bootstrap --application-choice=browser --no-interactive --no-system-changes
+  fi
+  if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
+    # Having this option in .mozconfig kills incremental compilation.
+    echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
   fi
 fi
 

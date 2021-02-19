@@ -59,7 +59,7 @@ index f042cc1081850ac60e329b70b5569f8b97d4e4dc..65bcff9b41b9471ef1427e3ea330481c
     * Return XPCOM wrapper for the internal accessible.
     */
 diff --git a/browser/app/winlauncher/LauncherProcessWin.cpp b/browser/app/winlauncher/LauncherProcessWin.cpp
-index faf53eff9a46f958890d2c50de4c741fce75f1b1..7ad4b9f2203dbf1706518a0ba372d424673c9d64 100644
+index faf53eff9a46f958890d2c50de4c741fce75f1b1..63a102074664f972bfb16ba7f57af730abad9eea 100644
 --- a/browser/app/winlauncher/LauncherProcessWin.cpp
 +++ b/browser/app/winlauncher/LauncherProcessWin.cpp
 @@ -23,6 +23,7 @@
@@ -70,7 +70,7 @@ index faf53eff9a46f958890d2c50de4c741fce75f1b1..7ad4b9f2203dbf1706518a0ba372d424
  #include <windows.h>
  #include <processthreadsapi.h>
  
-@@ -324,8 +325,25 @@ Maybe<int> LauncherMain(int& argc, wchar_t* argv[],
+@@ -324,8 +325,19 @@ Maybe<int> LauncherMain(int& argc, wchar_t* argv[],
    HANDLE stdHandles[] = {::GetStdHandle(STD_INPUT_HANDLE),
                           ::GetStdHandle(STD_OUTPUT_HANDLE),
                           ::GetStdHandle(STD_ERROR_HANDLE)};
@@ -81,15 +81,9 @@ index faf53eff9a46f958890d2c50de4c741fce75f1b1..7ad4b9f2203dbf1706518a0ba372d424
 +      mozilla::CheckArg(argc, argv, L"juggler-pipe",
 +                        static_cast<const wchar_t**>(nullptr),
 +                        mozilla::CheckArgFlag::None) == mozilla::ARG_FOUND;
-+  if (hasJugglerPipe && !mozilla::EnvHasValue("PW_PIPE_READ")) {
++  if (hasJugglerPipe) {
 +    intptr_t stdio3 = _get_osfhandle(3);
 +    intptr_t stdio4 = _get_osfhandle(4);
-+    CHAR stdio3str[20];
-+    CHAR stdio4str[20];
-+    itoa(stdio3, stdio3str, 10);
-+    itoa(stdio4, stdio4str, 10);
-+    SetEnvironmentVariable("PW_PIPE_READ", stdio3str);
-+    SetEnvironmentVariable("PW_PIPE_WRITE", stdio4str);
 +    HANDLE pipeHandles[] = {reinterpret_cast<HANDLE>(stdio3),
 +                            reinterpret_cast<HANDLE>(stdio4)};
 +    attrs.AddInheritableHandles(pipeHandles);
@@ -178,7 +172,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index ee271e6d7fd265aea278d841f66340a9c70e59f9..80665230adf04130e5bf79a3a2b09bec2c117442 100644
+index ee271e6d7fd265aea278d841f66340a9c70e59f9..0b3cbdd0a2d1c78c2f1356994a72d2bacb45afc6 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -247,7 +241,7 @@ index ee271e6d7fd265aea278d841f66340a9c70e59f9..80665230adf04130e5bf79a3a2b09bec
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3256,6 +3273,204 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3256,6 +3273,203 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -310,7 +304,6 @@ index ee271e6d7fd265aea278d841f66340a9c70e59f9..80665230adf04130e5bf79a3a2b09bec
 +
 +NS_IMETHODIMP
 +nsDocShell::GetLanguageOverride(nsAString& aLanguageOverride) {
-+  MOZ_ASSERT(aEnabled);
 +  aLanguageOverride = GetRootDocShell()->mLanguageOverride;
 +  return NS_OK;
 +}
@@ -452,7 +445,7 @@ index ee271e6d7fd265aea278d841f66340a9c70e59f9..80665230adf04130e5bf79a3a2b09bec
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -4864,7 +5079,7 @@ nsDocShell::GetIsOffScreenBrowser(bool* aIsOffScreen) {
+@@ -4864,7 +5078,7 @@ nsDocShell::GetIsOffScreenBrowser(bool* aIsOffScreen) {
  }
  
  void nsDocShell::ActivenessMaybeChanged() {
@@ -461,7 +454,7 @@ index ee271e6d7fd265aea278d841f66340a9c70e59f9..80665230adf04130e5bf79a3a2b09bec
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->SetIsActive(isActive);
    }
-@@ -8589,6 +8804,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8589,6 +8803,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -474,7 +467,7 @@ index ee271e6d7fd265aea278d841f66340a9c70e59f9..80665230adf04130e5bf79a3a2b09bec
        return rv;
      }
  
-@@ -12548,6 +12769,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12548,6 +12768,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -484,7 +477,7 @@ index ee271e6d7fd265aea278d841f66340a9c70e59f9..80665230adf04130e5bf79a3a2b09bec
      return NS_OK;
    }
  
-@@ -12633,6 +12857,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12633,6 +12856,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -1868,6 +1861,42 @@ index bbc3c98e4885f23f03f83b7c2aa00e4eb4faaef5..45dcb084904c1d2729ef1e2cd1bef1a4
          '/toolkit/components/telemetry/tests/marionette',
      ]
  
+diff --git a/toolkit/xre/nsWindowsWMain.cpp b/toolkit/xre/nsWindowsWMain.cpp
+index 109c53cac98302d657d2a5a997f2ba687db14515..4d3c4beddaf627441e28f2a49d793d56fe4e2447 100644
+--- a/toolkit/xre/nsWindowsWMain.cpp
++++ b/toolkit/xre/nsWindowsWMain.cpp
+@@ -14,8 +14,10 @@
+ #endif
+ 
+ #include "mozilla/Char16.h"
++#include "mozilla/CmdLineAndEnvUtils.h"
+ #include "nsUTF8Utils.h"
+ 
++#include <io.h>
+ #include <windows.h>
+ 
+ #ifdef __MINGW32__
+@@ -94,6 +96,20 @@ static void FreeAllocStrings(int argc, char** argv) {
+ int wmain(int argc, WCHAR** argv) {
+   SanitizeEnvironmentVariables();
+   SetDllDirectoryW(L"");
++  bool hasJugglerPipe =
++      mozilla::CheckArg(argc, argv, L"juggler-pipe",
++                        static_cast<const wchar_t**>(nullptr),
++                        mozilla::CheckArgFlag::None) == mozilla::ARG_FOUND;
++  if (hasJugglerPipe && !mozilla::EnvHasValue("PW_PIPE_READ")) {
++    intptr_t stdio3 = _get_osfhandle(3);
++    intptr_t stdio4 = _get_osfhandle(4);
++    CHAR stdio3str[20];
++    CHAR stdio4str[20];
++    itoa(stdio3, stdio3str, 10);
++    itoa(stdio4, stdio4str, 10);
++    SetEnvironmentVariableA("PW_PIPE_READ", stdio3str);
++    SetEnvironmentVariableA("PW_PIPE_WRITE", stdio4str);
++  }
+ 
+   // Only run this code if LauncherProcessWin.h was included beforehand, thus
+   // signalling that the hosting process should support launcher mode.
 diff --git a/uriloader/base/nsDocLoader.cpp b/uriloader/base/nsDocLoader.cpp
 index bf7902f5dd642e2800b3fa83f4d379ab1ac9fda0..b94c24f9534cc19a5c2828e035e33c95f671d181 100644
 --- a/uriloader/base/nsDocLoader.cpp
