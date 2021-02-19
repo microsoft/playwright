@@ -63,7 +63,7 @@ methods accept [`param: selector`] as their first argument.
   page.click("article:has-text('Playwright')")
   page.click("#nav-bar :text('Contact us')")
   ```
-  Learn more about [`:has-text()` and `:text()` pseudo classes](#selecting-elements-by-text).
+  Learn more about [`:has-text()` and `:text()` pseudo classes][text].
 - Element that contains another, with css selector
   ```js
   await page.click('.item-description:has(.item-promo-banner)');
@@ -120,41 +120,123 @@ methods accept [`param: selector`] as their first argument.
   ```
   Learn more about [XPath selector][xpath].
 
-## Basic text selectors
+## Text selector
 
-Text selectors locate elements that contain text nodes with the passed text.
+Text selector locates elements that contain passed text.
 
 ```js
 await page.click('text=Log in');
 ```
-
 ```python async
 await page.click("text=Log in")
 ```
-
 ```python sync
 page.click("text=Log in")
 ```
 
-Matching is case-insensitive and searches for a substring. This means `text=Login` matches `<button>Button loGIN (click me)</button>`. Matching also normalizes whitespace, for example it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+Text selector has a few variations:
 
-Text body can be escaped with single or double quotes for full-string case-sensitive match instead. This means `text="Login"` will match `<button>Login</button>`, but not `<button>Login (click me)</button>` or `<button>login</button>`. Quoted text follows the usual escaping
-rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.  Note that quoted match still normalizes whitespace.
+- `text=Log in` - default matching is case-insensitive and searches for a substring. For example `text=Log` matches `<button>Log in</button>`.
 
-Text body can also be a JavaScript-like regex wrapped in `/` symbols. This means `text=/^\\s*Login$/i`
-will match `<button> loGIN</button>` with any number of spaces before "Login" and no spaces after.
+  ```js
+  await page.click('text=Log in');
+  ```
+  ```python async
+  await page.click("text=Log in")
+  ```
+  ```python sync
+  page.click("text=Log in")
+  ```
 
-Input elements of the type `button` and `submit` are rendered with their value as text, and text
-engine finds them. For example, `text=Login` matches `<input type=button value="Login">`.
+- `text="Log in"` - text body can be escaped with single or double quotes for full-string case-sensitive match. For example `text="Log"` does not match `<button>Log in</button>` but instead matches `<span>Log</span>`.
 
-Selector string starting and ending with a quote (either `"` or `'`) is assumed to be a text selector.
-For example, Playwright converts `'"Login"'` to `'text="Login"'` internally.
+  Quoted body follows the usual escaping rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.
 
-## Basic CSS selectors
+  ```js
+  await page.click('text="Log in"');
+  ```
+  ```python async
+  await page.click("text='Log in'")
+  ```
+  ```python sync
+  page.click("text='Log in'")
+  ```
+
+- `"Log in"` - selector starting and ending with a quote (either `"` or `'`) is assumed to be a text selector. For example, `"Log in"` is converted to `text="Log in"` internally.
+
+  ```js
+  await page.click('"Log in"');
+  ```
+  ```python async
+  await page.click("'Log in'")
+  ```
+  ```python sync
+  page.click("'Log in'")
+  ```
+
+- `/Log\s*in/i` - body can be a [JavaScript-like regex](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) wrapped in `/` symbols. For example, `text=/Log\s*in/i` matches `<button>Login</button>` and `<button>log IN</button>`.
+
+  ```js
+  await page.click('text=/Log\\s*in/i');
+  ```
+  ```python async
+  await page.click("text=/Log\s*in/i")
+  ```
+  ```python sync
+  page.click("text=/Log\s*in/i")
+  ```
+
+- `article:has-text("Playwright")` - the `:has-text()` pseudo-class can be used inside a [css] selector. It matches any element containing specified text somewhere inside, possibly in a child or a descendant element. For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
+
+  Note that `:has-text()` should be used together with other `css` specifiers, otherwise it will match all the elements containing specified text, including the `<body>`.
+  ```js
+  // Wrong, will match many elements including <body>
+  await page.click(':has-text("Playwright")');
+  // Correct, only matches the <article> element
+  await page.click('article:has-text("Playwright")');
+  ```
+  ```python async
+  # Wrong, will match many elements including <body>
+  await page.click(':has-text("Playwright")')
+  # Correct, only matches the <article> element
+  await page.click('article:has-text("Playwright")')
+  ```
+  ```python sync
+  # Wrong, will match many elements including <body>
+  page.click(':has-text("Playwright")')
+  # Correct, only matches the <article> element
+  page.click('article:has-text("All products")')
+  ```
+
+- `#nav-bar :text("Home")` - the `:text()` pseudo-class can be used inside a [css] selector. It matches the smallest element containing specified text. This example is equivalent to `text=Home`, but inside the `#nav-bar` element.
+
+  ```js
+  await page.click('#nav-bar :text("Home")');
+  ```
+  ```python async
+  await page.click("#nav-bar :text('Home')")
+  ```
+  ```python sync
+  page.click("#nav-bar :text('Home')")
+  ```
+
+- `#nav-bar :text-is("Home")` - the `:text-is()` pseudo-class can be used inside a [css] selector, for case-sensitive match. This example is equivalent to `text="Home"` (note quotes), but inside the `#nav-bar` element.
+
+* `#nav-bar :text-matches("reg?ex", "i")` - the `:text-matches()` pseudo-class can be used inside a [css] selector, for regex-based match. This example is equivalent to `text=/reg?ex/i`, but inside the `#nav-bar` element.
+
+:::note
+Matching always normalizes whitespace, for example it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+:::
+
+:::note
+Input elements of the type `button` and `submit` are matched by their `value` instead of text content. For example, `text=Log in` matches `<input type=button value="Log in">`.
+:::
+
+## CSS selector
 
 Playwright augments standard CSS selectors in two ways:
 * `css` engine pierces open shadow DOM by default.
-* Playwright adds a few custom pseudo-classes like `:visible`.
+* Playwright adds custom pseudo-classes like `:visible`, `:text` and more.
 
 ```js
 await page.click('button');
@@ -258,83 +340,13 @@ await page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))')
 page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))')
 ```
 
-## Selecting elements by text
-
-The `:has-text` pseudo-class matches elements that have specific text somewhere inside, possibly in a child or a descendant element. It is approximately equivalent to `element.textContent.includes(textToSearchFor)`.
-
-The `:text` pseudo-class matches elements that have a text node child with specific text. It is similar to the [text] engine.
-
-`:has-text` and `:text` should be used differently. Consider the following page:
-```html
-<div class=nav-item>Home</div>
-<div class=nav-item>
-  <span class=bold>New</span> products
-</div>
-<div class=nav-item>
-  <span class=bold>All</span> products
-</div>
-<div class=nav-item>Contact us</div>
-```
-
-Use `:has-text()` to click a navigation item that contains text "All products".
-```js
-await page.click('.nav-item:has-text("All products")');
-```
-```python async
-await page.click('.nav-item:has-text("All products")')
-```
-```python sync
-page.click('.nav-item:has-text("All products")')
-```
-`:has-text()` will match even though "All products" text is split between multiple elements. However, it will also match any parent element of this navigation item, including `<body>` and `<html>`, because each of them contains "All products" somewhere inside. Therefore, `:has-text()` must be used together with other `css` specifiers, like a tag name or a class name.
-```js
-// Wrong, will match many elements including <body>
-await page.click(':has-text("All products")');
-// Correct, only matches the navigation item
-await page.click('.nav-item:has-text("All products")');
-```
-```python async
-# Wrong, will match many elements including <body>
-await page.click(':has-text("All products")')
-# Correct, only matches the navigation item
-await page.click('.nav-item:has-text("All products")')
-```
-```python sync
-# Wrong, will match many elements including <body>
-page.click(':has-text("All products")')
-# Correct, only matches the navigation item
-page.click('.nav-item:has-text("All products")')
-```
-
-Use `:text()` to click an element that directly contains text "Home".
-```js
-await page.click(':text("Home")');
-```
-```python async
-await page.click(':text("Home")')
-```
-```python sync
-page.click(':text("Home")')
-```
-`:text()` only matches the element that contains the text directly inside, but not any parent elements. It is suitable to use without other `css` specifiers. However, it does not match text across elements. For example, `:text("All products")` will not match anything, because "All" and "products" belong to the different elements.
-
-:::note
-Both `:has-text()` and `:text()` perform case-insensitive match. They also normalize whitespace, for example turn multiple spaces into one, turn line breaks into spaces and ignore leading and trailing whitespace.
-:::
-
-There are a few `:text()` variations that support different arguments:
-* `:text("substring")` - Matches when a text node inside the element contains "substring". Matching is case-insensitive and normalizes whitespace.
-* `:text-is("string")` - Matches when all text nodes inside the element combined have the text value equal to "string". Matching is case-insensitive and normalizes whitespace.
-* `:text-matches("[+-]?\\d+")` - Matches text nodes against a regular expression. Note that special characters like back-slash `\`, quotes `"`, square brackets `[]` and more should be escaped. Learn more about [regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp).
-* `:text-matches("value", "i")` - Matches text nodes against a regular expression with specified flags.
-
 ## Selecting elements in Shadow DOM
 
 Our `css` and `text` engines pierce the [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) by default:
-- First it searches for the elements in the light DOM in the iteration order, and
-- Then it searches recursively inside open shadow roots in the iteration order.
+- First they search for the elements in the light DOM in the iteration order, and
+- Then they search recursively inside open shadow roots in the iteration order.
 
-In particular, in `css` engines, any [Descendant combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator)
+In particular, in `css` engine, any [Descendant combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator)
 or [Child combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Child_combinator) pierces an
 arbitrary number of open shadow roots, including the implicit descendant combinator at the start of the
 selector. It does not search inside closed shadow roots or iframes.
@@ -634,7 +646,7 @@ page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc 
 page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
 ```
 
-[text]: #basic-text-selectors
-[css]: #basic-css-selectors
+[text]: #text-selector
+[css]: #css-selector
 [xpath]: #xpath-selectors
 [id]: #id-data-testid-data-test-id-data-test-selectors
