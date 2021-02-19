@@ -132,8 +132,8 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   }
 
   async response(): Promise<Response | null> {
-    return this._wrapApiCall('request.response', async () => {
-      return Response.fromNullable((await this._channel.response()).response);
+    return this._wrapApiCall('request.response', async (channel: channels.RequestChannel) => {
+      return Response.fromNullable((await channel.response()).response);
     });
   }
 
@@ -184,13 +184,13 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
   }
 
   async abort(errorCode?: string) {
-    return this._wrapApiCall('route.abort', async () => {
-      await this._channel.abort({ errorCode });
+    return this._wrapApiCall('route.abort', async (channel: channels.RouteChannel) => {
+      await channel.abort({ errorCode });
     });
   }
 
   async fulfill(options: { status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
-    return this._wrapApiCall('route.fulfill', async () => {
+    return this._wrapApiCall('route.fulfill', async (channel: channels.RouteChannel) => {
       let body = '';
       let isBase64 = false;
       let length = 0;
@@ -219,7 +219,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
       if (length && !('content-length' in headers))
         headers['content-length'] = String(length);
 
-      await this._channel.fulfill({
+      await channel.fulfill({
         status: options.status || 200,
         headers: headersObjectToArray(headers),
         body,
@@ -229,9 +229,9 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
   }
 
   async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
-    return this._wrapApiCall('route.continue', async () => {
+    return this._wrapApiCall('route.continue', async (channel: channels.RouteChannel) => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
-      await this._channel.continue({
+      await channel.continue({
         url: options.url,
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
@@ -303,8 +303,8 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 
   async body(): Promise<Buffer> {
-    return this._wrapApiCall('response.body', async () => {
-      return Buffer.from((await this._channel.body()).binary, 'base64');
+    return this._wrapApiCall('response.body', async (channel: channels.ResponseChannel) => {
+      return Buffer.from((await channel.body()).binary, 'base64');
     });
   }
 

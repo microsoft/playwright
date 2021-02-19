@@ -47,17 +47,19 @@ export class Download extends ChannelOwner<channels.DownloadChannel, channels.Do
   async path(): Promise<string | null> {
     if (this._browser && this._browser._isRemote)
       throw new Error(`Path is not available when using browserType.connect(). Use download.saveAs() to save a local copy.`);
-    return (await this._channel.path()).value || null;
+    return this._wrapApiCall('download.path', async (channel: channels.DownloadChannel) => {
+      return (await channel.path()).value || null;
+    });
   }
 
   async saveAs(path: string): Promise<void> {
-    return this._wrapApiCall('download.saveAs', async () => {
+    return this._wrapApiCall('download.saveAs', async (channel: channels.DownloadChannel) => {
       if (!this._browser || !this._browser._isRemote) {
-        await this._channel.saveAs({ path });
+        await channel.saveAs({ path });
         return;
       }
 
-      const result = await this._channel.saveAsStream();
+      const result = await channel.saveAsStream();
       const stream = Stream.from(result.stream);
       await mkdirIfNeeded(path);
       await new Promise((resolve, reject) => {
@@ -69,14 +71,14 @@ export class Download extends ChannelOwner<channels.DownloadChannel, channels.Do
   }
 
   async failure(): Promise<string | null> {
-    return this._wrapApiCall('download.failure', async () => {
-      return (await this._channel.failure()).error || null;
+    return this._wrapApiCall('download.failure', async (channel: channels.DownloadChannel) => {
+      return (await channel.failure()).error || null;
     });
   }
 
   async createReadStream(): Promise<Readable | null> {
-    return this._wrapApiCall('download.createReadStream', async () => {
-      const result = await this._channel.stream();
+    return this._wrapApiCall('download.createReadStream', async (channel: channels.DownloadChannel) => {
+      const result = await channel.stream();
       if (!result.stream)
         return null;
       const stream = Stream.from(result.stream);
@@ -85,8 +87,8 @@ export class Download extends ChannelOwner<channels.DownloadChannel, channels.Do
   }
 
   async delete(): Promise<void> {
-    return this._wrapApiCall('download.delete', async () => {
-      return this._channel.delete();
+    return this._wrapApiCall('download.delete', async (channel: channels.DownloadChannel) => {
+      return channel.delete();
     });
   }
 }

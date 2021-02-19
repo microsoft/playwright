@@ -44,11 +44,11 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    return this._wrapApiCall('browser.newContext', async () => {
+    return this._wrapApiCall('browser.newContext', async (channel: channels.BrowserChannel) => {
       if (this._isRemote && options._traceDir)
         throw new Error(`"_traceDir" is not supported in connected browser`);
       const contextOptions = await prepareBrowserContextParams(options);
-      const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
+      const context = BrowserContext.from((await channel.newContext(contextOptions)).context);
       context._options = contextOptions;
       this._contexts.add(context);
       context._logger = options.logger || this._logger;
@@ -78,8 +78,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   async close(): Promise<void> {
     try {
-      await this._wrapApiCall('browser.close', async () => {
-        await this._channel.close();
+      await this._wrapApiCall('browser.close', async (channel: channels.BrowserChannel) => {
+        await channel.close();
         await this._closedPromise;
       });
     } catch (e) {
