@@ -33,7 +33,7 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Modern web features**. Playwright supports web components through [shadow-piercing selectors](./selectors.md), [geolocation, permissions](./emulation.md), web workers and other modern web APIs.
 
-* **Capabilities to cover all scenarios**. Support for [file downloads](./network.md) and [uploads](./input.md), out-of-process iframes, native [input events](./input.md), and even [dark mode](./emulation.md).
+* **Capabilities to cover all scenarios**. Support for [file downloads](./downloads.md) and [uploads](./input.md), out-of-process iframes, native [input events](./input.md), and even [dark mode](./emulation.md).
 
 ## Integrates with your workflow
 * **One-line installation**. Installing Playwright auto-downloads browser dependencies for your team to be onboarded quickly.
