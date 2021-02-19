@@ -32,7 +32,7 @@ it('should emulate type', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
 });
 
-it('should throw in case of media argument', async ({page, server}) => {
+it('should throw in case of bad media argument', async ({page, server}) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
   await page.emulateMedia({ media: 'bad'}).catch(e => error = e);
