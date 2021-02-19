@@ -180,6 +180,7 @@ describe('page screenshot', (suite, { browserName, headful }) => {
 
   it('should work with a mobile viewport', (test, { browserName }) => {
     test.skip(browserName === 'firefox');
+    test.fixme(browserName === 'chromium');
   }, async ({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
