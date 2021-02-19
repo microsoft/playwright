@@ -311,12 +311,12 @@ send_telegram_message "$BUILD_ALIAS -- started"
 
 if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_PATH; then
   # Report successful build. Note: we don't know how to get zip size on MINGW.
-  if [[ $(uname) == MINGW* ]]; then
-    send_telegram_message "$BUILD_ALIAS -- uploaded"
-  else
-    UPLOAD_SIZE=$(du -h "$ZIP_PATH" | awk '{print $1}')
-    send_telegram_message "$BUILD_ALIAS -- $UPLOAD_SIZE uploaded"
+  UPLOAD_SIZE=""
+  if command -v du >/dev/null && command -v awk >/dev/null; then
+    UPLOAD_SIZE="$(du -h "$ZIP_PATH" | awk '{print $1}') "
   fi
+  send_telegram_message "$BUILD_ALIAS -- ${UPLOAD_SIZE}uploaded"
+
   # Check if we uploaded the last build.
   if ./tools/check_cdn.sh $BROWSER_NAME --has-all-builds; then
     LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
@@ -344,5 +344,6 @@ else
   # Upload logs only in case of failure and report failure.
   ./upload.sh ${LOG_BLOB_PATH} ${LOG_PATH} || true
   send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a>"
+  exit 1
 fi
 
