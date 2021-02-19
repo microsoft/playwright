@@ -21,25 +21,28 @@ export interface SplitViewProps {
   sidebarSize: number,
 }
 
+const kMinSidebarSize = 50;
+
 export const SplitView: React.FC<SplitViewProps> = ({
   sidebarSize,
   children
 }) => {
-  let [size, setSize] = React.useState<number>(sidebarSize);
-  const [resizing, setResizing] = React.useState<{ offsetY: number } | null>(null);
-  if (size < 50)
-    size = 50;
+  let [size, setSize] = React.useState<number>(Math.max(kMinSidebarSize, sidebarSize));
+  const [resizing, setResizing] = React.useState<{ offsetY: number, size: number } | null>(null);
 
   const childrenArray = React.Children.toArray(children);
   return <div className='split-view'>
     <div className='split-view-main'>{childrenArray[0]}</div>
     <div style={{flexBasis: size}} className='split-view-sidebar'>{childrenArray[1]}</div>
     <div
-      style={{bottom: resizing ? 0 : size - 32, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 32 }}
+      style={{bottom: resizing ? 0 : size - 4, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 }}
       className='split-view-resizer'
-      onMouseDown={event => setResizing({ offsetY: event.clientY - (event.target as HTMLElement).getBoundingClientRect().y })}
+      onMouseDown={event => setResizing({ offsetY: event.clientY, size })}
       onMouseUp={() => setResizing(null)}
-      onMouseMove={event => resizing ? setSize((event.target as HTMLElement).clientHeight - event.clientY + resizing.offsetY) : 0}
+      onMouseMove={event => {
+        if (resizing)
+          setSize(Math.max(kMinSidebarSize, resizing.size - event.clientY + resizing.offsetY));
+      }}
     ></div>
   </div>;
 };

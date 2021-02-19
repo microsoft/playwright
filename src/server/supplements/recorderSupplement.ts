@@ -45,6 +45,7 @@ export class RecorderSupplement {
   private _timers = new Set<NodeJS.Timeout>();
   private _context: BrowserContext;
   private _mode: Mode;
+  private _highlightedSelector = '';
   private _recorderApp: RecorderApp | null = null;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
@@ -127,11 +128,11 @@ export class RecorderSupplement {
     });
     recorderApp.on('event', (data: EventData) => {
       if (data.event === 'setMode') {
-        this._mode = data.params.mode;
-        recorderApp.setMode(this._mode);
-        this._generator.setEnabled(this._mode === 'recording');
-        if (this._mode !== 'none')
-          this._context.pages()[0].bringToFront().catch(() => {});
+        this._setMode(data.params.mode);
+        return;
+      }
+      if (data.event === 'selectorUpdated') {
+        this._highlightedSelector = data.params.selector;
         return;
       }
       if (data.event === 'step') {
@@ -191,8 +192,14 @@ export class RecorderSupplement {
           actionSelector = metadata.params.selector || actionSelector;
         }
       }
-      const uiState: UIState = { mode: this._mode, actionPoint, actionSelector };
+      const uiState: UIState = { mode: this._mode, actionPoint, actionSelector: this._highlightedSelector || actionSelector };
       return uiState;
+    });
+
+    await this._context.exposeBinding('_playwrightRecorderSetSelector', false, async (_, selector: string) => {
+      this._setMode('none');
+      await this._recorderApp?.setSelector(selector, true);
+      await this._recorderApp?.bringToFront();
     });
 
     await this._context.exposeBinding('_playwrightResume', false, () => {
@@ -214,6 +221,14 @@ export class RecorderSupplement {
     this._updateUserSources();
     this.updateCallLog([metadata]);
     return result;
+  }
+
+  private _setMode(mode: Mode) {
+    this._mode = mode;
+    this._recorderApp?.setMode(this._mode);
+    this._generator.setEnabled(this._mode === 'recording');
+    if (this._mode !== 'none')
+      this._context.pages()[0].bringToFront().catch(() => {});
   }
 
   private async _resume(step: boolean) {
@@ -354,6 +369,10 @@ export class RecorderSupplement {
     this.updateCallLog([metadata]);
     if (metadata.method === 'pause' || (this._pauseOnNextStatement && metadata.method === 'goto'))
       await this.pause(metadata);
+    if (metadata.params && metadata.params.selector) {
+      this._highlightedSelector = metadata.params.selector;
+      await this._recorderApp?.setSelector(this._highlightedSelector);
+    }
   }
 
   async onAfterCall(metadata: CallMetadata): Promise<void> {

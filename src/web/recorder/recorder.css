@@ -55,3 +55,7 @@
 .recorder .toolbar-button:not([disabled]):hover .codicon-debug-step-over {
   color: #41ca1e;
 }
+
+.recorder .selector-input {
+  flex: auto;
+}

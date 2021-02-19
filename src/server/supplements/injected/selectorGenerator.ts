@@ -27,11 +27,18 @@ const cacheAllowText = new Map<Element, SelectorToken[] | null>();
 const cacheDisallowText = new Map<Element, SelectorToken[] | null>();
 
 export function querySelector(injectedScript: InjectedScript, selector: string, ownerDocument: Document): { selector: string, elements: Element[] } {
-  const parsedSelector = injectedScript.parseSelector(selector);
-  return {
-    selector,
-    elements: injectedScript.querySelectorAll(parsedSelector, ownerDocument)
-  };
+  try {
+    const parsedSelector = injectedScript.parseSelector(selector);
+    return {
+      selector,
+      elements: injectedScript.querySelectorAll(parsedSelector, ownerDocument)
+    };
+  } catch (e) {
+    return {
+      selector,
+      elements: [],
+    };
+  }
 }
 
 export function generateSelector(injectedScript: InjectedScript, targetElement: Element): { selector: string, elements: Element[] } {

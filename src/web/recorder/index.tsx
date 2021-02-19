@@ -21,11 +21,6 @@ import { applyTheme } from '../theme';
 import '../common.css';
 import { Main } from './main';
 
-declare global {
-  interface Window {
-  }
-}
-
 (async () => {
   applyTheme();
   ReactDOM.render(<Main/>, document.querySelector('#root'));

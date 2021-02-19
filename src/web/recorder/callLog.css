@@ -31,17 +31,6 @@
   align-items: center;
 }
 
-.call-log-header {
-  color: var(--toolbar-color);
-  box-shadow: var(--box-shadow);
-  background-color: var(--toolbar-bg-color);
-  height: 32px;
-  display: flex;
-  align-items: center;
-  padding: 0 9px;
-  z-index: 10;
-}
-
 .call-log-call {
   display: flex;
   flex: none;
