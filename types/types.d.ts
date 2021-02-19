@@ -4917,9 +4917,7 @@ export interface BrowserContext {
   newPage(): Promise<Page>;
 
   /**
-   * Returns all open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can
-   * find them using
-   * [chromiumBrowserContext.backgroundPages()](https://playwright.dev/docs/api/class-chromiumbrowsercontext#chromiumbrowsercontextbackgroundpages).
+   * Returns all open pages in the context. 
    */
   pages(): Array<Page>;
 

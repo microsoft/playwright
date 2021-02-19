@@ -527,8 +527,7 @@ Creates a new page in the browser context.
 ## method: BrowserContext.pages
 - returns: <[Array]<[Page]>>
 
-Returns all open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can
-find them using [`method: ChromiumBrowserContext.backgroundPages`].
+Returns all open pages in the context. 
 
 ## async method: BrowserContext.route
 
