@@ -65,8 +65,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
   }
 
-  async newPage(): Promise<channels.BrowserContextNewPageResult> {
-    return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage()) };
+  async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
+    return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage(metadata)) };
   }
 
   async cookies(params: channels.BrowserContextCookiesParams): Promise<channels.BrowserContextCookiesResult> {
@@ -123,8 +123,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return await this._context.storageState(metadata);
   }
 
-  async close(): Promise<void> {
-    await this._context.close();
+  async close(params: channels.BrowserContextCloseParams, metadata: CallMetadata): Promise<void> {
+    await this._context.close(metadata);
   }
 
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {

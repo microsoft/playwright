@@ -27,7 +27,7 @@ import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 import path from 'path';
-import { CallMetadata, SdkObject } from './instrumentation';
+import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 
 export class Video {
   readonly _videoId: string;
@@ -209,8 +209,8 @@ export abstract class BrowserContext extends SdkObject {
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
       const oldPage = pages[0];
-      await this.newPage();
-      await oldPage.close();
+      await this.newPage(progress.metadata);
+      await oldPage.close(progress.metadata);
     }
   }
 
@@ -245,7 +245,7 @@ export abstract class BrowserContext extends SdkObject {
     return this._closedStatus !== 'open';
   }
 
-  async close() {
+  async close(metadata: CallMetadata) {
     if (this._closedStatus === 'open') {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
@@ -255,7 +255,7 @@ export abstract class BrowserContext extends SdkObject {
       if (this._isPersistentContext) {
         // Close all the pages instead of the context,
         // because we cannot close the default context.
-        await Promise.all(this.pages().map(page => page.close()));
+        await Promise.all(this.pages().map(page => page.close(metadata)));
       } else {
         // Close the context.
         await this._doClose();
@@ -286,7 +286,7 @@ export abstract class BrowserContext extends SdkObject {
     await this._closePromise;
   }
 
-  async newPage(): Promise<Page> {
+  async newPage(metadata: CallMetadata): Promise<Page> {
     const pageDelegate = await this.newPageDelegate();
     const pageOrError = await pageDelegate.pageOrError();
     if (pageOrError instanceof Page) {
@@ -307,7 +307,8 @@ export abstract class BrowserContext extends SdkObject {
       origins: []
     };
     if (this._origins.size)  {
-      const page = await this.newPage();
+      const internalMetadata = internalCallMetadata();
+      const page = await this.newPage(internalMetadata);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });
@@ -315,13 +316,13 @@ export abstract class BrowserContext extends SdkObject {
         const originStorage: types.OriginStorage = { origin, localStorage: [] };
         result.origins.push(originStorage);
         const frame = page.mainFrame();
-        await frame.goto(metadata, origin);
+        await frame.goto(internalMetadata, origin);
         const storage = await frame._evaluateExpression(`({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
         })`, false, undefined, 'utility');
         originStorage.localStorage = storage.localStorage;
       }
-      await page.close();
+      await page.close(internalMetadata);
     }
     return result;
   }
@@ -330,7 +331,8 @@ export abstract class BrowserContext extends SdkObject {
     if (state.cookies)
       await this.addCookies(state.cookies);
     if (state.origins && state.origins.length)  {
-      const page = await this.newPage();
+      const internalMetadata = internalCallMetadata();
+      const page = await this.newPage(internalMetadata);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });
@@ -343,7 +345,7 @@ export abstract class BrowserContext extends SdkObject {
               localStorage.setItem(name, value);
           }`, true, originState, 'utility');
       }
-      await page.close();
+      await page.close(internalMetadata);
     }
   }
 

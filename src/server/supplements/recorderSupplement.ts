@@ -50,7 +50,7 @@ export class RecorderSupplement {
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _pausedCallsMetadata = new Map<CallMetadata, () => void>();
-  private _pauseOnNextStatement = false;
+  private _pauseOnNextStatement: boolean;
   private _recorderSources: Source[];
   private _userSources = new Map<string, Source>();
 
@@ -72,6 +72,7 @@ export class RecorderSupplement {
     this._context = context;
     this._params = params;
     this._mode = params.startRecording ? 'recording' : 'none';
+    this._pauseOnNextStatement = !!params.pauseOnNextStatement;
     const language = params.language || context._options.sdkLanguage;
 
     const languages = new Set([
@@ -367,7 +368,7 @@ export class RecorderSupplement {
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
     this.updateCallLog([metadata]);
-    if (metadata.method === 'pause' || (this._pauseOnNextStatement && metadata.method === 'goto'))
+    if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseOnStep(sdkObject, metadata)))
       await this.pause(metadata);
     if (metadata.params && metadata.params.selector) {
       this._highlightedSelector = metadata.params.selector;
@@ -477,4 +478,14 @@ function languageForFile(file: string) {
   if (file.endsWith('.cs'))
     return 'csharp';
   return 'javascript';
+}
+
+function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolean {
+  if (!sdkObject.attribution.browser?.options.headful && !isUnderTest())
+    return false;
+  return metadata.method === 'pause';
+}
+
+function shouldPauseOnStep(sdkObject: SdkObject, metadata: CallMetadata): boolean {
+  return metadata.method === 'goto' || metadata.method === 'close';
 }
