@@ -2411,12 +2411,9 @@ Shortcut for main frame's [`method: Frame.waitForFunction`].
 
 Optional argument to pass to [`param: expression`].
 
-### option: Page.waitForFunction.polling
-- `polling` <[float]|"raf">
+### option: Page.waitForFunction.polling = %%-js-python-wait-for-function-polling-%%
 
-If [`option: polling`] is `'raf'`, then [`param: expression`] is constantly executed in `requestAnimationFrame`
-callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
-would be executed. Defaults to `raf`.
+### option: Page.waitForFunction.polling = %%-csharp-java-wait-for-function-polling-%%
 
 ### option: Page.waitForFunction.timeout = %%-wait-for-timeout-%%
 

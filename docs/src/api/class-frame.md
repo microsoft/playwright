@@ -1086,12 +1086,9 @@ frame.wait_for_function("selector => !!document.querySelector(selector)", select
 
 Optional argument to pass to [`param: expression`].
 
-### option: Frame.waitForFunction.polling
-- `polling` <[float]|"raf">
+### option: Frame.waitForFunction.polling = %%-js-python-wait-for-function-polling-%%
 
-If [`option: polling`] is `'raf'`, then [`param: expression`] is constantly executed in `requestAnimationFrame`
-callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
-would be executed. Defaults to `raf`.
+### option: Frame.waitForFunction.polling = %%-csharp-java-wait-for-function-polling-%%
 
 ### option: Frame.waitForFunction.timeout = %%-wait-for-timeout-%%
 
