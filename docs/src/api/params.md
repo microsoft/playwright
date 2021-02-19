@@ -98,6 +98,20 @@ Defaults to `'visible'`. Can be either:
 * `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`.
   This is opposite to the `'visible'` option.
 
+## js-python-wait-for-function-polling
+* langs: js, python
+- `polling` <[float]|"raf">
+
+If [`option: polling`] is `'raf'`, then [`param: expression`] is constantly executed in `requestAnimationFrame`
+callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
+would be executed. Defaults to `raf`.
+
+## csharp-java-wait-for-function-polling
+* langs: csharp, java
+- `pollingInterval` <[float]>
+
+If specified, then it is treated as an interval in milliseconds at which the function would be executed. By default if the option is not specified [`param: expression`] is executed in `requestAnimationFrame` callback.
+
 ## browser-option-ignoredefaultargs
 * langs: js, python
 - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>>
