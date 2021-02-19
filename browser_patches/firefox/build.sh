@@ -21,8 +21,7 @@ else
   cd "checkout"
 fi
 
-
-rm .mozconfig
+rm -rf .mozconfig
 
 if [[ "$(uname)" == "Darwin" ]]; then
   if [[ $(uname -m) == "arm64" ]]; then
