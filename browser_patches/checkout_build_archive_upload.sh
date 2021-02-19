@@ -172,11 +172,12 @@ elif [[ "$BUILD_FLAVOR" == "firefox-mac-11.0-arm64" ]]; then
   BUILD_BLOB_NAME="firefox-mac-11.0-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-win32" ]]; then
   BROWSER_NAME="firefox"
+  EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="firefox-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   BROWSER_NAME="firefox"
-  EXTRA_BUILD_ARGS="--win64"
+  EXTRA_BUILD_ARGS="--win64 --full"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="firefox-win64.zip"
 
