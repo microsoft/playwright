@@ -903,6 +903,10 @@ export module Protocol {
        */
       defaultValue: number;
     }
+    /**
+     * The layout context type of a node.
+     */
+    export type LayoutContextType = "grid";
     
     /**
      * Fires whenever a MediaQuery result changes (for example, after a browser window has been resized.) The current implementation considers only viewport-dependent media features.
@@ -931,6 +935,19 @@ export module Protocol {
        * Identifier of the removed stylesheet.
        */
       styleSheetId: StyleSheetId;
+    }
+    /**
+     * Called when a node's layout context type has changed.
+     */
+    export type nodeLayoutContextTypeChangedPayload = {
+      /**
+       * Identifier of the node whose layout context type changed.
+       */
+      nodeId: DOM.NodeId;
+      /**
+       * The new layout context type of the node. When not provided, the <code>LayoutContextType</code> of the node is not a context for which Web Inspector has specific functionality.
+       */
+      layoutContextType?: LayoutContextType;
     }
     
     /**
@@ -1781,6 +1798,10 @@ export module Protocol {
        * Computed SHA-256 Content Security Policy hash source for given element.
        */
       contentSecurityPolicyHash?: string;
+      /**
+       * The layout context type of the node. When not provided, the <code>LayoutContextType</code> of the node is not a context for which Web Inspector has specific functionality.
+       */
+      layoutContextType?: CSS.LayoutContextType;
     }
     /**
      * Relationship between data that is associated with a node and the node itself.
@@ -8458,6 +8479,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.styleSheetChanged": CSS.styleSheetChangedPayload;
     "CSS.styleSheetAdded": CSS.styleSheetAddedPayload;
     "CSS.styleSheetRemoved": CSS.styleSheetRemovedPayload;
+    "CSS.nodeLayoutContextTypeChanged": CSS.nodeLayoutContextTypeChangedPayload;
     "Canvas.canvasAdded": Canvas.canvasAddedPayload;
     "Canvas.canvasRemoved": Canvas.canvasRemovedPayload;
     "Canvas.canvasMemoryChanged": Canvas.canvasMemoryChangedPayload;
