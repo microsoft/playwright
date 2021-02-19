@@ -210,3 +210,46 @@ it('should not return cookies with empty value', async ({context, page, server})
   expect(cookies.length).toBe(0);
 });
 
+it('should return secure cookies based on HTTP(S) protocol', async ({context}) => {
+  await context.addCookies([{
+    url: 'https://foo.com',
+    name: 'doggo',
+    value: 'woofs',
+    secure: true
+  }, {
+    url: 'http://foo.com',
+    name: 'catto',
+    value: 'purrs',
+    secure: false
+  }]);
+  const cookies = await context.cookies('https://foo.com');
+  expect(cookies.sort((a, b) => a.name.localeCompare(b.name))).toEqual([{
+    name: 'catto',
+    value: 'purrs',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'None',
+  }, {
+    name: 'doggo',
+    value: 'woofs',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: true,
+    sameSite: 'None',
+  }]);
+  expect(await context.cookies('http://foo.com/')).toEqual([{
+    name: 'catto',
+    value: 'purrs',
+    domain: 'foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'None',
+  }]);
+});
