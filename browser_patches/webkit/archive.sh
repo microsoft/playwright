@@ -131,6 +131,9 @@ createZipForMac() {
   # copy protocol
   node $SCRIPTS_DIR/concat_protocol.js > $tmpdir/protocol.json
 
+  # Remove all broken symlinks. @see https://github.com/microsoft/playwright/issues/5472
+  find "${tmpdir}" -type l ! -exec test -e {} \; -print | xargs rm
+
   # zip resulting directory and cleanup TMP.
   ditto -c -k $tmpdir $ZIP_PATH
   rm -rf $tmpdir
