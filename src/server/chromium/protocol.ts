@@ -810,9 +810,8 @@ some CSP errors in the future.
     }
     export type SharedArrayBufferIssueType = "TransferIssue"|"CreationIssue";
     /**
-     * Details for a request that has been blocked with the BLOCKED_BY_RESPONSE
-code. Currently only used for COEP/COOP, but may be extended to include
-some CSP errors in the future.
+     * Details for a issue arising from an SAB being instantiated in, or
+transfered to a context that is not cross-origin isolated.
      */
     export interface SharedArrayBufferIssueDetails {
       sourceCodeLocation: SourceCodeLocation;
@@ -848,11 +847,22 @@ used when violation type is kDigitalAssetLinks.
       fontWeight: string;
     }
     /**
+     * Details for a CORS related issue, e.g. a warning or error related to
+CORS RFC1918 enforcement.
+     */
+    export interface CorsIssueDetails {
+      corsErrorStatus: Network.CorsErrorStatus;
+      isWarning: boolean;
+      request: AffectedRequest;
+      resourceIPAddressSpace?: Network.IPAddressSpace;
+      clientSecurityState?: Network.ClientSecurityState;
+    }
+    /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -867,6 +877,7 @@ add a new optional field to this type.
       sharedArrayBufferIssueDetails?: SharedArrayBufferIssueDetails;
       twaQualityEnforcementDetails?: TrustedWebActivityIssueDetails;
       lowTextContrastIssueDetails?: LowTextContrastIssueDetails;
+      corsIssueDetails?: CorsIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -7486,7 +7497,7 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
        */
       errors?: SignedExchangeError[];
     }
-    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate";
+    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate";
     export type IPAddressSpace = "Local"|"Private"|"Public"|"Unknown";
     export interface ClientSecurityState {
       initiatorIsSecureContext: boolean;
@@ -14927,7 +14938,7 @@ other objects in their object group.
 NOTE: If you change anything here, make sure to also update
 `subtype` in `ObjectPreview` and `PropertyPreview` below.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue";
       /**
        * Object class (constructor) name. Specified for `object` type values only.
        */
@@ -14979,7 +14990,7 @@ The result value is json ML array.
       /**
        * Object subtype hint. Specified for `object` type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue";
       /**
        * String representation of the object.
        */
@@ -15017,7 +15028,7 @@ The result value is json ML array.
       /**
        * Object subtype hint. Specified for `object` type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue";
     }
     export interface EntryPreview {
       /**
