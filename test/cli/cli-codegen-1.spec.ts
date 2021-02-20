@@ -83,6 +83,43 @@ await page.ClickAsync("text=Submit");`);
     expect(message.text()).toBe('click');
   });
 
+  it('should work with TrustedTypes', async ({ page, recorder }) => {
+    await recorder.setContentAndWait(`
+      <head>
+        <meta http-equiv="Content-Security-Policy" content="trusted-types unsafe escape; require-trusted-types-for 'script'">
+    </head>
+    <body>
+      <button onclick="console.log('click')">Submit</button>
+    </body>`);
+
+    const selector = await recorder.hoverOverElement('button');
+    expect(selector).toBe('text=Submit');
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console'),
+      recorder.waitForOutput('<javascript>', 'click'),
+      page.dispatchEvent('button', 'click', { detail: 1 })
+    ]);
+
+    expect(sources.get('<javascript>').text).toContain(`
+  // Click text=Submit
+  await page.click('text=Submit');`);
+
+    expect(sources.get('<python>').text).toContain(`
+    # Click text=Submit
+    page.click("text=Submit")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    # Click text=Submit
+    await page.click("text=Submit")`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+// Click text=Submit
+await page.ClickAsync("text=Submit");`);
+
+    expect(message.text()).toBe('click');
+  });
+
   it('should not target selector preview by text regexp', async ({ page, recorder }) => {
     await recorder.setContentAndWait(`<span>dummy</span>`);
 
