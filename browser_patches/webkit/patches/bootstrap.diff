@@ -3040,7 +3040,7 @@ index 3386cb879f1178c1b9635775c9a0e864f5b94c52..d2350182f5f061855e8ca172779ad60e
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 292d2c2940da6a410ec68fb665e3e9d70df71b4a..fbc245b47177360f7aa32983b50339d40f6dc458 100644
+index 292d2c2940da6a410ec68fb665e3e9d70df71b4a..54cf2a65c57b99c449e4c22e9c4a824bbf2c395b 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -3116,16 +3116,32 @@ index 292d2c2940da6a410ec68fb665e3e9d70df71b4a..fbc245b47177360f7aa32983b50339d4
      ResourceRequest request = loader.request();
      if (!!url)
          request.setURL(URL({ }, url));
-@@ -1292,6 +1304,8 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+@@ -1284,14 +1296,24 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+     response.setHTTPStatusCode(status);
+     response.setHTTPStatusText(statusText);
+     HTTPHeaderMap explicitHeaders;
++    String setCookieValue;
+     for (auto& header : headers.get()) {
+         auto headerValue = header.value->asString();
+         if (!!headerValue)
+             explicitHeaders.add(header.key, headerValue);
++        if (equalIgnoringASCIICase(header.key, "Set-Cookie"))
++            setCookieValue = headerValue;
+     }
      response.setHTTPHeaderFields(WTFMove(explicitHeaders));
      response.setHTTPHeaderField(HTTPHeaderName::ContentType, response.mimeType());
++
++    auto* frame = loader->frame();
++    if (!setCookieValue.isEmpty() && frame && frame->page())
++        frame->page()->cookieJar().setCookieFromResponse(*loader.get(), setCookieValue);
++
      loader->didReceiveResponse(response, [loader, buffer = data.releaseNonNull()]() mutable {
 +        if (loader->reachedTerminalState())
 +            return;
          if (buffer->size())
              loader->didReceiveBuffer(WTFMove(buffer), buffer->size(), DataPayloadWholeResource);
          loader->didFinishLoading(NetworkLoadMetrics());
-@@ -1332,6 +1346,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
+@@ -1332,6 +1354,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
      return { };
  }
  
@@ -3138,7 +3154,7 @@ index 292d2c2940da6a410ec68fb665e3e9d70df71b4a..fbc245b47177360f7aa32983b50339d4
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1373,6 +1393,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
+@@ -1373,6 +1401,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
      return WTF::nullopt;
  }
  
@@ -4338,6 +4354,28 @@ index 16edb3bc689b8e2dde17597b642b706c1343e1f5..f363b2ca2410f22cff8d6ad908a88527
      ~UserGestureEmulationScope();
  
  private:
+diff --git a/Source/WebCore/loader/CookieJar.h b/Source/WebCore/loader/CookieJar.h
+index ca42c37f15d240a0e6692e66ee83210352023547..1c82f768aecff9fcce098840fb0093bf2fb9bf72 100644
+--- a/Source/WebCore/loader/CookieJar.h
++++ b/Source/WebCore/loader/CookieJar.h
+@@ -42,6 +42,7 @@ struct CookieRequestHeaderFieldProxy;
+ class NetworkStorageSession;
+ class StorageSessionProvider;
+ struct SameSiteInfo;
++class ResourceLoader;
+ 
+ class WEBCORE_EXPORT CookieJar : public RefCounted<CookieJar> {
+ public:
+@@ -65,6 +66,9 @@ public:
+     virtual void clearCache() { }
+     virtual void clearCacheForHost(const String&) { }
+ 
++    // Playwright.
++    virtual void setCookieFromResponse(ResourceLoader&, const String&) { }
++
+     virtual ~CookieJar();
+ protected:
+     static SameSiteInfo sameSiteInfo(const Document&);
 diff --git a/Source/WebCore/loader/DocumentLoader.cpp b/Source/WebCore/loader/DocumentLoader.cpp
 index 752a9ae2714d7a6b83e5ae9596e1c45fdba9b9eb..3fbc8415edba96e6e61fa1c28a3f6345c08f0fc2 100644
 --- a/Source/WebCore/loader/DocumentLoader.cpp
@@ -7914,6 +7952,64 @@ index 694008e0451edc5770142a0a6d9eed52b04ded80..ec93869f9486bdf7bd3bb56478c62469
  };
      
  WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, ScrollAlignment::Behavior);
+diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
+index 84c913ad1c0a914ff6d4a97e69b152c4ebbc6808..0263674fef79d9e97d12e87c3cfd195646c1ffea 100644
+--- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
++++ b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
+@@ -73,6 +73,11 @@
+ #include <WebCore/SameSiteInfo.h>
+ #include <WebCore/SecurityPolicy.h>
+ 
++#if PLATFORM(COCOA)
++#include "NetworkDataTaskCocoa.h"
++#include "NetworkSessionCocoa.h"
++#endif
++
+ #if ENABLE(APPLE_PAY_REMOTE_UI)
+ #include "WebPaymentCoordinatorProxyMessages.h"
+ #endif
+@@ -866,6 +871,15 @@ void NetworkConnectionToWebProcess::clearPageSpecificData(PageIdentifier pageID)
+ #endif
+ }
+ 
++void NetworkConnectionToWebProcess::setCookieFromResponse(NetworkResourceLoadParameters&& parameters, const URL& mainDocumentURL, const String& setCookieValue)
++{
++    if (auto* session = networkSession()) {
++#if PLATFORM(COCOA)
++        NetworkDataTaskCocoa::setCookieFromResponse(*static_cast<NetworkSessionCocoa*>(session), WTFMove(parameters), mainDocumentURL, setCookieValue);
++#endif
++    }
++}
++
+ #if ENABLE(RESOURCE_LOAD_STATISTICS)
+ void NetworkConnectionToWebProcess::removeStorageAccessForFrame(FrameIdentifier frameID, PageIdentifier pageID)
+ {
+diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.h b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.h
+index 5a4b2b8937d2501312e9d7e19422291ebf2180f2..6ee414bbec95611286c721d8af7f27ecc139d8fd 100644
+--- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.h
++++ b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.h
+@@ -271,6 +271,8 @@ private:
+ 
+     void clearPageSpecificData(WebCore::PageIdentifier);
+ 
++    void setCookieFromResponse(NetworkResourceLoadParameters&&, const URL& mainDocumentURL, const String& setCookieValue);
++
+ #if ENABLE(RESOURCE_LOAD_STATISTICS)
+     void removeStorageAccessForFrame(WebCore::FrameIdentifier, WebCore::PageIdentifier);
+ 
+diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.messages.in b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.messages.in
+index ff8d4a179f1fafd62b5d3fa64e99c208aa8fbf9a..c779fe10243bf2e5e3bd48f9833c9e2e7ecc07ae 100644
+--- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.messages.in
++++ b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.messages.in
+@@ -64,6 +64,8 @@ messages -> NetworkConnectionToWebProcess LegacyReceiver {
+ 
+     ClearPageSpecificData(WebCore::PageIdentifier pageID);
+ 
++    SetCookieFromResponse(WebKit::NetworkResourceLoadParameters parameters, URL mainDocumentURL, String setCookieValue);
++
+ #if ENABLE(RESOURCE_LOAD_STATISTICS)
+     RemoveStorageAccessForFrame(WebCore::FrameIdentifier frameID, WebCore::PageIdentifier pageID);
+     LogUserInteraction(WebCore::RegistrableDomain domain)
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 index 7a931948a056eb92ecbd3f2d274df144df01a95e..5beafaad7d350868f0091cd92842b51fba20ef3b 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
@@ -8042,6 +8138,91 @@ index 48c883bfc0fc7d501c8a4a4e7684ccc33e38c14d..20dedbbaf4b1a713c8be41e21425c307
 +    , m_impl(SocketStreamHandleImpl::create(url, networkProcess.networkSession(sessionID)->ignoreCertificateErrors(), *this, sessionID, credentialPartition, WTFMove(auditData), NetworkStorageSessionProvider::create(networkProcess, sessionID).ptr()))
      , m_delayFailTimer(*this, &NetworkSocketStream::sendDelayedFailMessage)
  {
+ }
+diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h
+index 669bd6a03ef8fbe62ff1f60106466c9414641442..95ff399827ef25a8dbaf993e343ea37c3a54494f 100644
+--- a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h
++++ b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h
+@@ -83,6 +83,8 @@ public:
+ 
+     void setH2PingCallback(const URL&, CompletionHandler<void(Expected<WTF::Seconds, WebCore::ResourceError>&&)>&&) override;
+ 
++    static void setCookieFromResponse(NetworkSessionCocoa& session, const NetworkLoadParameters&, const URL& mainDocumentURL, const String& setCookieValue);
++
+ private:
+     NetworkDataTaskCocoa(NetworkSession&, NetworkDataTaskClient&, const WebCore::ResourceRequest&, WebCore::FrameIdentifier, WebCore::PageIdentifier, WebCore::StoredCredentialsPolicy, WebCore::ContentSniffingPolicy, WebCore::ContentEncodingSniffingPolicy, bool shouldClearReferrerOnHTTPSToHTTPRedirect, PreconnectOnly, bool dataTaskIsForMainFrameNavigation, bool dataTaskIsForMainResourceNavigationForAnyFrame, Optional<NetworkActivityTracker>, Optional<NavigatingToAppBoundDomain> isNavigatingToAppBoundDomain, WebCore::ShouldRelaxThirdPartyCookieBlocking, Optional<WebCore::PrivateClickMeasurement::PcmDataCarried>);
+ 
+diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
+index fd26a108169f40bcbdae027b97d910f0a9758611..f5c356a9f1fa6ff062743f99f870a111ec9ebfdf 100644
+--- a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
++++ b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
+@@ -41,6 +41,7 @@
+ #import <WebCore/RegistrableDomain.h>
+ #import <WebCore/ResourceRequest.h>
+ #import <pal/spi/cf/CFNetworkSPI.h>
++#import <wtf/BlockObjCExceptions.h>
+ #import <wtf/BlockPtr.h>
+ #import <wtf/FileSystem.h>
+ #import <wtf/MainThread.h>
+@@ -702,4 +703,59 @@ void NetworkDataTaskCocoa::setH2PingCallback(const URL& url, CompletionHandler<v
+ #endif
+ }
+ 
++class DummyNetworkDataTaskClient: public NetworkDataTaskClient {
++public:
++  void willPerformHTTPRedirection(WebCore::ResourceResponse&&, WebCore::ResourceRequest&&, RedirectCompletionHandler&&) final {}
++  void didReceiveChallenge(WebCore::AuthenticationChallenge&&, NegotiatedLegacyTLS, ChallengeCompletionHandler&&) final {}
++  void didReceiveResponse(WebCore::ResourceResponse&&, NegotiatedLegacyTLS, ResponseCompletionHandler&&) final {}
++  void didReceiveData(Ref<WebCore::SharedBuffer>&&) final {}
++  void didCompleteWithError(const WebCore::ResourceError&, const WebCore::NetworkLoadMetrics&) final {}
++  void didSendData(uint64_t totalBytesSent, uint64_t totalBytesExpectedToSend) final {}
++  void wasBlocked() final {}
++  void cannotShowURL() final {}
++  void wasBlockedByRestrictions() final {}
++  ~DummyNetworkDataTaskClient() {}
++};
++
++// static
++void NetworkDataTaskCocoa::setCookieFromResponse(NetworkSessionCocoa& networkSession, const NetworkLoadParameters& parameters, const URL& mainDocumentURL, const String& setCookieValue)
++{
++    const URL& url = parameters.request.url();
++    DummyNetworkDataTaskClient client;
++    RefPtr<NetworkDataTask> taskGeneric = NetworkDataTask::create(networkSession, client, parameters);
++    NetworkDataTaskCocoa* task = static_cast<NetworkDataTaskCocoa*>(taskGeneric.get());
++    // Note: we are not calling task->resume(), and miss some logic from there.
++
++    WebCore::ResourceResponse resourceResponse;
++    resourceResponse.setURL(url);
++    task->didReceiveResponse(WTFMove(resourceResponse), NegotiatedLegacyTLS::No, [](WebCore::PolicyAction policyAction) {});
++
++    if (task->m_hasBeenSetToUseStatelessCookieStorage || !task->m_sessionWrapper) {
++        task->cancel();
++        return;
++    }
++
++    NSURLSessionConfiguration* configuration = [task->m_sessionWrapper->session configuration];
++    if (!configuration.HTTPCookieStorage) {
++        task->cancel();
++        return;
++    }
++
++    NSString* cookieString = (NSString *)setCookieValue;
++    NSString* cookieKey = @"Set-Cookie";
++    NSDictionary* headers = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:cookieString] forKeys:[NSArray arrayWithObject:cookieKey]];
++    NSArray<NSHTTPCookie*>* cookies = [NSHTTPCookie cookiesWithResponseHeaderFields:headers forURL:(NSURL *)url];
++
++    NSURL* siteForCookies = task->m_task.get()._siteForCookies;
++    NSURL* documentURL = task->isTopLevelNavigation() ? siteForCookies : (NSURL *)mainDocumentURL;
++    if (siteForCookies && documentURL) {
++        // Both siteForCookies and/or documentURL may be nil, for example when one of them is about:blank.
++        BEGIN_BLOCK_OBJC_EXCEPTIONS
++        [configuration.HTTPCookieStorage setCookies:cookies forURL:siteForCookies mainDocumentURL:documentURL];
++        END_BLOCK_OBJC_EXCEPTIONS
++    }
++
++    task->cancel();
++}
++
  }
 diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 index 29e0a830e41d55e6bf35bbb396ae81fb9b20f18c..aecd1fe738826d6d05f8111495d676d4420f582d 100644
@@ -17645,7 +17826,7 @@ index f0dbcb4c0181bff1b39826e54b02714bcc6b217e..41b282e280c0c3801aaa876cada0c73f
  				BCBD3914125BB1A800D2C29F /* WebPageProxyMessageReceiver.cpp in Sources */,
  				7CE9CE101FA0767A000177DE /* WebPageUpdatePreferences.cpp in Sources */,
 diff --git a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
-index 48b3a225dfb6b30da0c5d1ffea9fec765e13b969..017d8f160ab2b7648ad183da2866fba88ee3267a 100644
+index 48b3a225dfb6b30da0c5d1ffea9fec765e13b969..a7afa8671b3edcd9189d64043ad5b5e28d80b1d2 100644
 --- a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
 +++ b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
 @@ -227,6 +227,11 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
@@ -17660,7 +17841,70 @@ index 48b3a225dfb6b30da0c5d1ffea9fec765e13b969..017d8f160ab2b7648ad183da2866fba8
      if (!tryLoadingUsingURLSchemeHandler(resourceLoader, trackingParameters)) {
          WEBLOADERSTRATEGY_RELEASE_LOG_IF_ALLOWED("scheduleLoad: URL will be scheduled with the NetworkProcess");
  
-@@ -803,7 +808,7 @@ void WebLoaderStrategy::didFinishPreconnection(uint64_t preconnectionIdentifier,
+@@ -287,7 +292,8 @@ static void addParametersShared(const Frame* frame, NetworkResourceLoadParameter
+     }
+ }
+ 
+-void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceLoader, const ResourceRequest& request, const WebResourceLoader::TrackingParameters& trackingParameters, bool shouldClearReferrerOnHTTPSToHTTPRedirect, Seconds maximumBufferingTime)
++// static
++bool WebLoaderStrategy::fillParametersForNetworkProcessLoad(ResourceLoader& resourceLoader, const ResourceRequest& request, const WebResourceLoader::TrackingParameters& trackingParameters, bool shouldClearReferrerOnHTTPSToHTTPRedirect, Seconds maximumBufferingTime, NetworkResourceLoadParameters& loadParameters)
+ {
+     ResourceLoadIdentifier identifier = resourceLoader.identifier();
+     ASSERT(identifier);
+@@ -300,7 +306,6 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
+ 
+     auto* frame = resourceLoader.frame();
+ 
+-    NetworkResourceLoadParameters loadParameters;
+     loadParameters.identifier = identifier;
+     loadParameters.webPageProxyID = trackingParameters.webPageProxyID;
+     loadParameters.webPageID = trackingParameters.pageID;
+@@ -376,14 +381,11 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
+ 
+     if (loadParameters.options.mode != FetchOptions::Mode::Navigate) {
+         ASSERT(loadParameters.sourceOrigin);
+-        if (!loadParameters.sourceOrigin) {
+-            WEBLOADERSTRATEGY_RELEASE_LOG_ERROR_IF_ALLOWED("scheduleLoad: no sourceOrigin (priority=%d)", static_cast<int>(resourceLoader.request().priority()));
+-            scheduleInternallyFailedLoad(resourceLoader);
+-            return;
+-        }
++        if (!loadParameters.sourceOrigin)
++            return false;
+     }
+ 
+-    loadParameters.shouldRestrictHTTPResponseAccess = shouldPerformSecurityChecks();
++    loadParameters.shouldRestrictHTTPResponseAccess = RuntimeEnabledFeatures::sharedFeatures().restrictedHTTPResponseAccess();
+ 
+     loadParameters.isMainFrameNavigation = resourceLoader.frame() && resourceLoader.frame()->isMainFrame() && resourceLoader.options().mode == FetchOptions::Mode::Navigate;
+ 
+@@ -399,6 +401,17 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
+     }
+ 
+     ASSERT((loadParameters.webPageID && loadParameters.webFrameID) || loadParameters.clientCredentialPolicy == ClientCredentialPolicy::CannotAskClientForCredentials);
++    return true;
++}
++
++void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceLoader, const ResourceRequest& request, const WebResourceLoader::TrackingParameters& trackingParameters, bool shouldClearReferrerOnHTTPSToHTTPRedirect, Seconds maximumBufferingTime)
++{
++    NetworkResourceLoadParameters loadParameters;
++    if (!fillParametersForNetworkProcessLoad(resourceLoader, request, trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime, loadParameters)) {
++        WEBLOADERSTRATEGY_RELEASE_LOG_ERROR_IF_ALLOWED("scheduleLoad: no sourceOrigin (priority=%d)", static_cast<int>(resourceLoader.request().priority()));
++        scheduleInternallyFailedLoad(resourceLoader);
++        return;
++    }
+ 
+     WEBLOADERSTRATEGY_RELEASE_LOG_IF_ALLOWED("scheduleLoad: Resource is being scheduled with the NetworkProcess (priority=%d)", static_cast<int>(resourceLoader.request().priority()));
+     if (!WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::ScheduleResourceLoad(loadParameters), 0)) {
+@@ -410,7 +423,7 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
+     }
+ 
+     auto loader = WebResourceLoader::create(resourceLoader, trackingParameters);
+-    m_webResourceLoaders.set(identifier, WTFMove(loader));
++    m_webResourceLoaders.set(resourceLoader.identifier(), WTFMove(loader));
+ }
+ 
+ void WebLoaderStrategy::scheduleInternallyFailedLoad(WebCore::ResourceLoader& resourceLoader)
+@@ -803,7 +816,7 @@ void WebLoaderStrategy::didFinishPreconnection(uint64_t preconnectionIdentifier,
  
  bool WebLoaderStrategy::isOnLine() const
  {
@@ -17669,7 +17913,7 @@ index 48b3a225dfb6b30da0c5d1ffea9fec765e13b969..017d8f160ab2b7648ad183da2866fba8
  }
  
  void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& listener)
-@@ -823,6 +828,11 @@ void WebLoaderStrategy::isResourceLoadFinished(CachedResource& resource, Complet
+@@ -823,6 +836,11 @@ void WebLoaderStrategy::isResourceLoadFinished(CachedResource& resource, Complet
  
  void WebLoaderStrategy::setOnLineState(bool isOnLine)
  {
@@ -17681,7 +17925,7 @@ index 48b3a225dfb6b30da0c5d1ffea9fec765e13b969..017d8f160ab2b7648ad183da2866fba8
      if (m_isOnLine == isOnLine)
          return;
  
-@@ -831,6 +841,12 @@ void WebLoaderStrategy::setOnLineState(bool isOnLine)
+@@ -831,6 +849,12 @@ void WebLoaderStrategy::setOnLineState(bool isOnLine)
          listener(isOnLine);
  }
  
@@ -17695,18 +17939,29 @@ index 48b3a225dfb6b30da0c5d1ffea9fec765e13b969..017d8f160ab2b7648ad183da2866fba8
  {
      WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::SetCaptureExtraNetworkLoadMetricsEnabled(enabled), 0);
 diff --git a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.h b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.h
-index b23d5b8a9f72696f33a1e0b7778ffbf8ec21049c..082d77a341a737aa981fc3c012fcd2634d7a748a 100644
+index b23d5b8a9f72696f33a1e0b7778ffbf8ec21049c..1a778a275d7b1a3338328abb91ef70f39e5aeed7 100644
 --- a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.h
 +++ b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.h
-@@ -88,6 +88,7 @@ public:
+@@ -40,6 +40,7 @@ struct FetchOptions;
+ namespace WebKit {
+ 
+ class NetworkProcessConnection;
++class NetworkResourceLoadParameters;
+ class WebFrame;
+ class WebPage;
+ class WebURLSchemeTaskProxy;
+@@ -88,8 +89,10 @@ public:
      bool isOnLine() const final;
      void addOnlineStateChangeListener(Function<void(bool)>&&) final;
      void setOnLineState(bool);
 +    void setEmulateOfflineState(bool) final;
  
      static uint64_t generateLoadIdentifier();
++    static bool fillParametersForNetworkProcessLoad(WebCore::ResourceLoader&, const WebCore::ResourceRequest&, const WebResourceLoader::TrackingParameters&, bool shouldClearReferrerOnHTTPSToHTTPRedirect, Seconds maximumBufferingTime, NetworkResourceLoadParameters&);
  
-@@ -134,6 +135,7 @@ private:
+ private:
+     void scheduleLoad(WebCore::ResourceLoader&, WebCore::CachedResource*, bool shouldClearReferrerOnHTTPSToHTTPRedirect);
+@@ -134,6 +137,7 @@ private:
      HashMap<unsigned long, PreconnectCompletionHandler> m_preconnectCompletionHandlers;
      Vector<Function<void(bool)>> m_onlineStateChangeListeners;
      bool m_isOnLine { true };
@@ -18091,6 +18346,66 @@ index 16fd3c364fc7eb9db9f31859f672f4215f55b5ab..e840d69b400ba21c28725e9d17916ab6
  
      virtual void adoptLayersFromDrawingArea(DrawingArea&) { }
      virtual void adoptDisplayRefreshMonitorsFromDrawingArea(DrawingArea&) { }
+diff --git a/Source/WebKit/WebProcess/WebPage/WebCookieJar.cpp b/Source/WebKit/WebProcess/WebPage/WebCookieJar.cpp
+index a75588b5d2a541bf47cae34b0aabe18651d719bd..0826607f42e566652050273192561487bd151bb1 100644
+--- a/Source/WebKit/WebProcess/WebPage/WebCookieJar.cpp
++++ b/Source/WebKit/WebProcess/WebPage/WebCookieJar.cpp
+@@ -28,15 +28,19 @@
+ 
+ #include "NetworkConnectionToWebProcessMessages.h"
+ #include "NetworkProcessConnection.h"
++#include "NetworkResourceLoadParameters.h"
+ #include "WebFrame.h"
++#include "WebLoaderStrategy.h"
+ #include "WebPage.h"
+ #include "WebProcess.h"
++#include "WebResourceLoader.h"
+ #include <WebCore/CookieRequestHeaderFieldProxy.h>
+ #include <WebCore/DeprecatedGlobalSettings.h>
+ #include <WebCore/Document.h>
+ #include <WebCore/Frame.h>
+ #include <WebCore/FrameLoader.h>
+ #include <WebCore/FrameLoaderClient.h>
++#include <WebCore/ResourceLoader.h>
+ #include <WebCore/Settings.h>
+ #include <WebCore/StorageSessionProvider.h>
+ 
+@@ -255,4 +259,22 @@ void WebCookieJar::deleteCookie(const WebCore::Document& document, const URL& ur
+     WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::DeleteCookie(url, cookieName), 0);
+ }
+ 
++void WebCookieJar::setCookieFromResponse(ResourceLoader& loader, const String& setCookieValue)
++{
++    auto* webFrame = WebFrame::fromCoreFrame(*loader.frame());
++
++    WebResourceLoader::TrackingParameters trackingParameters;
++    trackingParameters.webPageProxyID = webFrame->page()->webPageProxyIdentifier();
++    trackingParameters.pageID = webFrame->page()->identifier();
++    trackingParameters.frameID = webFrame->frameID();
++    trackingParameters.resourceID = loader.identifier();
++
++    NetworkResourceLoadParameters loadParameters;
++    if (!WebLoaderStrategy::fillParametersForNetworkProcessLoad(loader, loader.request(), trackingParameters, true, 0_s, loadParameters))
++        return;
++
++    URL mainDocumentURL = loader.frame()->document()->topDocument().url();
++    WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::SetCookieFromResponse(loadParameters, mainDocumentURL, setCookieValue), 0);
++}
++
+ } // namespace WebKit
+diff --git a/Source/WebKit/WebProcess/WebPage/WebCookieJar.h b/Source/WebKit/WebProcess/WebPage/WebCookieJar.h
+index 70f87ac8b194b220c285cdb20ed8ceffd7eca28c..b935a85eeb1822a7cdb523efb1805300ec3da7d4 100644
+--- a/Source/WebKit/WebProcess/WebPage/WebCookieJar.h
++++ b/Source/WebKit/WebProcess/WebPage/WebCookieJar.h
+@@ -52,6 +52,8 @@ public:
+     void cookiesDeleted(const String& host, const Vector<WebCore::Cookie>&);
+     void allCookiesDeleted();
+ 
++    void setCookieFromResponse(WebCore::ResourceLoader&, const String& setCookieValue);
++
+ private:
+     WebCookieJar();
+ 
 diff --git a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
 index b2d54a627b94583bda3518c4e7c3364481b605a4..d407e32b6a7b8b27925c49391e86d42c9b3dfa8b 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
