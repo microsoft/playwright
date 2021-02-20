@@ -127,7 +127,7 @@ function archive_compiled_chromium() {
 
   for ((i = 0; i < ${#CHROMIUM_FILES_TO_ARCHIVE[@]}; i++)) do
     file="${CHROMIUM_FILES_TO_ARCHIVE[$i]}"
-    mkdir -p "output/${CHROMIUM_FOLDER_NAME}/$(dirname $file)"
+    mkdir -p "output/${CHROMIUM_FOLDER_NAME}/$(dirname "${file}")"
     $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
   done
 
