@@ -70,7 +70,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {
     const logger = options.logger;
-    return this._wrapApiCall('browserType.launch', async () => {
+    return this._wrapApiCall('browserType.launch', async (channel: channels.BrowserTypeChannel) => {
       assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
       const launchOptions: channels.BrowserTypeLaunchParams = {
@@ -79,7 +79,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
         env: options.env ? envObjectToArray(options.env) : undefined,
       };
-      const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
+      const browser = Browser.from((await channel.launch(launchOptions)).browser);
       browser._logger = logger;
       return browser;
     }, logger);
@@ -92,7 +92,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
-    return this._wrapApiCall('browserType.launchPersistentContext', async () => {
+    return this._wrapApiCall('browserType.launchPersistentContext', async (channel: channels.BrowserTypeChannel) => {
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
       const contextParams = await prepareBrowserContextParams(options);
       const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
@@ -102,7 +102,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         env: options.env ? envObjectToArray(options.env) : undefined,
         userDataDir,
       };
-      const result = await this._channel.launchPersistentContext(persistentParams);
+      const result = await channel.launchPersistentContext(persistentParams);
       const context = BrowserContext.from(result.context);
       context._options = contextParams;
       context._logger = options.logger;
@@ -190,8 +190,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     if (this.name() !== 'chromium')
       throw new Error('Connecting over CDP is only supported in Chromium.');
     const logger = params.logger;
-    return this._wrapApiCall('browserType.connectOverCDP', async () => {
-      const result = await this._channel.connectOverCDP({
+    return this._wrapApiCall('browserType.connectOverCDP', async (channel: channels.BrowserTypeChannel) => {
+      const result = await channel.connectOverCDP({
         sdkLanguage: 'javascript',
         wsEndpoint: params.wsEndpoint,
         slowMo: params.slowMo,

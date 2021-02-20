@@ -84,11 +84,11 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
-  async _wrapApiCall<T>(apiName: string, func: () => Promise<T>, logger?: Logger): Promise<T> {
+  async _wrapApiCall<T, K extends channels.Channel>(apiName: string, func: (channel: K) => Promise<T>, logger?: Logger): Promise<T> {
     logger = logger || this._logger;
     try {
       logApiCall(logger, `=> ${apiName} started`);
-      const result = await func();
+      const result = await func(this._channel as any);
       logApiCall(logger, `<= ${apiName} succeeded`);
       return result;
     } catch (e) {

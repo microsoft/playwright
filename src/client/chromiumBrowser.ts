@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as channels from '../protocol/channels';
 import { Page } from './page';
 import { CDPSession } from './cdpSession';
 import { Browser } from './browser';
@@ -31,20 +32,20 @@ export class ChromiumBrowser extends Browser implements api.ChromiumBrowser {
   }
 
   async newBrowserCDPSession(): Promise<CDPSession> {
-    return this._wrapApiCall('chromiumBrowser.newBrowserCDPSession', async () => {
-      return CDPSession.from((await this._channel.crNewBrowserCDPSession()).session);
+    return this._wrapApiCall('chromiumBrowser.newBrowserCDPSession', async (channel: channels.BrowserChannel) => {
+      return CDPSession.from((await channel.crNewBrowserCDPSession()).session);
     });
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
-    return this._wrapApiCall('chromiumBrowser.startTracing', async () => {
-      await this._channel.crStartTracing({ ...options, page: page ? page._channel : undefined });
+    return this._wrapApiCall('chromiumBrowser.startTracing', async (channel: channels.BrowserChannel) => {
+      await channel.crStartTracing({ ...options, page: page ? page._channel : undefined });
     });
   }
 
   async stopTracing(): Promise<Buffer> {
-    return this._wrapApiCall('chromiumBrowser.stopTracing', async () => {
-      return Buffer.from((await this._channel.crStopTracing()).binary, 'base64');
+    return this._wrapApiCall('chromiumBrowser.stopTracing', async (channel: channels.BrowserChannel) => {
+      return Buffer.from((await channel.crStopTracing()).binary, 'base64');
     });
   }
 }
