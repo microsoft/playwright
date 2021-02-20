@@ -75,6 +75,7 @@ export class InspectorController implements InstrumentationListener {
         case 'after':
           const originalMetadata = this._waitOperations.get(info.waitId)!;
           originalMetadata.endTime = metadata.endTime;
+          originalMetadata.error = info.error;
           this._waitOperations.delete(info.waitId);
           metadata = originalMetadata;
           break;
