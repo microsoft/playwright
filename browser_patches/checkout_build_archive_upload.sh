@@ -305,7 +305,7 @@ function generate_and_upload_browser_build {
   return 0
 }
 
-source ./buildbots/send_telegram_message.sh
+source ./send_telegram_message.sh
 BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
 send_telegram_message "$BUILD_ALIAS -- started"
 
