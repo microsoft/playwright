@@ -71,13 +71,13 @@ export class Connection {
     return this._objects.get(guid)!;
   }
 
-  async sendMessageToServer(guid: string, method: string, params: any): Promise<any> {
+  async sendMessageToServer(guid: string, method: string, params: any, apiName: string | undefined): Promise<any> {
     const { stack, frames } = captureStackTrace();
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.
     debugLogger.log('channel:command', converted);
-    this.onmessage({ ...converted, metadata: { stack: frames } });
+    this.onmessage({ ...converted, metadata: { stack: frames, apiName } });
     try {
       return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
     } catch (e) {

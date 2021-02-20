@@ -32,6 +32,7 @@ export type StackFrame = {
 
 export type Metadata = {
   stack?: StackFrame[],
+  apiName?: string,
 };
 
 export type WaitForEventInfo = {

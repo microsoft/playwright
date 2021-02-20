@@ -28,6 +28,7 @@ Metadata:
     stack:
       type: array?
       items: StackFrame
+    apiName: string?
 
 
 WaitForEventInfo:

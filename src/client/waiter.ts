@@ -38,8 +38,8 @@ export class Waiter {
     ];
   }
 
-  static createForEvent(channelOwner: ChannelOwner, event: string) {
-    return new Waiter(channelOwner, `waitForEvent(${event})`);
+  static createForEvent(channelOwner: ChannelOwner, target: string, event: string) {
+    return new Waiter(channelOwner, `${target}.waitForEvent(${event})`);
   }
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean): Promise<T> {
