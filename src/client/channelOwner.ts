@@ -48,20 +48,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       this._logger = this._parent._logger;
     }
 
-    const base = new EventEmitter();
-    this._channel = new Proxy(base, {
-      get: (obj: any, prop) => {
-        if (prop === 'debugScopeState')
-          return (params: any) => this._connection.sendMessageToServer(guid, prop, params);
-        if (typeof prop === 'string') {
-          const validator = scheme[paramsName(type, prop)];
-          if (validator)
-            return (params: any) => this._connection.sendMessageToServer(guid, prop, validator(params, ''));
-        }
-        return obj[prop];
-      },
-    });
-    (this._channel as any)._object = this;
+    this._channel = this._createChannel(new EventEmitter(), '');
     this._initializer = initializer;
   }
 
@@ -84,11 +71,29 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
-  async _wrapApiCall<T, K extends channels.Channel>(apiName: string, func: (channel: K) => Promise<T>, logger?: Logger): Promise<T> {
+  _createChannel(base: Object, apiName: string): T {
+    const channel = new Proxy(base, {
+      get: (obj: any, prop) => {
+        if (prop === 'debugScopeState')
+          return (params: any) => this._connection.sendMessageToServer(this._guid, prop, params, apiName);
+        if (typeof prop === 'string') {
+          const validator = scheme[paramsName(this._type, prop)];
+          if (validator)
+            return (params: any) => this._connection.sendMessageToServer(this._guid, prop, validator(params, ''), apiName);
+        }
+        return obj[prop];
+      },
+    });
+    (channel as any)._object = this;
+    return channel;
+  }
+
+  async _wrapApiCall<R, C extends channels.Channel>(apiName: string, func: (channel: C) => Promise<R>, logger?: Logger): Promise<R> {
     logger = logger || this._logger;
     try {
       logApiCall(logger, `=> ${apiName} started`);
-      const result = await func(this._channel as any);
+      const channel = this._createChannel({}, apiName);
+      const result = await func(channel as any);
       logApiCall(logger, `<= ${apiName} succeeded`);
       return result;
     } catch (e) {
@@ -99,15 +104,15 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   }
 
   _waitForEventInfoBefore(waitId: string, name: string, stack: StackFrame[]) {
-    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { name, waitId, phase: 'before', stack } }).catch(() => {});
+    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { name, waitId, phase: 'before', stack } }, undefined).catch(() => {});
   }
 
   _waitForEventInfoAfter(waitId: string, error?: string) {
-    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { waitId, phase: 'after', error } }).catch(() => {});
+    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { waitId, phase: 'after', error } }, undefined).catch(() => {});
   }
 
   _waitForEventInfoLog(waitId: string, message: string) {
-    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { waitId, phase: 'log', message } }).catch(() => {});
+    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { waitId, phase: 'log', message } }, undefined).catch(() => {});
   }
 
   private toJSON() {

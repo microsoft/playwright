@@ -113,7 +113,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('waitForNavigation'), async (channel: channels.FrameChannel) => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      const waiter = this._setupNavigationWaiter('waitForNavigation', options);
+      const waiter = this._setupNavigationWaiter(this._apiName('waitForNavigation'), options);
 
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
@@ -150,7 +150,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     if (this._loadStates.has(state))
       return;
     return this._wrapApiCall(this._apiName('waitForLoadState'), async (channel: channels.FrameChannel) => {
-      const waiter = this._setupNavigationWaiter('waitForLoadState', options);
+      const waiter = this._setupNavigationWaiter(this._apiName('waitForLoadState'), options);
       await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
         waiter.log(`  "${s}" event fired`);
         return s === state;

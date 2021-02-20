@@ -39,6 +39,7 @@ export type CallMetadata = {
   type: string;
   method: string;
   params: any;
+  apiName?: string;
   stack?: StackFrame[];
   log: string[];
   error?: string;

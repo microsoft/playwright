@@ -155,9 +155,9 @@ describe('pause', (suite, { mode }) => {
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
-      'pause- XXms',
-      'click(button)- XXms',
-      'pause',
+      'page.pause- XXms',
+      'page.click(button)- XXms',
+      'page.pause',
     ]);
     await recorderPage.click('[title="Resume"]');
     await scriptPromise;
@@ -177,10 +177,10 @@ describe('pause', (suite, { mode }) => {
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
-      'pause- XXms',
-      'waitForEvent(console)- XXms',
-      'click(button)- XXms',
-      'pause',
+      'page.pause- XXms',
+      'page.waitForEvent(console)- XXms',
+      'page.click(button)- XXms',
+      'page.pause',
     ]);
     await recorderPage.click('[title="Resume"]');
     await scriptPromise;
@@ -196,8 +196,8 @@ describe('pause', (suite, { mode }) => {
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-error');
     expect(await sanitizeLog(recorderPage)).toEqual([
-      'pause- XXms',
-      'isChecked(button)- XXms',
+      'page.pause- XXms',
+      'page.isChecked(button)- XXms',
       'checking \"checked\" state of \"button\"',
       'selector resolved to <button onclick=\"console.log(1)\">Submit</button>',
       'Not a checkbox or radio button',
