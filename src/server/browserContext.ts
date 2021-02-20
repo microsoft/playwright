@@ -162,7 +162,7 @@ export abstract class BrowserContext extends SdkObject {
     }
     const binding = new PageBinding(name, playwrightBinding, needsHandle, 'main');
     this._pageBindings.set(identifier, binding);
-    this._doExposeBinding(binding);
+    await this._doExposeBinding(binding);
   }
 
   async grantPermissions(permissions: string[], origin?: string) {
