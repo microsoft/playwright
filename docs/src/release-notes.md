@@ -13,7 +13,7 @@ title: "Release notes"
   $ npx playwright --help
   ```
   ```sh python
-  $ python -m playwright --help
+  $ playwright --help
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.
 - New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].
