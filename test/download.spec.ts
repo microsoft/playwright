@@ -62,6 +62,35 @@ describe('download event', () => {
     await page.close();
   });
 
+  it('should report proper download url when download is from download attribute', (test, {browserName}) => {
+    // @see https://github.com/microsoft/playwright/issues/5537
+    test.fixme(browserName === 'webkit');
+  }, async ({browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.goto(server.PREFIX + '/empty.html');
+    await page.setContent(`<a href="${server.PREFIX}/chromium-linux.zip" download="foo.zip">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    expect(download.url()).toBe(`${server.PREFIX}/chromium-linux.zip`);
+    await page.close();
+  });
+
+  it('should report downloads for download attribute', async ({browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.goto(server.PREFIX + '/empty.html');
+    await page.setContent(`<a href="${server.PREFIX}/chromium-linux.zip" download="foo.zip">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    expect(download.suggestedFilename()).toBe(`foo.zip`);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    await page.close();
+  });
+
   it('should save to user-specified path', async ({testInfo, browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
