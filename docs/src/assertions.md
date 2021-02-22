@@ -27,8 +27,8 @@ assert content == "home"
 ```
 
 ### API reference
-- [`method: Page.innerText`]
-- [`method: ElementHandle.innerText`]
+- [`method: Page.textContent`]
+- [`method: ElementHandle.textContent`]
 
 ## Inner text
 
