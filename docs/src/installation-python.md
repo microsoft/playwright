@@ -15,7 +15,7 @@ Each version of Playwright needs specific versions of browser binaries to operat
 
 ```sh
 $ pip install playwright
-$ python -m playwright install
+$ playwright install
 ```
 
 These browsers will take few hundreds of megabytes of the disk space when installed:
@@ -37,7 +37,7 @@ $ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python -m playwright install
 # Windows
 $ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 $ pip install playwright
-$ python -m playwright install
+$ playwright install
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location:
@@ -61,7 +61,7 @@ $ PLAYWRIGHT_BROWSERS_PATH=0 python -m playwright install
 # Windows
 $ set PLAYWRIGHT_BROWSERS_PATH=0
 $ pip install playwright
-$ python -m playwright install
+$ playwright install
 ```
 
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
@@ -86,7 +86,7 @@ $ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 python -m playwright install
 # Windows
 $ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
 $ pip install playwright
-$ python -m playwright install
+$ playwright install
 ```
 
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
@@ -113,7 +113,7 @@ $ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
 # Windows
 $ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 $ pip install playwright
-$ python -m playwright install
+$ playwright install
 ```
 
 ## Download single browser binary
@@ -122,5 +122,5 @@ Playwright downloads Chromium, Firefox and WebKit browsers by default. To instal
 
 ```sh
 $ pip install playwright
-$ python -m playwright install firefox
+$ playwright install firefox
 ```

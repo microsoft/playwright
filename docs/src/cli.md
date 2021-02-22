@@ -14,7 +14,7 @@ $ npx playwright --help
 ```
 
 ```sh python
-$ python -m playwright
+$ playwright
 ```
 
 ```json js
@@ -33,7 +33,7 @@ $ npx playwright codegen wikipedia.org
 ```
 
 ```sh python
-$ python -m playwright codegen wikipedia.org
+$ playwright codegen wikipedia.org
 ```
 
 Run `codegen` and perform actions in the browser. Playwright CLI will generate JavaScript code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
@@ -51,7 +51,7 @@ $ npx playwright --save-storage=auth.json codegen
 ```
 
 ```sh python
-$ python -m playwright --save-storage=auth.json codegen
+$ playwright --save-storage=auth.json codegen
 # Perform authentication and exit.
 # auth.json will contain the storage state.
 ```
@@ -65,8 +65,8 @@ $ npx playwright --load-storage=auth.json codegen my.web.app
 ```
 
 ```sh python
-$ python -m playwright --load-storage=auth.json open my.web.app
-$ python -m playwright --load-storage=auth.json codegen my.web.app
+$ playwright --load-storage=auth.json open my.web.app
+$ playwright --load-storage=auth.json codegen my.web.app
 # Perform actions in authenticated state.
 ```
 
@@ -138,7 +138,7 @@ $ npx playwright open example.com
 
 ```sh python
 # Open page in Chromium
-$ python -m playwright open example.com
+$ playwright open example.com
 ```
 
 ```sh js
@@ -148,7 +148,7 @@ $ npx playwright wk example.com
 
 ```sh python
 # Open page in WebKit
-$ python -m playwright wk example.com
+$ playwright wk example.com
 ```
 
 ### Emulate devices
@@ -161,7 +161,7 @@ $ npx playwright --device="iPhone 11" open wikipedia.org
 
 ```sh python
 # Emulate iPhone 11.
-$ python -m playwright --device="iPhone 11" open wikipedia.org
+$ playwright --device="iPhone 11" open wikipedia.org
 ```
 
 ### Emulate color scheme and viewport size
@@ -171,7 +171,7 @@ $ npx playwright --viewport-size=800,600 --color-scheme=dark open twitter.com
 ```
 ```sh python
 # Emulate screen size and color scheme.
-$ python -m playwright --viewport-size=800,600 --color-scheme=dark open twitter.com
+$ playwright --viewport-size=800,600 --color-scheme=dark open twitter.com
 ```
 
 ### Emulate geolocation, language and timezone
@@ -183,7 +183,7 @@ $ npx playwright --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --
 ```sh python
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
-$ python -m playwright --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" open maps.google.com
+$ playwright --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" open maps.google.com
 ```
 
 ## Inspect selectors
@@ -238,7 +238,7 @@ $ npx playwright screenshot --help
 
 ```sh python
 # See command help
-$ python -m playwright screenshot --help
+$ playwright screenshot --help
 ```
 
 ```sh js
@@ -253,7 +253,7 @@ $ npx playwright \
 
 ```sh python
 # Wait 3 seconds before capturing a screenshot after page loads ('load' event fires)
-$ python -m playwright \
+$ playwright \
   --device="iPhone 11" \
   --color-scheme=dark \
   screenshot \
@@ -268,7 +268,7 @@ $ npx playwright screenshot --full-page en.wikipedia.org wiki-full.png
 
 ```sh python
 # Capture a full page screenshot
-$ python -m playwright screenshot --full-page en.wikipedia.org wiki-full.png
+$ playwright screenshot --full-page en.wikipedia.org wiki-full.png
 ```
 
 ## Generate PDF
@@ -282,7 +282,7 @@ $ npx playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 
 ```sh python
 # See command help
-$ python -m playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
+$ playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 ```
 
 ## Known limitations

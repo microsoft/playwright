@@ -42,7 +42,7 @@ Playwright enables fast, reliable and capable automation across all modern brows
   ```
   ```sh python
   $ pip install playwright
-  $ python -m playwright install
+  $ playwright install
   ```
 
 * **TypeScript support**. Playwright ships with built-in types for auto-completion and other benefits.
