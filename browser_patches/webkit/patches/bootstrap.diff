@@ -8384,10 +8384,18 @@ index 4c120d6830582861432e5e58fba5707206350cd0..3509c62ac2c970fdcf78db2503c0cc42
      bool isThirdPartyRequest(const WebCore::ResourceRequest&);
      bool shouldBlockCookies(const WebCore::ResourceRequest&);
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
-index 435980eb8eff1749afd65ea09941d257a0a9cfc1..f8ff58861d367bfcf5104d5b3d9de7f3e6e7864d 100644
+index 435980eb8eff1749afd65ea09941d257a0a9cfc1..69a63ca6d28ed9c569176c2058d7a0e86ae1b3e8 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 +++ b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
-@@ -490,6 +490,8 @@ bool NetworkDataTaskSoup::acceptCertificate(GTlsCertificate* certificate, GTlsCe
+@@ -404,6 +404,7 @@ void NetworkDataTaskSoup::didSendRequest(GRefPtr<GInputStream>&& inputStream)
+         m_inputStream = WTFMove(inputStream);
+ 
+     m_networkLoadMetrics.responseStart = MonotonicTime::now() - m_startTime;
++    m_response.m_httpRequestHeaderFields = m_networkLoadMetrics.requestHeaders;
+     dispatchDidReceiveResponse();
+ }
+ 
+@@ -490,6 +491,8 @@ bool NetworkDataTaskSoup::acceptCertificate(GTlsCertificate* certificate, GTlsCe
  {
      ASSERT(m_soupMessage);
      URL url = soupURIToURL(soup_message_get_uri(m_soupMessage.get()));
@@ -8396,14 +8404,6 @@ index 435980eb8eff1749afd65ea09941d257a0a9cfc1..f8ff58861d367bfcf5104d5b3d9de7f3
      auto error = static_cast<NetworkSessionSoup&>(*m_session).soupNetworkSession().checkTLSErrors(url, certificate, tlsErrors);
      if (!error)
          return true;
-@@ -1001,6 +1003,7 @@ void NetworkDataTaskSoup::didGetHeaders()
-         const char* headerValue;
-         while (soup_message_headers_iter_next(&headersIter, &headerName, &headerValue))
-             requestHeaders.set(String(headerName), String(headerValue));
-+        m_response.m_httpRequestHeaderFields = requestHeaders;
-         m_networkLoadMetrics.requestHeaders = WTFMove(requestHeaders);
-     }
- }
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
 index 6e973f518c176c589e426bd6f466b1a7552828d4..8df1134613da2d817147bc5db3d30f5d29d994fb 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
@@ -9762,6 +9762,30 @@ index 0000000000000000000000000000000000000000..e7143513ea2be8e1cdab5c86a28643ff
 +    [super dealloc];
 +}
 +@end
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKDownload.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKDownload.mm
+index 913f53a5411894c29ebfe0d7f07fb7b60207af08..f198b4f05a5bcfe3455af157628791d549f181b0 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/_WKDownload.mm
++++ b/Source/WebKit/UIProcess/API/Cocoa/_WKDownload.mm
+@@ -32,6 +32,7 @@
+ #import "WKFrameInfoInternal.h"
+ #import "WKNSData.h"
+ #import "WKWebViewInternal.h"
++#import <wtf/cocoa/VectorCocoa.h>
+ #import <wtf/WeakObjCPtr.h>
+ 
+ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKDownloadInternal.h b/Source/WebKit/UIProcess/API/Cocoa/_WKDownloadInternal.h
+index ca94c2173757a54a0c755cbf30f8e05a0b75c9cb..422c1379da9b091ae5903a42bc7625be78030016 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/_WKDownloadInternal.h
++++ b/Source/WebKit/UIProcess/API/Cocoa/_WKDownloadInternal.h
+@@ -24,6 +24,7 @@
+  */
+ 
+ #import "_WKDownload.h"
++#import "WKObject.h"
+ 
+ #import <wtf/RetainPtr.h>
+ 
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm
 index 267f0ef93383958437840f00c2baa76bfd79cf5e..aa26067356677749c4f0e3b2f0a851b13707db66 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm
