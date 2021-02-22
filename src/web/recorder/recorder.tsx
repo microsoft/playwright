@@ -109,11 +109,11 @@ export const Recorder: React.FC<RecorderProps> = ({
         window.dispatch({ event: 'clear' }).catch(() => {});
       }}></ToolbarButton>
     </Toolbar>
-    <SplitView sidebarSize={200}>
+    <SplitView sidebarSize={200} sidebarHidden={mode === 'recording'}>
       <SourceView text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></SourceView>
       <div className='vbox'>
         <Toolbar>
-          <ToolbarButton icon='question' title='Explore' toggled={mode == 'inspecting'} onClick={() => {
+          <ToolbarButton icon='microscope' title='Explore' toggled={mode == 'inspecting'} onClick={() => {
             window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' }}).catch(() => { });
           }}>Explore</ToolbarButton>
           <input ref={selectorInputRef} className='selector-input' placeholder='Playwright Selector' value={selector} disabled={mode !== 'none'} onChange={event => {
