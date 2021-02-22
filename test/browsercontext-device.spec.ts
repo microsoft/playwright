@@ -60,9 +60,7 @@ describe('device', (suite, { browserName }) => {
     await context.close();
   });
 
-  it('should scroll twice when emulated',(test, {browserName}) => {
-    test.skip(browserName === 'webkit');
-  }, async ({server, contextFactory, playwright, contextOptions}) => {
+  it('should scroll twice when emulated', async ({server, contextFactory, playwright, contextOptions}) => {
     const device = playwright.devices['iPhone 6'];
     const context = await contextFactory({
       ...contextOptions,
