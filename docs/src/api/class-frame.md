@@ -1156,10 +1156,7 @@ a navigation.
 
 ### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
 
-### option: Frame.waitForNavigation.url
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
-
-URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
 
 ### option: Frame.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
 

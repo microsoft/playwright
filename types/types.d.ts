@@ -4457,7 +4457,7 @@ export interface Frame {
     timeout?: number;
 
     /**
-     * URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
      */
     url?: string|RegExp|((url: URL) => boolean);
 
