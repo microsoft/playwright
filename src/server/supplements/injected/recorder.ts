@@ -17,7 +17,6 @@
 import type * as actions from '../recorder/recorderActions';
 import type InjectedScript from '../../injected/injectedScript';
 import { generateSelector, querySelector } from './selectorGenerator';
-import { html } from './html';
 import type { Point } from '../../../common/types';
 import type { UIState } from '../recorder/recorderTypes';
 
@@ -57,33 +56,30 @@ export class Recorder {
   constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean }) {
     this._params = params;
     this._injectedScript = injectedScript;
-    this._outerGlassPaneElement = html`
-      <x-pw-glass style="
-        position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index: 2147483647;
-        pointer-events: none;
-        display: flex;
-      ">
-      </x-pw-glass>`;
+    this._outerGlassPaneElement = document.createElement('x-pw-glass');
+    this._outerGlassPaneElement.style.position = 'fixed';
+    this._outerGlassPaneElement.style.top = '0';
+    this._outerGlassPaneElement.style.right = '0';
+    this._outerGlassPaneElement.style.bottom = '0';
+    this._outerGlassPaneElement.style.left = '0';
+    this._outerGlassPaneElement.style.zIndex = '2147483647';
+    this._outerGlassPaneElement.style.pointerEvents = 'none';
+    this._outerGlassPaneElement.style.display = 'flex';
 
-    this._tooltipElement = html`<x-pw-tooltip></x-pw-tooltip>`;
-    this._actionPointElement = html`<x-pw-action-point hidden=true></x-pw-action-point>`;
+    this._tooltipElement = document.createElement('x-pw-tooltip');
+    this._actionPointElement = document.createElement('x-pw-action-point');
+    this._actionPointElement.setAttribute('hidden', 'true');
 
-    this._innerGlassPaneElement = html`
-      <x-pw-glass-inner style="flex: auto">
-        ${this._tooltipElement}
-      </x-pw-glass-inner>`;
+    this._innerGlassPaneElement = document.createElement('x-pw-glass-inner');
+    this._innerGlassPaneElement.style.flex = 'auto';
+    this._innerGlassPaneElement.appendChild(this._tooltipElement);
 
     // Use a closed shadow root to prevent selectors matching our internal previews.
     this._glassPaneShadow = this._outerGlassPaneElement.attachShadow({ mode: this._params.isUnderTest ? 'open' : 'closed' });
     this._glassPaneShadow.appendChild(this._innerGlassPaneElement);
     this._glassPaneShadow.appendChild(this._actionPointElement);
-    this._glassPaneShadow.appendChild(html`
-      <style>
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
         x-pw-tooltip {
           align-items: center;
           backdrop-filter: blur(5px);
@@ -120,8 +116,9 @@ export class Recorder {
         *[hidden] {
           display: none !important;
         }
-      </style>
-    `);
+    `;
+    this._glassPaneShadow.appendChild(styleElement);
+
     this._refreshListenersIfNeeded();
     setInterval(() => {
       this._refreshListenersIfNeeded();
@@ -394,15 +391,13 @@ export class Recorder {
   }
 
   private _createHighlightElement(): HTMLElement {
-    const highlightElement = html`
-      <x-pw-highlight style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 0;
-        height: 0;
-        box-sizing: border-box;">
-      </x-pw-highlight>`;
+    const highlightElement = document.createElement('x-pw-highlight');
+    highlightElement.style.position = 'absolute';
+    highlightElement.style.top = '0';
+    highlightElement.style.left = '0';
+    highlightElement.style.width = '0';
+    highlightElement.style.height = '0';
+    highlightElement.style.boxSizing = 'border-box';
     this._glassPaneShadow.appendChild(highlightElement);
     return highlightElement;
   }
