@@ -22,7 +22,7 @@
   padding: 0;
   margin-left: 10px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
 }
 
@@ -31,7 +31,7 @@
   cursor: default;
 }
 
-.toolbar-button:not(.disabled):not(.toggled):hover {
+.toolbar-button:not(.disabled):hover {
   color: #555;
 }
 

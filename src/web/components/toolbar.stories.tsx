@@ -32,7 +32,7 @@ const Template: Story<ToolbarProps> = () => <Toolbar>
 
 export const Primary = Template.bind({});
 
-const AllTemplate: Story = () => <Toolbar lineWrap={true}>
+const AllTemplate: Story = () => <Toolbar>
   {[
     'add', 'plus', 'gist-new', 'repo-create', 'lightbulb', 'light-bulb', 'repo', 'repo-delete', 'gist-fork', 'repo-forked',
     'git-pull-request', 'git-pull-request-abandoned', 'record-keys', 'keyboard', 'tag', 'tag-add', 'tag-remove', 'person',

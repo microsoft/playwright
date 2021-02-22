@@ -18,13 +18,10 @@ import './toolbar.css';
 import * as React from 'react';
 
 export interface ToolbarProps {
-  lineWrap?: boolean
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
-  lineWrap = false,
   children
 }) => {
-  const className = lineWrap ? 'toolbar toolbar-linewrap' : 'toolbar';
-  return <div className={className}>{children}</div>;
+  return <div className='toolbar'>{children}</div>;
 };
