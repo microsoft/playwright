@@ -17,6 +17,7 @@ can be changed for individual pages.
 <br/>
 
 ## Devices
+* langs: js, python
 
 Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser
 behavior on a mobile device:
