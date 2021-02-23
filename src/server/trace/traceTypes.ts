@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { StackFrame } from '../common/types';
+import { StackFrame } from '../../common/types';
 import { NodeSnapshot } from './snapshotterInjected';
 export { NodeSnapshot } from './snapshotterInjected';
 

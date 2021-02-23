@@ -20,7 +20,7 @@ import * as playwright from '../../..';
 import * as util from 'util';
 import { ScreenshotGenerator } from './screenshotGenerator';
 import { readTraceFile, TraceModel } from './traceModel';
-import type { TraceEvent } from '../../trace/traceTypes';
+import type { TraceEvent } from '../../server/trace/traceTypes';
 import { SnapshotServer } from './snapshotServer';
 import { ServerRouteHandler, TraceServer } from './traceServer';
 
