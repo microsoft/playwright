@@ -9572,6 +9572,18 @@ index 3d315be61348dd7d2467baa94dea4ae711c27803..364cfc24d55d9a2db33cbf9810295bfb
  
      // Version 15.
      WKPageDecidePolicyForSpeechRecognitionPermissionRequestCallback     decidePolicyForSpeechRecognitionPermissionRequest;
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKDownloadInternal.h b/Source/WebKit/UIProcess/API/Cocoa/WKDownloadInternal.h
+index 06c89420e6e27b143db025405cb33b7a9d7c4af9..cc0258b9dadf38dce74cabab479881b444a41167 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/WKDownloadInternal.h
++++ b/Source/WebKit/UIProcess/API/Cocoa/WKDownloadInternal.h
+@@ -26,6 +26,7 @@
+ #import "DownloadProxy.h"
+ #import "WKDownload.h"
+ #import "WKObject.h"
++#import <wtf/WeakObjCPtr.h>
+ 
+ namespace WebKit {
+ 
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h b/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
 index cad87f3ef2ab93d93a74cec0c34b47c695de6bc6..66145a384638b97ee08516e56e1e86a83713c634 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
