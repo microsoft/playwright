@@ -10,7 +10,7 @@ LAST_RELEASE=$(git describe --tags $(git rev-list --tags --max-count=1))
 
 echo "## Highlights"
 echo
-echo "TODO: \`git diff ${LAST_RELEASE}:docs/api.md docs/api.md\`"
+echo "TODO: asked teammates for the highlights"
 echo
 echo "## Browser Versions"
 echo
@@ -18,7 +18,7 @@ node ./print_versions.js
 echo
 echo "## New APIs"
 echo
-echo "TODO: \`git diff ${LAST_RELEASE}:docs/api.md docs/api.md\`"
+echo "TODO: \`git diff -w ${LAST_RELEASE}..HEAD src/client\`"
 echo
 CLOSED_ISSUES=$(./list_closed_issues.sh "${LAST_RELEASE}")
 ISSUES_COUNT=$(echo "${CLOSED_ISSUES}" | wc -l | xargs)
