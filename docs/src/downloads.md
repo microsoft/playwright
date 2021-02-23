@@ -74,4 +74,3 @@ are downloading a file since your main control flow is not awaiting for this ope
 ### API reference
 - [Download]
 - [`event: Page.download`]
-- [`method: Page.waitForEvent`]
