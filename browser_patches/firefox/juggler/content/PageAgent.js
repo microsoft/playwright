@@ -819,10 +819,10 @@ class PageAgent {
       null /* relatedTarget */,
       dragService.getCurrentSession().dataTransfer.mozCloneForEvent(type)
     );
-
-    window.windowUtils.dispatchDOMEventViaPresShellForTesting(element, event);
+    if (type !== 'drop' || dragService.dragAction)
+      window.windowUtils.dispatchDOMEventViaPresShellForTesting(element, event);
     if (type === 'drop')
-      dragService.endDragSession(true);
+      this._cancelDragIfNeeded();
   }
 
   _cancelDragIfNeeded() {
