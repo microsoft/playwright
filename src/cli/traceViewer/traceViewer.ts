@@ -54,8 +54,10 @@ const emptyModel: TraceModel = {
       name: '<empty>',
       filePath: '',
       pages: [],
+      resourcesByUrl: {},
+      overridenUrls: {}
     }
-  ]
+  ],
 };
 
 class TraceViewer {

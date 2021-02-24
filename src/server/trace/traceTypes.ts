@@ -129,7 +129,7 @@ export type FrameSnapshotTraceEvent = {
   type: 'snapshot',
   contextId: string,
   pageId: string,
-  frameId: string,  // Empty means main frame.
+  frameId: string,
   snapshot: FrameSnapshot,
   frameUrl: string,
   snapshotId?: string,
@@ -149,9 +149,15 @@ export type TraceEvent =
     LoadEvent |
     FrameSnapshotTraceEvent;
 
+export type ResourceOverride = {
+  url: string,
+  sha1?: string,
+  ref?: number
+};
+
 export type FrameSnapshot = {
   doctype?: string,
   html: NodeSnapshot,
-  resourceOverrides: { url: string, sha1?: string, ref?: number }[],
+  resourceOverrides: ResourceOverride[],
   viewport: { width: number, height: number },
 };
