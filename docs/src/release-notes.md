@@ -5,6 +5,34 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.9
+
+- [Playwright Inspector](https://playwright.dev/docs/inspector) is a **new GUI tool** to author and debug your tests.
+  - **Line-by-line debugging** of your Playwright scripts, with play, pause and step-through.
+  - Author new scripts by **recording user actions**.
+  - **Generate element selectors** for your script by hovering over elements.
+  - Set the `PWDEBUG=1` environment variable to launch the Inspector
+
+- **Pause script execution** with [`await page.pause()`](https://playwright.dev/docs/api/class-page#pagepause) in headed mode. Pausing the page launches [Playwright Inspector](https://playwright.dev/docs/inspector) for debugging.
+
+- **New has-text pseudo-class** for CSS selectors. `:has-text("example")` matches any element containing `"example"` somewhere inside, possibly in a child or a descendant element. See [more examples](https://playwright.dev/docs/selectors#text-selector).
+
+- **Page dialogs are now auto-dismissed** during execution, unless a listener for `dialog` event is configured. [Learn more](https://playwright.dev/docs/dialogs) about this.
+
+- [Playwright for Python](https://github.com/microsoft/playwright-python) is **now stable** with an idiomatic snake case API and pre-built [Docker image](https://playwright.dev/docs/docker) to run tests in CI/CD.
+
+#### Browser Versions
+
+- Chromium 90.0.4421.0
+- Mozilla Firefox 86.0b10
+- WebKit 14.1
+
+#### New APIs
+
+- [`browserType.connectOverCDP`](https://playwright.dev/docs/next/api/class-browsertype#browsertypeconnectovercdpparams)
+- [`page.pause`](https://playwright.dev/docs/next/api/class-page#pagepause)
+
+
 ## Version 1.8
 
 - [Selecting elements based on layout](./selectors.md#selecting-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
