@@ -13,7 +13,7 @@ title: "Release notes"
   - **Generate element selectors** for your script by hovering over elements.
   - Set the `PWDEBUG=1` environment variable to launch the Inspector
 
-- **Pause script execution** with [`method: page.pause`] in headed mode. Pausing the page launches [Playwright Inspector](./inspector.md) for debugging.
+- **Pause script execution** with [`method: Page.pause`]. in headed mode. Pausing the page launches [Playwright Inspector](./inspector.md) for debugging.
 
 - **New has-text pseudo-class** for CSS selectors. `:has-text("example")` matches any element containing `"example"` somewhere inside, possibly in a child or a descendant element. See [more examples](./selectors.md#text-selector).
 
@@ -29,8 +29,8 @@ title: "Release notes"
 
 #### New APIs
 
-- [`method: browserType.connectOverCDP`].
-- [`method: page.pause`].
+- [`method: BrowserType.connectOverCDP`].
+- [`method: Page.pause`].
 
 
 ## Version 1.8
