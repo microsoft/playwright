@@ -28,8 +28,6 @@ title: "Release notes"
 - WebKit 14.1
 
 #### New APIs
-
-- [`method: BrowserType.connectOverCDP`].
 - [`method: Page.pause`].
 
 
