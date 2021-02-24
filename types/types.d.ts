@@ -7095,8 +7095,8 @@ export interface ElectronApplication {
    * @param pageFunction Function to be evaluated in the worker context.
    * @param arg Optional argument to pass to `pageFunction`.
    */
-  evaluate<R, Arg>(pageFunction: PageFunctionOn<typeof import('electron'), Arg, R>, arg: Arg): Promise<R>;
-  evaluate<R>(pageFunction: PageFunctionOn<typeof import('electron'), void, R>, arg?: any): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<any, Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<any, void, R>, arg?: any): Promise<R>;
 
   /**
    * Returns the return value of `pageFunction` as a [JSHandle].
@@ -7117,8 +7117,8 @@ export interface ElectronApplication {
    * @param pageFunction Function to be evaluated in the worker context.
    * @param arg 
    */
-  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<typeof import('electron'), Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  evaluateHandle<R>(pageFunction: PageFunctionOn<typeof import('electron'), void, R>, arg?: any): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<any, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunctionOn<any, void, R>, arg?: any): Promise<SmartHandle<R>>;
   /**
    * This event is issued when the application closes.
    */
