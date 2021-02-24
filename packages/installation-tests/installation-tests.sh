@@ -33,7 +33,9 @@ PLAYWRIGHT_ANDROID_TGZ="$(node ${PACKAGE_BUILDER} playwright-android ./playwrigh
 echo "playwright-android built"
 
 SCRIPTS_PATH="$(pwd -P)/.."
-TEST_ROOT="$(pwd -P)"
+TEST_ROOT="/tmp/playwright-installation-tests"
+rm -rf "${TEST_ROOT}"
+mkdir -p "${TEST_ROOT}"
 NODE_VERSION="$(node --version)"
 
 function copy_test_scripts {
