@@ -41,7 +41,7 @@ const PW_LIB_DIRS = [
   'playwright-chromium',
   'playwright-firefox',
   'playwright-webkit',
-].map(packageName => path.join(packageName, 'lib'));
+].map(packageName => path.join('node_modules', packageName, 'lib'));
 
 export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
   const stack = new Error().stack!;
@@ -56,7 +56,7 @@ export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
     if (PW_LIB_DIRS.some(libDir => fileName.includes(libDir)))
       continue;
     // for tests.
-    if (fileName.includes(path.join('playwright', 'src')))
+    if (isUnderTest() && fileName.includes(path.join('playwright', 'src')))
       continue;
     if (isUnderTest() && fileName.includes(path.join('playwright', 'test', 'coverage.js')))
       continue;
