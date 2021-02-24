@@ -140,20 +140,19 @@ DEPS['src/server/injected/'] = ['src/server/common/'];
 DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/'];
 DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 
-DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/trace/', 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/android/', 'src/server/electron/'];
+DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/trace/', 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/android/', 'src/server/electron/'];
 DEPS['src/cli/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
 
 // Tracing is a client/server plugin, nothing should depend on it.
-DEPS['src/trace/'] = ['src/common/', 'src/utils/', 'src/client/**', 'src/server/**'];
 DEPS['src/web/recorder/'] = ['src/common/', 'src/web/', 'src/web/components/', 'src/server/supplements/recorder/recorderTypes.ts'];
 DEPS['src/web/traceViewer/'] = ['src/common/', 'src/web/', 'src/cli/traceViewer/'];
-DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/web/traceViewer/', 'src/web/', 'src/cli/traceViewer/', 'src/trace/'];
+DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/web/traceViewer/', 'src/web/', 'src/cli/traceViewer/', 'src/server/trace/'];
 // The service is a cross-cutting feature, and so it depends on a bunch of things.
-DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/trace/'];
+DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/server/trace/'];
 DEPS['src/service.ts'] = ['src/remote/'];
 
 // CLI should only use client-side features.
-DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/install/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/trace/**', 'src/utils/**'];
+DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/install/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**'];
 
 DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/common/', 'src/utils/', 'src/server/', 'src/server/chromium/'];
 DEPS['src/utils/'] = ['src/common/'];
