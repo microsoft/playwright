@@ -110,7 +110,7 @@ class Lock {
 
   async obtain() {
     while (this._workers === this._maxWorkers)
-      await new Promise(f => this._callbacks.push(f));
+      await new Promise<void>(f => this._callbacks.push(f));
     ++this._workers;
   }
 

@@ -26,7 +26,7 @@ import { FrameSnapshot } from './traceTypes';
 
 export type SnapshotterResource = {
   pageId: string,
-  frameId: string,
+  frameId: string,  // Empty means main frame
   url: string,
   contentType: string,
   responseHeaders: { name: string, value: string }[],
@@ -47,6 +47,7 @@ export interface SnapshotterDelegate {
   onResource(resource: SnapshotterResource): void;
   onFrameSnapshot(frame: Frame, frameUrl: string, snapshot: FrameSnapshot, snapshotId?: string): void;
   pageId(page: Page): string;
+  frameId(frame: Frame): string;
 }
 
 export class Snapshotter {
@@ -115,7 +116,7 @@ export class Snapshotter {
         const context = await parent._mainContext();
         await context.evaluateInternal(({ kSnapshotStreamer, frameElement, frameId }) => {
           (window as any)[kSnapshotStreamer].markIframe(frameElement, frameId);
-        }, { kSnapshotStreamer, frameElement, frameId: frame._id });
+        }, { kSnapshotStreamer, frameElement, frameId: this._delegate.frameId(frame) });
         frameElement.dispose();
       } catch (e) {
         // Ignore
@@ -149,7 +150,7 @@ export class Snapshotter {
     const responseSha1 = body ? calculateSha1(body) : 'none';
     const resource: SnapshotterResource = {
       pageId: this._delegate.pageId(page),
-      frameId: response.frame()._id,
+      frameId: this._delegate.frameId(response.frame()),
       url,
       contentType,
       responseHeaders: response.headers(),

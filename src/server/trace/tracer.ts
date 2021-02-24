@@ -144,7 +144,7 @@ class ContextTracer implements SnapshotterDelegate {
       type: 'snapshot',
       contextId: this._contextId,
       pageId: this.pageId(frame._page),
-      frameId: frame._page.mainFrame() === frame ? '' : frame._id,
+      frameId: this.frameId(frame),
       snapshot: snapshot,
       frameUrl,
       snapshotId,
@@ -154,6 +154,10 @@ class ContextTracer implements SnapshotterDelegate {
 
   pageId(page: Page): string {
     return (page as any)[pageIdSymbol];
+  }
+
+  frameId(frame: Frame): string {
+    return frame._page.mainFrame() === frame ? this.pageId(frame._page) : frame._id;
   }
 
   async onActionCheckpoint(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {

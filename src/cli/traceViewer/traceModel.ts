@@ -19,7 +19,7 @@ export * as trace from '../../server/trace/traceTypes';
 
 export type TraceModel = {
   contexts: ContextEntry[];
-}
+};
 
 export type ContextEntry = {
   name: string;
@@ -29,6 +29,8 @@ export type ContextEntry = {
   created: trace.ContextCreatedTraceEvent;
   destroyed: trace.ContextDestroyedTraceEvent;
   pages: PageEntry[];
+  resourcesByUrl: { [key: string]: { resourceId: string, frameId: string }[] };
+  overridenUrls: { [key: string]: boolean };
 }
 
 export type VideoEntry = {
@@ -80,6 +82,8 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
           created: event,
           destroyed: undefined as any,
           pages: [],
+          resourcesByUrl: {},
+          overridenUrls: {}
         });
         break;
       }
@@ -155,6 +159,38 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
     contextEntry.endTime = Math.max(contextEntry.endTime, event.timestamp);
   }
   traceModel.contexts.push(...contextEntries.values());
+  preprocessModel(traceModel);
+}
+
+function preprocessModel(traceModel: TraceModel) {
+  for (const contextEntry of traceModel.contexts) {
+    const appendResource = (event: trace.NetworkResourceTraceEvent) => {
+      let responseEvents = contextEntry.resourcesByUrl[event.url];
+      if (!responseEvents) {
+        responseEvents = [];
+        contextEntry.resourcesByUrl[event.url] = responseEvents;
+      }
+      responseEvents.push({ frameId: event.frameId, resourceId: event.resourceId });
+    };
+    for (const pageEntry of contextEntry.pages) {
+      for (const action of pageEntry.actions)
+        action.resources.forEach(appendResource);
+      pageEntry.resources.forEach(appendResource);
+      for (const snapshots of Object.values(pageEntry.snapshotsByFrameId)) {
+        for (let i = 0; i < snapshots.length; ++i) {
+          const snapshot = snapshots[i];
+          for (const override of snapshot.snapshot.resourceOverrides) {
+            if (override.ref) {
+              const refOverride = snapshots[i - override.ref]?.snapshot.resourceOverrides.find(o => o.url === override.url);
+              override.sha1 = refOverride?.sha1;
+              delete override.ref;
+            }
+            contextEntry.overridenUrls[override.url] = true;
+          }
+        }
+      }
+    }
+  }
 }
 
 export function actionById(traceModel: TraceModel, actionId: string): { context: ContextEntry, page: PageEntry, action: ActionEntry } {

@@ -17,20 +17,23 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
-import type { TraceModel, trace, ContextEntry } from './traceModel';
+import querystring from 'querystring';
+import type { TraceModel } from './traceModel';
+import * as trace from '../../server/trace/traceTypes';
 import { TraceServer } from './traceServer';
-import { NodeSnapshot } from '../../server/trace/traceTypes';
 
 export class SnapshotServer {
   private _resourcesDir: string | undefined;
   private _server: TraceServer;
   private _resourceById: Map<string, trace.NetworkResourceTraceEvent>;
+  private _traceModel: TraceModel;
 
   constructor(server: TraceServer, traceModel: TraceModel, resourcesDir: string | undefined) {
     this._resourcesDir = resourcesDir;
     this._server = server;
 
     this._resourceById = new Map();
+    this._traceModel = traceModel;
     for (const contextEntry of traceModel.contexts) {
       for (const pageEntry of contextEntry.pages) {
         for (const action of pageEntry.actions)
@@ -41,6 +44,7 @@ export class SnapshotServer {
 
     server.routePath('/snapshot/', this._serveSnapshotRoot.bind(this), true);
     server.routePath('/snapshot/service-worker.js', this._serveServiceWorker.bind(this));
+    server.routePath('/snapshot-data', this._serveSnapshot.bind(this));
     server.routePrefix('/resources/', this._serveResource.bind(this));
   }
 
@@ -109,50 +113,93 @@ export class SnapshotServer {
     return true;
   }
 
-  private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
-      let traceModel: TraceModel;
-
-      type ContextData = {
-        resourcesByUrl: Map<string, trace.NetworkResourceTraceEvent[]>,
-        overridenUrls: Set<string>
-      };
-      const contextToData = new Map<ContextEntry, ContextData>();
-
-      function preprocessModel() {
-        for (const contextEntry of traceModel.contexts) {
-          const contextData: ContextData = {
-            resourcesByUrl: new Map(),
-            overridenUrls: new Set(),
-          };
-          const appendResource = (event: trace.NetworkResourceTraceEvent) => {
-            let responseEvents = contextData.resourcesByUrl.get(event.url);
-            if (!responseEvents) {
-              responseEvents = [];
-              contextData.resourcesByUrl.set(event.url, responseEvents);
-            }
-            responseEvents.push(event);
-          };
-          for (const pageEntry of contextEntry.pages) {
-            for (const action of pageEntry.actions)
-              action.resources.forEach(appendResource);
-            pageEntry.resources.forEach(appendResource);
-            for (const snapshots of Object.values(pageEntry.snapshotsByFrameId)) {
-              for (const snapshot of snapshots) {
-                for (const { url } of snapshot.snapshot.resourceOverrides)
-                  contextData.overridenUrls.add(url);
-              }
-            }
-          }
-          contextToData.set(contextEntry, contextData);
+  private _frameSnapshotData(parsed: { pageId: string, frameId: string, snapshotId?: string, timestamp?: number }) {
+    let contextEntry;
+    let pageEntry;
+    for (const c of this._traceModel.contexts) {
+      for (const p of c.pages) {
+        if (p.created.pageId === parsed.pageId) {
+          contextEntry = c;
+          pageEntry = p;
         }
       }
+    }
+    if (!contextEntry || !pageEntry)
+      return { html: ''  };
+
+    const frameSnapshots = pageEntry.snapshotsByFrameId[parsed.frameId] || [];
+    let snapshotIndex = -1;
+    for (let index = 0; index < frameSnapshots.length; index++) {
+      const current = snapshotIndex === -1 ? undefined : frameSnapshots[snapshotIndex];
+      const snapshot = frameSnapshots[index];
+      // Prefer snapshot with exact id.
+      const exactMatch = parsed.snapshotId && snapshot.snapshotId === parsed.snapshotId;
+      const currentExactMatch = current && parsed.snapshotId && current.snapshotId === parsed.snapshotId;
+      // If not available, prefer the latest snapshot before the timestamp.
+      const timestampMatch = parsed.timestamp && snapshot.timestamp <= parsed.timestamp;
+      if (exactMatch || (timestampMatch && !currentExactMatch))
+        snapshotIndex = index;
+    }
+    let html = this._serializeSnapshot(frameSnapshots, snapshotIndex);
+    html += `<script>${contextEntry.created.snapshotScript}</script>`;
+    const resourcesByUrl = contextEntry.resourcesByUrl;
+    const overridenUrls = contextEntry.overridenUrls;
+    const resourceOverrides: any = {};
+    for (const o of frameSnapshots[snapshotIndex].snapshot.resourceOverrides)
+      resourceOverrides[o.url] = o.sha1;
+    return { html, resourcesByUrl, overridenUrls, resourceOverrides };
+  }
+
+  private _serializeSnapshot(snapshots: trace.FrameSnapshotTraceEvent[], initialSnapshotIndex: number): string {
+    const visit = (n: trace.NodeSnapshot, snapshotIndex: number): string => {
+      // Text node.
+      if (typeof n === 'string')
+        return escapeText(n);
+
+      if (!(n as any)._string) {
+        if (Array.isArray(n[0])) {
+          // Node reference.
+          const referenceIndex = snapshotIndex - n[0][0];
+          if (referenceIndex >= 0 && referenceIndex < snapshotIndex) {
+            const nodes = snapshotNodes(snapshots[referenceIndex].snapshot);
+            const nodeIndex = n[0][1];
+            if (nodeIndex >= 0 && nodeIndex < nodes.length)
+              (n as any)._string = visit(nodes[nodeIndex], referenceIndex);
+          }
+        } else if (typeof n[0] === 'string') {
+          // Element node.
+          const builder: string[] = [];
+          builder.push('<', n[0]);
+          for (const [attr, value] of Object.entries(n[1] || {}))
+            builder.push(' ', attr, '="', escapeAttribute(value as string), '"');
+          builder.push('>');
+          for (let i = 2; i < n.length; i++)
+            builder.push(visit(n[i], snapshotIndex));
+          if (!autoClosing.has(n[0]))
+            builder.push('</', n[0], '>');
+          (n as any)._string = builder.join('');
+        } else {
+          // Why are we here? Let's not throw, just in case.
+          (n as any)._string = '';
+        }
+      }
+      return (n as any)._string;
+    };
+
+    const snapshot = snapshots[initialSnapshotIndex].snapshot;
+    let html = visit(snapshot.html, initialSnapshotIndex);
+    if (snapshot.doctype)
+      html = `<!DOCTYPE ${snapshot.doctype}>` + html;
+    return html;
+  }
+
+  private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
+    function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
+      const pageToResourcesByUrl = new Map<string, { [key: string]: { resourceId: string, frameId: string }[] }>();
+      const pageToOverriddenUrls = new Map<string, { [key: string]: boolean }>();
+      const snapshotToResourceOverrides = new Map<string, { [key: string]: string | undefined }>();
 
       self.addEventListener('install', function(event: any) {
-        event.waitUntil(fetch('/tracemodel').then(async response => {
-          traceModel = await response.json();
-          preprocessModel();
-        }));
       });
 
       self.addEventListener('activate', function(event: any) {
@@ -172,7 +219,7 @@ export class SnapshotServer {
           throw new Error(`Unexpected url "${urlString}"`);
         return {
           pageId: parts[2],
-          frameId: parts[5] === 'main' ? '' : parts[5],
+          frameId: parts[5] === 'main' ? parts[2] : parts[5],
           snapshotId: (parts[3] === 'snapshotId' ? parts[4] : undefined),
           timestamp: (parts[3] === 'timestamp' ? +parts[4] : undefined),
         };
@@ -196,93 +243,6 @@ export class SnapshotServer {
         }
       }
 
-      const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
-      const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
-      function escapeAttribute(s: string): string {
-        return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
-      }
-      function escapeText(s: string): string {
-        return s.replace(/[&<]/ug, char => (escaped as any)[char]);
-      }
-
-      function snapshotNodes(snapshot: trace.FrameSnapshot): NodeSnapshot[] {
-        if (!(snapshot as any)._nodes) {
-          const nodes: NodeSnapshot[] = [];
-          const visit = (n: trace.NodeSnapshot) => {
-            if (typeof n === 'string') {
-              nodes.push(n);
-            } else if (typeof n[0] === 'string') {
-              for (let i = 2; i < n.length; i++)
-                visit(n[i]);
-              nodes.push(n);
-            }
-          };
-          visit(snapshot.html);
-          (snapshot as any)._nodes = nodes;
-        }
-        return (snapshot as any)._nodes;
-      }
-
-      function serializeSnapshot(snapshots: trace.FrameSnapshotTraceEvent[], initialSnapshotIndex: number): string {
-        const visit = (n: trace.NodeSnapshot, snapshotIndex: number): string => {
-          // Text node.
-          if (typeof n === 'string')
-            return escapeText(n);
-
-          if (!(n as any)._string) {
-            if (Array.isArray(n[0])) {
-              // Node reference.
-              const referenceIndex = snapshotIndex - n[0][0];
-              if (referenceIndex >= 0 && referenceIndex < snapshotIndex) {
-                const nodes = snapshotNodes(snapshots[referenceIndex].snapshot);
-                const nodeIndex = n[0][1];
-                if (nodeIndex >= 0 && nodeIndex < nodes.length)
-                  (n as any)._string = visit(nodes[nodeIndex], referenceIndex);
-              }
-            } else if (typeof n[0] === 'string') {
-              // Element node.
-              const builder: string[] = [];
-              builder.push('<', n[0]);
-              for (const [attr, value] of Object.entries(n[1] || {}))
-                builder.push(' ', attr, '="', escapeAttribute(value), '"');
-              builder.push('>');
-              for (let i = 2; i < n.length; i++)
-                builder.push(visit(n[i], snapshotIndex));
-              if (!autoClosing.has(n[0]))
-                builder.push('</', n[0], '>');
-              (n as any)._string = builder.join('');
-            } else {
-              // Why are we here? Let's not throw, just in case.
-              (n as any)._string = '';
-            }
-          }
-          return (n as any)._string;
-        };
-
-        const snapshot = snapshots[initialSnapshotIndex].snapshot;
-        let html = visit(snapshot.html, initialSnapshotIndex);
-        if (snapshot.doctype)
-          html = `<!DOCTYPE ${snapshot.doctype}>` + html;
-        return html;
-      }
-
-      function findResourceOverride(snapshots: trace.FrameSnapshotTraceEvent[], snapshotIndex: number, url: string): string | undefined {
-        while (true) {
-          const snapshot = snapshots[snapshotIndex].snapshot;
-          const override = snapshot.resourceOverrides.find(o => o.url === url);
-          if (!override)
-            return;
-          if (override.sha1 !== undefined)
-            return override.sha1;
-          if (override.ref === undefined)
-            return;
-          const referenceIndex = snapshotIndex - override.ref!;
-          if (referenceIndex < 0 || referenceIndex >= snapshotIndex)
-            return;
-          snapshotIndex = referenceIndex;
-        }
-      }
-
       async function doFetch(event: any /* FetchEvent */): Promise<Response> {
         try {
           const pathname = new URL(event.request.url).pathname;
@@ -292,7 +252,7 @@ export class SnapshotServer {
         }
 
         const request = event.request;
-        let parsed;
+        let parsed: { pageId: string, frameId: string, timestamp?: number, snapshotId?: string };
         if (request.mode === 'navigate') {
           parsed = parseUrl(request.url);
         } else {
@@ -300,58 +260,28 @@ export class SnapshotServer {
           parsed = parseUrl(client.url);
         }
 
-        let contextEntry;
-        let pageEntry;
-        for (const c of traceModel.contexts) {
-          for (const p of c.pages) {
-            if (p.created.pageId === parsed.pageId) {
-              contextEntry = c;
-              pageEntry = p;
-            }
-          }
-        }
-        if (!contextEntry || !pageEntry)
-          return request.mode === 'navigate' ? respondNotAvailable() : respond404();
-        const contextData = contextToData.get(contextEntry)!;
-
-        const frameSnapshots = pageEntry.snapshotsByFrameId[parsed.frameId] || [];
-        let snapshotIndex = -1;
-        for (let index = 0; index < frameSnapshots.length; index++) {
-          const current = snapshotIndex === -1 ? undefined : frameSnapshots[snapshotIndex];
-          const snapshot = frameSnapshots[index];
-          // Prefer snapshot with exact id.
-          const exactMatch = parsed.snapshotId && snapshot.snapshotId === parsed.snapshotId;
-          const currentExactMatch = current && parsed.snapshotId && current.snapshotId === parsed.snapshotId;
-          // If not available, prefer the latest snapshot before the timestamp.
-          const timestampMatch = parsed.timestamp && snapshot.timestamp <= parsed.timestamp;
-          if (exactMatch || (timestampMatch && !currentExactMatch))
-            snapshotIndex = index;
-        }
-        const snapshotEvent = snapshotIndex === -1 ? undefined : frameSnapshots[snapshotIndex];
-        if (!snapshotEvent)
-          return request.mode === 'navigate' ? respondNotAvailable() : respond404();
-
         if (request.mode === 'navigate') {
-          let html = serializeSnapshot(frameSnapshots, snapshotIndex);
-          html += `<script>${contextEntry.created.snapshotScript}</script>`;
+          const htmlResponse = await fetch(`/snapshot-data?pageId=${parsed.pageId}&snapshotId=${parsed.snapshotId}&timestamp=${parsed.timestamp}&frameId=${parsed.frameId}`);
+          const { html, resourcesByUrl, overridenUrls, resourceOverrides } = await htmlResponse.json();
+          if (!html)
+            return respondNotAvailable();
+          pageToResourcesByUrl.set(parsed.pageId, resourcesByUrl);
+          pageToOverriddenUrls.set(parsed.pageId, overridenUrls);
+          snapshotToResourceOverrides.set(parsed.snapshotId + '@' + parsed.timestamp, resourceOverrides);
           const response = new Response(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
           return response;
         }
 
-        let resource: trace.NetworkResourceTraceEvent | null = null;
+        const resourcesByUrl = pageToResourcesByUrl.get(parsed.pageId);
+        const overridenUrls = pageToOverriddenUrls.get(parsed.pageId);
+        const resourceOverrides = snapshotToResourceOverrides.get(parsed.snapshotId + '@' + parsed.timestamp);
         const urlWithoutHash = removeHash(request.url);
-        const resourcesWithUrl = contextData.resourcesByUrl.get(urlWithoutHash) || [];
-        for (const resourceEvent of resourcesWithUrl) {
-          if (resource && resourceEvent.frameId !== parsed.frameId)
-            continue;
-          resource = resourceEvent;
-          if (resourceEvent.frameId === parsed.frameId)
-            break;
-        }
+        const resourcesWithUrl = resourcesByUrl?.[urlWithoutHash] || [];
+        const resource = resourcesWithUrl.find(r => r.frameId === parsed.frameId) || resourcesWithUrl[0];
         if (!resource)
           return respond404();
 
-        const overrideSha1 = findResourceOverride(frameSnapshots, snapshotIndex, urlWithoutHash);
+        const overrideSha1 = resourceOverrides?.[urlWithoutHash];
         const fetchUrl = overrideSha1 ?
           `/resources/${resource.resourceId}/override/${overrideSha1}` :
           `/resources/${resource.resourceId}`;
@@ -362,7 +292,7 @@ export class SnapshotServer {
         // as the original request url.
         // Response url turns into resource base uri that is used to resolve
         // relative links, e.g. url(/foo/bar) in style sheets.
-        if (contextData.overridenUrls.has(urlWithoutHash)) {
+        if (overridenUrls?.[urlWithoutHash]) {
           // No cache, so that we refetch overridden resources.
           headers.set('Cache-Control', 'no-cache');
         }
@@ -383,6 +313,16 @@ export class SnapshotServer {
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/javascript');
     response.end(`(${serviceWorkerMain.toString()})(self)`);
+    return true;
+  }
+
+  private _serveSnapshot(request: http.IncomingMessage, response: http.ServerResponse): boolean {
+    response.statusCode = 200;
+    response.setHeader('Cache-Control', 'public, max-age=31536000');
+    response.setHeader('Content-Type', 'application/json');
+    const parsed = querystring.parse(request.url!.substring(request.url!.indexOf('?') + 1));
+    const snapshotData = this._frameSnapshotData(parsed as any);
+    response.end(JSON.stringify(snapshotData));
     return true;
   }
 
@@ -438,4 +378,32 @@ export class SnapshotServer {
       return false;
     }
   }
+}
+
+const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
+const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
+
+function escapeAttribute(s: string): string {
+  return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
+}
+function escapeText(s: string): string {
+  return s.replace(/[&<]/ug, char => (escaped as any)[char]);
+}
+
+function snapshotNodes(snapshot: trace.FrameSnapshot): trace.NodeSnapshot[] {
+  if (!(snapshot as any)._nodes) {
+    const nodes: trace.NodeSnapshot[] = [];
+    const visit = (n: trace.NodeSnapshot) => {
+      if (typeof n === 'string') {
+        nodes.push(n);
+      } else if (typeof n[0] === 'string') {
+        for (let i = 2; i < n.length; i++)
+          visit(n[i]);
+        nodes.push(n);
+      }
+    };
+    visit(snapshot.html);
+    (snapshot as any)._nodes = nodes;
+  }
+  return (snapshot as any)._nodes;
 }
