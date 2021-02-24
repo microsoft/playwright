@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { ActionEntry, TraceModel } from '../../../server/trace/viewer/traceModel';
+import { ActionEntry, ContextEntry, TraceModel } from '../../../server/trace/viewer/traceModel';
 import { ActionList } from './actionList';
 import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';
@@ -27,9 +27,9 @@ import { SnapshotTab } from './snapshotTab';
 import { LogsTab } from './logsTab';
 
 export const Workbench: React.FunctionComponent<{
-  traceModel: TraceModel,
-}> = ({ traceModel }) => {
-  const [context, setContext] = React.useState(traceModel.contexts[0]);
+  contexts: ContextEntry[],
+}> = ({ contexts }) => {
+  const [context, setContext] = React.useState(contexts[0]);
   const [selectedAction, setSelectedAction] = React.useState<ActionEntry | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionEntry | undefined>();
   const [selectedTime, setSelectedTime] = React.useState<number | undefined>();
@@ -51,7 +51,7 @@ export const Workbench: React.FunctionComponent<{
       <div className='product'>Playwright</div>
       <div className='spacer'></div>
       <ContextSelector
-        contexts={traceModel.contexts}
+        contexts={contexts}
         context={context}
         onChange={context => {
           setContext(context);

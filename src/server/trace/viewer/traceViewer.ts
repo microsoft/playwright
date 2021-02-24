@@ -19,7 +19,7 @@ import path from 'path';
 import * as playwright from '../../../..';
 import * as util from 'util';
 import { ScreenshotGenerator } from './screenshotGenerator';
-import { readTraceFile, TraceModel } from './traceModel';
+import { TraceModel } from './traceModel';
 import type { TraceEvent } from '../common/traceEvents';
 import { SnapshotServer } from './snapshotServer';
 import { ServerRouteHandler, TraceServer } from './traceServer';
@@ -31,41 +31,14 @@ type TraceViewerDocument = {
   model: TraceModel;
 };
 
-const emptyModel: TraceModel = {
-  contexts: [
-    {
-      startTime: 0,
-      endTime: 1,
-      created: {
-        timestamp: Date.now(),
-        type: 'context-created',
-        browserName: 'none',
-        contextId: '<empty>',
-        deviceScaleFactor: 1,
-        isMobile: false,
-        viewportSize: { width: 800, height: 600 },
-        snapshotScript: '',
-      },
-      destroyed: {
-        timestamp: Date.now(),
-        type: 'context-destroyed',
-        contextId: '<empty>',
-      },
-      name: '<empty>',
-      filePath: '',
-      pages: [],
-      resourcesByUrl: {},
-      overridenUrls: {}
-    }
-  ],
-};
+const emptyModel: TraceModel = new TraceModel();
 
 class TraceViewer {
   private _document: TraceViewerDocument | undefined;
 
   async load(traceDir: string) {
     const resourcesDir = path.join(traceDir, 'resources');
-    const model = { contexts: [] };
+    const model = new TraceModel();
     this._document = {
       model,
       resourcesDir,
@@ -77,7 +50,7 @@ class TraceViewer {
       const filePath = path.join(traceDir, name);
       const traceContent = await fsReadFileAsync(filePath, 'utf8');
       const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
-      readTraceFile(events, model, filePath);
+      model.appendEvents(events);
     }
   }
 

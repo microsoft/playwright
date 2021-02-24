@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import * as playwright from '../../../..';
 import * as util from 'util';
-import { actionById, ActionEntry, ContextEntry, TraceModel } from './traceModel';
+import { ActionEntry, ContextEntry, TraceModel } from './traceModel';
 import { SnapshotServer } from './snapshotServer';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
@@ -40,7 +40,7 @@ export class ScreenshotGenerator {
   }
 
   generateScreenshot(actionId: string): Promise<Buffer | undefined> {
-    const { context, action } = actionById(this._traceModel, actionId);
+    const { context, action } = this._traceModel.actionById(actionId);
     if (!this._rendering.has(action)) {
       this._rendering.set(action, this._render(context, action).then(body => {
         this._rendering.delete(action);

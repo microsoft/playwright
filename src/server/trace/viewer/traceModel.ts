@@ -14,16 +14,170 @@
  * limitations under the License.
  */
 
+import { createGuid } from '../../../utils/utils';
 import * as trace from '../common/traceEvents';
+import { FrameSnapshot } from './frameSnapshot';
 export * as trace from '../common/traceEvents';
 
-export type TraceModel = {
-  contexts: ContextEntry[];
-};
+export class TraceModel {
+  contextEntries = new Map<string, ContextEntry>();
+  pageEntries = new Map<string, { contextEntry: ContextEntry, pageEntry: PageEntry }>();
+  resourceById = new Map<string, trace.NetworkResourceTraceEvent>();
+
+  appendEvents(events: trace.TraceEvent[]) {
+    for (const event of events)
+      this.appendEvent(event);
+  }
+
+  appendEvent(event: trace.TraceEvent) {
+    switch (event.type) {
+      case 'context-created': {
+        this.contextEntries.set(event.contextId, {
+          name: event.debugName || createGuid(),
+          startTime: Number.MAX_VALUE,
+          endTime: Number.MIN_VALUE,
+          created: event,
+          destroyed: undefined as any,
+          pages: [],
+          resourcesByUrl: {},
+          overridenUrls: {}
+        });
+        break;
+      }
+      case 'context-destroyed': {
+        this.contextEntries.get(event.contextId)!.destroyed = event;
+        break;
+      }
+      case 'page-created': {
+        const pageEntry: PageEntry = {
+          created: event,
+          destroyed: undefined as any,
+          actions: [],
+          resources: [],
+          interestingEvents: [],
+          snapshotsByFrameId: {},
+        };
+        const contextEntry = this.contextEntries.get(event.contextId)!;
+        this.pageEntries.set(event.pageId, { pageEntry, contextEntry });
+        contextEntry.pages.push(pageEntry);
+        break;
+      }
+      case 'page-destroyed': {
+        this.pageEntries.get(event.pageId)!.pageEntry.destroyed = event;
+        break;
+      }
+      case 'action': {
+        if (!kInterestingActions.includes(event.method))
+          break;
+        const { pageEntry } = this.pageEntries.get(event.pageId!)!;
+        const actionId = event.contextId + '/' + event.pageId + '/' + pageEntry.actions.length;
+        const action: ActionEntry = {
+          actionId,
+          action: event,
+          thumbnailUrl: `/action-preview/${actionId}.png`,
+          resources: pageEntry.resources,
+        };
+        pageEntry.resources = [];
+        pageEntry.actions.push(action);
+        break;
+      }
+      case 'resource': {
+        const { pageEntry } = this.pageEntries.get(event.pageId!)!;
+        const action = pageEntry.actions[pageEntry.actions.length - 1];
+        (action || pageEntry).resources.push(event);
+        this.appendResource(event);
+        break;
+      }
+      case 'dialog-opened':
+      case 'dialog-closed':
+      case 'navigation':
+      case 'load': {
+        const { pageEntry } = this.pageEntries.get(event.pageId)!;
+        pageEntry.interestingEvents.push(event);
+        break;
+      }
+      case 'snapshot': {
+        const { pageEntry } = this.pageEntries.get(event.pageId!)!;
+        let snapshots = pageEntry.snapshotsByFrameId[event.frameId];
+        if (!snapshots) {
+          snapshots = [];
+          pageEntry.snapshotsByFrameId[event.frameId] = snapshots;
+        }
+        snapshots.push(event);
+        const contextEntry = this.contextEntries.get(event.contextId)!;
+        for (const override of event.snapshot.resourceOverrides) {
+          if (override.ref) {
+            const refOverride = snapshots[snapshots.length - 1 - override.ref]?.snapshot.resourceOverrides.find(o => o.url === override.url);
+            override.sha1 = refOverride?.sha1;
+            delete override.ref;
+          }
+          contextEntry.overridenUrls[override.url] = true;
+        }
+        break;
+      }
+    }
+    const contextEntry = this.contextEntries.get(event.contextId)!;
+    contextEntry.startTime = Math.min(contextEntry.startTime, event.timestamp);
+    contextEntry.endTime = Math.max(contextEntry.endTime, event.timestamp);
+  }
+
+  appendResource(event: trace.NetworkResourceTraceEvent) {
+    const contextEntry = this.contextEntries.get(event.contextId)!;
+    let responseEvents = contextEntry.resourcesByUrl[event.url];
+    if (!responseEvents) {
+      responseEvents = [];
+      contextEntry.resourcesByUrl[event.url] = responseEvents;
+    }
+    responseEvents.push({ frameId: event.frameId, resourceId: event.resourceId });
+    this.resourceById.set(event.resourceId, event);
+  }
+
+  actionById(actionId: string): { context: ContextEntry, page: PageEntry, action: ActionEntry } {
+    const [contextId, pageId, actionIndex] = actionId.split('/');
+    const context = this.contextEntries.get(contextId)!;
+    const page = context.pages.find(entry => entry.created.pageId === pageId)!;
+    const action = page.actions[+actionIndex];
+    return { context, page, action };
+  }
+
+  findPage(pageId: string): { contextEntry: ContextEntry | undefined, pageEntry: PageEntry | undefined } {
+    let contextEntry;
+    let pageEntry;
+    for (const c of this.contextEntries.values()) {
+      for (const p of c.pages) {
+        if (p.created.pageId === pageId) {
+          contextEntry = c;
+          pageEntry = p;
+        }
+      }
+    }
+    return { contextEntry, pageEntry };
+  }
+
+  findSnapshotById(pageId: string, frameId: string, snapshotId: string): FrameSnapshot | undefined {
+    const { pageEntry, contextEntry } = this.pageEntries.get(pageId)!;
+    const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
+    for (let index = 0; index < frameSnapshots.length; index++) {
+      if (frameSnapshots[index].snapshotId === snapshotId)
+        return new FrameSnapshot(contextEntry, frameSnapshots, index);
+    }
+  }
+
+  findSnapshotByTime(pageId: string, frameId: string, timestamp: number): FrameSnapshot | undefined {
+    const { pageEntry, contextEntry } = this.pageEntries.get(pageId)!;
+    const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
+    let snapshotIndex = -1;
+    for (let index = 0; index < frameSnapshots.length; index++) {
+      const snapshot = frameSnapshots[index];
+      if (timestamp && snapshot.timestamp <= timestamp)
+        snapshotIndex = index;
+    }
+    return snapshotIndex >= 0 ? new FrameSnapshot(contextEntry, frameSnapshots, snapshotIndex) : undefined;
+  }
+}
 
 export type ContextEntry = {
   name: string;
-  filePath: string;
   startTime: number;
   endTime: number;
   created: trace.ContextCreatedTraceEvent;
@@ -33,17 +187,11 @@ export type ContextEntry = {
   overridenUrls: { [key: string]: boolean };
 }
 
-export type VideoEntry = {
-  video: trace.PageVideoTraceEvent;
-  videoId: string;
-};
-
 export type InterestingPageEvent = trace.DialogOpenedEvent | trace.DialogClosedEvent | trace.NavigationEvent | trace.LoadEvent;
 
 export type PageEntry = {
   created: trace.PageCreatedTraceEvent;
   destroyed: trace.PageDestroyedTraceEvent;
-  video?: VideoEntry;
   actions: ActionEntry[];
   interestingEvents: InterestingPageEvent[];
   resources: trace.NetworkResourceTraceEvent[];
@@ -57,153 +205,4 @@ export type ActionEntry = {
   resources: trace.NetworkResourceTraceEvent[];
 };
 
-export type VideoMetaInfo = {
-  frames: number;
-  width: number;
-  height: number;
-  fps: number;
-  startTime: number;
-  endTime: number;
-};
-
 const kInterestingActions = ['click', 'dblclick', 'hover', 'check', 'uncheck', 'tap', 'fill', 'press', 'type', 'selectOption', 'setInputFiles', 'goto', 'setContent', 'goBack', 'goForward', 'reload'];
-
-export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel, filePath: string) {
-  const contextEntries = new Map<string, ContextEntry>();
-  const pageEntries = new Map<string, PageEntry>();
-  for (const event of events) {
-    switch (event.type) {
-      case 'context-created': {
-        contextEntries.set(event.contextId, {
-          filePath,
-          name: event.debugName || filePath.substring(filePath.lastIndexOf('/') + 1),
-          startTime: Number.MAX_VALUE,
-          endTime: Number.MIN_VALUE,
-          created: event,
-          destroyed: undefined as any,
-          pages: [],
-          resourcesByUrl: {},
-          overridenUrls: {}
-        });
-        break;
-      }
-      case 'context-destroyed': {
-        contextEntries.get(event.contextId)!.destroyed = event;
-        break;
-      }
-      case 'page-created': {
-        const pageEntry: PageEntry = {
-          created: event,
-          destroyed: undefined as any,
-          actions: [],
-          resources: [],
-          interestingEvents: [],
-          snapshotsByFrameId: {},
-        };
-        pageEntries.set(event.pageId, pageEntry);
-        contextEntries.get(event.contextId)!.pages.push(pageEntry);
-        break;
-      }
-      case 'page-destroyed': {
-        pageEntries.get(event.pageId)!.destroyed = event;
-        break;
-      }
-      case 'page-video': {
-        const pageEntry = pageEntries.get(event.pageId)!;
-        pageEntry.video = { video: event, videoId: event.contextId + '/' + event.pageId };
-        break;
-      }
-      case 'action': {
-        if (!kInterestingActions.includes(event.method))
-          break;
-        const pageEntry = pageEntries.get(event.pageId!)!;
-        const actionId = event.contextId + '/' + event.pageId + '/' + pageEntry.actions.length;
-        const action: ActionEntry = {
-          actionId,
-          action: event,
-          thumbnailUrl: `/action-preview/${actionId}.png`,
-          resources: pageEntry.resources,
-        };
-        pageEntry.resources = [];
-        pageEntry.actions.push(action);
-        break;
-      }
-      case 'resource': {
-        const pageEntry = pageEntries.get(event.pageId!)!;
-        const action = pageEntry.actions[pageEntry.actions.length - 1];
-        if (action)
-          action.resources.push(event);
-        else
-          pageEntry.resources.push(event);
-        break;
-      }
-      case 'dialog-opened':
-      case 'dialog-closed':
-      case 'navigation':
-      case 'load': {
-        const pageEntry = pageEntries.get(event.pageId)!;
-        pageEntry.interestingEvents.push(event);
-        break;
-      }
-      case 'snapshot': {
-        const pageEntry = pageEntries.get(event.pageId!)!;
-        if (!(event.frameId in pageEntry.snapshotsByFrameId))
-          pageEntry.snapshotsByFrameId[event.frameId] = [];
-        pageEntry.snapshotsByFrameId[event.frameId]!.push(event);
-        break;
-      }
-    }
-
-    const contextEntry = contextEntries.get(event.contextId)!;
-    contextEntry.startTime = Math.min(contextEntry.startTime, event.timestamp);
-    contextEntry.endTime = Math.max(contextEntry.endTime, event.timestamp);
-  }
-  traceModel.contexts.push(...contextEntries.values());
-  preprocessModel(traceModel);
-}
-
-function preprocessModel(traceModel: TraceModel) {
-  for (const contextEntry of traceModel.contexts) {
-    const appendResource = (event: trace.NetworkResourceTraceEvent) => {
-      let responseEvents = contextEntry.resourcesByUrl[event.url];
-      if (!responseEvents) {
-        responseEvents = [];
-        contextEntry.resourcesByUrl[event.url] = responseEvents;
-      }
-      responseEvents.push({ frameId: event.frameId, resourceId: event.resourceId });
-    };
-    for (const pageEntry of contextEntry.pages) {
-      for (const action of pageEntry.actions)
-        action.resources.forEach(appendResource);
-      pageEntry.resources.forEach(appendResource);
-      for (const snapshots of Object.values(pageEntry.snapshotsByFrameId)) {
-        for (let i = 0; i < snapshots.length; ++i) {
-          const snapshot = snapshots[i];
-          for (const override of snapshot.snapshot.resourceOverrides) {
-            if (override.ref) {
-              const refOverride = snapshots[i - override.ref]?.snapshot.resourceOverrides.find(o => o.url === override.url);
-              override.sha1 = refOverride?.sha1;
-              delete override.ref;
-            }
-            contextEntry.overridenUrls[override.url] = true;
-          }
-        }
-      }
-    }
-  }
-}
-
-export function actionById(traceModel: TraceModel, actionId: string): { context: ContextEntry, page: PageEntry, action: ActionEntry } {
-  const [contextId, pageId, actionIndex] = actionId.split('/');
-  const context = traceModel.contexts.find(entry => entry.created.contextId === contextId)!;
-  const page = context.pages.find(entry => entry.created.pageId === pageId)!;
-  const action = page.actions[+actionIndex];
-  return { context, page, action };
-}
-
-export function videoById(traceModel: TraceModel, videoId: string): { context: ContextEntry, page: PageEntry } {
-  const [contextId, pageId] = videoId.split('/');
-  const context = traceModel.contexts.find(entry => entry.created.contextId === contextId)!;
-  const page = context.pages.find(entry => entry.created.pageId === pageId)!;
-  return { context, page };
-}
