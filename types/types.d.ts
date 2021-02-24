@@ -7042,6 +7042,9 @@ type AccessibilityNode = {
 export const selectors: Selectors;
 export const devices: Devices & DeviceDescriptor[];
 
+//@ts-ignore this will be any if electron is not installed
+type ElectronType = typeof import('electron');
+
 /**
  * Electron application representation. You can use
  * [electron.launch([options])](https://playwright.dev/docs/api/class-electron#electronlaunchoptions) to obtain the
@@ -7095,8 +7098,8 @@ export interface ElectronApplication {
    * @param pageFunction Function to be evaluated in the worker context.
    * @param arg Optional argument to pass to `pageFunction`.
    */
-  evaluate<R, Arg>(pageFunction: PageFunctionOn<any, Arg, R>, arg: Arg): Promise<R>;
-  evaluate<R>(pageFunction: PageFunctionOn<any, void, R>, arg?: any): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<R>;
 
   /**
    * Returns the return value of `pageFunction` as a [JSHandle].
@@ -7117,8 +7120,8 @@ export interface ElectronApplication {
    * @param pageFunction Function to be evaluated in the worker context.
    * @param arg 
    */
-  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<any, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  evaluateHandle<R>(pageFunction: PageFunctionOn<any, void, R>, arg?: any): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
   /**
    * This event is issued when the application closes.
    */

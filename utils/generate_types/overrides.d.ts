@@ -222,12 +222,15 @@ type AccessibilityNode = {
 export const selectors: Selectors;
 export const devices: Devices & DeviceDescriptor[];
 
-export interface ElectronApplication {
-  evaluate<R, Arg>(pageFunction: PageFunctionOn<any, Arg, R>, arg: Arg): Promise<R>;
-  evaluate<R>(pageFunction: PageFunctionOn<any, void, R>, arg?: any): Promise<R>;
+//@ts-ignore this will be any if electron is not installed
+type ElectronType = typeof import('electron');
 
-  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<any, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  evaluateHandle<R>(pageFunction: PageFunctionOn<any, void, R>, arg?: any): Promise<SmartHandle<R>>;
+export interface ElectronApplication {
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<R>;
+
+  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
 }
 
 export type AndroidElementInfo = {
