@@ -462,13 +462,15 @@ const hasTextEngine: SelectorEngine = {
   },
 };
 
-function textMatcher(text: string, substring: boolean): (s: string) => boolean {
+function textMatcher(text: string, caseInsensitive: boolean): (s: string) => boolean {
   text = text.trim().replace(/\s+/g, ' ');
-  text = text.toLowerCase();
+  if (caseInsensitive)
+    text = text.toLowerCase();
   return (s: string) => {
     s = s.trim().replace(/\s+/g, ' ');
-    s = s.toLowerCase();
-    return substring ? s.includes(text) : s === text;
+    if (caseInsensitive)
+      s = s.toLowerCase();
+    return s.includes(text);
   };
 }
 
