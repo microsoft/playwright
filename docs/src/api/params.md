@@ -68,8 +68,8 @@ Defaults to `left`.
 
 ## input-files
 - `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
-  - `name` <[string]> [File] name
-  - `mimeType` <[string]> [File] type
+  - `name` <[string]> File name
+  - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
 
 ## input-down-up-delay

@@ -2578,12 +2578,12 @@ export interface Page {
    */
   setInputFiles(selector: string, files: string|Array<string>|{
     /**
-     * [File] name
+     * File name
      */
     name: string;
 
     /**
-     * [File] type
+     * File type
      */
     mimeType: string;
 
@@ -2593,12 +2593,12 @@ export interface Page {
     buffer: Buffer;
   }|Array<{
     /**
-     * [File] name
+     * File name
      */
     name: string;
 
     /**
-     * [File] type
+     * File type
      */
     mimeType: string;
 
@@ -4194,12 +4194,12 @@ export interface Frame {
    */
   setInputFiles(selector: string, files: string|Array<string>|{
     /**
-     * [File] name
+     * File name
      */
     name: string;
 
     /**
-     * [File] type
+     * File type
      */
     mimeType: string;
 
@@ -4209,12 +4209,12 @@ export interface Frame {
     buffer: Buffer;
   }|Array<{
     /**
-     * [File] name
+     * File name
      */
     name: string;
 
     /**
-     * [File] type
+     * File type
      */
     mimeType: string;
 
@@ -6021,12 +6021,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    */
   setInputFiles(files: string|Array<string>|{
     /**
-     * [File] name
+     * File name
      */
     name: string;
 
     /**
-     * [File] type
+     * File type
      */
     mimeType: string;
 
@@ -6036,12 +6036,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     buffer: Buffer;
   }|Array<{
     /**
-     * [File] name
+     * File name
      */
     name: string;
 
     /**
-     * [File] type
+     * File type
      */
     mimeType: string;
 
@@ -9267,12 +9267,12 @@ export interface FileChooser {
    */
   setFiles(files: string|Array<string>|{
     /**
-     * [File] name
+     * File name
      */
     name: string;
 
     /**
-     * [File] type
+     * File type
      */
     mimeType: string;
 
@@ -9282,12 +9282,12 @@ export interface FileChooser {
     buffer: Buffer;
   }|Array<{
     /**
-     * [File] name
+     * File name
      */
     name: string;
 
     /**
-     * [File] type
+     * File type
      */
     mimeType: string;
 
