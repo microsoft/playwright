@@ -10864,6 +10864,19 @@ index f078994c0253b92e548c283879d88e44306fff76..9d70a9295af7f5b8003788dd7635932f
  void UIDelegate::UIClient::requestStorageAccessConfirm(WebPageProxy& webPageProxy, WebFrameProxy*, const WebCore::RegistrableDomain& requestingDomain, const WebCore::RegistrableDomain& currentDomain, CompletionHandler<void(bool)>&& completionHandler)
  {
      if (!m_uiDelegate)
+diff --git a/Source/WebKit/UIProcess/Cocoa/WKBlankOverlayView.mm b/Source/WebKit/UIProcess/Cocoa/WKBlankOverlayView.mm
+index 77adfc78b4a1a93c112da563a70a1de1ee73b947..1754517afa1fdcb30a6b8ee7a81da2c40c36fcec 100644
+--- a/Source/WebKit/UIProcess/Cocoa/WKBlankOverlayView.mm
++++ b/Source/WebKit/UIProcess/Cocoa/WKBlankOverlayView.mm
+@@ -24,7 +24,7 @@
+  */
+ 
+ #import "config.h"
+-#import "WKBlankOverlayView.mm"
++#import "WKBlankOverlayView.h"
+ 
+ @implementation WKBlankOverlayView {
+ }
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm b/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
 index 69ddc7c3576a1477c9fc44bc95b79aa5282b2f2c..e9591d0bcad2af54365e25ea3b7def880fbbd451 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
