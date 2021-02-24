@@ -18,7 +18,7 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ParsedSelector, ParsedSelectorPart, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
-import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText } from './selectorEvaluator';
+import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createWordsMatcher, createSubstringMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
@@ -164,7 +164,7 @@ export class InjectedScript {
 
   private _createTextEngine(shadow: boolean): SelectorEngine {
     const queryList = (root: SelectorRoot, selector: string, single: boolean): Element[] => {
-      const { matcher, strict } = createTextMatcher(selector);
+      const { matcher, strict } = textEngineMatcher(selector);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
 
@@ -758,12 +758,12 @@ function unescape(s: string): string {
   return r.join('');
 }
 
-type Matcher = (text: string) => boolean;
-function createTextMatcher(selector: string): { matcher: Matcher, strict: boolean } {
+function textEngineMatcher(selector: string): { matcher: TextMatcher, strict: boolean } {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
-    return { matcher: text => re.test(text), strict: true };
+    const matcher: TextMatcher = text => re.test(text.full);
+    return { matcher, strict: true };
   }
   let strict = false;
   if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
@@ -774,16 +774,7 @@ function createTextMatcher(selector: string): { matcher: Matcher, strict: boolea
     selector = unescape(selector.substring(1, selector.length - 1));
     strict = true;
   }
-  selector = selector.trim().replace(/\s+/g, ' ');
-  if (!strict)
-    selector = selector.toLowerCase();
-  const matcher = (text: string) => {
-    text = text.trim().replace(/\s+/g, ' ');
-    if (!strict)
-      return text.toLowerCase().includes(selector);
-    return text === selector;
-  };
-  return { matcher, strict };
+  return { matcher: strict ? createWordsMatcher(selector) : createSubstringMatcher(selector), strict };
 }
 
 export default InjectedScript;

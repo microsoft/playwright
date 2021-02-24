@@ -180,7 +180,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element): Sele
 function buildTextCandidates(injectedScript: InjectedScript, element: Element, allowHasText: boolean): SelectorToken[] {
   if (element.nodeName === 'SELECT')
     return [];
-  const text = elementText(injectedScript._evaluator, element).trim().replace(/\s+/g, ' ').substring(0, 80);
+  const text = elementText(injectedScript._evaluator, element).trimmed.substring(0, 80);
   if (!text)
     return [];
   const candidates: SelectorToken[] = [];

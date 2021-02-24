@@ -115,7 +115,7 @@ it('should work with :text', async ({page}) => {
   expect(await page.$eval(`:text("y")`, e => e.outerHTML)).toBe('<div>yo</div>');
   expect(await page.$(`:text-is("y")`)).toBe(null);
   expect(await page.$eval(`:text("hello world")`, e => e.outerHTML)).toBe('<div>\nHELLO   \n world  </div>');
-  expect(await page.$eval(`:text-is("hello world")`, e => e.outerHTML)).toBe('<div>\nHELLO   \n world  </div>');
+  expect(await page.$eval(`:text-is("HELLO world")`, e => e.outerHTML)).toBe('<div>\nHELLO   \n world  </div>');
   expect(await page.$eval(`:text("lo wo")`, e => e.outerHTML)).toBe('<div>\nHELLO   \n world  </div>');
   expect(await page.$(`:text-is("lo wo")`)).toBe(null);
   expect(await page.$eval(`:text-matches("^[ay]+$")`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -145,11 +145,11 @@ it('should work across nodes', async ({page}) => {
   expect(await page.$(`text=hello world`)).toBe(null);
 
   expect(await page.$eval(`:text-is("Hello, world!")`, e => e.id)).toBe('target1');
-  expect(await page.$(`:text-is("Hello")`)).toBe(null);
+  expect(await page.$eval(`:text-is("Hello")`, e => e.id)).toBe('target1');
   expect(await page.$eval(`:text-is("world")`, e => e.id)).toBe('target2');
   expect(await page.$$eval(`:text-is("world")`, els => els.length)).toBe(1);
   expect(await page.$eval(`text="Hello, world!"`, e => e.id)).toBe('target1');
-  expect(await page.$(`text="Hello"`)).toBe(null);
+  expect(await page.$eval(`text="Hello"`, e => e.id)).toBe('target1');
   expect(await page.$eval(`text="world"`, e => e.id)).toBe('target2');
   expect(await page.$$eval(`text="world"`, els => els.length)).toBe(1);
 
@@ -160,6 +160,21 @@ it('should work across nodes', async ({page}) => {
   expect(await page.$eval(`text=/.*/`, e => e.nodeName)).toBe('I');
   expect(await page.$eval(`text=/world?/`, e => e.id)).toBe('target2');
   expect(await page.$$eval(`text=/world/`, els => els.length)).toBe(1);
+});
+
+it('should work with text nodes in strict match mode', async ({page}) => {
+  await page.setContent(`<div id=target1>Hello<span id=target2>wo  rld  </span>  Hi again  </div>`);
+  expect(await page.$eval(`text="Hello"`, e => e.id)).toBe('target1');
+  expect(await page.$eval(`text="Hi again"`, e => e.id)).toBe('target1');
+  expect(await page.$eval(`text="wo rld"`, e => e.id)).toBe('target2');
+  expect(await page.$eval(`text="Hellowo rld Hi again"`, e => e.id)).toBe('target1');
+  expect(await page.$(`text="Hellowo"`)).toBe(null);
+  expect(await page.$(`text="Hellowo rld"`)).toBe(null);
+  expect(await page.$(`text="wo rld Hi ag"`)).toBe(null);
+  expect(await page.$(`text="again"`)).toBe(null);
+  expect(await page.$eval(`text=Hellowo`, e => e.id)).toBe('target1');
+  expect(await page.$eval(`text=wo rld Hi ag`, e => e.id)).toBe('target1');
+  expect(await page.$eval(`text=Hellowo rld`, e => e.id)).toBe('target1');
 });
 
 it('should clear caches', async ({page}) => {
@@ -249,6 +264,7 @@ it('should work with large DOM', async ({page}) => {
     'text=id18',
     'text=id12345',
     'text=id',
+    'text="id12345"',
     '#id18',
     '#id12345',
     '*',
