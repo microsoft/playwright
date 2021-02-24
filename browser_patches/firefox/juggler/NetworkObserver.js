@@ -245,7 +245,7 @@ class NetworkRequest {
       const body = atob(postData);
       synthesized.setData(body, body.length);
 
-      const overridenHeader = (lowerCaseName, defaultValue) => {
+      const overriddenHeader = (lowerCaseName, defaultValue) => {
         if (headers) {
           for (const header of headers) {
             if (header.name.toLowerCase() === lowerCaseName) {
@@ -256,8 +256,8 @@ class NetworkRequest {
         return defaultValue;
       }
       // Clear content-length, so that upload stream resets it.
-      this.httpChannel.setRequestHeader('content-length', overridenHeader('content-length', ''), false /* merge */);
-      this.httpChannel.explicitSetUploadStream(synthesized, overridenHeader('content-type', 'application/octet-stream'), -1, this.httpChannel.requestMethod, false);
+      this.httpChannel.setRequestHeader('content-length', overriddenHeader('content-length', ''), false /* merge */);
+      this.httpChannel.explicitSetUploadStream(synthesized, overriddenHeader('content-type', 'application/octet-stream'), -1, this.httpChannel.requestMethod, false);
     }
   }
 

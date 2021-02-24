@@ -171,18 +171,18 @@ export class SnapshotServer {
 
         if (request.mode === 'navigate') {
           const htmlResponse = await fetch(`/snapshot-data?pageId=${parsed.pageId}&snapshotId=${parsed.snapshotId || ''}&timestamp=${parsed.timestamp || ''}&frameId=${parsed.frameId || ''}`);
-          const { html, resourcesByUrl, overridenUrls, resourceOverrides } = await htmlResponse.json();
+          const { html, resourcesByUrl, overriddenUrls, resourceOverrides } = await htmlResponse.json();
           if (!html)
             return respondNotAvailable();
           pageToResourcesByUrl.set(parsed.pageId, resourcesByUrl);
-          pageToOverriddenUrls.set(parsed.pageId, overridenUrls);
+          pageToOverriddenUrls.set(parsed.pageId, overriddenUrls);
           snapshotToResourceOverrides.set(parsed.snapshotId + '@' + parsed.timestamp, resourceOverrides);
           const response = new Response(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
           return response;
         }
 
         const resourcesByUrl = pageToResourcesByUrl.get(parsed.pageId);
-        const overridenUrls = pageToOverriddenUrls.get(parsed.pageId);
+        const overriddenUrls = pageToOverriddenUrls.get(parsed.pageId);
         const resourceOverrides = snapshotToResourceOverrides.get(parsed.snapshotId + '@' + parsed.timestamp);
         const urlWithoutHash = removeHash(request.url);
         const resourcesWithUrl = resourcesByUrl?.[urlWithoutHash] || [];
@@ -201,7 +201,7 @@ export class SnapshotServer {
         // as the original request url.
         // Response url turns into resource base uri that is used to resolve
         // relative links, e.g. url(/foo/bar) in style sheets.
-        if (overridenUrls?.[urlWithoutHash]) {
+        if (overriddenUrls?.[urlWithoutHash]) {
           // No cache, so that we refetch overridden resources.
           headers.set('Cache-Control', 'no-cache');
         }

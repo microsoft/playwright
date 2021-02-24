@@ -242,7 +242,7 @@ export class Route extends SdkObject {
       const newUrl = new URL(overrides.url);
       const oldUrl = new URL(this._request.url());
       if (oldUrl.protocol !== newUrl.protocol)
-        throw new Error('New URL must have same protocol as overriden URL');
+        throw new Error('New URL must have same protocol as overridden URL');
     }
     await this._delegate.continue(overrides);
   }
