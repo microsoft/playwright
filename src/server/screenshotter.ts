@@ -73,19 +73,19 @@ export class Screenshotter {
       if (options.fullPage) {
         const fullPageSize = await this._fullPageSize();
         let documentRect = { x: 0, y: 0, width: fullPageSize.width, height: fullPageSize.height };
-        let overridenViewportSize: types.Size | null = null;
+        let overriddenViewportSize: types.Size | null = null;
         const fitsViewport = fullPageSize.width <= viewportSize.width && fullPageSize.height <= viewportSize.height;
         if (!this._page._delegate.canScreenshotOutsideViewport() && !fitsViewport) {
-          overridenViewportSize = fullPageSize;
+          overriddenViewportSize = fullPageSize;
           progress.throwIfAborted(); // Avoid side effects.
-          await this._page.setViewportSize(overridenViewportSize);
+          await this._page.setViewportSize(overriddenViewportSize);
           progress.cleanupWhenAborted(() => this._restoreViewport(originalViewportSize));
         }
         if (options.clip)
           documentRect = trimClipToSize(options.clip, documentRect);
         const buffer = await this._screenshot(progress, format, documentRect, undefined, options);
         progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
-        if (overridenViewportSize)
+        if (overriddenViewportSize)
           await this._restoreViewport(originalViewportSize);
         return buffer;
       }
@@ -106,15 +106,15 @@ export class Screenshotter {
       assert(boundingBox.width !== 0, 'Node has 0 width.');
       assert(boundingBox.height !== 0, 'Node has 0 height.');
 
-      let overridenViewportSize: types.Size | null = null;
+      let overriddenViewportSize: types.Size | null = null;
       const fitsViewport = boundingBox.width <= viewportSize.width && boundingBox.height <= viewportSize.height;
       if (!this._page._delegate.canScreenshotOutsideViewport() && !fitsViewport) {
-        overridenViewportSize = helper.enclosingIntSize({
+        overriddenViewportSize = helper.enclosingIntSize({
           width: Math.max(viewportSize.width, boundingBox.width),
           height: Math.max(viewportSize.height, boundingBox.height),
         });
         progress.throwIfAborted(); // Avoid side effects.
-        await this._page.setViewportSize(overridenViewportSize);
+        await this._page.setViewportSize(overriddenViewportSize);
         progress.cleanupWhenAborted(() => this._restoreViewport(originalViewportSize));
 
         await handle._waitAndScrollIntoViewIfNeeded(progress);
@@ -131,7 +131,7 @@ export class Screenshotter {
       documentRect.y += scrollOffset.y;
       const buffer = await this._screenshot(progress, format, helper.enclosingIntRect(documentRect), undefined, options);
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
-      if (overridenViewportSize)
+      if (overriddenViewportSize)
         await this._restoreViewport(originalViewportSize);
       return buffer;
     }).catch(rewriteError);

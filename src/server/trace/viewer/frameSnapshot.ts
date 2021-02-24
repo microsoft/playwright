@@ -21,7 +21,7 @@ export * as trace from '../common/traceEvents';
 export type SerializedFrameSnapshot = {
   html: string;
   resourcesByUrl: { [key: string]: { resourceId: string, frameId: string }[] };
-  overridenUrls: { [key: string]: boolean };
+  overriddenUrls: { [key: string]: boolean };
   resourceOverrides: { [key: string]: string };
 };
 
@@ -83,11 +83,11 @@ export class FrameSnapshot {
     html += `<script>${this.contextEntry.created.snapshotScript}</script>`;
 
     const resourcesByUrl = this.contextEntry.resourcesByUrl;
-    const overridenUrls = this.contextEntry.overridenUrls;
+    const overriddenUrls = this.contextEntry.overriddenUrls;
     const resourceOverrides: any = {};
     for (const o of this._snapshots[this._index].snapshot.resourceOverrides)
       resourceOverrides[o.url] = o.sha1;
-    return { html, resourcesByUrl, overridenUrls, resourceOverrides };
+    return { html, resourcesByUrl, overriddenUrls: overriddenUrls, resourceOverrides };
   }
 }
 

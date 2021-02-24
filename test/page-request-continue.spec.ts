@@ -74,7 +74,7 @@ it('should not allow changing protocol when overriding url', async ({page, serve
   });
   await page.goto(server.EMPTY_PAGE);
   expect(error).toBeTruthy();
-  expect(error.message).toContain('New URL must have same protocol as overriden URL');
+  expect(error.message).toContain('New URL must have same protocol as overridden URL');
 });
 
 it('should override method along with url', async ({page, server}) => {

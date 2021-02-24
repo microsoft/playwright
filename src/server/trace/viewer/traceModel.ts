@@ -40,7 +40,7 @@ export class TraceModel {
           destroyed: undefined as any,
           pages: [],
           resourcesByUrl: {},
-          overridenUrls: {}
+          overriddenUrls: {}
         });
         break;
       }
@@ -111,7 +111,7 @@ export class TraceModel {
             override.sha1 = refOverride?.sha1;
             delete override.ref;
           }
-          contextEntry.overridenUrls[override.url] = true;
+          contextEntry.overriddenUrls[override.url] = true;
         }
         break;
       }
@@ -184,7 +184,7 @@ export type ContextEntry = {
   destroyed: trace.ContextDestroyedTraceEvent;
   pages: PageEntry[];
   resourcesByUrl: { [key: string]: { resourceId: string, frameId: string }[] };
-  overridenUrls: { [key: string]: boolean };
+  overriddenUrls: { [key: string]: boolean };
 }
 
 export type InterestingPageEvent = trace.DialogOpenedEvent | trace.DialogClosedEvent | trace.NavigationEvent | trace.LoadEvent;
