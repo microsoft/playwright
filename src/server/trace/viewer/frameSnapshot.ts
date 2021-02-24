@@ -15,23 +15,25 @@
  */
 
 import * as trace from '../common/traceEvents';
-import { ContextEntry } from './traceModel';
+import { ContextEntry, ContextResources } from './traceModel';
 export * as trace from '../common/traceEvents';
 
 export type SerializedFrameSnapshot = {
   html: string;
-  resourcesByUrl: { [key: string]: { resourceId: string, frameId: string }[] };
-  overriddenUrls: { [key: string]: boolean };
-  resourceOverrides: { [key: string]: string };
+  resources: { [key: string]: { resourceId: string, sha1?: string } };
 };
 
 export class FrameSnapshot {
   private _snapshots: trace.FrameSnapshotTraceEvent[];
   private _index: number;
-  contextEntry: ContextEntry;
+  private _contextEntry: ContextEntry;
+  private _contextResources: ContextResources;
+  private _frameId: string;
 
-  constructor(contextEntry: ContextEntry, events: trace.FrameSnapshotTraceEvent[], index: number) {
-    this.contextEntry = contextEntry;
+  constructor(frameId: string, contextEntry: ContextEntry, contextResources: ContextResources, events: trace.FrameSnapshotTraceEvent[], index: number) {
+    this._frameId = frameId;
+    this._contextEntry = contextEntry;
+    this._contextResources = contextResources;
     this._snapshots = events;
     this._index = index;
   }
@@ -80,14 +82,19 @@ export class FrameSnapshot {
     let html = visit(snapshot.html, this._index);
     if (snapshot.doctype)
       html = `<!DOCTYPE ${snapshot.doctype}>` + html;
-    html += `<script>${this.contextEntry.created.snapshotScript}</script>`;
+    html += `<script>${this._contextEntry.created.snapshotScript}</script>`;
 
-    const resourcesByUrl = this.contextEntry.resourcesByUrl;
-    const overriddenUrls = this.contextEntry.overriddenUrls;
-    const resourceOverrides: any = {};
-    for (const o of this._snapshots[this._index].snapshot.resourceOverrides)
-      resourceOverrides[o.url] = o.sha1;
-    return { html, resourcesByUrl, overriddenUrls: overriddenUrls, resourceOverrides };
+    const resources: { [key: string]: { resourceId: string, sha1?: string } } = {};
+    for (const [url, contextResources] of this._contextResources) {
+      const contextResource = contextResources.find(r => r.frameId === this._frameId) || contextResources[0];
+      if (contextResource)
+        resources[url] = { resourceId: contextResource.resourceId };
+    }
+    for (const o of this.traceEvent().snapshot.resourceOverrides) {
+      const resource = resources[o.url];
+      resource.sha1 = o.sha1;
+    }
+    return { html, resources };
   }
 }
 

@@ -23,6 +23,7 @@ export class TraceModel {
   contextEntries = new Map<string, ContextEntry>();
   pageEntries = new Map<string, { contextEntry: ContextEntry, pageEntry: PageEntry }>();
   resourceById = new Map<string, trace.NetworkResourceTraceEvent>();
+  contextResources = new Map<string, ContextResources>();
 
   appendEvents(events: trace.TraceEvent[]) {
     for (const event of events)
@@ -39,9 +40,8 @@ export class TraceModel {
           created: event,
           destroyed: undefined as any,
           pages: [],
-          resourcesByUrl: {},
-          overriddenUrls: {}
         });
+        this.contextResources.set(event.contextId, new Map());
         break;
       }
       case 'context-destroyed': {
@@ -104,14 +104,12 @@ export class TraceModel {
           pageEntry.snapshotsByFrameId[event.frameId] = snapshots;
         }
         snapshots.push(event);
-        const contextEntry = this.contextEntries.get(event.contextId)!;
         for (const override of event.snapshot.resourceOverrides) {
           if (override.ref) {
             const refOverride = snapshots[snapshots.length - 1 - override.ref]?.snapshot.resourceOverrides.find(o => o.url === override.url);
             override.sha1 = refOverride?.sha1;
             delete override.ref;
           }
-          contextEntry.overriddenUrls[override.url] = true;
         }
         break;
       }
@@ -122,11 +120,11 @@ export class TraceModel {
   }
 
   appendResource(event: trace.NetworkResourceTraceEvent) {
-    const contextEntry = this.contextEntries.get(event.contextId)!;
-    let responseEvents = contextEntry.resourcesByUrl[event.url];
+    const contextResources = this.contextResources.get(event.contextId)!;
+    let responseEvents = contextResources.get(event.url);
     if (!responseEvents) {
       responseEvents = [];
-      contextEntry.resourcesByUrl[event.url] = responseEvents;
+      contextResources.set(event.url, responseEvents);
     }
     responseEvents.push({ frameId: event.frameId, resourceId: event.resourceId });
     this.resourceById.set(event.resourceId, event);
@@ -159,7 +157,7 @@ export class TraceModel {
     const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
     for (let index = 0; index < frameSnapshots.length; index++) {
       if (frameSnapshots[index].snapshotId === snapshotId)
-        return new FrameSnapshot(contextEntry, frameSnapshots, index);
+        return new FrameSnapshot(frameId, contextEntry, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots, index);
     }
   }
 
@@ -172,7 +170,7 @@ export class TraceModel {
       if (timestamp && snapshot.timestamp <= timestamp)
         snapshotIndex = index;
     }
-    return snapshotIndex >= 0 ? new FrameSnapshot(contextEntry, frameSnapshots, snapshotIndex) : undefined;
+    return snapshotIndex >= 0 ? new FrameSnapshot(frameId, contextEntry, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots, snapshotIndex) : undefined;
   }
 }
 
@@ -183,9 +181,9 @@ export type ContextEntry = {
   created: trace.ContextCreatedTraceEvent;
   destroyed: trace.ContextDestroyedTraceEvent;
   pages: PageEntry[];
-  resourcesByUrl: { [key: string]: { resourceId: string, frameId: string }[] };
-  overriddenUrls: { [key: string]: boolean };
 }
+
+export type ContextResources = Map<string, { resourceId: string, frameId: string }[]>;
 
 export type InterestingPageEvent = trace.DialogOpenedEvent | trace.DialogClosedEvent | trace.NavigationEvent | trace.LoadEvent;
 

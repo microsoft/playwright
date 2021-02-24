@@ -20,6 +20,7 @@ import path from 'path';
 import querystring from 'querystring';
 import type { TraceModel } from './traceModel';
 import { TraceServer } from './traceServer';
+import type { SerializedFrameSnapshot } from './frameSnapshot';
 
 export class SnapshotServer {
   private _resourcesDir: string | undefined;
@@ -104,9 +105,7 @@ export class SnapshotServer {
 
   private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
-      const pageToResourcesByUrl = new Map<string, { [key: string]: { resourceId: string, frameId: string }[] }>();
-      const pageToOverriddenUrls = new Map<string, { [key: string]: boolean }>();
-      const snapshotToResourceOverrides = new Map<string, { [key: string]: string | undefined }>();
+      const snapshotResources = new Map<string, { [key: string]: { resourceId?: string, sha1?: string } }>();
 
       self.addEventListener('install', function(event: any) {
       });
@@ -171,28 +170,22 @@ export class SnapshotServer {
 
         if (request.mode === 'navigate') {
           const htmlResponse = await fetch(`/snapshot-data?pageId=${parsed.pageId}&snapshotId=${parsed.snapshotId || ''}&timestamp=${parsed.timestamp || ''}&frameId=${parsed.frameId || ''}`);
-          const { html, resourcesByUrl, overriddenUrls, resourceOverrides } = await htmlResponse.json();
+          const { html, resources }: SerializedFrameSnapshot  = await htmlResponse.json();
           if (!html)
             return respondNotAvailable();
-          pageToResourcesByUrl.set(parsed.pageId, resourcesByUrl);
-          pageToOverriddenUrls.set(parsed.pageId, overriddenUrls);
-          snapshotToResourceOverrides.set(parsed.snapshotId + '@' + parsed.timestamp, resourceOverrides);
+          snapshotResources.set(parsed.snapshotId + '@' + parsed.timestamp, resources);
           const response = new Response(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
           return response;
         }
 
-        const resourcesByUrl = pageToResourcesByUrl.get(parsed.pageId);
-        const overriddenUrls = pageToOverriddenUrls.get(parsed.pageId);
-        const resourceOverrides = snapshotToResourceOverrides.get(parsed.snapshotId + '@' + parsed.timestamp);
+        const resources = snapshotResources.get(parsed.snapshotId + '@' + parsed.timestamp)!;
         const urlWithoutHash = removeHash(request.url);
-        const resourcesWithUrl = resourcesByUrl?.[urlWithoutHash] || [];
-        const resource = resourcesWithUrl.find(r => r.frameId === parsed.frameId) || resourcesWithUrl[0];
+        const resource = resources[urlWithoutHash];
         if (!resource)
           return respond404();
 
-        const overrideSha1 = resourceOverrides?.[urlWithoutHash];
-        const fetchUrl = overrideSha1 ?
-          `/resources/${resource.resourceId}/override/${overrideSha1}` :
+        const fetchUrl = resource.sha1 ?
+          `/resources/${resource.resourceId}/override/${resource.sha1}` :
           `/resources/${resource.resourceId}`;
         const fetchedResponse = await fetch(fetchUrl);
         const headers = new Headers(fetchedResponse.headers);
@@ -201,7 +194,7 @@ export class SnapshotServer {
         // as the original request url.
         // Response url turns into resource base uri that is used to resolve
         // relative links, e.g. url(/foo/bar) in style sheets.
-        if (overriddenUrls?.[urlWithoutHash]) {
+        if (resource.sha1) {
           // No cache, so that we refetch overridden resources.
           headers.set('Cache-Control', 'no-cache');
         }
