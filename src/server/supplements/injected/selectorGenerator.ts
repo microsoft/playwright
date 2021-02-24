@@ -154,14 +154,15 @@ function buildCandidates(injectedScript: InjectedScript, element: Element): Sele
   }
   if (element.hasAttribute('aria-label'))
     candidates.push({ engine: 'css', selector: `[aria-label=${quoteString(element.getAttribute('aria-label')!)}]`, score: 10 });
-  if (element.nodeName === 'IMG' && element.getAttribute('alt'))
-    candidates.push({ engine: 'css', selector: `img[alt=${quoteString(element.getAttribute('alt')!)}]`, score: 10 });
+  if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName))
+    candidates.push({ engine: 'css', selector: `${element.nodeName.toLowerCase()}[alt=${quoteString(element.getAttribute('alt')!)}]`, score: 10 });
 
   if (element.hasAttribute('role'))
     candidates.push({ engine: 'css', selector: `${element.nodeName.toLocaleLowerCase()}[role=${quoteString(element.getAttribute('role')!)}]` , score: 50 });
+
+  if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
+    candidates.push({ engine: 'css', selector: `${element.nodeName.toLowerCase()}[name=${quoteString(element.getAttribute('name')!)}]`, score: 50 });
   if (['INPUT', 'TEXTAREA'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden') {
-    if (element.getAttribute('name'))
-      candidates.push({ engine: 'css', selector: `${element.nodeName.toLowerCase()}[name=${quoteString(element.getAttribute('name')!)}]`, score: 50 });
     if (element.getAttribute('type'))
       candidates.push({ engine: 'css', selector: `${element.nodeName.toLowerCase()}[type=${quoteString(element.getAttribute('type')!)}]`, score: 50 });
   }

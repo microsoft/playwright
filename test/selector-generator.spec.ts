@@ -272,4 +272,11 @@ describe('selector generator', (suite, { mode }) => {
     ]);
     expect(await generate(frame, 'div')).toBe('text=Target');
   });
+
+  it('should use the name attributes for elements that can have it', async ({ page }) => {
+    for (const tagName of ['button', 'input', 'textarea']) {
+      await page.setContent(`<form><${tagName} name="foo"></${tagName}><${tagName} name="bar"></${tagName}></form>`);
+      expect(await generate(page, '[name=bar]')).toBe(`${tagName}[name="bar"]`);
+    }
+  });
 });
