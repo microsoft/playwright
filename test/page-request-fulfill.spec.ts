@@ -202,3 +202,52 @@ it('should support Set-Cookie header', (test, { browserName }) => {
     secure: false
   }]);
 });
+
+it('should ignore secure Set-Cookie header for insecure requests', (test, { browserName }) => {
+  test.fixme(browserName === 'webkit');
+}, async ({context, page, server}) => {
+  await page.route('http://example.com/', (route, request) => {
+    route.fulfill({
+      headers: {
+        'Set-Cookie': 'name=value; domain=.example.com; Path=/; Secure'
+      },
+      contentType: 'text/html',
+      body: 'done'
+    });
+  });
+  await page.goto('http://example.com');
+  expect(await context.cookies()).toEqual([]);
+});
+
+it('should use Set-Cookie header in future requests', (test, { browserName }) => {
+  test.fixme(browserName === 'webkit');
+}, async ({context, page, server}) => {
+  await page.route(server.EMPTY_PAGE, (route, request) => {
+    route.fulfill({
+      headers: {
+        'Set-Cookie': 'name=value'
+      },
+      contentType: 'text/html',
+      body: 'done'
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(await context.cookies()).toEqual([{
+    sameSite: 'None',
+    name: 'name',
+    value: 'value',
+    domain: 'localhost',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false
+  }]);
+
+  let cookie = '';
+  server.setRoute('/foo.html', (req, res) => {
+    cookie = req.headers.cookie;
+    res.end();
+  });
+  await page.goto(server.PREFIX + '/foo.html');
+  expect(cookie).toBe('name=value');
+});
