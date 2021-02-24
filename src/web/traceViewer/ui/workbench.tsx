@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { ActionEntry, TraceModel } from '../../../cli/traceViewer/traceModel';
+import { ActionEntry, TraceModel } from '../../../server/trace/viewer/traceModel';
 import { ActionList } from './actionList';
 import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ActionEntry } from '../../../cli/traceViewer/traceModel';
+import { ActionEntry } from '../../../server/trace/viewer/traceModel';
 import * as React from 'react';
 import { useAsyncMemo } from './helpers';
 import './sourceTab.css';

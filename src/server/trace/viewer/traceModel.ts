@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as trace from '../../server/trace/traceTypes';
-export * as trace from '../../server/trace/traceTypes';
+import * as trace from '../common/traceEvents';
+export * as trace from '../common/traceEvents';
 
 export type TraceModel = {
   contexts: ContextEntry[];

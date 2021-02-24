@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import { BrowserContext, Video } from '../browserContext';
+import { BrowserContext, Video } from '../../browserContext';
 import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import * as trace from './traceTypes';
+import * as trace from '../common/traceEvents';
 import path from 'path';
 import * as util from 'util';
 import fs from 'fs';
-import { createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../../utils/utils';
-import { Page } from '../page';
+import { createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
+import { Page } from '../../page';
 import { Snapshotter } from './snapshotter';
-import { helper, RegisteredListener } from '../helper';
-import { Dialog } from '../dialog';
-import { Frame, NavigationEvent } from '../frames';
+import { helper, RegisteredListener } from '../../helper';
+import { Dialog } from '../../dialog';
+import { Frame, NavigationEvent } from '../../frames';
 import { snapshotScript } from './snapshotterInjected';
-import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
+import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));

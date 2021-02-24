@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-import { StackFrame } from '../../common/types';
-import { NodeSnapshot } from './snapshotterInjected';
-export { NodeSnapshot } from './snapshotterInjected';
+import { StackFrame } from '../../../common/types';
+
+export type NodeSnapshot =
+  // Text node.
+  string |
+  // Subtree reference, "x snapshots ago, node #y". Could point to a text node.
+  // Only nodes that are not references are counted, starting from zero, using post-order traversal.
+  [ [number, number] ] |
+  // Just node name.
+  [ string ] |
+  // Node name, attributes, child nodes.
+  // Unfortunately, we cannot make this type definition recursive, therefore "any".
+  [ string, { [attr: string]: string }, ...any ];
 
 export type ContextCreatedTraceEvent = {
   timestamp: number,

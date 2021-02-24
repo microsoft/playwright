@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ActionEntry } from '../../../cli/traceViewer/traceModel';
+import { ActionEntry } from '../../../server/trace/viewer/traceModel';
 import { Boundaries, Size } from '../geometry';
 import './snapshotTab.css';
 import * as React from 'react';

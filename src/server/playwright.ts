@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { Tracer } from './trace/tracer';
+import { Tracer } from './trace/recorder/tracer';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
 import { PlaywrightOptions } from './browser';
