@@ -411,9 +411,11 @@ export class Frame extends SdkObject {
   private _setContentCounter = 0;
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
+  readonly traceId: string;
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page);
+    this.traceId = parentFrame ? `frame@${id}` : page.traceId;
     this.attribution.frame = this;
     this._id = id;
     this._page = page;
