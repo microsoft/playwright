@@ -36,6 +36,13 @@ export function rewriteErrorMessage(e: Error, newMessage: string): Error {
   return e;
 }
 
+const PW_LIB_DIRS = [
+  'playwright',
+  'playwright-chromium',
+  'playwright-firefox',
+  'playwright-webkit',
+].map(packageName => path.join(packageName, 'lib'));
+
 export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
   const stack = new Error().stack!;
   const frames: StackFrame[] = [];
@@ -46,7 +53,7 @@ export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
     if (frame.file.startsWith('internal'))
       continue;
     const fileName = path.resolve(process.cwd(), frame.file);
-    if (fileName.includes(path.join('playwright', 'lib')))
+    if (PW_LIB_DIRS.some(libDir => fileName.includes(libDir)))
       continue;
     // for tests.
     if (fileName.includes(path.join('playwright', 'src')))
