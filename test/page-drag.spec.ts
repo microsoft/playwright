@@ -17,8 +17,8 @@ import { ElementHandle } from '..';
 import { it, expect, describe } from './fixtures';
 import { attachFrame } from './utils';
 
-describe('Drag and drop', test => {
-  test.fixme();
+describe('Drag and drop', (test, {browserName}) => {
+  test.fixme(browserName === 'chromium');
 }, () => {
   it('should work', async ({server, page, context}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
@@ -69,80 +69,54 @@ describe('Drag and drop', test => {
     ]);
   });
 
-  it('should drag into an iframe', async ({server, page, isFirefox}) => {
-    await page.goto(server.PREFIX + '/drag-n-drop.html');
-    const frame = await attachFrame(page, 'oopif',server.CROSS_PROCESS_PREFIX + '/drag-n-drop.html');
-    const pageEvents = await trackEvents(await page.$('body'));
-    const frameEvents = await trackEvents(await frame.$('body'));
-    await page.hover('#source');
-    await page.mouse.down();
-    await frame.hover('#target');
-    await page.mouse.up();
-    expect(await frame.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
-    expect(await pageEvents.jsonValue()).toEqual([
-      'mousemove',
-      'mousedown',
-      isFirefox ? 'dragstart' : 'mousemove',
-      isFirefox ? 'mousemove' : 'dragstart',
-    ]);
-    expect(await frameEvents.jsonValue()).toEqual([
-      'dragenter',
-      'dragover',
-      'drop',
-    ]);
-  });
+  describe('iframe', (test, {}) => {
+    test.fixme('implement dragging with iframes');
+  }, () => {
+    it('should drag into an iframe', async ({server, page, isFirefox}) => {
+      await page.goto(server.PREFIX + '/drag-n-drop.html');
+      const frame = await attachFrame(page, 'oopif',server.PREFIX + '/drag-n-drop.html');
+      const pageEvents = await trackEvents(await page.$('body'));
+      const frameEvents = await trackEvents(await frame.$('body'));
+      await page.pause();
+      await page.hover('#source');
+      await page.mouse.down();
+      await frame.hover('#target');
+      await page.mouse.up();
+      expect(await frame.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+      expect(await pageEvents.jsonValue()).toEqual([
+        'mousemove',
+        'mousedown',
+        isFirefox ? 'dragstart' : 'mousemove',
+        isFirefox ? 'mousemove' : 'dragstart',
+      ]);
+      expect(await frameEvents.jsonValue()).toEqual([
+        'dragenter',
+        'dragover',
+        'drop',
+      ]);
+    });
 
-  it('should drag out of an iframe', async ({server, page}) => {
-    await page.goto(server.PREFIX + '/drag-n-drop.html');
-    const frame = await attachFrame(page, 'oopif',server.CROSS_PROCESS_PREFIX + '/drag-n-drop.html');
-    const pageEvents = await trackEvents(await page.$('body'));
-    const frameEvents = await trackEvents(await frame.$('body'));
-    await frame.hover('#source');
-    await page.mouse.down();
-    await page.hover('#target');
-    await page.mouse.up();
-    expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
-    expect(await frameEvents.jsonValue()).toEqual([
-      'mousemove',
-      'mousedown',
-      'dragstart',
-    ]);
-    expect(await pageEvents.jsonValue()).toEqual([
-      'dragenter',
-      'dragover',
-      'drop',
-    ]);
-  });
-
-  it('should drag through a navigation', async ({server, page, isFirefox}) => {
-    await page.goto(server.PREFIX + '/drag-n-drop.html');
-    const beforeNavigationEvents = await trackEvents(await page.$('body'));
-    await page.hover('#source');
-    await page.mouse.down();
-    // start the drag
-    await page.mouse.move(50, 50);
-
-    expect(await beforeNavigationEvents.jsonValue()).toEqual([
-      'mousemove',
-      'mousedown',
-      isFirefox ? 'dragstart' : 'mousemove',
-      isFirefox ? 'mousemove' : 'dragstart',
-      'dragenter',
-      'dragover',
-    ]);
-
-    await page.reload();
-    const afterNavigationEvents = await trackEvents(await page.$('body'));
-
-    await page.hover('#target');
-    await page.mouse.up();
-
-    expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
-    expect(await afterNavigationEvents.jsonValue()).toEqual([
-      'dragenter',
-      'dragover',
-      'drop',
-    ]);
+    it('should drag out of an iframe', async ({server, page}) => {
+      await page.goto(server.PREFIX + '/drag-n-drop.html');
+      const frame = await attachFrame(page, 'oopif',server.PREFIX + '/drag-n-drop.html');
+      const pageEvents = await trackEvents(await page.$('body'));
+      const frameEvents = await trackEvents(await frame.$('body'));
+      await frame.hover('#source');
+      await page.mouse.down();
+      await page.hover('#target');
+      await page.mouse.up();
+      expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+      expect(await frameEvents.jsonValue()).toEqual([
+        'mousemove',
+        'mousedown',
+        'dragstart',
+      ]);
+      expect(await pageEvents.jsonValue()).toEqual([
+        'dragenter',
+        'dragover',
+        'drop',
+      ]);
+    });
   });
 
   it('should respect the drop effect', (test, {browserName}) => {
