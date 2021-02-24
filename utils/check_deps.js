@@ -159,7 +159,7 @@ DEPS['src/utils/'] = ['src/common/'];
 
 // Trace viewer
 DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/']];
-DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/'];
+DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', ...DEPS['src/server/']];
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);

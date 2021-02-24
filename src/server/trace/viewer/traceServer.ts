@@ -34,10 +34,10 @@ export class TraceServer {
     const traceModelHandler: ServerRouteHandler = (request, response) => {
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
-      response.end(JSON.stringify(this._traceModel));
+      response.end(JSON.stringify(Array.from(this._traceModel.contextEntries.values())));
       return true;
     };
-    this.routePath('/tracemodel', traceModelHandler);
+    this.routePath('/contexts', traceModelHandler);
   }
 
   routePrefix(prefix: string, handler: ServerRouteHandler, skipReferrerCheck?: boolean) {

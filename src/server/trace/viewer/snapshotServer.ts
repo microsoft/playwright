@@ -19,29 +19,18 @@ import fs from 'fs';
 import path from 'path';
 import querystring from 'querystring';
 import type { TraceModel } from './traceModel';
-import * as trace from '../common/traceEvents';
 import { TraceServer } from './traceServer';
 
 export class SnapshotServer {
   private _resourcesDir: string | undefined;
   private _server: TraceServer;
-  private _resourceById: Map<string, trace.NetworkResourceTraceEvent>;
   private _traceModel: TraceModel;
 
   constructor(server: TraceServer, traceModel: TraceModel, resourcesDir: string | undefined) {
     this._resourcesDir = resourcesDir;
     this._server = server;
 
-    this._resourceById = new Map();
     this._traceModel = traceModel;
-    for (const contextEntry of traceModel.contexts) {
-      for (const pageEntry of contextEntry.pages) {
-        for (const action of pageEntry.actions)
-          action.resources.forEach(r => this._resourceById.set(r.resourceId, r));
-        pageEntry.resources.forEach(r => this._resourceById.set(r.resourceId, r));
-      }
-    }
-
     server.routePath('/snapshot/', this._serveSnapshotRoot.bind(this), true);
     server.routePath('/snapshot/service-worker.js', this._serveServiceWorker.bind(this));
     server.routePath('/snapshot-data', this._serveSnapshot.bind(this));
@@ -113,86 +102,6 @@ export class SnapshotServer {
     return true;
   }
 
-  private _frameSnapshotData(parsed: { pageId: string, frameId: string, snapshotId?: string, timestamp?: number }) {
-    let contextEntry;
-    let pageEntry;
-    for (const c of this._traceModel.contexts) {
-      for (const p of c.pages) {
-        if (p.created.pageId === parsed.pageId) {
-          contextEntry = c;
-          pageEntry = p;
-        }
-      }
-    }
-    if (!contextEntry || !pageEntry)
-      return { html: ''  };
-
-    const frameSnapshots = pageEntry.snapshotsByFrameId[parsed.frameId] || [];
-    let snapshotIndex = -1;
-    for (let index = 0; index < frameSnapshots.length; index++) {
-      const current = snapshotIndex === -1 ? undefined : frameSnapshots[snapshotIndex];
-      const snapshot = frameSnapshots[index];
-      // Prefer snapshot with exact id.
-      const exactMatch = parsed.snapshotId && snapshot.snapshotId === parsed.snapshotId;
-      const currentExactMatch = current && parsed.snapshotId && current.snapshotId === parsed.snapshotId;
-      // If not available, prefer the latest snapshot before the timestamp.
-      const timestampMatch = parsed.timestamp && snapshot.timestamp <= parsed.timestamp;
-      if (exactMatch || (timestampMatch && !currentExactMatch))
-        snapshotIndex = index;
-    }
-    let html = this._serializeSnapshot(frameSnapshots, snapshotIndex);
-    html += `<script>${contextEntry.created.snapshotScript}</script>`;
-    const resourcesByUrl = contextEntry.resourcesByUrl;
-    const overridenUrls = contextEntry.overridenUrls;
-    const resourceOverrides: any = {};
-    for (const o of frameSnapshots[snapshotIndex].snapshot.resourceOverrides)
-      resourceOverrides[o.url] = o.sha1;
-    return { html, resourcesByUrl, overridenUrls, resourceOverrides };
-  }
-
-  private _serializeSnapshot(snapshots: trace.FrameSnapshotTraceEvent[], initialSnapshotIndex: number): string {
-    const visit = (n: trace.NodeSnapshot, snapshotIndex: number): string => {
-      // Text node.
-      if (typeof n === 'string')
-        return escapeText(n);
-
-      if (!(n as any)._string) {
-        if (Array.isArray(n[0])) {
-          // Node reference.
-          const referenceIndex = snapshotIndex - n[0][0];
-          if (referenceIndex >= 0 && referenceIndex < snapshotIndex) {
-            const nodes = snapshotNodes(snapshots[referenceIndex].snapshot);
-            const nodeIndex = n[0][1];
-            if (nodeIndex >= 0 && nodeIndex < nodes.length)
-              (n as any)._string = visit(nodes[nodeIndex], referenceIndex);
-          }
-        } else if (typeof n[0] === 'string') {
-          // Element node.
-          const builder: string[] = [];
-          builder.push('<', n[0]);
-          for (const [attr, value] of Object.entries(n[1] || {}))
-            builder.push(' ', attr, '="', escapeAttribute(value as string), '"');
-          builder.push('>');
-          for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex));
-          if (!autoClosing.has(n[0]))
-            builder.push('</', n[0], '>');
-          (n as any)._string = builder.join('');
-        } else {
-          // Why are we here? Let's not throw, just in case.
-          (n as any)._string = '';
-        }
-      }
-      return (n as any)._string;
-    };
-
-    const snapshot = snapshots[initialSnapshotIndex].snapshot;
-    let html = visit(snapshot.html, initialSnapshotIndex);
-    if (snapshot.doctype)
-      html = `<!DOCTYPE ${snapshot.doctype}>` + html;
-    return html;
-  }
-
   private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
       const pageToResourcesByUrl = new Map<string, { [key: string]: { resourceId: string, frameId: string }[] }>();
@@ -261,7 +170,7 @@ export class SnapshotServer {
         }
 
         if (request.mode === 'navigate') {
-          const htmlResponse = await fetch(`/snapshot-data?pageId=${parsed.pageId}&snapshotId=${parsed.snapshotId}&timestamp=${parsed.timestamp}&frameId=${parsed.frameId}`);
+          const htmlResponse = await fetch(`/snapshot-data?pageId=${parsed.pageId}&snapshotId=${parsed.snapshotId || ''}&timestamp=${parsed.timestamp || ''}&frameId=${parsed.frameId || ''}`);
           const { html, resourcesByUrl, overridenUrls, resourceOverrides } = await htmlResponse.json();
           if (!html)
             return respondNotAvailable();
@@ -320,8 +229,11 @@ export class SnapshotServer {
     response.statusCode = 200;
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/json');
-    const parsed = querystring.parse(request.url!.substring(request.url!.indexOf('?') + 1));
-    const snapshotData = this._frameSnapshotData(parsed as any);
+    const parsed: any = querystring.parse(request.url!.substring(request.url!.indexOf('?') + 1));
+    const snapshot = parsed.snapshotId ?
+      this._traceModel.findSnapshotById(parsed.pageId, parsed.frameId, parsed.snapshotId) :
+      this._traceModel.findSnapshotByTime(parsed.pageId, parsed.frameId, parsed.timestamp!);
+    const snapshotData: any = snapshot ? snapshot.serialize() : { html: '' };
     response.end(JSON.stringify(snapshotData));
     return true;
   }
@@ -351,7 +263,7 @@ export class SnapshotServer {
       return false;
     }
 
-    const resource = this._resourceById.get(resourceId);
+    const resource = this._traceModel.resourceById.get(resourceId);
     if (!resource)
       return false;
     const sha1 = overrideSha1 || resource.responseSha1;
@@ -378,32 +290,4 @@ export class SnapshotServer {
       return false;
     }
   }
-}
-
-const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
-const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
-
-function escapeAttribute(s: string): string {
-  return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
-}
-function escapeText(s: string): string {
-  return s.replace(/[&<]/ug, char => (escaped as any)[char]);
-}
-
-function snapshotNodes(snapshot: trace.FrameSnapshot): trace.NodeSnapshot[] {
-  if (!(snapshot as any)._nodes) {
-    const nodes: trace.NodeSnapshot[] = [];
-    const visit = (n: trace.NodeSnapshot) => {
-      if (typeof n === 'string') {
-        nodes.push(n);
-      } else if (typeof n[0] === 'string') {
-        for (let i = 2; i < n.length; i++)
-          visit(n[i]);
-        nodes.push(n);
-      }
-    };
-    visit(snapshot.html);
-    (snapshot as any)._nodes = nodes;
-  }
-  return (snapshot as any)._nodes;
 }

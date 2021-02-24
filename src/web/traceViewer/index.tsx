@@ -23,6 +23,6 @@ import '../common.css';
 
 (async () => {
   applyTheme();
-  const traceModel = await fetch('/tracemodel').then(response => response.json());
-  ReactDOM.render(<Workbench traceModel={traceModel} />, document.querySelector('#root'));
+  const contexts = await fetch('/contexts').then(response => response.json());
+  ReactDOM.render(<Workbench contexts={contexts} />, document.querySelector('#root'));
 })();
