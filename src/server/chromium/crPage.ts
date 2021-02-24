@@ -38,6 +38,7 @@ import { ConsoleMessage } from '../console';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, headersArrayToObject, createGuid } from '../../utils/utils';
 import { VideoRecorder } from './videoRecorder';
+import { DragManager } from './crDragDrop';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -73,8 +74,9 @@ export class CRPage implements PageDelegate {
   constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean) {
     this._targetId = targetId;
     this._opener = opener;
-    this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._isMac);
-    this.rawMouse = new RawMouseImpl(client);
+    const dragManager = new DragManager(this);
+    this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._isMac, dragManager);
+    this.rawMouse = new RawMouseImpl(this, client, dragManager);
     this.rawTouchscreen = new RawTouchscreenImpl(client);
     this._pdf = new CRPDF(client);
     this._coverage = new CRCoverage(client);

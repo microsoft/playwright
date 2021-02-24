@@ -17,9 +17,7 @@ import { ElementHandle } from '..';
 import { it, expect, describe } from './fixtures';
 import { attachFrame } from './utils';
 
-describe('Drag and drop', (test, {browserName}) => {
-  test.fixme(browserName === 'chromium');
-}, () => {
+describe('Drag and drop', () => {
   it('should work', async ({server, page, context}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.hover('#source');

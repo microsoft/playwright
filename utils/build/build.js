@@ -67,6 +67,7 @@ function runBuild() {
 // Build injected scripts.
 const webPackFiles = [
   'src/server/injected/injectedScript.webpack.config.js',
+  'src/server/injected/dragScript.webpack.config.js',
   'src/server/injected/utilityScript.webpack.config.js',
   'src/server/supplements/injected/consoleApi.webpack.config.js',
   'src/server/supplements/injected/recorder.webpack.config.js',
