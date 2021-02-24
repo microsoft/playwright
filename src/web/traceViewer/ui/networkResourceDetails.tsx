@@ -17,7 +17,7 @@
 import './networkResourceDetails.css';
 import * as React from 'react';
 import { Expandable } from './helpers';
-import { NetworkResourceTraceEvent } from '../../../server/trace/traceTypes';
+import { NetworkResourceTraceEvent } from '../../../server/trace/common/traceEvents';
 
 const utf8Encoder = new TextDecoder('utf-8');
 

@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import querystring from 'querystring';
 import type { TraceModel } from './traceModel';
-import * as trace from '../../server/trace/traceTypes';
+import * as trace from '../common/traceEvents';
 import { TraceServer } from './traceServer';
 
 export class SnapshotServer {

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { ActionEntry } from '../../../cli/traceViewer/traceModel';
+import { ActionEntry } from '../../../server/trace/viewer/traceModel';
 import './actionList.css';
 import * as React from 'react';
 

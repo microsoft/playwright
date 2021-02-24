@@ -16,11 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import * as playwright from '../../..';
+import * as playwright from '../../../..';
 import * as util from 'util';
 import { ScreenshotGenerator } from './screenshotGenerator';
 import { readTraceFile, TraceModel } from './traceModel';
-import type { TraceEvent } from '../../server/trace/traceTypes';
+import type { TraceEvent } from '../common/traceEvents';
 import { SnapshotServer } from './snapshotServer';
 import { ServerRouteHandler, TraceServer } from './traceServer';
 
@@ -106,7 +106,7 @@ class TraceViewer {
 
     const traceViewerHandler: ServerRouteHandler = (request, response) => {
       const relativePath = request.url!.substring('/traceviewer/'.length);
-      const absolutePath = path.join(__dirname, '..', '..', 'web', ...relativePath.split('/'));
+      const absolutePath = path.join(__dirname, '..', '..', '..', 'web', ...relativePath.split('/'));
       return server.serveFile(response, absolutePath);
     };
     server.routePrefix('/traceviewer/', traceViewerHandler, true);

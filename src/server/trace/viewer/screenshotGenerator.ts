@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import * as playwright from '../../..';
+import * as playwright from '../../../..';
 import * as util from 'util';
 import { actionById, ActionEntry, ContextEntry, TraceModel } from './traceModel';
 import { SnapshotServer } from './snapshotServer';

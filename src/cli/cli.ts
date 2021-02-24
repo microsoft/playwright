@@ -23,7 +23,7 @@ import program from 'commander';
 import os from 'os';
 import fs from 'fs';
 import { runServer, printApiJson, installBrowsers } from './driver';
-import { showTraceViewer } from './traceViewer/traceViewer';
+import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
 import { Browser } from '../client/browser';

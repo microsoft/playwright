@@ -15,7 +15,7 @@
   limitations under the License.
 */
 
-import { ContextEntry, InterestingPageEvent, ActionEntry, trace } from '../../../cli/traceViewer/traceModel';
+import { ContextEntry, InterestingPageEvent, ActionEntry, trace } from '../../../server/trace/viewer/traceModel';
 import './timeline.css';
 import { Boundaries } from '../geometry';
 import * as React from 'react';

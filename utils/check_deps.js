@@ -140,13 +140,13 @@ DEPS['src/server/injected/'] = ['src/server/common/'];
 DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/'];
 DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 
-DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/trace/', 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/android/', 'src/server/electron/'];
+DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/trace/recorder/tracer.ts', 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/android/', 'src/server/electron/'];
 DEPS['src/cli/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
 
 // Tracing is a client/server plugin, nothing should depend on it.
 DEPS['src/web/recorder/'] = ['src/common/', 'src/web/', 'src/web/components/', 'src/server/supplements/recorder/recorderTypes.ts'];
-DEPS['src/web/traceViewer/'] = ['src/common/', 'src/web/', 'src/cli/traceViewer/'];
-DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/web/traceViewer/', 'src/web/', 'src/cli/traceViewer/', 'src/server/trace/'];
+DEPS['src/web/traceViewer/'] = ['src/common/', 'src/web/'];
+DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/web/traceViewer/', 'src/web/', 'src/server/trace/viewer/', 'src/server/trace/', 'src/server/trace/common/'];
 // The service is a cross-cutting feature, and so it depends on a bunch of things.
 DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/server/trace/'];
 DEPS['src/service.ts'] = ['src/remote/'];
@@ -156,6 +156,10 @@ DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/install/**', 'src/genera
 
 DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/common/', 'src/utils/', 'src/server/', 'src/server/chromium/'];
 DEPS['src/utils/'] = ['src/common/'];
+
+// Trace viewer
+DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/']];
+DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/'];
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);
