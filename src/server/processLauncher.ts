@@ -95,12 +95,12 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
   const stdout = readline.createInterface({ input: spawnedProcess.stdout });
   stdout.on('line', (data: string) => {
-    options.log('[out] ' + data);
+    options.log(`[pid=${spawnedProcess.pid}][out] ` + data);
   });
 
   const stderr = readline.createInterface({ input: spawnedProcess.stderr });
   stderr.on('line', (data: string) => {
-    options.log('[err] ' + data);
+    options.log(`[pid=${spawnedProcess.pid}][err] ` + data);
   });
 
   let processClosed = false;
@@ -109,7 +109,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   let fulfillCleanup = () => {};
   const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
   spawnedProcess.once('exit', (exitCode, signal) => {
-    options.log(`<process did exit: exitCode=${exitCode}, signal=${signal}>`);
+    options.log(`[pid=${spawnedProcess.pid}] <process did exit: exitCode=${exitCode}, signal=${signal}>`);
     processClosed = true;
     helper.removeEventListeners(listeners);
     gracefullyCloseSet.delete(gracefullyClose);
@@ -145,21 +145,21 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     // reentrancy to this function, for example user sends SIGINT second time.
     // In this case, let's forcefully kill the process.
     if (gracefullyClosing) {
-      options.log(`<forecefully close>`);
+      options.log(`[pid=${spawnedProcess.pid}] <forecefully close>`);
       killProcess();
       await waitForClose;  // Ensure the process is dead and we called options.onkill.
       return;
     }
     gracefullyClosing = true;
-    options.log(`<gracefully close start>`);
+    options.log(`[pid=${spawnedProcess.pid}] <gracefully close start>`);
     await options.attemptToGracefullyClose().catch(() => killProcess());
     await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
-    options.log(`<gracefully close end>`);
+    options.log(`[pid=${spawnedProcess.pid}] <gracefully close end>`);
   }
 
   // This method has to be sync to be used as 'exit' event handler.
   function killProcess() {
-    options.log(`<kill>`);
+    options.log(`[pid=${spawnedProcess.pid}] <kill>`);
     helper.removeEventListeners(listeners);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
       // Force kill the browser.
