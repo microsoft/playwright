@@ -28,7 +28,7 @@ fixtures.outputTraceFile.init(async ({ testInfo }, run) => {
 });
 const { it, expect, describe } = fixtures.build();
 
-describe('oopif', (suite, { browserName }) => {
+describe('tracing', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');
 }, () => {
   it('should output a trace', async ({browser, page, server, outputTraceFile}) => {

@@ -32,7 +32,7 @@ it('should emulate type', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
 });
 
-it('should throw in case of bad type argument', async ({page, server}) => {
+it('should throw in case of bad media argument', async ({page, server}) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
   await page.emulateMedia({ media: 'bad'}).catch(e => error = e);
@@ -61,7 +61,7 @@ it('should default to light', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
 });
 
-it('should throw in case of bad argument', async ({page, server}) => {
+it('should throw in case of bad colorScheme argument', async ({page, server}) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
   await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);

@@ -16,7 +16,7 @@
 
 import { it, expect, describe } from './fixtures';
 
-describe('oopif', (suite, { browserName }) => {
+describe('CSS Coverage', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');
 }, () => {
   it('should work', async function({browserType, page, server}) {

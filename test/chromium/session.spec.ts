@@ -110,7 +110,7 @@ describe('session', (suite, { browserName }) => {
     await context.close();
   });
 
-  it('should work', async function({browser}) {
+  it('should work with newBrowserCDPSession', async function({browser}) {
     const session = await (browser as ChromiumBrowser).newBrowserCDPSession();
 
     const version = await session.send('Browser.getVersion');

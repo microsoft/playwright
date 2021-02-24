@@ -23,7 +23,7 @@ async function({page}) {
   expect(page.coverage).toBe(null);
 });
 
-describe('oopif', (suite, { browserName }) => {
+describe('JS Coverage', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');
 }, () => {
   it('should work', async function({page, server}) {

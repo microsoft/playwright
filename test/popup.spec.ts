@@ -146,7 +146,7 @@ it('should use viewport size from window features', async function({browser, ser
   expect(resized).toEqual({width: 500, height: 400});
 });
 
-it('should respect routes from browser context', async function({browser, server}) {
+it('should respect routes from browser context when using window.open', async function({browser, server}) {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
