@@ -449,7 +449,42 @@ converts `'//html/body'` to `'xpath=//html/body'`.
 
 ## id, data-testid, data-test-id, data-test selectors
 
-Attribute engines are selecting based on the corresponding attribute value. For example: `data-test-id=foo` is equivalent to `css=[data-test-id="foo"]`, and `id:light=foo` is equivalent to `css:light=[id="foo"]`.
+Playwright supports a shorthand for selecting elements using certain elements. Currently, only
+the following attributes are supported:
+
+- `id`
+- `data-testid`
+- `data-test-id`
+- `data-test`
+
+```js
+// Fill an input with the id "username"
+await page.fill('id=username', 'value');
+
+// Click an element with data-test-id "submit"
+await page.click('data-test-id=submit');
+```
+
+```python async
+# Fill an input with the id "username"
+await page.fill('id=username', 'value')
+
+# Click an element with data-test-id "submit"
+await page.click('data-test-id=submit')
+```
+
+```python sync
+# Fill an input with the id "username"
+page.fill('id=username', 'value')
+
+# Click an element with data-test-id "submit"
+page.click('data-test-id=submit')
+```
+
+:::note
+Attribute selectors piece shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.click('data-test-id:light=submit')
+:::
+
 
 ## Pick n-th match from the query result
 
