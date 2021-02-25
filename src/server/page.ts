@@ -28,7 +28,7 @@ import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import { ProgressController } from './progress';
-import { assert, isError } from '../utils/utils';
+import { assert, createGuid, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
@@ -147,9 +147,11 @@ export class Page extends SdkObject {
   _ownedContext: BrowserContext | undefined;
   readonly selectors: Selectors;
   _video: Video | null = null;
+  readonly traceId: string;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext);
+    this.traceId = 'page@' + createGuid();
     this.attribution.page = this;
     this._delegate = delegate;
     this._closedCallback = () => {};

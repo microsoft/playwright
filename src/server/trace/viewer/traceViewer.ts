@@ -20,9 +20,10 @@ import * as playwright from '../../../..';
 import * as util from 'util';
 import { ScreenshotGenerator } from './screenshotGenerator';
 import { TraceModel } from './traceModel';
-import type { TraceEvent } from '../common/traceEvents';
-import { SnapshotServer } from './snapshotServer';
+import { NetworkResourceTraceEvent, TraceEvent } from '../common/traceEvents';
+import { SnapshotServer, SnapshotStorage } from './snapshotServer';
 import { ServerRouteHandler, TraceServer } from './traceServer';
+import { FrameSnapshot } from './frameSnapshot';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -33,7 +34,7 @@ type TraceViewerDocument = {
 
 const emptyModel: TraceModel = new TraceModel();
 
-class TraceViewer {
+class TraceViewer implements SnapshotStorage {
   private _document: TraceViewerDocument | undefined;
 
   async load(traceDir: string) {
@@ -74,7 +75,7 @@ class TraceViewer {
     //   and translates them into "/resources/<resourceId>".
 
     const server = new TraceServer(this._document ? this._document.model : emptyModel);
-    const snapshotServer = new SnapshotServer(server, this._document ? this._document.model : emptyModel, this._document ? this._document.resourcesDir : undefined);
+    const snapshotServer = new SnapshotServer(server, this, this._document ? this._document.resourcesDir : undefined);
     const screenshotGenerator = this._document ? new ScreenshotGenerator(snapshotServer, this._document.resourcesDir, this._document.model) : undefined;
 
     const traceViewerHandler: ServerRouteHandler = (request, response) => {
@@ -132,6 +133,18 @@ class TraceViewer {
     uiPage.on('close', () => process.exit(0));
     await uiPage.goto(urlPrefix + '/traceviewer/traceViewer/index.html');
   }
+
+  resourceById(resourceId: string): NetworkResourceTraceEvent {
+    const traceModel = this._document!.model;
+    return traceModel.resourceById.get(resourceId)!;
+  }
+
+  snapshotByName(snapshotName: string): FrameSnapshot | undefined {
+    const traceModel = this._document!.model;
+    const parsed = parseSnapshotName(snapshotName);
+    const snapshot = parsed.snapshotId ? traceModel.findSnapshotById(parsed.pageId, parsed.frameId, parsed.snapshotId) : traceModel.findSnapshotByTime(parsed.pageId, parsed.frameId, parsed.timestamp!);
+    return snapshot;
+  }
 }
 
 export async function showTraceViewer(traceDir: string) {
@@ -139,4 +152,22 @@ export async function showTraceViewer(traceDir: string) {
   if (traceDir)
     await traceViewer.load(traceDir);
   await traceViewer.show();
+}
+
+function parseSnapshotName(pathname: string): { pageId: string, frameId: string, timestamp?: number, snapshotId?: string } {
+  const parts = pathname.split('/');
+  if (!parts[0])
+    parts.shift();
+  if (!parts[parts.length - 1])
+    parts.pop();
+  // - /snapshot/pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
+  // - /snapshot/pageId/<pageId>/timestamp/<timestamp>/<frameId>
+  if (parts.length !== 6 || parts[0] !== 'snapshot' || parts[1] !== 'pageId' || (parts[3] !== 'snapshotId' && parts[3] !== 'timestamp'))
+    throw new Error(`Unexpected path "${pathname}"`);
+  return {
+    pageId: parts[2],
+    frameId: parts[5] === 'main' ? parts[2] : parts[5],
+    snapshotId: (parts[3] === 'snapshotId' ? parts[4] : undefined),
+    timestamp: (parts[3] === 'timestamp' ? +parts[4] : undefined),
+  };
 }

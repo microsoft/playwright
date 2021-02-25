@@ -18,20 +18,25 @@ import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
 import querystring from 'querystring';
-import type { TraceModel } from './traceModel';
 import { TraceServer } from './traceServer';
-import type { SerializedFrameSnapshot } from './frameSnapshot';
+import type { FrameSnapshot, SerializedFrameSnapshot } from './frameSnapshot';
+import type { NetworkResourceTraceEvent } from '../common/traceEvents';
+
+export interface SnapshotStorage {
+  resourceById(resourceId: string): NetworkResourceTraceEvent;
+  snapshotByName(snapshotName: string): FrameSnapshot | undefined;
+}
 
 export class SnapshotServer {
   private _resourcesDir: string | undefined;
-  private _server: TraceServer;
-  private _traceModel: TraceModel;
+  private _urlPrefix: string;
+  private _snapshotStorage: SnapshotStorage;
 
-  constructor(server: TraceServer, traceModel: TraceModel, resourcesDir: string | undefined) {
+  constructor(server: TraceServer, snapshotStorage: SnapshotStorage, resourcesDir: string | undefined) {
     this._resourcesDir = resourcesDir;
-    this._server = server;
+    this._urlPrefix = server.urlPrefix();
+    this._snapshotStorage = snapshotStorage;
 
-    this._traceModel = traceModel;
     server.routePath('/snapshot/', this._serveSnapshotRoot.bind(this), true);
     server.routePath('/snapshot/service-worker.js', this._serveServiceWorker.bind(this));
     server.routePath('/snapshot-data', this._serveSnapshot.bind(this));
@@ -39,15 +44,15 @@ export class SnapshotServer {
   }
 
   snapshotRootUrl() {
-    return this._server.urlPrefix() + '/snapshot/';
+    return this._urlPrefix + '/snapshot/';
   }
 
   snapshotUrl(pageId: string, snapshotId?: string, timestamp?: number) {
     // Prefer snapshotId over timestamp.
     if (snapshotId)
-      return this._server.urlPrefix() + `/snapshot/pageId/${pageId}/snapshotId/${snapshotId}/main`;
+      return this._urlPrefix + `/snapshot/pageId/${pageId}/snapshotId/${snapshotId}/main`;
     if (timestamp)
-      return this._server.urlPrefix() + `/snapshot/pageId/${pageId}/timestamp/${timestamp}/main`;
+      return this._urlPrefix + `/snapshot/pageId/${pageId}/timestamp/${timestamp}/main`;
     return 'data:text/html,Snapshot is not available';
   }
 
@@ -114,25 +119,6 @@ export class SnapshotServer {
         event.waitUntil(self.clients.claim());
       });
 
-      function parseUrl(urlString: string): { pageId: string, frameId: string, timestamp?: number, snapshotId?: string } {
-        const url = new URL(urlString);
-        const parts = url.pathname.split('/');
-        if (!parts[0])
-          parts.shift();
-        if (!parts[parts.length - 1])
-          parts.pop();
-        // - /snapshot/pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
-        // - /snapshot/pageId/<pageId>/timestamp/<timestamp>/<frameId>
-        if (parts.length !== 6 || parts[0] !== 'snapshot' || parts[1] !== 'pageId' || (parts[3] !== 'snapshotId' && parts[3] !== 'timestamp'))
-          throw new Error(`Unexpected url "${urlString}"`);
-        return {
-          pageId: parts[2],
-          frameId: parts[5] === 'main' ? parts[2] : parts[5],
-          snapshotId: (parts[3] === 'snapshotId' ? parts[4] : undefined),
-          timestamp: (parts[3] === 'timestamp' ? +parts[4] : undefined),
-        };
-      }
-
       function respond404(): Response {
         return new Response(null, { status: 404 });
       }
@@ -152,33 +138,29 @@ export class SnapshotServer {
       }
 
       async function doFetch(event: any /* FetchEvent */): Promise<Response> {
-        try {
-          const pathname = new URL(event.request.url).pathname;
-          if (pathname === '/snapshot/service-worker.js' || pathname === '/snapshot/')
-            return fetch(event.request);
-        } catch (e) {
-        }
-
         const request = event.request;
-        let parsed: { pageId: string, frameId: string, timestamp?: number, snapshotId?: string };
+        const pathname = new URL(request.url).pathname;
+        if (pathname === '/snapshot/service-worker.js' || pathname === '/snapshot/')
+          return fetch(event.request);
+
+        let snapshotId: string;
         if (request.mode === 'navigate') {
-          parsed = parseUrl(request.url);
+          snapshotId = pathname;
         } else {
           const client = (await self.clients.get(event.clientId))!;
-          parsed = parseUrl(client.url);
+          snapshotId = new URL(client.url).pathname;
         }
-
         if (request.mode === 'navigate') {
-          const htmlResponse = await fetch(`/snapshot-data?pageId=${parsed.pageId}&snapshotId=${parsed.snapshotId || ''}&timestamp=${parsed.timestamp || ''}&frameId=${parsed.frameId || ''}`);
+          const htmlResponse = await fetch(`/snapshot-data?snapshotName=${snapshotId}`);
           const { html, resources }: SerializedFrameSnapshot  = await htmlResponse.json();
           if (!html)
             return respondNotAvailable();
-          snapshotResources.set(parsed.snapshotId + '@' + parsed.timestamp, resources);
+          snapshotResources.set(snapshotId, resources);
           const response = new Response(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
           return response;
         }
 
-        const resources = snapshotResources.get(parsed.snapshotId + '@' + parsed.timestamp)!;
+        const resources = snapshotResources.get(snapshotId)!;
         const urlWithoutHash = removeHash(request.url);
         const resource = resources[urlWithoutHash];
         if (!resource)
@@ -223,9 +205,7 @@ export class SnapshotServer {
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/json');
     const parsed: any = querystring.parse(request.url!.substring(request.url!.indexOf('?') + 1));
-    const snapshot = parsed.snapshotId ?
-      this._traceModel.findSnapshotById(parsed.pageId, parsed.frameId, parsed.snapshotId) :
-      this._traceModel.findSnapshotByTime(parsed.pageId, parsed.frameId, parsed.timestamp!);
+    const snapshot = this._snapshotStorage.snapshotByName(parsed.snapshotName);
     const snapshotData: any = snapshot ? snapshot.serialize() : { html: '' };
     response.end(JSON.stringify(snapshotData));
     return true;
@@ -256,9 +236,7 @@ export class SnapshotServer {
       return false;
     }
 
-    const resource = this._traceModel.resourceById.get(resourceId);
-    if (!resource)
-      return false;
+    const resource = this._snapshotStorage.resourceById(resourceId);
     const sha1 = overrideSha1 || resource.responseSha1;
     try {
       const content = fs.readFileSync(path.join(this._resourcesDir, sha1));

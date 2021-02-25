@@ -46,8 +46,6 @@ export interface SnapshotterDelegate {
   onBlob(blob: SnapshotterBlob): void;
   onResource(resource: SnapshotterResource): void;
   onFrameSnapshot(frame: Frame, frameUrl: string, snapshot: FrameSnapshot, snapshotId?: string): void;
-  pageId(page: Page): string;
-  frameId(frame: Frame): string;
 }
 
 export class Snapshotter {
@@ -116,7 +114,7 @@ export class Snapshotter {
         const context = await parent._mainContext();
         await context.evaluateInternal(({ kSnapshotStreamer, frameElement, frameId }) => {
           (window as any)[kSnapshotStreamer].markIframe(frameElement, frameId);
-        }, { kSnapshotStreamer, frameElement, frameId: this._delegate.frameId(frame) });
+        }, { kSnapshotStreamer, frameElement, frameId: frame.traceId });
         frameElement.dispose();
       } catch (e) {
         // Ignore
@@ -149,8 +147,8 @@ export class Snapshotter {
     const body = await response.body().catch(e => debugLogger.log('error', e));
     const responseSha1 = body ? calculateSha1(body) : 'none';
     const resource: SnapshotterResource = {
-      pageId: this._delegate.pageId(page),
-      frameId: this._delegate.frameId(response.frame()),
+      pageId: page.traceId,
+      frameId: response.frame().traceId,
       url,
       contentType,
       responseHeaders: response.headers(),

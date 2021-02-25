@@ -68,7 +68,6 @@ export class Tracer implements InstrumentationListener {
   }
 }
 
-const pageIdSymbol = Symbol('pageId');
 const snapshotsSymbol = Symbol('snapshots');
 
 // This is an official way to pass snapshots between onBefore/AfterInputAction and onAfterCall.
@@ -79,7 +78,6 @@ function snapshotsForMetadata(metadata: CallMetadata): { name: string, snapshotI
 }
 
 class ContextTracer implements SnapshotterDelegate {
-  private _context: BrowserContext;
   private _contextId: string;
   private _traceStoragePromise: Promise<string>;
   private _appendEventChain: Promise<string>;
@@ -90,7 +88,6 @@ class ContextTracer implements SnapshotterDelegate {
   private _traceFile: string;
 
   constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
-    this._context = context;
     this._contextId = 'context@' + createGuid();
     this._traceFile = traceFile;
     this._traceStoragePromise = mkdirIfNeeded(path.join(traceStorageDir, 'sha1')).then(() => traceStorageDir);
@@ -143,21 +140,13 @@ class ContextTracer implements SnapshotterDelegate {
       timestamp: monotonicTime(),
       type: 'snapshot',
       contextId: this._contextId,
-      pageId: this.pageId(frame._page),
-      frameId: this.frameId(frame),
+      pageId: frame._page.traceId,
+      frameId: frame.traceId,
       snapshot: snapshot,
       frameUrl,
       snapshotId,
     };
     this._appendTraceEvent(event);
-  }
-
-  pageId(page: Page): string {
-    return (page as any)[pageIdSymbol];
-  }
-
-  frameId(frame: Frame): string {
-    return frame._page.mainFrame() === frame ? this.pageId(frame._page) : frame._id;
   }
 
   async onActionCheckpoint(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -175,7 +164,7 @@ class ContextTracer implements SnapshotterDelegate {
       timestamp: monotonicTime(),
       type: 'action',
       contextId: this._contextId,
-      pageId: this.pageId(sdkObject.attribution.page),
+      pageId: sdkObject.attribution.page.traceId,
       objectType: metadata.type,
       method: metadata.method,
       // FIXME: filter out evaluation snippets, binary
@@ -191,8 +180,7 @@ class ContextTracer implements SnapshotterDelegate {
   }
 
   private _onPage(page: Page) {
-    const pageId = 'page@' + createGuid();
-    (page as any)[pageIdSymbol] = pageId;
+    const pageId = page.traceId;
 
     const event: trace.PageCreatedTraceEvent = {
       timestamp: monotonicTime(),
