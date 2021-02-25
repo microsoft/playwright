@@ -155,6 +155,7 @@ DEPS['src/service.ts'] = ['src/remote/'];
 DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/install/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**'];
 
 DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/common/', 'src/utils/', 'src/server/', 'src/server/chromium/'];
+DEPS['src/server/supplements/recorderSupplement.ts'] = ['src/server/snapshot/', ...DEPS['src/server/']];
 DEPS['src/utils/'] = ['src/common/'];
 
 // Trace viewer

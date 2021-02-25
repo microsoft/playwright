@@ -147,11 +147,11 @@ export class Page extends SdkObject {
   _ownedContext: BrowserContext | undefined;
   readonly selectors: Selectors;
   _video: Video | null = null;
-  readonly traceId: string;
+  readonly idInSnapshot: string;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext);
-    this.traceId = 'page@' + createGuid();
+    this.idInSnapshot = 'page@' + createGuid();
     this.attribution.page = this;
     this._delegate = delegate;
     this._closedCallback = () => {};

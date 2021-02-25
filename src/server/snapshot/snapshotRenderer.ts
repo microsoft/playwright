@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-import { FrameSnapshot, NodeSnapshot } from './snapshot';
-
-export type ContextResources = Map<string, { resourceId: string, frameId: string }[]>;
-
-export type RenderedFrameSnapshot = {
-  html: string;
-  resources: { [key: string]: { resourceId: string, sha1?: string } };
-};
+import { ContextResources, FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot } from './snapshot';
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
   private _contextResources: ContextResources;
-  private _frameId: string;
 
-  constructor(frameId: string, contextResources: ContextResources, snapshots: FrameSnapshot[], index: number) {
-    this._frameId = frameId;
+  constructor(contextResources: ContextResources, snapshots: FrameSnapshot[], index: number) {
     this._contextResources = contextResources;
     this._snapshots = snapshots;
     this._index = index;
@@ -80,7 +71,7 @@ export class SnapshotRenderer {
 
     const resources: { [key: string]: { resourceId: string, sha1?: string } } = {};
     for (const [url, contextResources] of this._contextResources) {
-      const contextResource = contextResources.find(r => r.frameId === this._frameId) || contextResources[0];
+      const contextResource = contextResources.find(r => r.frameId === snapshot.frameId) || contextResources[0];
       if (contextResource)
         resources[url] = { resourceId: contextResource.resourceId };
     }

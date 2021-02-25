@@ -16,8 +16,6 @@
 
 import { Story, Meta } from '@storybook/react/types-6-0';
 import { ActionList, ActionListProps } from './actionList';
-import gotoThumbnailUrl from './assets/action-thumbnail-goto.png';
-import clickThumbnailUrl from './assets/action-thumbnail-click.png';
 
 export default {
   title: 'TraceViewer/ActionList',
@@ -43,7 +41,6 @@ Primary.args = {
         startTime: Date.now(),
         endTime: Date.now(),
       },
-      thumbnailUrl: gotoThumbnailUrl,
       resources: [],
     },
     {
@@ -57,7 +54,6 @@ Primary.args = {
         startTime: Date.now(),
         endTime: Date.now(),
       },
-      thumbnailUrl: clickThumbnailUrl,
       resources: [],
     }
   ]

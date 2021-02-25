@@ -34,8 +34,19 @@ export type ResourceOverride = {
 };
 
 export type FrameSnapshot = {
+  snapshotId: string,
+  pageId: string,
+  frameId: string,
+  frameUrl: string,
   doctype?: string,
   html: NodeSnapshot,
   resourceOverrides: ResourceOverride[],
   viewport: { width: number, height: number },
+};
+
+export type ContextResources = Map<string, { resourceId: string, frameId: string }[]>;
+
+export type RenderedFrameSnapshot = {
+  html: string;
+  resources: { [key: string]: { resourceId: string, sha1?: string } };
 };
