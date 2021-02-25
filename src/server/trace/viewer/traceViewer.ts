@@ -21,9 +21,9 @@ import * as util from 'util';
 import { ScreenshotGenerator } from './screenshotGenerator';
 import { TraceModel } from './traceModel';
 import { NetworkResourceTraceEvent, TraceEvent } from '../common/traceEvents';
-import { SnapshotServer, SnapshotStorage } from './snapshotServer';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
-import { FrameSnapshot } from './frameSnapshot';
+import { SnapshotServer, SnapshotStorage } from '../../snapshot/snapshotServer';
+import { SnapshotRenderer } from '../../snapshot/snapshotRenderer';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -146,7 +146,7 @@ class TraceViewer implements SnapshotStorage {
     return traceModel.resourceById.get(resourceId)!;
   }
 
-  snapshotByName(snapshotName: string): FrameSnapshot | undefined {
+  snapshotByName(snapshotName: string): SnapshotRenderer | undefined {
     const traceModel = this._document!.model;
     const parsed = parseSnapshotName(snapshotName);
     const snapshot = parsed.snapshotId ? traceModel.findSnapshotById(parsed.pageId, parsed.frameId, parsed.snapshotId) : traceModel.findSnapshotByTime(parsed.pageId, parsed.frameId, parsed.timestamp!);

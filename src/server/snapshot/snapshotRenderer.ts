@@ -14,34 +14,30 @@
  * limitations under the License.
  */
 
-import * as trace from '../common/traceEvents';
-import { ContextResources } from './traceModel';
-export * as trace from '../common/traceEvents';
+import { FrameSnapshot, NodeSnapshot } from './snapshot';
 
-export type SerializedFrameSnapshot = {
+export type ContextResources = Map<string, { resourceId: string, frameId: string }[]>;
+
+export type RenderedFrameSnapshot = {
   html: string;
   resources: { [key: string]: { resourceId: string, sha1?: string } };
 };
 
-export class FrameSnapshot {
-  private _snapshots: trace.FrameSnapshotTraceEvent[];
+export class SnapshotRenderer {
+  private _snapshots: FrameSnapshot[];
   private _index: number;
   private _contextResources: ContextResources;
   private _frameId: string;
 
-  constructor(frameId: string, contextResources: ContextResources, events: trace.FrameSnapshotTraceEvent[], index: number) {
+  constructor(frameId: string, contextResources: ContextResources, snapshots: FrameSnapshot[], index: number) {
     this._frameId = frameId;
     this._contextResources = contextResources;
-    this._snapshots = events;
+    this._snapshots = snapshots;
     this._index = index;
   }
 
-  traceEvent(): trace.FrameSnapshotTraceEvent {
-    return this._snapshots[this._index];
-  }
-
-  serialize(): SerializedFrameSnapshot {
-    const visit = (n: trace.NodeSnapshot, snapshotIndex: number): string => {
+  render(): RenderedFrameSnapshot {
+    const visit = (n: NodeSnapshot, snapshotIndex: number): string => {
       // Text node.
       if (typeof n === 'string')
         return escapeText(n);
@@ -51,7 +47,7 @@ export class FrameSnapshot {
           // Node reference.
           const referenceIndex = snapshotIndex - n[0][0];
           if (referenceIndex >= 0 && referenceIndex < snapshotIndex) {
-            const nodes = snapshotNodes(this._snapshots[referenceIndex].snapshot);
+            const nodes = snapshotNodes(this._snapshots[referenceIndex]);
             const nodeIndex = n[0][1];
             if (nodeIndex >= 0 && nodeIndex < nodes.length)
               (n as any)._string = visit(nodes[nodeIndex], referenceIndex);
@@ -76,7 +72,7 @@ export class FrameSnapshot {
       return (n as any)._string;
     };
 
-    const snapshot = this._snapshots[this._index].snapshot;
+    const snapshot = this._snapshots[this._index];
     let html = visit(snapshot.html, this._index);
     if (snapshot.doctype)
       html = `<!DOCTYPE ${snapshot.doctype}>` + html;
@@ -88,7 +84,7 @@ export class FrameSnapshot {
       if (contextResource)
         resources[url] = { resourceId: contextResource.resourceId };
     }
-    for (const o of this.traceEvent().snapshot.resourceOverrides) {
+    for (const o of snapshot.resourceOverrides) {
       const resource = resources[o.url];
       resource.sha1 = o.sha1;
     }
@@ -106,10 +102,10 @@ function escapeText(s: string): string {
   return s.replace(/[&<]/ug, char => (escaped as any)[char]);
 }
 
-function snapshotNodes(snapshot: trace.FrameSnapshot): trace.NodeSnapshot[] {
+function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   if (!(snapshot as any)._nodes) {
-    const nodes: trace.NodeSnapshot[] = [];
-    const visit = (n: trace.NodeSnapshot) => {
+    const nodes: NodeSnapshot[] = [];
+    const visit = (n: NodeSnapshot) => {
       if (typeof n === 'string') {
         nodes.push(n);
       } else if (typeof n[0] === 'string') {

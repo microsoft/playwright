@@ -158,8 +158,9 @@ DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/common/', 'src/ut
 DEPS['src/utils/'] = ['src/common/'];
 
 // Trace viewer
-DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/']];
-DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', ...DEPS['src/server/']];
+DEPS['src/server/trace/common/'] = ['src/server/snapshot/', ...DEPS['src/server/']];
+DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/trace/common/']];
+DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', ...DEPS['src/server/trace/common/']];
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);
