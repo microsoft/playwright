@@ -55,6 +55,12 @@ const { webkit } = require('playwright');
 })();
 ```
 
+Save the script above in a filename of your choosing, such as `first_script.js`. Then execute the script from the command-line using Node.js.
+
+```
+npx node first_script.js
+```
+
 By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless: false` flag while launching the browser. You can also use `slowMo` to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```js
