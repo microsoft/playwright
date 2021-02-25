@@ -780,8 +780,8 @@ function createTextMatcher(selector: string): { matcher: Matcher, strict: boolea
   const matcher = (text: string) => {
     text = text.trim().replace(/\s+/g, ' ');
     if (!strict)
-      return text.toLowerCase().includes(selector);
-    return text === selector;
+      text = text.toLowerCase();
+    return text.includes(selector);
   };
   return { matcher, strict };
 }
