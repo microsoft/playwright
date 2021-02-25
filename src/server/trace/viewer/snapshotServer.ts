@@ -15,25 +15,22 @@
  */
 
 import * as http from 'http';
-import fs from 'fs';
-import path from 'path';
 import querystring from 'querystring';
-import { TraceServer } from './traceServer';
-import type { FrameSnapshot, SerializedFrameSnapshot } from './frameSnapshot';
 import type { NetworkResourceTraceEvent } from '../common/traceEvents';
+import type { FrameSnapshot, SerializedFrameSnapshot } from './frameSnapshot';
+import { HttpServer } from '../../../utils/httpServer';
 
 export interface SnapshotStorage {
+  resourceContent(sha1: string): Buffer;
   resourceById(resourceId: string): NetworkResourceTraceEvent;
   snapshotByName(snapshotName: string): FrameSnapshot | undefined;
 }
 
 export class SnapshotServer {
-  private _resourcesDir: string | undefined;
   private _urlPrefix: string;
   private _snapshotStorage: SnapshotStorage;
 
-  constructor(server: TraceServer, snapshotStorage: SnapshotStorage, resourcesDir: string | undefined) {
-    this._resourcesDir = resourcesDir;
+  constructor(server: HttpServer, snapshotStorage: SnapshotStorage) {
     this._urlPrefix = server.urlPrefix();
     this._snapshotStorage = snapshotStorage;
 
@@ -212,9 +209,6 @@ export class SnapshotServer {
   }
 
   private _serveResource(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    if (!this._resourcesDir)
-      return false;
-
     // - /resources/<resourceId>
     // - /resources/<resourceId>/override/<overrideSha1>
     const parts = request.url!.split('/');
@@ -239,7 +233,7 @@ export class SnapshotServer {
     const resource = this._snapshotStorage.resourceById(resourceId);
     const sha1 = overrideSha1 || resource.responseSha1;
     try {
-      const content = fs.readFileSync(path.join(this._resourcesDir, sha1));
+      const content = this._snapshotStorage.resourceContent(sha1);
       response.statusCode = 200;
       let contentType = resource.contentType;
       const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);

@@ -22,7 +22,7 @@ import { ScreenshotGenerator } from './screenshotGenerator';
 import { TraceModel } from './traceModel';
 import { NetworkResourceTraceEvent, TraceEvent } from '../common/traceEvents';
 import { SnapshotServer, SnapshotStorage } from './snapshotServer';
-import { ServerRouteHandler, TraceServer } from './traceServer';
+import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { FrameSnapshot } from './frameSnapshot';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
@@ -31,8 +31,6 @@ type TraceViewerDocument = {
   resourcesDir: string;
   model: TraceModel;
 };
-
-const emptyModel: TraceModel = new TraceModel();
 
 class TraceViewer implements SnapshotStorage {
   private _document: TraceViewerDocument | undefined;
@@ -74,8 +72,17 @@ class TraceViewer implements SnapshotStorage {
     // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
     //   and translates them into "/resources/<resourceId>".
 
-    const server = new TraceServer(this._document ? this._document.model : emptyModel);
-    const snapshotServer = new SnapshotServer(server, this, this._document ? this._document.resourcesDir : undefined);
+    const server = new HttpServer();
+
+    const traceModelHandler: ServerRouteHandler = (request, response) => {
+      response.statusCode = 200;
+      response.setHeader('Content-Type', 'application/json');
+      response.end(JSON.stringify(Array.from(this._document!.model.contextEntries.values())));
+      return true;
+    };
+    server.routePath('/contexts', traceModelHandler);
+
+    const snapshotServer = new SnapshotServer(server, this);
     const screenshotGenerator = this._document ? new ScreenshotGenerator(snapshotServer, this._document.resourcesDir, this._document.model) : undefined;
 
     const traceViewerHandler: ServerRouteHandler = (request, response) => {
@@ -144,6 +151,10 @@ class TraceViewer implements SnapshotStorage {
     const parsed = parseSnapshotName(snapshotName);
     const snapshot = parsed.snapshotId ? traceModel.findSnapshotById(parsed.pageId, parsed.frameId, parsed.snapshotId) : traceModel.findSnapshotByTime(parsed.pageId, parsed.frameId, parsed.timestamp!);
     return snapshot;
+  }
+
+  resourceContent(sha1: string): Buffer {
+    return fs.readFileSync(path.join(this._document!.resourcesDir, sha1));
   }
 }
 

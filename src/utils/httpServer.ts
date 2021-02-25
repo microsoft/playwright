@@ -17,27 +17,16 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
-import type { TraceModel } from './traceModel';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
-export class TraceServer {
-  private _traceModel: TraceModel;
+export class HttpServer {
   private _server: http.Server | undefined;
   private _urlPrefix: string;
   private _routes: { prefix?: string, exact?: string, needsReferrer: boolean, handler: ServerRouteHandler }[] = [];
 
-  constructor(traceModel: TraceModel) {
-    this._traceModel = traceModel;
+  constructor() {
     this._urlPrefix = '';
-
-    const traceModelHandler: ServerRouteHandler = (request, response) => {
-      response.statusCode = 200;
-      response.setHeader('Content-Type', 'application/json');
-      response.end(JSON.stringify(Array.from(this._traceModel.contextEntries.values())));
-      return true;
-    };
-    this.routePath('/contexts', traceModelHandler);
   }
 
   routePrefix(prefix: string, handler: ServerRouteHandler, skipReferrerCheck?: boolean) {

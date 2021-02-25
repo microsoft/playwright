@@ -15,7 +15,7 @@
  */
 
 import * as trace from '../common/traceEvents';
-import { ContextEntry, ContextResources } from './traceModel';
+import { ContextResources } from './traceModel';
 export * as trace from '../common/traceEvents';
 
 export type SerializedFrameSnapshot = {
@@ -26,13 +26,11 @@ export type SerializedFrameSnapshot = {
 export class FrameSnapshot {
   private _snapshots: trace.FrameSnapshotTraceEvent[];
   private _index: number;
-  private _contextEntry: ContextEntry;
   private _contextResources: ContextResources;
   private _frameId: string;
 
-  constructor(frameId: string, contextEntry: ContextEntry, contextResources: ContextResources, events: trace.FrameSnapshotTraceEvent[], index: number) {
+  constructor(frameId: string, contextResources: ContextResources, events: trace.FrameSnapshotTraceEvent[], index: number) {
     this._frameId = frameId;
-    this._contextEntry = contextEntry;
     this._contextResources = contextResources;
     this._snapshots = events;
     this._index = index;
@@ -82,7 +80,7 @@ export class FrameSnapshot {
     let html = visit(snapshot.html, this._index);
     if (snapshot.doctype)
       html = `<!DOCTYPE ${snapshot.doctype}>` + html;
-    html += `<script>${this._contextEntry.created.snapshotScript}</script>`;
+    html += `<script>${snapshotScript}</script>`;
 
     const resources: { [key: string]: { resourceId: string, sha1?: string } } = {};
     for (const [url, contextResources] of this._contextResources) {
@@ -124,4 +122,60 @@ function snapshotNodes(snapshot: trace.FrameSnapshot): trace.NodeSnapshot[] {
     (snapshot as any)._nodes = nodes;
   }
   return (snapshot as any)._nodes;
+}
+
+export function snapshotScript() {
+  function applyPlaywrightAttributes(shadowAttribute: string, scrollTopAttribute: string, scrollLeftAttribute: string) {
+    const scrollTops: Element[] = [];
+    const scrollLefts: Element[] = [];
+
+    const visit = (root: Document | ShadowRoot) => {
+      // Collect all scrolled elements for later use.
+      for (const e of root.querySelectorAll(`[${scrollTopAttribute}]`))
+        scrollTops.push(e);
+      for (const e of root.querySelectorAll(`[${scrollLeftAttribute}]`))
+        scrollLefts.push(e);
+
+      for (const iframe of root.querySelectorAll('iframe')) {
+        const src = iframe.getAttribute('src') || '';
+        if (src.startsWith('data:text/html'))
+          continue;
+        // Rewrite iframes to use snapshot url (relative to window.location)
+        // instead of begin relative to the <base> tag.
+        const index = location.pathname.lastIndexOf('/');
+        if (index === -1)
+          continue;
+        const pathname = location.pathname.substring(0, index + 1) + src;
+        const href = location.href.substring(0, location.href.indexOf(location.pathname)) + pathname;
+        iframe.setAttribute('src', href);
+      }
+
+      for (const element of root.querySelectorAll(`template[${shadowAttribute}]`)) {
+        const template = element as HTMLTemplateElement;
+        const shadowRoot = template.parentElement!.attachShadow({ mode: 'open' });
+        shadowRoot.appendChild(template.content);
+        template.remove();
+        visit(shadowRoot);
+      }
+    };
+    visit(document);
+
+    const onLoad = () => {
+      window.removeEventListener('load', onLoad);
+      for (const element of scrollTops) {
+        element.scrollTop = +element.getAttribute(scrollTopAttribute)!;
+        element.removeAttribute(scrollTopAttribute);
+      }
+      for (const element of scrollLefts) {
+        element.scrollLeft = +element.getAttribute(scrollLeftAttribute)!;
+        element.removeAttribute(scrollLeftAttribute);
+      }
+    };
+    window.addEventListener('load', onLoad);
+  }
+
+  const kShadowAttribute = '__playwright_shadow_root_';
+  const kScrollTopAttribute = '__playwright_scroll_top_';
+  const kScrollLeftAttribute = '__playwright_scroll_left_';
+  return `\n(${applyPlaywrightAttributes.toString()})('${kShadowAttribute}', '${kScrollTopAttribute}', '${kScrollLeftAttribute}')`;
 }

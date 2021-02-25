@@ -157,7 +157,7 @@ export class TraceModel {
     const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
     for (let index = 0; index < frameSnapshots.length; index++) {
       if (frameSnapshots[index].snapshotId === snapshotId)
-        return new FrameSnapshot(frameId, contextEntry, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots, index);
+        return new FrameSnapshot(frameId, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots, index);
     }
   }
 
@@ -170,7 +170,7 @@ export class TraceModel {
       if (timestamp && snapshot.timestamp <= timestamp)
         snapshotIndex = index;
     }
-    return snapshotIndex >= 0 ? new FrameSnapshot(frameId, contextEntry, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots, snapshotIndex) : undefined;
+    return snapshotIndex >= 0 ? new FrameSnapshot(frameId, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots, snapshotIndex) : undefined;
   }
 }
 
