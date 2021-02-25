@@ -148,7 +148,7 @@ Text selector has a few variations:
   page.click("text=Log in")
   ```
 
-- `text="Log in"` - text body can be escaped with single or double quotes for full-string case-sensitive match. For example `text="Log"` does not match `<button>Log in</button>` but instead matches `<span>Log</span>`.
+- `text="Log in"` - text body can be escaped with single or double quotes for case-sensitive match. For example `text="Log"` does not match `<button>log in</button>` but instead matches `<span>Log in</span>`.
 
   Quoted body follows the usual escaping rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.
 
