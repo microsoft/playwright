@@ -86,7 +86,7 @@ class TraceViewer implements SnapshotStorage {
       const absolutePath = path.join(__dirname, '..', '..', '..', 'web', ...relativePath.split('/'));
       return server.serveFile(response, absolutePath);
     };
-    server.routePrefix('/traceviewer/', traceViewerHandler, true);
+    server.routePrefix('/traceviewer/', traceViewerHandler);
 
     const fileHandler: ServerRouteHandler = (request, response) => {
       try {
@@ -122,9 +122,9 @@ class TraceViewer implements SnapshotStorage {
     return traceModel.resourceById.get(resourceId)!;
   }
 
-  snapshotById(snapshotName: string): SnapshotRenderer | undefined {
+  snapshotById(snapshotId: string): SnapshotRenderer | undefined {
     const traceModel = this._document!.model;
-    const parsed = parseSnapshotName(snapshotName);
+    const parsed = parseSnapshotName(snapshotId);
     const snapshot = parsed.snapshotId ? traceModel.findSnapshotById(parsed.pageId, parsed.frameId, parsed.snapshotId) : traceModel.findSnapshotByTime(parsed.pageId, parsed.frameId, parsed.timestamp!);
     return snapshot;
   }
@@ -143,18 +143,14 @@ export async function showTraceViewer(traceDir: string) {
 
 function parseSnapshotName(pathname: string): { pageId: string, frameId: string, timestamp?: number, snapshotId?: string } {
   const parts = pathname.split('/');
-  if (!parts[0])
-    parts.shift();
-  if (!parts[parts.length - 1])
-    parts.pop();
-  // - /snapshot/pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
-  // - /snapshot/pageId/<pageId>/timestamp/<timestamp>/<frameId>
-  if (parts.length !== 6 || parts[0] !== 'snapshot' || parts[1] !== 'pageId' || (parts[3] !== 'snapshotId' && parts[3] !== 'timestamp'))
+  // - pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
+  // - pageId/<pageId>/timestamp/<timestamp>/<frameId>
+  if (parts.length !== 5 || parts[0] !== 'pageId' || (parts[2] !== 'snapshotId' && parts[2] !== 'timestamp'))
     throw new Error(`Unexpected path "${pathname}"`);
   return {
-    pageId: parts[2],
-    frameId: parts[5] === 'main' ? parts[2] : parts[5],
-    snapshotId: (parts[3] === 'snapshotId' ? parts[4] : undefined),
-    timestamp: (parts[3] === 'timestamp' ? +parts[4] : undefined),
+    pageId: parts[1],
+    frameId: parts[4] === 'main' ? parts[1] : parts[4],
+    snapshotId: (parts[2] === 'snapshotId' ? parts[3] : undefined),
+    timestamp: (parts[2] === 'timestamp' ? +parts[3] : undefined),
   };
 }

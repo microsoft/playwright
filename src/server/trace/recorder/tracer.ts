@@ -44,6 +44,7 @@ export class Tracer implements InstrumentationListener {
     const traceStorageDir = path.join(traceDir, 'resources');
     const tracePath = path.join(traceDir, createGuid() + '.trace');
     const contextTracer = new ContextTracer(context, traceStorageDir, tracePath);
+    await contextTracer.start();
     this._contextTracers.set(context, contextTracer);
   }
 
@@ -108,6 +109,10 @@ class ContextTracer implements SnapshotterDelegate {
     this._eventListeners = [
       helper.addEventListener(context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
+  }
+
+  async start() {
+    await this._snapshotter.start();
   }
 
   onBlob(blob: SnapshotterBlob): void {

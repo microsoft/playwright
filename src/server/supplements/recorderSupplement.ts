@@ -32,6 +32,7 @@ import { CallMetadata, internalCallMetadata, SdkObject } from '../instrumentatio
 import { Point } from '../../common/types';
 import { CallLog, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
 import { isUnderTest, monotonicTime } from '../../utils/utils';
+import { InMemorySnapshotter } from '../snapshot/inMemorySnapshotter';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -53,6 +54,10 @@ export class RecorderSupplement {
   private _pauseOnNextStatement: boolean;
   private _recorderSources: Source[];
   private _userSources = new Map<string, Source>();
+  private _snapshotter: InMemorySnapshotter;
+  private _hoveredSnapshot: { callLogId: number, phase: 'before' | 'after' | 'in' } | undefined;
+  private _snapshots = new Set<string>();
+  private _allMetadatas = new Map<number, CallMetadata>();
 
   static getOrCreate(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<RecorderSupplement> {
     let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
@@ -119,21 +124,32 @@ export class RecorderSupplement {
       });
     }
     this._generator = generator;
+    this._snapshotter = new InMemorySnapshotter(context);
   }
 
   async install() {
     const recorderApp = await RecorderApp.open(this._context);
     this._recorderApp = recorderApp;
     recorderApp.once('close', () => {
+      this._snapshotter.stop();
       this._recorderApp = null;
     });
     recorderApp.on('event', (data: EventData) => {
       if (data.event === 'setMode') {
         this._setMode(data.params.mode);
+        this._refreshOverlay();
         return;
       }
       if (data.event === 'selectorUpdated') {
         this._highlightedSelector = data.params.selector;
+        this._refreshOverlay();
+        return;
+      }
+      if (data.event === 'callLogHovered') {
+        this._hoveredSnapshot = undefined;
+        if (this._isPaused())
+          this._hoveredSnapshot = data.params;
+        this._refreshOverlay();
         return;
       }
       if (data.event === 'step') {
@@ -185,15 +201,27 @@ export class RecorderSupplement {
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
     await this._context.exposeBinding('_playwrightRecorderState', false, source => {
-      let actionPoint: Point | undefined = undefined;
-      let actionSelector: string | undefined = undefined;
-      for (const [metadata, sdkObject] of this._currentCallsMetadata) {
-        if (source.page === sdkObject.attribution.page) {
-          actionPoint = metadata.point || actionPoint;
-          actionSelector = metadata.params.selector || actionSelector;
+      let snapshotId: string | undefined;
+      let actionSelector: string | undefined;
+      let actionPoint: Point | undefined;
+      if (this._hoveredSnapshot) {
+        snapshotId = this._hoveredSnapshot.phase + '@' + this._hoveredSnapshot.callLogId;
+        const metadata = this._allMetadatas.get(this._hoveredSnapshot.callLogId);
+        actionPoint = this._hoveredSnapshot.phase === 'in' ? metadata?.point : undefined;
+      } else {
+        for (const [metadata, sdkObject] of this._currentCallsMetadata) {
+          if (source.page === sdkObject.attribution.page) {
+            actionPoint = metadata.point || actionPoint;
+            actionSelector = metadata.params.selector || actionSelector;
+          }
         }
       }
-      const uiState: UIState = { mode: this._mode, actionPoint, actionSelector: this._highlightedSelector || actionSelector };
+      const uiState: UIState = {
+        mode: this._mode,
+        actionPoint,
+        actionSelector,
+        snapshotId,
+      };
       return uiState;
     });
 
@@ -207,9 +235,9 @@ export class RecorderSupplement {
       this._resume(false).catch(() => {});
     });
 
-    await this._context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest() });
+    const snapshotBaseUrl = await this._snapshotter.start() + '/snapshot/';
+    await this._context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest(), snapshotBaseUrl });
     await this._context.extendInjectedScript(consoleApiSource.source);
-
     (this._context as any).recorderAppForTest = recorderApp;
   }
 
@@ -222,6 +250,10 @@ export class RecorderSupplement {
     this._updateUserSources();
     this.updateCallLog([metadata]);
     return result;
+  }
+
+  _isPaused(): boolean {
+    return !!this._pausedCallsMetadata.size;
   }
 
   private _setMode(mode: Mode) {
@@ -245,6 +277,11 @@ export class RecorderSupplement {
 
     this._updateUserSources();
     this.updateCallLog([...this._currentCallsMetadata.keys()]);
+  }
+
+  private _refreshOverlay() {
+    for (const page of this._context.pages())
+      page.mainFrame()._evaluateExpression('window._playwrightRefreshOverlay', false, undefined, 'main').catch(() => {});
   }
 
   private async _onPage(page: Page) {
@@ -362,10 +399,20 @@ export class RecorderSupplement {
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: String(++this._lastDialogOrdinal) });
   }
 
+  async _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'in') {
+    if (sdkObject.attribution.page) {
+      const snapshotId = `${phase}@${metadata.id}`;
+      this._snapshots.add(snapshotId);
+      await this._snapshotter.forceSnapshot(sdkObject.attribution.page, snapshotId);
+    }
+  }
+
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
+    await this._captureSnapshot(sdkObject, metadata, 'before');
     this._currentCallsMetadata.set(metadata, sdkObject);
+    this._allMetadatas.set(metadata.id, metadata);
     this._updateUserSources();
     this.updateCallLog([metadata]);
     if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseOnStep(sdkObject, metadata)))
@@ -376,9 +423,10 @@ export class RecorderSupplement {
     }
   }
 
-  async onAfterCall(metadata: CallMetadata): Promise<void> {
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
+    await this._captureSnapshot(sdkObject, metadata, 'after');
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._pausedCallsMetadata.delete(metadata);
@@ -420,9 +468,10 @@ export class RecorderSupplement {
     this._recorderApp?.setSources([...this._recorderSources, ...this._userSources.values()]);
   }
 
-  async onBeforeInputAction(metadata: CallMetadata): Promise<void> {
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
+    await this._captureSnapshot(sdkObject, metadata, 'in');
     if (this._pauseOnNextStatement)
       await this.pause(metadata);
   }
@@ -458,7 +507,12 @@ export class RecorderSupplement {
         status,
         error: metadata.error,
         params,
-        duration
+        duration,
+        snapshots: {
+          before: showBeforeSnapshot(metadata) && this._snapshots.has(`before@${metadata.id}`),
+          in: showInSnapshot(metadata) && this._snapshots.has(`in@${metadata.id}`),
+          after: showAfterSnapshot(metadata) && this._snapshots.has(`after@${metadata.id}`),
+        }
       });
     }
     this._recorderApp?.updateCallLogs(logs);
@@ -491,4 +545,16 @@ function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolea
 
 function shouldPauseOnStep(sdkObject: SdkObject, metadata: CallMetadata): boolean {
   return metadata.method === 'goto' || metadata.method === 'close';
+}
+
+function showBeforeSnapshot(metadata: CallMetadata): boolean {
+  return metadata.method === 'close';
+}
+
+function showInSnapshot(metadata: CallMetadata): boolean {
+  return ['click', 'dblclick', 'check', 'uncheck', 'fill', 'press'].includes(metadata.method);
+}
+
+function showAfterSnapshot(metadata: CallMetadata): boolean {
+  return ['goto', 'click', 'dblclick', 'dblclick', 'check', 'uncheck', 'fill', 'press'].includes(metadata.method);
 }

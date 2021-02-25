@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+import { HttpServer } from '../../utils/httpServer';
 import { BrowserContext } from '../browserContext';
+import { Page } from '../page';
 import { ContextResources, FrameSnapshot } from './snapshot';
 import { SnapshotRenderer } from './snapshotRenderer';
-import { NetworkResponse, SnapshotStorage } from './snapshotServer';
+import { NetworkResponse, SnapshotServer, SnapshotStorage } from './snapshotServer';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate, SnapshotterResource } from './snapshotter';
 
 export class InMemorySnapshotter implements SnapshotStorage, SnapshotterDelegate {
@@ -26,10 +28,27 @@ export class InMemorySnapshotter implements SnapshotStorage, SnapshotterDelegate
   private _frameSnapshots = new Map<string, FrameSnapshot[]>();
   private _snapshots = new Map<string, SnapshotRenderer>();
   private _contextResources: ContextResources = new Map();
+  private _server: HttpServer;
   private _snapshotter: Snapshotter;
 
   constructor(context: BrowserContext) {
+    this._server = new HttpServer();
+    new SnapshotServer(this._server, this);
     this._snapshotter = new Snapshotter(context, this);
+  }
+
+  async start(): Promise<string> {
+    await this._snapshotter.start();
+    return await this._server.start();
+  }
+
+  stop() {
+    this._snapshotter.dispose();
+    this._server.stop().catch(() => {});
+  }
+
+  async forceSnapshot(page: Page, snapshotId: string) {
+    await this._snapshotter.forceSnapshot(page, snapshotId);
   }
 
   onBlob(blob: SnapshotterBlob): void {

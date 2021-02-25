@@ -23,23 +23,23 @@ export type ServerRouteHandler = (request: http.IncomingMessage, response: http.
 export class HttpServer {
   private _server: http.Server | undefined;
   private _urlPrefix: string;
-  private _routes: { prefix?: string, exact?: string, needsReferrer: boolean, handler: ServerRouteHandler }[] = [];
+  private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
 
   constructor() {
     this._urlPrefix = '';
   }
 
-  routePrefix(prefix: string, handler: ServerRouteHandler, skipReferrerCheck?: boolean) {
-    this._routes.push({ prefix, handler, needsReferrer: !skipReferrerCheck });
+  routePrefix(prefix: string, handler: ServerRouteHandler) {
+    this._routes.push({ prefix, handler });
   }
 
-  routePath(path: string, handler: ServerRouteHandler, skipReferrerCheck?: boolean) {
-    this._routes.push({ exact: path, handler, needsReferrer: !skipReferrerCheck });
+  routePath(path: string, handler: ServerRouteHandler) {
+    this._routes.push({ exact: path, handler });
   }
 
-  async start(): Promise<string> {
+  async start(port?: number): Promise<string> {
     this._server = http.createServer(this._onRequest.bind(this));
-    this._server.listen();
+    this._server.listen(port);
     await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();
     this._urlPrefix = typeof address === 'string' ? address : `http://127.0.0.1:${address.port}`;
@@ -78,10 +78,7 @@ export class HttpServer {
         return;
       }
       const url = new URL('http://localhost' + request.url);
-      const hasReferrer = request.headers['referer'] && request.headers['referer'].startsWith(this._urlPrefix);
       for (const route of this._routes) {
-        if (route.needsReferrer && !hasReferrer)
-          continue;
         if (route.exact && url.pathname === route.exact && route.handler(request, response))
           return;
         if (route.prefix && url.pathname.startsWith(route.prefix) && route.handler(request, response))

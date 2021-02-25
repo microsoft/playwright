@@ -20,11 +20,13 @@ import type { CallLog } from '../../server/supplements/recorder/recorderTypes';
 import { msToString } from '../uiUtils';
 
 export interface CallLogProps {
-  log: CallLog[]
+  log: CallLog[],
+  onHover: (callLogId: number | undefined, phase?: 'before' | 'after' | 'in') => void
 }
 
 export const CallLogView: React.FC<CallLogProps> = ({
   log,
+  onHover,
 }) => {
   const messagesEndRef = React.createRef<HTMLDivElement>();
   const [expandOverrides, setExpandOverrides] = React.useState<Map<number, boolean>>(new Map());
@@ -49,6 +51,10 @@ export const CallLogView: React.FC<CallLogProps> = ({
           { callLog.params.selector ? <span>(<span className='call-log-selector'>{callLog.params.selector}</span>)</span> : undefined }
           <span className={'codicon ' + iconClass(callLog)}></span>
           { typeof callLog.duration === 'number' ? <span className='call-log-time'>— {msToString(callLog.duration)}</span> : undefined}
+          { <div style={{flex: 'auto'}}></div> }
+          <span className={'codicon codicon-vm-outline preview' + (callLog.snapshots.before ? '' : ' invisible')} onMouseEnter={() => onHover(callLog.id, 'before')} onMouseLeave={() => onHover(undefined)}></span>
+          <span className={'codicon codicon-vm-running preview' + (callLog.snapshots.in ? '' : ' invisible')} onMouseEnter={() => onHover(callLog.id, 'in')} onMouseLeave={() => onHover(undefined)}></span>
+          <span className={'codicon codicon-vm-active preview' + (callLog.snapshots.after ? '' : ' invisible')} onMouseEnter={() => onHover(callLog.id, 'after')} onMouseLeave={() => onHover(undefined)}></span>
         </div>
         { (isExpanded ? callLog.messages : []).map((message, i) => {
           return <div className='call-log-message' key={i}>

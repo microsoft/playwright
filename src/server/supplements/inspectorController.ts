@@ -83,14 +83,14 @@ export class InspectorController implements InstrumentationListener {
     }
 
     const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
-    await recorder?.onAfterCall(metadata);
+    await recorder?.onAfterCall(sdkObject, metadata);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!sdkObject.attribution.context)
       return;
     const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
-    await recorder?.onBeforeInputAction(metadata);
+    await recorder?.onBeforeInputAction(sdkObject, metadata);
   }
 
   async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {

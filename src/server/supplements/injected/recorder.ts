@@ -28,6 +28,7 @@ declare global {
     _playwrightRecorderState: () => Promise<UIState>;
     _playwrightResume: () => Promise<void>;
     _playwrightRecorderSetSelector: (selector: string) => Promise<void>;
+    _playwrightRefreshOverlay: () => void;
   }
 }
 
@@ -52,8 +53,11 @@ export class Recorder {
   private _actionPoint: Point | undefined;
   private _actionSelector: string | undefined;
   private _params: { isUnderTest: boolean; };
+  private _snapshotIframe: HTMLIFrameElement | undefined;
+  private _snapshotId: string | undefined;
+  private _snapshotBaseUrl: string;
 
-  constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean }) {
+  constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean, snapshotBaseUrl: string }) {
     this._params = params;
     this._injectedScript = injectedScript;
     this._outerGlassPaneElement = document.createElement('x-pw-glass');
@@ -65,6 +69,7 @@ export class Recorder {
     this._outerGlassPaneElement.style.zIndex = '2147483647';
     this._outerGlassPaneElement.style.pointerEvents = 'none';
     this._outerGlassPaneElement.style.display = 'flex';
+    this._snapshotBaseUrl = params.snapshotBaseUrl;
 
     this._tooltipElement = document.createElement('x-pw-tooltip');
     this._actionPointElement = document.createElement('x-pw-action-point');
@@ -122,10 +127,15 @@ export class Recorder {
     this._refreshListenersIfNeeded();
     setInterval(() => {
       this._refreshListenersIfNeeded();
-      if ((window as any)._recorderScriptReadyForTest)
+      if ((window as any)._recorderScriptReadyForTest) {
         (window as any)._recorderScriptReadyForTest();
+        delete (window as any)._recorderScriptReadyForTest;
+      }
     }, 500);
-    this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
+    window._playwrightRefreshOverlay = () => {
+      this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
+    };
+    window._playwrightRefreshOverlay();
   }
 
   private _refreshListenersIfNeeded() {
@@ -152,8 +162,29 @@ export class Recorder {
     document.documentElement.appendChild(this._outerGlassPaneElement);
   }
 
+  private _createSnapshotIframeIfNeeded(): HTMLIFrameElement | undefined {
+    if (this._snapshotIframe)
+      return this._snapshotIframe;
+    if (window.top === window) {
+      this._snapshotIframe = document.createElement('iframe');
+      this._snapshotIframe.src = this._snapshotBaseUrl;
+      this._snapshotIframe.style.position = 'fixed';
+      this._snapshotIframe.style.top = '0';
+      this._snapshotIframe.style.right = '0';
+      this._snapshotIframe.style.bottom = '0';
+      this._snapshotIframe.style.left = '0';
+      this._snapshotIframe.style.border = 'none';
+      this._snapshotIframe.style.width = '100%';
+      this._snapshotIframe.style.height = '100%';
+      this._snapshotIframe.style.zIndex = '2147483647';
+      this._snapshotIframe.style.visibility = 'hidden';
+      document.documentElement.appendChild(this._snapshotIframe);
+    }
+    return this._snapshotIframe;
+  }
+
   private async _pollRecorderMode() {
-    const pollPeriod = 250;
+    const pollPeriod = 1000;
     if (this._pollRecorderModeTimer)
       clearTimeout(this._pollRecorderModeTimer);
     const state = await window._playwrightRecorderState().catch(e => null);
@@ -162,7 +193,7 @@ export class Recorder {
       return;
     }
 
-    const { mode, actionPoint, actionSelector } = state;
+    const { mode, actionPoint, actionSelector, snapshotId } = state;
     if (mode !== this._mode) {
       this._mode = mode;
       this._clearHighlight();
@@ -190,6 +221,18 @@ export class Recorder {
       this._hoveredModel = actionSelector ? querySelector(this._injectedScript, actionSelector, document) : null;
       this._updateHighlight();
       this._actionSelector = actionSelector;
+    }
+    if (snapshotId !== this._snapshotId) {
+      this._snapshotId = snapshotId;
+      const snapshotIframe = this._createSnapshotIframeIfNeeded();
+      if (snapshotIframe) {
+        if (!snapshotId) {
+          snapshotIframe.style.visibility = 'hidden';
+        } else {
+          snapshotIframe.style.visibility = 'visible';
+          snapshotIframe.contentWindow?.postMessage({ snapshotId }, '*');
+        }
+      }
     }
     this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
