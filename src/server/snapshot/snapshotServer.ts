@@ -16,14 +16,19 @@
 
 import * as http from 'http';
 import querystring from 'querystring';
-import type { NetworkResourceTraceEvent } from '../common/traceEvents';
-import type { FrameSnapshot, SerializedFrameSnapshot } from './frameSnapshot';
-import { HttpServer } from '../../../utils/httpServer';
+import { SnapshotRenderer, RenderedFrameSnapshot } from './snapshotRenderer';
+import { HttpServer } from '../../utils/httpServer';
+
+export type NetworkResponse = {
+  contentType: string;
+  responseHeaders: { name: string, value: string }[];
+  responseSha1: string;
+};
 
 export interface SnapshotStorage {
   resourceContent(sha1: string): Buffer;
-  resourceById(resourceId: string): NetworkResourceTraceEvent;
-  snapshotByName(snapshotName: string): FrameSnapshot | undefined;
+  resourceById(resourceId: string): NetworkResponse;
+  snapshotByName(snapshotName: string): SnapshotRenderer | undefined;
 }
 
 export class SnapshotServer {
@@ -149,7 +154,7 @@ export class SnapshotServer {
         }
         if (request.mode === 'navigate') {
           const htmlResponse = await fetch(`/snapshot-data?snapshotName=${snapshotId}`);
-          const { html, resources }: SerializedFrameSnapshot  = await htmlResponse.json();
+          const { html, resources }: RenderedFrameSnapshot  = await htmlResponse.json();
           if (!html)
             return respondNotAvailable();
           snapshotResources.set(snapshotId, resources);
@@ -203,7 +208,7 @@ export class SnapshotServer {
     response.setHeader('Content-Type', 'application/json');
     const parsed: any = querystring.parse(request.url!.substring(request.url!.indexOf('?') + 1));
     const snapshot = this._snapshotStorage.snapshotByName(parsed.snapshotName);
-    const snapshotData: any = snapshot ? snapshot.serialize() : { html: '' };
+    const snapshotData: any = snapshot ? snapshot.render() : { html: '' };
     response.end(JSON.stringify(snapshotData));
     return true;
   }

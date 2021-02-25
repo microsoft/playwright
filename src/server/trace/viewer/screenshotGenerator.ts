@@ -19,7 +19,7 @@ import path from 'path';
 import * as playwright from '../../../..';
 import * as util from 'util';
 import { ActionEntry, ContextEntry, TraceModel } from './traceModel';
-import { SnapshotServer } from './snapshotServer';
+import { SnapshotServer } from '../../snapshot/snapshotServer';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));

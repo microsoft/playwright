@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { NodeSnapshot } from '../common/traceEvents';
+import { NodeSnapshot } from './snapshot';
 
 export type SnapshotData = {
   doctype?: string,

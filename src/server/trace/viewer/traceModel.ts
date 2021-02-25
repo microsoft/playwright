@@ -16,7 +16,7 @@
 
 import { createGuid } from '../../../utils/utils';
 import * as trace from '../common/traceEvents';
-import { FrameSnapshot } from './frameSnapshot';
+import { ContextResources, SnapshotRenderer } from '../../snapshot/snapshotRenderer';
 export * as trace from '../common/traceEvents';
 
 export class TraceModel {
@@ -152,16 +152,16 @@ export class TraceModel {
     return { contextEntry, pageEntry };
   }
 
-  findSnapshotById(pageId: string, frameId: string, snapshotId: string): FrameSnapshot | undefined {
+  findSnapshotById(pageId: string, frameId: string, snapshotId: string): SnapshotRenderer | undefined {
     const { pageEntry, contextEntry } = this.pageEntries.get(pageId)!;
     const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
     for (let index = 0; index < frameSnapshots.length; index++) {
       if (frameSnapshots[index].snapshotId === snapshotId)
-        return new FrameSnapshot(frameId, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots, index);
+        return new SnapshotRenderer(frameId, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots.map(fs => fs.snapshot), index);
     }
   }
 
-  findSnapshotByTime(pageId: string, frameId: string, timestamp: number): FrameSnapshot | undefined {
+  findSnapshotByTime(pageId: string, frameId: string, timestamp: number): SnapshotRenderer | undefined {
     const { pageEntry, contextEntry } = this.pageEntries.get(pageId)!;
     const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
     let snapshotIndex = -1;
@@ -170,7 +170,7 @@ export class TraceModel {
       if (timestamp && snapshot.timestamp <= timestamp)
         snapshotIndex = index;
     }
-    return snapshotIndex >= 0 ? new FrameSnapshot(frameId, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots, snapshotIndex) : undefined;
+    return snapshotIndex >= 0 ? new SnapshotRenderer(frameId, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots.map(fs => fs.snapshot), snapshotIndex) : undefined;
   }
 }
 
@@ -182,8 +182,6 @@ export type ContextEntry = {
   destroyed: trace.ContextDestroyedTraceEvent;
   pages: PageEntry[];
 }
-
-export type ContextResources = Map<string, { resourceId: string, frameId: string }[]>;
 
 export type InterestingPageEvent = trace.DialogOpenedEvent | trace.DialogClosedEvent | trace.NavigationEvent | trace.LoadEvent;
 

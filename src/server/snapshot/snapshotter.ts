@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../../browserContext';
-import { Page } from '../../page';
-import * as network from '../../network';
-import { helper, RegisteredListener } from '../../helper';
-import { debugLogger } from '../../../utils/debugLogger';
-import { Frame } from '../../frames';
+import { BrowserContext } from '../browserContext';
+import { Page } from '../page';
+import * as network from '../network';
+import { helper, RegisteredListener } from '../helper';
+import { debugLogger } from '../../utils/debugLogger';
+import { Frame } from '../frames';
 import { SnapshotData, frameSnapshotStreamer, kSnapshotBinding, kSnapshotStreamer } from './snapshotterInjected';
-import { calculateSha1 } from '../../../utils/utils';
-import { FrameSnapshot } from '../common/traceEvents';
+import { calculateSha1 } from '../../utils/utils';
+import { FrameSnapshot } from './snapshot';
 
 export type SnapshotterResource = {
   pageId: string,
