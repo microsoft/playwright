@@ -48,6 +48,16 @@ await page.route('**/*', (route, request) => {
 });
 ```
 
+```java
+page.route("**/*", route -> {
+  // Override headers
+  Map<String, String> headers = new HashMap<>(route.request().headers());
+  headers.put("foo", "bar"); // set "foo" header
+  headers.remove("origin"); // remove "origin" header
+  route.resume(new Route.ResumeOptions().withHeaders(headers));
+});
+```
+
 ```python async
 async def handle(route, request):
     # override headers
@@ -110,6 +120,15 @@ await page.route('**/*', route => {
 });
 ```
 
+```java
+page.route("**/*", route -> {
+  route.fulfill(new Route.FulfillOptions()
+    .withStatus(404)
+    .withContentType("text/plain")
+    .withBody("Not Found!"));
+});
+```
+
 ```python async
 await page.route("**/*", lambda route: route.fulfill(
     status=404,
@@ -128,6 +147,11 @@ An example of serving static file:
 
 ```js
 await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.json' }));
+```
+
+```java
+page.route("**/xhr_endpoint", route -> route.fulfill(
+  new Route.FulfillOptions().withPath(Paths.get("mock_data.json")));
 ```
 
 ```python async

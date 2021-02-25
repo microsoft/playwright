@@ -29,6 +29,12 @@ page.on('requestfailed', request => {
 });
 ```
 
+```java
+page.onRequestFailed(request -> {
+  System.out.println(request.url() + " " + request.failure());
+});
+```
+
 ```py
 page.on("requestfailed", lambda request: print(request.url + " " + request.failure))
 ```
@@ -88,6 +94,11 @@ const response = await page.goto('http://example.com');
 console.log(response.request().redirectedFrom().url()); // 'http://example.com'
 ```
 
+```java
+Response response = page.navigate("http://example.com");
+System.out.println(response.request().redirectedFrom().url()); // "http://example.com"
+```
+
 ```python async
 response = await page.goto("http://example.com")
 print(response.request.redirected_from.url) # "http://example.com"
@@ -103,6 +114,11 @@ If the website `https://google.com` has no redirects:
 ```js
 const response = await page.goto('https://google.com');
 console.log(response.request().redirectedFrom()); // null
+```
+
+```java
+Response response = page.navigate("https://google.com");
+System.out.println(response.request().redirectedFrom()); // null
 ```
 
 ```python async
@@ -124,6 +140,10 @@ This method is the opposite of [`method: Request.redirectedFrom`]:
 
 ```js
 console.log(request.redirectedFrom().redirectedTo() === request); // true
+```
+
+```java
+System.out.println(request.redirectedFrom().redirectedTo() == request); // true
 ```
 
 ```py
@@ -173,6 +193,14 @@ const [request] = await Promise.all([
   page.goto('http://example.com')
 ]);
 console.log(request.timing());
+```
+
+```java
+page.onRequestFinished(request -> {
+  Timing timing = request.timing();
+  System.out.println(timing.responseEnd - timing.startTime);
+});
+page.navigate("http://example.com");
 ```
 
 ```python async

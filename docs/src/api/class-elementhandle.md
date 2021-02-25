@@ -16,6 +16,24 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 })();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch();
+      Page page = browser.newPage();
+      page.navigate("https://example.com");
+      ElementHandle hrefElement = page.querySelector("a");
+      hrefElement.click();
+      // ...
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -79,6 +97,11 @@ snippet should click the center of the element.
 ```js
 const box = await elementHandle.boundingBox();
 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+```
+
+```java
+BoundingBox box = elementHandle.boundingBox();
+page.mouse().click(box.x + box.width / 2, box.y + box.height / 2);
 ```
 
 ```python async
@@ -189,6 +212,10 @@ is dispatched. This is equivalend to calling
 await elementHandle.dispatchEvent('click');
 ```
 
+```java
+elementHandle.dispatchEvent("click");
+```
+
 ```python async
 await element_handle.dispatch_event("click")
 ```
@@ -217,6 +244,14 @@ You can also specify `JSHandle` as the property value if you want live objects t
 // Note you can only create DataTransfer in Chromium and Firefox
 const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
 await elementHandle.dispatchEvent('dragstart', { dataTransfer });
+```
+
+```java
+// Note you can only create DataTransfer in Chromium and Firefox
+JSHandle dataTransfer = page.evaluateHandle("() => new DataTransfer()");
+Map<String, Object> arg = new HashMap<>();
+arg.put("dataTransfer", dataTransfer);
+elementHandle.dispatchEvent("dragstart", arg);
 ```
 
 ```python async
@@ -262,6 +297,12 @@ Examples:
 const tweetHandle = await page.$('.tweet');
 expect(await tweetHandle.$eval('.like', node => node.innerText)).toBe('100');
 expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
+```
+
+```java
+ElementHandle tweetHandle = page.querySelector(".tweet");
+assertEquals("100", tweetHandle.evalOnSelector(".like", "node => node.innerText"));
+assertEquals("10", tweetHandle.evalOnSelector(".retweets", "node => node.innerText"));
 ```
 
 ```python async
@@ -312,6 +353,11 @@ Examples:
 ```js
 const feedHandle = await page.$('.feed');
 expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
+```
+
+```java
+ElementHandle feedHandle = page.querySelector(".feed");
+assertEquals(Arrays.asList("Hello!", "Hi!"), feedHandle.evalOnSelectorAll(".tweet", "nodes => nodes.map(n => n.innerText)"));
 ```
 
 ```python async
@@ -551,6 +597,15 @@ handle.selectOption({ label: 'Blue' });
 handle.selectOption(['red', 'green', 'blue']);
 ```
 
+```java
+// single selection matching the value
+handle.selectOption("blue");
+// single selection matching the label
+handle.selectOption(new SelectOption().withLabel("Blue"));
+// multiple selection
+handle.selectOption(new String[] {"red", "green", "blue"});
+```
+
 ```python async
 # single selection matching the value
 await handle.select_option("blue")
@@ -650,6 +705,11 @@ await elementHandle.type('Hello'); // Types instantly
 await elementHandle.type('World', {delay: 100}); // Types slower, like a user
 ```
 
+```java
+elementHandle.type("Hello"); // Types instantly
+elementHandle.type("World", new ElementHandle.TypeOptions().withDelay(100)); // Types slower, like a user
+```
+
 ```python async
 await element_handle.type("hello") # types instantly
 await element_handle.type("world", delay=100) # types slower, like a user
@@ -666,6 +726,12 @@ An example of typing into a text field and then submitting the form:
 const elementHandle = await page.$('input');
 await elementHandle.type('some text');
 await elementHandle.press('Enter');
+```
+
+```java
+ElementHandle elementHandle = page.querySelector("input");
+elementHandle.type("some text");
+elementHandle.press("Enter");
 ```
 
 ```python async
@@ -756,6 +822,14 @@ await page.setContent(`<div><span></span></div>`);
 const div = await page.$('div');
 // Waiting for the 'span' selector relative to the div.
 const span = await div.waitForSelector('span', { state: 'attached' });
+```
+
+```java
+page.setContent("<div><span></span></div>");
+ElementHandle div = page.querySelector("div");
+// Waiting for the "span" selector relative to the div.
+ElementHandle span = div.waitForSelector("span", new ElementHandle.WaitForSelectorOptions()
+  .withState(WaitForSelectorState.ATTACHED));
 ```
 
 ```python async

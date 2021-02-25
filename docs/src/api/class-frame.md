@@ -31,6 +31,29 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType firefox = playwright.firefox();
+      Browser browser = firefox.launch();
+      Page page = browser.newPage();
+      page.navigate("https://www.google.com/chrome/browser/canary.html");
+      dumpFrameTree(page.mainFrame(), "");
+      browser.close();
+    }
+  }
+  static void dumpFrameTree(Frame frame, String indent) {
+    System.out.println(indent + frame.url());
+    for (Frame child : frame.childFrames()) {
+      dumpFrameTree(child, indent + "  ");
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -237,6 +260,10 @@ is dispatched. This is equivalend to calling
 await frame.dispatchEvent('button#submit', 'click');
 ```
 
+```java
+frame.dispatchEvent("button#submit", "click");
+```
+
 ```python async
 await frame.dispatch_event("button#submit", "click")
 ```
@@ -267,6 +294,14 @@ const dataTransfer = await frame.evaluateHandle(() => new DataTransfer());
 await frame.dispatchEvent('#source', 'dragstart', { dataTransfer });
 ```
 
+```java
+// Note you can only create DataTransfer in Chromium and Firefox
+JSHandle dataTransfer = frame.evaluateHandle("() => new DataTransfer()");
+Map<String, Object> arg = new HashMap<>();
+arg.put("dataTransfer", dataTransfer);
+frame.dispatchEvent("#source", "dragstart", arg);
+```
+
 ```python async
 # note you can only create data_transfer in chromium and firefox
 data_transfer = await frame.evaluate_handle("new DataTransfer()")
@@ -278,7 +313,6 @@ await frame.dispatch_event("#source", "dragstart", { "dataTransfer": data_transf
 data_transfer = frame.evaluate_handle("new DataTransfer()")
 frame.dispatch_event("#source", "dragstart", { "dataTransfer": data_transfer })
 ```
-
 
 ### param: Frame.dispatchEvent.selector = %%-input-selector-%%
 
@@ -315,6 +349,12 @@ Examples:
 const searchValue = await frame.$eval('#search', el => el.value);
 const preloadHref = await frame.$eval('link[rel=preload]', el => el.href);
 const html = await frame.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
+```
+
+```java
+String searchValue = (String) frame.evalOnSelector("#search", "el => el.value");
+String preloadHref = (String) frame.evalOnSelector("link[rel=preload]", "el => el.href");
+String html = (String) frame.evalOnSelector(".main-container", "(e, suffix) => e.outerHTML + suffix", "hello");
 ```
 
 ```python async
@@ -359,6 +399,10 @@ Examples:
 const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
 ```
 
+```java
+boolean divsCounts = (boolean) page.evalOnSelectorAll("div", "(divs, min) => divs.length >= min", 10);
+```
+
 ```python async
 divs_counts = await frame.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
 ```
@@ -395,6 +439,13 @@ const result = await frame.evaluate(([x, y]) => {
 console.log(result); // prints "56"
 ```
 
+```java
+Object result = frame.evaluate("([x, y]) => {\n" +
+  "  return Promise.resolve(x * y);\n" +
+  "}", Arrays.asList(7, 8));
+System.out.println(result); // prints "56"
+```
+
 ```python async
 result = await frame.evaluate("([x, y]) => Promise.resolve(x * y)", [7, 8])
 print(result) # prints "56"
@@ -405,11 +456,14 @@ result = frame.evaluate("([x, y]) => Promise.resolve(x * y)", [7, 8])
 print(result) # prints "56"
 ```
 
-
 A string can also be passed in instead of a function.
 
 ```js
 console.log(await frame.evaluate('1 + 2')); // prints "3"
+```
+
+```java
+System.out.println(frame.evaluate("1 + 2")); // prints "3"
 ```
 
 ```python async
@@ -424,13 +478,18 @@ x = 10
 print(frame.evaluate(f"1 + {x}")) # prints "11"
 ```
 
-
 [ElementHandle] instances can be passed as an argument to the [`method: Frame.evaluate`]:
 
 ```js
 const bodyHandle = await frame.$('body');
 const html = await frame.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
 await bodyHandle.dispose();
+```
+
+```java
+ElementHandle bodyHandle = frame.querySelector("body");
+String html = (String) frame.evaluate("([body, suffix]) => body.innerHTML + suffix", Arrays.asList(bodyHandle, "hello"));
+bodyHandle.dispose();
 ```
 
 ```python async
@@ -468,6 +527,11 @@ const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
 aWindowHandle; // Handle for the window object.
 ```
 
+```java
+// Handle for the window object.
+JSHandle aWindowHandle = frame.evaluateHandle("() => Promise.resolve(window)");
+```
+
 ```python async
 a_window_handle = await frame.evaluate_handle("Promise.resolve(window)")
 a_window_handle # handle for the window object.
@@ -482,6 +546,10 @@ A string can also be passed in instead of a function.
 
 ```js
 const aHandle = await frame.evaluateHandle('document'); // Handle for the 'document'.
+```
+
+```java
+JSHandle aHandle = frame.evaluateHandle("document"); // Handle for the "document".
 ```
 
 ```python async
@@ -499,6 +567,13 @@ const aHandle = await frame.evaluateHandle(() => document.body);
 const resultHandle = await frame.evaluateHandle(([body, suffix]) => body.innerHTML + suffix, [aHandle, 'hello']);
 console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
+```
+
+```java
+JSHandle aHandle = frame.evaluateHandle("() => document.body");
+JSHandle resultHandle = frame.evaluateHandle("([body, suffix]) => body.innerHTML + suffix", Arrays.asList(aHandle, "hello"));
+System.out.println(resultHandle.jsonValue());
+resultHandle.dispose();
 ```
 
 ```python async
@@ -565,6 +640,12 @@ This method throws an error if the frame has been detached before `frameElement(
 const frameElement = await frame.frameElement();
 const contentFrame = await frameElement.contentFrame();
 console.log(frame === contentFrame);  // -> true
+```
+
+```java
+ElementHandle frameElement = frame.frameElement();
+Frame contentFrame = frameElement.contentFrame();
+System.out.println(frame == contentFrame);  // -> true
 ```
 
 ```python async
@@ -844,6 +925,15 @@ frame.selectOption('select#colors', { label: 'Blue' });
 frame.selectOption('select#colors', 'red', 'green', 'blue');
 ```
 
+```java
+// single selection matching the value
+frame.selectOption("select#colors", "blue");
+// single selection matching both the value and the label
+frame.selectOption("select#colors", new SelectOption().withLabel("Blue"));
+// multiple selection
+frame.selectOption("select#colors", new String[] {"red", "green", "blue"});
+```
+
 ```python async
 # single selection matching the value
 await frame.select_option("select#colors", "blue")
@@ -953,6 +1043,13 @@ await frame.type('#mytextarea', 'Hello'); // Types instantly
 await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
 ```
 
+```java
+// Types instantly
+frame.type("#mytextarea", "Hello");
+// Types slower, like a user
+frame.type("#mytextarea", "World", new Frame.TypeOptions().withDelay(100)); 
+```
+
 ```python async
 await frame.type("#mytextarea", "hello") # types instantly
 await frame.type("#mytextarea", "world", delay=100) # types slower, like a user
@@ -1029,6 +1126,23 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType firefox = playwright.firefox();
+      Browser browser = firefox.launch();
+      Page page = browser.newPage();
+      page.setViewportSize(50, 50);
+      page.mainFrame().waitForFunction("window.innerWidth < 100");
+      browser.close();
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -1069,6 +1183,11 @@ const selector = '.foo';
 await frame.waitForFunction(selector => !!document.querySelector(selector), selector);
 ```
 
+```java
+String selector = ".foo";
+frame.waitForFunction("selector => !!document.querySelector(selector)", selector);
+```
+
 ```python async
 selector = ".foo"
 await frame.wait_for_function("selector => !!document.querySelector(selector)", selector)
@@ -1104,6 +1223,11 @@ await frame.click('button'); // Click triggers navigation.
 await frame.waitForLoadState(); // Waits for 'load' state by default.
 ```
 
+```java
+frame.click("button"); // Click triggers navigation.
+frame.waitForLoadState(); // Waits for "load" state by default.
+```
+
 ```python async
 await frame.click("button") # click triggers navigation.
 await frame.wait_for_load_state() # the promise resolves after "load" event.
@@ -1135,6 +1259,14 @@ const [response] = await Promise.all([
   frame.waitForNavigation(), // The promise resolves after navigation has finished
   frame.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
 ]);
+```
+
+```java
+// The method returns after navigation has finished
+Response response = frame.waitForNavigation(() -> {
+  // Clicking the link will indirectly cause a navigation
+  frame.click("a.delayed-navigation");
+});
 ```
 
 ```python async
@@ -1186,6 +1318,26 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
   }
   await browser.close();
 })();
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch();
+      Page page = browser.newPage();
+      for (String currentURL : Arrays.asList("https://google.com", "https://bbc.com")) {
+        page.navigate(currentURL);
+        ElementHandle element = page.mainFrame().waitForSelector("img");
+        System.out.println("Loaded image: " + element.getAttribute("src"));
+      }
+      browser.close();
+    }
+  }
+}
 ```
 
 ```python async

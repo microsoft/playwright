@@ -15,6 +15,16 @@ for (const worker of page.workers())
   console.log('  ' + worker.url());
 ```
 
+```java
+page.onWorker(worker -> {
+  System.out.println("Worker created: " + worker.url());
+  worker.onClose(worker1 -> System.out.println("Worker destroyed: " + worker1.url()));
+});
+System.out.println("Current workers:");
+for (Worker worker : page.workers())
+  System.out.println("  " + worker.url());
+```
+
 ```py
 def handle_worker(worker):
     print("worker created: " + worker.url)
