@@ -63,7 +63,7 @@ it('should record trace', (test, { browserName, platform }) => {
   expect(clickEvent).toBeTruthy();
   expect(clickEvent.snapshots.length).toBe(2);
   const snapshotId = clickEvent.snapshots[0].snapshotId;
-  const snapshotEvent = traceEvents.find(event => event.type === 'snapshot' && event.snapshotId === snapshotId) as trace.FrameSnapshotTraceEvent;
+  const snapshotEvent = traceEvents.find(event => event.type === 'snapshot' && event.snapshot.snapshotId === snapshotId) as trace.FrameSnapshotTraceEvent;
   expect(snapshotEvent).toBeTruthy();
 });
 

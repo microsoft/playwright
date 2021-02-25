@@ -16,7 +16,8 @@
 
 import { createGuid } from '../../../utils/utils';
 import * as trace from '../common/traceEvents';
-import { ContextResources, SnapshotRenderer } from '../../snapshot/snapshotRenderer';
+import { SnapshotRenderer } from '../../snapshot/snapshotRenderer';
+import { ContextResources } from '../../snapshot/snapshot';
 export * as trace from '../common/traceEvents';
 
 export class TraceModel {
@@ -74,7 +75,6 @@ export class TraceModel {
         const action: ActionEntry = {
           actionId,
           action: event,
-          thumbnailUrl: `/action-preview/${actionId}.png`,
           resources: pageEntry.resources,
         };
         pageEntry.resources = [];
@@ -156,8 +156,8 @@ export class TraceModel {
     const { pageEntry, contextEntry } = this.pageEntries.get(pageId)!;
     const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
     for (let index = 0; index < frameSnapshots.length; index++) {
-      if (frameSnapshots[index].snapshotId === snapshotId)
-        return new SnapshotRenderer(frameId, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots.map(fs => fs.snapshot), index);
+      if (frameSnapshots[index].snapshot.snapshotId === snapshotId)
+        return new SnapshotRenderer(this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots.map(fs => fs.snapshot), index);
     }
   }
 
@@ -170,7 +170,7 @@ export class TraceModel {
       if (timestamp && snapshot.timestamp <= timestamp)
         snapshotIndex = index;
     }
-    return snapshotIndex >= 0 ? new SnapshotRenderer(frameId, this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots.map(fs => fs.snapshot), snapshotIndex) : undefined;
+    return snapshotIndex >= 0 ? new SnapshotRenderer(this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots.map(fs => fs.snapshot), snapshotIndex) : undefined;
   }
 }
 
@@ -197,7 +197,6 @@ export type PageEntry = {
 export type ActionEntry = {
   actionId: string;
   action: trace.ActionTraceEvent;
-  thumbnailUrl: string;
   resources: trace.NetworkResourceTraceEvent[];
 };
 

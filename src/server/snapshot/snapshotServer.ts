@@ -16,8 +16,9 @@
 
 import * as http from 'http';
 import querystring from 'querystring';
-import { SnapshotRenderer, RenderedFrameSnapshot } from './snapshotRenderer';
+import { SnapshotRenderer } from './snapshotRenderer';
 import { HttpServer } from '../../utils/httpServer';
+import type { RenderedFrameSnapshot } from './snapshot';
 
 export type NetworkResponse = {
   contentType: string;
@@ -26,9 +27,9 @@ export type NetworkResponse = {
 };
 
 export interface SnapshotStorage {
-  resourceContent(sha1: string): Buffer;
-  resourceById(resourceId: string): NetworkResponse;
-  snapshotByName(snapshotName: string): SnapshotRenderer | undefined;
+  resourceContent(sha1: string): Buffer | undefined;
+  resourceById(resourceId: string): NetworkResponse | undefined;
+  snapshotById(snapshotId: string): SnapshotRenderer | undefined;
 }
 
 export class SnapshotServer {
@@ -207,7 +208,7 @@ export class SnapshotServer {
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/json');
     const parsed: any = querystring.parse(request.url!.substring(request.url!.indexOf('?') + 1));
-    const snapshot = this._snapshotStorage.snapshotByName(parsed.snapshotName);
+    const snapshot = this._snapshotStorage.snapshotById(parsed.snapshotName);
     const snapshotData: any = snapshot ? snapshot.render() : { html: '' };
     response.end(JSON.stringify(snapshotData));
     return true;
@@ -236,9 +237,14 @@ export class SnapshotServer {
     }
 
     const resource = this._snapshotStorage.resourceById(resourceId);
+    if (!resource)
+      return false;
+
     const sha1 = overrideSha1 || resource.responseSha1;
     try {
       const content = this._snapshotStorage.resourceContent(sha1);
+      if (!content)
+        return false;
       response.statusCode = 200;
       let contentType = resource.contentType;
       const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);

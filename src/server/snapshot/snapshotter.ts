@@ -21,12 +21,13 @@ import { helper, RegisteredListener } from '../helper';
 import { debugLogger } from '../../utils/debugLogger';
 import { Frame } from '../frames';
 import { SnapshotData, frameSnapshotStreamer, kSnapshotBinding, kSnapshotStreamer } from './snapshotterInjected';
-import { calculateSha1 } from '../../utils/utils';
+import { calculateSha1, createGuid } from '../../utils/utils';
 import { FrameSnapshot } from './snapshot';
 
 export type SnapshotterResource = {
+  resourceId: string,
   pageId: string,
-  frameId: string,  // Empty means main frame
+  frameId: string,
   url: string,
   contentType: string,
   responseHeaders: { name: string, value: string }[],
@@ -45,7 +46,7 @@ export type SnapshotterBlob = {
 export interface SnapshotterDelegate {
   onBlob(blob: SnapshotterBlob): void;
   onResource(resource: SnapshotterResource): void;
-  onFrameSnapshot(frame: Frame, frameUrl: string, snapshot: FrameSnapshot, snapshotId?: string): void;
+  onFrameSnapshot(snapshot: FrameSnapshot): void;
 }
 
 export class Snapshotter {
@@ -61,6 +62,10 @@ export class Snapshotter {
     ];
     this._context.exposeBinding(kSnapshotBinding, false, (source, data: SnapshotData) => {
       const snapshot: FrameSnapshot = {
+        snapshotId: data.snapshotId,
+        pageId: source.page.idInSnapshot,
+        frameId: source.frame.idInSnapshot,
+        frameUrl: data.url,
         doctype: data.doctype,
         html: data.html,
         viewport: data.viewport,
@@ -76,7 +81,7 @@ export class Snapshotter {
           snapshot.resourceOverrides.push({ url, ref: content });
         }
       }
-      this._delegate.onFrameSnapshot(source.frame, data.url, snapshot, data.snapshotId);
+      this._delegate.onFrameSnapshot(snapshot);
     });
     this._context._doAddInitScript('(' + frameSnapshotStreamer.toString() + ')()');
   }
@@ -114,7 +119,7 @@ export class Snapshotter {
         const context = await parent._mainContext();
         await context.evaluateInternal(({ kSnapshotStreamer, frameElement, frameId }) => {
           (window as any)[kSnapshotStreamer].markIframe(frameElement, frameId);
-        }, { kSnapshotStreamer, frameElement, frameId: frame.traceId });
+        }, { kSnapshotStreamer, frameElement, frameId: frame.idInSnapshot });
         frameElement.dispose();
       } catch (e) {
         // Ignore
@@ -147,8 +152,9 @@ export class Snapshotter {
     const body = await response.body().catch(e => debugLogger.log('error', e));
     const responseSha1 = body ? calculateSha1(body) : 'none';
     const resource: SnapshotterResource = {
-      pageId: page.traceId,
-      frameId: response.frame().traceId,
+      pageId: page.idInSnapshot,
+      frameId: response.frame().idInSnapshot,
+      resourceId: 'resource@' + createGuid(),
       url,
       contentType,
       responseHeaders: response.headers(),

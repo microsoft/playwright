@@ -129,8 +129,6 @@ export type FrameSnapshotTraceEvent = {
   pageId: string,
   frameId: string,
   snapshot: FrameSnapshot,
-  frameUrl: string,
-  snapshotId?: string,
 };
 
 export type TraceEvent =

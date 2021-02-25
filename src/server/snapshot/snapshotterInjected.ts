@@ -26,7 +26,7 @@ export type SnapshotData = {
   }[],
   viewport: { width: number, height: number },
   url: string,
-  snapshotId?: string,
+  snapshotId: string,
 };
 
 export const kSnapshotStreamer = '__playwright_snapshot_streamer_';
@@ -92,7 +92,7 @@ export function frameSnapshotStreamer() {
       const observerConfig = { attributes: true, subtree: true };
       this._observer.observe(document, observerConfig);
 
-      this._streamSnapshot();
+      this._streamSnapshot('snapshot@initial');
     }
 
     private _interceptNativeMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
@@ -168,7 +168,7 @@ export function frameSnapshotStreamer() {
       this._streamSnapshot(snapshotId);
     }
 
-    private _streamSnapshot(snapshotId?: string) {
+    private _streamSnapshot(snapshotId: string) {
       if (this._timer) {
         clearTimeout(this._timer);
         this._timer = undefined;
@@ -178,7 +178,7 @@ export function frameSnapshotStreamer() {
         (window as any)[kSnapshotBinding](snapshot).catch((e: any) => {});
       } catch (e) {
       }
-      this._timer = setTimeout(() => this._streamSnapshot(), 100);
+      this._timer = setTimeout(() => this._streamSnapshot(`snapshot@${performance.now()}`), 100);
     }
 
     private _sanitizeUrl(url: string): string {
@@ -228,7 +228,7 @@ export function frameSnapshotStreamer() {
       }
     }
 
-    private _captureSnapshot(snapshotId?: string): SnapshotData {
+    private _captureSnapshot(snapshotId: string): SnapshotData {
       const snapshotNumber = ++this._lastSnapshotNumber;
       let nodeCounter = 0;
       let shadowDomNesting = 0;
