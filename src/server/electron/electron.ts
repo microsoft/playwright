@@ -100,17 +100,11 @@ export class ElectronApplication extends SdkObject {
   }
 
   async close() {
-    const closed = this._waitForEvent(ElectronApplication.Events.Close);
+    const progressController = new ProgressController(internalCallMetadata(), this);
+    const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise, this._timeoutSettings.timeout({}));
     await this._nodeElectronHandle!.evaluate(({ app }) => app.quit());
     this._nodeConnection.close();
     await closed;
-  }
-
-  private async _waitForEvent(event: string, predicate?: Function): Promise<any> {
-    const progressController = new ProgressController(internalCallMetadata(), this);
-    if (event !== ElectronApplication.Events.Close)
-      this._browserContext._closePromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, predicate).promise, this._timeoutSettings.timeout({}));
   }
 
   async _init()  {

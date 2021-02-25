@@ -297,23 +297,22 @@ export class Page extends SdkObject {
   }
 
   async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = this.mainFrame().setupNavigationProgressController(metadata);
-    const response = await controller.run(async progress => {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
       const [response] = await Promise.all([
         this.mainFrame()._waitForNavigation(progress, options),
         this._delegate.reload(),
       ]);
+      await this._doSlowMo();
       return response;
-    }, this._timeoutSettings.navigationTimeout(options));
-    await this._doSlowMo();
-    return response;
+    }), this._timeoutSettings.navigationTimeout(options));
   }
 
   async goBack(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = this.mainFrame().setupNavigationProgressController(metadata);
-    const response = await controller.run(async progress => {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -327,15 +326,14 @@ export class Page extends SdkObject {
       const response = await waitPromise;
       if (error)
         throw error;
+      await this._doSlowMo();
       return response;
-    }, this._timeoutSettings.navigationTimeout(options));
-    await this._doSlowMo();
-    return response;
+    }), this._timeoutSettings.navigationTimeout(options));
   }
 
   async goForward(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = this.mainFrame().setupNavigationProgressController(metadata);
-    const response = await controller.run(async progress => {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -349,10 +347,9 @@ export class Page extends SdkObject {
       const response = await waitPromise;
       if (error)
         throw error;
+      await this._doSlowMo();
       return response;
-    }, this._timeoutSettings.navigationTimeout(options));
-    await this._doSlowMo();
-    return response;
+    }), this._timeoutSettings.navigationTimeout(options));
   }
 
   async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null }) {

@@ -111,10 +111,6 @@ export class ProgressController {
       clearTimeout(timer);
     }
   }
-
-  abort(error: Error) {
-    this._forceAbort(error);
-  }
 }
 
 async function runCleanup(cleanup: () => any) {
