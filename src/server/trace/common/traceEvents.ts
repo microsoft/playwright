@@ -37,7 +37,6 @@ export type ContextCreatedTraceEvent = {
   isMobile: boolean,
   viewportSize?: { width: number, height: number },
   debugName?: string,
-  snapshotScript: string,
 };
 
 export type ContextDestroyedTraceEvent = {

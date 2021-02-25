@@ -26,7 +26,6 @@ import { Snapshotter } from './snapshotter';
 import { helper, RegisteredListener } from '../../helper';
 import { Dialog } from '../../dialog';
 import { Frame, NavigationEvent } from '../../frames';
-import { snapshotScript } from './snapshotterInjected';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
@@ -102,7 +101,6 @@ class ContextTracer implements SnapshotterDelegate {
       deviceScaleFactor: context._options.deviceScaleFactor || 1,
       viewportSize: context._options.viewport || undefined,
       debugName: context._options._debugName,
-      snapshotScript: snapshotScript(),
     };
     this._appendTraceEvent(event);
     this._snapshotter = new Snapshotter(context, this);
