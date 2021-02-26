@@ -45,5 +45,5 @@ using System.Threading.Tasks;
 
 namespace PlaywrightSharp
 {
-    [CONTENT]
+	[CONTENT]
 }
