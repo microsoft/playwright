@@ -36,6 +36,17 @@ await page.click('text=Submit');
 // Verify app is logged in
 ```
 
+```java
+Page page = context.newPage();
+page.navigate("https://github.com/login");
+// Interact with login form
+page.click("text=Login");
+page.fill("input[name='login']", USERNAME);
+page.fill("input[name='password']", PASSWORD);
+page.click("text=Submit");
+// Verify app is logged in
+```
+
 ```python async
 page = await context.new_page()
 await page.goto('https://github.com/login')
@@ -86,6 +97,16 @@ process.env.STORAGE = JSON.stringify(storage);
 // Create a new context with the saved storage state
 const storageState = JSON.parse(process.env.STORAGE);
 const context = await browser.newContext({ storageState });
+```
+
+```java
+// Save storage state and store as an env variable
+String storage = context.storageState();
+System.getenv().put("STORAGE", storage);
+
+// Create a new context with the saved storage state
+BrowserContext context = browser.newContext(
+  new Browser.NewContextOptions().withStorageState(storage));
 ```
 
 ```python async
@@ -150,6 +171,23 @@ await context.addInitScript(storage => {
 }, sessionStorage);
 ```
 
+```java
+// Get session storage and store as env variable
+String sessionStorage = (String) page.evaluate("() => JSON.stringify(sessionStorage");
+System.getenv().put("SESSION_STORAGE", sessionStorage);
+
+// Set session storage in a new context
+String sessionStorage = System.getenv("SESSION_STORAGE");
+context.addInitScript("(storage => {\n" +
+  "  if (window.location.hostname === 'example.com') {\n" +
+  "    const entries = JSON.parse(storage);\n" +
+  "    Object.keys(entries).forEach(key => {\n" +
+  "      window.sessionStorage.setItem(key, entries[key]);\n" +
+  "    });\n" +
+  "  }\n" +
+  "})(" + sessionStorage + ")");
+```
+
 ```python async
 import os
 # Get session storage and store as env variable
@@ -199,8 +237,6 @@ manual intervention. Persistent authentication can be used to partially automate
 MFA scenarios.
 
 ### Persistent authentication
-Web browsers use a directory on disk to store user history, cookies, IndexedDB
-and other local state. This disk location is called the [User data directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
 
 Note that persistent authentication is not suited for CI environments since it
 relies on a disk location. User data directories are specific to browser types
@@ -214,6 +250,22 @@ const { chromium } = require('playwright');
 const userDataDir = '/path/to/directory';
 const context = await chromium.launchPersistentContext(userDataDir, { headless: false });
 // Execute login steps manually in the browser window
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Path userDataDir = Paths.get("/path/to/directory");
+      BrowserContext context = chromium.launchPersistentContext(userDataDir,
+        new BrowserType.LaunchPersistentContextOptions().withHeadless(false));
+      // Execute login steps manually in the browser window
+    }
+  }
+}
 ```
 
 ```python async

@@ -83,6 +83,11 @@ Suggested configuration
    });
    ```
 
+   ```java
+   Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
+     .withArgs(Arrays.asList("--disable-dev-shm-usage")));
+   ```
+
    ```python async
    browser = await playwright.chromium.launch(
       args=['--disable-dev-shm-usage']
@@ -233,6 +238,19 @@ const { chromium } = require('playwright');
 const browser = await chromium.launch({ chromiumSandbox: false });
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch(new BrowserType.LaunchOptions().withChromiumSandbox(false));
+    }
+  }
+}
+```
+
 ```python async
 browser = await playwright.chromium.launch(chromiumSandbox=False)
 ```
@@ -317,6 +335,20 @@ By default, Playwright launches browsers in headless mode. This can be changed b
 // Works across chromium, firefox and webkit
 const { chromium } = require('playwright');
 const browser = await chromium.launch({ headless: false });
+```
+
+```java
+// Works across chromium, firefox and webkit
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch(new BrowserType.LaunchOptions().withHeadless(false));
+    }
+  }
+}
 ```
 
 ```python async

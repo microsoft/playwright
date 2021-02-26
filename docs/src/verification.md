@@ -33,6 +33,27 @@ await msg.args[0].jsonValue() // hello
 await msg.args[1].jsonValue() // 42
 ```
 
+```java
+// Listen for all System.out.printlns
+page.onConsole(msg -> System.out.println(msg.text()));
+
+// Listen for all console events and handle errors
+page.onConsole(msg -> {
+  if ("error".equals(msg.type()))
+    System.out.println("Error text: " + msg.text());
+});
+
+// Get the next System.out.println
+ConsoleMessage msg = page.waitForConsoleMessage(() -> {
+  // Issue console.log inside the page
+  page.evaluate("console.log('hello', 42, { foo: 'bar' });");
+});
+
+// Deconstruct console.log arguments
+msg.args().get(0).jsonValue() // hello
+msg.args().get(1).jsonValue() // 42
+```
+
 ```python async
 # Listen for all console logs
 page.on("console", msg => print(msg.text))
@@ -90,6 +111,16 @@ page.on('pageerror', exception => {
 await page.goto('data:text/html,<script>throw new Error("Test")</script>');
 ```
 
+```java
+// Log all uncaught errors to the terminal
+page.onPageError(exception -> {
+  System.out.println("Uncaught exception: " + exception);
+});
+
+// Navigate to a page with an exception.
+page.navigate("data:text/html,<script>throw new Error('Test')</script>");
+```
+
 ```python async
 # Log all uncaught errors to the terminal
 page.on("pageerror", lambda exc: print(f"uncaught exception: {exc}"))
@@ -122,6 +153,12 @@ page.on('requestfailed', request => {
 });
 ```
 
+```java
+page.onRequestFailed(request -> {
+  System.out.println(request.url() + " " + request.failure());
+});
+```
+
 ```python
 page.on("requestfailed", lambda request: print(request.url + " " + request.failure.error_text))
 ```
@@ -130,6 +167,12 @@ page.on("requestfailed", lambda request: print(request.url + " " + request.failu
 
 ```js
 page.on('dialog', dialog => {
+  dialog.accept();
+});
+```
+
+```java
+page.onDialog(dialog -> {
   dialog.accept();
 });
 ```
@@ -145,6 +188,12 @@ const [popup] = await Promise.all([
   page.waitForEvent('popup'),
   page.click('#open')
 ]);
+```
+
+```java
+Page popup = page.waitForPopup(() -> {
+  page.click("#open");
+});
 ```
 
 ```python async

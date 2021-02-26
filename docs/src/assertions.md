@@ -8,12 +8,16 @@ text content of an element. These APIs can be used in your test assertions.
 
 <!-- TOC -->
 
-
 ## Text content
 
 ```js
 const content = await page.textContent('nav:first-child');
 expect(content).toBe('home');
+```
+
+```java
+String content = page.textContent("nav:first-child");
+assertEquals("home", content);
 ```
 
 ```python async
@@ -37,6 +41,11 @@ const text = await page.innerText('.selected');
 expect(text).toBe('value');
 ```
 
+```java
+String text = page.innerText(".selected");
+assertEquals("value", text);
+```
+
 ```python async
 text = await page.inner_text(".selected")
 assert text == "value"
@@ -58,6 +67,11 @@ const alt = await page.getAttribute('input', 'alt');
 expect(alt).toBe('Text');
 ```
 
+```java
+String alt = page.getAttribute("input", "alt");
+assertEquals("Text", alt);
+```
+
 ```python async
 checked = await page.get_attribute("input", "alt")
 assert alt == "Text"
@@ -73,6 +87,11 @@ assert alt == "Text"
 ```js
 const checked = await page.isChecked('input');
 expect(checked).toBeTruthy();
+```
+
+```java
+boolean checked = page.isChecked("input");
+assertTrue(checked);
 ```
 
 ```python async
@@ -96,6 +115,11 @@ const content = await page.$eval('nav:first-child', e => e.textContent);
 expect(content).toBe('home');
 ```
 
+```java
+Object content = page.evalOnSelector("nav:first-child", "e => e.textContent");
+assertEquals("home", content);
+```
+
 ```python async
 content = await page.eval_on_selector("nav:first-child", "e => e.textContent")
 assert content == "home"
@@ -115,6 +139,11 @@ assert content == "home"
 ```js
 const html = await page.innerHTML('div.result');
 expect(html).toBe('<p>Result</p>');
+```
+
+```java
+String html = page.innerHTML("div.result");
+assertEquals("<p>Result</p>", html);
 ```
 
 ```python async
@@ -138,6 +167,11 @@ const visible = await page.isVisible('input');
 expect(visible).toBeTruthy();
 ```
 
+```java
+boolean visible = page.isVisible("input");
+assertTrue(visible);
+```
+
 ```python async
 visible = await page.is_visible("input")
 assert visible
@@ -156,7 +190,12 @@ assert visible
 
 ```js
 const enabled = await page.isEnabled('input');
-expect(visible).toBeTruthy();
+expect(enabled).toBeTruthy();
+```
+
+```java
+boolean enabled = page.isEnabled("input");
+assertTrue(enabled);
 ```
 
 ```python async
@@ -196,6 +235,25 @@ expect(fontSize === '16px').toBeTruthy();
 // Assert list length
 const length = await page.$$eval('li.selected', (items) => items.length);
 expect(length === 3).toBeTruthy();
+```
+
+```java
+// Assert local storage value
+Object userId = page.evaluate("() => window.localStorage.getItem('userId')");
+assertNotNull(userId);
+
+// Assert value for input element
+page.waitForSelector("#search");
+Object value = page.evalOnSelector("#search", "el => el.value");
+assertEquals("query", value);
+
+// Assert computed style
+Object fontSize = page.evalOnSelector("div", "el => window.getComputedStyle(el).fontSize");
+assertEquals("16px", fontSize);
+
+// Assert list length
+Object length = page.evalOnSelectorAll("li.selected",  "items => items.length");
+assertEquals(3, length);
 ```
 
 ```python async
