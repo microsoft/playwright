@@ -907,6 +907,10 @@ export module Protocol {
      * The layout context type of a node.
      */
     export type LayoutContextType = "grid";
+    /**
+     * The mode for how layout context type changes are handled. <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and.
+     */
+    export type LayoutContextTypeChangedMode = "observed"|"all";
     
     /**
      * Fires whenever a MediaQuery result changes (for example, after a browser window has been resized.) The current implementation considers only viewport-dependent media features.
@@ -1166,6 +1170,17 @@ export module Protocol {
       forcedPseudoClasses: "active"|"focus"|"hover"|"visited"[];
     }
     export type forcePseudoStateReturnValue = {
+    }
+    /**
+     * Change how layout context type changes are handled for nodes. When the new mode would observe nodes the frontend has not yet recieved, those nodes will be sent to the frontend immediately.
+     */
+    export type setLayoutContextTypeChangedModeParameters = {
+      /**
+       * The mode for how layout context type changes are handled.
+       */
+      mode: LayoutContextTypeChangedMode;
+    }
+    export type setLayoutContextTypeChangedModeReturnValue = {
     }
   }
   
@@ -2850,7 +2865,7 @@ export module Protocol {
       /**
        * Show grid lines that extend beyond the bounds of the grid. If not specified, the default value is false.
        */
-      showExtendedGridlines?: boolean;
+      showExtendedGridLines?: boolean;
       /**
        * Show grid track size information. If not specified, the default value is false.
        */
@@ -8626,6 +8641,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.getSupportedCSSProperties": CSS.getSupportedCSSPropertiesParameters;
     "CSS.getSupportedSystemFontFamilyNames": CSS.getSupportedSystemFontFamilyNamesParameters;
     "CSS.forcePseudoState": CSS.forcePseudoStateParameters;
+    "CSS.setLayoutContextTypeChangedMode": CSS.setLayoutContextTypeChangedModeParameters;
     "Canvas.enable": Canvas.enableParameters;
     "Canvas.disable": Canvas.disableParameters;
     "Canvas.requestNode": Canvas.requestNodeParameters;
@@ -8913,6 +8929,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.getSupportedCSSProperties": CSS.getSupportedCSSPropertiesReturnValue;
     "CSS.getSupportedSystemFontFamilyNames": CSS.getSupportedSystemFontFamilyNamesReturnValue;
     "CSS.forcePseudoState": CSS.forcePseudoStateReturnValue;
+    "CSS.setLayoutContextTypeChangedMode": CSS.setLayoutContextTypeChangedModeReturnValue;
     "Canvas.enable": Canvas.enableReturnValue;
     "Canvas.disable": Canvas.disableReturnValue;
     "Canvas.requestNode": Canvas.requestNodeReturnValue;
