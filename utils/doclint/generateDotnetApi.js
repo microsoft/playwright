@@ -519,14 +519,7 @@ function renderMethod(member, parent, output, name) {
  *  @param {Documentation.Class|Documentation.Type} parent
  *  @param {generateNameCallback} generateNameCallback
 */
-function translateType(type, parent, generateNameCallback = null) {
-
-  if (!generateNameCallback) {
-    generateNameCallback = (t) => {
-      return t.name;
-    }
-  }
-
+function translateType(type, parent, generateNameCallback = t => t.name) {
   // a few special cases we can fix automatically
   if (type.expression === '[null]|[Error]')
     return 'void';
@@ -585,10 +578,10 @@ function translateType(type, parent, generateNameCallback = null) {
     if (type.expression === '[string]|[Buffer]')
       return `byte[]`; // TODO: make sure we implement extension methods for this!
     else if (type.expression === '[string]|[float]'
-      || type.expression === '[string]|[float]|[boolean]'
-      || (type.union && type.union[0].name === 'string' && type.union[1].name === 'float' && type.union[2].name === 'boolean'))
-      return 'string'; // because users can send either 100 or 100px for most of these arguments
-    else if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
+      || type.expression === '[string]|[float]|[boolean]') {
+      console.warn(`${type.name} should be a 'string', but was a ${type.expression}`);
+      throw new Error(`The type ${type.name} was not marked as string, but we expect it to be.`);
+    } else if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
       return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
     else if (type.union[0].name === 'path')
       // we don't support path, but we know it's usually an object on the other end, and we expect
