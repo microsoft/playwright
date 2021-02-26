@@ -8,7 +8,7 @@
 Emitted when the socket is closed.
 
 ## event: AndroidSocket.data
-- type: <[Buffer]>
+- argument: <[Buffer]>
 
 Emitted when data is available to read from the socket.
 

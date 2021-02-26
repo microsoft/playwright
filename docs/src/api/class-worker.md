@@ -38,7 +38,7 @@ for worker in page.workers:
 ```
 
 ## event: Worker.close
-- type: <[Worker]>
+- argument: <[Worker]>
 
 Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
@@ -50,7 +50,7 @@ Returns the return value of [`param: expression`].
 If the function passed to the [`method: Worker.evaluate`] returns a [Promise], then [`method: Worker.evaluate`] would wait for the promise
 to resolve and return its value.
 
-If the function passed to the [`method: Worker.evaluate`] returns a non-[Serializable] value, then [`method: Worker.evaluate`] returns `undefined`. Playwright also supports transferring some 
+If the function passed to the [`method: Worker.evaluate`] returns a non-[Serializable] value, then [`method: Worker.evaluate`] returns `undefined`. Playwright also supports transferring some
 additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
 
 ### param: Worker.evaluate.expression = %%-evaluate-expression-%%
@@ -66,7 +66,7 @@ Optional argument to pass to [`param: expression`].
 Returns the return value of [`param: expression`] as a [JSHandle].
 
 The only difference between [`method: Worker.evaluate`] and
-[`method: Worker.evaluateHandle`] is that [`method: Worker.evaluateHandle`] 
+[`method: Worker.evaluateHandle`] is that [`method: Worker.evaluateHandle`]
 returns [JSHandle].
 
 If the function passed to the [`method: Worker.evaluateHandle`] returns a [Promise], then [`method: Worker.evaluateHandle`] would wait for

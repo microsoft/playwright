@@ -62,7 +62,7 @@ with sync_playwright() as playwright:
 ```
 
 ## event: Browser.disconnected
-- type: <[Browser]>
+- argument: <[Browser]>
 
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
 * Browser application is closed or crashed.

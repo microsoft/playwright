@@ -4,7 +4,7 @@
 [AndroidDevice] represents a connected device, either real hardware or emulated. Devices can be obtained using [`method: Android.devices`].
 
 ## event: AndroidDevice.webView
-- type: <[AndroidWebView]>
+- argument: <[AndroidWebView]>
 
 Emitted when a new WebView instance is detected.
 
