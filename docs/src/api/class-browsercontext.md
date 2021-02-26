@@ -19,6 +19,16 @@ await page.goto('https://example.com');
 await context.close();
 ```
 
+```java
+// Create a new incognito browser context
+BrowserContext context = browser.newContext();
+// Create a new page inside context.
+Page page = context.newPage();
+page.navigate("https://example.com");
+// Dispose context once it"s no longer needed.
+context.close();
+```
+
 ```python async
 # create a new incognito browser context
 context = await browser.new_context()
@@ -58,11 +68,18 @@ popup with `window.open('http://example.com')`, this event will fire when the ne
 done and its response has started loading in the popup.
 
 ```js
-const [page] = await Promise.all([
+const [newPage] = await Promise.all([
   context.waitForEvent('page'),
   page.click('a[target=_blank]'),
 ]);
-console.log(await page.evaluate('location.href'));
+console.log(await newPage.evaluate('location.href'));
+```
+
+```java
+Page newPage = context.waitForPage(() -> {
+  page.click("a[target=_blank]");
+});
+System.out.println(newPage.evaluate("location.href"));
 ```
 
 ```python async
@@ -91,6 +108,10 @@ obtained via [`method: BrowserContext.cookies`].
 
 ```js
 await browserContext.addCookies([cookieObject1, cookieObject2]);
+```
+
+```java
+browserContext.addCookies(Arrays.asList(cookieObject1, cookieObject2));
 ```
 
 ```python async
@@ -135,6 +156,11 @@ Math.random = () => 42;
 await browserContext.addInitScript({
   path: 'preload.js'
 });
+```
+
+```java
+// In your playwright script, assuming the preload.js file is in same directory.
+browserContext.addInitScript(Paths.get("preload.js"));
 ```
 
 ```python async
@@ -189,6 +215,13 @@ Clears all permission overrides for the browser context.
 ```js
 const context = await browser.newContext();
 await context.grantPermissions(['clipboard-read']);
+// do stuff ..
+context.clearPermissions();
+```
+
+```java
+BrowserContext context = browser.newContext();
+context.grantPermissions(Arrays.asList("clipboard-read"));
 // do stuff ..
 context.clearPermissions();
 ```
@@ -268,6 +301,30 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 })();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType webkit = playwright.webkit()
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().withHeadless(false));
+      BrowserContext context = browser.newContext();
+      context.exposeBinding("pageURL", (source, args) -> source.page().url());
+      Page page = context.newPage();
+      page.setContent("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.pageURL();\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>");
+      page.click("button");
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -332,6 +389,20 @@ await page.setContent(`
   <div>Click me</div>
   <div>Or click me</div>
 `);
+```
+
+```java
+context.exposeBinding("clicked", (source, args) -> {
+  ElementHandle element = (ElementHandle) args[0];
+  System.out.println(element.textContent());
+  return null;
+}, new BrowserContext.ExposeBindingOptions().withHandle(true));
+page.setContent("" +
+  "<script>\n" +
+  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
+  "</script>\n" +
+  "<div>Click me</div>\n" +
+  "<div>Or click me</div>\n");
 ```
 
 ```python async
@@ -410,6 +481,44 @@ const crypto = require('crypto');
   `);
   await page.click('button');
 })();
+```
+
+```java
+import com.microsoft.playwright.*;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType webkit = playwright.webkit()
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().withHeadless(false));
+      context.exposeFunction("sha1", args -> {
+        String text = (String) args[0];
+        MessageDigest crypto;
+        try {
+          crypto = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+          return null;
+        }
+        byte[] token = crypto.digest(text.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(token);
+      });
+      Page page = context.newPage();
+      page.setContent("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>\n");
+      page.click("button");
+    }
+  }
+}
 ```
 
 ```python async
@@ -544,6 +653,14 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
+```java
+BrowserContext context = browser.newContext();
+context.route("**/*.{png,jpg,jpeg}", route -> route.abort());
+Page page = context.newPage();
+page.navigate("https://example.com");
+browser.close();
+```
+
 ```python async
 context = await browser.new_context()
 page = await context.new_page()
@@ -568,6 +685,14 @@ await context.route(/(\.png$)|(\.jpg$)/, route => route.abort());
 const page = await context.newPage();
 await page.goto('https://example.com');
 await browser.close();
+```
+
+```java
+BrowserContext context = browser.newContext();
+context.route(Pattern.compile("(\\.png$)|(\\.jpg$)"), route -> route.abort());
+Page page = context.newPage();
+page.navigate("https://example.com");
+browser.close();
 ```
 
 ```python async
@@ -668,6 +793,10 @@ Sets the context's geolocation. Passing `null` or `undefined` emulates position 
 
 ```js
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
+```
+
+```java
+browserContext.setGeolocation(new Geolocation(59.95, 30.31667));
 ```
 
 ```python async
@@ -772,6 +901,10 @@ const [page, _] = await Promise.all([
   context.waitForEvent('page'),
   page.click('button')
 ]);
+```
+
+```java
+Page newPage = context.waitForPage(() -> page.click("button"));
 ```
 
 ```python async
