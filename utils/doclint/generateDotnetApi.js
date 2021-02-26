@@ -86,11 +86,9 @@ let classNameMap;
   classNameMap.set('any', 'object');
   classNameMap.set('Buffer', 'byte[]');
   classNameMap.set('path', 'string');
-  classNameMap.set('URL', 'Uri');
+  classNameMap.set('URL', 'string');
   classNameMap.set('RegExp', 'Regex');
-  classNameMap.set('float', 'decimal');
-
-
+  
   // this are types that we don't explicility render even if we get the specs
   const ignoredTypes = ['TimeoutException'];
 
@@ -424,7 +422,7 @@ function renderMethod(member, parent, output, name) {
    */
   const pushArg = (innerArgType, innerArgName, argument) => {
     let isEnum = enumTypes.has(innerArgType);
-    let isNullable = ['int', 'bool', 'decimal'].includes(innerArgType);
+    let isNullable = ['int', 'bool', 'decimal', 'float'].includes(innerArgType);
     const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
     const requiredSuffix = argument.required ? "" : isEnum ? " = default" : " = null";
     args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);
@@ -623,10 +621,6 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
     } else if (type.name === 'Object') {
       registerAdditionalType(objectName, type);
     }
-
-    if (['object'].includes(objectName))
-      return objectName;
-
     return objectName;
   }
 
