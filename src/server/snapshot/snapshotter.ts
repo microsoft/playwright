@@ -52,15 +52,18 @@ export interface SnapshotterDelegate {
 export class Snapshotter {
   private _context: BrowserContext;
   private _delegate: SnapshotterDelegate;
-  private _eventListeners: RegisteredListener[];
+  private _eventListeners: RegisteredListener[] = [];
 
   constructor(context: BrowserContext, delegate: SnapshotterDelegate) {
     this._context = context;
     this._delegate = delegate;
+  }
+
+  async start() {
     this._eventListeners = [
       helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
-    this._context.exposeBinding(kSnapshotBinding, false, (source, data: SnapshotData) => {
+    await this._context.exposeBinding(kSnapshotBinding, false, (source, data: SnapshotData) => {
       const snapshot: FrameSnapshot = {
         snapshotId: data.snapshotId,
         pageId: source.page.idInSnapshot,
@@ -83,7 +86,10 @@ export class Snapshotter {
       }
       this._delegate.onFrameSnapshot(snapshot);
     });
-    this._context._doAddInitScript('(' + frameSnapshotStreamer.toString() + ')()');
+    const initScript = '(' + frameSnapshotStreamer.toString() + ')()';
+    await this._context._doAddInitScript(initScript);
+    for (const page of this._context.pages())
+      await page.mainFrame()._evaluateExpression(initScript, false, undefined, 'main');
   }
 
   dispose() {

@@ -24,7 +24,12 @@ export function exampleCallLog(): CallLog[] {
       'title': 'newPage',
       'status': 'done',
       'duration': 100,
-      'params': {}
+      'params': {},
+      'snapshots': {
+        'before': true,
+        'in': false,
+        'after': true,
+      }
     },
     {
       'id': 4,
@@ -35,6 +40,11 @@ export function exampleCallLog(): CallLog[] {
       'status': 'done',
       'params': {
         'url': 'https://github.com/microsoft'
+      },
+      'snapshots': {
+        'before': true,
+        'in': false,
+        'after': true,
       },
       'duration': 1100,
     },
@@ -57,6 +67,11 @@ export function exampleCallLog(): CallLog[] {
       'params': {
         'selector': 'input[aria-label="Find a repository…"]'
       },
+      'snapshots': {
+        'before': true,
+        'in': true,
+        'after': false,
+      }
     },
     {
       'id': 6,
@@ -68,6 +83,11 @@ export function exampleCallLog(): CallLog[] {
       'status': 'error',
       'params': {
       },
+      'snapshots': {
+        'before': false,
+        'in': false,
+        'after': false,
+      }
     },
   ];
 }

@@ -81,6 +81,10 @@ body {
   display: none !important;
 }
 
+.invisible {
+  visibility: hidden !important;
+}
+
 svg {
   fill: currentColor;
 }

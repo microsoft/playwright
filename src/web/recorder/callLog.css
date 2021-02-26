@@ -78,3 +78,17 @@
   margin-left: 4px;
   color: var(--gray);
 }
+
+.call-log-call .codicon.preview {
+  visibility: hidden;
+  color: var(--toolbar-color);
+  cursor: pointer;
+}
+
+.call-log-call .codicon.preview:hover {
+  color: inherit;
+}
+
+.call-log-call:hover .codicon.preview {
+  visibility: visible;
+}

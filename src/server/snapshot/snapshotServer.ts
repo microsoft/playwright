@@ -33,30 +33,15 @@ export interface SnapshotStorage {
 }
 
 export class SnapshotServer {
-  private _urlPrefix: string;
   private _snapshotStorage: SnapshotStorage;
 
   constructor(server: HttpServer, snapshotStorage: SnapshotStorage) {
-    this._urlPrefix = server.urlPrefix();
     this._snapshotStorage = snapshotStorage;
 
-    server.routePath('/snapshot/', this._serveSnapshotRoot.bind(this), true);
+    server.routePath('/snapshot/', this._serveSnapshotRoot.bind(this));
     server.routePath('/snapshot/service-worker.js', this._serveServiceWorker.bind(this));
     server.routePath('/snapshot-data', this._serveSnapshot.bind(this));
     server.routePrefix('/resources/', this._serveResource.bind(this));
-  }
-
-  snapshotRootUrl() {
-    return this._urlPrefix + '/snapshot/';
-  }
-
-  snapshotUrl(pageId: string, snapshotId?: string, timestamp?: number) {
-    // Prefer snapshotId over timestamp.
-    if (snapshotId)
-      return this._urlPrefix + `/snapshot/pageId/${pageId}/snapshotId/${snapshotId}/main`;
-    if (timestamp)
-      return this._urlPrefix + `/snapshot/pageId/${pageId}/timestamp/${timestamp}/main`;
-    return 'data:text/html,Snapshot is not available';
   }
 
   private _serveSnapshotRoot(request: http.IncomingMessage, response: http.ServerResponse): boolean {
@@ -80,8 +65,8 @@ export class SnapshotServer {
       </style>
       <body>
         <script>
+        if (navigator.serviceWorker) {
           navigator.serviceWorker.register('./service-worker.js');
-
           let showPromise = Promise.resolve();
           if (!navigator.serviceWorker.controller)
             showPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
@@ -105,6 +90,10 @@ export class SnapshotServer {
             await showPromise;
             next.src = url;
           };
+          window.addEventListener('message', event => {
+            window.showSnapshot(window.location.href + event.data.snapshotId);
+          }, false);
+        }
         </script>
       </body>
     `);
@@ -148,13 +137,13 @@ export class SnapshotServer {
 
         let snapshotId: string;
         if (request.mode === 'navigate') {
-          snapshotId = pathname;
+          snapshotId = pathname.substring('/snapshot/'.length);
         } else {
           const client = (await self.clients.get(event.clientId))!;
-          snapshotId = new URL(client.url).pathname;
+          snapshotId = new URL(client.url).pathname.substring('/snapshot/'.length);
         }
         if (request.mode === 'navigate') {
-          const htmlResponse = await fetch(`/snapshot-data?snapshotName=${snapshotId}`);
+          const htmlResponse = await fetch(`/snapshot-data?snapshotId=${snapshotId}`);
           const { html, resources }: RenderedFrameSnapshot  = await htmlResponse.json();
           if (!html)
             return respondNotAvailable();
@@ -208,7 +197,7 @@ export class SnapshotServer {
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/json');
     const parsed: any = querystring.parse(request.url!.substring(request.url!.indexOf('?') + 1));
-    const snapshot = this._snapshotStorage.snapshotById(parsed.snapshotName);
+    const snapshot = this._snapshotStorage.snapshotById(parsed.snapshotId);
     const snapshotData: any = snapshot ? snapshot.render() : { html: '' };
     response.end(JSON.stringify(snapshotData));
     return true;

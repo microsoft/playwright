@@ -37,6 +37,9 @@ export function frameSnapshotStreamer() {
   const kSnapshotStreamer = '__playwright_snapshot_streamer_';
   const kSnapshotBinding = '__playwright_snapshot_binding_';
 
+  if ((window as any)[kSnapshotStreamer])
+    return;
+
   // Attributes present in the snapshot.
   const kShadowAttribute = '__playwright_shadow_root_';
   const kScrollTopAttribute = '__playwright_scroll_top_';

@@ -281,3 +281,11 @@ it('exposeBinding(handle) should work with element handles', async ({ page}) => 
   await page.click('#a1');
   expect(await promise).toBe('Click me');
 });
+
+it('should work with setContent', async ({page, server}) => {
+  await page.exposeFunction('compute', function(a, b) {
+    return Promise.resolve(a * b);
+  });
+  await page.setContent('<script>window.result = compute(3, 2)</script>');
+  expect(await page.evaluate('window.result')).toBe(6);
+});
