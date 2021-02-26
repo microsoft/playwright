@@ -40,7 +40,7 @@ context.close()
 ```
 
 ## event: BrowserContext.close
-- type: <[BrowserContext]>
+- argument: <[BrowserContext]>
 
 Emitted when Browser context gets closed. This might happen because of one of the following:
 * Browser context is closed.
@@ -48,7 +48,7 @@ Emitted when Browser context gets closed. This might happen because of one of th
 * The [`method: Browser.close`] method was called.
 
 ## event: BrowserContext.page
-- type: <[Page]>
+- argument: <[Page]>
 
 The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
 also fire for popup pages. See also [`event: Page.popup`] to receive events about popups relevant to a specific page.
@@ -527,7 +527,7 @@ Creates a new page in the browser context.
 ## method: BrowserContext.pages
 - returns: <[Array]<[Page]>>
 
-Returns all open pages in the context. 
+Returns all open pages in the context.
 
 ## async method: BrowserContext.route
 

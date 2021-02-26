@@ -3,32 +3,32 @@
 The [WebSocket] class represents websocket connections in the page.
 
 ## event: WebSocket.close
-- type: <[WebSocket]>
+- argument: <[WebSocket]>
 
 Fired when the websocket closes.
 
 ## event: WebSocket.frameReceived
-- type: <[Object]>
+- argument: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket recieves a frame.
 
 ## event: WebSocket.frameReceived
 * langs: csharp, java
-- type: <[WebSocketFrame]>
+- argument: <[WebSocketFrame]>
 
 ## event: WebSocket.frameSent
-- type: <[Object]>
+- argument: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket sends a frame.
 
 ## event: WebSocket.frameSent
 * langs: csharp, java
-- type: <[WebSocketFrame]>
+- argument: <[WebSocketFrame]>
 
 ## event: WebSocket.socketError
-- type: <[String]>
+- argument: <[String]>
 
 Fired when the websocket has an error.
 

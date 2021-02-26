@@ -4917,7 +4917,7 @@ export interface BrowserContext {
   newPage(): Promise<Page>;
 
   /**
-   * Returns all open pages in the context. 
+   * Returns all open pages in the context.
    */
   pages(): Array<Page>;
 
@@ -5158,7 +5158,7 @@ export interface Worker {
    * [worker.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatepagefunction-arg)
    * returns a non-[Serializable] value, then
    * [worker.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-worker#workerevaluatepagefunction-arg)
-   * returns `undefined`. Playwright also supports transferring some  additional values that are not serializable by `JSON`:
+   * returns `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
    * @param pageFunction Function to be evaluated in the worker context.
    * @param arg Optional argument to pass to `pageFunction`.

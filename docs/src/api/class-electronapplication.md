@@ -38,7 +38,7 @@ const { _electron: electron } = require('playwright');
 This event is issued when the application closes.
 
 ## event: ElectronApplication.window
-- type: <[Page]>
+- argument: <[Page]>
 
 This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can
 be used for Playwright automation.
@@ -48,7 +48,7 @@ be used for Playwright automation.
 Closes Electron application.
 
 ## method: ElectronApplication.context
-- type: <[BrowserContext]>
+- returns: <[BrowserContext]>
 
 This method returns browser context that can be used for setting up context-wide routing, etc.
 

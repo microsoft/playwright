@@ -185,7 +185,7 @@ class ApiParser {
 }
 
 /**
- * @param {string} line 
+ * @param {string} line
  * @returns {{ name: string, type: string, text: string }}
  */
 function parseVariable(line) {
@@ -194,6 +194,8 @@ function parseVariable(line) {
     match = line.match(/^(returns): (.*)/);
   if (!match)
     match = line.match(/^(type): (.*)/);
+  if (!match)
+    match = line.match(/^(argument): (.*)/);
   if (!match)
     throw new Error('Invalid argument: ' + line);
   const name = match[1];

@@ -89,12 +89,12 @@ page.remove_listener("request", log_request)
 ```
 
 ## event: Page.close
-- type: <[Page]>
+- argument: <[Page]>
 
 Emitted when the page closes.
 
 ## event: Page.console
-- type: <[ConsoleMessage]>
+- argument: <[ConsoleMessage]>
 
 Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
 emitted if the page throws an error or a warning.
@@ -130,7 +130,7 @@ page.evaluate("console.log('hello', 5, {foo: 'bar'})")
 ```
 
 ## event: Page.crash
-- type: <[Page]>
+- argument: <[Page]>
 
 Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes,
 ongoing and subsequent operations will throw.
@@ -169,7 +169,7 @@ except Error as e:
 ```
 
 ## event: Page.dialog
-- type: <[Dialog]>
+- argument: <[Dialog]>
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and actions like click will never finish.
 
@@ -178,13 +178,13 @@ When no [`event: Page.dialog`] listeners are present, all dialogs are automatica
 :::
 
 ## event: Page.DOMContentLoaded
-- type: <[Page]>
+- argument: <[Page]>
 
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
 event is dispatched.
 
 ## event: Page.download
-- type: <[Download]>
+- argument: <[Download]>
 
 Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
 [Download] instance.
@@ -196,7 +196,7 @@ not performed and user has no access to the downloaded files.
 :::
 
 ## event: Page.fileChooser
-- type: <[FileChooser]>
+- argument: <[FileChooser]>
 
 Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
 respond to it via setting the input files using [`method: FileChooser.setFiles`] that can be uploaded after that.
@@ -212,36 +212,36 @@ page.on("filechooser", lambda file_chooser: file_chooser.set_files("/tmp/myfile.
 ```
 
 ## event: Page.frameAttached
-- type: <[Frame]>
+- argument: <[Frame]>
 
 Emitted when a frame is attached.
 
 ## event: Page.frameDetached
-- type: <[Frame]>
+- argument: <[Frame]>
 
 Emitted when a frame is detached.
 
 ## event: Page.frameNavigated
-- type: <[Frame]>
+- argument: <[Frame]>
 
 Emitted when a frame is navigated to a new url.
 
 ## event: Page.load
-- type: <[Page]>
+- argument: <[Page]>
 
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
 ## event: Page.pageError
-- type: <[Error]>
+- argument: <[Error]>
 
 Emitted when an uncaught exception happens within the page.
 
 ## event: Page.pageError
 * langs: csharp, java
-- type: <[string]>
+- argument: <[string]>
 
 ## event: Page.popup
-- type: <[Page]>
+- argument: <[Page]>
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the
 [`event: BrowserContext.page`], but only for popups relevant to this page.
@@ -278,13 +278,13 @@ cases).
 :::
 
 ## event: Page.request
-- type: <[Request]>
+- argument: <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
 [`method: Page.route`] or [`method: BrowserContext.route`].
 
 ## event: Page.requestFailed
-- type: <[Request]>
+- argument: <[Request]>
 
 Emitted when a request fails, for example by timing out.
 
@@ -294,24 +294,24 @@ with [`event: Page.requestFinished`] event and not with [`event: Page.requestFai
 :::
 
 ## event: Page.requestFinished
-- type: <[Request]>
+- argument: <[Request]>
 
 Emitted when a request finishes successfully after downloading the response body. For a successful response, the
 sequence of events is `request`, `response` and `requestfinished`.
 
 ## event: Page.response
-- type: <[Response]>
+- argument: <[Response]>
 
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
 is `request`, `response` and `requestfinished`.
 
 ## event: Page.webSocket
-- type: <[WebSocket]>
+- argument: <[WebSocket]>
 
 Emitted when [WebSocket] request is sent.
 
 ## event: Page.worker
-- type: <[Worker]>
+- argument: <[Worker]>
 
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
 page.
