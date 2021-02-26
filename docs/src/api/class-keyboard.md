@@ -21,6 +21,17 @@ await page.keyboard.press('Backspace');
 // Result text will end up saying 'Hello!'
 ```
 
+```java
+page.keyboard().type("Hello World!");
+page.keyboard().press("ArrowLeft");
+page.keyboard().down("Shift");
+for (int i = 0; i < " World".length(); i++)
+  page.keyboard().press("ArrowLeft");
+page.keyboard().up("Shift");
+page.keyboard().press("Backspace");
+// Result text will end up saying "Hello!"
+```
+
 ```python async
 await page.keyboard.type("Hello World!")
 await page.keyboard.press("ArrowLeft")
@@ -51,6 +62,12 @@ await page.keyboard.press('Shift+KeyA');
 await page.keyboard.press('Shift+A');
 ```
 
+```java
+page.keyboard().press("Shift+KeyA");
+// or
+page.keyboard().press("Shift+A");
+```
+
 ```python async
 await page.keyboard.press("Shift+KeyA")
 # or
@@ -70,6 +87,13 @@ An example to trigger select-all with the keyboard
 await page.keyboard.press('Control+A');
 // on macOS
 await page.keyboard.press('Meta+A');
+```
+
+```java
+// on Windows and Linux
+page.keyboard().press("Control+A");
+// on macOS
+page.keyboard().press("Meta+A");
 ```
 
 ```python async
@@ -129,6 +153,10 @@ Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress
 page.keyboard.insertText('嗨');
 ```
 
+```java
+page.keyboard().insertText("嗨");
+```
+
 ```python async
 await page.keyboard.insert_text("嗨")
 ```
@@ -178,6 +206,18 @@ await page.screenshot({ path: 'O.png' });
 await browser.close();
 ```
 
+```java
+Page page = browser.newPage();
+page.navigate("https://keycode.info");
+page.keyboard().press("A");
+page.screenshot(new Page.ScreenshotOptions().withPath(Paths.get("A.png"));
+page.keyboard().press("ArrowLeft");
+page.screenshot(new Page.ScreenshotOptions().withPath(Paths.get("ArrowLeft.png")));
+page.keyboard().press("Shift+O");
+page.screenshot(new Page.ScreenshotOptions().withPath(Paths.get("O.png")));
+browser.close();
+```
+
 ```python async
 page = await browser.new_page()
 await page.goto("https://keycode.info")
@@ -223,6 +263,13 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.pr
 ```js
 await page.keyboard.type('Hello'); // Types instantly
 await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
+```
+
+```java
+// Types instantly
+page.keyboard().type("Hello");
+// Types slower, like a user
+page.keyboard().type("World", new Keyboard.TypeOptions().withDelay(100));
 ```
 
 ```python async

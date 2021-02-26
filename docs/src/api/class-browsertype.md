@@ -15,6 +15,23 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 })();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch();
+      Page page = browser.newPage();
+      page.navigate("https://example.com");
+      // other actions...
+      browser.close();
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -100,6 +117,12 @@ You can use [`option: ignoreDefaultArgs`] to filter out `--mute-audio` from defa
 const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   ignoreDefaultArgs: ['--mute-audio']
 });
+```
+
+```java
+// Or "firefox" or "webkit".
+Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+  .withIgnoreDefaultArgs(Arrays.asList("--mute-audio")));
 ```
 
 ```python async

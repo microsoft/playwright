@@ -4576,11 +4576,11 @@ export interface BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -4607,11 +4607,11 @@ export interface BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -4638,11 +4638,11 @@ export interface BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -4669,11 +4669,11 @@ export interface BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -4700,11 +4700,11 @@ export interface BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -5113,11 +5113,11 @@ export interface BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -8624,11 +8624,11 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -8667,11 +8667,11 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -8710,11 +8710,11 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -8753,11 +8753,11 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -8796,11 +8796,11 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -8855,11 +8855,11 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * done and its response has started loading in the popup.
    * 
    * ```js
-   * const [page] = await Promise.all([
+   * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
    *   page.click('a[target=_blank]'),
    * ]);
-   * console.log(await page.evaluate('location.href'));
+   * console.log(await newPage.evaluate('location.href'));
    * ```
    * 
    * > NOTE: Use
@@ -9049,9 +9049,9 @@ export interface ConsoleMessage {
  *   page.on('dialog', async dialog => {
  *     console.log(dialog.message());
  *     await dialog.dismiss();
- *     await browser.close();
  *   });
- *   page.evaluate(() => alert('1'));
+ *   await page.evaluate(() => alert('1'));
+ *   await browser.close();
  * })();
  * ```
  * 

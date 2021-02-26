@@ -227,7 +227,7 @@ function render(nodes, maxColumns) {
  */
 function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
   const newLine = () => {
-    if (result[result.length - 1] !== '')
+    if (result.length && result[result.length - 1] !== '')
       result.push('');
   };
 
