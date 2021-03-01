@@ -13,8 +13,13 @@ Each version of Playwright needs specific versions of browser binaries to operat
 - `~/Library/Caches/ms-playwright` on MacOS
 - `~/.cache/ms-playwright` on Linux
 
-```sh
+```sh js
 $ npm i -D playwright
+```
+
+```sh python
+$ pip install playwright
+$ playwright install
 ```
 
 These browsers will take few hundreds of megabytes of the disk space when installed:
@@ -28,7 +33,7 @@ $ du -hs ./Library/Caches/ms-playwright/*
 
 You can override default behavior using environment variables. When installing Playwright, ask it to download browsers into a specific location:
 
-```sh
+```sh js
 # Linux/macOS
 $ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i -D playwright
 
@@ -37,9 +42,25 @@ $ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 $ npm i -D playwright
 ```
 
-When running Playwright scripts, ask it to search for browsers in a shared location:
+```sh python
+# Linux/macOS
+$ pip install playwright
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python -m playwright install
 
-```sh
+# Windows
+$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+$ pip install playwright
+$ playwright install
+```
+
+```sh java
+# Linux/macOS
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn test
+```
+
+When running Playwright scripts, ask it to search for browsers in a shared location.
+
+```sh js
 # Linux/macOS
 $ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers node playwright-script.js
 
@@ -48,9 +69,24 @@ $ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 $ node playwright-script.js
 ```
 
-Or you can opt into the hermetic install and place binaries under the `node_modules/` folder:
+```sh python
+# Linux/macOS
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python playwright_script.js
 
-```sh
+# Windows
+$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+$ python playwright_script.py
+```
+
+```sh java
+# Windows
+$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+$ mvn test
+```
+
+Or you can opt into the hermetic install and place binaries in the local folder:
+
+```sh js
 # Linux/macOS
 # Places binaries to node_modules/playwright
 $ PLAYWRIGHT_BROWSERS_PATH=0 npm i -D playwright
@@ -61,21 +97,68 @@ $ set PLAYWRIGHT_BROWSERS_PATH=0
 $ npm i -D playwright
 ```
 
+```sh python
+# Linux/macOS
+$ pip install playwright
+$ PLAYWRIGHT_BROWSERS_PATH=0 playwright install
+
+# Windows
+$ set PLAYWRIGHT_BROWSERS_PATH=0
+$ pip install playwright
+$ playwright install
+```
+
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
 
 :::note
 Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
 :::
 
+## Install behind the firewall or proxy
+
+By default, Playwright downloads browsers from Microsoft CDN.
+
+Sometimes companies maintain an internal proxy that blocks direct access to the public
+resources. In this case, Playwright can be configured to download browsers via a proxy server.
+
+```sh js
+# Linux/macOS
+$ HTTPS_PROXY=https://192.168.1.78 npm i -D playwright
+
+# Windows
+$ set HTTPS_PROXY=https://192.168.1.78
+$ npm i -D playwright
+```
+
+```sh python
+# Linux/macOS
+$ pip install playwright
+$ HTTPS_PROXY=https://192.168.1.78 playwright install
+
+# Windows
+$ set HTTPS_PROXY=https://192.168.1.78
+$ pip install playwright
+$ playwright install
+```
+
+```sh java
+# Linux/macOS
+$ HTTPS_PROXY=https://192.168.1.78 mvn test
+
+# Windows
+$ set HTTPS_PROXY=https://192.168.1.78
+$ mvn test
+```
+
 ## Download from artifact repository
 
-By default, Playwright downloads browsers from Microsoft and Google public CDNs.
+By default, Playwright downloads browsers from Microsoft CDN.
 
 Sometimes companies maintain an internal artifact repository to host browser
 binaries. In this case, Playwright can be configured to download from a custom
 location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
-```sh
+```sh js
 # Linux/macOS
 $ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
 
@@ -84,12 +167,45 @@ $ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
 $ npm i -D playwright
 ```
 
+```sh python
+# Linux/macOS
+$ pip install playwright
+$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 playwright install
+
+# Windows
+$ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+$ pip install playwright
+$ playwright install
+```
+
+```sh java
+# Linux/macOS
+$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
+
+# Windows
+$ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+$ mvn test
+```
+
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
 take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
 
-```sh
+It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
+
+```sh js
 # Linux/macOS
 $ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+```
+
+```sh python
+# Linux/macOS
+$ pip install playwright
+$ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 python -m playwright install
+```
+
+```sh java
+# Linux/macOS
+$ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
 ```
 
 ## Skip browser downloads
@@ -99,7 +215,7 @@ browser binaries are managed separately.
 
 This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before installation.
 
-```sh
+```sh js
 # Linux/macOS
 $ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 
@@ -108,7 +224,28 @@ $ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 $ npm i -D playwright
 ```
 
+```sh python
+# Linux/macOS
+$ pip install playwright
+$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
+
+# Windows
+$ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+$ pip install playwright
+$ playwright install
+```
+
+```sh java
+# Linux/macOS
+$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 mvn test
+
+# Windows
+$ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+$ mvn test
+```
+
 ## Download single browser binary
+* langs: js
 
 Playwright ships three packages that bundle only a single browser:
 - [`playwright-chromium`](https://www.npmjs.com/package/playwright-chromium)
@@ -137,4 +274,14 @@ const { webkit } = require('playwright-webkit');
   const browser = await webkit.launch();
   // ...
 })();
+```
+
+## Download single browser binary
+* langs: python
+
+Playwright downloads Chromium, Firefox and WebKit browsers by default. To install a specific browser, pass it as an argument during installation.
+
+```sh
+$ pip install playwright
+$ playwright install firefox
 ```
