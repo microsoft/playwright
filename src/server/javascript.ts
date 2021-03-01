@@ -79,6 +79,11 @@ export class ExecutionContext extends SdkObject {
     return this._delegate.createHandle(this, remoteObject);
   }
 
+  async rawEvaluate(expression: string): Promise<void> {
+    // Make sure to never return a value.
+    await this._delegate.rawEvaluate(expression + '; 0');
+  }
+
   async doSlowMo() {
     // overrided in FrameExecutionContext
   }

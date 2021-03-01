@@ -112,7 +112,8 @@ class ContextTracer implements SnapshotterDelegate {
   }
 
   async start() {
-    await this._snapshotter.start();
+    await this._snapshotter.initialize();
+    await this._snapshotter.setAutoSnapshotInterval(100);
   }
 
   onBlob(blob: SnapshotterBlob): void {
@@ -156,7 +157,7 @@ class ContextTracer implements SnapshotterDelegate {
       return;
     const snapshotId = createGuid();
     snapshotsForMetadata(metadata).push({ name, snapshotId });
-    await this._snapshotter.forceSnapshot(sdkObject.attribution.page, snapshotId);
+    this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotId);
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -166,7 +167,7 @@ class ContextTracer implements SnapshotterDelegate {
       timestamp: monotonicTime(),
       type: 'action',
       contextId: this._contextId,
-      pageId: sdkObject.attribution.page.idInSnapshot,
+      pageId: sdkObject.attribution.page.uniqueId,
       objectType: metadata.type,
       method: metadata.method,
       // FIXME: filter out evaluation snippets, binary
@@ -182,7 +183,7 @@ class ContextTracer implements SnapshotterDelegate {
   }
 
   private _onPage(page: Page) {
-    const pageId = page.idInSnapshot;
+    const pageId = page.uniqueId;
 
     const event: trace.PageCreatedTraceEvent = {
       timestamp: monotonicTime(),

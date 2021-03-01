@@ -411,11 +411,11 @@ export class Frame extends SdkObject {
   private _setContentCounter = 0;
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
-  readonly idInSnapshot: string;
+  readonly uniqueId: string;
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page);
-    this.idInSnapshot = parentFrame ? `frame@${id}` : page.idInSnapshot;
+    this.uniqueId = parentFrame ? `frame@${page.uniqueId}/${id}` : page.uniqueId;
     this.attribution.frame = this;
     this._id = id;
     this._page = page;
@@ -583,6 +583,10 @@ export class Frame extends SdkObject {
 
   _mainContext(): Promise<dom.FrameExecutionContext> {
     return this._context('main');
+  }
+
+  _existingMainContext(): dom.FrameExecutionContext | null {
+    return this._contextData.get('main')?.context || null;
   }
 
   _utilityContext(): Promise<dom.FrameExecutionContext> {

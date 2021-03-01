@@ -131,7 +131,7 @@ export class RecorderSupplement {
     const recorderApp = await RecorderApp.open(this._context);
     this._recorderApp = recorderApp;
     recorderApp.once('close', () => {
-      this._snapshotter.stop();
+      this._snapshotter.dispose().catch(() => {});
       this._recorderApp = null;
     });
     recorderApp.on('event', (data: EventData) => {
@@ -235,7 +235,7 @@ export class RecorderSupplement {
       this._resume(false).catch(() => {});
     });
 
-    const snapshotBaseUrl = await this._snapshotter.start() + '/snapshot/';
+    const snapshotBaseUrl = await this._snapshotter.initialize() + '/snapshot/';
     await this._context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest(), snapshotBaseUrl });
     await this._context.extendInjectedScript(consoleApiSource.source);
     (this._context as any).recorderAppForTest = recorderApp;
@@ -399,18 +399,18 @@ export class RecorderSupplement {
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: String(++this._lastDialogOrdinal) });
   }
 
-  async _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'in') {
+  _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'in') {
     if (sdkObject.attribution.page) {
       const snapshotId = `${phase}@${metadata.id}`;
       this._snapshots.add(snapshotId);
-      await this._snapshotter.forceSnapshot(sdkObject.attribution.page, snapshotId);
+      this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotId);
     }
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
-    await this._captureSnapshot(sdkObject, metadata, 'before');
+    this._captureSnapshot(sdkObject, metadata, 'before');
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._allMetadatas.set(metadata.id, metadata);
     this._updateUserSources();
