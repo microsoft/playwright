@@ -29,6 +29,20 @@ const browser = await chromium.launch({ headless: false });
 await browser.close();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch(new BrowserType.LaunchOptions().withHeadless(false));
+      browser.close();
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -69,6 +83,11 @@ const browser = await chromium.launch();
 const context = await browser.newContext();
 ```
 
+```java
+Browser browser = chromium.launch();
+BrowserContext context = browser.newContext();
+```
+
 ```python async
 browser = await playwright.chromium.launch()
 context = await browser.new_context()
@@ -93,6 +112,29 @@ const context = await browser.newContext({
   colorScheme: 'dark',
   locale: 'de-DE'
 });
+```
+
+```java
+// FIXME
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType devices = playwright.devices();
+      BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+        .withUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
+        .withViewportSize(375, 812)
+        .withDeviceScaleFactor(3)
+        .withIsMobile(true)
+        .withHasTouch(true)
+        .withPermissions(Arrays.asList("geolocation"))
+        .withGeolocation(52.52, 13.39)
+        .withColorScheme(ColorScheme.DARK)
+        .withLocale("de-DE"));
+    }
+  }
+}
 ```
 
 ```python async
@@ -161,6 +203,24 @@ console.log(page.url());
 window.location.href = 'https://example.com';
 ```
 
+```java
+// Create a page.
+Page page = context.newPage();
+
+// Navigate explicitly, similar to entering a URL in the browser.
+page.navigate("http://example.com");
+// Fill an input.
+page.fill("#search", "query");
+
+// Navigate implicitly by clicking a link.
+page.click("#submit");
+// Expect a new url.
+System.out.println(page.url());
+
+// Page can navigate from the script - this will be picked up by Playwright.
+// window.location.href = "https://example.com";
+```
+
 ```python async
 page = await context.new_page()
 
@@ -219,6 +279,21 @@ const frame = await frameElementHandle.contentFrame();
 await frame.fill('#username-input', 'John');
 ```
 
+```java
+// Get frame using the frame"s name attribute
+Frame frame = page.frame("frame-login");
+
+// Get frame using frame"s URL
+Frame frame = page.frameByUrl(Pattern.compile(".*domain.*"));
+
+// Get frame using any other selector
+ElementHandle frameElementHandle = page.querySelector(".frame-class");
+Frame frame = frameElementHandle.contentFrame();
+
+// Interact with the frame
+frame.fill("#username-input", "John");
+```
+
 ```python async
 # Get frame using the frame's name attribute
 frame = page.frame('frame-login')
@@ -274,6 +349,11 @@ Some examples below:
 await page.click('data-test-id=foo');
 ```
 
+```java
+// Using data-test-id= selector engine
+page.click("data-test-id=foo");
+```
+
 ```python async
 # Using data-test-id= selector engine
 await page.click('data-test-id=foo')
@@ -288,6 +368,12 @@ page.click('data-test-id=foo')
 // CSS and XPath selector engines are automatically detected
 await page.click('div');
 await page.click('//html/body/div');
+```
+
+```java
+// CSS and XPath selector engines are automatically detected
+page.click("div");
+page.click("//html/body/div");
 ```
 
 ```python async
@@ -307,6 +393,11 @@ page.click('//html/body/div')
 await page.click('text=Hello w');
 ```
 
+```java
+// Find node by text substring
+page.click("text=Hello w");
+```
+
 ```python async
 # Find node by text substring
 await page.click('text=Hello w')
@@ -321,6 +412,12 @@ page.click('text=Hello w')
 // Explicit CSS and XPath notation
 await page.click('css=div');
 await page.click('xpath=//html/body/div');
+```
+
+```java
+// Explicit CSS and XPath notation
+page.click("css=div");
+page.click("xpath=//html/body/div");
 ```
 
 ```python async
@@ -340,6 +437,11 @@ page.click('xpath=//html/body/div')
 await page.click('css:light=div');
 ```
 
+```java
+// Only search light DOM, outside WebComponent shadow DOM:
+page.click("css:light=div");
+```
+
 ```python async
 # Only search light DOM, outside WebComponent shadow DOM:
 await page.click('css:light=div')
@@ -357,6 +459,11 @@ Selectors using the same or different engines can be combined using the `>>` sep
 await page.click('#free-month-promo >> text=Sign Up');
 ```
 
+```java
+// Click an element with text "Sign Up" inside of a #free-month-promo.
+page.click("#free-month-promo >> text=Sign Up");
+```
+
 ```python async
 # Click an element with text 'Sign Up' inside of a #free-month-promo.
 await page.click('#free-month-promo >> text=Sign Up')
@@ -370,6 +477,11 @@ page.click('#free-month-promo >> text=Sign Up')
 ```js
 // Capture textContent of a section that contains an element with text 'Selectors'.
 const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.textContent);
+```
+
+```java
+// Capture textContent of a section that contains an element with text "Selectors".
+String sectionText = (String) page.evalOnSelector("*css=section >> text=Selectors", "e => e.textContent");
 ```
 
 ```python async
@@ -401,6 +513,11 @@ and [actionable](./actionability.md). For example, click will:
 await page.fill('#search', 'query');
 ```
 
+```java
+// Playwright waits for #search element to be in the DOM
+page.fill("#search", "query");
+```
+
 ```python async
 # Playwright waits for #search element to be in the DOM
 await page.fill('#search', 'query')
@@ -415,6 +532,12 @@ page.fill('#search', 'query')
 // Playwright waits for element to stop animating
 // and accept clicks.
 await page.click('#search');
+```
+
+```java
+// Playwright waits for element to stop animating
+// and accept clicks.
+page.click("#search");
 ```
 
 ```python async
@@ -438,6 +561,14 @@ await page.waitForSelector('#search', { state: 'attached' });
 await page.waitForSelector('#promo');
 ```
 
+```java
+// Wait for #search to appear in the DOM.
+page.waitForSelector("#search", new Page.WaitForSelectorOptions()
+  .withState(WaitForSelectorState.ATTACHED));
+// Wait for #promo to become visible, for example with "visibility:visible".
+page.waitForSelector("#promo");
+```
+
 ```python async
 # Wait for #search to appear in the DOM.
 await page.wait_for_selector('#search', state='attached')
@@ -459,6 +590,15 @@ page.wait_for_selector('#promo')
 await page.waitForSelector('#details', { state: 'hidden' });
 // Wait for #promo to be removed from the DOM.
 await page.waitForSelector('#promo', { state: 'detached' });
+```
+
+```java
+// Wait for #details to become hidden, for example with "display:none".
+page.waitForSelector("#details", new Page.WaitForSelectorOptions()
+  .withState(WaitForSelectorState.HIDDEN));
+// Wait for #promo to be removed from the DOM.
+page.waitForSelector("#promo", new Page.WaitForSelectorOptions()
+  .withState(WaitForSelectorState.DETACHED));
 ```
 
 ```python async
@@ -495,6 +635,10 @@ of the web page and bring results back to the Playwright environment. Browser gl
 const href = await page.evaluate(() => document.location.href);
 ```
 
+```java
+String href = (String) page.evaluate("document.location.href");
+```
+
 ```python async
 href = await page.evaluate('() => document.location.href')
 ```
@@ -510,6 +654,13 @@ const status = await page.evaluate(async () => {
   const response = await fetch(location.href);
   return response.status;
 });
+```
+
+```java
+int status = (int) page.evaluate("async () => {\n" +
+  "  const response = await fetch(location.href);\n" +
+  "  return response.status;\n" +
+  "}");
 ```
 
 ```python async
@@ -571,6 +722,57 @@ await page.evaluate(
 await page.evaluate(
     x => x.button1.textContent + x.list[0].textContent + String(x.foo),
     { button1, list: [button2], foo: null });
+```
+
+```java
+// A primitive value.
+page.evaluate("num => num", 42);
+
+// An array.
+page.evaluate("array => array.length", Arrays.asList(1, 2, 3));
+
+// An object.
+Map<String, Object> obj = new HashMap<>();
+obj.put("foo", "bar");
+page.evaluate("object => object.foo", obj);
+
+// A single handle.
+ElementHandle button = page.querySelector("button");
+page.evaluate("button => button.textContent", button);
+
+// Alternative notation using elementHandle.evaluate.
+button.evaluate("(button, from) => button.textContent.substring(from)", 5);
+
+// Object with multiple handles.
+ElementHandle button1 = page.querySelector(".button1");
+ElementHandle button2 = page.querySelector(".button2");
+Map<String, ElementHandle> arg = new HashMap<>();
+arg.put("button1", button1);
+arg.put("button2", button2);
+page.evaluate("o => o.button1.textContent + o.button2.textContent", arg);
+
+// Object destructuring works. Note that property names must match
+// between the destructured object and the argument.
+// Also note the required parenthesis.
+Map<String, ElementHandle> arg = new HashMap<>();
+arg.put("button1", button1);
+arg.put("button2", button2);
+page.evaluate("({ button1, button2 }) => button1.textContent + button2.textContent", arg);
+
+// Array works as well. Arbitrary names can be used for destructuring.
+// Note the required parenthesis.
+page.evaluate(
+  "([b1, b2]) => b1.textContent + b2.textContent",
+  Arrays.asList(button1, button2));
+
+// Any non-cyclic mix of serializables and handles works.
+Map<String, Object> arg = new HashMap<>();
+arg.put("button1", button1);
+arg.put("list", Arrays.asList(button2));
+arg.put("foo", 0);
+page.evaluate(
+  "x => x.button1.textContent + x.list[0].textContent + String(x.foo)",
+  arg);
 ```
 
 ```python async
@@ -668,6 +870,16 @@ const result = await page.evaluate(data => {
 }, data);
 ```
 
+```java
+Map<String, Object> data = new HashMap<>();
+data.put("text", "some data");
+data.put("value", 1);
+// Pass |data| as a parameter.
+Object result = page.evaluate("data => {\n" +
+  "  window.myApp.use(data);\n" +
+  "}", data);
+```
+
 ```python async
 data = { 'text': 'some data', 'value': 1 }
 # Pass |data| as a parameter.
@@ -692,6 +904,16 @@ const result = await page.evaluate(() => {
   // There is no |data| in the web page.
   window.myApp.use(data);
 });
+```
+
+```java
+Map<String, Object> data = new HashMap<>();
+data.put("text", "some data");
+data.put("value", 1);
+Object result = page.evaluate("() => {\n" +
+  "  // There is no |data| in the web page.\n" +
+  "  window.myApp.use(data);\n" +
+  "}");
 ```
 
 ```python async

@@ -30,6 +30,12 @@ tall screen and the page could fit it entirely.
 await page.screenshot({ path: 'screenshot.png', fullPage: true });
 ```
 
+```java
+page.screenshot(new Page.ScreenshotOptions()
+  .withPath(Paths.get("screenshot.png"))
+  .withFullPage(true));
+```
+
 ```python async
 await page.screenshot(path="screenshot.png", full_page=True)
 ```
@@ -45,6 +51,11 @@ Rather than writing into a file, you can get a buffer with the image and post-pr
 ```js
 const buffer = await page.screenshot();
 console.log(buffer.toString('base64'));
+```
+
+```java
+byte[] buffer = page.screenshot();
+System.out.println(Base64.getEncoder().encode(buffer));
 ```
 
 ```python async
@@ -65,6 +76,11 @@ Sometimes it is useful to take a screenshot of a single element.
 ```js
 const elementHandle = await page.$('.header');
 await elementHandle.screenshot({ path: 'screenshot.png' });
+```
+
+```java
+ElementHandle elementHandle = page.querySelector(".header");
+elementHandle.screenshot(new ElementHandle.ScreenshotOptions().withPath(Paths.get("screenshot.png")));
 ```
 
 ```python async

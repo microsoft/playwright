@@ -91,6 +91,27 @@ const { chromium } = require('playwright');
 })();
 ```
 
+```java
+// FIXME
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      // Make sure to run headed.
+      Browser browser = chromium.launch(new BrowserType.LaunchOptions().withHeadless(false));
+      // Setup context however you like.
+      BrowserContext context = browser.newContext(/* pass any options */);
+      context.route("**/*", route -> route.resume());
+      // Pause the page, and start recording manually.
+      Page page = context.newPage();
+      page.pause();
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright

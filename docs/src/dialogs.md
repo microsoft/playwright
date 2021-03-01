@@ -16,6 +16,11 @@ page.on('dialog', dialog => dialog.accept());
 await page.click('button');
 ```
 
+```java
+page.onDialog(dialog -> dialog.accept());
+page.click("button");
+```
+
 ```python async
 page.on("dialog", lambda dialog: dialog.accept())
 await page.click("button")
@@ -39,6 +44,11 @@ WRONG!
 ```js
 page.on('dialog', dialog => console.log(dialog.message()));
 await page.click('button'); // Will hang here
+```
+
+```java
+page.onDialog(dialog -> System.out.println(dialog.message()));
+page.click("button"); // Will hang here
 ```
 
 ```python async
@@ -73,6 +83,14 @@ page.on('dialog', async dialog => {
   await dialog.dismiss();
 });
 await page.close({runBeforeUnload: true});
+```
+
+```java
+page.onDialog(dialog -> {
+  assertEquals("beforeunload", dialog.type());
+  dialog.dismiss();
+});
+page.close(new Page.CloseOptions().withRunBeforeUnload(true));
 ```
 
 ```python async
