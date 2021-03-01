@@ -28,6 +28,11 @@ const jsHandle = await page.evaluateHandle('window');
 //  Use jsHandle for evaluations.
 ```
 
+```java
+JSHandle jsHandle = page.evaluateHandle("window");
+//  Use jsHandle for evaluations.
+```
+
 ```python async
 js_handle = await page.evaluate_handle('window')
 #  Use jsHandle for evaluations.
@@ -40,6 +45,11 @@ js_handle = page.evaluate_handle('window')
 
 ```js
 const ulElementHandle = await page.waitForSelector('ul');
+//  Use ulElementHandle for actions and evaluation.
+```
+
+```java
+ElementHandle ulElementHandle = page.waitForSelector("ul");
 //  Use ulElementHandle for actions and evaluation.
 ```
 
@@ -74,6 +84,20 @@ expect(boundingBox.width).toBe(100);
 // Assert attribute for the element
 const classNames = await elementHandle.getAttribute('class');
 expect(classNames.includes('highlighted')).toBeTruthy();
+```
+
+```java
+// Get the element handle
+JSHandle jsHandle = page.waitForSelector("#box");
+ElementHandle elementHandle = jsHandle.asElement();
+
+// Assert bounding box for the element
+BoundingBox boundingBox = elementHandle.boundingBox();
+assertEquals(100, boundingBox.width);
+
+// Assert attribute for the element
+String classNames = elementHandle.getAttribute("class");
+assertTrue(classNames.contains("highlighted"));
 ```
 
 ```python async
@@ -127,6 +151,26 @@ await page.evaluate(arg => arg.myArray.push(arg.newElement), {
 
 // Release the object when it's no longer needed.
 await myArrayHandle.dispose();
+```
+
+```java
+// Create new array in page.
+JSHandle myArrayHandle = page.evaluateHandle("() => {\n" +
+  "  window.myArray = [1];\n" +
+  "  return myArray;\n" +
+  "}");
+
+// Get the length of the array.
+int length = (int) page.evaluate("a => a.length", myArrayHandle);
+
+// Add one more element to the array using the handle
+Map<String, Object> arg = new HashMap<>();
+arg.put("myArray", myArrayHandle);
+arg.put("newElement", 2);
+page.evaluate("arg => arg.myArray.add(arg.newElement)", arg);
+
+// Release the object when it"s no longer needed.
+myArrayHandle.dispose();
 ```
 
 ```python async

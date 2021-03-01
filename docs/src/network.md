@@ -24,6 +24,13 @@ const page = await context.newPage();
 await page.goto('https://example.com');
 ```
 
+```java
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+  .withHttpCredentials("bill", "pa55w0rd"));
+Page page = context.newPage();
+page.navigate("https://example.com");
+```
+
 ```python async
 context = await browser.new_context(
     http_credentials={"username": "bill", "password": "pa55w0rd"}
@@ -63,6 +70,24 @@ const { chromium, webkit, firefox } = require('playwright');
 
   await browser.close();
 })();
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch();
+      Page page = browser.newPage();
+      page.onRequest(request -> System.out.println(">> " + request.method() + " " + request.url()));
+      page.onResponse(response -> System.out.println("<<" + response.status() + " " + response.url()));
+      page.navigate("https://example.com");
+      browser.close();
+    }
+  }
+}
 ```
 
 ```python async
@@ -112,6 +137,13 @@ const [response] = await Promise.all([
 ]);
 ```
 
+```java
+// Use a glob URL pattern
+Response response = page.waitForResponse("**/api/fetch_data", () -> {
+  page.click("button#update");
+});
+```
+
 ```python async
 # Use a glob url pattern
 async with page.expect_response("**/api/fetch_data") as response_info:
@@ -140,6 +172,18 @@ const [response] = await Promise.all([
   page.waitForResponse(response => response.url().includes(token)),
   page.click('button#update'),
 ]);
+```
+
+```java
+// Use a RegExp
+Response response = page.waitForResponse(Pattern.compile("\\.jpeg$"), () -> {
+  page.click("button#update");
+});
+
+// Use a predicate taking a Response object
+Response response = page.waitForResponse(r -> r.url().contains(token), () -> {
+  page.click("button#update");
+});
 ```
 
 ```python async
@@ -186,6 +230,13 @@ await page.route('**/api/fetch_data', route => route.fulfill({
 await page.goto('https://example.com');
 ```
 
+```java
+page.route("**/api/fetch_data", route -> route.fulfill(new Route.FulfillOptions()
+  .withStatus(200)
+  .withBody(testData)));
+page.navigate("https://example.com");
+```
+
 ```python async
 await page.route(
     "**/api/fetch_data",
@@ -213,6 +264,13 @@ await browserContext.route('**/api/login', route => route.fulfill({
   body: 'accept',
 }));
 await page.goto('https://example.com');
+```
+
+```java
+browserContext.route("**/api/login", route -> route.fulfill(new Route.FulfillOptions()
+  .withStatus(200)
+  .withBody("accept")));
+page.navigate("https://example.com");
 ```
 
 ```python async
@@ -256,6 +314,18 @@ await page.route('**/*', route => {
 await page.route('**/*', route => route.continue({method: 'POST'}));
 ```
 
+```java
+// Delete header
+page.route("**/*", route -> {
+  Map<String, String> headers = new HashMap<>(route.request().headers());
+  headers.remove("X-Secret");
+    route.resume(new Route.ResumeOptions().withHeaders(headers));
+});
+
+// Continue requests as POST.
+page.route("**/*", route -> route.resume(new Route.ResumeOptions().withMethod("POST")));
+```
+
 ```python async
 # Delete header
 async def handle_route(route):
@@ -291,6 +361,18 @@ await page.route('**/*.{png,jpg,jpeg}', route => route.abort());
 await page.route('**/*', route => {
   return route.request().resourceType() === 'image' ?
       route.abort() : route.continue();
+});
+```
+
+```java
+page.route("**/*.{png,jpg,jpeg}", route -> route.abort());
+
+// Abort based on the request type
+page.route("**/*", route -> {
+  if ("image".equals(route.request().resourceType()))
+    route.abort();
+  else
+    route.resume();
 });
 ```
 

@@ -26,6 +26,23 @@ await page.fill('#local', '2020-03-02T05:15');
 await page.fill('text=First Name', 'Peter');
 ```
 
+```java
+// Text input
+page.fill("#name", "Peter");
+
+// Date input
+page.fill("#date", "2020-02-02");
+
+// Time input
+page.fill("#time", "13-15");
+
+// Local datetime input
+page.fill("#local", "2020-03-02T05:15");
+
+// Input through label
+page.fill("text=First Name", "Peter");
+```
+
 ```python async
 # Text input
 await page.fill('#name', 'Peter')
@@ -86,6 +103,20 @@ await page.uncheck('#subscribe-label');
 await page.check('text=XL');
 ```
 
+```java
+// Check the checkbox
+page.check("#agree");
+
+// Assert the checked state
+assertTrue(page.isChecked("#agree"));
+
+// Uncheck by input <label>.
+page.uncheck("#subscribe-label");
+
+// Select the radio button
+page.check("text=XL");
+```
+
 ```python async
 # Check the checkbox
 await page.check('#agree')
@@ -143,6 +174,21 @@ await page.selectOption('select#colors', ['red', 'green', 'blue']);
 // Select the option via element handle
 const option = await page.$('#best-option');
 await page.selectOption('select#colors', option);
+```
+
+```java
+// Single selection matching the value
+page.selectOption("select#colors", "blue");
+
+// Single selection matching the label
+page.selectOption("select#colors", new SelectOption().withLabel("Blue"));
+
+// Multiple selected items
+page.selectOption("select#colors", new String[] {"red", "green", "blue"});
+
+// Select the option via element handle
+ElementHandle option = page.querySelector("#best-option");
+page.selectOption("select#colors", option);
 ```
 
 ```python async
@@ -207,6 +253,26 @@ await page.hover('#item');
 await page.click('#item', { position: { x: 0, y: 0} });
 ```
 
+```java
+// Generic click
+page.click("button#submit");
+
+// Double click
+page.dblclick("#item");
+
+// Right click
+page.click("#item", new Page.ClickOptions().withButton(MouseButton.RIGHT));
+
+// Shift + click
+page.click("#item", new Page.ClickOptions().withModifiers(Arrays.asList(KeyboardModifier.SHIFT)));
+
+// Hover over element
+page.hover("#item");
+
+// Click the top left corner
+page.click("#item", new Page.ClickOptions().withPosition(0, 0));
+```
+
 ```python async
 # Generic click
 await page.click('button#submit')
@@ -264,6 +330,10 @@ Sometimes, apps use non-trivial logic where hovering the element overlays it wit
 await page.click('button#submit', { force: true });
 ```
 
+```java
+page.click("button#submit", new Page.ClickOptions().withForce(true));
+```
+
 ```python async
 await page.click('button#submit', force=True)
 ```
@@ -278,6 +348,10 @@ If you are not interested in testing your app under the real conditions and want
 
 ```js
 await page.dispatchEvent('button#submit', 'click');
+```
+
+```java
+page.dispatchEvent("button#submit", "click");
 ```
 
 ```python async
@@ -312,6 +386,11 @@ Type into the field character by character, as if it was a user with a real keyb
 ```js
 // Type character by character
 await page.type('#area', 'Hello World!');
+```
+
+```java
+// Type character by character
+page.type("#area", "Hello World!");
 ```
 
 ```python async
@@ -350,6 +429,17 @@ await page.press('#name', 'Control+ArrowRight');
 
 // Press $ sign on keyboard
 await page.press('#value', '$');
+```
+
+```java
+// Hit Enter
+page.press("#submit", "Enter");
+
+// Dispatch Control+Right
+page.press("#name", "Control+ArrowRight");
+
+// Press $ sign on keyboard
+page.press("#value", "$");
 ```
 
 ```python async
@@ -395,6 +485,14 @@ await page.press('#name', 'Shift+A');
 
 // <input id=name>
 await page.press('#name', 'Shift+ArrowLeft');
+```
+
+```java
+// <input id=name>
+page.press("#name", "Shift+A");
+
+// <input id=name>
+page.press("#name", "Shift+ArrowLeft");
 ```
 
 ```python async
@@ -449,6 +547,21 @@ await page.setInputFiles('input#upload', {
 });
 ```
 
+```java
+// Select one file
+page.setInputFiles("input#upload", Paths.get("myfile.pdf"));
+
+// Select multiple files
+page.setInputFiles("input#upload", new Path[] {Paths.get("file1.txt"), Paths.get("file2.txt")});
+
+// Remove all the selected files
+page.setInputFiles("input#upload", new Path[0]);
+
+// Upload buffer from memory
+page.setInputFiles("input#upload", new FilePayload(
+  "file.txt", "text/plain", "this is test".getBytes(StandardCharsets.UTF_8)));
+```
+
 ```python async
 # Select one file
 await page.set_input_files('input#upload', 'myfile.pdf')
@@ -498,6 +611,13 @@ const [fileChooser] = await Promise.all([
 await fileChooser.setFiles('myfile.pdf');
 ```
 
+```java
+FileChooser fileChooser = page.waitForFileChooser(() -> {
+  page.click("upload");
+});
+fileChooser.setFiles(Paths.get("myfile.pdf"));
+```
+
 ```python async
 async with page.expect_file_chooser() as fc_info:
     await page.click("upload")
@@ -526,6 +646,10 @@ For the dynamic pages that handle focus events, you can focus the given element.
 
 ```js
 await page.focus('input#name');
+```
+
+```java
+page.focus("input#name");
 ```
 
 ```python async

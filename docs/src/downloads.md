@@ -58,6 +58,10 @@ If you have no idea what initiates the download, you can still handle the event:
 page.on('download', download => download.path().then(console.log));
 ```
 
+```java
+page.onDownload(download -> System.out.println(download.path()));
+```
+
 ```python async
 async def handle_download(download):
     print(await download.path())

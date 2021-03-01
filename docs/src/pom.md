@@ -39,6 +39,30 @@ class SearchPage {
 module.exports = { SearchPage };
 ```
 
+```java
+// models/SearchPage.java
+package models;
+
+import com.microsoft.playwright;
+
+public class SearchPage {
+  private final Page page;
+
+  public SearchPage(Page page) {
+    this.page = page;
+  }
+
+  public void navigate() {
+    page.navigate("https://bing.com");
+  }
+
+  public void search(String text) {
+    page.fill("[aria-label='Enter your search term']", text);
+    page.press("[aria-label='Enter your search term']", "Enter");
+  }
+}
+```
+
 ```python async
 # models/search.py
 class SearchPage:
@@ -78,6 +102,18 @@ const page = await browser.newPage();
 const searchPage = new SearchPage(page);
 await searchPage.navigate();
 await searchPage.search('search query');
+```
+
+```java
+import models.SearchPage;
+import com.microsoft.playwright.*;
+...
+
+// In the test
+Page page = browser.newPage();
+SearchPage searchPage = new SearchPage(page);
+searchPage.navigate();
+searchPage.search("search query");
 ```
 
 ```python async

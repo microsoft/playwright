@@ -135,12 +135,12 @@ function multiplyComment(spec) {
   return children;
 }
 
-for (const name of fs.readdirSync("docs/src/api")) {
+for (const name of fs.readdirSync("docs/src")) {
   if (!name.endsWith(".md"))
     continue;
   if (name.includes('android'))
     continue;
-  const inputFile = `docs/src/api/${name}`;
+  const inputFile = `docs/src/${name}`;
   const fileline = fs.readFileSync(inputFile).toString();
   const nodes = md.parse(fileline);
   

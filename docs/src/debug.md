@@ -26,6 +26,12 @@ to slow down execution and follow along while debugging.
 await chromium.launch({ headless: false, slowMo: 100 }); // or firefox, webkit
 ```
 
+```java
+chromium.launch(new BrowserType.LaunchOptions() // or firefox, webkit
+  .withHeadless(false)
+  .withSlowMo(100));
+```
+
 ```python async
 await chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
 
@@ -75,6 +81,10 @@ In Chromium, you can also open developer tools through a launch option.
 await chromium.launch({ devtools: true });
 ```
 
+```java
+chromium.launch(new BrowserType.LaunchOptions().withDevtools(true));
+```
+
 ```python async
 await chromium.launch(devtools=True)
 
@@ -96,6 +106,15 @@ $ PWDEBUG=1 npm run test
 # Windows
 $ set PWDEBUG=1
 $ npm run test
+```
+
+```sh java
+# Linux/macOS
+$ PWDEBUG=1 mvn test
+
+# Windows
+$ set PWDEBUG=1
+$ mvn test
 ```
 
 ```sh python
@@ -150,6 +169,15 @@ $ DEBUG=pw:api npm run test
 # Windows
 $ set DEBUG=pw:api
 $ npm run test
+```
+
+```sh java
+# Linux/macOS
+$ DEBUG=pw:api mvn test
+
+# Windows
+$ set DEBUG=pw:api
+$ mvn test
 ```
 
 ```sh python
