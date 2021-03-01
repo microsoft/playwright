@@ -3,6 +3,20 @@
 
 Terminates this instance of Playwright, will also close all created browsers if they are still running.
 
+## method: Playwright.create
+* langs: java
+- returns: <[Playwright]>
+
+Launches new Playwright driver process and connects to it. [`method: Playwright.close`] should be called when the instance is no longer needed.
+
+```java
+Playwright playwright = Playwright.create()) {
+Browser browser = playwright.webkit().launch();
+Page page = browser.newPage();
+page.navigate("https://www.w3.org/");
+playwright.close();
+```
+
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
