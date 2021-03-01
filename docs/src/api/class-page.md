@@ -2363,9 +2363,18 @@ page.goto("https://example.com")
 ```
 
 ### param: Page.setViewportSize.viewportSize
+* langs: js, python
 - `viewportSize` <[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
+
+### param: Page.setViewportSize.width
+* langs: csharp, java
+- `width` <[int]> page width in pixels.
+
+### param: Page.setViewportSize.height
+* langs: csharp, java
+- `height` <[int]> page height in pixels.
 
 ## async method: Page.tap
 
