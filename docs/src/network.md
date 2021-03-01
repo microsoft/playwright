@@ -139,7 +139,7 @@ const [response] = await Promise.all([
 
 ```java
 // Use a glob URL pattern
-Response response =page.waitForResponse("**/api/fetch_data", () -> {
+Response response = page.waitForResponse("**/api/fetch_data", () -> {
   page.click("button#update");
 });
 ```
