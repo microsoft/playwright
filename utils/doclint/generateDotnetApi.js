@@ -88,7 +88,7 @@ let classNameMap;
   classNameMap.set('path', 'string');
   classNameMap.set('URL', 'string');
   classNameMap.set('RegExp', 'Regex');
-  
+
   // this are types that we don't explicility render even if we get the specs
   const ignoredTypes = ['TimeoutException'];
 
@@ -194,11 +194,6 @@ function translateMemberName(memberKind, name, member = null) {
   // like, when generating classes inside methods for params
   name = name.replace(/[@-]/g, '');
 
-  // we sanitize some common abbreviations to ensure consistency
-  name = name.replace(/(HTTP[S]?)/g, (m, g) => {
-    return g[0].toUpperCase() + g.substring(1).toLowerCase();
-  });
-
   if (memberKind === 'argument') {
     if (['params', 'event'].includes(name)) { // just in case we want to add others
       return `@${name}`;
@@ -206,6 +201,7 @@ function translateMemberName(memberKind, name, member = null) {
       return name;
     }
   }
+
   // check if there's an alias in the docs, in which case
   // we return that, otherwise, we apply our dotnet magic to it
   if (member) {
@@ -213,6 +209,11 @@ function translateMemberName(memberKind, name, member = null) {
       return member.alias;
     }
   }
+
+  // we sanitize some common abbreviations to ensure consistency
+  name = name.replace(/(HTTP[S]?)/g, (m, g) => {
+    return g[0].toUpperCase() + g.substring(1).toLowerCase();
+  });
 
   let assumedName = name.charAt(0).toUpperCase() + name.substring(1);
 
@@ -384,11 +385,12 @@ function renderMethod(member, parent, output, name) {
     }
   }
 
-  type = type || typeResolve(member.type); //translateType(member.type, parent);
+  type = type || typeResolve(member.type);
   // TODO: this is something that will probably go into the docs
+  // translate simple getters into read-only properties, and simple
+  // set-only methods to settable properties
   if (member.args.size == 0
     && type !== 'void'
-    && !name.startsWith('Is')
     && !name.startsWith('Get')) {
     if (!member.async) {
       if (member.spec)
@@ -397,6 +399,15 @@ function renderMethod(member, parent, output, name) {
       return;
     }
     name = `Get${name}`;
+  } else if (member.args.size == 1
+    && type === 'void'
+    && name.startsWith('Set')
+    && !member.async) {
+    name = name.substring(3); // remove the 'Set'
+    if (member.spec)
+      output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+    output(`${translateType(member.argsArray[0].type, parent)} ${name} { set; }`);
+    return;
   }
 
   // HACK: special case for generics handling!
