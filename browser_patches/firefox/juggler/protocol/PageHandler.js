@@ -257,8 +257,9 @@ class PageHandler {
     return await this._contentPage.send('setFileInputFiles', options);
   }
 
-  async ['Page.setEmulatedMedia'](options) {
-    return await this._contentPage.send('setEmulatedMedia', options);
+  async ['Page.setEmulatedMedia']({colorScheme, type}) {
+    this._pageTarget.setColorScheme(colorScheme || null);
+    this._pageTarget.setEmulatedMedia(type);
   }
 
   async ['Page.bringToFront'](options) {

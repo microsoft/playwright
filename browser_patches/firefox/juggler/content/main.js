@@ -65,11 +65,6 @@ const applySetting = {
   colorScheme: (colorScheme) => {
     frameTree.setColorScheme(colorScheme);
   },
-
-  deviceScaleFactor: (deviceScaleFactor) => {
-    docShell.contentViewer.overrideDPPX = deviceScaleFactor || this._initialDPPX;
-    docShell.deviceSizeIsPageSize = !!deviceScaleFactor;
-  },
 };
 
 const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
@@ -122,7 +117,8 @@ function initialize() {
       return failedToOverrideTimezone;
     },
 
-    async awaitViewportDimensions({width, height}) {
+    async awaitViewportDimensions({width, height, deviceSizeIsPageSize}) {
+      docShell.deviceSizeIsPageSize = deviceSizeIsPageSize;
       const win = docShell.domWindow;
       if (win.innerWidth === width && win.innerHeight === height)
         return;

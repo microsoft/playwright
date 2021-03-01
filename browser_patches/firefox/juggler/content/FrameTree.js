@@ -145,16 +145,6 @@ class FrameTree {
       frame._addBinding(name, script);
   }
 
-  setColorScheme(colorScheme) {
-    const docShell = this._mainFrame._docShell;
-    switch (colorScheme) {
-      case 'light': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_LIGHT; break;
-      case 'dark': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_DARK; break;
-      case 'no-preference': docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_NO_PREFERENCE; break;
-      default: docShell.colorSchemeOverride = Ci.nsIDocShell.COLOR_SCHEME_OVERRIDE_NONE; break;
-    }
-  }
-
   frameForDocShell(docShell) {
     return this._docShellToFrame.get(docShell) || null;
   }
