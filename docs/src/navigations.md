@@ -41,6 +41,11 @@ Navigating to a URL auto-waits for the page to fire the `load` event. If the pag
 await page.goto('https://example.com');
 ```
 
+```java
+// Navigate the page
+page.navigate("https://example.com");
+```
+
 ```python async
 # Navigate the page
 await page.goto("https://example.com")
@@ -58,6 +63,12 @@ Override the default behavior to wait until a specific event, like `networkidle`
 ```js
 // Navigate and wait until network is idle
 await page.goto('https://example.com', { waitUntil: 'networkidle' });
+```
+
+```java
+// Navigate and wait until network is idle
+page.navigate("https://example.com", new Page.NavigateOptions()
+  .withWaitUntil(WaitUntilState.NETWORKIDLE));
 ```
 
 ```python async
@@ -84,6 +95,17 @@ await page.waitForSelector('text=Example Domain');
 // Click will auto-wait for the element
 await page.goto('https://example.com');
 await page.click('text=Example Domain');
+```
+
+```java
+// Navigate and wait for element
+page.navigate("https://example.com");
+page.waitForSelector("text=Example Domain");
+
+// Navigate and click element
+// Click will auto-wait for the element
+page.navigate("https://example.com");
+page.click("text=Example Domain");
 ```
 
 ```python async
@@ -126,8 +148,17 @@ the navigated page which would auto-wait for an element.
 ```js
 // Click will auto-wait for navigation to complete
 await page.click('text=Login');
+
 // Fill will auto-wait for element on navigated page
 await page.fill('#username', 'John Doe');
+```
+
+```java
+// Click will auto-wait for navigation to complete
+page.click("text=Login");
+
+// Fill will auto-wait for element on navigated page
+page.fill("#username", "John Doe");
 ```
 
 ```python async
@@ -155,6 +186,11 @@ await page.click('button'); // Click triggers navigation
 await page.waitForLoadState('networkidle'); // This resolves after 'networkidle'
 ```
 
+```java
+page.click("button"); // Click triggers navigation
+page.waitForLoadState(LoadState.NETWORKIDLE); // This resolves after "networkidle"
+```
+
 ```python async
 await page.click("button"); # Click triggers navigation
 await page.wait_for_load_state("networkidle"); # This waits for the "networkidle"
@@ -171,10 +207,10 @@ In lazy-loaded pages, it can be useful to wait until an element is visible with 
 Alternatively, page interactions like [`method: Page.click`] auto-wait for elements.
 
 ```js
-// Click triggers navigation
+// Click will auto-wait for the element and trigger navigation
 await page.click('text=Login');
-// Click will auto-wait for the element
-await page.waitForSelector('#username', 'John Doe');
+// Wait for the element
+await page.waitForSelector('#username');
 
 // Click triggers navigation
 await page.click('text=Login');
@@ -182,11 +218,23 @@ await page.click('text=Login');
 await page.fill('#username', 'John Doe');
 ```
 
+```java
+// Click will auto-wait for the element and trigger navigation
+page.click("text=Login");
+// Wait for the element
+page.waitForSelector("#username");
+
+// Click triggers navigation
+page.click("text=Login");
+// Fill will auto-wait for element
+page.fill("#username", "John Doe");
+```
+
 ```python async
-# Click triggers navigation
+# Click will auto-wait for the element and trigger navigation
 await page.click("text=Login")
-# Click will auto-wait for the element
-await page.wait_for_selector("#username", "John Doe")
+# Wait for the element
+await page.wait_for_selector("#username")
 
 # Click triggers navigation
 await page.click("text=Login")
@@ -222,6 +270,14 @@ await Promise.all([
 ]);
 ```
 
+```java
+// Using waitForNavigation with a callback prevents a race condition
+// between clicking and waiting for a navigation.
+page.waitForNavigation(() -> { // Waits for the next navigation
+  page.click("a"); // Triggers a navigation after a timeout
+});
+```
+
 ```python async
 # Waits for the next navigation. Using Python context manager
 # prevents a race condition between clicking and waiting for a navigation.
@@ -254,6 +310,14 @@ await Promise.all([
 ]);
 ```
 
+```java
+// Running action in the callback of waitForNavigation prevents a race
+// condition between clicking and waiting for a navigation.
+page.waitForNavigation(new Page.WaitForNavigationOptions().withUrl("**/login"), () -> {
+  page.click("a"); // Triggers a navigation with a script redirect
+});
+```
+
 ```python async
 # Using Python context manager prevents a race condition
 # between clicking and waiting for a navigation.
@@ -281,6 +345,13 @@ const [ popup ] = await Promise.all([
   page.click('a[target="_blank"]'),  // Opens popup
 ]);
 await popup.waitForLoadState('load');
+```
+
+```java
+Page popup = page.waitForPopup(() -> {
+  page.click("a[target='_blank']"); // Opens popup
+});
+popup.waitForLoadState(LoadState.LOAD);
 ```
 
 ```python async
@@ -314,6 +385,13 @@ await page.goto('http://example.com');
 await page.waitForFunction(() => window.amILoadedYet());
 // Ready to take a screenshot, according to the page itself.
 await page.screenshot();
+```
+
+```java
+page.navigate("http://example.com");
+page.waitForFunction("() => window.amILoadedYet()");
+// Ready to take a screenshot, according to the page itself.
+page.screenshot();
 ```
 
 ```python async

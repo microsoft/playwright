@@ -15,6 +15,9 @@ methods accept [`param: selector`] as their first argument.
   ```js
   await page.click('text=Log in');
   ```
+  ```java
+  page.click("text=Log in");
+  ```
   ```python async
   await page.click("text=Log in")
   ```
@@ -26,6 +29,10 @@ methods accept [`param: selector`] as their first argument.
   ```js
   await page.click('button');
   await page.click('#nav-bar .contact-us-item');
+  ```
+  ```java
+  page.click("button");
+  page.click("#nav-bar .contact-us-item");
   ```
   ```python async
   await page.click("button")
@@ -41,6 +48,10 @@ methods accept [`param: selector`] as their first argument.
   await page.click('[data-test=login-button]');
   await page.click('[aria-label="Sign in"]');
   ```
+  ```java
+  page.click("[data-test=login-button]");
+  page.click("[aria-label='Sign in']");
+  ```
   ```python async
   await page.click("[data-test=login-button]")
   await page.click("[aria-label='Sign in']")
@@ -55,6 +66,10 @@ methods accept [`param: selector`] as their first argument.
   await page.click('article:has-text("Playwright")');
   await page.click('#nav-bar :text("Contact us")');
   ```
+  ```java
+  page.click("article:has-text(\"Playwright\")");
+  page.click("#nav-bar :text(\"Contact us\")");
+  ```
   ```python async
   await page.click("article:has-text('Playwright')")
   await page.click("#nav-bar :text('Contact us')")
@@ -68,6 +83,9 @@ methods accept [`param: selector`] as their first argument.
   ```js
   await page.click('.item-description:has(.item-promo-banner)');
   ```
+  ```java
+  page.click(".item-description:has(.item-promo-banner)");
+  ```
   ```python async
   await page.click(".item-description:has(.item-promo-banner)")
   ```
@@ -78,6 +96,9 @@ methods accept [`param: selector`] as their first argument.
 - Selecting based on layout, with css selector
   ```js
   await page.click('input:right-of(:text("Username"))');
+  ```
+  ```java
+  page.click("input:right-of(:text(\"Username\"))");
   ```
   ```python async
   await page.click("input:right-of(:text('Username'))")
@@ -90,6 +111,9 @@ methods accept [`param: selector`] as their first argument.
   ```js
   await page.click('.login-button:visible');
   ```
+  ```java
+  page.click(".login-button:visible");
+  ```
   ```python async
   await page.click(".login-button:visible")
   ```
@@ -101,6 +125,9 @@ methods accept [`param: selector`] as their first argument.
   ```js
   await page.click(':nth-match(:text("Buy"), 3)');
   ```
+  ```java
+  page.click(":nth-match(:text('Buy'), 3)");
+  ```
   ```python async
   await page.click(":nth-match(:text('Buy'), 3)"
   ```
@@ -111,6 +138,9 @@ methods accept [`param: selector`] as their first argument.
 - XPath selector
   ```js
   await page.click('xpath=//button');
+  ```
+  ```java
+  page.click("xpath=//button");
   ```
   ```python async
   await page.click("xpath=//button")
@@ -127,6 +157,9 @@ Text selector locates elements that contain passed text.
 ```js
 await page.click('text=Log in');
 ```
+```java
+page.click("text=Log in");
+```
 ```python async
 await page.click("text=Log in")
 ```
@@ -140,6 +173,9 @@ Text selector has a few variations:
 
   ```js
   await page.click('text=Log in');
+  ```
+  ```java
+  page.click("text=Log in");
   ```
   ```python async
   await page.click("text=Log in")
@@ -155,6 +191,9 @@ Text selector has a few variations:
   ```js
   await page.click('text="Log in"');
   ```
+  ```java
+  page.click("text='Log in'");
+  ```
   ```python async
   await page.click("text='Log in'")
   ```
@@ -167,6 +206,9 @@ Text selector has a few variations:
   ```js
   await page.click('"Log in"');
   ```
+  ```java
+  page.click("'Log in'");
+  ```
   ```python async
   await page.click("'Log in'")
   ```
@@ -178,6 +220,9 @@ Text selector has a few variations:
 
   ```js
   await page.click('text=/Log\\s*in/i');
+  ```
+  ```java
+  page.click("text=/Log\\s*in/i");
   ```
   ```python async
   await page.click("text=/Log\s*in/i")
@@ -195,6 +240,14 @@ Text selector has a few variations:
   // Correct, only matches the <article> element
   await page.click('article:has-text("Playwright")');
   ```
+
+  ```java
+  // Wrong, will match many elements including <body>
+  page.click(":has-text(\"Playwright\")");
+  // Correct, only matches the <article> element
+  page.click("article:has-text(\"Playwright\")");
+  ```
+
   ```python async
   # Wrong, will match many elements including <body>
   await page.click(':has-text("Playwright")')
@@ -212,6 +265,9 @@ Text selector has a few variations:
 
   ```js
   await page.click('#nav-bar :text("Home")');
+  ```
+  ```java
+  page.click("#nav-bar :text('Home')");
   ```
   ```python async
   await page.click("#nav-bar :text('Home')")
@@ -240,6 +296,10 @@ Playwright augments standard CSS selectors in two ways:
 
 ```js
 await page.click('button');
+```
+
+```java
+page.click("button");
 ```
 
 ```python async
@@ -275,6 +335,10 @@ Consider a page with two buttons, first invisible and second visible.
   await page.click('button');
   ```
 
+  ```java
+  page.click("button");
+  ```
+
   ```python async
   await page.click("button")
   ```
@@ -287,6 +351,9 @@ Consider a page with two buttons, first invisible and second visible.
 
   ```js
   await page.click('button:visible');
+  ```
+  ```java
+  page.click("button:visible");
   ```
   ```python async
   await page.click("button:visible")
@@ -310,6 +377,10 @@ Following snippet returns text content of an `<article>` element that has a `<di
 await page.textContent('article:has(div.promo)');
 ```
 
+```java
+page.textContent("article:has(div.promo)");
+```
+
 ```python async
 await page.textContent("article:has(div.promo)")
 ```
@@ -328,6 +399,11 @@ selectors in a more compact form.
 ```js
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
 await page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))');
+```
+
+```java
+// Clicks a <button> that has either a "Log in" or "Sign in" text.
+page.click(":is(button:has-text(\"Log in\"), button:has-text(\"Sign in\"))");
 ```
 
 ```python async
@@ -355,6 +431,10 @@ If you'd like to opt-out of this behavior, you can use `:light` CSS extension or
 
 ```js
 await page.click(':light(.article > .header)');
+```
+
+```java
+page.click(":light(.article > .header)");
 ```
 
 ```python async
@@ -419,6 +499,14 @@ await page.fill('input:right-of(:text("Username"))', 'value');
 await page.click('button:near(.promo-card)');
 ```
 
+```java
+// Fill an input to the right of "Username".
+page.fill("input:right-of(:text(\"Username\"))", "value");
+
+// Click a button near the promo card.
+page.click("button:near(.promo-card)");
+```
+
 ```python async
 # Fill an input to the right of "Username".
 await page.fill('input:right-of(:text("Username"))', 'value')
@@ -465,6 +553,14 @@ await page.fill('id=username', 'value');
 await page.click('data-test-id=submit');
 ```
 
+```java
+// Fill an input with the id "username"
+page.fill("id=username", "value");
+
+// Click an element with data-test-id "submit"
+page.click("data-test-id=submit");
+```
+
 ```python async
 # Fill an input with the id "username"
 await page.fill('id=username', 'value')
@@ -503,6 +599,11 @@ In this case, `:nth-match(:text("Buy"), 3)` will select the third button from th
 await page.click(':nth-match(:text("Buy"), 3)');
 ```
 
+```java
+// Click the third "Buy" button
+page.click(":nth-match(:text('Buy'), 3)");
+```
+
 ```python async
 # Click the third "Buy" button
 await page.click(":nth-match(:text('Buy'), 3)"
@@ -518,6 +619,11 @@ page.click(":nth-match(:text('Buy'), 3)"
 ```js
 // Wait until all three buttons are visible
 await page.waitForSelector(':nth-match(:text("Buy"), 3)');
+```
+
+```java
+// Wait until all three buttons are visible
+page.waitForSelector(":nth-match(:text('Buy'), 3)");
 ```
 
 ```python async
@@ -578,8 +684,8 @@ await page.click('text="Login"');
 await page.click('"Login"'); // short-form
 
 // queries "Search GitHub" placeholder attribute
-await page.fill('css=[placeholder="Search GitHub"]');
-await page.fill('[placeholder="Search GitHub"]'); // short-form
+await page.fill('css=[placeholder="Search GitHub"]', 'query');
+await page.fill('[placeholder="Search GitHub"]', 'query'); // short-form
 
 // queries "Close" accessibility label
 await page.click('css=[aria-label="Close"]');
@@ -589,14 +695,31 @@ await page.click('[aria-label="Close"]'); // short-form
 await page.click('css=nav >> text=Login');
 ```
 
+```java
+// queries "Login" text selector
+page.click("text=\"Login\"");
+page.click("\"Login\""); // short-form
+
+// queries "Search GitHub" placeholder attribute
+page.fill("css=[placeholder='Search GitHub']", "query");
+page.fill("[placeholder='Search GitHub']", "query"); // short-form
+
+// queries "Close" accessibility label
+page.click("css=[aria-label='Close']");
+page.click("[aria-label='Close']"); // short-form
+
+// combine role and text queries
+page.click("css=nav >> text=Login");
+```
+
 ```python async
 # queries "Login" text selector
 await page.click('text="Login"')
 await page.click('"Login"') # short-form
 
 # queries "Search GitHub" placeholder attribute
-await page.fill('css=[placeholder="Search GitHub"]')
-await page.fill('[placeholder="Search GitHub"]') # short-form
+await page.fill('css=[placeholder="Search GitHub"]', 'query')
+await page.fill('[placeholder="Search GitHub"]', 'query') # short-form
 
 # queries "Close" accessibility label
 await page.click('css=[aria-label="Close"]')
@@ -640,6 +763,15 @@ await page.click('[data-test-id=directions]'); // short-form
 await page.click('data-test-id=directions');
 ```
 
+```java
+// queries data-test-id attribute with css
+page.click("css=[data-test-id=directions]");
+page.click("[data-test-id=directions]"); // short-form
+
+// queries data-test-id with id
+page.click("data-test-id=directions");
+```
+
 ```python async
 # queries data-test-id attribute with css
 await page.click('css=[data-test-id=directions]')
@@ -667,6 +799,12 @@ the DOM structure changes.
 // avoid long css or xpath chains
 await page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input');
 await page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input');
+```
+
+```java
+// avoid long css or xpath chains
+page.click("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input");
+page.click("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input");
 ```
 
 ```python async

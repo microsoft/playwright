@@ -28,6 +28,27 @@ await userContext.addCookies(userCookies);
 await adminContext.addCookies(adminCookies);
 ```
 
+```java
+// FIXME
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      // Create a Chromium browser instance
+      Browser browser = chromium.launch();
+      // Create two isolated browser contexts
+      BrowserContext userContext = browser.newContext();
+      BrowserContext adminContext = browser.newContext();
+      // Load user and admin cookies
+      userContext.addCookies(userCookies);
+      adminContext.addCookies(adminCookies);
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -92,6 +113,15 @@ const pageTwo = await context.newPage();
 const allPages = context.pages();
 ```
 
+```java
+// Create two pages
+Page pageOne = context.newPage();
+Page pageTwo = context.newPage();
+
+// Get pages of a brower context
+List<Page> allPages = context.pages();
+```
+
 ```python async
 # create two pages
 page_one = await context.new_page()
@@ -130,6 +160,15 @@ await newPage.waitForLoadState();
 console.log(await newPage.title());
 ```
 
+```java
+// Get page after a specific action (e.g. clicking a link)
+Page newPage = context.waitForPage(() -> {
+  page.click("a[target='_blank']"); // Opens a new tab
+});
+newPage.waitForLoadState();
+System.out.println(newPage.title());
+```
+
 ```python async
 # Get page after a specific action (e.g. clicking a link)
 async with context.expect_page() as new_page_info:
@@ -158,6 +197,14 @@ context.on('page', async page => {
   await page.waitForLoadState();
   console.log(await page.title());
 })
+```
+
+```java
+// Get all new pages (including popups) in the context
+context.onPage(page -> {
+  page.waitForLoadState();
+  System.out.println(page.title());
+});
 ```
 
 ```python async
@@ -197,6 +244,15 @@ await popup.waitForLoadState();
 console.log(await popup.title());
 ```
 
+```java
+// Get popup after a specific action (e.g., click)
+Page popup = page.waitForPopup(() -> {
+  page.click("#open");
+});
+popup.waitForLoadState();
+System.out.println(popup.title());
+```
+
 ```python async
 # Get popup after a specific action (e.g., click)
 async with page.expect_popup() as popup_info:
@@ -225,6 +281,14 @@ page.on('popup', async popup => {
   await popup.waitForLoadState();
   await popup.title();
 })
+```
+
+```java
+// Get all popups when they open
+page.onPopup(popup -> {
+  popup.waitForLoadState();
+  System.out.println(popup.title());
+});
 ```
 
 ```python async

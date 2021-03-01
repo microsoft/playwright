@@ -44,6 +44,11 @@ configures Playwright for debugging and opens the inspector.
   await page.pause();
   ```
 
+  ```java
+  // Pause on the following line.
+  page.pause();
+  ```
+
   ```python async
   # Pause on the following line.
   await page.pause()
