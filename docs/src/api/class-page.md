@@ -125,6 +125,8 @@ page.remove_listener("request", log_request)
 Emitted when the page closes.
 
 ## event: Page.console
+* langs:
+  - alias-java: consoleMessage
 - type: <[ConsoleMessage]>
 
 Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
