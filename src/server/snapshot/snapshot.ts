@@ -38,6 +38,8 @@ export type FrameSnapshot = {
   pageId: string,
   frameId: string,
   frameUrl: string,
+  pageTimestamp: number,
+  collectionTime: number,
   doctype?: string,
   html: NodeSnapshot,
   resourceOverrides: ResourceOverride[],

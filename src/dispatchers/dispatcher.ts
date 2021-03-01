@@ -195,9 +195,12 @@ export class DispatcherConnection {
       return;
     }
 
+    const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
     const callMetadata: CallMetadata = {
       id,
       ...validMetadata,
+      pageId: sdkObject?.attribution.page?.uniqueId,
+      frameId: sdkObject?.attribution.frame?.uniqueId,
       startTime: monotonicTime(),
       endTime: 0,
       type: dispatcher._type,
@@ -206,7 +209,6 @@ export class DispatcherConnection {
       log: [],
     };
 
-    const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
     try {
       if (sdkObject)
         await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);

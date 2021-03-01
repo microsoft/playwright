@@ -44,6 +44,8 @@ export type CallMetadata = {
   log: string[];
   error?: string;
   point?: Point;
+  pageId?: string;
+  frameId?: string;
 };
 
 export class SdkObject extends EventEmitter {

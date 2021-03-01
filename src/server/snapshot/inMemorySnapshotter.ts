@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from 'events';
 import { HttpServer } from '../../utils/httpServer';
 import { BrowserContext } from '../browserContext';
+import { helper } from '../helper';
 import { Page } from '../page';
 import { ContextResources, FrameSnapshot } from './snapshot';
 import { SnapshotRenderer } from './snapshotRenderer';
 import { NetworkResponse, SnapshotServer, SnapshotStorage } from './snapshotServer';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate, SnapshotterResource } from './snapshotter';
 
-export class InMemorySnapshotter implements SnapshotStorage, SnapshotterDelegate {
+const kSnapshotInterval = 25;
+
+export class InMemorySnapshotter extends EventEmitter implements SnapshotStorage, SnapshotterDelegate {
   private _blobs = new Map<string, Buffer>();
   private _resources = new Map<string, SnapshotterResource>();
   private _frameSnapshots = new Map<string, FrameSnapshot[]>();
@@ -32,23 +36,43 @@ export class InMemorySnapshotter implements SnapshotStorage, SnapshotterDelegate
   private _snapshotter: Snapshotter;
 
   constructor(context: BrowserContext) {
+    super();
     this._server = new HttpServer();
     new SnapshotServer(this._server, this);
     this._snapshotter = new Snapshotter(context, this);
   }
 
-  async start(): Promise<string> {
-    await this._snapshotter.start();
+  async initialize(): Promise<string> {
+    await this._snapshotter.initialize();
     return await this._server.start();
   }
 
-  stop() {
-    this._snapshotter.dispose();
-    this._server.stop().catch(() => {});
+  async start(): Promise<void> {
+    await this._snapshotter.setAutoSnapshotInterval(kSnapshotInterval);
   }
 
-  async forceSnapshot(page: Page, snapshotId: string) {
-    await this._snapshotter.forceSnapshot(page, snapshotId);
+  async dispose() {
+    this._snapshotter.dispose();
+    await this._server.stop();
+  }
+
+  async captureSnapshot(page: Page, snapshotId: string): Promise<SnapshotRenderer> {
+    if (this._snapshots.has(snapshotId))
+      throw new Error('Duplicate snapshotId: ' + snapshotId);
+
+    this._snapshotter.captureSnapshot(page, snapshotId);
+    return new Promise<SnapshotRenderer>(fulfill => {
+      const listener = helper.addEventListener(this, 'snapshot', (renderer: SnapshotRenderer) => {
+        if (renderer.snapshotId === snapshotId) {
+          helper.removeEventListeners([listener]);
+          fulfill(renderer);
+        }
+      });
+    });
+  }
+
+  async setAutoSnapshotInterval(interval: number): Promise<void> {
+    await this._snapshotter.setAutoSnapshotInterval(interval);
   }
 
   onBlob(blob: SnapshotterBlob): void {
@@ -66,14 +90,15 @@ export class InMemorySnapshotter implements SnapshotStorage, SnapshotterDelegate
   }
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
-    const key = snapshot.pageId + '/' + snapshot.frameId;
-    let frameSnapshots = this._frameSnapshots.get(key);
+    let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
     if (!frameSnapshots) {
       frameSnapshots = [];
-      this._frameSnapshots.set(key, frameSnapshots);
+      this._frameSnapshots.set(snapshot.frameId, frameSnapshots);
     }
     frameSnapshots.push(snapshot);
-    this._snapshots.set(snapshot.snapshotId, new SnapshotRenderer(new Map(this._contextResources), frameSnapshots, frameSnapshots.length - 1));
+    const renderer = new SnapshotRenderer(new Map(this._contextResources), frameSnapshots, frameSnapshots.length - 1);
+    this._snapshots.set(snapshot.snapshotId, renderer);
+    this.emit('snapshot', renderer);
   }
 
   resourceContent(sha1: string): Buffer | undefined {
@@ -86,5 +111,9 @@ export class InMemorySnapshotter implements SnapshotStorage, SnapshotterDelegate
 
   snapshotById(snapshotId: string): SnapshotRenderer | undefined {
     return this._snapshots.get(snapshotId);
+  }
+
+  frameSnapshots(frameId: string): FrameSnapshot[] {
+    return this._frameSnapshots.get(frameId) || [];
   }
 }

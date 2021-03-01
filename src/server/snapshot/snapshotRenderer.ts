@@ -20,11 +20,13 @@ export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
   private _contextResources: ContextResources;
+  readonly snapshotId: string;
 
   constructor(contextResources: ContextResources, snapshots: FrameSnapshot[], index: number) {
     this._contextResources = contextResources;
     this._snapshots = snapshots;
     this._index = index;
+    this.snapshotId = snapshots[index].snapshotId;
   }
 
   render(): RenderedFrameSnapshot {
