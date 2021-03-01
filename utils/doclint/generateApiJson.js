@@ -49,7 +49,7 @@ function serialize(documentation) {
  * @param {Documentation.Class} clazz
  */
 function serializeClass(clazz) {
-  const result = { name: clazz.name };
+  const result = { name: clazz.name, spec: clazz.spec };
   if (clazz.extends)
     result.extends = clazz.extends;
   result.langs = clazz.langs;
@@ -88,7 +88,6 @@ function sanitize(result) {
   delete result.argsArray;
   delete result.clazz;
   delete result.enclosingMethod;
-  delete result.spec;
 }
 
 /**
