@@ -58,6 +58,11 @@ const snapshot = await page.accessibility.snapshot();
 console.log(snapshot);
 ```
 
+```java
+String snapshot = page.accessibility().snapshot();
+System.out.println(snapshot);
+```
+
 ```python async
 snapshot = await page.accessibility.snapshot()
 print(snapshot)
@@ -84,6 +89,11 @@ function findFocusedNode(node) {
   }
   return null;
 }
+```
+
+```java
+// FIXME
+String snapshot = page.accessibility().snapshot();
 ```
 
 ```python async

@@ -20,6 +20,24 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 })();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType webkit = playwright.webkit();
+      Browser browser = webkit.launch();
+      BrowserContext context = browser.newContext();
+      Page page = context.newPage();
+      page.navigate("https://example.com");
+      page.screenshot(new Page.ScreenshotOptions().withPath(Paths.get("screenshot.png")));
+      browser.close();
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -65,6 +83,10 @@ This example logs a message for a single page `load` event:
 page.once('load', () => console.log('Page loaded!'));
 ```
 
+```java
+page.onLoad(p -> System.out.println("Page loaded!"));
+```
+
 ```py
 page.once("load", lambda: print("page loaded!"))
 ```
@@ -78,6 +100,15 @@ function logRequest(interceptedRequest) {
 page.on('request', logRequest);
 // Sometime later...
 page.removeListener('request', logRequest);
+```
+
+```java
+Consumer<Request> logRequest = interceptedRequest -> {
+  System.out.println("A request was made: " + interceptedRequest.url());
+};
+page.onRequest(logRequest);
+// Sometime later...
+page.offRequest(logRequest);
 ```
 
 ```py
@@ -109,6 +140,14 @@ page.on('console', msg => {
     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
 });
 page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+```
+
+```java
+page.onConsole(msg -> {
+  for (int i = 0; i < msg.args().size(); ++i)
+    System.out.println(i + ": " + msg.args().get(i).jsonValue());
+});
+page.evaluate("() => console.log('hello', 5, {foo: 'bar'})");
 ```
 
 ```python async
@@ -145,6 +184,17 @@ try {
   await page.waitForEvent('popup');
 } catch (e) {
   // When the page crashes, exception message contains 'crash'.
+}
+```
+
+```java
+try {
+  // Crash might happen during a click.
+  page.click("button");
+  // Or while waiting for an event.
+  page.waitForPopup(() -> {});
+} catch (PlaywrightException e) {
+  // When the page crashes, exception message contains "crash".
 }
 ```
 
@@ -207,6 +257,12 @@ page.on('filechooser', async (fileChooser) => {
 });
 ```
 
+```java
+page.onFileChooser(fileChooser -> {
+  fileChooser.setFiles(Paths.get("/tmp/myfile.pdf"));
+});
+```
+
 ```py
 page.on("filechooser", lambda file_chooser: file_chooser.set_files("/tmp/myfile.pdf"))
 ```
@@ -256,6 +312,13 @@ const [popup] = await Promise.all([
   page.evaluate(() => window.open('https://example.com')),
 ]);
 console.log(await popup.evaluate('location.href'));
+```
+
+```java
+Page popup = page.waitForPopup(() -> {
+  page.evaluate("() => window.open('https://example.com')");
+});
+System.out.println(popup.evaluate("location.href"));
 ```
 
 ```python async
@@ -339,6 +402,11 @@ Math.random = () => 42;
 ```js
 // In your playwright script, assuming the preload.js file is in same directory
 await page.addInitScript({ path: './preload.js' });
+```
+
+```java
+// In your playwright script, assuming the preload.js file is in same directory
+page.addInitScript(Paths.get("./preload.js"));
 ```
 
 ```python async
@@ -578,6 +646,10 @@ is dispatched. This is equivalend to calling
 await page.dispatchEvent('button#submit', 'click');
 ```
 
+```java
+page.dispatchEvent("button#submit", "click");
+```
+
 ```python async
 await page.dispatch_event("button#submit", "click")
 ```
@@ -606,6 +678,14 @@ You can also specify `JSHandle` as the property value if you want live objects t
 // Note you can only create DataTransfer in Chromium and Firefox
 const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
 await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
+```
+
+```java
+// Note you can only create DataTransfer in Chromium and Firefox
+JSHandle dataTransfer = page.evaluateHandle("() => new DataTransfer()");
+Map<String, Object> arg = new HashMap<>();
+arg.put("dataTransfer", dataTransfer);
+page.dispatchEvent("#source", "dragstart", arg);
 ```
 
 ```python async
@@ -655,6 +735,25 @@ await page.evaluate(() => matchMedia('print').matches);
 // → false
 ```
 
+```java
+page.evaluate("() => matchMedia('screen').matches");
+// → true
+page.evaluate("() => matchMedia('print').matches");
+// → false
+
+page.emulateMedia(new Page.EmulateMediaOptions().withMedia(Media.PRINT));
+page.evaluate("() => matchMedia('screen').matches");
+// → false
+page.evaluate("() => matchMedia('print').matches");
+// → true
+
+page.emulateMedia(new Page.EmulateMediaOptions());
+page.evaluate("() => matchMedia('screen').matches");
+// → true
+page.evaluate("() => matchMedia('print').matches");
+// → false
+```
+
 ```python async
 await page.evaluate("matchMedia('screen').matches")
 # → True
@@ -700,6 +799,16 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
 await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);
 // → false
 await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);
+// → false
+```
+
+```java
+page.emulateMedia(new Page.EmulateMediaOptions().withColorScheme(ColorScheme.DARK));
+page.evaluate("() => matchMedia('(prefers-color-scheme: dark)').matches");
+// → true
+page.evaluate("() => matchMedia('(prefers-color-scheme: light)').matches");
+// → false
+page.evaluate("() => matchMedia('(prefers-color-scheme: no-preference)').matches");
 // → false
 ```
 
@@ -755,6 +864,12 @@ const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
 const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
 ```
 
+```java
+String searchValue = (String) page.evalOnSelector("#search", "el => el.value");
+String preloadHref = (String) page.evalOnSelector("link[rel=preload]", "el => el.href");
+String html = (String) page.evalOnSelector(".main-container", "(e, suffix) => e.outerHTML + suffix", "hello");
+```
+
 ```python async
 search_value = await page.eval_on_selector("#search", "el => el.value")
 preload_href = await page.eval_on_selector("link[rel=preload]", "el => el.href")
@@ -796,6 +911,10 @@ Examples:
 const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
 ```
 
+```java
+boolean divCounts = (boolean) page.evalOnSelectorAll("div", "(divs, min) => divs.length >= min", 10);
+```
+
 ```python async
 div_counts = await page.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
 ```
@@ -834,6 +953,13 @@ const result = await page.evaluate(([x, y]) => {
 console.log(result); // prints "56"
 ```
 
+```java
+Object result = page.evaluate("([x, y]) => {\n" +
+  "  return Promise.resolve(x * y);\n" +
+  "}", Arrays.asList(7, 8));
+System.out.println(result); // prints "56"
+```
+
 ```python async
 result = await page.evaluate("([x, y]) => Promise.resolve(x * y)", [7, 8])
 print(result) # prints "56"
@@ -850,6 +976,10 @@ A string can also be passed in instead of a function:
 console.log(await page.evaluate('1 + 2')); // prints "3"
 const x = 10;
 console.log(await page.evaluate(`1 + ${x}`)); // prints "11"
+```
+
+```java
+System.out.println(page.evaluate("1 + 2")); // prints "3"
 ```
 
 ```python async
@@ -870,6 +1000,12 @@ print(page.evaluate(f"1 + {x}")) # prints "11"
 const bodyHandle = await page.$('body');
 const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
 await bodyHandle.dispose();
+```
+
+```java
+ElementHandle bodyHandle = page.querySelector("body");
+String html = (String) page.evaluate("([body, suffix]) => body.innerHTML + suffix", Arrays.asList(bodyHandle, "hello"));
+bodyHandle.dispose();
 ```
 
 ```python async
@@ -908,6 +1044,11 @@ const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
 aWindowHandle; // Handle for the window object.
 ```
 
+```java
+// Handle for the window object.
+JSHandle aWindowHandle = page.evaluateHandle("() => Promise.resolve(window)");
+```
+
 ```python async
 a_window_handle = await page.evaluate_handle("Promise.resolve(window)")
 a_window_handle # handle for the window object.
@@ -922,6 +1063,10 @@ A string can also be passed in instead of a function:
 
 ```js
 const aHandle = await page.evaluateHandle('document'); // Handle for the 'document'
+```
+
+```java
+JSHandle aHandle = page.evaluateHandle("document"); // Handle for the "document".
 ```
 
 ```python async
@@ -939,6 +1084,13 @@ const aHandle = await page.evaluateHandle(() => document.body);
 const resultHandle = await page.evaluateHandle(body => body.innerHTML, aHandle);
 console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
+```
+
+```java
+JSHandle aHandle = page.evaluateHandle("() => document.body");
+JSHandle resultHandle = page.evaluateHandle("([body, suffix]) => body.innerHTML + suffix", Arrays.asList(aHandle, "hello"));
+System.out.println(resultHandle.jsonValue());
+resultHandle.dispose();
 ```
 
 ```python async
@@ -998,6 +1150,30 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
   `);
   await page.click('button');
 })();
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType webkit = playwright.webkit();
+      Browser browser = webkit.launch({ headless: false });
+      BrowserContext context = browser.newContext();
+      Page page = context.newPage();
+      page.exposeBinding("pageURL", (source, args) -> source.page().url());
+      page.setContent("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.pageURL();\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>");
+      page.click("button");
+    }
+  }
+}
 ```
 
 ```python async
@@ -1064,6 +1240,20 @@ await page.setContent(`
   <div>Click me</div>
   <div>Or click me</div>
 `);
+```
+
+```java
+page.exposeBinding("clicked", (source, args) -> {
+  ElementHandle element = (ElementHandle) args[0];
+  System.out.println(element.textContent());
+  return null;
+}, new Page.ExposeBindingOptions().withHandle(true));
+page.setContent("" +
+  "<script>\n" +
+  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
+  "</script>\n" +
+  "<div>Click me</div>\n" +
+  "<div>Or click me</div>\n");
 ```
 
 ```python async
@@ -1144,6 +1334,44 @@ const crypto = require('crypto');
   `);
   await page.click('button');
 })();
+```
+
+```java
+import com.microsoft.playwright.*;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType webkit = playwright.webkit();
+      Browser browser = webkit.launch({ headless: false });
+      Page page = browser.newPage();
+      page.exposeFunction("sha1", args -> {
+        String text = (String) args[0];
+        MessageDigest crypto;
+        try {
+          crypto = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+          return null;
+        }
+        byte[] token = crypto.digest(text.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(token);
+      });
+      page.setContent("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>\n");
+      page.click("button");
+    }
+  }
+}
 ```
 
 ```python async
@@ -1261,12 +1489,20 @@ Returns frame matching the specified criteria. Either `name` or `url` must be sp
 const frame = page.frame('frame-name');
 ```
 
+```java
+Frame frame = page.frame("frame-name");
+```
+
 ```py
 frame = page.frame(name="frame-name")
 ```
 
 ```js
 const frame = page.frame({ url: /.*domain.*/ });
+```
+
+```java
+Frame frame = page.frameByUrl(Pattern.compile(".*domain.*");
 ```
 
 ```py
@@ -1545,6 +1781,12 @@ await page.emulateMedia({media: 'screen'});
 await page.pdf({path: 'page.pdf'});
 ```
 
+```java
+// Generates a PDF with "screen" media type.
+page.emulateMedia(new Page.EmulateMediaOptions().withMedia(Media.SCREEN));
+page.pdf(new Page.PdfOptions().withPath(Paths.get("page.pdf")));
+```
+
 ```python async
 # generates a pdf with "screen" media type.
 await page.emulate_media(media="screen")
@@ -1726,6 +1968,17 @@ await page.screenshot({ path: 'O.png' });
 await browser.close();
 ```
 
+```java
+Page page = browser.newPage();
+page.navigate("https://keycode.info");
+page.press("body", "A");
+page.screenshot(new Page.ScreenshotOptions().withPath(Paths.get("A.png")));
+page.press("body", "ArrowLeft");
+page.screenshot(new Page.ScreenshotOptions().withPath(Paths.get("ArrowLeft.png" )));
+page.press("body", "Shift+O");
+page.screenshot(new Page.ScreenshotOptions().withPath(Paths.get("O.png" )));
+```
+
 ```python async
 page = await browser.new_page()
 await page.goto("https://keycode.info")
@@ -1821,6 +2074,13 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
+```java
+Page page = browser.newPage();
+page.route("**/*.{png,jpg,jpeg}", route -> route.abort());
+page.navigate("https://example.com");
+browser.close();
+```
+
 ```python async
 page = await browser.new_page()
 await page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
@@ -1842,6 +2102,13 @@ const page = await browser.newPage();
 await page.route(/(\.png$)|(\.jpg$)/, route => route.abort());
 await page.goto('https://example.com');
 await browser.close();
+```
+
+```java
+Page page = browser.newPage();
+page.route(Pattern.compile("(\\.png$)|(\\.jpg$)"),route -> route.abort());
+page.navigate("https://example.com");
+browser.close();
 ```
 
 ```python async
@@ -1948,6 +2215,15 @@ page.selectOption('select#colors', { label: 'Blue' });
 // multiple selection
 page.selectOption('select#colors', ['red', 'green', 'blue']);
 
+```
+
+```java
+// single selection matching the value
+page.selectOption("select#colors", "blue");
+// single selection matching both the value and the label
+page.selectOption("select#colors", new SelectOption().withLabel("Blue"));
+// multiple selection
+page.selectOption("select#colors", new String[] {"red", "green", "blue"});
 ```
 
 ```python async
@@ -2068,6 +2344,12 @@ await page.setViewportSize({
 await page.goto('https://example.com');
 ```
 
+```java
+Page page = browser.newPage();
+page.setViewportSize(640, 480);
+page.navigate("https://example.com");
+```
+
 ```python async
 page = await browser.new_page()
 await page.set_viewport_size({"width": 640, "height": 480})
@@ -2144,6 +2426,13 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.pr
 ```js
 await page.type('#mytextarea', 'Hello'); // Types instantly
 await page.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
+```
+
+```java
+// Types instantly
+page.type("#mytextarea", "Hello");
+// Types slower, like a user
+page.type("#mytextarea", "World", new Page.TypeOptions().withDelay(100));
 ```
 
 ```python async
@@ -2352,6 +2641,23 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 })();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType webkit = playwright.webkit();
+      Browser browser = webkit.launch();
+      Page page = browser.newPage();
+      page.setViewportSize(50,  50);
+      page.waitForFunction("() => window.innerWidth < 100");
+      browser.close();
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -2392,6 +2698,11 @@ const selector = '.foo';
 await page.waitForFunction(selector => !!document.querySelector(selector), selector);
 ```
 
+```java
+String selector = ".foo";
+page.waitForFunction("selector => !!document.querySelector(selector)", selector);
+```
+
 ```python async
 selector = ".foo"
 await page.wait_for_function("selector => !!document.querySelector(selector)", selector)
@@ -2429,6 +2740,11 @@ await page.click('button'); // Click triggers navigation.
 await page.waitForLoadState(); // The promise resolves after 'load' event.
 ```
 
+```java
+page.click("button"); // Click triggers navigation.
+page.waitForLoadState(); // The promise resolves after "load" event.
+```
+
 ```python async
 await page.click("button") # click triggers navigation.
 await page.wait_for_load_state() # the promise resolves after "load" event.
@@ -2446,6 +2762,14 @@ const [popup] = await Promise.all([
 ])
 await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 'domcontentloaded' event.
 console.log(await popup.title()); // Popup is ready to use.
+```
+
+```java
+Page popup = page.waitForPopup(() -> {
+  page.click("button"); // Click triggers a popup.
+});
+popup.waitForLoadState(LoadState.DOMCONTENTLOADED);
+System.out.println(popup.title()); // Popup is ready to use.
 ```
 
 ```python async
@@ -2490,6 +2814,13 @@ const [response] = await Promise.all([
   page.waitForNavigation(), // The promise resolves after navigation has finished
   page.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
 ]);
+```
+
+```java
+// The method returns after navigation has finished
+Response response = page.waitForNavigation(() -> {
+  page.click("a.delayed-navigation"); // Clicking the link will indirectly cause a navigation
+});
 ```
 
 ```python async
@@ -2546,6 +2877,13 @@ const finalRequest = await page.waitForRequest(request => request.url() === 'htt
 return firstRequest.url();
 ```
 
+```java
+Request firstRequest = page.waitForRequest("http://example.com/resource");
+Object finalRequest = page.waitForRequest(
+  request -> "http://example.com".equals(request.url()) && "GET".equals(request.method()), () -> {});
+return firstRequest.url();
+```
+
 ```python async
 async with page.expect_request("http://example.com/resource") as first:
     await page.click('button')
@@ -2591,6 +2929,12 @@ Returns the matched response.
 ```js
 const firstResponse = await page.waitForResponse('https://example.com/resource');
 const finalResponse = await page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);
+return finalResponse.ok();
+```
+
+```java
+Response firstResponse = page.waitForResponse("https://example.com/resource", () -> {});
+Response finalResponse = page.waitForResponse(response -> "https://example.com".equals(response.url()) && response.status() == 200, () -> {});
 return finalResponse.ok();
 ```
 
@@ -2643,6 +2987,26 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
   }
   await browser.close();
 })();
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch();
+      Page page = browser.newPage();
+      for (String currentURL : Arrays.asList("https://google.com", "https://bbc.com")) {
+        page.navigate(currentURL);
+        ElementHandle element = page.waitForSelector("img");
+        System.out.println("Loaded image: " + element.getAttribute("src"));
+      }
+      browser.close();
+    }
+  }
+}
 ```
 
 ```python async
@@ -2698,6 +3062,11 @@ flaky. Use signals such as network events, selectors becoming visible and others
 ```js
 // wait for 1 second
 await page.waitForTimeout(1000);
+```
+
+```java
+// wait for 1 second
+page.waitForTimeout(1000);
 ```
 
 ```python async

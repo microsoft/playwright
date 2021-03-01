@@ -14,6 +14,22 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType firefox = playwright.firefox()
+      Browser browser = firefox.launch();
+      Page page = browser.newPage();
+      page.navigate('https://example.com');
+      browser.close();
+    }
+  }
+}
+```
+
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -75,6 +91,13 @@ const context = await browser.newContext();
 console.log(browser.contexts().length); // prints `1`
 ```
 
+```java
+Browser browser = pw.webkit().launch();
+System.out.println(browser.contexts().size()); // prints "0"
+BrowserContext context = browser.newContext();
+System.out.println(browser.contexts().size()); // prints "1"
+```
+
 ```python async
 browser = await pw.webkit.launch()
 print(len(browser.contexts())) # prints `0`
@@ -108,6 +131,15 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   const page = await context.newPage();
   await page.goto('https://example.com');
 })();
+```
+
+```java
+Browser browser = playwright.firefox().launch();  // Or 'chromium' or 'webkit'.
+// Create a new incognito browser context.
+BrowserContext context = browser.newContext();
+// Create a new page in a pristine context.
+Page page = context.newPage();
+page.navigate('https://example.com');
 ```
 
 ```python async

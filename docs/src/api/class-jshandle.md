@@ -8,6 +8,11 @@ const windowHandle = await page.evaluateHandle(() => window);
 // ...
 ```
 
+```java
+JSHandle windowHandle = page.evaluateHandle("() => window");
+// ...
+```
+
 ```python async
 window_handle = await page.evaluate_handle("window")
 # ...
@@ -49,6 +54,11 @@ Examples:
 ```js
 const tweetHandle = await page.$('.tweet .retweets');
 expect(await tweetHandle.evaluate(node => node.innerText)).toBe('10 retweets');
+```
+
+```java
+ElementHandle tweetHandle = page.querySelector(".tweet .retweets");
+assertEquals("10 retweets", tweetHandle.evaluate("node => node.innerText"));
 ```
 
 ```python async
@@ -100,6 +110,14 @@ const properties = await handle.getProperties();
 const windowHandle = properties.get('window');
 const documentHandle = properties.get('document');
 await handle.dispose();
+```
+
+```java
+JSHandle handle = page.evaluateHandle("() => ({window, document}"););
+Map<String, JSHandle> properties = handle.getProperties();
+JSHandle windowHandle = properties.get("window");
+JSHandle documentHandle = properties.get("document");
+handle.dispose();
 ```
 
 ```python async

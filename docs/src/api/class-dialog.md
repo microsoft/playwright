@@ -13,10 +13,30 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
   page.on('dialog', async dialog => {
     console.log(dialog.message());
     await dialog.dismiss();
-    await browser.close();
   });
-  page.evaluate(() => alert('1'));
+  await page.evaluate(() => alert('1'));
+  await browser.close();
 })();
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      Browser browser = chromium.launch();
+      Page page = browser.newPage();
+      page.onDialog(dialog -> {
+        System.out.println(dialog.message());
+        dialog.dismiss();
+      });
+      page.evaluate("alert('1')");
+      browser.close();
+    }
+  }
+}
 ```
 
 ```python async

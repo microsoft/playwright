@@ -16,6 +16,22 @@ const [ download ] = await Promise.all([
 const path = await download.path();
 ```
 
+```java
+// wait for download to start
+Download download  = page.waitForDownload(() -> page.click("a")); 
+// wait for download to complete
+Path path = download.path();
+```
+
+```java
+// wait for download to start
+Download download = page.waitForDownload(() -> {
+  page.click("a");
+});
+// wait for download to complete
+Path path = download.path();
+```
+
 ```python async
 async with page.expect_download() as download_info:
     await page.click("a")

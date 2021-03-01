@@ -10,6 +10,11 @@ const [fileChooser] = await Promise.all([
 await fileChooser.setFiles('myfile.pdf');
 ```
 
+```java
+FileChooser fileChooser = page.waitForFileChooser(() -> page.click("upload"));
+fileChooser.setFiles(Paths.get("myfile.pdf"));
+```
+
 ```python async
 async with page.expect_file_chooser() as fc_info:
     await page.click("upload")
