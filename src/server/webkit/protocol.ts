@@ -908,7 +908,7 @@ export module Protocol {
      */
     export type LayoutContextType = "grid";
     /**
-     * The mode for how layout context type changes are handled. <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and.
+     * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
     export type LayoutContextTypeChangedMode = "observed"|"all";
     
