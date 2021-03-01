@@ -537,7 +537,7 @@ converts `'//html/body'` to `'xpath=//html/body'`.
 
 ## id, data-testid, data-test-id, data-test selectors
 
-Playwright supports a shorthand for selecting elements using certain elements. Currently, only
+Playwright supports a shorthand for selecting elements using certain attributes. Currently, only
 the following attributes are supported:
 
 - `id`
@@ -578,7 +578,7 @@ page.click('data-test-id=submit')
 ```
 
 :::note
-Attribute selectors piece shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.click('data-test-id:light=submit')
+Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.click('data-test-id:light=submit')
 :::
 
 
