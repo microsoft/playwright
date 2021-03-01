@@ -91,9 +91,7 @@ describe('chromium', (suite, { browserName }) => {
     expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
   });
 
-  it('should connect to an existing cdp session', (test, {headful}) => {
-    test.skip(headful, 'Chromium currently doesn\'t support --remote-debugging-port and --remote-debugging-pipe at the same time.');
-  }, async ({browserType, testWorkerIndex, browserOptions, createUserDataDir }) => {
+  it('should connect to an existing cdp session', async ({browserType, testWorkerIndex, browserOptions }) => {
     const port = 9339 + testWorkerIndex;
     const browserServer = await browserType.launch({
       ...browserOptions,
@@ -113,6 +111,48 @@ describe('chromium', (suite, { browserName }) => {
       const contexts = cdpBrowser.contexts();
       expect(contexts.length).toBe(1);
       await cdpBrowser.close();
+    } finally {
+      await browserServer.close();
+    }
+  });
+
+  it('should connect to an existing cdp session twice', async ({browserType, testWorkerIndex, browserOptions, server }) => {
+    const port = 9339 + testWorkerIndex;
+    const browserServer = await browserType.launch({
+      ...browserOptions,
+      args: ['--remote-debugging-port=' + port]
+    });
+    try {
+      const json = await new Promise<string>((resolve, reject) => {
+        http.get(`http://localhost:${port}/json/version/`, resp => {
+          let data = '';
+          resp.on('data', chunk => data += chunk);
+          resp.on('end', () => resolve(data));
+        }).on('error', reject);
+      });
+      const cdpBrowser1 = await browserType.connectOverCDP({
+        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+      });
+      const cdpBrowser2 = await browserType.connectOverCDP({
+        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+      });
+      const contexts1 = cdpBrowser1.contexts();
+      expect(contexts1.length).toBe(1);
+      const [context1] = contexts1;
+      const page1 = await context1.newPage();
+      await page1.goto(server.EMPTY_PAGE);
+
+      const contexts2 = cdpBrowser2.contexts();
+      expect(contexts2.length).toBe(1);
+      const [context2] = contexts2;
+      const page2 = await context2.newPage();
+      await page2.goto(server.EMPTY_PAGE);
+
+      expect(context1.pages().length).toBe(2);
+      expect(context2.pages().length).toBe(2);
+
+      await cdpBrowser1.close();
+      await cdpBrowser2.close();
     } finally {
       await browserServer.close();
     }
