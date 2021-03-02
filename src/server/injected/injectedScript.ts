@@ -18,7 +18,7 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ParsedSelector, ParsedSelectorPart, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
-import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText } from './selectorEvaluator';
+import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
@@ -164,18 +164,18 @@ export class InjectedScript {
 
   private _createTextEngine(shadow: boolean): SelectorEngine {
     const queryList = (root: SelectorRoot, selector: string, single: boolean): Element[] => {
-      const { matcher, strict } = createTextMatcher(selector);
+      const { matcher, kind } = createTextMatcher(selector);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
 
       const checkElement = (element: Element) => {
         // TODO: replace contains() with something shadow-dom-aware?
-        if (!strict && lastDidNotMatchSelf && lastDidNotMatchSelf.contains(element))
+        if (kind === 'lax' && lastDidNotMatchSelf && lastDidNotMatchSelf.contains(element))
           return false;
         const matches = elementMatchesText(this._evaluator, element, matcher);
         if (matches === 'none')
           lastDidNotMatchSelf = element;
-        if (matches === 'self')
+        if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict'))
           result.push(element);
         return single && result.length > 0;
       };
@@ -758,12 +758,11 @@ function unescape(s: string): string {
   return r.join('');
 }
 
-type Matcher = (text: string) => boolean;
-function createTextMatcher(selector: string): { matcher: Matcher, strict: boolean } {
+function createTextMatcher(selector: string): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
-    const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
-    return { matcher: text => re.test(text), strict: true };
+    const matcher: TextMatcher = createRegexTextMatcher(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
+    return { matcher, kind: 'regex' };
   }
   let strict = false;
   if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
@@ -774,16 +773,8 @@ function createTextMatcher(selector: string): { matcher: Matcher, strict: boolea
     selector = unescape(selector.substring(1, selector.length - 1));
     strict = true;
   }
-  selector = selector.trim().replace(/\s+/g, ' ');
-  if (!strict)
-    selector = selector.toLowerCase();
-  const matcher = (text: string) => {
-    text = text.trim().replace(/\s+/g, ' ');
-    if (!strict)
-      text = text.toLowerCase();
-    return text.includes(selector);
-  };
-  return { matcher, strict };
+  const matcher = strict ? createStrictTextMatcher(selector) : createLaxTextMatcher(selector);
+  return { matcher, kind: strict ? 'strict' : 'lax' };
 }
 
 export default InjectedScript;
