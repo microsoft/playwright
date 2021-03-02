@@ -96,7 +96,9 @@ can see what is going on. Defaults to 0.
 
 ### option: BrowserType.connect.timeout
 * langs: java
-- `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## async method: BrowserType.connectOverCDP
