@@ -94,7 +94,7 @@ let classNameMap;
 
   let writeFile = (name, out, folder) => {
     let content = template.replace('[CONTENT]', out.join(`${EOL}\t`));
-    fs.writeFileSync(`${path.join(folder, name)}.cs`, content);
+    fs.writeFileSync(`${path.join(folder, name)}.generated.cs`, content);
   }
 
   /**
