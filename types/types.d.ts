@@ -6364,7 +6364,7 @@ export interface BrowserType<Browser> {
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
-     * Defaults to '`light`'.
+     * Defaults to `'light'`.
      */
     colorScheme?: "light"|"dark"|"no-preference";
 
@@ -7528,7 +7528,7 @@ export interface AndroidDevice {
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
-     * Defaults to '`light`'.
+     * Defaults to `'light'`.
      */
     colorScheme?: "light"|"dark"|"no-preference";
 
@@ -8257,7 +8257,7 @@ export interface Browser extends EventEmitter {
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
-     * Defaults to '`light`'.
+     * Defaults to `'light'`.
      */
     colorScheme?: "light"|"dark"|"no-preference";
 
@@ -10357,7 +10357,7 @@ export interface BrowserContextOptions {
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
-   * Defaults to '`light`'.
+   * Defaults to `'light'`.
    */
   colorScheme?: "light"|"dark"|"no-preference";
 
