@@ -50,6 +50,79 @@ page.goto("https://example.com")
 ### API reference
 - [`method: Browser.newContext`]
 
+## HTTP Proxy
+
+You can configure pages to load over the HTTP(S) proxy or SOCKSv5. Proxy can be either set globally
+for the entire browser, or for each browser context individually.
+
+You can optionally specify username and password for HTTP(S) proxy, you can also specify hosts to
+bypass proxy for.
+
+Here is an example of a global proxy:
+
+```js
+const browser = await chromium.launch({
+  proxy: {
+    server: 'http://myproxy.com:3128',
+    user: 'usr',
+    password: 'pwd'
+  }
+});
+```
+
+```java
+Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+  .withProxy(new Proxy("http://myproxy.com:3128")
+  .withUsername('usr')
+  .withPassword('pwd'));
+```
+
+```python async
+browser = await chromium.launch(proxy={
+  "server": "http://myproxy.com:3128",
+  "user": "usr",
+  "password": "pwd"
+})
+```
+
+```python sync
+browser = chromium.launch(proxy={
+  "server": "http://myproxy.com:3128",
+  "user": "usr",
+  "password": "pwd"
+})
+```
+
+When specifying proxy for each context individually, you need to give Playwright
+a hint that proxy will be set. This is done via passing a non-empty proxy server
+to the browser itself. Here is an example of a context-specific proxy:
+
+```js
+const browser = await chromium.launch({
+  proxy: { server: 'per-context' }
+});
+const context = await browser.newContext({
+  proxy: { server: 'http://myproxy.com:3128' }
+})
+```
+
+```java
+Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+  .withProxy(new Proxy("per-context"));
+BrowserContext context = chromium.launch(new Browser.NewContextOptions()
+  .withProxy(new Proxy("http://myproxy.com:3128"));
+```
+
+```python async
+browser = await chromium.launch(proxy={"server": "per-context"})
+context = await browser.new_context(proxy={"server": "http://myproxy.com:3128"})
+```
+
+```python sync
+browser = chromium.launch(proxy={"server": "per-context"})
+context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
+```
+
 ## Network events
 
 You can monitor all the requests and responses:
