@@ -54,6 +54,39 @@ it('should work with browser context scripts', async ({ browser, server }) => {
   await context.close();
 });
 
+it('should work without navigation, after all bindings', async ({ browser }) => {
+  const context = await browser.newContext();
+
+  let callback;
+  const promise = new Promise(f => callback = f);
+  await context.exposeFunction('woof', function(arg) {
+    callback(arg);
+  });
+
+  await context.addInitScript(() => {
+    window['woof']('hey');
+    window['temp'] = 123;
+  });
+  const page = await context.newPage();
+
+  expect(await page.evaluate(() => window['temp'])).toBe(123);
+  expect(await promise).toBe('hey');
+
+  await context.close();
+});
+
+it('should work without navigation in popup', async ({ browser }) => {
+  const context = await browser.newContext();
+  await context.addInitScript(() => window['temp'] = 123);
+  const page = await context.newPage();
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window['win'] = window.open()),
+  ]);
+  expect(await popup.evaluate(() => window['temp'])).toBe(123);
+  await context.close();
+});
+
 it('should work with browser context scripts with a path', async ({ browser, server }) => {
   const context = await browser.newContext();
   await context.addInitScript({ path: path.join(__dirname, 'assets/injectedfile.js') });

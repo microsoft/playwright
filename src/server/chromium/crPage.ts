@@ -421,7 +421,9 @@ class FrameSession {
             worldName: UTILITY_WORLD_NAME,
           });
           for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame._evaluateExpression(binding.source, false, {}, binding.world).catch(e => {});
+            frame._evaluateExpression(binding.source, false, undefined, binding.world).catch(e => {});
+          for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
+            frame._evaluateExpression(source, false, undefined, 'main').catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
