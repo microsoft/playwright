@@ -88,7 +88,7 @@ export class RecorderSupplement {
     ]);
     const primaryLanguage = [...languages].find(l => l.id === language)!;
     if (!primaryLanguage)
-      throw new Error(`\n===============================\nInvalid target: '${params.language}'\n===============================\n`);
+      throw new Error(`\n===============================\nUnsupported language: '${language}'\n===============================\n`);
 
     languages.delete(primaryLanguage);
     const orderedLanguages = [primaryLanguage, ...languages];
