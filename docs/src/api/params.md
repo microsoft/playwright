@@ -340,7 +340,7 @@ Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/W
 - `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-[`method: Page.emulateMedia`] for more details. Defaults to '`light`'.
+[`method: Page.emulateMedia`] for more details. Defaults to `'light'`.
 
 ## context-option-logger
 * langs: js
