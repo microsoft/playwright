@@ -3271,7 +3271,9 @@ export interface Frame {
    * The only difference between
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatepagefunction-arg) and
    * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatehandlepagefunction-arg)
-   * is that [method: Frame.evaluateHandle`] returns [JSHandle].
+   * is that
+   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatehandlepagefunction-arg)
+   * returns [JSHandle].
    * 
    * If the function, passed to the
    * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevaluatehandlepagefunction-arg),

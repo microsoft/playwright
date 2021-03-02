@@ -517,7 +517,7 @@ Optional argument to pass to [`param: expression`].
 Returns the return value of [`param: expression`] as a [JSHandle].
 
 The only difference between [`method: Frame.evaluate`] and [`method: Frame.evaluateHandle`] is that
-[method: Frame.evaluateHandle`] returns [JSHandle].
+[`method: Frame.evaluateHandle`] returns [JSHandle].
 
 If the function, passed to the [`method: Frame.evaluateHandle`], returns a [Promise], then
 [`method: Frame.evaluateHandle`] would wait for the promise to resolve and return its value.
