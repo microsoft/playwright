@@ -38,7 +38,7 @@ public class Example {
 });
 
 it('should print the correct context options for custom settings', async ({ runCLI, browserName }) => {
-  const cli = runCLI(['--color-scheme=light', 'codegen', '--target=java', emptyHTML]);
+  const cli = runCLI(['codegen', '--color-scheme=light', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .withColorScheme(ColorScheme.LIGHT));`;
   await cli.waitFor(expectedResult);
@@ -46,7 +46,7 @@ it('should print the correct context options for custom settings', async ({ runC
 });
 
 it('should print the correct context options when using a device', async ({ runCLI }) => {
-  const cli = runCLI(['--device=Pixel 2', 'codegen', '--target=java', emptyHTML]);
+  const cli = runCLI(['codegen', '--device=Pixel 2', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .withUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Mobile Safari/537.36")
         .withViewportSize(411, 731)
@@ -58,7 +58,7 @@ it('should print the correct context options when using a device', async ({ runC
 });
 
 it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', 'codegen', '--target=java', emptyHTML]);
+  const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .withColorScheme(ColorScheme.LIGHT)
         .withUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
@@ -74,7 +74,7 @@ it('should print load/save storage_state', async ({ runCLI, browserName, testInf
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', '--target=java', emptyHTML]);
+  const cli = runCLI(['codegen', `--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=java', emptyHTML]);
   const expectedResult1 = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .withStorageStatePath(Paths.get("${loadFileName}")));`;
   await cli.waitFor(expectedResult1);

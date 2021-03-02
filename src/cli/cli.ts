@@ -30,105 +30,58 @@ import { Browser } from '../client/browser';
 import { Page } from '../client/page';
 import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
+import { spawn } from 'child_process';
 
 program
     .version('Version ' + require('../../package.json').version)
-    .name('npx playwright')
-    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
-    .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
-    .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
-    .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')
-    .option('--lang <language>', 'specify language / locale, for example "en-GB"')
-    .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
-    .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
-    .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
-    .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
-    .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
-    .option('--user-agent <ua string>', 'specify user agent string')
-    .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
+    .name('npx playwright');
 
-program
-    .command('open [url]')
-    .description('open page in browser specified via -b, --browser')
+commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, command) {
-      open(command.parent, url, language());
-    }).on('--help', function() {
+      open(command, url, language());
+    })
+    .on('--help', function() {
       console.log('');
       console.log('Examples:');
       console.log('');
       console.log('  $ open');
-      console.log('  $ -b webkit open https://example.com');
+      console.log('  $ open -b webkit https://example.com');
     });
 
-const browsers = [
-  { alias: 'cr', name: 'Chromium', type: 'chromium' },
-  { alias: 'ff', name: 'Firefox', type: 'firefox' },
-  { alias: 'wk', name: 'WebKit', type: 'webkit' },
-];
+commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
+    [
+      ['-o, --output <file name>', 'saves the generated script to a file'],
+      ['--target <language>', `language to use, one of javascript, python, python-async, csharp`, language()],
+    ]).action(function(url, command) {
+  codegen(command, url, command.target, command.output);
+}).on('--help', function() {
+  console.log('');
+  console.log('Examples:');
+  console.log('');
+  console.log('  $ codegen');
+  console.log('  $ codegen --target=python');
+  console.log('  $ codegen -b webkit https://example.com');
+});
 
-for (const {alias, name, type} of browsers) {
-  program
-      .command(`${alias} [url]`)
-      .description(`open page in ${name}`)
-      .option('--target <language>', `language to use, one of javascript, python, python-async, csharp`, language())
-      .action(function(url, command) {
-        open({ ...command.parent, browser: type }, url, command.target);
-      }).on('--help', function() {
-        console.log('');
-        console.log('Examples:');
-        console.log('');
-        console.log(`  $ ${alias} https://example.com`);
+program
+    .command('debug <app> [args...]')
+    .description('run command in debug mode: disable timeout, open inspector')
+    .action(function(app, args) {
+      spawn(app, args, {
+        env: { ...process.env, PWDEBUG: '1' },
+        stdio: 'inherit'
       });
-}
-
-program
-    .command('codegen [url]')
-    .description('open page and generate code for user actions')
-    .option('-o, --output <file name>', 'saves the generated script to a file')
-    .option('--target <language>', `language to use, one of javascript, python, python-async, csharp`, language())
-    .action(function(url, command) {
-      codegen(command.parent, url, command.target, command.output);
     }).on('--help', function() {
       console.log('');
       console.log('Examples:');
       console.log('');
-      console.log('  $ codegen');
-      console.log('  $ codegen --target=python');
-      console.log('  $ -b webkit codegen https://example.com');
-    });
-
-program
-    .command('screenshot <url> <filename>')
-    .description('capture a page screenshot')
-    .option('--wait-for-selector <selector>', 'wait for selector before taking a screenshot')
-    .option('--wait-for-timeout <timeout>', 'wait for timeout in milliseconds before taking a screenshot')
-    .option('--full-page', 'whether to take a full page screenshot (entire scrollable area)')
-    .action(function(url, filename, command) {
-      screenshot(command.parent, command, url, filename);
-    }).on('--help', function() {
-      console.log('');
-      console.log('Examples:');
-      console.log('');
-      console.log('  $ -b webkit screenshot https://example.com example.png');
-    });
-
-program
-    .command('pdf <url> <filename>')
-    .description('save page as pdf')
-    .option('--wait-for-selector <selector>', 'wait for given selector before saving as pdf')
-    .option('--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf')
-    .action(function(url, filename, command) {
-      pdf(command.parent, command, url, filename);
-    }).on('--help', function() {
-      console.log('');
-      console.log('Examples:');
-      console.log('');
-      console.log('  $ pdf https://example.com example.pdf');
+      console.log('  $ debug node test.js');
+      console.log('  $ debug npm run test');
     });
 
 program
     .command('install [browserType...]')
-    .description('Ensure browsers necessary for this version of Playwright are installed')
+    .description('ensure browsers necessary for this version of Playwright are installed')
     .action(function(browserType) {
       const allBrowsers = new Set(['chromium', 'firefox', 'webkit']);
       for (const type of browserType) {
@@ -142,6 +95,51 @@ program
         process.exit(1);
       });
     });
+
+const browsers = [
+  { alias: 'cr', name: 'Chromium', type: 'chromium' },
+  { alias: 'ff', name: 'Firefox', type: 'firefox' },
+  { alias: 'wk', name: 'WebKit', type: 'webkit' },
+];
+
+for (const {alias, name, type} of browsers) {
+  commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
+      .action(function(url, command) {
+        open({ ...command, browser: type }, url, command.target);
+      }).on('--help', function() {
+        console.log('');
+        console.log('Examples:');
+        console.log('');
+        console.log(`  $ ${alias} https://example.com`);
+      });
+}
+
+commandWithOpenOptions('screenshot <url> <filename>', 'capture a page screenshot',
+    [
+      ['--wait-for-selector <selector>', 'wait for selector before taking a screenshot'],
+      ['--wait-for-timeout <timeout>', 'wait for timeout in milliseconds before taking a screenshot'],
+      ['--full-page', 'whether to take a full page screenshot (entire scrollable area)'],
+    ]).action(function(url, filename, command) {
+  screenshot(command, command, url, filename);
+}).on('--help', function() {
+  console.log('');
+  console.log('Examples:');
+  console.log('');
+  console.log('  $ screenshot -b webkit https://example.com example.png');
+});
+
+commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
+    [
+      ['--wait-for-selector <selector>', 'wait for given selector before saving as pdf'],
+      ['--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf'],
+    ]).action(function(url, filename, command) {
+  pdf(command, command, url, filename);
+}).on('--help', function() {
+  console.log('');
+  console.log('Examples:');
+  console.log('');
+  console.log('  $ pdf https://example.com example.pdf');
+});
 
 if (process.env.PWTRACE) {
   program
@@ -426,4 +424,23 @@ function validateOptions(options: Options) {
 
 function language(): string {
   return process.env.PW_CLI_TARGET_LANG || 'javascript';
+}
+
+function commandWithOpenOptions(command: string, description: string, options: any[][]): program.Command {
+  let result = program.command(command).description(description);
+  for (const option of options)
+    result = result.option(option[0], ...option.slice(1));
+  return result
+      .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+      .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
+      .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
+      .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')
+      .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
+      .option('--lang <language>', 'specify language / locale, for example "en-GB"')
+      .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
+      .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
+      .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
+      .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
+      .option('--user-agent <ua string>', 'specify user agent string')
+      .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }

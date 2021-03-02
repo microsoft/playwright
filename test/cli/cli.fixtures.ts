@@ -170,8 +170,8 @@ class CLIMock {
     this.data = '';
     this.process = spawn('node', [
       path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
+      ...args,
       `--browser=${browserName}`,
-      ...args
     ], {
       env: {
         ...process.env,
