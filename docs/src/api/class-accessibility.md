@@ -1,4 +1,5 @@
 # class: Accessibility
+* langs: csharp, js, python
 
 The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is used by
 assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Screen_reader) or
