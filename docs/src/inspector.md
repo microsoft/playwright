@@ -24,6 +24,16 @@ configures Playwright for debugging and opens the inspector.
   $ npm run test
   ```
 
+  ```sh java
+  # Linux/macOS
+  $ PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java src root> mvn test
+
+  # Windows
+  $ set PLAYWRIGHT_JAVA_SRC=<java src root>
+  $ set PWDEBUG=1
+  $ mvn test
+  ```
+
   ```sh python
   # Linux/macOS
   $ PWDEBUG=1 pytest -s
