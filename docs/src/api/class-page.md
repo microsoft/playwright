@@ -2950,15 +2950,29 @@ return finalResponse.ok();
 ```
 
 ```python async
-first_response = await page.wait_for_response("https://example.com/resource")
-final_response = await page.wait_for_response(lambda response: response.url == "https://example.com" and response.status === 200)
-return final_response.ok
+async with page.expect_response("https://example.com/resource") as response_info:
+    await page.click("input")
+response = response_info.value
+return response.ok
+
+# or with a lambda
+async with page.expect_response(lambda response: response.url == "https://example.com" and response.status === 200) as response_info:
+    await page.click("input")
+response = response_info.value
+return response.ok
 ```
 
 ```python sync
-first_response = page.wait_for_response("https://example.com/resource")
-final_response = page.wait_for_response(lambda response: response.url == "https://example.com" and response.status === 200)
-return final_response.ok
+with page.expect_response("https://example.com/resource") as response_info:
+    page.click("input")
+response = response_info.value
+return response.ok
+
+# or with a lambda
+with page.expect_response(lambda response: response.url == "https://example.com" and response.status === 200) as response_info:
+    page.click("input")
+response = response_info.value
+return response.ok
 ```
 
 ### param: Page.waitForResponse.urlOrPredicate
