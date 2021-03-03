@@ -156,6 +156,7 @@ class TargetRegistry {
       const target = new PageTarget(this, window, tab, browserContext, openerTarget);
       target.updateUserAgent();
       target.updateTouchOverride();
+      target.updateColorSchemeOverride();
       if (!hasExplicitSize)
         target.updateViewportSize();
       if (browserContext.screencastOptions)
@@ -328,6 +329,7 @@ class PageTarget {
     this._linkedBrowser = tab.linkedBrowser;
     this._browserContext = browserContext;
     this._viewportSize = undefined;
+    this._initialDPPX = this._linkedBrowser.browsingContext.overrideDPPX;
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
@@ -411,11 +413,27 @@ class PageTarget {
     // default viewport.
     const viewportSize = this._viewportSize || this._browserContext.defaultViewportSize;
     const actualSize = await setViewportSizeForBrowser(viewportSize, this._linkedBrowser, this._window);
+    this._linkedBrowser.browsingContext.overrideDPPX = this._browserContext.deviceScaleFactor || this._initialDPPX;
     await this._channel.connect('').send('awaitViewportDimensions', {
       width: actualSize.width,
-      height: actualSize.height
+      height: actualSize.height,
+      deviceSizeIsPageSize: !!this._browserContext.deviceScaleFactor,
     });
   }
+
+  setEmulatedMedia(mediumOverride) {
+    this._linkedBrowser.browsingContext.mediumOverride = mediumOverride || '';
+  }
+
+  setColorScheme(colorScheme) {
+    this.colorScheme = fromProtocolColorScheme(colorScheme);
+    this.updateColorSchemeOverride();
+  }
+
+  updateColorSchemeOverride() {
+    this._linkedBrowser.browsingContext.prefersColorSchemeOverride = this.colorScheme || this._browserContext.colorScheme || 'none';
+  }
+
 
   async setViewportSize(viewportSize) {
     this._viewportSize = viewportSize;
@@ -540,6 +558,14 @@ PageTarget.Events = {
   DialogClosed: Symbol('PageTarget.DialogClosed'),
 };
 
+function fromProtocolColorScheme(colorScheme) {
+  if (colorScheme === 'light' || colorScheme === 'dark')
+    return colorScheme;
+  if (colorScheme === null || colorScheme === 'no-preference')
+    return undefined;
+  throw new Error('Unknown color scheme: ' + colorScheme);
+}
+
 class BrowserContext {
   constructor(registry, browserContextId, removeOnDetach) {
     this._registry = registry;
@@ -563,13 +589,21 @@ class BrowserContext {
     this.ignoreHTTPSErrors = undefined;
     this.downloadOptions = undefined;
     this.defaultViewportSize = undefined;
+    this.deviceScaleFactor = undefined;
     this.defaultUserAgent = null;
     this.touchOverride = false;
+    this.colorScheme = 'none';
     this.screencastOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
     this.bindings = [];
     this.settings = {};
     this.pages = new Set();
+  }
+
+  setColorScheme(colorScheme) {
+    this.colorScheme = fromProtocolColorScheme(colorScheme);
+    for (const page of this.pages)
+      page.updateColorSchemeOverride();
   }
 
   async destroy() {
@@ -628,11 +662,8 @@ class BrowserContext {
 
   async setDefaultViewport(viewport) {
     this.defaultViewportSize = viewport ? viewport.viewportSize : undefined;
-    const promises = Array.from(this.pages).map(page => page.updateViewportSize());
-    await Promise.all([
-      this.applySetting('deviceScaleFactor', viewport ? viewport.deviceScaleFactor : undefined),
-      ...promises,
-    ]);
+    this.deviceScaleFactor = viewport ? viewport.deviceScaleFactor : undefined;
+    await Promise.all(Array.from(this.pages).map(page => page.updateViewportSize()));
   }
 
   async addScriptToEvaluateOnNewDocument(script) {

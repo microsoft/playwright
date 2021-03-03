@@ -196,7 +196,7 @@ class BrowserHandler {
   }
 
   async ['Browser.setColorScheme']({browserContextId, colorScheme}) {
-    await this._targetRegistry.browserContextForId(browserContextId).applySetting('colorScheme', nullToUndefined(colorScheme));
+    await this._targetRegistry.browserContextForId(browserContextId).setColorScheme(nullToUndefined(colorScheme));
   }
 
   async ['Browser.setScreencastOptions']({browserContextId, dir, width, height, scale}) {

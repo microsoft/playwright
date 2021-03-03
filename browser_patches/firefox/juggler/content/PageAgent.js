@@ -218,7 +218,6 @@ class PageAgent {
         screenshot: this._screenshot.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setCacheDisabled: this._setCacheDisabled.bind(this),
-        setEmulatedMedia: this._setEmulatedMedia.bind(this),
         setFileInputFiles: this._setFileInputFiles.bind(this),
         setInterceptFileChooserDialog: this._setInterceptFileChooserDialog.bind(this),
         evaluate: this._runtime.evaluate.bind(this._runtime),
@@ -227,16 +226,6 @@ class PageAgent {
         disposeObject: this._runtime.disposeObject.bind(this._runtime),
       }),
     ];
-  }
-
-  async _setEmulatedMedia({type, colorScheme}) {
-    const docShell = this._frameTree.mainFrame().docShell();
-    const cv = docShell.contentViewer;
-    if (type === '')
-      cv.stopEmulatingMedium();
-    else if (type)
-      cv.emulateMedium(type);
-    this._frameTree.setColorScheme(colorScheme);
   }
 
   _addScriptToEvaluateOnNewDocument({script, worldName}) {
@@ -801,6 +790,8 @@ class PageAgent {
     const element = window.windowUtils.elementFromPoint(x, y, false, false);
     const event = window.document.createEvent('DragEvent');
 
+    const dataTransfer = dragService.getCurrentSession().dataTransfer.mozCloneForEvent(type);
+    dataTransfer.dropEffect = 'move';
     event.initDragEvent(
       type,
       true /* bubble */,
@@ -817,7 +808,7 @@ class PageAgent {
       modifiers & 8 /* metaKey */,
       0 /* button */, // firefox always has the button as 0 on drops, regardless of which was pressed
       null /* relatedTarget */,
-      dragService.getCurrentSession().dataTransfer.mozCloneForEvent(type)
+      dataTransfer,
     );
     if (type !== 'drop' || dragService.dragAction)
       window.windowUtils.dispatchDOMEventViaPresShellForTesting(element, event);
