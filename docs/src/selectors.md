@@ -169,7 +169,7 @@ page.click("text=Log in")
 
 Text selector has a few variations:
 
-- `text=Log in` - default matching is case-insensitive and searches for a substring. For example `text=Log` matches `<button>Log in</button>`.
+- `text=Log in` - default matching is case-insensitive and searches for a substring. For example, `text=Log` matches `<button>Log in</button>`.
 
   ```js
   await page.click('text=Log in');
@@ -184,7 +184,7 @@ Text selector has a few variations:
   page.click("text=Log in")
   ```
 
-- `text="Log in"` - text body can be escaped with single or double quotes for case-sensitive match. For example `text="Log"` does not match `<button>log in</button>` but instead matches `<span>Log in</span>`.
+- `text="Log in"` - text body can be escaped with single or double quotes to search for a text node with exact content. For example, `text="Log"` does not match `<button>Log in</button>` because `<button>` contains a single text node `"Log in"` that is not equal to `"Log"`. However, `text="Log"` matches `<button>Log<span>in</span></button>`, because `<button>` contains a text node `"Log"`.
 
   Quoted body follows the usual escaping rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.
 
@@ -276,7 +276,7 @@ Text selector has a few variations:
   page.click("#nav-bar :text('Home')")
   ```
 
-- `#nav-bar :text-is("Home")` - the `:text-is()` pseudo-class can be used inside a [css] selector, for case-sensitive match. This example is equivalent to `text="Home"` (note quotes), but inside the `#nav-bar` element.
+- `#nav-bar :text-is("Home")` - the `:text-is()` pseudo-class can be used inside a [css] selector, for strict text node match. This example is equivalent to `text="Home"` (note quotes), but inside the `#nav-bar` element.
 
 * `#nav-bar :text-matches("reg?ex", "i")` - the `:text-matches()` pseudo-class can be used inside a [css] selector, for regex-based match. This example is equivalent to `text=/reg?ex/i`, but inside the `#nav-bar` element.
 
