@@ -22,6 +22,7 @@ import { describeFrame, toClickOptions, toModifiers } from './recorder/utils';
 import { Page } from '../page';
 import { Frame } from '../frames';
 import { BrowserContext } from '../browserContext';
+import { JavaLanguageGenerator } from './recorder/java';
 import { JavaScriptLanguageGenerator } from './recorder/javascript';
 import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
@@ -76,6 +77,7 @@ export class RecorderSupplement {
     const language = params.language || context._options.sdkLanguage;
 
     const languages = new Set([
+      new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(),
       new PythonLanguageGenerator(false),
       new PythonLanguageGenerator(true),
