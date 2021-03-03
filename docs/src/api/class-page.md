@@ -1741,6 +1741,20 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 ## property: Page.mouse
 - type: <[Mouse]>
 
+## method: Page.onceDialog
+* langs: java
+
+Adds one-off [Dialog] handler. The handler will be removed immediately after next [Dialog] is created.
+
+### param: Page.onceDialog.handler =
+- `handler` <[function]\([Dialog]\):[void]>
+
+Receives the [Dialog] object, it **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise
+the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog,
+and actions like click will never finish.
+
+### option: Page.waitForDownload.timeout = %%-wait-for-event-timeout-%%
+
 ## async method: Page.opener
 - returns: <[null]|[Page]>
 
