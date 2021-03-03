@@ -1741,8 +1741,6 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 ## property: Page.mouse
 - type: <[Mouse]>
 
-### option: Page.waitForDownload.timeout = %%-wait-for-event-timeout-%%
-
 ## async method: Page.opener
 - returns: <[null]|[Page]>
 
