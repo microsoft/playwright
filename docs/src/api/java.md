@@ -32,8 +32,8 @@ System.out.println(page.evaluate("prompt('Enter string:')"));
 System.out.println(page.evaluate("prompt('Enter string:')"));
 ```
 
-### param: Page.onceDialog.handler =
-- `handler` <[function]\([Dialog]\):[void]>
+### param: Page.onceDialog.handler
+- `handler` <[function]\([Dialog]\)>
 
 Receives the [Dialog] object, it **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise
 the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog,
