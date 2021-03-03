@@ -66,7 +66,8 @@ it('should be callable from-inside addInitScript', async ({context, server}) => 
   await page.addInitScript('window["woof"]("page")');
   args = [];
   await page.reload();
-  expect(args).toEqual(['context', 'page']);
+  expect(args).toContain('context');
+  expect(args).toContain('page');
 });
 
 it('exposeBindingHandle should work', async ({context}) => {

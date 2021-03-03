@@ -176,9 +176,9 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
       promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
-    promises.push(session.send('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }));
-    for (const binding of this._browserContext._pageBindings.values())
-      promises.push(this._evaluateBindingScript(binding));
+    const bootstrapScript = this._calculateBootstrapScript();
+    promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
+    this._page.frames().map(frame => frame._evaluateExpression(bootstrapScript, false, undefined, 'main').catch(e => {}));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.viewportSize) {
