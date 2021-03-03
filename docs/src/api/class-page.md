@@ -382,6 +382,7 @@ Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/We
 page.
 
 ## property: Page.accessibility
+* langs: csharp, js, python
 - type: <[Accessibility]>
 
 ## async method: Page.addInitScript
