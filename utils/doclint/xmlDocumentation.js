@@ -60,7 +60,7 @@ function _innerRenderNodes(nodes, maxColumns = 80, wrapParagraphs = true) {
       else
         summary.push(..._wrapAndEscape(node, maxColumns));
     } else if (node.type === 'code' && node.codeLang === 'csharp') {
-      _wrapInNode('code', node.lines, summary);
+      _wrapInNode('code', _wrapCode(node.lines), summary);
     } else if (node.type === 'li') {
       _wrapInNode('item><description', _wrapAndEscape(node, maxColumns), summary, '/description></item');
     } else if (node.type === 'note') {
@@ -71,6 +71,19 @@ function _innerRenderNodes(nodes, maxColumns = 80, wrapParagraphs = true) {
   handleListItem(lastNode, null);
 
   return { summary, remarks };
+}
+
+function _wrapCode(lines) {
+  let i = 0;
+  let out = [];
+  for (let line of lines) {
+    line = line.replace('<', '&lt;').replace('>', '&gt;');
+    if (i < lines.length - 1)
+      line = line + "<br/>";
+    out.push(line);
+    i++;
+  }
+  return out;
 }
 
 function _wrapInNode(tag, nodes, target, closingTag = null) {
@@ -106,7 +119,7 @@ function _wrapAndEscape(node, maxColumns = 0) {
 
   let text = node.text;
   text = text.replace(/`([^`]*)`/g, (match, code) => `<c>${code.replace('<', '&lt;').replace('>', '&gt;')}</c>`);
-  text = text.replace(/\[(.*?)\]\((.*?\))/g, (match, linkName, linkUrl) => { 
+  text = text.replace(/\[(.*?)\]\((.*?\))/g, (match, linkName, linkUrl) => {
     return `<a href="${linkUrl}">${linkName}</a>`;
   });
   const words = text.split(' ');
