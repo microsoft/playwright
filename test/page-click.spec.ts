@@ -768,3 +768,14 @@ it('should click the button when window.innerWidth is corrupted', async ({page, 
   await page.click('button');
   expect(await page.evaluate('result')).toBe('Clicked');
 });
+
+it('should click zero-sized input by label', async ({page, server}) => {
+  await page.setContent(`
+    <label>
+      Click me
+      <input onclick="window.__clicked=true" style="width:0;height:0;padding:0;margin:0;border:0;">
+    </label>
+  `);
+  await page.click('text=Click me');
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
