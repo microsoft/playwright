@@ -66,12 +66,13 @@ with sync_playwright() as playwright:
 ```
 
 ## async method: BrowserType.connect
-* langs: js
+* langs: js, java
 - returns: <[Browser]>
 
 This methods attaches Playwright to an existing browser instance.
 
 ### param: BrowserType.connect.params
+* langs: js
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
@@ -79,6 +80,26 @@ This methods attaches Playwright to an existing browser instance.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
   - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to
     `30000` (30 seconds). Pass `0` to disable timeout.
+
+### param: BrowserType.connect.wsEndpoint
+* langs: java
+- `wsEndpoint` <[string]>
+
+A browser websocket endpoint to connect to.
+
+### option: BrowserType.connect.slowMo
+* langs: java
+- `slowMo` <[float]>
+
+Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
+can see what is going on. Defaults to 0.
+
+### option: BrowserType.connect.timeout
+* langs: java
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the connection to be established. Defaults to
+`30000` (30 seconds). Pass `0` to disable timeout.
 
 ## async method: BrowserType.connectOverCDP
 * langs: js
