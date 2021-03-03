@@ -1,3 +1,44 @@
+## method: Page.onceDialog
+* langs: java
+
+Adds one-off [Dialog] handler. The handler will be removed immediately after next [Dialog] is created.
+```java
+page.onceDialog(dialog -> {
+  dialog.accept("foo");
+});
+
+// prints 'foo'
+System.out.println(page.evaluate("prompt('Enter string:')"));
+
+// prints 'null' as the dialog will be auto-dismissed because there are no handlers.
+System.out.println(page.evaluate("prompt('Enter string:')"));
+```
+
+This code above is equivalent to:
+```java
+Consumer<Dialog> handler = new Consumer<Dialog>() {
+  @Override
+  public void accept(Dialog dialog) {
+    dialog.accept("foo");
+    page.offDialog(this);
+  }
+};
+page.onDialog(handler);
+
+// prints 'foo'
+System.out.println(page.evaluate("prompt('Enter string:')"));
+
+// prints 'null' as the dialog will be auto-dismissed because there are no handlers.
+System.out.println(page.evaluate("prompt('Enter string:')"));
+```
+
+### param: Page.onceDialog.handler
+- `handler` <[function]\([Dialog]\)>
+
+Receives the [Dialog] object, it **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise
+the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog,
+and actions like click will never finish.
+
 ## method: Playwright.close
 * langs: java
 
