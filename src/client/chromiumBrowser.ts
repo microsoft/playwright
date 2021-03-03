@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Page } from './page';
 import { CDPSession } from './cdpSession';
 import { Browser } from './browser';

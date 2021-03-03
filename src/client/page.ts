@@ -18,7 +18,7 @@
 import { Events } from './events';
 import { assert } from '../utils/utils';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { parseError, serializeError } from '../protocol/serializers';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';

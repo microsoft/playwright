@@ -17,7 +17,7 @@
 import { BrowserContext } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
@@ -128,7 +128,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
-    await RecorderSupplement.getOrCreate(this._context, params);
+    await RecorderSupplement.getOrCreate(this._context, params.recorderParameters);
   }
 
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {

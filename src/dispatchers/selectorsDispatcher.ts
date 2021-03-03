@@ -15,7 +15,7 @@
  */
 
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Selectors } from '../server/selectors';
 
 export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsInitializer> implements channels.SelectorsChannel {

@@ -15,7 +15,7 @@
  */
 
 import { Browser } from '../server/browser';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Frame } from './frame';
 import { JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';

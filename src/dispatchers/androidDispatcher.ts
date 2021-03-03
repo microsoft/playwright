@@ -16,7 +16,7 @@
 
 import { Dispatcher, DispatcherScope, existingDispatcher } from './dispatcher';
 import { Android, AndroidDevice, SocketBackend } from '../server/android/android';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 

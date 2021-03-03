@@ -17,7 +17,7 @@
 
 import { Page, BindingCall } from './page';
 import * as network from './network';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import * as util from 'util';
 import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
@@ -266,7 +266,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       startRecording?: boolean,
       outputFile?: string
   }) {
-    await this._channel.recorderSupplementEnable(params);
+    await this._channel.recorderSupplementEnable({ recorderParameters: params });
   }
 }
 

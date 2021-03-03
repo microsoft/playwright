@@ -223,6 +223,19 @@ SerializedError:
     value: SerializedValue?
 
 
+RecorderParameters:
+  type: object
+  properties:
+    language: string?
+    startRecording: boolean?
+    pauseOnNextStatement: boolean?
+    launchOptions: json?
+    contextOptions: json?
+    device: string?
+    saveStorage: string?
+    outputFile: string?
+
+
 Playwright:
   type: interface
 
@@ -647,14 +660,7 @@ BrowserContext:
     recorderSupplementEnable:
       experimental: True
       parameters:
-        language: string?
-        startRecording: boolean?
-        pauseOnNextStatement: boolean?
-        launchOptions: json?
-        contextOptions: json?
-        device: string?
-        saveStorage: string?
-        outputFile: string?
+        recorderParameters: RecorderParameters
 
     crNewCDPSession:
       parameters:

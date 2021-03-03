@@ -16,7 +16,7 @@
  */
 
 import { Page } from './page';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { ChannelOwner } from './channelOwner';
 import { CDPSession } from './cdpSession';
 import { Events } from './events';

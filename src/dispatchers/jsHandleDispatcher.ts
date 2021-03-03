@@ -15,7 +15,7 @@
  */
 
 import * as js from '../server/javascript';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { createHandle } from './elementHandlerDispatcher';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';

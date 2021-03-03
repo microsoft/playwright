@@ -16,7 +16,7 @@
 
 import * as structs from '../../types/structs';
 import * as api from '../../types/types';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';

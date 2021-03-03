@@ -18,7 +18,7 @@ import { BrowserContext, Video } from '../server/browserContext';
 import { Frame } from '../server/frames';
 import { Request } from '../server/network';
 import { Page, Worker } from '../server/page';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../protocol/serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';

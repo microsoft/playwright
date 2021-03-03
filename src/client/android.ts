@@ -17,7 +17,7 @@
 import fs from 'fs';
 import * as util from 'util';
 import { isString } from '../utils/utils';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';

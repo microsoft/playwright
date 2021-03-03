@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as stream from 'stream';
 

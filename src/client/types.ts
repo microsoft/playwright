@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {

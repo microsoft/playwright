@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as actions from './recorder/recorderActions';
-import type * as channels from '../../protocol/channels';
+import { RecorderParameters } from '../../protocol/types';
 import { CodeGenerator, ActionInContext } from './recorder/codeGenerator';
 import { describeFrame, toClickOptions, toModifiers } from './recorder/utils';
 import { Page } from '../page';
@@ -50,7 +50,7 @@ export class RecorderSupplement {
   private _mode: Mode;
   private _highlightedSelector = '';
   private _recorderApp: RecorderApp | null = null;
-  private _params: channels.BrowserContextRecorderSupplementEnableParams;
+  private _params: RecorderParameters;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _pausedCallsMetadata = new Map<CallMetadata, () => void>();
   private _pauseOnNextStatement: boolean;
@@ -61,7 +61,7 @@ export class RecorderSupplement {
   private _snapshots = new Set<string>();
   private _allMetadatas = new Map<number, CallMetadata>();
 
-  static getOrCreate(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<RecorderSupplement> {
+  static getOrCreate(context: BrowserContext, params: RecorderParameters = {}): Promise<RecorderSupplement> {
     let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
     if (!recorderPromise) {
       const recorder = new RecorderSupplement(context, params);
@@ -75,7 +75,7 @@ export class RecorderSupplement {
     return (context as any)[symbol] as Promise<RecorderSupplement> | undefined;
   }
 
-  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
+  constructor(context: BrowserContext, params: RecorderParameters) {
     this._context = context;
     this._params = params;
     this._mode = params.startRecording ? 'recording' : 'none';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';

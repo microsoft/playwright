@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Playwright } from '../server/playwright';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';

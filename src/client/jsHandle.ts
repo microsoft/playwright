@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { ChannelOwner } from './channelOwner';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 import * as api from '../../types/types';

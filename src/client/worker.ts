@@ -15,7 +15,7 @@
  */
 
 import { Events } from './events';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { ChannelOwner } from './channelOwner';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { Page } from './page';

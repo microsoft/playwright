@@ -24,7 +24,7 @@ import { EventEmitter } from 'ws';
 import { Dispatcher, DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
 import { BrowserDispatcher } from './dispatchers/browserDispatcher';
 import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
-import * as channels from './protocol/channels';
+import * as channels from './dispatchers/channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
 import { createGuid } from './utils/utils';

@@ -16,7 +16,7 @@
 
 import { BrowserType } from '../server/browserType';
 import { BrowserDispatcher } from './browserDispatcher';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CallMetadata } from '../server/instrumentation';

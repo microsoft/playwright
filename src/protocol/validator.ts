@@ -148,6 +148,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
+  scheme.RecorderParameters = tObject({
+    language: tOptional(tString),
+    startRecording: tOptional(tBoolean),
+    pauseOnNextStatement: tOptional(tBoolean),
+    launchOptions: tOptional(tAny),
+    contextOptions: tOptional(tAny),
+    device: tOptional(tString),
+    saveStorage: tOptional(tString),
+    outputFile: tOptional(tString),
+  });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
     source: tString,
@@ -362,14 +372,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
   scheme.BrowserContextPauseParams = tOptional(tObject({}));
   scheme.BrowserContextRecorderSupplementEnableParams = tObject({
-    language: tOptional(tString),
-    startRecording: tOptional(tBoolean),
-    pauseOnNextStatement: tOptional(tBoolean),
-    launchOptions: tOptional(tAny),
-    contextOptions: tOptional(tAny),
-    device: tOptional(tString),
-    saveStorage: tOptional(tString),
-    outputFile: tOptional(tString),
+    recorderParameters: tType('RecorderParameters'),
   });
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),

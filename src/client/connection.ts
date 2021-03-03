@@ -31,7 +31,7 @@ import { parseError } from '../protocol/serializers';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Stream } from './stream';

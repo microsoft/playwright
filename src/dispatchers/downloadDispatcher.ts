@@ -15,7 +15,7 @@
  */
 
 import { Download } from '../server/download';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
 import fs from 'fs';

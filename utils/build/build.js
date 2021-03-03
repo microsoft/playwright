@@ -34,7 +34,7 @@ function runWatch() {
     function callback() {
       child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
     }
-    chokidar.watch([...paths, nodeFile].map(filePath)).on('all', callback);
+    chokidar.watch([...paths.map(filePath), nodeFile]).on('all', callback);
     callback();
   }
 

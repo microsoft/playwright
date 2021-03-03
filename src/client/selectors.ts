@@ -15,7 +15,7 @@
  */
 
 import { evaluationScript } from './clientHelper';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { ChannelOwner } from './channelOwner';
 import { SelectorEngine } from './types';
 import * as api from '../../types/types';

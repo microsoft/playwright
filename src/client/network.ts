@@ -15,7 +15,7 @@
  */
 
 import { URLSearchParams } from 'url';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Headers, WaitForEventOptions } from './types';

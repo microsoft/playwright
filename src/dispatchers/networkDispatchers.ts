@@ -15,7 +15,7 @@
  */
 
 import { Request, Response, Route, WebSocket } from '../server/network';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 

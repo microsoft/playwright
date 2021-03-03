@@ -15,7 +15,7 @@
  */
 
 import { Readable } from 'stream';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { ChannelOwner } from './channelOwner';
 
 export class Stream extends ChannelOwner<channels.StreamChannel, channels.StreamInitializer> {

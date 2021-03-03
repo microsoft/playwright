@@ -30,7 +30,7 @@ import { helper } from '../helper';
 import { Transport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
-import { AndroidWebView } from '../../protocol/channels';
+import { AndroidWebView } from '../../protocol/types';
 import { CRPage } from '../chromium/crPage';
 import { SdkObject, internalCallMetadata } from '../instrumentation';
 

@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
 import { assert, createGuid, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';

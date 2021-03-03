@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../utils/utils';
-import * as channels from '../protocol/channels';
+import * as channels from './channels';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
