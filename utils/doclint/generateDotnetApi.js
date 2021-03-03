@@ -30,6 +30,8 @@ const maxDocumentationColumnWidth = 80;
 
 /** @type {Map<string, Documentation.Type>} */
 const additionalTypes = new Map(); // this will hold types that we discover, because of .NET specifics, like results
+/** @type {Map<string, string>} */
+const documentedResults = new Map(); // will hold documentation for new types
 /** @type {Map<string, string[]>} */
 const enumTypes = new Map();
 
@@ -112,6 +114,14 @@ let classNameMap;
 
     if (spec)
       out.push(...XmlDoc.renderXmlDoc(spec, maxDocumentationColumnWidth));
+    else {
+      let ownDocumentation = documentedResults.get(name);
+      if (ownDocumentation) {
+        out.push('/// <summary>');
+        out.push(`/// ${ownDocumentation}`);
+        out.push('/// </summary>');
+      }
+    }
 
     if (extendsName === 'IEventEmitter')
       extendsName = null;
@@ -145,7 +155,7 @@ let classNameMap;
   }
 
   additionalTypes.forEach((type, name) =>
-    innerRenderElement('class', name, null, (out) => {
+    innerRenderElement('partial class', name, null, (out) => {
       // TODO: consider how this could be merged with the `translateType` check
       if (type.union
         && type.union[0].name === 'null'
@@ -260,15 +270,23 @@ function renderMember(member, parent, out) {
       if (!member.type)
         throw new Error(`No Event Type for ${name} in ${parent.name}`);
       if (member.spec)
-        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth)/*.map(x => `\t${x}`)*/);
+        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       if (parent && (classNameMap.get(parent.name) === type))
         output(`event EventHandler ${name};`); // event sender will be the type, so we're fine to ignore
       else
         output(`event EventHandler<${type}> ${name};`);
     } else if (member.kind === 'property') {
       if (member.spec)
-        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth)/*.map(x => `\t${x}`)*/);
-      output(`${type} ${name} { get; set; }`);
+        output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      let propertyOrigin = member.name;
+      if (member.type.expression === '[string]|[float]')
+        propertyOrigin = `${member.name}String`;
+      output(`[JsonPropertyName("${propertyOrigin}")]`)
+      if (parent && member && member.name === 'children') {  // this is a special hack for Accessibility
+        console.warn(`children property found in ${parent.name}, assuming array.`);
+        type = `IEnumerable<${parent.name}>`;
+      }
+      output(`public ${type} ${name} { get; set; }`);
     } else {
       throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
     }
@@ -345,7 +363,9 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
  */
 function renderMethod(member, parent, output, name) {
   const typeResolve = (type) => translateType(type, parent, (t) => {
-    return `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
+    let newName = `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
+    documentedResults.set(newName, `Result of calling <see cref="${translateMemberName("interface", parent.name)}.${translateMemberName(member.kind, member.name, member)}" />.`);
+    return newName;
   });
 
   /** @type {Map<string, string[]>} */
@@ -589,7 +609,7 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
     else if (type.expression === '[string]|[float]'
       || type.expression === '[string]|[float]|[boolean]') {
       console.warn(`${type.name} should be a 'string', but was a ${type.expression}`);
-      throw new Error(`The type ${type.name} was not marked as string, but we expect it to be.`);
+      return `string`;
     } else if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
       return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
     else if (type.union[0].name === 'path')
