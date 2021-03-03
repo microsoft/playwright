@@ -31,6 +31,10 @@ describe('cli codegen', (suite, { mode }) => {
   // Open new page
   const page = await context.newPage();`);
 
+    expect(sources.get('<java>').text).toContain(`
+      // Open new page
+      Page page = context.newPage();`);
+
     expect(sources.get('<python>').text).toContain(`
     # Open new page
     page = context.new_page()`);
@@ -53,6 +57,10 @@ var page = await context.NewPageAsync();`);
   // Open new page
   const page1 = await context.newPage();`);
 
+    expect(sources.get('<java>').text).toContain(`
+      // Open new page
+      Page page1 = context.newPage();`);
+
     expect(sources.get('<python>').text).toContain(`
     # Open new page
     page1 = context.new_page()`);
@@ -74,6 +82,9 @@ var page1 = await context.NewPageAsync();`);
 
     expect(sources.get('<javascript>').text).toContain(`
   await page.close();`);
+
+    expect(sources.get('<java>').text).toContain(`
+      page.close();`);
 
     expect(sources.get('<python>').text).toContain(`
     page.close()`);
@@ -117,6 +128,10 @@ await page.CloseAsync();`);
   // Upload file-to-upload.txt
   await page.setInputFiles('input[type="file"]', 'file-to-upload.txt');`);
 
+    expect(sources.get('<java>').text).toContain(`
+      // Upload file-to-upload.txt
+      page.setInputFiles("input[type=\\\"file\\\"]", Paths.get("file-to-upload.txt"));`);
+
     expect(sources.get('<python>').text).toContain(`
     # Upload file-to-upload.txt
     page.set_input_files(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt\")`);
@@ -150,6 +165,10 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt
   // Upload file-to-upload.txt, file-to-upload-2.txt
   await page.setInputFiles('input[type=\"file\"]', ['file-to-upload.txt', 'file-to-upload-2.txt']);`);
 
+    expect(sources.get('<java>').text).toContain(`
+      // Upload file-to-upload.txt, file-to-upload-2.txt
+      page.setInputFiles("input[type=\\\"file\\\"]", new Path[] {Paths.get("file-to-upload.txt"), Paths.get("file-to-upload-2.txt")});`);
+
     expect(sources.get('<python>').text).toContain(`
     # Upload file-to-upload.txt, file-to-upload-2.txt
     page.set_input_files(\"input[type=\\\"file\\\"]\", [\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
@@ -181,6 +200,10 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-up
     expect(sources.get('<javascript>').text).toContain(`
   // Clear selected files
   await page.setInputFiles('input[type=\"file\"]', []);`);
+
+    expect(sources.get('<java>').text).toContain(`
+      // Clear selected files
+      page.setInputFiles("input[type=\\\"file\\\"]", new Path[0]);`);
 
     expect(sources.get('<python>').text).toContain(`
     # Clear selected files
@@ -225,6 +248,12 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
     page.click('text=Download')
   ]);`);
 
+    expect(sources.get('<java>').text).toContain(`
+      // Click text=Download
+      Download download = page.waitForDownload(() -> {
+        page.click("text=Download");
+      });`);
+
     expect(sources.get('<python>').text).toContain(`
     # Click text=Download
     with page.expect_download() as download_info:
@@ -264,6 +293,14 @@ await Task.WhenAll(
     dialog.dismiss().catch(() => {});
   });
   await page.click('text=click me');`);
+
+    expect(sources.get('<java>').text).toContain(`
+      // Click text=click me
+      page.onceDialog(dialog -> {
+        System.out.println(String.format("Dialog message: %s", dialog.message()));
+        dialog.dismiss();
+      });
+      page.click("text=click me");`);
 
     expect(sources.get('<python>').text).toContain(`
     # Click text=click me
@@ -359,6 +396,9 @@ await page.ClickAsync(\"text=click me\");`);
     expect(sources.get('<javascript>').text).toContain(`await page1.fill('input', 'TextA');`);
     expect(sources.get('<javascript>').text).toContain(`await page2.fill('input', 'TextB');`);
 
+    expect(sources.get('<java>').text).toContain(`page1.fill("input", "TextA");`);
+    expect(sources.get('<java>').text).toContain(`page2.fill("input", "TextB");`);
+
     expect(sources.get('<python>').text).toContain(`page1.fill(\"input\", \"TextA\")`);
     expect(sources.get('<python>').text).toContain(`page2.fill(\"input\", \"TextB\")`);
 
@@ -438,6 +478,10 @@ await page.ClickAsync(\"text=click me\");`);
     name: 'one'
   }).click('text=Hi, I\\'m frame');`);
 
+    expect(sources.get('<java>').text).toContain(`
+      // Click text=Hi, I'm frame
+      page.frame("one").click("text=Hi, I'm frame");`);
+
     expect(sources.get('<python>').text).toContain(`
     # Click text=Hi, I'm frame
     page.frame(name=\"one\").click(\"text=Hi, I'm frame\")`);
@@ -461,6 +505,10 @@ await page.GetFrame(name: \"one\").ClickAsync(\"text=Hi, I'm frame\");`);
     name: 'two'
   }).click('text=Hi, I\\'m frame');`);
 
+    expect(sources.get('<java>').text).toContain(`
+      // Click text=Hi, I'm frame
+      page.frame("two").click("text=Hi, I'm frame");`);
+
     expect(sources.get('<python>').text).toContain(`
     # Click text=Hi, I'm frame
     page.frame(name=\"two\").click(\"text=Hi, I'm frame\")`);
@@ -483,6 +531,10 @@ await page.GetFrame(name: \"two\").ClickAsync(\"text=Hi, I'm frame\");`);
   await page.frame({
     url: 'http://localhost:${server.PORT}/frames/frame.html'
   }).click('text=Hi, I\\'m frame');`);
+
+    expect(sources.get('<java>').text).toContain(`
+      // Click text=Hi, I'm frame
+      page.frameByUrl("http://localhost:${server.PORT}/frames/frame.html").click("text=Hi, I'm frame");`);
 
     expect(sources.get('<python>').text).toContain(`
     # Click text=Hi, I'm frame

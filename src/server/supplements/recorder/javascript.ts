@@ -193,7 +193,7 @@ function formatContextOptions(options: BrowserContextOptions, deviceName: string
   return lines.join('\n');
 }
 
-class JavaScriptFormatter {
+export class JavaScriptFormatter {
   private _baseIndent: string;
   private _baseOffset: string;
   private _lines: string[] = [];
@@ -224,10 +224,11 @@ class JavaScriptFormatter {
       if (line.startsWith('}') || line.startsWith(']'))
         spaces = spaces.substring(this._baseIndent.length);
 
-      const extraSpaces = /^(for|while|if).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
+      const extraSpaces = /^(for|while|if|try).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
       previousLine = line;
 
-      line = spaces + extraSpaces + line;
+      const callCarryOver = line.startsWith('.with');
+      line = spaces + extraSpaces + (callCarryOver ? this._baseIndent : '') + line;
       if (line.endsWith('{') || line.endsWith('['))
         spaces += this._baseIndent;
       return this._baseOffset + line;
