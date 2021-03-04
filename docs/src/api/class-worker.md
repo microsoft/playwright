@@ -37,6 +37,20 @@ for worker in page.workers:
     print("    " + worker.url)
 ```
 
+```csharp
+Page.Worker += (_, worker) =>
+{
+    Console.WriteLine($"Worker created: {worker.Url}");
+    worker.Close += (_, _) => Console.WriteLine($"Worker closed {worker.Url}");
+};
+
+Console.WriteLine("Current Workers:");
+foreach(var pageWorker in Page.Workers)
+{
+    Console.WriteLine($"\tWorker: {pageWorker.Url}");
+}
+```
+
 ## event: Worker.close
 - argument: <[Worker]>
 
