@@ -10,21 +10,20 @@ title: "Getting Started"
 
 Playwright is distributed as a set of [Maven](https://maven.apache.org/what-is-maven.html) modules. The easiest way to use it is to add one dependency to your project's `pom.xml` as described below. If you're not familiar with Maven please refer to its [documentation](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html).
 
-```xml
-<dependency>
-  <groupId>com.microsoft.playwright</groupId>
-  <artifactId>playwright</artifactId>
-  <version>0.180.0</version>
-</dependency>
-```
-
-These commands download the Playwright package and install browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./installation.md).
-
 ## Usage
 
-Once installed, you can `import` Playwright in a Java file, and launch any of the 3 browsers (`chromium`, `firefox` and `webkit`).
+<Tabs
+  defaultValue="java"
+  values={[
+    {label: 'Example.java', value: 'java'},
+    {label: 'pom.xml', value: 'pom'}
+  ]
+}>
+<TabItem value="java">
 
 ```java
+package org.example;
+
 import com.microsoft.playwright.*;
 
 public class Example {
@@ -38,6 +37,57 @@ public class Example {
   }
 }
 ```
+
+</TabItem>
+<TabItem value="pom">
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.example</groupId>
+  <artifactId>examples</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <name>Playwright Client Examples</name>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>com.microsoft.playwright</groupId>
+      <artifactId>playwright</artifactId>
+      <version>0.190.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+```
+
+</TabItem>
+</Tabs>
+
+With the Example.java and pom.xml above, compile and execute your new program as follows:
+
+```sh
+mvn compile exec:java -Dexec.mainClass="org.example.Example"
+```
+
+Running it downloads the Playwright package and installs browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./installation.md).
 
 ## First script
 
