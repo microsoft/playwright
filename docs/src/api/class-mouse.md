@@ -48,6 +48,15 @@ page.mouse.move(0, 0)
 page.mouse.up()
 ```
 
+```csharp
+await Page.Mouse.MoveAsync(0, 0);
+await Page.Mouse.DownAsync();
+await Page.Mouse.MoveAsync(0, 100);
+await Page.Mouse.MoveAsync(100, 100);
+await Page.Mouse.MoveAsync(100, 0);
+await Page.Mouse.MoveAsync(0, 0);
+await Page.Mouse.UpAsync();
+```
 ## async method: Mouse.click
 
 Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`].
