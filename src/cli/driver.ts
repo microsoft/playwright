@@ -20,6 +20,7 @@ import fs from 'fs';
 import path from 'path';
 import * as playwright from '../..';
 import { BrowserType } from '../client/browserType';
+import { LaunchServerOptions } from '../client/types';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { installBrowsersWithProgressBar } from '../install/installer';
@@ -55,9 +56,12 @@ export function runServer() {
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
 
-export async function launchBrowserServer(browserName: string) {
+export async function launchBrowserServer(browserName: string, configFile?: string) {
+  let options: LaunchServerOptions = {};
+  if (configFile)
+    options = JSON.parse(fs.readFileSync(configFile).toString());
   const browserType = (playwright as any)[browserName] as BrowserType;
-  const server = await browserType.launchServer();
+  const server = await browserType.launchServer(options);
   console.log(server.wsEndpoint());
 }
 

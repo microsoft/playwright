@@ -161,7 +161,7 @@ if (process.argv[2] === 'run-driver')
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')
-  launchBrowserServer(process.argv[3]);
+  launchBrowserServer(process.argv[3], process.argv[4]);
 else
   program.parse(process.argv);
 
