@@ -35,7 +35,7 @@ async def run(playwright):
 });
 
 it('should print the correct context options for custom settings', async ({ browserName, runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', 'codegen', '--target=python-async', emptyHTML]);
+  const cli = runCLI(['codegen', '--color-scheme=light', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
 from playwright.async_api import async_playwright
 
@@ -47,7 +47,7 @@ async def run(playwright):
 });
 
 it('should print the correct context options when using a device', async ({ runCLI }) => {
-  const cli = runCLI(['--device=Pixel 2', 'codegen', '--target=python-async', emptyHTML]);
+  const cli = runCLI(['codegen', '--device=Pixel 2', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
 from playwright.async_api import async_playwright
 
@@ -59,7 +59,7 @@ async def run(playwright):
 });
 
 it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', 'codegen', '--target=python-async', emptyHTML]);
+  const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
 from playwright.async_api import async_playwright
 
@@ -105,7 +105,7 @@ it('should print load/save storage_state', async ({ browserName, runCLI, testInf
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', '--target=python-async', emptyHTML]);
+  const cli = runCLI(['codegen', `--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=python-async', emptyHTML]);
   const expectedResult1 = `import asyncio
 from playwright.async_api import async_playwright
 

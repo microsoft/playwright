@@ -36,7 +36,7 @@ it('should print the correct imports and context options', async ({ browserName,
 });
 
 it('should print the correct context options for custom settings', async ({ browserName, runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', 'codegen', emptyHTML]);
+  const cli = runCLI(['codegen', '--color-scheme=light', emptyHTML]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
 (async () => {
@@ -52,7 +52,7 @@ it('should print the correct context options for custom settings', async ({ brow
 
 
 it('should print the correct context options when using a device', async ({ runCLI }) => {
-  const cli = runCLI(['--device=Pixel 2', 'codegen', emptyHTML]);
+  const cli = runCLI(['codegen', '--device=Pixel 2', emptyHTML]);
   const expectedResult = `const { chromium, devices } = require('playwright');
 
 (async () => {
@@ -67,7 +67,7 @@ it('should print the correct context options when using a device', async ({ runC
 });
 
 it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', 'codegen', emptyHTML]);
+  const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', emptyHTML]);
   const expectedResult = `const { webkit, devices } = require('playwright');
 
 (async () => {
@@ -114,7 +114,7 @@ it('should print load/save storageState', async ({ browserName, runCLI, testInfo
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', emptyHTML]);
+  const cli = runCLI(['codegen', `--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, emptyHTML]);
   const expectedResult1 = `const { ${browserName} } = require('playwright');
 
 (async () => {

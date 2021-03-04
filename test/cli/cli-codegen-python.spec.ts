@@ -34,7 +34,7 @@ def run(playwright):
 });
 
 it('should print the correct context options for custom settings', async ({ runCLI, browserName }) => {
-  const cli = runCLI(['--color-scheme=light', 'codegen', '--target=python', emptyHTML]);
+  const cli = runCLI(['codegen', '--color-scheme=light', '--target=python', emptyHTML]);
   const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
@@ -45,7 +45,7 @@ def run(playwright):
 });
 
 it('should print the correct context options when using a device', async ({ runCLI }) => {
-  const cli = runCLI(['--device=Pixel 2', 'codegen', '--target=python', emptyHTML]);
+  const cli = runCLI(['codegen', '--device=Pixel 2', '--target=python', emptyHTML]);
   const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
@@ -56,7 +56,7 @@ def run(playwright):
 });
 
 it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
-  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', 'codegen', '--target=python', emptyHTML]);
+  const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', '--target=python', emptyHTML]);
   const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
@@ -98,7 +98,7 @@ it('should print load/save storage_state', async ({ runCLI, browserName, testInf
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', '--target=python', emptyHTML]);
+  const cli = runCLI(['codegen', `--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=python', emptyHTML]);
   const expectedResult1 = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
