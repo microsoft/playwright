@@ -149,7 +149,7 @@ export class RecorderSupplement {
       }
       if (data.event === 'callLogHovered') {
         this._hoveredSnapshot = undefined;
-        if (this._isPaused())
+        if (this._isPaused() && data.params.callLogId)
           this._hoveredSnapshot = data.params;
         this._refreshOverlay();
         return;
@@ -283,7 +283,7 @@ export class RecorderSupplement {
 
   private _refreshOverlay() {
     for (const page of this._context.pages())
-      page.mainFrame()._evaluateExpression('window._playwrightRefreshOverlay', false, undefined, 'main').catch(() => {});
+      page.mainFrame()._evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'main').catch(() => {});
   }
 
   private async _onPage(page: Page) {

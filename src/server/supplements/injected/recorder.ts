@@ -168,6 +168,7 @@ export class Recorder {
     if (window.top === window) {
       this._snapshotIframe = document.createElement('iframe');
       this._snapshotIframe.src = this._snapshotBaseUrl;
+      this._snapshotIframe.style.background = '#ff000060';
       this._snapshotIframe.style.position = 'fixed';
       this._snapshotIframe.style.top = '0';
       this._snapshotIframe.style.right = '0';
