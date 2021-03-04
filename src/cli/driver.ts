@@ -18,6 +18,8 @@
 
 import fs from 'fs';
 import path from 'path';
+import * as playwright from '../..';
+import { BrowserType } from '../client/browserType';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { installBrowsersWithProgressBar } from '../install/installer';
@@ -51,6 +53,12 @@ export function runServer() {
 
   const playwright = createPlaywright();
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
+}
+
+export async function launchBrowserServer(browserName: string) {
+  const browserType = (playwright as any)[browserName] as BrowserType;
+  const server = await browserType.launchServer();
+  console.log(server.wsEndpoint());
 }
 
 export async function installBrowsers(browserNames?: BrowserName[]) {
