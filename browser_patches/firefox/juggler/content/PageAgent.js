@@ -790,8 +790,6 @@ class PageAgent {
     const element = window.windowUtils.elementFromPoint(x, y, false, false);
     const event = window.document.createEvent('DragEvent');
 
-    const dataTransfer = dragService.getCurrentSession().dataTransfer.mozCloneForEvent(type);
-    dataTransfer.dropEffect = 'move';
     event.initDragEvent(
       type,
       true /* bubble */,
@@ -808,7 +806,7 @@ class PageAgent {
       modifiers & 8 /* metaKey */,
       0 /* button */, // firefox always has the button as 0 on drops, regardless of which was pressed
       null /* relatedTarget */,
-      dataTransfer,
+      null,
     );
     if (type !== 'drop' || dragService.dragAction)
       window.windowUtils.dispatchDOMEventViaPresShellForTesting(element, event);
