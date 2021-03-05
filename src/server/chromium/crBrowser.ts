@@ -349,6 +349,8 @@ export class CRBrowserContext extends BrowserContext {
       delete copy.priority;
       delete copy.session;
       delete copy.sameParty;
+      delete copy.sourceScheme;
+      delete copy.sourcePort;
       return copy as types.NetworkCookie;
     }), urls);
   }

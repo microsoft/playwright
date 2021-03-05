@@ -947,6 +947,10 @@ applies to images.
 using Audits.issueAdded event.
      */
     export type checkContrastParameters = {
+      /**
+       * Whether to report WCAG AAA level issues. Default is false.
+       */
+      reportAAA?: boolean;
     }
     export type checkContrastReturnValue = {
     }
@@ -6702,6 +6706,12 @@ https://tools.ietf.org/html/draft-west-cookie-priority-00
      */
     export type CookiePriority = "Low"|"Medium"|"High";
     /**
+     * Represents the source scheme of the origin that originally set the cookie.
+A value of "Unset" allows protocol clients to emulate legacy cookie scope for the scheme.
+This is a temporary ability and it will be removed in the future.
+     */
+    export type CookieSourceScheme = "Unset"|"NonSecure"|"Secure";
+    /**
      * Timing information for the request.
      */
     export interface ResourceTiming {
@@ -7234,6 +7244,16 @@ module) (0-based).
        * True if cookie is SameParty.
        */
       sameParty: boolean;
+      /**
+       * Cookie source scheme type.
+       */
+      sourceScheme: CookieSourceScheme;
+      /**
+       * Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
+An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+This is a temporary ability and it will be removed in the future.
+       */
+      sourcePort: number;
     }
     /**
      * Types of reasons why a cookie may not be stored from a response.
@@ -7290,7 +7310,7 @@ errors.
       value: string;
       /**
        * The request-URI to associate with the setting of the cookie. This value can affect the
-default domain and path values of the created cookie.
+default domain, path, source port, and source scheme values of the created cookie.
        */
       url?: string;
       /**
@@ -7321,6 +7341,20 @@ default domain and path values of the created cookie.
        * Cookie Priority.
        */
       priority?: CookiePriority;
+      /**
+       * True if cookie is SameParty.
+       */
+      sameParty?: boolean;
+      /**
+       * Cookie source scheme type.
+       */
+      sourceScheme?: CookieSourceScheme;
+      /**
+       * Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
+An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+This is a temporary ability and it will be removed in the future.
+       */
+      sourcePort?: number;
     }
     /**
      * Authorization challenge for HTTP status code 401 or 407.
@@ -8445,7 +8479,7 @@ attribute, user, password.
       value: string;
       /**
        * The request-URI to associate with the setting of the cookie. This value can affect the
-default domain and path values of the created cookie.
+default domain, path, source port, and source scheme values of the created cookie.
        */
       url?: string;
       /**
@@ -8476,6 +8510,20 @@ default domain and path values of the created cookie.
        * Cookie Priority type.
        */
       priority?: CookiePriority;
+      /**
+       * True if cookie is SameParty.
+       */
+      sameParty?: boolean;
+      /**
+       * Cookie source scheme type.
+       */
+      sourceScheme?: CookieSourceScheme;
+      /**
+       * Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
+An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+This is a temporary ability and it will be removed in the future.
+       */
+      sourcePort?: number;
     }
     export type setCookieReturnValue = {
       /**
@@ -9311,6 +9359,24 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      */
     export type CrossOriginIsolatedContextType = "Isolated"|"NotIsolated"|"NotIsolatedFeatureDisabled";
     export type GatedAPIFeatures = "SharedArrayBuffers"|"SharedArrayBuffersTransferAllowed"|"PerformanceMeasureMemory"|"PerformanceProfile";
+    /**
+     * All Permissions Policy features. This enum should match the one defined
+in renderer/core/feature_policy/feature_policy_features.json5.
+     */
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"conversion-measurement"|"cross-origin-isolated"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"xr-spatial-tracking";
+    /**
+     * Reason for a permissions policy feature to be disabled.
+     */
+    export type PermissionsPolicyBlockReason = "Header"|"IframeAttribute";
+    export interface PermissionsPolicyBlockLocator {
+      frameId: FrameId;
+      blockReason: PermissionsPolicyBlockReason;
+    }
+    export interface PermissionsPolicyFeatureState {
+      feature: PermissionsPolicyFeature;
+      allowed: boolean;
+      locator?: PermissionsPolicyBlockLocator;
+    }
     /**
      * Information about the Frame on the page.
      */
@@ -10551,6 +10617,15 @@ Argument will be ignored if reloading dataURL origin.
       enabled: boolean;
     }
     export type setBypassCSPReturnValue = {
+    }
+    /**
+     * Get Permissions Policy state on given frame.
+     */
+    export type getPermissionsPolicyStateParameters = {
+      frameId: FrameId;
+    }
+    export type getPermissionsPolicyStateReturnValue = {
+      states: PermissionsPolicyFeatureState[];
     }
     /**
      * Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
@@ -16374,6 +16449,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.searchInResource": Page.searchInResourceParameters;
     "Page.setAdBlockingEnabled": Page.setAdBlockingEnabledParameters;
     "Page.setBypassCSP": Page.setBypassCSPParameters;
+    "Page.getPermissionsPolicyState": Page.getPermissionsPolicyStateParameters;
     "Page.setDeviceMetricsOverride": Page.setDeviceMetricsOverrideParameters;
     "Page.setDeviceOrientationOverride": Page.setDeviceOrientationOverrideParameters;
     "Page.setFontFamilies": Page.setFontFamiliesParameters;
@@ -16882,6 +16958,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.searchInResource": Page.searchInResourceReturnValue;
     "Page.setAdBlockingEnabled": Page.setAdBlockingEnabledReturnValue;
     "Page.setBypassCSP": Page.setBypassCSPReturnValue;
+    "Page.getPermissionsPolicyState": Page.getPermissionsPolicyStateReturnValue;
     "Page.setDeviceMetricsOverride": Page.setDeviceMetricsOverrideReturnValue;
     "Page.setDeviceOrientationOverride": Page.setDeviceOrientationOverrideReturnValue;
     "Page.setFontFamilies": Page.setFontFamiliesReturnValue;
