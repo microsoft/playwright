@@ -68,7 +68,7 @@ class Documentation {
     for (const [name, clazz] of this.classes.entries()) {
       clazz.validateOrder(errors, clazz);
 
-      if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
+      if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error' || clazz.extends === 'RuntimeException')
         continue;
       const superClass = this.classes.get(clazz.extends);
       if (!superClass) {
