@@ -122,7 +122,6 @@ describe('Drag and drop', (test, {browserName}) => {
   it('should respect the drop effect', (test, {browserName, platform}) => {
     test.fixme(browserName === 'chromium', 'Chromium doesn\'t let users set dropEffect on our fake data transfer');
     test.fixme(browserName === 'webkit' && platform !== 'linux', 'WebKit doesn\'t handle the drop effect correctly outside of linux.');
-    test.fixme(browserName === 'firefox');
   }, async ({context}) => {
     const page = await context.newPage();
     expect(await testIfDropped('copy', 'copy')).toBe(true);
@@ -151,6 +150,7 @@ describe('Drag and drop', (test, {browserName}) => {
       `);
       await page.evaluate(({effectAllowed, dropEffect}) => {
         window['dropped'] = false;
+        delete window['dropData'];
 
         document.querySelector('div').addEventListener('dragstart', event => {
           event.dataTransfer.effectAllowed = effectAllowed;
@@ -164,13 +164,18 @@ describe('Drag and drop', (test, {browserName}) => {
         });
         dropTarget.addEventListener('drop', event => {
           window['dropped'] = true;
+          window['dropData'] = 'drag data';
         });
       }, {effectAllowed, dropEffect});
       await page.hover('div');
       await page.mouse.down();
       await page.hover('drop-target');
       await page.mouse.up();
-      return await page.evaluate('dropped');
+      const dropped = await page.evaluate('dropped');
+      if (!dropped)
+        return false;
+      expect(await page.evaluate('dropData')).toBe('drag data');
+      return true;
     }
   });
 
