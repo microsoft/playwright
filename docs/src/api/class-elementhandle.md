@@ -601,7 +601,7 @@ handle.selectOption(['red', 'green', 'blue']);
 // single selection matching the value
 handle.selectOption("blue");
 // single selection matching the label
-handle.selectOption(new SelectOption().withLabel("Blue"));
+handle.selectOption(new SelectOption().setLabel("Blue"));
 // multiple selection
 handle.selectOption(new String[] {"red", "green", "blue"});
 ```
@@ -707,7 +707,7 @@ await elementHandle.type('World', {delay: 100}); // Types slower, like a user
 
 ```java
 elementHandle.type("Hello"); // Types instantly
-elementHandle.type("World", new ElementHandle.TypeOptions().withDelay(100)); // Types slower, like a user
+elementHandle.type("World", new ElementHandle.TypeOptions().setDelay(100)); // Types slower, like a user
 ```
 
 ```python async
@@ -829,7 +829,7 @@ page.setContent("<div><span></span></div>");
 ElementHandle div = page.querySelector("div");
 // Waiting for the "span" selector relative to the div.
 ElementHandle span = div.waitForSelector("span", new ElementHandle.WaitForSelectorOptions()
-  .withState(WaitForSelectorState.ATTACHED));
+  .setState(WaitForSelectorState.ATTACHED));
 ```
 
 ```python async

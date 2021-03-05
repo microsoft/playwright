@@ -106,7 +106,7 @@ System.getenv().put("STORAGE", storage);
 
 // Create a new context with the saved storage state
 BrowserContext context = browser.newContext(
-  new Browser.NewContextOptions().withStorageState(storage));
+  new Browser.NewContextOptions().setStorageState(storage));
 ```
 
 ```python async
@@ -261,7 +261,7 @@ public class Example {
       BrowserType chromium = playwright.chromium();
       Path userDataDir = Paths.get("/path/to/directory");
       BrowserContext context = chromium.launchPersistentContext(userDataDir,
-        new BrowserType.LaunchPersistentContextOptions().withHeadless(false));
+        new BrowserType.LaunchPersistentContextOptions().setHeadless(false));
       // Execute login steps manually in the browser window
     }
   }

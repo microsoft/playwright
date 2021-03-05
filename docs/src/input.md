@@ -181,7 +181,7 @@ await page.selectOption('select#colors', option);
 page.selectOption("select#colors", "blue");
 
 // Single selection matching the label
-page.selectOption("select#colors", new SelectOption().withLabel("Blue"));
+page.selectOption("select#colors", new SelectOption().setLabel("Blue"));
 
 // Multiple selected items
 page.selectOption("select#colors", new String[] {"red", "green", "blue"});
@@ -261,16 +261,16 @@ page.click("button#submit");
 page.dblclick("#item");
 
 // Right click
-page.click("#item", new Page.ClickOptions().withButton(MouseButton.RIGHT));
+page.click("#item", new Page.ClickOptions().setButton(MouseButton.RIGHT));
 
 // Shift + click
-page.click("#item", new Page.ClickOptions().withModifiers(Arrays.asList(KeyboardModifier.SHIFT)));
+page.click("#item", new Page.ClickOptions().setModifiers(Arrays.asList(KeyboardModifier.SHIFT)));
 
 // Hover over element
 page.hover("#item");
 
 // Click the top left corner
-page.click("#item", new Page.ClickOptions().withPosition(0, 0));
+page.click("#item", new Page.ClickOptions().setPosition(0, 0));
 ```
 
 ```python async
@@ -331,7 +331,7 @@ await page.click('button#submit', { force: true });
 ```
 
 ```java
-page.click("button#submit", new Page.ClickOptions().withForce(true));
+page.click("button#submit", new Page.ClickOptions().setForce(true));
 ```
 
 ```python async

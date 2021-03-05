@@ -68,7 +68,7 @@ await page.goto('https://example.com', { waitUntil: 'networkidle' });
 ```java
 // Navigate and wait until network is idle
 page.navigate("https://example.com", new Page.NavigateOptions()
-  .withWaitUntil(WaitUntilState.NETWORKIDLE));
+  .setWaitUntil(WaitUntilState.NETWORKIDLE));
 ```
 
 ```python async
@@ -313,7 +313,7 @@ await Promise.all([
 ```java
 // Running action in the callback of waitForNavigation prevents a race
 // condition between clicking and waiting for a navigation.
-page.waitForNavigation(new Page.WaitForNavigationOptions().withUrl("**/login"), () -> {
+page.waitForNavigation(new Page.WaitForNavigationOptions().setUrl("**/login"), () -> {
   page.click("a"); // Triggers a navigation with a script redirect
 });
 ```

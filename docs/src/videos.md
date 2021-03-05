@@ -15,7 +15,7 @@ await context.close();
 ```
 
 ```java
-context = browser.newContext(new Browser.NewContextOptions().withRecordVideoDir(Paths.get("videos/")));
+context = browser.newContext(new Browser.NewContextOptions().setRecordVideoDir(Paths.get("videos/")));
 // Make sure to close, so that videos are saved.
 context.close();
 ```
@@ -45,8 +45,8 @@ const context = await browser.newContext({
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-  .withRecordVideoDir(Paths.get("videos/"))
-  .withRecordVideoSize(1024, 768));
+  .setRecordVideoDir(Paths.get("videos/"))
+  .setRecordVideoSize(1024, 768));
 ```
 
 ```python async
