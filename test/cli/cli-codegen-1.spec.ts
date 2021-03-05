@@ -552,7 +552,7 @@ await page.ClickAsync(\"text=link\");
 
     expect(sources.get('<java>').text).toContain(`
       // Click text=link
-      // page.waitForNavigation(new Page.WaitForNavigationOptions().withUrl("about:blank#foo"), () ->
+      // page.waitForNavigation(new Page.WaitForNavigationOptions().setUrl("about:blank#foo"), () ->
       page.waitForNavigation(() -> {
         page.click("text=link");
       });`);
