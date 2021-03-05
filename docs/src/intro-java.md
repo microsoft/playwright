@@ -117,7 +117,7 @@ playwright.firefox().launch(new BrowserType.LaunchOptions().withHeadless(false).
 
 ## Record scripts
 
-Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate JavaScript code.
+Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate Java code.
 
 ```sh
 $ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
