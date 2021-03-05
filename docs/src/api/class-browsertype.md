@@ -143,7 +143,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
 ```java
 // Or "firefox" or "webkit".
 Browser browser = chromium.launch(new BrowserType.LaunchOptions()
-  .withIgnoreDefaultArgs(Arrays.asList("--mute-audio")));
+  .setIgnoreDefaultArgs(Arrays.asList("--mute-audio")));
 ```
 
 ```python async

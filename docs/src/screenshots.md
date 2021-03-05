@@ -32,8 +32,8 @@ await page.screenshot({ path: 'screenshot.png', fullPage: true });
 
 ```java
 page.screenshot(new Page.ScreenshotOptions()
-  .withPath(Paths.get("screenshot.png"))
-  .withFullPage(true));
+  .setPath(Paths.get("screenshot.png"))
+  .setFullPage(true));
 ```
 
 ```python async
@@ -80,7 +80,7 @@ await elementHandle.screenshot({ path: 'screenshot.png' });
 
 ```java
 ElementHandle elementHandle = page.querySelector(".header");
-elementHandle.screenshot(new ElementHandle.ScreenshotOptions().withPath(Paths.get("screenshot.png")));
+elementHandle.screenshot(new ElementHandle.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
 ```
 
 ```python async

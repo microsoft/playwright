@@ -85,7 +85,7 @@ Suggested configuration
 
    ```java
    Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-     .withArgs(Arrays.asList("--disable-dev-shm-usage")));
+     .setArgs(Arrays.asList("--disable-dev-shm-usage")));
    ```
 
    ```python async
@@ -245,7 +245,7 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType chromium = playwright.chromium();
-      Browser browser = chromium.launch(new BrowserType.LaunchOptions().withChromiumSandbox(false));
+      Browser browser = chromium.launch(new BrowserType.LaunchOptions().setChromiumSandbox(false));
     }
   }
 }
@@ -345,7 +345,7 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType chromium = playwright.chromium();
-      Browser browser = chromium.launch(new BrowserType.LaunchOptions().withHeadless(false));
+      Browser browser = chromium.launch(new BrowserType.LaunchOptions().setHeadless(false));
     }
   }
 }

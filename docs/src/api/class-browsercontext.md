@@ -310,7 +310,7 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType webkit = playwright.webkit()
-      Browser browser = webkit.launch(new BrowserType.LaunchOptions().withHeadless(false));
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
       BrowserContext context = browser.newContext();
       context.exposeBinding("pageURL", (source, args) -> source.page().url());
       Page page = context.newPage();
@@ -398,7 +398,7 @@ context.exposeBinding("clicked", (source, args) -> {
   ElementHandle element = (ElementHandle) args[0];
   System.out.println(element.textContent());
   return null;
-}, new BrowserContext.ExposeBindingOptions().withHandle(true));
+}, new BrowserContext.ExposeBindingOptions().setHandle(true));
 page.setContent("" +
   "<script>\n" +
   "  document.addEventListener('click', event => window.clicked(event.target));\n" +
@@ -497,7 +497,7 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType webkit = playwright.webkit()
-      Browser browser = webkit.launch(new BrowserType.LaunchOptions().withHeadless(false));
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
       context.exposeFunction("sha1", args -> {
         String text = (String) args[0];
         MessageDigest crypto;

@@ -103,7 +103,7 @@ public class WebKitScreenshot {
       Browser browser = playwright.webkit().launch();
       Page page = browser.newPage();
       page.navigate("http://whatsmyuseragent.org/");
-      page.screenshot(new Page.ScreenshotOptions().withPath(Paths.get("example.png")));
+      page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("example.png")));
     }
   }
 }
@@ -112,7 +112,7 @@ public class WebKitScreenshot {
 By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless=false` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```java
-playwright.firefox().launch(new BrowserType.LaunchOptions().withHeadless(false).withSlowMo(50));
+playwright.firefox().launch(new BrowserType.LaunchOptions().setHeadless(false).setSlowMo(50));
 ```
 
 ## Record scripts
