@@ -227,7 +227,7 @@ export class JavaScriptFormatter {
       const extraSpaces = /^(for|while|if|try).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
       previousLine = line;
 
-      const callCarryOver = line.startsWith('.with');
+      const callCarryOver = line.startsWith('.set');
       line = spaces + extraSpaces + (callCarryOver ? this._baseIndent : '') + line;
       if (line.endsWith('{') || line.endsWith('['))
         spaces += this._baseIndent;
