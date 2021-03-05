@@ -36,7 +36,7 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType chromium = playwright.chromium();
-      Browser browser = chromium.launch(new BrowserType.LaunchOptions().withHeadless(false));
+      Browser browser = chromium.launch(new BrowserType.LaunchOptions().setHeadless(false));
       browser.close();
     }
   }
@@ -123,15 +123,15 @@ public class Example {
     try (Playwright playwright = Playwright.create()) {
       BrowserType devices = playwright.devices();
       BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-        .withUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
-        .withViewportSize(375, 812)
-        .withDeviceScaleFactor(3)
-        .withIsMobile(true)
-        .withHasTouch(true)
-        .withPermissions(Arrays.asList("geolocation"))
-        .withGeolocation(52.52, 13.39)
-        .withColorScheme(ColorScheme.DARK)
-        .withLocale("de-DE"));
+        .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
+        .setViewportSize(375, 812)
+        .setDeviceScaleFactor(3)
+        .setIsMobile(true)
+        .setHasTouch(true)
+        .setPermissions(Arrays.asList("geolocation"))
+        .setGeolocation(52.52, 13.39)
+        .setColorScheme(ColorScheme.DARK)
+        .setLocale("de-DE"));
     }
   }
 }
@@ -564,7 +564,7 @@ await page.waitForSelector('#promo');
 ```java
 // Wait for #search to appear in the DOM.
 page.waitForSelector("#search", new Page.WaitForSelectorOptions()
-  .withState(WaitForSelectorState.ATTACHED));
+  .setState(WaitForSelectorState.ATTACHED));
 // Wait for #promo to become visible, for example with "visibility:visible".
 page.waitForSelector("#promo");
 ```
@@ -595,10 +595,10 @@ await page.waitForSelector('#promo', { state: 'detached' });
 ```java
 // Wait for #details to become hidden, for example with "display:none".
 page.waitForSelector("#details", new Page.WaitForSelectorOptions()
-  .withState(WaitForSelectorState.HIDDEN));
+  .setState(WaitForSelectorState.HIDDEN));
 // Wait for #promo to be removed from the DOM.
 page.waitForSelector("#promo", new Page.WaitForSelectorOptions()
-  .withState(WaitForSelectorState.DETACHED));
+  .setState(WaitForSelectorState.DETACHED));
 ```
 
 ```python async

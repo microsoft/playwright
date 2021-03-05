@@ -28,8 +28,8 @@ await chromium.launch({ headless: false, slowMo: 100 }); // or firefox, webkit
 
 ```java
 chromium.launch(new BrowserType.LaunchOptions() // or firefox, webkit
-  .withHeadless(false)
-  .withSlowMo(100));
+  .setHeadless(false)
+  .setSlowMo(100));
 ```
 
 ```python async
@@ -82,7 +82,7 @@ await chromium.launch({ devtools: true });
 ```
 
 ```java
-chromium.launch(new BrowserType.LaunchOptions().withDevtools(true));
+chromium.launch(new BrowserType.LaunchOptions().setDevtools(true));
 ```
 
 ```python async

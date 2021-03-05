@@ -26,7 +26,7 @@ await page.goto('https://example.com');
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-  .withHttpCredentials("bill", "pa55w0rd"));
+  .setHttpCredentials("bill", "pa55w0rd"));
 Page page = context.newPage();
 page.navigate("https://example.com");
 ```
@@ -49,6 +49,79 @@ page.goto("https://example.com")
 
 ### API reference
 - [`method: Browser.newContext`]
+
+## HTTP Proxy
+
+You can configure pages to load over the HTTP(S) proxy or SOCKSv5. Proxy can be either set globally
+for the entire browser, or for each browser context individually.
+
+You can optionally specify username and password for HTTP(S) proxy, you can also specify hosts to
+bypass proxy for.
+
+Here is an example of a global proxy:
+
+```js
+const browser = await chromium.launch({
+  proxy: {
+    server: 'http://myproxy.com:3128',
+    user: 'usr',
+    password: 'pwd'
+  }
+});
+```
+
+```java
+Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+  .setProxy(new Proxy("http://myproxy.com:3128")
+  .setUsername('usr')
+  .setPassword('pwd'));
+```
+
+```python async
+browser = await chromium.launch(proxy={
+  "server": "http://myproxy.com:3128",
+  "user": "usr",
+  "password": "pwd"
+})
+```
+
+```python sync
+browser = chromium.launch(proxy={
+  "server": "http://myproxy.com:3128",
+  "user": "usr",
+  "password": "pwd"
+})
+```
+
+When specifying proxy for each context individually, you need to give Playwright
+a hint that proxy will be set. This is done via passing a non-empty proxy server
+to the browser itself. Here is an example of a context-specific proxy:
+
+```js
+const browser = await chromium.launch({
+  proxy: { server: 'per-context' }
+});
+const context = await browser.newContext({
+  proxy: { server: 'http://myproxy.com:3128' }
+})
+```
+
+```java
+Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+  .setProxy(new Proxy("per-context"));
+BrowserContext context = chromium.launch(new Browser.NewContextOptions()
+  .setProxy(new Proxy("http://myproxy.com:3128"));
+```
+
+```python async
+browser = await chromium.launch(proxy={"server": "per-context"})
+context = await browser.new_context(proxy={"server": "http://myproxy.com:3128"})
+```
+
+```python sync
+browser = chromium.launch(proxy={"server": "per-context"})
+context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
+```
 
 ## Network events
 
@@ -232,8 +305,8 @@ await page.goto('https://example.com');
 
 ```java
 page.route("**/api/fetch_data", route -> route.fulfill(new Route.FulfillOptions()
-  .withStatus(200)
-  .withBody(testData)));
+  .setStatus(200)
+  .setBody(testData)));
 page.navigate("https://example.com");
 ```
 
@@ -268,8 +341,8 @@ await page.goto('https://example.com');
 
 ```java
 browserContext.route("**/api/login", route -> route.fulfill(new Route.FulfillOptions()
-  .withStatus(200)
-  .withBody("accept")));
+  .setStatus(200)
+  .setBody("accept")));
 page.navigate("https://example.com");
 ```
 
@@ -319,11 +392,11 @@ await page.route('**/*', route => route.continue({method: 'POST'}));
 page.route("**/*", route -> {
   Map<String, String> headers = new HashMap<>(route.request().headers());
   headers.remove("X-Secret");
-    route.resume(new Route.ResumeOptions().withHeaders(headers));
+    route.resume(new Route.ResumeOptions().setHeaders(headers));
 });
 
 // Continue requests as POST.
-page.route("**/*", route -> route.resume(new Route.ResumeOptions().withMethod("POST")));
+page.route("**/*", route -> route.resume(new Route.ResumeOptions().setMethod("POST")));
 ```
 
 ```python async

@@ -90,7 +90,7 @@ page.onDialog(dialog -> {
   assertEquals("beforeunload", dialog.type());
   dialog.dismiss();
 });
-page.close(new Page.CloseOptions().withRunBeforeUnload(true));
+page.close(new Page.CloseOptions().setRunBeforeUnload(true));
 ```
 
 ```python async
