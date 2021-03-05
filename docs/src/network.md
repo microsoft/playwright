@@ -26,7 +26,7 @@ await page.goto('https://example.com');
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-  .withHttpCredentials("bill", "pa55w0rd"));
+  .setHttpCredentials("bill", "pa55w0rd"));
 Page page = context.newPage();
 page.navigate("https://example.com");
 ```
@@ -72,9 +72,9 @@ const browser = await chromium.launch({
 
 ```java
 Browser browser = chromium.launch(new BrowserType.LaunchOptions()
-  .withProxy(new Proxy("http://myproxy.com:3128")
-  .withUsername('usr')
-  .withPassword('pwd'));
+  .setProxy(new Proxy("http://myproxy.com:3128")
+  .setUsername('usr')
+  .setPassword('pwd'));
 ```
 
 ```python async
@@ -108,9 +108,9 @@ const context = await browser.newContext({
 
 ```java
 Browser browser = chromium.launch(new BrowserType.LaunchOptions()
-  .withProxy(new Proxy("per-context"));
+  .setProxy(new Proxy("per-context"));
 BrowserContext context = chromium.launch(new Browser.NewContextOptions()
-  .withProxy(new Proxy("http://myproxy.com:3128"));
+  .setProxy(new Proxy("http://myproxy.com:3128"));
 ```
 
 ```python async
@@ -305,8 +305,8 @@ await page.goto('https://example.com');
 
 ```java
 page.route("**/api/fetch_data", route -> route.fulfill(new Route.FulfillOptions()
-  .withStatus(200)
-  .withBody(testData)));
+  .setStatus(200)
+  .setBody(testData)));
 page.navigate("https://example.com");
 ```
 
@@ -341,8 +341,8 @@ await page.goto('https://example.com');
 
 ```java
 browserContext.route("**/api/login", route -> route.fulfill(new Route.FulfillOptions()
-  .withStatus(200)
-  .withBody("accept")));
+  .setStatus(200)
+  .setBody("accept")));
 page.navigate("https://example.com");
 ```
 
@@ -392,11 +392,11 @@ await page.route('**/*', route => route.continue({method: 'POST'}));
 page.route("**/*", route -> {
   Map<String, String> headers = new HashMap<>(route.request().headers());
   headers.remove("X-Secret");
-    route.resume(new Route.ResumeOptions().withHeaders(headers));
+    route.resume(new Route.ResumeOptions().setHeaders(headers));
 });
 
 // Continue requests as POST.
-page.route("**/*", route -> route.resume(new Route.ResumeOptions().withMethod("POST")));
+page.route("**/*", route -> route.resume(new Route.ResumeOptions().setMethod("POST")));
 ```
 
 ```python async
