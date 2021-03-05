@@ -45,21 +45,27 @@ fixtures.persistentDownloadsContext.init(async ({ server, launchPersistent, test
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
     res.end(`Hello world`);
   });
-  console.log('--- launching persistent context ---');
+  logOnCI('--- launching persistent context ---');
   const { context, page } = await launchPersistent(
       {
         downloadsPath: testInfo.outputPath(''),
         acceptDownloads: true
       }
   );
-  console.log('--- setting content for the page ---');
+  logOnCI('--- setting content for the page ---');
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  console.log('--- launching test ---');
+  logOnCI('--- launching test ---');
   await test(context);
-  console.log('--- closing context ---');
+  logOnCI('--- closing context ---');
   await context.close();
-  console.log('--- DONE ---');
+  logOnCI('--- DONE ---');
 });
+
+function logOnCI(...args) {
+  if (!process.env.CI)
+    return;
+  console.log(...args);
+}
 
 const { it, expect } = fixtures.build();
 
@@ -104,49 +110,49 @@ it('should report downloads in downloadsPath folder', async ({downloadsBrowser, 
 });
 
 it('should accept downloads in persistent context', async ({persistentDownloadsContext, testInfo, server})  => {
-  console.log('----- 1.1');
+  logOnCI('----- 1.1');
   const page = persistentDownloadsContext.pages()[0];
-  console.log('----- 1.2');
+  logOnCI('----- 1.2');
   const [ download ] = await Promise.all([
     page.waitForEvent('download').then(d => {
-      console.log('----- 1.3');
+      logOnCI('----- 1.3');
       return d;
     }),
     page.click('a').then(d => {
-      console.log('----- 1.4');
+      logOnCI('----- 1.4');
     }),
   ]);
-  console.log('----- 1.5');
+  logOnCI('----- 1.5');
   expect(download.url()).toBe(`${server.PREFIX}/download`);
-  console.log('----- 1.6');
+  logOnCI('----- 1.6');
   expect(download.suggestedFilename()).toBe(`file.txt`);
-  console.log('----- 1.7');
+  logOnCI('----- 1.7');
   const path = await download.path();
-  console.log('----- 1.8');
+  logOnCI('----- 1.8');
   expect(path.startsWith(testInfo.outputPath(''))).toBeTruthy();
-  console.log('----- 1.9');
+  logOnCI('----- 1.9');
 });
 
 it('should delete downloads when persistent context closes', async ({persistentDownloadsContext}) => {
-  console.log('----- 2.1');
+  logOnCI('----- 2.1');
   const page = persistentDownloadsContext.pages()[0];
-  console.log('----- 2.2');
+  logOnCI('----- 2.2');
   const [ download ] = await Promise.all([
     page.waitForEvent('download').then(d => {
-      console.log('----- 2.3');
+      logOnCI('----- 2.3');
       return d;
     }),
     page.click('a').then(() => {
-      console.log('----- 2.4');
+      logOnCI('----- 2.4');
     }),
   ]);
-  console.log('----- 2.5');
+  logOnCI('----- 2.5');
   const path = await download.path();
-  console.log('----- 2.6');
+  logOnCI('----- 2.6');
   expect(fs.existsSync(path)).toBeTruthy();
-  console.log('----- 2.7');
+  logOnCI('----- 2.7');
   await persistentDownloadsContext.close();
-  console.log('----- 2.8');
+  logOnCI('----- 2.8');
   expect(fs.existsSync(path)).toBeFalsy();
-  console.log('----- 2.9');
+  logOnCI('----- 2.9');
 });
