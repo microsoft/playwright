@@ -115,6 +115,14 @@ By default, Playwright runs the browsers in headless mode. To see the browser UI
 playwright.firefox().launch(new BrowserType.LaunchOptions().withHeadless(false).withSlowMo(50));
 ```
 
+## Record scripts
+
+Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate JavaScript code.
+
+```sh
+$ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+```
+
 ## System requirements
 
 Playwright requires **Java 8** or newer. The browser binaries for Chromium,

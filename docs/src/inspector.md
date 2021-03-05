@@ -74,6 +74,10 @@ configures Playwright for debugging and opens the inspector.
   $ npx playwright codegen wikipedia.org
   ```
 
+  ```sh java
+  $ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+  ```
+
   ```sh python
   $ playwright codegen wikipedia.org
   ```
