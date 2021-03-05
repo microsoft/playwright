@@ -71,7 +71,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
 
     if (signals.waitForNavigation) {
       code = `
-      // ${pageAlias}.waitForNavigation(new Page.WaitForNavigationOptions().withUrl(${quote(signals.waitForNavigation.url)}), () ->
+      // ${pageAlias}.waitForNavigation(new Page.WaitForNavigationOptions().setUrl(${quote(signals.waitForNavigation.url)}), () ->
       ${pageAlias}.waitForNavigation(() -> {
         ${code}
       });`;
@@ -131,7 +131,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n      context.storageState(new BrowserContext.StorageStateOptions().withPath(${quote(saveStorage)}));` : '';
+    const storageStateLine = saveStorage ? `\n      context.storageState(new BrowserContext.StorageStateOptions().setPath(${quote(saveStorage)}));` : '';
     return `\n      // ---------------------${storageStateLine}
     }
   }
@@ -163,7 +163,7 @@ function formatLaunchOptions(options: any): string {
     return '';
   lines.push('new BrowserType.LaunchOptions()');
   if (typeof options.headless === 'boolean')
-    lines.push(`  .withHeadless(false)`);
+    lines.push(`  .setHeadless(false)`);
   return lines.join('\n');
 }
 
@@ -175,27 +175,27 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
   const options: BrowserContextOptions = { ...device, ...contextOptions };
   lines.push('new Browser.NewContextOptions()');
   if (options.colorScheme)
-    lines.push(`  .withColorScheme(ColorScheme.${options.colorScheme.toUpperCase()})`);
+    lines.push(`  .setColorScheme(ColorScheme.${options.colorScheme.toUpperCase()})`);
   if (options.geolocation)
-    lines.push(`  .withGeolocation(${options.geolocation.latitude}, ${options.geolocation.longitude})`);
+    lines.push(`  .setGeolocation(${options.geolocation.latitude}, ${options.geolocation.longitude})`);
   if (options.locale)
-    lines.push(`  .withLocale("${options.locale}")`);
+    lines.push(`  .setLocale("${options.locale}")`);
   if (options.proxy)
-    lines.push(`  .withProxy(new Proxy("${options.proxy.server}"))`);
+    lines.push(`  .setProxy(new Proxy("${options.proxy.server}"))`);
   if (options.timezoneId)
-    lines.push(`  .withTimezoneId("${options.timezoneId}")`);
+    lines.push(`  .setTimezoneId("${options.timezoneId}")`);
   if (options.userAgent)
-    lines.push(`  .withUserAgent("${options.userAgent}")`);
+    lines.push(`  .setUserAgent("${options.userAgent}")`);
   if (options.viewport)
-    lines.push(`  .withViewportSize(${options.viewport.width}, ${options.viewport.height})`);
+    lines.push(`  .setViewportSize(${options.viewport.width}, ${options.viewport.height})`);
   if (options.deviceScaleFactor)
-    lines.push(`  .withDeviceScaleFactor(${options.deviceScaleFactor})`);
+    lines.push(`  .setDeviceScaleFactor(${options.deviceScaleFactor})`);
   if (options.isMobile)
-    lines.push(`  .withIsMobile(${options.isMobile})`);
+    lines.push(`  .setIsMobile(${options.isMobile})`);
   if (options.hasTouch)
-    lines.push(`  .withHasTouch(${options.hasTouch})`);
+    lines.push(`  .setHasTouch(${options.hasTouch})`);
   if (options.storageState)
-    lines.push(`  .withStorageStatePath(Paths.get(${quote(options.storageState as string)}))`);
+    lines.push(`  .setStorageStatePath(Paths.get(${quote(options.storageState as string)}))`);
 
   return lines.join('\n');
 }
