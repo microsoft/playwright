@@ -15,7 +15,6 @@
  */
 
 import { StackFrame } from '../../../common/types';
-import { FrameSnapshot } from '../../snapshot/snapshot';
 
 export type ContextCreatedTraceEvent = {
   timestamp: number,
@@ -32,23 +31,6 @@ export type ContextDestroyedTraceEvent = {
   timestamp: number,
   type: 'context-destroyed',
   contextId: string,
-};
-
-export type NetworkResourceTraceEvent = {
-  timestamp: number,
-  type: 'resource',
-  contextId: string,
-  pageId: string,
-  frameId: string,
-  resourceId: string,
-  url: string,
-  contentType: string,
-  responseHeaders: { name: string, value: string }[],
-  requestHeaders: { name: string, value: string }[],
-  method: string,
-  status: number,
-  requestSha1: string,
-  responseSha1: string,
 };
 
 export type PageCreatedTraceEvent = {
@@ -86,7 +68,7 @@ export type ActionTraceEvent = {
   endTime: number,
   logs?: string[],
   error?: string,
-  snapshots?: { name: string, snapshotId: string }[],
+  snapshots?: { title: string, snapshotName: string }[],
 };
 
 export type DialogOpenedEvent = {
@@ -122,25 +104,14 @@ export type LoadEvent = {
   pageId: string,
 };
 
-export type FrameSnapshotTraceEvent = {
-  timestamp: number,
-  type: 'snapshot',
-  contextId: string,
-  pageId: string,
-  frameId: string,
-  snapshot: FrameSnapshot,
-};
-
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ContextDestroyedTraceEvent |
     PageCreatedTraceEvent |
     PageDestroyedTraceEvent |
     PageVideoTraceEvent |
-    NetworkResourceTraceEvent |
     ActionTraceEvent |
     DialogOpenedEvent |
     DialogClosedEvent |
     NavigationEvent |
-    LoadEvent |
-    FrameSnapshotTraceEvent;
+    LoadEvent;

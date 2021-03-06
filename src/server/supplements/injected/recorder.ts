@@ -54,7 +54,7 @@ export class Recorder {
   private _actionSelector: string | undefined;
   private _params: { isUnderTest: boolean; };
   private _snapshotIframe: HTMLIFrameElement | undefined;
-  private _snapshotId: string | undefined;
+  private _snapshotUrl: string | undefined;
   private _snapshotBaseUrl: string;
 
   constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean, snapshotBaseUrl: string }) {
@@ -194,7 +194,7 @@ export class Recorder {
       return;
     }
 
-    const { mode, actionPoint, actionSelector, snapshotId } = state;
+    const { mode, actionPoint, actionSelector, snapshotUrl } = state;
     if (mode !== this._mode) {
       this._mode = mode;
       this._clearHighlight();
@@ -223,15 +223,15 @@ export class Recorder {
       this._updateHighlight();
       this._actionSelector = actionSelector;
     }
-    if (snapshotId !== this._snapshotId) {
-      this._snapshotId = snapshotId;
+    if (snapshotUrl !== this._snapshotUrl) {
+      this._snapshotUrl = snapshotUrl;
       const snapshotIframe = this._createSnapshotIframeIfNeeded();
       if (snapshotIframe) {
-        if (!snapshotId) {
+        if (!snapshotUrl) {
           snapshotIframe.style.visibility = 'hidden';
         } else {
           snapshotIframe.style.visibility = 'visible';
-          snapshotIframe.contentWindow?.postMessage({ snapshotId }, '*');
+          snapshotIframe.contentWindow?.postMessage({ snapshotUrl }, '*');
         }
       }
     }

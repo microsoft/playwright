@@ -27,7 +27,7 @@ export type UIState = {
   mode: Mode;
   actionPoint?: Point;
   actionSelector?: string;
-  snapshotId?: string;
+  snapshotUrl?: string;
 };
 
 export type CallLog = {

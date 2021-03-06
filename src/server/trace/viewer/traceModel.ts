@@ -16,19 +16,32 @@
 
 import { createGuid } from '../../../utils/utils';
 import * as trace from '../common/traceEvents';
-import { SnapshotRenderer } from '../../snapshot/snapshotRenderer';
-import { ContextResources } from '../../snapshot/snapshot';
+import { ContextResources, ResourceSnapshot } from '../../snapshot/snapshotTypes';
+import { SnapshotStorage } from '../../snapshot/snapshotStorage';
 export * as trace from '../common/traceEvents';
 
 export class TraceModel {
   contextEntries = new Map<string, ContextEntry>();
   pageEntries = new Map<string, { contextEntry: ContextEntry, pageEntry: PageEntry }>();
-  resourceById = new Map<string, trace.NetworkResourceTraceEvent>();
   contextResources = new Map<string, ContextResources>();
 
-  appendEvents(events: trace.TraceEvent[]) {
+  appendEvents(events: trace.TraceEvent[], snapshotStorage: SnapshotStorage) {
     for (const event of events)
       this.appendEvent(event);
+    const actions: ActionEntry[] = [];
+    for (const context of this.contextEntries.values()) {
+      for (const page of context.pages)
+        actions.push(...page.actions);
+    }
+
+    const resources = snapshotStorage.resources().reverse();
+    actions.reverse();
+
+    for (const action of actions) {
+      while (resources.length && resources[0].timestamp > action.action.timestamp)
+        action.resources.push(resources.shift()!);
+      action.resources.reverse();
+    }
   }
 
   appendEvent(event: trace.TraceEvent) {
@@ -54,9 +67,7 @@ export class TraceModel {
           created: event,
           destroyed: undefined as any,
           actions: [],
-          resources: [],
           interestingEvents: [],
-          snapshotsByFrameId: {},
         };
         const contextEntry = this.contextEntries.get(event.contextId)!;
         this.pageEntries.set(event.pageId, { pageEntry, contextEntry });
@@ -75,17 +86,9 @@ export class TraceModel {
         const action: ActionEntry = {
           actionId,
           action: event,
-          resources: pageEntry.resources,
+          resources: []
         };
-        pageEntry.resources = [];
         pageEntry.actions.push(action);
-        break;
-      }
-      case 'resource': {
-        const { pageEntry } = this.pageEntries.get(event.pageId!)!;
-        const action = pageEntry.actions[pageEntry.actions.length - 1];
-        (action || pageEntry).resources.push(event);
-        this.appendResource(event);
         break;
       }
       case 'dialog-opened':
@@ -96,38 +99,10 @@ export class TraceModel {
         pageEntry.interestingEvents.push(event);
         break;
       }
-      case 'snapshot': {
-        const { pageEntry } = this.pageEntries.get(event.pageId!)!;
-        let snapshots = pageEntry.snapshotsByFrameId[event.frameId];
-        if (!snapshots) {
-          snapshots = [];
-          pageEntry.snapshotsByFrameId[event.frameId] = snapshots;
-        }
-        snapshots.push(event);
-        for (const override of event.snapshot.resourceOverrides) {
-          if (override.ref) {
-            const refOverride = snapshots[snapshots.length - 1 - override.ref]?.snapshot.resourceOverrides.find(o => o.url === override.url);
-            override.sha1 = refOverride?.sha1;
-            delete override.ref;
-          }
-        }
-        break;
-      }
     }
     const contextEntry = this.contextEntries.get(event.contextId)!;
     contextEntry.startTime = Math.min(contextEntry.startTime, event.timestamp);
     contextEntry.endTime = Math.max(contextEntry.endTime, event.timestamp);
-  }
-
-  appendResource(event: trace.NetworkResourceTraceEvent) {
-    const contextResources = this.contextResources.get(event.contextId)!;
-    let responseEvents = contextResources.get(event.url);
-    if (!responseEvents) {
-      responseEvents = [];
-      contextResources.set(event.url, responseEvents);
-    }
-    responseEvents.push({ frameId: event.frameId, resourceId: event.resourceId });
-    this.resourceById.set(event.resourceId, event);
   }
 
   actionById(actionId: string): { context: ContextEntry, page: PageEntry, action: ActionEntry } {
@@ -151,27 +126,6 @@ export class TraceModel {
     }
     return { contextEntry, pageEntry };
   }
-
-  findSnapshotById(pageId: string, frameId: string, snapshotId: string): SnapshotRenderer | undefined {
-    const { pageEntry, contextEntry } = this.pageEntries.get(pageId)!;
-    const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
-    for (let index = 0; index < frameSnapshots.length; index++) {
-      if (frameSnapshots[index].snapshot.snapshotId === snapshotId)
-        return new SnapshotRenderer(this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots.map(fs => fs.snapshot), index);
-    }
-  }
-
-  findSnapshotByTime(pageId: string, frameId: string, timestamp: number): SnapshotRenderer | undefined {
-    const { pageEntry, contextEntry } = this.pageEntries.get(pageId)!;
-    const frameSnapshots = pageEntry.snapshotsByFrameId[frameId];
-    let snapshotIndex = -1;
-    for (let index = 0; index < frameSnapshots.length; index++) {
-      const snapshot = frameSnapshots[index];
-      if (timestamp && snapshot.timestamp <= timestamp)
-        snapshotIndex = index;
-    }
-    return snapshotIndex >= 0 ? new SnapshotRenderer(this.contextResources.get(contextEntry.created.contextId)!, frameSnapshots.map(fs => fs.snapshot), snapshotIndex) : undefined;
-  }
 }
 
 export type ContextEntry = {
@@ -190,14 +144,12 @@ export type PageEntry = {
   destroyed: trace.PageDestroyedTraceEvent;
   actions: ActionEntry[];
   interestingEvents: InterestingPageEvent[];
-  resources: trace.NetworkResourceTraceEvent[];
-  snapshotsByFrameId: { [key: string]: trace.FrameSnapshotTraceEvent[] };
 }
 
 export type ActionEntry = {
   actionId: string;
   action: trace.ActionTraceEvent;
-  resources: trace.NetworkResourceTraceEvent[];
+  resources: ResourceSnapshot[]
 };
 
 const kInterestingActions = ['click', 'dblclick', 'hover', 'check', 'uncheck', 'tap', 'fill', 'press', 'type', 'selectOption', 'setInputFiles', 'goto', 'setContent', 'goBack', 'goForward', 'reload'];

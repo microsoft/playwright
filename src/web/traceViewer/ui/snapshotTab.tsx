@@ -30,14 +30,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
-  let snapshots: { name: string, snapshotId?: string, snapshotTime?: number }[] = [];
-  snapshots = (actionEntry ? (actionEntry.action.snapshots || []) : []).slice();
-  if (actionEntry) {
-    if (!snapshots.length || snapshots[0].name !== 'before')
-      snapshots.unshift({ name: 'before', snapshotTime: actionEntry ? actionEntry.action.startTime : 0 });
-    if (snapshots[snapshots.length - 1].name !== 'after')
-      snapshots.push({ name: 'after', snapshotTime: actionEntry ? actionEntry.action.endTime : 0 });
-  }
+  const snapshots = actionEntry ? (actionEntry.action.snapshots || []) : [];
   const { pageId, time } = selection || { pageId: undefined, time: 0 };
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
@@ -45,18 +38,15 @@ export const SnapshotTab: React.FunctionComponent<{
     if (!iframeRef.current)
       return;
 
-    // TODO: this logic is copied from SnapshotServer. Find a way to share.
-    let snapshotUrl = 'data:text/html,Snapshot is not available';
+    let snapshotUri = undefined;
     if (pageId) {
-      snapshotUrl = `/snapshot/pageId/${pageId}/timestamp/${time}/main`;
+      snapshotUri = `${pageId}?time=${time}`;
     } else if (actionEntry) {
       const snapshot = snapshots[snapshotIndex];
-      if (snapshot && snapshot.snapshotTime)
-        snapshotUrl = `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${snapshot.snapshotTime}/main`;
-      else if (snapshot && snapshot.snapshotId)
-        snapshotUrl = `/snapshot/pageId/${actionEntry.action.pageId!}/snapshotId/${snapshot.snapshotId}/main`;
+      if (snapshot && snapshot.snapshotName)
+        snapshotUri = `${actionEntry.action.pageId}?name=${snapshot.snapshotName}`;
     }
-
+    const snapshotUrl = snapshotUri ? `${window.location.origin}/snapshot/${snapshotUri}` : 'data:text/html,Snapshot is not available';
     try {
       (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl);
     } catch (e) {
@@ -71,10 +61,10 @@ export const SnapshotTab: React.FunctionComponent<{
       </div>
     }{!selection && snapshots.map((snapshot, index) => {
         return <div
-          key={snapshot.name}
+          key={snapshot.title}
           className={'snapshot-toggle' + (snapshotIndex === index ? ' toggled' : '')}
           onClick={() => setSnapshotIndex(index)}>
-          {snapshot.name}
+          {snapshot.title}
         </div>
       })
     }</div>
