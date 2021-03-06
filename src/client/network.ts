@@ -113,9 +113,6 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
       return null;
 
     const contentType = this.headers()['content-type'];
-    if (!contentType)
-      return null;
-
     if (contentType === 'application/x-www-form-urlencoded') {
       const entries: Record<string, string> = {};
       const parsed = new URLSearchParams(postData);
@@ -124,7 +121,11 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
       return entries;
     }
 
-    return JSON.parse(postData);
+    try {
+      return JSON.parse(postData);
+    } catch (e) {
+      throw new Error('POST data is not a valid JSON object: ' + postData);
+    }
   }
 
   headers(): Headers {
