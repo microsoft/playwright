@@ -9124,22 +9124,23 @@ export interface Download {
   createReadStream(): Promise<null|Readable>;
 
   /**
-   * Deletes the downloaded file.
+   * Deletes the downloaded file. Will wait for the download to finish if necessary.
    */
   delete(): Promise<void>;
 
   /**
-   * Returns download error if any.
+   * Returns download error if any. Will wait for the download to finish if necessary.
    */
   failure(): Promise<null|string>;
 
   /**
-   * Returns path to the downloaded file in case of successful download.
+   * Returns path to the downloaded file in case of successful download. The method will wait for the download to finish if
+   * necessary.
    */
   path(): Promise<null|string>;
 
   /**
-   * Saves the download to a user-specified path.
+   * Saves the download to a user-specified path. It is safe to call this method while the download is still in progress.
    * @param path Path where the download should be saved.
    */
   saveAs(path: string): Promise<void>;

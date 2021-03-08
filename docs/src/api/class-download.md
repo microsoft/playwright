@@ -62,21 +62,23 @@ Returns readable stream for current download or `null` if download failed.
 
 ## async method: Download.delete
 
-Deletes the downloaded file.
+Deletes the downloaded file. Will wait for the download to finish if necessary.
 
 ## async method: Download.failure
 - returns: <[null]|[string]>
 
-Returns download error if any.
+Returns download error if any. Will wait for the download to finish if necessary.
 
 ## async method: Download.path
 - returns: <[null]|[path]>
 
-Returns path to the downloaded file in case of successful download.
+Returns path to the downloaded file in case of successful download. The method will
+wait for the download to finish if necessary.
 
 ## async method: Download.saveAs
 
-Saves the download to a user-specified path.
+Saves the download to a user-specified path. It is safe to call this method while the download
+is still in progress.
 
 ### param: Download.saveAs.path
 - `path` <[path]>
