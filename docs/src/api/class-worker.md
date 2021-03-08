@@ -96,7 +96,7 @@ Optional argument to pass to [`param: expression`].
 ## method: Worker.url
 - returns: <[string]>
 
-## method: Worker.waitForClose
+## async method: Worker.waitForClose
 * langs: csharp, java
 - returns: <[Worker]>
 
