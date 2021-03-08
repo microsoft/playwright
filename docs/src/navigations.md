@@ -266,7 +266,7 @@ recommended to explicitly call [`method: Page.waitForNavigation`]. For example:
 // between clicking and waiting for a navigation.
 await Promise.all([
   page.waitForNavigation(), // Waits for the next navigation
-  page.click('a'), // Triggers a navigation after a timeout
+  page.click('div.delayed-navigation'), // Triggers a navigation after a timeout
 ]);
 ```
 
@@ -274,7 +274,7 @@ await Promise.all([
 // Using waitForNavigation with a callback prevents a race condition
 // between clicking and waiting for a navigation.
 page.waitForNavigation(() -> { // Waits for the next navigation
-  page.click("a"); // Triggers a navigation after a timeout
+  page.click("div.delayed-navigation"); // Triggers a navigation after a timeout
 });
 ```
 
@@ -283,7 +283,7 @@ page.waitForNavigation(() -> { // Waits for the next navigation
 # prevents a race condition between clicking and waiting for a navigation.
 async with page.expect_navigation():
     # Triggers a navigation after a timeout
-    await page.click("a")
+    await page.click("div.delayed-navigation")
 ```
 
 ```python sync
