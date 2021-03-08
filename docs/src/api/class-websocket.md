@@ -63,7 +63,7 @@ Event name, same one would pass into `webSocket.on(event)`.
 
 Either a predicate that receives an event or an options object. Optional.
 
-## method: WebSocket.waitForFrameReceived
+## async method: WebSocket.waitForFrameReceived
 * langs: csharp, java
 - returns: <[WebSocketFrame]>
 
@@ -78,7 +78,7 @@ Receives the [WebSocketFrame] object and resolves to truthy value when the waiti
 
 ### option: WebSocket.waitForFrameReceived.timeout = %%-wait-for-event-timeout-%%
 
-## method: WebSocket.waitForFrameSent
+## async method: WebSocket.waitForFrameSent
 * langs: csharp, java
 - returns: <[WebSocketFrame]>
 
