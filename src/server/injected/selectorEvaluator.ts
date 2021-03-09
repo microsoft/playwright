@@ -43,7 +43,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   private _cacheCallMatches: QueryCache = new Map();
   private _cacheCallQuery: QueryCache = new Map();
   private _cacheQuerySimple: QueryCache = new Map();
-  _cacheText = new Map<Element | ShadowRoot, string>();
+  _cacheText = new Map<Element | ShadowRoot, ElementText>();
   private _scoreMap: Map<Element, number> | undefined;
   private _retainCacheCounter = 0;
 
@@ -427,7 +427,7 @@ const textEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text" engine expects a single string`);
-    const matcher = textMatcher(args[0], true);
+    const matcher = createLaxTextMatcher(args[0]);
     return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) === 'self';
   },
 };
@@ -436,8 +436,8 @@ const textIsEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text-is" engine expects a single string`);
-    const matcher = textMatcher(args[0], false);
-    return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) === 'self';
+    const matcher = createStrictTextMatcher(args[0]);
+    return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) !== 'none';
   },
 };
 
@@ -445,8 +445,7 @@ const textMatchesEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
       throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
-    const re = new RegExp(args[0], args.length === 2 ? args[1] : undefined);
-    const matcher = (s: string) => re.test(s);
+    const matcher = createRegexTextMatcher(args[0], args.length === 2 ? args[1] : undefined);
     return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) === 'self';
   },
 };
@@ -457,20 +456,30 @@ const hasTextEngine: SelectorEngine = {
       throw new Error(`"has-text" engine expects a single string`);
     if (shouldSkipForTextMatching(element))
       return false;
-    const matcher = textMatcher(args[0], true);
+    const matcher = createLaxTextMatcher(args[0]);
     return matcher(elementText(evaluator as SelectorEvaluatorImpl, element));
   },
 };
 
-function textMatcher(text: string, caseInsensitive: boolean): (s: string) => boolean {
-  text = text.trim().replace(/\s+/g, ' ');
-  if (caseInsensitive)
-    text = text.toLowerCase();
-  return (s: string) => {
-    s = s.trim().replace(/\s+/g, ' ');
-    if (caseInsensitive)
-      s = s.toLowerCase();
+export function createLaxTextMatcher(text: string): TextMatcher {
+  text = text.trim().replace(/\s+/g, ' ').toLowerCase();
+  return (elementText: ElementText) => {
+    const s = elementText.full.trim().replace(/\s+/g, ' ').toLowerCase();
     return s.includes(text);
+  };
+}
+
+export function createStrictTextMatcher(text: string): TextMatcher {
+  text = text.trim().replace(/\s+/g, ' ');
+  return (elementText: ElementText) => {
+    return elementText.immediate.some(s => s.trim().replace(/\s+/g, ' ') === text);
+  };
+}
+
+export function createRegexTextMatcher(source: string, flags?: string): TextMatcher {
+  const re = new RegExp(source, flags);
+  return (elementText: ElementText) => {
+    return re.test(elementText.full);
   };
 }
 
@@ -478,22 +487,34 @@ function shouldSkipForTextMatching(element: Element | ShadowRoot) {
   return element.nodeName === 'SCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element);
 }
 
-export function elementText(evaluator: SelectorEvaluatorImpl, root: Element | ShadowRoot): string {
+export type ElementText = { full: string, immediate: string[] };
+export type TextMatcher = (text: ElementText) => boolean;
+
+export function elementText(evaluator: SelectorEvaluatorImpl, root: Element | ShadowRoot): ElementText {
   let value = evaluator._cacheText.get(root);
   if (value === undefined) {
-    value = '';
+    value = { full: '', immediate: [] };
     if (!shouldSkipForTextMatching(root)) {
+      let currentImmediate = '';
       if ((root instanceof HTMLInputElement) && (root.type === 'submit' || root.type === 'button')) {
-        value = root.value;
+        value = { full: root.value, immediate: [root.value] };
       } else {
         for (let child = root.firstChild; child; child = child.nextSibling) {
-          if (child.nodeType === Node.ELEMENT_NODE)
-            value += elementText(evaluator, child as Element);
-          else if (child.nodeType === Node.TEXT_NODE)
-            value += child.nodeValue || '';
+          if (child.nodeType === Node.TEXT_NODE) {
+            value.full += child.nodeValue || '';
+            currentImmediate += child.nodeValue || '';
+          } else {
+            if (currentImmediate)
+              value.immediate.push(currentImmediate);
+            currentImmediate = '';
+            if (child.nodeType === Node.ELEMENT_NODE)
+              value.full += elementText(evaluator, child as Element).full;
+          }
         }
+        if (currentImmediate)
+          value.immediate.push(currentImmediate);
         if ((root as Element).shadowRoot)
-          value += elementText(evaluator, (root as Element).shadowRoot!);
+          value.full += elementText(evaluator, (root as Element).shadowRoot!).full;
       }
     }
     evaluator._cacheText.set(root, value);
@@ -501,7 +522,7 @@ export function elementText(evaluator: SelectorEvaluatorImpl, root: Element | Sh
   return value;
 }
 
-export function elementMatchesText(evaluator: SelectorEvaluatorImpl, element: Element, matcher: (s: string) => boolean): 'none' | 'self' | 'selfAndChildren' {
+export function elementMatchesText(evaluator: SelectorEvaluatorImpl, element: Element, matcher: TextMatcher): 'none' | 'self' | 'selfAndChildren' {
   if (shouldSkipForTextMatching(element))
     return 'none';
   if (!matcher(elementText(evaluator, element)))
@@ -510,7 +531,7 @@ export function elementMatchesText(evaluator: SelectorEvaluatorImpl, element: El
     if (child.nodeType === Node.ELEMENT_NODE && matcher(elementText(evaluator, child as Element)))
       return 'selfAndChildren';
   }
-  if (element.shadowRoot  && matcher(elementText(evaluator, element.shadowRoot)))
+  if (element.shadowRoot && matcher(elementText(evaluator, element.shadowRoot)))
     return 'selfAndChildren';
   return 'self';
 }
