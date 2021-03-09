@@ -270,6 +270,24 @@ describe('pause', (suite, { mode }) => {
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
+
+  it('should highlight on explore', async ({ page, recorderPageGetter }) => {
+    await page.setContent('<button>Submit</button>');
+    const scriptPromise = (async () => {
+      await page.pause();
+    })();
+    const recorderPage = await recorderPageGetter();
+    const [element] = await Promise.all([
+      page.waitForSelector('x-pw-highlight:visible'),
+      recorderPage.fill('input[placeholder="Playwright Selector"]', 'text=Submit'),
+    ]);
+    const button = await page.$('text=Submit');
+    const box1 = await element.boundingBox();
+    const box2 = await button.boundingBox();
+    expect(box1).toEqual(box2);
+    await recorderPage.click('[title=Resume]');
+    await scriptPromise;
+  });
 });
 
 async function sanitizeLog(recorderPage: Page): Promise<string[]> {

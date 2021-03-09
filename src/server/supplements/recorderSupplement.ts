@@ -204,7 +204,7 @@ export class RecorderSupplement {
 
     await this._context.exposeBinding('_playwrightRecorderState', false, source => {
       let snapshotUrl: string | undefined;
-      let actionSelector: string | undefined;
+      let actionSelector = this._highlightedSelector;
       let actionPoint: Point | undefined;
       if (this._hoveredSnapshot) {
         const metadata = this._allMetadatas.get(this._hoveredSnapshot.callLogId)!;
@@ -214,7 +214,7 @@ export class RecorderSupplement {
         for (const [metadata, sdkObject] of this._currentCallsMetadata) {
           if (source.page === sdkObject.attribution.page) {
             actionPoint = metadata.point || actionPoint;
-            actionSelector = metadata.params.selector || actionSelector;
+            actionSelector = actionSelector || metadata.params.selector;
           }
         }
       }
