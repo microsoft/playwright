@@ -455,7 +455,7 @@ function renderMethod(member, parent, output, name) {
     let isEnum = enumTypes.has(innerArgType);
     let isNullable = ['int', 'bool', 'decimal', 'float'].includes(innerArgType);
     const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
-    const requiredSuffix = argument.required ? "" : isEnum ? " = default" : " = null";
+    const requiredSuffix = argument.required ? "" : " = default";
     args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);
   };
 
