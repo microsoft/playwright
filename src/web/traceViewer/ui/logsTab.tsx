@@ -23,9 +23,9 @@ export const LogsTab: React.FunctionComponent<{
 }> = ({ actionEntry }) => {
   let logs: string[] = [];
   if (actionEntry) {
-    logs = actionEntry.action.logs || [];
-    if (actionEntry.action.error)
-      logs = [actionEntry.action.error, ...logs];
+    logs = actionEntry.metadata.log || [];
+    if (actionEntry.metadata.error)
+      logs = [actionEntry.metadata.error, ...logs];
   }
   return <div className='logs-tab'>{
     logs.map((logLine, index) => {

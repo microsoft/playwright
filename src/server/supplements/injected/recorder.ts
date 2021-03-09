@@ -26,7 +26,6 @@ declare global {
     _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
     _playwrightRecorderCommitAction: () => Promise<void>;
     _playwrightRecorderState: () => Promise<UIState>;
-    _playwrightResume: () => Promise<void>;
     _playwrightRecorderSetSelector: (selector: string) => Promise<void>;
     _playwrightRefreshOverlay: () => void;
   }

@@ -22,6 +22,7 @@ import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
+import { ElementHandle } from '../dom';
 
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
@@ -47,6 +48,8 @@ export class PersistentSnapshotter extends EventEmitter implements SnapshotterDe
 
   async start(): Promise<void> {
     await fsMkdirAsync(this._resourcesDir, {recursive: true}).catch(() => {});
+    await fsAppendFileAsync(this._networkTrace, Buffer.from([]));
+    await fsAppendFileAsync(this._snapshotTrace, Buffer.from([]));
     await this._snapshotter.initialize();
     await this._snapshotter.setAutoSnapshotInterval(kSnapshotInterval);
   }
@@ -56,13 +59,13 @@ export class PersistentSnapshotter extends EventEmitter implements SnapshotterDe
     await this._writeArtifactChain;
   }
 
-  captureSnapshot(page: Page, snapshotName: string) {
-    this._snapshotter.captureSnapshot(page, snapshotName);
+  captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle) {
+    this._snapshotter.captureSnapshot(page, snapshotName, element);
   }
 
   onBlob(blob: SnapshotterBlob): void {
     this._writeArtifactChain = this._writeArtifactChain.then(async () => {
-      await fsWriteFileAsync(path.join(this._resourcesDir, blob.sha1), blob.buffer);
+      await fsWriteFileAsync(path.join(this._resourcesDir, blob.sha1), blob.buffer).catch(() => {});
     });
   }
 

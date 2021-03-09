@@ -35,7 +35,7 @@ export const ActionList: React.FC<ActionListProps> = ({
 }) => {
   const targetAction = highlightedAction || selectedAction;
   return <div className='action-list'>{actions.map(actionEntry => {
-    const { action, actionId } = actionEntry;
+    const { metadata, actionId } = actionEntry;
     return <div
       className={'action-entry' + (actionEntry === targetAction ? ' selected' : '')}
       key={actionId}
@@ -44,10 +44,10 @@ export const ActionList: React.FC<ActionListProps> = ({
       onMouseLeave={() => (highlightedAction === actionEntry) && onHighlighted(undefined)}
     >
       <div className='action-header'>
-        <div className={'action-error codicon codicon-issues'} hidden={!actionEntry.action.error} />
-        <div className='action-title'>{action.method}</div>
-        {action.params.selector && <div className='action-selector' title={action.params.selector}>{action.params.selector}</div>}
-        {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
+        <div className={'action-error codicon codicon-issues'} hidden={!metadata.error} />
+        <div className='action-title'>{metadata.method}</div>
+        {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
+        {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
       </div>
     </div>;
   })}</div>;

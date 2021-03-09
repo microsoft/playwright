@@ -19,8 +19,6 @@ import * as React from 'react';
 import { Expandable } from './helpers';
 import type { ResourceSnapshot } from '../../../server/snapshot/snapshotTypes';
 
-const utf8Encoder = new TextDecoder('utf-8');
-
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot,
   index: number,

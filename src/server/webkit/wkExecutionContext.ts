@@ -53,6 +53,16 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
+  rawCallFunctionNoReply(func: Function, ...args: any[]) {
+    this._session.send('Runtime.callFunctionOn', {
+      functionDeclaration: func.toString(),
+      objectId: args.find(a => a instanceof js.JSHandle)!._objectId,
+      arguments: args.map(a => a instanceof js.JSHandle ? { objectId: a._objectId } : { value: a }),
+      returnByValue: true,
+      emulateUserGesture: true
+    }).catch(() => {});
+  }
+
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
     try {
       let response = await this._session.send('Runtime.callFunctionOn', {

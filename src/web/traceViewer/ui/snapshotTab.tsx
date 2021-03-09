@@ -20,6 +20,7 @@ import './snapshotTab.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import { msToString } from '../../uiUtils';
+import type { Point } from '../../../common/types';
 
 export const SnapshotTab: React.FunctionComponent<{
   actionEntry: ActionEntry | undefined,
@@ -30,7 +31,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
-  const snapshots = actionEntry ? (actionEntry.action.snapshots || []) : [];
+  const snapshots = actionEntry ? (actionEntry.snapshots || []) : [];
   const { pageId, time } = selection || { pageId: undefined, time: 0 };
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
@@ -39,16 +40,20 @@ export const SnapshotTab: React.FunctionComponent<{
       return;
 
     let snapshotUri = undefined;
+    let point: Point | undefined = undefined;
     if (pageId) {
       snapshotUri = `${pageId}?time=${time}`;
     } else if (actionEntry) {
       const snapshot = snapshots[snapshotIndex];
-      if (snapshot && snapshot.snapshotName)
-        snapshotUri = `${actionEntry.action.pageId}?name=${snapshot.snapshotName}`;
+      if (snapshot && snapshot.snapshotName) {
+        snapshotUri = `${actionEntry.metadata.pageId}?name=${snapshot.snapshotName}`;
+        if (snapshot.snapshotName.includes('action'))
+          point = actionEntry.metadata.point;
+      }
     }
     const snapshotUrl = snapshotUri ? `${window.location.origin}/snapshot/${snapshotUri}` : 'data:text/html,Snapshot is not available';
     try {
-      (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl);
+      (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
     } catch (e) {
     }
   }, [actionEntry, snapshotIndex, pageId, time]);

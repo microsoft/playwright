@@ -18,8 +18,9 @@ import fs from 'fs';
 import path from 'path';
 import * as util from 'util';
 import { createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
-import { BrowserContext, Video } from '../../browserContext';
+import { BrowserContext } from '../../browserContext';
 import { Dialog } from '../../dialog';
+import { ElementHandle } from '../../dom';
 import { Frame, NavigationEvent } from '../../frames';
 import { helper, RegisteredListener } from '../../helper';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
@@ -28,18 +29,18 @@ import { PersistentSnapshotter } from '../../snapshot/persistentSnapshotter';
 import * as trace from '../common/traceEvents';
 
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
-const envTrace = getFromENV('PW_TRACE_DIR');
+const envTrace = getFromENV('PWTRACE_RESOURCE_DIR');
 
 export class Tracer implements InstrumentationListener {
   private _contextTracers = new Map<BrowserContext, ContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
-    const traceDir = envTrace || context._options._traceDir;
+    const traceDir = context._options._traceDir;
     if (!traceDir)
       return;
-    const traceStorageDir = path.join(traceDir, 'resources');
+    const resourcesDir = envTrace || path.join(traceDir, 'resources');
     const tracePath = path.join(traceDir, createGuid());
-    const contextTracer = new ContextTracer(context, traceStorageDir, tracePath);
+    const contextTracer = new ContextTracer(context, resourcesDir, tracePath);
     await contextTracer.start();
     this._contextTracers.set(context, contextTracer);
   }
@@ -52,15 +53,16 @@ export class Tracer implements InstrumentationListener {
     }
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onActionCheckpoint('before', sdkObject, metadata);
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('action', sdkObject, metadata, element);
   }
 
-  async onAfterInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onActionCheckpoint('after', sdkObject, metadata);
+  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('before', sdkObject, metadata, element);
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('after', sdkObject, metadata);
     this._contextTracers.get(sdkObject.attribution.context!)?.onAfterCall(sdkObject, metadata);
   }
 }
@@ -80,12 +82,10 @@ class ContextTracer {
   private _snapshotter: PersistentSnapshotter;
   private _eventListeners: RegisteredListener[];
   private _disposed = false;
-  private _traceFile: string;
 
-  constructor(context: BrowserContext, traceStorageDir: string, tracePrefix: string) {
+  constructor(context: BrowserContext, resourcesDir: string, tracePrefix: string) {
     const traceFile = tracePrefix + '-actions.trace';
     this._contextId = 'context@' + createGuid();
-    this._traceFile = traceFile;
     this._appendEventChain = mkdirIfNeeded(traceFile).then(() => traceFile);
     const event: trace.ContextCreatedTraceEvent = {
       timestamp: monotonicTime(),
@@ -98,7 +98,7 @@ class ContextTracer {
       debugName: context._options._debugName,
     };
     this._appendTraceEvent(event);
-    this._snapshotter = new PersistentSnapshotter(context, tracePrefix, traceStorageDir);
+    this._snapshotter = new PersistentSnapshotter(context, tracePrefix, resourcesDir);
     this._eventListeners = [
       helper.addEventListener(context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
@@ -108,12 +108,12 @@ class ContextTracer {
     await this._snapshotter.start();
   }
 
-  async onActionCheckpoint(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async _captureSnapshot(name: string, sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
     if (!sdkObject.attribution.page)
       return;
     const snapshotName = `${name}@${metadata.id}`;
     snapshotsForMetadata(metadata).push({ title: name, snapshotName });
-    this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName);
+    this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName, element);
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -123,16 +123,7 @@ class ContextTracer {
       timestamp: monotonicTime(),
       type: 'action',
       contextId: this._contextId,
-      pageId: sdkObject.attribution.page.uniqueId,
-      objectType: metadata.type,
-      method: metadata.method,
-      // FIXME: filter out evaluation snippets, binary
-      params: metadata.params,
-      stack: metadata.stack,
-      startTime: metadata.startTime,
-      endTime: metadata.endTime,
-      logs: metadata.log.slice(),
-      error: metadata.error,
+      metadata,
       snapshots: snapshotsForMetadata(metadata),
     };
     this._appendTraceEvent(event);
@@ -148,19 +139,6 @@ class ContextTracer {
       pageId,
     };
     this._appendTraceEvent(event);
-
-    page.on(Page.Events.VideoStarted, (video: Video) => {
-      if (this._disposed)
-        return;
-      const event: trace.PageVideoTraceEvent = {
-        timestamp: monotonicTime(),
-        type: 'page-video',
-        contextId: this._contextId,
-        pageId,
-        fileName: path.relative(path.dirname(this._traceFile), video._path),
-      };
-      this._appendTraceEvent(event);
-    });
 
     page.on(Page.Events.Dialog, (dialog: Dialog) => {
       if (this._disposed)

@@ -144,13 +144,10 @@ fixtures.isLinux.init(async ({ platform }, run) => {
 }, { scope: 'worker' });
 
 fixtures.contextOptions.init(async ({ video, testInfo }, run) => {
-  if (video) {
-    await run({
-      recordVideo: { dir: testInfo.outputPath('') },
-    });
-  } else {
-    await run({});
-  }
+  await run({
+    recordVideo: video ? { dir: testInfo.outputPath('') } : undefined,
+    _traceDir: process.env.PWTRACE ? testInfo.outputPath('') : undefined,
+  } as any);
 });
 
 fixtures.contextFactory.init(async ({ browser, contextOptions, testInfo, screenshotOnFailure }, run) => {

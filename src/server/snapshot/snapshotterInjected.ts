@@ -317,8 +317,6 @@ export function frameSnapshotStreamer() {
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
-          // if (node === target)
-          //   attrs[' __playwright_target__] = '';
           if (nodeName === 'INPUT') {
             const value = (element as HTMLInputElement).value;
             expectValue('value');
