@@ -326,34 +326,34 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  private _retarget(node: Node): Element | null {
+  private _retarget(node: Node, behavior: 'follow-label' | 'no-follow-label'): Element | null {
     let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
     if (!element)
       return null;
     element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
-    if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
-        !(element as any).isContentEditable) {
-      // Go up to the label that might be connected to the input/textarea.
-      element = element.closest('label') || element;
+    if (behavior === 'follow-label') {
+      if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
+          !(element as any).isContentEditable) {
+        // Go up to the label that might be connected to the input/textarea.
+        element = element.closest('label') || element;
+      }
+      if (element.nodeName === 'LABEL')
+        element = (element as HTMLLabelElement).control || element;
     }
-    if (element.nodeName === 'LABEL')
-      element = (element as HTMLLabelElement).control || element;
     return element;
   }
 
   waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[],
-    callback: (element: Element | null, progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol): InjectedScriptPoll<T | 'error:notconnected' | FatalDOMError> {
+    callback: (node: Node, progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol): InjectedScriptPoll<T | 'error:notconnected' | FatalDOMError> {
     let lastRect: { x: number, y: number, width: number, height: number } | undefined;
     let counter = 0;
     let samePositionCounter = 0;
     let lastTime = 0;
 
     const predicate = (progress: InjectedScriptProgress, continuePolling: symbol) => {
-      const element = this._retarget(node);
-
       for (const state of states) {
         if (state !== 'stable') {
-          const result = this._checkElementState(element, state);
+          const result = this.checkElementState(node, state);
           if (typeof result !== 'boolean')
             return result;
           if (!result) {
@@ -363,6 +363,7 @@ export class InjectedScript {
           continue;
         }
 
+        const element = this._retarget(node, 'no-follow-label');
         if (!element)
           return 'error:notconnected';
 
@@ -394,7 +395,7 @@ export class InjectedScript {
           return continuePolling;
       }
 
-      return callback(element, progress, continuePolling);
+      return callback(node, progress, continuePolling);
     };
 
     if (this._replaceRafWithTimeout)
@@ -403,12 +404,14 @@ export class InjectedScript {
       return this.pollRaf(predicate);
   }
 
-  private _checkElementState(element: Element | null, state: ElementStateWithoutStable): boolean | 'error:notconnected' | FatalDOMError {
+  checkElementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' | FatalDOMError {
+    const element = this._retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
         return true;
       return 'error:notconnected';
     }
+
     if (state === 'visible')
       return this.isVisible(element);
     if (state === 'hidden')
@@ -436,13 +439,9 @@ export class InjectedScript {
     throw new Error(`Unexpected element state "${state}"`);
   }
 
-  checkElementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' | FatalDOMError {
-    const element = this._retarget(node);
-    return this._checkElementState(element, state);
-  }
-
   selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
-    element: Element | null, progress: InjectedScriptProgress, continuePolling: symbol): string[] | 'error:notconnected' | FatalDOMError | symbol {
+    node: Node, progress: InjectedScriptProgress, continuePolling: symbol): string[] | 'error:notconnected' | FatalDOMError | symbol {
+    const element = this._retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() !== 'select')
@@ -487,7 +486,8 @@ export class InjectedScript {
     return selectedOptions.map(option => option.value);
   }
 
-  fill(value: string, element: Element | null, progress: InjectedScriptProgress): FatalDOMError | 'error:notconnected' | 'needsinput' | 'done' {
+  fill(value: string, node: Node, progress: InjectedScriptProgress): FatalDOMError | 'error:notconnected' | 'needsinput' | 'done' {
+    const element = this._retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
@@ -523,7 +523,8 @@ export class InjectedScript {
     return 'needsinput';  // Still need to input the value.
   }
 
-  selectText(element: Element | null): 'error:notconnected' | 'done' {
+  selectText(node: Node): 'error:notconnected' | 'done' {
+    const element = this._retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
