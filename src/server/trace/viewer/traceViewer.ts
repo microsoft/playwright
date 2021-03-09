@@ -19,10 +19,10 @@ import path from 'path';
 import * as playwright from '../../../..';
 import * as util from 'util';
 import { TraceModel } from './traceModel';
-import { NetworkResourceTraceEvent, TraceEvent } from '../common/traceEvents';
+import { TraceEvent } from '../common/traceEvents';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
-import { SnapshotServer, SnapshotStorage } from '../../snapshot/snapshotServer';
-import { SnapshotRenderer } from '../../snapshot/snapshotRenderer';
+import { SnapshotServer } from '../../snapshot/snapshotServer';
+import { PersistentSnapshotStorage } from '../../snapshot/snapshotStorage';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -31,29 +31,16 @@ type TraceViewerDocument = {
   model: TraceModel;
 };
 
-class TraceViewer implements SnapshotStorage {
+class TraceViewer {
   private _document: TraceViewerDocument | undefined;
 
-  async load(traceDir: string) {
+  async show(traceDir: string) {
     const resourcesDir = path.join(traceDir, 'resources');
     const model = new TraceModel();
     this._document = {
       model,
       resourcesDir,
     };
-
-    for (const name of fs.readdirSync(traceDir)) {
-      if (!name.endsWith('.trace'))
-        continue;
-      const filePath = path.join(traceDir, name);
-      const traceContent = await fsReadFileAsync(filePath, 'utf8');
-      const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
-      model.appendEvents(events);
-    }
-  }
-
-  async show() {
-    const browser = await playwright.chromium.launch({ headless: false });
 
     // Served by TraceServer
     // - "/tracemodel" - json with trace model.
@@ -70,8 +57,16 @@ class TraceViewer implements SnapshotStorage {
     // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
     //   and translates them into "/resources/<resourceId>".
 
+    const actionsTrace = fs.readdirSync(traceDir).find(name => name.endsWith('-actions.trace'))!;
+    const tracePrefix = path.join(traceDir, actionsTrace.substring(0, actionsTrace.indexOf('-actions.trace')));
     const server = new HttpServer();
-    new SnapshotServer(server, this);
+    const snapshotStorage = new PersistentSnapshotStorage();
+    await snapshotStorage.load(tracePrefix, resourcesDir);
+    new SnapshotServer(server, snapshotStorage);
+
+    const traceContent = await fsReadFileAsync(path.join(traceDir, actionsTrace), 'utf8');
+    const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
+    model.appendEvents(events, snapshotStorage);
 
     const traceModelHandler: ServerRouteHandler = (request, response) => {
       response.statusCode = 200;
@@ -112,45 +107,15 @@ class TraceViewer implements SnapshotStorage {
     server.routePrefix('/sha1/', sha1Handler);
 
     const urlPrefix = await server.start();
+
+    const browser = await playwright.chromium.launch({ headless: false });
     const uiPage = await browser.newPage({ viewport: null });
     uiPage.on('close', () => process.exit(0));
     await uiPage.goto(urlPrefix + '/traceviewer/traceViewer/index.html');
-  }
-
-  resourceById(resourceId: string): NetworkResourceTraceEvent | undefined {
-    const traceModel = this._document!.model;
-    return traceModel.resourceById.get(resourceId)!;
-  }
-
-  snapshotById(snapshotId: string): SnapshotRenderer | undefined {
-    const traceModel = this._document!.model;
-    const parsed = parseSnapshotName(snapshotId);
-    const snapshot = parsed.snapshotId ? traceModel.findSnapshotById(parsed.pageId, parsed.frameId, parsed.snapshotId) : traceModel.findSnapshotByTime(parsed.pageId, parsed.frameId, parsed.timestamp!);
-    return snapshot;
-  }
-
-  resourceContent(sha1: string): Buffer | undefined {
-    return fs.readFileSync(path.join(this._document!.resourcesDir, sha1));
   }
 }
 
 export async function showTraceViewer(traceDir: string) {
   const traceViewer = new TraceViewer();
-  if (traceDir)
-    await traceViewer.load(traceDir);
-  await traceViewer.show();
-}
-
-function parseSnapshotName(pathname: string): { pageId: string, frameId: string, timestamp?: number, snapshotId?: string } {
-  const parts = pathname.split('/');
-  // - pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
-  // - pageId/<pageId>/timestamp/<timestamp>/<frameId>
-  if (parts.length !== 5 || parts[0] !== 'pageId' || (parts[2] !== 'snapshotId' && parts[2] !== 'timestamp'))
-    throw new Error(`Unexpected path "${pathname}"`);
-  return {
-    pageId: parts[1],
-    frameId: parts[4] === 'main' ? parts[1] : parts[4],
-    snapshotId: (parts[2] === 'snapshotId' ? parts[3] : undefined),
-    timestamp: (parts[2] === 'timestamp' ? +parts[3] : undefined),
-  };
+  await traceViewer.show(traceDir);
 }

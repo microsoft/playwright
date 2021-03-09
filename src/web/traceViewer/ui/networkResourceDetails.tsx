@@ -17,19 +17,19 @@
 import './networkResourceDetails.css';
 import * as React from 'react';
 import { Expandable } from './helpers';
-import { NetworkResourceTraceEvent } from '../../../server/trace/common/traceEvents';
+import type { ResourceSnapshot } from '../../../server/snapshot/snapshotTypes';
 
 const utf8Encoder = new TextDecoder('utf-8');
 
 export const NetworkResourceDetails: React.FunctionComponent<{
-  resource: NetworkResourceTraceEvent,
+  resource: ResourceSnapshot,
   index: number,
   selected: boolean,
   setSelected: React.Dispatch<React.SetStateAction<number>>,
 }> = ({ resource, index, selected, setSelected }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [requestBody, setRequestBody] = React.useState<string | null>(null);
-  const [responseBody, setResponseBody] = React.useState<ArrayBuffer | null>(null);
+  const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string } | null>(null);
 
   React.useEffect(() => {
     setExpanded(false);
@@ -45,14 +45,22 @@ export const NetworkResourceDetails: React.FunctionComponent<{
       }
 
       if (resource.responseSha1 !== 'none') {
+        const useBase64 = resource.contentType.includes('image');
         const response = await fetch(`/sha1/${resource.responseSha1}`);
-        const responseResource = await response.arrayBuffer();
-        setResponseBody(responseResource);
+        if (useBase64) {
+          const blob = await response.blob();
+          const reader = new FileReader();
+          const eventPromise = new Promise<any>(f => reader.onload = f);
+          reader.readAsDataURL(blob);
+          setResponseBody({ dataUrl: (await eventPromise).target.result });
+        } else {
+          setResponseBody({ text: await response.text() });
+        }
       }
     };
 
     readResources();
-  }, [expanded, resource.responseSha1, resource.requestSha1]);
+  }, [expanded, resource.responseSha1, resource.requestSha1, resource.contentType]);
 
   function formatBody(body: string | null, contentType: string): string {
     if (body === null)
@@ -111,8 +119,8 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         {resource.requestSha1 !== 'none' ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
         <h4>Response Body</h4>
         {resource.responseSha1 === 'none' ? <div className='network-request-response-body'>Response body is not available for this request.</div> : ''}
-        {responseBody !== null && resource.contentType.includes('image') ? <img src={`data:${resource.contentType};base64,${btoa(String.fromCharCode(...new Uint8Array(responseBody)))}`} /> : ''}
-        {responseBody !== null && !resource.contentType.includes('image') ? <div className='network-request-response-body'>{formatBody(utf8Encoder.decode(responseBody), resource.contentType)}</div> : ''}
+        {responseBody !== null && responseBody.dataUrl ? <img src={responseBody.dataUrl} /> : ''}
+        {responseBody !== null && responseBody.text ? <div className='network-request-response-body'>{formatBody(responseBody.text, resource.contentType)}</div> : ''}
       </div>
     }/>
   </div>;

@@ -203,12 +203,12 @@ export class RecorderSupplement {
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
     await this._context.exposeBinding('_playwrightRecorderState', false, source => {
-      let snapshotId: string | undefined;
+      let snapshotUrl: string | undefined;
       let actionSelector: string | undefined;
       let actionPoint: Point | undefined;
       if (this._hoveredSnapshot) {
-        snapshotId = this._hoveredSnapshot.phase + '@' + this._hoveredSnapshot.callLogId;
-        const metadata = this._allMetadatas.get(this._hoveredSnapshot.callLogId);
+        const metadata = this._allMetadatas.get(this._hoveredSnapshot.callLogId)!;
+        snapshotUrl = `${metadata.pageId}?name=${this._hoveredSnapshot.phase}@${this._hoveredSnapshot.callLogId}`;
         actionPoint = this._hoveredSnapshot.phase === 'in' ? metadata?.point : undefined;
       } else {
         for (const [metadata, sdkObject] of this._currentCallsMetadata) {
@@ -222,7 +222,7 @@ export class RecorderSupplement {
         mode: this._mode,
         actionPoint,
         actionSelector,
-        snapshotId,
+        snapshotUrl,
       };
       return uiState;
     });
@@ -403,9 +403,9 @@ export class RecorderSupplement {
 
   _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'in') {
     if (sdkObject.attribution.page) {
-      const snapshotId = `${phase}@${metadata.id}`;
-      this._snapshots.add(snapshotId);
-      this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotId);
+      const snapshotName = `${phase}@${metadata.id}`;
+      this._snapshots.add(snapshotName);
+      this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName);
     }
   }
 

@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-import { BrowserContext, Video } from '../../browserContext';
-import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
-import * as trace from '../common/traceEvents';
+import fs from 'fs';
 import path from 'path';
 import * as util from 'util';
-import fs from 'fs';
 import { createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
-import { Page } from '../../page';
-import { Snapshotter } from '../../snapshot/snapshotter';
-import { helper, RegisteredListener } from '../../helper';
+import { BrowserContext, Video } from '../../browserContext';
 import { Dialog } from '../../dialog';
 import { Frame, NavigationEvent } from '../../frames';
+import { helper, RegisteredListener } from '../../helper';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
-import { FrameSnapshot } from '../../snapshot/snapshot';
+import { Page } from '../../page';
+import { PersistentSnapshotter } from '../../snapshot/persistentSnapshotter';
+import * as trace from '../common/traceEvents';
 
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
-const fsAccessAsync = util.promisify(fs.access.bind(fs));
 const envTrace = getFromENV('PW_TRACE_DIR');
 
 export class Tracer implements InstrumentationListener {
@@ -42,7 +38,7 @@ export class Tracer implements InstrumentationListener {
     if (!traceDir)
       return;
     const traceStorageDir = path.join(traceDir, 'resources');
-    const tracePath = path.join(traceDir, createGuid() + '.trace');
+    const tracePath = path.join(traceDir, createGuid());
     const contextTracer = new ContextTracer(context, traceStorageDir, tracePath);
     await contextTracer.start();
     this._contextTracers.set(context, contextTracer);
@@ -72,28 +68,25 @@ export class Tracer implements InstrumentationListener {
 const snapshotsSymbol = Symbol('snapshots');
 
 // This is an official way to pass snapshots between onBefore/AfterInputAction and onAfterCall.
-function snapshotsForMetadata(metadata: CallMetadata): { name: string, snapshotId: string }[] {
+function snapshotsForMetadata(metadata: CallMetadata): { title: string, snapshotName: string }[] {
   if (!(metadata as any)[snapshotsSymbol])
     (metadata as any)[snapshotsSymbol] = [];
   return (metadata as any)[snapshotsSymbol];
 }
 
-class ContextTracer implements SnapshotterDelegate {
+class ContextTracer {
   private _contextId: string;
-  private _traceStoragePromise: Promise<string>;
   private _appendEventChain: Promise<string>;
-  private _writeArtifactChain: Promise<void>;
-  private _snapshotter: Snapshotter;
+  private _snapshotter: PersistentSnapshotter;
   private _eventListeners: RegisteredListener[];
   private _disposed = false;
   private _traceFile: string;
 
-  constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
+  constructor(context: BrowserContext, traceStorageDir: string, tracePrefix: string) {
+    const traceFile = tracePrefix + '-actions.trace';
     this._contextId = 'context@' + createGuid();
     this._traceFile = traceFile;
-    this._traceStoragePromise = mkdirIfNeeded(path.join(traceStorageDir, 'sha1')).then(() => traceStorageDir);
     this._appendEventChain = mkdirIfNeeded(traceFile).then(() => traceFile);
-    this._writeArtifactChain = Promise.resolve();
     const event: trace.ContextCreatedTraceEvent = {
       timestamp: monotonicTime(),
       type: 'context-created',
@@ -105,59 +98,22 @@ class ContextTracer implements SnapshotterDelegate {
       debugName: context._options._debugName,
     };
     this._appendTraceEvent(event);
-    this._snapshotter = new Snapshotter(context, this);
+    this._snapshotter = new PersistentSnapshotter(context, tracePrefix, traceStorageDir);
     this._eventListeners = [
       helper.addEventListener(context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
   }
 
   async start() {
-    await this._snapshotter.initialize();
-    await this._snapshotter.setAutoSnapshotInterval(100);
-  }
-
-  onBlob(blob: SnapshotterBlob): void {
-    this._writeArtifact(blob.sha1, blob.buffer);
-  }
-
-  onResource(resource: SnapshotterResource): void {
-    const event: trace.NetworkResourceTraceEvent = {
-      timestamp: monotonicTime(),
-      type: 'resource',
-      contextId: this._contextId,
-      pageId: resource.pageId,
-      frameId: resource.frameId,
-      resourceId: resource.resourceId,
-      url: resource.url,
-      contentType: resource.contentType,
-      responseHeaders: resource.responseHeaders,
-      requestHeaders: resource.requestHeaders,
-      method: resource.method,
-      status: resource.status,
-      requestSha1: resource.requestSha1,
-      responseSha1: resource.responseSha1,
-    };
-    this._appendTraceEvent(event);
-  }
-
-  onFrameSnapshot(snapshot: FrameSnapshot): void {
-    const event: trace.FrameSnapshotTraceEvent = {
-      timestamp: monotonicTime(),
-      type: 'snapshot',
-      contextId: this._contextId,
-      pageId: snapshot.pageId,
-      frameId: snapshot.frameId,
-      snapshot: snapshot,
-    };
-    this._appendTraceEvent(event);
+    await this._snapshotter.start();
   }
 
   async onActionCheckpoint(name: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!sdkObject.attribution.page)
       return;
-    const snapshotId = createGuid();
-    snapshotsForMetadata(metadata).push({ name, snapshotId });
-    this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotId);
+    const snapshotName = `${name}@${metadata.id}`;
+    snapshotsForMetadata(metadata).push({ title: name, snapshotName });
+    this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName);
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -285,24 +241,7 @@ class ContextTracer implements SnapshotterDelegate {
 
     // Ensure all writes are finished.
     await this._appendEventChain;
-    await this._writeArtifactChain;
-  }
-
-  private _writeArtifact(sha1: string, buffer: Buffer) {
-    // Save all write promises to wait for them in dispose.
-    const promise = this._innerWriteArtifact(sha1, buffer);
-    this._writeArtifactChain = this._writeArtifactChain.then(() => promise);
-  }
-
-  private async _innerWriteArtifact(sha1: string, buffer: Buffer): Promise<void> {
-    const traceDirectory = await this._traceStoragePromise;
-    const filePath = path.join(traceDirectory, sha1);
-    try {
-      await fsAccessAsync(filePath);
-    } catch (e) {
-      // File does not exist - write it.
-      await fsWriteFileAsync(filePath, buffer);
-    }
+    await this._snapshotter.dispose();
   }
 
   private _appendTraceEvent(event: any) {

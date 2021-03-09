@@ -30,5 +30,3 @@ export const NetworkTab: React.FunctionComponent<{
     })
   }</div>;
 };
-
-

@@ -21,22 +21,8 @@ import { helper, RegisteredListener } from '../helper';
 import { debugLogger } from '../../utils/debugLogger';
 import { Frame } from '../frames';
 import { SnapshotData, frameSnapshotStreamer, kSnapshotBinding, kSnapshotStreamer } from './snapshotterInjected';
-import { calculateSha1, createGuid } from '../../utils/utils';
-import { FrameSnapshot } from './snapshot';
-
-export type SnapshotterResource = {
-  resourceId: string,
-  pageId: string,
-  frameId: string,
-  url: string,
-  contentType: string,
-  responseHeaders: { name: string, value: string }[],
-  requestHeaders: { name: string, value: string }[],
-  method: string,
-  status: number,
-  requestSha1: string,
-  responseSha1: string,
-};
+import { calculateSha1, createGuid, monotonicTime } from '../../utils/utils';
+import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 
 export type SnapshotterBlob = {
   buffer: Buffer,
@@ -45,7 +31,7 @@ export type SnapshotterBlob = {
 
 export interface SnapshotterDelegate {
   onBlob(blob: SnapshotterBlob): void;
-  onResource(resource: SnapshotterResource): void;
+  onResourceSnapshot(resource: ResourceSnapshot): void;
   onFrameSnapshot(snapshot: FrameSnapshot): void;
 }
 
@@ -68,13 +54,14 @@ export class Snapshotter {
   async initialize() {
     await this._context.exposeBinding(kSnapshotBinding, false, (source, data: SnapshotData) => {
       const snapshot: FrameSnapshot = {
-        snapshotId: data.snapshotId,
+        snapshotName: data.snapshotName,
         pageId: source.page.uniqueId,
         frameId: source.frame.uniqueId,
         frameUrl: data.url,
         doctype: data.doctype,
         html: data.html,
         viewport: data.viewport,
+        timestamp: monotonicTime(),
         pageTimestamp: data.timestamp,
         collectionTime: data.collectionTime,
         resourceOverrides: [],
@@ -105,9 +92,9 @@ export class Snapshotter {
     helper.removeEventListeners(this._eventListeners);
   }
 
-  captureSnapshot(page: Page, snapshotId: string) {
+  captureSnapshot(page: Page, snapshotName?: string) {
     // This needs to be sync, as in not awaiting for anything before we issue the command.
-    const expression = `window[${JSON.stringify(kSnapshotStreamer)}].captureSnapshot(${JSON.stringify(snapshotId)})`;
+    const expression = `window[${JSON.stringify(kSnapshotStreamer)}].captureSnapshot(${JSON.stringify(snapshotName)})`;
     const snapshotFrame = (frame: Frame) => {
       const context = frame._existingMainContext();
       context?.rawEvaluate(expression).catch(debugExceptionHandler);
@@ -170,7 +157,7 @@ export class Snapshotter {
     const requestHeaders = original.headers();
     const body = await response.body().catch(e => debugLogger.log('error', e));
     const responseSha1 = body ? calculateSha1(body) : 'none';
-    const resource: SnapshotterResource = {
+    const resource: ResourceSnapshot = {
       pageId: page.uniqueId,
       frameId: response.frame().uniqueId,
       resourceId: 'resource@' + createGuid(),
@@ -182,8 +169,9 @@ export class Snapshotter {
       status,
       requestSha1,
       responseSha1,
+      timestamp: monotonicTime()
     };
-    this._delegate.onResource(resource);
+    this._delegate.onResourceSnapshot(resource);
     if (requestBody)
       this._delegate.onBlob({ sha1: requestSha1, buffer: requestBody });
     if (body)

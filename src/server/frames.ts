@@ -24,7 +24,7 @@ import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
-import { assert, makeWaitForNextTask } from '../utils/utils';
+import { assert, createGuid, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
@@ -415,7 +415,7 @@ export class Frame extends SdkObject {
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page);
-    this.uniqueId = parentFrame ? `frame@${page.uniqueId}/${id}` : page.uniqueId;
+    this.uniqueId = parentFrame ? `frame@${createGuid()}` : page.uniqueId;
     this.attribution.frame = this;
     this._id = id;
     this._page = page;

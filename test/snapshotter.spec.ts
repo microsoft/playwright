@@ -16,9 +16,12 @@
 
 import { folio as baseFolio } from './fixtures';
 import { InMemorySnapshotter } from '../lib/server/snapshot/inMemorySnapshotter';
+import { HttpServer } from '../lib/utils/httpServer';
+import { SnapshotServer } from '../lib/server/snapshot/snapshotServer';
 
 type TestFixtures = {
   snapshotter: any;
+  snapshotPort: number;
 };
 
 export const fixtures = baseFolio.extend<TestFixtures>();
@@ -27,6 +30,15 @@ fixtures.snapshotter.init(async ({ context, toImpl }, runTest) => {
   await snapshotter.initialize();
   await runTest(snapshotter);
   await snapshotter.dispose();
+});
+
+fixtures.snapshotPort.init(async ({ snapshotter, testWorkerIndex }, runTest) => {
+  const httpServer = new HttpServer();
+  new SnapshotServer(httpServer, snapshotter);
+  const port = 9700 + testWorkerIndex;
+  httpServer.start(port);
+  await runTest(port);
+  httpServer.stop();
 });
 
 const { it, describe, expect } = fixtures.build();
@@ -122,12 +134,53 @@ describe('snapshots', (suite, { mode }) => {
     const { sha1 } = resources[cssHref];
     expect(snapshotter.resourceContent(sha1).toString()).toBe('button { color: blue; }');
   });
+
+  it('should capture iframe', (test, { browserName }) => {
+    test.skip(browserName === 'firefox');
+  }, async ({ contextFactory, snapshotter, page, server, snapshotPort, toImpl }) => {
+    await page.route('**/empty.html', route => {
+      route.fulfill({
+        body: '<iframe src="iframe.html"></iframe>',
+        contentType: 'text/html'
+      }).catch(() => {});
+    });
+    await page.route('**/iframe.html', route => {
+      route.fulfill({
+        body: '<html><button>Hello iframe</button></html>',
+        contentType: 'text/html'
+      }).catch(() => {});
+    });
+    await page.goto(server.EMPTY_PAGE);
+
+    // Marking iframe hierarchy is racy, do not expect snapshot, wait for it.
+    let counter = 0;
+    let snapshot: any;
+    for (; ; ++counter) {
+      snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
+      const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
+      if (text === '<IFRAME src=\"/snapshot/<id>\"></IFRAME>')
+        break;
+      await page.waitForTimeout(250);
+    }
+
+    // Render snapshot, check expectations.
+    const previewContext = await contextFactory();
+    const previewPage = await previewContext.newPage();
+    await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/`);
+    await previewPage.evaluate(snapshotId => {
+      (window as any).showSnapshot(snapshotId);
+    }, `${snapshot.snapshot().pageId}?name=snapshot${counter}`);
+    while (previewPage.frames().length < 4)
+      await new Promise(f => previewPage.once('frameattached', f));
+    const button = await previewPage.frames()[3].waitForSelector('button');
+    expect(await button.textContent()).toBe('Hello iframe');
+  });
 });
 
 function distillSnapshot(snapshot) {
   const { html } = snapshot.render();
   return html
-      .replace(/<script>function snapshotScript[.\s\S]*/, '')
+      .replace(/<script>[.\s\S]+<\/script>/, '')
       .replace(/<BASE href="about:blank">/, '')
       .replace(/<BASE href="http:\/\/localhost:[\d]+\/empty.html">/, '')
       .replace(/<HTML>/, '')

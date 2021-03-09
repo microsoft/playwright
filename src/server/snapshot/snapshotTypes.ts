@@ -14,6 +14,21 @@
  * limitations under the License.
  */
 
+export type ResourceSnapshot = {
+  resourceId: string,
+  pageId: string,
+  frameId: string,
+  url: string,
+  contentType: string,
+  responseHeaders: { name: string, value: string }[],
+  requestHeaders: { name: string, value: string }[],
+  method: string,
+  status: number,
+  requestSha1: string,
+  responseSha1: string,
+  timestamp: number,
+};
+
 export type NodeSnapshot =
   // Text node.
   string |
@@ -34,10 +49,11 @@ export type ResourceOverride = {
 };
 
 export type FrameSnapshot = {
-  snapshotId: string,
+  snapshotName?: string,
   pageId: string,
   frameId: string,
   frameUrl: string,
+  timestamp: number,
   pageTimestamp: number,
   collectionTime: number,
   doctype?: string,
