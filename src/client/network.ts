@@ -187,7 +187,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
   async abort(errorCode?: string) {
     return this._wrapApiCall('route.abort', async (channel: channels.RouteChannel) => {
       await channel.abort({ errorCode });
-    });
+    }).catch(e => {});  // Might be racing against page/context/connection closure.
   }
 
   async fulfill(options: { status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
@@ -225,7 +225,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         headers: headersObjectToArray(headers),
         body,
         isBase64
-      });
+      }).catch(e => {});  // Might be racing against page/context/connection closure.
     });
   }
 
@@ -237,7 +237,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
         postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
-      });
+      }).catch(e => {});  // Might be racing against page/context/connection closure.
     });
   }
 }

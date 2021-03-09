@@ -106,3 +106,20 @@ it('should fall back to context.route', async ({browser, server}) => {
   expect(await response.text()).toBe('context');
   await context.close();
 });
+
+it('should work after close', async ({browser, server}) => {
+  const context = await browser.newContext();
+
+  let doneCallback;
+  const done = new Promise<void>(f => doneCallback = f);
+  await context.route('**/empty.html', async route => {
+    // Do something asynchronously, meanwhile context is closed.
+    await context.close();
+    await route.fulfill({ status: 200, body: 'context' });
+    doneCallback();
+  });
+
+  const page = await context.newPage();
+  page.goto(server.EMPTY_PAGE).catch(e => {});
+  await done;
+});

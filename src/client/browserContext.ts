@@ -79,8 +79,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
         return;
       }
     }
-    // it can race with BrowserContext.close() which then throws since its closed
-    route.continue().catch(() => {});
+    route.continue();
   }
 
   async _onBinding(bindingCall: BindingCall) {
