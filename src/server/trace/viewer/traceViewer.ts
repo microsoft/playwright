@@ -115,7 +115,7 @@ class TraceViewer {
     const traceViewerPlaywright = createPlaywright(true);
     const args = [
       '--app=data:text/html,',
-      '--window-position=1280,10',
+      '--window-size=1280,800'
     ];
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);

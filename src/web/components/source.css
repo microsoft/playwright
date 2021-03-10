@@ -24,6 +24,7 @@
   font-size: 11px;
   line-height: 16px;
   background: white;
+  user-select: text;
 }
 
 .source-line {
@@ -36,7 +37,7 @@
   padding: 0 8px;
   width: 30px;
   text-align: right;
-  background: #edebe9;
+  background: #f6f5f4;
   user-select: none;
 }
 

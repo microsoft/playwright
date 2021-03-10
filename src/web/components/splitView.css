@@ -21,6 +21,10 @@
   position: relative;
 }
 
+.split-view.horizontal {
+  flex-direction: row;
+}
+
 .split-view-main {
   display: flex;
   flex: auto;
@@ -32,12 +36,29 @@
   border-top: 1px solid #ddd;
 }
 
+.split-view.vertical > .split-view-sidebar {
+  border-top: 1px solid #ddd;
+}
+
+.split-view.horizontal > .split-view-sidebar {
+  border-left: 1px solid #ddd;
+}
+
 .split-view-resizer {
   position: absolute;
+  z-index: 100;
+}
+
+.split-view.vertical > .split-view-resizer {
   left: 0;
   right: 0;
   height: 12px;
-  cursor: resize;
   cursor: ns-resize;
-  z-index: 100;
+}
+
+.split-view.horizontal > .split-view-resizer {
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  cursor: ew-resize;
 }

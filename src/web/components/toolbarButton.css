@@ -32,7 +32,7 @@
 }
 
 .toolbar-button:not(.disabled):hover {
-  color: #555;
+  color: #333;
 }
 
 .toolbar-button .codicon {

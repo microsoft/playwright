@@ -14,50 +14,42 @@
   limitations under the License.
 */
 
-.snapshot-tab {
+.stack-trace {
+  flex: 1 1 120px;
   display: flex;
-  flex: auto;
   flex-direction: column;
   align-items: stretch;
+  overflow-y: auto;
 }
 
-.snapshot-controls {
-  flex: 0 0 24px;
+.stack-trace-frame {
+  flex: 0 0 20px;
+  font-size: smaller;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 10px 4px 0 0;
-}
-
-.snapshot-toggle {
-  padding: 4px 8px;
   cursor: pointer;
-  border-radius: 20px;
-  margin-left: 4px;
+  padding: 0 5px;
 }
 
-.snapshot-toggle:hover {
-  background-color: #ededed;
+.stack-trace-frame.selected,
+.stack-trace-frame:hover {
+  background-color: #eaeaea;
 }
 
-.snapshot-toggle.toggled {
-  background: var(--inactive-focus-ring);
+.stack-trace-frame-function {
+  flex: 1 1 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.snapshot-wrapper {
-  flex: auto;
-  margin: 1px;
-  padding: 10px;
+.stack-trace-frame-location {
+  flex: 1 1 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: end;
 }
 
-.snapshot-container {
-  display: block;
-  background: white;
-  box-shadow: rgb(0 0 0 / 15%) 0px 0.1em 4.5em;
-}
-
-iframe#snapshot {
-  width: 100%;
-  height: 100%;
-  border: none;
+.stack-trace-frame-line {
+  flex: none;
 }

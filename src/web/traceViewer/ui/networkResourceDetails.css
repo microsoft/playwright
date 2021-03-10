@@ -15,15 +15,12 @@
 */
 
 .network-request {
-  box-shadow: var(--box-shadow);
   white-space: nowrap;
   display: flex;
   align-items: center;
   padding: 0 10px;
-  margin-bottom: 10px;
   background: #fdfcfc;
   width: 100%;
-  border: 3px solid transparent;
   flex: none;
   outline: none;
 }
@@ -38,23 +35,14 @@
 }
 
 .network-request-title {
-  height: 36px;
+  height: 28px;
   display: flex;
   align-items: center;
   flex: 1;
 }
 
 .network-request-title-status {
-  font-weight: bold;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  padding: 0px 5px;
-  margin-right: 5px;
-}
-
-.network-request-title-status.status-success {
-  background-color: var(--green);
+  padding-right: 5px;
 }
 
 .network-request-title-status.status-failure {
@@ -66,18 +54,10 @@
   background-color: var(--white);
 }
 
-.network-request-title-method {
-  font-weight: bold;
-}
-
 .network-request-title-url {
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
-}
-
-.network-request-title-content-type {
-  font-weight: bold;
 }
 
 .network-request-details {

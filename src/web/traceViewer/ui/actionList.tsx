@@ -33,22 +33,19 @@ export const ActionList: React.FC<ActionListProps> = ({
   onSelected = () => {},
   onHighlighted = () => {},
 }) => {
-  const targetAction = highlightedAction || selectedAction;
   return <div className='action-list'>{actions.map(actionEntry => {
     const { metadata, actionId } = actionEntry;
     return <div
-      className={'action-entry' + (actionEntry === targetAction ? ' selected' : '')}
+      className={'action-entry' + (actionEntry === selectedAction ? ' selected' : '')}
       key={actionId}
       onClick={() => onSelected(actionEntry)}
       onMouseEnter={() => onHighlighted(actionEntry)}
       onMouseLeave={() => (highlightedAction === actionEntry) && onHighlighted(undefined)}
     >
-      <div className='action-header'>
-        <div className={'action-error codicon codicon-issues'} hidden={!metadata.error} />
-        <div className='action-title'>{metadata.method}</div>
-        {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
-        {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
-      </div>
+      <div className={'action-error codicon codicon-issues'} hidden={!metadata.error} />
+      <div className='action-title'>{metadata.method}</div>
+      {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
+      {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
     </div>;
   })}</div>;
 };

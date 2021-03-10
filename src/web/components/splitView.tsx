@@ -20,6 +20,7 @@ import * as React from 'react';
 export interface SplitViewProps {
   sidebarSize: number,
   sidebarHidden?: boolean
+  orientation?: 'vertical' | 'horizontal',
 }
 
 const kMinSidebarSize = 50;
@@ -27,26 +28,30 @@ const kMinSidebarSize = 50;
 export const SplitView: React.FC<SplitViewProps> = ({
   sidebarSize,
   sidebarHidden,
+  orientation = 'vertical',
   children
 }) => {
   let [size, setSize] = React.useState<number>(Math.max(kMinSidebarSize, sidebarSize));
-  const [resizing, setResizing] = React.useState<{ offsetY: number, size: number } | null>(null);
+  const [resizing, setResizing] = React.useState<{ offset: number, size: number } | null>(null);
 
   const childrenArray = React.Children.toArray(children);
   document.body.style.userSelect = resizing ? 'none' : 'inherit';
-  return <div className='split-view'>
+  const resizerStyle = orientation === 'vertical' ?
+    {bottom: resizing ? 0 : size - 4, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 } :
+    {right: resizing ? 0 : size - 4, left: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
+  return <div className={'split-view ' + orientation}>
     <div className='split-view-main'>{childrenArray[0]}</div>
     { !sidebarHidden && <div style={{flexBasis: size}} className='split-view-sidebar'>{childrenArray[1]}</div> }
     { !sidebarHidden && <div
-      style={{bottom: resizing ? 0 : size - 4, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 }}
+      style={resizerStyle}
       className='split-view-resizer'
-      onMouseDown={event => setResizing({ offsetY: event.clientY, size })}
+      onMouseDown={event => setResizing({ offset: orientation === 'vertical' ? event.clientY : event.clientX, size })}
       onMouseUp={() => setResizing(null)}
       onMouseMove={event => {
         if (!event.buttons)
           setResizing(null);
         else if (resizing)
-          setSize(Math.max(kMinSidebarSize, resizing.size - event.clientY + resizing.offsetY));
+          setSize(Math.max(kMinSidebarSize, resizing.size - (orientation === 'vertical' ? event.clientY : event.clientX) + resizing.offset));
       }}
     ></div> }
   </div>;
