@@ -122,6 +122,7 @@ function _wrapAndEscape(node, maxColumns = 0) {
   text = text.replace(/\[(.*?)\]\((.*?\))/g, (match, linkName, linkUrl) => {
     return `<a href="${linkUrl}">${linkName}</a>`;
   });
+  text = text.replace(/\[(.*?)\]/g, (match, link) => `<see cref="${link}" />`);
   const words = text.split(' ');
   let line = '';
   for (let i = 0; i < words.length; i++) {
