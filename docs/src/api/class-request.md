@@ -157,6 +157,10 @@ Contains the request's resource type as it was perceived by the rendering engine
 following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttrack`, `xhr`, `fetch`, `eventsource`,
 `websocket`, `manifest`, `other`.
 
+:::note csharp
+The resource types are available as constants in [ResourceTypes].
+:::
+
 ## async method: Request.response
 - returns: <[null]|[Response]>
 
