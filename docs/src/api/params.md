@@ -169,7 +169,7 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `expires` <[float]> Optional Unix time in seconds.
     - `httpOnly` <[boolean]> Optional httpOnly flag
     - `secure` <[boolean]> Optional secure flag
-    - `sameSite` <["SameSiteAttribute"]<"Strict"|"Lax"|"None">> Optional sameSite flag
+    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional sameSite flag
   - `origins` <[Array]<[Object]>> Optional localStorage to set for context
     - `origin` <[string]>
     - `localStorage` <[Array]<[Object]>>
