@@ -23,6 +23,7 @@ import { Frame } from '../frames';
 import { SnapshotData, frameSnapshotStreamer, kSnapshotBinding, kSnapshotStreamer } from './snapshotterInjected';
 import { calculateSha1, createGuid, monotonicTime } from '../../utils/utils';
 import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+import { ElementHandle } from '../dom';
 
 export type SnapshotterBlob = {
   buffer: Buffer,
@@ -92,9 +93,12 @@ export class Snapshotter {
     helper.removeEventListeners(this._eventListeners);
   }
 
-  captureSnapshot(page: Page, snapshotName?: string) {
+  captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle) {
     // This needs to be sync, as in not awaiting for anything before we issue the command.
     const expression = `window[${JSON.stringify(kSnapshotStreamer)}].captureSnapshot(${JSON.stringify(snapshotName)})`;
+    element?.callFunctionNoReply((element: Element, snapshotName: string) => {
+      element.setAttribute('__playwright_target__', snapshotName);
+    }, snapshotName);
     const snapshotFrame = (frame: Frame) => {
       const context = frame._existingMainContext();
       context?.rawEvaluate(expression).catch(debugExceptionHandler);

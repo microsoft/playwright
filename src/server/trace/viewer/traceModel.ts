@@ -38,7 +38,7 @@ export class TraceModel {
     actions.reverse();
 
     for (const action of actions) {
-      while (resources.length && resources[0].timestamp > action.action.timestamp)
+      while (resources.length && resources[0].timestamp > action.timestamp)
         action.resources.push(resources.shift()!);
       action.resources.reverse();
     }
@@ -79,14 +79,15 @@ export class TraceModel {
         break;
       }
       case 'action': {
-        if (!kInterestingActions.includes(event.method))
+        const metadata = event.metadata;
+        if (metadata.method === 'waitForEventInfo')
           break;
-        const { pageEntry } = this.pageEntries.get(event.pageId!)!;
-        const actionId = event.contextId + '/' + event.pageId + '/' + pageEntry.actions.length;
+        const { pageEntry } = this.pageEntries.get(metadata.pageId!)!;
+        const actionId = event.contextId + '/' + metadata.pageId + '/' + pageEntry.actions.length;
         const action: ActionEntry = {
           actionId,
-          action: event,
-          resources: []
+          resources: [],
+          ...event,
         };
         pageEntry.actions.push(action);
         break;
@@ -146,10 +147,7 @@ export type PageEntry = {
   interestingEvents: InterestingPageEvent[];
 }
 
-export type ActionEntry = {
+export type ActionEntry = trace.ActionTraceEvent & {
   actionId: string;
-  action: trace.ActionTraceEvent;
   resources: ResourceSnapshot[]
 };
-
-const kInterestingActions = ['click', 'dblclick', 'hover', 'check', 'uncheck', 'tap', 'fill', 'press', 'type', 'selectOption', 'setInputFiles', 'goto', 'setContent', 'goBack', 'goForward', 'reload'];

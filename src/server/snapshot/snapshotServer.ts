@@ -19,6 +19,7 @@ import querystring from 'querystring';
 import { HttpServer } from '../../utils/httpServer';
 import type { RenderedFrameSnapshot } from './snapshotTypes';
 import { SnapshotStorage } from './snapshotStorage';
+import type { Point } from '../../common/types';
 
 export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;
@@ -51,35 +52,7 @@ export class SnapshotServer {
       </style>
       <body>
         <script>
-        if (navigator.serviceWorker) {
-          navigator.serviceWorker.register('./service-worker.js');
-          let showPromise = Promise.resolve();
-          if (!navigator.serviceWorker.controller)
-            showPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
-
-          let current = document.createElement('iframe');
-          document.body.appendChild(current);
-          let next = document.createElement('iframe');
-          document.body.appendChild(next);
-          next.style.visibility = 'hidden';
-          const onload = () => {
-            let temp = current;
-            current = next;
-            next = temp;
-            current.style.visibility = 'visible';
-            next.style.visibility = 'hidden';
-          };
-          current.onload = onload;
-          next.onload = onload;
-
-          window.showSnapshot = async url => {
-            await showPromise;
-            next.src = url;
-          };
-          window.addEventListener('message', event => {
-            window.showSnapshot(window.location.href + event.data.snapshotUrl);
-          }, false);
-        }
+        (${rootScript})();
         </script>
       </body>
     `);
@@ -244,4 +217,60 @@ export class SnapshotServer {
       return false;
     }
   }
+}
+
+declare global {
+  interface Window {
+    showSnapshot: (url: string, point?: Point) => Promise<void>;
+  }
+}
+function rootScript() {
+  if (!navigator.serviceWorker)
+    return;
+  navigator.serviceWorker.register('./service-worker.js');
+  let showPromise = Promise.resolve();
+  if (!navigator.serviceWorker.controller) {
+    showPromise = new Promise(resolve => {
+      navigator.serviceWorker.oncontrollerchange = () => resolve();
+    });
+  }
+
+  const pointElement = document.createElement('div');
+  pointElement.style.position = 'fixed';
+  pointElement.style.backgroundColor = 'red';
+  pointElement.style.width = '20px';
+  pointElement.style.height = '20px';
+  pointElement.style.borderRadius = '10px';
+  pointElement.style.margin = '-10px 0 0 -10px';
+  pointElement.style.zIndex = '2147483647';
+
+  let current = document.createElement('iframe');
+  document.body.appendChild(current);
+  let next = document.createElement('iframe');
+  document.body.appendChild(next);
+  next.style.visibility = 'hidden';
+  const onload = () => {
+    const temp = current;
+    current = next;
+    next = temp;
+    current.style.visibility = 'visible';
+    next.style.visibility = 'hidden';
+  };
+  current.onload = onload;
+  next.onload = onload;
+
+  (window as any).showSnapshot = async (url: string, options: { point?: Point } = {}) => {
+    await showPromise;
+    next.src = url;
+    if (options.point) {
+      pointElement.style.left = options.point.x + 'px';
+      pointElement.style.top = options.point.y + 'px';
+      document.documentElement.appendChild(pointElement);
+    } else {
+      pointElement.remove();
+    }
+  };
+  window.addEventListener('message', event => {
+    window.showSnapshot(window.location.href + event.data.snapshotUrl);
+  }, false);
 }

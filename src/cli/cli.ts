@@ -144,9 +144,10 @@ commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
 if (process.env.PWTRACE) {
   program
       .command('show-trace [trace]')
+      .option('--resources <dir>', 'load resources from shared folder')
       .description('Show trace viewer')
       .action(function(trace, command) {
-        showTraceViewer(trace);
+        showTraceViewer(trace, command.resources);
       }).on('--help', function() {
         console.log('');
         console.log('Examples:');

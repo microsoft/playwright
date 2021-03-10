@@ -175,12 +175,46 @@ describe('snapshots', (suite, { mode }) => {
     const button = await previewPage.frames()[3].waitForSelector('button');
     expect(await button.textContent()).toBe('Hello iframe');
   });
+
+  it('should capture snapshot target', async ({ snapshotter, page, toImpl }) => {
+    await page.setContent('<button>Hello</button><button>World</button>');
+    {
+      const handle = await page.$('text=Hello');
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot', toImpl(handle));
+      expect(distillSnapshot(snapshot)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON>World</BUTTON>');
+    }
+    {
+      const handle = await page.$('text=World');
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2', toImpl(handle));
+      expect(distillSnapshot(snapshot)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON __playwright_target__=\"snapshot2\">World</BUTTON>');
+    }
+  });
+
+  it('should collect on attribute change', async ({ snapshotter, page, toImpl }) => {
+    await page.setContent('<button>Hello</button>');
+    {
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+      expect(distillSnapshot(snapshot)).toBe('<BUTTON>Hello</BUTTON>');
+    }
+    const handle = await page.$('text=Hello')!;
+    await handle.evaluate(element => element.setAttribute('data', 'one'));
+    {
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+      expect(distillSnapshot(snapshot)).toBe('<BUTTON data="one">Hello</BUTTON>');
+    }
+    await handle.evaluate(element => element.setAttribute('data', 'two'));
+    {
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+      expect(distillSnapshot(snapshot)).toBe('<BUTTON data="two">Hello</BUTTON>');
+    }
+  });
 });
 
 function distillSnapshot(snapshot) {
   const { html } = snapshot.render();
   return html
       .replace(/<script>[.\s\S]+<\/script>/, '')
+      .replace(/<style>.*__playwright_target__.*<\/style>/, '')
       .replace(/<BASE href="about:blank">/, '')
       .replace(/<BASE href="http:\/\/localhost:[\d]+\/empty.html">/, '')
       .replace(/<HTML>/, '')
@@ -188,5 +222,5 @@ function distillSnapshot(snapshot) {
       .replace(/<HEAD>/, '')
       .replace(/<\/HEAD>/, '')
       .replace(/<BODY>/, '')
-      .replace(/<\/BODY>/, '');
+      .replace(/<\/BODY>/, '').trim();
 }

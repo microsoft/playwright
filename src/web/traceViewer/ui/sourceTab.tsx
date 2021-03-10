@@ -43,10 +43,10 @@ export const SourceTab: React.FunctionComponent<{
   const stackInfo = React.useMemo<StackInfo>(() => {
     if (!actionEntry)
       return '';
-    const { action } = actionEntry;
-    if (!action.stack)
+    const { metadata } = actionEntry;
+    if (!metadata.stack)
       return '';
-    const frames = action.stack;
+    const frames = metadata.stack;
     return {
       frames,
       fileContent: new Map(),

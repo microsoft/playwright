@@ -19,6 +19,7 @@ import { Point, StackFrame } from '../common/types';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { BrowserType } from './browserType';
+import { ElementHandle } from './dom';
 import type { Frame } from './frames';
 import type { Page } from './page';
 
@@ -66,7 +67,7 @@ export interface Instrumentation {
   onContextDidDestroy(context: BrowserContext): Promise<void>;
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onAfterInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
@@ -78,7 +79,7 @@ export interface InstrumentationListener {
   onContextDidDestroy?(context: BrowserContext): Promise<void>;
 
   onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onAfterInputAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onCallLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { StackFrame } from '../../../common/types';
+import { CallMetadata } from '../../instrumentation';
 
 export type ContextCreatedTraceEvent = {
   timestamp: number,
@@ -47,27 +47,11 @@ export type PageDestroyedTraceEvent = {
   pageId: string,
 };
 
-export type PageVideoTraceEvent = {
-  timestamp: number,
-  type: 'page-video',
-  contextId: string,
-  pageId: string,
-  fileName: string,
-};
-
 export type ActionTraceEvent = {
   timestamp: number,
   type: 'action',
   contextId: string,
-  objectType: string,
-  method: string,
-  params: any,
-  stack?: StackFrame[],
-  pageId?: string,
-  startTime: number,
-  endTime: number,
-  logs?: string[],
-  error?: string,
+  metadata: CallMetadata,
   snapshots?: { title: string, snapshotName: string }[],
 };
 
@@ -109,7 +93,6 @@ export type TraceEvent =
     ContextDestroyedTraceEvent |
     PageCreatedTraceEvent |
     PageDestroyedTraceEvent |
-    PageVideoTraceEvent |
     ActionTraceEvent |
     DialogOpenedEvent |
     DialogClosedEvent |

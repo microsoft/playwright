@@ -16,13 +16,17 @@
 
 import fs from 'fs';
 import path from 'path';
-import * as playwright from '../../../..';
+import { createPlaywright } from '../../playwright';
 import * as util from 'util';
 import { TraceModel } from './traceModel';
 import { TraceEvent } from '../common/traceEvents';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import { PersistentSnapshotStorage } from '../../snapshot/snapshotStorage';
+import * as consoleApiSource from '../../../generated/consoleApiSource';
+import { isUnderTest } from '../../../utils/utils';
+import { internalCallMetadata } from '../../instrumentation';
+import { ProgressController } from '../../progress';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -34,8 +38,9 @@ type TraceViewerDocument = {
 class TraceViewer {
   private _document: TraceViewerDocument | undefined;
 
-  async show(traceDir: string) {
-    const resourcesDir = path.join(traceDir, 'resources');
+  async show(traceDir: string, resourcesDir?: string) {
+    if (!resourcesDir)
+      resourcesDir = path.join(traceDir, 'resources');
     const model = new TraceModel();
     this._document = {
       model,
@@ -56,7 +61,6 @@ class TraceViewer {
     // - "/snapshot/pageId/..." - actual snapshot html.
     // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
     //   and translates them into "/resources/<resourceId>".
-
     const actionsTrace = fs.readdirSync(traceDir).find(name => name.endsWith('-actions.trace'))!;
     const tracePrefix = path.join(traceDir, actionsTrace.substring(0, actionsTrace.indexOf('-actions.trace')));
     const server = new HttpServer();
@@ -108,14 +112,33 @@ class TraceViewer {
 
     const urlPrefix = await server.start();
 
-    const browser = await playwright.chromium.launch({ headless: false });
-    const uiPage = await browser.newPage({ viewport: null });
-    uiPage.on('close', () => process.exit(0));
-    await uiPage.goto(urlPrefix + '/traceviewer/traceViewer/index.html');
+    const traceViewerPlaywright = createPlaywright(true);
+    const args = [
+      '--app=data:text/html,',
+      '--window-position=1280,10',
+    ];
+    if (isUnderTest())
+      args.push(`--remote-debugging-port=0`);
+    const context = await traceViewerPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
+      // TODO: store language in the trace.
+      sdkLanguage: 'javascript',
+      args,
+      noDefaultViewport: true,
+      headless: !!process.env.PWCLI_HEADLESS_FOR_TEST,
+      useWebSocket: isUnderTest()
+    });
+    const controller = new ProgressController(internalCallMetadata(), context._browser);
+    await controller.run(async progress => {
+      await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
+    });
+    await context.extendInjectedScript(consoleApiSource.source);
+    const [page] = context.pages();
+    page.on('close', () => process.exit(0));
+    await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
   }
 }
 
-export async function showTraceViewer(traceDir: string) {
+export async function showTraceViewer(traceDir: string, resourcesDir?: string) {
   const traceViewer = new TraceViewer();
-  await traceViewer.show(traceDir);
+  await traceViewer.show(traceDir, resourcesDir);
 }

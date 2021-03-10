@@ -71,9 +71,15 @@ export class SnapshotRenderer {
 
     const snapshot = this._snapshots[this._index];
     let html = visit(snapshot.html, this._index);
+    if (!html)
+      return { html: '', resources: {} };
+
     if (snapshot.doctype)
       html = `<!DOCTYPE ${snapshot.doctype}>` + html;
-    html += `<script>${snapshotScript()}</script>`;
+    html += `
+      <style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>
+      <script>${snapshotScript()}</script>
+    `;
 
     const resources: { [key: string]: { resourceId: string, sha1?: string } } = {};
     for (const [url, contextResources] of this._contextResources) {

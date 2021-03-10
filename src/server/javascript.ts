@@ -44,6 +44,7 @@ export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>
 
 export interface ExecutionContextDelegate {
   rawEvaluate(expression: string): Promise<ObjectId>;
+  rawCallFunctionNoReply(func: Function, ...args: any[]): void;
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
   getProperties(handle: JSHandle): Promise<Map<string, JSHandle>>;
   createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
@@ -107,6 +108,10 @@ export class JSHandle<T = any> extends SdkObject {
     if (this._objectId)
       this._value = 'JSHandle@' + this._objectType;
     this._preview = 'JSHandle@' + String(this._objectId ? this._objectType : this._value);
+  }
+
+  callFunctionNoReply(func: Function, arg: any) {
+    this._context._delegate.rawCallFunctionNoReply(func, this, arg);
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
