@@ -1,0 +1,28 @@
+<html>
+<head>
+<script>
+customElements.define('my-link',
+  class extends HTMLElement {
+    constructor() {
+      super();
+
+      const template = document.getElementById('my-link-template');
+      const templateContent = template.content;
+
+      this.attachShadow({mode: 'open'}).appendChild(
+        templateContent.cloneNode(true)
+      );
+    }
+  }
+);
+
+window.clickCount = 0;
+</script>
+</head>
+<body>
+<template id="my-link-template">
+  <a href="#" id="inner-link" onclick="clickCount++"><slot></slot></a>
+</template>
+<my-link>Sign up</my-link>
+</body>
+</html>
