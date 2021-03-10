@@ -407,6 +407,10 @@ function test_playwright_cli_install_should_work {
     echo "ERROR: should download chromium"
     exit 1
   fi
+  if [[ "${OUTPUT}" != *"ffmpeg"* ]]; then
+    echo "ERROR: should download ffmpeg"
+    exit 1
+  fi
   if [[ "${OUTPUT}" == *"webkit"* ]]; then
     echo "ERROR: should not download webkit"
     exit 1
@@ -420,6 +424,10 @@ function test_playwright_cli_install_should_work {
   OUTPUT=$(PLAYWRIGHT_BROWSERS_PATH=${BROWSERS} npx playwright install)
   if [[ "${OUTPUT}" == *"chromium"* ]]; then
     echo "ERROR: should not download chromium"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" == *"ffmpeg"* ]]; then
+    echo "ERROR: should not download ffmpeg"
     exit 1
   fi
   if [[ "${OUTPUT}" != *"webkit"* ]]; then
