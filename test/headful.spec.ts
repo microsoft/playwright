@@ -175,6 +175,7 @@ fixtures.build().it('focused input should produce the same screenshot', (test, {
   test.fail(browserName === 'firefox' && platform === 'darwin', 'headless has thinner outline');
   test.fail(browserName === 'firefox' && platform === 'linux', 'headless has no outline');
   test.skip(browserName === 'webkit' && platform === 'linux', 'gtk vs wpe');
+  test.skip(process.env.CRPATH);
 }, async ({browserType, browserOptions}) => {
   const headful = await browserType.launch({...browserOptions, headless: false });
   const headfulPage = await headful.newPage();

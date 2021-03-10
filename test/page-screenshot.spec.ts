@@ -192,6 +192,7 @@ describe('page screenshot', (suite, { browserName, headful }) => {
 
   it('should work with a mobile viewport and clip', (test, { browserName }) => {
     test.skip(browserName === 'firefox');
+    test.skip(process.env.CRPATH); // Does not work in stable Chrome.
   }, async ({browser, server}) => {
     const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
     const page = await context.newPage();
