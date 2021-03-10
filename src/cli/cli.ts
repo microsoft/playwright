@@ -90,6 +90,8 @@ program
           process.exit(1);
         }
       }
+      if (browserType.length && browserType.includes('chromium'))
+        browserType = browserType.concat('ffmpeg');
       installBrowsers(browserType.length ? browserType : undefined).catch((e: any) => {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
