@@ -364,7 +364,7 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
 function renderMethod(member, parent, output, name) {
   const typeResolve = (type) => translateType(type, parent, (t) => {
     let newName = `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
-    documentedResults.set(newName, `Result of calling <see cref="${translateMemberName("interface", parent.name)}.${translateMemberName(member.kind, member.name, member)}" />.`);
+    documentedResults.set(newName, `Result of calling <see cref="${translateMemberName("interface", parent.name)}.${translateMemberName(member.kind, member.name, member)}"/>.`);
     return newName;
   });
 
