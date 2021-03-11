@@ -374,3 +374,17 @@ it('should work with :scope', async ({page, server}) => {
     expect(await scope.$$eval(`css=* ~ :scope`, els => els.length)).toBe(0);
   }
 });
+
+it('css on the handle should be relative', async ({ page }) => {
+  await page.setContent(`
+    <span class="find-me" id=target1>1</span>
+    <div>
+      <span class="find-me" id=target2>2</span>
+    </div>
+  `);
+  expect(await page.$eval(`.find-me`, e => e.id)).toBe('target1');
+
+  const div = await page.$('div');
+  expect(await div.$eval(`.find-me`, e => e.id)).toBe('target2');
+  expect(await page.$eval(`div >> .find-me`, e => e.id)).toBe('target2');
+});
