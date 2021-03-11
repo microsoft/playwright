@@ -136,7 +136,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
       await this._page._setClientRequestInterceptor(undefined);
       return;
     }
-    this._page._setClientRequestInterceptor((route, request) => {
+    await this._page._setClientRequestInterceptor((route, request) => {
       this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }
