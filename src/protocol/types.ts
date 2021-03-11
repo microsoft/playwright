@@ -28,6 +28,7 @@ export type StackFrame = {
 export type Metadata = {
   stack?: StackFrame[],
   apiName?: string,
+  timeout?: number,
 };
 
 export type WaitForEventInfo = {

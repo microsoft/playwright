@@ -16,27 +16,36 @@
 
 import * as channels from './channels';
 import * as api from '../../types/types';
+import { Page } from './page';
 
 export class ChromiumCoverage implements api.ChromiumCoverage {
-  private _channel: channels.PageChannel;
+  private _page: Page;
 
-  constructor(channel: channels.PageChannel) {
-    this._channel = channel;
+  constructor(page: Page) {
+    this._page = page;
   }
 
   async startJSCoverage(options: channels.PageCrStartJSCoverageOptions = {}) {
-    await this._channel.crStartJSCoverage(options);
+    return this._page._wrapApiCall('coverage.startJSCoverage', async channel => {
+      await channel.crStartJSCoverage(options);
+    });
   }
 
   async stopJSCoverage(): Promise<channels.PageCrStopJSCoverageResult['entries']> {
-    return (await this._channel.crStopJSCoverage()).entries;
+    return this._page._wrapApiCall('coverage.stopJSCoverage', async channel => {
+      return (await channel.crStopJSCoverage()).entries;
+    });
   }
 
   async startCSSCoverage(options: channels.PageCrStartCSSCoverageOptions = {}) {
-    await this._channel.crStartCSSCoverage(options);
+    return this._page._wrapApiCall('coverage.startCSSCoverage', async channel => {
+      await channel.crStartCSSCoverage(options);
+    });
   }
 
   async stopCSSCoverage(): Promise<channels.PageCrStopCSSCoverageResult['entries']> {
-    return (await this._channel.crStopCSSCoverage()).entries;
+    return this._page._wrapApiCall('coverage.stopCSSCoverage', async channel => {
+      return (await channel.crStopCSSCoverage()).entries;
+    });
   }
 }

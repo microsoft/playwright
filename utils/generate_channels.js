@@ -214,7 +214,7 @@ for (const [name, item] of Object.entries(protocol)) {
       const returns = objectType(method.returns || {}, '');
       ts_types.set(resultName, method.returns ? returns.ts : 'void');
 
-      client_channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}): Promise<${resultName}>;`);
+      client_channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, timeout?: number): Promise<${resultName}>;`);
       server_channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, metadata?: CallMetadata): Promise<${resultName}>;`);
     }
 

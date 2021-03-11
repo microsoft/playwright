@@ -66,7 +66,7 @@ export type RemoteBrowserVideoEvent = {
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
 export interface SelectorsChannel extends Channel {
-  register(params: SelectorsRegisterParams): Promise<SelectorsRegisterResult>;
+  register(params: SelectorsRegisterParams, timeout?: number): Promise<SelectorsRegisterResult>;
 }
 export type SelectorsRegisterParams = {
   name: string,
@@ -84,9 +84,9 @@ export type BrowserTypeInitializer = {
   name: string,
 };
 export interface BrowserTypeChannel extends Channel {
-  launch(params: BrowserTypeLaunchParams): Promise<BrowserTypeLaunchResult>;
-  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<BrowserTypeLaunchPersistentContextResult>;
-  connectOverCDP(params: BrowserTypeConnectOverCDPParams): Promise<BrowserTypeConnectOverCDPResult>;
+  launch(params: BrowserTypeLaunchParams, timeout?: number): Promise<BrowserTypeLaunchResult>;
+  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, timeout?: number): Promise<BrowserTypeLaunchPersistentContextResult>;
+  connectOverCDP(params: BrowserTypeConnectOverCDPParams, timeout?: number): Promise<BrowserTypeConnectOverCDPResult>;
 }
 export type BrowserTypeLaunchParams = {
   executablePath?: string,
@@ -290,11 +290,11 @@ export type BrowserInitializer = {
 };
 export interface BrowserChannel extends Channel {
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
-  close(params?: BrowserCloseParams): Promise<BrowserCloseResult>;
-  newContext(params: BrowserNewContextParams): Promise<BrowserNewContextResult>;
-  crNewBrowserCDPSession(params?: BrowserCrNewBrowserCDPSessionParams): Promise<BrowserCrNewBrowserCDPSessionResult>;
-  crStartTracing(params: BrowserCrStartTracingParams): Promise<BrowserCrStartTracingResult>;
-  crStopTracing(params?: BrowserCrStopTracingParams): Promise<BrowserCrStopTracingResult>;
+  close(params?: BrowserCloseParams, timeout?: number): Promise<BrowserCloseResult>;
+  newContext(params: BrowserNewContextParams, timeout?: number): Promise<BrowserNewContextResult>;
+  crNewBrowserCDPSession(params?: BrowserCrNewBrowserCDPSessionParams, timeout?: number): Promise<BrowserCrNewBrowserCDPSessionResult>;
+  crStartTracing(params: BrowserCrStartTracingParams, timeout?: number): Promise<BrowserCrStartTracingResult>;
+  crStopTracing(params?: BrowserCrStopTracingParams, timeout?: number): Promise<BrowserCrStopTracingResult>;
 }
 export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {};
@@ -445,26 +445,26 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
   on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
-  addCookies(params: BrowserContextAddCookiesParams): Promise<BrowserContextAddCookiesResult>;
-  addInitScript(params: BrowserContextAddInitScriptParams): Promise<BrowserContextAddInitScriptResult>;
-  clearCookies(params?: BrowserContextClearCookiesParams): Promise<BrowserContextClearCookiesResult>;
-  clearPermissions(params?: BrowserContextClearPermissionsParams): Promise<BrowserContextClearPermissionsResult>;
-  close(params?: BrowserContextCloseParams): Promise<BrowserContextCloseResult>;
-  cookies(params: BrowserContextCookiesParams): Promise<BrowserContextCookiesResult>;
-  exposeBinding(params: BrowserContextExposeBindingParams): Promise<BrowserContextExposeBindingResult>;
-  grantPermissions(params: BrowserContextGrantPermissionsParams): Promise<BrowserContextGrantPermissionsResult>;
-  newPage(params?: BrowserContextNewPageParams): Promise<BrowserContextNewPageResult>;
-  setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
-  setDefaultTimeoutNoReply(params: BrowserContextSetDefaultTimeoutNoReplyParams): Promise<BrowserContextSetDefaultTimeoutNoReplyResult>;
-  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams): Promise<BrowserContextSetExtraHTTPHeadersResult>;
-  setGeolocation(params: BrowserContextSetGeolocationParams): Promise<BrowserContextSetGeolocationResult>;
-  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<BrowserContextSetHTTPCredentialsResult>;
-  setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
-  setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
-  storageState(params?: BrowserContextStorageStateParams): Promise<BrowserContextStorageStateResult>;
-  pause(params?: BrowserContextPauseParams): Promise<BrowserContextPauseResult>;
-  recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams): Promise<BrowserContextRecorderSupplementEnableResult>;
-  crNewCDPSession(params: BrowserContextCrNewCDPSessionParams): Promise<BrowserContextCrNewCDPSessionResult>;
+  addCookies(params: BrowserContextAddCookiesParams, timeout?: number): Promise<BrowserContextAddCookiesResult>;
+  addInitScript(params: BrowserContextAddInitScriptParams, timeout?: number): Promise<BrowserContextAddInitScriptResult>;
+  clearCookies(params?: BrowserContextClearCookiesParams, timeout?: number): Promise<BrowserContextClearCookiesResult>;
+  clearPermissions(params?: BrowserContextClearPermissionsParams, timeout?: number): Promise<BrowserContextClearPermissionsResult>;
+  close(params?: BrowserContextCloseParams, timeout?: number): Promise<BrowserContextCloseResult>;
+  cookies(params: BrowserContextCookiesParams, timeout?: number): Promise<BrowserContextCookiesResult>;
+  exposeBinding(params: BrowserContextExposeBindingParams, timeout?: number): Promise<BrowserContextExposeBindingResult>;
+  grantPermissions(params: BrowserContextGrantPermissionsParams, timeout?: number): Promise<BrowserContextGrantPermissionsResult>;
+  newPage(params?: BrowserContextNewPageParams, timeout?: number): Promise<BrowserContextNewPageResult>;
+  setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams, timeout?: number): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
+  setDefaultTimeoutNoReply(params: BrowserContextSetDefaultTimeoutNoReplyParams, timeout?: number): Promise<BrowserContextSetDefaultTimeoutNoReplyResult>;
+  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, timeout?: number): Promise<BrowserContextSetExtraHTTPHeadersResult>;
+  setGeolocation(params: BrowserContextSetGeolocationParams, timeout?: number): Promise<BrowserContextSetGeolocationResult>;
+  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, timeout?: number): Promise<BrowserContextSetHTTPCredentialsResult>;
+  setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, timeout?: number): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
+  setOffline(params: BrowserContextSetOfflineParams, timeout?: number): Promise<BrowserContextSetOfflineResult>;
+  storageState(params?: BrowserContextStorageStateParams, timeout?: number): Promise<BrowserContextStorageStateResult>;
+  pause(params?: BrowserContextPauseParams, timeout?: number): Promise<BrowserContextPauseResult>;
+  recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, timeout?: number): Promise<BrowserContextRecorderSupplementEnableResult>;
+  crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, timeout?: number): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -657,38 +657,38 @@ export interface PageChannel extends Channel {
   on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
-  setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
-  setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams): Promise<PageSetDefaultTimeoutNoReplyResult>;
-  setFileChooserInterceptedNoReply(params: PageSetFileChooserInterceptedNoReplyParams): Promise<PageSetFileChooserInterceptedNoReplyResult>;
-  addInitScript(params: PageAddInitScriptParams): Promise<PageAddInitScriptResult>;
-  close(params: PageCloseParams): Promise<PageCloseResult>;
-  emulateMedia(params: PageEmulateMediaParams): Promise<PageEmulateMediaResult>;
-  exposeBinding(params: PageExposeBindingParams): Promise<PageExposeBindingResult>;
-  goBack(params: PageGoBackParams): Promise<PageGoBackResult>;
-  goForward(params: PageGoForwardParams): Promise<PageGoForwardResult>;
-  opener(params?: PageOpenerParams): Promise<PageOpenerResult>;
-  reload(params: PageReloadParams): Promise<PageReloadResult>;
-  screenshot(params: PageScreenshotParams): Promise<PageScreenshotResult>;
-  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams): Promise<PageSetExtraHTTPHeadersResult>;
-  setNetworkInterceptionEnabled(params: PageSetNetworkInterceptionEnabledParams): Promise<PageSetNetworkInterceptionEnabledResult>;
-  setViewportSize(params: PageSetViewportSizeParams): Promise<PageSetViewportSizeResult>;
-  keyboardDown(params: PageKeyboardDownParams): Promise<PageKeyboardDownResult>;
-  keyboardUp(params: PageKeyboardUpParams): Promise<PageKeyboardUpResult>;
-  keyboardInsertText(params: PageKeyboardInsertTextParams): Promise<PageKeyboardInsertTextResult>;
-  keyboardType(params: PageKeyboardTypeParams): Promise<PageKeyboardTypeResult>;
-  keyboardPress(params: PageKeyboardPressParams): Promise<PageKeyboardPressResult>;
-  mouseMove(params: PageMouseMoveParams): Promise<PageMouseMoveResult>;
-  mouseDown(params: PageMouseDownParams): Promise<PageMouseDownResult>;
-  mouseUp(params: PageMouseUpParams): Promise<PageMouseUpResult>;
-  mouseClick(params: PageMouseClickParams): Promise<PageMouseClickResult>;
-  touchscreenTap(params: PageTouchscreenTapParams): Promise<PageTouchscreenTapResult>;
-  accessibilitySnapshot(params: PageAccessibilitySnapshotParams): Promise<PageAccessibilitySnapshotResult>;
-  pdf(params: PagePdfParams): Promise<PagePdfResult>;
-  crStartJSCoverage(params: PageCrStartJSCoverageParams): Promise<PageCrStartJSCoverageResult>;
-  crStopJSCoverage(params?: PageCrStopJSCoverageParams): Promise<PageCrStopJSCoverageResult>;
-  crStartCSSCoverage(params: PageCrStartCSSCoverageParams): Promise<PageCrStartCSSCoverageResult>;
-  crStopCSSCoverage(params?: PageCrStopCSSCoverageParams): Promise<PageCrStopCSSCoverageResult>;
-  bringToFront(params?: PageBringToFrontParams): Promise<PageBringToFrontResult>;
+  setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, timeout?: number): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
+  setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, timeout?: number): Promise<PageSetDefaultTimeoutNoReplyResult>;
+  setFileChooserInterceptedNoReply(params: PageSetFileChooserInterceptedNoReplyParams, timeout?: number): Promise<PageSetFileChooserInterceptedNoReplyResult>;
+  addInitScript(params: PageAddInitScriptParams, timeout?: number): Promise<PageAddInitScriptResult>;
+  close(params: PageCloseParams, timeout?: number): Promise<PageCloseResult>;
+  emulateMedia(params: PageEmulateMediaParams, timeout?: number): Promise<PageEmulateMediaResult>;
+  exposeBinding(params: PageExposeBindingParams, timeout?: number): Promise<PageExposeBindingResult>;
+  goBack(params: PageGoBackParams, timeout?: number): Promise<PageGoBackResult>;
+  goForward(params: PageGoForwardParams, timeout?: number): Promise<PageGoForwardResult>;
+  opener(params?: PageOpenerParams, timeout?: number): Promise<PageOpenerResult>;
+  reload(params: PageReloadParams, timeout?: number): Promise<PageReloadResult>;
+  screenshot(params: PageScreenshotParams, timeout?: number): Promise<PageScreenshotResult>;
+  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, timeout?: number): Promise<PageSetExtraHTTPHeadersResult>;
+  setNetworkInterceptionEnabled(params: PageSetNetworkInterceptionEnabledParams, timeout?: number): Promise<PageSetNetworkInterceptionEnabledResult>;
+  setViewportSize(params: PageSetViewportSizeParams, timeout?: number): Promise<PageSetViewportSizeResult>;
+  keyboardDown(params: PageKeyboardDownParams, timeout?: number): Promise<PageKeyboardDownResult>;
+  keyboardUp(params: PageKeyboardUpParams, timeout?: number): Promise<PageKeyboardUpResult>;
+  keyboardInsertText(params: PageKeyboardInsertTextParams, timeout?: number): Promise<PageKeyboardInsertTextResult>;
+  keyboardType(params: PageKeyboardTypeParams, timeout?: number): Promise<PageKeyboardTypeResult>;
+  keyboardPress(params: PageKeyboardPressParams, timeout?: number): Promise<PageKeyboardPressResult>;
+  mouseMove(params: PageMouseMoveParams, timeout?: number): Promise<PageMouseMoveResult>;
+  mouseDown(params: PageMouseDownParams, timeout?: number): Promise<PageMouseDownResult>;
+  mouseUp(params: PageMouseUpParams, timeout?: number): Promise<PageMouseUpResult>;
+  mouseClick(params: PageMouseClickParams, timeout?: number): Promise<PageMouseClickResult>;
+  touchscreenTap(params: PageTouchscreenTapParams, timeout?: number): Promise<PageTouchscreenTapResult>;
+  accessibilitySnapshot(params: PageAccessibilitySnapshotParams, timeout?: number): Promise<PageAccessibilitySnapshotResult>;
+  pdf(params: PagePdfParams, timeout?: number): Promise<PagePdfResult>;
+  crStartJSCoverage(params: PageCrStartJSCoverageParams, timeout?: number): Promise<PageCrStartJSCoverageResult>;
+  crStopJSCoverage(params?: PageCrStopJSCoverageParams, timeout?: number): Promise<PageCrStopJSCoverageResult>;
+  crStartCSSCoverage(params: PageCrStartCSSCoverageParams, timeout?: number): Promise<PageCrStartCSSCoverageResult>;
+  crStopCSSCoverage(params?: PageCrStopCSSCoverageParams, timeout?: number): Promise<PageCrStopCSSCoverageResult>;
+  bringToFront(params?: PageBringToFrontParams, timeout?: number): Promise<PageBringToFrontResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1080,44 +1080,44 @@ export type FrameInitializer = {
 export interface FrameChannel extends Channel {
   on(event: 'loadstate', callback: (params: FrameLoadstateEvent) => void): this;
   on(event: 'navigated', callback: (params: FrameNavigatedEvent) => void): this;
-  evalOnSelector(params: FrameEvalOnSelectorParams): Promise<FrameEvalOnSelectorResult>;
-  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams): Promise<FrameEvalOnSelectorAllResult>;
-  addScriptTag(params: FrameAddScriptTagParams): Promise<FrameAddScriptTagResult>;
-  addStyleTag(params: FrameAddStyleTagParams): Promise<FrameAddStyleTagResult>;
-  check(params: FrameCheckParams): Promise<FrameCheckResult>;
-  click(params: FrameClickParams): Promise<FrameClickResult>;
-  content(params?: FrameContentParams): Promise<FrameContentResult>;
-  dblclick(params: FrameDblclickParams): Promise<FrameDblclickResult>;
-  dispatchEvent(params: FrameDispatchEventParams): Promise<FrameDispatchEventResult>;
-  evaluateExpression(params: FrameEvaluateExpressionParams): Promise<FrameEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams): Promise<FrameEvaluateExpressionHandleResult>;
-  fill(params: FrameFillParams): Promise<FrameFillResult>;
-  focus(params: FrameFocusParams): Promise<FrameFocusResult>;
-  frameElement(params?: FrameFrameElementParams): Promise<FrameFrameElementResult>;
-  getAttribute(params: FrameGetAttributeParams): Promise<FrameGetAttributeResult>;
-  goto(params: FrameGotoParams): Promise<FrameGotoResult>;
-  hover(params: FrameHoverParams): Promise<FrameHoverResult>;
-  innerHTML(params: FrameInnerHTMLParams): Promise<FrameInnerHTMLResult>;
-  innerText(params: FrameInnerTextParams): Promise<FrameInnerTextResult>;
-  isChecked(params: FrameIsCheckedParams): Promise<FrameIsCheckedResult>;
-  isDisabled(params: FrameIsDisabledParams): Promise<FrameIsDisabledResult>;
-  isEnabled(params: FrameIsEnabledParams): Promise<FrameIsEnabledResult>;
-  isHidden(params: FrameIsHiddenParams): Promise<FrameIsHiddenResult>;
-  isVisible(params: FrameIsVisibleParams): Promise<FrameIsVisibleResult>;
-  isEditable(params: FrameIsEditableParams): Promise<FrameIsEditableResult>;
-  press(params: FramePressParams): Promise<FramePressResult>;
-  querySelector(params: FrameQuerySelectorParams): Promise<FrameQuerySelectorResult>;
-  querySelectorAll(params: FrameQuerySelectorAllParams): Promise<FrameQuerySelectorAllResult>;
-  selectOption(params: FrameSelectOptionParams): Promise<FrameSelectOptionResult>;
-  setContent(params: FrameSetContentParams): Promise<FrameSetContentResult>;
-  setInputFiles(params: FrameSetInputFilesParams): Promise<FrameSetInputFilesResult>;
-  tap(params: FrameTapParams): Promise<FrameTapResult>;
-  textContent(params: FrameTextContentParams): Promise<FrameTextContentResult>;
-  title(params?: FrameTitleParams): Promise<FrameTitleResult>;
-  type(params: FrameTypeParams): Promise<FrameTypeResult>;
-  uncheck(params: FrameUncheckParams): Promise<FrameUncheckResult>;
-  waitForFunction(params: FrameWaitForFunctionParams): Promise<FrameWaitForFunctionResult>;
-  waitForSelector(params: FrameWaitForSelectorParams): Promise<FrameWaitForSelectorResult>;
+  evalOnSelector(params: FrameEvalOnSelectorParams, timeout?: number): Promise<FrameEvalOnSelectorResult>;
+  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, timeout?: number): Promise<FrameEvalOnSelectorAllResult>;
+  addScriptTag(params: FrameAddScriptTagParams, timeout?: number): Promise<FrameAddScriptTagResult>;
+  addStyleTag(params: FrameAddStyleTagParams, timeout?: number): Promise<FrameAddStyleTagResult>;
+  check(params: FrameCheckParams, timeout?: number): Promise<FrameCheckResult>;
+  click(params: FrameClickParams, timeout?: number): Promise<FrameClickResult>;
+  content(params?: FrameContentParams, timeout?: number): Promise<FrameContentResult>;
+  dblclick(params: FrameDblclickParams, timeout?: number): Promise<FrameDblclickResult>;
+  dispatchEvent(params: FrameDispatchEventParams, timeout?: number): Promise<FrameDispatchEventResult>;
+  evaluateExpression(params: FrameEvaluateExpressionParams, timeout?: number): Promise<FrameEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams, timeout?: number): Promise<FrameEvaluateExpressionHandleResult>;
+  fill(params: FrameFillParams, timeout?: number): Promise<FrameFillResult>;
+  focus(params: FrameFocusParams, timeout?: number): Promise<FrameFocusResult>;
+  frameElement(params?: FrameFrameElementParams, timeout?: number): Promise<FrameFrameElementResult>;
+  getAttribute(params: FrameGetAttributeParams, timeout?: number): Promise<FrameGetAttributeResult>;
+  goto(params: FrameGotoParams, timeout?: number): Promise<FrameGotoResult>;
+  hover(params: FrameHoverParams, timeout?: number): Promise<FrameHoverResult>;
+  innerHTML(params: FrameInnerHTMLParams, timeout?: number): Promise<FrameInnerHTMLResult>;
+  innerText(params: FrameInnerTextParams, timeout?: number): Promise<FrameInnerTextResult>;
+  isChecked(params: FrameIsCheckedParams, timeout?: number): Promise<FrameIsCheckedResult>;
+  isDisabled(params: FrameIsDisabledParams, timeout?: number): Promise<FrameIsDisabledResult>;
+  isEnabled(params: FrameIsEnabledParams, timeout?: number): Promise<FrameIsEnabledResult>;
+  isHidden(params: FrameIsHiddenParams, timeout?: number): Promise<FrameIsHiddenResult>;
+  isVisible(params: FrameIsVisibleParams, timeout?: number): Promise<FrameIsVisibleResult>;
+  isEditable(params: FrameIsEditableParams, timeout?: number): Promise<FrameIsEditableResult>;
+  press(params: FramePressParams, timeout?: number): Promise<FramePressResult>;
+  querySelector(params: FrameQuerySelectorParams, timeout?: number): Promise<FrameQuerySelectorResult>;
+  querySelectorAll(params: FrameQuerySelectorAllParams, timeout?: number): Promise<FrameQuerySelectorAllResult>;
+  selectOption(params: FrameSelectOptionParams, timeout?: number): Promise<FrameSelectOptionResult>;
+  setContent(params: FrameSetContentParams, timeout?: number): Promise<FrameSetContentResult>;
+  setInputFiles(params: FrameSetInputFilesParams, timeout?: number): Promise<FrameSetInputFilesResult>;
+  tap(params: FrameTapParams, timeout?: number): Promise<FrameTapResult>;
+  textContent(params: FrameTextContentParams, timeout?: number): Promise<FrameTextContentResult>;
+  title(params?: FrameTitleParams, timeout?: number): Promise<FrameTitleResult>;
+  type(params: FrameTypeParams, timeout?: number): Promise<FrameTypeResult>;
+  uncheck(params: FrameUncheckParams, timeout?: number): Promise<FrameUncheckResult>;
+  waitForFunction(params: FrameWaitForFunctionParams, timeout?: number): Promise<FrameWaitForFunctionResult>;
+  waitForSelector(params: FrameWaitForSelectorParams, timeout?: number): Promise<FrameWaitForSelectorResult>;
 }
 export type FrameLoadstateEvent = {
   add?: 'load' | 'domcontentloaded' | 'networkidle',
@@ -1587,8 +1587,8 @@ export type WorkerInitializer = {
 };
 export interface WorkerChannel extends Channel {
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
-  evaluateExpression(params: WorkerEvaluateExpressionParams): Promise<WorkerEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams): Promise<WorkerEvaluateExpressionHandleResult>;
+  evaluateExpression(params: WorkerEvaluateExpressionParams, timeout?: number): Promise<WorkerEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, timeout?: number): Promise<WorkerEvaluateExpressionHandleResult>;
 }
 export type WorkerCloseEvent = {};
 export type WorkerEvaluateExpressionParams = {
@@ -1620,12 +1620,12 @@ export type JSHandleInitializer = {
 };
 export interface JSHandleChannel extends Channel {
   on(event: 'previewUpdated', callback: (params: JSHandlePreviewUpdatedEvent) => void): this;
-  dispose(params?: JSHandleDisposeParams): Promise<JSHandleDisposeResult>;
-  evaluateExpression(params: JSHandleEvaluateExpressionParams): Promise<JSHandleEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams): Promise<JSHandleEvaluateExpressionHandleResult>;
-  getPropertyList(params?: JSHandleGetPropertyListParams): Promise<JSHandleGetPropertyListResult>;
-  getProperty(params: JSHandleGetPropertyParams): Promise<JSHandleGetPropertyResult>;
-  jsonValue(params?: JSHandleJsonValueParams): Promise<JSHandleJsonValueResult>;
+  dispose(params?: JSHandleDisposeParams, timeout?: number): Promise<JSHandleDisposeResult>;
+  evaluateExpression(params: JSHandleEvaluateExpressionParams, timeout?: number): Promise<JSHandleEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams, timeout?: number): Promise<JSHandleEvaluateExpressionHandleResult>;
+  getPropertyList(params?: JSHandleGetPropertyListParams, timeout?: number): Promise<JSHandleGetPropertyListResult>;
+  getProperty(params: JSHandleGetPropertyParams, timeout?: number): Promise<JSHandleGetPropertyResult>;
+  jsonValue(params?: JSHandleJsonValueParams, timeout?: number): Promise<JSHandleJsonValueResult>;
 }
 export type JSHandlePreviewUpdatedEvent = {
   preview: string,
@@ -1681,41 +1681,41 @@ export type JSHandleJsonValueResult = {
 // ----------- ElementHandle -----------
 export type ElementHandleInitializer = {};
 export interface ElementHandleChannel extends JSHandleChannel {
-  evalOnSelector(params: ElementHandleEvalOnSelectorParams): Promise<ElementHandleEvalOnSelectorResult>;
-  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams): Promise<ElementHandleEvalOnSelectorAllResult>;
-  boundingBox(params?: ElementHandleBoundingBoxParams): Promise<ElementHandleBoundingBoxResult>;
-  check(params: ElementHandleCheckParams): Promise<ElementHandleCheckResult>;
-  click(params: ElementHandleClickParams): Promise<ElementHandleClickResult>;
-  contentFrame(params?: ElementHandleContentFrameParams): Promise<ElementHandleContentFrameResult>;
-  dblclick(params: ElementHandleDblclickParams): Promise<ElementHandleDblclickResult>;
-  dispatchEvent(params: ElementHandleDispatchEventParams): Promise<ElementHandleDispatchEventResult>;
-  fill(params: ElementHandleFillParams): Promise<ElementHandleFillResult>;
-  focus(params?: ElementHandleFocusParams): Promise<ElementHandleFocusResult>;
-  getAttribute(params: ElementHandleGetAttributeParams): Promise<ElementHandleGetAttributeResult>;
-  hover(params: ElementHandleHoverParams): Promise<ElementHandleHoverResult>;
-  innerHTML(params?: ElementHandleInnerHTMLParams): Promise<ElementHandleInnerHTMLResult>;
-  innerText(params?: ElementHandleInnerTextParams): Promise<ElementHandleInnerTextResult>;
-  isChecked(params?: ElementHandleIsCheckedParams): Promise<ElementHandleIsCheckedResult>;
-  isDisabled(params?: ElementHandleIsDisabledParams): Promise<ElementHandleIsDisabledResult>;
-  isEditable(params?: ElementHandleIsEditableParams): Promise<ElementHandleIsEditableResult>;
-  isEnabled(params?: ElementHandleIsEnabledParams): Promise<ElementHandleIsEnabledResult>;
-  isHidden(params?: ElementHandleIsHiddenParams): Promise<ElementHandleIsHiddenResult>;
-  isVisible(params?: ElementHandleIsVisibleParams): Promise<ElementHandleIsVisibleResult>;
-  ownerFrame(params?: ElementHandleOwnerFrameParams): Promise<ElementHandleOwnerFrameResult>;
-  press(params: ElementHandlePressParams): Promise<ElementHandlePressResult>;
-  querySelector(params: ElementHandleQuerySelectorParams): Promise<ElementHandleQuerySelectorResult>;
-  querySelectorAll(params: ElementHandleQuerySelectorAllParams): Promise<ElementHandleQuerySelectorAllResult>;
-  screenshot(params: ElementHandleScreenshotParams): Promise<ElementHandleScreenshotResult>;
-  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams): Promise<ElementHandleScrollIntoViewIfNeededResult>;
-  selectOption(params: ElementHandleSelectOptionParams): Promise<ElementHandleSelectOptionResult>;
-  selectText(params: ElementHandleSelectTextParams): Promise<ElementHandleSelectTextResult>;
-  setInputFiles(params: ElementHandleSetInputFilesParams): Promise<ElementHandleSetInputFilesResult>;
-  tap(params: ElementHandleTapParams): Promise<ElementHandleTapResult>;
-  textContent(params?: ElementHandleTextContentParams): Promise<ElementHandleTextContentResult>;
-  type(params: ElementHandleTypeParams): Promise<ElementHandleTypeResult>;
-  uncheck(params: ElementHandleUncheckParams): Promise<ElementHandleUncheckResult>;
-  waitForElementState(params: ElementHandleWaitForElementStateParams): Promise<ElementHandleWaitForElementStateResult>;
-  waitForSelector(params: ElementHandleWaitForSelectorParams): Promise<ElementHandleWaitForSelectorResult>;
+  evalOnSelector(params: ElementHandleEvalOnSelectorParams, timeout?: number): Promise<ElementHandleEvalOnSelectorResult>;
+  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams, timeout?: number): Promise<ElementHandleEvalOnSelectorAllResult>;
+  boundingBox(params?: ElementHandleBoundingBoxParams, timeout?: number): Promise<ElementHandleBoundingBoxResult>;
+  check(params: ElementHandleCheckParams, timeout?: number): Promise<ElementHandleCheckResult>;
+  click(params: ElementHandleClickParams, timeout?: number): Promise<ElementHandleClickResult>;
+  contentFrame(params?: ElementHandleContentFrameParams, timeout?: number): Promise<ElementHandleContentFrameResult>;
+  dblclick(params: ElementHandleDblclickParams, timeout?: number): Promise<ElementHandleDblclickResult>;
+  dispatchEvent(params: ElementHandleDispatchEventParams, timeout?: number): Promise<ElementHandleDispatchEventResult>;
+  fill(params: ElementHandleFillParams, timeout?: number): Promise<ElementHandleFillResult>;
+  focus(params?: ElementHandleFocusParams, timeout?: number): Promise<ElementHandleFocusResult>;
+  getAttribute(params: ElementHandleGetAttributeParams, timeout?: number): Promise<ElementHandleGetAttributeResult>;
+  hover(params: ElementHandleHoverParams, timeout?: number): Promise<ElementHandleHoverResult>;
+  innerHTML(params?: ElementHandleInnerHTMLParams, timeout?: number): Promise<ElementHandleInnerHTMLResult>;
+  innerText(params?: ElementHandleInnerTextParams, timeout?: number): Promise<ElementHandleInnerTextResult>;
+  isChecked(params?: ElementHandleIsCheckedParams, timeout?: number): Promise<ElementHandleIsCheckedResult>;
+  isDisabled(params?: ElementHandleIsDisabledParams, timeout?: number): Promise<ElementHandleIsDisabledResult>;
+  isEditable(params?: ElementHandleIsEditableParams, timeout?: number): Promise<ElementHandleIsEditableResult>;
+  isEnabled(params?: ElementHandleIsEnabledParams, timeout?: number): Promise<ElementHandleIsEnabledResult>;
+  isHidden(params?: ElementHandleIsHiddenParams, timeout?: number): Promise<ElementHandleIsHiddenResult>;
+  isVisible(params?: ElementHandleIsVisibleParams, timeout?: number): Promise<ElementHandleIsVisibleResult>;
+  ownerFrame(params?: ElementHandleOwnerFrameParams, timeout?: number): Promise<ElementHandleOwnerFrameResult>;
+  press(params: ElementHandlePressParams, timeout?: number): Promise<ElementHandlePressResult>;
+  querySelector(params: ElementHandleQuerySelectorParams, timeout?: number): Promise<ElementHandleQuerySelectorResult>;
+  querySelectorAll(params: ElementHandleQuerySelectorAllParams, timeout?: number): Promise<ElementHandleQuerySelectorAllResult>;
+  screenshot(params: ElementHandleScreenshotParams, timeout?: number): Promise<ElementHandleScreenshotResult>;
+  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams, timeout?: number): Promise<ElementHandleScrollIntoViewIfNeededResult>;
+  selectOption(params: ElementHandleSelectOptionParams, timeout?: number): Promise<ElementHandleSelectOptionResult>;
+  selectText(params: ElementHandleSelectTextParams, timeout?: number): Promise<ElementHandleSelectTextResult>;
+  setInputFiles(params: ElementHandleSetInputFilesParams, timeout?: number): Promise<ElementHandleSetInputFilesResult>;
+  tap(params: ElementHandleTapParams, timeout?: number): Promise<ElementHandleTapResult>;
+  textContent(params?: ElementHandleTextContentParams, timeout?: number): Promise<ElementHandleTextContentResult>;
+  type(params: ElementHandleTypeParams, timeout?: number): Promise<ElementHandleTypeResult>;
+  uncheck(params: ElementHandleUncheckParams, timeout?: number): Promise<ElementHandleUncheckResult>;
+  waitForElementState(params: ElementHandleWaitForElementStateParams, timeout?: number): Promise<ElementHandleWaitForElementStateResult>;
+  waitForSelector(params: ElementHandleWaitForSelectorParams, timeout?: number): Promise<ElementHandleWaitForSelectorResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
@@ -2065,7 +2065,7 @@ export type RequestInitializer = {
   redirectedFrom?: RequestChannel,
 };
 export interface RequestChannel extends Channel {
-  response(params?: RequestResponseParams): Promise<RequestResponseResult>;
+  response(params?: RequestResponseParams, timeout?: number): Promise<RequestResponseResult>;
 }
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
@@ -2078,9 +2078,9 @@ export type RouteInitializer = {
   request: RequestChannel,
 };
 export interface RouteChannel extends Channel {
-  abort(params: RouteAbortParams): Promise<RouteAbortResult>;
-  continue(params: RouteContinueParams): Promise<RouteContinueResult>;
-  fulfill(params: RouteFulfillParams): Promise<RouteFulfillResult>;
+  abort(params: RouteAbortParams, timeout?: number): Promise<RouteAbortResult>;
+  continue(params: RouteContinueParams, timeout?: number): Promise<RouteContinueResult>;
+  fulfill(params: RouteFulfillParams, timeout?: number): Promise<RouteFulfillResult>;
 }
 export type RouteAbortParams = {
   errorCode?: string,
@@ -2133,8 +2133,8 @@ export type ResponseInitializer = {
   timing: types.ResourceTiming,
 };
 export interface ResponseChannel extends Channel {
-  body(params?: ResponseBodyParams): Promise<ResponseBodyResult>;
-  finished(params?: ResponseFinishedParams): Promise<ResponseFinishedResult>;
+  body(params?: ResponseBodyParams, timeout?: number): Promise<ResponseBodyResult>;
+  finished(params?: ResponseFinishedParams, timeout?: number): Promise<ResponseFinishedResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -2194,8 +2194,8 @@ export type BindingCallInitializer = {
   handle?: JSHandleChannel,
 };
 export interface BindingCallChannel extends Channel {
-  reject(params: BindingCallRejectParams): Promise<BindingCallRejectResult>;
-  resolve(params: BindingCallResolveParams): Promise<BindingCallResolveResult>;
+  reject(params: BindingCallRejectParams, timeout?: number): Promise<BindingCallRejectResult>;
+  resolve(params: BindingCallResolveParams, timeout?: number): Promise<BindingCallResolveResult>;
 }
 export type BindingCallRejectParams = {
   error: types.SerializedError,
@@ -2219,8 +2219,8 @@ export type DialogInitializer = {
   defaultValue: string,
 };
 export interface DialogChannel extends Channel {
-  accept(params: DialogAcceptParams): Promise<DialogAcceptResult>;
-  dismiss(params?: DialogDismissParams): Promise<DialogDismissResult>;
+  accept(params: DialogAcceptParams, timeout?: number): Promise<DialogAcceptResult>;
+  dismiss(params?: DialogDismissParams, timeout?: number): Promise<DialogDismissResult>;
 }
 export type DialogAcceptParams = {
   promptText?: string,
@@ -2239,12 +2239,12 @@ export type DownloadInitializer = {
   suggestedFilename: string,
 };
 export interface DownloadChannel extends Channel {
-  path(params?: DownloadPathParams): Promise<DownloadPathResult>;
-  saveAs(params: DownloadSaveAsParams): Promise<DownloadSaveAsResult>;
-  saveAsStream(params?: DownloadSaveAsStreamParams): Promise<DownloadSaveAsStreamResult>;
-  failure(params?: DownloadFailureParams): Promise<DownloadFailureResult>;
-  stream(params?: DownloadStreamParams): Promise<DownloadStreamResult>;
-  delete(params?: DownloadDeleteParams): Promise<DownloadDeleteResult>;
+  path(params?: DownloadPathParams, timeout?: number): Promise<DownloadPathResult>;
+  saveAs(params: DownloadSaveAsParams, timeout?: number): Promise<DownloadSaveAsResult>;
+  saveAsStream(params?: DownloadSaveAsStreamParams, timeout?: number): Promise<DownloadSaveAsStreamResult>;
+  failure(params?: DownloadFailureParams, timeout?: number): Promise<DownloadFailureResult>;
+  stream(params?: DownloadStreamParams, timeout?: number): Promise<DownloadStreamResult>;
+  delete(params?: DownloadDeleteParams, timeout?: number): Promise<DownloadDeleteResult>;
 }
 export type DownloadPathParams = {};
 export type DownloadPathOptions = {};
@@ -2280,8 +2280,8 @@ export type DownloadDeleteResult = void;
 // ----------- Stream -----------
 export type StreamInitializer = {};
 export interface StreamChannel extends Channel {
-  read(params: StreamReadParams): Promise<StreamReadResult>;
-  close(params?: StreamCloseParams): Promise<StreamCloseResult>;
+  read(params: StreamReadParams, timeout?: number): Promise<StreamReadResult>;
+  close(params?: StreamCloseParams, timeout?: number): Promise<StreamCloseResult>;
 }
 export type StreamReadParams = {
   size?: number,
@@ -2300,8 +2300,8 @@ export type StreamCloseResult = void;
 export type CDPSessionInitializer = {};
 export interface CDPSessionChannel extends Channel {
   on(event: 'event', callback: (params: CDPSessionEventEvent) => void): this;
-  send(params: CDPSessionSendParams): Promise<CDPSessionSendResult>;
-  detach(params?: CDPSessionDetachParams): Promise<CDPSessionDetachResult>;
+  send(params: CDPSessionSendParams, timeout?: number): Promise<CDPSessionSendResult>;
+  detach(params?: CDPSessionDetachParams, timeout?: number): Promise<CDPSessionDetachResult>;
 }
 export type CDPSessionEventEvent = {
   method: string,
@@ -2324,7 +2324,7 @@ export type CDPSessionDetachResult = void;
 // ----------- Electron -----------
 export type ElectronInitializer = {};
 export interface ElectronChannel extends Channel {
-  launch(params: ElectronLaunchParams): Promise<ElectronLaunchResult>;
+  launch(params: ElectronLaunchParams, timeout?: number): Promise<ElectronLaunchResult>;
 }
 export type ElectronLaunchParams = {
   sdkLanguage: string,
@@ -2351,9 +2351,9 @@ export interface ElectronApplicationChannel extends Channel {
   on(event: 'context', callback: (params: ElectronApplicationContextEvent) => void): this;
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   on(event: 'window', callback: (params: ElectronApplicationWindowEvent) => void): this;
-  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams): Promise<ElectronApplicationEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
-  close(params?: ElectronApplicationCloseParams): Promise<ElectronApplicationCloseResult>;
+  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, timeout?: number): Promise<ElectronApplicationEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, timeout?: number): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
+  close(params?: ElectronApplicationCloseParams, timeout?: number): Promise<ElectronApplicationCloseResult>;
 }
 export type ElectronApplicationContextEvent = {
   context: BrowserContextChannel,
@@ -2392,8 +2392,8 @@ export type ElectronApplicationCloseResult = void;
 // ----------- Android -----------
 export type AndroidInitializer = {};
 export interface AndroidChannel extends Channel {
-  devices(params?: AndroidDevicesParams): Promise<AndroidDevicesResult>;
-  setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
+  devices(params?: AndroidDevicesParams, timeout?: number): Promise<AndroidDevicesResult>;
+  setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, timeout?: number): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
 }
 export type AndroidDevicesParams = {};
 export type AndroidDevicesOptions = {};
@@ -2413,8 +2413,8 @@ export type AndroidSocketInitializer = {};
 export interface AndroidSocketChannel extends Channel {
   on(event: 'data', callback: (params: AndroidSocketDataEvent) => void): this;
   on(event: 'close', callback: (params: AndroidSocketCloseEvent) => void): this;
-  write(params: AndroidSocketWriteParams): Promise<AndroidSocketWriteResult>;
-  close(params?: AndroidSocketCloseParams): Promise<AndroidSocketCloseResult>;
+  write(params: AndroidSocketWriteParams, timeout?: number): Promise<AndroidSocketWriteResult>;
+  close(params?: AndroidSocketCloseParams, timeout?: number): Promise<AndroidSocketCloseResult>;
 }
 export type AndroidSocketDataEvent = {
   data: types.Binary,
@@ -2439,31 +2439,31 @@ export type AndroidDeviceInitializer = {
 export interface AndroidDeviceChannel extends Channel {
   on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
   on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
-  wait(params: AndroidDeviceWaitParams): Promise<AndroidDeviceWaitResult>;
-  fill(params: AndroidDeviceFillParams): Promise<AndroidDeviceFillResult>;
-  tap(params: AndroidDeviceTapParams): Promise<AndroidDeviceTapResult>;
-  drag(params: AndroidDeviceDragParams): Promise<AndroidDeviceDragResult>;
-  fling(params: AndroidDeviceFlingParams): Promise<AndroidDeviceFlingResult>;
-  longTap(params: AndroidDeviceLongTapParams): Promise<AndroidDeviceLongTapResult>;
-  pinchClose(params: AndroidDevicePinchCloseParams): Promise<AndroidDevicePinchCloseResult>;
-  pinchOpen(params: AndroidDevicePinchOpenParams): Promise<AndroidDevicePinchOpenResult>;
-  scroll(params: AndroidDeviceScrollParams): Promise<AndroidDeviceScrollResult>;
-  swipe(params: AndroidDeviceSwipeParams): Promise<AndroidDeviceSwipeResult>;
-  info(params: AndroidDeviceInfoParams): Promise<AndroidDeviceInfoResult>;
-  screenshot(params?: AndroidDeviceScreenshotParams): Promise<AndroidDeviceScreenshotResult>;
-  inputType(params: AndroidDeviceInputTypeParams): Promise<AndroidDeviceInputTypeResult>;
-  inputPress(params: AndroidDeviceInputPressParams): Promise<AndroidDeviceInputPressResult>;
-  inputTap(params: AndroidDeviceInputTapParams): Promise<AndroidDeviceInputTapResult>;
-  inputSwipe(params: AndroidDeviceInputSwipeParams): Promise<AndroidDeviceInputSwipeResult>;
-  inputDrag(params: AndroidDeviceInputDragParams): Promise<AndroidDeviceInputDragResult>;
-  launchBrowser(params: AndroidDeviceLaunchBrowserParams): Promise<AndroidDeviceLaunchBrowserResult>;
-  open(params: AndroidDeviceOpenParams): Promise<AndroidDeviceOpenResult>;
-  shell(params: AndroidDeviceShellParams): Promise<AndroidDeviceShellResult>;
-  installApk(params: AndroidDeviceInstallApkParams): Promise<AndroidDeviceInstallApkResult>;
-  push(params: AndroidDevicePushParams): Promise<AndroidDevicePushResult>;
-  setDefaultTimeoutNoReply(params: AndroidDeviceSetDefaultTimeoutNoReplyParams): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
-  connectToWebView(params: AndroidDeviceConnectToWebViewParams): Promise<AndroidDeviceConnectToWebViewResult>;
-  close(params?: AndroidDeviceCloseParams): Promise<AndroidDeviceCloseResult>;
+  wait(params: AndroidDeviceWaitParams, timeout?: number): Promise<AndroidDeviceWaitResult>;
+  fill(params: AndroidDeviceFillParams, timeout?: number): Promise<AndroidDeviceFillResult>;
+  tap(params: AndroidDeviceTapParams, timeout?: number): Promise<AndroidDeviceTapResult>;
+  drag(params: AndroidDeviceDragParams, timeout?: number): Promise<AndroidDeviceDragResult>;
+  fling(params: AndroidDeviceFlingParams, timeout?: number): Promise<AndroidDeviceFlingResult>;
+  longTap(params: AndroidDeviceLongTapParams, timeout?: number): Promise<AndroidDeviceLongTapResult>;
+  pinchClose(params: AndroidDevicePinchCloseParams, timeout?: number): Promise<AndroidDevicePinchCloseResult>;
+  pinchOpen(params: AndroidDevicePinchOpenParams, timeout?: number): Promise<AndroidDevicePinchOpenResult>;
+  scroll(params: AndroidDeviceScrollParams, timeout?: number): Promise<AndroidDeviceScrollResult>;
+  swipe(params: AndroidDeviceSwipeParams, timeout?: number): Promise<AndroidDeviceSwipeResult>;
+  info(params: AndroidDeviceInfoParams, timeout?: number): Promise<AndroidDeviceInfoResult>;
+  screenshot(params?: AndroidDeviceScreenshotParams, timeout?: number): Promise<AndroidDeviceScreenshotResult>;
+  inputType(params: AndroidDeviceInputTypeParams, timeout?: number): Promise<AndroidDeviceInputTypeResult>;
+  inputPress(params: AndroidDeviceInputPressParams, timeout?: number): Promise<AndroidDeviceInputPressResult>;
+  inputTap(params: AndroidDeviceInputTapParams, timeout?: number): Promise<AndroidDeviceInputTapResult>;
+  inputSwipe(params: AndroidDeviceInputSwipeParams, timeout?: number): Promise<AndroidDeviceInputSwipeResult>;
+  inputDrag(params: AndroidDeviceInputDragParams, timeout?: number): Promise<AndroidDeviceInputDragResult>;
+  launchBrowser(params: AndroidDeviceLaunchBrowserParams, timeout?: number): Promise<AndroidDeviceLaunchBrowserResult>;
+  open(params: AndroidDeviceOpenParams, timeout?: number): Promise<AndroidDeviceOpenResult>;
+  shell(params: AndroidDeviceShellParams, timeout?: number): Promise<AndroidDeviceShellResult>;
+  installApk(params: AndroidDeviceInstallApkParams, timeout?: number): Promise<AndroidDeviceInstallApkResult>;
+  push(params: AndroidDevicePushParams, timeout?: number): Promise<AndroidDevicePushResult>;
+  setDefaultTimeoutNoReply(params: AndroidDeviceSetDefaultTimeoutNoReplyParams, timeout?: number): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
+  connectToWebView(params: AndroidDeviceConnectToWebViewParams, timeout?: number): Promise<AndroidDeviceConnectToWebViewResult>;
+  close(params?: AndroidDeviceCloseParams, timeout?: number): Promise<AndroidDeviceCloseResult>;
 }
 export type AndroidDeviceWebViewAddedEvent = {
   webView: types.AndroidWebView,

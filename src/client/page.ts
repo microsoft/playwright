@@ -100,7 +100,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._browserContext = parent as BrowserContext;
     this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
 
-    this.accessibility = new Accessibility(this._channel);
+    this.accessibility = new Accessibility(this);
     this.keyboard = new Keyboard(this._channel);
     this.mouse = new Mouse(this._channel);
     this.touchscreen = new Touchscreen(this._channel);
@@ -137,7 +137,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
     if ((this._browserContext as ChromiumBrowserContext)._isChromium) {
-      this.coverage = new ChromiumCoverage(this._channel);
+      this.coverage = new ChromiumCoverage(this);
       this.pdf = options => this._pdf(options);
     } else {
       this.pdf = undefined as any;
@@ -350,7 +350,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   async reload(options: channels.PageReloadOptions = {}): Promise<Response | null> {
     return this._wrapApiCall('page.reload', async (channel: channels.PageChannel) => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      return Response.fromNullable((await channel.reload({ ...options, waitUntil })).response);
+      return Response.fromNullable((await channel.reload({ ...options, waitUntil }, this._timeoutSettings.navigationTimeout(options))).response);
     });
   }
 
@@ -413,14 +413,14 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   async goBack(options: channels.PageGoBackOptions = {}): Promise<Response | null> {
     return this._wrapApiCall('page.goBack', async (channel: channels.PageChannel) => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      return Response.fromNullable((await channel.goBack({ ...options, waitUntil })).response);
+      return Response.fromNullable((await channel.goBack({ ...options, waitUntil }, this._timeoutSettings.navigationTimeout(options))).response);
     });
   }
 
   async goForward(options: channels.PageGoForwardOptions = {}): Promise<Response | null> {
     return this._wrapApiCall('page.goForward', async (channel: channels.PageChannel) => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      return Response.fromNullable((await channel.goForward({ ...options, waitUntil })).response);
+      return Response.fromNullable((await channel.goForward({ ...options, waitUntil }, this._timeoutSettings.navigationTimeout(options))).response);
     });
   }
 
@@ -477,7 +477,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
       const copy = { ...options };
       if (!copy.type)
         copy.type = determineScreenshotType(options);
-      const result = await channel.screenshot(copy);
+      const result = await channel.screenshot(copy, this._timeoutSettings.timeout(options));
       const buffer = Buffer.from(result.binary, 'base64');
       if (options.path) {
         await mkdirIfNeeded(options.path);

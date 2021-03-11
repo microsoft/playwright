@@ -26,6 +26,7 @@ import * as util from 'util';
 import { assert, isString, mkdirIfNeeded } from '../utils/utils';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
@@ -131,56 +132,56 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 
   async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions = {}) {
     return this._wrapApiCall('elementHandle.scrollIntoViewIfNeeded', async (channel: channels.ElementHandleChannel) => {
-      await channel.scrollIntoViewIfNeeded(options);
+      await channel.scrollIntoViewIfNeeded(options, TimeoutSettings.timeout(options));
     });
   }
 
   async hover(options: channels.ElementHandleHoverOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.hover', async (channel: channels.ElementHandleChannel) => {
-      await channel.hover(options);
+      await channel.hover(options, TimeoutSettings.timeout(options));
     });
   }
 
   async click(options: channels.ElementHandleClickOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.click', async (channel: channels.ElementHandleChannel) => {
-      return await channel.click(options);
+      return await channel.click(options, TimeoutSettings.timeout(options));
     });
   }
 
   async dblclick(options: channels.ElementHandleDblclickOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.dblclick', async (channel: channels.ElementHandleChannel) => {
-      return await channel.dblclick(options);
+      return await channel.dblclick(options, TimeoutSettings.timeout(options));
     });
   }
 
   async tap(options: channels.ElementHandleTapOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.tap', async (channel: channels.ElementHandleChannel) => {
-      return await channel.tap(options);
+      return await channel.tap(options, TimeoutSettings.timeout(options));
     });
   }
 
   async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
     return this._wrapApiCall('elementHandle.selectOption', async (channel: channels.ElementHandleChannel) => {
-      const result = await channel.selectOption({ ...convertSelectOptionValues(values), ...options });
+      const result = await channel.selectOption({ ...convertSelectOptionValues(values), ...options }, TimeoutSettings.timeout(options));
       return result.values;
     });
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.fill', async (channel: channels.ElementHandleChannel) => {
-      return await channel.fill({ value, ...options });
+      return await channel.fill({ value, ...options }, TimeoutSettings.timeout(options));
     });
   }
 
   async selectText(options: channels.ElementHandleSelectTextOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.selectText', async (channel: channels.ElementHandleChannel) => {
-      await channel.selectText(options);
+      await channel.selectText(options, TimeoutSettings.timeout(options));
     });
   }
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
     return this._wrapApiCall('elementHandle.setInputFiles', async (channel: channels.ElementHandleChannel) => {
-      await channel.setInputFiles({ files: await convertInputFiles(files), ...options });
+      await channel.setInputFiles({ files: await convertInputFiles(files), ...options }, TimeoutSettings.timeout(options));
     });
   }
 
@@ -192,25 +193,25 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 
   async type(text: string, options: channels.ElementHandleTypeOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.type', async (channel: channels.ElementHandleChannel) => {
-      await channel.type({ text, ...options });
+      await channel.type({ text, ...options }, TimeoutSettings.timeout(options));
     });
   }
 
   async press(key: string, options: channels.ElementHandlePressOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.press', async (channel: channels.ElementHandleChannel) => {
-      await channel.press({ key, ...options });
+      await channel.press({ key, ...options }, TimeoutSettings.timeout(options));
     });
   }
 
   async check(options: channels.ElementHandleCheckOptions = {}) {
     return this._wrapApiCall('elementHandle.check', async (channel: channels.ElementHandleChannel) => {
-      return await channel.check(options);
+      return await channel.check(options, TimeoutSettings.timeout(options));
     });
   }
 
   async uncheck(options: channels.ElementHandleUncheckOptions = {}) {
     return this._wrapApiCall('elementHandle.uncheck', async (channel: channels.ElementHandleChannel) => {
-      return await channel.uncheck(options);
+      return await channel.uncheck(options, TimeoutSettings.timeout(options));
     });
   }
 
@@ -226,7 +227,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
       const copy = { ...options };
       if (!copy.type)
         copy.type = determineScreenshotType(options);
-      const result = await channel.screenshot(copy);
+      const result = await channel.screenshot(copy, TimeoutSettings.timeout(options));
       const buffer = Buffer.from(result.binary, 'base64');
       if (options.path) {
         await mkdirIfNeeded(options.path);
@@ -265,7 +266,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 
   async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: channels.ElementHandleWaitForElementStateOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.waitForElementState', async (channel: channels.ElementHandleChannel) => {
-      return await channel.waitForElementState({ state, ...options });
+      return await channel.waitForElementState({ state, ...options }, TimeoutSettings.timeout(options));
     });
   }
 
@@ -273,7 +274,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   waitForSelector(selector: string, options?: channels.ElementHandleWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
   async waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions = {}): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     return this._wrapApiCall('elementHandle.waitForSelector', async (channel: channels.ElementHandleChannel) => {
-      const result = await channel.waitForSelector({ selector, ...options });
+      const result = await channel.waitForSelector({ selector, ...options }, TimeoutSettings.timeout(options));
       return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
     });
   }

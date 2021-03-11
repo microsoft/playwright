@@ -18,6 +18,7 @@
 import * as channels from './channels';
 import { ElementHandle } from './elementHandle';
 import * as api from '../../types/types';
+import { Page } from './page';
 
 type SerializedAXNode = Omit<channels.AXNode, 'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'> & {
   value?: string|number,
@@ -40,15 +41,17 @@ function axNodeFromProtocol(axNode: channels.AXNode): SerializedAXNode {
 }
 
 export class Accessibility implements api.Accessibility {
-  private _channel: channels.PageChannel;
+  private _page: Page;
 
-  constructor(channel: channels.PageChannel) {
-    this._channel = channel;
+  constructor(page: Page) {
+    this._page = page;
   }
 
   async snapshot(options: { interestingOnly?: boolean; root?: ElementHandle } = {}): Promise<SerializedAXNode | null> {
-    const root = options.root ? options.root._elementChannel : undefined;
-    const result = await this._channel.accessibilitySnapshot({ interestingOnly: options.interestingOnly, root });
-    return result.rootAXNode ? axNodeFromProtocol(result.rootAXNode) : null;
+    return this._page._wrapApiCall('accessibility.snapshot', async channel => {
+      const root = options.root ? options.root._elementChannel : undefined;
+      const result = await channel.accessibilitySnapshot({ interestingOnly: options.interestingOnly, root }, this._page._timeoutSettings.timeout({}));
+      return result.rootAXNode ? axNodeFromProtocol(result.rootAXNode) : null;
+    });
   }
 }

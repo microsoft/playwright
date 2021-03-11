@@ -50,7 +50,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel, channels.El
         ...options,
         env: envObjectToArray(options.env ? options.env : process.env),
       };
-      return ElectronApplication.from((await channel.launch(params)).electronApplication);
+      return ElectronApplication.from((await channel.launch(params, TimeoutSettings.timeout(params))).electronApplication);
     });
   }
 }

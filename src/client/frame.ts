@@ -96,7 +96,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   async goto(url: string, options: channels.FrameGotoOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('goto'), async (channel: channels.FrameChannel) => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      return network.Response.fromNullable((await channel.goto({ url, ...options, waitUntil })).response);
+      return network.Response.fromNullable((await channel.goto({ url, ...options, waitUntil }, this.page()._timeoutSettings.navigationTimeout(options))).response);
     });
   }
 
@@ -216,14 +216,14 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
         throw new Error('options.visibility is not supported, did you mean options.state?');
       if ((options as any).waitFor && (options as any).waitFor !== 'visible')
         throw new Error('options.waitFor is not supported, did you mean options.state?');
-      const result = await channel.waitForSelector({ selector, ...options });
+      const result = await channel.waitForSelector({ selector, ...options }, this.page()._timeoutSettings.timeout(options));
       return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
     });
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: any, options: channels.FrameDispatchEventOptions = {}): Promise<void> {
     return this._wrapApiCall(this._apiName('dispatchEvent'), async (channel: channels.FrameChannel) => {
-      await channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options });
+      await channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
@@ -259,7 +259,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   async setContent(html: string, options: channels.FrameSetContentOptions = {}): Promise<void> {
     return this._wrapApiCall(this._apiName('setContent'), async (channel: channels.FrameChannel) => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      await channel.setContent({ html, ...options, waitUntil });
+      await channel.setContent({ html, ...options, waitUntil }, this.page()._timeoutSettings.navigationTimeout(options));
     });
   }
 
@@ -307,135 +307,135 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
 
   async click(selector: string, options: channels.FrameClickOptions = {}) {
     return this._wrapApiCall(this._apiName('click'), async (channel: channels.FrameChannel) => {
-      return await channel.click({ selector, ...options });
+      return await channel.click({ selector, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async dblclick(selector: string, options: channels.FrameDblclickOptions = {}) {
     return this._wrapApiCall(this._apiName('dblclick'), async (channel: channels.FrameChannel) => {
-      return await channel.dblclick({ selector, ...options });
+      return await channel.dblclick({ selector, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async tap(selector: string, options: channels.FrameTapOptions = {}) {
     return this._wrapApiCall(this._apiName('tap'), async (channel: channels.FrameChannel) => {
-      return await channel.tap({ selector, ...options });
+      return await channel.tap({ selector, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async fill(selector: string, value: string, options: channels.FrameFillOptions = {}) {
     return this._wrapApiCall(this._apiName('fill'), async (channel: channels.FrameChannel) => {
-      return await channel.fill({ selector, value, ...options });
+      return await channel.fill({ selector, value, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async focus(selector: string, options: channels.FrameFocusOptions = {}) {
     return this._wrapApiCall(this._apiName('focus'), async (channel: channels.FrameChannel) => {
-      await channel.focus({ selector, ...options });
+      await channel.focus({ selector, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async textContent(selector: string, options: channels.FrameTextContentOptions = {}): Promise<null|string> {
     return this._wrapApiCall(this._apiName('textContent'), async (channel: channels.FrameChannel) => {
-      const value = (await channel.textContent({ selector, ...options })).value;
+      const value = (await channel.textContent({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
       return value === undefined ? null : value;
     });
   }
 
   async innerText(selector: string, options: channels.FrameInnerTextOptions = {}): Promise<string> {
     return this._wrapApiCall(this._apiName('innerText'), async (channel: channels.FrameChannel) => {
-      return (await channel.innerText({ selector, ...options })).value;
+      return (await channel.innerText({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
     });
   }
 
   async innerHTML(selector: string, options: channels.FrameInnerHTMLOptions = {}): Promise<string> {
     return this._wrapApiCall(this._apiName('innerHTML'), async (channel: channels.FrameChannel) => {
-      return (await channel.innerHTML({ selector, ...options })).value;
+      return (await channel.innerHTML({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
     });
   }
 
   async getAttribute(selector: string, name: string, options: channels.FrameGetAttributeOptions = {}): Promise<string | null> {
     return this._wrapApiCall(this._apiName('getAttribute'), async (channel: channels.FrameChannel) => {
-      const value = (await channel.getAttribute({ selector, name, ...options })).value;
+      const value = (await channel.getAttribute({ selector, name, ...options }, this.page()._timeoutSettings.timeout(options))).value;
       return value === undefined ? null : value;
     });
   }
 
   async isChecked(selector: string, options: channels.FrameIsCheckedOptions = {}): Promise<boolean> {
     return this._wrapApiCall(this._apiName('isChecked'), async (channel: channels.FrameChannel) => {
-      return (await channel.isChecked({ selector, ...options })).value;
+      return (await channel.isChecked({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
     });
   }
 
   async isDisabled(selector: string, options: channels.FrameIsDisabledOptions = {}): Promise<boolean> {
     return this._wrapApiCall(this._apiName('isDisabled'), async (channel: channels.FrameChannel) => {
-      return (await channel.isDisabled({ selector, ...options })).value;
+      return (await channel.isDisabled({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
     });
   }
 
   async isEditable(selector: string, options: channels.FrameIsEditableOptions = {}): Promise<boolean> {
     return this._wrapApiCall(this._apiName('isEditable'), async (channel: channels.FrameChannel) => {
-      return (await channel.isEditable({ selector, ...options })).value;
+      return (await channel.isEditable({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
     });
   }
 
   async isEnabled(selector: string, options: channels.FrameIsEnabledOptions = {}): Promise<boolean> {
     return this._wrapApiCall(this._apiName('isEnabled'), async (channel: channels.FrameChannel) => {
-      return (await channel.isEnabled({ selector, ...options })).value;
+      return (await channel.isEnabled({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
     });
   }
 
   async isHidden(selector: string, options: channels.FrameIsHiddenOptions = {}): Promise<boolean> {
     return this._wrapApiCall(this._apiName('isHidden'), async (channel: channels.FrameChannel) => {
-      return (await channel.isHidden({ selector, ...options })).value;
+      return (await channel.isHidden({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
     });
   }
 
   async isVisible(selector: string, options: channels.FrameIsVisibleOptions = {}): Promise<boolean> {
     return this._wrapApiCall(this._apiName('isVisible'), async (channel: channels.FrameChannel) => {
-      return (await channel.isVisible({ selector, ...options })).value;
+      return (await channel.isVisible({ selector, ...options }, this.page()._timeoutSettings.timeout(options))).value;
     });
   }
 
   async hover(selector: string, options: channels.FrameHoverOptions = {}) {
     return this._wrapApiCall(this._apiName('hover'), async (channel: channels.FrameChannel) => {
-      await channel.hover({ selector, ...options });
+      await channel.hover({ selector, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async selectOption(selector: string, values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
     return this._wrapApiCall(this._apiName('selectOption'), async (channel: channels.FrameChannel) => {
-      return (await channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options })).values;
+      return (await channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options }, this.page()._timeoutSettings.timeout(options))).values;
     });
   }
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions = {}): Promise<void> {
     return this._wrapApiCall(this._apiName('setInputFiles'), async (channel: channels.FrameChannel) => {
-      await channel.setInputFiles({ selector, files: await convertInputFiles(files), ...options });
+      await channel.setInputFiles({ selector, files: await convertInputFiles(files), ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async type(selector: string, text: string, options: channels.FrameTypeOptions = {}) {
     return this._wrapApiCall(this._apiName('type'), async (channel: channels.FrameChannel) => {
-      await channel.type({ selector, text, ...options });
+      await channel.type({ selector, text, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async press(selector: string, key: string, options: channels.FramePressOptions = {}) {
     return this._wrapApiCall(this._apiName('press'), async (channel: channels.FrameChannel) => {
-      await channel.press({ selector, key, ...options });
+      await channel.press({ selector, key, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async check(selector: string, options: channels.FrameCheckOptions = {}) {
     return this._wrapApiCall(this._apiName('check'), async (channel: channels.FrameChannel) => {
-      await channel.check({ selector, ...options });
+      await channel.check({ selector, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
   async uncheck(selector: string, options: channels.FrameUncheckOptions = {}) {
     return this._wrapApiCall(this._apiName('uncheck'), async (channel: channels.FrameChannel) => {
-      await channel.uncheck({ selector, ...options });
+      await channel.uncheck({ selector, ...options }, this.page()._timeoutSettings.timeout(options));
     });
   }
 
@@ -455,7 +455,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
         expression: String(pageFunction),
         isFunction: typeof pageFunction === 'function',
         arg: serializeArgument(arg),
-      });
+      }, this.page()._timeoutSettings.timeout(options));
       return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
     });
   }

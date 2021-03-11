@@ -198,7 +198,8 @@ export class DispatcherConnection {
     const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
     const callMetadata: CallMetadata = {
       id,
-      ...validMetadata,
+      stack: validMetadata.stack,
+      apiName: validMetadata.apiName,
       pageId: sdkObject?.attribution.page?.uniqueId,
       frameId: sdkObject?.attribution.frame?.uniqueId,
       startTime: monotonicTime(),

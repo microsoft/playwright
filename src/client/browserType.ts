@@ -79,7 +79,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
         env: options.env ? envObjectToArray(options.env) : undefined,
       };
-      const browser = Browser.from((await channel.launch(launchOptions)).browser);
+      const browser = Browser.from((await channel.launch(launchOptions, TimeoutSettings.timeout(options))).browser);
       browser._logger = logger;
       return browser;
     }, logger);
@@ -102,7 +102,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         env: options.env ? envObjectToArray(options.env) : undefined,
         userDataDir,
       };
-      const result = await channel.launchPersistentContext(persistentParams);
+      const result = await channel.launchPersistentContext(persistentParams, TimeoutSettings.timeout(options));
       const context = BrowserContext.from(result.context);
       context._options = contextParams;
       context._logger = options.logger;
@@ -196,7 +196,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         wsEndpoint: params.wsEndpoint,
         slowMo: params.slowMo,
         timeout: params.timeout
-      });
+      }, TimeoutSettings.timeout(params));
       const browser = Browser.from(result.browser);
       if (result.defaultContext)
         browser._contexts.add(BrowserContext.from(result.defaultContext));

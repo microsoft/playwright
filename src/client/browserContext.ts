@@ -134,7 +134,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
 
   async clearCookies(): Promise<void> {
     return this._wrapApiCall('browserContext.clearCookies', async (channel: channels.BrowserContextChannel) => {
-      await channel.clearCookies();
+      await channel.clearCookies({});
     });
   }
 
@@ -146,7 +146,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
 
   async clearPermissions(): Promise<void> {
     return this._wrapApiCall('browserContext.clearPermissions', async (channel: channels.BrowserContextChannel) => {
-      await channel.clearPermissions();
+      await channel.clearPermissions({});
     });
   }
 
