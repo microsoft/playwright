@@ -119,7 +119,7 @@ function _wrapAndEscape(node, maxColumns = 0) {
 
   let text = node.text;
   text = text.replace(/`([^`]*)`/g, (match, code) => `<c>${code.replace('<', '&lt;').replace('>', '&gt;')}</c>`);
-  text = text.replace(/\[(.*?)\]\((.*?\))/g, (match, linkName, linkUrl) => {
+  text = text.replace(/\[(.*?)\]\((.*?)\)/g, (match, linkName, linkUrl) => {
     return `<a href="${linkUrl}">${linkName}</a>`;
   });
   text = text.replace(/\[(.*?)\]/g, (match, link) => `<see cref="${link}" />`);
