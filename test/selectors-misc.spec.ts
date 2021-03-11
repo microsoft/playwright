@@ -214,3 +214,17 @@ it('xpath should be relative', async ({ page }) => {
   expect(await page.$eval(`div >> //*[@class="find-me"]`, e => e.id)).toBe('target2');
   expect(await page.$eval(`div >> xpath=/*[@class="find-me"]`, e => e.id)).toBe('target2');
 });
+
+it('data-testid on the handle should be relative', async ({ page }) => {
+  await page.setContent(`
+    <span data-testid="find-me" id=target1>1</span>
+    <div>
+      <span data-testid="find-me" id=target2>2</span>
+    </div>
+  `);
+  expect(await page.$eval(`data-testid=find-me`, e => e.id)).toBe('target1');
+
+  const div = await page.$('div');
+  expect(await div.$eval(`data-testid=find-me`, e => e.id)).toBe('target2');
+  expect(await page.$eval(`div >> data-testid=find-me`, e => e.id)).toBe('target2');
+});
