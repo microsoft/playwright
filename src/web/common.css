@@ -16,7 +16,7 @@
 
 :root {
   --toolbar-bg-color: #fafafa;
-  --toolbar-color: #777;
+  --toolbar-color: #555;
 
   --light-background: #f3f2f1;
   --background: #edebe9;
@@ -27,7 +27,7 @@
   --purple: #9C27B0;
   --yellow: #FFC107;
   --white: #FFFFFF;
-  --blue: #2196F3;
+  --blue: #0b7ad5;
   --transparent-blue: #2196F355;
   --orange: #d24726;
   --black: #1E1E1E;
@@ -53,7 +53,6 @@ html, body {
   margin: 0;
   overflow: hidden;
   display: flex;
-  background: var(--background);
   overscroll-behavior-x: none;
 }
 
@@ -64,7 +63,6 @@ html, body {
 }
 
 body {
-  background-color: var(--background);
   color: var(--color);
   font-size: 14px;
   font-family: SegoeUI-SemiBold-final,Segoe UI Semibold,SegoeUI-Regular-final,Segoe UI,"Segoe UI Web (West European)",Segoe,-apple-system,BlinkMacSystemFont,Roboto,Helvetica Neue,Tahoma,Helvetica,Arial,sans-serif;

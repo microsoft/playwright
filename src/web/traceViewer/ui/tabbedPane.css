@@ -27,11 +27,16 @@
 }
 
 .tab-strip {
-  flex: auto;
+  color: var(--toolbar-color);
   display: flex;
-  flex-direction: row;
+  box-shadow: var(--box-shadow);
+  background-color: var(--toolbar-bg-color);
+  height: 40px;
   align-items: center;
-  height: 34px;
+  padding-right: 10px;
+  flex: none;
+  width: 100%;
+  z-index: 2;
 }
 
 .tab-strip:focus {
@@ -50,6 +55,7 @@
   border-bottom: 3px solid transparent;
   width: 80px;
   outline: none;
+  height: 100%;
 }
 
 .tab-label {
@@ -61,9 +67,9 @@
 }
 
 .tab-element.selected {
-  border-bottom-color: var(--color);
+  border-bottom-color: #666;
 }
 
 .tab-element:hover {
-  font-weight: 600;
+  color: #333;
 }

@@ -25,6 +25,8 @@ import { NetworkTab } from './networkTab';
 import { SourceTab } from './sourceTab';
 import { SnapshotTab } from './snapshotTab';
 import { LogsTab } from './logsTab';
+import { SplitView } from '../../components/splitView';
+
 
 export const Workbench: React.FunctionComponent<{
   contexts: ContextEntry[],
@@ -71,7 +73,7 @@ export const Workbench: React.FunctionComponent<{
       />
     </div>
     <div className='hbox'>
-      <div style={{ display: 'flex', flex: 'none', overflow: 'auto' }}>
+      <div style={{ display: 'flex', flex: 'none', overflow: 'auto', borderRight: '1px solid #ddd' }}>
         <ActionList
           actions={actions}
           selectedAction={selectedAction}
@@ -83,12 +85,15 @@ export const Workbench: React.FunctionComponent<{
           onHighlighted={action => setHighlightedAction(action)}
         />
       </div>
-      <TabbedPane tabs={[
-        { id: 'snapshot', title: 'Snapshot', render: () => <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} selection={snapshotSelection} boundaries={boundaries} /> },
-        { id: 'source', title: 'Source', render: () => <SourceTab actionEntry={selectedAction} /> },
-        { id: 'network', title: 'Network', render: () => <NetworkTab actionEntry={selectedAction} /> },
-        { id: 'logs', title: 'Logs', render: () => <LogsTab actionEntry={selectedAction} /> },
-      ]}/>
+      <SplitView sidebarSize={250}>
+        <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} selection={snapshotSelection} boundaries={boundaries} />
+        <TabbedPane tabs={[
+          { id: 'logs', title: 'Log', render: () => <LogsTab actionEntry={selectedAction} /> },
+          { id: 'source', title: 'Source', render: () => <SourceTab actionEntry={selectedAction} /> },
+          { id: 'network', title: 'Network', render: () => <NetworkTab actionEntry={selectedAction} /> },
+        ]}/>
+
+      </SplitView>
     </div>
   </div>;
 };

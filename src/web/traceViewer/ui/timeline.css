@@ -20,7 +20,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: white;
+  border-bottom: 1px solid #ddd;
   padding: 20px 0 5px;
   cursor: text;
 }

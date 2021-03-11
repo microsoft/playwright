@@ -138,7 +138,7 @@ function snapshotScript() {
       for (const iframe of root.querySelectorAll('iframe')) {
         const src = iframe.getAttribute('src');
         if (!src) {
-          iframe.setAttribute('src', 'data:text/html,<body>Snapshot is not available</body>');
+          iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
           // Append query parameters to inherit ?name= or ?time= values from parent.
           iframe.setAttribute('src', window.location.origin + src + window.location.search);

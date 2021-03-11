@@ -16,6 +16,7 @@
 
 .workbench {
   contain: size;
+  user-select: none;
 }
 
 .workbench .header {

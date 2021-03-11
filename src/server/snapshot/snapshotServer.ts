@@ -75,7 +75,7 @@ export class SnapshotServer {
       }
 
       function respondNotAvailable(): Response {
-        return new Response('<body>Snapshot is not available</body>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+        return new Response('<body style="background: #ddd"></body>', { status: 200, headers: { 'Content-Type': 'text/html' } });
       }
 
       function removeHash(url: string) {
