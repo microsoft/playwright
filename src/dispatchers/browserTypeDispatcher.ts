@@ -19,7 +19,7 @@ import { BrowserDispatcher } from './browserDispatcher';
 import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { CallMetadata } from '../server/instrumentation';
+import { Progress } from '../server/progress';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer> implements channels.BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserType) {
@@ -29,18 +29,18 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     }, true);
   }
 
-  async launch(params: channels.BrowserTypeLaunchParams, metadata: CallMetadata): Promise<channels.BrowserTypeLaunchResult> {
-    const browser = await this._object.launch(metadata, params);
+  async launch(progress: Progress, params: channels.BrowserTypeLaunchParams): Promise<channels.BrowserTypeLaunchResult> {
+    const browser = await this._object.launch(progress, params);
     return { browser: new BrowserDispatcher(this._scope, browser) };
   }
 
-  async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams, metadata: CallMetadata): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
-    const browserContext = await this._object.launchPersistentContext(metadata, params.userDataDir, params);
+  async launchPersistentContext(progress: Progress, params: channels.BrowserTypeLaunchPersistentContextParams): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
+    const browserContext = await this._object.launchPersistentContext(progress, params.userDataDir, params);
     return { context: new BrowserContextDispatcher(this._scope, browserContext) };
   }
 
-  async connectOverCDP(params: channels.BrowserTypeConnectOverCDPParams, metadata: CallMetadata): Promise<channels.BrowserTypeConnectOverCDPResult> {
-    const browser = await this._object.connectOverCDP(metadata, params.wsEndpoint, params, params.timeout);
+  async connectOverCDP(progress: Progress, params: channels.BrowserTypeConnectOverCDPParams): Promise<channels.BrowserTypeConnectOverCDPResult> {
+    const browser = await this._object.connectOverCDP(progress, params.wsEndpoint, params, params.timeout);
     return {
       browser: new BrowserDispatcher(this._scope, browser),
       defaultContext: browser._defaultContext ? new BrowserContextDispatcher(this._scope, browser._defaultContext) : undefined,

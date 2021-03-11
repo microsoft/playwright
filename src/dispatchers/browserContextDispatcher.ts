@@ -22,7 +22,7 @@ import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
-import { CallMetadata } from '../server/instrumentation';
+import { Progress } from '../server/progress';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -49,15 +49,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     }
   }
 
-  async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {
+  async setDefaultNavigationTimeoutNoReply(progress: Progress, params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {
     this._context.setDefaultNavigationTimeout(params.timeout);
   }
 
-  async setDefaultTimeoutNoReply(params: channels.BrowserContextSetDefaultTimeoutNoReplyParams) {
+  async setDefaultTimeoutNoReply(progress: Progress, params: channels.BrowserContextSetDefaultTimeoutNoReplyParams) {
     this._context.setDefaultTimeout(params.timeout);
   }
 
-  async exposeBinding(params: channels.BrowserContextExposeBindingParams): Promise<void> {
+  async exposeBinding(progress: Progress, params: channels.BrowserContextExposeBindingParams): Promise<void> {
     await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
       const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
@@ -65,51 +65,51 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
   }
 
-  async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
-    return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage(metadata)) };
+  async newPage(progress: Progress, params: channels.BrowserContextNewPageParams): Promise<channels.BrowserContextNewPageResult> {
+    return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage(progress)) };
   }
 
-  async cookies(params: channels.BrowserContextCookiesParams): Promise<channels.BrowserContextCookiesResult> {
+  async cookies(progress: Progress, params: channels.BrowserContextCookiesParams): Promise<channels.BrowserContextCookiesResult> {
     return { cookies: await this._context.cookies(params.urls) };
   }
 
-  async addCookies(params: channels.BrowserContextAddCookiesParams): Promise<void> {
+  async addCookies(progress: Progress, params: channels.BrowserContextAddCookiesParams): Promise<void> {
     await this._context.addCookies(params.cookies);
   }
 
-  async clearCookies(): Promise<void> {
+  async clearCookies(progress: Progress): Promise<void> {
     await this._context.clearCookies();
   }
 
-  async grantPermissions(params: channels.BrowserContextGrantPermissionsParams): Promise<void> {
+  async grantPermissions(progress: Progress, params: channels.BrowserContextGrantPermissionsParams): Promise<void> {
     await this._context.grantPermissions(params.permissions, params.origin);
   }
 
-  async clearPermissions(): Promise<void> {
+  async clearPermissions(progress: Progress): Promise<void> {
     await this._context.clearPermissions();
   }
 
-  async setGeolocation(params: channels.BrowserContextSetGeolocationParams): Promise<void> {
+  async setGeolocation(progress: Progress, params: channels.BrowserContextSetGeolocationParams): Promise<void> {
     await this._context.setGeolocation(params.geolocation);
   }
 
-  async setExtraHTTPHeaders(params: channels.BrowserContextSetExtraHTTPHeadersParams): Promise<void> {
+  async setExtraHTTPHeaders(progress: Progress, params: channels.BrowserContextSetExtraHTTPHeadersParams): Promise<void> {
     await this._context.setExtraHTTPHeaders(params.headers);
   }
 
-  async setOffline(params: channels.BrowserContextSetOfflineParams): Promise<void> {
+  async setOffline(progress: Progress, params: channels.BrowserContextSetOfflineParams): Promise<void> {
     await this._context.setOffline(params.offline);
   }
 
-  async setHTTPCredentials(params: channels.BrowserContextSetHTTPCredentialsParams): Promise<void> {
+  async setHTTPCredentials(progress: Progress, params: channels.BrowserContextSetHTTPCredentialsParams): Promise<void> {
     await this._context.setHTTPCredentials(params.httpCredentials);
   }
 
-  async addInitScript(params: channels.BrowserContextAddInitScriptParams): Promise<void> {
+  async addInitScript(progress: Progress, params: channels.BrowserContextAddInitScriptParams): Promise<void> {
     await this._context._doAddInitScript(params.source);
   }
 
-  async setNetworkInterceptionEnabled(params: channels.BrowserContextSetNetworkInterceptionEnabledParams): Promise<void> {
+  async setNetworkInterceptionEnabled(progress: Progress, params: channels.BrowserContextSetNetworkInterceptionEnabledParams): Promise<void> {
     if (!params.enabled) {
       await this._context._setRequestInterceptor(undefined);
       return;
@@ -119,23 +119,23 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
   }
 
-  async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {
-    return await this._context.storageState(metadata);
+  async storageState(progress: Progress, params: channels.BrowserContextStorageStateParams): Promise<channels.BrowserContextStorageStateResult> {
+    return await this._context.storageState(progress);
   }
 
-  async close(params: channels.BrowserContextCloseParams, metadata: CallMetadata): Promise<void> {
-    await this._context.close(metadata);
+  async close(progress: Progress, params: channels.BrowserContextCloseParams): Promise<void> {
+    await this._context.close(progress);
   }
 
-  async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
+  async recorderSupplementEnable(progress: Progress, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
     await RecorderSupplement.getOrCreate(this._context, params.recorderParameters);
   }
 
-  async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
+  async pause(progress: Progress, params: channels.BrowserContextPauseParams) {
     // Inspector controller will take care of this.
   }
 
-  async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {
+  async crNewCDPSession(progress: Progress, params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {
     if (!this._object._browser.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowserContext = this._object as CRBrowserContext;

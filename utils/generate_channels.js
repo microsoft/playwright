@@ -126,7 +126,7 @@ export interface Channel extends EventEmitter {
 const server_channels_ts = [ prefix,
 `import { EventEmitter } from 'events';
 import * as types from '../protocol/types';
-import { CallMetadata } from '../server/instrumentation';
+import { Progress } from '../server/progress';
 export * from '../protocol/types';
 
 export interface Channel extends EventEmitter {
@@ -215,7 +215,7 @@ for (const [name, item] of Object.entries(protocol)) {
       ts_types.set(resultName, method.returns ? returns.ts : 'void');
 
       client_channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, timeout?: number): Promise<${resultName}>;`);
-      server_channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, metadata?: CallMetadata): Promise<${resultName}>;`);
+      server_channels_ts.push(`  ${methodName}(progress: Progress, params${method.parameters ? '' : '?'}: ${paramsName}): Promise<${resultName}>;`);
     }
 
     client_channels_ts.push(`}`);

@@ -24,14 +24,13 @@ import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
 import { launchProcess, Env, envArrayToObject } from './processLauncher';
 import { PipeTransport } from './pipeTransport';
-import { Progress, ProgressController } from './progress';
+import { Progress } from './progress';
 import * as types from './types';
-import { TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
 import { isDebugMode } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
-import { CallMetadata, SdkObject } from './instrumentation';
+import { SdkObject } from './instrumentation';
 
 const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -59,24 +58,17 @@ export abstract class BrowserType extends SdkObject {
     return this._name;
   }
 
-  async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
+  async launch(progress: Progress, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
+    progress.setLogName('browser');
     options = validateLaunchOptions(options);
-    const controller = new ProgressController(metadata, this);
-    controller.setLogName('browser');
-    const browser = await controller.run(progress => {
-      return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
-    }, TimeoutSettings.timeout(options));
-    return browser;
+    return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
+  async launchPersistentContext(progress: Progress, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
+    progress.setLogName('browser');
     options = validateLaunchOptions(options);
-    const controller = new ProgressController(metadata, this);
     const persistent: types.BrowserContextOptions = options;
-    controller.setLogName('browser');
-    const browser = await controller.run(progress => {
-      return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
-    }, TimeoutSettings.timeout(options));
+    const browser = await this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
     return browser._defaultContext!;
   }
 
@@ -234,7 +226,7 @@ export abstract class BrowserType extends SdkObject {
     return { browserProcess, downloadsPath, transport };
   }
 
-  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
+  async connectOverCDP(progress: Progress, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
   }
 

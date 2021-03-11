@@ -26,13 +26,13 @@ import * as types from '../types';
 import { launchProcess, envArrayToObject } from '../processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { Progress, ProgressController } from '../progress';
+import { Progress, runWithProgress } from '../progress';
 import { helper } from '../helper';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
-import { internalCallMetadata, SdkObject } from '../instrumentation';
+import { SdkObject } from '../instrumentation';
 
 export type ElectronLaunchOptionsBase = {
   sdkLanguage: string,
@@ -90,8 +90,7 @@ export class ElectronApplication extends SdkObject {
     if (!handle)
       return;
     page.browserWindow = handle;
-    const controller = new ProgressController(internalCallMetadata(), this);
-    await controller.run(progress => page.mainFrame()._waitForLoadState(progress, 'domcontentloaded'), page._timeoutSettings.navigationTimeout({})).catch(e => {}); // can happen after detach
+    await runWithProgress(progress => page.mainFrame()._waitForLoadState(progress, 'domcontentloaded')).catch(e => {}); // can happen after detach
     this.emit(ElectronApplication.Events.Window, page);
   }
 
@@ -99,9 +98,8 @@ export class ElectronApplication extends SdkObject {
     return this._browserContext;
   }
 
-  async close() {
-    const progressController = new ProgressController(internalCallMetadata(), this);
-    const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise, this._timeoutSettings.timeout({}));
+  async close(progress: Progress) {
+    const closed = helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise;
     await this._nodeElectronHandle!.evaluate(({ app }) => app.quit());
     this._nodeConnection.close();
     await closed;
@@ -125,68 +123,67 @@ export class Electron extends SdkObject {
     this._playwrightOptions = playwrightOptions;
   }
 
-  async launch(options: ElectronLaunchOptionsBase): Promise<ElectronApplication> {
+  async launch(progress: Progress, options: ElectronLaunchOptionsBase): Promise<ElectronApplication> {
     const {
       args = [],
     } = options;
-    const controller = new ProgressController(internalCallMetadata(), this);
-    controller.setLogName('browser');
-    return controller.run(async progress => {
-      let app: ElectronApplication | undefined = undefined;
-      const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
+    progress.setLogName('browser');
+    let app: ElectronApplication | undefined = undefined;
+    const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
 
-      if (os.platform() === 'linux') {
-        const runningAsRoot = process.geteuid && process.geteuid() === 0;
-        if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1)
-          electronArguments.push('--no-sandbox');
-      }
+    if (os.platform() === 'linux') {
+      const runningAsRoot = process.geteuid && process.geteuid() === 0;
+      if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1)
+        electronArguments.push('--no-sandbox');
+    }
 
-      const browserLogsCollector = new RecentLogsCollector();
-      const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-        executablePath: options.executablePath || require('electron/index.js'),
-        args: electronArguments,
-        env: options.env ? envArrayToObject(options.env) : process.env,
-        log: (message: string) => {
-          progress.log(message);
-          browserLogsCollector.log(message);
-        },
-        stdio: 'pipe',
-        cwd: options.cwd,
-        tempDirectories: [],
-        attemptToGracefullyClose: () => app!.close(),
-        handleSIGINT: true,
-        handleSIGTERM: true,
-        handleSIGHUP: true,
-        onExit: () => {},
-      });
+    const browserLogsCollector = new RecentLogsCollector();
+    const { launchedProcess, gracefullyClose, kill } = await launchProcess({
+      executablePath: options.executablePath || require('electron/index.js'),
+      args: electronArguments,
+      env: options.env ? envArrayToObject(options.env) : process.env,
+      log: (message: string) => {
+        progress.log(message);
+        browserLogsCollector.log(message);
+      },
+      stdio: 'pipe',
+      cwd: options.cwd,
+      tempDirectories: [],
+      attemptToGracefullyClose: async () => {
+        await runWithProgress(progress => app!.close(progress));
+      },
+      handleSIGINT: true,
+      handleSIGTERM: true,
+      handleSIGHUP: true,
+      onExit: () => {},
+    });
 
-      const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
-      const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
-      const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
+    const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
+    const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
+    const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
 
-      const chromeMatch = await waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/);
-      const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
-      const browserProcess: BrowserProcess = {
-        onclose: undefined,
-        process: launchedProcess,
-        close: gracefullyClose,
-        kill
-      };
-      const browserOptions: BrowserOptions = {
-        ...this._playwrightOptions,
-        name: 'electron',
-        isChromium: true,
-        headful: true,
-        persistent: { sdkLanguage: options.sdkLanguage, noDefaultViewport: true },
-        browserProcess,
-        protocolLogger: helper.debugProtocolLogger(),
-        browserLogsCollector,
-      };
-      const browser = await CRBrowser.connect(chromeTransport, browserOptions);
-      app = new ElectronApplication(this, browser, nodeConnection);
-      await app._init();
-      return app;
-    }, TimeoutSettings.timeout(options));
+    const chromeMatch = await waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/);
+    const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
+    const browserProcess: BrowserProcess = {
+      onclose: undefined,
+      process: launchedProcess,
+      close: gracefullyClose,
+      kill
+    };
+    const browserOptions: BrowserOptions = {
+      ...this._playwrightOptions,
+      name: 'electron',
+      isChromium: true,
+      headful: true,
+      persistent: { sdkLanguage: options.sdkLanguage, noDefaultViewport: true },
+      browserProcess,
+      protocolLogger: helper.debugProtocolLogger(),
+      browserLogsCollector,
+    };
+    const browser = await CRBrowser.connect(chromeTransport, browserOptions);
+    app = new ElectronApplication(this, browser, nodeConnection);
+    await app._init();
+    return app;
   }
 }
 

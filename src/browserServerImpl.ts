@@ -33,7 +33,8 @@ import { Selectors } from './server/selectors';
 import { BrowserContext, Video } from './server/browserContext';
 import { StreamDispatcher } from './dispatchers/streamDispatcher';
 import { ProtocolLogger } from './server/types';
-import { CallMetadata, internalCallMetadata, SdkObject } from './server/instrumentation';
+import { SdkObject } from './server/instrumentation';
+import { Progress, runWithProgress } from './server/progress';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserType;
@@ -43,13 +44,15 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServerImpl> {
-    const browser = await this._browserType.launch(internalCallMetadata(), {
-      ...options,
-      ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
-      ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
-      env: options.env ? envObjectToArray(options.env) : undefined,
-    }, toProtocolLogger(options.logger));
-    return BrowserServerImpl.start(browser, options.port);
+    return runWithProgress(async progress => {
+      const browser = await this._browserType.launch(progress, {
+        ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+      }, toProtocolLogger(options.logger));
+      return BrowserServerImpl.start(browser, options.port);
+    });
   }
 }
 
@@ -126,7 +129,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       // Avoid sending any more messages over closed socket.
       connection.onmessage = () => {};
       // Cleanup contexts upon disconnect.
-      remoteBrowser.connectedBrowser.close().catch(e => {});
+      runWithProgress(progress => remoteBrowser.connectedBrowser.close(progress)).catch(e => {});
     });
   }
 }
@@ -156,12 +159,12 @@ class ConnectedBrowser extends BrowserDispatcher {
     this._selectors = selectors;
   }
 
-  async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<{ context: channels.BrowserContextChannel }> {
+  async newContext(progress: Progress, params: channels.BrowserNewContextParams): Promise<{ context: channels.BrowserContextChannel }> {
     if (params.recordVideo) {
       // TODO: we should create a separate temp directory or accept a launchServer parameter.
       params.recordVideo.dir = this._object.options.downloadsPath!;
     }
-    const result = await super.newContext(params, metadata);
+    const result = await super.newContext(progress, params);
     const dispatcher = result.context as BrowserContextDispatcher;
     dispatcher._object.on(BrowserContext.Events.VideoStarted, (video: Video) => this._sendVideo(dispatcher, video));
     dispatcher._object._setSelectors(this._selectors);
@@ -169,9 +172,9 @@ class ConnectedBrowser extends BrowserDispatcher {
     return result;
   }
 
-  async close(): Promise<void> {
+  async close(progress: Progress): Promise<void> {
     // Only close our own contexts.
-    await Promise.all(this._contexts.map(context => context.close({}, internalCallMetadata())));
+    await Promise.all(this._contexts.map(context => context.close(progress, {})));
     this._didClose();
   }
 

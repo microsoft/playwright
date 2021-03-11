@@ -18,7 +18,7 @@
 
 import { EventEmitter } from 'events';
 import * as types from '../protocol/types';
-import { CallMetadata } from '../server/instrumentation';
+import { Progress } from '../server/progress';
 export * from '../protocol/types';
 
 export interface Channel extends EventEmitter {
@@ -66,7 +66,7 @@ export type RemoteBrowserVideoEvent = {
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
 export interface SelectorsChannel extends Channel {
-  register(params: SelectorsRegisterParams, metadata?: CallMetadata): Promise<SelectorsRegisterResult>;
+  register(progress: Progress, params: SelectorsRegisterParams): Promise<SelectorsRegisterResult>;
 }
 export type SelectorsRegisterParams = {
   name: string,
@@ -84,9 +84,9 @@ export type BrowserTypeInitializer = {
   name: string,
 };
 export interface BrowserTypeChannel extends Channel {
-  launch(params: BrowserTypeLaunchParams, metadata?: CallMetadata): Promise<BrowserTypeLaunchResult>;
-  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, metadata?: CallMetadata): Promise<BrowserTypeLaunchPersistentContextResult>;
-  connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: CallMetadata): Promise<BrowserTypeConnectOverCDPResult>;
+  launch(progress: Progress, params: BrowserTypeLaunchParams): Promise<BrowserTypeLaunchResult>;
+  launchPersistentContext(progress: Progress, params: BrowserTypeLaunchPersistentContextParams): Promise<BrowserTypeLaunchPersistentContextResult>;
+  connectOverCDP(progress: Progress, params: BrowserTypeConnectOverCDPParams): Promise<BrowserTypeConnectOverCDPResult>;
 }
 export type BrowserTypeLaunchParams = {
   executablePath?: string,
@@ -289,11 +289,11 @@ export type BrowserInitializer = {
   name: string,
 };
 export interface BrowserChannel extends Channel {
-  close(params?: BrowserCloseParams, metadata?: CallMetadata): Promise<BrowserCloseResult>;
-  newContext(params: BrowserNewContextParams, metadata?: CallMetadata): Promise<BrowserNewContextResult>;
-  crNewBrowserCDPSession(params?: BrowserCrNewBrowserCDPSessionParams, metadata?: CallMetadata): Promise<BrowserCrNewBrowserCDPSessionResult>;
-  crStartTracing(params: BrowserCrStartTracingParams, metadata?: CallMetadata): Promise<BrowserCrStartTracingResult>;
-  crStopTracing(params?: BrowserCrStopTracingParams, metadata?: CallMetadata): Promise<BrowserCrStopTracingResult>;
+  close(progress: Progress, params?: BrowserCloseParams): Promise<BrowserCloseResult>;
+  newContext(progress: Progress, params: BrowserNewContextParams): Promise<BrowserNewContextResult>;
+  crNewBrowserCDPSession(progress: Progress, params?: BrowserCrNewBrowserCDPSessionParams): Promise<BrowserCrNewBrowserCDPSessionResult>;
+  crStartTracing(progress: Progress, params: BrowserCrStartTracingParams): Promise<BrowserCrStartTracingResult>;
+  crStopTracing(progress: Progress, params?: BrowserCrStopTracingParams): Promise<BrowserCrStopTracingResult>;
 }
 export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {};
@@ -438,26 +438,26 @@ export type BrowserContextInitializer = {
   isChromium: boolean,
 };
 export interface BrowserContextChannel extends Channel {
-  addCookies(params: BrowserContextAddCookiesParams, metadata?: CallMetadata): Promise<BrowserContextAddCookiesResult>;
-  addInitScript(params: BrowserContextAddInitScriptParams, metadata?: CallMetadata): Promise<BrowserContextAddInitScriptResult>;
-  clearCookies(params?: BrowserContextClearCookiesParams, metadata?: CallMetadata): Promise<BrowserContextClearCookiesResult>;
-  clearPermissions(params?: BrowserContextClearPermissionsParams, metadata?: CallMetadata): Promise<BrowserContextClearPermissionsResult>;
-  close(params?: BrowserContextCloseParams, metadata?: CallMetadata): Promise<BrowserContextCloseResult>;
-  cookies(params: BrowserContextCookiesParams, metadata?: CallMetadata): Promise<BrowserContextCookiesResult>;
-  exposeBinding(params: BrowserContextExposeBindingParams, metadata?: CallMetadata): Promise<BrowserContextExposeBindingResult>;
-  grantPermissions(params: BrowserContextGrantPermissionsParams, metadata?: CallMetadata): Promise<BrowserContextGrantPermissionsResult>;
-  newPage(params?: BrowserContextNewPageParams, metadata?: CallMetadata): Promise<BrowserContextNewPageResult>;
-  setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams, metadata?: CallMetadata): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
-  setDefaultTimeoutNoReply(params: BrowserContextSetDefaultTimeoutNoReplyParams, metadata?: CallMetadata): Promise<BrowserContextSetDefaultTimeoutNoReplyResult>;
-  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, metadata?: CallMetadata): Promise<BrowserContextSetExtraHTTPHeadersResult>;
-  setGeolocation(params: BrowserContextSetGeolocationParams, metadata?: CallMetadata): Promise<BrowserContextSetGeolocationResult>;
-  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, metadata?: CallMetadata): Promise<BrowserContextSetHTTPCredentialsResult>;
-  setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: CallMetadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
-  setOffline(params: BrowserContextSetOfflineParams, metadata?: CallMetadata): Promise<BrowserContextSetOfflineResult>;
-  storageState(params?: BrowserContextStorageStateParams, metadata?: CallMetadata): Promise<BrowserContextStorageStateResult>;
-  pause(params?: BrowserContextPauseParams, metadata?: CallMetadata): Promise<BrowserContextPauseResult>;
-  recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: CallMetadata): Promise<BrowserContextRecorderSupplementEnableResult>;
-  crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: CallMetadata): Promise<BrowserContextCrNewCDPSessionResult>;
+  addCookies(progress: Progress, params: BrowserContextAddCookiesParams): Promise<BrowserContextAddCookiesResult>;
+  addInitScript(progress: Progress, params: BrowserContextAddInitScriptParams): Promise<BrowserContextAddInitScriptResult>;
+  clearCookies(progress: Progress, params?: BrowserContextClearCookiesParams): Promise<BrowserContextClearCookiesResult>;
+  clearPermissions(progress: Progress, params?: BrowserContextClearPermissionsParams): Promise<BrowserContextClearPermissionsResult>;
+  close(progress: Progress, params?: BrowserContextCloseParams): Promise<BrowserContextCloseResult>;
+  cookies(progress: Progress, params: BrowserContextCookiesParams): Promise<BrowserContextCookiesResult>;
+  exposeBinding(progress: Progress, params: BrowserContextExposeBindingParams): Promise<BrowserContextExposeBindingResult>;
+  grantPermissions(progress: Progress, params: BrowserContextGrantPermissionsParams): Promise<BrowserContextGrantPermissionsResult>;
+  newPage(progress: Progress, params?: BrowserContextNewPageParams): Promise<BrowserContextNewPageResult>;
+  setDefaultNavigationTimeoutNoReply(progress: Progress, params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
+  setDefaultTimeoutNoReply(progress: Progress, params: BrowserContextSetDefaultTimeoutNoReplyParams): Promise<BrowserContextSetDefaultTimeoutNoReplyResult>;
+  setExtraHTTPHeaders(progress: Progress, params: BrowserContextSetExtraHTTPHeadersParams): Promise<BrowserContextSetExtraHTTPHeadersResult>;
+  setGeolocation(progress: Progress, params: BrowserContextSetGeolocationParams): Promise<BrowserContextSetGeolocationResult>;
+  setHTTPCredentials(progress: Progress, params: BrowserContextSetHTTPCredentialsParams): Promise<BrowserContextSetHTTPCredentialsResult>;
+  setNetworkInterceptionEnabled(progress: Progress, params: BrowserContextSetNetworkInterceptionEnabledParams): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
+  setOffline(progress: Progress, params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
+  storageState(progress: Progress, params?: BrowserContextStorageStateParams): Promise<BrowserContextStorageStateResult>;
+  pause(progress: Progress, params?: BrowserContextPauseParams): Promise<BrowserContextPauseResult>;
+  recorderSupplementEnable(progress: Progress, params: BrowserContextRecorderSupplementEnableParams): Promise<BrowserContextRecorderSupplementEnableResult>;
+  crNewCDPSession(progress: Progress, params: BrowserContextCrNewCDPSessionParams): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -629,38 +629,38 @@ export type PageInitializer = {
   videoRelativePath?: string,
 };
 export interface PageChannel extends Channel {
-  setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: CallMetadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
-  setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: CallMetadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
-  setFileChooserInterceptedNoReply(params: PageSetFileChooserInterceptedNoReplyParams, metadata?: CallMetadata): Promise<PageSetFileChooserInterceptedNoReplyResult>;
-  addInitScript(params: PageAddInitScriptParams, metadata?: CallMetadata): Promise<PageAddInitScriptResult>;
-  close(params: PageCloseParams, metadata?: CallMetadata): Promise<PageCloseResult>;
-  emulateMedia(params: PageEmulateMediaParams, metadata?: CallMetadata): Promise<PageEmulateMediaResult>;
-  exposeBinding(params: PageExposeBindingParams, metadata?: CallMetadata): Promise<PageExposeBindingResult>;
-  goBack(params: PageGoBackParams, metadata?: CallMetadata): Promise<PageGoBackResult>;
-  goForward(params: PageGoForwardParams, metadata?: CallMetadata): Promise<PageGoForwardResult>;
-  opener(params?: PageOpenerParams, metadata?: CallMetadata): Promise<PageOpenerResult>;
-  reload(params: PageReloadParams, metadata?: CallMetadata): Promise<PageReloadResult>;
-  screenshot(params: PageScreenshotParams, metadata?: CallMetadata): Promise<PageScreenshotResult>;
-  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, metadata?: CallMetadata): Promise<PageSetExtraHTTPHeadersResult>;
-  setNetworkInterceptionEnabled(params: PageSetNetworkInterceptionEnabledParams, metadata?: CallMetadata): Promise<PageSetNetworkInterceptionEnabledResult>;
-  setViewportSize(params: PageSetViewportSizeParams, metadata?: CallMetadata): Promise<PageSetViewportSizeResult>;
-  keyboardDown(params: PageKeyboardDownParams, metadata?: CallMetadata): Promise<PageKeyboardDownResult>;
-  keyboardUp(params: PageKeyboardUpParams, metadata?: CallMetadata): Promise<PageKeyboardUpResult>;
-  keyboardInsertText(params: PageKeyboardInsertTextParams, metadata?: CallMetadata): Promise<PageKeyboardInsertTextResult>;
-  keyboardType(params: PageKeyboardTypeParams, metadata?: CallMetadata): Promise<PageKeyboardTypeResult>;
-  keyboardPress(params: PageKeyboardPressParams, metadata?: CallMetadata): Promise<PageKeyboardPressResult>;
-  mouseMove(params: PageMouseMoveParams, metadata?: CallMetadata): Promise<PageMouseMoveResult>;
-  mouseDown(params: PageMouseDownParams, metadata?: CallMetadata): Promise<PageMouseDownResult>;
-  mouseUp(params: PageMouseUpParams, metadata?: CallMetadata): Promise<PageMouseUpResult>;
-  mouseClick(params: PageMouseClickParams, metadata?: CallMetadata): Promise<PageMouseClickResult>;
-  touchscreenTap(params: PageTouchscreenTapParams, metadata?: CallMetadata): Promise<PageTouchscreenTapResult>;
-  accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: CallMetadata): Promise<PageAccessibilitySnapshotResult>;
-  pdf(params: PagePdfParams, metadata?: CallMetadata): Promise<PagePdfResult>;
-  crStartJSCoverage(params: PageCrStartJSCoverageParams, metadata?: CallMetadata): Promise<PageCrStartJSCoverageResult>;
-  crStopJSCoverage(params?: PageCrStopJSCoverageParams, metadata?: CallMetadata): Promise<PageCrStopJSCoverageResult>;
-  crStartCSSCoverage(params: PageCrStartCSSCoverageParams, metadata?: CallMetadata): Promise<PageCrStartCSSCoverageResult>;
-  crStopCSSCoverage(params?: PageCrStopCSSCoverageParams, metadata?: CallMetadata): Promise<PageCrStopCSSCoverageResult>;
-  bringToFront(params?: PageBringToFrontParams, metadata?: CallMetadata): Promise<PageBringToFrontResult>;
+  setDefaultNavigationTimeoutNoReply(progress: Progress, params: PageSetDefaultNavigationTimeoutNoReplyParams): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
+  setDefaultTimeoutNoReply(progress: Progress, params: PageSetDefaultTimeoutNoReplyParams): Promise<PageSetDefaultTimeoutNoReplyResult>;
+  setFileChooserInterceptedNoReply(progress: Progress, params: PageSetFileChooserInterceptedNoReplyParams): Promise<PageSetFileChooserInterceptedNoReplyResult>;
+  addInitScript(progress: Progress, params: PageAddInitScriptParams): Promise<PageAddInitScriptResult>;
+  close(progress: Progress, params: PageCloseParams): Promise<PageCloseResult>;
+  emulateMedia(progress: Progress, params: PageEmulateMediaParams): Promise<PageEmulateMediaResult>;
+  exposeBinding(progress: Progress, params: PageExposeBindingParams): Promise<PageExposeBindingResult>;
+  goBack(progress: Progress, params: PageGoBackParams): Promise<PageGoBackResult>;
+  goForward(progress: Progress, params: PageGoForwardParams): Promise<PageGoForwardResult>;
+  opener(progress: Progress, params?: PageOpenerParams): Promise<PageOpenerResult>;
+  reload(progress: Progress, params: PageReloadParams): Promise<PageReloadResult>;
+  screenshot(progress: Progress, params: PageScreenshotParams): Promise<PageScreenshotResult>;
+  setExtraHTTPHeaders(progress: Progress, params: PageSetExtraHTTPHeadersParams): Promise<PageSetExtraHTTPHeadersResult>;
+  setNetworkInterceptionEnabled(progress: Progress, params: PageSetNetworkInterceptionEnabledParams): Promise<PageSetNetworkInterceptionEnabledResult>;
+  setViewportSize(progress: Progress, params: PageSetViewportSizeParams): Promise<PageSetViewportSizeResult>;
+  keyboardDown(progress: Progress, params: PageKeyboardDownParams): Promise<PageKeyboardDownResult>;
+  keyboardUp(progress: Progress, params: PageKeyboardUpParams): Promise<PageKeyboardUpResult>;
+  keyboardInsertText(progress: Progress, params: PageKeyboardInsertTextParams): Promise<PageKeyboardInsertTextResult>;
+  keyboardType(progress: Progress, params: PageKeyboardTypeParams): Promise<PageKeyboardTypeResult>;
+  keyboardPress(progress: Progress, params: PageKeyboardPressParams): Promise<PageKeyboardPressResult>;
+  mouseMove(progress: Progress, params: PageMouseMoveParams): Promise<PageMouseMoveResult>;
+  mouseDown(progress: Progress, params: PageMouseDownParams): Promise<PageMouseDownResult>;
+  mouseUp(progress: Progress, params: PageMouseUpParams): Promise<PageMouseUpResult>;
+  mouseClick(progress: Progress, params: PageMouseClickParams): Promise<PageMouseClickResult>;
+  touchscreenTap(progress: Progress, params: PageTouchscreenTapParams): Promise<PageTouchscreenTapResult>;
+  accessibilitySnapshot(progress: Progress, params: PageAccessibilitySnapshotParams): Promise<PageAccessibilitySnapshotResult>;
+  pdf(progress: Progress, params: PagePdfParams): Promise<PagePdfResult>;
+  crStartJSCoverage(progress: Progress, params: PageCrStartJSCoverageParams): Promise<PageCrStartJSCoverageResult>;
+  crStopJSCoverage(progress: Progress, params?: PageCrStopJSCoverageParams): Promise<PageCrStopJSCoverageResult>;
+  crStartCSSCoverage(progress: Progress, params: PageCrStartCSSCoverageParams): Promise<PageCrStartCSSCoverageResult>;
+  crStopCSSCoverage(progress: Progress, params?: PageCrStopCSSCoverageParams): Promise<PageCrStopCSSCoverageResult>;
+  bringToFront(progress: Progress, params?: PageBringToFrontParams): Promise<PageBringToFrontResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1050,44 +1050,44 @@ export type FrameInitializer = {
   loadStates: ('load' | 'domcontentloaded' | 'networkidle')[],
 };
 export interface FrameChannel extends Channel {
-  evalOnSelector(params: FrameEvalOnSelectorParams, metadata?: CallMetadata): Promise<FrameEvalOnSelectorResult>;
-  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, metadata?: CallMetadata): Promise<FrameEvalOnSelectorAllResult>;
-  addScriptTag(params: FrameAddScriptTagParams, metadata?: CallMetadata): Promise<FrameAddScriptTagResult>;
-  addStyleTag(params: FrameAddStyleTagParams, metadata?: CallMetadata): Promise<FrameAddStyleTagResult>;
-  check(params: FrameCheckParams, metadata?: CallMetadata): Promise<FrameCheckResult>;
-  click(params: FrameClickParams, metadata?: CallMetadata): Promise<FrameClickResult>;
-  content(params?: FrameContentParams, metadata?: CallMetadata): Promise<FrameContentResult>;
-  dblclick(params: FrameDblclickParams, metadata?: CallMetadata): Promise<FrameDblclickResult>;
-  dispatchEvent(params: FrameDispatchEventParams, metadata?: CallMetadata): Promise<FrameDispatchEventResult>;
-  evaluateExpression(params: FrameEvaluateExpressionParams, metadata?: CallMetadata): Promise<FrameEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams, metadata?: CallMetadata): Promise<FrameEvaluateExpressionHandleResult>;
-  fill(params: FrameFillParams, metadata?: CallMetadata): Promise<FrameFillResult>;
-  focus(params: FrameFocusParams, metadata?: CallMetadata): Promise<FrameFocusResult>;
-  frameElement(params?: FrameFrameElementParams, metadata?: CallMetadata): Promise<FrameFrameElementResult>;
-  getAttribute(params: FrameGetAttributeParams, metadata?: CallMetadata): Promise<FrameGetAttributeResult>;
-  goto(params: FrameGotoParams, metadata?: CallMetadata): Promise<FrameGotoResult>;
-  hover(params: FrameHoverParams, metadata?: CallMetadata): Promise<FrameHoverResult>;
-  innerHTML(params: FrameInnerHTMLParams, metadata?: CallMetadata): Promise<FrameInnerHTMLResult>;
-  innerText(params: FrameInnerTextParams, metadata?: CallMetadata): Promise<FrameInnerTextResult>;
-  isChecked(params: FrameIsCheckedParams, metadata?: CallMetadata): Promise<FrameIsCheckedResult>;
-  isDisabled(params: FrameIsDisabledParams, metadata?: CallMetadata): Promise<FrameIsDisabledResult>;
-  isEnabled(params: FrameIsEnabledParams, metadata?: CallMetadata): Promise<FrameIsEnabledResult>;
-  isHidden(params: FrameIsHiddenParams, metadata?: CallMetadata): Promise<FrameIsHiddenResult>;
-  isVisible(params: FrameIsVisibleParams, metadata?: CallMetadata): Promise<FrameIsVisibleResult>;
-  isEditable(params: FrameIsEditableParams, metadata?: CallMetadata): Promise<FrameIsEditableResult>;
-  press(params: FramePressParams, metadata?: CallMetadata): Promise<FramePressResult>;
-  querySelector(params: FrameQuerySelectorParams, metadata?: CallMetadata): Promise<FrameQuerySelectorResult>;
-  querySelectorAll(params: FrameQuerySelectorAllParams, metadata?: CallMetadata): Promise<FrameQuerySelectorAllResult>;
-  selectOption(params: FrameSelectOptionParams, metadata?: CallMetadata): Promise<FrameSelectOptionResult>;
-  setContent(params: FrameSetContentParams, metadata?: CallMetadata): Promise<FrameSetContentResult>;
-  setInputFiles(params: FrameSetInputFilesParams, metadata?: CallMetadata): Promise<FrameSetInputFilesResult>;
-  tap(params: FrameTapParams, metadata?: CallMetadata): Promise<FrameTapResult>;
-  textContent(params: FrameTextContentParams, metadata?: CallMetadata): Promise<FrameTextContentResult>;
-  title(params?: FrameTitleParams, metadata?: CallMetadata): Promise<FrameTitleResult>;
-  type(params: FrameTypeParams, metadata?: CallMetadata): Promise<FrameTypeResult>;
-  uncheck(params: FrameUncheckParams, metadata?: CallMetadata): Promise<FrameUncheckResult>;
-  waitForFunction(params: FrameWaitForFunctionParams, metadata?: CallMetadata): Promise<FrameWaitForFunctionResult>;
-  waitForSelector(params: FrameWaitForSelectorParams, metadata?: CallMetadata): Promise<FrameWaitForSelectorResult>;
+  evalOnSelector(progress: Progress, params: FrameEvalOnSelectorParams): Promise<FrameEvalOnSelectorResult>;
+  evalOnSelectorAll(progress: Progress, params: FrameEvalOnSelectorAllParams): Promise<FrameEvalOnSelectorAllResult>;
+  addScriptTag(progress: Progress, params: FrameAddScriptTagParams): Promise<FrameAddScriptTagResult>;
+  addStyleTag(progress: Progress, params: FrameAddStyleTagParams): Promise<FrameAddStyleTagResult>;
+  check(progress: Progress, params: FrameCheckParams): Promise<FrameCheckResult>;
+  click(progress: Progress, params: FrameClickParams): Promise<FrameClickResult>;
+  content(progress: Progress, params?: FrameContentParams): Promise<FrameContentResult>;
+  dblclick(progress: Progress, params: FrameDblclickParams): Promise<FrameDblclickResult>;
+  dispatchEvent(progress: Progress, params: FrameDispatchEventParams): Promise<FrameDispatchEventResult>;
+  evaluateExpression(progress: Progress, params: FrameEvaluateExpressionParams): Promise<FrameEvaluateExpressionResult>;
+  evaluateExpressionHandle(progress: Progress, params: FrameEvaluateExpressionHandleParams): Promise<FrameEvaluateExpressionHandleResult>;
+  fill(progress: Progress, params: FrameFillParams): Promise<FrameFillResult>;
+  focus(progress: Progress, params: FrameFocusParams): Promise<FrameFocusResult>;
+  frameElement(progress: Progress, params?: FrameFrameElementParams): Promise<FrameFrameElementResult>;
+  getAttribute(progress: Progress, params: FrameGetAttributeParams): Promise<FrameGetAttributeResult>;
+  goto(progress: Progress, params: FrameGotoParams): Promise<FrameGotoResult>;
+  hover(progress: Progress, params: FrameHoverParams): Promise<FrameHoverResult>;
+  innerHTML(progress: Progress, params: FrameInnerHTMLParams): Promise<FrameInnerHTMLResult>;
+  innerText(progress: Progress, params: FrameInnerTextParams): Promise<FrameInnerTextResult>;
+  isChecked(progress: Progress, params: FrameIsCheckedParams): Promise<FrameIsCheckedResult>;
+  isDisabled(progress: Progress, params: FrameIsDisabledParams): Promise<FrameIsDisabledResult>;
+  isEnabled(progress: Progress, params: FrameIsEnabledParams): Promise<FrameIsEnabledResult>;
+  isHidden(progress: Progress, params: FrameIsHiddenParams): Promise<FrameIsHiddenResult>;
+  isVisible(progress: Progress, params: FrameIsVisibleParams): Promise<FrameIsVisibleResult>;
+  isEditable(progress: Progress, params: FrameIsEditableParams): Promise<FrameIsEditableResult>;
+  press(progress: Progress, params: FramePressParams): Promise<FramePressResult>;
+  querySelector(progress: Progress, params: FrameQuerySelectorParams): Promise<FrameQuerySelectorResult>;
+  querySelectorAll(progress: Progress, params: FrameQuerySelectorAllParams): Promise<FrameQuerySelectorAllResult>;
+  selectOption(progress: Progress, params: FrameSelectOptionParams): Promise<FrameSelectOptionResult>;
+  setContent(progress: Progress, params: FrameSetContentParams): Promise<FrameSetContentResult>;
+  setInputFiles(progress: Progress, params: FrameSetInputFilesParams): Promise<FrameSetInputFilesResult>;
+  tap(progress: Progress, params: FrameTapParams): Promise<FrameTapResult>;
+  textContent(progress: Progress, params: FrameTextContentParams): Promise<FrameTextContentResult>;
+  title(progress: Progress, params?: FrameTitleParams): Promise<FrameTitleResult>;
+  type(progress: Progress, params: FrameTypeParams): Promise<FrameTypeResult>;
+  uncheck(progress: Progress, params: FrameUncheckParams): Promise<FrameUncheckResult>;
+  waitForFunction(progress: Progress, params: FrameWaitForFunctionParams): Promise<FrameWaitForFunctionResult>;
+  waitForSelector(progress: Progress, params: FrameWaitForSelectorParams): Promise<FrameWaitForSelectorResult>;
 }
 export type FrameLoadstateEvent = {
   add?: 'load' | 'domcontentloaded' | 'networkidle',
@@ -1556,8 +1556,8 @@ export type WorkerInitializer = {
   url: string,
 };
 export interface WorkerChannel extends Channel {
-  evaluateExpression(params: WorkerEvaluateExpressionParams, metadata?: CallMetadata): Promise<WorkerEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, metadata?: CallMetadata): Promise<WorkerEvaluateExpressionHandleResult>;
+  evaluateExpression(progress: Progress, params: WorkerEvaluateExpressionParams): Promise<WorkerEvaluateExpressionResult>;
+  evaluateExpressionHandle(progress: Progress, params: WorkerEvaluateExpressionHandleParams): Promise<WorkerEvaluateExpressionHandleResult>;
 }
 export type WorkerCloseEvent = {};
 export type WorkerEvaluateExpressionParams = {
@@ -1588,12 +1588,12 @@ export type JSHandleInitializer = {
   preview: string,
 };
 export interface JSHandleChannel extends Channel {
-  dispose(params?: JSHandleDisposeParams, metadata?: CallMetadata): Promise<JSHandleDisposeResult>;
-  evaluateExpression(params: JSHandleEvaluateExpressionParams, metadata?: CallMetadata): Promise<JSHandleEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams, metadata?: CallMetadata): Promise<JSHandleEvaluateExpressionHandleResult>;
-  getPropertyList(params?: JSHandleGetPropertyListParams, metadata?: CallMetadata): Promise<JSHandleGetPropertyListResult>;
-  getProperty(params: JSHandleGetPropertyParams, metadata?: CallMetadata): Promise<JSHandleGetPropertyResult>;
-  jsonValue(params?: JSHandleJsonValueParams, metadata?: CallMetadata): Promise<JSHandleJsonValueResult>;
+  dispose(progress: Progress, params?: JSHandleDisposeParams): Promise<JSHandleDisposeResult>;
+  evaluateExpression(progress: Progress, params: JSHandleEvaluateExpressionParams): Promise<JSHandleEvaluateExpressionResult>;
+  evaluateExpressionHandle(progress: Progress, params: JSHandleEvaluateExpressionHandleParams): Promise<JSHandleEvaluateExpressionHandleResult>;
+  getPropertyList(progress: Progress, params?: JSHandleGetPropertyListParams): Promise<JSHandleGetPropertyListResult>;
+  getProperty(progress: Progress, params: JSHandleGetPropertyParams): Promise<JSHandleGetPropertyResult>;
+  jsonValue(progress: Progress, params?: JSHandleJsonValueParams): Promise<JSHandleJsonValueResult>;
 }
 export type JSHandlePreviewUpdatedEvent = {
   preview: string,
@@ -1649,41 +1649,41 @@ export type JSHandleJsonValueResult = {
 // ----------- ElementHandle -----------
 export type ElementHandleInitializer = {};
 export interface ElementHandleChannel extends JSHandleChannel {
-  evalOnSelector(params: ElementHandleEvalOnSelectorParams, metadata?: CallMetadata): Promise<ElementHandleEvalOnSelectorResult>;
-  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams, metadata?: CallMetadata): Promise<ElementHandleEvalOnSelectorAllResult>;
-  boundingBox(params?: ElementHandleBoundingBoxParams, metadata?: CallMetadata): Promise<ElementHandleBoundingBoxResult>;
-  check(params: ElementHandleCheckParams, metadata?: CallMetadata): Promise<ElementHandleCheckResult>;
-  click(params: ElementHandleClickParams, metadata?: CallMetadata): Promise<ElementHandleClickResult>;
-  contentFrame(params?: ElementHandleContentFrameParams, metadata?: CallMetadata): Promise<ElementHandleContentFrameResult>;
-  dblclick(params: ElementHandleDblclickParams, metadata?: CallMetadata): Promise<ElementHandleDblclickResult>;
-  dispatchEvent(params: ElementHandleDispatchEventParams, metadata?: CallMetadata): Promise<ElementHandleDispatchEventResult>;
-  fill(params: ElementHandleFillParams, metadata?: CallMetadata): Promise<ElementHandleFillResult>;
-  focus(params?: ElementHandleFocusParams, metadata?: CallMetadata): Promise<ElementHandleFocusResult>;
-  getAttribute(params: ElementHandleGetAttributeParams, metadata?: CallMetadata): Promise<ElementHandleGetAttributeResult>;
-  hover(params: ElementHandleHoverParams, metadata?: CallMetadata): Promise<ElementHandleHoverResult>;
-  innerHTML(params?: ElementHandleInnerHTMLParams, metadata?: CallMetadata): Promise<ElementHandleInnerHTMLResult>;
-  innerText(params?: ElementHandleInnerTextParams, metadata?: CallMetadata): Promise<ElementHandleInnerTextResult>;
-  isChecked(params?: ElementHandleIsCheckedParams, metadata?: CallMetadata): Promise<ElementHandleIsCheckedResult>;
-  isDisabled(params?: ElementHandleIsDisabledParams, metadata?: CallMetadata): Promise<ElementHandleIsDisabledResult>;
-  isEditable(params?: ElementHandleIsEditableParams, metadata?: CallMetadata): Promise<ElementHandleIsEditableResult>;
-  isEnabled(params?: ElementHandleIsEnabledParams, metadata?: CallMetadata): Promise<ElementHandleIsEnabledResult>;
-  isHidden(params?: ElementHandleIsHiddenParams, metadata?: CallMetadata): Promise<ElementHandleIsHiddenResult>;
-  isVisible(params?: ElementHandleIsVisibleParams, metadata?: CallMetadata): Promise<ElementHandleIsVisibleResult>;
-  ownerFrame(params?: ElementHandleOwnerFrameParams, metadata?: CallMetadata): Promise<ElementHandleOwnerFrameResult>;
-  press(params: ElementHandlePressParams, metadata?: CallMetadata): Promise<ElementHandlePressResult>;
-  querySelector(params: ElementHandleQuerySelectorParams, metadata?: CallMetadata): Promise<ElementHandleQuerySelectorResult>;
-  querySelectorAll(params: ElementHandleQuerySelectorAllParams, metadata?: CallMetadata): Promise<ElementHandleQuerySelectorAllResult>;
-  screenshot(params: ElementHandleScreenshotParams, metadata?: CallMetadata): Promise<ElementHandleScreenshotResult>;
-  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams, metadata?: CallMetadata): Promise<ElementHandleScrollIntoViewIfNeededResult>;
-  selectOption(params: ElementHandleSelectOptionParams, metadata?: CallMetadata): Promise<ElementHandleSelectOptionResult>;
-  selectText(params: ElementHandleSelectTextParams, metadata?: CallMetadata): Promise<ElementHandleSelectTextResult>;
-  setInputFiles(params: ElementHandleSetInputFilesParams, metadata?: CallMetadata): Promise<ElementHandleSetInputFilesResult>;
-  tap(params: ElementHandleTapParams, metadata?: CallMetadata): Promise<ElementHandleTapResult>;
-  textContent(params?: ElementHandleTextContentParams, metadata?: CallMetadata): Promise<ElementHandleTextContentResult>;
-  type(params: ElementHandleTypeParams, metadata?: CallMetadata): Promise<ElementHandleTypeResult>;
-  uncheck(params: ElementHandleUncheckParams, metadata?: CallMetadata): Promise<ElementHandleUncheckResult>;
-  waitForElementState(params: ElementHandleWaitForElementStateParams, metadata?: CallMetadata): Promise<ElementHandleWaitForElementStateResult>;
-  waitForSelector(params: ElementHandleWaitForSelectorParams, metadata?: CallMetadata): Promise<ElementHandleWaitForSelectorResult>;
+  evalOnSelector(progress: Progress, params: ElementHandleEvalOnSelectorParams): Promise<ElementHandleEvalOnSelectorResult>;
+  evalOnSelectorAll(progress: Progress, params: ElementHandleEvalOnSelectorAllParams): Promise<ElementHandleEvalOnSelectorAllResult>;
+  boundingBox(progress: Progress, params?: ElementHandleBoundingBoxParams): Promise<ElementHandleBoundingBoxResult>;
+  check(progress: Progress, params: ElementHandleCheckParams): Promise<ElementHandleCheckResult>;
+  click(progress: Progress, params: ElementHandleClickParams): Promise<ElementHandleClickResult>;
+  contentFrame(progress: Progress, params?: ElementHandleContentFrameParams): Promise<ElementHandleContentFrameResult>;
+  dblclick(progress: Progress, params: ElementHandleDblclickParams): Promise<ElementHandleDblclickResult>;
+  dispatchEvent(progress: Progress, params: ElementHandleDispatchEventParams): Promise<ElementHandleDispatchEventResult>;
+  fill(progress: Progress, params: ElementHandleFillParams): Promise<ElementHandleFillResult>;
+  focus(progress: Progress, params?: ElementHandleFocusParams): Promise<ElementHandleFocusResult>;
+  getAttribute(progress: Progress, params: ElementHandleGetAttributeParams): Promise<ElementHandleGetAttributeResult>;
+  hover(progress: Progress, params: ElementHandleHoverParams): Promise<ElementHandleHoverResult>;
+  innerHTML(progress: Progress, params?: ElementHandleInnerHTMLParams): Promise<ElementHandleInnerHTMLResult>;
+  innerText(progress: Progress, params?: ElementHandleInnerTextParams): Promise<ElementHandleInnerTextResult>;
+  isChecked(progress: Progress, params?: ElementHandleIsCheckedParams): Promise<ElementHandleIsCheckedResult>;
+  isDisabled(progress: Progress, params?: ElementHandleIsDisabledParams): Promise<ElementHandleIsDisabledResult>;
+  isEditable(progress: Progress, params?: ElementHandleIsEditableParams): Promise<ElementHandleIsEditableResult>;
+  isEnabled(progress: Progress, params?: ElementHandleIsEnabledParams): Promise<ElementHandleIsEnabledResult>;
+  isHidden(progress: Progress, params?: ElementHandleIsHiddenParams): Promise<ElementHandleIsHiddenResult>;
+  isVisible(progress: Progress, params?: ElementHandleIsVisibleParams): Promise<ElementHandleIsVisibleResult>;
+  ownerFrame(progress: Progress, params?: ElementHandleOwnerFrameParams): Promise<ElementHandleOwnerFrameResult>;
+  press(progress: Progress, params: ElementHandlePressParams): Promise<ElementHandlePressResult>;
+  querySelector(progress: Progress, params: ElementHandleQuerySelectorParams): Promise<ElementHandleQuerySelectorResult>;
+  querySelectorAll(progress: Progress, params: ElementHandleQuerySelectorAllParams): Promise<ElementHandleQuerySelectorAllResult>;
+  screenshot(progress: Progress, params: ElementHandleScreenshotParams): Promise<ElementHandleScreenshotResult>;
+  scrollIntoViewIfNeeded(progress: Progress, params: ElementHandleScrollIntoViewIfNeededParams): Promise<ElementHandleScrollIntoViewIfNeededResult>;
+  selectOption(progress: Progress, params: ElementHandleSelectOptionParams): Promise<ElementHandleSelectOptionResult>;
+  selectText(progress: Progress, params: ElementHandleSelectTextParams): Promise<ElementHandleSelectTextResult>;
+  setInputFiles(progress: Progress, params: ElementHandleSetInputFilesParams): Promise<ElementHandleSetInputFilesResult>;
+  tap(progress: Progress, params: ElementHandleTapParams): Promise<ElementHandleTapResult>;
+  textContent(progress: Progress, params?: ElementHandleTextContentParams): Promise<ElementHandleTextContentResult>;
+  type(progress: Progress, params: ElementHandleTypeParams): Promise<ElementHandleTypeResult>;
+  uncheck(progress: Progress, params: ElementHandleUncheckParams): Promise<ElementHandleUncheckResult>;
+  waitForElementState(progress: Progress, params: ElementHandleWaitForElementStateParams): Promise<ElementHandleWaitForElementStateResult>;
+  waitForSelector(progress: Progress, params: ElementHandleWaitForSelectorParams): Promise<ElementHandleWaitForSelectorResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
@@ -2033,7 +2033,7 @@ export type RequestInitializer = {
   redirectedFrom?: RequestChannel,
 };
 export interface RequestChannel extends Channel {
-  response(params?: RequestResponseParams, metadata?: CallMetadata): Promise<RequestResponseResult>;
+  response(progress: Progress, params?: RequestResponseParams): Promise<RequestResponseResult>;
 }
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
@@ -2046,9 +2046,9 @@ export type RouteInitializer = {
   request: RequestChannel,
 };
 export interface RouteChannel extends Channel {
-  abort(params: RouteAbortParams, metadata?: CallMetadata): Promise<RouteAbortResult>;
-  continue(params: RouteContinueParams, metadata?: CallMetadata): Promise<RouteContinueResult>;
-  fulfill(params: RouteFulfillParams, metadata?: CallMetadata): Promise<RouteFulfillResult>;
+  abort(progress: Progress, params: RouteAbortParams): Promise<RouteAbortResult>;
+  continue(progress: Progress, params: RouteContinueParams): Promise<RouteContinueResult>;
+  fulfill(progress: Progress, params: RouteFulfillParams): Promise<RouteFulfillResult>;
 }
 export type RouteAbortParams = {
   errorCode?: string,
@@ -2101,8 +2101,8 @@ export type ResponseInitializer = {
   timing: types.ResourceTiming,
 };
 export interface ResponseChannel extends Channel {
-  body(params?: ResponseBodyParams, metadata?: CallMetadata): Promise<ResponseBodyResult>;
-  finished(params?: ResponseFinishedParams, metadata?: CallMetadata): Promise<ResponseFinishedResult>;
+  body(progress: Progress, params?: ResponseBodyParams): Promise<ResponseBodyResult>;
+  finished(progress: Progress, params?: ResponseFinishedParams): Promise<ResponseFinishedResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -2157,8 +2157,8 @@ export type BindingCallInitializer = {
   handle?: JSHandleChannel,
 };
 export interface BindingCallChannel extends Channel {
-  reject(params: BindingCallRejectParams, metadata?: CallMetadata): Promise<BindingCallRejectResult>;
-  resolve(params: BindingCallResolveParams, metadata?: CallMetadata): Promise<BindingCallResolveResult>;
+  reject(progress: Progress, params: BindingCallRejectParams): Promise<BindingCallRejectResult>;
+  resolve(progress: Progress, params: BindingCallResolveParams): Promise<BindingCallResolveResult>;
 }
 export type BindingCallRejectParams = {
   error: types.SerializedError,
@@ -2182,8 +2182,8 @@ export type DialogInitializer = {
   defaultValue: string,
 };
 export interface DialogChannel extends Channel {
-  accept(params: DialogAcceptParams, metadata?: CallMetadata): Promise<DialogAcceptResult>;
-  dismiss(params?: DialogDismissParams, metadata?: CallMetadata): Promise<DialogDismissResult>;
+  accept(progress: Progress, params: DialogAcceptParams): Promise<DialogAcceptResult>;
+  dismiss(progress: Progress, params?: DialogDismissParams): Promise<DialogDismissResult>;
 }
 export type DialogAcceptParams = {
   promptText?: string,
@@ -2202,12 +2202,12 @@ export type DownloadInitializer = {
   suggestedFilename: string,
 };
 export interface DownloadChannel extends Channel {
-  path(params?: DownloadPathParams, metadata?: CallMetadata): Promise<DownloadPathResult>;
-  saveAs(params: DownloadSaveAsParams, metadata?: CallMetadata): Promise<DownloadSaveAsResult>;
-  saveAsStream(params?: DownloadSaveAsStreamParams, metadata?: CallMetadata): Promise<DownloadSaveAsStreamResult>;
-  failure(params?: DownloadFailureParams, metadata?: CallMetadata): Promise<DownloadFailureResult>;
-  stream(params?: DownloadStreamParams, metadata?: CallMetadata): Promise<DownloadStreamResult>;
-  delete(params?: DownloadDeleteParams, metadata?: CallMetadata): Promise<DownloadDeleteResult>;
+  path(progress: Progress, params?: DownloadPathParams): Promise<DownloadPathResult>;
+  saveAs(progress: Progress, params: DownloadSaveAsParams): Promise<DownloadSaveAsResult>;
+  saveAsStream(progress: Progress, params?: DownloadSaveAsStreamParams): Promise<DownloadSaveAsStreamResult>;
+  failure(progress: Progress, params?: DownloadFailureParams): Promise<DownloadFailureResult>;
+  stream(progress: Progress, params?: DownloadStreamParams): Promise<DownloadStreamResult>;
+  delete(progress: Progress, params?: DownloadDeleteParams): Promise<DownloadDeleteResult>;
 }
 export type DownloadPathParams = {};
 export type DownloadPathOptions = {};
@@ -2243,8 +2243,8 @@ export type DownloadDeleteResult = void;
 // ----------- Stream -----------
 export type StreamInitializer = {};
 export interface StreamChannel extends Channel {
-  read(params: StreamReadParams, metadata?: CallMetadata): Promise<StreamReadResult>;
-  close(params?: StreamCloseParams, metadata?: CallMetadata): Promise<StreamCloseResult>;
+  read(progress: Progress, params: StreamReadParams): Promise<StreamReadResult>;
+  close(progress: Progress, params?: StreamCloseParams): Promise<StreamCloseResult>;
 }
 export type StreamReadParams = {
   size?: number,
@@ -2262,8 +2262,8 @@ export type StreamCloseResult = void;
 // ----------- CDPSession -----------
 export type CDPSessionInitializer = {};
 export interface CDPSessionChannel extends Channel {
-  send(params: CDPSessionSendParams, metadata?: CallMetadata): Promise<CDPSessionSendResult>;
-  detach(params?: CDPSessionDetachParams, metadata?: CallMetadata): Promise<CDPSessionDetachResult>;
+  send(progress: Progress, params: CDPSessionSendParams): Promise<CDPSessionSendResult>;
+  detach(progress: Progress, params?: CDPSessionDetachParams): Promise<CDPSessionDetachResult>;
 }
 export type CDPSessionEventEvent = {
   method: string,
@@ -2286,7 +2286,7 @@ export type CDPSessionDetachResult = void;
 // ----------- Electron -----------
 export type ElectronInitializer = {};
 export interface ElectronChannel extends Channel {
-  launch(params: ElectronLaunchParams, metadata?: CallMetadata): Promise<ElectronLaunchResult>;
+  launch(progress: Progress, params: ElectronLaunchParams): Promise<ElectronLaunchResult>;
 }
 export type ElectronLaunchParams = {
   sdkLanguage: string,
@@ -2310,9 +2310,9 @@ export type ElectronLaunchResult = {
 // ----------- ElectronApplication -----------
 export type ElectronApplicationInitializer = {};
 export interface ElectronApplicationChannel extends Channel {
-  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: CallMetadata): Promise<ElectronApplicationEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, metadata?: CallMetadata): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
-  close(params?: ElectronApplicationCloseParams, metadata?: CallMetadata): Promise<ElectronApplicationCloseResult>;
+  evaluateExpression(progress: Progress, params: ElectronApplicationEvaluateExpressionParams): Promise<ElectronApplicationEvaluateExpressionResult>;
+  evaluateExpressionHandle(progress: Progress, params: ElectronApplicationEvaluateExpressionHandleParams): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
+  close(progress: Progress, params?: ElectronApplicationCloseParams): Promise<ElectronApplicationCloseResult>;
 }
 export type ElectronApplicationContextEvent = {
   context: BrowserContextChannel,
@@ -2351,8 +2351,8 @@ export type ElectronApplicationCloseResult = void;
 // ----------- Android -----------
 export type AndroidInitializer = {};
 export interface AndroidChannel extends Channel {
-  devices(params?: AndroidDevicesParams, metadata?: CallMetadata): Promise<AndroidDevicesResult>;
-  setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: CallMetadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
+  devices(progress: Progress, params?: AndroidDevicesParams): Promise<AndroidDevicesResult>;
+  setDefaultTimeoutNoReply(progress: Progress, params: AndroidSetDefaultTimeoutNoReplyParams): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
 }
 export type AndroidDevicesParams = {};
 export type AndroidDevicesOptions = {};
@@ -2370,8 +2370,8 @@ export type AndroidSetDefaultTimeoutNoReplyResult = void;
 // ----------- AndroidSocket -----------
 export type AndroidSocketInitializer = {};
 export interface AndroidSocketChannel extends Channel {
-  write(params: AndroidSocketWriteParams, metadata?: CallMetadata): Promise<AndroidSocketWriteResult>;
-  close(params?: AndroidSocketCloseParams, metadata?: CallMetadata): Promise<AndroidSocketCloseResult>;
+  write(progress: Progress, params: AndroidSocketWriteParams): Promise<AndroidSocketWriteResult>;
+  close(progress: Progress, params?: AndroidSocketCloseParams): Promise<AndroidSocketCloseResult>;
 }
 export type AndroidSocketDataEvent = {
   data: types.Binary,
@@ -2394,31 +2394,31 @@ export type AndroidDeviceInitializer = {
   serial: string,
 };
 export interface AndroidDeviceChannel extends Channel {
-  wait(params: AndroidDeviceWaitParams, metadata?: CallMetadata): Promise<AndroidDeviceWaitResult>;
-  fill(params: AndroidDeviceFillParams, metadata?: CallMetadata): Promise<AndroidDeviceFillResult>;
-  tap(params: AndroidDeviceTapParams, metadata?: CallMetadata): Promise<AndroidDeviceTapResult>;
-  drag(params: AndroidDeviceDragParams, metadata?: CallMetadata): Promise<AndroidDeviceDragResult>;
-  fling(params: AndroidDeviceFlingParams, metadata?: CallMetadata): Promise<AndroidDeviceFlingResult>;
-  longTap(params: AndroidDeviceLongTapParams, metadata?: CallMetadata): Promise<AndroidDeviceLongTapResult>;
-  pinchClose(params: AndroidDevicePinchCloseParams, metadata?: CallMetadata): Promise<AndroidDevicePinchCloseResult>;
-  pinchOpen(params: AndroidDevicePinchOpenParams, metadata?: CallMetadata): Promise<AndroidDevicePinchOpenResult>;
-  scroll(params: AndroidDeviceScrollParams, metadata?: CallMetadata): Promise<AndroidDeviceScrollResult>;
-  swipe(params: AndroidDeviceSwipeParams, metadata?: CallMetadata): Promise<AndroidDeviceSwipeResult>;
-  info(params: AndroidDeviceInfoParams, metadata?: CallMetadata): Promise<AndroidDeviceInfoResult>;
-  screenshot(params?: AndroidDeviceScreenshotParams, metadata?: CallMetadata): Promise<AndroidDeviceScreenshotResult>;
-  inputType(params: AndroidDeviceInputTypeParams, metadata?: CallMetadata): Promise<AndroidDeviceInputTypeResult>;
-  inputPress(params: AndroidDeviceInputPressParams, metadata?: CallMetadata): Promise<AndroidDeviceInputPressResult>;
-  inputTap(params: AndroidDeviceInputTapParams, metadata?: CallMetadata): Promise<AndroidDeviceInputTapResult>;
-  inputSwipe(params: AndroidDeviceInputSwipeParams, metadata?: CallMetadata): Promise<AndroidDeviceInputSwipeResult>;
-  inputDrag(params: AndroidDeviceInputDragParams, metadata?: CallMetadata): Promise<AndroidDeviceInputDragResult>;
-  launchBrowser(params: AndroidDeviceLaunchBrowserParams, metadata?: CallMetadata): Promise<AndroidDeviceLaunchBrowserResult>;
-  open(params: AndroidDeviceOpenParams, metadata?: CallMetadata): Promise<AndroidDeviceOpenResult>;
-  shell(params: AndroidDeviceShellParams, metadata?: CallMetadata): Promise<AndroidDeviceShellResult>;
-  installApk(params: AndroidDeviceInstallApkParams, metadata?: CallMetadata): Promise<AndroidDeviceInstallApkResult>;
-  push(params: AndroidDevicePushParams, metadata?: CallMetadata): Promise<AndroidDevicePushResult>;
-  setDefaultTimeoutNoReply(params: AndroidDeviceSetDefaultTimeoutNoReplyParams, metadata?: CallMetadata): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
-  connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: CallMetadata): Promise<AndroidDeviceConnectToWebViewResult>;
-  close(params?: AndroidDeviceCloseParams, metadata?: CallMetadata): Promise<AndroidDeviceCloseResult>;
+  wait(progress: Progress, params: AndroidDeviceWaitParams): Promise<AndroidDeviceWaitResult>;
+  fill(progress: Progress, params: AndroidDeviceFillParams): Promise<AndroidDeviceFillResult>;
+  tap(progress: Progress, params: AndroidDeviceTapParams): Promise<AndroidDeviceTapResult>;
+  drag(progress: Progress, params: AndroidDeviceDragParams): Promise<AndroidDeviceDragResult>;
+  fling(progress: Progress, params: AndroidDeviceFlingParams): Promise<AndroidDeviceFlingResult>;
+  longTap(progress: Progress, params: AndroidDeviceLongTapParams): Promise<AndroidDeviceLongTapResult>;
+  pinchClose(progress: Progress, params: AndroidDevicePinchCloseParams): Promise<AndroidDevicePinchCloseResult>;
+  pinchOpen(progress: Progress, params: AndroidDevicePinchOpenParams): Promise<AndroidDevicePinchOpenResult>;
+  scroll(progress: Progress, params: AndroidDeviceScrollParams): Promise<AndroidDeviceScrollResult>;
+  swipe(progress: Progress, params: AndroidDeviceSwipeParams): Promise<AndroidDeviceSwipeResult>;
+  info(progress: Progress, params: AndroidDeviceInfoParams): Promise<AndroidDeviceInfoResult>;
+  screenshot(progress: Progress, params?: AndroidDeviceScreenshotParams): Promise<AndroidDeviceScreenshotResult>;
+  inputType(progress: Progress, params: AndroidDeviceInputTypeParams): Promise<AndroidDeviceInputTypeResult>;
+  inputPress(progress: Progress, params: AndroidDeviceInputPressParams): Promise<AndroidDeviceInputPressResult>;
+  inputTap(progress: Progress, params: AndroidDeviceInputTapParams): Promise<AndroidDeviceInputTapResult>;
+  inputSwipe(progress: Progress, params: AndroidDeviceInputSwipeParams): Promise<AndroidDeviceInputSwipeResult>;
+  inputDrag(progress: Progress, params: AndroidDeviceInputDragParams): Promise<AndroidDeviceInputDragResult>;
+  launchBrowser(progress: Progress, params: AndroidDeviceLaunchBrowserParams): Promise<AndroidDeviceLaunchBrowserResult>;
+  open(progress: Progress, params: AndroidDeviceOpenParams): Promise<AndroidDeviceOpenResult>;
+  shell(progress: Progress, params: AndroidDeviceShellParams): Promise<AndroidDeviceShellResult>;
+  installApk(progress: Progress, params: AndroidDeviceInstallApkParams): Promise<AndroidDeviceInstallApkResult>;
+  push(progress: Progress, params: AndroidDevicePushParams): Promise<AndroidDevicePushResult>;
+  setDefaultTimeoutNoReply(progress: Progress, params: AndroidDeviceSetDefaultTimeoutNoReplyParams): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
+  connectToWebView(progress: Progress, params: AndroidDeviceConnectToWebViewParams): Promise<AndroidDeviceConnectToWebViewResult>;
+  close(progress: Progress, params?: AndroidDeviceCloseParams): Promise<AndroidDeviceCloseResult>;
 }
 export type AndroidDeviceWebViewAddedEvent = {
   webView: types.AndroidWebView,

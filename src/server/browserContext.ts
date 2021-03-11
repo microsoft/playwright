@@ -27,7 +27,7 @@ import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 import path from 'path';
-import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
+import { SdkObject } from './instrumentation';
 
 export class Video {
   readonly _videoId: string;
@@ -209,8 +209,8 @@ export abstract class BrowserContext extends SdkObject {
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
       const oldPage = pages[0];
-      await this.newPage(progress.metadata);
-      await oldPage.close(progress.metadata);
+      await this.newPage(progress);
+      await oldPage.close(progress);
     }
   }
 
@@ -245,7 +245,7 @@ export abstract class BrowserContext extends SdkObject {
     return this._closedStatus !== 'open';
   }
 
-  async close(metadata: CallMetadata) {
+  async close(progress: Progress) {
     if (this._closedStatus === 'open') {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
@@ -255,7 +255,7 @@ export abstract class BrowserContext extends SdkObject {
       if (this._isPersistentContext) {
         // Close all the pages instead of the context,
         // because we cannot close the default context.
-        await Promise.all(this.pages().map(page => page.close(metadata)));
+        await Promise.all(this.pages().map(page => page.close(progress)));
       } else {
         // Close the context.
         await this._doClose();
@@ -286,7 +286,7 @@ export abstract class BrowserContext extends SdkObject {
     await this._closePromise;
   }
 
-  async newPage(metadata: CallMetadata): Promise<Page> {
+  async newPage(progress: Progress): Promise<Page> {
     const pageDelegate = await this.newPageDelegate();
     const pageOrError = await pageDelegate.pageOrError();
     if (pageOrError instanceof Page) {
@@ -301,14 +301,13 @@ export abstract class BrowserContext extends SdkObject {
     this._origins.add(origin);
   }
 
-  async storageState(metadata: CallMetadata): Promise<types.StorageState> {
+  async storageState(progress: Progress): Promise<types.StorageState> {
     const result: types.StorageState = {
       cookies: (await this.cookies()).filter(c => c.value !== ''),
       origins: []
     };
     if (this._origins.size)  {
-      const internalMetadata = internalCallMetadata();
-      const page = await this.newPage(internalMetadata);
+      const page = await this.newPage(progress);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });
@@ -316,36 +315,35 @@ export abstract class BrowserContext extends SdkObject {
         const originStorage: types.OriginStorage = { origin, localStorage: [] };
         result.origins.push(originStorage);
         const frame = page.mainFrame();
-        await frame.goto(internalMetadata, origin);
+        await frame.goto(progress, origin);
         const storage = await frame._evaluateExpression(`({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
         })`, false, undefined, 'utility');
         originStorage.localStorage = storage.localStorage;
       }
-      await page.close(internalMetadata);
+      await page.close(progress);
     }
     return result;
   }
 
-  async setStorageState(metadata: CallMetadata, state: types.SetStorageState) {
+  async setStorageState(progress: Progress, state: types.SetStorageState) {
     if (state.cookies)
       await this.addCookies(state.cookies);
     if (state.origins && state.origins.length)  {
-      const internalMetadata = internalCallMetadata();
-      const page = await this.newPage(internalMetadata);
+      const page = await this.newPage(progress);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });
       for (const originState of state.origins) {
         const frame = page.mainFrame();
-        await frame.goto(metadata, originState.origin);
+        await frame.goto(progress, originState.origin);
         await frame._evaluateExpression(`
           originState => {
             for (const { name, value } of (originState.localStorage || []))
               localStorage.setItem(name, value);
           }`, true, originState, 'utility');
       }
-      await page.close(internalMetadata);
+      await page.close(progress);
     }
   }
 

@@ -17,13 +17,14 @@
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as channels from './channels';
 import { Selectors } from '../server/selectors';
+import { Progress } from '../server/progress';
 
 export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsInitializer> implements channels.SelectorsChannel {
   constructor(scope: DispatcherScope, selectors: Selectors) {
     super(scope, selectors, 'Selectors', {});
   }
 
-  async register(params: channels.SelectorsRegisterParams): Promise<void> {
+  async register(progress: Progress, params: channels.SelectorsRegisterParams): Promise<void> {
     await this._object.register(params.name, params.source, params.contentScript);
   }
 }

@@ -17,13 +17,14 @@
 import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as stream from 'stream';
+import { Progress } from '../server/progress';
 
 export class StreamDispatcher extends Dispatcher<stream.Readable, channels.StreamInitializer> implements channels.StreamChannel {
   constructor(scope: DispatcherScope, stream: stream.Readable) {
     super(scope, stream, 'Stream', {});
   }
 
-  async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
+  async read(progress: Progress, params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
     const buffer = this._object.read(Math.min(this._object.readableLength, params.size || this._object.readableLength));
     return { binary: buffer ? buffer.toString('base64') : '' };
   }

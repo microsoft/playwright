@@ -17,10 +17,11 @@
 import { TimeoutError } from '../utils/errors';
 import { assert, monotonicTime } from '../utils/utils';
 import { LogName } from '../utils/debugLogger';
-import { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
+import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementHandle } from './dom';
 
 export interface Progress {
+  setLogName(logName: LogName): void;
   log(message: string): void;
   timeUntilDeadline(): number;
   isRunning(): boolean;
@@ -29,6 +30,11 @@ export interface Progress {
   beforeInputAction(element: ElementHandle): Promise<void>;
   afterInputAction(): Promise<void>;
   metadata: CallMetadata;
+}
+
+export function runWithProgress<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
+  const controller = new ProgressController(internalCallMetadata(), undefined);
+  return controller.run(task, timeout);
 }
 
 export class ProgressController {
@@ -40,24 +46,17 @@ export class ProgressController {
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
-  private _logName = 'api';
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number = 0;
   private _timeout: number = 0;
   readonly metadata: CallMetadata;
-  readonly instrumentation: Instrumentation;
-  readonly sdkObject: SdkObject;
+  readonly sdkObject: SdkObject | undefined;
 
-  constructor(metadata: CallMetadata, sdkObject: SdkObject) {
+  constructor(metadata: CallMetadata, sdkObject: SdkObject | undefined) {
     this.metadata = metadata;
     this.sdkObject = sdkObject;
-    this.instrumentation = sdkObject.instrumentation;
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
-  }
-
-  setLogName(logName: LogName) {
-    this._logName = logName;
   }
 
   async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
@@ -69,12 +68,16 @@ export class ProgressController {
     assert(this._state === 'before');
     this._state = 'running';
 
+    let logName = 'api';
     const progress: Progress = {
+      setLogName: (name: LogName) => {
+        logName = name;
+      },
       log: message => {
         if (this._state === 'running')
           this.metadata.log.push(message);
         // Note: we might be sending logs after progress has finished, for example browser logs.
-        this.instrumentation.onCallLog(this._logName, message, this.sdkObject, this.metadata);
+        this.sdkObject?.instrumentation.onCallLog(logName, message, this.sdkObject, this.metadata);
       },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
@@ -89,10 +92,10 @@ export class ProgressController {
           throw new AbortedError();
       },
       beforeInputAction: async (element: ElementHandle) => {
-        await this.instrumentation.onBeforeInputAction(this.sdkObject, this.metadata, element);
+        await this.sdkObject?.instrumentation.onBeforeInputAction(this.sdkObject, this.metadata, element);
       },
       afterInputAction: async () => {
-        await this.instrumentation.onAfterInputAction(this.sdkObject, this.metadata);
+        await this.sdkObject?.instrumentation.onAfterInputAction(this.sdkObject, this.metadata);
       },
       metadata: this.metadata
     };

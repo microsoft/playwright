@@ -21,7 +21,7 @@ import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { CRBrowser } from '../server/chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
-import { CallMetadata } from '../server/instrumentation';
+import { Progress } from '../server/progress';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {
   constructor(scope: DispatcherScope, browser: Browser) {
@@ -34,32 +34,32 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserIniti
     this._dispose();
   }
 
-  async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
+  async newContext(progress: Progress, params: channels.BrowserNewContextParams): Promise<channels.BrowserNewContextResult> {
     const context = await this._object.newContext(params);
     if (params.storageState)
-      await context.setStorageState(metadata, params.storageState);
+      await context.setStorageState(progress, params.storageState);
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }
 
-  async close(): Promise<void> {
+  async close(progress: Progress): Promise<void> {
     await this._object.close();
   }
 
-  async crNewBrowserCDPSession(): Promise<channels.BrowserCrNewBrowserCDPSessionResult> {
+  async crNewBrowserCDPSession(progress: Progress): Promise<channels.BrowserCrNewBrowserCDPSessionResult> {
     if (!this._object.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
   }
 
-  async crStartTracing(params: channels.BrowserCrStartTracingParams): Promise<void> {
+  async crStartTracing(progress: Progress, params: channels.BrowserCrStartTracingParams): Promise<void> {
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
   }
 
-  async crStopTracing(): Promise<channels.BrowserCrStopTracingResult> {
+  async crStopTracing(progress: Progress): Promise<channels.BrowserCrStopTracingResult> {
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;

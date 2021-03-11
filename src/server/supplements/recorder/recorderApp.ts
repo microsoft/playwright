@@ -19,10 +19,9 @@ import path from 'path';
 import * as util from 'util';
 import { CRPage } from '../../chromium/crPage';
 import { Page } from '../../page';
-import { ProgressController } from '../../progress';
+import { runWithProgress } from '../../progress';
 import { createPlaywright } from '../../playwright';
 import { EventEmitter } from 'events';
-import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
 import { isUnderTest } from '../../../utils/utils';
@@ -53,7 +52,7 @@ export class RecorderApp extends EventEmitter {
   }
 
   async close() {
-    await this._page.context().close(internalCallMetadata());
+    await runWithProgress(progress => this._page.context().close(progress));
   }
 
   private async _init() {
@@ -85,11 +84,11 @@ export class RecorderApp extends EventEmitter {
 
     this._page.once('close', () => {
       this.emit('close');
-      this._page.context().close(internalCallMetadata()).catch(e => console.error(e));
+      runWithProgress(progress => this._page.context().close(progress)).catch(e => console.error(e));
     });
 
     const mainFrame = this._page.mainFrame();
-    await mainFrame.goto(internalCallMetadata(), 'https://playwright/index.html');
+    await runWithProgress(progress => mainFrame.goto(progress, 'https://playwright/index.html'));
   }
 
   static async open(inspectedContext: BrowserContext): Promise<RecorderApp> {
@@ -101,22 +100,20 @@ export class RecorderApp extends EventEmitter {
     ];
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
-    const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
-      sdkLanguage: inspectedContext._options.sdkLanguage,
-      args,
-      noDefaultViewport: true,
-      headless: !!process.env.PWCLI_HEADLESS_FOR_TEST || (isUnderTest() && !inspectedContext._browser.options.headful),
-      useWebSocket: isUnderTest()
-    });
-    const controller = new ProgressController(internalCallMetadata(), context._browser);
-    await controller.run(async progress => {
+    return runWithProgress(async progress => {
+      const context = await recorderPlaywright.chromium.launchPersistentContext(progress, '', {
+        sdkLanguage: inspectedContext._options.sdkLanguage,
+        args,
+        noDefaultViewport: true,
+        headless: !!process.env.PWCLI_HEADLESS_FOR_TEST || (isUnderTest() && !inspectedContext._browser.options.headful),
+        useWebSocket: isUnderTest()
+      });
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
+      const [page] = context.pages();
+      const result = new RecorderApp(page, context._browser.options.wsEndpoint);
+      await result._init();
+      return result;
     });
-
-    const [page] = context.pages();
-    const result = new RecorderApp(page, context._browser.options.wsEndpoint);
-    await result._init();
-    return result;
   }
 
   async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {

@@ -29,12 +29,13 @@ import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
 import { RecorderApp } from './recorder/recorderApp';
-import { CallMetadata, internalCallMetadata, SdkObject } from '../instrumentation';
+import { CallMetadata, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
 import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
 import { isUnderTest, monotonicTime } from '../../utils/utils';
 import { InMemorySnapshotter } from '../snapshot/inMemorySnapshotter';
 import { metadataToCallLog } from './recorder/recorderUtils';
+import { runWithProgress } from '../progress';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -344,24 +345,25 @@ export class RecorderSupplement {
       action
     };
     this._generator.willPerformAction(actionInContext);
-    const noCallMetadata = internalCallMetadata();
     try {
-      const kActionTimeout = 5000;
-      if (action.name === 'click') {
-        const { options } = toClickOptions(action);
-        await frame.click(noCallMetadata, action.selector, { ...options, timeout: kActionTimeout });
-      }
-      if (action.name === 'press') {
-        const modifiers = toModifiers(action.modifiers);
-        const shortcut = [...modifiers, action.key].join('+');
-        await frame.press(noCallMetadata, action.selector, shortcut, { timeout: kActionTimeout });
-      }
-      if (action.name === 'check')
-        await frame.check(noCallMetadata, action.selector, { timeout: kActionTimeout });
-      if (action.name === 'uncheck')
-        await frame.uncheck(noCallMetadata, action.selector, { timeout: kActionTimeout });
-      if (action.name === 'select')
-        await frame.selectOption(noCallMetadata, action.selector, [], action.options.map(value => ({ value })), { timeout: kActionTimeout });
+      await runWithProgress(async progress => {
+        const kActionTimeout = 5000;
+        if (action.name === 'click') {
+          const { options } = toClickOptions(action);
+          await frame.click(progress, action.selector, { ...options, timeout: kActionTimeout });
+        }
+        if (action.name === 'press') {
+          const modifiers = toModifiers(action.modifiers);
+          const shortcut = [...modifiers, action.key].join('+');
+          await frame.press(progress, action.selector, shortcut, { timeout: kActionTimeout });
+        }
+        if (action.name === 'check')
+          await frame.check(progress, action.selector, { timeout: kActionTimeout });
+        if (action.name === 'uncheck')
+          await frame.uncheck(progress, action.selector, { timeout: kActionTimeout });
+        if (action.name === 'select')
+          await frame.selectOption(progress, action.selector, [], action.options.map(value => ({ value })), { timeout: kActionTimeout });
+      });
     } catch (e) {
       this._generator.performedActionFailed(actionInContext);
       return;

@@ -24,7 +24,7 @@ import * as ws from 'ws';
 import { createGuid, makeWaitForNextTask } from '../../utils/utils';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
-import { ProgressController } from '../progress';
+import { Progress } from '../progress';
 import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
 import { Transport } from '../../protocol/transport';
@@ -32,7 +32,7 @@ import { RecentLogsCollector } from '../../utils/debugLogger';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/types';
 import { CRPage } from '../chromium/crPage';
-import { SdkObject, internalCallMetadata } from '../instrumentation';
+import { SdkObject } from '../instrumentation';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -233,7 +233,7 @@ export class AndroidDevice extends SdkObject {
     this.emit(AndroidDevice.Events.Closed);
   }
 
-  async launchBrowser(pkg: string = 'com.android.chrome', options: types.BrowserContextOptions): Promise<BrowserContext> {
+  async launchBrowser(progress: Progress, pkg: string = 'com.android.chrome', options: types.BrowserContextOptions): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
 
@@ -242,17 +242,17 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Starting', pkg, commandLine);
     await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
     await this._backend.runCommand(`shell:am start -n ${pkg}/com.google.android.apps.chrome.Main about:blank`);
-    return await this._connectToBrowser(socketName, options);
+    return await this._connectToBrowser(progress, socketName, options);
   }
 
-  async connectToWebView(pid: number, sdkLanguage: string): Promise<BrowserContext> {
+  async connectToWebView(progress: Progress, pid: number, sdkLanguage: string): Promise<BrowserContext> {
     const webView = this._webViews.get(pid);
     if (!webView)
       throw new Error('WebView has been closed');
-    return await this._connectToBrowser(`webview_devtools_remote_${pid}`, { sdkLanguage });
+    return await this._connectToBrowser(progress, `webview_devtools_remote_${pid}`, { sdkLanguage });
   }
 
-  private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions): Promise<BrowserContext> {
+  private async _connectToBrowser(progress: Progress, socketName: string, options: types.BrowserContextOptions): Promise<BrowserContext> {
     const socket = await this._waitForLocalAbstract(socketName);
     const androidBrowser = new AndroidBrowser(this, socket);
     await androidBrowser._init();
@@ -273,11 +273,8 @@ export class AndroidDevice extends SdkObject {
     validateBrowserContextOptions(options, browserOptions);
 
     const browser = await CRBrowser.connect(androidBrowser, browserOptions);
-    const controller = new ProgressController(internalCallMetadata(), this);
     const defaultContext = browser._defaultContext!;
-    await controller.run(async progress => {
-      await defaultContext._loadDefaultContextAsIs(progress);
-    });
+    await defaultContext._loadDefaultContextAsIs(progress);
     {
       // TODO: remove after rolling to r838157
       // Force page scale factor update.

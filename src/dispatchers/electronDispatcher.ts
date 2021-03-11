@@ -21,14 +21,15 @@ import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { createHandle } from './elementHandlerDispatcher';
+import { Progress } from '../server/progress';
 
 export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronInitializer> implements channels.ElectronChannel {
   constructor(scope: DispatcherScope, electron: Electron) {
     super(scope, electron, 'Electron', {}, true);
   }
 
-  async launch(params: channels.ElectronLaunchParams): Promise<channels.ElectronLaunchResult> {
-    const electronApplication = await this._object.launch(params);
+  async launch(progress: Progress, params: channels.ElectronLaunchParams): Promise<channels.ElectronLaunchResult> {
+    const electronApplication = await this._object.launch(progress, params);
     return { electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication) };
   }
 }
@@ -49,18 +50,18 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     });
   }
 
-  async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
+  async evaluateExpression(progress: Progress, params: channels.ElectronApplicationEvaluateExpressionParams): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
     const handle = this._object._nodeElectronHandle!;
     return { value: serializeResult(await handle._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
+  async evaluateExpressionHandle(progress: Progress, params: channels.ElectronApplicationEvaluateExpressionHandleParams): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
     const handle = this._object._nodeElectronHandle!;
     const result = await handle._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
     return { handle: createHandle(this._scope, result) };
   }
 
-  async close(): Promise<void> {
-    await this._object.close();
+  async close(progress: Progress): Promise<void> {
+    await this._object.close(progress);
   }
 }

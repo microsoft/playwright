@@ -21,6 +21,7 @@ import { StreamDispatcher } from './streamDispatcher';
 import fs from 'fs';
 import * as util from 'util';
 import { mkdirIfNeeded } from '../utils/utils';
+import { Progress } from '../server/progress';
 
 export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadInitializer> implements channels.DownloadChannel {
   constructor(scope: DispatcherScope, download: Download) {
@@ -30,12 +31,12 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
     });
   }
 
-  async path(): Promise<channels.DownloadPathResult> {
+  async path(progress: Progress): Promise<channels.DownloadPathResult> {
     const path = await this._object.localPath();
     return { value: path || undefined };
   }
 
-  async saveAs(params: channels.DownloadSaveAsParams): Promise<channels.DownloadSaveAsResult> {
+  async saveAs(progress: Progress, params: channels.DownloadSaveAsParams): Promise<channels.DownloadSaveAsResult> {
     return await new Promise((resolve, reject) => {
       this._object.saveAs(async (localPath, error) => {
         if (error !== undefined) {
@@ -54,7 +55,7 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
     });
   }
 
-  async saveAsStream(): Promise<channels.DownloadSaveAsStreamResult> {
+  async saveAsStream(progress: Progress): Promise<channels.DownloadSaveAsStreamResult> {
     return await new Promise((resolve, reject) => {
       this._object.saveAs(async (localPath, error) => {
         if (error !== undefined) {
@@ -81,7 +82,7 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
     });
   }
 
-  async stream(): Promise<channels.DownloadStreamResult> {
+  async stream(progress: Progress): Promise<channels.DownloadStreamResult> {
     const fileName = await this._object.localPath();
     if (!fileName)
       return {};
@@ -90,12 +91,12 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
     return { stream: new StreamDispatcher(this._scope, readable) };
   }
 
-  async failure(): Promise<channels.DownloadFailureResult> {
+  async failure(progress: Progress): Promise<channels.DownloadFailureResult> {
     const error = await this._object.failure();
     return { error: error || undefined };
   }
 
-  async delete(): Promise<void> {
+  async delete(progress: Progress): Promise<void> {
     await this._object.delete();
   }
 }

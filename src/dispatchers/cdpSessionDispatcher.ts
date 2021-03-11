@@ -15,6 +15,7 @@
  */
 
 import { CRSession, CRSessionEvents } from '../server/chromium/crConnection';
+import { Progress } from '../server/progress';
 import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
@@ -27,11 +28,11 @@ export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSess
     crSession.on(CRSessionEvents.Disconnected, () => this._dispose());
   }
 
-  async send(params: channels.CDPSessionSendParams): Promise<channels.CDPSessionSendResult> {
+  async send(progress: Progress, params: channels.CDPSessionSendParams): Promise<channels.CDPSessionSendResult> {
     return { result: await this._object.send(params.method as any, params.params) };
   }
 
-  async detach(): Promise<void> {
+  async detach(progress: Progress): Promise<void> {
     return this._object.detach();
   }
 }

@@ -27,11 +27,11 @@ import { BrowserContext, Video } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
-import { ProgressController } from './progress';
+import { Progress } from './progress';
 import { assert, createGuid, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
-import { CallMetadata, SdkObject } from './instrumentation';
+import { SdkObject } from './instrumentation';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -298,9 +298,8 @@ export class Page extends SdkObject {
       this.emit(Page.Events.Console, message);
   }
 
-  async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
+  async reload(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
+    return this.mainFrame().raceNavigationAction(async () => {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
       const [response] = await Promise.all([
@@ -309,12 +308,11 @@ export class Page extends SdkObject {
       ]);
       await this._doSlowMo();
       return response;
-    }), this._timeoutSettings.navigationTimeout(options));
+    });
   }
 
-  async goBack(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
+  async goBack(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
+    return this.mainFrame().raceNavigationAction(async () => {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -330,12 +328,11 @@ export class Page extends SdkObject {
         throw error;
       await this._doSlowMo();
       return response;
-    }), this._timeoutSettings.navigationTimeout(options));
+    });
   }
 
-  async goForward(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
+  async goForward(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
+    return this.mainFrame().raceNavigationAction(async () => {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -351,7 +348,7 @@ export class Page extends SdkObject {
         throw error;
       await this._doSlowMo();
       return response;
-    }), this._timeoutSettings.navigationTimeout(options));
+    });
   }
 
   async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null }) {
@@ -420,14 +417,11 @@ export class Page extends SdkObject {
     route.continue();
   }
 
-  async screenshot(metadata: CallMetadata, options: types.ScreenshotOptions = {}): Promise<Buffer> {
-    const controller = new ProgressController(metadata, this);
-    return controller.run(
-        progress => this._screenshotter.screenshotPage(progress, options),
-        this._timeoutSettings.timeout(options));
+  async screenshot(progress: Progress, options: types.ScreenshotOptions = {}): Promise<Buffer> {
+    return this._screenshotter.screenshotPage(progress, options);
   }
 
-  async close(metadata: CallMetadata, options?: { runBeforeUnload?: boolean }) {
+  async close(progress: Progress, options?: { runBeforeUnload?: boolean }) {
     if (this._closedState === 'closed')
       return;
     const runBeforeUnload = !!options && !!options.runBeforeUnload;
@@ -441,7 +435,7 @@ export class Page extends SdkObject {
     if (!runBeforeUnload)
       await this._closedPromise;
     if (this._ownedContext)
-      await this._ownedContext.close(metadata);
+      await this._ownedContext.close(progress);
   }
 
   private _setIsError() {

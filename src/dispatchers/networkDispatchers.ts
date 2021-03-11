@@ -15,6 +15,7 @@
  */
 
 import { Request, Response, Route, WebSocket } from '../server/network';
+import { Progress } from '../server/progress';
 import * as channels from './channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -44,7 +45,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestIniti
     });
   }
 
-  async response(): Promise<channels.RequestResponseResult> {
+  async response(progress: Progress): Promise<channels.RequestResponseResult> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._object.response()) };
   }
 }
@@ -64,11 +65,11 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
     });
   }
 
-  async finished(): Promise<channels.ResponseFinishedResult> {
+  async finished(progress: Progress): Promise<channels.ResponseFinishedResult> {
     return await this._object._finishedPromise;
   }
 
-  async body(): Promise<channels.ResponseBodyResult> {
+  async body(progress: Progress): Promise<channels.ResponseBodyResult> {
     return { binary: (await this._object.body()).toString('base64') };
   }
 }
@@ -82,7 +83,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
     });
   }
 
-  async continue(params: channels.RouteContinueParams): Promise<void> {
+  async continue(progress: Progress, params: channels.RouteContinueParams): Promise<void> {
     await this._object.continue({
       url: params.url,
       method: params.method,
@@ -91,11 +92,11 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
     });
   }
 
-  async fulfill(params: channels.RouteFulfillParams): Promise<void> {
+  async fulfill(progress: Progress, params: channels.RouteFulfillParams): Promise<void> {
     await this._object.fulfill(params);
   }
 
-  async abort(params: channels.RouteAbortParams): Promise<void> {
+  async abort(progress: Progress, params: channels.RouteAbortParams): Promise<void> {
     await this._object.abort(params.errorCode || 'failed');
   }
 }

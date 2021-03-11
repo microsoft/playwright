@@ -19,6 +19,7 @@ import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { createHandle } from './elementHandlerDispatcher';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
+import { Progress } from '../server/progress';
 
 export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleInitializer> implements channels.JSHandleChannel {
 
@@ -30,21 +31,21 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
     jsHandle._setPreviewCallback(preview => this._dispatchEvent('previewUpdated', { preview }));
   }
 
-  async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams): Promise<channels.JSHandleEvaluateExpressionResult> {
+  async evaluateExpression(progress: Progress, params: channels.JSHandleEvaluateExpressionParams): Promise<channels.JSHandleEvaluateExpressionResult> {
     return { value: serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
+  async evaluateExpressionHandle(progress: Progress, params: channels.JSHandleEvaluateExpressionHandleParams): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
     const jsHandle = await this._object._evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
     return { handle: createHandle(this._scope, jsHandle) };
   }
 
-  async getProperty(params: channels.JSHandleGetPropertyParams): Promise<channels.JSHandleGetPropertyResult> {
+  async getProperty(progress: Progress, params: channels.JSHandleGetPropertyParams): Promise<channels.JSHandleGetPropertyResult> {
     const jsHandle = await this._object.getProperty(params.name);
     return { handle: createHandle(this._scope, jsHandle) };
   }
 
-  async getPropertyList(): Promise<channels.JSHandleGetPropertyListResult> {
+  async getPropertyList(progress: Progress): Promise<channels.JSHandleGetPropertyListResult> {
     const map = await this._object.getProperties();
     const properties = [];
     for (const [name, value] of map)
@@ -52,11 +53,11 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
     return { properties };
   }
 
-  async jsonValue(): Promise<channels.JSHandleJsonValueResult> {
+  async jsonValue(progress: Progress): Promise<channels.JSHandleJsonValueResult> {
     return { value: serializeResult(await this._object.jsonValue()) };
   }
 
-  async dispose() {
+  async dispose(progress: Progress) {
     await this._object.dispose();
   }
 }

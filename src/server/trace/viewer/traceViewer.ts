@@ -25,8 +25,7 @@ import { SnapshotServer } from '../../snapshot/snapshotServer';
 import { PersistentSnapshotStorage } from '../../snapshot/snapshotStorage';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { isUnderTest } from '../../../utils/utils';
-import { internalCallMetadata } from '../../instrumentation';
-import { ProgressController } from '../../progress';
+import { runWithProgress } from '../../progress';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -119,22 +118,21 @@ class TraceViewer {
     ];
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
-    const context = await traceViewerPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
-      // TODO: store language in the trace.
-      sdkLanguage: 'javascript',
-      args,
-      noDefaultViewport: true,
-      headless: !!process.env.PWCLI_HEADLESS_FOR_TEST,
-      useWebSocket: isUnderTest()
-    });
-    const controller = new ProgressController(internalCallMetadata(), context._browser);
-    await controller.run(async progress => {
+    await runWithProgress(async progress => {
+      const context = await traceViewerPlaywright.chromium.launchPersistentContext(progress, '', {
+        // TODO: store language in the trace.
+        sdkLanguage: 'javascript',
+        args,
+        noDefaultViewport: true,
+        headless: !!process.env.PWCLI_HEADLESS_FOR_TEST,
+        useWebSocket: isUnderTest()
+      });
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
+      await context.extendInjectedScript(consoleApiSource.source);
+      const [page] = context.pages();
+      page.on('close', () => process.exit(0));
+      await page.mainFrame().goto(progress, urlPrefix + '/traceviewer/traceViewer/index.html');
     });
-    await context.extendInjectedScript(consoleApiSource.source);
-    const [page] = context.pages();
-    page.on('close', () => process.exit(0));
-    await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
   }
 }
 

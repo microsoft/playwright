@@ -15,6 +15,7 @@
  */
 
 import { Dialog } from '../server/dialog';
+import { Progress } from '../server/progress';
 import * as channels from './channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
@@ -27,11 +28,11 @@ export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogInitiali
     });
   }
 
-  async accept(params: { promptText?: string }): Promise<void> {
+  async accept(progress: Progress, params: { promptText?: string }): Promise<void> {
     await this._object.accept(params.promptText);
   }
 
-  async dismiss(): Promise<void> {
+  async dismiss(progress: Progress): Promise<void> {
     await this._object.dismiss();
   }
 }

@@ -24,6 +24,8 @@ import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
 import { StackFrame } from '../common/types';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { TimeoutSettings } from '../utils/timeoutSettings';
+import { ProgressController } from '../server/progress';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -213,7 +215,8 @@ export class DispatcherConnection {
     try {
       if (sdkObject)
         await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
-      const result = await (dispatcher as any)[method](validParams, callMetadata);
+      const controller = new ProgressController(callMetadata, sdkObject);
+      const result = await controller.run(progress => (dispatcher as any)[method](progress, validParams), validMetadata.timeout);
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
       // Dispatching error

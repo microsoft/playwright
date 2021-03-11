@@ -27,10 +27,8 @@ import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
 import { isDebugMode } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
-import { ProgressController } from '../progress';
-import { TimeoutSettings } from '../../utils/timeoutSettings';
+import { Progress } from '../progress';
 import { helper } from '../helper';
-import { CallMetadata } from '../instrumentation';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -42,32 +40,29 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number) {
-    const controller = new ProgressController(metadata, this);
-    controller.setLogName('browser');
+  async connectOverCDP(progress: Progress, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number) {
+    progress.setLogName('browser');
     const browserLogsCollector = new RecentLogsCollector();
-    return controller.run(async progress => {
-      const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint);
-      const browserProcess: BrowserProcess = {
-        close: async () => {
-          await chromeTransport.closeAndWait();
-        },
-        kill: async () => {
-          await chromeTransport.closeAndWait();
-        }
-      };
-      const browserOptions: BrowserOptions = {
-        ...this._playwrightOptions,
-        slowMo: options.slowMo,
-        name: 'chromium',
-        isChromium: true,
-        persistent: { sdkLanguage: options.sdkLanguage, noDefaultViewport: true },
-        browserProcess,
-        protocolLogger: helper.debugProtocolLogger(),
-        browserLogsCollector,
-      };
-      return await CRBrowser.connect(chromeTransport, browserOptions);
-    }, TimeoutSettings.timeout({timeout}));
+    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint);
+    const browserProcess: BrowserProcess = {
+      close: async () => {
+        await chromeTransport.closeAndWait();
+      },
+      kill: async () => {
+        await chromeTransport.closeAndWait();
+      }
+    };
+    const browserOptions: BrowserOptions = {
+      ...this._playwrightOptions,
+      slowMo: options.slowMo,
+      name: 'chromium',
+      isChromium: true,
+      persistent: { sdkLanguage: options.sdkLanguage, noDefaultViewport: true },
+      browserProcess,
+      protocolLogger: helper.debugProtocolLogger(),
+      browserLogsCollector,
+    };
+    return await CRBrowser.connect(chromeTransport, browserOptions);
   }
 
   private _createDevTools() {
