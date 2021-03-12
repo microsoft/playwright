@@ -31,6 +31,7 @@ import { Page } from '../client/page';
 import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
+import { installDeps } from '../install/installDeps';
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -82,20 +83,34 @@ program
 program
     .command('install [browserType...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(function(browserType) {
-      const allBrowsers = new Set(['chromium', 'firefox', 'webkit']);
-      for (const type of browserType) {
-        if (!allBrowsers.has(type)) {
-          console.log(`Invalid browser name: '${type}'. Expecting 'chromium', 'firefox' or 'webkit'.`);
-          process.exit(1);
+    .action(async function(browserType) {
+      try {
+        const allBrowsers = new Set(['chromium', 'firefox', 'webkit']);
+        for (const type of browserType) {
+          if (!allBrowsers.has(type)) {
+            console.log(`Invalid browser name: '${type}'. Expecting 'chromium', 'firefox' or 'webkit'.`);
+            process.exit(1);
+          }
         }
-      }
-      if (browserType.length && browserType.includes('chromium'))
-        browserType = browserType.concat('ffmpeg');
-      installBrowsers(browserType.length ? browserType : undefined).catch((e: any) => {
+        if (browserType.length && browserType.includes('chromium'))
+          browserType = browserType.concat('ffmpeg');
+        await installBrowsers(browserType.length ? browserType : undefined);
+      } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
-      });
+      }
+    });
+
+program
+    .command('install-deps [browserType...]')
+    .description('install dependencies necessary to run browser')
+    .action(async function(browserType) {
+      try {
+        await installDeps(browserType);
+      } catch (e) {
+        console.log(`Failed to install browsers\n${e}`);
+        process.exit(1);
+      }
     });
 
 const browsers = [

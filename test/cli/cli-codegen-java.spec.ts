@@ -45,7 +45,9 @@ it('should print the correct context options for custom settings', async ({ runC
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device', async ({ runCLI }) => {
+it('should print the correct context options when using a device', (test, { browserName }) => {
+  test.skip(browserName !== 'chromium');
+}, async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--device=Pixel 2', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Mobile Safari/537.36")
@@ -57,7 +59,9 @@ it('should print the correct context options when using a device', async ({ runC
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
+it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
+  test.skip(browserName !== 'webkit');
+}, async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT)

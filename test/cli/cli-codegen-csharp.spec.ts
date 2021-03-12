@@ -76,7 +76,9 @@ var context = await browser.NewContextAsync(
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device', async ({ runCLI }) => {
+it('should print the correct context options when using a device', (test, { browserName }) => {
+  test.skip(browserName !== 'chromium');
+}, async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--device=Pixel 2', '--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
@@ -86,7 +88,9 @@ var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
+it('should print the correct context options when using a device and additional options', (test, {browserName}) => {
+  test.skip(browserName !== 'webkit');
+}, async ({ runCLI }) => {
   const cli = runCLI([
     'codegen',
     '--device=iPhone 11',
