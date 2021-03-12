@@ -44,7 +44,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) });
       context.on(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) }));
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
-        this._dispatchEvent('crServiceWorker', new WorkerDispatcher(this._scope, serviceWorker));
+        this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
       context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
   }

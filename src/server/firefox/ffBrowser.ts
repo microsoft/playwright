@@ -35,6 +35,8 @@ export class FFBrowser extends Browser {
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     const connection = new FFConnection(transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new FFBrowser(connection, options);
+    if ((options as any).__testHookOnConnectToBrowser)
+      await (options as any).__testHookOnConnectToBrowser();
     const promises: Promise<any>[] = [
       connection.send('Browser.enable', { attachToDefaultContext: !!options.persistent }),
       browser._initVersion(),
