@@ -29,9 +29,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -64,9 +64,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json --shard=${{ matrix.shard }}/2
       env:
         BROWSER: ${{ matrix.browser }}
@@ -94,9 +94,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
       shell: bash
       env:
@@ -125,9 +125,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node_version }}
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - run: bash packages/installation-tests/installation-tests.sh
 
   headful_linux:
@@ -142,9 +142,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -177,9 +177,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -211,9 +211,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -240,9 +240,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 14
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - name: Create Android Emulator
       run: utils/avd_recreate.sh
     - name: Start Android Emulator
@@ -269,11 +269,11 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - name: Install Chrome Stable
       run: sudo apt install google-chrome-stable
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'

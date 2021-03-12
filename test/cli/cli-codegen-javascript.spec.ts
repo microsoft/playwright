@@ -51,7 +51,9 @@ it('should print the correct context options for custom settings', async ({ brow
 });
 
 
-it('should print the correct context options when using a device', async ({ runCLI }) => {
+it('should print the correct context options when using a device', (test, { browserName }) => {
+  test.skip(browserName !== 'chromium');
+}, async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--device=Pixel 2', emptyHTML]);
   const expectedResult = `const { chromium, devices } = require('playwright');
 
@@ -66,7 +68,9 @@ it('should print the correct context options when using a device', async ({ runC
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
+it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
+  test.skip(browserName !== 'webkit');
+}, async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', emptyHTML]);
   const expectedResult = `const { webkit, devices } = require('playwright');
 

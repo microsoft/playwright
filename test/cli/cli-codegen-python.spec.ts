@@ -44,7 +44,9 @@ def run(playwright):
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device', async ({ runCLI }) => {
+it('should print the correct context options when using a device', (test, { browserName }) => {
+  test.skip(browserName !== 'chromium');
+}, async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--device=Pixel 2', '--target=python', emptyHTML]);
   const expectedResult = `from playwright.sync_api import sync_playwright
 
@@ -55,7 +57,9 @@ def run(playwright):
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
+it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
+  test.skip(browserName !== 'webkit');
+}, async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', '--target=python', emptyHTML]);
   const expectedResult = `from playwright.sync_api import sync_playwright
 
