@@ -268,7 +268,7 @@ export class Recorder {
 
   private _onClick(event: MouseEvent) {
     if (this._mode === 'inspecting')
-      window._playwrightRecorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
+      window._playwrightRecorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '').catch(console.error);
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -365,7 +365,7 @@ export class Recorder {
     const { selector, elements } = generateSelector(this._injectedScript, hoveredElement);
     if ((this._hoveredModel && this._hoveredModel.selector === selector) || this._hoveredElement !== hoveredElement)
       return;
-    window._playwrightRecorderCommitAction();
+    window._playwrightRecorderCommitAction().catch(console.error);
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
     if ((window as any)._highlightUpdatedForTest)
@@ -463,7 +463,7 @@ export class Recorder {
           selector: this._activeModel!.selector,
           signals: [],
           files: [...(inputElement.files || [])].map(file => file.name),
-        });
+        }).catch(console.error);
         return;
       }
 
@@ -475,7 +475,7 @@ export class Recorder {
         selector: this._activeModel!.selector,
         signals: [],
         text: inputElement.value,
-      });
+      }).catch(console.error);
     }
 
     if (target.nodeName === 'SELECT') {
@@ -565,7 +565,11 @@ export class Recorder {
     this._expectProgrammaticKeyUp = false;
   }
 
-  private async _performAction(action: actions.Action) {
+  private _performAction(action: actions.Action) {
+    this._performActionAsync(action).catch(console.error);
+  }
+
+  private async _performActionAsync(action: actions.Action) {
     this._performingAction = true;
     await window._playwrightRecorderPerformAction(action).catch(() => {});
     this._performingAction = false;

@@ -87,17 +87,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     const func = this._bindings.get(bindingCall._initializer.name);
     if (!func)
       return;
-    bindingCall.call(func);
+    await bindingCall.call(func);
   }
 
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-    this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
+    this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(e => {});
   }
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout });
+    this._channel.setDefaultTimeoutNoReply({ timeout }).catch(e => {});
   }
 
   browser(): Browser | null {
@@ -238,7 +238,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _onClose() {
+  _onClose() {
     if (this._browser)
       this._browser._contexts.delete(this);
     this.emit(Events.BrowserContext.Close, this);

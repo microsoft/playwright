@@ -70,7 +70,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     await this._interceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
-    await this._session.sendMayFail('Network.interceptRequestWithError', { requestId: this._requestId, errorType });
+    await this._session.send('Network.interceptRequestWithError', { requestId: this._requestId, errorType }).catch(e => {});
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
@@ -86,7 +86,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     const contentType = headers['content-type'];
     if (contentType)
       mimeType = contentType.split(';')[0].trim();
-    await this._session.sendMayFail('Network.interceptRequestWithResponse', {
+    await this._session.send('Network.interceptRequestWithResponse', {
       requestId: this._requestId,
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)],
@@ -94,20 +94,20 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       headers,
       base64Encoded: response.isBase64,
       content: response.body
-    });
+    }).catch(e => {});
   }
 
   async continue(overrides: types.NormalizedContinueOverrides) {
     await this._interceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
-    await this._session.sendMayFail('Network.interceptWithRequest', {
+    await this._session.send('Network.interceptWithRequest', {
       requestId: this._requestId,
       url: overrides.url,
       method: overrides.method,
       headers: overrides.headers ? headersArrayToObject(overrides.headers, false /* lowerCase */) : undefined,
       postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined
-    });
+    }).catch(e => {});
   }
 
   createResponse(responsePayload: Protocol.Network.Response): network.Response {

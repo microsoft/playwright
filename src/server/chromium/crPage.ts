@@ -415,7 +415,7 @@ class FrameSession {
         const localFrames = this._isMainFrame() ? this._page.frames() : [ this._page._frameManager.frame(this._targetId)! ];
         for (const frame of localFrames) {
           // Note: frames might be removed before we send these.
-          this._client._sendMayFail('Page.createIsolatedWorld', {
+          this._client._sendNoReply('Page.createIsolatedWorld', {
             frameId: frame._id,
             grantUniveralAccess: true,
             worldName: UTILITY_WORLD_NAME,
@@ -432,7 +432,7 @@ class FrameSession {
           // started (even if the target url is about:blank).
           lifecycleEventsEnabled.then(() => {
             this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
-          });
+          }, e => {});
         } else {
           this._firstNonInitialNavigationCommittedFulfill();
           this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
@@ -634,9 +634,9 @@ class FrameSession {
 
     if (event.targetInfo.type !== 'worker') {
       // Ideally, detaching should resume any target, but there is a bug in the backend.
-      session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
-        this._client._sendMayFail('Target.detachFromTarget', { sessionId: event.sessionId });
-      });
+      session.send('Runtime.runIfWaitingForDebugger').then(() => {
+        return this._client.send('Target.detachFromTarget', { sessionId: event.sessionId });
+      }).catch(e => {});
       return;
     }
 
@@ -646,11 +646,10 @@ class FrameSession {
     session.once('Runtime.executionContextCreated', async event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));
     });
-    Promise.all([
-      session._sendMayFail('Runtime.enable'),
-      session._sendMayFail('Network.enable'),
-      session._sendMayFail('Runtime.runIfWaitingForDebugger'),
-    ]);  // This might fail if the target is closed before we initialize.
+    // This might fail if the target is closed before we initialize.
+    session._sendNoReply('Runtime.enable');
+    session._sendNoReply('Network.enable');
+    session._sendNoReply('Runtime.runIfWaitingForDebugger');
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
@@ -685,7 +684,7 @@ class FrameSession {
       if (!childFrameSession._swappedIn)
         this._page._frameManager.frameDetached(event.targetId!);
       childFrameSession.dispose();
-    });
+    }, e => {});
   }
 
   _onWindowOpen(event: Protocol.Page.windowOpenPayload) {
@@ -848,7 +847,7 @@ class FrameSession {
   async _stopScreencast(): Promise<void> {
     if (!this._screencastId)
       return;
-    await this._client._sendMayFail('Page.stopScreencast');
+    await this._client.send('Page.stopScreencast').catch(e => {});
     const recorder = this._videoRecorder!;
     const screencastId = this._screencastId;
     this._videoRecorder = null;
@@ -990,9 +989,9 @@ class FrameSession {
   }
 
   async _getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
-    const result = await this._client._sendMayFail('DOM.getBoxModel', {
+    const result = await this._client.send('DOM.getBoxModel', {
       objectId: handle._objectId
-    });
+    }).catch(e => null);
     if (!result)
       return null;
     const quad = result.model.border;
@@ -1031,9 +1030,9 @@ class FrameSession {
   }
 
   async _getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
-    const result = await this._client._sendMayFail('DOM.getContentQuads', {
+    const result = await this._client.send('DOM.getContentQuads', {
       objectId: handle._objectId
-    });
+    }).catch(e => null);
     if (!result)
       return null;
     const position = await this._framePosition();
@@ -1055,10 +1054,10 @@ class FrameSession {
   }
 
   async _adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.FrameExecutionContext): Promise<dom.ElementHandle> {
-    const result = await this._client._sendMayFail('DOM.resolveNode', {
+    const result = await this._client.send('DOM.resolveNode', {
       backendNodeId,
       executionContextId: (to._delegate as CRExecutionContext)._contextId,
-    });
+    }).catch(e => null);
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to.createHandle(result.object).asElement()!;

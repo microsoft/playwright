@@ -115,7 +115,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.onExit(exitCode, signal);
     fulfillClose();
     // Cleanup as process exits.
-    cleanup().then(fulfillCleanup);
+    cleanup().then(fulfillCleanup, e => {});
   });
 
   const listeners = [ helper.addEventListener(process, 'exit', killProcess) ];
@@ -127,7 +127,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
           setTimeout(() => process.exit(130), 0);
         else
           process.exit(130);
-      });
+      }, e => {});
     }));
   }
   if (options.handleSIGTERM)

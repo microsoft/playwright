@@ -227,7 +227,7 @@ declare global {
 function rootScript() {
   if (!navigator.serviceWorker)
     return;
-  navigator.serviceWorker.register('./service-worker.js');
+  navigator.serviceWorker.register('./service-worker.js').catch(console.error);
   let showPromise = Promise.resolve();
   if (!navigator.serviceWorker.controller) {
     showPromise = new Promise(resolve => {
@@ -271,6 +271,6 @@ function rootScript() {
     }
   };
   window.addEventListener('message', event => {
-    window.showSnapshot(window.location.href + event.data.snapshotUrl);
+    window.showSnapshot(window.location.href + event.data.snapshotUrl).catch(console.error);
   }, false);
 }

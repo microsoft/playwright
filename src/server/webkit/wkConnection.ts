@@ -140,8 +140,8 @@ export class WKSession extends EventEmitter {
     });
   }
 
-  sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
-    return this.send(method, params).catch(error => debugLogger.log('error', error));
+  sendNoReply<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): void {
+    this.send(method, params).catch(error => debugLogger.log('error', error));
   }
 
   markAsCrashed() {
@@ -173,7 +173,7 @@ export class WKSession extends EventEmitter {
       // Response might come after session has been disposed and rejected all callbacks.
       assert(this.isDisposed());
     } else {
-      Promise.resolve().then(() => this.emit(object.method, object.params));
+      void Promise.resolve().then(() => this.emit(object.method, object.params));
     }
   }
 }

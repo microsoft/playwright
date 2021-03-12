@@ -28,6 +28,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRDevTools } from './crDevTools';
+import { debugLogger } from '../../utils/debugLogger';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -117,16 +118,16 @@ export class CRBrowser extends Browser {
     }
 
     if (targetInfo.type === 'other' && targetInfo.url.startsWith('devtools://devtools') && this._devtools) {
-      this._devtools.install(session);
+      this._devtools.install(session).catch(e => debugLogger.log('error', e));
       return;
     }
 
     if (targetInfo.type === 'other' || !context) {
       if (waitingForDebugger) {
         // Ideally, detaching should resume any target, but there is a bug in the backend.
-        session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
-          this._session._sendMayFail('Target.detachFromTarget', { sessionId });
-        });
+        session.send('Runtime.runIfWaitingForDebugger').then(() => {
+          return this._session.send('Target.detachFromTarget', { sessionId });
+        }).catch(e => {});
       }
       return;
     }
@@ -141,7 +142,7 @@ export class CRBrowser extends Browser {
       backgroundPage.pageOrError().then(pageOrError => {
         if (pageOrError instanceof Page)
           context!.emit(CRBrowserContext.CREvents.BackgroundPage, backgroundPage._page);
-      });
+      }, e => {});
       return;
     }
 

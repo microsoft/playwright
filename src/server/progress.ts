@@ -82,7 +82,7 @@ export class ProgressController {
         if (this._state === 'running')
           this._cleanups.push(cleanup);
         else
-          runCleanup(cleanup);
+          cleanup();
       },
       throwIfAborted: () => {
         if (this._state === 'aborted')
@@ -106,7 +106,7 @@ export class ProgressController {
       return result;
     } catch (e) {
       this._state = 'aborted';
-      await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
+      await Promise.all(this._cleanups.splice(0).map(runCleanup));
       throw e;
     } finally {
       clearTimeout(timer);

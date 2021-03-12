@@ -39,7 +39,7 @@ program
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, command) {
-      open(command, url, language());
+      open(command, url, language()).catch(logErrorAndExit);
     })
     .on('--help', function() {
       console.log('');
@@ -54,7 +54,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to use, one of javascript, python, python-async, csharp`, language()],
     ]).action(function(url, command) {
-  codegen(command, url, command.target, command.output);
+  codegen(command, url, command.target, command.output).catch(logErrorAndExit);
 }).on('--help', function() {
   console.log('');
   console.log('Examples:');
@@ -122,7 +122,7 @@ const browsers = [
 for (const {alias, name, type} of browsers) {
   commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
       .action(function(url, command) {
-        open({ ...command, browser: type }, url, command.target);
+        open({ ...command, browser: type }, url, command.target).catch(logErrorAndExit);
       }).on('--help', function() {
         console.log('');
         console.log('Examples:');
@@ -137,7 +137,7 @@ commandWithOpenOptions('screenshot <url> <filename>', 'capture a page screenshot
       ['--wait-for-timeout <timeout>', 'wait for timeout in milliseconds before taking a screenshot'],
       ['--full-page', 'whether to take a full page screenshot (entire scrollable area)'],
     ]).action(function(url, filename, command) {
-  screenshot(command, command, url, filename);
+  screenshot(command, command, url, filename).catch(logErrorAndExit);
 }).on('--help', function() {
   console.log('');
   console.log('Examples:');
@@ -150,7 +150,7 @@ commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
       ['--wait-for-selector <selector>', 'wait for given selector before saving as pdf'],
       ['--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf'],
     ]).action(function(url, filename, command) {
-  pdf(command, command, url, filename);
+  pdf(command, command, url, filename).catch(logErrorAndExit);
 }).on('--help', function() {
   console.log('');
   console.log('Examples:');
@@ -164,7 +164,7 @@ if (process.env.PWTRACE) {
       .option('--resources <dir>', 'load resources from shared folder')
       .description('Show trace viewer')
       .action(function(trace, command) {
-        showTraceViewer(trace, command.resources);
+        showTraceViewer(trace, command.resources).catch(logErrorAndExit);
       }).on('--help', function() {
         console.log('');
         console.log('Examples:');
@@ -179,7 +179,7 @@ if (process.argv[2] === 'run-driver')
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')
-  launchBrowserServer(process.argv[3], process.argv[4]);
+  launchBrowserServer(process.argv[3], process.argv[4]).catch(logErrorAndExit);
 else
   program.parse(process.argv);
 
@@ -444,6 +444,11 @@ function validateOptions(options: Options) {
     console.log('Invalid color scheme, should be one of "light", "dark"');
     process.exit(0);
   }
+}
+
+function logErrorAndExit(e: Error) {
+  console.error(e);
+  process.exit(1);
 }
 
 function language(): string {

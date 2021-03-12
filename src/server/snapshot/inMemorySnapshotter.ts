@@ -23,7 +23,6 @@ import { SnapshotRenderer } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { BaseSnapshotStorage } from './snapshotStorage';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { ElementHandle } from '../dom';
 
 const kSnapshotInterval = 25;
 
@@ -53,11 +52,11 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     await this._server.stop();
   }
 
-  async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle): Promise<SnapshotRenderer> {
+  async captureSnapshot(page: Page, snapshotName: string): Promise<SnapshotRenderer> {
     if (this._frameSnapshots.has(snapshotName))
       throw new Error('Duplicate snapshot name: ' + snapshotName);
 
-    this._snapshotter.captureSnapshot(page, snapshotName, element);
+    this._snapshotter.captureSnapshot(page, snapshotName);
     return new Promise<SnapshotRenderer>(fulfill => {
       const listener = helper.addEventListener(this, 'snapshot', (renderer: SnapshotRenderer) => {
         if (renderer.snapshotName === snapshotName) {

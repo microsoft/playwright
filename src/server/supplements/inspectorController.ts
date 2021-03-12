@@ -45,7 +45,7 @@ export class InspectorController implements InstrumentationListener {
         case 'log':
           const originalMetadata = this._waitOperations.get(info.waitId)!;
           originalMetadata.log.push(info.message);
-          this.onCallLog('api', info.message, sdkObject, originalMetadata);
+          await this.onCallLog('api', info.message, sdkObject, originalMetadata);
           // Fall through.
         case 'after':
           return;

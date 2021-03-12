@@ -143,7 +143,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   async releaseHandle(handle: js.JSHandle): Promise<void> {
     if (!handle._objectId)
       return;
-    await this._session.send('Runtime.releaseObject', {objectId: handle._objectId}).catch(error => {});
+    await this._session.send('Runtime.releaseObject', {objectId: handle._objectId});
   }
 }
 

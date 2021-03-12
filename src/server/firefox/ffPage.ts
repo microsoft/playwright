@@ -232,14 +232,14 @@ export class FFPage implements PageDelegate {
     const context = this._contextIdToContext.get(event.executionContextId)!;
     const pageOrError = await this.pageOrError();
     if (!(pageOrError instanceof Error))
-      this._page._onBindingCalled(event.payload, context);
+      await this._page._onBindingCalled(event.payload, context);
   }
 
   async _onFileChooserOpened(payload: Protocol.Page.fileChooserOpenedPayload) {
     const {executionContextId, element} = payload;
     const context = this._contextIdToContext.get(executionContextId)!;
     const handle = context.createHandle(element).asElement()!;
-    this._page._onFileChooserOpened(handle);
+    await this._page._onFileChooserOpened(handle);
   }
 
   async _onWorkerCreated(event: Protocol.Page.workerCreatedPayload) {
@@ -267,7 +267,7 @@ export class FFPage implements PageDelegate {
     // Note: we receive worker exceptions directly from the page.
   }
 
-  async _onWorkerDestroyed(event: Protocol.Page.workerDestroyedPayload) {
+  _onWorkerDestroyed(event: Protocol.Page.workerDestroyedPayload) {
     const workerId = event.workerId;
     const worker = this._workers.get(workerId);
     if (!worker)

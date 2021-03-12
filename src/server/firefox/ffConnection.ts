@@ -113,7 +113,7 @@ export class FFConnection extends EventEmitter {
           callback.resolve(message.result);
       }
     } else {
-      Promise.resolve().then(() => this.emit(message.method!, message.params));
+      void Promise.resolve().then(() => this.emit(message.method!, message.params));
     }
   }
 
@@ -128,7 +128,7 @@ export class FFConnection extends EventEmitter {
     for (const callback of this._callbacks.values())
       callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Browser closed.` + formattedBrowserLogs));
     this._callbacks.clear();
-    Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
+    void Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
   close() {
@@ -211,7 +211,7 @@ export class FFSession extends EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      Promise.resolve().then(() => this.emit(object.method!, object.params));
+      void Promise.resolve().then(() => this.emit(object.method!, object.params));
     }
   }
 
@@ -221,7 +221,7 @@ export class FFSession extends EventEmitter {
     this._callbacks.clear();
     this._disposed = true;
     this._connection._sessions.delete(this._sessionId);
-    Promise.resolve().then(() => this.emit(FFSessionEvents.Disconnected));
+    void Promise.resolve().then(() => this.emit(FFSessionEvents.Disconnected));
   }
 }
 

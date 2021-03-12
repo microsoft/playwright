@@ -34,6 +34,7 @@ import { BrowserContext, Video } from './server/browserContext';
 import { StreamDispatcher } from './dispatchers/streamDispatcher';
 import { ProtocolLogger } from './server/types';
 import { CallMetadata, internalCallMetadata, SdkObject } from './server/instrumentation';
+import { debugLogger } from './utils/debugLogger';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserType;
@@ -116,7 +117,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
         socket.send(JSON.stringify(message));
     };
     socket.on('message', (message: string) => {
-      connection.dispatch(JSON.parse(Buffer.from(message).toString()));
+      connection.dispatch(JSON.parse(Buffer.from(message).toString())).catch(e => debugLogger.log('error', e));
     });
     socket.on('error', () => {});
     const selectors = new Selectors();

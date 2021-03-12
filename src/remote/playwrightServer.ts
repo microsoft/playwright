@@ -48,11 +48,11 @@ export class PlaywrightServer {
       ws.on('message', message => dispatcherConnection.dispatch(JSON.parse(message.toString())));
       ws.on('close', () => {
         debugLog('Client closed');
-        this._onDisconnect();
+        this._onDisconnect().catch(debugLog);
       });
       ws.on('error', error => {
         debugLog('Client error ' + error);
-        this._onDisconnect();
+        this._onDisconnect().catch(debugLog);
       });
       dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
       new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), createPlaywright());

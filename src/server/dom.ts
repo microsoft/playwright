@@ -793,7 +793,7 @@ export class InjectedScriptPollHandler<T> {
     //   - no unnecessary work in the page;
     //   - no possible side effects after progress promsie rejects.
     this._progress.cleanupWhenAborted(() => this.cancel());
-    this._streamLogs();
+    this._streamLogs().catch(e => {});
   }
 
   private async _streamLogs() {

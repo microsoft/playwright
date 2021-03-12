@@ -181,7 +181,11 @@ export class Page extends SdkObject {
     this.selectors = browserContext.selectors();
   }
 
-  async reportAsNew() {
+  reportAsNew() {
+    this._reportAsNew().catch(e => {});
+  }
+
+  private async _reportAsNew() {
     const pageOrError = await this._delegate.pageOrError();
     if (pageOrError instanceof Error) {
       // Initialization error could have happened because of
@@ -196,7 +200,7 @@ export class Page extends SdkObject {
       openerDelegate.pageOrError().then(openerPage => {
         if (openerPage instanceof Page && !openerPage.isClosed())
           openerPage.emit(Page.Events.Popup, this);
-      });
+      }, e => {});
     }
   }
 
@@ -418,7 +422,7 @@ export class Page extends SdkObject {
       this._browserContext._requestInterceptor(route, request);
       return;
     }
-    route.continue();
+    route.continue().catch(e => {});
   }
 
   async screenshot(metadata: CallMetadata, options: types.ScreenshotOptions = {}): Promise<Buffer> {

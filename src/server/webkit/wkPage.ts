@@ -113,7 +113,7 @@ export class WKPage implements PageDelegate {
     promises.push(this.updateHttpCredentials());
     if (this._browserContext._permissions.size) {
       for (const [key, value] of this._browserContext._permissions)
-        this._grantPermissions(key, value);
+        promises.push(this._grantPermissions(key, value));
     }
     if (this._browserContext._options.recordVideo) {
       const size = this._browserContext._options.recordVideo.size || this._browserContext._options.viewport || { width: 1280, height: 720 };
@@ -302,7 +302,7 @@ export class WKPage implements PageDelegate {
         pageOrError = e;
       }
       if (targetInfo.isPaused)
-        this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        this._pageProxySession.sendNoReply('Target.resume', { targetId: targetInfo.targetId });
       if ((pageOrError instanceof Page) && this._page.mainFrame().url() === '') {
         try {
           // Initial empty page has an empty url. We should wait until the first real url has been loaded,
@@ -324,8 +324,8 @@ export class WKPage implements PageDelegate {
       this._provisionalPage = new WKProvisionalPage(session, this);
       if (targetInfo.isPaused) {
         this._provisionalPage.initializationPromise.then(() => {
-          this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
-        });
+          this._pageProxySession.sendNoReply('Target.resume', { targetId: targetInfo.targetId });
+        }, e => {});
       }
     }
   }
@@ -484,8 +484,8 @@ export class WKPage implements PageDelegate {
       const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId)!;
       this.pageOrError().then(pageOrError => {
         if (!(pageOrError instanceof Error))
-          this._page._onBindingCalled(parameters[2].value, context);
-      });
+          return this._page._onBindingCalled(parameters[2].value, context);
+      }, e => {});
       return;
     }
     if (level === 'error' && source === 'javascript') {
@@ -609,7 +609,7 @@ export class WKPage implements PageDelegate {
   }
 
   async bringToFront(): Promise<void> {
-    this._pageProxySession.send('Target.activate', {
+    await this._pageProxySession.send('Target.activate', {
       targetId: this._session.sessionId
     });
   }
@@ -725,10 +725,10 @@ export class WKPage implements PageDelegate {
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
     await this._stopScreencast();
-    await this._pageProxySession.sendMayFail('Target.close', {
+    await this._pageProxySession.send('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
-    });
+    }).catch(e => {});
   }
 
   canScreenshotOutsideViewport(): boolean {
@@ -753,7 +753,7 @@ export class WKPage implements PageDelegate {
   async _stopScreencast(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
-    await this._pageProxySession.sendMayFail('Screencast.stop');
+    await this._pageProxySession.send('Screencast.stop').catch(e => {});
     this._recordingVideoFile = null;
   }
 
@@ -830,9 +830,9 @@ export class WKPage implements PageDelegate {
   }
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
-    const result = await this._session.sendMayFail('DOM.getContentQuads', {
+    const result = await this._session.send('DOM.getContentQuads', {
       objectId: handle._objectId
-    });
+    }).catch(e => null);
     if (!result)
       return null;
     return result.quads.map(quad => [
@@ -854,10 +854,10 @@ export class WKPage implements PageDelegate {
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
-    const result = await this._session.sendMayFail('DOM.resolveNode', {
+    const result = await this._session.send('DOM.resolveNode', {
       objectId: handle._objectId,
       executionContextId: (to._delegate as WKExecutionContext)._contextId
-    });
+    }).catch(e => null);
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to.createHandle(result.object) as dom.ElementHandle<T>;
@@ -924,7 +924,7 @@ export class WKPage implements PageDelegate {
     if (!request._allowInterception) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
-      this._session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
+      this._session.sendNoReply('Network.interceptWithRequest', { requestId: request._requestId });
     } else {
       request._interceptedCallback();
     }

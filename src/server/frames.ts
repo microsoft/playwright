@@ -260,7 +260,7 @@ export class FrameManager {
     if (request._isFavicon) {
       const route = request._route();
       if (route)
-        route.continue();
+        route.continue().catch(e => {});
       return;
     }
     this._page._requestStarted(request);
@@ -1201,7 +1201,11 @@ class RerunnableTask {
     this._reject(error);
   }
 
-  async rerun(context: dom.FrameExecutionContext) {
+  rerun(context: dom.FrameExecutionContext) {
+    this._rerunAsync(context).catch(e => {});
+  }
+
+  private async _rerunAsync(context: dom.FrameExecutionContext) {
     try {
       const injectedScript = await context.injectedScript();
       const pollHandler = new dom.InjectedScriptPollHandler(this._progress, await this._task(injectedScript));

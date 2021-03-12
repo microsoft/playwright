@@ -100,7 +100,7 @@ export class CRConnection extends EventEmitter {
     for (const session of this._sessions.values())
       session._onClosed(browserDisconnectedLogs);
     this._sessions.clear();
-    Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
+    void Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
   close() {
@@ -173,8 +173,8 @@ export class CRSession extends EventEmitter {
     });
   }
 
-  _sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
-    return this.send(method, params).catch((error: Error) => debugLogger.log('error', error));
+  _sendNoReply<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): void {
+    this.send(method, params).catch((error: Error) => debugLogger.log('error', error));
   }
 
   _onMessage(object: ProtocolResponse) {
@@ -187,7 +187,7 @@ export class CRSession extends EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      Promise.resolve().then(() => {
+      void Promise.resolve().then(() => {
         if (this._eventListener)
           this._eventListener(object.method!, object.params);
         this.emit(object.method!, object.params);
@@ -211,7 +211,7 @@ export class CRSession extends EventEmitter {
       callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): ` + errorMessage));
     this._callbacks.clear();
     this._connection = null;
-    Promise.resolve().then(() => this.emit(CRSessionEvents.Disconnected));
+    void Promise.resolve().then(() => this.emit(CRSessionEvents.Disconnected));
   }
 }
 
