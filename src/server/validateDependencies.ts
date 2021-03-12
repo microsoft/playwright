@@ -20,6 +20,7 @@ import * as os from 'os';
 import { spawn } from 'child_process';
 import { getUbuntuVersion } from '../utils/ubuntuVersion';
 import * as registry from '../utils/registry';
+import * as utils from '../utils/utils';
 import { printDepsWindowsExecutable } from '../utils/binaryPaths';
 
 const accessAsync = util.promisify(fs.access.bind(fs));
@@ -28,6 +29,10 @@ const statAsync = util.promisify(fs.stat.bind(fs));
 const readdirAsync = util.promisify(fs.readdir.bind(fs));
 
 export async function validateHostRequirements(registry: registry.Registry, browserName: registry.BrowserName) {
+  if (utils.getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
+    process.stdout.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
+    return;
+  }
   const ubuntuVersion = await getUbuntuVersion();
   if (browserName === 'firefox' && ubuntuVersion === '16.04')
     throw new Error(`Cannot launch firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
