@@ -164,6 +164,8 @@ function formatLaunchOptions(options: any): string {
   lines.push('new BrowserType.LaunchOptions()');
   if (typeof options.headless === 'boolean')
     lines.push(`  .setHeadless(false)`);
+  if (options.channel)
+    lines.push(`  .setChannel("${options.channel}")`);
   return lines.join('\n');
 }
 

@@ -104,6 +104,7 @@ export abstract class BrowserType extends SdkObject {
       ...this._playwrightOptions,
       name: this._name,
       isChromium: this._name === 'chromium',
+      channel: options.channel,
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,

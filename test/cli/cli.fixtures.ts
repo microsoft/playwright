@@ -168,11 +168,16 @@ class CLIMock {
 
   constructor(browserName: string, headless: boolean, args: string[]) {
     this.data = '';
-    this.process = spawn('node', [
+    const nodeArgs = [
       path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
+      'codegen',
       ...args,
       `--browser=${browserName}`,
-    ], {
+    ];
+    // if (process.env.PW_CHROMIUM_CHANNEL)
+    //   nodeArgs.push(`--channel=${process.env.PW_CHROMIUM_CHANNEL}`);
+    nodeArgs.push('--channel=chrome');
+    this.process = spawn('node', nodeArgs, {
       env: {
         ...process.env,
         PWCLI_EXIT_FOR_TEST: '1',

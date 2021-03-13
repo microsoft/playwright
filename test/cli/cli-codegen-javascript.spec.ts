@@ -21,14 +21,15 @@ import { folio } from './cli.fixtures';
 const { it, expect } = folio;
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
+const launchOptions = process.env.PW_CHROMIUM_CHANNEL ? `headless: false,\n    channel: '${process.env.PW_CHROMIUM_CHANNEL}'` : 'headless: false';
 
 it('should print the correct imports and context options', async ({ browserName, runCLI }) => {
-  const cli = runCLI(['codegen', emptyHTML]);
+  const cli = runCLI([emptyHTML]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
 (async () => {
   const browser = await ${browserName}.launch({
-    headless: false
+    ${launchOptions}
   });
   const context = await browser.newContext();`;
   await cli.waitFor(expectedResult);
@@ -36,12 +37,12 @@ it('should print the correct imports and context options', async ({ browserName,
 });
 
 it('should print the correct context options for custom settings', async ({ browserName, runCLI }) => {
-  const cli = runCLI(['codegen', '--color-scheme=light', emptyHTML]);
+  const cli = runCLI(['--color-scheme=light', emptyHTML]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
 (async () => {
   const browser = await ${browserName}.launch({
-    headless: false
+    ${launchOptions}
   });
   const context = await browser.newContext({
     colorScheme: 'light'
@@ -54,12 +55,12 @@ it('should print the correct context options for custom settings', async ({ brow
 it('should print the correct context options when using a device', (test, { browserName }) => {
   test.skip(browserName !== 'chromium');
 }, async ({ runCLI }) => {
-  const cli = runCLI(['codegen', '--device=Pixel 2', emptyHTML]);
+  const cli = runCLI(['--device=Pixel 2', emptyHTML]);
   const expectedResult = `const { chromium, devices } = require('playwright');
 
 (async () => {
   const browser = await chromium.launch({
-    headless: false
+    ${launchOptions}
   });
   const context = await browser.newContext({
     ...devices['Pixel 2'],
@@ -71,12 +72,12 @@ it('should print the correct context options when using a device', (test, { brow
 it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
   test.skip(browserName !== 'webkit');
 }, async ({ runCLI }) => {
-  const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', emptyHTML]);
+  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', emptyHTML]);
   const expectedResult = `const { webkit, devices } = require('playwright');
 
 (async () => {
   const browser = await webkit.launch({
-    headless: false
+    ${launchOptions}
   });
   const context = await browser.newContext({
     ...devices['iPhone 11'],
@@ -88,14 +89,14 @@ it('should print the correct context options when using a device and additional 
 
 it('should save the codegen output to a file if specified', async ({ browserName, runCLI, testInfo }) => {
   const tmpFile = testInfo.outputPath('script.js');
-  const cli = runCLI(['codegen', '--output', tmpFile, emptyHTML]);
+  const cli = runCLI(['--output', tmpFile, emptyHTML]);
   await cli.exited;
   const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`const { ${browserName} } = require('playwright');
 
 (async () => {
   const browser = await ${browserName}.launch({
-    headless: false
+    ${launchOptions}
   });
   const context = await browser.newContext();
 
@@ -118,12 +119,12 @@ it('should print load/save storageState', async ({ browserName, runCLI, testInfo
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI(['codegen', `--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, emptyHTML]);
+  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, emptyHTML]);
   const expectedResult1 = `const { ${browserName} } = require('playwright');
 
 (async () => {
   const browser = await ${browserName}.launch({
-    headless: false
+    ${launchOptions}
   });
   const context = await browser.newContext({
     storageState: '${loadFileName}'

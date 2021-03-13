@@ -20,6 +20,8 @@ import path from 'path';
 function darwin(channel: string): string | undefined {
   switch (channel) {
     case 'chrome': return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    case 'chrome-beta': return '/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta';
+    case 'chrome-dev': return '/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev';
     case 'chrome-canary': return '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary';
     case 'msedge': return '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
     case 'msedge-beta': return '/Applications/Microsoft Edge Beta.app/Contents/MacOS/Microsoft Edge Beta';
@@ -41,6 +43,8 @@ function win32(channel: string): string | undefined {
   let suffix: string | undefined;
   switch (channel) {
     case 'chrome': suffix = `\\Google\\Chrome\\Application\\chrome.exe`; break;
+    case 'chrome-beta': suffix = `\\Google\\Chrome Beta\\Application\\chrome.exe`; break;
+    case 'chrome-dev': suffix = `\\Google\\Chrome Dev\\Application\\chrome.exe`; break;
     case 'chrome-canary': suffix = `\\Google\\Chrome SxS\\Application\\chrome.exe`; break;
     case 'msedge': suffix = `\\Microsoft\\Edge\\Application\\msedge.exe`; break;
     case 'msedge-beta': suffix = `\\Microsoft\\Edge Beta\\Application\\msedge.exe`; break;

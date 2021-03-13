@@ -21,9 +21,10 @@ import { folio } from './cli.fixtures';
 const { it, expect } = folio;
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
+const launchOptions = process.env.PW_CHROMIUM_CHANNEL ? `.setHeadless(false)\n        .setChannel("${process.env.PW_CHROMIUM_CHANNEL}")` : '.setHeadless(false)';
 
 it('should print the correct imports and context options', async ({ runCLI, browserName }) => {
-  const cli = runCLI(['codegen', '--target=java', emptyHTML]);
+  const cli = runCLI(['--target=java', emptyHTML]);
   const expectedResult = `import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.*;
 
@@ -31,14 +32,14 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       Browser browser = playwright.${browserName}().launch(new BrowserType.LaunchOptions()
-        .setHeadless(false));
+        ${launchOptions});
       BrowserContext context = browser.newContext();`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
 
 it('should print the correct context options for custom settings', async ({ runCLI, browserName }) => {
-  const cli = runCLI(['codegen', '--color-scheme=light', '--target=java', emptyHTML]);
+  const cli = runCLI(['--color-scheme=light', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT));`;
   await cli.waitFor(expectedResult);
@@ -48,7 +49,7 @@ it('should print the correct context options for custom settings', async ({ runC
 it('should print the correct context options when using a device', (test, { browserName }) => {
   test.skip(browserName !== 'chromium');
 }, async ({ runCLI }) => {
-  const cli = runCLI(['codegen', '--device=Pixel 2', '--target=java', emptyHTML]);
+  const cli = runCLI(['--device=Pixel 2', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Mobile Safari/537.36")
         .setViewportSize(411, 731)
@@ -62,7 +63,7 @@ it('should print the correct context options when using a device', (test, { brow
 it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
   test.skip(browserName !== 'webkit');
 }, async ({ runCLI }) => {
-  const cli = runCLI(['codegen', '--color-scheme=light', '--device=iPhone 11', '--target=java', emptyHTML]);
+  const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT)
         .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
@@ -78,7 +79,7 @@ it('should print load/save storage_state', async ({ runCLI, browserName, testInf
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI(['codegen', `--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=java', emptyHTML]);
+  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=java', emptyHTML]);
   const expectedResult1 = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setStorageStatePath(Paths.get("${loadFileName}")));`;
   await cli.waitFor(expectedResult1);
