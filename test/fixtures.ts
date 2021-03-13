@@ -92,6 +92,7 @@ fixtures.browserOptions.override(async ({ browserName, headful, slowMo }, run) =
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
   await run({
+    channel: process.env.PW_CHROMIUM_CHANNEL,
     executablePath,
     handleSIGINT: false,
     slowMo,

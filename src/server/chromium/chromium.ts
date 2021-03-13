@@ -31,6 +31,7 @@ import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
+import { findChromiumChannel } from './findChromiumChannel';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -40,6 +41,12 @@ export class Chromium extends BrowserType {
 
     if (isDebugMode())
       this._devtools = this._createDevTools();
+  }
+
+  executablePath(options?: types.LaunchOptions): string {
+    if (options?.channel)
+      return findChromiumChannel(options.channel);
+    return super.executablePath(options);
   }
 
   async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number) {

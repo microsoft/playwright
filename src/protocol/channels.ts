@@ -217,6 +217,7 @@ export interface BrowserTypeChannel extends Channel {
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: Metadata): Promise<BrowserTypeConnectOverCDPResult>;
 }
 export type BrowserTypeLaunchParams = {
+  channel?: string,
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -240,6 +241,7 @@ export type BrowserTypeLaunchParams = {
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
+  channel?: string,
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,

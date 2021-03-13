@@ -103,12 +103,12 @@ program
 
 program
     .command('install-deps [browserType...]')
-    .description('install dependencies necessary to run browser')
+    .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
     .action(async function(browserType) {
       try {
         await installDeps(browserType);
       } catch (e) {
-        console.log(`Failed to install browsers\n${e}`);
+        console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);
       }
     });
