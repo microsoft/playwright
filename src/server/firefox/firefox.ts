@@ -60,7 +60,7 @@ export class Firefox extends BrowserType {
       console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
     if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
+      throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
     const firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
