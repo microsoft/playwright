@@ -268,6 +268,7 @@ export type BrowserTypeLaunchResult = {
   browser: BrowserChannel,
 };
 export type BrowserTypeLaunchPersistentContextParams = {
+  channel?: string,
   userDataDir: string,
   sdkLanguage: string,
   executablePath?: string,
@@ -333,6 +334,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
+  channel?: string,
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,

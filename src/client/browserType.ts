@@ -100,6 +100,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
         env: options.env ? envObjectToArray(options.env) : undefined,
+        channel: options.channel,
         userDataDir,
       };
       const result = await channel.launchPersistentContext(persistentParams);

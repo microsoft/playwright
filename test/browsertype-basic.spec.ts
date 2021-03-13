@@ -18,9 +18,11 @@
 import fs from 'fs';
 import { it, expect } from './fixtures';
 
-it('browserType.executablePath should work', test => {
+it('browserType.executablePath should work', (test, { browserChannel }) => {
+  test.fixme(!!browserChannel, 'Uncomment on roll');
   test.skip(Boolean(process.env.CRPATH || process.env.FFPATH || process.env.WKPATH));
-}, async ({browserType}) => {
+}, async ({ browserType, browserChannel }) => {
+  // Interesting, unless I use browserChannel in test, filter above does not work!
   const executablePath = browserType.executablePath();
   expect(fs.existsSync(executablePath)).toBe(true);
 });

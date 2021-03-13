@@ -104,6 +104,7 @@ export abstract class BrowserType extends SdkObject {
       ...this._playwrightOptions,
       name: this._name,
       isChromium: this._name === 'chromium',
+      channel: options.channel,
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,
@@ -176,7 +177,7 @@ export abstract class BrowserType extends SdkObject {
       throw new Error(errorMessageLines.join('\n'));
     }
 
-    if (!executablePath) {
+    if (!executable) {
       // We can only validate dependencies for bundled browsers.
       await validateHostRequirements(this._registry, this._name);
     }

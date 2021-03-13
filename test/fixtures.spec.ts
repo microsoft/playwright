@@ -80,21 +80,27 @@ describe('fixtures', (suite, { platform, headful }) => {
     await connectedRemoteServer.childExitCode();
   });
 
-  it('should close the browser on SIGINT', async ({connectedRemoteServer}) => {
+  it('should close the browser on SIGINT', (test, { browserChannel }) => {
+    test.fixme(!!browserChannel, 'Uncomment on roll');
+  }, async ({connectedRemoteServer}) => {
     process.kill(connectedRemoteServer.child().pid, 'SIGINT');
     expect(await connectedRemoteServer.out('exitCode')).toBe('0');
     expect(await connectedRemoteServer.out('signal')).toBe('null');
     expect(await connectedRemoteServer.childExitCode()).toBe(130);
   });
 
-  it('should close the browser on SIGTERM', async ({connectedRemoteServer}) => {
+  it('should close the browser on SIGTERM', (test, { browserChannel }) => {
+    test.fixme(!!browserChannel, 'Uncomment on roll');
+  }, async ({connectedRemoteServer}) => {
     process.kill(connectedRemoteServer.child().pid, 'SIGTERM');
     expect(await connectedRemoteServer.out('exitCode')).toBe('0');
     expect(await connectedRemoteServer.out('signal')).toBe('null');
     expect(await connectedRemoteServer.childExitCode()).toBe(0);
   });
 
-  it('should close the browser on SIGHUP', async ({connectedRemoteServer}) => {
+  it('should close the browser on SIGHUP', (test, { browserChannel }) => {
+    test.fixme(!!browserChannel, 'Uncomment on roll');
+  }, async ({connectedRemoteServer}) => {
     process.kill(connectedRemoteServer.child().pid, 'SIGHUP');
     expect(await connectedRemoteServer.out('exitCode')).toBe('0');
     expect(await connectedRemoteServer.out('signal')).toBe('null');

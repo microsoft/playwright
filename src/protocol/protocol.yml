@@ -334,6 +334,7 @@ BrowserType:
 
     launchPersistentContext:
       parameters:
+        channel: string?
         userDataDir: string
         sdkLanguage: string
         executablePath: string?
