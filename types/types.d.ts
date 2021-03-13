@@ -10646,6 +10646,19 @@ export interface LaunchOptions {
   args?: Array<string>;
 
   /**
+   * Chromium distribution channel, one of
+   * - chrome
+   * - chrome-beta
+   * - chrome-dev
+   * - chrome-canary
+   * - msedge
+   * - msedge-beta
+   * - msedge-dev
+   * - msedge-canary
+   */
+  channel?: string;
+
+  /**
    * Enable Chromium sandboxing. Defaults to `false`.
    */
   chromiumSandbox?: boolean;

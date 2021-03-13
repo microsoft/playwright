@@ -283,7 +283,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --timeout=60000 --global-timeout=5400000 --retries=3 --reporter=dot,json -p video"
       env:
         BROWSER: "chromium"
-        CRPATH: "/opt/google/chrome/chrome"
+        PW_CHROMIUM_CHANNEL: "chrome"
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}

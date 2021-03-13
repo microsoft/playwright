@@ -250,6 +250,7 @@ export type BrowserContextOptions = {
 export type EnvArray = { name: string, value: string }[];
 
 type LaunchOptionsBase = {
+  channel?: string,
   executablePath?: string,
   args?: string[],
   ignoreDefaultArgs?: string[],
