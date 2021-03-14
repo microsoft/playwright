@@ -178,7 +178,7 @@ export abstract class BrowserType extends SdkObject {
     }
 
     if (!executable) {
-      // We can only validate dependencies for bundled browsers.
+      // Only validate dependencies for bundled browsers.
       await validateHostRequirements(this._registry, this._name);
     }
 

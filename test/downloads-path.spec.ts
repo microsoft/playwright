@@ -50,7 +50,6 @@ fixtures.persistentDownloadsContext.init(async ({ server, launchPersistent, test
       {
         downloadsPath: testInfo.outputPath(''),
         acceptDownloads: true,
-        channel: browserChannel,
       }
   );
   logOnCI('--- setting content for the page ---');
