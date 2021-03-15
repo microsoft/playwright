@@ -95,14 +95,16 @@ async function validateCache(linksDir: string, browserNames: BrowserName[]) {
   }
 
   // 2. Delete all unused browsers.
-  let downloadedBrowsers = (await fsReaddirAsync(registryDirectory)).map(file => path.join(registryDirectory, file));
-  downloadedBrowsers = downloadedBrowsers.filter(file => isBrowserDirectory(file));
-  const directories = new Set<string>(downloadedBrowsers);
-  for (const browserDirectory of usedBrowserPaths)
-    directories.delete(browserDirectory);
-  for (const directory of directories) {
-    browserFetcher.logPolitely('Removing unused browser at ' + directory);
-    await removeFolderAsync(directory).catch(e => {});
+  if (!getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC')) {
+    let downloadedBrowsers = (await fsReaddirAsync(registryDirectory)).map(file => path.join(registryDirectory, file));
+    downloadedBrowsers = downloadedBrowsers.filter(file => isBrowserDirectory(file));
+    const directories = new Set<string>(downloadedBrowsers);
+    for (const browserDirectory of usedBrowserPaths)
+      directories.delete(browserDirectory);
+    for (const directory of directories) {
+      browserFetcher.logPolitely('Removing unused browser at ' + directory);
+      await removeFolderAsync(directory).catch(e => {});
+    }
   }
 
   // 3. Install missing browsers for this package.
