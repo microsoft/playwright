@@ -39,6 +39,8 @@ export class WKBrowser extends Browser {
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     const browser = new WKBrowser(transport, options);
+    if ((options as any).__testHookOnConnectToBrowser)
+      await (options as any).__testHookOnConnectToBrowser();
     const promises: Promise<any>[] = [
       browser._browserSession.send('Playwright.enable'),
     ];

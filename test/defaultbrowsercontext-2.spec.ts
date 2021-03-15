@@ -229,3 +229,11 @@ it('should respect selectors', async ({playwright, launchPersistent}) => {
   expect(await page.innerHTML('css=div')).toBe('hello');
   expect(await page.innerHTML('defaultContextCSS=div')).toBe('hello');
 });
+
+it('should connect to a browser with the default page', (test, { mode }) => {
+  test.skip(mode !== 'default');
+}, async ({browserType, browserOptions, createUserDataDir}) => {
+  const options = { ...browserOptions, __testHookOnConnectToBrowser: () => new Promise(f => setTimeout(f, 3000)) };
+  const context = await browserType.launchPersistentContext(await createUserDataDir(), options);
+  expect(context.pages().length).toBe(1);
+});
