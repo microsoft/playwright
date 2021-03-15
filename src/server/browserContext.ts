@@ -314,13 +314,14 @@ export abstract class BrowserContext extends SdkObject {
       });
       for (const origin of this._origins) {
         const originStorage: types.OriginStorage = { origin, localStorage: [] };
-        result.origins.push(originStorage);
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
         const storage = await frame._evaluateExpression(`({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
         })`, false, undefined, 'utility');
         originStorage.localStorage = storage.localStorage;
+        if (storage.localStorage.length)
+          result.origins.push(originStorage);
       }
       await page.close(internalMetadata);
     }
