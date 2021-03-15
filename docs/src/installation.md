@@ -285,3 +285,11 @@ Playwright downloads Chromium, Firefox and WebKit browsers by default. To instal
 $ pip install playwright
 $ playwright install firefox
 ```
+
+## Stale browser removal
+
+Playwright keeps track of the clients that use its browsers. When there are no more clients that require particular
+version of the browser, that version is deleted from the system. That way you can safely use Playwright instances of
+different versions and at the same time, you don't waste disk space for the browsers that are no longer in use.
+
+To opt-out from the unused browser removal, you can set the `PLAYWRIGHT_SKIP_BROWSER_GC=1` environment variable.
