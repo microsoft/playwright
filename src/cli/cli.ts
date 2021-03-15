@@ -85,7 +85,7 @@ program
     .description('ensure browsers necessary for this version of Playwright are installed')
     .action(async function(browserType) {
       try {
-        const allBrowsers = new Set(['chromium', 'firefox', 'webkit']);
+        const allBrowsers = new Set(['chromium', 'firefox', 'webkit', 'ffmpeg']);
         for (const type of browserType) {
           if (!allBrowsers.has(type)) {
             console.log(`Invalid browser name: '${type}'. Expecting 'chromium', 'firefox' or 'webkit'.`);
@@ -186,6 +186,7 @@ else
 
 type Options = {
   browser: string;
+  channel?: string;
   colorScheme?: string;
   device?: string;
   geolocation?: string;
@@ -209,6 +210,9 @@ async function launchContext(options: Options, headless: boolean): Promise<{ bro
   validateOptions(options);
   const browserType = lookupBrowserType(options);
   const launchOptions: LaunchOptions = { headless };
+  if (options.channel)
+    launchOptions.channel = options.channel;
+
   const contextOptions: BrowserContextOptions =
     // Copy the device descriptor since we have to compare and modify the options.
     options.device ? { ...playwright.devices[options.device] } : {};
@@ -452,6 +456,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
     result = result.option(option[0], ...option.slice(1));
   return result
       .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+      .option('--channel <channel>', 'Chromium distribution channel, "chrome", "chrome-beta", "msedge-dev", etc')
       .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
       .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
       .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')

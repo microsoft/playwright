@@ -39,7 +39,7 @@ fixtures.downloadsBrowser.init(async ({ server, browserType, browserOptions, tes
   await browser.close();
 });
 
-fixtures.persistentDownloadsContext.init(async ({ server, launchPersistent, testInfo }, test) => {
+fixtures.persistentDownloadsContext.init(async ({ server, launchPersistent, testInfo, browserChannel }, test) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
@@ -49,7 +49,8 @@ fixtures.persistentDownloadsContext.init(async ({ server, launchPersistent, test
   const { context, page } = await launchPersistent(
       {
         downloadsPath: testInfo.outputPath(''),
-        acceptDownloads: true
+        acceptDownloads: true,
+        channel: browserChannel,
       }
   );
   logOnCI('--- setting content for the page ---');

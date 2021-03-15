@@ -102,6 +102,7 @@ export class RecorderApp extends EventEmitter {
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
+      channel: inspectedContext._browser.options.channel,
       sdkLanguage: inspectedContext._options.sdkLanguage,
       args,
       noDefaultViewport: true,

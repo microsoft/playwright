@@ -272,8 +272,12 @@ jobs:
     - name: Install Chrome Stable
       run: sudo apt install google-chrome-stable
     - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
+    # This only created problems, should we move ffmpeg back into npm?
+    - run: node lib/cli/cli install ffmpeg
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'

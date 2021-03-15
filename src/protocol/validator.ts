@@ -178,6 +178,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
+    channel: tOptional(tString),
     userDataDir: tString,
     sdkLanguage: tString,
     executablePath: tOptional(tString),

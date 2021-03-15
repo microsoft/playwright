@@ -21,24 +21,28 @@ import { folio } from './cli.fixtures';
 const { it, expect } = folio;
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
+const launchOptions = (channel: string) => {
+  return channel ? `headless: false,\n    channel: "${channel}"` : 'headless: false';
+};
 
 function capitalize(browserName: string): string {
   return browserName[0].toUpperCase() + browserName.slice(1);
 }
 
-it('should print the correct imports and context options', async ({ browserName, runCLI }) => {
-  const cli = runCLI(['codegen', '--target=csharp', emptyHTML]);
+it('should print the correct imports and context options', async ({ browserName, browserChannel, runCLI }) => {
+  const cli = runCLI(['--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(headless: false);
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
+    ${launchOptions(browserChannel)}
+);
 var context = await browser.NewContextAsync();`;
   await cli.waitFor(expectedResult).catch(e => e);
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options for custom settings', async ({ browserName, runCLI }) => {
+it('should print the correct context options for custom settings', async ({ browserName, browserChannel, runCLI }) => {
   const cli = runCLI([
-    'codegen',
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
     '--lang=es',
@@ -51,11 +55,12 @@ it('should print the correct context options for custom settings', async ({ brow
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
-    headless: false,
+    ${launchOptions(browserChannel)},
     proxy: new ProxySettings
     {
         Server = "http://myproxy:3128",
-    });
+    }
+);
 var context = await browser.NewContextAsync(
     viewport: new ViewportSize
     {
@@ -78,21 +83,22 @@ var context = await browser.NewContextAsync(
 
 it('should print the correct context options when using a device', (test, { browserName }) => {
   test.skip(browserName !== 'chromium');
-}, async ({ runCLI }) => {
-  const cli = runCLI(['codegen', '--device=Pixel 2', '--target=csharp', emptyHTML]);
+}, async ({ browserChannel, runCLI }) => {
+  const cli = runCLI(['--device=Pixel 2', '--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync(headless: false);
+await using var browser = await playwright.Chromium.LaunchAsync(
+    ${launchOptions(browserChannel)}
+);
 var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device and additional options', (test, {browserName}) => {
+it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
   test.skip(browserName !== 'webkit');
-}, async ({ runCLI }) => {
+}, async ({ browserChannel, runCLI }) => {
   const cli = runCLI([
-    'codegen',
     '--device=iPhone 11',
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
@@ -106,11 +112,12 @@ it('should print the correct context options when using a device and additional 
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Webkit.LaunchAsync(
-    headless: false,
+    ${launchOptions(browserChannel)},
     proxy: new ProxySettings
     {
         Server = "http://myproxy:3128",
-    });
+    }
+);
 var context = await browser.NewContextAsync(new BrowserContextOptions(playwright.Devices["iPhone 11"])
 {
     UserAgent = "hardkodemium",
@@ -134,15 +141,18 @@ var context = await browser.NewContextAsync(new BrowserContextOptions(playwright
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print load/save storageState', async ({ browserName, runCLI, testInfo }) => {
+it('should print load/save storageState', async ({ browserName, browserChannel, runCLI, testInfo }) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
-  const cli = runCLI(['codegen', `--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=csharp', emptyHTML]);
+  const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=csharp', emptyHTML]);
   const expectedResult1 = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(headless: false);
-var context = await browser.NewContextAsync(storageState: "${loadFileName}");`;
+await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
+    ${launchOptions(browserChannel)}
+);
+var context = await browser.NewContextAsync(
+    storageState: "${loadFileName}");`;
   await cli.waitFor(expectedResult1);
 
   const expectedResult2 = `
