@@ -14,7 +14,10 @@
     {
       "name": "webkit",
       "revision": "1446",
-      "download": true
+      "download": true,
+      "revisionOverrides": {
+        "mac10.14": "1443"
+      }
     },
     {
       "name": "ffmpeg",
