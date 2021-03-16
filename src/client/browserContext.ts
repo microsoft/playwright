@@ -232,7 +232,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       const state = await channel.storageState();
       if (options.path) {
         await mkdirIfNeeded(options.path);
-        await fsWriteFileAsync(options.path, JSON.stringify(state), 'utf8');
+        await fsWriteFileAsync(options.path, JSON.stringify(state, undefined, 2), 'utf8');
       }
       return state;
     });
