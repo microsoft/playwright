@@ -16,13 +16,9 @@
  */
 
 import { EventEmitter } from 'events';
-import removeFolder from 'rimraf';
-import util from 'util';
 import * as types from './types';
 import { Progress } from './progress';
 import { debugLogger } from '../utils/debugLogger';
-
-const removeFolderAsync = util.promisify(removeFolder);
 
 export type RegisteredListener = {
   emitter: EventEmitter;
@@ -75,12 +71,6 @@ class Helper {
     if (!Number.isNaN(width) && !Number.isNaN(height))
       return { width, height };
     return null;
-  }
-
-  static async removeFolders(dirs: string[]) {
-    await Promise.all(dirs.map(dir => {
-      return removeFolderAsync(dir).catch((err: Error) => console.error(err));
-    }));
   }
 
   static waitForEvent(progress: Progress | null, emitter: EventEmitter, event: string | symbol, predicate?: Function): { promise: Promise<any>, dispose: () => void } {

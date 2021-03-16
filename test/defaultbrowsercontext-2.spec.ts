@@ -236,4 +236,5 @@ it('should connect to a browser with the default page', (test, { mode }) => {
   const options = { ...browserOptions, __testHookOnConnectToBrowser: () => new Promise(f => setTimeout(f, 3000)) };
   const context = await browserType.launchPersistentContext(await createUserDataDir(), options);
   expect(context.pages().length).toBe(1);
+  await context.close();
 });
