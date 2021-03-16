@@ -19746,10 +19746,18 @@ index 8e9947b0b3240f3fc09b3c6adb65e8f2e02cfed4..b9a8c84233515d7520de7194cb86385c
 +
  } // namespace WTR
 diff --git a/Tools/gtk/install-dependencies b/Tools/gtk/install-dependencies
-index d8b23a7bfe31ea3c99d7954a3de7022f7d47077f..26c5fc1630f6a888c3ab9286fafb6696b6840b1b 100755
+index d8b23a7bfe31ea3c99d7954a3de7022f7d47077f..a2f56510dc9b27b06cead04a16ead24d9d885549 100755
 --- a/Tools/gtk/install-dependencies
 +++ b/Tools/gtk/install-dependencies
-@@ -142,6 +142,7 @@ function installDependenciesWithApt {
+@@ -119,6 +119,7 @@ function installDependenciesWithApt {
+         libgudev-1.0-dev \
+         libhyphen-dev \
+         libjpeg-dev \
++        liblcms2-dev \
+         libmount-dev \
+         libmpg123-dev \
+         libnotify-dev \
+@@ -142,6 +143,7 @@ function installDependenciesWithApt {
          libupower-glib-dev \
          libwebp-dev \
          libwoff-dev \
@@ -19757,7 +19765,7 @@ index d8b23a7bfe31ea3c99d7954a3de7022f7d47077f..26c5fc1630f6a888c3ab9286fafb6696
          libxcomposite-dev \
          libxt-dev \
          libxtst-dev \
-@@ -150,6 +151,7 @@ function installDependenciesWithApt {
+@@ -150,6 +152,7 @@ function installDependenciesWithApt {
          nasm \
          ninja-build \
          patch \
@@ -19839,10 +19847,18 @@ index c09b6f39f894943f11b7a453428fab7d6f6e68fb..bc21acb648562ee0380811599b08f7d2
      static cairo_user_data_key_t bufferKey;
      cairo_surface_set_user_data(m_snapshot, &bufferKey, buffer,
 diff --git a/Tools/wpe/install-dependencies b/Tools/wpe/install-dependencies
-index 5575a3e9d6e153261b009a21b999ce65447a9b83..2f6e3571873d8aba3b548e190c3c04be795f76af 100755
+index 5575a3e9d6e153261b009a21b999ce65447a9b83..39d37b6a23b6b7aadfc282cbdd94e26f60b91004 100755
 --- a/Tools/wpe/install-dependencies
 +++ b/Tools/wpe/install-dependencies
-@@ -86,10 +86,12 @@ function installDependenciesWithApt {
+@@ -77,6 +77,7 @@ function installDependenciesWithApt {
+         libicu-dev \
+         libjpeg-dev \
+         libfile-copy-recursive-perl \
++        liblcms2-dev \
+         libopenjp2-7-dev \
+         libpng-dev \
+         libseccomp-dev \
+@@ -86,10 +87,12 @@ function installDependenciesWithApt {
          libtool \
          libwebp-dev \
          libwoff-dev \
