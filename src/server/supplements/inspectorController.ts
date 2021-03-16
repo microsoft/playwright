@@ -25,7 +25,7 @@ export class InspectorController implements InstrumentationListener {
 
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode())
-      RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
+      await RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -53,7 +53,7 @@ export class InspectorController implements InstrumentationListener {
     }
 
     if (shouldOpenInspector(sdkObject, metadata))
-      RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
+      await RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
 
     const recorder = await RecorderSupplement.getNoCreate(context);
     await recorder?.onBeforeCall(sdkObject, metadata);
