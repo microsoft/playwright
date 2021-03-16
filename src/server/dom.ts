@@ -374,6 +374,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log(`  element does receive pointer events`);
     }
 
+    progress.metadata.point = point;
+    await progress.beforeInputAction(this);
+
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       if ((options as any).__testHookBeforePointerAction)
         await (options as any).__testHookBeforePointerAction();
@@ -382,8 +385,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
       progress.log(`  performing ${actionName} action`);
-      progress.metadata.point = point;
-      await progress.beforeInputAction(this);
       await action(point);
       progress.log(`  ${actionName} action done`);
       progress.log('  waiting for scheduled navigations to finish');
@@ -455,10 +456,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
     const optionsToSelect = [...elements, ...values];
+    await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       progress.log('  selecting specified option(s)');
-      await progress.beforeInputAction(this);
       const poll = await this._evaluateHandleInUtility(([injected, node, optionsToSelect]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], injected.selectOptions.bind(injected, optionsToSelect));
       }, optionsToSelect);
@@ -479,6 +480,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.fill("${value}")`);
+    await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.log('  waiting for element to be visible, enabled and editable');
       const poll = await this._evaluateHandleInUtility(([injected, node, value]) => {
@@ -490,7 +492,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (filled === 'error:notconnected')
         return filled;
       progress.log('  element is visible, enabled and editable');
-      await progress.beforeInputAction(this);
       if (filled === 'needsinput') {
         progress.throwIfAborted();  // Avoid action that has side-effects.
         if (value)
@@ -535,9 +536,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (typeof multiple === 'string')
       return multiple;
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
+    await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await progress.beforeInputAction(this);
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, files);
     });
     await this._page._doSlowMo();
@@ -569,12 +570,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.type("${text}")`);
+    await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await progress.beforeInputAction(this);
       await this._page.keyboard.type(text, options);
       return 'done';
     }, 'input');
@@ -590,12 +591,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.press("${key}")`);
+    await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await progress.beforeInputAction(this);
       await this._page.keyboard.press(key, options);
       return 'done';
     }, 'input');
