@@ -323,7 +323,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
   send_telegram_message "$BUILD_ALIAS -- ${UPLOAD_SIZE}uploaded"
 
   # Check if we uploaded the last build.
-  if ./tools/check_cdn.sh $BROWSER_NAME --has-all-builds; then
+  if ./check_cdn.sh $BROWSER_NAME > /dev/null; then
     LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
     send_telegram_message "<b>$BROWSER_NAME r${BUILD_NUMBER} COMPLETE! ✅</b> $LAST_COMMIT_MESSAGE"
   fi
