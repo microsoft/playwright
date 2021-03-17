@@ -521,7 +521,10 @@ function renderMethod(member, parent, output, name) {
     pushArg(argType, argName, arg);
   };
 
-  member.args.forEach(parseArg);
+  Array.from(member.args)
+    .map(i => i[1])
+    .sort((a, b) =>  b.alias ==='options' ? -1 : 0) //move options to the back to the arguments list
+    .forEach(parseArg);
 
   output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
   paramDocs.forEach((val, ind) => {
