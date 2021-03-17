@@ -259,7 +259,7 @@ jobs:
         name: android-test-results
         path: test-results
 
-  chrome_stable:
+  chrome_stable_linux:
     name: "Chrome Stable"
     strategy:
       fail-fast: false
@@ -292,10 +292,64 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: chrome-stable-test-results
+        name: chrome-stable-linux-test-results
         path: test-results
 
-  edge_stable:
+  chrome_stable_win:
+    name: "Chrome Stable (Win)"
+    runs-on: windows-latest
+    steps:
+    - name: Install Media Pack
+      shell: powershell
+      run: Install-WindowsFeature Server-Media-Foundation
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    # This only created problems, should we move ffmpeg back into npm?
+    - run: node lib/cli/cli install ffmpeg
+    - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
+      shell: bash
+      env:
+        BROWSER: "chromium"
+        PW_CHROMIUM_CHANNEL: "chrome"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: chrome-stable-win-test-results
+        path: test-results
+
+  chrome_stable_mac:
+    name: "Chrome Stable (Mac)"
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    # This only created problems, should we move ffmpeg back into npm?
+    - run: node lib/cli/cli install ffmpeg
+    - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
+      env:
+        BROWSER: "chromium"
+        PW_CHROMIUM_CHANNEL: "chrome"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: chrome-stable-mac-test-results
+        path: test-results
+
+  edge_stable_win:
     name: "Edge Stable (Win)"
     runs-on: windows-latest
     steps:
@@ -321,5 +375,5 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: edge-stable-test-results
+        name: edge-stable-win-test-results
         path: test-results
