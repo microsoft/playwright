@@ -178,7 +178,7 @@ export class WKPage implements PageDelegate {
       promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
     const bootstrapScript = this._calculateBootstrapScript();
     promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
-    this._page.frames().map(frame => frame._evaluateExpression(bootstrapScript, false, undefined, 'main').catch(e => {}));
+    this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript, false, undefined, 'main').catch(e => {}));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.viewportSize) {
@@ -699,7 +699,7 @@ export class WKPage implements PageDelegate {
     if (binding.world !== 'main')
       throw new Error('Only main context bindings are supported in WebKit.');
     const script = this._bindingToScript(binding);
-    await Promise.all(this._page.frames().map(frame => frame._evaluateExpression(script, false, {}).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}).catch(e => {})));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {

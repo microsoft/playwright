@@ -593,17 +593,25 @@ export class Frame extends SdkObject {
     return this._context('utility');
   }
 
-  async _evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
+  async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
-    const handle = await context.evaluateExpressionHandleInternal(expression, isFunction, arg);
+    const handle = await context.evaluateExpressionHandleAndWaitForSignals(expression, isFunction, arg);
     if (world === 'main')
       await this._page._doSlowMo();
     return handle;
   }
 
-  async _evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
+  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
-    const value = await context.evaluateExpressionInternal(expression, isFunction, arg);
+    const value = await context.evaluateExpression(expression, isFunction, arg);
+    if (world === 'main')
+      await this._page._doSlowMo();
+    return value;
+  }
+
+  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
+    const context = await this._context(world);
+    const value = await context.evaluateExpressionAndWaitForSignals(expression, isFunction, arg);
     if (world === 'main')
       await this._page._doSlowMo();
     return value;
@@ -652,14 +660,14 @@ export class Frame extends SdkObject {
     const handle = await this.$(selector);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle._evaluateExpression(expression, isFunction, true, arg);
+    const result = await handle.evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
     return result;
   }
 
   async _$$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this, selector);
-    const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
+    const result = await arrayHandle.evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
   }
@@ -670,7 +678,7 @@ export class Frame extends SdkObject {
 
   async content(): Promise<string> {
     const context = await this._utilityContext();
-    return context.evaluateInternal(() => {
+    return context.evaluate(() => {
       let retVal = '';
       if (document.doctype)
         retVal = new XMLSerializer().serializeToString(document.doctype);
@@ -694,7 +702,7 @@ export class Frame extends SdkObject {
           this._waitForLoadState(progress, waitUntil).then(resolve).catch(reject);
         });
       });
-      const contentPromise = context.evaluateInternal(({ html, tag }) => {
+      const contentPromise = context.evaluate(({ html, tag }) => {
         window.stop();
         document.open();
         console.debug(tag);  // eslint-disable-line no-console
@@ -738,12 +746,12 @@ export class Frame extends SdkObject {
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
-        return (await context.evaluateHandleInternal(addScriptUrl, { url, type })).asElement()!;
-      const result = (await context.evaluateHandleInternal(addScriptContent, { content: content!, type })).asElement()!;
+        return (await context.evaluateHandle(addScriptUrl, { url, type })).asElement()!;
+      const result = (await context.evaluateHandle(addScriptContent, { content: content!, type })).asElement()!;
       // Another round trip to the browser to ensure that we receive CSP error messages
       // (if any) logged asynchronously in a separate task on the content main thread.
       if (this._page._delegate.cspErrorsAsynchronousForInlineScipts)
-        await context.evaluateInternal(() => true);
+        await context.evaluate(() => true);
       return result;
     });
 
@@ -785,8 +793,8 @@ export class Frame extends SdkObject {
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
-        return (await context.evaluateHandleInternal(addStyleUrl, url)).asElement()!;
-      return (await context.evaluateHandleInternal(addStyleContent, content!)).asElement()!;
+        return (await context.evaluateHandle(addStyleUrl, url)).asElement()!;
+      return (await context.evaluateHandle(addStyleContent, content!)).asElement()!;
     });
 
     async function addStyleUrl(url: string): Promise<HTMLElement> {
@@ -1075,7 +1083,7 @@ export class Frame extends SdkObject {
 
   async title(): Promise<string> {
     const context = await this._utilityContext();
-    return context.evaluateInternal(() => document.title);
+    return context.evaluate(() => document.title);
   }
 
   _onDetached() {

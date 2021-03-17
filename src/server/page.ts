@@ -563,17 +563,17 @@ export class PageBinding {
       const binding = page.getBinding(name, context.world)!;
       let result: any;
       if (binding.needsHandle) {
-        const handle = await context.evaluateHandleInternal(takeHandle, { name, seq }).catch(e => null);
+        const handle = await context.evaluateHandle(takeHandle, { name, seq }).catch(e => null);
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
       } else {
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       }
-      context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
+      context.evaluate(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
       if (isError(error))
-        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
+        context.evaluate(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
       else
-        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
+        context.evaluate(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
 
     function takeHandle(arg: { name: string, seq: number }) {

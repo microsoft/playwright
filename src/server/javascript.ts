@@ -114,19 +114,15 @@ export class JSHandle<T = any> extends SdkObject {
     this._context._delegate.rawCallFunctionNoReply(func, this, arg);
   }
 
-  async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<R> {
     return evaluate(this._context, true /* returnByValue */, pageFunction, this, arg);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<SmartHandle<R>> {
     return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
-  async _evaluateExpression(expression: string, isFunction: boolean | undefined, returnByValue: boolean, arg: any) {
+  async evaluateExpression(expression: string, isFunction: boolean | undefined, returnByValue: boolean, arg: any) {
     const value = await evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);
     await this._context.doSlowMo();
     return value;
