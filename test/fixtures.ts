@@ -26,9 +26,9 @@ import { folio as httpFolio } from './http.fixtures';
 import { folio as playwrightFolio } from './playwright.fixtures';
 import { PlaywrightClient } from '../lib/remote/playwrightClient';
 import { start } from '../lib/outofprocess';
+import { removeFolders } from '../lib/utils/utils';
 export { expect, config } from 'folio';
 
-const removeFolderAsync = util.promisify(require('rimraf'));
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 const getExecutablePath = browserName => {
@@ -69,7 +69,7 @@ fixtures.createUserDataDir.init(async ({ }, run) => {
     return dir;
   }
   await run(createUserDataDir);
-  await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => { })));
+  await removeFolders(dirs);
 });
 
 fixtures.launchPersistent.init(async ({ createUserDataDir, browserOptions, browserType }, run) => {

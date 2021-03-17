@@ -16,6 +16,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import removeFolder from 'rimraf';
 import * as util from 'util';
 import * as crypto from 'crypto';
 
@@ -144,4 +145,16 @@ export function calculateSha1(buffer: Buffer | string): string {
 
 export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
+}
+
+export async function removeFolders(dirs: string[]) {
+  await Promise.all(dirs.map((dir: string) => {
+    return new Promise<void>(fulfill => {
+      removeFolder(dir, { maxBusyTries: 10 }, error => {
+        if (error)
+          console.error(error);  // eslint-disable no-console
+        fulfill();
+      });
+    });
+  }));
 }
