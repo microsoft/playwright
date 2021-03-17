@@ -207,6 +207,7 @@ Documentation.Class = class {
       member.filterForLanguage(lang);
       membersArray.push(member);
     }
+    this.spec = filterSpecs(this.spec, lang);
     this.membersArray = membersArray;
   }
 
@@ -340,6 +341,7 @@ Documentation.Member = class {
       argsArray.push(overriddenArg);
     }
     this.argsArray = argsArray;
+    this.spec = filterSpecs(this.spec, lang);
   }
 
   clone() {
@@ -685,6 +687,18 @@ function generateSourceCodeComment(spec) {
     }
   });
   return md.render(comments, 120);
+}
+
+/**
+ * 
+ * @param {MarkdownNode[]} spec 
+ * @param {string} lang 
+ * @returns {MarkdownNode[]}
+ */
+function filterSpecs(spec, lang) {
+  if(!spec)
+    return;
+  return spec.filter(n => n.type !== 'note' || (n.type === 'note' && (!n.codeLang || n.codeLang === lang)));
 }
 
 module.exports = Documentation;
