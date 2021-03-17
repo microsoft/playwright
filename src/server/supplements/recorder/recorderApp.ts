@@ -121,25 +121,25 @@ export class RecorderApp extends EventEmitter {
   }
 
   async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {
-    await this._page.mainFrame()._evaluateExpression(((mode: Mode) => {
+    await this._page.mainFrame().evaluateExpression(((mode: Mode) => {
       window.playwrightSetMode(mode);
     }).toString(), true, mode, 'main').catch(() => {});
   }
 
   async setFile(file: string): Promise<void> {
-    await this._page.mainFrame()._evaluateExpression(((file: string) => {
+    await this._page.mainFrame().evaluateExpression(((file: string) => {
       window.playwrightSetFile(file);
     }).toString(), true, file, 'main').catch(() => {});
   }
 
   async setPaused(paused: boolean): Promise<void> {
-    await this._page.mainFrame()._evaluateExpression(((paused: boolean) => {
+    await this._page.mainFrame().evaluateExpression(((paused: boolean) => {
       window.playwrightSetPaused(paused);
     }).toString(), true, paused, 'main').catch(() => {});
   }
 
   async setSources(sources: Source[]): Promise<void> {
-    await this._page.mainFrame()._evaluateExpression(((sources: Source[]) => {
+    await this._page.mainFrame().evaluateExpression(((sources: Source[]) => {
       window.playwrightSetSources(sources);
     }).toString(), true, sources, 'main').catch(() => {});
 
@@ -154,13 +154,13 @@ export class RecorderApp extends EventEmitter {
   }
 
   async setSelector(selector: string, focus?: boolean): Promise<void> {
-    await this._page.mainFrame()._evaluateExpression(((arg: any) => {
+    await this._page.mainFrame().evaluateExpression(((arg: any) => {
       window.playwrightSetSelector(arg.selector, arg.focus);
     }).toString(), true, { selector, focus }, 'main').catch(() => {});
   }
 
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {
-    await this._page.mainFrame()._evaluateExpression(((callLogs: CallLog[]) => {
+    await this._page.mainFrame().evaluateExpression(((callLogs: CallLog[]) => {
       window.playwrightUpdateLogs(callLogs);
     }).toString(), true, callLogs, 'main').catch(() => {});
   }

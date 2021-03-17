@@ -91,7 +91,7 @@ class HarContextTracer {
     page.on(Page.Events.Response, (response: network.Response) => this._onResponse(page, response));
 
     page.on(Page.Events.DOMContentLoaded, () => {
-      const promise = page.mainFrame()._evaluateExpression(String(() => {
+      const promise = page.mainFrame().evaluateExpression(String(() => {
         return {
           title: document.title,
           domContentLoaded: performance.timing.domContentLoadedEventStart,
@@ -103,7 +103,7 @@ class HarContextTracer {
       this._addBarrier(page, promise);
     });
     page.on(Page.Events.Load, () => {
-      const promise = page.mainFrame()._evaluateExpression(String(() => {
+      const promise = page.mainFrame().evaluateExpression(String(() => {
         return {
           title: document.title,
           loaded: performance.timing.loadEventStart,
@@ -118,7 +118,7 @@ class HarContextTracer {
 
   private _addBarrier(page: Page, promise: Promise<void>) {
     const race = Promise.race([
-      new Promise(f => page.on('close', () => {
+      new Promise<void>(f => page.on('close', () => {
         this._barrierPromises.delete(race);
         f();
       })),

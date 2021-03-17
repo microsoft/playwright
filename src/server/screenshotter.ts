@@ -37,14 +37,14 @@ export class Screenshotter {
     let viewportSize = originalViewportSize;
     if (!viewportSize) {
       const context = await this._page.mainFrame()._utilityContext();
-      viewportSize = await context.evaluateInternal(() => ({ width: window.innerWidth, height: window.innerHeight }));
+      viewportSize = await context.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
     }
     return { viewportSize, originalViewportSize };
   }
 
   private async _fullPageSize(): Promise<types.Size> {
     const context = await this._page.mainFrame()._utilityContext();
-    const fullPageSize = await context.evaluateInternal(() => {
+    const fullPageSize = await context.evaluate(() => {
       if (!document.body || !document.documentElement)
         return null;
       return {
@@ -125,7 +125,7 @@ export class Screenshotter {
       }
 
       const context = await this._page.mainFrame()._utilityContext();
-      const scrollOffset = await context.evaluateInternal(() => ({ x: window.scrollX, y: window.scrollY }));
+      const scrollOffset = await context.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
       const documentRect = { ...boundingBox };
       documentRect.x += scrollOffset.x;
       documentRect.y += scrollOffset.y;

@@ -43,31 +43,33 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return null;
   }
 
-  async evaluateInternal<R>(pageFunction: js.Func0<R>): Promise<R>;
-  async evaluateInternal<Arg, R>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluateInternal(pageFunction: never, ...args: never[]): Promise<any> {
+  async evaluate<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<R> {
+    return js.evaluate(this, true /* returnByValue */, pageFunction, arg);
+  }
+
+  async evaluateHandle<Arg, R>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
+    return js.evaluate(this, false /* returnByValue */, pageFunction, arg);
+  }
+
+  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
+    return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, arg);
+  }
+
+  async evaluateAndWaitForSignals<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<R> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluate(this, true /* returnByValue */, pageFunction, ...args);
+      return this.evaluate(pageFunction, arg);
     });
   }
 
-  async evaluateExpressionInternal(expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
+  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, ...args);
+      return this.evaluateExpression(expression, isFunction, arg);
     });
   }
 
-  async evaluateHandleInternal<R>(pageFunction: js.Func0<R>): Promise<js.SmartHandle<R>>;
-  async evaluateHandleInternal<Arg, R>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
-  async evaluateHandleInternal(pageFunction: never, ...args: never[]): Promise<any> {
+  async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluate(this, false /* returnByValue */, pageFunction, ...args);
-    });
-  }
-
-  async evaluateExpressionHandleInternal(expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, ...args);
+      return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, arg);
     });
   }
 
@@ -124,19 +126,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  async _evaluateInMain<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
+  private async _evaluateInMainAndWaitForSignals<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
     const main = await this._context.frame._mainContext();
-    return main.evaluateInternal(pageFunction, [await main.injectedScript(), this, arg]);
+    return main.evaluateAndWaitForSignals(pageFunction, [await main.injectedScript(), this, arg]);
   }
 
-  async _evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
+  async evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
     const utility = await this._context.frame._utilityContext();
-    return utility.evaluateInternal(pageFunction, [await utility.injectedScript(), this, arg]);
+    return utility.evaluate(pageFunction, [await utility.injectedScript(), this, arg]);
   }
 
-  async _evaluateHandleInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R>> {
+  async evaluateHandleInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R>> {
     const utility = await this._context.frame._utilityContext();
-    return utility.evaluateHandleInternal(pageFunction, [await utility.injectedScript(), this, arg]);
+    return utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
   }
 
   async ownerFrame(): Promise<frames.Frame | null> {
@@ -155,14 +157,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    const isFrameElement = await this._evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
+    const isFrameElement = await this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
     if (!isFrameElement)
       return null;
     return this._page._delegate.getContentFrame(this);
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return throwFatalDOMError(await this._evaluateInUtility(([injeced, node, name]) => {
+    return throwFatalDOMError(await this.evaluateInUtility(([injeced, node, name]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
       const element = node as unknown as Element;
@@ -171,11 +173,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async textContent(): Promise<string | null> {
-    return this._evaluateInUtility(([injected, node]) => node.textContent, {});
+    return this.evaluateInUtility(([injected, node]) => node.textContent, {});
   }
 
   async innerText(): Promise<string> {
-    return throwFatalDOMError(await this._evaluateInUtility(([injected, node]) => {
+    return throwFatalDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
       if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
@@ -186,7 +188,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async innerHTML(): Promise<string> {
-    return throwFatalDOMError(await this._evaluateInUtility(([injected, node]) => {
+    return throwFatalDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
       const element = node as unknown as Element;
@@ -195,7 +197,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
-    await this._evaluateInMain(([injected, node, { type, eventInit }]) =>
+    await this._evaluateInMainAndWaitForSignals(([injected, node, { type, eventInit }]) =>
       injected.dispatchEvent(node, type, eventInit), { type, eventInit });
     await this._page._doSlowMo();
   }
@@ -246,7 +248,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     const [quads, metrics] = await Promise.all([
       this._page._delegate.getContentQuads(this),
-      this._page.mainFrame()._utilityContext().then(utility => utility.evaluateInternal(() => ({width: innerWidth, height: innerHeight}))),
+      this._page.mainFrame()._utilityContext().then(utility => utility.evaluate(() => ({width: innerWidth, height: innerHeight}))),
     ] as const);
     if (!quads || !quads.length)
       return 'error:notvisible';
@@ -268,7 +270,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private async _offsetPoint(offset: types.Point): Promise<types.Point | 'error:notvisible'> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
-      this._evaluateInUtility(([injected, node]) => injected.getElementBorderWidth(node), {}).catch(e => {}),
+      this.evaluateInUtility(([injected, node]) => injected.getElementBorderWidth(node), {}).catch(e => {}),
     ]);
     if (!box || !border)
       return 'error:notvisible';
@@ -302,7 +304,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         const timeout = waitTime[Math.min(retry - 1, waitTime.length - 1)];
         if (timeout) {
           progress.log(`  waiting ${timeout}ms`);
-          await this._evaluateInUtility(([injected, node, timeout]) => new Promise(f => setTimeout(f, timeout)), timeout);
+          await this.evaluateInUtility(([injected, node, timeout]) => new Promise(f => setTimeout(f, timeout)), timeout);
         }
       } else {
         progress.log(`attempting ${actionName} action`);
@@ -348,7 +350,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.log('  scrolling into view if needed');
     progress.throwIfAborted();  // Avoid action that has side-effects.
     if (forceScrollOptions) {
-      await this._evaluateInUtility(([injected, node, options]) => {
+      await this.evaluateInUtility(([injected, node, options]) => {
         if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
           (node as Node as Element).scrollIntoView(options);
       }, forceScrollOptions);
@@ -460,7 +462,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       progress.log('  selecting specified option(s)');
-      const poll = await this._evaluateHandleInUtility(([injected, node, optionsToSelect]) => {
+      const poll = await this.evaluateHandleInUtility(([injected, node, optionsToSelect]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], injected.selectOptions.bind(injected, optionsToSelect));
       }, optionsToSelect);
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
@@ -483,7 +485,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.log('  waiting for element to be visible, enabled and editable');
-      const poll = await this._evaluateHandleInUtility(([injected, node, value]) => {
+      const poll = await this.evaluateHandleInUtility(([injected, node, value]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled', 'editable'], injected.fill.bind(injected, value));
       }, value);
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
@@ -509,7 +511,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+      const poll = await this.evaluateHandleInUtility(([injected, node]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible'], injected.selectText.bind(injected));
       }, {});
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
@@ -527,7 +529,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _setInputFiles(progress: Progress, files: types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    const multiple = throwFatalDOMError(await this._evaluateInUtility(([injected, node]): 'error:notinput' | 'error:notconnected' | boolean => {
+    const multiple = throwFatalDOMError(await this.evaluateInUtility(([injected, node]): 'error:notinput' | 'error:notconnected' | boolean => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         return 'error:notinput';
       const input = node as Node as HTMLInputElement;
@@ -556,7 +558,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _focus(progress: Progress, resetSelectionIfNotFocused?: boolean): Promise<'error:notconnected' | 'done'> {
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    const result = await this._evaluateInUtility(([injected, node, resetSelectionIfNotFocused]) => injected.focusNode(node, resetSelectionIfNotFocused), resetSelectionIfNotFocused);
+    const result = await this.evaluateInUtility(([injected, node, resetSelectionIfNotFocused]) => injected.focusNode(node, resetSelectionIfNotFocused), resetSelectionIfNotFocused);
     return throwFatalDOMError(result);
   }
 
@@ -620,7 +622,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
-      const result = await this._evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
+      const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
       return throwRetargetableDOMError(throwFatalDOMError(result));
     };
     if (await isChecked() === state)
@@ -652,49 +654,49 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page.selectors._queryAll(this._context.frame, selector, this, true /* adoptToMain */);
   }
 
-  async _$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async $evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const handle = await this._page.selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle._evaluateExpression(expression, isFunction, true, arg);
+    const result = await handle.evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
     return result;
   }
 
-  async _$$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async $$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this._context.frame, selector, this);
-    const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
+    const result = await arrayHandle.evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
   }
 
   async isVisible(): Promise<boolean> {
-    const result = await this._evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'visible'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'visible'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isHidden(): Promise<boolean> {
-    const result = await this._evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'hidden'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'hidden'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isEnabled(): Promise<boolean> {
-    const result = await this._evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'enabled'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'enabled'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isDisabled(): Promise<boolean> {
-    const result = await this._evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'disabled'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'disabled'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isEditable(): Promise<boolean> {
-    const result = await this._evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'editable'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'editable'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isChecked(): Promise<boolean> {
-    const result = await this._evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
@@ -702,7 +704,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`  waiting for element to be ${state}`);
-      const poll = await this._evaluateHandleInUtility(([injected, node, state]) => {
+      const poll = await this.evaluateHandleInUtility(([injected, node, state]) => {
         return injected.waitForElementStatesAndPerformAction(node, [state], () => 'done' as const);
       }, state);
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
@@ -746,7 +748,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log(`  waiting for element to be visible, enabled and stable`);
     else
       progress.log(`  waiting for element to be visible and stable`);
-    const poll = this._evaluateHandleInUtility(([injected, node, waitForEnabled]) => {
+    const poll = this.evaluateHandleInUtility(([injected, node, waitForEnabled]) => {
       return injected.waitForElementStatesAndPerformAction(node,
           waitForEnabled ? ['visible', 'stable', 'enabled'] : ['visible', 'stable'], () => 'done' as const);
     }, waitForEnabled);
@@ -769,7 +771,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Translate from viewport coordinates to frame coordinates.
       point = { x: point.x - box.x, y: point.y - box.y };
     }
-    return this._evaluateInUtility(([injected, node, point]) => injected.checkHitTargetAt(node, point), point);
+    return this.evaluateInUtility(([injected, node, point]) => injected.checkHitTargetAt(node, point), point);
   }
 }
 
