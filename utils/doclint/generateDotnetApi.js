@@ -461,9 +461,9 @@ function renderMethod(member, parent, output, name) {
 
   let parseArg = (/** @type {Documentation.Member} */ arg) => {
     if (arg.name === "options") {
-      arg.type.properties.forEach(prop => {
-        parseArg(prop);
-      });
+      arg.type.properties
+        .sort((a, b) => a.order - b.order)
+        .forEach(parseArg);
       return;
     }
 
