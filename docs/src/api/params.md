@@ -519,6 +519,24 @@ The default value can be changed by using the [`method: BrowserContext.setDefaul
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
 using the [`method: AndroidDevice.setDefaultTimeout`] method.
 
+## csharp-select-options-values
+* langs: csharp
+- `values` <[Array]<[Object]>>
+  - `value` <[string]> Matches by `option.value`. Optional.
+  - `label` <[string]> Matches by `option.label`. Optional.
+  - `index` <[int]> Matches by the index. Optional.
+
+Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
+first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
+is considered matching if all specified properties match.
+
+## csharp-input-files
+* langs: csharp
+- `files` <[Array]<[Object]>>
+  - `name` <[string]> File name
+  - `mimeType` <[string]> File type
+  - `buffer` <[Buffer]> File content
+
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%

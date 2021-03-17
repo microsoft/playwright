@@ -14,3 +14,6 @@ The options that control custom behaviour when parsing the JSON.
 - returns: <[System.Net.HttpStatusCode]>
 
 Gets the [System.Net.HttpStatusCode] code of the response.
+
+### param: ElementHandle.selectOption.values = %%-csharp-select-options-values-%%
+### param: ElementHandle.setInputFiles.files = %%-csharp-input-files-%%
