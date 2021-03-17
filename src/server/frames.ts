@@ -1243,6 +1243,9 @@ class SignalBarrier {
   }
 
   async addFrameNavigation(frame: Frame) {
+    // Auto-wait top-level navigations only.
+    if (frame.parentFrame())
+      return;
     this.retain();
     const waiter = helper.waitForEvent(null, frame, Frame.Events.Navigation, (e: NavigationEvent) => {
       if (!e.error && this._progress)
