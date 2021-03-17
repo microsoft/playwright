@@ -59,7 +59,7 @@ index b08377cf1016ee8c24cf8782adf861a5b6dca0ac..cc606615f855026930375079bde89a3e
     * Return XPCOM wrapper for the internal accessible.
     */
 diff --git a/browser/app/winlauncher/LauncherProcessWin.cpp b/browser/app/winlauncher/LauncherProcessWin.cpp
-index 1de2c35433fb3d1989b418d9b4bbcfea8b300828..9f7cc63a46947baf0589bb001102ea0b70940b44 100644
+index 4fa1d742bd5e0c03b1c93b8bf7cca2fcc8cbded1..1af645fdb86c4a803e1a5f0be08c1d09ab6a16cd 100644
 --- a/browser/app/winlauncher/LauncherProcessWin.cpp
 +++ b/browser/app/winlauncher/LauncherProcessWin.cpp
 @@ -23,6 +23,7 @@
@@ -172,7 +172,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index ceedd4c317b8f39df73d0e762822d823a02f3546..2c677171ac2fb9427999263d2a5f37c6c9a068ee 100644
+index fed621a4fe569104d92685500aed6ec729768037..f56b6e9c42c83c18887a1067b9ad40f12ca63222 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -467,7 +467,7 @@ index ceedd4c317b8f39df73d0e762822d823a02f3546..2c677171ac2fb9427999263d2a5f37c6
        return rv;
      }
  
-@@ -12638,6 +12858,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12642,6 +12862,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -477,7 +477,7 @@ index ceedd4c317b8f39df73d0e762822d823a02f3546..2c677171ac2fb9427999263d2a5f37c6
      return NS_OK;
    }
  
-@@ -12723,6 +12946,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12727,6 +12950,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -1822,10 +1822,10 @@ index 318037b12e9ea7b8bad92498950ac48ff936fb3c..44db941025a5253da38572600cd0fc57
                                          int32_t aMaxSelfProgress,
                                          int32_t aCurTotalProgress,
 diff --git a/toolkit/components/windowwatcher/nsWindowWatcher.cpp b/toolkit/components/windowwatcher/nsWindowWatcher.cpp
-index 7ed92e814cd4a952bf98e97a88075f4c1a208e7e..04c58cf1897823db276c1b006c6d5ebe798c2d0d 100644
+index c6da134e1c4c028420659a1ca26bf51116de71b1..93738c34673bfec06557e856f11ad1993597eb6b 100644
 --- a/toolkit/components/windowwatcher/nsWindowWatcher.cpp
 +++ b/toolkit/components/windowwatcher/nsWindowWatcher.cpp
-@@ -1815,6 +1815,10 @@ uint32_t nsWindowWatcher::CalculateChromeFlagsForContent(
+@@ -1816,6 +1816,10 @@ uint32_t nsWindowWatcher::CalculateChromeFlagsForContent(
    uint32_t chromeFlags = CalculateChromeFlagsHelper(
        nsIWebBrowserChrome::CHROME_WINDOW_BORDERS, aFeatures, aSizeSpec);
  
