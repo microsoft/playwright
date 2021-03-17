@@ -320,19 +320,37 @@ function generateNameDefault(member, name, t, parent) {
   let enumName = generateEnumNameIfApplicable(member, name, t, parent);
   if (!enumName && member) {
     if (member.kind === 'method' || member.kind === 'property') {
-      // this should be easy to name... let's call it the same as the argument (eternal optimist)
-      let probableName = `${parent.name}${translateMemberName(``, name, null)}`;
-      let probableType = additionalTypes.get(probableName);
-      if (probableType) {
-        // compare it with what?
-        if (probableType.expression != t.expression) {
-          throw new Error(`Non-matching types with the same name. Panic.`);
-        }
-      } else {
-        additionalTypes.set(probableName, t);
+      let names = [
+        parent.alias || parent.name,
+        translateMemberName(``, member.alias || member.name, null),
+        translateMemberName(``, name, null),
+      ];
+      if (names[2] === names[1])
+        names.pop(); // get rid of duplicates, cheaply
+      let attemptedName = names.pop();
+      let typesDiffer = function (left, right) {
+        if (left.expression && right.expression)
+          return left.expression !== right.expression;
+        return JSON.stringify(right.properties) !== JSON.stringify(left.properties);
       }
-
-      return probableName;
+      while (true) {
+        // crude attempt at removing plurality
+        if (attemptedName.endsWith('s')
+          && !["properties", "httpcredentials"].includes(attemptedName.toLowerCase()))
+          attemptedName = attemptedName.substring(0, attemptedName.length - 1);
+        let probableType = additionalTypes.get(attemptedName);
+        if ((probableType && typesDiffer(t, probableType))
+          || (["Value"].includes(attemptedName))) {
+          if (!names.length)
+            throw new Error(`Ran out of possible names: ${attemptedName}`);
+          attemptedName = `${names.pop()}${attemptedName}`;
+          continue;
+        } else {
+          additionalTypes.set(attemptedName, t);
+        }
+        break;
+      }
+      return attemptedName;
     }
 
     if (member.kind === 'event') {
@@ -528,7 +546,7 @@ function renderMethod(member, parent, output, name) {
   };
 
   member.argsArray
-    .sort((a, b) =>  b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
+    .sort((a, b) => b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
     .forEach(parseArg);
 
   output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
