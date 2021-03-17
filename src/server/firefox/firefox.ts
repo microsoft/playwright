@@ -46,6 +46,8 @@ export class Firefox extends BrowserType {
       ...env,
       // On linux Juggler ships the libstdc++ it was linked against.
       LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
+      // @see https://github.com/microsoft/playwright/issues/5721
+      MOZ_WEBRENDER: 0,
     } : env;
   }
 
