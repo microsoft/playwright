@@ -4840,6 +4840,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       iFrame?: boolean;
       /**
+       * Composition due to association with a <model> element.
+       */
+      model?: boolean;
+      /**
        * Composition due to association with an element with a "backface-visibility: hidden" style.
        */
       backfaceVisibilityHidden?: boolean;
@@ -7202,7 +7206,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export interface Frame {
       /**
-       * Information about an action made to the recorded object. Follows the structure [name, parameters, swizzleTypes, trace], where name is a string, parameters is an array, swizzleTypes is an array, and trace is an array.
+       * Information about an action made to the recorded object. Follows the structure [name, parameters, swizzleTypes, trace, snapshot], where name is a string, parameters is an array, swizzleTypes is an array, trace is an array, and snapshot is a data URL image of the current contents after this action.
        */
       actions: any[];
       /**
