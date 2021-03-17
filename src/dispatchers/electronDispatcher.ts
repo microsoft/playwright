@@ -51,12 +51,12 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
 
   async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
     const handle = this._object._nodeElectronHandle!;
-    return { value: serializeResult(await handle.evaluateExpression(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
+    return { value: serializeResult(await handle.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
   }
 
   async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
     const handle = this._object._nodeElectronHandle!;
-    const result = await handle.evaluateExpression(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
+    const result = await handle.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
     return { handle: createHandle(this._scope, result) };
   }
 
