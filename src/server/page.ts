@@ -528,11 +528,11 @@ export class Worker extends SdkObject {
     return this._url;
   }
 
-  async _evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     return js.evaluateExpression(await this._executionContextPromise, true /* returnByValue */, expression, isFunction, arg);
   }
 
-  async _evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     return js.evaluateExpression(await this._executionContextPromise, false /* returnByValue */, expression, isFunction, arg);
   }
 }

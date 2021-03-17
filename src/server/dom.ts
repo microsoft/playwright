@@ -37,6 +37,10 @@ export class FrameExecutionContext extends js.ExecutionContext {
     this.world = world;
   }
 
+  async waitForSignalsCreatedBy<T>(action: () => Promise<T>): Promise<T> {
+    return this.frame._page._frameManager.waitForSignalsCreatedBy(null, false, action);
+  }
+
   adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {
     if (handle instanceof ElementHandle && handle._context !== this)
       return this.frame._page._delegate.adoptElementHandle(handle, this);
@@ -654,18 +658,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page.selectors._queryAll(this._context.frame, selector, this, true /* adoptToMain */);
   }
 
-  async $evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evalOnSelectorAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const handle = await this._page.selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpression(expression, isFunction, true, arg);
+    const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     handle.dispose();
     return result;
   }
 
-  async $$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this._context.frame, selector, this);
-    const result = await arrayHandle.evaluateExpression(expression, isFunction, true, arg);
+    const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
   }

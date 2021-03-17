@@ -656,18 +656,18 @@ export class Frame extends SdkObject {
     await this._page._doSlowMo();
   }
 
-  async _$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evalOnSelectorAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const handle = await this.$(selector);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpression(expression, isFunction, true, arg);
+    const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     handle.dispose();
     return result;
   }
 
-  async _$$evalExpression(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this, selector);
-    const result = await arrayHandle.evaluateExpression(expression, isFunction, true, arg);
+    const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
   }

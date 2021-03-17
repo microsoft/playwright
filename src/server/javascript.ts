@@ -60,6 +60,10 @@ export class ExecutionContext extends SdkObject {
     this._delegate = delegate;
   }
 
+  async waitForSignalsCreatedBy<T>(action: () => Promise<T>): Promise<T> {
+    return action();
+  }
+
   adoptIfNeeded(handle: JSHandle): Promise<JSHandle> | null {
     return null;
   }
@@ -122,8 +126,8 @@ export class JSHandle<T = any> extends SdkObject {
     return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
-  async evaluateExpression(expression: string, isFunction: boolean | undefined, returnByValue: boolean, arg: any) {
-    const value = await evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);
+  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, returnByValue: boolean, arg: any) {
+    const value = await evaluateExpressionAndWaitForSignals(this._context, returnByValue, expression, isFunction, this, arg);
     await this._context.doSlowMo();
     return value;
   }
@@ -223,6 +227,10 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }
+}
+
+export async function evaluateExpressionAndWaitForSignals(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction?: boolean, ...args: any[]): Promise<any> {
+  return await context.waitForSignalsCreatedBy(() => evaluateExpression(context, returnByValue, expression, isFunction, ...args));
 }
 
 export function parseUnserializableValue(unserializableValue: string): any {

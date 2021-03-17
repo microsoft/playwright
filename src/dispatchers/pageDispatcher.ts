@@ -251,11 +251,11 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerInitiali
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionResult> {
-    return { value: serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: serializeResult(await this._object.evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
   async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionHandleResult> {
-    return { handle: createHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { handle: createHandle(this._scope, await this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
 
