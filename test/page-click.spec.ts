@@ -47,7 +47,7 @@ it('should click the button if window.Node is removed', async ({page, server}) =
 });
 
 // @see https://github.com/GoogleChrome/puppeteer/issues/4281
-it('should click on a span with an inline element inside', async ({page, server}) => {
+it('should click on a span with an inline element inside', async ({page}) => {
   await page.setContent(`
     <style>
     span::before {
@@ -60,17 +60,14 @@ it('should click on a span with an inline element inside', async ({page, server}
   expect(await page.evaluate('CLICKED')).toBe(42);
 });
 
-it('should not throw UnhandledPromiseRejection when page closes', async ({browser, server}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should not throw UnhandledPromiseRejection when page closes', async ({page}) => {
   await Promise.all([
     page.close(),
     page.mouse.click(1, 2),
   ]).catch(e => {});
-  await context.close();
 });
 
-it('should click the 1x1 div', async ({page, server}) => {
+it('should click the 1x1 div', async ({page}) => {
   await page.setContent(`<div style="width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
   await page.click('div');
   expect(await page.evaluate('window.__clicked')).toBe(true);
@@ -92,19 +89,7 @@ it('should click the button after a cross origin navigation ', async ({page, ser
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should click with disabled javascript', async ({browser, server}) => {
-  const context = await browser.newContext({ javaScriptEnabled: false });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/wrappedlink.html');
-  await Promise.all([
-    page.click('a'),
-    page.waitForNavigation()
-  ]);
-  expect(page.url()).toBe(server.PREFIX + '/wrappedlink.html#clicked');
-  await context.close();
-});
-
-it('should click when one of inline box children is outside of viewport', async ({page, server}) => {
+it('should click when one of inline box children is outside of viewport', async ({page}) => {
   await page.setContent(`
     <style>
     i {
@@ -248,17 +233,6 @@ it('should click on checkbox label and toggle', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'].check)).toBe(false);
 });
 
-it('should not hang with touch-enabled viewports', async ({browser, playwright}) => {
-  // @see https://github.com/GoogleChrome/puppeteer/issues/161
-  const { viewport, hasTouch } = playwright.devices['iPhone 6'];
-  const context = await browser.newContext({ viewport, hasTouch });
-  const page = await context.newPage();
-  await page.mouse.down();
-  await page.mouse.move(100, 10);
-  await page.mouse.up();
-  await context.close();
-});
-
 it('should scroll and click the button', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.click('#button-5');
@@ -375,19 +349,6 @@ it('should click the button behind sticky header', async ({page}) => {
   expect(await page.evaluate(() => window['__clicked'])).toBe(true);
 });
 
-it('should click the button with deviceScaleFactor set', async ({browser, server}) => {
-  const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
-  const page = await context.newPage();
-  expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
-  await page.setContent('<div style="width:100px;height:100px">spacer</div>');
-  await attachFrame(page, 'button-test', server.PREFIX + '/input/button.html');
-  const frame = page.frames()[1];
-  const button = await frame.$('button');
-  await button.click();
-  expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
-  await context.close();
-});
-
 it('should click the button with px border with offset', async ({page, server, isWebKit}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
@@ -438,32 +399,6 @@ it('should click a button in scrolling container with offset', async ({page, ser
   // Safari reports border-relative offsetX/offsetY.
   expect(await page.evaluate('offsetX')).toBe(isWebKit ? 1900 + 8 : 1900);
   expect(await page.evaluate('offsetY')).toBe(isWebKit ? 1910 + 8 : 1910);
-});
-
-it('should click the button with offset with page scale', (test, { browserName }) => {
-  test.skip(browserName === 'firefox');
-}, async ({browser, server, isWebKit, isChromium, headful}) => {
-  const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/input/button.html');
-  await page.$eval('button', button => {
-    button.style.borderWidth = '8px';
-    document.body.style.margin = '0';
-  });
-  await page.click('button', { position: { x: 20, y: 10 } });
-  expect(await page.evaluate('result')).toBe('Clicked');
-  const round = x => Math.round(x + 0.01);
-  let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
-  if (isWebKit) {
-    // WebKit rounds up during css -> dip -> css conversion.
-    expected = { x: 29, y: 19 };
-  } else if (isChromium && !headful) {
-    // Headless Chromium rounds down during css -> dip -> css conversion.
-    expected = { x: 27, y: 18 };
-  }
-  expect(round(await page.evaluate('pageX'))).toBe(expected.x);
-  expect(round(await page.evaluate('pageY'))).toBe(expected.y);
-  await context.close();
 });
 
 it('should wait for stable position', async ({page, server}) => {
@@ -534,7 +469,7 @@ it('should fail when obscured and not waiting for hit target', async ({page, ser
   expect(await page.evaluate(() => window['result'])).toBe('Was not clicked');
 });
 
-it('should wait for button to be enabled', async ({page, server}) => {
+it('should wait for button to be enabled', async ({page}) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
   let done = false;
   const clickPromise = page.click('text=Click target').then(() => done = true);
@@ -546,7 +481,7 @@ it('should wait for button to be enabled', async ({page, server}) => {
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
-it('should wait for input to be enabled', async ({page, server}) => {
+it('should wait for input to be enabled', async ({page}) => {
   await page.setContent('<input onclick="javascript:window.__CLICKED=true;" disabled>');
   let done = false;
   const clickPromise = page.click('input').then(() => done = true);
@@ -558,7 +493,7 @@ it('should wait for input to be enabled', async ({page, server}) => {
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
-it('should wait for select to be enabled', async ({page, server}) => {
+it('should wait for select to be enabled', async ({page}) => {
   await page.setContent('<select onclick="javascript:window.__CLICKED=true;" disabled><option selected>Hello</option></select>');
   let done = false;
   const clickPromise = page.click('select').then(() => done = true);
@@ -570,25 +505,25 @@ it('should wait for select to be enabled', async ({page, server}) => {
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
-it('should click disabled div', async ({page, server}) => {
+it('should click disabled div', async ({page}) => {
   await page.setContent('<div onclick="javascript:window.__CLICKED=true;" disabled>Click target</div>');
   await page.click('text=Click target');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
-it('should climb dom for inner label with pointer-events:none', async ({page, server}) => {
+it('should climb dom for inner label with pointer-events:none', async ({page}) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;"><label style="pointer-events:none">Click target</label></button>');
   await page.click('text=Click target');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
-it('should climb up to [role=button]', async ({page, server}) => {
+it('should climb up to [role=button]', async ({page}) => {
   await page.setContent('<div role=button onclick="javascript:window.__CLICKED=true;"><div style="pointer-events:none"><span><div>Click target</div></span></div>');
   await page.click('text=Click target');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
-it('should wait for BUTTON to be clickable when it has pointer-events:none', async ({page, server}) => {
+it('should wait for BUTTON to be clickable when it has pointer-events:none', async ({page}) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></button>');
   let done = false;
   const clickPromise = page.click('text=Click target').then(() => done = true);
@@ -600,7 +535,7 @@ it('should wait for BUTTON to be clickable when it has pointer-events:none', asy
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
-it('should wait for LABEL to be clickable when it has pointer-events:none', async ({page, server}) => {
+it('should wait for LABEL to be clickable when it has pointer-events:none', async ({page}) => {
   await page.setContent('<label onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></label>');
   const clickPromise = page.click('text=Click target');
   // Do a few roundtrips to the page.
@@ -682,7 +617,7 @@ it('should retry when element detaches after animation', async ({page, server}) 
   expect(await page.evaluate('clicked')).toBe(true);
 });
 
-it('should retry when element is animating from outside the viewport', async ({page, server}) => {
+it('should retry when element is animating from outside the viewport', async ({page}) => {
   await page.setContent(`<style>
     @keyframes move {
       from { left: -300px; }
@@ -710,7 +645,7 @@ it('should retry when element is animating from outside the viewport', async ({p
   expect(await page.evaluate('clicked')).toBe(true);
 });
 
-it('should fail when element is animating from outside the viewport with force', async ({page, server}) => {
+it('should fail when element is animating from outside the viewport with force', async ({page}) => {
   await page.setContent(`<style>
     @keyframes move {
       from { left: -300px; }
@@ -739,7 +674,7 @@ it('should fail when element is animating from outside the viewport with force',
   expect(error.message).toContain('Element is outside of the viewport');
 });
 
-it('should dispatch microtasks in order', async ({page, server}) => {
+it('should dispatch microtasks in order', async ({page}) => {
   await page.setContent(`
     <button id=button>Click me</button>
     <script>
@@ -769,7 +704,7 @@ it('should click the button when window.innerWidth is corrupted', async ({page, 
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should click zero-sized input by label', async ({page, server}) => {
+it('should click zero-sized input by label', async ({page}) => {
   await page.setContent(`
     <label>
       Click me

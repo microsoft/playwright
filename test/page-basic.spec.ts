@@ -17,45 +17,34 @@
 
 import { it, expect } from './fixtures';
 
-it('should reject all promises when page is closed', async ({context}) => {
-  const newPage = await context.newPage();
+it('should reject all promises when page is closed', async ({page}) => {
   let error = null;
   await Promise.all([
-    newPage.evaluate(() => new Promise(r => {})).catch(e => error = e),
-    newPage.close(),
+    page.evaluate(() => new Promise(r => {})).catch(e => error = e),
+    page.close(),
   ]);
   expect(error.message).toContain('Protocol error');
 });
 
-it('should not be visible in context.pages', async ({context}) => {
-  const newPage = await context.newPage();
-  expect(context.pages()).toContain(newPage);
-  await newPage.close();
-  expect(context.pages()).not.toContain(newPage);
+it('should set the page close state', async ({page}) => {
+  expect(page.isClosed()).toBe(false);
+  await page.close();
+  expect(page.isClosed()).toBe(true);
 });
 
-it('should set the page close state', async ({context}) => {
-  const newPage = await context.newPage();
-  expect(newPage.isClosed()).toBe(false);
-  await newPage.close();
-  expect(newPage.isClosed()).toBe(true);
-});
-
-it('should pass page to close event', async ({context}) => {
-  const newPage = await context.newPage();
+it('should pass page to close event', async ({page}) => {
   const [closedPage] = await Promise.all([
-    newPage.waitForEvent('close'),
-    newPage.close()
+    page.waitForEvent('close'),
+    page.close()
   ]);
-  expect(closedPage).toBe(newPage);
+  expect(closedPage).toBe(page);
 });
 
-it('should terminate network waiters', async ({context, server}) => {
-  const newPage = await context.newPage();
+it('should terminate network waiters', async ({page, server}) => {
   const results = await Promise.all([
-    newPage.waitForRequest(server.EMPTY_PAGE).catch(e => e),
-    newPage.waitForResponse(server.EMPTY_PAGE).catch(e => e),
-    newPage.close()
+    page.waitForRequest(server.EMPTY_PAGE).catch(e => e),
+    page.waitForResponse(server.EMPTY_PAGE).catch(e => e),
+    page.close()
   ]);
   for (let i = 0; i < 2; i++) {
     const message = results[i].message;
@@ -64,16 +53,15 @@ it('should terminate network waiters', async ({context, server}) => {
   }
 });
 
-it('should be callable twice', async ({context}) => {
-  const newPage = await context.newPage();
+it('should be callable twice', async ({page}) => {
   await Promise.all([
-    newPage.close(),
-    newPage.close(),
+    page.close(),
+    page.close(),
   ]);
-  await newPage.close();
+  await page.close();
 });
 
-it('should fire load when expected', async ({page, server}) => {
+it('should fire load when expected', async ({page}) => {
   await Promise.all([
     page.goto('about:blank'),
     page.waitForEvent('load'),
@@ -109,13 +97,13 @@ it('should return null if parent page has been closed', async ({page}) => {
   expect(opener).toBe(null);
 });
 
-it('should fire domcontentloaded when expected', async ({page, server}) => {
+it('should fire domcontentloaded when expected', async ({page}) => {
   const navigatedPromise = page.goto('about:blank');
   await page.waitForEvent('domcontentloaded');
   await navigatedPromise;
 });
 
-it('should pass self as argument to domcontentloaded event', async ({page, server}) => {
+it('should pass self as argument to domcontentloaded event', async ({page}) => {
   const [eventArg] = await Promise.all([
     new Promise(f => page.on('domcontentloaded', f)),
     page.goto('about:blank')
@@ -123,7 +111,7 @@ it('should pass self as argument to domcontentloaded event', async ({page, serve
   expect(eventArg).toBe(page);
 });
 
-it('should pass self as argument to load event', async ({page, server}) => {
+it('should pass self as argument to load event', async ({page}) => {
   const [eventArg] = await Promise.all([
     new Promise(f => page.on('load', f)),
     page.goto('about:blank')
@@ -131,7 +119,7 @@ it('should pass self as argument to load event', async ({page, server}) => {
   expect(eventArg).toBe(page);
 });
 
-it('should fail with error upon disconnect', async ({page, server}) => {
+it('should fail with error upon disconnect', async ({page}) => {
   let error;
   const waitForPromise = page.waitForEvent('download').catch(e => error = e);
   await page.close();
@@ -159,7 +147,7 @@ it('page.title should return the page title', async ({page, server}) => {
   expect(await page.title()).toBe('Woof-Woof');
 });
 
-it('page.close should work with window.close', async function({ page, context, server }) {
+it('page.close should work with window.close', async function({ page }) {
   const newPagePromise = page.waitForEvent('popup');
   await page.evaluate(() => window['newPage'] = window.open('about:blank'));
   const newPage = await newPagePromise;
@@ -168,18 +156,13 @@ it('page.close should work with window.close', async function({ page, context, s
   await closedPromise;
 });
 
-it('page.close should work with page.close', async function({ page, context, server }) {
-  const newPage = await context.newPage();
-  const closedPromise = new Promise(x => newPage.on('close', x));
-  await newPage.close();
+it('page.close should work with page.close', async function({ page }) {
+  const closedPromise = new Promise(x => page.on('close', x));
+  await page.close();
   await closedPromise;
 });
 
-it('page.context should return the correct instance', async function({page, context}) {
-  expect(page.context()).toBe(context);
-});
-
-it('page.frame should respect name', async function({page, server}) {
+it('page.frame should respect name', async function({page}) {
   await page.setContent(`<iframe name=target></iframe>`);
   expect(page.frame({ name: 'bogus' })).toBe(null);
   const frame = page.frame({ name: 'target' });
@@ -233,7 +216,7 @@ it('page.press should work', async ({page, server}) => {
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it('page.press should work for Enter', async ({page, server}) => {
+it('page.press should work for Enter', async ({page}) => {
   await page.setContent(`<input onkeypress="console.log('press')"></input>`);
   const messages = [];
   page.on('console', message => messages.push(message));
@@ -246,14 +229,4 @@ it('frame.press should work', async ({page, server}) => {
   const frame = page.frame('inner');
   await frame.press('textarea', 'a');
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
-});
-
-it('frame.focus should work multiple times', async ({ context, server }) => {
-  const page1 = await context.newPage();
-  const page2 = await context.newPage();
-  for (const page of [page1, page2]) {
-    await page.setContent(`<button id="foo" onfocus="window.gotFocus=true"></button>`);
-    await page.focus('#foo');
-    expect(await page.evaluate(() => !!window['gotFocus'])).toBe(true);
-  }
 });

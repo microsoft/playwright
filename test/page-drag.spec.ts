@@ -20,7 +20,7 @@ import { attachFrame } from './utils';
 describe('Drag and drop', (test, {browserName}) => {
   test.fixme(browserName === 'chromium');
 }, () => {
-  it('should work', async ({server, page, context}) => {
+  it('should work', async ({page, server}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.hover('#source');
     await page.mouse.down();
@@ -123,8 +123,7 @@ describe('Drag and drop', (test, {browserName}) => {
     test.fixme(browserName === 'chromium', 'Chromium doesn\'t let users set dropEffect on our fake data transfer');
     test.fixme(browserName === 'webkit' && platform !== 'linux', 'WebKit doesn\'t handle the drop effect correctly outside of linux.');
     test.fixme(browserName === 'firefox');
-  }, async ({context}) => {
-    const page = await context.newPage();
+  }, async ({page}) => {
     expect(await testIfDropped('copy', 'copy')).toBe(true);
     expect(await testIfDropped('copy', 'move')).toBe(false);
     expect(await testIfDropped('all', 'link')).toBe(true);

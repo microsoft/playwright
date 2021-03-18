@@ -27,7 +27,7 @@ it('should avoid side effects after timeout', (test, { mode }) => {
   expect(error.message).toContain('page.click: Timeout 2000ms exceeded.');
 });
 
-it('should timeout waiting for button to be enabled', async ({page, server}) => {
+it('should timeout waiting for button to be enabled', async ({page}) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
   const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.__CLICKED')).toBe(undefined);

@@ -40,7 +40,7 @@ it('should dispatch click svg', async ({page}) => {
   expect(await page.evaluate(() => window['__CLICKED'])).toBe(42);
 });
 
-it('should dispatch click on a span with an inline element inside', async ({page, server}) => {
+it('should dispatch click on a span with an inline element inside', async ({page}) => {
   await page.setContent(`
     <style>
     span::before {
@@ -69,7 +69,7 @@ it('should dispatch click after a cross origin navigation ', async ({page, serve
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should not fail when element is blocked on hover', async ({page, server}) => {
+it('should not fail when element is blocked on hover', async ({page}) => {
   await page.setContent(`<style>
     container { display: block; position: relative; width: 200px; height: 50px; }
     div, button { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }

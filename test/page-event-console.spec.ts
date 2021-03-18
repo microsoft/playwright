@@ -18,7 +18,7 @@
 import { it, expect } from './fixtures';
 import util from 'util';
 
-it('should work', async ({page, server}) => {
+it('should work', async ({page}) => {
   let message = null;
   page.once('console', m => message = m);
   await Promise.all([
@@ -32,7 +32,7 @@ it('should work', async ({page, server}) => {
   expect(await message.args()[2].jsonValue()).toEqual({foo: 'bar'});
 });
 
-it('should emit same log twice', async ({page, server}) => {
+it('should emit same log twice', async ({page}) => {
   const messages = [];
   page.on('console', m => messages.push(m.text()));
   await page.evaluate(() => { for (let i = 0; i < 2; ++i) console.log('hello'); });
@@ -49,7 +49,7 @@ it('should use text() for inspection', async ({page}) => {
   expect(text).toEqual('Hello world');
 });
 
-it('should work for different console API calls', async ({page, server}) => {
+it('should work for different console API calls', async ({page}) => {
   const messages = [];
   page.on('console', msg => messages.push(msg));
   // All console events will be reported before `page.evaluate` is finished.
@@ -76,7 +76,7 @@ it('should work for different console API calls', async ({page, server}) => {
   ]);
 });
 
-it('should not fail for window object', async ({page, server}) => {
+it('should not fail for window object', async ({page}) => {
   let message = null;
   page.once('console', msg => message = msg);
   await Promise.all([
