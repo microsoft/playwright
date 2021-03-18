@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-import { folio } from './android.fixtures';
+import { folio } from '../fixtures';
 const { it, expect } = folio;
 
 if (process.env.PW_ANDROID_TESTS) {
-  it('androidDevice.webView', async function({ device }) {
-    expect(device.webViews().length).toBe(0);
-    await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
-    const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
+  it('androidDevice.webView', async function({ androidDevice }) {
+    expect(androidDevice.webViews().length).toBe(0);
+    await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+    const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });
     expect(webview.pkg()).toBe('org.chromium.webview_shell');
-    expect(device.webViews().length).toBe(1);
+    expect(androidDevice.webViews().length).toBe(1);
   });
 
-  it('webView.page', async function({ device }) {
-    expect(device.webViews().length).toBe(0);
-    await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
-    const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
+  it('webView.page', async function({ androidDevice }) {
+    expect(androidDevice.webViews().length).toBe(0);
+    await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+    const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });
     const page = await webview.page();
     expect(page.url()).toBe('about:blank');
   });
 
-  it('should navigate page internally', async function({ device, server }) {
-    expect(device.webViews().length).toBe(0);
-    await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
-    const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
+  it('should navigate page internally', async function({ androidDevice }) {
+    expect(androidDevice.webViews().length).toBe(0);
+    await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+    const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });
     const page = await webview.page();
     await page.goto('data:text/html,<title>Hello world!</title>');
     expect(await page.title()).toBe('Hello world!');
@@ -45,16 +45,16 @@ if (process.env.PW_ANDROID_TESTS) {
 
   it('should navigate page externally', test => {
     test.fixme(!!process.env.CI, 'Hangs on the bots');
-  }, async function({ device }) {
-    expect(device.webViews().length).toBe(0);
-    await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
-    const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
+  }, async function({ androidDevice }) {
+    expect(androidDevice.webViews().length).toBe(0);
+    await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+    const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });
     const page = await webview.page();
 
-    await device.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'data:text/html,<title>Hello world!</title>');
+    await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'data:text/html,<title>Hello world!</title>');
     await Promise.all([
       page.waitForNavigation(),
-      device.press({ res: 'org.chromium.webview_shell:id/url_field' }, 'Enter')
+      androidDevice.press({ res: 'org.chromium.webview_shell:id/url_field' }, 'Enter')
     ]);
     expect(await page.title()).toBe('Hello world!');
   });

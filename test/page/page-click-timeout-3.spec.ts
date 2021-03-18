@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should fail when element jumps during hit testing', (test, { mode }) => {
   test.skip(mode !== 'default');

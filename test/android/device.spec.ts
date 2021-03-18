@@ -17,17 +17,17 @@
 import fs from 'fs';
 import { PNG } from 'pngjs';
 
-import { folio } from './android.fixtures';
+import { folio } from '../fixtures';
 const { it, expect } = folio;
 
 if (process.env.PW_ANDROID_TESTS) {
-  it('androidDevice.shell', async function({ device }) {
-    const output = await device.shell('echo 123');
+  it('androidDevice.shell', async function({ androidDevice }) {
+    const output = await androidDevice.shell('echo 123');
     expect(output.toString()).toBe('123\n');
   });
 
-  it('androidDevice.open', async function({ device }) {
-    const socket = await device.open('shell:/bin/cat');
+  it('androidDevice.open', async function({ androidDevice }) {
+    const socket = await androidDevice.open('shell:/bin/cat');
     await socket.write(Buffer.from('321\n'));
     const output = await new Promise(resolve => socket.on('data', resolve));
     expect(output.toString()).toBe('321\n');
@@ -36,9 +36,9 @@ if (process.env.PW_ANDROID_TESTS) {
     await closedPromise;
   });
 
-  it('androidDevice.screenshot', async function({ device, testInfo }) {
+  it('androidDevice.screenshot', async function({ androidDevice, testInfo }) {
     const path = testInfo.outputPath('screenshot.png');
-    const result = await device.screenshot({ path });
+    const result = await androidDevice.screenshot({ path });
     const buffer = fs.readFileSync(path);
     expect(result.length).toBe(buffer.length);
     const { width, height} = PNG.sync.read(result);
@@ -46,18 +46,18 @@ if (process.env.PW_ANDROID_TESTS) {
     expect(height).toBe(1920);
   });
 
-  it('androidDevice.push', async function({ device, testInfo }) {
-    await device.shell('rm /data/local/tmp/hello-world');
-    await device.push(Buffer.from('hello world'), '/data/local/tmp/hello-world');
-    const data = await device.shell('cat /data/local/tmp/hello-world');
+  it('androidDevice.push', async function({ androidDevice }) {
+    await androidDevice.shell('rm /data/local/tmp/hello-world');
+    await androidDevice.push(Buffer.from('hello world'), '/data/local/tmp/hello-world');
+    const data = await androidDevice.shell('cat /data/local/tmp/hello-world');
     expect(data).toEqual(Buffer.from('hello world'));
   });
 
   it('androidDevice.fill', test => {
     test.fixme(!!process.env.CI, 'Hangs on the bots');
-  }, async function({ device }) {
-    await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
-    await device.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'Hello');
-    expect((await device.info({ res: 'org.chromium.webview_shell:id/url_field' })).text).toBe('Hello');
+  }, async function({ androidDevice }) {
+    await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+    await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'Hello');
+    expect((await androidDevice.info({ res: 'org.chromium.webview_shell:id/url_field' })).text).toBe('Hello');
   });
 }

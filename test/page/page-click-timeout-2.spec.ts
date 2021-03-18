@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should timeout waiting for display:none to be gone', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

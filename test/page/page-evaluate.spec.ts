@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should work', async ({ page }) => {
   const result = await page.evaluate(() => 7 * 3);

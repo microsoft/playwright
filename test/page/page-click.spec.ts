@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
-import { attachFrame } from './utils';
+import { it, expect } from '../fixtures';
+import { attachFrame } from '../utils';
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)
@@ -29,7 +29,7 @@ it('should click the button', async ({page, server}) => {
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should click svg', async ({page, server}) => {
+it('should click svg', async ({page}) => {
   await page.setContent(`
     <svg height="100" width="100">
       <circle onclick="javascript:window.__CLICKED=42" cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
@@ -370,7 +370,9 @@ it('should click the button with em border with offset', async ({page, server, i
   expect(await page.evaluate('offsetY')).toBe(isWebKit ? 12 * 2 + 10 : 10);
 });
 
-it('should click a very large button with offset', async ({page, server, isWebKit}) => {
+it('should click a very large button with offset', test => {
+  test.skip(process.env.PWTESTREPORT);
+}, async ({page, server, isWebKit}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
   await page.$eval('button', button => button.style.height = button.style.width = '2000px');
@@ -381,7 +383,9 @@ it('should click a very large button with offset', async ({page, server, isWebKi
   expect(await page.evaluate('offsetY')).toBe(isWebKit ? 1910 + 8 : 1910);
 });
 
-it('should click a button in scrolling container with offset', async ({page, server, isWebKit}) => {
+it('should click a button in scrolling container with offset', test => {
+  test.skip(process.env.PWTESTREPORT);
+}, async ({page, server, isWebKit}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
     const container = document.createElement('div');

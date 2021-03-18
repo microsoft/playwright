@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should timeout waiting for stable position', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

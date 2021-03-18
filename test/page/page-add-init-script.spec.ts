@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 import path from 'path';
 
 it('should evaluate before anything else on the page', async ({ page, server }) => {
@@ -27,7 +27,7 @@ it('should evaluate before anything else on the page', async ({ page, server }) 
 });
 
 it('should work with a path', async ({ page, server }) => {
-  await page.addInitScript({ path: path.join(__dirname, 'assets/injectedfile.js') });
+  await page.addInitScript({ path: path.join(__dirname, '../assets/injectedfile.js') });
   await page.goto(server.PREFIX + '/tamperable.html');
   expect(await page.evaluate(() => window['result'])).toBe(123);
 });
@@ -38,72 +38,10 @@ it('should work with content', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe(123);
 });
 
-it('should throw without path and content', async ({ page, server }) => {
+it('should throw without path and content', async ({ page }) => {
   // @ts-expect-error foo is not a real option of addInitScript
   const error = await page.addInitScript({ foo: 'bar' }).catch(e => e);
   expect(error.message).toContain('Either path or content property must be present');
-});
-
-it('should work with browser context scripts', async ({ browser, server }) => {
-  const context = await browser.newContext();
-  await context.addInitScript(() => window['temp'] = 123);
-  const page = await context.newPage();
-  await page.addInitScript(() => window['injected'] = window['temp']);
-  await page.goto(server.PREFIX + '/tamperable.html');
-  expect(await page.evaluate(() => window['result'])).toBe(123);
-  await context.close();
-});
-
-it('should work without navigation, after all bindings', async ({ browser }) => {
-  const context = await browser.newContext();
-
-  let callback;
-  const promise = new Promise(f => callback = f);
-  await context.exposeFunction('woof', function(arg) {
-    callback(arg);
-  });
-
-  await context.addInitScript(() => {
-    window['woof']('hey');
-    window['temp'] = 123;
-  });
-  const page = await context.newPage();
-
-  expect(await page.evaluate(() => window['temp'])).toBe(123);
-  expect(await promise).toBe('hey');
-
-  await context.close();
-});
-
-it('should work without navigation in popup', async ({ browser }) => {
-  const context = await browser.newContext();
-  await context.addInitScript(() => window['temp'] = 123);
-  const page = await context.newPage();
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.evaluate(() => window['win'] = window.open()),
-  ]);
-  expect(await popup.evaluate(() => window['temp'])).toBe(123);
-  await context.close();
-});
-
-it('should work with browser context scripts with a path', async ({ browser, server }) => {
-  const context = await browser.newContext();
-  await context.addInitScript({ path: path.join(__dirname, 'assets/injectedfile.js') });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/tamperable.html');
-  expect(await page.evaluate(() => window['result'])).toBe(123);
-  await context.close();
-});
-
-it('should work with browser context scripts for already created pages', async ({ browser, server }) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await context.addInitScript(() => window['temp'] = 123);
-  await page.addInitScript(() => window['injected'] = window['temp']);
-  await page.goto(server.PREFIX + '/tamperable.html');
-  expect(await page.evaluate(() => window['result'])).toBe(123);
-  await context.close();
 });
 
 it('should support multiple scripts', async ({ page, server }) => {

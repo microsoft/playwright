@@ -20,7 +20,7 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import os from 'os';
-import type { Browser, BrowserContext, BrowserType, Page } from '../index';
+import type { AndroidDevice, Browser, BrowserContext, BrowserType, Page } from '../index';
 import { installCoverageHooks } from './coverage';
 import { folio as httpFolio } from './http.fixtures';
 import { folio as playwrightFolio } from './playwright.fixtures';
@@ -45,6 +45,8 @@ type ModeParameters = {
 };
 type WorkerFixtures = {
   toImpl: (rpcObject: any) => any;
+  androidDevice: AndroidDevice;
+  androidDeviceBrowser: BrowserContext;
 };
 type TestFixtures = {
   createUserDataDir: () => Promise<string>;
@@ -156,6 +158,27 @@ fixtures.toImpl.init(async ({ playwright }, run) => {
 fixtures.testParametersPathSegment.override(async ({ browserName }, run) => {
   await run(browserName);
 });
+
+fixtures.androidDevice.init(async ({ playwright }, runTest) => {
+  const [device] = await playwright._android.devices();
+  await device.shell('am force-stop org.chromium.webview_shell');
+  await device.shell('am force-stop com.android.chrome');
+  device.setDefaultTimeout(120000);
+  await runTest(device);
+  await device.close();
+}, { scope: 'worker' });
+
+fixtures.androidDeviceBrowser.init(async ({ androidDevice }, runTest) => {
+  await runTest(await androidDevice.launchBrowser());
+}, { scope: 'worker' });
+
+if (process.env.PW_ANDROID_TESTS) {
+  fixtures.page.override(async ({ androidDeviceBrowser }, run) => {
+    for (const page of androidDeviceBrowser.pages())
+      await page.close();
+    run(await androidDeviceBrowser.newPage());
+  });
+}
 
 export const folio = fixtures.build();
 
