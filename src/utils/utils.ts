@@ -158,3 +158,15 @@ export async function removeFolders(dirs: string[]) {
     });
   }));
 }
+
+export function canAccessFile(file: string) {
+  if (!file)
+    return false;
+
+  try {
+    fs.accessSync(file);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}

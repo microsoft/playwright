@@ -36,7 +36,7 @@ import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { assert, headersArrayToObject, createGuid } from '../../utils/utils';
+import { assert, headersArrayToObject, createGuid, canAccessFile } from '../../utils/utils';
 import { VideoRecorder } from './videoRecorder';
 
 
@@ -816,6 +816,22 @@ class FrameSession {
     const ffmpegPath = this._crPage._browserContext._browser.options.registry.executablePath('ffmpeg');
     if (!ffmpegPath)
       throw new Error('ffmpeg executable was not found');
+    if (!canAccessFile(ffmpegPath)) {
+      let message: string = '';
+      switch (this._page._browserContext._options.sdkLanguage) {
+        case 'python': message = 'playwright install ffmpeg'; break;
+        case 'python-async': message = 'playwright install ffmpeg'; break;
+        case 'javascript': message = 'npx playwright install ffmpeg'; break;
+        case 'java': message = 'mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install ffmpeg"'; break;
+      }
+      throw new Error(`
+============================================================
+  Please install ffmpeg in order to record video.
+
+  $ ${message}
+============================================================
+      `);
+    }
     this._videoRecorder = await VideoRecorder.launch(this._crPage._page, ffmpegPath, options);
     this._screencastId = screencastId;
     const gotFirstFrame = new Promise(f => this._client.once('Page.screencastFrame', f));

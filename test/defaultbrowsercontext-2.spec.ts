@@ -107,8 +107,9 @@ it('should restore state from userDataDir', (test, { browserName }) => {
   await browserContext3.close();
 });
 
-it('should restore cookies from userDataDir', (test, { browserName }) => {
+it('should restore cookies from userDataDir', (test, { platform, browserChannel }) => {
   test.slow();
+  test.fixme(platform === 'win32' && browserChannel === 'chrome');
 }, async ({browserType, browserOptions,  server, createUserDataDir}) => {
   const userDataDir = await createUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, browserOptions);
