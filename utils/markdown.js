@@ -141,12 +141,10 @@ function buildTree(lines) {
     }
 
     if (content.startsWith(':::')) {
-      let noteType = content.substring(3).split(' ');
       /** @type {MarkdownNode} */
       const node = {
         type: 'note',
-        noteType: noteType[0],
-        codeLang: noteType[1]
+        noteType: content.substring(3)
       };
       line = lines[++i];
       const tokens = [];
