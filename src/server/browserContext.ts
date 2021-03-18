@@ -195,9 +195,13 @@ export abstract class BrowserContext extends SdkObject {
     if (!this.pages().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
-      await waitForEvent.promise;
+      const page = (await waitForEvent.promise) as Page;
+      if (page._pageIsError)
+        throw page._pageIsError;
     }
     const pages = this.pages();
+    if (pages[0]._pageIsError)
+      throw pages[0]._pageIsError;
     await pages[0].mainFrame()._waitForLoadState(progress, 'load');
     return pages;
   }
