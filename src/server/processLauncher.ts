@@ -86,7 +86,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     let failed: (e: Error) => void;
     const failedPromise = new Promise<Error>((f, r) => failed = f);
     spawnedProcess.once('error', error => {
-      failed(new Error('Failed to launch browser: ' + error));
+      failed(new Error('Failed to launch: ' + error));
     });
     return cleanup().then(() => failedPromise).then(e => Promise.reject(e));
   }
@@ -164,7 +164,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       // Force kill the browser.
       try {
         if (process.platform === 'win32')
-          childProcess.execSync(`taskkill /pid ${spawnedProcess.pid} /T /F`);
+          childProcess.execSync(`taskkill /pid ${spawnedProcess.pid} /T /F`, { stdio: 'ignore' });
         else
           process.kill(-spawnedProcess.pid, 'SIGKILL');
       } catch (e) {

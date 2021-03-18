@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import path from 'path';
+import { canAccessFile } from '../../utils/utils';
 
 function darwin(channel: string): string | undefined {
   switch (channel) {
@@ -60,22 +60,10 @@ function win32(channel: string): string | undefined {
   let result: string | undefined;
   prefixes.forEach(prefix => {
     const chromePath = path.join(prefix, suffix!);
-    if (canAccess(chromePath))
+    if (canAccessFile(chromePath))
       result = chromePath;
   });
   return result;
-}
-
-function canAccess(file: string) {
-  if (!file)
-    return false;
-
-  try {
-    fs.accessSync(file);
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
 
 export function findChromiumChannel(channel: string): string {
@@ -90,7 +78,7 @@ export function findChromiumChannel(channel: string): string {
   if (!result)
     throw new Error(`Chromium distribution '${channel}' is not supported on ${process.platform}`);
 
-  if (canAccess(result))
+  if (canAccessFile(result))
     return result;
   throw new Error(`Chromium distribution was not found: ${channel}`);
 }
