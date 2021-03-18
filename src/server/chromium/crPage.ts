@@ -401,7 +401,6 @@ class FrameSession {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
       this._windowId = windowId;
     }
-    let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
       this._addRendererListeners();
     this._addBrowserListeners();
@@ -426,6 +425,7 @@ class FrameSession {
             frame._evaluateExpression(source, false, undefined, 'main').catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
+        const lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true });
         if (isInitialEmptyPage) {
           // Ignore lifecycle events for the initial empty page. It is never the final page
           // hence we are going to get more lifecycle updates after the actual navigation has
@@ -436,10 +436,10 @@ class FrameSession {
         } else {
           this._firstNonInitialNavigationCommittedFulfill();
           this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
-        }
+        };
+        return lifecycleEventsEnabled;
       }),
       this._client.send('Log.enable', {}),
-      lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
         source: '',
