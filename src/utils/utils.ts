@@ -24,6 +24,11 @@ const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
 // See https://joel.tools/microtasks/
 export function makeWaitForNextTask() {
+  // As of Mar 2021, Electorn v12 doesn't create new task with `setImmediate` despite
+  // using Node 14 internally, so we fallback to `setTimeout(0)` instead.
+  // @see https://github.com/electron/electron/issues/28261
+  if (process.versions.electron)
+    return (callback: () => void) => setTimeout(callback, 0);
   if (parseInt(process.versions.node, 10) >= 11)
     return setImmediate;
 
