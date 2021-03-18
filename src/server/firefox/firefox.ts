@@ -42,13 +42,21 @@ export class Firefox extends BrowserType {
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     if (!path.isAbsolute(os.homedir()))
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
-    return os.platform() === 'linux' ? {
-      ...env,
-      // On linux Juggler ships the libstdc++ it was linked against.
-      LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
-      // @see https://github.com/microsoft/playwright/issues/5721
-      MOZ_WEBRENDER: 0,
-    } : env;
+    if (os.platform() === 'linux') {
+      return {
+        ...env,
+        // On linux Juggler ships the libstdc++ it was linked against.
+        LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
+      };
+    }
+    if (os.platform() === 'darwin') {
+      return {
+        ...env,
+        // @see https://github.com/microsoft/playwright/issues/5721
+        MOZ_WEBRENDER: 0,
+      };
+    }
+    return env;
   }
 
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
