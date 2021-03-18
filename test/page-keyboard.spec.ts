@@ -342,8 +342,10 @@ it('should be able to prevent selectAll', async ({page, server, isMac}) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
 });
 
-it('should support MacOS shortcuts', (test, { platform }) => {
+it('should support MacOS shortcuts', (test, { platform, browserName }) => {
   test.skip(platform !== 'darwin');
+  // @see https://github.com/microsoft/playwright/issues/5721
+  test.fixme(browserName === 'firefox' && platform === 'dawrin');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
