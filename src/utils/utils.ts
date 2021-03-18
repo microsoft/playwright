@@ -28,7 +28,7 @@ export function makeWaitForNextTask() {
   // using Node 14 internally, so we fallback to `setTimeout(0)` instead.
   // @see https://github.com/electron/electron/issues/28261
   if (process.versions.electron)
-    return callback => setTimeout(callback, 0);
+    return (callback: () => void) => setTimeout(callback, 0);
   if (parseInt(process.versions.node, 10) >= 11)
     return setImmediate;
 
