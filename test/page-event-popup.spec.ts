@@ -164,4 +164,3 @@ it('should not treat navigations as new popups', async ({context, server}) => {
   await context.close();
   expect(badSecondPopup).toBe(false);
 });
-

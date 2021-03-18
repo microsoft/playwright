@@ -148,6 +148,7 @@ export class Page extends SdkObject {
   readonly selectors: Selectors;
   _video: Video | null = null;
   readonly uniqueId: string;
+  _pageIsError: Error | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext);
@@ -187,7 +188,7 @@ export class Page extends SdkObject {
       // context/browser closure. Just ignore the page.
       if (this._browserContext.isClosingOrClosed())
         return;
-      this._setIsError();
+      this._setIsError(pageOrError);
     }
     this._browserContext.emit(BrowserContext.Events.Page, this);
     const openerDelegate = this._delegate.openerDelegate();
@@ -444,7 +445,8 @@ export class Page extends SdkObject {
       await this._ownedContext.close(metadata);
   }
 
-  private _setIsError() {
+  private _setIsError(error: Error) {
+    this._pageIsError = error;
     if (!this._frameManager.mainFrame())
       this._frameManager.frameAttached('<dummy>', null);
   }
