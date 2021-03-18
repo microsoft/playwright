@@ -436,7 +436,7 @@ class FrameSession {
         } else {
           this._firstNonInitialNavigationCommittedFulfill();
           this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
-        };
+        }
         return lifecycleEventsEnabled;
       }),
       this._client.send('Log.enable', {}),
