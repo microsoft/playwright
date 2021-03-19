@@ -3,7 +3,7 @@ id: events
 title: "Events"
 ---
 
-Playwright allows to listen to various types of events happening in the browser such
+Playwright allows listening to various types of events happening in the browser, such
 as network requests, creation of child pages, dedicated workers etc. There are several
 ways to subscribe to such events:
 
@@ -12,9 +12,9 @@ ways to subscribe to such events:
 ## Waiting for event
 
 There is a number of methods which wait for a particular condition or an event happening
-in the page. They are usually preferred choice. Here is a few examples:
+in the page. They are usually the preferred choice. Here is a few examples:
 
-Waiting for request with specified url:
+Waiting for a request with a specified url:
 
 ```js
 const [request] = await Promise.all([
@@ -78,67 +78,64 @@ with page.expect_popup() as popup:
 popup.value.goto("https://wikipedia.org")
 ```
 
-## Adding event listener
+## Adding/removing event listener
+
+Playwright supports traditional language mechanisms to subscribe and unsubscribe from events:
 
 ```js
-page.on('requestfinished', request => console.log(`Request finished: ${request.url()}`));
-await page.goto('https://wikipedia.org');
-```
-
-```java
-page.onRequestFinished(request -> System.out.println("Request finished: " + request.url()));
-page.navigate("https://wikipedia.org");
-```
-
-```python async
-def print_request(request):
-  print("Request finished: " + request.url)
-page.on("requestfinished", print_request)
-await page.goto("https://wikipedia.org")
-```
-
-```python sync
-def print_request(request):
-  print("Request finished: " + request.url)
-page.on("requestfinished", print_request)
-page.goto("https://wikipedia.org")
-```
-
-## Removing event listener
-
-```js
-const listener = request => console.log(`Request finished: ${request.url()}`)
+page.on('request', request => console.log(`Request sent: ${request.url()}`));
+const listener = request => console.log(`Request finished: ${request.url()}`);
 page.on('requestfinished', listener);
 await page.goto('https://wikipedia.org');
+
 page.off('requestfinished', listener);
+await page.goto('https://www.openstreetmap.org/');
 ```
 
 ```java
+page.onRequest(request -> System.out.println("Request sent: " + request.url()));
 Consumer<Request> listener = request -> System.out.println("Request finished: " + request.url());
 page.onRequestFinished(listener);
 page.navigate("https://wikipedia.org");
+
+// Remove previously added listener, each on* method has corresponding off*
 page.offRequestFinished(listener);
+page.navigate("https://www.openstreetmap.org/");
 ```
 
 ```python async
-def print_request(request):
+def print_request_sent(request):
+  print("Request sent: " + request.url)
+
+def print_request_finished(request):
   print("Request finished: " + request.url)
-page.on("requestfinished", print_request)
+
+page.on("request", print_request_sent)
+page.on("requestfinished", print_request_finished)
 await page.goto("https://wikipedia.org")
-page.remove_listener("requestfinished", print_request)
+
+page.remove_listener("requestfinished", print_request_finished)
+await page.goto("https://www.openstreetmap.org/")
 ```
 
 ```python sync
-def print_request(request):
+def print_request_sent(request):
+  print("Request sent: " + request.url)
+
+def print_request_finished(request):
   print("Request finished: " + request.url)
-page.on("requestfinished", print_request)
+
+page.on("request", print_request_sent)
+page.on("requestfinished", print_request_finished)
 page.goto("https://wikipedia.org")
-page.remove_listener("requestfinished", print_request)
+
+page.remove_listener("requestfinished", print_request_finished)
+page.goto("https://www.openstreetmap.org/")
 ```
 
 ## Adding one-off listeners
 
-If only next event needs to be handled there is convinience API for some of the events:
+If only next event needs to be handled, there is a convinience API for some of the events:
 
 ```js
 page.once('dialog', dialog => dialog.accept("2021"));
