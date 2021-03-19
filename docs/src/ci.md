@@ -190,8 +190,8 @@ Running Playwright on CircleCI requires the following steps:
    ```yml
    docker:
      - image: mcr.microsoft.com/playwright:bionic
-       environment:
-         NODE_ENV: development # Needed if playwright is in `devDependencies`
+   environment:
+     NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
 
 1. If you’re using Playwright through Jest, then you may encounter an error spawning child processes:
