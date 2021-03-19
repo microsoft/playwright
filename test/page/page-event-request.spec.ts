@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
-import { attachFrame } from './utils';
+import { it, expect } from '../fixtures';
+import { attachFrame } from '../utils';
 
 it('should fire for navigation requests', async ({page, server}) => {
   const requests = [];
@@ -41,7 +41,9 @@ it('should fire for fetches', async ({page, server}) => {
   expect(requests.length).toBe(2);
 });
 
-it('should report requests and responses handled by service worker', async ({page, server}) => {
+it('should report requests and responses handled by service worker', test => {
+  test.fixme(process.env.PW_ANDROID_TESTS);
+}, async ({page, server}) => {
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);
   const [swResponse, request] = await Promise.all([

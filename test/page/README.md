@@ -1,0 +1,1 @@
+Put tests that are scoped to a page and can run on Chrome for Android, WebView, Electron, etc.

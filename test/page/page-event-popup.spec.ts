@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should work', async ({page}) => {
   const [popup] = await Promise.all([
@@ -35,9 +35,7 @@ it('should work with window features', async ({page, server}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should emit for immediately closed popups', async ({browser}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should emit for immediately closed popups', async ({page}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -46,7 +44,6 @@ it('should emit for immediately closed popups', async ({browser}) => {
     }),
   ]);
   expect(popup).toBeTruthy();
-  await context.close();
 });
 
 it('should emit for immediately closed popups 2', (test, {browserName, video}) => {
@@ -63,9 +60,7 @@ it('should emit for immediately closed popups 2', (test, {browserName, video}) =
   expect(popup).toBeTruthy();
 });
 
-it('should be able to capture alert', async ({browser}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should be able to capture alert', async ({page}) => {
   const evaluatePromise = page.evaluate(() => {
     const win = window.open('');
     win.alert('hello');
@@ -75,7 +70,6 @@ it('should be able to capture alert', async ({browser}) => {
   expect(dialog.message()).toBe('hello');
   await dialog.dismiss();
   await evaluatePromise;
-  await context.close();
 });
 
 it('should work with empty url', async ({page}) => {
@@ -150,8 +144,7 @@ it('should work with clicking target=_blank and rel=noopener', async ({page, ser
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should not treat navigations as new popups', async ({context, server}) => {
-  const page = await context.newPage();
+it('should not treat navigations as new popups', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -161,6 +154,6 @@ it('should not treat navigations as new popups', async ({context, server}) => {
   let badSecondPopup = false;
   page.on('popup', () => badSecondPopup = true);
   await popup.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-  await context.close();
+  await page.close();
   expect(badSecondPopup).toBe(false);
 });

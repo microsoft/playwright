@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
-it('should work', async ({ page, server }) => {
+it('should work', test => {
+  test.fixme(process.env.PW_ANDROID_TESTS);
+}, async ({ page, server }) => {
   await page.goto(server.PREFIX + '/offscreenbuttons.html');
   for (let i = 0; i < 11; ++i) {
     const button = await page.$('#btn' + i);

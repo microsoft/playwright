@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 async function giveItAChanceToResolve(page) {
   for (let i = 0; i < 5; i++)
