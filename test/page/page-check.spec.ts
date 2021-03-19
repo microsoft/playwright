@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should check the box', async ({page}) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);

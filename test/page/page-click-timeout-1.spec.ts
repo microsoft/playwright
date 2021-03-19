@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should avoid side effects after timeout', (test, { mode }) => {
   test.skip(mode !== 'default');

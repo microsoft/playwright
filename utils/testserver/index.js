@@ -29,6 +29,9 @@ const rejectSymbol = Symbol('reject callback');
 const readFileAsync = util.promisify(fs.readFile.bind(fs));
 const gzipAsync = util.promisify(zlib.gzip.bind(zlib));
 
+const loopback = process.env.PW_ANDROID_TESTS ? '10.0.2.2' : 'localhost';
+const cross_origin_loopback = process.env.PW_ANDROID_TESTS ? '10.0.2.2' : '127.0.0.1';
+
 class TestServer {
   /**
    * @param {string} dirPath
@@ -91,9 +94,9 @@ class TestServer {
 
     const protocol = sslOptions ? 'https' : 'http';
     this.PORT = port;
-    this.PREFIX = `${protocol}://localhost:${port}`;
-    this.CROSS_PROCESS_PREFIX = `${protocol}://127.0.0.1:${port}`;
-    this.EMPTY_PAGE = `${protocol}://localhost:${port}/empty.html`;
+    this.PREFIX = `${protocol}://${loopback}:${port}`;
+    this.CROSS_PROCESS_PREFIX = `${protocol}://${cross_origin_loopback}:${port}`;
+    this.EMPTY_PAGE = `${protocol}://${loopback}:${port}/empty.html`;
   }
 
   _onSocket(socket) {

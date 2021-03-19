@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should fire', async ({page, server}) => {
   page.on('dialog', dialog => {

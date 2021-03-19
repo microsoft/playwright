@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { it } from './fixtures';
+import { it } from '../fixtures';
 
 it('should not hit scroll bar', (test, { browserName, platform }) => {
   test.fixme(browserName === 'webkit' && platform === 'darwin');
+  test.skip(process.env.PW_ANDROID_TESTS);
 }, async ({page, server}) => {
   await page.setContent(`
     <style>

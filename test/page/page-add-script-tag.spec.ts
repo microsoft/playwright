@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 import path from 'path';
 
 it('should throw an error if no options are provided', async ({page, server}) => {
@@ -44,7 +44,7 @@ it('should work with a url and type=module', async ({page, server}) => {
 
 it('should work with a path and type=module', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.addScriptTag({ path: path.join(__dirname, 'assets/es6/es6pathimport.js'), type: 'module' });
+  await page.addScriptTag({ path: path.join(__dirname, '../assets/es6/es6pathimport.js'), type: 'module' });
   await page.waitForFunction('window.__es6injected');
   expect(await page.evaluate(() => window['__es6injected'])).toBe(42);
 });
@@ -69,7 +69,7 @@ it('should throw an error if loading from url fail', async ({page, server}) => {
 
 it('should work with a path', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  const scriptHandle = await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
+  const scriptHandle = await page.addScriptTag({ path: path.join(__dirname, '../assets/injectedfile.js') });
   expect(scriptHandle.asElement()).not.toBeNull();
   expect(await page.evaluate(() => window['__injected'])).toBe(42);
 });
@@ -78,7 +78,7 @@ it('should include sourceURL when path is provided', (test, { browserName }) => 
   test.skip(browserName === 'webkit');
 }, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
+  await page.addScriptTag({ path: path.join(__dirname, '../assets/injectedfile.js') });
   const result = await page.evaluate(() => window['__injectedError'].stack);
   expect(result).toContain(path.join('assets', 'injectedfile.js'));
 });
@@ -98,7 +98,9 @@ it('should throw when added with content to the CSP page', async ({page, server}
   expect(error).toBeTruthy();
 });
 
-it('should throw when added with URL to the CSP page', async ({page, server}) => {
+it('should throw when added with URL to the CSP page', test => {
+  test.skip(process.env.PW_ANDROID_TESTS);
+}, async ({page, server}) => {
   await page.goto(server.PREFIX + '/csp.html');
   let error = null;
   await page.addScriptTag({ url: server.CROSS_PROCESS_PREFIX + '/injectedfile.js' }).catch(e => error = e);

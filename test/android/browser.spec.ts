@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-import { folio } from './android.fixtures';
+import { folio } from '../fixtures';
 const { it, expect } = folio;
 
 if (process.env.PW_ANDROID_TESTS) {
-  it('androidDevice.model', async function({ device }) {
-    expect(device.model()).toBe('sdk_gphone_x86_arm');
+  it('androidDevice.model', async function({ androidDevice }) {
+    expect(androidDevice.model()).toBe('sdk_gphone_x86_arm');
   });
 
-  it('androidDevice.launchBrowser', async function({ device }) {
-    const context = await device.launchBrowser();
+  it('androidDevice.launchBrowser', async function({ androidDevice }) {
+    const context = await androidDevice.launchBrowser();
     const [page] = context.pages();
     await page.goto('data:text/html,<title>Hello world!</title>');
     expect(await page.title()).toBe('Hello world!');
     await context.close();
   });
 
-  it('should create new page', async function({ device }) {
-    const context = await device.launchBrowser();
+  it('should create new page', async function({ androidDevice }) {
+    const context = await androidDevice.launchBrowser();
     const page = await context.newPage();
     await page.goto('data:text/html,<title>Hello world!</title>');
     expect(await page.title()).toBe('Hello world!');
@@ -39,8 +39,8 @@ if (process.env.PW_ANDROID_TESTS) {
     await context.close();
   });
 
-  it('should check', async function({ device }) {
-    const context = await device.launchBrowser();
+  it('should check', async function({ androidDevice }) {
+    const context = await androidDevice.launchBrowser();
     const [page] = context.pages();
     await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
     await page.check('input');
@@ -48,8 +48,8 @@ if (process.env.PW_ANDROID_TESTS) {
     await page.close();
     await context.close();
   });
-  it('should be able to send CDP messages', async ({ device }) => {
-    const context = await device.launchBrowser();
+  it('should be able to send CDP messages', async ({ androidDevice }) => {
+    const context = await androidDevice.launchBrowser();
     const [page] = context.pages();
     const client = await context.newCDPSession(page);
     await client.send('Runtime.enable');
