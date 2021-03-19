@@ -86,7 +86,7 @@ it('should round-trip through the file', async ({ browser, context, testInfo }) 
   const path = testInfo.outputPath('storage-state.json');
   const state = await context.storageState({ path });
   const written = await fs.promises.readFile(path, 'utf8');
-  expect(JSON.stringify(state)).toBe(written);
+  expect(JSON.stringify(state, undefined, 2)).toBe(written);
 
   const context2 = await browser.newContext({ storageState: path });
   const page2 = await context2.newPage();

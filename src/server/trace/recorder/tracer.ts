@@ -108,7 +108,7 @@ class ContextTracer {
     await this._snapshotter.start();
   }
 
-  async _captureSnapshot(name: string, sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
+  async _captureSnapshot(name: 'before' | 'after' | 'action', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
     if (!sdkObject.attribution.page)
       return;
     const snapshotName = `${name}@${metadata.id}`;

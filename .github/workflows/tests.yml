@@ -29,9 +29,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -64,9 +64,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json --shard=${{ matrix.shard }}/2
       env:
         BROWSER: ${{ matrix.browser }}
@@ -94,9 +94,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
       shell: bash
       env:
@@ -125,9 +125,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node_version }}
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - run: bash packages/installation-tests/installation-tests.sh
 
   headful_linux:
@@ -142,9 +142,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -177,9 +177,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -211,9 +211,9 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -235,22 +235,25 @@ jobs:
   test_android:
     name: Android Emulator
     runs-on: macos-10.15
+    env:
+      FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+      PW_ANDROID_TESTS: 1
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 14
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - name: Create Android Emulator
       run: utils/avd_recreate.sh
     - name: Start Android Emulator
       run: utils/avd_start.sh
-    - run: npx folio test/android -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=3 --reporter=dot,json
-      env:
-        FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
-        PW_ANDROID_TESTS: 1
+    - name: Run device tests
+      run: npx folio test/android -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=3 --reporter=dot,json
+    - name: Run page tests
+      run: npx folio test/page -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=3 --reporter=dot,json
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1
@@ -259,7 +262,7 @@ jobs:
         name: android-test-results
         path: test-results
 
-  chrome_stable:
+  chrome_stable_linux:
     name: "Chrome Stable"
     strategy:
       fail-fast: false
@@ -269,11 +272,15 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
-    - uses: microsoft/playwright-github-action@v1
     - name: Install Chrome Stable
       run: sudo apt install google-chrome-stable
     - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
+    - run: node lib/cli/cli install-deps chromium
+    # This only created problems, should we move ffmpeg back into npm?
+    - run: node lib/cli/cli install ffmpeg
     - run: mkdir -p coredumps
     # Set core dump file name pattern
     - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
@@ -283,10 +290,93 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --timeout=60000 --global-timeout=5400000 --retries=3 --reporter=dot,json -p video"
       env:
         BROWSER: "chromium"
-        CRPATH: "/opt/google/chrome/chrome"
+        PW_CHROMIUM_CHANNEL: "chrome"
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: chrome-stable-test-results
+        name: chrome-stable-linux-test-results
+        path: test-results
+
+  chrome_stable_win:
+    name: "Chrome Stable (Win)"
+    runs-on: windows-latest
+    steps:
+    - name: Install Media Pack
+      shell: powershell
+      run: Install-WindowsFeature Server-Media-Foundation
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    # This only created problems, should we move ffmpeg back into npm?
+    - run: node lib/cli/cli install ffmpeg
+    - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
+      shell: bash
+      env:
+        BROWSER: "chromium"
+        PW_CHROMIUM_CHANNEL: "chrome"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: chrome-stable-win-test-results
+        path: test-results
+
+  chrome_stable_mac:
+    name: "Chrome Stable (Mac)"
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    # This only created problems, should we move ffmpeg back into npm?
+    - run: node lib/cli/cli install ffmpeg
+    - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
+      env:
+        BROWSER: "chromium"
+        PW_CHROMIUM_CHANNEL: "chrome"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: chrome-stable-mac-test-results
+        path: test-results
+
+  edge_stable_win:
+    name: "Edge Stable (Win)"
+    runs-on: windows-latest
+    steps:
+    - name: Install Media Pack
+      shell: powershell
+      run: Install-WindowsFeature Server-Media-Foundation
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    # This only created problems, should we move ffmpeg back into npm?
+    - run: node lib/cli/cli install ffmpeg
+    - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
+      shell: bash
+      env:
+        BROWSER: "chromium"
+        PW_CHROMIUM_CHANNEL: "msedge"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: edge-stable-win-test-results
         path: test-results

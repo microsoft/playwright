@@ -36,6 +36,13 @@ it('should throw if userDataDir option is passed', async ({browserType, browserO
   expect(waitError.message).toContain('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
 });
 
+it('should throw if userDataDir is passed as an argument', async ({browserType, browserOptions}) => {
+  let waitError = null;
+  const options = Object.assign({}, browserOptions, {args: ['--user-data-dir=random-path', '--profile=random-path']});
+  await browserType.launch(options).catch(e => waitError = e);
+  expect(waitError.message).toContain('Pass userDataDir parameter to `browserType.launchPersistentContext');
+});
+
 it('should throw if port option is passed', async ({browserType, browserOptions}) => {
   const options = Object.assign({}, browserOptions, {port: 1234});
   const error = await browserType.launch(options).catch(e => e);

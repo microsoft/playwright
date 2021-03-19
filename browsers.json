@@ -8,13 +8,16 @@
     },
     {
       "name": "firefox",
-      "revision": "1234",
+      "revision": "1238",
       "download": true
     },
     {
       "name": "webkit",
-      "revision": "1443",
-      "download": true
+      "revision": "1446",
+      "download": true,
+      "revisionOverrides": {
+        "mac10.14": "1443"
+      }
     },
     {
       "name": "ffmpeg",

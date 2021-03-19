@@ -18,7 +18,7 @@
 import { it, expect } from './fixtures';
 import { attachFrame } from './utils';
 
-it('should emulate type', async ({page, server}) => {
+it('should emulate type', async ({page}) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
   await page.emulateMedia({ media: 'print' });
@@ -32,14 +32,14 @@ it('should emulate type', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
 });
 
-it('should throw in case of bad media argument', async ({page, server}) => {
+it('should throw in case of bad media argument', async ({page}) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
   await page.emulateMedia({ media: 'bad'}).catch(e => error = e);
   expect(error.message).toContain('media: expected one of (screen|print|null)');
 });
 
-it('should emulate scheme work', async ({page, server}) => {
+it('should emulate scheme work', async ({page}) => {
   await page.emulateMedia({ colorScheme: 'light' });
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
@@ -48,7 +48,7 @@ it('should emulate scheme work', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
 });
 
-it('should default to light', async ({page, server}) => {
+it('should default to light', async ({page}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
 
@@ -61,7 +61,7 @@ it('should default to light', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
 });
 
-it('should throw in case of bad colorScheme argument', async ({page, server}) => {
+it('should throw in case of bad colorScheme argument', async ({page}) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
   await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);

@@ -107,8 +107,9 @@ it('should restore state from userDataDir', (test, { browserName }) => {
   await browserContext3.close();
 });
 
-it('should restore cookies from userDataDir', (test, { browserName }) => {
+it('should restore cookies from userDataDir', (test, { platform, browserChannel }) => {
   test.slow();
+  test.fixme(platform === 'win32' && browserChannel === 'chrome');
 }, async ({browserType, browserOptions,  server, createUserDataDir}) => {
   const userDataDir = await createUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, browserOptions);
@@ -228,4 +229,13 @@ it('should respect selectors', async ({playwright, launchPersistent}) => {
   await page.setContent(`<div>hello</div>`);
   expect(await page.innerHTML('css=div')).toBe('hello');
   expect(await page.innerHTML('defaultContextCSS=div')).toBe('hello');
+});
+
+it('should connect to a browser with the default page', (test, { mode }) => {
+  test.skip(mode !== 'default');
+}, async ({browserType, browserOptions, createUserDataDir}) => {
+  const options = { ...browserOptions, __testHookOnConnectToBrowser: () => new Promise(f => setTimeout(f, 3000)) };
+  const context = await browserType.launchPersistentContext(await createUserDataDir(), options);
+  expect(context.pages().length).toBe(1);
+  await context.close();
 });

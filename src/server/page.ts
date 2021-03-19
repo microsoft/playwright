@@ -148,6 +148,7 @@ export class Page extends SdkObject {
   readonly selectors: Selectors;
   _video: Video | null = null;
   readonly uniqueId: string;
+  _pageIsError: Error | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext);
@@ -187,7 +188,7 @@ export class Page extends SdkObject {
       // context/browser closure. Just ignore the page.
       if (this._browserContext.isClosingOrClosed())
         return;
-      this._setIsError();
+      this._setIsError(pageOrError);
     }
     this._browserContext.emit(BrowserContext.Events.Page, this);
     const openerDelegate = this._delegate.openerDelegate();
@@ -444,7 +445,8 @@ export class Page extends SdkObject {
       await this._ownedContext.close(metadata);
   }
 
-  private _setIsError() {
+  private _setIsError(error: Error) {
+    this._pageIsError = error;
     if (!this._frameManager.mainFrame())
       this._frameManager.frameAttached('<dummy>', null);
   }
@@ -528,11 +530,11 @@ export class Worker extends SdkObject {
     return this._url;
   }
 
-  async _evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     return js.evaluateExpression(await this._executionContextPromise, true /* returnByValue */, expression, isFunction, arg);
   }
 
-  async _evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     return js.evaluateExpression(await this._executionContextPromise, false /* returnByValue */, expression, isFunction, arg);
   }
 }
@@ -563,17 +565,17 @@ export class PageBinding {
       const binding = page.getBinding(name, context.world)!;
       let result: any;
       if (binding.needsHandle) {
-        const handle = await context.evaluateHandleInternal(takeHandle, { name, seq }).catch(e => null);
+        const handle = await context.evaluateHandle(takeHandle, { name, seq }).catch(e => null);
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
       } else {
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       }
-      context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
+      context.evaluate(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
       if (isError(error))
-        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
+        context.evaluate(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
       else
-        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
+        context.evaluate(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
 
     function takeHandle(arg: { name: string, seq: number }) {

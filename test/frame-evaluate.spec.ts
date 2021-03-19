@@ -67,9 +67,9 @@ it('should dispose context on cross-origin navigation', (test, { mode }) => {
 it('should execute after cross-site navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const mainFrame = page.mainFrame();
-  expect(await mainFrame.evaluate(() => window.location.href)).toContain('localhost');
+  expect(await mainFrame.evaluate(() => window.location.href)).toContain(server.EMPTY_PAGE);
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-  expect(await mainFrame.evaluate(() => window.location.href)).toContain('127');
+  expect(await mainFrame.evaluate(() => window.location.href)).toContain(server.CROSS_PROCESS_PREFIX);
 });
 
 it('should not allow cross-frame js handles', async ({ page, server }) => {

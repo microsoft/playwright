@@ -16,6 +16,7 @@
 
 .snapshot-tab {
   display: flex;
+  flex: auto;
   flex-direction: column;
   align-items: stretch;
 }
@@ -25,11 +26,18 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  padding: 10px 4px 0 0;
 }
 
 .snapshot-toggle {
-  padding: 5px 10px;
+  padding: 4px 8px;
   cursor: pointer;
+  border-radius: 20px;
+  margin-left: 4px;
+}
+
+.snapshot-toggle:hover {
+  background-color: #ededed;
 }
 
 .snapshot-toggle.toggled {
@@ -39,12 +47,13 @@
 .snapshot-wrapper {
   flex: auto;
   margin: 1px;
+  padding: 10px;
 }
 
 .snapshot-container {
   display: block;
   background: white;
-  outline: 1px solid #aaa;
+  box-shadow: rgb(0 0 0 / 15%) 0px 0.1em 4.5em;
 }
 
 iframe#snapshot {

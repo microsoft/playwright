@@ -31,9 +31,10 @@ import * as consoleApiSource from '../../generated/consoleApiSource';
 import { RecorderApp } from './recorder/recorderApp';
 import { CallMetadata, internalCallMetadata, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
-import { CallLog, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
+import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
 import { isUnderTest, monotonicTime } from '../../utils/utils';
 import { InMemorySnapshotter } from '../snapshot/inMemorySnapshotter';
+import { metadataToCallLog } from './recorder/recorderUtils';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -56,7 +57,7 @@ export class RecorderSupplement {
   private _recorderSources: Source[];
   private _userSources = new Map<string, Source>();
   private _snapshotter: InMemorySnapshotter;
-  private _hoveredSnapshot: { callLogId: number, phase: 'before' | 'after' | 'in' } | undefined;
+  private _hoveredSnapshot: { callLogId: number, phase: 'before' | 'after' | 'action' } | undefined;
   private _snapshots = new Set<string>();
   private _allMetadatas = new Map<number, CallMetadata>();
 
@@ -209,7 +210,7 @@ export class RecorderSupplement {
       if (this._hoveredSnapshot) {
         const metadata = this._allMetadatas.get(this._hoveredSnapshot.callLogId)!;
         snapshotUrl = `${metadata.pageId}?name=${this._hoveredSnapshot.phase}@${this._hoveredSnapshot.callLogId}`;
-        actionPoint = this._hoveredSnapshot.phase === 'in' ? metadata?.point : undefined;
+        actionPoint = this._hoveredSnapshot.phase === 'action' ? metadata?.point : undefined;
       } else {
         for (const [metadata, sdkObject] of this._currentCallsMetadata) {
           if (source.page === sdkObject.attribution.page) {
@@ -283,7 +284,7 @@ export class RecorderSupplement {
 
   private _refreshOverlay() {
     for (const page of this._context.pages())
-      page.mainFrame()._evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'main').catch(() => {});
+      page.mainFrame().evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'main').catch(() => {});
   }
 
   private async _onPage(page: Page) {
@@ -401,7 +402,7 @@ export class RecorderSupplement {
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: String(++this._lastDialogOrdinal) });
   }
 
-  _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'in') {
+  _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'action') {
     if (sdkObject.attribution.page) {
       const snapshotName = `${phase}@${metadata.id}`;
       this._snapshots.add(snapshotName);
@@ -428,7 +429,7 @@ export class RecorderSupplement {
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
-    await this._captureSnapshot(sdkObject, metadata, 'after');
+    this._captureSnapshot(sdkObject, metadata, 'after');
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._pausedCallsMetadata.delete(metadata);
@@ -473,49 +474,24 @@ export class RecorderSupplement {
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
-    await this._captureSnapshot(sdkObject, metadata, 'in');
+    this._captureSnapshot(sdkObject, metadata, 'action');
     if (this._pauseOnNextStatement)
       await this.pause(metadata);
   }
 
-  async updateCallLog(metadatas: CallMetadata[]): Promise<void> {
+  updateCallLog(metadatas: CallMetadata[]) {
     if (this._mode === 'recording')
       return;
     const logs: CallLog[] = [];
     for (const metadata of metadatas) {
       if (!metadata.method)
         continue;
-      const title = metadata.apiName || metadata.method;
-      let status: 'done' | 'in-progress' | 'paused' | 'error' = 'done';
+      let status: CallLogStatus = 'done';
       if (this._currentCallsMetadata.has(metadata))
         status = 'in-progress';
       if (this._pausedCallsMetadata.has(metadata))
         status = 'paused';
-      if (metadata.error)
-        status = 'error';
-      const params = {
-        url: metadata.params?.url,
-        selector: metadata.params?.selector,
-      };
-      let duration = metadata.endTime ? metadata.endTime - metadata.startTime : undefined;
-      if (typeof duration === 'number' && metadata.pauseStartTime && metadata.pauseEndTime) {
-        duration -= (metadata.pauseEndTime - metadata.pauseStartTime);
-        duration = Math.max(duration, 0);
-      }
-      logs.push({
-        id: metadata.id,
-        messages: metadata.log,
-        title,
-        status,
-        error: metadata.error,
-        params,
-        duration,
-        snapshots: {
-          before: showBeforeSnapshot(metadata) && this._snapshots.has(`before@${metadata.id}`),
-          in: showInSnapshot(metadata) && this._snapshots.has(`in@${metadata.id}`),
-          after: showAfterSnapshot(metadata) && this._snapshots.has(`after@${metadata.id}`),
-        }
-      });
+      logs.push(metadataToCallLog(metadata, status, this._snapshots));
     }
     this._recorderApp?.updateCallLogs(logs);
   }
@@ -547,16 +523,4 @@ function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolea
 
 function shouldPauseOnStep(sdkObject: SdkObject, metadata: CallMetadata): boolean {
   return metadata.method === 'goto' || metadata.method === 'close';
-}
-
-function showBeforeSnapshot(metadata: CallMetadata): boolean {
-  return metadata.method === 'close';
-}
-
-function showInSnapshot(metadata: CallMetadata): boolean {
-  return ['click', 'dblclick', 'check', 'uncheck', 'fill', 'press'].includes(metadata.method);
-}
-
-function showAfterSnapshot(metadata: CallMetadata): boolean {
-  return ['goto', 'click', 'dblclick', 'dblclick', 'check', 'uncheck', 'fill', 'press'].includes(metadata.method);
 }

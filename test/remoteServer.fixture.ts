@@ -69,11 +69,12 @@ export class RemoteServer {
     this._didExit = false;
 
     this._browserType = browserType;
-    const launchOptions = {...browserOptions,
+    const launchOptions = {
+      ...browserOptions,
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,
-      executablePath: browserOptions.executablePath || browserType.executablePath(),
+      executablePath: browserOptions.channel ? undefined : browserOptions.executablePath || browserType.executablePath(),
       logger: undefined,
     };
     const options = {

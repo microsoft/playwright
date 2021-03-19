@@ -31,6 +31,7 @@ import { Page } from '../client/page';
 import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
+import { installDeps } from '../install/installDeps';
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -82,20 +83,34 @@ program
 program
     .command('install [browserType...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(function(browserType) {
-      const allBrowsers = new Set(['chromium', 'firefox', 'webkit']);
-      for (const type of browserType) {
-        if (!allBrowsers.has(type)) {
-          console.log(`Invalid browser name: '${type}'. Expecting 'chromium', 'firefox' or 'webkit'.`);
-          process.exit(1);
+    .action(async function(browserType) {
+      try {
+        const allBrowsers = new Set(['chromium', 'firefox', 'webkit', 'ffmpeg']);
+        for (const type of browserType) {
+          if (!allBrowsers.has(type)) {
+            console.log(`Invalid browser name: '${type}'. Expecting 'chromium', 'firefox' or 'webkit'.`);
+            process.exit(1);
+          }
         }
-      }
-      if (browserType.length && browserType.includes('chromium'))
-        browserType = browserType.concat('ffmpeg');
-      installBrowsers(browserType.length ? browserType : undefined).catch((e: any) => {
+        if (browserType.length && browserType.includes('chromium'))
+          browserType = browserType.concat('ffmpeg');
+        await installBrowsers(browserType.length ? browserType : undefined);
+      } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
-      });
+      }
+    });
+
+program
+    .command('install-deps [browserType...]')
+    .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
+    .action(async function(browserType) {
+      try {
+        await installDeps(browserType);
+      } catch (e) {
+        console.log(`Failed to install browser dependencies\n${e}`);
+        process.exit(1);
+      }
     });
 
 const browsers = [
@@ -171,6 +186,7 @@ else
 
 type Options = {
   browser: string;
+  channel?: string;
   colorScheme?: string;
   device?: string;
   geolocation?: string;
@@ -194,6 +210,9 @@ async function launchContext(options: Options, headless: boolean): Promise<{ bro
   validateOptions(options);
   const browserType = lookupBrowserType(options);
   const launchOptions: LaunchOptions = { headless };
+  if (options.channel)
+    launchOptions.channel = options.channel;
+
   const contextOptions: BrowserContextOptions =
     // Copy the device descriptor since we have to compare and modify the options.
     options.device ? { ...playwright.devices[options.device] } : {};
@@ -437,6 +456,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
     result = result.option(option[0], ...option.slice(1));
   return result
       .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+      .option('--channel <channel>', 'Chromium distribution channel, "chrome", "chrome-beta", "msedge-dev", etc')
       .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
       .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
       .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')

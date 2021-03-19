@@ -157,4 +157,41 @@ describe('chromium', (suite, { browserName }) => {
       await browserServer.close();
     }
   });
+
+  it('should connect to existing service workers', async ({browserType, testWorkerIndex, browserOptions, server}) => {
+    const port = 9339 + testWorkerIndex;
+    const browserServer = await browserType.launch({
+      ...browserOptions,
+      args: ['--remote-debugging-port=' + port]
+    });
+    try {
+      const json = await new Promise<string>((resolve, reject) => {
+        http.get(`http://localhost:${port}/json/version/`, resp => {
+          let data = '';
+          resp.on('data', chunk => data += chunk);
+          resp.on('end', () => resolve(data));
+        }).on('error', reject);
+      });
+      const cdpBrowser1 = await browserType.connectOverCDP({
+        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+      });
+      const context = cdpBrowser1.contexts()[0] as ChromiumBrowserContext;
+      const page = await cdpBrowser1.contexts()[0].newPage();
+      const [worker] = await Promise.all([
+        context.waitForEvent('serviceworker'),
+        page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+      ]);
+      expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
+      await cdpBrowser1.close();
+
+      const cdpBrowser2 = await browserType.connectOverCDP({
+        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+      });
+      const context2 = cdpBrowser2.contexts()[0] as ChromiumBrowserContext;
+      expect(context2.serviceWorkers().length).toBe(1);
+      await cdpBrowser2.close();
+    } finally {
+      await browserServer.close();
+    }
+  });
 });

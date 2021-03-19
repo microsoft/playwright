@@ -1,58 +1,115 @@
 FROM ubuntu:focal
 
-# === INSTALL BROWSER DEPENDENCIES ===
+# === GENERATED BROWSER DEPENDENCIES ===
 
-# Install WebKit dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libwoff1 \
-    libopus0 \
-    libwebp6 \
-    libwebpdemux2 \
-    libenchant1c2a \
-    libgudev-1.0-0 \
-    libsecret-1-0 \
-    libhyphen0 \
-    libgdk-pixbuf2.0-0 \
-    libegl1 \
-    libnotify4 \
-    libxslt1.1 \
-    libevent-2.1-7 \
-    libgles2 \
-    libxcomposite1 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libepoxy0 \
-    libgtk-3-0 \
-    libharfbuzz-icu0
+# (generated with ./updateDockerDeps.js)
 
-# Install gstreamer and plugins to support video playback in WebKit.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgstreamer-gl1.0-0 \
-    libgstreamer-plugins-bad1.0-0 \
-    gstreamer1.0-plugins-good \
-    gstreamer1.0-libav
-
-# Install Chromium dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    fonts-liberation \
-    libnss3 \
-    libxss1 \
-    libasound2 \
-    fonts-noto-color-emoji \
-    libxtst6
-
-# Install Firefox dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libdbus-glib-1-2 \
-    libxt6
-
-# Install ffmpeg to bring in audio and video codecs necessary for playing videos in Firefox.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg
-
-# (Optional) Install XVFB if there's a need to run browsers in headful mode
+# tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb
+
+# chromium
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-liberation\
+    libasound2\
+    libatk-bridge2.0-0\
+    libatk1.0-0\
+    libatspi2.0-0\
+    libcairo2\
+    libcups2\
+    libdbus-1-3\
+    libdrm2\
+    libgbm1\
+    libglib2.0-0\
+    libgtk-3-0\
+    libnspr4\
+    libnss3\
+    libpango-1.0-0\
+    libx11-6\
+    libxcb1\
+    libxcomposite1\
+    libxdamage1\
+    libxext6\
+    libxfixes3\
+    libxrandr2
+
+# firefox
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg\
+    libatk1.0-0\
+    libcairo-gobject2\
+    libcairo2\
+    libdbus-1-3\
+    libdbus-glib-1-2\
+    libfontconfig1\
+    libfreetype6\
+    libgdk-pixbuf2.0-0\
+    libglib2.0-0\
+    libgtk-3-0\
+    libpango-1.0-0\
+    libpangocairo-1.0-0\
+    libpangoft2-1.0-0\
+    libx11-6\
+    libx11-xcb1\
+    libxcb-shm0\
+    libxcb1\
+    libxcomposite1\
+    libxcursor1\
+    libxdamage1\
+    libxext6\
+    libxfixes3\
+    libxi6\
+    libxrender1\
+    libxt6
+
+# webkit
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gstreamer1.0-libav\
+    gstreamer1.0-plugins-bad\
+    gstreamer1.0-plugins-base\
+    gstreamer1.0-plugins-good\
+    libatk-bridge2.0-0\
+    libatk1.0-0\
+    libcairo2\
+    libegl1\
+    libenchant1c2a\
+    libepoxy0\
+    libfontconfig1\
+    libfreetype6\
+    libgdk-pixbuf2.0-0\
+    libgl1\
+    libgles2\
+    libglib2.0-0\
+    libgstreamer-gl1.0-0\
+    libgstreamer1.0-0\
+    libgtk-3-0\
+    libharfbuzz-icu0\
+    libharfbuzz0b\
+    libhyphen0\
+    libicu66\
+    libjpeg-turbo8\
+    libnotify4\
+    libopenjp2-7\
+    libopus0\
+    libpango-1.0-0\
+    libpng16-16\
+    libsecret-1-0\
+    libsoup2.4-1\
+    libvpx6\
+    libwayland-client0\
+    libwayland-egl1\
+    libwayland-server0\
+    libwebp6\
+    libwebpdemux2\
+    libwoff1\
+    libx11-6\
+    libxcomposite1\
+    libxdamage1\
+    libxkbcommon0\
+    libxml2\
+    libxslt1.1
+
+# === GENERATED BROWSER DEPENDENCIES END ===
 
 # === INSTALL Node.js ===
 

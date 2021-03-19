@@ -415,7 +415,7 @@ describe('screencast', suite => {
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should be 800x450 by default', async ({browser, testInfo}) => {
+  it('should be 800x450 by default', async ({ browser, testInfo }) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),

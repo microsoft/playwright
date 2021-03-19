@@ -51,7 +51,7 @@ export abstract class BrowserType extends SdkObject {
     this._registry = playwrightOptions.registry;
   }
 
-  executablePath(): string {
+  executablePath(options?: types.LaunchOptions): string {
     return this._registry.executablePath(this._name) || '';
   }
 
@@ -104,6 +104,7 @@ export abstract class BrowserType extends SdkObject {
       ...this._playwrightOptions,
       name: this._name,
       isChromium: this._name === 'chromium',
+      channel: options.channel,
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,
@@ -165,7 +166,7 @@ export abstract class BrowserType extends SdkObject {
     else
       browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
 
-    const executable = executablePath || this.executablePath();
+    const executable = executablePath || this.executablePath(options);
     if (!executable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
     if (!(await existsAsync(executable))) {
@@ -176,8 +177,8 @@ export abstract class BrowserType extends SdkObject {
       throw new Error(errorMessageLines.join('\n'));
     }
 
-    if (!executablePath) {
-      // We can only validate dependencies for bundled browsers.
+    if (!executable) {
+      // Only validate dependencies for bundled browsers.
       await validateHostRequirements(this._registry, this._name);
     }
 

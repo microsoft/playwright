@@ -195,9 +195,13 @@ export abstract class BrowserContext extends SdkObject {
     if (!this.pages().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
-      await waitForEvent.promise;
+      const page = (await waitForEvent.promise) as Page;
+      if (page._pageIsError)
+        throw page._pageIsError;
     }
     const pages = this.pages();
+    if (pages[0]._pageIsError)
+      throw pages[0]._pageIsError;
     await pages[0].mainFrame()._waitForLoadState(progress, 'load');
     return pages;
   }
@@ -314,13 +318,14 @@ export abstract class BrowserContext extends SdkObject {
       });
       for (const origin of this._origins) {
         const originStorage: types.OriginStorage = { origin, localStorage: [] };
-        result.origins.push(originStorage);
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage = await frame._evaluateExpression(`({
+        const storage = await frame.evaluateExpression(`({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
         })`, false, undefined, 'utility');
         originStorage.localStorage = storage.localStorage;
+        if (storage.localStorage.length)
+          result.origins.push(originStorage);
       }
       await page.close(internalMetadata);
     }
@@ -339,7 +344,7 @@ export abstract class BrowserContext extends SdkObject {
       for (const originState of state.origins) {
         const frame = page.mainFrame();
         await frame.goto(metadata, originState.origin);
-        await frame._evaluateExpression(`
+        await frame.evaluateExpression(`
           originState => {
             for (const { name, value } of (originState.localStorage || []))
               localStorage.setItem(name, value);

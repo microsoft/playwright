@@ -6357,6 +6357,19 @@ export interface BrowserType<Browser> {
     bypassCSP?: boolean;
 
     /**
+     * Chromium distribution channel, one of
+     * - chrome
+     * - chrome-beta
+     * - chrome-dev
+     * - chrome-canary
+     * - msedge
+     * - msedge-beta
+     * - msedge-dev
+     * - msedge-canary
+     */
+    channel?: string;
+
+    /**
      * Enable Chromium sandboxing. Defaults to `true`.
      */
     chromiumSandbox?: boolean;
@@ -10644,6 +10657,19 @@ export interface LaunchOptions {
    * [here](http://peter.sh/experiments/chromium-command-line-switches/).
    */
   args?: Array<string>;
+
+  /**
+   * Chromium distribution channel, one of
+   * - chrome
+   * - chrome-beta
+   * - chrome-dev
+   * - chrome-canary
+   * - msedge
+   * - msedge-beta
+   * - msedge-dev
+   * - msedge-canary
+   */
+  channel?: string;
 
   /**
    * Enable Chromium sandboxing. Defaults to `false`.

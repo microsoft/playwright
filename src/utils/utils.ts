@@ -16,6 +16,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import removeFolder from 'rimraf';
 import * as util from 'util';
 import * as crypto from 'crypto';
 
@@ -23,6 +24,11 @@ const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
 // See https://joel.tools/microtasks/
 export function makeWaitForNextTask() {
+  // As of Mar 2021, Electorn v12 doesn't create new task with `setImmediate` despite
+  // using Node 14 internally, so we fallback to `setTimeout(0)` instead.
+  // @see https://github.com/electron/electron/issues/28261
+  if (process.versions.electron)
+    return (callback: () => void) => setTimeout(callback, 0);
   if (parseInt(process.versions.node, 10) >= 11)
     return setImmediate;
 
@@ -144,4 +150,28 @@ export function calculateSha1(buffer: Buffer | string): string {
 
 export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
+}
+
+export async function removeFolders(dirs: string[]) {
+  await Promise.all(dirs.map((dir: string) => {
+    return new Promise<void>(fulfill => {
+      removeFolder(dir, { maxBusyTries: 10 }, error => {
+        if (error)
+          console.error(error);  // eslint-disable no-console
+        fulfill();
+      });
+    });
+  }));
+}
+
+export function canAccessFile(file: string) {
+  if (!file)
+    return false;
+
+  try {
+    fs.accessSync(file);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }

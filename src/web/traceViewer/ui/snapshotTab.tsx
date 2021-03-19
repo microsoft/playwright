@@ -51,7 +51,7 @@ export const SnapshotTab: React.FunctionComponent<{
           point = actionEntry.metadata.point;
       }
     }
-    const snapshotUrl = snapshotUri ? `${window.location.origin}/snapshot/${snapshotUri}` : 'data:text/html,Snapshot is not available';
+    const snapshotUrl = snapshotUri ? `${window.location.origin}/snapshot/${snapshotUri}` : 'data:text/html,<body style="background: #ddd"></body>';
     try {
       (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
     } catch (e) {
@@ -59,6 +59,10 @@ export const SnapshotTab: React.FunctionComponent<{
   }, [actionEntry, snapshotIndex, pageId, time]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
+  const scaledSize = {
+    width: snapshotSize.width * scale,
+    height: snapshotSize.height * scale,
+  };
   return <div className='snapshot-tab'>
     <div className='snapshot-controls'>{
       selection && <div key='selectedTime' className='snapshot-toggle'>
@@ -77,7 +81,7 @@ export const SnapshotTab: React.FunctionComponent<{
       <div className='snapshot-container' style={{
         width: snapshotSize.width + 'px',
         height: snapshotSize.height + 'px',
-        transform: `translate(${-snapshotSize.width * (1 - scale) / 2}px, ${-snapshotSize.height * (1 - scale) / 2}px) scale(${scale})`,
+        transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
       }}>
         <iframe ref={iframeRef} id='snapshot' name='snapshot' src='/snapshot/'></iframe>
       </div>

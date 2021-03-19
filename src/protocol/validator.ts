@@ -154,6 +154,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     contentScript: tOptional(tBoolean),
   });
   scheme.BrowserTypeLaunchParams = tObject({
+    channel: tOptional(tString),
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
@@ -177,6 +178,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
+    channel: tOptional(tString),
     userDataDir: tString,
     sdkLanguage: tString,
     executablePath: tOptional(tString),

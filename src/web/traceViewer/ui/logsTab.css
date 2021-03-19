@@ -16,14 +16,15 @@
 
 .logs-tab {
   flex: auto;
-  position: relative;
+  line-height: 20px;
+  white-space: pre;
   overflow: auto;
-  background: #fdfcfc;
-  font-family: var(--monospace-font);
-  white-space: nowrap;
+  padding-top: 3px;
 }
 
 .log-line {
-  margin: 0 10px;
-  white-space: pre;
+  flex: none;
+  padding: 3px 0 3px 12px;
+  display: flex;
+  align-items: center;
 }

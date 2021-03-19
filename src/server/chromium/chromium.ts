@@ -31,6 +31,7 @@ import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
+import { findChromiumChannel } from './findChromiumChannel';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -40,6 +41,12 @@ export class Chromium extends BrowserType {
 
     if (isDebugMode())
       this._devtools = this._createDevTools();
+  }
+
+  executablePath(options?: types.LaunchOptions): string {
+    if (options?.channel)
+      return findChromiumChannel(options.channel);
+    return super.executablePath(options);
   }
 
   async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number) {
@@ -112,7 +119,7 @@ export class Chromium extends BrowserType {
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
+      throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --user-data-dir argument');
     if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))

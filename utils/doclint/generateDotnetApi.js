@@ -364,7 +364,7 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
 function renderMethod(member, parent, output, name) {
   const typeResolve = (type) => translateType(type, parent, (t) => {
     let newName = `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
-    documentedResults.set(newName, `Result of calling <see cref="${translateMemberName("interface", parent.name)}.${translateMemberName(member.kind, member.name, member)}" />.`);
+    documentedResults.set(newName, `Result of calling <see cref="${translateMemberName("interface", parent.name)}.${translateMemberName(member.kind, member.name, member)}"/>.`);
     return newName;
   });
 
@@ -466,8 +466,8 @@ function renderMethod(member, parent, output, name) {
 
     if (arg.type.expression === '[string]|[path]') {
       let argName = translateMemberName('argument', arg.name, null);
-      pushArg("string", argName, arg);
-      pushArg("string", `${argName}Path`, arg);
+      pushArg("string", `${argName} = null`, arg);
+      pushArg("string", `${argName}Path = null`, arg);
       if (arg.spec) {
         addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
         addParamsDoc(`${argName}Path`, [`Instead of specifying <paramref name="${argName}"/>, gives the file name to load from.`]);
@@ -518,7 +518,9 @@ function renderMethod(member, parent, output, name) {
     pushArg(argType, argName, arg);
   };
 
-  member.args.forEach(parseArg);
+  member.argsArray
+    .sort((a, b) =>  b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
+    .forEach(parseArg);
 
   output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
   paramDocs.forEach((val, ind) => {
@@ -686,6 +688,13 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
 
       return `Func<${argsList}, ${returnType}>`;
     }
+  }
+
+  if (type.templates) {
+    // this should mean we have a generic type and we can translate that
+    /** @type {string[]} */
+    var types = type.templates.map(template => translateType(template, parent));
+    return `${type.name}<${types.join(', ')}>`
   }
 
   // there's a chance this is a name we've already seen before, so check

@@ -37,7 +37,7 @@ page.click("button")
 
 As a result, following snippet will never resolve:
 
-:::warn
+:::warning
 WRONG!
 :::
 
@@ -67,7 +67,7 @@ If there is no listener for [`event: Page.dialog`], all dialogs are automaticall
 
 ### API reference
 
-- [`Dialog`]
+- [Dialog]
 - [`method: Dialog.accept`]
 - [`method: Dialog.dismiss`]
 

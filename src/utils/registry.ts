@@ -31,6 +31,7 @@ type BrowserDescriptor = {
   name: BrowserName,
   revision: string,
   download: boolean,
+  browserDirectory: string,
 };
 
 const EXECUTABLE_PATHS = {
@@ -107,7 +108,7 @@ const DOWNLOAD_URLS = {
     'ubuntu18.04': '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip',
     'ubuntu20.04': '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip',
     'mac10.13': undefined,
-    'mac10.14': '%s/builds/webkit/%s/webkit-mac-10.14.zip',
+    'mac10.14': '%s/builds/deprecated-webkit-mac-10.14/%s/deprecated-webkit-mac-10.14.zip',
     'mac10.15': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
     'mac11': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
     'mac11-arm64': '%s/builds/webkit/%s/webkit-mac-11.0-arm64.zip',
@@ -203,13 +204,24 @@ export class Registry {
 
   constructor(packagePath: string) {
     const browsersJSON = JSON.parse(fs.readFileSync(path.join(packagePath, 'browsers.json'), 'utf8'));
-    this._descriptors = browsersJSON['browsers'];
+    this._descriptors = browsersJSON['browsers'].map((obj: any) => {
+      const name = obj.name;
+      const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
+      const revision = revisionOverride || obj.revision;
+      const browserDirectory = revisionOverride ? `${name}-${hostPlatform}-special-${revision}` : `${name}-${revision}`;
+      return {
+        name,
+        revision,
+        download: obj.download,
+        browserDirectory,
+      };
+    });
   }
 
   browserDirectory(browserName: BrowserName): string {
     const browser = this._descriptors.find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
-    return path.join(registryDirectory, `${browser.name}-${browser.revision}`);
+    return path.join(registryDirectory, browser.browserDirectory);
   }
 
   revision(browserName: BrowserName): number {

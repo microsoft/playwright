@@ -1,3 +1,16 @@
+- [Contributing Browser Patches](#Contributing-browser-patches)
+    * [1. Setting up local browser checkout](#1-setting-up-local-browser-checkout)
+    * [2. Developing a new change](#2-developing-a-new-change)
+    * [3. Exporting your change to playwright repo](#3-exporting-your-change-to-playwright-repo)
+    * [4. Rolling Playwright to the new browser build](#4-rolling-playwright-to-the-new-browser-build)
+- [Cheatsheet](#cheatsheet)
+    * [Firefox](#firefox)
+        - [stack trace](#stack-trace)
+        - [logging](#logging)
+    * [WebKit](#webkit)
+        - [Debugging Windows](#degugging-windows)
+        - [Enable core dumps on Linux](#enable-core-dumps-on-linux)
+
 # Contributing Browser Patches
 
 Firefox and WebKit have additional patches atop to expose necessary capabilities.
@@ -62,4 +75,68 @@ Once the patch has been committed, the build bots will kick in, compile and uplo
 
 ```sh
 $ node utils/roll_browser.js chromium 123456
+```
+
+# Cheatsheet
+
+## FireFox
+
+#### Stack trace
+
+In `//mozglue/misc/StackWalk.cpp` add
+
+```c++
+#define MOZ_DEMANGLE_SYMBOLS 1
+```
+
+In native code use
+
+```c++
+nsTraceRefcnt::WalkTheStack(stderr);
+```
+
+If the stack trace is still mangled `cat` it to `tools/rb/fix_linux_stack.py`
+
+#### Logging
+
+Upstream documentation: https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Gecko_Logging
+
+```bash
+MOZ_LOG=nsHttp:5
+```
+
+Module name is a string passed to the `mozilla::LazyLogModule` of the corresponding component, e.g.:
+
+```c++
+LazyLogModule gHttpLog("nsHttp");
+```
+
+## WebKit
+
+#### Debugging windows
+
+In `Source\WTF\wtf\win\DbgHelperWin.cpp` replace
+
+```#if !defined(NDEBUG)``` with ```#if 1```
+
+Then regular `WTFReportBacktrace()` works.
+
+#### Enable core dumps on Linux
+
+```bash
+mkdir -p /tmp/coredumps
+sudo bash -c 'echo "/tmp/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
+ulimit -c unlimited
+```
+
+Then to read stack traces run the following command:
+```bash
+# To find out crashing process name
+file core-pid_29652.dump
+# Point gdb to the local binary of the crashed process and the core file
+gdb $HOME/.cache/ms-playwright/webkit-1292/minibrowser-gtk/WebKitWebProcess core-pid_29652
+# Inside gdb update .so library search path to the local one
+set solib-search-path /home/yurys/.cache/ms-playwright/webkit-1292/minibrowser-gtk
+# Finally print backtrace
+bt
 ```

@@ -185,7 +185,7 @@ export class Snapshotter {
 
 async function setIntervalInFrame(frame: Frame, interval: number) {
   const context = frame._existingMainContext();
-  await context?.evaluateInternal(({ kSnapshotStreamer, interval }) => {
+  await context?.evaluate(({ kSnapshotStreamer, interval }) => {
     (window as any)[kSnapshotStreamer].setSnapshotInterval(interval);
   }, { kSnapshotStreamer, interval }).catch(debugExceptionHandler);
 }
@@ -197,7 +197,7 @@ async function annotateFrameHierarchy(frame: Frame) {
     if (!parent)
       return;
     const context = await parent._mainContext();
-    await context?.evaluateInternal(({ kSnapshotStreamer, frameElement, frameId }) => {
+    await context?.evaluate(({ kSnapshotStreamer, frameElement, frameId }) => {
       (window as any)[kSnapshotStreamer].markIframe(frameElement, frameId);
     }, { kSnapshotStreamer, frameElement, frameId: frame.uniqueId });
     frameElement.dispose();

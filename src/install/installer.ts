@@ -17,11 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
-import removeFolder from 'rimraf';
 import lockfile from 'proper-lockfile';
 import {Registry, allBrowserNames, isBrowserDirectory, BrowserName, registryDirectory} from '../utils/registry';
 import * as browserFetcher from './browserFetcher';
-import { getAsBooleanFromENV, calculateSha1 } from '../utils/utils';
+import { getAsBooleanFromENV, calculateSha1, removeFolders } from '../utils/utils';
 
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
@@ -29,7 +28,6 @@ const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 const fsExistsAsync = (filePath: string) => fsReadFileAsync(filePath).then(() => true).catch(e => false);
 const fsUnlinkAsync = util.promisify(fs.unlink.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-const removeFolderAsync = util.promisify(removeFolder);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
@@ -95,14 +93,15 @@ async function validateCache(linksDir: string, browserNames: BrowserName[]) {
   }
 
   // 2. Delete all unused browsers.
-  let downloadedBrowsers = (await fsReaddirAsync(registryDirectory)).map(file => path.join(registryDirectory, file));
-  downloadedBrowsers = downloadedBrowsers.filter(file => isBrowserDirectory(file));
-  const directories = new Set<string>(downloadedBrowsers);
-  for (const browserDirectory of usedBrowserPaths)
-    directories.delete(browserDirectory);
-  for (const directory of directories) {
-    browserFetcher.logPolitely('Removing unused browser at ' + directory);
-    await removeFolderAsync(directory).catch(e => {});
+  if (!getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC')) {
+    let downloadedBrowsers = (await fsReaddirAsync(registryDirectory)).map(file => path.join(registryDirectory, file));
+    downloadedBrowsers = downloadedBrowsers.filter(file => isBrowserDirectory(file));
+    const directories = new Set<string>(downloadedBrowsers);
+    for (const browserDirectory of usedBrowserPaths)
+      directories.delete(browserDirectory);
+    for (const directory of directories)
+      browserFetcher.logPolitely('Removing unused browser at ' + directory);
+    await removeFolders([...directories]);
   }
 
   // 3. Install missing browsers for this package.

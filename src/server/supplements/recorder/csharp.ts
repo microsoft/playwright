@@ -134,7 +134,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     formatter.add(`
       await Playwright.InstallAsync();
       using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatArgs(options.launchOptions)});
+      await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatArgs(options.launchOptions)}
+      );
       var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
     return formatter.format();
   }
@@ -178,10 +179,7 @@ function formatArgs(value: any, indent = '    '): string {
     const tokens: string[] = [];
     for (const key of keys)
       tokens.push(`${keys.length !==  1 ? indent : ''}${key}: ${formatObject(value[key], indent, key)}`);
-    if (keys.length === 1)
-      return `${tokens.join(`,\n${indent}`)}`;
-    else
-      return `\n${indent}${tokens.join(`,\n${indent}`)}`;
+    return `\n${indent}${tokens.join(`,\n${indent}`)}`;
   }
   return String(value);
 }
@@ -271,7 +269,7 @@ class CSharpFormatter {
     return this._lines.map((line: string) => {
       if (line === '')
         return line;
-      if (line.startsWith('}') || line.startsWith(']') || line.includes('});'))
+      if (line.startsWith('}') || line.startsWith(']') || line.includes('});') || line === ');')
         spaces = spaces.substring(this._baseIndent.length);
 
       const extraSpaces = /^(for|while|if).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
