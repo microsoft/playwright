@@ -278,9 +278,8 @@ Documentation.Member = class {
    * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
    * @param {string[]=} templates
-   * @param {number} order
    */
-  constructor(kind, langs, name, type, argsArray, spec = undefined, required = true, templates = [], order = null) {
+  constructor(kind, langs, name, type, argsArray, spec = undefined, required = true, templates = []) {
     this.kind = kind;
     this.langs = langs;
     this.name = name;
@@ -289,7 +288,6 @@ Documentation.Member = class {
     this.argsArray = argsArray;
     this.required = required;
     this.comment =  '';
-    this.order = order;
     /** @type {!Map<string, !Documentation.Member>} */
     this.args = new Map();
     this.index();
@@ -316,11 +314,7 @@ Documentation.Member = class {
       this.args.set(arg.name, arg);
       arg.enclosingMethod = this;
       if (arg.name === 'options') {
-        arg.type.properties.forEach((p,i) => {
-          p.enclosingMethod = this,
-          p.order = p.order || i + 1;
-        });
-        arg.type.properties.sort((p1, p2) => p1.name.localeCompare(p2.name));
+        arg.type.properties.forEach((p) => p.enclosingMethod = this );
       }
     }
   }
@@ -503,6 +497,17 @@ Documentation.Type = class {
         return type.properties;
     }
     return [];
+  }
+
+  /**
+    * @returns {Documentation.Member[]}
+  */
+  sortedProperties() {
+    if (!this.properties)
+      return this.properties;
+    const sortedProperties = [...this.properties];
+    sortedProperties.sort((p1, p2) => p1.name.localeCompare(p2.name));
+    return sortedProperties;
   }
 
   /**

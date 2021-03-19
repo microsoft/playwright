@@ -452,7 +452,6 @@ function renderMethod(member, parent, output, name) {
    * @param {Documentation.Member} argument 
    */
   const pushArg = (innerArgType, innerArgName, argument) => {
-    let isEnum = enumTypes.has(innerArgType);
     let isNullable = ['int', 'bool', 'decimal', 'float'].includes(innerArgType);
     const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
     const requiredSuffix = argument.required ? "" : " = default";
@@ -461,9 +460,7 @@ function renderMethod(member, parent, output, name) {
 
   let parseArg = (/** @type {Documentation.Member} */ arg) => {
     if (arg.name === "options") {
-      arg.type.properties
-        .sort((a, b) => a.order - b.order)
-        .forEach(parseArg);
+      arg.type.properties.forEach(parseArg);
       return;
     }
 
