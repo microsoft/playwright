@@ -34,6 +34,8 @@ const additionalTypes = new Map(); // this will hold types that we discover, bec
 const documentedResults = new Map(); // will hold documentation for new types
 /** @type {Map<string, string[]>} */
 const enumTypes = new Map();
+/** @type {string[]} */
+const nullableTypes = ['int', 'bool', 'decimal', 'float'];
 
 let documentation;
 /** @type {Map<string, string>} */
@@ -265,6 +267,7 @@ function renderMember(member, parent, out) {
   if (member.kind === 'method') {
     renderMethod(member, parent, output, name);
   } else {
+    /** @type string */
     let type = translateType(member.type, parent, t => generateNameDefault(member, name, t, parent));
     if (member.kind === 'event') {
       if (!member.type)
@@ -286,6 +289,9 @@ function renderMember(member, parent, out) {
         console.warn(`children property found in ${parent.name}, assuming array.`);
         type = `IEnumerable<${parent.name}>`;
       }
+
+      if(!type.endsWith('?') && !member.required && nullableTypes.includes(type))
+        type = `${type}?`;
       output(`public ${type} ${name} { get; set; }`);
     } else {
       throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
@@ -453,7 +459,7 @@ function renderMethod(member, parent, output, name) {
    */
   const pushArg = (innerArgType, innerArgName, argument) => {
     let isEnum = enumTypes.has(innerArgType);
-    let isNullable = ['int', 'bool', 'decimal', 'float'].includes(innerArgType);
+    let isNullable = nullableTypes.includes(innerArgType);
     const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
     const requiredSuffix = argument.required ? "" : " = default";
     args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);
