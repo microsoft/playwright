@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should work with function', async ({page}) => {
   const windowHandle = await page.evaluateHandle(() => {

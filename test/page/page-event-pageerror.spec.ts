@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should fire', async ({page, server, isWebKit}) => {
   const [error] = await Promise.all([

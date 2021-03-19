@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe } from './fixtures';
+import { it, expect, describe } from '../fixtures';
 import * as os from 'os';
 
 function crash(page, toImpl, browserName) {

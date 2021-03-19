@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
-import type { ElementHandle } from '..';
+import { it, expect } from '../fixtures';
+import type { ElementHandle } from '../..';
 
 it('should work', async ({page}) => {
   const aHandle = await page.evaluateHandle(() => ({
