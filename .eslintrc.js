@@ -4,6 +4,12 @@ module.exports = {
     parserOptions: {
       ecmaVersion: 9,
       sourceType: 'module',
+      project: [
+        'src/install/tsconfig.json',
+        'test/tsconfig.json',
+        'tsconfig.json',
+        'utils/generate_types/test/tsconfig.json',
+      ],
     },
     extends: [
       'plugin:react-hooks/recommended'
@@ -69,6 +75,7 @@ module.exports = {
         "valid-typeof": 2,
         "no-implicit-globals": [2],
         "no-unused-expressions": [2, { "allowShortCircuit": true, "allowTernary": true, "allowTaggedTemplates": true}],
+        "@typescript-eslint/no-floating-promises": 2,
 
         // es2015 features
         "require-yield": 2,

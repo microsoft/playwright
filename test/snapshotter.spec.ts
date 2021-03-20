@@ -176,7 +176,7 @@ describe('snapshots', (suite, { mode }) => {
     expect(await button.textContent()).toBe('Hello iframe');
   });
 
-  it('should capture snapshot target', async ({ snapshotter, page, toImpl }) => {
+  it.only('should capture snapshot target', async ({ snapshotter, page, toImpl }) => {
     await page.setContent('<button>Hello</button><button>World</button>');
     {
       const handle = await page.$('text=Hello');
