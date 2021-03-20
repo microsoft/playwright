@@ -82,7 +82,7 @@ export class ProgressController {
         if (this._state === 'running')
           this._cleanups.push(cleanup);
         else
-          cleanup();
+          runCleanup(cleanup);
       },
       throwIfAborted: () => {
         if (this._state === 'aborted')

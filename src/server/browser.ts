@@ -89,7 +89,7 @@ export abstract class Browser extends SdkObject {
     const download = this._downloads.get(uuid);
     if (!download)
       return;
-    download._reportFinished(error).catch(e => {});
+    download._reportFinished(error);
     this._downloads.delete(uuid);
   }
 
@@ -100,13 +100,13 @@ export abstract class Browser extends SdkObject {
     pageOrError.then(pageOrError => {
       if (pageOrError instanceof Page)
         pageOrError.videoStarted(video);
-    }, e => {});
+    });
   }
 
   _videoFinished(videoId: string) {
     const video = this._idToVideo.get(videoId)!;
     this._idToVideo.delete(videoId);
-    video._finish().catch(e => {});
+    video._finish();
   }
 
   _didClose() {

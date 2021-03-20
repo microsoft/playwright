@@ -90,7 +90,7 @@ class JSCoverage {
   }
 
   _onDebuggerPaused() {
-    this._client.send('Debugger.resume').catch(() => {});
+    this._client.send('Debugger.resume');
   }
 
   _onExecutionContextsCleared() {
@@ -106,7 +106,7 @@ class JSCoverage {
     if (!event.url && !this._reportAnonymousScripts)
       return;
     // This might fail if the page has already navigated away.
-    const response = await this._client.send('Debugger.getScriptSource', {scriptId: event.scriptId}).catch(e => null);
+    const response = await this._client._sendMayFail('Debugger.getScriptSource', {scriptId: event.scriptId});
     if (response)
       this._scriptSources.set(event.scriptId, response.scriptSource);
   }
@@ -186,7 +186,7 @@ class CSSCoverage {
     if (!header.sourceURL)
       return;
     // This might fail if the page has already navigated away.
-    const response = await this._client.send('CSS.getStyleSheetText', {styleSheetId: header.styleSheetId}).catch(e => null);
+    const response = await this._client._sendMayFail('CSS.getStyleSheetText', {styleSheetId: header.styleSheetId});
     if (response) {
       this._stylesheetURLs.set(header.styleSheetId, header.sourceURL);
       this._stylesheetSources.set(header.styleSheetId, response.text);

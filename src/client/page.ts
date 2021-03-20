@@ -239,12 +239,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-    this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(e => {});
+    this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
   }
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout }).catch(e => {});
+    this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
   video(): Video | null {
@@ -617,14 +617,14 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   on(event: string | symbol, listener: Listener): this {
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
-      this._channel.setFileChooserInterceptedNoReply({ intercepted: true }).catch(e => {});
+      this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
     super.on(event, listener);
     return this;
   }
 
   addListener(event: string | symbol, listener: Listener): this {
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
-      this._channel.setFileChooserInterceptedNoReply({ intercepted: true }).catch(e => {});
+      this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
     super.addListener(event, listener);
     return this;
   }
@@ -632,14 +632,14 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   off(event: string | symbol, listener: Listener): this {
     super.off(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
-      this._channel.setFileChooserInterceptedNoReply({ intercepted: false }).catch(e => {});
+      this._channel.setFileChooserInterceptedNoReply({ intercepted: false });
     return this;
   }
 
   removeListener(event: string | symbol, listener: Listener): this {
     super.removeListener(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
-      this._channel.setFileChooserInterceptedNoReply({ intercepted: false }).catch(e => {});
+      this._channel.setFileChooserInterceptedNoReply({ intercepted: false });
     return this;
   }
 

@@ -33,7 +33,7 @@ export class CRDevTools {
     this._savePromise = Promise.resolve();
   }
 
-  async install(session: CRSession) {
+  install(session: CRSession) {
     session.on('Runtime.bindingCalled', async event => {
       if (event.name !== kBindingName)
         return;
@@ -66,7 +66,7 @@ export class CRDevTools {
         contextId: event.executionContextId
       }).catch(e => null);
     });
-    await Promise.all([
+    Promise.all([
       session.send('Runtime.enable'),
       session.send('Runtime.addBinding', { name: kBindingName }),
       session.send('Page.enable'),

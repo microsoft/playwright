@@ -92,12 +92,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
 
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-    this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(e => {});
+    this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
   }
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout }).catch(e => {});
+    this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
   browser(): Browser | null {

@@ -181,7 +181,7 @@ export class RecorderSupplement {
 
     this._context.on(BrowserContext.Events.Page, page => this._onPage(page));
     for (const page of this._context.pages())
-      this._onPage(page).catch(e => {});
+      this._onPage(page);
 
     this._context.once(BrowserContext.Events.Close, () => {
       for (const timer of this._timers)
@@ -235,7 +235,7 @@ export class RecorderSupplement {
     });
 
     await this._context.exposeBinding('_playwrightResume', false, () => {
-      this._resume(false);
+      this._resume(false).catch(() => {});
     });
 
     const snapshotBaseUrl = await this._snapshotter.initialize() + '/snapshot/';
@@ -267,7 +267,7 @@ export class RecorderSupplement {
       this._context.pages()[0].bringToFront().catch(() => {});
   }
 
-  private _resume(step: boolean) {
+  private async _resume(step: boolean) {
     this._pauseOnNextStatement = step;
     this._recorderApp?.setPaused(false);
 
@@ -402,18 +402,18 @@ export class RecorderSupplement {
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: String(++this._lastDialogOrdinal) });
   }
 
-  async _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'action') {
+  _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'action') {
     if (sdkObject.attribution.page) {
       const snapshotName = `${phase}@${metadata.id}`;
       this._snapshots.add(snapshotName);
-      await this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName);
+      this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName);
     }
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
-    await this._captureSnapshot(sdkObject, metadata, 'before');
+    this._captureSnapshot(sdkObject, metadata, 'before');
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._allMetadatas.set(metadata.id, metadata);
     this._updateUserSources();
@@ -429,7 +429,7 @@ export class RecorderSupplement {
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
-    await this._captureSnapshot(sdkObject, metadata, 'after');
+    this._captureSnapshot(sdkObject, metadata, 'after');
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._pausedCallsMetadata.delete(metadata);
@@ -474,7 +474,7 @@ export class RecorderSupplement {
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._mode === 'recording')
       return;
-    await this._captureSnapshot(sdkObject, metadata, 'action');
+    this._captureSnapshot(sdkObject, metadata, 'action');
     if (this._pauseOnNextStatement)
       await this.pause(metadata);
   }
