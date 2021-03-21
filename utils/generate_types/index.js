@@ -330,11 +330,12 @@ function stringifySimpleType(type, indent = '', ...namespace) {
   if (type.name === 'Object' && type.properties && type.properties.length) {
     const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
     const shouldExport = exported[name];
-    objectDefinitions.push({name, properties: type.properties});
+    const properties = namespace[namespace.length -1] === 'options' ? type.sortedProperties() : type.properties;
+    objectDefinitions.push({name, properties: properties});
     if (shouldExport) {
       out = name;
     } else {
-      out = stringifyObjectType(type.properties, name, indent);
+      out = stringifyObjectType(properties, name, indent);
     }
   }
 
