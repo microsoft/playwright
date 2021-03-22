@@ -603,7 +603,8 @@ Browser-specific Coverage implementation, only available for Chromium atm. See
 [ChromiumCoverage](#class-chromiumcoverage) for more details.
 
 ## async method: Page.dblclick
-
+* langs:
+  - alias-csharp: DblClickAsync
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
