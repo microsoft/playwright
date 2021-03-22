@@ -646,11 +646,10 @@ class FrameSession {
     session.once('Runtime.executionContextCreated', async event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));
     });
-    Promise.all([
-      session._sendMayFail('Runtime.enable'),
-      session._sendMayFail('Network.enable'),
-      session._sendMayFail('Runtime.runIfWaitingForDebugger'),
-    ]);  // This might fail if the target is closed before we initialize.
+    // This might fail if the target is closed before we initialize.
+    session._sendMayFail('Runtime.enable');
+    session._sendMayFail('Network.enable');
+    session._sendMayFail('Runtime.runIfWaitingForDebugger');
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));

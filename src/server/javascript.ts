@@ -160,11 +160,11 @@ export class JSHandle<T = any> extends SdkObject {
     return null;
   }
 
-  async dispose() {
+  dispose() {
     if (this._disposed)
       return;
     this._disposed = true;
-    await this._context._delegate.releaseHandle(this);
+    this._context._delegate.releaseHandle(this).catch(e => {});
   }
 
   toString(): string {

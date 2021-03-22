@@ -184,7 +184,7 @@ export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.
   }
 
   async close(params: channels.AndroidSocketCloseParams, metadata: CallMetadata): Promise<void> {
-    await this._object.close();
+    this._object.close();
   }
 }
 

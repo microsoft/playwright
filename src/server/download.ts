@@ -83,7 +83,7 @@ export class Download {
       throw new Error('Download not found on disk. Check download.failure() for details.');
 
     if (this._finished) {
-      saveCallback(path.join(this._downloadsPath, this._uuid));
+      saveCallback(path.join(this._downloadsPath, this._uuid)).catch(e => {});
       return;
     }
     this._saveCallbacks.push(saveCallback);
@@ -117,7 +117,7 @@ export class Download {
       const fileName = path.join(this._downloadsPath, this._uuid);
       await util.promisify(fs.unlink)(fileName).catch(e => {});
     }
-    this._reportFinished('Download deleted upon browser context closure.');
+    await this._reportFinished('Download deleted upon browser context closure.');
   }
 
   async _reportFinished(error?: string) {
@@ -128,7 +128,7 @@ export class Download {
 
     if (error) {
       for (const callback of this._saveCallbacks)
-        callback('', error);
+        await callback('', error);
     } else {
       const fullPath = path.join(this._downloadsPath, this._uuid);
       for (const callback of this._saveCallbacks)

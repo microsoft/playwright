@@ -186,10 +186,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   async _onBinding(bindingCall: BindingCall) {
     const func = this._bindings.get(bindingCall._initializer.name);
     if (func) {
-      bindingCall.call(func);
+      await bindingCall.call(func);
       return;
     }
-    this._browserContext._onBinding(bindingCall);
+    await this._browserContext._onBinding(bindingCall);
   }
 
   _onWorker(worker: Worker): void {

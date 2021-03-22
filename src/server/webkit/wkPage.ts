@@ -113,7 +113,7 @@ export class WKPage implements PageDelegate {
     promises.push(this.updateHttpCredentials());
     if (this._browserContext._permissions.size) {
       for (const [key, value] of this._browserContext._permissions)
-        this._grantPermissions(key, value);
+        promises.push(this._grantPermissions(key, value));
     }
     if (this._browserContext._options.recordVideo) {
       const size = this._browserContext._options.recordVideo.size || this._browserContext._options.viewport || { width: 1280, height: 720 };

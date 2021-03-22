@@ -75,7 +75,7 @@ async function runCommand(command: string, serial?: string): Promise<Buffer> {
   } else {
     commandOutput = await socket.readAll();
   }
-  await socket.close();
+  socket.close();
   return commandOutput;
 }
 
@@ -138,7 +138,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
     await new Promise(f => this._socket.write(data, f));
   }
 
-  async close() {
+  close() {
     if (this._isClosed)
       return;
     debug('pw:adb')('Close ' + this._command);

@@ -209,7 +209,7 @@ class ContextTracer {
   async dispose() {
     this._disposed = true;
     helper.removeEventListeners(this._eventListeners);
-    this._snapshotter.dispose();
+    await this._snapshotter.dispose();
     const event: trace.ContextDestroyedTraceEvent = {
       timestamp: monotonicTime(),
       type: 'context-destroyed',
@@ -219,7 +219,6 @@ class ContextTracer {
 
     // Ensure all writes are finished.
     await this._appendEventChain;
-    await this._snapshotter.dispose();
   }
 
   private _appendTraceEvent(event: any) {

@@ -87,7 +87,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     const func = this._bindings.get(bindingCall._initializer.name);
     if (!func)
       return;
-    bindingCall.call(func);
+    await bindingCall.call(func);
   }
 
   setDefaultNavigationTimeout(timeout: number) {
@@ -238,7 +238,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _onClose() {
+  _onClose() {
     if (this._browser)
       this._browser._contexts.delete(this);
     this.emit(Events.BrowserContext.Close, this);

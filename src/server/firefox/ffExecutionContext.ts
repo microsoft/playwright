@@ -90,7 +90,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     await this._session.send('Runtime.disposeObject', {
       executionContextId: this._executionContextId,
       objectId: handle._objectId,
-    }).catch(error => {});
+    });
   }
 }
 

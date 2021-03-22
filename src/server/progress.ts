@@ -106,7 +106,7 @@ export class ProgressController {
       return result;
     } catch (e) {
       this._state = 'aborted';
-      await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
+      await Promise.all(this._cleanups.splice(0).map(runCleanup));
       throw e;
     } finally {
       clearTimeout(timer);
