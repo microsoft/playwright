@@ -201,7 +201,7 @@ export function isBrowserDirectory(browserDirectory: string): boolean {
   return false;
 }
 
-let currentPackageRegistry : Registry | undefined = undefined;
+let currentPackageRegistry: Registry | undefined = undefined;
 
 export class Registry {
   private _descriptors: BrowserDescriptor[];
@@ -303,7 +303,7 @@ export class Registry {
     return !!browser;
   }
 
-  installByDefault() : BrowserName[] {
+  installByDefault(): BrowserName[] {
     return this._descriptors.filter(browser => browser.installByDefault).map(browser => browser.name);
   }
 }
