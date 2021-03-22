@@ -20,6 +20,11 @@
       }
     },
     {
+      "name": "webkit-technology-preview",
+      "revision": "1443",
+      "installByDefault": false
+    },
+    {
       "name": "ffmpeg",
       "revision": "1005",
       "installByDefault": true

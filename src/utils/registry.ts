@@ -23,8 +23,8 @@ import * as util from 'util';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV } from './utils';
 
-export type BrowserName = 'chromium'|'webkit'|'firefox'|'ffmpeg';
-export const allBrowserNames: BrowserName[] = ['chromium', 'webkit', 'firefox', 'ffmpeg'];
+export type BrowserName = 'chromium'|'webkit'|'firefox'|'ffmpeg'|'webkit-technology-preview';
+export const allBrowserNames: BrowserName[] = ['chromium', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview'];
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
@@ -37,7 +37,7 @@ type BrowserDescriptor = {
 };
 
 const EXECUTABLE_PATHS = {
-  chromium: {
+  'chromium': {
     'ubuntu18.04': ['chrome-linux', 'chrome'],
     'ubuntu20.04': ['chrome-linux', 'chrome'],
     'mac10.13': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
@@ -48,7 +48,7 @@ const EXECUTABLE_PATHS = {
     'win32': ['chrome-win', 'chrome.exe'],
     'win64': ['chrome-win', 'chrome.exe'],
   },
-  firefox: {
+  'firefox': {
     'ubuntu18.04': ['firefox', 'firefox'],
     'ubuntu20.04': ['firefox', 'firefox'],
     'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
@@ -59,7 +59,7 @@ const EXECUTABLE_PATHS = {
     'win32': ['firefox', 'firefox.exe'],
     'win64': ['firefox', 'firefox.exe'],
   },
-  webkit: {
+  'webkit': {
     'ubuntu18.04': ['pw_run.sh'],
     'ubuntu20.04': ['pw_run.sh'],
     'mac10.13': undefined,
@@ -70,7 +70,18 @@ const EXECUTABLE_PATHS = {
     'win32': ['Playwright.exe'],
     'win64': ['Playwright.exe'],
   },
-  ffmpeg: {
+  'webkit-technology-preview': {
+    'ubuntu18.04': ['pw_run.sh'],
+    'ubuntu20.04': ['pw_run.sh'],
+    'mac10.13': undefined,
+    'mac10.14': ['pw_run.sh'],
+    'mac10.15': ['pw_run.sh'],
+    'mac11': ['pw_run.sh'],
+    'mac11-arm64': ['pw_run.sh'],
+    'win32': ['Playwright.exe'],
+    'win64': ['Playwright.exe'],
+  },
+  'ffmpeg': {
     'ubuntu18.04': ['ffmpeg-linux'],
     'ubuntu20.04': ['ffmpeg-linux'],
     'mac10.13': ['ffmpeg-mac'],
@@ -84,7 +95,7 @@ const EXECUTABLE_PATHS = {
 };
 
 const DOWNLOAD_URLS = {
-  chromium: {
+  'chromium': {
     'ubuntu18.04': '%s/builds/chromium/%s/chromium-linux.zip',
     'ubuntu20.04': '%s/builds/chromium/%s/chromium-linux.zip',
     'mac10.13': '%s/builds/chromium/%s/chromium-mac.zip',
@@ -95,7 +106,7 @@ const DOWNLOAD_URLS = {
     'win32': '%s/builds/chromium/%s/chromium-win32.zip',
     'win64': '%s/builds/chromium/%s/chromium-win64.zip',
   },
-  firefox: {
+  'firefox': {
     'ubuntu18.04': '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip',
     'ubuntu20.04': '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip',
     'mac10.13': '%s/builds/firefox/%s/firefox-mac-10.14.zip',
@@ -106,7 +117,7 @@ const DOWNLOAD_URLS = {
     'win32': '%s/builds/firefox/%s/firefox-win32.zip',
     'win64': '%s/builds/firefox/%s/firefox-win64.zip',
   },
-  webkit: {
+  'webkit': {
     'ubuntu18.04': '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip',
     'ubuntu20.04': '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip',
     'mac10.13': undefined,
@@ -117,7 +128,18 @@ const DOWNLOAD_URLS = {
     'win32': '%s/builds/webkit/%s/webkit-win64.zip',
     'win64': '%s/builds/webkit/%s/webkit-win64.zip',
   },
-  ffmpeg: {
+  'webkit-technology-preview': {
+    'ubuntu18.04': '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip',
+    'ubuntu20.04': '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip',
+    'mac10.13': undefined,
+    'mac10.14': undefined,
+    'mac10.15': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
+    'mac11': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
+    'mac11-arm64': '%s/builds/webkit/%s/webkit-mac-11.0-arm64.zip',
+    'win32': '%s/builds/webkit/%s/webkit-win64.zip',
+    'win64': '%s/builds/webkit/%s/webkit-win64.zip',
+  },
+  'ffmpeg': {
     'ubuntu18.04': '%s/builds/ffmpeg/%s/ffmpeg-linux.zip',
     'ubuntu20.04': '%s/builds/ffmpeg/%s/ffmpeg-linux.zip',
     'mac10.13': '%s/builds/ffmpeg/%s/ffmpeg-mac.zip',
@@ -218,12 +240,17 @@ export class Registry {
       const name = obj.name;
       const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
       const revision = revisionOverride || obj.revision;
-      const browserDirectory = revisionOverride ? `${name}-${hostPlatform}-special-${revision}` : `${name}-${revision}`;
+      const browserDirectoryPrefix = revisionOverride ? `${name}_${hostPlatform}_special` : `${name}`;
       return {
         name,
         revision,
         installByDefault: !!obj.installByDefault,
-        browserDirectory,
+        // Method `isBrowserDirectory` determines directory to be browser iff
+        // it starts with some browser name followed by '-'. Some browser names
+        // are prefixes of others, e.g. 'webkit' is a prefix of `webkit-technology-preview`.
+        // To avoid older registries erroneously removing 'webkit-technology-preview', we have to
+        // ensure that browser folders to never include dashes inside.
+        browserDirectory: browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision,
       };
     });
   }
@@ -280,10 +307,11 @@ export class Registry {
     const browser = this._descriptors.find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
     const envDownloadHost: { [key: string]: string } = {
-      chromium: 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
-      firefox: 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
-      webkit: 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
-      ffmpeg: 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST',
+      'chromium': 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
+      'firefox': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
+      'webkit': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
+      'webkit-technology-preview': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
+      'ffmpeg': 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST',
     };
     const downloadHost = getFromENV(envDownloadHost[browserName]) ||
                          getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||

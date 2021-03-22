@@ -32,6 +32,7 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { installDeps } from '../install/installDeps';
+import { allBrowserNames } from '../utils/registry';
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -85,10 +86,10 @@ program
     .description('ensure browsers necessary for this version of Playwright are installed')
     .action(async function(browserType) {
       try {
-        const allBrowsers = new Set(['chromium', 'firefox', 'webkit', 'ffmpeg']);
+        const allBrowsers = new Set(allBrowserNames);
         for (const type of browserType) {
           if (!allBrowsers.has(type)) {
-            console.log(`Invalid browser name: '${type}'. Expecting 'chromium', 'firefox' or 'webkit'.`);
+            console.log(`Invalid browser name: '${type}'. Expecting one of: ${allBrowserNames.map(name => `'${name}'`).join(', ')}`);
             process.exit(1);
           }
         }
