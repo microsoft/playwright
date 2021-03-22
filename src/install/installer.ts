@@ -31,7 +31,7 @@ const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
-export async function installBrowsersWithProgressBar(browserNames: BrowserName[] = allBrowserNames) {
+export async function installBrowsersWithProgressBar(browserNames: BrowserName[] = Registry.currentPackageRegistry().installByDefault()) {
   // PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should have a value of 0 or 1
   if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
     browserFetcher.logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
@@ -74,7 +74,7 @@ async function validateCache(linksDir: string, browserNames: BrowserName[]) {
       linkTarget = (await fsReadFileAsync(linkPath)).toString();
       const linkRegistry = new Registry(linkTarget);
       for (const browserName of allBrowserNames) {
-        if (!linkRegistry.shouldDownload(browserName))
+        if (!linkRegistry.shouldRetain(browserName))
           continue;
         const usedBrowserPath = linkRegistry.browserDirectory(browserName);
         const browserRevision = linkRegistry.revision(browserName);
@@ -105,10 +105,8 @@ async function validateCache(linksDir: string, browserNames: BrowserName[]) {
   }
 
   // 3. Install missing browsers for this package.
-  const myRegistry = new Registry(PACKAGE_PATH);
+  const myRegistry = Registry.currentPackageRegistry();
   for (const browserName of browserNames) {
-    if (!myRegistry.shouldDownload(browserName))
-      continue;
     await browserFetcher.downloadBrowserWithProgressBar(myRegistry, browserName).catch(e => {
       throw new Error(`Failed to download ${browserName}, caused by\n${e.stack}`);
     });

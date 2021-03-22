@@ -163,7 +163,7 @@ if (!args.some(arg => arg === '--no-cleanup')) {
   // 5. Generate browsers.json
   const browsersJSON = require(path.join(ROOT_PATH, 'browsers.json'));
   for (const browser of browsersJSON.browsers)
-    browser.download = package.browsers.includes(browser.name);
+    browser.installByDefault = package.browsers.includes(browser.name);
   await writeToPackage('browsers.json', JSON.stringify(browsersJSON, null, 2));
 
   // 6. Bake commit SHA into the package
