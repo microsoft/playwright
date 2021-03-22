@@ -76,6 +76,7 @@ Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`
 ## async method: Mouse.dblclick
 * langs:
   - alias-csharp: DblClickAsync
+
 Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`], [`method: Mouse.down`] and
 [`method: Mouse.up`].
 
