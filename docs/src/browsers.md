@@ -11,9 +11,10 @@ of the browsers it supports, so that the latest Playwright would support the lat
 ## Chromium
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.
-These builds match the current [Chrome Dev Channel](https://support.google.com/chrome/a/answer/9027636?hl=en) build at the time
+These builds match the current [Chrome Dev Channel](https://support.google.com/chrome/a/answer/9027636?hl=en) at the time
 of each Playwright release, i.e. it is new with every Playwright update. Since Chromium project is ahead of the branded browsers,
-when the world is on Google Chrome 89, Playwright already supports Google Chrome and Microsoft Edge testing all the way to version 91.
+when the world is on Google Chrome 89, Playwright already supports Chromium 91 that will hit Google Chrome and Microsoft Edge
+if a few weeks.
 
 There is also a way to opt into using Google Chrome's or Microsoft Edge's branded builds for testing. For details
 on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edge section below.](#google-chrome--microsoft-edge) section below.
@@ -31,7 +32,8 @@ also working on a dedicated support for builds that would match Apple Safari Tec
 
 ## Google Chrome & Microsoft Edge
 
-While Playwright will download and use the recent Chromium build by default, it can operate against the stock Google Chrome and Microsoft Edge browsers. In particular, current Playwright version will support Stable and Beta channels
+While Playwright will download and use the recent Chromium build by default, it can operate against the stock Google
+Chrome and Microsoft Edge browsers. In particular, current Playwright version will support Stable and Beta channels
 of these browsers. Here is how you can opt into using the stock browser:
 
 ```js
