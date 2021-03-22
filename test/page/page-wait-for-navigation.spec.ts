@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
-import type { Frame } from '../index';
-import { expectedSSLError } from './utils';
+import { it, expect } from '../fixtures';
+import type { Frame } from '../../index';
+import { expectedSSLError } from '../utils';
 
 it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);

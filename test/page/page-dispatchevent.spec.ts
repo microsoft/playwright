@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should dispatch click event', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

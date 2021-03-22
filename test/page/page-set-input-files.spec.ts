@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 import path from 'path';
 import fs from 'fs';
 import formidable from 'formidable';
 
-const FILE_TO_UPLOAD = path.join(__dirname, '/assets/file-to-upload.txt');
+const FILE_TO_UPLOAD = path.join(__dirname, '../assets/file-to-upload.txt');
 
 it('should upload the file', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/fileupload.html');
@@ -39,7 +39,7 @@ it('should upload the file', async ({page, server}) => {
 
 it('should work', async ({page}) => {
   await page.setContent(`<input type=file>`);
-  await page.setInputFiles('input', path.join(__dirname, '/assets/file-to-upload.txt'));
+  await page.setInputFiles('input', path.join(__dirname, '../assets/file-to-upload.txt'));
   expect(await page.$eval('input', input => input.files.length)).toBe(1);
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
@@ -168,7 +168,7 @@ it('should work with CSP', async ({page, server}) => {
   server.setCSP('/empty.html', 'default-src "none"');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<input type=file>`);
-  await page.setInputFiles('input', path.join(__dirname, '/assets/file-to-upload.txt'));
+  await page.setInputFiles('input', path.join(__dirname, '../assets/file-to-upload.txt'));
   expect(await page.$eval('input', input => input.files.length)).toBe(1);
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
@@ -244,8 +244,8 @@ it('should detect mime type', async ({page, server}) => {
       <input type="file" name="file2">
       <input type="submit" value="Submit">
     </form>`);
-  await (await page.$('input[name=file1]')).setInputFiles(path.join(__dirname, '/assets/file-to-upload.txt'));
-  await (await page.$('input[name=file2]')).setInputFiles(path.join(__dirname, '/assets/pptr.png'));
+  await (await page.$('input[name=file1]')).setInputFiles(path.join(__dirname, '../assets/file-to-upload.txt'));
+  await (await page.$('input[name=file2]')).setInputFiles(path.join(__dirname, '../assets/pptr.png'));
   await Promise.all([
     page.click('input[type=submit]'),
     server.waitForRequest('/upload'),
@@ -254,11 +254,11 @@ it('should detect mime type', async ({page, server}) => {
   expect(file1.name).toBe('file-to-upload.txt');
   expect(file1.type).toBe('text/plain');
   expect(fs.readFileSync(file1.path).toString()).toBe(
-      fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.txt')).toString());
+      fs.readFileSync(path.join(__dirname, '../assets/file-to-upload.txt')).toString());
   expect(file2.name).toBe('pptr.png');
   expect(file2.type).toBe('image/png');
   expect(fs.readFileSync(file2.path).toString()).toBe(
-      fs.readFileSync(path.join(__dirname, '/assets/pptr.png')).toString());
+      fs.readFileSync(path.join(__dirname, '../assets/pptr.png')).toString());
 });
 
 it('should be able to read selected file', async ({page, server}) => {

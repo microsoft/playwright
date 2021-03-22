@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect } from '../fixtures';
 
 it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
