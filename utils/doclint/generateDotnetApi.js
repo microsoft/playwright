@@ -459,7 +459,6 @@ function renderMethod(member, parent, output, name) {
    */
   const pushArg = (innerArgType, innerArgName, argument) => {
     let isNullable = nullableTypes.includes(innerArgType);
-
     const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
     const requiredSuffix = argument.required ? "" : " = default";
     args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);

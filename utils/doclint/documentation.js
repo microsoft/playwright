@@ -314,7 +314,7 @@ Documentation.Member = class {
       this.args.set(arg.name, arg);
       arg.enclosingMethod = this;
       if (arg.name === 'options') {
-        arg.type.properties.forEach((p) => p.enclosingMethod = this );
+        arg.type.properties.forEach(p => p.enclosingMethod = this );
       }
     }
   }
