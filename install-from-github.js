@@ -21,8 +21,11 @@ const {execSync} = require('child_process');
 
 console.log(`Rebuilding installer...`);
 try {
-  execSync('npm run tsc-installer');
+  execSync('npm run tsc-installer', {
+    stdio: ['inherit', 'inherit', 'inherit'],
+  });
 } catch (e) {
+  process.exit(1);
 }
 
 console.log(`Downloading browsers...`);
