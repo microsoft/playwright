@@ -14404,10 +14404,18 @@ index 94e4a4d7e4f8e16f20ecb94a7eb048fe629358be..cb508bc16d3acbb7a80c22ef353f9b13
  
  namespace WebKit {
 diff --git a/Source/WebKit/UIProcess/WebContextMenuProxy.h b/Source/WebKit/UIProcess/WebContextMenuProxy.h
-index 1b8fcc84664f309afe5f4eacd28b5413c1b1b907..9c859e579c6ec6283646b664010a4beb5cbcf35b 100644
+index 1b8fcc84664f309afe5f4eacd28b5413c1b1b907..280cf47fe75b2c13062090512b3250c9012984a9 100644
 --- a/Source/WebKit/UIProcess/WebContextMenuProxy.h
 +++ b/Source/WebKit/UIProcess/WebContextMenuProxy.h
-@@ -45,6 +45,7 @@ public:
+@@ -33,6 +33,7 @@
+ #include <wtf/RefCounted.h>
+ #include <wtf/WeakPtr.h>
+ 
++OBJC_CLASS NSArray;
+ OBJC_CLASS NSMenu;
+ 
+ namespace WebKit {
+@@ -45,6 +46,7 @@ public:
      virtual ~WebContextMenuProxy();
  
      virtual void show();
