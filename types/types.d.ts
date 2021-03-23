@@ -7329,17 +7329,17 @@ export {};
  * Playwright has **experimental** support for Android automation. You can access android namespace via:
  * 
  * ```js
- * const { _android } = require('playwright');
+ * const { _android: android } = require('playwright');
  * ```
  * 
  * An example of the Android automation script would be:
  * 
  * ```js
- * const { _android } = require('playwright');
+ * const { _android: android } = require('playwright');
  * 
  * (async () => {
  *   // Connect to the device.
- *   const [device] = await playwright._android.devices();
+ *   const [device] = await android.devices();
  *   console.log(`Model: ${device.model()}`);
  *   console.log(`Serial: ${device.serial()}`);
  *   // Take screenshot of the whole device.
@@ -7360,7 +7360,7 @@ export {};
  * 
  *     // Work with WebView's page as usual.
  *     const page = await webview.page();
- *     await page.page.waitForNavigation({ url: /.*microsoft\/playwright.*\/ });
+ *     await page.waitForNavigation({ url: /.*microsoft\/playwright.*\/ });
  *     console.log(await page.title());
  *   }
  * 
