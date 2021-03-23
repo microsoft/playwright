@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
-import { attachFrame, detachFrame } from './utils';
+import { it, expect } from '../fixtures';
+import { attachFrame, detachFrame } from '../utils';
 
 const addElement = tag => document.body.appendChild(document.createElement(tag));
 
