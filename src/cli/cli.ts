@@ -211,7 +211,7 @@ async function launchContext(options: Options, headless: boolean): Promise<{ bro
   const browserType = lookupBrowserType(options);
   const launchOptions: LaunchOptions = { headless };
   if (options.channel)
-    launchOptions.channel = options.channel;
+    launchOptions.channel = options.channel as any;
 
   const contextOptions: BrowserContextOptions =
     // Copy the device descriptor since we have to compare and modify the options.

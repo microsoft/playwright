@@ -94,7 +94,7 @@ fixtures.browserOptions.override(async ({ browserName, headful, slowMo, browserC
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
   await run({
-    channel: browserChannel,
+    channel: browserChannel as any,
     executablePath,
     handleSIGINT: false,
     slowMo,
