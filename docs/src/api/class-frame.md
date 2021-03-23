@@ -677,6 +677,7 @@ Attribute name to get the value for.
 ## async method: Frame.goto
 * langs:
   - alias-java: navigate
+  - alias-csharp: GoToAsync
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -1047,7 +1048,7 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
 // Types instantly
 frame.type("#mytextarea", "Hello");
 // Types slower, like a user
-frame.type("#mytextarea", "World", new Frame.TypeOptions().setDelay(100)); 
+frame.type("#mytextarea", "World", new Frame.TypeOptions().setDelay(100));
 ```
 
 ```python async
