@@ -378,7 +378,9 @@ saved.
   - alias-python: record_har_path
 - `recordHarPath` <[path]>
 
-Path on the filesystem to write the HAR file to.
+Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into the
+specified HAR file on the filesystem. If not specified, the HAR is not recorded. Make sure to
+call [`method: BrowserContext.close`] for the HAR to be saved.
 
 ## context-option-recordhar-omit-content
 * langs: csharp, java, python
@@ -405,7 +407,8 @@ sure to await [`method: BrowserContext.close`] for videos to be saved.
   - alias-python: record_video_dir
 - `recordVideoDir` <[path]>
 
-Path to the directory to put videos into.
+Enables video recording for all pages into the specified directory. If not specified videos are
+not recorded. Make sure to call [`method: BrowserContext.close`] for videos to be saved.
 
 ## context-option-recordvideo-size
 * langs: csharp, java, python
