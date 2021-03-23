@@ -401,4 +401,18 @@ describe('element screenshot', (suite, parameters) => {
     const buffer = await elementHandle.screenshot({ path: outputPath, type: 'jpeg' });
     expect([buffer[0], buffer[1], buffer[2]]).toEqual([0xFF, 0xD8, 0xFF]);
   });
+
+  it('should not issue resize event', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/grid.html');
+    let resizeTriggered = false;
+    await page.exposeFunction('resize', () => {
+      resizeTriggered = true;
+    });
+    await page.evaluate(() => {
+      window.addEventListener('resize', () => (window as any).resize());
+    });
+    const elementHandle = await page.$('.box:nth-of-type(3)');
+    await elementHandle.screenshot();
+    expect(resizeTriggered).toBeFalsy();
+  });
 });

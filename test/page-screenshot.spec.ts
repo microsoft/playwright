@@ -341,4 +341,17 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect(pixel(0, 8339).r).toBeLessThan(128);
     expect(pixel(0, 8339).b).toBeGreaterThan(128);
   });
+
+  it('should not issue resize event', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/grid.html');
+    let resizeTriggered = false;
+    await page.exposeFunction('resize', () => {
+      resizeTriggered = true;
+    });
+    await page.evaluate(() => {
+      window.addEventListener('resize', () => (window as any).resize());
+    });
+    await page.screenshot();
+    expect(resizeTriggered).toBeFalsy();
+  });
 });
