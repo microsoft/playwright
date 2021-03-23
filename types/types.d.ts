@@ -6357,17 +6357,9 @@ export interface BrowserType<Browser> {
     bypassCSP?: boolean;
 
     /**
-     * Chromium distribution channel, one of
-     * - chrome
-     * - chrome-beta
-     * - chrome-dev
-     * - chrome-canary
-     * - msedge
-     * - msedge-beta
-     * - msedge-dev
-     * - msedge-canary
+     * Browser distribution channel.
      */
-    channel?: string;
+    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
 
     /**
      * Enable Chromium sandboxing. Defaults to `true`.
@@ -10659,17 +10651,9 @@ export interface LaunchOptions {
   args?: Array<string>;
 
   /**
-   * Chromium distribution channel, one of
-   * - chrome
-   * - chrome-beta
-   * - chrome-dev
-   * - chrome-canary
-   * - msedge
-   * - msedge-beta
-   * - msedge-dev
-   * - msedge-canary
+   * Browser distribution channel.
    */
-  channel?: string;
+  channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
 
   /**
    * Enable Chromium sandboxing. Defaults to `false`.

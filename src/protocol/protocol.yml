@@ -300,7 +300,17 @@ BrowserType:
 
     launch:
       parameters:
-        channel: string?
+        channel:
+          type: enum?
+          literals:
+          - chrome
+          - chrome-beta
+          - chrome-dev
+          - chrome-canary
+          - msedge
+          - msedge-beta
+          - msedge-dev
+          - msedge-canary
         executablePath: string?
         args:
           type: array?
@@ -334,7 +344,17 @@ BrowserType:
 
     launchPersistentContext:
       parameters:
-        channel: string?
+        channel:
+          type: enum?
+          literals:
+          - chrome
+          - chrome-beta
+          - chrome-dev
+          - chrome-canary
+          - msedge
+          - msedge-beta
+          - msedge-dev
+          - msedge-canary
         userDataDir: string
         sdkLanguage: string
         executablePath: string?

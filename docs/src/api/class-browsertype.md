@@ -179,17 +179,9 @@ Whether to run browser in headless mode. More details for
 [`option: devtools`] option is `true`.
 
 ### option: BrowserType.launch.channel
-- `channel` <[string]>
+- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
 
-Chromium distribution channel, one of
-* chrome
-* chrome-beta
-* chrome-dev
-* chrome-canary
-* msedge
-* msedge-beta
-* msedge-dev
-* msedge-canary
+Browser distribution channel.
 
 ### option: BrowserType.launch.executablePath
 - `executablePath` <[path]>
@@ -300,17 +292,9 @@ Whether to run browser in headless mode. More details for
 [`option: devtools`] option is `true`.
 
 ### option: BrowserType.launchPersistentContext.channel
-- `channel` <[string]>
+- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
 
-Chromium distribution channel, one of
-* chrome
-* chrome-beta
-* chrome-dev
-* chrome-canary
-* msedge
-* msedge-beta
-* msedge-dev
-* msedge-canary
+Browser distribution channel.
 
 ### option: BrowserType.launchPersistentContext.executablePath
 - `executablePath` <[path]>

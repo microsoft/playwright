@@ -103,7 +103,7 @@ fixtures.browserOptions.init(async ({ headful, slowMo, browserChannel }, run) =>
     handleSIGINT: false,
     slowMo,
     headless: !headful,
-    channel: browserChannel,
+    channel: browserChannel as any,
   });
 }, { scope: 'worker' });
 

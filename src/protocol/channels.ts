@@ -217,7 +217,7 @@ export interface BrowserTypeChannel extends Channel {
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: Metadata): Promise<BrowserTypeConnectOverCDPResult>;
 }
 export type BrowserTypeLaunchParams = {
-  channel?: string,
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -241,7 +241,7 @@ export type BrowserTypeLaunchParams = {
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
-  channel?: string,
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -268,7 +268,7 @@ export type BrowserTypeLaunchResult = {
   browser: BrowserChannel,
 };
 export type BrowserTypeLaunchPersistentContextParams = {
-  channel?: string,
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
   userDataDir: string,
   sdkLanguage: string,
   executablePath?: string,
@@ -334,7 +334,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
-  channel?: string,
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
