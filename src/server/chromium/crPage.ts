@@ -404,11 +404,11 @@ class FrameSession {
 
     let screencastOptions: types.PageScreencastOptions | undefined;
     if (this._isMainFrame() && this._crPage._browserContext._options.recordVideo && hasUIWindow) {
-      const size = this._crPage._browserContext._options.recordVideo.size || this._crPage._browserContext._options.viewport || { width: 1280, height: 720 };
       const screencastId = createGuid();
       const outputFile = path.join(this._crPage._browserContext._options.recordVideo.dir, screencastId + '.webm');
       screencastOptions = {
-        ...size,
+        // validateBrowserContextOptions ensures correct video size.
+        ...this._crPage._browserContext._options.recordVideo.size!,
         outputFile,
       };
       await this._crPage._browserContext._ensureVideosPath();

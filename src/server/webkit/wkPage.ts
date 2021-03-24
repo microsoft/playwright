@@ -116,11 +116,11 @@ export class WKPage implements PageDelegate {
         promises.push(this._grantPermissions(key, value));
     }
     if (this._browserContext._options.recordVideo) {
-      const size = this._browserContext._options.recordVideo.size || this._browserContext._options.viewport || { width: 1280, height: 720 };
       const outputFile = path.join(this._browserContext._options.recordVideo.dir, createGuid() + '.webm');
       promises.push(this._browserContext._ensureVideosPath().then(() => {
         return this._startScreencast({
-          ...size,
+          // validateBrowserContextOptions ensures correct video size.
+          ...this._browserContext._options.recordVideo!.size!,
           outputFile,
         });
       }));
