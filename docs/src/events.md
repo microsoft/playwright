@@ -3,7 +3,7 @@ id: events
 title: "Events"
 ---
 
-Playwright allows listening to various types of events happening in the browser, such
+Playwright allows listening to various types of events happening in the web page, such
 as network requests, creation of child pages, dedicated workers etc. There are several
 ways to subscribe to such events:
 
@@ -11,10 +11,10 @@ ways to subscribe to such events:
 
 ## Waiting for event
 
-There is a number of methods which wait for a particular condition or an event happening
-in the page. They are usually the preferred choice. Here is a few examples:
+Most of the time, scripts will need to wait for a particular event to happen. Below are some of the typical event
+awaiting patterns.
 
-Waiting for a request with a specified url:
+Wait for a request with the specified url:
 
 ```js
 const [request] = await Promise.all([
@@ -46,7 +46,7 @@ with page.expect_request("**/*logo*.png") as first:
 print(first.value.url)
 ```
 
-Waiting for popup window:
+Wait for popup window:
 
 ```js
 const [popup] = await Promise.all([
@@ -80,7 +80,8 @@ popup.value.goto("https://wikipedia.org")
 
 ## Adding/removing event listener
 
-Playwright supports traditional language mechanisms to subscribe and unsubscribe from events:
+Sometimes, events happen in random time and instead of waiting for them, they need to be handled.
+Playwright supports traditional language mechanisms for subscribing and unsubscribing from the events:
 
 ```js
 page.on('request', request => console.log(`Request sent: ${request.url()}`));
@@ -135,7 +136,7 @@ page.goto("https://www.openstreetmap.org/")
 
 ## Adding one-off listeners
 
-If only next event needs to be handled, there is a convinience API for some of the events:
+If certain event needs to be handled once, there is a convenience API for that:
 
 ```js
 page.once('dialog', dialog => dialog.accept("2021"));
