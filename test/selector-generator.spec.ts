@@ -260,7 +260,7 @@ describe('selector generator', (suite, { mode }) => {
     const [frame] = await Promise.all([
       page.waitForEvent('frameattached'),
       page.evaluate(() => {
-        return new Promise(f => {
+        return new Promise<void>(f => {
           const iframe = document.createElement('iframe');
           iframe.onload = () => {
             iframe.contentDocument.body.innerHTML = '<div>Target</div>';
@@ -278,5 +278,10 @@ describe('selector generator', (suite, { mode }) => {
       await page.setContent(`<form><${tagName} name="foo"></${tagName}><${tagName} name="bar"></${tagName}></form>`);
       expect(await generate(page, '[name=bar]')).toBe(`${tagName}[name="bar"]`);
     }
+  });
+
+  it('should work with tricky ids', async ({page}) => {
+    await page.setContent(`<button id="this:is-my-tricky.id"><span></span></button>`);
+    expect(await generate(page, 'button')).toBe('[id="this:is-my-tricky.id"]');
   });
 });
