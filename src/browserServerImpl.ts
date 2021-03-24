@@ -17,11 +17,9 @@
 import { LaunchServerOptions, Logger } from './client/types';
 import { BrowserType } from './server/browserType';
 import * as ws from 'ws';
-import fs from 'fs';
 import { Browser } from './server/browser';
-import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
-import { Dispatcher, DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
+import { DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
 import { BrowserDispatcher } from './dispatchers/browserDispatcher';
 import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
 import * as channels from './protocol/channels';
@@ -30,48 +28,75 @@ import { envObjectToArray } from './client/clientHelper';
 import { createGuid } from './utils/utils';
 import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
-import { BrowserContext, Video } from './server/browserContext';
-import { StreamDispatcher } from './dispatchers/streamDispatcher';
 import { ProtocolLogger } from './server/types';
-import { CallMetadata, internalCallMetadata, SdkObject } from './server/instrumentation';
+import { CallMetadata, internalCallMetadata } from './server/instrumentation';
+import { Playwright } from './server/playwright';
+import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
+  private _playwright: Playwright;
   private _browserType: BrowserType;
 
-  constructor(browserType: BrowserType) {
+  constructor(playwright: Playwright, browserType: BrowserType) {
+    this._playwright = playwright;
     this._browserType = browserType;
   }
 
-  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServerImpl> {
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     const browser = await this._browserType.launch(internalCallMetadata(), {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     }, toProtocolLogger(options.logger));
-    return BrowserServerImpl.start(browser, options.port);
+
+    const server = await PlaywrightServer.start(scope => {
+      const selectors = new Selectors();
+      const browserDispatcher = new ConnectedBrowser(scope, browser, selectors);
+      return {
+        playwright: new PlaywrightDispatcher(scope, this._playwright, new SelectorsDispatcher(scope, selectors), browserDispatcher),
+        onDisconnect: () => {
+          // Cleanup contexts upon disconnect.
+          browserDispatcher.close().catch(e => {});
+        }
+      };
+    }, options.port);
+
+    const browserServer = new EventEmitter() as (BrowserServer & EventEmitter);
+    browserServer.process = () => browser.options.browserProcess.process!;
+    browserServer.wsEndpoint = () => server.wsEndpoint();
+    browserServer.close = () => browser.options.browserProcess.close();
+    browserServer.kill = () => browser.options.browserProcess.kill();
+    browser.options.browserProcess.onclose = (exitCode, signal) => {
+      server.close();
+      browserServer.emit('close', exitCode, signal);
+    };
+    return browserServer;
   }
 }
 
-export class BrowserServerImpl extends EventEmitter implements BrowserServer {
+type OnConnect = (scope: DispatcherScope) => {
+  playwright: PlaywrightDispatcher;
+  onDisconnect(): any;
+};
+
+class PlaywrightServer extends EventEmitter {
+  private _onConnect: OnConnect;
   private _server: ws.Server;
-  private _browser: Browser;
   private _wsEndpoint: string;
-  private _process: ChildProcess;
   private _ready: Promise<void>;
 
-  static async start(browser: Browser, port: number = 0): Promise<BrowserServerImpl> {
-    const server = new BrowserServerImpl(browser, port);
+  static async start(onConnect: OnConnect, port: number = 0): Promise<PlaywrightServer> {
+    const server = new PlaywrightServer(onConnect, port);
     await server._ready;
     return server;
   }
 
-  constructor(browser: Browser, port: number) {
+  constructor(onConnect: OnConnect, port: number) {
     super();
 
-    this._browser = browser;
+    this._onConnect = onConnect;
     this._wsEndpoint = '';
-    this._process = browser.options.browserProcess.process!;
 
     let readyCallback = () => {};
     this._ready = new Promise<void>(f => readyCallback = f);
@@ -86,27 +111,14 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     this._server.on('connection', (socket: ws, req) => {
       this._clientAttached(socket);
     });
-
-    browser.options.browserProcess.onclose = (exitCode, signal) => {
-      this._server.close();
-      this.emit('close', exitCode, signal);
-    };
   }
 
-  process(): ChildProcess {
-    return this._process;
+  close() {
+    this._server.close();
   }
 
   wsEndpoint(): string {
     return this._wsEndpoint;
-  }
-
-  async close(): Promise<void> {
-    await this._browser.options.browserProcess.close();
-  }
-
-  async kill(): Promise<void> {
-    await this._browser.options.browserProcess.kill();
   }
 
   private _clientAttached(socket: ws) {
@@ -119,29 +131,13 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       connection.dispatch(JSON.parse(Buffer.from(message).toString()));
     });
     socket.on('error', () => {});
-    const selectors = new Selectors();
     const scope = connection.rootDispatcher();
-    const remoteBrowser = new RemoteBrowserDispatcher(scope, this._browser, selectors);
+    const connected = this._onConnect(scope);
     socket.on('close', () => {
       // Avoid sending any more messages over closed socket.
       connection.onmessage = () => {};
-      // Cleanup contexts upon disconnect.
-      remoteBrowser.connectedBrowser.close().catch(e => {});
+      connected.onDisconnect();
     });
-  }
-}
-
-class RemoteBrowserDispatcher extends Dispatcher<SdkObject, channels.RemoteBrowserInitializer> implements channels.PlaywrightChannel {
-  readonly connectedBrowser: ConnectedBrowser;
-
-  constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
-    const connectedBrowser = new ConnectedBrowser(scope, browser, selectors);
-    super(scope, browser, 'RemoteBrowser', {
-      selectors: new SelectorsDispatcher(scope, selectors),
-      browser: connectedBrowser,
-    }, false, 'remoteBrowser');
-    this.connectedBrowser = connectedBrowser;
-    connectedBrowser._remoteBrowser = this;
   }
 }
 
@@ -149,7 +145,6 @@ class ConnectedBrowser extends BrowserDispatcher {
   private _contexts: BrowserContextDispatcher[] = [];
   private _selectors: Selectors;
   _closed = false;
-  _remoteBrowser?: RemoteBrowserDispatcher;
 
   constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
     super(scope, browser);
@@ -163,7 +158,7 @@ class ConnectedBrowser extends BrowserDispatcher {
     }
     const result = await super.newContext(params, metadata);
     const dispatcher = result.context as BrowserContextDispatcher;
-    dispatcher._object.on(BrowserContext.Events.VideoStarted, (video: Video) => this._sendVideo(dispatcher, video));
+    dispatcher.streamVideos();
     dispatcher._object._setSelectors(this._selectors);
     this._contexts.push(dispatcher);
     return result;
@@ -183,24 +178,6 @@ class ConnectedBrowser extends BrowserDispatcher {
       this._closed = true;
       super._didClose();
     }
-  }
-
-  private _sendVideo(contextDispatcher: BrowserContextDispatcher, video: Video) {
-    video._waitForCallbackOnFinish(async () => {
-      const readable = fs.createReadStream(video._path);
-      await new Promise(f => readable.on('readable', f));
-      const stream = new StreamDispatcher(this._remoteBrowser!._scope, readable);
-      this._remoteBrowser!._dispatchEvent('video', {
-        stream,
-        context: contextDispatcher,
-        relativePath: video._relativePath
-      });
-      await new Promise<void>(resolve => {
-        readable.on('close', resolve);
-        readable.on('end', resolve);
-        readable.on('error', resolve);
-      });
-    });
   }
 }
 

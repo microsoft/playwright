@@ -173,23 +173,10 @@ export type PlaywrightInitializer = {
     },
   }[],
   selectors: SelectorsChannel,
+  preLaunchedBrowser?: BrowserChannel,
 };
 export interface PlaywrightChannel extends Channel {
 }
-
-// ----------- RemoteBrowser -----------
-export type RemoteBrowserInitializer = {
-  browser: BrowserChannel,
-  selectors: SelectorsChannel,
-};
-export interface RemoteBrowserChannel extends Channel {
-  on(event: 'video', callback: (params: RemoteBrowserVideoEvent) => void): this;
-}
-export type RemoteBrowserVideoEvent = {
-  context: BrowserContextChannel,
-  stream: StreamChannel,
-  relativePath: string,
-};
 
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
@@ -575,6 +562,7 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
+  on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
   on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
   on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams, metadata?: Metadata): Promise<BrowserContextAddCookiesResult>;
@@ -608,6 +596,10 @@ export type BrowserContextPageEvent = {
 export type BrowserContextRouteEvent = {
   route: RouteChannel,
   request: RequestChannel,
+};
+export type BrowserContextVideoEvent = {
+  stream: StreamChannel,
+  relativePath: string,
 };
 export type BrowserContextCrBackgroundPageEvent = {
   page: PageChannel,

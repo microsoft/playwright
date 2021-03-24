@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../server/browserContext';
+import { BrowserContext, Video } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import * as channels from '../protocol/channels';
@@ -23,6 +23,8 @@ import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
 import { CallMetadata } from '../server/instrumentation';
+import * as fs from 'fs';
+import { StreamDispatcher } from './streamDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -47,6 +49,25 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
       context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
+  }
+
+  streamVideos() {
+    this._context.on(BrowserContext.Events.VideoStarted, (video: Video) => {
+      video._waitForCallbackOnFinish(async () => {
+        const readable = fs.createReadStream(video._path);
+        await new Promise(f => readable.on('readable', f));
+        const stream = new StreamDispatcher(this, readable);
+        this._dispatchEvent('video', {
+          stream,
+          relativePath: video._relativePath
+        });
+        await new Promise<void>(resolve => {
+          readable.on('close', resolve);
+          readable.on('end', resolve);
+          readable.on('error', resolve);
+        });
+      });
+    });
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {

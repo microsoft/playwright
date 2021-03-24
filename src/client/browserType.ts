@@ -20,19 +20,16 @@ import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 import WebSocket from 'ws';
-import path from 'path';
-import fs from 'fs';
 import { Connection } from './connection';
 import { serializeError } from '../protocol/serializers';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, makeWaitForNextTask, mkdirIfNeeded } from '../utils/utils';
-import { SelectorsOwner, sharedSelectors } from './selectors';
+import { assert, makeWaitForNextTask } from '../utils/utils';
 import { kBrowserClosedError } from '../utils/errors';
-import { Stream } from './stream';
 import * as api from '../../types/types';
+import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -152,13 +149,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             reject(new Error('Server disconnected: ' + event.reason));
           };
           ws.addEventListener('close', prematureCloseListener);
-          const remoteBrowser = await connection.waitForObjectWithKnownName('remoteBrowser') as RemoteBrowser;
+          const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
 
-          // Inherit shared selectors for connected browser.
-          const selectorsOwner = SelectorsOwner.from(remoteBrowser._initializer.selectors);
-          sharedSelectors._addChannel(selectorsOwner);
+          if (!playwright._initializer.preLaunchedBrowser) {
+            reject(new Error('Malformed endpoint. Did you use launchServer method?'));
+            ws.close();
+            return;
+          }
 
-          const browser = Browser.from(remoteBrowser._initializer.browser);
+          const browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
           browser._logger = logger;
           browser._isRemote = true;
           const closeListener = () => {
@@ -173,7 +172,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           ws.removeEventListener('close', prematureCloseListener);
           ws.addEventListener('close', closeListener);
           browser.on(Events.Browser.Disconnected, () => {
-            sharedSelectors._removeChannel(selectorsOwner);
+            playwright._cleanup();
             ws.removeEventListener('close', closeListener);
             ws.close();
           });
@@ -205,18 +204,5 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       browser._logger = logger;
       return browser;
     }, logger);
-  }
-}
-
-export class RemoteBrowser extends ChannelOwner<channels.RemoteBrowserChannel, channels.RemoteBrowserInitializer> {
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RemoteBrowserInitializer) {
-    super(parent, type, guid, initializer);
-    this._channel.on('video', ({ context, stream, relativePath }) => this._onVideo(BrowserContext.from(context), Stream.from(stream), relativePath));
-  }
-
-  private async _onVideo(context: BrowserContext, stream: Stream, relativePath: string) {
-    const videoFile = path.join(context._options.recordVideo!.dir, relativePath);
-    await mkdirIfNeeded(videoFile);
-    stream.stream().pipe(fs.createWriteStream(videoFile));
   }
 }

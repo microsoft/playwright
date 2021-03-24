@@ -257,24 +257,8 @@ Playwright:
                 - firefox
                 - webkit
     selectors: Selectors
-
-
-RemoteBrowser:
-  type: interface
-
-  initializer:
-    browser: Browser
-    selectors: Selectors
-
-  events:
-
-    # Video stream blocks owner context from closing until the stream is closed.
-    # Make sure to close the stream!
-    video:
-      parameters:
-        context: BrowserContext
-        stream: Stream
-        relativePath: string
+    # Only present when connecting remotely via BrowserType.connect() method.
+    preLaunchedBrowser: Browser?
 
 
 Selectors:
@@ -700,6 +684,14 @@ BrowserContext:
       parameters:
         route: Route
         request: Request
+
+    # This event is only sent for remotely connected contexts.
+    # Video stream blocks the context from closing until the stream is closed.
+    # Make sure to close the stream!
+    video:
+      parameters:
+        stream: Stream
+        relativePath: string
 
     crBackgroundPage:
       parameters:

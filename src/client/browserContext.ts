@@ -19,7 +19,8 @@ import { Page, BindingCall } from './page';
 import * as network from './network';
 import * as channels from '../protocol/channels';
 import * as util from 'util';
-import fs from 'fs';
+import * as fs from 'fs';
+import * as path from 'path';
 import { ChannelOwner } from './channelOwner';
 import { deprecate, evaluationScript, urlMatches } from './clientHelper';
 import { Browser } from './browser';
@@ -31,6 +32,7 @@ import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
+import { Stream } from './stream';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
@@ -64,6 +66,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+    this._channel.on('video', ({ stream, relativePath }) => this._onVideo(Stream.from(stream), relativePath));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -88,6 +91,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     if (!func)
       return;
     await bindingCall.call(func);
+  }
+
+  private async _onVideo(stream: Stream, relativePath: string) {
+    const videoFile = path.join(this._options.recordVideo!.dir, relativePath);
+    await mkdirIfNeeded(videoFile);
+    stream.stream().pipe(fs.createWriteStream(videoFile));
   }
 
   setDefaultNavigationTimeout(timeout: number) {
