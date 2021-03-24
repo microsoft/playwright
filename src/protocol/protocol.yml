@@ -223,6 +223,110 @@ SerializedError:
     value: SerializedValue?
 
 
+LaunchOptions:
+  type: mixin
+  properties:
+    channel:
+      type: enum?
+      literals:
+      - chrome
+      - chrome-beta
+      - chrome-dev
+      - chrome-canary
+      - msedge
+      - msedge-beta
+      - msedge-dev
+      - msedge-canary
+    executablePath: string?
+    args:
+      type: array?
+      items: string
+    ignoreAllDefaultArgs: boolean?
+    ignoreDefaultArgs:
+      type: array?
+      items: string
+    handleSIGINT: boolean?
+    handleSIGTERM: boolean?
+    handleSIGHUP: boolean?
+    timeout: number?
+    env:
+      type: array?
+      items: NameValue
+    headless: boolean?
+    devtools: boolean?
+    proxy:
+      type: object?
+      properties:
+        server: string
+        bypass: string?
+        username: string?
+        password: string?
+    downloadsPath: string?
+    chromiumSandbox: boolean?
+
+
+ContextOptions:
+  type: mixin
+  properties:
+    sdkLanguage: string
+    noDefaultViewport: boolean?
+    viewport:
+      type: object?
+      properties:
+        width: number
+        height: number
+    ignoreHTTPSErrors: boolean?
+    javaScriptEnabled: boolean?
+    bypassCSP: boolean?
+    userAgent: string?
+    locale: string?
+    timezoneId: string?
+    geolocation:
+      type: object?
+      properties:
+        longitude: number
+        latitude: number
+        accuracy: number?
+    permissions:
+      type: array?
+      items: string
+    extraHTTPHeaders:
+      type: array?
+      items: NameValue
+    offline: boolean?
+    httpCredentials:
+      type: object?
+      properties:
+        username: string
+        password: string
+    deviceScaleFactor: number?
+    isMobile: boolean?
+    hasTouch: boolean?
+    colorScheme:
+      type: enum?
+      literals:
+      - dark
+      - light
+      - no-preference
+    acceptDownloads: boolean?
+    _traceDir: string?
+    _debugName: string?
+    recordVideo:
+      type: object?
+      properties:
+        dir: string
+        size:
+          type: object?
+          properties:
+            width: number
+            height: number
+    recordHar:
+      type: object?
+      properties:
+        omitContent: boolean?
+        path: string
+
+
 Playwright:
   type: interface
 
@@ -300,146 +404,18 @@ BrowserType:
 
     launch:
       parameters:
-        channel:
-          type: enum?
-          literals:
-          - chrome
-          - chrome-beta
-          - chrome-dev
-          - chrome-canary
-          - msedge
-          - msedge-beta
-          - msedge-dev
-          - msedge-canary
-        executablePath: string?
-        args:
-          type: array?
-          items: string
-        ignoreAllDefaultArgs: boolean?
-        ignoreDefaultArgs:
-          type: array?
-          items: string
-        handleSIGINT: boolean?
-        handleSIGTERM: boolean?
-        handleSIGHUP: boolean?
-        timeout: number?
-        env:
-          type: array?
-          items: NameValue
-        headless: boolean?
-        devtools: boolean?
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
-        downloadsPath: string?
+        $mixin: LaunchOptions
         firefoxUserPrefs: json?
-        chromiumSandbox: boolean?
         slowMo: number?
       returns:
         browser: Browser
 
     launchPersistentContext:
       parameters:
-        channel:
-          type: enum?
-          literals:
-          - chrome
-          - chrome-beta
-          - chrome-dev
-          - chrome-canary
-          - msedge
-          - msedge-beta
-          - msedge-dev
-          - msedge-canary
+        $mixin1: LaunchOptions
+        $mixin2: ContextOptions
         userDataDir: string
-        sdkLanguage: string
-        executablePath: string?
-        args:
-          type: array?
-          items: string
-        ignoreAllDefaultArgs: boolean?
-        ignoreDefaultArgs:
-          type: array?
-          items: string
-        handleSIGINT: boolean?
-        handleSIGTERM: boolean?
-        handleSIGHUP: boolean?
-        timeout: number?
-        env:
-          type: array?
-          items: NameValue
-        headless: boolean?
-        devtools: boolean?
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
-        downloadsPath: string?
-        chromiumSandbox: boolean?
         slowMo: number?
-        noDefaultViewport: boolean?
-        viewport:
-          type: object?
-          properties:
-            width: number
-            height: number
-        ignoreHTTPSErrors: boolean?
-        javaScriptEnabled: boolean?
-        bypassCSP: boolean?
-        userAgent: string?
-        locale: string?
-        timezoneId: string?
-        geolocation:
-          type: object?
-          properties:
-            longitude: number
-            latitude: number
-            accuracy: number?
-        permissions:
-          type: array?
-          items: string
-        extraHTTPHeaders:
-          type: array?
-          items: NameValue
-        offline: boolean?
-        httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-        deviceScaleFactor: number?
-        isMobile: boolean?
-        hasTouch: boolean?
-        colorScheme:
-          type: enum?
-          literals:
-          - light
-          - dark
-          - no-preference
-        acceptDownloads: boolean?
-        _traceDir: string?
-        _debugName: string?
-        recordVideo:
-          type: object?
-          properties:
-            dir: string
-            size:
-              type: object?
-              properties:
-                width: number
-                height: number
-        recordHar:
-          type: object?
-          properties:
-            omitContent: boolean?
-            path: string
       returns:
         context: BrowserContext
 
@@ -466,63 +442,7 @@ Browser:
 
     newContext:
       parameters:
-        sdkLanguage: string
-        noDefaultViewport: boolean?
-        viewport:
-          type: object?
-          properties:
-            width: number
-            height: number
-        ignoreHTTPSErrors: boolean?
-        javaScriptEnabled: boolean?
-        bypassCSP: boolean?
-        userAgent: string?
-        locale: string?
-        timezoneId: string?
-        geolocation:
-          type: object?
-          properties:
-            longitude: number
-            latitude: number
-            accuracy: number?
-        permissions:
-          type: array?
-          items: string
-        extraHTTPHeaders:
-          type: array?
-          items: NameValue
-        offline: boolean?
-        httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-        deviceScaleFactor: number?
-        isMobile: boolean?
-        hasTouch: boolean?
-        colorScheme:
-          type: enum?
-          literals:
-          - dark
-          - light
-          - no-preference
-        acceptDownloads: boolean?
-        _traceDir: string?
-        _debugName: string?
-        recordVideo:
-          type: object?
-          properties:
-            dir: string
-            size:
-              type: object?
-              properties:
-                width: number
-                height: number
-        recordHar:
-          type: object?
-          properties:
-            omitContent: boolean?
-            path: string
+        $mixin: ContextOptions
         proxy:
           type: object?
           properties:

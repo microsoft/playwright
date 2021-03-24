@@ -173,14 +173,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
-    firefoxUserPrefs: tOptional(tAny),
     chromiumSandbox: tOptional(tBoolean),
+    firefoxUserPrefs: tOptional(tAny),
     slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     channel: tOptional(tEnum(['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary'])),
-    userDataDir: tString,
-    sdkLanguage: tString,
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
@@ -200,7 +198,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     downloadsPath: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
-    slowMo: tOptional(tNumber),
+    sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
       width: tNumber,
@@ -227,7 +225,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     deviceScaleFactor: tOptional(tNumber),
     isMobile: tOptional(tBoolean),
     hasTouch: tOptional(tBoolean),
-    colorScheme: tOptional(tEnum(['light', 'dark', 'no-preference'])),
+    colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
     _traceDir: tOptional(tString),
     _debugName: tOptional(tString),
@@ -242,6 +240,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    userDataDir: tString,
+    slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeConnectOverCDPParams = tObject({
     sdkLanguage: tString,

@@ -21,6 +21,8 @@ const path = require('path');
 const yaml = require('yaml');
 
 const channels = new Set();
+const inherits = new Map();
+const mixins = new Map();
 
 function raise(item) {
   throw new Error('Invalid item: ' + JSON.stringify(item, null, 2));
@@ -73,17 +75,24 @@ function inlineType(type, indent, wrapEnums = false) {
   raise(type);
 }
 
-function properties(props, indent, onlyOptional) {
+function properties(properties, indent, onlyOptional) {
   const ts = [];
   const scheme = [];
-  for (const [name, value] of Object.entries(props)) {
-    const inner = inlineType(value, indent);
-    if (onlyOptional && !inner.optional)
-      continue;
-    ts.push(`${indent}${name}${inner.optional ? '?' : ''}: ${inner.ts},`);
-    const wrapped = inner.optional ? `tOptional(${inner.scheme})` : inner.scheme;
-    scheme.push(`${indent}${name}: ${wrapped},`);
-  }
+  const visitProperties = props => {
+    for (const [name, value] of Object.entries(props)) {
+      if (name.startsWith('$mixin')) {
+        visitProperties(mixins.get(value).properties);
+        continue;
+      }
+      const inner = inlineType(value, indent);
+      if (onlyOptional && !inner.optional)
+        continue;
+      ts.push(`${indent}${name}${inner.optional ? '?' : ''}: ${inner.ts},`);
+      const wrapped = inner.optional ? `tOptional(${inner.scheme})` : inner.scheme;
+      scheme.push(`${indent}${name}: ${wrapped},`);
+    }
+  };
+  visitProperties(properties);
   return { ts: ts.join('\n'), scheme: scheme.join('\n') };
 }
 
@@ -166,13 +175,14 @@ function addScheme(name, s) {
   validator_ts.push(...lines.map(line => '  ' + line));
 }
 
-const inherits = new Map();
 for (const [name, value] of Object.entries(protocol)) {
   if (value.type === 'interface') {
     channels.add(name);
     if (value.extends)
       inherits.set(name, value.extends);
   }
+  if (value.type === 'mixin')
+    mixins.set(name, value);
 }
 
 for (const [name, item] of Object.entries(protocol)) {
@@ -219,12 +229,13 @@ for (const [name, item] of Object.entries(protocol)) {
     channels_ts.push(`}`);
     for (const [typeName, typeValue] of ts_types)
       channels_ts.push(`export type ${typeName} = ${typeValue};`);
+    channels_ts.push(``);
   } else if (item.type === 'object') {
     const inner = objectType(item.properties, '');
     channels_ts.push(`export type ${name} = ${inner.ts};`);
+    channels_ts.push(``);
     addScheme(name, inner.scheme);
   }
-  channels_ts.push(``);
 }
 
 validator_ts.push(`
