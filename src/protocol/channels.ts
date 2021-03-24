@@ -236,8 +236,8 @@ export type BrowserTypeLaunchParams = {
     password?: string,
   },
   downloadsPath?: string,
-  firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
@@ -260,8 +260,8 @@ export type BrowserTypeLaunchOptions = {
     password?: string,
   },
   downloadsPath?: string,
-  firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
   slowMo?: number,
 };
 export type BrowserTypeLaunchResult = {
@@ -269,8 +269,6 @@ export type BrowserTypeLaunchResult = {
 };
 export type BrowserTypeLaunchPersistentContextParams = {
   channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
-  userDataDir: string,
-  sdkLanguage: string,
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -290,7 +288,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   downloadsPath?: string,
   chromiumSandbox?: boolean,
-  slowMo?: number,
+  sdkLanguage: string,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -317,7 +315,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'light' | 'dark' | 'no-preference',
+  colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
   _traceDir?: string,
   _debugName?: string,
@@ -332,6 +330,8 @@ export type BrowserTypeLaunchPersistentContextParams = {
     omitContent?: boolean,
     path: string,
   },
+  userDataDir: string,
+  slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
   channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
@@ -354,7 +354,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   },
   downloadsPath?: string,
   chromiumSandbox?: boolean,
-  slowMo?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -381,7 +380,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'light' | 'dark' | 'no-preference',
+  colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
   _traceDir?: string,
   _debugName?: string,
@@ -396,6 +395,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     omitContent?: boolean,
     path: string,
   },
+  slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
   context: BrowserContextChannel,
