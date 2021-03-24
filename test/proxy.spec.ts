@@ -59,6 +59,26 @@ it('should use proxy for second page', async ({browserType, browserOptions, serv
   await browser.close();
 });
 
+it('should use set the user agent for a proxy', async ({browserType, browserOptions, server}) => {
+  server.setRoute('/target.html', async (req, res) => {
+    res.end(`<html><title>${req.headers['user-agent']}</title></html>`);
+  });
+  const browser = await browserType.launch({
+    ...browserOptions,
+    proxy: { server: `localhost:${server.PORT}` }
+  });
+  const context = await browser.newContext({userAgent: 'blah'});
+
+  const page = await context.newPage();
+  await page.goto('http://non-existent.com/target.html');
+  expect(await page.title()).toBe('blah');
+
+  await page.goto('http://non-existent2.com/target.html');
+  expect(await page.title()).toBe('blah');
+
+  await browser.close();
+});
+
 it('should work with IP:PORT notion', async ({browserType, browserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
