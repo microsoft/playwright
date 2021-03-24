@@ -2158,10 +2158,6 @@ handler function to route the request.
 
 Returns the buffer with the captured screenshot.
 
-:::note
-Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for discussion.
-:::
-
 ### option: Page.screenshot.path
 - `path` <[path]>
 
