@@ -469,3 +469,46 @@ page.route("**/*", lambda route: route.abort() if route.request.resource_type ==
 - [`method: Route.abort`]
 
 <br/>
+
+## WebSockets
+
+Playwright supports [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) inspection out of the
+box. Every time WebSocket is created, [`event: Page.webSocket`] event is fired. This event contains the [WebSocket]
+instance for further web socket frames inspection:
+
+```js
+page.on('websocket', ws => {
+  console.log(`WebSocket opened: ${ws.url()}>`);
+  ws.on('framesent', event => console.log(event.payload));
+  ws.on('framereceived', event => console.log(event.payload));
+  ws.on('close', () => console.log('WebSocket closed'));
+});
+```
+
+```java
+page.onWebSocket(ws -> {
+  log("WebSocket opened: " + ws.url());
+  ws.onFrameSent(frameData -> log(frameData.text()));
+  ws.onFrameReceived(frameData -> log(frameData.text()));
+  ws.onClose(ws1 -> log("WebSocket closed"));
+});
+```
+
+```python
+def on_web_socket(ws):
+    print(f"WebSocket opened: {ws.url}")
+    ws.on("framesent", lambda payload: print(payload))
+    ws.on("framereceived", lambda payload: print(payload))
+    ws.on("close", lambda payload: print("WebSocket closed"))
+
+page.on("websocket", on_web_socket)
+```
+
+### API reference
+- [WebSocket]
+- [`event: Page.webSocket`]
+- [`event: WebSocket.frameSent`]
+- [`event: WebSocket.frameReceived`]
+- [`event: WebSocket.close`]
+
+<br/>
