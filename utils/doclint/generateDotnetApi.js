@@ -23,7 +23,6 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { Type } = require('./documentation');
-const { args } = require('commander');
 const { EOL } = require('os');
 
 const maxDocumentationColumnWidth = 80;
@@ -40,6 +39,11 @@ const nullableTypes = ['int', 'bool', 'decimal', 'float'];
 let documentation;
 /** @type {Map<string, string>} */
 let classNameMap;
+/** @type {Map<string, string>} */
+let knownNames = new Map([
+  ['domcontentloaded', 'DOMContentLoaded'],
+  ['networkidle', 'NetworkIdle']
+]);
 
 {
   const typesDir = process.argv[2] || '../generate_types/csharp/';
@@ -186,7 +190,7 @@ let classNameMap;
         v = v.replace(/[\"]/g, ``)
         let escapedName = v.replace(/[-]/g, ' ')
           .split(' ')
-          .map(word => word[0].toUpperCase() + word.substring(1)).join('');
+          .map(word => knownNames.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
 
         out.push(`\t[EnumMember(Value = "${v}")]`);
         out.push(`\t${escapedName},`);
