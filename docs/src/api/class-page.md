@@ -1585,6 +1585,7 @@ Navigate to the next page in history.
 ## async method: Page.goto
 * langs:
   - alias-java: navigate
+  - alias-csharp: GoToAsync
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
