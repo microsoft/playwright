@@ -5,6 +5,28 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.10
+
+- [Playwright for Java v1.10](https://github.com/microsoft/playwright-java) is **now stable**!
+- Run Playwright against **Google Chrome** and **Microsoft Edge** stable channels with the [new channels API](./browsers).
+- Chromium screenshots are **fast** on Mac & Windows.
+
+#### Bundled Browser Versions
+
+- Chromium 90.0.4430.0
+- Mozilla Firefox 87.0b10
+- WebKit 14.2
+
+This version of Playwright was also tested against the following stable channels:
+
+- Google Chrome 89
+- Microsoft Edge 89
+
+#### New APIs
+
+- [`browserType.launch()`](./api/class-browsertype#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
+
+
 ## Version 1.9
 
 - [Playwright Inspector](./inspector.md) is a **new GUI tool** to author and debug your tests.
