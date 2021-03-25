@@ -39,11 +39,6 @@ const nullableTypes = ['int', 'bool', 'decimal', 'float'];
 let documentation;
 /** @type {Map<string, string>} */
 let classNameMap;
-/** @type {Map<string, string>} */
-let knownNames = new Map([
-  ['domcontentloaded', 'DOMContentLoaded'],
-  ['networkidle', 'NetworkIdle']
-]);
 
 {
   const typesDir = process.argv[2] || '../generate_types/csharp/';
@@ -184,13 +179,17 @@ let knownNames = new Map([
 
   enumTypes.forEach((values, name) =>
     innerRenderElement('enum', name, null, (out) => {
+      const knownEnumValues = new Map([
+        ['domcontentloaded', 'DOMContentLoaded'],
+        ['networkidle', 'NetworkIdle']
+      ]);
       out.push('\tUndefined = 0,');
       values.forEach((v, i) => {
         // strip out the quotes
         v = v.replace(/[\"]/g, ``)
         let escapedName = v.replace(/[-]/g, ' ')
           .split(' ')
-          .map(word => knownNames.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
+          .map(word => knownEnumValues.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
 
         out.push(`\t[EnumMember(Value = "${v}")]`);
         out.push(`\t${escapedName},`);
