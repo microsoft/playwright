@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Remote importScripts Test</title>
+  </head>
+  <html>
+    <div id="status">-</div>
+    <script>
+      new Worker('worker-http-import.js').addEventListener("message", ({ data }) => {
+        document.getElementById("status").innerText = data;
+      });
+    </script>
+  </html>
+</html>

@@ -146,3 +146,13 @@ it('should work with regular expression passed from a different context', async 
   expect(response.ok()).toBe(true);
   expect(intercepted).toBe(true);
 });
+
+it('should not break remote worker importScripts',  (test, { browserName }) => {
+  test.fail(browserName === 'chromium');
+}, async ({ page, server, context }) => {
+  context.route('**', async request => {
+    await request.continue();
+  });
+  await page.goto(server.PREFIX + '/worker/worker-http-import.html');
+  await page.waitForSelector("#status:has-text('finished')");
+});
