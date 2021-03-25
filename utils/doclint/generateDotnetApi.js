@@ -23,7 +23,6 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { Type } = require('./documentation');
-const { args } = require('commander');
 const { EOL } = require('os');
 
 const maxDocumentationColumnWidth = 80;
@@ -180,13 +179,17 @@ let classNameMap;
 
   enumTypes.forEach((values, name) =>
     innerRenderElement('enum', name, null, (out) => {
+      const knownEnumValues = new Map([
+        ['domcontentloaded', 'DOMContentLoaded'],
+        ['networkidle', 'NetworkIdle']
+      ]);
       out.push('\tUndefined = 0,');
       values.forEach((v, i) => {
         // strip out the quotes
         v = v.replace(/[\"]/g, ``)
         let escapedName = v.replace(/[-]/g, ' ')
           .split(' ')
-          .map(word => word[0].toUpperCase() + word.substring(1)).join('');
+          .map(word => knownEnumValues.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
 
         out.push(`\t[EnumMember(Value = "${v}")]`);
         out.push(`\t${escapedName},`);
