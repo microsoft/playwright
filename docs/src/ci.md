@@ -119,9 +119,9 @@ For Linux agents, you can use [our Docker container](./docker.md) with Azure Pip
 
 ```yml
 pool:
-  vmImage: 'ubuntu-18.04'
+  vmImage: 'ubuntu-20.04'
 
-container: mcr.microsoft.com/playwright:bionic
+container: mcr.microsoft.com/playwright:focal
 
 steps:
 ...
@@ -189,7 +189,7 @@ Running Playwright on CircleCI requires the following steps:
 
    ```yml
    docker:
-     - image: mcr.microsoft.com/playwright:bionic
+     - image: mcr.microsoft.com/playwright:focal
    environment:
      NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
@@ -211,7 +211,7 @@ to run tests on Jenkins.
 
 ```groovy
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright:bionic' } }
+   agent { docker { image 'mcr.microsoft.com/playwright:focal' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -228,7 +228,7 @@ pipeline {
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
 
 ```yml
-image: mcr.microsoft.com/playwright:bionic
+image: mcr.microsoft.com/playwright:focal
 ```
 
 While the Docker image supports sandboxing for Chromium, it does not work in the Bitbucket Pipelines environment. To launch Chromium on Bitbucket Pipelines, use the `chromiumSandbox: false` launch argument.
@@ -269,7 +269,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:bionic
+  image: mcr.microsoft.com/playwright:focal
   script:
   ...
 ```

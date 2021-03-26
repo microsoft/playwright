@@ -24,7 +24,7 @@ jobs:
         username: playwright
         password: ${{ secrets.DOCKER_PASSWORD }}
     - uses: microsoft/playwright-github-action@v1
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@v2
       with:
         node-version: 10.15
     - run: npm ci
