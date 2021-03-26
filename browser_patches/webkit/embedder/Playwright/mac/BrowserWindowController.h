@@ -29,6 +29,7 @@
 
 - (IBAction)goBack:(id)sender;
 - (IBAction)goForward:(id)sender;
+- (IBAction)toggleFullWindowWebView:(id)sender;
 - (IBAction)reload:(id)sender;
 - (IBAction)saveAsPDF:(id)sender;
 - (IBAction)saveAsWebArchive:(id)sender;
