@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		256AC3DA0F4B6AC300CF336A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 256AC3D90F4B6AC300CF336A /* AppDelegate.m */; };
 		51E244FA11EFCE07008228D2 /* MBToolbarItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 51E244F911EFCE07008228D2 /* MBToolbarItem.m */; };
+		5C9332AF24C1349C0036DECF /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C9332AE24C1349C0036DECF /* SecurityInterface.framework */; };
 		BC329487116A92E2008635D1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = BC329486116A92E2008635D1 /* main.m */; };
 		BC329498116A941B008635D1 /* BrowserWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = BC329497116A941B008635D1 /* BrowserWindowController.m */; };
 		BC72B89511E57E07001EB4EB /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DDD58150DA1D0A300B3202A /* MainMenu.xib */; };
@@ -27,6 +28,7 @@
 		37BAF90620218053000EA87A /* Playwright.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Playwright.entitlements; sourceTree = "<group>"; };
 		51E244F811EFCE07008228D2 /* MBToolbarItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MBToolbarItem.h; sourceTree = "<group>"; };
 		51E244F911EFCE07008228D2 /* MBToolbarItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MBToolbarItem.m; sourceTree = "<group>"; };
+		5C9332AE24C1349C0036DECF /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = System/Library/Frameworks/SecurityInterface.framework; sourceTree = SDKROOT; };
 		8D1107320486CEB800E47091 /* Playwright.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Playwright.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B89B95221E027A00EB4CEB /* SDKVariant.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = SDKVariant.xcconfig; sourceTree = "<group>"; };
 		BC329486116A92E2008635D1 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = mac/main.m; sourceTree = "<group>"; };
@@ -44,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5C9332AF24C1349C0036DECF /* SecurityInterface.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -111,6 +114,7 @@
 			children = (
 				1058C7A2FEA54F0111CA2CBC /* Other Frameworks */,
 				1AFFEF761860EE6800DA465F /* Cocoa.framework */,
+				5C9332AE24C1349C0036DECF /* SecurityInterface.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
