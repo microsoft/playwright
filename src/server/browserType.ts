@@ -222,13 +222,11 @@ export abstract class BrowserType extends SdkObject {
     async function closeOrKill(timeout: number): Promise<void> {
       let timer: NodeJS.Timer;
       try {
-        console.error(`closeOrKill ${timeout}`);
         await Promise.race([
           gracefullyClose(),
           new Promise((resolve, reject) => timer = setTimeout(reject, timeout)),
         ]);
       } catch (ignored) {
-        console.error(`closeOrKill catch   browserProcess.kill `);
         await kill().catch(ignored => {}); // Make sure to await actual process exit.
       } finally {
         clearTimeout(timer!);
