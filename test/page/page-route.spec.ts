@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-
-
 import { it, expect } from '../fixtures';
 
 it('should intercept', async ({page, server}) => {
