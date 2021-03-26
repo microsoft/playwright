@@ -118,3 +118,16 @@ it('should not create pages automatically', (test, { browserName }) => {
   await browser.close();
   expect(targets.length).toBe(0);
 });
+
+it('should kill browser process on timeout after close', async ({browserType, browserOptions}) => {
+  const launchOptions = { ...browserOptions };
+  let stalled = false;
+  (launchOptions as any).__testHookGracefullyClose = () => {
+    stalled = true;
+    return new Promise(() => {});
+  };
+  (launchOptions as any).__testHookBrowserCloseTimeout = 1_000;
+  const browser = await browserType.launch(launchOptions);
+  await browser.close();
+  expect(stalled).toBeTruthy();
+});

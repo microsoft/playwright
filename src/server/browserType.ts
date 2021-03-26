@@ -235,7 +235,7 @@ export abstract class BrowserType extends SdkObject {
     browserProcess = {
       onclose: undefined,
       process: launchedProcess,
-      close: () => closeOrKill(DEFAULT_TIMEOUT),
+      close: () => closeOrKill((options as any).__testHookBrowserCloseTimeout || DEFAULT_TIMEOUT),
       kill
     };
     progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
