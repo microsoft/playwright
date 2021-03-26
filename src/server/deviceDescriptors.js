@@ -439,9 +439,13 @@ module.exports = {
   },
   'iPhone 11': {
     'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
-    'viewport': {
+    'screen': {
       'width': 414,
       'height': 896
+    },
+    'viewport': {
+      'width': 414,
+      'height': 715
     },
     'deviceScaleFactor': 2,
     'isMobile': true,
@@ -450,9 +454,13 @@ module.exports = {
   },
   'iPhone 11 landscape': {
     'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 414,
+      'height': 896
+    },
     'viewport': {
-      'width': 896,
-      'height': 414
+      'width': 800,
+      'height': 364
     },
     'deviceScaleFactor': 2,
     'isMobile': true,
@@ -461,9 +469,13 @@ module.exports = {
   },
   'iPhone 11 Pro': {
     'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
-    'viewport': {
+    'screen': {
       'width': 375,
       'height': 812
+    },
+    'viewport': {
+      'width': 375,
+      'height': 635
     },
     'deviceScaleFactor': 3,
     'isMobile': true,
@@ -472,9 +484,13 @@ module.exports = {
   },
   'iPhone 11 Pro landscape': {
     'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 375,
+      'height': 812
+    },
     'viewport': {
-      'width': 812,
-      'height': 375
+      'width': 724,
+      'height': 325
     },
     'deviceScaleFactor': 3,
     'isMobile': true,
@@ -483,9 +499,13 @@ module.exports = {
   },
   'iPhone 11 Pro Max': {
     'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
-    'viewport': {
+    'screen': {
       'width': 414,
       'height': 896
+    },
+    'viewport': {
+      'width': 414,
+      'height': 715
     },
     'deviceScaleFactor': 3,
     'isMobile': true,
@@ -494,9 +514,103 @@ module.exports = {
   },
   'iPhone 11 Pro Max landscape': {
     'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 414,
+      'height': 896
+    },
     'viewport': {
-      'width': 896,
-      'height': 414
+      'width': 808,
+      'height': 364
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'webkit'
+  },
+  'iPhone 12': {
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 390,
+      'height': 844
+    },
+    'viewport': {
+      'width': 390,
+      'height': 664
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'webkit'
+  },
+  'iPhone 12 landscape': {
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 390,
+      'height': 844
+    },
+    'viewport': {
+      'width': 750,
+      'height': 340
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'webkit'
+  },
+  'iPhone 12 Pro': {
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 390,
+      'height': 844
+    },
+    'viewport': {
+      'width': 390,
+      'height': 664
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'webkit'
+  },
+  'iPhone 12 Pro landscape': {
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 390,
+      'height': 844
+    },
+    'viewport': {
+      'width': 750,
+      'height': 340
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'webkit'
+  },
+  'iPhone 12 Pro Max': {
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 428,
+      'height': 926
+    },
+    'viewport': {
+      'width': 428,
+      'height': 746
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'webkit'
+  },
+  'iPhone 12 Pro Max landscape': {
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1',
+    'screen': {
+      'width': 428,
+      'height': 926
+    },
+    'viewport': {
+      'width': 832,
+      'height': 378
     },
     'deviceScaleFactor': 3,
     'isMobile': true,
@@ -854,5 +968,65 @@ module.exports = {
     'isMobile': true,
     'hasTouch': true,
     'defaultBrowserType': 'chromium'
-  }
+  },
+  'Pixel 4a (5G)': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 11; Pixel 4a (5G)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36',
+    'screen': {
+      'width': 412,
+      'height': 892
+    },
+    'viewport': {
+      'width': 412,
+      'height': 765
+    },
+    'deviceScaleFactor': 2.63,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Pixel 4a (5G) landscape': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 11; Pixel 4a (5G)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36',
+    'screen': {
+      'height': 892,
+      'width': 412
+    },
+    'viewport': {
+      'width': 840,
+      'height': 312
+    },
+    'deviceScaleFactor': 2.63,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Pixel 5': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36',
+    'screen': {
+      'width': 393,
+      'height': 851
+    },
+    'viewport': {
+      'width': 393,
+      'height': 727
+    },
+    'deviceScaleFactor': 2.75,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Pixel 5 landscape': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36',
+    'screen': {
+      'width': 851,
+      'height': 393
+    },
+    'viewport': {
+      'width': 802,
+      'height': 293
+    },
+    'deviceScaleFactor': 2.75,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
 };

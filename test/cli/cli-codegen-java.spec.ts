@@ -69,7 +69,7 @@ it('should print the correct context options when using a device and additional 
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT)
         .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
-        .setViewportSize(414, 896)
+        .setViewportSize(414, 715)
         .setDeviceScaleFactor(2)
         .setIsMobile(true)
         .setHasTouch(true));`;

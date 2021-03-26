@@ -114,4 +114,47 @@ describe('device', (suite, { browserName }) => {
     await context.close();
   });
 
+  it('should emulate viewport and screen size', async ({server, contextFactory, playwright, contextOptions}) => {
+    const device = playwright.devices['iPhone 12'];
+    const context = await contextFactory({
+      ...contextOptions,
+      ...device,
+    });
+    const page = await context.newPage();
+    await page.setContent(`<meta name="viewport" content="width=device-width, user-scalable=no" />`);
+
+    expect(await page.evaluate(() => ({
+      width: window.screen.width,
+      height: window.screen.height
+    }))).toEqual({ width: 390, height: 844 });
+
+    expect(await page.evaluate(() => ({
+      width: window.innerWidth,
+      height: window.innerHeight
+    }))).toEqual({ width: 390, height: 664 });
+
+    await context.close();
+  });
+
+  it('should emulate viewport without screen size', async ({server, contextFactory, playwright, contextOptions}) => {
+    const device = playwright.devices['iPhone 6'];
+    const context = await contextFactory({
+      ...contextOptions,
+      ...device,
+    });
+    const page = await context.newPage();
+    await page.setContent(`<meta name="viewport" content="width=device-width, user-scalable=no" />`);
+
+    expect(await page.evaluate(() => ({
+      width: window.screen.width,
+      height: window.screen.height
+    }))).toEqual({ width: 375, height: 667 });
+
+    expect(await page.evaluate(() => ({
+      width: window.innerWidth,
+      height: window.innerHeight
+    }))).toEqual({ width: 375, height: 667 });
+
+    await context.close();
+  });
 });

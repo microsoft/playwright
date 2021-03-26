@@ -315,12 +315,12 @@ export class FFPage implements PageDelegate {
     await this._session.send('Network.setExtraHTTPHeaders', { headers: this._page._state.extraHTTPHeaders || [] });
   }
 
-  async setViewportSize(viewportSize: types.Size): Promise<void> {
-    assert(this._page._state.viewportSize === viewportSize);
+  async setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void> {
+    assert(this._page._state.emulatedSize === emulatedSize);
     await this._session.send('Page.setViewportSize', {
       viewportSize: {
-        width: viewportSize.width,
-        height: viewportSize.height,
+        width: emulatedSize.viewport.width,
+        height: emulatedSize.viewport.height,
       },
     });
   }

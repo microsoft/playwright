@@ -87,7 +87,7 @@ export class CRPage implements PageDelegate {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
       if (viewportSize)
-        this._page._state.viewportSize = viewportSize;
+        this._page._state.emulatedSize = { viewport: viewportSize, screen: viewportSize };
     }
     this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(() => this._initializedPage = this._page).catch(e => e);
   }
@@ -162,8 +162,8 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame._updateHttpCredentials(false));
   }
 
-  async setViewportSize(viewportSize: types.Size): Promise<void> {
-    assert(this._page._state.viewportSize === viewportSize);
+  async setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void> {
+    assert(this._page._state.emulatedSize === emulatedSize);
     await this._mainFrameSession._updateViewport();
   }
 
@@ -899,17 +899,19 @@ class FrameSession {
       return;
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;
-    const viewportSize = this._page._state.viewportSize;
-    if (viewportSize === null)
+    const emulatedSize = this._page._state.emulatedSize;
+    if (emulatedSize === null)
       return;
+    const viewportSize = emulatedSize.viewport;
+    const screenSize = emulatedSize.screen;
     const isLandscape = viewportSize.width > viewportSize.height;
     const promises = [
       this._client.send('Emulation.setDeviceMetricsOverride', {
         mobile: !!options.isMobile,
         width: viewportSize.width,
         height: viewportSize.height,
-        screenWidth: viewportSize.width,
-        screenHeight: viewportSize.height,
+        screenWidth: screenSize.width,
+        screenHeight: screenSize.height,
         deviceScaleFactor: options.deviceScaleFactor || 1,
         screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
       }),

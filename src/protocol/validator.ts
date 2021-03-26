@@ -204,6 +204,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       width: tNumber,
       height: tNumber,
     })),
+    screen: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),
@@ -254,6 +258,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
+    screen: tOptional(tObject({
       width: tNumber,
       height: tNumber,
     })),
