@@ -30,7 +30,7 @@ it('should require top-level DeviceDescriptors', async ({playwright}) => {
 
 it('should kill browser process on timeout after close', (test, { mode }) => {
   test.skip(mode !== 'default', 'Test passes server hooks via options');
-}, async ({browserType, browserOptions, mode}) => {
+}, async ({browserType, browserOptions}) => {
   const launchOptions = { ...browserOptions };
   let stalled = false;
   (launchOptions as any).__testHookGracefullyClose = () => {
