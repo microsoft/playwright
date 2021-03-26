@@ -1559,8 +1559,8 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
-   * is dispatched. This is equivalend to calling
+   * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
+   * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
    * 
    * ```js
@@ -2256,7 +2256,7 @@ export interface Page {
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective
    * texts.
    * 
-   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
+   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
    * 
    * ```js
@@ -2329,7 +2329,7 @@ export interface Page {
    * 
    * > NOTE: The handler will only be called for the first url if the response is a redirect.
    * 
-   * An example of a naïve handler that aborts all image requests:
+   * An example of a naive handler that aborts all image requests:
    * 
    * ```js
    * const page = await browser.newPage();
@@ -3680,8 +3680,8 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
-   * is dispatched. This is equivalend to calling
+   * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
+   * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
    * 
    * ```js
@@ -4058,7 +4058,7 @@ export interface Frame {
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective
    * texts.
    * 
-   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
+   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
@@ -4924,7 +4924,7 @@ export interface BrowserContext {
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
    * is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    * 
-   * An example of a naïve handler that aborts all image requests:
+   * An example of a naive handler that aborts all image requests:
    * 
    * ```js
    * const context = await browser.newContext();
@@ -5660,8 +5660,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;
 
   /**
-   * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
-   * is dispatched. This is equivalend to calling
+   * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
+   * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
    * 
    * ```js
@@ -5838,7 +5838,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective
    * texts.
    * 
-   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
+   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options 
@@ -6959,7 +6959,7 @@ class TimeoutError extends Error {}
  * Accessibility is a very platform-specific thing. On different platforms, there are different screen readers that might
  * have wildly different output.
  * 
- * Rendering engines of Chromium, Firefox and Webkit have a concept of "accessibility tree", which is then translated into
+ * Rendering engines of Chromium, Firefox and WebKit have a concept of "accessibility tree", which is then translated into
  * different platform-specific APIs. Accessibility namespace gives access to this Accessibility Tree.
  * 
  * Most of the accessibility tree gets filtered out when converting from internal browser AX Tree to Platform-specific
@@ -8880,7 +8880,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
 /**
  * Coverage gathers information about parts of JavaScript and CSS that were used by the page.
  * 
- * An example of using JavaScript coverage to produce Istambul report for page load:
+ * An example of using JavaScript coverage to produce Istanbul report for page load:
  * 
  * ```js
  * const { chromium } = require('playwright');
@@ -9429,7 +9429,7 @@ export interface Keyboard {
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective
    * texts.
    * 
-   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
+   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
    * 
    * ```js
@@ -10094,7 +10094,7 @@ export interface Selectors {
 
 /**
  * The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on the
- * touchscreen can only be used in browser contexts that have been intialized with `hasTouch` set to true.
+ * touchscreen can only be used in browser contexts that have been initialized with `hasTouch` set to true.
  */
 export interface Touchscreen {
   /**
@@ -10140,7 +10140,7 @@ export interface WebSocket {
   on(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Fired when the websocket recieves a frame.
+   * Fired when the websocket receives a frame.
    */
   on(event: 'framereceived', listener: (data: {
   /**
@@ -10170,7 +10170,7 @@ export interface WebSocket {
   once(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Fired when the websocket recieves a frame.
+   * Fired when the websocket receives a frame.
    */
   once(event: 'framereceived', listener: (data: {
   /**
@@ -10200,7 +10200,7 @@ export interface WebSocket {
   addListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Fired when the websocket recieves a frame.
+   * Fired when the websocket receives a frame.
    */
   addListener(event: 'framereceived', listener: (data: {
   /**
@@ -10230,7 +10230,7 @@ export interface WebSocket {
   removeListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Fired when the websocket recieves a frame.
+   * Fired when the websocket receives a frame.
    */
   removeListener(event: 'framereceived', listener: (data: {
   /**
@@ -10260,7 +10260,7 @@ export interface WebSocket {
   off(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Fired when the websocket recieves a frame.
+   * Fired when the websocket receives a frame.
    */
   off(event: 'framereceived', listener: (data: {
   /**
@@ -10300,7 +10300,7 @@ export interface WebSocket {
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (webSocket: WebSocket) => boolean, timeout?: number } | ((webSocket: WebSocket) => boolean)): Promise<WebSocket>;
 
   /**
-   * Fired when the websocket recieves a frame.
+   * Fired when the websocket receives a frame.
    */
   waitForEvent(event: 'framereceived', optionsOrPredicate?: { predicate?: (data: {
   /**

@@ -11,7 +11,7 @@ Fired when the websocket closes.
 - argument: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
-Fired when the websocket recieves a frame.
+Fired when the websocket receives a frame.
 
 ## event: WebSocket.frameReceived
 * langs: csharp, java

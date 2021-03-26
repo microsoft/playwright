@@ -252,8 +252,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.dispatchEvent
 
-The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
-is dispatched. This is equivalend to calling
+The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
+is dispatched. This is equivalent to calling
 [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
 
 ```js
@@ -858,7 +858,7 @@ Holding down `Shift` will type the text that corresponds to the [`param: key`] i
 If [`param: key`] is a single character, it is case-sensitive, so the values `a` and `A` will generate different
 respective texts.
 
-Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
+Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
 modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
 ### param: Frame.press.selector = %%-input-selector-%%
