@@ -26,7 +26,7 @@ import { launchProcess, Env, envArrayToObject } from './processLauncher';
 import { PipeTransport } from './pipeTransport';
 import { Progress, ProgressController } from './progress';
 import * as types from './types';
-import { TimeoutSettings } from '../utils/timeoutSettings';
+import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
 import { isDebugMode } from '../utils/utils';
 import { helper } from './helper';
@@ -219,13 +219,28 @@ export abstract class BrowserType extends SdkObject {
           browserProcess.onclose(exitCode, signal);
       },
     });
+    async function closeOrKill(timeout: number): Promise<void> {
+      let timer: NodeJS.Timer;
+      try {
+        console.error(`closeOrKill ${timeout}`);
+        await Promise.race([
+          gracefullyClose(),
+          new Promise((resolve, reject) => timer = setTimeout(reject, timeout)),
+        ]);
+      } catch (ignored) {
+        console.error(`closeOrKill catch   browserProcess.kill `);
+        await kill().catch(ignored => {}); // Make sure to await actual process exit.
+      } finally {
+        clearTimeout(timer!);
+      }
+    }
     browserProcess = {
       onclose: undefined,
       process: launchedProcess,
-      close: gracefullyClose,
+      close: () => closeOrKill(DEFAULT_TIMEOUT),
       kill
     };
-    progress.cleanupWhenAborted(() => browserProcess && closeOrKill(browserProcess, progress.timeUntilDeadline()));
+    progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
     if (options.useWebSocket) {
       transport = await WebSocketTransport.connect(progress, await wsEndpoint!);
     } else {
@@ -259,18 +274,4 @@ function validateLaunchOptions<Options extends types.LaunchOptions>(options: Opt
   if (isDebugMode())
     headless = false;
   return { ...options, devtools, headless };
-}
-
-async function closeOrKill(browserProcess: BrowserProcess, timeout: number): Promise<void> {
-  let timer: NodeJS.Timer;
-  try {
-    await Promise.race([
-      browserProcess.close(),
-      new Promise((resolve, reject) => timer = setTimeout(reject, timeout)),
-    ]);
-  } catch (ignored) {
-    await browserProcess.kill().catch(ignored => {}); // Make sure to await actual process exit.
-  } finally {
-    clearTimeout(timer!);
-  }
 }
