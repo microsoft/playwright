@@ -45,27 +45,16 @@ fixtures.persistentDownloadsContext.init(async ({ server, launchPersistent, test
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
     res.end(`Hello world`);
   });
-  logOnCI('--- launching persistent context ---');
   const { context, page } = await launchPersistent(
       {
         downloadsPath: testInfo.outputPath(''),
         acceptDownloads: true,
       }
   );
-  logOnCI('--- setting content for the page ---');
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  logOnCI('--- launching test ---');
   await test(context);
-  logOnCI('--- closing context ---');
   await context.close();
-  logOnCI('--- DONE ---');
 });
-
-function logOnCI(...args) {
-  if (!process.env.CI)
-    return;
-  console.log(...args);
-}
 
 const { it, expect } = fixtures.build();
 
