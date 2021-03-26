@@ -25,7 +25,7 @@ import * as URL from 'url';
 import * as util from 'util';
 import { BrowserName, Registry, hostPlatform } from '../utils/registry';
 
-// `https-proxy-agent` v5 is written in Typescript and exposes generated types.
+// `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
 // `esModuleInterop` option.
 //

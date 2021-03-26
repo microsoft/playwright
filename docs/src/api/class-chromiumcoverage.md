@@ -3,7 +3,7 @@
 
 Coverage gathers information about parts of JavaScript and CSS that were used by the page.
 
-An example of using JavaScript coverage to produce Istambul report for page load:
+An example of using JavaScript coverage to produce Istanbul report for page load:
 
 ```js
 const { chromium } = require('playwright');
