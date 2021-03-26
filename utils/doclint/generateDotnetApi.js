@@ -343,7 +343,7 @@ function generateNameDefault(member, name, t, parent) {
           attemptedName = attemptedName.substring(0, attemptedName.length - 1);
         let probableType = additionalTypes.get(attemptedName);
         if ((probableType && typesDiffer(t, probableType))
-          || (["Value"].includes(attemptedName))) {
+          || (["Value", "File"].includes(attemptedName))) {
           if (!names.length)
             throw new Error(`Ran out of possible names: ${attemptedName}`);
           attemptedName = `${names.pop()}${attemptedName}`;
