@@ -40,6 +40,13 @@ let documentation;
 /** @type {Map<string, string>} */
 let classNameMap;
 
+/** @type {Map<string, string>} */
+const customTypeNames = new Map([
+  ['domcontentloaded', 'DOMContentLoaded'],
+  ['networkidle', 'NetworkIdle'],
+  ['File', 'FilePayload'],
+]);
+
 {
   const typesDir = process.argv[2] || '../generate_types/csharp/';
   let checkAndMakeDir = (path) => {
@@ -179,17 +186,13 @@ let classNameMap;
 
   enumTypes.forEach((values, name) =>
     innerRenderElement('enum', name, null, (out) => {
-      const knownEnumValues = new Map([
-        ['domcontentloaded', 'DOMContentLoaded'],
-        ['networkidle', 'NetworkIdle']
-      ]);
       out.push('\tUndefined = 0,');
       values.forEach((v, i) => {
         // strip out the quotes
         v = v.replace(/[\"]/g, ``)
         let escapedName = v.replace(/[-]/g, ' ')
           .split(' ')
-          .map(word => knownEnumValues.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
+          .map(word => customTypeNames.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
 
         out.push(`\t[EnumMember(Value = "${v}")]`);
         out.push(`\t${escapedName},`);
@@ -341,9 +344,11 @@ function generateNameDefault(member, name, t, parent) {
         if (attemptedName.endsWith('s')
           && !["properties", "httpcredentials"].includes(attemptedName.toLowerCase()))
           attemptedName = attemptedName.substring(0, attemptedName.length - 1);
+        if (customTypeNames.get(attemptedName))
+          attemptedName = customTypeNames.get(attemptedName);
         let probableType = additionalTypes.get(attemptedName);
         if ((probableType && typesDiffer(t, probableType))
-          || (["Value", "File"].includes(attemptedName))) {
+          || (["Value"].includes(attemptedName))) {
           if (!names.length)
             throw new Error(`Ran out of possible names: ${attemptedName}`);
           attemptedName = `${names.pop()}${attemptedName}`;
