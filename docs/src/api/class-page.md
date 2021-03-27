@@ -1656,6 +1656,8 @@ Shortcut for main frame's [`method: Frame.hover`].
 ### option: Page.hover.timeout = %%-input-timeout-%%
 
 ## async method: Page.innerHTML
+* langs:
+  - alias-csharp: GetInnerHTMLAsync
 - returns: <[string]>
 
 Returns `element.innerHTML`.
@@ -1665,6 +1667,8 @@ Returns `element.innerHTML`.
 ### option: Page.innerHTML.timeout = %%-input-timeout-%%
 
 ## async method: Page.innerText
+* langs:
+  - alias-csharp: GetInnerTextAsync
 - returns: <[string]>
 
 Returns `element.innerText`.
@@ -2409,6 +2413,8 @@ Shortcut for main frame's [`method: Frame.tap`].
 ### option: Page.tap.timeout = %%-input-timeout-%%
 
 ## async method: Page.textContent
+* langs:
+  - alias-csharp: GetTextContentAsync
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.

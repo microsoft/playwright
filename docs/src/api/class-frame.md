@@ -744,6 +744,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.hover.timeout = %%-input-timeout-%%
 
 ## async method: Frame.innerHTML
+* langs:
+  - alias-csharp: GetInnerHTMLAsync
 - returns: <[string]>
 
 Returns `element.innerHTML`.
@@ -753,6 +755,8 @@ Returns `element.innerHTML`.
 ### option: Frame.innerHTML.timeout = %%-input-timeout-%%
 
 ## async method: Frame.innerText
+* langs:
+  - alias-csharp: GetInnerTextAsync
 - returns: <[string]>
 
 Returns `element.innerText`.
@@ -1019,6 +1023,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.tap.timeout = %%-input-timeout-%%
 
 ## async method: Frame.textContent
+* langs:
+  - alias-csharp: GetTextContentAsync
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.
