@@ -27,3 +27,18 @@ it('should require top-level DeviceDescriptors', async ({playwright}) => {
   expect(Devices['iPhone 6']).toBeTruthy();
   expect(Devices['iPhone 6']).toEqual(playwright.devices['iPhone 6']);
 });
+
+it('should kill browser process on timeout after close', (test, { mode }) => {
+  test.skip(mode !== 'default', 'Test passes server hooks via options');
+}, async ({browserType, browserOptions}) => {
+  const launchOptions = { ...browserOptions };
+  let stalled = false;
+  (launchOptions as any).__testHookGracefullyClose = () => {
+    stalled = true;
+    return new Promise(() => {});
+  };
+  (launchOptions as any).__testHookBrowserCloseTimeout = 1_000;
+  const browser = await browserType.launch(launchOptions);
+  await browser.close();
+  expect(stalled).toBeTruthy();
+});
