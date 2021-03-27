@@ -66,6 +66,8 @@ steps:
 
 We run [our tests](https://github.com/microsoft/playwright/blob/master/.github/workflows/tests.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
 
+Most environments for GitHub Actions come with preinstalled [Google Chrome & Microsoft Edge](./browsers.md#google-chrome--microsoft-edge). Find exact browser versions and more details for each environment [on this page](https://github.com/actions/virtual-environments).
+
 ### Docker
 
 We have a [pre-built Docker image](./docker.md) which can either be used directly, or as a reference to update your existing Docker definitions.
@@ -133,10 +135,11 @@ Suggested configuration
 1. [User namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
    should be enabled to support proper sandboxing
 1. [xvfb](https://en.wikipedia.org/wiki/Xvfb) should be launched in order to run
-   Chromium in non-headless mode (e.g. to test Chrome Extensions)
+   browsers in headed mode
 1. If your project does not have `package-lock.json`, Travis would be auto-caching
    `node_modules` directory. If you run `npm install` (instead of `npm ci`), it is
    possible that the browser binaries are not downloaded. Fix this with [these steps](#exception-node_modules-are-cached) outlined below.
+1. You will need to install browser dependencies. Look at [Dockerfile.bionic](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.bionic) or [Dockerfile.focal](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.focal) for the list of dependencies.
 
 To sum up, your `.travis.yml` might look like this:
 
@@ -146,33 +149,13 @@ dist: bionic
 addons:
   apt:
     packages:
-    # These are required to run webkit
-    - libwoff1
-    - libopus0
-    - libwebp6
-    - libwebpdemux2
-    - libenchant1c2a
-    - libgudev-1.0-0
-    - libsecret-1-0
-    - libhyphen0
-    - libgdk-pixbuf2.0-0
-    - libegl1
-    - libgles2
-    - libevent-2.1-6
-    - libnotify4
-    - libxslt1.1
-    - libvpx5
-    # gstreamer and plugins to support video playback in WebKit.
-    - gstreamer1.0-gl
-    - gstreamer1.0-plugins-base
-    - gstreamer1.0-plugins-good
-    - gstreamer1.0-plugins-bad
-    # This is required to run chromium
-    - libgbm1
-    # this is needed for running headful tests
+    # Dependencies copied from Dockerfile.bionic.
     - xvfb
+    - fonts-liberation
+    - libasound2
+    # ... There are many more - copy the full list.
 
-# allow headful tests
+# allow headed tests
 before_install:
   # Enable user namespace cloning
   - "sysctl kernel.unprivileged_userns_clone=1"

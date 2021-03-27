@@ -68,7 +68,7 @@ browser = playwright.chromium.launch(channel="chrome")
 ```
 
 :::note
-Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be installed manually before use.
+Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be [installed manually](#how-to-install-google-chrome--microsoft-edge) before use.
 :::
 
 ### When to use Google Chrome & Microsoft Edge and when not to?
@@ -99,3 +99,17 @@ Google Chrome and Microsoft Edge respect enterprise policies, which include limi
 network proxy, mandatory extensions that stand in the way of testing. So if you are a part of the
 organization that uses such policies, it is the easiest to use bundled Chromium for your local testing,
 you can still opt into stable channels on the bots that are typically free of such restrictions.
+
+### How to install Google Chrome & Microsoft Edge?
+
+Google Chrome can be downloaded here:
+- [Google Chrome](https://www.google.com/chrome/)
+- [Google Chrome Beta](https://www.google.com/chrome/beta/)
+- [Google Chrome Dev](https://www.google.com/chrome/dev/)
+- [Google Chrome Canary](https://www.google.com/chrome/canary/)
+
+Microsoft Edge can be downloaded here:
+- [Microsoft Edge](https://www.microsoft.com/edge)
+- [Microsoft Edge Beta, Microsoft Edge Dev and Microsoft Edge Canary](https://www.microsoftedgeinsider.com/download)
+
+When using GitHub Actions, most environments come with preinstalled Google Chrome and Microsoft Edge. Find exact versions and more details for each environment [on this page](https://github.com/actions/virtual-environments).
