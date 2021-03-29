@@ -745,7 +745,7 @@ index 65ab2092b0ffd0ead3da1ddccd398d4f4179f51a..2d9ef40a20df819193c9a5867fbf6f8f
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7501a62eb 100644
+index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..f0c30d5cea46f5620de4ed024f5beacb5cfac649 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -27,7 +27,7 @@
@@ -757,7 +757,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
              "description": "Resource type as it was perceived by the rendering engine."
          },
          {
-@@ -112,6 +112,41 @@
+@@ -112,6 +112,51 @@
                  { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
                  { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
              ]
@@ -796,10 +796,20 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
 +                { "name": "children", "type": "array", "optional": true, "items": { "$ref": "AXNode"}, "description": "Child AXNodes of this node, if any."},
 +                { "name": "found", "type": "boolean", "optional": true, "description": "True if this AXNode corresponds with the ObjectId passed into acessibilitySnapshot."}
 +            ]
++        },
++        {
++            "id": "Insets",
++            "type": "object",
++            "properties": [
++                { "name": "top", "type": "number" },
++                { "name": "right", "type": "number" },
++                { "name": "bottom", "type": "number" },
++                { "name": "left", "type": "number" }
++            ]
          }
      ],
      "commands": [
-@@ -131,6 +166,14 @@
+@@ -131,6 +176,14 @@
                  { "name": "revalidateAllResources", "type": "boolean", "optional": true, "description": "If true, all cached subresources will be revalidated when the main resource loads. Otherwise, only expired cached subresources will be revalidated (the default behavior for most WebKit clients)." }
              ]
          },
@@ -814,7 +824,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          {
              "name": "navigate",
              "description": "Navigates current page to the given URL.",
-@@ -270,6 +313,20 @@
+@@ -270,6 +323,20 @@
                  { "name": "appearance", "$ref": "Appearance", "optional": true }
              ]
          },
@@ -835,7 +845,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -308,12 +365,67 @@
+@@ -308,12 +375,77 @@
          {
              "name": "setScreenSizeOverride",
              "description": "Overrides screen size exposed to DOM and used in media queries for testing with provided values.",
@@ -901,10 +911,20 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
 +            "parameters": [
 +                { "name": "angle", "type": "integer", "optional": true }
 +            ]
++        },
++        {
++            "name": "setVisibleContentRects",
++            "targetTypes": ["page"],
++            "parameters": [
++                { "name": "unobscuredContentRect", "$ref": "DOM.Rect", "optional": true },
++                { "name": "contentInsets", "$ref": "Insets", "optional": true },
++                { "name": "obscuredInsets", "$ref": "Insets", "optional": true },
++                { "name": "unobscuredInsets", "$ref": "Insets", "optional": true }
++            ]
          }
      ],
      "events": [
-@@ -321,14 +433,16 @@
+@@ -321,14 +453,16 @@
              "name": "domContentEventFired",
              "targetTypes": ["page"],
              "parameters": [
@@ -923,7 +943,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
              ]
          },
          {
-@@ -338,6 +452,14 @@
+@@ -338,6 +472,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -938,7 +958,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -377,6 +499,22 @@
+@@ -377,6 +519,22 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -961,7 +981,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          {
              "name": "defaultAppearanceDidChange",
              "description": "Fired when page's default appearance changes, even if there is a forced appearance.",
-@@ -385,6 +523,28 @@
+@@ -385,6 +543,28 @@
              "parameters": [
                  { "name": "appearance", "$ref": "Appearance", "description": "Name of the appearance that is active (not considering any forced appearance.)" }
              ]
@@ -3175,7 +3195,7 @@ index 933601761667417ebe5de301586869ccc64fc3da..f63a95c3c45980d5606971b83881e824
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1ddeec40bc 100644
+index af0a051bdae52b2daf70b1fee76eee0866b7b046..18d22ad1469daccfccdf8b8dcf957cf41d7229a2 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,19 +32,25 @@
@@ -3501,7 +3521,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional<int>&& width, Optional<int>&& height)
  {
      if (width.hasValue() != height.hasValue())
-@@ -1121,6 +1243,533 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional
+@@ -1121,6 +1243,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.valueOr(0), height.valueOr(0)));
      return { };
  }
@@ -4033,10 +4053,72 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
 +    return makeUnexpected("Orientation events are disabled in this build");
  #endif
 +}
++
++static Optional<FloatBoxExtent> parseInsets(RefPtr<JSON::Object>&& insets)
++{
++    Optional<double> top = insets->getDouble("top");
++    Optional<double> right = insets->getDouble("right");
++    Optional<double> bottom = insets->getDouble("bottom");
++    Optional<double> left = insets->getDouble("left");
++    if (top && right && bottom && left)
++      return FloatBoxExtent(*top, *right, *bottom, *left);
++    return Optional<FloatBoxExtent>();
++}
++
++static Optional<FloatRect> parseRect(RefPtr<JSON::Object>&& insets)
++{
++    Optional<double> x = insets->getDouble("x");
++    Optional<double> y = insets->getDouble("y");
++    Optional<double> width = insets->getDouble("width");
++    Optional<double> height = insets->getDouble("height");
++    if (x && y && width && height)
++      return FloatRect(*x, *y, *width, *height);
++    return Optional<FloatRect>();
++}
++
++Protocol::ErrorStringOr<void> InspectorPageAgent::setVisibleContentRects(RefPtr<JSON::Object>&& unobscuredContentRect, RefPtr<JSON::Object>&& contentInsets, RefPtr<JSON::Object>&& obscuredInsets, RefPtr<JSON::Object>&& unobscuredInsets)
++{
++    FrameView* view = m_inspectedPage.mainFrame().view();
++    if (!view)
++        return makeUnexpected("Internal error: No frame view to set content rects for"_s);
++
++    if (unobscuredContentRect) {
++        Optional<FloatRect> ucr = parseRect(WTFMove(unobscuredContentRect));
++        if (!ucr)
++          return makeUnexpected("Invalid unobscured content rect");
++
++        view->setUnobscuredContentSize(FloatSize(ucr->width(), ucr->height()));
++    }
++
++    if (contentInsets) {
++        Optional<FloatBoxExtent> ci = parseInsets(WTFMove(contentInsets));
++        if (!ci)
++          return makeUnexpected("Invalid content insets");
++
++        m_inspectedPage.setContentInsets(*ci);
++    }
++
++    if (obscuredInsets) {
++        Optional<FloatBoxExtent> oi = parseInsets(WTFMove(obscuredInsets));
++        if (!oi)
++          return makeUnexpected("Invalid obscured insets");
++
++        m_inspectedPage.setObscuredInsets(*oi);
++    }
++
++    if (unobscuredInsets) {
++        Optional<FloatBoxExtent> ui = parseInsets(WTFMove(unobscuredInsets));
++        if (!ui)
++          return makeUnexpected("Invalid unobscured insets");
++
++        m_inspectedPage.setUnobscuredSafeAreaInsets(*ui);
++    }
++    return { };
++}
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 78a98224ab5450e0729751571fe1bb957d303301..a4f46cc377bde6a787f3e67ca4869bfc25461127 100644
+index 78a98224ab5450e0729751571fe1bb957d303301..5fb734482bdc1cbd62bc639a43e1bf8f0ceb0068 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -4109,8 +4191,8 @@ index 78a98224ab5450e0729751571fe1bb957d303301..a4f46cc377bde6a787f3e67ca4869bfc
 +    Inspector::Protocol::ErrorStringOr<void> createUserWorld(const String&);
 +    Inspector::Protocol::ErrorStringOr<void> setBypassCSP(bool);
 +    Inspector::Protocol::ErrorStringOr<void> crash();
-+    Inspector::Protocol::ErrorStringOr<void> setScreenSizeOverride(int width, int height);
 +    Inspector::Protocol::ErrorStringOr<void> setOrientationOverride(Optional<int>&& angle);
++    Inspector::Protocol::ErrorStringOr<void> setVisibleContentRects(RefPtr<JSON::Object>&& unobscuredContentRect, RefPtr<JSON::Object>&& contentInsets, RefPtr<JSON::Object>&& obscuredInsets, RefPtr<JSON::Object>&& unobscuredInsets);
  
      // InspectorInstrumentation
 -    void domContentEventFired();
