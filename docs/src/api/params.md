@@ -208,8 +208,8 @@ Whether to ignore HTTPS errors during navigation. Defaults to `false`.
 
 Toggles bypassing page's Content-Security-Policy.
 
-## context-option-viewport
-* langs: js, java
+## option-viewport
+* langs: js, java, csharp
   - alias-java: viewportSize
   - alias-csharp: viewportSize
 - `viewport` <[null]|[Object]>
@@ -544,7 +544,7 @@ is considered matching if all specified properties match.
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%
 - %%-context-option-bypasscsp-%%
-- %%-context-option-viewport-%%
+- %%-option-viewport-%%
 - %%-python-context-option-viewport-%%
 - %%-python-context-option-no-viewport-%%
 - %%-context-option-useragent-%%

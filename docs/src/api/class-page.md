@@ -2531,10 +2531,7 @@ Shortcut for main frame's [`method: Frame.url`].
 
 Video object associated with this page.
 
-## method: Page.viewportSize
-- returns: <[null]|[Object]>
-  - `width` <[int]> page width in pixels.
-  - `height` <[int]> page height in pixels.
+## method: Page.viewportSize = %%-option-viewport-%%
 
 ## method: Page.waitForClose
 * langs: csharp, java
