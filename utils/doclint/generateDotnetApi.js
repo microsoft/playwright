@@ -394,11 +394,7 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
  * @param {Function} output
  */
 function renderMethod(member, parent, output, name) {
-  const typeResolve = (type) => translateType(type, parent, (t) => {
-    let newName = `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
-    documentedResults.set(newName, `Result of calling <see cref="${translateMemberName("interface", parent.name)}.${translateMemberName(member.kind, member.name, member)}"/>.`);
-    return newName;
-  });
+  const typeResolve = (type) => translateType(type, parent, (t) => generateNameDefault(member, member.alias, t, parent));
 
   /** @type {Map<string, string[]>} */
   const paramDocs = new Map();
@@ -428,9 +424,8 @@ function renderMethod(member, parent, output, name) {
       type = `dynamic`;
     } else {
       type = classNameMap.get(innerType.name);
-      if (!type) {
+      if (!type)
         type = typeResolve(innerType);
-      }
 
       if (isArray)
         type = `IReadOnlyCollection<${type}>`;
