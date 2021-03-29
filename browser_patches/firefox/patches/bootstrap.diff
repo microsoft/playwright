@@ -596,7 +596,7 @@ index afa1eee3a6107067be52bf635e94be4271facee0..8d3e7bca533da4e55cc43843de552a12
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 48af2c30f3604a94e6bc1da7848aed3c8ac11c1e..f9c1df0b36b3c9342b81b4c2c7bc7aeca2461f0c 100644
+index 48af2c30f3604a94e6bc1da7848aed3c8ac11c1e..17df24bfdd2d9752686a46b6bb0afc575b091fcb 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3490,6 +3490,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -638,7 +638,7 @@ index 48af2c30f3604a94e6bc1da7848aed3c8ac11c1e..f9c1df0b36b3c9342b81b4c2c7bc7aec
      IgnoreRFP aIgnoreRFP) const {
 +  auto* docShell = static_cast<nsDocShell*>(GetDocShell());
 +  nsIDocShell::ColorSchemeOverride colorScheme;
-+  if (docShell->GetColorSchemeOverride(&colorScheme) == NS_OK &&
++  if (docShell && docShell->GetColorSchemeOverride(&colorScheme) == NS_OK &&
 +      colorScheme != nsIDocShell::COLOR_SCHEME_OVERRIDE_NONE) {
 +    switch (colorScheme) {
 +      case nsIDocShell::COLOR_SCHEME_OVERRIDE_LIGHT:
