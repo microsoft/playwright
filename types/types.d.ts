@@ -6577,6 +6577,22 @@ export interface BrowserType<Browser> {
     };
 
     /**
+     * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
+     * is set.
+     */
+    screen?: {
+      /**
+       * page width in pixels.
+       */
+      width: number;
+
+      /**
+       * page height in pixels.
+       */
+      height: number;
+    };
+
+    /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
      * Defaults to 0.
      */
@@ -6623,7 +6639,7 @@ export interface BrowserType<Browser> {
     videosPath?: string;
 
     /**
-     * Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
      */
     viewport?: null|{
       /**
@@ -7667,6 +7683,22 @@ export interface AndroidDevice {
     };
 
     /**
+     * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
+     * is set.
+     */
+    screen?: {
+      /**
+       * page width in pixels.
+       */
+      width: number;
+
+      /**
+       * page height in pixels.
+       */
+      height: number;
+    };
+
+    /**
      * Changes the timezone of the context. See
      * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
      * for a list of supported timezone IDs.
@@ -7701,7 +7733,7 @@ export interface AndroidDevice {
     videosPath?: string;
 
     /**
-     * Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
      */
     viewport?: null|{
       /**
@@ -8419,6 +8451,22 @@ export interface Browser extends EventEmitter {
     };
 
     /**
+     * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
+     * is set.
+     */
+    screen?: {
+      /**
+       * page width in pixels.
+       */
+      width: number;
+
+      /**
+       * page height in pixels.
+       */
+      height: number;
+    };
+
+    /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
      * obtained via
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browsercontextstoragestateoptions).
@@ -8518,7 +8566,7 @@ export interface Browser extends EventEmitter {
     videosPath?: string;
 
     /**
-     * Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
      */
     viewport?: null|{
       /**
@@ -10501,6 +10549,22 @@ export interface BrowserContextOptions {
   };
 
   /**
+   * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
+   * is set.
+   */
+  screen?: {
+    /**
+     * page width in pixels.
+     */
+    width: number;
+
+    /**
+     * page height in pixels.
+     */
+    height: number;
+  };
+
+  /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information
    * obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browsercontextstoragestateoptions).
@@ -10600,7 +10664,7 @@ export interface BrowserContextOptions {
   videosPath?: string;
 
   /**
-   * Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
    */
   viewport?: null|ViewportSize;
 }
@@ -10907,6 +10971,12 @@ type Devices = {
   "iPhone 11 Pro landscape": DeviceDescriptor;
   "iPhone 11 Pro Max": DeviceDescriptor;
   "iPhone 11 Pro Max landscape": DeviceDescriptor;
+  "iPhone 12": DeviceDescriptor;
+  "iPhone 12 landscape": DeviceDescriptor;
+  "iPhone 12 Pro": DeviceDescriptor;
+  "iPhone 12 Pro landscape": DeviceDescriptor;
+  "iPhone 12 Pro Max": DeviceDescriptor;
+  "iPhone 12 Pro Max landscape": DeviceDescriptor;
   "JioPhone 2": DeviceDescriptor;
   "JioPhone 2 landscape": DeviceDescriptor;
   "Kindle Fire HDX": DeviceDescriptor;
@@ -10939,5 +11009,9 @@ type Devices = {
   "Pixel 2 landscape": DeviceDescriptor;
   "Pixel 2 XL": DeviceDescriptor;
   "Pixel 2 XL landscape": DeviceDescriptor;
+  "Pixel 4a (5G)": DeviceDescriptor;
+  "Pixel 4a (5G) landscape": DeviceDescriptor;
+  "Pixel 5": DeviceDescriptor;
+  "Pixel 5 landscape": DeviceDescriptor;
   [key: string]: DeviceDescriptor;
 }

@@ -216,7 +216,18 @@ Toggles bypassing page's Content-Security-Policy.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+
+## context-option-screen
+* langs:
+  - alias-java: screenSize
+  - alias-csharp: screenSize
+- `screen` <[Object]>
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
+
+Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+[`option: viewport`] is set.
 
 ## evaluate-expression
 - `expression` <[string]>
@@ -546,6 +557,7 @@ is considered matching if all specified properties match.
 - %%-context-option-bypasscsp-%%
 - %%-context-option-viewport-%%
 - %%-python-context-option-viewport-%%
+- %%-context-option-screen-%%
 - %%-python-context-option-no-viewport-%%
 - %%-context-option-useragent-%%
 - %%-context-option-devicescalefactor-%%

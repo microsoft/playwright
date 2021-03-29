@@ -166,6 +166,10 @@ export type PlaywrightInitializer = {
         width: number,
         height: number,
       },
+      screen?: {
+        width: number,
+        height: number,
+      },
       deviceScaleFactor: number,
       isMobile: boolean,
       hasTouch: boolean,
@@ -294,6 +298,10 @@ export type BrowserTypeLaunchPersistentContextParams = {
     width: number,
     height: number,
   },
+  screen?: {
+    width: number,
+    height: number,
+  },
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -356,6 +364,10 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   chromiumSandbox?: boolean,
   noDefaultViewport?: boolean,
   viewport?: {
+    width: number,
+    height: number,
+  },
+  screen?: {
     width: number,
     height: number,
   },
@@ -439,6 +451,10 @@ export type BrowserNewContextParams = {
     width: number,
     height: number,
   },
+  screen?: {
+    width: number,
+    height: number,
+  },
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -489,6 +505,10 @@ export type BrowserNewContextParams = {
 export type BrowserNewContextOptions = {
   noDefaultViewport?: boolean,
   viewport?: {
+    width: number,
+    height: number,
+  },
+  screen?: {
     width: number,
     height: number,
   },

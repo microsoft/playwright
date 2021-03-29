@@ -214,9 +214,12 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
+export type EmulatedSize = { viewport: Size, screen: Size };
+
 export type BrowserContextOptions = {
   sdkLanguage: string,
   viewport?: Size,
+  screen?: Size,
   noDefaultViewport?: boolean,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
