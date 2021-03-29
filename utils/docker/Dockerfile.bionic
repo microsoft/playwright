@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcups2\
     libdbus-1-3\
     libdrm2\
+    libegl1\
     libgbm1\
     libglib2.0-0\
     libgtk-3-0\
@@ -31,7 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxdamage1\
     libxext6\
     libxfixes3\
-    libxrandr2
+    libxrandr2\
+    libxshmfence1
 
 # firefox
 RUN apt-get update && apt-get install -y --no-install-recommends \

@@ -34,6 +34,7 @@ export const deps = {
       'libcups2',
       'libdbus-1-3',
       'libdrm2',
+      'libegl1',
       'libgbm1',
       'libglib2.0-0',
       'libgtk-3-0',
@@ -47,6 +48,7 @@ export const deps = {
       'libxext6',
       'libxfixes3',
       'libxrandr2',
+      'libxshmfence1',
     ],
     firefox: [
       'ffmpeg',
@@ -138,6 +140,7 @@ export const deps = {
       'libcups2',
       'libdbus-1-3',
       'libdrm2',
+      'libegl1',
       'libgbm1',
       'libglib2.0-0',
       'libgtk-3-0',
