@@ -151,6 +151,7 @@ export const deps = {
       'libxext6',
       'libxfixes3',
       'libxrandr2',
+      'libxshmfence1',
     ],
     firefox: [
       'ffmpeg',
