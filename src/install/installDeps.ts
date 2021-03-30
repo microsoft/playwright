@@ -47,6 +47,9 @@ export async function installDeps(browserTypes: string[]) {
   commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
     ...uniqueLibraries,
   ].join(' '));
-  const child = childProcess.spawn('sudo', ['--', 'sh', '-c', `${commands.join('; ')}`], { stdio: 'inherit' });
+  const isRoot = (process.getuid() === 0);
+  const child = isRoot ?
+    childProcess.spawn('sh', ['-c', `${commands.join('; ')}`], { stdio: 'inherit' }) :
+    childProcess.spawn('sudo', ['--', 'sh', '-c', `${commands.join('; ')}`], { stdio: 'inherit' });
   await new Promise(f => child.on('exit', f));
 }
