@@ -12,12 +12,16 @@ else
   cd "checkout"
 fi
 
-if [[ -d ./WebKitBuild ]]; then
-  rm -rf ./WebKitBuild/Release
-fi
-if [[ -d ./WebKitBuild/GTK ]]; then
-  rm -rf ./WebKitBuild/GTK/Release
-fi
-if [[ -d ./WebKitBuild/WPE ]]; then
-  rm -rf ./WebKitBuild/WPE/Release
+if [[ "$(uname)" == "Darwin" ]]; then
+  rm -rf ./WebKitBuild
+else
+  if [[ -d ./WebKitBuild ]]; then
+    rm -rf ./WebKitBuild/Release
+  fi
+  if [[ -d ./WebKitBuild/GTK ]]; then
+    rm -rf ./WebKitBuild/GTK/Release
+  fi
+  if [[ -d ./WebKitBuild/WPE ]]; then
+    rm -rf ./WebKitBuild/WPE/Release
+  fi
 fi
