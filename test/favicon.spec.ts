@@ -19,7 +19,6 @@ import path from 'path';
 import { it } from './fixtures';
 
 it('should load svg favicon with prefer-color-scheme', (test, {browserName, browserChannel, headful}) => {
-  test.fixme(browserName === 'firefox', 'firefox hard crashes in both headless and headful');
   test.skip(!headful && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   test.skip(headful && browserName === 'webkit' && !browserChannel, 'playwright headful webkit does not have a favicon feature');
 }, async ({page, server}) => {
