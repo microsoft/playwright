@@ -169,7 +169,7 @@ it.skip('should work', async ({server, page}) => {
 - To run tests in non-headless (headful) mode:
 
 ```bash
-HEADLESS=false npm run ctest
+HEADFUL=1 npm run ctest
 ```
 
 - To run tests with custom browser executable, specify `CRPATH`, `WKPATH` or `FFPATH` env variable that points to browser executable:
@@ -181,7 +181,7 @@ CRPATH=<path-to-executable> npm run ctest
 - To run tests in slow-mode:
 
 ```bash
-HEADLESS=false SLOW_MO=500 npm run wtest
+HEADFUL=1 SLOW_MO=500 npm run wtest
 ```
 
 - When should a test be marked with `skip` or `fail`?
