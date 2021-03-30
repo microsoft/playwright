@@ -57,6 +57,7 @@ export class CRPage implements PageDelegate {
   readonly _browserContext: CRBrowserContext;
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
+  private _isBackgroundPage: boolean;
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -70,9 +71,10 @@ export class CRPage implements PageDelegate {
     return crPage._mainFrameSession;
   }
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean, isBackgroundPage: boolean) {
     this._targetId = targetId;
     this._opener = opener;
+    this._isBackgroundPage = isBackgroundPage;
     this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._isMac);
     this.rawMouse = new RawMouseImpl(client);
     this.rawTouchscreen = new RawTouchscreenImpl(client);
@@ -89,7 +91,25 @@ export class CRPage implements PageDelegate {
       if (viewportSize)
         this._page._state.emulatedSize = { viewport: viewportSize, screen: viewportSize };
     }
-    this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(() => this._initializedPage = this._page).catch(e => e);
+    // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
+    // so that anyone who awaits pageOrError got a ready and reported page.
+    this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(() => {
+      this._initializedPage = this._page;
+      this._reportAsNew();
+      return this._page;
+    }).catch(e => {
+      this._reportAsNew(e);
+      return e;
+    });
+  }
+
+  private _reportAsNew(error?: Error) {
+    if (this._isBackgroundPage) {
+      if (!error)
+        this._browserContext.emit(CRBrowserContext.CREvents.BackgroundPage, this._page);
+    } else {
+      this._page.reportAsNew(error);
+    }
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {

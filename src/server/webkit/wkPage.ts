@@ -316,7 +316,10 @@ export class WKPage implements PageDelegate {
         // Avoid rejection on disconnect.
         this._firstNonInitialNavigationCommittedPromise.catch(() => {});
       }
+      // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
+      // so that anyone who awaits pageOrError got a ready and reported page.
       this._initializedPage = pageOrError instanceof Page ? pageOrError : null;
+      this._page.reportAsNew(pageOrError instanceof Page ? undefined : pageOrError);
       this._pagePromiseCallback(pageOrError);
     } else {
       assert(targetInfo.isProvisional);
