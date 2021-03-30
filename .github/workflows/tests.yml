@@ -38,10 +38,17 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json && node test/checkCoverage.js"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run folio -- ${{ matrix.browser }} --reporter=dot,json"
+      env:
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json"
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    # Checking coverage across two test suites is hard. Temporary disabled.
+    # - run: node test/checkCoverage.js
+    #   env:
+    #     BROWSER: ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1
@@ -66,6 +73,9 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
+    - run: npm run folio -- ${{ matrix.browser }} --reporter=dot,json
+      env:
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
       env:
         BROWSER: ${{ matrix.browser }}
@@ -96,6 +106,10 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps
+    - run: npm run folio -- ${{ matrix.browser }} --reporter=dot,json
+      shell: bash
+      env:
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
       shell: bash
       env:
@@ -150,6 +164,11 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run folio -- ${{ matrix.browser }} --reporter=dot,json"
+      if: ${{ always() }}
+      env:
+        HEADFUL: 1
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json"
       if: ${{ always() }}
       env:
@@ -185,6 +204,10 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run folio -- chromium --reporter=dot,json"
+      env:
+        PWMODE: "${{ matrix.mode }}"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json"
       env:
         BROWSER: "chromium"
@@ -219,6 +242,10 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run folio -- ${{ matrix.browser }} --reporter=dot,json"
+      env:
+        PWVIDEO: 1
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --timeout=60000 --global-timeout=5400000 --retries=3 --reporter=dot,json -p video"
       env:
         BROWSER: ${{ matrix.browser }}
@@ -249,8 +276,10 @@ jobs:
       run: utils/avd_recreate.sh
     - name: Start Android Emulator
       run: utils/avd_start.sh
-    - name: Run device tests
-      run: npx folio test/android -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=3 --reporter=dot,json
+    - name: Run tests
+      run: npm run build-folio && node tests/folio/cli.js --config=tests/config/android.config.ts
+      env:
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - name: Run page tests
       run: npx folio test/page -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=3 --reporter=dot,json
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -286,6 +315,10 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run folio -- chromium --reporter=dot,json"
+      env:
+        PW_CHROMIUM_CHANNEL: "chrome"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --timeout=60000 --global-timeout=5400000 --retries=3 --reporter=dot,json"
       env:
         BROWSER: "chromium"
@@ -314,6 +347,11 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
+    - run: npm run folio -- chromium --reporter=dot,json
+      shell: bash
+      env:
+        PW_CHROMIUM_CHANNEL: "chrome"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
       shell: bash
       env:
@@ -340,6 +378,10 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
+    - run: npm run folio -- chromium --reporter=dot,json
+      env:
+        PW_CHROMIUM_CHANNEL: "chrome"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
       env:
         BROWSER: "chromium"
@@ -368,6 +410,11 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
+    - run: npm run folio -- chromium --reporter=dot,json
+      shell: bash
+      env:
+        PW_CHROMIUM_CHANNEL: "msedge"
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
     - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json
       shell: bash
       env:

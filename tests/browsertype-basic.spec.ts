@@ -16,30 +16,23 @@
  */
 
 import fs from 'fs';
-import { it, expect } from './fixtures';
+import { test, expect } from './config/playwrightTest';
 
-it('browserType.executablePath should work', (test, { browserChannel }) => {
-  test.fixme(!!browserChannel, 'Uncomment on roll');
-  test.skip(Boolean(process.env.CRPATH || process.env.FFPATH || process.env.WKPATH));
-}, async ({ browserType, browserChannel }) => {
-  // Interesting, unless I use browserChannel in test, filter above does not work!
+test('browserType.executablePath should work', async ({ browserType, browserChannel, browserOptions }) => {
+  test.skip(!!browserChannel, 'We skip browser download when testing a channel');
+  test.skip(!!browserOptions.executablePath, 'Skip with custom executable path');
+
   const executablePath = browserType.executablePath();
   expect(fs.existsSync(executablePath)).toBe(true);
 });
 
-it('browserType.name should work', async ({browserType, isChromium, isFirefox, isWebKit}) => {
-  if (isWebKit)
-    expect(browserType.name()).toBe('webkit');
-  else if (isFirefox)
-    expect(browserType.name()).toBe('firefox');
-  else if (isChromium)
-    expect(browserType.name()).toBe('chromium');
-  else
-    throw new Error('Unknown browser');
+test('browserType.name should work', async ({browserType, browserName}) => {
+  expect(browserType.name()).toBe(browserName);
 });
-it('should throw when trying to connect with not-chromium', (test, {browserName}) => {
+
+test('should throw when trying to connect with not-chromium', async ({ browserType, browserName }) => {
   test.skip(browserName === 'chromium');
-}, async ({browserType }) => {
+
   const error = await browserType.connectOverCDP({wsEndpoint: 'foo'}).catch(e => e);
   expect(error.message).toBe('Connecting over CDP is only supported in Chromium.');
 });

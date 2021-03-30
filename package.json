@@ -28,7 +28,9 @@
     "check-deps": "node utils/check_deps.js",
     "build-android-driver": "./utils/build_android_driver.sh",
     "storybook": "start-storybook -p 6006 -s public",
-    "build-storybook": "build-storybook -s public"
+    "build-storybook": "build-storybook -s public",
+    "build-folio": "tsc -p ./tests/folio",
+    "folio": "npm run build-folio && node tests/folio/cli.js --config=tests/config/default.config.ts"
   },
   "author": {
     "name": "Microsoft Corporation"

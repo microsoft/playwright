@@ -13,5 +13,5 @@ utils/generate_types/test/test.ts
 node_modules/
 browser_patches/*/checkout/
 browser_patches/chromium/output/
-packages/**/*.d.ts
+**/*.d.ts
 output/
