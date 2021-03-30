@@ -275,6 +275,11 @@ ContextOptions:
       properties:
         width: number
         height: number
+    screen:
+      type: object?
+      properties:
+        width: number
+        height: number
     ignoreHTTPSErrors: boolean?
     javaScriptEnabled: boolean?
     bypassCSP: boolean?
@@ -348,6 +353,11 @@ Playwright:
               userAgent: string
               viewport:
                 type: object
+                properties:
+                  width: number
+                  height: number
+              screen:
+                type: object?
                 properties:
                   width: number
                   height: number

@@ -97,7 +97,7 @@ export class WKPage implements PageDelegate {
       const viewportSize = helper.getViewportSizeFromWindowFeatures(opener._nextWindowOpenPopupFeatures);
       opener._nextWindowOpenPopupFeatures = undefined;
       if (viewportSize)
-        this._page._state.viewportSize = viewportSize;
+        this._page._state.emulatedSize = { viewport: viewportSize, screen: viewportSize };
     }
   }
 
@@ -181,10 +181,10 @@ export class WKPage implements PageDelegate {
     this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript, false, undefined, 'main').catch(e => {}));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
-    if (this._page._state.viewportSize) {
+    if (this._page._state.emulatedSize) {
       promises.push(session.send('Page.setScreenSizeOverride', {
-        width: this._page._state.viewportSize.width,
-        height: this._page._state.viewportSize.height,
+        width: this._page._state.emulatedSize.screen.width,
+        height: this._page._state.emulatedSize.screen.height,
       }));
     }
     promises.push(this.updateEmulateMedia());
@@ -603,8 +603,8 @@ export class WKPage implements PageDelegate {
     await this._forAllSessions(session => WKPage._setEmulateMedia(session, this._page._state.mediaType, colorScheme));
   }
 
-  async setViewportSize(viewportSize: types.Size): Promise<void> {
-    assert(this._page._state.viewportSize === viewportSize);
+  async setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void> {
+    assert(this._page._state.emulatedSize === emulatedSize);
     await this._updateViewport();
   }
 
@@ -616,9 +616,11 @@ export class WKPage implements PageDelegate {
 
   async _updateViewport(): Promise<void> {
     const options = this._browserContext._options;
-    const viewportSize = this._page._state.viewportSize;
-    if (viewportSize === null)
+    const deviceSize = this._page._state.emulatedSize;
+    if (deviceSize === null)
       return;
+    const viewportSize = deviceSize.viewport;
+    const screenSize = deviceSize.screen;
     const promises: Promise<any>[] = [
       this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {
         width: viewportSize.width,
@@ -627,8 +629,8 @@ export class WKPage implements PageDelegate {
         deviceScaleFactor: options.deviceScaleFactor || 1
       }),
       this._session.send('Page.setScreenSizeOverride', {
-        width: viewportSize.width,
-        height: viewportSize.height,
+        width: screenSize.width,
+        height: screenSize.height,
       }),
     ];
     if (options.isMobile) {

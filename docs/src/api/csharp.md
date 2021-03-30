@@ -17,3 +17,9 @@ Gets the [System.Net.HttpStatusCode] code of the response.
 
 ### param: ElementHandle.selectOption.values = %%-csharp-select-options-values-%%
 ### param: ElementHandle.setInputFiles.files = %%-csharp-input-files-%%
+
+### param: Frame.selectOption.values = %%-csharp-select-options-values-%%
+### param: Frame.setInputFiles.files = %%-csharp-input-files-%%
+
+### param: Page.selectOption.values = %%-csharp-select-options-values-%%
+### param: Page.setInputFiles.files = %%-csharp-input-files-%%

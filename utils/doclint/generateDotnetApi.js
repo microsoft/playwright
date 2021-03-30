@@ -23,7 +23,6 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { Type } = require('./documentation');
-const { args } = require('commander');
 const { EOL } = require('os');
 
 const maxDocumentationColumnWidth = 80;
@@ -40,6 +39,13 @@ const nullableTypes = ['int', 'bool', 'decimal', 'float'];
 let documentation;
 /** @type {Map<string, string>} */
 let classNameMap;
+
+/** @type {Map<string, string>} */
+const customTypeNames = new Map([
+  ['domcontentloaded', 'DOMContentLoaded'],
+  ['networkidle', 'NetworkIdle'],
+  ['File', 'FilePayload'],
+]);
 
 {
   const typesDir = process.argv[2] || '../generate_types/csharp/';
@@ -186,7 +192,7 @@ let classNameMap;
         v = v.replace(/[\"]/g, ``)
         let escapedName = v.replace(/[-]/g, ' ')
           .split(' ')
-          .map(word => word[0].toUpperCase() + word.substring(1)).join('');
+          .map(word => customTypeNames.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
 
         out.push(`\t[EnumMember(Value = "${v}")]`);
         out.push(`\t${escapedName},`);
@@ -338,6 +344,8 @@ function generateNameDefault(member, name, t, parent) {
         if (attemptedName.endsWith('s')
           && !["properties", "httpcredentials"].includes(attemptedName.toLowerCase()))
           attemptedName = attemptedName.substring(0, attemptedName.length - 1);
+        if (customTypeNames.get(attemptedName))
+          attemptedName = customTypeNames.get(attemptedName);
         let probableType = additionalTypes.get(attemptedName);
         if ((probableType && typesDiffer(t, probableType))
           || (["Value"].includes(attemptedName))) {
@@ -442,7 +450,8 @@ function renderMethod(member, parent, output, name) {
       output(`${type} ${name} { get; }`);
       return;
     }
-    name = `Get${name}`;
+    if (!/Is[A-Z]/.test(name))
+      name = `Get${name}`;
   } else if (member.args.size == 1
     && type === 'void'
     && name.startsWith('Set')
@@ -450,7 +459,7 @@ function renderMethod(member, parent, output, name) {
     name = name.substring(3); // remove the 'Set'
     if (member.spec)
       output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-    output(`${translateType(member.argsArray[0].type, parent)} ${name} { set; }`);
+    output(`${translateType(member.argsArray[0].type, parent)} ${name} { get; set; }`);
     return;
   }
 

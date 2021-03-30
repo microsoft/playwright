@@ -15,6 +15,7 @@
  */
 
 import { it, expect } from './fixtures';
+import net from 'net';
 
 it('should throw for bad server value', async ({browserType, browserOptions}) => {
   const error = await browserType.launch({
@@ -171,4 +172,34 @@ it('does launch without a port', async ({ browserType, browserOptions }) => {
     proxy: { server: 'http://localhost' }
   });
   await browser.close();
+});
+
+it('should use proxy', test => {
+  test.fixme('Non-emulated user agent is used in proxy CONNECT');
+}, async ({ browserType, browserOptions }) => {
+  let requestText = '';
+  // This is our proxy server
+  const server = net.createServer(socket => {
+    socket.on('data', data => {
+      requestText = data.toString();
+      socket.end();
+    });
+  });
+  await new Promise(f => server.listen(0, f));
+
+  const browser = await browserType.launch({
+    ...browserOptions,
+    proxy: { server: `http://127.0.0.1:${(server.address() as any).port}` }
+  });
+
+  const page = await browser.newPage({
+    userAgent: 'MyUserAgent'
+  });
+
+  // HTTPS over HTTP proxy will start with CONNECT request.
+  await page.goto('https://bing.com/').catch(() => {});
+  await browser.close();
+  server.close();
+  // This connect request should have emulated user agent.
+  expect(requestText).toContain('MyUserAgent');
 });

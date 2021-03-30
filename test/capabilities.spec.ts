@@ -81,7 +81,7 @@ it('should support webgl', (test, {browserName, headful}) => {
 });
 
 it('should support webgl 2', (test, {browserName, headful}) => {
-  test.skip(browserName === 'webkit', 'Webkit doesn\'t have webgl2 enabled yet upstream.');
+  test.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
   test.fixme(browserName === 'firefox' && !headful);
   test.fixme(browserName === 'chromium' && headful, 'chromium doesn\'t like webgl2 when running under xvfb');
 }, async ({page}) => {

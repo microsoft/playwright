@@ -17,7 +17,7 @@ when the world is on Google Chrome 89, Playwright already supports Chromium 91 t
 if a few weeks.
 
 There is also a way to opt into using Google Chrome's or Microsoft Edge's branded builds for testing. For details
-on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edge section below.](#google-chrome--microsoft-edge) section below.
+on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edge](#google-chrome--microsoft-edge) section below.
 
 ## Firefox
 
@@ -33,7 +33,7 @@ also working on a dedicated support for builds that would match Apple Safari Tec
 ## Google Chrome & Microsoft Edge
 
 While Playwright will download and use the recent Chromium build by default, it can operate against the stock Google
-Chrome and Microsoft Edge browsers. In particular, current Playwright version will support Stable and Beta channels
+Chrome and Microsoft Edge browsers available on the machine. In particular, current Playwright version will support Stable and Beta channels
 of these browsers. Here is how you can opt into using the stock browser:
 
 ```js
@@ -66,6 +66,10 @@ browser = await playwright.chromium.launch(channel="chrome")
 # Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
 browser = playwright.chromium.launch(channel="chrome")
 ```
+
+:::note
+Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be installed manually before use.
+:::
 
 ### When to use Google Chrome & Microsoft Edge and when not to?
 

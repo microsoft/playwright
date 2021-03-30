@@ -134,7 +134,7 @@ it('should work with subframes return 204 with domcontentloaded', async ({page, 
 });
 
 it('should fail when server returns 204', async ({page, server, isChromium, isWebKit}) => {
-  // Webkit just loads an empty page.
+  // WebKit just loads an empty page.
   server.setRoute('/empty.html', (req, res) => {
     res.statusCode = 204;
     res.end();

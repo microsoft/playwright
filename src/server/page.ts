@@ -52,7 +52,7 @@ export interface PageDelegate {
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
   updateExtraHTTPHeaders(): Promise<void>;
-  setViewportSize(viewportSize: types.Size): Promise<void>;
+  setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   setFileChooserIntercepted(enabled: boolean): Promise<void>;
@@ -86,7 +86,7 @@ export interface PageDelegate {
 }
 
 type PageState = {
-  viewportSize: types.Size | null;
+  emulatedSize: { screen: types.Size, viewport: types.Size } | null;
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: types.HeadersArray | null;
@@ -163,7 +163,7 @@ export class Page extends SdkObject {
     this._crashedPromise = new Promise(f => this._crashedCallback = f);
     this._browserContext = browserContext;
     this._state = {
-      viewportSize: browserContext._options.viewport || null,
+      emulatedSize: browserContext._options.viewport ? { viewport: browserContext._options.viewport, screen: browserContext._options.screen || browserContext._options.viewport } : null,
       mediaType: null,
       colorScheme: null,
       extraHTTPHeaders: null,
@@ -369,13 +369,13 @@ export class Page extends SdkObject {
   }
 
   async setViewportSize(viewportSize: types.Size) {
-    this._state.viewportSize = { ...viewportSize };
-    await this._delegate.setViewportSize(this._state.viewportSize);
+    this._state.emulatedSize = { viewport: { ...viewportSize }, screen: { ...viewportSize } };
+    await this._delegate.setEmulatedSize(this._state.emulatedSize);
     await this._doSlowMo();
   }
 
   viewportSize(): types.Size | null {
-    return this._state.viewportSize;
+    return this._state.emulatedSize?.viewport || null;
   }
 
   async bringToFront(): Promise<void> {
