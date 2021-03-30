@@ -863,7 +863,8 @@ class FrameSession {
   }
 
   async _startScreencast(options: types.PageScreencastOptions) {
-    assert(this._screencastId);
+    const screencastId = this._screencastId;
+    assert(screencastId);
     const gotFirstFrame = new Promise(f => this._client.once('Page.screencastFrame', f));
     await this._client.send('Page.startScreencast', {
       format: 'jpeg',
@@ -872,7 +873,9 @@ class FrameSession {
       maxHeight: options.height,
     });
     // Wait for the first frame before reporting video to the client.
-    this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, this._screencastId, options.outputFile, gotFirstFrame.then(() => this._crPage.pageOrError()));
+    gotFirstFrame.then(() => {
+      this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, screencastId, options.outputFile, this._crPage.pageOrError());
+    });
   }
 
   async _stopScreencast(): Promise<void> {

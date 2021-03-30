@@ -231,11 +231,63 @@ describe('screencast', suite => {
     });
     const page = await context.newPage();
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await page.waitForTimeout(1000);
     await context.close();
 
     const saveAsPath = testInfo.outputPath('my-video.webm');
     await page.video().saveAs(saveAsPath);
     expect(fs.existsSync(saveAsPath)).toBeTruthy();
+  });
+
+  it('saveAs should throw when no video frames', async ({browser, browserName, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: videosPath,
+        size
+      },
+      viewport: size,
+    });
+
+    const page = await context.newPage();
+    const [popup] = await Promise.all([
+      page.context().waitForEvent('page'),
+      page.evaluate(() => {
+        const win = window.open('about:blank');
+        win.close();
+      }),
+    ]);
+    await page.close();
+
+    const saveAsPath = testInfo.outputPath('my-video.webm');
+    const error = await popup.video().saveAs(saveAsPath).catch(e => e);
+    // WebKit pauses renderer before win.close() and actually writes something.
+    if (browserName === 'webkit')
+      expect(fs.existsSync(saveAsPath)).toBeTruthy();
+    else
+      expect(error.message).toContain('Page did not produce any video frames');
+  });
+
+  it('should delete video', async ({browser, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: videosPath,
+        size
+      },
+      viewport: size,
+    });
+    const page = await context.newPage();
+    const deletePromise = page.video().delete();
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await page.waitForTimeout(1000);
+    await context.close();
+
+    const videoPath = await page.video().path();
+    await deletePromise;
+    expect(fs.existsSync(videoPath)).toBeFalsy();
   });
 
   it('should expose video path blank page', async ({browser, testInfo}) => {

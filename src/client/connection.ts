@@ -26,7 +26,6 @@ import { Page, BindingCall } from './page';
 import { Worker } from './worker';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
-import { Download } from './download';
 import { parseError } from '../protocol/serializers';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
@@ -42,7 +41,7 @@ import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
 import { Android, AndroidSocket, AndroidDevice } from './android';
 import { captureStackTrace } from '../utils/stackTrace';
-import { VideoImpl } from './video';
+import { Artifact } from './artifact';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -157,6 +156,9 @@ export class Connection {
       case 'AndroidDevice':
         result = new AndroidDevice(parent, type, guid, initializer);
         break;
+      case 'Artifact':
+        result = new Artifact(parent, type, guid, initializer);
+        break;
       case 'BindingCall':
         result = new BindingCall(parent, type, guid, initializer);
         break;
@@ -191,9 +193,6 @@ export class Connection {
         break;
       case 'Dialog':
         result = new Dialog(parent, type, guid, initializer);
-        break;
-      case 'Download':
-        result = new Download(parent, type, guid, initializer);
         break;
       case 'Electron':
         result = new Electron(parent, type, guid, initializer);
@@ -233,9 +232,6 @@ export class Connection {
         break;
       case 'Selectors':
         result = new SelectorsOwner(parent, type, guid, initializer);
-        break;
-      case 'Video':
-        result = new VideoImpl(parent, type, guid, initializer);
         break;
       case 'WebSocket':
         result = new WebSocket(parent, type, guid, initializer);

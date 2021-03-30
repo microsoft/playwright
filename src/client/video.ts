@@ -16,60 +16,46 @@
 
 import { Page } from './page';
 import * as api from '../../types/types';
-import * as channels from '../protocol/channels';
-import * as fs from 'fs';
-import { Stream } from './stream';
-import { mkdirIfNeeded } from '../utils/utils';
-import { ChannelOwner } from './channelOwner';
+import { Artifact } from './artifact';
 
 export class Video implements api.Video {
-  private _page: Page;
-  private _impl: VideoImpl | undefined;
-  private _implCallback = () => {};
-  private _implPromise: Promise<void>;
+  private _artifact: Promise<Artifact | null> | null = null;
+  private _artifactCallback = (artifact: Artifact) => {};
+  private _isRemote = false;
 
   constructor(page: Page) {
-    this._page = page;
-    this._implPromise = new Promise(f => this._implCallback = f);
+    const browser = page.context()._browser;
+    this._isRemote = !!browser && browser._isRemote;
+    this._artifact = Promise.race([
+      new Promise<Artifact>(f => this._artifactCallback = f),
+      page._closedOrCrashedPromise.then(() => null),
+    ]);
   }
 
-  _setImpl(impl: VideoImpl) {
-    this._impl = impl;
-    this._implCallback();
+  _artifactReady(artifact: Artifact) {
+    artifact._isRemote = this._isRemote;
+    this._artifactCallback(artifact);
   }
 
   async path(): Promise<string> {
-    const browser = this._page.context()._browser;
-    if (browser && browser._isRemote)
-      throw new Error(`Path is not available when using browserType.connect(). Use video.saveAs() to save a local copy.`);
-    await this._implPromise;
-    return this._impl!._initializer.absolutePath;
+    if (this._isRemote)
+      throw new Error(`Path is not available when using browserType.connect(). Use saveAs() to save a local copy.`);
+    const artifact = await this._artifact;
+    if (!artifact)
+      throw new Error('Page did not produce any video frames');
+    return artifact._initializer.absolutePath;
   }
 
   async saveAs(path: string): Promise<void> {
-    await this._implPromise;
-    const impl = this._impl!;
-    return impl._wrapApiCall('video.saveAs', async (channel: channels.VideoChannel) => {
-      const browser = this._page.context()._browser;
-      if (!browser || !browser._isRemote) {
-        await channel.saveAs({ path });
-        return;
-      }
-
-      const result = await channel.saveAsStream();
-      const stream = Stream.from(result.stream);
-      await mkdirIfNeeded(path);
-      await new Promise((resolve, reject) => {
-        stream.stream().pipe(fs.createWriteStream(path))
-            .on('finish' as any, resolve)
-            .on('error' as any, reject);
-      });
-    });
+    const artifact = await this._artifact;
+    if (!artifact)
+      throw new Error('Page did not produce any video frames');
+    return artifact.saveAs(path);
   }
-}
 
-export class VideoImpl extends ChannelOwner<channels.VideoChannel, channels.VideoInitializer> {
-  static from(channel: channels.VideoChannel): VideoImpl {
-    return (channel as any)._object;
+  async delete(): Promise<void> {
+    const artifact = await this._artifact;
+    if (artifact)
+      await artifact.delete();
   }
 }

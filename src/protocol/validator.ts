@@ -514,10 +514,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.PageCrStopCSSCoverageParams = tOptional(tObject({}));
   scheme.PageBringToFrontParams = tOptional(tObject({}));
-  scheme.VideoSaveAsParams = tObject({
-    path: tString,
-  });
-  scheme.VideoSaveAsStreamParams = tOptional(tObject({}));
   scheme.FrameEvalOnSelectorParams = tObject({
     selector: tString,
     expression: tString,
@@ -930,14 +926,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     promptText: tOptional(tString),
   });
   scheme.DialogDismissParams = tOptional(tObject({}));
-  scheme.DownloadPathParams = tOptional(tObject({}));
-  scheme.DownloadSaveAsParams = tObject({
+  scheme.ArtifactPathAfterFinishedParams = tOptional(tObject({}));
+  scheme.ArtifactSaveAsParams = tObject({
     path: tString,
   });
-  scheme.DownloadSaveAsStreamParams = tOptional(tObject({}));
-  scheme.DownloadFailureParams = tOptional(tObject({}));
-  scheme.DownloadStreamParams = tOptional(tObject({}));
-  scheme.DownloadDeleteParams = tOptional(tObject({}));
+  scheme.ArtifactSaveAsStreamParams = tOptional(tObject({}));
+  scheme.ArtifactFailureParams = tOptional(tObject({}));
+  scheme.ArtifactStreamParams = tOptional(tObject({}));
+  scheme.ArtifactDeleteParams = tOptional(tObject({}));
   scheme.StreamReadParams = tObject({
     size: tOptional(tNumber),
   });

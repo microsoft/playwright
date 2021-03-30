@@ -18,6 +18,10 @@ print(await page.video.path())
 print(page.video.path())
 ```
 
+## async method: Video.delete
+
+Deletes the video file. Will wait for the video to finish if necessary.
+
 ## async method: Video.path
 - returns: <[path]>
 

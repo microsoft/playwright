@@ -189,7 +189,7 @@ describe('download event', () => {
     expect(fs.existsSync(nestedPath)).toBeTruthy();
     expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
     const error = await download.path().catch(e => e);
-    expect(error.message).toContain('Path is not available when using browserType.connect(). Use download.saveAs() to save a local copy.');
+    expect(error.message).toContain('Path is not available when using browserType.connect(). Use saveAs() to save a local copy.');
     await browser.close();
   });
 
@@ -216,7 +216,7 @@ describe('download event', () => {
     const userPath = testInfo.outputPath('download.txt');
     await download.delete();
     const { message } = await download.saveAs(userPath).catch(e => e);
-    expect(message).toContain('Download already deleted. Save before deleting.');
+    expect(message).toContain('File already deleted. Save before deleting.');
     await page.close();
   });
 
@@ -233,7 +233,7 @@ describe('download event', () => {
     const userPath = testInfo.outputPath('download.txt');
     await download.delete();
     const { message } = await download.saveAs(userPath).catch(e => e);
-    expect(message).toContain('Download already deleted. Save before deleting.');
+    expect(message).toContain('File already deleted. Save before deleting.');
     await browser.close();
   });
 
@@ -413,7 +413,7 @@ describe('download event', () => {
       page.context().close(),
     ]);
     expect(downloadPath).toBe(null);
-    expect(saveError.message).toContain('Download deleted upon browser context closure.');
+    expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 
   it('should close the context without awaiting the download', (test, { browserName, platform }) => {
@@ -440,6 +440,6 @@ describe('download event', () => {
       page.context().close(),
     ]);
     expect(downloadPath).toBe(null);
-    expect(saveError.message).toContain('Download deleted upon browser context closure.');
+    expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 });

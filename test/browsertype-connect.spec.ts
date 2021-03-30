@@ -256,6 +256,8 @@ describe('connect', (suite, { mode }) => {
     const savedAsPath = testInfo.outputPath('my-video.webm');
     await page.video().saveAs(savedAsPath);
     expect(fs.existsSync(savedAsPath)).toBeTruthy();
+    const error = await page.video().path().catch(e => e);
+    expect(error.message).toContain('Path is not available when using browserType.connect(). Use saveAs() to save a local copy.');
   });
 
   it('should be able to connect 20 times to a single server without warnings', async ({browserType, remoteServer, server}) => {

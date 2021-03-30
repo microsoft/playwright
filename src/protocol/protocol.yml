@@ -621,6 +621,10 @@ BrowserContext:
         route: Route
         request: Request
 
+    video:
+      parameters:
+        artifact: Artifact
+
     crBackgroundPage:
       parameters:
         page: Page
@@ -640,7 +644,6 @@ Page:
         width: number
         height: number
     isClosed: boolean
-    video: Video?
 
   commands:
 
@@ -930,7 +933,9 @@ Page:
 
     download:
       parameters:
-        download: Download
+        url: string
+        suggestedFilename: string
+        artifact: Artifact
 
     domcontentloaded:
 
@@ -983,7 +988,7 @@ Page:
 
     video:
       parameters:
-        video: Video
+        artifact: Artifact
 
     webSocket:
       parameters:
@@ -992,25 +997,6 @@ Page:
     worker:
       parameters:
         worker: Worker
-
-
-Video:
-  type: interface
-
-  initializer:
-    absolutePath: string
-
-  commands:
-
-    # Blocks context.close until saved to the local |path|.
-    saveAs:
-      parameters:
-        path: string
-
-    # Blocks context.close until the stream is closed.
-    saveAsStream:
-      returns:
-        stream: Stream
 
 
 
@@ -2000,16 +1986,15 @@ Dialog:
 
 
 
-Download:
+Artifact:
   type: interface
 
   initializer:
-    url: string
-    suggestedFilename: string
+    absolutePath: string
 
   commands:
 
-    path:
+    pathAfterFinished:
       returns:
         value: string?
 
@@ -2032,7 +2017,6 @@ Download:
         stream: Stream?
 
     delete:
-
 
 
 Stream:

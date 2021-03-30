@@ -10164,6 +10164,11 @@ export interface Touchscreen {
  */
 export interface Video {
   /**
+   * Deletes the video file. Will wait for the video to finish if necessary.
+   */
+  delete(): Promise<void>;
+
+  /**
    * Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem
    * upon closing the browser context. This method throws when connected remotely via
    * [browserType.connect(params)](https://playwright.dev/docs/api/class-browsertype#browsertypeconnectparams).
