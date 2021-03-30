@@ -3199,7 +3199,7 @@ index 933601761667417ebe5de301586869ccc64fc3da..f63a95c3c45980d5606971b83881e824
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index af0a051bdae52b2daf70b1fee76eee0866b7b046..18d22ad1469daccfccdf8b8dcf957cf41d7229a2 100644
+index af0a051bdae52b2daf70b1fee76eee0866b7b046..e11ae6eca2615d7364370c036d8aadb00ef51dc5 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,19 +32,25 @@
@@ -4065,7 +4065,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..18d22ad1469daccfccdf8b8dcf957cf4
 +    Optional<double> bottom = insets->getDouble("bottom");
 +    Optional<double> left = insets->getDouble("left");
 +    if (top && right && bottom && left)
-+      return FloatBoxExtent(*top, *right, *bottom, *left);
++        return FloatBoxExtent(static_cast<float>(*top), static_cast<float>(*right), static_cast<float>(*bottom), static_cast<float>(*left));
 +    return Optional<FloatBoxExtent>();
 +}
 +
@@ -4076,7 +4076,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..18d22ad1469daccfccdf8b8dcf957cf4
 +    Optional<double> width = insets->getDouble("width");
 +    Optional<double> height = insets->getDouble("height");
 +    if (x && y && width && height)
-+      return FloatRect(*x, *y, *width, *height);
++        return FloatRect(static_cast<float>(*x), static_cast<float>(*y), static_cast<float>(*width), static_cast<float>(*height));
 +    return Optional<FloatRect>();
 +}
 +
@@ -4089,7 +4089,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..18d22ad1469daccfccdf8b8dcf957cf4
 +    if (unobscuredContentRect) {
 +        Optional<FloatRect> ucr = parseRect(WTFMove(unobscuredContentRect));
 +        if (!ucr)
-+          return makeUnexpected("Invalid unobscured content rect");
++            return makeUnexpected("Invalid unobscured content rect");
 +
 +        view->setUnobscuredContentSize(FloatSize(ucr->width(), ucr->height()));
 +    }
@@ -4097,7 +4097,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..18d22ad1469daccfccdf8b8dcf957cf4
 +    if (contentInsets) {
 +        Optional<FloatBoxExtent> ci = parseInsets(WTFMove(contentInsets));
 +        if (!ci)
-+          return makeUnexpected("Invalid content insets");
++            return makeUnexpected("Invalid content insets");
 +
 +        m_inspectedPage.setContentInsets(*ci);
 +    }
@@ -4105,7 +4105,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..18d22ad1469daccfccdf8b8dcf957cf4
 +    if (obscuredInsets) {
 +        Optional<FloatBoxExtent> oi = parseInsets(WTFMove(obscuredInsets));
 +        if (!oi)
-+          return makeUnexpected("Invalid obscured insets");
++            return makeUnexpected("Invalid obscured insets");
 +
 +        m_inspectedPage.setObscuredInsets(*oi);
 +    }
@@ -4113,11 +4113,11 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..18d22ad1469daccfccdf8b8dcf957cf4
 +    if (unobscuredInsets) {
 +        Optional<FloatBoxExtent> ui = parseInsets(WTFMove(unobscuredInsets));
 +        if (!ui)
-+          return makeUnexpected("Invalid unobscured insets");
++            return makeUnexpected("Invalid unobscured insets");
 +
 +        m_inspectedPage.setUnobscuredSafeAreaInsets(*ui);
 +    }
-+    return { };
++    return {};
 +}
  
  } // namespace WebCore
@@ -6287,18 +6287,6 @@ index 4a4f6c72b54a2e6c5462aa4366b71b67d82e3582..9b15f8992bc32892e24e27025870c09b
 +constexpr bool platformScreenIsTouchPrimaryInputDevice() { return true; }
  #endif
  #endif
- 
-diff --git a/Source/WebCore/platform/RectEdges.h b/Source/WebCore/platform/RectEdges.h
-index 883ecae9e15822034f217a5701473853a0b05468..65dfd324ddbf54e74f637f7b3b991a18db805207 100644
---- a/Source/WebCore/platform/RectEdges.h
-+++ b/Source/WebCore/platform/RectEdges.h
-@@ -27,6 +27,7 @@
- 
- #include "WritingMode.h"
- #include <array>
-+#include <utility>
- #include <wtf/OptionSet.h>
- #include <wtf/text/TextStream.h>
  
 diff --git a/Source/WebCore/platform/ScrollableArea.h b/Source/WebCore/platform/ScrollableArea.h
 index 7eb7b540282840ab7b5f31fdfa6b2bfd58eb19dc..4937254dc71d6eb0d6213e645b92199af354096e 100644
