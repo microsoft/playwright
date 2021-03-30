@@ -45,7 +45,7 @@ import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOpt
 import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
-import { Video } from './video';
+import { Video, VideoImpl } from './video';
 import type { ChromiumBrowserContext } from './chromiumBrowserContext';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
@@ -132,7 +132,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('requestFinished', ({ request, responseEndTiming }) => this._onRequestFinished(Request.from(request), responseEndTiming));
     this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
-    this._channel.on('video', ({ relativePath }) => this.video()!._setRelativePath(relativePath));
+    this._channel.on('video', ({ video }) => this.video()!._setImpl(VideoImpl.from(video)));
     this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
@@ -248,14 +248,17 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   video(): Video | null {
+    // Note: we are creating Video object lazily, because we do not know
+    // BrowserContextOptions when constructing the page - it is assigned
+    // too late during launchPersistentContext.
     if (this._video)
       return this._video;
     if (!this._browserContext._options.recordVideo)
       return null;
     this._video = new Video(this);
     // In case of persistent profile, we already have it.
-    if (this._initializer.videoRelativePath)
-      this._video._setRelativePath(this._initializer.videoRelativePath);
+    if (this._initializer.video)
+      this._video._setImpl(VideoImpl.from(this._initializer.video));
     return this._video;
   }
 

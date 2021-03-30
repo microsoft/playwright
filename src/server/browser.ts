@@ -96,7 +96,6 @@ export abstract class Browser extends SdkObject {
   _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
     const video = new Video(context, videoId, path);
     this._idToVideo.set(videoId, video);
-    context.emit(BrowserContext.Events.VideoStarted, video);
     pageOrError.then(pageOrError => {
       if (pageOrError instanceof Page)
         pageOrError.videoStarted(video);

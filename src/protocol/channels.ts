@@ -187,13 +187,7 @@ export type RemoteBrowserInitializer = {
   selectors: SelectorsChannel,
 };
 export interface RemoteBrowserChannel extends Channel {
-  on(event: 'video', callback: (params: RemoteBrowserVideoEvent) => void): this;
 }
-export type RemoteBrowserVideoEvent = {
-  context: BrowserContextChannel,
-  stream: StreamChannel,
-  relativePath: string,
-};
 
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
@@ -799,7 +793,7 @@ export type PageInitializer = {
     height: number,
   },
   isClosed: boolean,
-  videoRelativePath?: string,
+  video?: VideoChannel,
 };
 export interface PageChannel extends Channel {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
@@ -908,7 +902,7 @@ export type PageRouteEvent = {
   request: RequestChannel,
 };
 export type PageVideoEvent = {
-  relativePath: string,
+  video: VideoChannel,
 };
 export type PageWebSocketEvent = {
   webSocket: WebSocketChannel,
@@ -1235,6 +1229,27 @@ export type PageCrStopCSSCoverageResult = {
 export type PageBringToFrontParams = {};
 export type PageBringToFrontOptions = {};
 export type PageBringToFrontResult = void;
+
+// ----------- Video -----------
+export type VideoInitializer = {
+  absolutePath: string,
+};
+export interface VideoChannel extends Channel {
+  saveAs(params: VideoSaveAsParams, metadata?: Metadata): Promise<VideoSaveAsResult>;
+  saveAsStream(params?: VideoSaveAsStreamParams, metadata?: Metadata): Promise<VideoSaveAsStreamResult>;
+}
+export type VideoSaveAsParams = {
+  path: string,
+};
+export type VideoSaveAsOptions = {
+
+};
+export type VideoSaveAsResult = void;
+export type VideoSaveAsStreamParams = {};
+export type VideoSaveAsStreamOptions = {};
+export type VideoSaveAsStreamResult = {
+  stream: StreamChannel,
+};
 
 // ----------- Frame -----------
 export type FrameInitializer = {

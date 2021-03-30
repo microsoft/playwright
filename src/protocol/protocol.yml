@@ -380,16 +380,6 @@ RemoteBrowser:
     browser: Browser
     selectors: Selectors
 
-  events:
-
-    # Video stream blocks owner context from closing until the stream is closed.
-    # Make sure to close the stream!
-    video:
-      parameters:
-        context: BrowserContext
-        stream: Stream
-        relativePath: string
-
 
 Selectors:
   type: interface
@@ -650,7 +640,7 @@ Page:
         width: number
         height: number
     isClosed: boolean
-    videoRelativePath: string?
+    video: Video?
 
   commands:
 
@@ -993,7 +983,7 @@ Page:
 
     video:
       parameters:
-        relativePath: string
+        video: Video
 
     webSocket:
       parameters:
@@ -1002,6 +992,25 @@ Page:
     worker:
       parameters:
         worker: Worker
+
+
+Video:
+  type: interface
+
+  initializer:
+    absolutePath: string
+
+  commands:
+
+    # Blocks context.close until saved to the local |path|.
+    saveAs:
+      parameters:
+        path: string
+
+    # Blocks context.close until the stream is closed.
+    saveAsStream:
+      returns:
+        stream: Stream
 
 
 

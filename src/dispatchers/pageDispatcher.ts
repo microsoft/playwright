@@ -32,16 +32,19 @@ import { FileChooser } from '../server/fileChooser';
 import { CRCoverage } from '../server/chromium/crCoverage';
 import { JSHandle } from '../server/javascript';
 import { CallMetadata } from '../server/instrumentation';
+import { VideoDispatcher } from './videoDispatcher';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
 
-  constructor(scope: DispatcherScope, page: Page) {
+  // Note: Video must outlive Page and BrowserContext, so that client can saveAs it
+  // after closing the context.
+  constructor(scope: DispatcherScope, page: Page, scopeForVideo: DispatcherScope) {
     // TODO: theoretically, there could be more than one frame already.
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
     super(scope, page, 'Page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
-      videoRelativePath: page._video ? page._video._relativePath : undefined,
+      video: page._video ? new VideoDispatcher(scopeForVideo, page._video) : undefined,
       viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed()
     }, true);
@@ -75,7 +78,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
       responseEndTiming: request._responseEndTiming
     }));
     page.on(Page.Events.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
-    page.on(Page.Events.VideoStarted, (video: Video) => this._dispatchEvent('video', {  relativePath: video._relativePath }));
+    page.on(Page.Events.VideoStarted, (video: Video) => this._dispatchEvent('video', {  video: new VideoDispatcher(scopeForVideo, video) }));
     page.on(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this._scope, webSocket) }));
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }

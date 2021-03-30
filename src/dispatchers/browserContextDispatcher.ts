@@ -32,8 +32,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context = context;
 
     for (const page of context.pages())
-      this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) });
-    context.on(BrowserContext.Events.Page, page => this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) }));
+      this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page, scope) });
+    context.on(BrowserContext.Events.Page, page => this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page, scope) }));
     context.on(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
@@ -41,8 +41,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
     if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
-        this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) });
-      context.on(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) }));
+        this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page, scope) });
+      context.on(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page, scope) }));
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
         this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
       context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));

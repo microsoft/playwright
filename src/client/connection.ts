@@ -42,6 +42,7 @@ import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
 import { Android, AndroidSocket, AndroidDevice } from './android';
 import { captureStackTrace } from '../utils/stackTrace';
+import { VideoImpl } from './video';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -232,6 +233,9 @@ export class Connection {
         break;
       case 'Selectors':
         result = new SelectorsOwner(parent, type, guid, initializer);
+        break;
+      case 'Video':
+        result = new VideoImpl(parent, type, guid, initializer);
         break;
       case 'WebSocket':
         result = new WebSocket(parent, type, guid, initializer);

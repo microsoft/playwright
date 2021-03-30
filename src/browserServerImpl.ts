@@ -17,7 +17,6 @@
 import { LaunchServerOptions, Logger } from './client/types';
 import { BrowserType } from './server/browserType';
 import * as ws from 'ws';
-import fs from 'fs';
 import { Browser } from './server/browser';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
@@ -30,8 +29,6 @@ import { envObjectToArray } from './client/clientHelper';
 import { createGuid } from './utils/utils';
 import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
-import { BrowserContext, Video } from './server/browserContext';
-import { StreamDispatcher } from './dispatchers/streamDispatcher';
 import { ProtocolLogger } from './server/types';
 import { CallMetadata, internalCallMetadata, SdkObject } from './server/instrumentation';
 
@@ -163,7 +160,6 @@ class ConnectedBrowser extends BrowserDispatcher {
     }
     const result = await super.newContext(params, metadata);
     const dispatcher = result.context as BrowserContextDispatcher;
-    dispatcher._object.on(BrowserContext.Events.VideoStarted, (video: Video) => this._sendVideo(dispatcher, video));
     dispatcher._object._setSelectors(this._selectors);
     this._contexts.push(dispatcher);
     return result;
@@ -183,24 +179,6 @@ class ConnectedBrowser extends BrowserDispatcher {
       this._closed = true;
       super._didClose();
     }
-  }
-
-  private _sendVideo(contextDispatcher: BrowserContextDispatcher, video: Video) {
-    video._waitForCallbackOnFinish(async () => {
-      const readable = fs.createReadStream(video._path);
-      await new Promise(f => readable.on('readable', f));
-      const stream = new StreamDispatcher(this._remoteBrowser!._scope, readable);
-      this._remoteBrowser!._dispatchEvent('video', {
-        stream,
-        context: contextDispatcher,
-        relativePath: video._relativePath
-      });
-      await new Promise<void>(resolve => {
-        readable.on('close', resolve);
-        readable.on('end', resolve);
-        readable.on('error', resolve);
-      });
-    });
   }
 }
 

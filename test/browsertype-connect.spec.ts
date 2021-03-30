@@ -242,7 +242,7 @@ describe('connect', (suite, { mode }) => {
     await page.close();
   });
 
-  it('should save videos from remote browser', async ({browserType, remoteServer, testInfo}) => {
+  it('should saveAs videos from remote browser', async ({browserType, remoteServer, testInfo}) => {
     const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
     const videosPath = testInfo.outputPath();
     const context = await remote.newContext({
@@ -253,8 +253,9 @@ describe('connect', (suite, { mode }) => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const files = fs.readdirSync(videosPath);
-    expect(files.some(file => file.endsWith('webm'))).toBe(true);
+    const savedAsPath = testInfo.outputPath('my-video.webm');
+    await page.video().saveAs(savedAsPath);
+    expect(fs.existsSync(savedAsPath)).toBeTruthy();
   });
 
   it('should be able to connect 20 times to a single server without warnings', async ({browserType, remoteServer, server}) => {

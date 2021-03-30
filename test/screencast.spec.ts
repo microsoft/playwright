@@ -219,6 +219,25 @@ describe('screencast', suite => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
+  it('should saveAs video', async ({browser, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: videosPath,
+        size
+      },
+      viewport: size,
+    });
+    const page = await context.newPage();
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await context.close();
+
+    const saveAsPath = testInfo.outputPath('my-video.webm');
+    await page.video().saveAs(saveAsPath);
+    expect(fs.existsSync(saveAsPath)).toBeTruthy();
+  });
+
   it('should expose video path blank page', async ({browser, testInfo}) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };

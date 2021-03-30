@@ -9185,7 +9185,8 @@ export interface Download {
 
   /**
    * Returns path to the downloaded file in case of successful download. The method will wait for the download to finish if
-   * necessary.
+   * necessary. The method throws when connected remotely via
+   * [browserType.connect(params)](https://playwright.dev/docs/api/class-browsertype#browsertypeconnectparams).
    */
   path(): Promise<null|string>;
 
@@ -10154,7 +10155,7 @@ export interface Touchscreen {
 }
 
 /**
- * When browser context is created with the `videosPath` option, each page has a video object associated with it.
+ * When browser context is created with the `recordVideo` option, each page has a video object associated with it.
  * 
  * ```js
  * console.log(await page.video().path());
@@ -10164,9 +10165,17 @@ export interface Touchscreen {
 export interface Video {
   /**
    * Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem
-   * upon closing the browser context.
+   * upon closing the browser context. This method throws when connected remotely via
+   * [browserType.connect(params)](https://playwright.dev/docs/api/class-browsertype#browsertypeconnectparams).
    */
   path(): Promise<string>;
+
+  /**
+   * Saves the video to a user-specified path. It is safe to call this method while the video is still in progress, or after
+   * the page has closed. This method waits until the page is closed and the video is fully saved.
+   * @param path Path where the video should be saved.
+   */
+  saveAs(path: string): Promise<void>;
 }
 
 /**

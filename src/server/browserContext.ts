@@ -29,31 +29,36 @@ import * as types from './types';
 import path from 'path';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 
+type SaveVideoCallback = (localPath: string) => Promise<void>;
 export class Video {
   readonly _videoId: string;
   readonly _path: string;
-  readonly _relativePath: string;
   readonly _context: BrowserContext;
   readonly _finishedPromise: Promise<void>;
   private _finishCallback: () => void = () => {};
-  private _callbackOnFinish?: () => Promise<void>;
+  private _saveCallbacks: SaveVideoCallback[] = [];
+  private _finished = false;
 
   constructor(context: BrowserContext, videoId: string, p: string) {
     this._videoId = videoId;
     this._path = p;
-    this._relativePath = path.relative(context._options.recordVideo!.dir, p);
     this._context = context;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }
 
   async _finish() {
-    if (this._callbackOnFinish)
-      await this._callbackOnFinish();
+    for (const callback of this._saveCallbacks)
+      await callback(this._path);
+    this._finished = true;
     this._finishCallback();
   }
 
-  _waitForCallbackOnFinish(callback: () => Promise<void>) {
-    this._callbackOnFinish = callback;
+  saveAs(saveCallback: SaveVideoCallback) {
+    if (this._finished) {
+      saveCallback(this._path).catch(e => {});
+      return;
+    }
+    this._saveCallbacks.push(saveCallback);
   }
 }
 
@@ -61,7 +66,6 @@ export abstract class BrowserContext extends SdkObject {
   static Events = {
     Close: 'close',
     Page: 'page',
-    VideoStarted: 'videostarted',
     BeforeClose: 'beforeclose',
   };
 
