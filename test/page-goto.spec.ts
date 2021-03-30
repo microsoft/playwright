@@ -499,3 +499,28 @@ it('should not throw unhandled rejections on invalid url', async ({page, server}
   const e = await page.goto('https://www.youtube Panel Title.com/').catch(e => e);
   expect(e.toString()).toContain('Panel Title');
 });
+
+it('should not crash when RTCPeerConnection is used',(test, { browserName }) => {
+  test.fail(browserName === 'webkit');
+}, async ({ page, server }) => {
+  server.setRoute('/rtc.html', (_, res) => {
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <script>
+            new window.RTCPeerConnection({
+              iceServers: []
+            });
+          </script>
+        </body>
+      </html>
+`);
+  });
+  await page.goto(server.PREFIX + '/rtc.html');
+  await page.evaluate(() => {
+    new window.RTCPeerConnection({
+      iceServers: []
+    });
+  });
+});
