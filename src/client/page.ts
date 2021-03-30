@@ -362,6 +362,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.waitForNavigation(options));
   }
 
+  async waitForURL(url: URLMatch, options?: { waitUntil?: LifecycleEvent, timeout?: number }): Promise<void> {
+    return this._attributeToPage(() => this._mainFrame.waitForURL(url, options));
+  }
+
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: { timeout?: number } = {}): Promise<Request> {
     return this._wrapApiCall('page.waitForRequest', async (channel: channels.PageChannel) => {
       const predicate = (request: Request) => {

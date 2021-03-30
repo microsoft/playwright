@@ -2531,6 +2531,7 @@ export interface Page {
    * - [page.reload([options])](https://playwright.dev/docs/api/class-page#pagereloadoptions)
    * - [page.setContent(html[, options])](https://playwright.dev/docs/api/class-page#pagesetcontenthtml-options)
    * - [page.waitForNavigation([options])](https://playwright.dev/docs/api/class-page#pagewaitfornavigationoptions)
+   * - [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#pagewaitforurlurl-options)
    * 
    * > NOTE:
    * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#pagesetdefaultnavigationtimeouttimeout)
@@ -3173,6 +3174,39 @@ export interface Page {
    * @param timeout A timeout to wait for
    */
   waitForTimeout(timeout: number): Promise<void>;
+
+  /**
+   * Waits for the main frame to navigate to the given URL.
+   * 
+   * ```js
+   * await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
+   * await page.waitForURL('**\/target.html');
+   * ```
+   * 
+   * Shortcut for main frame's
+   * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#framewaitforurlurl-options).
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+   * @param options 
+   */
+  waitForURL(url: string|RegExp|((url: URL) => boolean), options?: {
+    /**
+     * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
+     * changed by using the
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#pagesetdefaultnavigationtimeouttimeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#pagesetdefaulttimeouttimeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When to consider operation succeeded, defaults to `load`. Events can be either:
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     */
+    waitUntil?: "load"|"domcontentloaded"|"networkidle";
+  }): Promise<void>;
 
   /**
    * This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
@@ -4476,7 +4510,38 @@ export interface Frame {
    * be flaky. Use signals such as network events, selectors becoming visible and others instead.
    * @param timeout A timeout to wait for
    */
-  waitForTimeout(timeout: number): Promise<void>;}
+  waitForTimeout(timeout: number): Promise<void>;
+
+  /**
+   * Waits for the frame to navigate to the given URL.
+   * 
+   * ```js
+   * await frame.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
+   * await frame.waitForURL('**\/target.html');
+   * ```
+   * 
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+   * @param options 
+   */
+  waitForURL(url: string|RegExp|((url: URL) => boolean), options?: {
+    /**
+     * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
+     * changed by using the
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#pagesetdefaultnavigationtimeouttimeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#pagesetdefaulttimeouttimeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When to consider operation succeeded, defaults to `load`. Events can be either:
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     */
+    waitUntil?: "load"|"domcontentloaded"|"networkidle";
+  }): Promise<void>;}
 
 /**
  * - extends: [EventEmitter]
