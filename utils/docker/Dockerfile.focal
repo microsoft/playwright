@@ -24,7 +24,6 @@ RUN apt-get update && apt-get install -y python3.8 python3-pip && \
 # === BAKE BROWSERS INTO IMAGE ===
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV DEBIAN_FRONTEND=noninteractive
 
 # 1. Add tip-of-tree Playwright package to install its browsers.
 #    The package should be built beforehand from tip-of-tree Playwright.
@@ -37,7 +36,7 @@ COPY ./playwright.tar.gz /tmp/playwright.tar.gz
 RUN mkdir /ms-playwright && \
     mkdir /tmp/pw && cd /tmp/pw && npm init -y && \
     npm i /tmp/playwright.tar.gz && \
-    npx playwright install-deps && \
+    DEBIAN_FRONTEND=noninteractive npx playwright install-deps && \
     rm -rf /tmp/pw && rm /tmp/playwright.tar.gz && \
     chmod -R 777 /ms-playwright
 

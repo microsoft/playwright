@@ -37,7 +37,7 @@ COPY ./playwright.tar.gz /tmp/playwright.tar.gz
 RUN mkdir /ms-playwright && \
     mkdir /tmp/pw && cd /tmp/pw && npm init -y && \
     npm i /tmp/playwright.tar.gz && \
-    npx playwright install-deps && \
+    DEBIAN_FRONTEND=noninteractive npx playwright install-deps && \
     rm -rf /tmp/pw && rm /tmp/playwright.tar.gz && \
     chmod -R 777 /ms-playwright
 
