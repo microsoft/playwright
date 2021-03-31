@@ -532,8 +532,8 @@ it('should support cors with GET', async ({page, server}) => {
   }
 });
 
-it('should support cors with POST', (test, { browserName }) => {
-  test.fail(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/6016');
+it('should support cors with POST', (test, { browserName, browserChannel }) => {
+  test.fail(browserName === 'chromium' && browserChannel !== 'chrome', 'https://github.com/microsoft/playwright/issues/6016');
 }, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
@@ -556,8 +556,8 @@ it('should support cors with POST', (test, { browserName }) => {
   expect(resp).toEqual(['electric', 'gas']);
 });
 
-it('should support cors with credentials', (test, { browserName }) => {
-  test.fail(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/6016');
+it('should support cors with credentials', (test, { browserName, browserChannel }) => {
+  test.fail(browserName === 'chromium' && browserChannel !== 'chrome', 'https://github.com/microsoft/playwright/issues/6016');
 }, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
@@ -616,8 +616,8 @@ it('should reject cors with disallowed credentials', async ({page, server}) => {
   expect(error).toBeTruthy();
 });
 
-it('should support cors for different methods', (test, {browserName}) => {
-  test.fail(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/6016');
+it('should support cors for different methods', (test, {browserName, browserChannel}) => {
+  test.fail(browserChannel === 'chromium' && browserName !== 'chrome', 'https://github.com/microsoft/playwright/issues/6016');
 }, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async (route, request) => {
