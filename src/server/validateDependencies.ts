@@ -43,11 +43,12 @@ export async function validateHostRequirements(registry: registry.Registry, brow
 }
 
 const DL_OPEN_LIBRARIES = {
-  chromium: [],
-  webkit: ['libGLESv2.so.2', 'libx264.so'],
-  firefox: [],
-  clank: [],
-  ffmpeg: [],
+  'chromium': [],
+  'webkit': ['libGLESv2.so.2', 'libx264.so'],
+  'webkit-technology-preview': ['libGLESv2.so.2', 'libx264.so'],
+  'firefox': [],
+  'clank': [],
+  'ffmpeg': [],
 };
 
 function isSupportedWindowsVersion(): boolean {

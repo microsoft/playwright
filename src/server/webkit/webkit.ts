@@ -23,10 +23,24 @@ import { BrowserType } from '../browserType';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
+import * as fs from 'fs';
+import { assert } from '../../utils/utils';
 
 export class WebKit extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
     super('webkit', playwrightOptions);
+  }
+
+  executablePath(options?: types.LaunchOptions): string {
+    if (options?.channel) {
+      let executablePath = undefined;
+      if ((options.channel as any) === 'technology-preview')
+        executablePath = this._registry.executablePath('webkit-technology-preview');
+      assert(executablePath, `unsupported webkit channel "${options.channel}"`);
+      assert(fs.existsSync(executablePath), `webkit channel "${options.channel}" is not installed. Try running 'npx playwright install webkit-technology-preview'`);
+      return executablePath;
+    }
+    return super.executablePath(options);
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
