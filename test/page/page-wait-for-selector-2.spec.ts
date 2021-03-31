@@ -250,3 +250,21 @@ it('should allow you to select an element with single slash xpath', async ({page
   const waitForXPath = page.waitForSelector('//html/body/div');
   expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('some text');
 });
+
+it('should correctly handle hidden shadow host', async ({page, server}) => {
+  await page.setContent(`
+    <x-host hidden></x-host>
+    <script>
+      const host = document.querySelector('x-host');
+      const root = host.attachShadow({ mode: 'open' });
+      const style = document.createElement('style');
+      style.textContent = ':host([hidden]) { display: none; }';
+      root.appendChild(style);
+      const child = document.createElement('div');
+      child.textContent = 'Find me';
+      root.appendChild(child);
+    </script>
+  `);
+  expect(await page.textContent('div')).toBe('Find me');
+  await page.waitForSelector('div', { state: 'hidden' });
+});
