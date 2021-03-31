@@ -161,15 +161,21 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.log(`[pid=${spawnedProcess.pid}] <kill>`);
     helper.removeEventListeners(listeners);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
+      options.log(`[pid=${spawnedProcess.pid}] <will force kill>`);
       // Force kill the browser.
       try {
-        if (process.platform === 'win32')
-          childProcess.execSync(`taskkill /pid ${spawnedProcess.pid} /T /F`, { stdio: 'ignore' });
-        else
+        if (process.platform === 'win32') {
+          const stdout = childProcess.execSync(`taskkill /pid ${spawnedProcess.pid} /T /F`);
+          options.log(`[pid=${spawnedProcess.pid}] taskkill output: ${stdout.toString()}`);
+        } else {
           process.kill(-spawnedProcess.pid, 'SIGKILL');
+        }
       } catch (e) {
+        options.log(`[pid=${spawnedProcess.pid}] exception while trying to kill process: ${e}`);
         // the process might have already stopped
       }
+    } else {
+      options.log(`[pid=${spawnedProcess.pid}] <skipped force kill spawnedProcess.killed=${spawnedProcess.killed} processClosed=${processClosed}>`);
     }
     cleanup();
   }
