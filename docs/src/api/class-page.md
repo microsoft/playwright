@@ -2132,6 +2132,8 @@ browser.close()
 Page routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request
 matches both handlers.
 
+To remove a route with its handler you can use [`method: Page.unroute`].
+
 :::note
 Enabling routing disables http cache.
 :::
