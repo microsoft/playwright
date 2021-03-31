@@ -2351,6 +2351,9 @@ export interface Page {
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler))
    * when request matches both handlers.
    * 
+   * To remove a route with its handler you can use
+   * [page.unroute(url[, handler])](https://playwright.dev/docs/api/class-page#pageunrouteurl-handler).
+   * 
    * > NOTE: Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
    * @param handler handler function to route the request.
@@ -5011,6 +5014,9 @@ export interface BrowserContext {
    * 
    * Page routes (set up with [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler))
    * take precedence over browser context routes when request matches both handlers.
+   * 
+   * To remove a route with its handler you can use
+   * [browserContext.unroute(url[, handler])](https://playwright.dev/docs/api/class-browsercontext#browsercontextunrouteurl-handler).
    * 
    * > NOTE: Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
