@@ -500,16 +500,14 @@ it('should not throw unhandled rejections on invalid url', async ({page, server}
   expect(e.toString()).toContain('Panel Title');
 });
 
-it('should not crash when RTCPeerConnection is used',(test, { browserName }) => {
-  test.fail(browserName === 'webkit');
-}, async ({ page, server }) => {
+it('should not crash when RTCPeerConnection is used', async ({ page, server }) => {
   server.setRoute('/rtc.html', (_, res) => {
     res.end(`
       <!DOCTYPE html>
       <html>
         <body>
           <script>
-            new window.RTCPeerConnection({
+            window.RTCPeerConnection && new window.RTCPeerConnection({
               iceServers: []
             });
           </script>
@@ -519,7 +517,8 @@ it('should not crash when RTCPeerConnection is used',(test, { browserName }) => 
   });
   await page.goto(server.PREFIX + '/rtc.html');
   await page.evaluate(() => {
-    new window.RTCPeerConnection({
+    // RTCPeerConnection is not present on WebKit Linux
+    window.RTCPeerConnection && new window.RTCPeerConnection({
       iceServers: []
     });
   });
