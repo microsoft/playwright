@@ -172,6 +172,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         options.log(`[pid=${spawnedProcess.pid}] exception while trying to kill process: ${e}`);
         // the process might have already stopped
       }
+    } else {
+      options.log(`[pid=${spawnedProcess.pid}] <skipped force kill spawnedProcess.killed=${spawnedProcess.killed} processClosed=${processClosed}>`);
     }
     cleanup();
   }
