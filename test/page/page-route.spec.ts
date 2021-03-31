@@ -616,7 +616,7 @@ it('should reject cors with disallowed credentials', async ({page, server}) => {
   expect(error).toBeTruthy();
 });
 
-it('should support cors for different methods', (test, { browserName} ) => {
+it('should support cors for different methods', (test, {browserName}) => {
   test.fail(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/6016');
 }, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
