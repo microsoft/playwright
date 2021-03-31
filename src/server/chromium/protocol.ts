@@ -1236,6 +1236,21 @@ or 'allowAndName'.
     export type setDownloadBehaviorReturnValue = {
     }
     /**
+     * Cancel a download if in progress
+     */
+    export type cancelDownloadParameters = {
+      /**
+       * Global unique identifier of the download.
+       */
+      guid: string;
+      /**
+       * BrowserContext to perform the action in. When omitted, default browser context is used.
+       */
+      browserContextId?: BrowserContextID;
+    }
+    export type cancelDownloadReturnValue = {
+    }
+    /**
      * Close browser gracefully.
      */
     export type closeParameters = {
@@ -6954,7 +6969,7 @@ passed by the developer (e.g. via "fetch") as understood by the backend.
     /**
      * The reason why request was blocked.
      */
-    export type BlockedReason = "other"|"csp"|"mixed-content"|"origin"|"inspector"|"subresource-filter"|"content-type"|"collapsed-by-client"|"coep-frame-resource-needs-coep-header"|"coop-sandboxed-iframe-cannot-navigate-to-coop-page"|"corp-not-same-origin"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep"|"corp-not-same-site";
+    export type BlockedReason = "other"|"csp"|"mixed-content"|"origin"|"inspector"|"subresource-filter"|"content-type"|"coep-frame-resource-needs-coep-header"|"coop-sandboxed-iframe-cannot-navigate-to-coop-page"|"corp-not-same-origin"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep"|"corp-not-same-site";
     /**
      * The reason why request was blocked.
      */
@@ -7545,7 +7560,7 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
       reportingEndpoint?: string;
       reportOnlyReportingEndpoint?: string;
     }
-    export type CrossOriginEmbedderPolicyValue = "None"|"RequireCorp";
+    export type CrossOriginEmbedderPolicyValue = "None"|"CorsOrCredentialless"|"RequireCorp";
     export interface CrossOriginEmbedderPolicyStatus {
       value: CrossOriginEmbedderPolicyValue;
       reportOnlyValue: CrossOriginEmbedderPolicyValue;
@@ -9762,6 +9777,20 @@ Example URLs: http://www.google.com/file.html -> "google.com"
      * The referring-policy used for the navigation.
      */
     export type ReferrerPolicy = "noReferrer"|"noReferrerWhenDowngrade"|"origin"|"originWhenCrossOrigin"|"sameOrigin"|"strictOrigin"|"strictOriginWhenCrossOrigin"|"unsafeUrl";
+    /**
+     * Per-script compilation cache parameters for `Page.produceCompilationCache`
+     */
+    export interface CompilationCacheParams {
+      /**
+       * The URL of the script to produce a compilation cache entry for.
+       */
+      url: string;
+      /**
+       * A hint to the backend whether eager compilation is recommended.
+(the actual compilation mode used is upon backend discretion).
+       */
+      eager?: boolean;
+    }
     
     export type domContentEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -10298,17 +10327,29 @@ information in the `cookies` field.
     }
     export type getLayoutMetricsReturnValue = {
       /**
-       * Metrics relating to the layout viewport.
+       * Deprecated metrics relating to the layout viewport. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssLayoutViewport` instead.
        */
       layoutViewport: LayoutViewport;
       /**
-       * Metrics relating to the visual viewport.
+       * Deprecated metrics relating to the visual viewport. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssVisualViewport` instead.
        */
       visualViewport: VisualViewport;
       /**
-       * Size of scrollable area.
+       * Deprecated size of scrollable area. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssContentSize` instead.
        */
       contentSize: DOM.Rect;
+      /**
+       * Metrics relating to the layout viewport in CSS pixels.
+       */
+      cssLayoutViewport: LayoutViewport;
+      /**
+       * Metrics relating to the visual viewport in CSS pixels.
+       */
+      cssVisualViewport: VisualViewport;
+      /**
+       * Size of scrollable area in CSS pixels.
+       */
+      cssContentSize: DOM.Rect;
     }
     /**
      * Returns navigation history for the current page.
@@ -10873,11 +10914,28 @@ https://github.com/WICG/web-lifecycle/
     }
     /**
      * Forces compilation cache to be generated for every subresource script.
+See also: `Page.produceCompilationCache`.
      */
     export type setProduceCompilationCacheParameters = {
       enabled: boolean;
     }
     export type setProduceCompilationCacheReturnValue = {
+    }
+    /**
+     * Requests backend to produce compilation cache for the specified scripts.
+Unlike setProduceCompilationCache, this allows client to only produce cache
+for specific scripts. `scripts` are appeneded to the list of scripts
+for which the cache for would produced. Disabling compilation cache with
+`setProduceCompilationCache` would reset all pending cache requests.
+The list may also be reset during page navigation.
+When script with a matching URL is encountered, the cache is optionally
+produced upon backend discretion, based on internal heuristics.
+See also: `Page.compilationCacheProduced`.
+     */
+    export type produceCompilationCacheParameters = {
+      scripts: CompilationCacheParams[];
+    }
+    export type produceCompilationCacheReturnValue = {
     }
     /**
      * Seeds compilation cache for given url. Compilation cache does not survive
@@ -11766,6 +11824,19 @@ current browsing context.
     export type getTrustTokensReturnValue = {
       tokens: TrustTokens[];
     }
+    /**
+     * Removes all Trust Tokens issued by the provided issuerOrigin.
+Leaves other stored data, including the issuer's Redemption Records, intact.
+     */
+    export type clearTrustTokensParameters = {
+      issuerOrigin: string;
+    }
+    export type clearTrustTokensReturnValue = {
+      /**
+       * True if any tokens were deleted, false otherwise.
+       */
+      didDeleteTokens: boolean;
+    }
   }
   
   /**
@@ -12202,7 +12273,7 @@ one.
      */
     export type createTargetParameters = {
       /**
-       * The initial URL the page will be navigated to.
+       * The initial URL the page will be navigated to. An empty string indicates about:blank.
        */
       url: string;
       /**
@@ -12447,6 +12518,14 @@ Keep consistent with memory_dump_request_args.h and
 memory_instrumentation.mojom
      */
     export type MemoryDumpLevelOfDetail = "background"|"light"|"detailed";
+    /**
+     * Backend type to use for tracing. `chrome` uses the Chrome-integrated
+tracing service and is supported on all platforms. `system` is only
+supported on Chrome OS and uses the Perfetto system tracing service.
+`auto` chooses `system` when the perfettoConfig provided to Tracing.start
+specifies at least one non-Chrome data source; otherwise uses `chrome`.
+     */
+    export type TracingBackend = "auto"|"chrome"|"system";
     
     export type bufferUsagePayload = {
       /**
@@ -12585,6 +12664,10 @@ When specified, the parameters `categories`, `options`, `traceConfig`
 are ignored.
        */
       perfettoConfig?: binary;
+      /**
+       * Backend type (defaults to `auto`)
+       */
+      tracingBackend?: TracingBackend;
     }
     export type startReturnValue = {
     }
@@ -16165,6 +16248,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Browser.grantPermissions": Browser.grantPermissionsParameters;
     "Browser.resetPermissions": Browser.resetPermissionsParameters;
     "Browser.setDownloadBehavior": Browser.setDownloadBehaviorParameters;
+    "Browser.cancelDownload": Browser.cancelDownloadParameters;
     "Browser.close": Browser.closeParameters;
     "Browser.crash": Browser.crashParameters;
     "Browser.crashGpuProcess": Browser.crashGpuProcessParameters;
@@ -16466,6 +16550,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.setWebLifecycleState": Page.setWebLifecycleStateParameters;
     "Page.stopScreencast": Page.stopScreencastParameters;
     "Page.setProduceCompilationCache": Page.setProduceCompilationCacheParameters;
+    "Page.produceCompilationCache": Page.produceCompilationCacheParameters;
     "Page.addCompilationCache": Page.addCompilationCacheParameters;
     "Page.clearCompilationCache": Page.clearCompilationCacheParameters;
     "Page.generateTestReport": Page.generateTestReportParameters;
@@ -16505,6 +16590,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.untrackCacheStorageForOrigin": Storage.untrackCacheStorageForOriginParameters;
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginParameters;
     "Storage.getTrustTokens": Storage.getTrustTokensParameters;
+    "Storage.clearTrustTokens": Storage.clearTrustTokensParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoParameters;
     "Target.activateTarget": Target.activateTargetParameters;
@@ -16674,6 +16760,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Browser.grantPermissions": Browser.grantPermissionsReturnValue;
     "Browser.resetPermissions": Browser.resetPermissionsReturnValue;
     "Browser.setDownloadBehavior": Browser.setDownloadBehaviorReturnValue;
+    "Browser.cancelDownload": Browser.cancelDownloadReturnValue;
     "Browser.close": Browser.closeReturnValue;
     "Browser.crash": Browser.crashReturnValue;
     "Browser.crashGpuProcess": Browser.crashGpuProcessReturnValue;
@@ -16975,6 +17062,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.setWebLifecycleState": Page.setWebLifecycleStateReturnValue;
     "Page.stopScreencast": Page.stopScreencastReturnValue;
     "Page.setProduceCompilationCache": Page.setProduceCompilationCacheReturnValue;
+    "Page.produceCompilationCache": Page.produceCompilationCacheReturnValue;
     "Page.addCompilationCache": Page.addCompilationCacheReturnValue;
     "Page.clearCompilationCache": Page.clearCompilationCacheReturnValue;
     "Page.generateTestReport": Page.generateTestReportReturnValue;
@@ -17014,6 +17102,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.untrackCacheStorageForOrigin": Storage.untrackCacheStorageForOriginReturnValue;
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginReturnValue;
     "Storage.getTrustTokens": Storage.getTrustTokensReturnValue;
+    "Storage.clearTrustTokens": Storage.clearTrustTokensReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoReturnValue;
     "Target.activateTarget": Target.activateTargetReturnValue;
