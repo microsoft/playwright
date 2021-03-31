@@ -44,7 +44,7 @@ export class FFPage implements PageDelegate {
   readonly _networkManager: FFNetworkManager;
   readonly _browserContext: FFBrowserContext;
   private _pagePromise: Promise<Page | Error>;
-  _pageCallback: (pageOrError: Page | Error) => void = () => {};
+  private _pageCallback: (pageOrError: Page | Error) => void = () => {};
   _initializedPage: Page | null = null;
   readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
@@ -93,12 +93,22 @@ export class FFPage implements PageDelegate {
     this._pagePromise = new Promise(f => this._pageCallback = f);
     session.once(FFSessionEvents.Disconnected, () => this._page._didDisconnect());
     this._session.once('Page.ready', () => {
-      this._pageCallback(this._page);
+      // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
+      // so that anyone who awaits pageOrError got a ready and reported page.
       this._initializedPage = this._page;
+      this._page.reportAsNew();
+      this._pageCallback(this._page);
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: '', worldName: UTILITY_WORLD_NAME }).catch(this._pageCallback);
+    this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: '', worldName: UTILITY_WORLD_NAME }).catch(e => this._markAsError(e));
+  }
+
+  _markAsError(error: Error) {
+    if (!this._initializedPage) {
+      this._page.reportAsNew(error);
+      this._pageCallback(error);
+    }
   }
 
   async pageOrError(): Promise<Page | Error> {

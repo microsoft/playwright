@@ -155,7 +155,6 @@ export class WKBrowser extends Browser {
     const opener = event.openerId ? this._wkPages.get(event.openerId) : undefined;
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
-    wkPage._page.reportAsNew();
   }
 
   _onPageProxyDestroyed(event: Protocol.Playwright.pageProxyDestroyedPayload) {

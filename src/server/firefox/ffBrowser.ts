@@ -107,7 +107,6 @@ export class FFBrowser extends Browser {
     const opener = openerId ? this._ffPages.get(openerId)! : null;
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);
-    ffPage._page.reportAsNew();
   }
 
   _onDownloadCreated(payload: Protocol.Browser.downloadCreatedPayload) {
@@ -120,7 +119,7 @@ export class FFBrowser extends Browser {
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
-      ffPage._pageCallback(new Error('Starting new page download'));
+      ffPage._markAsError(new Error('Starting new page download'));
       if (ffPage._opener)
         originPage = ffPage._opener._initializedPage;
     }

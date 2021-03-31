@@ -181,14 +181,13 @@ export class Page extends SdkObject {
     this.selectors = browserContext.selectors();
   }
 
-  async reportAsNew() {
-    const pageOrError = await this._delegate.pageOrError();
-    if (pageOrError instanceof Error) {
+  async reportAsNew(error?: Error) {
+    if (error) {
       // Initialization error could have happened because of
       // context/browser closure. Just ignore the page.
       if (this._browserContext.isClosingOrClosed())
         return;
-      this._setIsError(pageOrError);
+      this._setIsError(error);
     }
     this._browserContext.emit(BrowserContext.Events.Page, this);
     const openerDelegate = this._delegate.openerDelegate();
