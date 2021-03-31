@@ -1395,3 +1395,31 @@ be flaky. Use signals such as network events, selectors becoming visible and oth
 - `timeout` <[float]>
 
 A timeout to wait for
+
+## async method: Frame.waitForURL
+
+Waits for the frame to navigate to the given URL.
+
+```js
+await frame.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
+await frame.waitForURL('**/target.html');
+```
+
+```java
+frame.click("a.delayed-navigation"); // Clicking the link will indirectly cause a navigation
+frame.waitForURL("**/target.html");
+```
+
+```python async
+await frame.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+await frame.wait_for_url("**/target.html")
+```
+
+```python sync
+frame.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+frame.wait_for_url("**/target.html")
+```
+
+### param: Frame.waitForURL.url = %%-wait-for-navigation-url-%%
+### option: Frame.waitForURL.timeout = %%-navigation-timeout-%%
+### option: Frame.waitForURL.waitUntil = %%-navigation-wait-until-%%

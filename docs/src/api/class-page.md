@@ -2274,6 +2274,7 @@ This setting will change the default maximum navigation time for the following m
 * [`method: Page.reload`]
 * [`method: Page.setContent`]
 * [`method: Page.waitForNavigation`]
+* [`method: Page.waitForURL`]
 
 :::note
 [`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`],
@@ -3108,6 +3109,36 @@ Shortcut for main frame's [`method: Frame.waitForTimeout`].
 - `timeout` <[float]>
 
 A timeout to wait for
+
+## async method: Page.waitForURL
+
+Waits for the main frame to navigate to the given URL.
+
+```js
+await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
+await page.waitForURL('**/target.html');
+```
+
+```java
+page.click("a.delayed-navigation"); // Clicking the link will indirectly cause a navigation
+page.waitForURL("**/target.html");
+```
+
+```python async
+await page.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+await page.wait_for_url("**/target.html")
+```
+
+```python sync
+page.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+page.wait_for_url("**/target.html")
+```
+
+Shortcut for main frame's [`method: Frame.waitForURL`].
+
+### param: Page.waitForURL.url = %%-wait-for-navigation-url-%%
+### option: Page.waitForURL.timeout = %%-navigation-timeout-%%
+### option: Page.waitForURL.waitUntil = %%-navigation-wait-until-%%
 
 ## async method: Page.waitForWebSocket
 * langs: csharp, java

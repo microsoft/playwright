@@ -159,6 +159,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {
+    if (urlMatches(this.url(), url))
+      return await this.waitForLoadState(options?.waitUntil, options);
+    await this.waitForNavigation({ url, ...options });
+  }
+
   async frameElement(): Promise<ElementHandle> {
     return this._wrapApiCall(this._apiName('frameElement'), async (channel: channels.FrameChannel) => {
       return ElementHandle.from((await channel.frameElement()).element);
