@@ -34,7 +34,7 @@ export class WebKit extends BrowserType {
   executablePath(options?: types.LaunchOptions): string {
     if (options?.channel) {
       let executablePath = undefined;
-      if (options.channel === 'technology-preview')
+      if ((options.channel as any) === 'technology-preview')
         executablePath = this._registry.executablePath('webkit-technology-preview');
       assert(executablePath, `unsupported webkit channel "${options.channel}"`);
       assert(fs.existsSync(executablePath), `webkit channel "${options.channel}" is not installed. Try running 'npx playwright install webkit-technology-preview'`);
