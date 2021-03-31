@@ -161,6 +161,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.log(`[pid=${spawnedProcess.pid}] <kill>`);
     helper.removeEventListeners(listeners);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
+      options.log(`[pid=${spawnedProcess.pid}] <will force kill>`);
       // Force kill the browser.
       try {
         if (process.platform === 'win32')
@@ -168,6 +169,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         else
           process.kill(-spawnedProcess.pid, 'SIGKILL');
       } catch (e) {
+        options.log(`[pid=${spawnedProcess.pid}] exception while trying to kill process: ${e}`);
         // the process might have already stopped
       }
     }
