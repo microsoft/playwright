@@ -6242,6 +6242,12 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       found?: boolean;
     }
+    export interface Insets {
+      top: number;
+      right: number;
+      bottom: number;
+      left: number;
+    }
     
     export type domContentEventFiredPayload = {
       timestamp: number;
@@ -6803,6 +6809,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       angle?: number;
     }
     export type setOrientationOverrideReturnValue = {
+    }
+    export type setVisibleContentRectsParameters = {
+      unobscuredContentRect?: DOM.Rect;
+      contentInsets?: Insets;
+      obscuredInsets?: Insets;
+      unobscuredInsets?: Insets;
+    }
+    export type setVisibleContentRectsReturnValue = {
     }
   }
   
@@ -8842,6 +8856,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setBypassCSP": Page.setBypassCSPParameters;
     "Page.crash": Page.crashParameters;
     "Page.setOrientationOverride": Page.setOrientationOverrideParameters;
+    "Page.setVisibleContentRects": Page.setVisibleContentRectsParameters;
     "Playwright.enable": Playwright.enableParameters;
     "Playwright.disable": Playwright.disableParameters;
     "Playwright.close": Playwright.closeParameters;
@@ -9130,6 +9145,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setBypassCSP": Page.setBypassCSPReturnValue;
     "Page.crash": Page.crashReturnValue;
     "Page.setOrientationOverride": Page.setOrientationOverrideReturnValue;
+    "Page.setVisibleContentRects": Page.setVisibleContentRectsReturnValue;
     "Playwright.enable": Playwright.enableReturnValue;
     "Playwright.disable": Playwright.disableReturnValue;
     "Playwright.close": Playwright.closeReturnValue;
