@@ -163,6 +163,7 @@ static void* keyValueObservingContext = &keyValueObservingContext;
 - (void)awakeFromNib
 {
     _webView = [[WKWebView alloc] initWithFrame:[containerView bounds] configuration:_configuration];
+    _webView._windowOcclusionDetectionEnabled = NO;
 
     _webView.allowsMagnification = YES;
     _webView.allowsBackForwardNavigationGestures = YES;
