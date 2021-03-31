@@ -18,7 +18,7 @@ const path = await download.path();
 
 ```java
 // wait for download to start
-Download download  = page.waitForDownload(() -> page.click("a")); 
+Download download  = page.waitForDownload(() -> page.click("a"));
 // wait for download to complete
 Path path = download.path();
 ```
@@ -73,7 +73,7 @@ Returns download error if any. Will wait for the download to finish if necessary
 - returns: <[null]|[path]>
 
 Returns path to the downloaded file in case of successful download. The method will
-wait for the download to finish if necessary.
+wait for the download to finish if necessary. The method throws when connected remotely via [`method: BrowserType.connect`].
 
 ## async method: Download.saveAs
 

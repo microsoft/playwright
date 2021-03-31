@@ -29,40 +29,12 @@ import * as types from './types';
 import path from 'path';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 
-export class Video {
-  readonly _videoId: string;
-  readonly _path: string;
-  readonly _relativePath: string;
-  readonly _context: BrowserContext;
-  readonly _finishedPromise: Promise<void>;
-  private _finishCallback: () => void = () => {};
-  private _callbackOnFinish?: () => Promise<void>;
-
-  constructor(context: BrowserContext, videoId: string, p: string) {
-    this._videoId = videoId;
-    this._path = p;
-    this._relativePath = path.relative(context._options.recordVideo!.dir, p);
-    this._context = context;
-    this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
-  }
-
-  async _finish() {
-    if (this._callbackOnFinish)
-      await this._callbackOnFinish();
-    this._finishCallback();
-  }
-
-  _waitForCallbackOnFinish(callback: () => Promise<void>) {
-    this._callbackOnFinish = callback;
-  }
-}
-
 export abstract class BrowserContext extends SdkObject {
   static Events = {
     Close: 'close',
     Page: 'page',
-    VideoStarted: 'videostarted',
     BeforeClose: 'beforeclose',
+    VideoStarted: 'videostarted',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();
@@ -121,6 +93,10 @@ export abstract class BrowserContext extends SdkObject {
     }
     this._closedStatus = 'closed';
     this._downloads.clear();
+    for (const [id, video] of this._browser._idToVideo) {
+      if (video.context === this)
+        this._browser._idToVideo.delete(id);
+    }
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
@@ -267,15 +243,15 @@ export abstract class BrowserContext extends SdkObject {
 
       // Cleanup.
       const promises: Promise<void>[] = [];
-      for (const video of this._browser._idToVideo.values()) {
+      for (const { context, artifact } of this._browser._idToVideo.values()) {
         // Wait for the videos to finish.
-        if (video._context === this)
-          promises.push(video._finishedPromise);
+        if (context === this)
+          promises.push(artifact.finishedPromise());
       }
       for (const download of this._downloads) {
         // We delete downloads after context closure
         // so that browser does not write to the download file anymore.
-        promises.push(download.deleteOnContextClose());
+        promises.push(download.artifact.deleteOnContextClose());
       }
       await Promise.all(promises);
 

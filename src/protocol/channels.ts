@@ -187,13 +187,7 @@ export type RemoteBrowserInitializer = {
   selectors: SelectorsChannel,
 };
 export interface RemoteBrowserChannel extends Channel {
-  on(event: 'video', callback: (params: RemoteBrowserVideoEvent) => void): this;
 }
-export type RemoteBrowserVideoEvent = {
-  context: BrowserContextChannel,
-  stream: StreamChannel,
-  relativePath: string,
-};
 
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
@@ -595,6 +589,7 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
+  on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
   on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
   on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams, metadata?: Metadata): Promise<BrowserContextAddCookiesResult>;
@@ -628,6 +623,9 @@ export type BrowserContextPageEvent = {
 export type BrowserContextRouteEvent = {
   route: RouteChannel,
   request: RequestChannel,
+};
+export type BrowserContextVideoEvent = {
+  artifact: ArtifactChannel,
 };
 export type BrowserContextCrBackgroundPageEvent = {
   page: PageChannel,
@@ -799,7 +797,6 @@ export type PageInitializer = {
     height: number,
   },
   isClosed: boolean,
-  videoRelativePath?: string,
 };
 export interface PageChannel extends Channel {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
@@ -868,7 +865,9 @@ export type PageDialogEvent = {
   dialog: DialogChannel,
 };
 export type PageDownloadEvent = {
-  download: DownloadChannel,
+  url: string,
+  suggestedFilename: string,
+  artifact: ArtifactChannel,
 };
 export type PageDomcontentloadedEvent = {};
 export type PageFileChooserEvent = {
@@ -908,7 +907,7 @@ export type PageRouteEvent = {
   request: RequestChannel,
 };
 export type PageVideoEvent = {
-  relativePath: string,
+  artifact: ArtifactChannel,
 };
 export type PageWebSocketEvent = {
   webSocket: WebSocketChannel,
@@ -2410,49 +2409,48 @@ export type DialogDismissParams = {};
 export type DialogDismissOptions = {};
 export type DialogDismissResult = void;
 
-// ----------- Download -----------
-export type DownloadInitializer = {
-  url: string,
-  suggestedFilename: string,
+// ----------- Artifact -----------
+export type ArtifactInitializer = {
+  absolutePath: string,
 };
-export interface DownloadChannel extends Channel {
-  path(params?: DownloadPathParams, metadata?: Metadata): Promise<DownloadPathResult>;
-  saveAs(params: DownloadSaveAsParams, metadata?: Metadata): Promise<DownloadSaveAsResult>;
-  saveAsStream(params?: DownloadSaveAsStreamParams, metadata?: Metadata): Promise<DownloadSaveAsStreamResult>;
-  failure(params?: DownloadFailureParams, metadata?: Metadata): Promise<DownloadFailureResult>;
-  stream(params?: DownloadStreamParams, metadata?: Metadata): Promise<DownloadStreamResult>;
-  delete(params?: DownloadDeleteParams, metadata?: Metadata): Promise<DownloadDeleteResult>;
+export interface ArtifactChannel extends Channel {
+  pathAfterFinished(params?: ArtifactPathAfterFinishedParams, metadata?: Metadata): Promise<ArtifactPathAfterFinishedResult>;
+  saveAs(params: ArtifactSaveAsParams, metadata?: Metadata): Promise<ArtifactSaveAsResult>;
+  saveAsStream(params?: ArtifactSaveAsStreamParams, metadata?: Metadata): Promise<ArtifactSaveAsStreamResult>;
+  failure(params?: ArtifactFailureParams, metadata?: Metadata): Promise<ArtifactFailureResult>;
+  stream(params?: ArtifactStreamParams, metadata?: Metadata): Promise<ArtifactStreamResult>;
+  delete(params?: ArtifactDeleteParams, metadata?: Metadata): Promise<ArtifactDeleteResult>;
 }
-export type DownloadPathParams = {};
-export type DownloadPathOptions = {};
-export type DownloadPathResult = {
+export type ArtifactPathAfterFinishedParams = {};
+export type ArtifactPathAfterFinishedOptions = {};
+export type ArtifactPathAfterFinishedResult = {
   value?: string,
 };
-export type DownloadSaveAsParams = {
+export type ArtifactSaveAsParams = {
   path: string,
 };
-export type DownloadSaveAsOptions = {
+export type ArtifactSaveAsOptions = {
 
 };
-export type DownloadSaveAsResult = void;
-export type DownloadSaveAsStreamParams = {};
-export type DownloadSaveAsStreamOptions = {};
-export type DownloadSaveAsStreamResult = {
+export type ArtifactSaveAsResult = void;
+export type ArtifactSaveAsStreamParams = {};
+export type ArtifactSaveAsStreamOptions = {};
+export type ArtifactSaveAsStreamResult = {
   stream: StreamChannel,
 };
-export type DownloadFailureParams = {};
-export type DownloadFailureOptions = {};
-export type DownloadFailureResult = {
+export type ArtifactFailureParams = {};
+export type ArtifactFailureOptions = {};
+export type ArtifactFailureResult = {
   error?: string,
 };
-export type DownloadStreamParams = {};
-export type DownloadStreamOptions = {};
-export type DownloadStreamResult = {
+export type ArtifactStreamParams = {};
+export type ArtifactStreamOptions = {};
+export type ArtifactStreamResult = {
   stream?: StreamChannel,
 };
-export type DownloadDeleteParams = {};
-export type DownloadDeleteOptions = {};
-export type DownloadDeleteResult = void;
+export type ArtifactDeleteParams = {};
+export type ArtifactDeleteOptions = {};
+export type ArtifactDeleteResult = void;
 
 // ----------- Stream -----------
 export type StreamInitializer = {};

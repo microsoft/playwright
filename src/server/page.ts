@@ -23,7 +23,7 @@ import * as network from './network';
 import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as types from './types';
-import { BrowserContext, Video } from './browserContext';
+import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
@@ -32,6 +32,7 @@ import { assert, createGuid, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
+import { Artifact } from './artifact';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -114,9 +115,9 @@ export class Page extends SdkObject {
     InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
     Load: 'load',
     Popup: 'popup',
+    Video: 'video',
     WebSocket: 'websocket',
     Worker: 'worker',
-    VideoStarted: 'videostarted',
   };
 
   private _closedState: 'open' | 'closing' | 'closed' = 'open';
@@ -146,9 +147,9 @@ export class Page extends SdkObject {
   private _serverRequestInterceptor: network.RouteHandler | undefined;
   _ownedContext: BrowserContext | undefined;
   readonly selectors: Selectors;
-  _video: Video | null = null;
   readonly uniqueId: string;
   _pageIsError: Error | undefined;
+  _video: Artifact | null = null;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext);
@@ -181,7 +182,7 @@ export class Page extends SdkObject {
     this.selectors = browserContext.selectors();
   }
 
-  async reportAsNew(error?: Error) {
+  reportAsNew(error?: Error) {
     if (error) {
       // Initialization error could have happened because of
       // context/browser closure. Just ignore the page.
@@ -476,11 +477,6 @@ export class Page extends SdkObject {
 
   async _setFileChooserIntercepted(enabled: boolean): Promise<void> {
     await this._delegate.setFileChooserIntercepted(enabled);
-  }
-
-  videoStarted(video: Video) {
-    this._video = video;
-    this.emit(Page.Events.VideoStarted, video);
   }
 
   frameNavigatedToNewDocument(frame: frames.Frame) {

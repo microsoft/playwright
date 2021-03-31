@@ -14,35 +14,33 @@
  * limitations under the License.
  */
 
-import { Download } from '../server/download';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
 import fs from 'fs';
 import * as util from 'util';
 import { mkdirIfNeeded } from '../utils/utils';
+import { Artifact } from '../server/artifact';
 
-export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadInitializer> implements channels.DownloadChannel {
-  constructor(scope: DispatcherScope, download: Download) {
-    super(scope, download, 'Download', {
-      url: download.url(),
-      suggestedFilename: download.suggestedFilename(),
+export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactInitializer> implements channels.ArtifactChannel {
+  constructor(scope: DispatcherScope, artifact: Artifact) {
+    super(scope, artifact, 'Artifact', {
+      absolutePath: artifact.localPath(),
     });
   }
 
-  async path(): Promise<channels.DownloadPathResult> {
-    const path = await this._object.localPath();
+  async pathAfterFinished(): Promise<channels.ArtifactPathAfterFinishedResult> {
+    const path = await this._object.localPathAfterFinished();
     return { value: path || undefined };
   }
 
-  async saveAs(params: channels.DownloadSaveAsParams): Promise<channels.DownloadSaveAsResult> {
+  async saveAs(params: channels.ArtifactSaveAsParams): Promise<channels.ArtifactSaveAsResult> {
     return await new Promise((resolve, reject) => {
       this._object.saveAs(async (localPath, error) => {
         if (error !== undefined) {
           reject(new Error(error));
           return;
         }
-
         try {
           await mkdirIfNeeded(params.path);
           await util.promisify(fs.copyFile)(localPath, params.path);
@@ -54,21 +52,20 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
     });
   }
 
-  async saveAsStream(): Promise<channels.DownloadSaveAsStreamResult> {
+  async saveAsStream(): Promise<channels.ArtifactSaveAsStreamResult> {
     return await new Promise((resolve, reject) => {
       this._object.saveAs(async (localPath, error) => {
         if (error !== undefined) {
           reject(new Error(error));
           return;
         }
-
         try {
           const readable = fs.createReadStream(localPath);
           await new Promise(f => readable.on('readable', f));
           const stream = new StreamDispatcher(this._scope, readable);
           // Resolve with a stream, so that client starts saving the data.
           resolve({ stream });
-          // Block the download until the stream is consumed.
+          // Block the Artifact until the stream is consumed.
           await new Promise<void>(resolve => {
             readable.on('close', resolve);
             readable.on('end', resolve);
@@ -81,8 +78,8 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
     });
   }
 
-  async stream(): Promise<channels.DownloadStreamResult> {
-    const fileName = await this._object.localPath();
+  async stream(): Promise<channels.ArtifactStreamResult> {
+    const fileName = await this._object.localPathAfterFinished();
     if (!fileName)
       return {};
     const readable = fs.createReadStream(fileName);
@@ -90,8 +87,8 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
     return { stream: new StreamDispatcher(this._scope, readable) };
   }
 
-  async failure(): Promise<channels.DownloadFailureResult> {
-    const error = await this._object.failure();
+  async failure(): Promise<channels.ArtifactFailureResult> {
+    const error = await this._object.failureError();
     return { error: error || undefined };
   }
 

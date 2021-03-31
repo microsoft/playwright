@@ -47,6 +47,7 @@ import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } fro
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
 import type { ChromiumBrowserContext } from './chromiumBrowserContext';
+import { Artifact } from './artifact';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const mkdirAsync = util.promisify(fs.mkdir);
@@ -72,6 +73,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   private _frames = new Set<Frame>();
   _workers = new Set<Worker>();
   private _closed = false;
+  _closedOrCrashedPromise: Promise<void>;
   private _viewportSize: Size | null;
   private _routes: { url: URLMatch, handler: RouteHandler }[] = [];
 
@@ -120,7 +122,11 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
         dialog.dismiss().catch(() => {});
     });
     this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded, this));
-    this._channel.on('download', ({ download }) => this.emit(Events.Page.Download, Download.from(download)));
+    this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
+      const artifactObject = Artifact.from(artifact);
+      artifactObject._isRemote = !!this._browserContext._browser && this._browserContext._browser._isRemote;
+      this.emit(Events.Page.Download, new Download(url, suggestedFilename, artifactObject));
+    });
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
@@ -132,7 +138,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('requestFinished', ({ request, responseEndTiming }) => this._onRequestFinished(Request.from(request), responseEndTiming));
     this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
-    this._channel.on('video', ({ relativePath }) => this.video()!._setRelativePath(relativePath));
+    this._channel.on('video', ({ artifact }) => {
+      const artifactObject = Artifact.from(artifact);
+      this._forceVideo()._artifactReady(artifactObject);
+    });
     this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
@@ -142,6 +151,11 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     } else {
       this.pdf = undefined as any;
     }
+
+    this._closedOrCrashedPromise = Promise.race([
+      new Promise<void>(f => this.once(Events.Page.Close, f)),
+      new Promise<void>(f => this.once(Events.Page.Crash, f)),
+    ]);
   }
 
   private _onRequestFailed(request: Request, responseEndTiming: number, failureText: string | undefined) {
@@ -247,16 +261,19 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
+  private _forceVideo(): Video {
+    if (!this._video)
+      this._video = new Video(this);
+    return this._video;
+  }
+
   video(): Video | null {
-    if (this._video)
-      return this._video;
+    // Note: we are creating Video object lazily, because we do not know
+    // BrowserContextOptions when constructing the page - it is assigned
+    // too late during launchPersistentContext.
     if (!this._browserContext._options.recordVideo)
       return null;
-    this._video = new Video(this);
-    // In case of persistent profile, we already have it.
-    if (this._initializer.videoRelativePath)
-      this._video._setRelativePath(this._initializer.videoRelativePath);
-    return this._video;
+    return this._forceVideo();
   }
 
   private _attributeToPage<T>(func: () => T): T {

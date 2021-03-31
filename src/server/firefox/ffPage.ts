@@ -310,6 +310,8 @@ export class FFPage implements PageDelegate {
   }
 
   didClose() {
+    if (!this._initializedPage)
+      this._markAsError(new Error('Page has been closed'));
     this._session.dispose();
     helper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();

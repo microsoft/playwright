@@ -380,16 +380,6 @@ RemoteBrowser:
     browser: Browser
     selectors: Selectors
 
-  events:
-
-    # Video stream blocks owner context from closing until the stream is closed.
-    # Make sure to close the stream!
-    video:
-      parameters:
-        context: BrowserContext
-        stream: Stream
-        relativePath: string
-
 
 Selectors:
   type: interface
@@ -631,6 +621,10 @@ BrowserContext:
         route: Route
         request: Request
 
+    video:
+      parameters:
+        artifact: Artifact
+
     crBackgroundPage:
       parameters:
         page: Page
@@ -650,7 +644,6 @@ Page:
         width: number
         height: number
     isClosed: boolean
-    videoRelativePath: string?
 
   commands:
 
@@ -940,7 +933,9 @@ Page:
 
     download:
       parameters:
-        download: Download
+        url: string
+        suggestedFilename: string
+        artifact: Artifact
 
     domcontentloaded:
 
@@ -993,7 +988,7 @@ Page:
 
     video:
       parameters:
-        relativePath: string
+        artifact: Artifact
 
     webSocket:
       parameters:
@@ -1991,16 +1986,15 @@ Dialog:
 
 
 
-Download:
+Artifact:
   type: interface
 
   initializer:
-    url: string
-    suggestedFilename: string
+    absolutePath: string
 
   commands:
 
-    path:
+    pathAfterFinished:
       returns:
         value: string?
 
@@ -2023,7 +2017,6 @@ Download:
         stream: Stream?
 
     delete:
-
 
 
 Stream:

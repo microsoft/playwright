@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import { BrowserContext, Video } from '../server/browserContext';
+import { BrowserContext } from '../server/browserContext';
 import { Frame } from '../server/frames';
 import { Request } from '../server/network';
 import { Page, Worker } from '../server/page';
 import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
+import { Dispatcher, DispatcherScope, existingDispatcher, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../protocol/serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
-import { DownloadDispatcher } from './downloadDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher, RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { serializeResult, parseArgument } from './jsHandleDispatcher';
@@ -32,6 +31,9 @@ import { FileChooser } from '../server/fileChooser';
 import { CRCoverage } from '../server/chromium/crCoverage';
 import { JSHandle } from '../server/javascript';
 import { CallMetadata } from '../server/instrumentation';
+import { Artifact } from '../server/artifact';
+import { ArtifactDispatcher } from './artifactDispatcher';
+import { Download } from '../server/download';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
@@ -41,7 +43,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
     super(scope, page, 'Page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
-      videoRelativePath: page._video ? page._video._relativePath : undefined,
       viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed()
     }, true);
@@ -54,7 +55,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     page.on(Page.Events.Crash, () => this._dispatchEvent('crash'));
     page.on(Page.Events.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
     page.on(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
-    page.on(Page.Events.Download, download => this._dispatchEvent('download', { download: new DownloadDispatcher(scope, download) }));
+    page.on(Page.Events.Download, (download: Download) => {
+      this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: new ArtifactDispatcher(scope, download.artifact) });
+    });
     this._page.on(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: new ElementHandleDispatcher(this._scope, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
@@ -75,9 +78,11 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
       responseEndTiming: request._responseEndTiming
     }));
     page.on(Page.Events.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
-    page.on(Page.Events.VideoStarted, (video: Video) => this._dispatchEvent('video', {  relativePath: video._relativePath }));
     page.on(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this._scope, webSocket) }));
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
+    page.on(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(artifact) }));
+    if (page._video)
+      this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(page._video) });
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams, metadata: CallMetadata): Promise<void> {

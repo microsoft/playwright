@@ -23,6 +23,8 @@ import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
 import { CallMetadata } from '../server/instrumentation';
+import { ArtifactDispatcher } from './artifactDispatcher';
+import { Artifact } from '../server/artifact';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -30,6 +32,20 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   constructor(scope: DispatcherScope, context: BrowserContext) {
     super(scope, context, 'BrowserContext', { isChromium: context._browser.options.isChromium }, true);
     this._context = context;
+    // Note: when launching persistent context, dispatcher is created very late,
+    // so we can already have pages, videos and everything else.
+
+    const onVideo = (artifact: Artifact) => {
+      // Note: Video must outlive Page and BrowserContext, so that client can saveAs it
+      // after closing the context. We use |scope| for it.
+      const artifactDispatcher = new ArtifactDispatcher(scope, artifact);
+      this._dispatchEvent('video', { artifact: artifactDispatcher });
+    };
+    context.on(BrowserContext.Events.VideoStarted, onVideo);
+    for (const video of context._browser._idToVideo.values()) {
+      if (video.context === context)
+        onVideo(video.artifact);
+    }
 
     for (const page of context.pages())
       this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) });
