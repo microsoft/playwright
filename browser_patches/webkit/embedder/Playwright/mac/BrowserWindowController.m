@@ -440,8 +440,6 @@ static BOOL areEssentiallyEqual(double a, double b)
 
 - (void)windowWillClose:(NSNotification *)notification
 {
-    [_webView removeObserver:self forKeyPath:@"title"];
-    [_webView removeObserver:self forKeyPath:@"URL"];
     [_webView removeFromSuperview];
     _textFinder.hideInterfaceCallback = nil;
     [self release];
