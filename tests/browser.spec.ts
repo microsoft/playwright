@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { test, expect } from './config/browserTest';
 
-it('should create new page', async function({browser}) {
+test('should create new page', async function({browser}) {
   const page1 = await browser.newPage();
   expect(browser.contexts().length).toBe(1);
 
@@ -30,7 +30,7 @@ it('should create new page', async function({browser}) {
   expect(browser.contexts().length).toBe(0);
 });
 
-it('should throw upon second create new page', async function({browser}) {
+test('should throw upon second create new page', async function({browser}) {
   const page = await browser.newPage();
   let error;
   await page.context().newPage().catch(e => error = e);
@@ -38,7 +38,7 @@ it('should throw upon second create new page', async function({browser}) {
   expect(error.message).toContain('Please use browser.newContext()');
 });
 
-it('version should work', async function({browser, isChromium}) {
+test('version should work', async function({browser, isChromium}) {
   const version = browser.version();
   if (isChromium)
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();

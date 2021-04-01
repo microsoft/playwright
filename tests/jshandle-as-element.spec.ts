@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-import { it, expect } from '../fixtures';
+import { test, expect } from './config/pageTest';
 
-it('should work', async ({page}) => {
+test('should work', async ({page}) => {
   const aHandle = await page.evaluateHandle(() => document.body);
   const element = aHandle.asElement();
   expect(element).toBeTruthy();
 });
 
-it('should return null for non-elements', async ({page}) => {
+test('should return null for non-elements', async ({page}) => {
   const aHandle = await page.evaluateHandle(() => 2);
   const element = aHandle.asElement();
   expect(element).toBeFalsy();
 });
 
-it('should return ElementHandle for TextNodes', async ({page}) => {
+test('should return ElementHandle for TextNodes', async ({page}) => {
   await page.setContent('<div>ee!</div>');
   const aHandle = await page.evaluateHandle(() => document.querySelector('div').firstChild);
   const element = aHandle.asElement();
@@ -37,7 +37,7 @@ it('should return ElementHandle for TextNodes', async ({page}) => {
   expect(await page.evaluate(e => e.nodeType === Node.TEXT_NODE, element)).toBeTruthy();
 });
 
-it('should work with nullified Node', async ({page}) => {
+test('should work with nullified Node', async ({page}) => {
   await page.setContent('<section>test</section>');
   await page.evaluate('delete Node');
   const handle = await page.evaluateHandle(() => document.querySelector('section'));

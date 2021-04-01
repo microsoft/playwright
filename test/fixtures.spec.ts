@@ -17,9 +17,6 @@
 
 import { folio } from './remoteServer.fixture';
 import { execSync } from 'child_process';
-import path from 'path';
-import * as stackTrace from '../src/utils/stackTrace';
-import { setUnderTest } from '../src/utils/utils';
 import type { Browser } from '../index';
 
 const { it, describe, expect, beforeEach, afterEach } = folio;
@@ -145,13 +142,4 @@ describe('stalling signals', (suite, { platform, headful }) => {
     expect(await stallingRemoteServer.out('signal')).toBe('SIGKILL');
     expect(await stallingRemoteServer.childExitCode()).toBe(130);
   });
-});
-
-it('caller file path', async ({}) => {
-  setUnderTest();
-  const callme = require('./fixtures/callback');
-  const filePath = callme(() => {
-    return stackTrace.getCallerFilePath(path.join(__dirname, 'fixtures') + path.sep);
-  });
-  expect(filePath).toBe(__filename);
 });
