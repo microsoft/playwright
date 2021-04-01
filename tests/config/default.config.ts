@@ -16,7 +16,7 @@
 
 import { setConfig, Config } from '../folio/out';
 import * as path from 'path';
-import { test as playwrightTest } from './playwrightTest';
+import { test as playwrightTest, slowTest as playwrightSlowTest } from './playwrightTest';
 import { test as browserTest } from './browserTest';
 import { test as pageTest } from './pageTest';
 import { PlaywrightEnv, BrowserEnv, PageEnv, BrowserName } from './browserEnv';
@@ -57,6 +57,7 @@ for (const browserName of browsers) {
     video: !!process.env.PWVIDEO,
   };
   playwrightTest.runWith(browserName, serverEnv, new PlaywrightEnv(browserName, options), {});
+  playwrightSlowTest.runWith(browserName, serverEnv, new PlaywrightEnv(browserName, options), { timeout: config.timeout * 3 });
   browserTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, options), {});
   pageTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
 }

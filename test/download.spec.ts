@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { folio } from './remoteServer.fixture';
+import { folio } from './fixtures';
 const { it, expect, beforeEach, describe } = folio;
 
 import fs from 'fs';
@@ -174,25 +174,6 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should save when connected remotely', (test, { mode }) => {
-    test.skip(mode !== 'default');
-  }, async ({testInfo, server, browserType, remoteServer}) => {
-    const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const nestedPath = testInfo.outputPath(path.join('these', 'are', 'directories', 'download.txt'));
-    await download.saveAs(nestedPath);
-    expect(fs.existsSync(nestedPath)).toBeTruthy();
-    expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
-    const error = await download.path().catch(e => e);
-    expect(error.message).toContain('Path is not available when using browserType.connect(). Use saveAs() to save a local copy.');
-    await browser.close();
-  });
-
   it('should error when saving with downloads disabled', async ({testInfo, browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: false });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -218,23 +199,6 @@ describe('download event', () => {
     const { message } = await download.saveAs(userPath).catch(e => e);
     expect(message).toContain('File already deleted. Save before deleting.');
     await page.close();
-  });
-
-  it('should error when saving after deletion when connected remotely', (test, { mode }) => {
-    test.skip(mode !== 'default');
-  }, async ({testInfo, server, browserType, remoteServer}) => {
-    const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const userPath = testInfo.outputPath('download.txt');
-    await download.delete();
-    const { message } = await download.saveAs(userPath).catch(e => e);
-    expect(message).toContain('File already deleted. Save before deleting.');
-    await browser.close();
   });
 
   it('should report non-navigation downloads', async ({browser, server}) => {
