@@ -477,7 +477,7 @@ index 0000000000000000000000000000000000000000..79edea03fed4e9be5da96e1275e182a4
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Emulation.json b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..3f28f8e41b39c517369c8ca69415486a75657489
+index 0000000000000000000000000000000000000000..347a01b3fdd1a8277cb4104558e8bbfa63539374
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 @@ -0,0 +1,51 @@
@@ -492,8 +492,8 @@ index 0000000000000000000000000000000000000000..3f28f8e41b39c517369c8ca69415486a
 +            "parameters": [
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" },
-+                { "name": "deviceScaleFactor", "type": "number" },
-+                { "name": "fixedLayout", "type": "boolean" }
++                { "name": "fixedLayout", "type": "boolean" },
++                { "name": "deviceScaleFactor", "type": "number", "optional": true }
 +            ]
 +        },
 +        {
@@ -745,7 +745,7 @@ index 65ab2092b0ffd0ead3da1ddccd398d4f4179f51a..2d9ef40a20df819193c9a5867fbf6f8f
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..f0c30d5cea46f5620de4ed024f5beacb5cfac649 100644
+index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..ecabf75f9a3a89194c033cf7cc3a4060a57af1c9 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -27,7 +27,7 @@
@@ -845,7 +845,17 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..f0c30d5cea46f5620de4ed024f5beacb
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -308,12 +375,77 @@
+@@ -290,7 +357,8 @@
+                 { "name": "y", "type": "integer", "description": "Y coordinate" },
+                 { "name": "width", "type": "integer", "description": "Rectangle width" },
+                 { "name": "height", "type": "integer", "description": "Rectangle height" },
+-                { "name": "coordinateSystem", "$ref": "CoordinateSystem", "description": "Indicates the coordinate system of the supplied rectangle." }
++                { "name": "coordinateSystem", "$ref": "CoordinateSystem", "description": "Indicates the coordinate system of the supplied rectangle." },
++                { "name": "omitDeviceScaleFactor", "type": "boolean", "optional": true, "description": "By default, screenshot is inflated by device scale factor to avoid blurry image. This flag disables it." }
+             ],
+             "returns": [
+                 { "name": "dataURL", "type": "string", "description": "Base64-encoded image data (PNG)." }
+@@ -308,12 +376,77 @@
          {
              "name": "setScreenSizeOverride",
              "description": "Overrides screen size exposed to DOM and used in media queries for testing with provided values.",
@@ -924,7 +934,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..f0c30d5cea46f5620de4ed024f5beacb
          }
      ],
      "events": [
-@@ -321,14 +453,16 @@
+@@ -321,14 +454,16 @@
              "name": "domContentEventFired",
              "targetTypes": ["page"],
              "parameters": [
@@ -943,7 +953,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..f0c30d5cea46f5620de4ed024f5beacb
              ]
          },
          {
-@@ -338,6 +472,14 @@
+@@ -338,6 +473,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -958,7 +968,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..f0c30d5cea46f5620de4ed024f5beacb
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -377,6 +519,22 @@
+@@ -377,6 +520,22 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -981,7 +991,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..f0c30d5cea46f5620de4ed024f5beacb
          {
              "name": "defaultAppearanceDidChange",
              "description": "Fired when page's default appearance changes, even if there is a forced appearance.",
-@@ -385,6 +543,28 @@
+@@ -385,6 +544,28 @@
              "parameters": [
                  { "name": "appearance", "$ref": "Appearance", "description": "Name of the appearance that is active (not considering any forced appearance.)" }
              ]
@@ -3199,7 +3209,7 @@ index 933601761667417ebe5de301586869ccc64fc3da..f63a95c3c45980d5606971b83881e824
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index af0a051bdae52b2daf70b1fee76eee0866b7b046..e11ae6eca2615d7364370c036d8aadb00ef51dc5 100644
+index af0a051bdae52b2daf70b1fee76eee0866b7b046..a51cb302362e011b6e6aac5273f15d719caf6a78 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,19 +32,25 @@
@@ -3489,7 +3499,22 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..e11ae6eca2615d7364370c036d8aadb0
  Ref<Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1094,6 +1196,27 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
+@@ -1079,11 +1181,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
+     return snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
+ }
+ 
+-Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, int width, int height, Protocol::Page::CoordinateSystem coordinateSystem)
++Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, int width, int height, Protocol::Page::CoordinateSystem coordinateSystem, Optional<bool>&& omitDeviceScaleFactor)
+ {
+     SnapshotOptions options = SnapshotOptionsNone;
+     if (coordinateSystem == Protocol::Page::CoordinateSystem::Viewport)
+         options |= SnapshotOptionsInViewCoordinates;
++    if (omitDeviceScaleFactor.hasValue() && *omitDeviceScaleFactor)
++        options |= SnapshotOptionsOmitDeviceScaleFactor;
+ 
+     IntRect rectangle(x, y, width, height);
+     auto snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, options);
+@@ -1094,6 +1198,27 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
      return snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -3517,7 +3542,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..e11ae6eca2615d7364370c036d8aadb0
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  {
-@@ -1106,7 +1229,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
+@@ -1106,7 +1231,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  }
  #endif
  
@@ -3525,7 +3550,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..e11ae6eca2615d7364370c036d8aadb0
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional<int>&& width, Optional<int>&& height)
  {
      if (width.hasValue() != height.hasValue())
-@@ -1121,6 +1243,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional
+@@ -1121,6 +1245,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.valueOr(0), height.valueOr(0)));
      return { };
  }
@@ -4122,7 +4147,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..e11ae6eca2615d7364370c036d8aadb0
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 78a98224ab5450e0729751571fe1bb957d303301..5fb734482bdc1cbd62bc639a43e1bf8f0ceb0068 100644
+index 78a98224ab5450e0729751571fe1bb957d303301..b557b0fed3f61ce4d842e6a70dcabd7cffa993c2 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -4180,7 +4205,8 @@ index 78a98224ab5450e0729751571fe1bb957d303301..5fb734482bdc1cbd62bc639a43e1bf8f
 +    Inspector::Protocol::ErrorStringOr<void> setTimeZone(const String&);
 +    Inspector::Protocol::ErrorStringOr<void> setTouchEmulationEnabled(bool);
      Inspector::Protocol::ErrorStringOr<String> snapshotNode(Inspector::Protocol::DOM::NodeId);
-     Inspector::Protocol::ErrorStringOr<String> snapshotRect(int x, int y, int width, int height, Inspector::Protocol::Page::CoordinateSystem);
+-    Inspector::Protocol::ErrorStringOr<String> snapshotRect(int x, int y, int width, int height, Inspector::Protocol::Page::CoordinateSystem);
++    Inspector::Protocol::ErrorStringOr<String> snapshotRect(int x, int y, int width, int height, Inspector::Protocol::Page::CoordinateSystem, Optional<bool>&& omitDeviceScaleFactor);
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
      Inspector::Protocol::ErrorStringOr<String> archive();
  #endif
@@ -5324,9 +5350,18 @@ index 0c9a65b9cf13d733c3dc580b5f2614123cfd9810..cc524edd5668db78eb23ae28f24efa35
  
      ViewportArguments m_viewportArguments;
 diff --git a/Source/WebCore/page/FrameSnapshotting.cpp b/Source/WebCore/page/FrameSnapshotting.cpp
-index e2f8a37fb89b421eebfa846e54c47ee795c6a9ab..f31da2c7cb84a027601c68d26232670c1f3ab142 100644
+index e2f8a37fb89b421eebfa846e54c47ee795c6a9ab..262da6f522dc0c91e56777444b53514bde9c216a 100644
 --- a/Source/WebCore/page/FrameSnapshotting.cpp
 +++ b/Source/WebCore/page/FrameSnapshotting.cpp
+@@ -103,7 +103,7 @@ RefPtr<ImageBuffer> snapshotFrameRectWithClip(Frame& frame, const IntRect& image
+     // Other paint behaviors are set by paintContentsForSnapshot.
+     frame.view()->setPaintBehavior(paintBehavior);
+ 
+-    float scaleFactor = frame.page()->deviceScaleFactor();
++    float scaleFactor = options & SnapshotOptionsOmitDeviceScaleFactor ? 1 : frame.page()->deviceScaleFactor();
+ 
+     if (frame.page()->delegatesScaling())
+         scaleFactor *= frame.page()->pageScaleFactor();
 @@ -114,7 +114,12 @@ RefPtr<ImageBuffer> snapshotFrameRectWithClip(Frame& frame, const IntRect& image
      auto buffer = ImageBuffer::create(imageRect.size(), RenderingMode::Unaccelerated, scaleFactor);
      if (!buffer)
@@ -5351,6 +5386,18 @@ index e2f8a37fb89b421eebfa846e54c47ee795c6a9ab..f31da2c7cb84a027601c68d26232670c
 +    frame.view()->paintContentsForSnapshot(buffer->context(), enclosingIntRect(fr), shouldIncludeSelection, coordinateSpace);
      return buffer;
  }
+ 
+diff --git a/Source/WebCore/page/FrameSnapshotting.h b/Source/WebCore/page/FrameSnapshotting.h
+index 1023738af87f73d4313ab17f793e67e9663a36f9..0ed28b16672709db2933391dd2ea12e43eb0bf6a 100644
+--- a/Source/WebCore/page/FrameSnapshotting.h
++++ b/Source/WebCore/page/FrameSnapshotting.h
+@@ -49,6 +49,7 @@ enum {
+     SnapshotOptionsPaintSelectionAndBackgroundsOnly = 1 << 4,
+     SnapshotOptionsPaintEverythingExcludingSelection = 1 << 5,
+     SnapshotOptionsPaintWithIntegralScaleFactor = 1 << 6,
++    SnapshotOptionsOmitDeviceScaleFactor = 1 << 7,
+ };
+ typedef unsigned SnapshotOptions;
  
 diff --git a/Source/WebCore/page/FrameView.cpp b/Source/WebCore/page/FrameView.cpp
 index c5917ff9aa7c22e90e56711f84be1124947c8659..4d1fac664e65f3a3e42e3128a85058e638ab9798 100644
@@ -14538,10 +14585,10 @@ index 04f3227cd55c992a42cd96a3f25d697aed7965a2..f0d36935f47bab03ea2ec50b70509206
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e6e700e846ea091a190b6b1f5c5636fed4389909
+index 0000000000000000000000000000000000000000..9aae63765d546524680510868cb0efd6d4a71827
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,147 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14602,7 +14649,7 @@ index 0000000000000000000000000000000000000000..e6e700e846ea091a190b6b1f5c5636fe
 +   m_commandsToRunWhenShown.clear();
 +}
 +
-+void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, bool fixedlayout, Ref<SetDeviceMetricsOverrideCallback>&& callback)
++void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(int width, int height, bool fixedlayout, Optional<double>&& deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&& callback)
 +{
 +#if PLATFORM(GTK)
 +    // On gtk, fixed layout doesn't work with compositing enabled
@@ -14614,7 +14661,8 @@ index 0000000000000000000000000000000000000000..e6e700e846ea091a190b6b1f5c5636fe
 +    }
 +#endif
 +
-+    m_page.setCustomDeviceScaleFactor(deviceScaleFactor);
++    if (deviceScaleFactor)
++        m_page.setCustomDeviceScaleFactor(deviceScaleFactor.value());
 +    m_page.setUseFixedLayout(fixedlayout);
 +    if (!m_page.pageClient().isViewVisible() && m_page.configuration().relatedPage()) {
 +        m_commandsToRunWhenShown.append([this, width, height, callback = WTFMove(callback)]() mutable {
@@ -14690,7 +14738,7 @@ index 0000000000000000000000000000000000000000..e6e700e846ea091a190b6b1f5c5636fe
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..1353851472668b3e77c19db54f224c0ca151e9d3
+index 0000000000000000000000000000000000000000..663f7777e000e1fef583b2bda1d1464fa70ef4bc
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 @@ -0,0 +1,75 @@
@@ -14749,7 +14797,7 @@ index 0000000000000000000000000000000000000000..1353851472668b3e77c19db54f224c0c
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
-+    void setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, bool fixedlayout, Ref<SetDeviceMetricsOverrideCallback>&&) override;
++    void setDeviceMetricsOverride(int width, int height, bool fixedlayout, Optional<double>&& deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&&) override;
 +    Inspector::Protocol::ErrorStringOr<void> setJavaScriptEnabled(bool enabled) override;
 +    Inspector::Protocol::ErrorStringOr<void> setAuthCredentials(const String&, const String&) override;
 +    Inspector::Protocol::ErrorStringOr<void> setActiveAndFocused(Optional<bool>&&) override;
