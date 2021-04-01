@@ -16,7 +16,7 @@ for browser automation.
 <img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
 
 
-## Run in headful mode
+## Run in headed mode
 
 Playwright runs browsers in headless mode by default. To change this behavior,
 use `headless: false` as a launch option. You can also use the [`option: slowMo`] option
@@ -130,7 +130,7 @@ $ pytest -s
 
 With PWDEBUG, the following defaults are configured for you:
 
-* **Run in headful**: With PWDEBUG, browsers always launch in headful mode
+* **Run in headed**: With PWDEBUG, browsers always launch in headed mode
 * **Disables timeout**: PWDEBUG sets timeout to 0 (= no timeout)
 
 ### Debugging Selectors

@@ -29,8 +29,8 @@ To run your tests, use pytest CLI.
 # Run tests (Chromium and headless by default)
 $ pytest
 
-# Run tests in headful mode
-$ pytest --headful
+# Run tests in headed mode
+$ pytest --headed
 
 # Run tests in a different browser (chromium, firefox, webkit)
 $ pytest --browser firefox
@@ -45,7 +45,7 @@ If you want to add the CLI arguments automatically without specifying them, you 
 # content of pytest.ini
 [pytest]
 # Run firefox with UI
-addopts = --headful --browser firefox
+addopts = --headed --browser firefox
 
 ```
 
