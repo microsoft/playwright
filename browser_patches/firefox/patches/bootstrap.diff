@@ -2237,6 +2237,69 @@ index aa52dab7d4b45c42d3dfdc63b9982ac2bab5f21f..ba46d7d54920aba478aeb9ba007991e8
  #  ifdef MOZ_WIDGET_ANDROID
    return new AndroidCompositorWidget(aOptions,
                                       static_cast<nsBaseWidget*>(aWidget));
+diff --git a/widget/cocoa/NativeKeyBindings.mm b/widget/cocoa/NativeKeyBindings.mm
+index 6a74e57ead4968e5cf5da73b2a2e093e8862f5da..9e44c36a6961a2d7548a874d8934f20f00db1f14 100644
+--- a/widget/cocoa/NativeKeyBindings.mm
++++ b/widget/cocoa/NativeKeyBindings.mm
+@@ -491,6 +491,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+       break;
+     case KEY_NAME_INDEX_ArrowLeft:
+       if (aEvent.IsAlt()) {
++        if (aEvent.IsMeta() || aEvent.IsControl())
++          break;
++        instance->AppendEditCommandsForSelector(
++            !aEvent.IsShift()
++                ? ToObjcSelectorPtr(@selector(moveWordLeft:))
++                : ToObjcSelectorPtr(@selector(moveWordLeftAndModifySelection:)),
++            aCommands);
+         break;
+       }
+       if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
+@@ -511,6 +518,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+       break;
+     case KEY_NAME_INDEX_ArrowRight:
+       if (aEvent.IsAlt()) {
++        if (aEvent.IsMeta() || aEvent.IsControl())
++          break;
++        instance->AppendEditCommandsForSelector(
++            !aEvent.IsShift()
++                ? ToObjcSelectorPtr(@selector(moveWordRight:))
++                : ToObjcSelectorPtr(@selector(moveWordRightAndModifySelection:)),
++            aCommands);
+         break;
+       }
+       if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
+@@ -531,6 +545,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+       break;
+     case KEY_NAME_INDEX_ArrowUp:
+       if (aEvent.IsControl()) {
++        if (aEvent.IsMeta() || aEvent.IsAlt())
++          break;
++        instance->AppendEditCommandsForSelector(
++          ToObjcSelectorPtr(@selector(scrollPageUp:)), aCommands);
+         break;
+       }
+       if (aEvent.IsMeta()) {
+@@ -540,7 +558,7 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+         instance->AppendEditCommandsForSelector(
+             !aEvent.IsShift()
+                 ? ToObjcSelectorPtr(@selector(moveToBeginningOfDocument:))
+-                : ToObjcSelectorPtr(@selector(moveToBegginingOfDocumentAndModifySelection:)),
++                : ToObjcSelectorPtr(@selector(moveToBeginningOfDocumentAndModifySelection:)),
+             aCommands);
+         break;
+       }
+@@ -563,6 +581,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+       break;
+     case KEY_NAME_INDEX_ArrowDown:
+       if (aEvent.IsControl()) {
++        if (aEvent.IsMeta() || aEvent.IsAlt())
++          break;
++        instance->AppendEditCommandsForSelector(
++          ToObjcSelectorPtr(@selector(scrollPageDown:)), aCommands);
+         break;
+       }
+       if (aEvent.IsMeta()) {
 diff --git a/widget/headless/HeadlessCompositorWidget.cpp b/widget/headless/HeadlessCompositorWidget.cpp
 index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..45456bd34713a32695c0fe6a84588f31e40c137d 100644
 --- a/widget/headless/HeadlessCompositorWidget.cpp
