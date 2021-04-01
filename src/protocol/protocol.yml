@@ -644,6 +644,7 @@ Page:
         width: number
         height: number
     isClosed: boolean
+    opener: Page?
 
   commands:
 
@@ -957,10 +958,6 @@ Page:
     pageError:
       parameters:
         error: SerializedError
-
-    popup:
-      parameters:
-        page: Page
 
     request:
       parameters:

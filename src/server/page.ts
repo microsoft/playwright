@@ -39,8 +39,6 @@ export interface PageDelegate {
   readonly rawKeyboard: input.RawKeyboard;
   readonly rawTouchscreen: input.RawTouchscreen;
 
-  opener(): Promise<Page | null>;
-
   reload(): Promise<void>;
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
@@ -48,7 +46,6 @@ export interface PageDelegate {
   evaluateOnNewDocument(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
   pageOrError(): Promise<Page | Error>;
-  openerDelegate(): PageDelegate | null;
 
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
@@ -150,6 +147,7 @@ export class Page extends SdkObject {
   readonly uniqueId: string;
   _pageIsError: Error | undefined;
   _video: Artifact | null = null;
+  _opener: Page | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext);
@@ -182,6 +180,14 @@ export class Page extends SdkObject {
     this.selectors = browserContext.selectors();
   }
 
+  async initOpener(opener: PageDelegate | null) {
+    if (!opener)
+      return;
+    const openerPage = await opener.pageOrError();
+    if (openerPage instanceof Page && !openerPage.isClosed())
+      this._opener = openerPage;
+  }
+
   reportAsNew(error?: Error) {
     if (error) {
       // Initialization error could have happened because of
@@ -191,13 +197,6 @@ export class Page extends SdkObject {
       this._setIsError(error);
     }
     this._browserContext.emit(BrowserContext.Events.Page, this);
-    const openerDelegate = this._delegate.openerDelegate();
-    if (openerDelegate) {
-      openerDelegate.pageOrError().then(openerPage => {
-        if (openerPage instanceof Page && !openerPage.isClosed())
-          openerPage.emit(Page.Events.Popup, this);
-      });
-    }
   }
 
   async _doSlowMo() {
@@ -211,7 +210,8 @@ export class Page extends SdkObject {
     this._frameManager.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
-    this.emit(Page.Events.Close);
+    // Ensure that page creation event is fired before the close event.
+    this._delegate.pageOrError().then(() => this.emit(Page.Events.Close));
     this._closedCallback();
   }
 
@@ -248,8 +248,8 @@ export class Page extends SdkObject {
     return this._browserContext;
   }
 
-  async opener(): Promise<Page | null> {
-    return await this._delegate.opener();
+  opener(): Page | undefined {
+    return this._opener;
   }
 
   mainFrame(): frames.Frame {

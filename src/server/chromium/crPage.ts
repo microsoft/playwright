@@ -93,7 +93,13 @@ export class CRPage implements PageDelegate {
     }
     // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
     // so that anyone who awaits pageOrError got a ready and reported page.
-    this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(() => {
+    this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(async r => {
+      await this._page.initOpener(this._opener);
+      return r;
+    }).catch(async e => {
+      await this._page.initOpener(this._opener);
+      throw e;
+    }).then(() => {
       this._initializedPage = this._page;
       this._reportAsNew();
       return this._page;
@@ -144,10 +150,6 @@ export class CRPage implements PageDelegate {
 
   async pageOrError(): Promise<Page | Error> {
     return this._pagePromise;
-  }
-
-  openerDelegate(): PageDelegate | null {
-    return this._opener;
   }
 
   didClose() {
@@ -201,15 +203,6 @@ export class CRPage implements PageDelegate {
 
   async setFileChooserIntercepted(enabled: boolean) {
     await this._forAllFrameSessions(frame => frame._setFileChooserIntercepted(enabled));
-  }
-
-  async opener(): Promise<Page | null> {
-    if (!this._opener)
-      return null;
-    const openerPage = await this._opener.pageOrError();
-    if (openerPage instanceof Page && !openerPage.isClosed())
-      return openerPage;
-    return null;
   }
 
   async reload(): Promise<void> {

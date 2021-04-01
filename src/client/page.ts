@@ -88,6 +88,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   readonly _timeoutSettings: TimeoutSettings;
   _isPageCall = false;
   private _video: Video | null = null;
+  readonly _opener: Page | null;
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -112,6 +113,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._frames.add(this._mainFrame);
     this._viewportSize = initializer.viewportSize || null;
     this._closed = initializer.isClosed;
+    this._opener = Page.fromNullable(initializer.opener);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -132,7 +134,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('load', () => this.emit(Events.Page.Load, this));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
-    this._channel.on('popup', ({ page }) => this.emit(Events.Page.Popup, Page.from(page)));
     this._channel.on('request', ({ request }) => this.emit(Events.Page.Request, Request.from(request)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming }) => this._onRequestFailed(Request.from(request), responseEndTiming, failureText));
     this._channel.on('requestFinished', ({ request, responseEndTiming }) => this._onRequestFinished(Request.from(request), responseEndTiming));
@@ -227,9 +228,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async opener(): Promise<Page | null> {
-    return this._wrapApiCall('page.opener', async (channel: channels.PageChannel) => {
-      return Page.fromNullable((await channel.opener()).page);
-    });
+    return this._opener;
   }
 
   mainFrame(): Frame {

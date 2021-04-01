@@ -70,6 +70,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   private _onPage(page: Page): void {
     this._pages.add(page);
     this.emit(Events.BrowserContext.Page, page);
+    if (page._opener)
+      page._opener.emit(Events.Page.Popup, page);
   }
 
   _onRoute(route: network.Route, request: network.Request) {

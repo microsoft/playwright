@@ -38,13 +38,21 @@ import { Download } from '../server/download';
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
 
+  private static from(scope: DispatcherScope, page: Page | undefined): PageDispatcher | undefined {
+    if (!page)
+      return undefined;
+    const result = existingDispatcher<PageDispatcher>(page);
+    return result || new PageDispatcher(scope, page);
+  }
+
   constructor(scope: DispatcherScope, page: Page) {
     // TODO: theoretically, there could be more than one frame already.
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
     super(scope, page, 'Page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
       viewportSize: page.viewportSize() || undefined,
-      isClosed: page.isClosed()
+      isClosed: page.isClosed(),
+      opener: PageDispatcher.from(scope, page.opener())
     }, true);
     this._page = page;
     page.on(Page.Events.Close, () => {
