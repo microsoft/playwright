@@ -49,6 +49,29 @@ page.goto("https://example.com")
 context.close()
 ```
 
+## event: BrowserContext.backgroundPage
+* langs: js, python
+- argument: <[Page]>
+
+:::note
+Only works with Chromium browser's persistent context.
+:::
+
+Emitted when new background page is created in the context.
+
+
+```js
+const backgroundPage = await context.waitForEvent('backgroundpage');
+```
+
+```python async
+background_page = await context.wait_for_event("backgroundpage")
+```
+
+```python sync
+background_page = context.wait_for_event("backgroundpage")
+```
+
 ## event: BrowserContext.close
 - argument: <[BrowserContext]>
 
@@ -100,6 +123,16 @@ print(page.evaluate("location.href"))
 Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not need it in most
 cases).
 :::
+
+## event: BrowserContext.serviceWorker
+* langs: js, python
+- argument: <[Worker]>
+
+:::note
+Service workers are only supported on Chromium-based browsers.
+:::
+
+Emitted when new service worker is created in the context.
 
 ## async method: BrowserContext.addCookies
 
@@ -198,6 +231,16 @@ Script to be evaluated in all pages in the browser context.
 - `arg` <[Serializable]>
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
+
+## method: BrowserContext.backgroundPages
+* langs: js, python
+- returns: <[Array]<[Page]>>
+
+:::note
+Background pages are only supported on Chromium-based browsers.
+:::
+
+All existing background pages in the context.
 
 ## method: BrowserContext.browser
 - returns: <[null]|[Browser]>
@@ -630,6 +673,21 @@ A permission or an array of permissions to grant. Permissions can be one of the 
 
 The [origin] to grant permissions to, e.g. "https://example.com".
 
+## async method: BrowserContext.newCDPSession
+* langs: js, python
+- returns: <[CDPSession]>
+
+:::note
+CDP sessions are only supported on Chromium-based browsers.
+:::
+
+Returns the newly created session.
+
+### param: BrowserContext.newCDPSession.page
+- `page` <[Page]>
+
+Page to create new session for.
+
 ## async method: BrowserContext.newPage
 - returns: <[Page]>
 
@@ -741,6 +799,16 @@ handler function to route the request.
 - `handler` <[function]\([Route]\)>
 
 handler function to route the request.
+
+## method: BrowserContext.serviceWorkers
+* langs: js, python
+- returns: <[Array]<[Worker]>>
+
+:::note
+Service workers are only supported on Chromium-based browsers.
+:::
+
+All existing service workers in the context.
 
 ## method: BrowserContext.setDefaultNavigationTimeout
 

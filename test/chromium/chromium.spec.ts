@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 import { it, expect, describe } from '../fixtures';
-import type { ChromiumBrowserContext } from '../..';
 import http from 'http';
 
 describe('chromium', (suite, { browserName }) => {
@@ -23,7 +22,7 @@ describe('chromium', (suite, { browserName }) => {
 }, () => {
   it('should create a worker from a service worker', async ({page, server, context}) => {
     const [worker] = await Promise.all([
-      (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
+      context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
     ]);
     expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
@@ -31,17 +30,17 @@ describe('chromium', (suite, { browserName }) => {
 
   it('serviceWorkers() should return current workers', async ({page, server, context}) => {
     const [worker1] = await Promise.all([
-      (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
+      context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
     ]);
-    let workers = (context as ChromiumBrowserContext).serviceWorkers();
+    let workers = context.serviceWorkers();
     expect(workers.length).toBe(1);
 
     const [worker2] = await Promise.all([
-      (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
+      context.waitForEvent('serviceworker'),
       page.goto(server.CROSS_PROCESS_PREFIX + '/serviceworkers/empty/sw.html')
     ]);
-    workers = (context as ChromiumBrowserContext).serviceWorkers();
+    workers = context.serviceWorkers();
     expect(workers.length).toBe(2);
     expect(workers).toContain(worker1);
     expect(workers).toContain(worker2);
@@ -50,7 +49,7 @@ describe('chromium', (suite, { browserName }) => {
   it('should not create a worker from a shared worker', async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     let serviceWorkerCreated;
-    (context as ChromiumBrowserContext).once('serviceworker', () => serviceWorkerCreated = true);
+    context.once('serviceworker', () => serviceWorkerCreated = true);
     await page.evaluate(() => {
       new SharedWorker('data:text/javascript,console.log("hi")');
     });
@@ -58,7 +57,7 @@ describe('chromium', (suite, { browserName }) => {
   });
 
   it('should close service worker together with the context', async ({browser, server}) => {
-    const context = await browser.newContext() as ChromiumBrowserContext;
+    const context = await browser.newContext();
     const page = await context.newPage();
     const [worker] = await Promise.all([
       context.waitForEvent('serviceworker'),
@@ -175,7 +174,7 @@ describe('chromium', (suite, { browserName }) => {
       const cdpBrowser1 = await browserType.connectOverCDP({
         wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
       });
-      const context = cdpBrowser1.contexts()[0] as ChromiumBrowserContext;
+      const context = cdpBrowser1.contexts()[0];
       const page = await cdpBrowser1.contexts()[0].newPage();
       const [worker] = await Promise.all([
         context.waitForEvent('serviceworker'),
@@ -187,7 +186,7 @@ describe('chromium', (suite, { browserName }) => {
       const cdpBrowser2 = await browserType.connectOverCDP({
         wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
       });
-      const context2 = cdpBrowser2.contexts()[0] as ChromiumBrowserContext;
+      const context2 = cdpBrowser2.contexts()[0];
       expect(context2.serviceWorkers().length).toBe(1);
       await cdpBrowser2.close();
     } finally {

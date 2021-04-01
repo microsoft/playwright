@@ -206,13 +206,6 @@ it('coverage should work', (test, { browserName }) => {
   expect(coverage[0].functions.find(f => f.functionName === 'foo').ranges[0].count).toEqual(1);
 });
 
-it('coverage should be missing', (test, { browserName }) => {
-  test.skip(browserName === 'chromium');
-}, async ({launchPersistent}) => {
-  const {page} = await launchPersistent();
-  expect(page.coverage).toBe(null);
-});
-
 it('should respect selectors', async ({playwright, launchPersistent}) => {
   const {page} = await launchPersistent();
 

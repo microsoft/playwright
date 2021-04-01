@@ -25,7 +25,7 @@ let api = new Set(installCoverageHooks(browserName).coverage.keys());
 
 if (browserName === 'chromium') {
   // Sometimes we already have a background page while launching, before adding a listener.
-  api.delete('chromiumBrowserContext.emit("backgroundpage")');
+  api.delete('browserContext.emit("backgroundpage")');
 }
 
 if (browserName !== 'chromium') {

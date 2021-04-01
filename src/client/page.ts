@@ -34,7 +34,7 @@ import { assertMaxArguments, serializeArgument, parseResult, JSHandle } from './
 import { Request, Response, Route, RouteHandler, WebSocket, validateHeaders } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
-import { ChromiumCoverage } from './chromiumCoverage';
+import { Coverage } from './coverage';
 import { Waiter } from './waiter';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -46,7 +46,6 @@ import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
-import type { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Artifact } from './artifact';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
@@ -78,11 +77,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   private _routes: { url: URLMatch, handler: RouteHandler }[] = [];
 
   readonly accessibility: Accessibility;
+  readonly coverage: Coverage;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
   readonly touchscreen: Touchscreen;
-  coverage: ChromiumCoverage | null = null;
-  pdf: (options?: PDFOptions) => Promise<Buffer>;
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   readonly _timeoutSettings: TimeoutSettings;
@@ -145,12 +143,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
-    if ((this._browserContext as ChromiumBrowserContext)._isChromium) {
-      this.coverage = new ChromiumCoverage(this._channel);
-      this.pdf = options => this._pdf(options);
-    } else {
-      this.pdf = undefined as any;
-    }
+    this.coverage = new Coverage(this._channel);
 
     this._closedOrCrashedPromise = Promise.race([
       new Promise<void>(f => this.once(Events.Page.Close, f)),
@@ -670,7 +663,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async _pdf(options: PDFOptions = {}): Promise<Buffer> {
+  async pdf(options: PDFOptions = {}): Promise<Buffer> {
     return this._wrapApiCall('page.pdf', async (channel: channels.PageChannel) => {
       const transportOptions: channels.PagePdfParams = { ...options } as channels.PagePdfParams;
       if (transportOptions.margin)

@@ -181,7 +181,7 @@ Whether to run browser in headless mode. More details for
 ### option: BrowserType.launch.channel
 - `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
 
-Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers#google-chrome--microsoft-edge).
+Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 
 ### option: BrowserType.launch.executablePath
 - `executablePath` <[path]>

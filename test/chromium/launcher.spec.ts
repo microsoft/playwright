@@ -16,7 +16,6 @@
 import { it, expect } from '../fixtures';
 
 import path from 'path';
-import type { ChromiumBrowser, ChromiumBrowserContext } from '../..';
 
 it('should throw with remote-debugging-pipe argument', (test, { browserName, mode }) => {
   test.skip(mode !== 'default' || browserName !== 'chromium');
@@ -66,7 +65,7 @@ it('should return background pages', (test, { browserName }) => {
       `--load-extension=${extensionPath}`,
     ],
   };
-  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions) as ChromiumBrowserContext;
+  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
   const backgroundPages = context.backgroundPages();
   const backgroundPage = backgroundPages.length
     ? backgroundPages[0]
@@ -92,7 +91,7 @@ it('should return background pages when recording video', (test, { browserName }
       dir: testInfo.outputPath(''),
     },
   };
-  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions) as ChromiumBrowserContext;
+  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
   const backgroundPages = context.backgroundPages();
   const backgroundPage = backgroundPages.length
     ? backgroundPages[0]
@@ -107,7 +106,7 @@ it('should not create pages automatically', (test, { browserName }) => {
   test.skip(browserName !== 'chromium');
 }, async ({browserType, browserOptions}) => {
   const browser = await browserType.launch(browserOptions);
-  const browserSession = await (browser as ChromiumBrowser).newBrowserCDPSession();
+  const browserSession = await browser.newBrowserCDPSession();
   const targets = [];
   browserSession.on('Target.targetCreated', async ({targetInfo}) => {
     if (targetInfo.type !== 'browser')

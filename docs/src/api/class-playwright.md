@@ -68,7 +68,7 @@ with sync_playwright() as playwright:
 ## property: Playwright.chromium
 - type: <[BrowserType]>
 
-This object can be used to launch or connect to Chromium, returning instances of [ChromiumBrowser].
+This object can be used to launch or connect to Chromium, returning instances of [Browser].
 
 ## property: Playwright.devices
 * langs: js, python
@@ -169,7 +169,7 @@ except TimeoutError as e:
 ## property: Playwright.firefox
 - type: <[BrowserType]>
 
-This object can be used to launch or connect to Firefox, returning instances of [FirefoxBrowser].
+This object can be used to launch or connect to Firefox, returning instances of [Browser].
 
 ## property: Playwright.selectors
 - type: <[Selectors]>
@@ -180,4 +180,4 @@ Selectors can be used to install custom selector engines. See
 ## property: Playwright.webkit
 - type: <[BrowserType]>
 
-This object can be used to launch or connect to WebKit, returning instances of [WebKitBrowser].
+This object can be used to launch or connect to WebKit, returning instances of [Browser].

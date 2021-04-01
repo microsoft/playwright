@@ -21,6 +21,7 @@ export { BrowserContext } from './browserContext';
 export { BrowserServer } from './browserType';
 export { BrowserType } from './browserType';
 export { ConsoleMessage } from './consoleMessage';
+export { Coverage } from './coverage';
 export { Dialog } from './dialog';
 export { Download } from './download';
 export { Electron, ElectronApplication } from './electron';
@@ -36,13 +37,5 @@ export { Page } from './page';
 export { Selectors } from './selectors';
 export { Video } from './video';
 export { Worker } from './worker';
-
-export { ChromiumBrowser } from './chromiumBrowser';
-export { ChromiumBrowserContext } from './chromiumBrowserContext';
-export { ChromiumCoverage } from './chromiumCoverage';
 export { CDPSession } from './cdpSession';
-
-export { WebKitBrowser } from './webkitBrowser';
-
-export { FirefoxBrowser } from './firefoxBrowser';
 export { Playwright } from './playwright';
