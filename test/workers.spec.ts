@@ -54,6 +54,21 @@ it('should report console logs', async function({page}) {
   expect(page.url()).not.toContain('blob');
 });
 
+it('should not report console logs from workers twice', (test, {browserName}) => {
+  test.fail(browserName === 'firefox');
+}, async function({page}) {
+  const messages = [];
+  page.on('console', msg => messages.push(msg.text()));
+  await Promise.all([
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1); console.log(2);'], {type: 'application/javascript'})))),
+    page.waitForEvent('console', msg => msg.text() === '1'),
+    page.waitForEvent('console', msg => msg.text() === '2'),
+  ]);
+  expect(messages).toEqual(['1', '2']);
+  // Firefox's juggler had an issue that reported worker blob urls as frame urls.
+  expect(page.url()).not.toContain('blob');
+});
+
 it('should have JSHandles for console logs', async function({page}) {
   const logPromise = new Promise<ConsoleMessage>(x => page.on('console', x));
   await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1,2,3,this)'], {type: 'application/javascript'}))));

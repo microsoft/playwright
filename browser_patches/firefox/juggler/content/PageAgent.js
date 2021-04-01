@@ -37,7 +37,7 @@ class WorkerData {
         evaluate: (options) => this._workerRuntime.send('evaluate', options),
         callFunction: (options) => this._workerRuntime.send('callFunction', options),
         getObjectProperties: (options) => this._workerRuntime.send('getObjectProperties', options),
-        disposeObject: (options) =>this._workerRuntime.send('disposeObject', options),
+        disposeObject: (options) => this._workerRuntime.send('disposeObject', options),
       }),
     ];
   }
