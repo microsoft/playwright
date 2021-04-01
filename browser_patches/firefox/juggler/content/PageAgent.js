@@ -206,7 +206,6 @@ class PageAgent {
         dispatchMouseEvent: this._dispatchMouseEvent.bind(this),
         dispatchTouchEvent: this._dispatchTouchEvent.bind(this),
         dispatchTapEvent: this._dispatchTapEvent.bind(this),
-        getBoundingBox: this._getBoundingBox.bind(this),
         getContentQuads: this._getContentQuads.bind(this),
         getFullAXTree: this._getFullAXTree.bind(this),
         goBack: this._goBack.bind(this),
@@ -622,31 +621,13 @@ class PageAgent {
     return {x: x1, y: y1, width: x2 - x1, height: y2 - y1};
   }
 
-  async _getBoundingBox({frameId, objectId}) {
-    const frame = this._frameTree.frame(frameId);
-    if (!frame)
-      throw new Error('Failed to find frame with id = ' + frameId);
-    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
-    const box = this._getNodeBoundingBox(unsafeObject);
-    if (!box)
-      return {boundingBox: null};
-    return {boundingBox: {x: box.x + frame.domWindow().scrollX, y: box.y + frame.domWindow().scrollY, width: box.width, height: box.height}};
-  }
-
-  async _screenshot({mimeType, fullPage, clip}) {
+  async _screenshot({mimeType, clip, omitDeviceScaleFactor}) {
     const content = this._messageManager.content;
     if (clip) {
-      const data = takeScreenshot(content, clip.x, clip.y, clip.width, clip.height, mimeType);
+      const data = takeScreenshot(content, clip.x, clip.y, clip.width, clip.height, mimeType, omitDeviceScaleFactor);
       return {data};
     }
-    if (fullPage) {
-      const rect = content.document.documentElement.getBoundingClientRect();
-      const width = content.innerWidth + content.scrollMaxX - content.scrollMinX;
-      const height = content.innerHeight + content.scrollMaxY - content.scrollMinY;
-      const data = takeScreenshot(content, 0, 0, width, height, mimeType);
-      return {data};
-    }
-    const data = takeScreenshot(content, content.scrollX, content.scrollY, content.innerWidth, content.innerHeight, mimeType);
+    const data = takeScreenshot(content, content.scrollX, content.scrollY, content.innerWidth, content.innerHeight, mimeType, omitDeviceScaleFactor);
     return {data};
   }
 
@@ -1021,10 +1002,10 @@ class PageAgent {
   }
 }
 
-function takeScreenshot(win, left, top, width, height, mimeType) {
+function takeScreenshot(win, left, top, width, height, mimeType, omitDeviceScaleFactor) {
   const MAX_SKIA_DIMENSIONS = 32767;
 
-  const scale = win.devicePixelRatio;
+  const scale = omitDeviceScaleFactor ? 1 : win.devicePixelRatio;
   const canvasWidth = width * scale;
   const canvasHeight = height * scale;
 

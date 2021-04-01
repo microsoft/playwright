@@ -71,7 +71,7 @@ pageTypes.Size = {
 
 pageTypes.Viewport = {
   viewportSize: pageTypes.Size,
-  deviceScaleFactor: t.Number,
+  deviceScaleFactor: t.Optional(t.Number),
 };
 
 pageTypes.DOMQuad = {
@@ -801,15 +801,6 @@ const Page = {
         frameId: t.String,
       },
     },
-    'getBoundingBox': {
-      params: {
-        frameId: t.String,
-        objectId: t.String,
-      },
-      returns: {
-        boundingBox: t.Nullable(pageTypes.Rect),
-      },
-    },
     'adoptNode': {
       params: {
         frameId: t.String,
@@ -823,8 +814,8 @@ const Page = {
     'screenshot': {
       params: {
         mimeType: t.Enum(['image/png', 'image/jpeg']),
-        fullPage: t.Optional(t.Boolean),
         clip: t.Optional(pageTypes.Clip),
+        omitDeviceScaleFactor: t.Optional(t.Boolean),
       },
       returns: {
         data: t.String,

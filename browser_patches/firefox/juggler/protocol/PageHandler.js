@@ -299,10 +299,6 @@ class PageHandler {
     return await this._contentPage.send('screenshot', options);
   }
 
-  async ['Page.getBoundingBox'](options) {
-    return await this._contentPage.send('getBoundingBox', options);
-  }
-
   async ['Page.getContentQuads'](options) {
     return await this._contentPage.send('getContentQuads', options);
   }
