@@ -15,65 +15,53 @@
  * limitations under the License.
  */
 
-import { folio as baseFolio } from './fixtures';
+import { folio } from './fixtures';
 import fs from 'fs';
-import type * as har from '../src/server/supplements/har/har';
-import type { BrowserContext, Page } from '../index';
+import type { BrowserContext, BrowserContextOptions } from '../index';
+import { TestInfo } from 'folio';
+const { expect, it } = folio;
 
-const builder = baseFolio.extend<{
-  pageWithHar: {
-    page: Page,
-    context: BrowserContext,
-    path: string,
-    log: () => Promise<har.Log>
-  }
-}>();
-
-builder.pageWithHar.init(async ({ contextFactory, testInfo }, run) => {
+async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: TestInfo) {
   const harPath = testInfo.outputPath('test.har');
   const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
-  await run({
-    path: harPath,
+  return {
     page,
-    context,
-    log: async () => {
+    getLog: async () => {
       await context.close();
       return JSON.parse(fs.readFileSync(harPath).toString())['log'];
     }
-  });
-});
-
-const { expect, it } = builder.build();
+  };
+}
 
 it('should throw without path', async ({ browser }) => {
   const error = await browser.newContext({ recordHar: {} as any }).catch(e => e);
   expect(error.message).toContain('recordHar.path: expected string, got undefined');
 });
 
-it('should have version and creator', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should have version and creator', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.version).toBe('1.2');
   expect(log.creator.name).toBe('Playwright');
   expect(log.creator.version).toBe(require('../package.json')['version']);
 });
 
-it('should have browser', async ({ browserName, browser, pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should have browser', async ({ browserName, browser, contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.browser.name.toLowerCase()).toBe(browserName);
   expect(log.browser.version).toBe(browser.version());
 });
 
-it('should have pages', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should have pages', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto('data:text/html,<title>Hello</title>');
   // For data: load comes before domcontentloaded...
   await page.waitForLoadState('domcontentloaded');
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.pages.length).toBe(1);
   const pageEntry = log.pages[0];
   expect(pageEntry.id).toBe('page_0');
@@ -97,10 +85,10 @@ it('should have pages in persistent context', async ({ launchPersistent, testInf
   expect(pageEntry.title).toBe('Hello');
 });
 
-it('should include request', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should include request', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.entries.length).toBe(1);
   const entry = log.entries[0];
   expect(entry.pageref).toBe('page_0');
@@ -111,10 +99,10 @@ it('should include request', async ({ pageWithHar, server }) => {
   expect(entry.request.headers.find(h => h.name.toLowerCase() === 'user-agent')).toBeTruthy();
 });
 
-it('should include response', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should include response', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
-  const log = await pageWithHar.log();
+  const log = await getLog();
   const entry = log.entries[0];
   expect(entry.response.status).toBe(200);
   expect(entry.response.statusText).toBe('OK');
@@ -123,29 +111,29 @@ it('should include response', async ({ pageWithHar, server }) => {
   expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type').value).toContain('text/html');
 });
 
-it('should include redirectURL', async ({ pageWithHar, server }) => {
+it('should include redirectURL', async ({ contextFactory, testInfo, server }) => {
   server.setRedirect('/foo.html', '/empty.html');
-  const { page } = pageWithHar;
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/foo.html');
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.entries.length).toBe(2);
   const entry = log.entries[0];
   expect(entry.response.status).toBe(302);
   expect(entry.response.redirectURL).toBe(server.EMPTY_PAGE);
 });
 
-it('should include query params', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should include query params', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html?name=value');
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.entries[0].request.queryString).toEqual([{ name: 'name', value: 'value' }]);
 });
 
-it('should include postData', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should include postData', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => fetch('./post', { method: 'POST', body: 'Hello' }));
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.entries[1].request.postData).toEqual({
     mimeType: 'text/plain;charset=UTF-8',
     params: [],
@@ -153,13 +141,13 @@ it('should include postData', async ({ pageWithHar, server }) => {
   });
 });
 
-it('should include binary postData', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should include binary postData', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(async () => {
     await fetch('./post', { method: 'POST', body: new Uint8Array(Array.from(Array(16).keys())) });
   });
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.entries[1].request.postData).toEqual({
     mimeType: 'application/octet-stream',
     params: [],
@@ -167,12 +155,12 @@ it('should include binary postData', async ({ pageWithHar, server }) => {
   });
 });
 
-it('should include form params', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should include form params', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<form method='POST' action='/post'><input type='text' name='foo' value='bar'><input type='number' name='baz' value='123'><input type='submit'></form>`);
   await page.click('input[type=submit]');
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.entries[1].request.postData).toEqual({
     mimeType: 'application/x-www-form-urlencoded',
     params: [
@@ -183,8 +171,9 @@ it('should include form params', async ({ pageWithHar, server }) => {
   });
 });
 
-it('should include cookies', async ({ pageWithHar, server }) => {
-  const { page, context } = pageWithHar;
+it('should include cookies', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const context = page.context();
   await context.addCookies([
     { name: 'name1', value: '"value1"', domain: 'localhost', path: '/', httpOnly: true },
     { name: 'name2', value: 'val"ue2', domain: 'localhost', path: '/', sameSite: 'Lax' },
@@ -192,7 +181,7 @@ it('should include cookies', async ({ pageWithHar, server }) => {
     { name: 'name4', value: 'val,ue4', domain: 'localhost', path: '/' },
   ]);
   await page.goto(server.EMPTY_PAGE);
-  const log = await pageWithHar.log();
+  const log = await getLog();
   expect(log.entries[0].request.cookies).toEqual([
     { name: 'name1', value: '"value1"' },
     { name: 'name2', value: 'val"ue2' },
@@ -203,8 +192,8 @@ it('should include cookies', async ({ pageWithHar, server }) => {
 
 it('should include set-cookies', (test, { browserName, platform }) => {
   test.fail(browserName === 'webkit' && platform === 'darwin', 'Does not work yet');
-}, async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+}, async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
       'name1=value1; HttpOnly',
@@ -214,15 +203,15 @@ it('should include set-cookies', (test, { browserName, platform }) => {
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
-  const log = await pageWithHar.log();
+  const log = await getLog();
   const cookies = log.entries[0].response.cookies;
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', httpOnly: true });
   expect(cookies[1]).toEqual({ name: 'name2', value: '"value2"' });
   expect(new Date(cookies[2].expires).valueOf()).toBeGreaterThan(Date.now());
 });
 
-it('should include set-cookies with comma', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should include set-cookies with comma', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
       'name1=val,ue1',
@@ -230,13 +219,13 @@ it('should include set-cookies with comma', async ({ pageWithHar, server }) => {
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
-  const log = await pageWithHar.log();
+  const log = await getLog();
   const cookies = log.entries[0].response.cookies;
   expect(cookies[0]).toEqual({ name: 'name1', value: 'val,ue1' });
 });
 
-it('should include secure set-cookies', async ({ pageWithHar, httpsServer }) => {
-  const { page } = pageWithHar;
+it('should include secure set-cookies', async ({ contextFactory, testInfo, httpsServer }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   httpsServer.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
       'name1=value1; Secure',
@@ -244,15 +233,15 @@ it('should include secure set-cookies', async ({ pageWithHar, httpsServer }) => 
     res.end();
   });
   await page.goto(httpsServer.EMPTY_PAGE);
-  const log = await pageWithHar.log();
+  const log = await getLog();
   const cookies = log.entries[0].response.cookies;
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', secure: true });
 });
 
-it('should include content', async ({ pageWithHar, server }) => {
-  const { page } = pageWithHar;
+it('should include content', async ({ contextFactory, testInfo, server }) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
-  const log = await pageWithHar.log();
+  const log = await getLog();
 
   const content1 = log.entries[0].response.content;
   expect(content1.encoding).toBe('base64');

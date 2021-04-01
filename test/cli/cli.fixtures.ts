@@ -17,10 +17,11 @@
 import * as http from 'http';
 import path from 'path';
 import { ChildProcess, spawn } from 'child_process';
-import { folio as baseFolio } from '../recorder.fixtures';
+import { folio as baseFolio } from '../fixtures';
 import type { BrowserType, Browser, Page } from '../..';
 export { config } from 'folio';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
+import { recorderPageGetter } from '../utils';
 
 type WorkerFixtures = {
   browserType: BrowserType<Browser>;
@@ -35,9 +36,9 @@ type TestFixtures = {
 
 export const fixtures = baseFolio.extend<TestFixtures, WorkerFixtures>();
 
-fixtures.recorder.init(async ({ page, recorderPageGetter }, runTest) => {
+fixtures.recorder.init(async ({ page, context, toImpl }, runTest) => {
   await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
-  const recorderPage = await recorderPageGetter();
+  const recorderPage = await recorderPageGetter(context, toImpl);
   await runTest(new Recorder(page, recorderPage));
 });
 
