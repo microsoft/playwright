@@ -169,10 +169,10 @@ addons:
     - gstreamer1.0-plugins-bad
     # This is required to run chromium
     - libgbm1
-    # this is needed for running headful tests
+    # this is needed for running headed tests
     - xvfb
 
-# allow headful tests
+# allow headed tests
 before_install:
   # Enable user namespace cloning
   - "sysctl kernel.unprivileged_userns_clone=1"
@@ -327,7 +327,7 @@ DEBUG=pw:browser* npm run test
 DEBUG=pw:browser* pytest
 ```
 
-## Running headful
+## Running headed
 
 By default, Playwright launches browsers in headless mode. This can be changed by passing a flag when the browser is launched.
 
@@ -371,7 +371,7 @@ with sync_playwright() as p:
    browser = p.chromium.launch(headless=False)
 ```
 
-On Linux agents, headful execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headful mode with Xvfb, add `xvfb-run` before the Node.js command.
+On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the Node.js command.
 
 ```sh js
 xvfb-run node index.js
