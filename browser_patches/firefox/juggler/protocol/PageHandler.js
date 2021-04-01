@@ -15,10 +15,15 @@ const Cu = Components.utils;
 const XUL_NS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
 const helper = new Helper();
 
+function hashConsoleMessage(params) {
+  return params.location.lineNumber + ':' + params.location.columnNumber + ':' + params.location.url;
+}
+
 class WorkerHandler {
   constructor(session, contentChannel, workerId) {
     this._session = session;
     this._contentWorker = contentChannel.connect(workerId);
+    this._workerConsoleMessages = new Set();
     this._workerId = workerId;
 
     const emitWrappedProtocolEvent = eventName => {
@@ -32,7 +37,10 @@ class WorkerHandler {
 
     this._eventListeners = [
       contentChannel.register(workerId, {
-        runtimeConsole: emitWrappedProtocolEvent('Runtime.console'),
+        runtimeConsole: (params) => {
+          this._workerConsoleMessages.add(hashConsoleMessage(params));
+          emitWrappedProtocolEvent('Runtime.console')(params);
+        },
         runtimeExecutionContextCreated: emitWrappedProtocolEvent('Runtime.executionContextCreated'),
         runtimeExecutionContextDestroyed: emitWrappedProtocolEvent('Runtime.executionContextDestroyed'),
       }),
@@ -111,7 +119,16 @@ class PageHandler {
         pageUncaughtError: emitProtocolEvent('Page.uncaughtError'),
         pageWorkerCreated: this._onWorkerCreated.bind(this),
         pageWorkerDestroyed: this._onWorkerDestroyed.bind(this),
-        runtimeConsole: emitProtocolEvent('Runtime.console'),
+        runtimeConsole: params => {
+          const consoleMessageHash = hashConsoleMessage(params);
+          for (const worker of this._workers) {
+            if (worker._workerConsoleMessages.has(consoleMessageHash)) {
+              worker._workerConsoleMessages.delete(consoleMessageHash);
+              return;
+            }
+          }
+          emitProtocolEvent('Runtime.console')(params);
+        },
         runtimeExecutionContextCreated: emitProtocolEvent('Runtime.executionContextCreated'),
         runtimeExecutionContextDestroyed: emitProtocolEvent('Runtime.executionContextDestroyed'),
 
