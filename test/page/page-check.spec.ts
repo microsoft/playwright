@@ -98,3 +98,11 @@ it('should throw when not a checkbox', async ({page}) => {
   const error = await page.check('div').catch(e => e);
   expect(error.message).toContain('Not a checkbox or radio button');
 });
+
+it('should check the box inside a button', async ({page}) => {
+  await page.setContent(`<div role='button'><input type='checkbox'></div>`);
+  await page.check('input');
+  expect(await page.$eval('input', input => input.checked)).toBe(true);
+  expect(await page.isChecked('input')).toBe(true);
+  expect(await (await page.$('input')).isChecked()).toBe(true);
+});
