@@ -23,6 +23,8 @@ export const deps = {
   bionic: {
     tools: [
       'xvfb',
+      'fonts-noto-color-emoji',
+      'ttf-unifont',
     ],
     chromium: [
       'fonts-liberation',
@@ -130,6 +132,8 @@ export const deps = {
   focal: {
     tools: [
       'xvfb',
+      'fonts-noto-color-emoji',
+      'ttf-unifont',
     ],
     chromium: [
       'fonts-liberation',
