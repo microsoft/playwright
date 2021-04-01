@@ -15,7 +15,8 @@
  */
 
 import { expect } from './fixtures';
-import type { Frame, Page } from '../index';
+import type { Frame, Page, BrowserContext } from '../index';
+import { chromium } from '../index';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -57,4 +58,13 @@ export function expectedSSLError(browserName: string): string {
     expectedSSLError = 'SSL_ERROR_UNKNOWN';
   }
   return expectedSSLError;
+}
+
+export async function recorderPageGetter(context: BrowserContext, toImpl: (x: any) => any) {
+  while (!toImpl(context).recorderAppForTest)
+    await new Promise(f => setTimeout(f, 100));
+  const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
+  const browser = await chromium.connectOverCDP({ wsEndpoint });
+  const c = browser.contexts()[0];
+  return c.pages()[0] || await c.waitForEvent('page');
 }

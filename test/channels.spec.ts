@@ -18,18 +18,7 @@
 import domain from 'domain';
 import { folio } from './fixtures';
 import type { ChromiumBrowser } from '..';
-
-const fixtures = folio.extend<{}, { domain: any }>();
-fixtures.domain.init(async ({ }, run) => {
-  const local = domain.create();
-  local.run(() => { });
-  let err;
-  local.on('error', e => err = e);
-  await run(null);
-  if (err)
-    throw err;
-}, { scope: 'worker' });
-const { it, expect } = fixtures.build();
+const { it, expect } = folio;
 
 it('should work', async ({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();
@@ -168,7 +157,12 @@ it('should scope browser handles', async ({browserType, browserOptions}) => {
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should work with the domain module', async ({ domain, browserType, browserOptions, server, isFirefox }) => {
+it('should work with the domain module', async ({ browserType, browserOptions, server, isFirefox }) => {
+  const local = domain.create();
+  local.run(() => { });
+  let err;
+  local.on('error', e => err = e);
+
   const browser = await browserType.launch(browserOptions);
   const page = await browser.newPage();
 
@@ -189,6 +183,9 @@ it('should work with the domain module', async ({ domain, browserType, browserOp
     expect(message).toContain(': 400');
 
   await browser.close();
+
+  if (err)
+    throw err;
 });
 
 async function expectScopeState(object, golden) {

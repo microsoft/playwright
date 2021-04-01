@@ -15,109 +15,87 @@
  */
 
 import { folio } from './fixtures';
-
 import fs from 'fs';
-import type { Browser, BrowserContext } from '..';
+const { it, expect, describe, beforeEach } = folio;
 
-type TestState = {
-  downloadsBrowser: Browser;
-  persistentDownloadsContext: BrowserContext;
-};
-const fixtures = folio.extend<TestState>();
-
-fixtures.downloadsBrowser.init(async ({ server, browserType, browserOptions, testInfo }, test) => {
-  server.setRoute('/download', (req, res) => {
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
-    res.end(`Hello world`);
+describe('downloads path', () => {
+  beforeEach(async ({server}) => {
+    server.setRoute('/download', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+      res.end(`Hello world`);
+    });
   });
-  const browser = await browserType.launch({
-    ...browserOptions,
-    downloadsPath: testInfo.outputPath(''),
+
+  it('should keep downloadsPath folder', async ({browserType, browserOptions, testInfo, server})  => {
+    const downloadsBrowser = await browserType.launch({ ...browserOptions, downloadsPath: testInfo.outputPath('') });
+    const page = await downloadsBrowser.newPage();
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    expect(download.url()).toBe(`${server.PREFIX}/download`);
+    expect(download.suggestedFilename()).toBe(`file.txt`);
+    await download.path().catch(e => void 0);
+    await page.close();
+    await downloadsBrowser.close();
+    expect(fs.existsSync(testInfo.outputPath(''))).toBeTruthy();
   });
-  await test(browser);
-  await browser.close();
-});
 
-fixtures.persistentDownloadsContext.init(async ({ server, launchPersistent, testInfo, browserChannel }, test) => {
-  server.setRoute('/download', (req, res) => {
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
-    res.end(`Hello world`);
+  it('should delete downloads when context closes', async ({browserType, browserOptions, server, testInfo}) => {
+    const downloadsBrowser = await browserType.launch({ ...browserOptions, downloadsPath: testInfo.outputPath('') });
+    const page = await downloadsBrowser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    await page.close();
+    expect(fs.existsSync(path)).toBeFalsy();
+    await downloadsBrowser.close();
   });
-  const { context, page } = await launchPersistent(
-      {
-        downloadsPath: testInfo.outputPath(''),
-        acceptDownloads: true,
-      }
-  );
-  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  await test(context);
-  await context.close();
-});
 
-const { it, expect } = fixtures.build();
+  it('should report downloads in downloadsPath folder', async ({browserType, browserOptions, testInfo, server}) => {
+    const downloadsBrowser = await browserType.launch({ ...browserOptions, downloadsPath: testInfo.outputPath('') });
+    const page = await downloadsBrowser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const path = await download.path();
+    expect(path.startsWith(testInfo.outputPath(''))).toBeTruthy();
+    await page.close();
+    await downloadsBrowser.close();
+  });
 
-it('should keep downloadsPath folder', async ({downloadsBrowser, testInfo, server})  => {
-  const page = await downloadsBrowser.newPage();
-  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  const [ download ] = await Promise.all([
-    page.waitForEvent('download'),
-    page.click('a')
-  ]);
-  expect(download.url()).toBe(`${server.PREFIX}/download`);
-  expect(download.suggestedFilename()).toBe(`file.txt`);
-  await download.path().catch(e => void 0);
-  await page.close();
-  await downloadsBrowser.close();
-  expect(fs.existsSync(testInfo.outputPath(''))).toBeTruthy();
-});
+  it('should accept downloads in persistent context', async ({launchPersistent, testInfo, server})  => {
+    const { context, page } = await launchPersistent({ acceptDownloads: true, downloadsPath: testInfo.outputPath('') });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a'),
+    ]);
+    expect(download.url()).toBe(`${server.PREFIX}/download`);
+    expect(download.suggestedFilename()).toBe(`file.txt`);
+    const path = await download.path();
+    expect(path.startsWith(testInfo.outputPath(''))).toBeTruthy();
+    await context.close();
+  });
 
-it('should delete downloads when context closes', async ({downloadsBrowser, server}) => {
-  const page = await downloadsBrowser.newPage({ acceptDownloads: true });
-  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  const [ download ] = await Promise.all([
-    page.waitForEvent('download'),
-    page.click('a')
-  ]);
-  const path = await download.path();
-  expect(fs.existsSync(path)).toBeTruthy();
-  await page.close();
-  expect(fs.existsSync(path)).toBeFalsy();
-});
-
-it('should report downloads in downloadsPath folder', async ({downloadsBrowser, testInfo, server}) => {
-  const page = await downloadsBrowser.newPage({ acceptDownloads: true });
-  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  const [ download ] = await Promise.all([
-    page.waitForEvent('download'),
-    page.click('a')
-  ]);
-  const path = await download.path();
-  expect(path.startsWith(testInfo.outputPath(''))).toBeTruthy();
-  await page.close();
-});
-
-it('should accept downloads in persistent context', async ({persistentDownloadsContext, testInfo, server})  => {
-  const page = persistentDownloadsContext.pages()[0];
-  const [ download ] = await Promise.all([
-    page.waitForEvent('download'),
-    page.click('a'),
-  ]);
-  expect(download.url()).toBe(`${server.PREFIX}/download`);
-  expect(download.suggestedFilename()).toBe(`file.txt`);
-  const path = await download.path();
-  expect(path.startsWith(testInfo.outputPath(''))).toBeTruthy();
-});
-
-it('should delete downloads when persistent context closes', async ({persistentDownloadsContext}) => {
-  const page = persistentDownloadsContext.pages()[0];
-  const [ download ] = await Promise.all([
-    page.waitForEvent('download'),
-    page.click('a'),
-  ]);
-  const path = await download.path();
-  expect(fs.existsSync(path)).toBeTruthy();
-  await persistentDownloadsContext.close();
-  expect(fs.existsSync(path)).toBeFalsy();
+  it('should delete downloads when persistent context closes', async ({launchPersistent, server, testInfo}) => {
+    const { context, page } = await launchPersistent({ acceptDownloads: true, downloadsPath: testInfo.outputPath('') });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a'),
+    ]);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    await context.close();
+    expect(fs.existsSync(path)).toBeFalsy();
+  });
 });
