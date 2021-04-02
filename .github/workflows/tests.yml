@@ -277,11 +277,7 @@ jobs:
     - name: Start Android Emulator
       run: utils/avd_start.sh
     - name: Run tests
-      run: npm run build-folio && node tests/folio/cli.js --config=tests/config/android.config.ts
-      env:
-        FOLIO_JSON_OUTPUT_NAME: "test-results/report-new.json"
-    - name: Run page tests
-      run: npx folio test/page -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=3 --reporter=dot,json
+      run: npm run build-folio && node tests/folio/cli.js --config=tests/config/android.config.ts --reporter=dot,json
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1

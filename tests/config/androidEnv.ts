@@ -41,6 +41,8 @@ export class AndroidEnv implements Env<AndroidTestArgs> {
       isChromium: true,
       isFirefox: false,
       isWebKit: false,
+      browserName: 'chromium' as const,
+      browserChannel: undefined,
       isWindows: os.platform() === 'win32',
       isMac: os.platform() === 'darwin',
       isLinux: os.platform() === 'linux',
