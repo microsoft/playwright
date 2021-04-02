@@ -273,9 +273,7 @@ it.describe('download event', () => {
     await page.close();
   });
 
-  it('should report new window downloads', async ({browser, server, browserName, headless}) => {
-    it.fixme(browserName === 'chromium' && !headless);
-
+  it('should report new window downloads', async ({browser, server}) => {
     // TODO: - the test fails in headed Chromium as the popup page gets closed along
     // with the session before download completed event arrives.
     // - WebKit doesn't close the popup page
@@ -361,7 +359,7 @@ it.describe('download event', () => {
     expect(fs.existsSync(path.join(path1, '..'))).toBeFalsy();
   });
 
-  it('should close the context without awaiting the failed download', async ({browser, server, httpsServer, browserName, browserVersion}, testInfo) => {
+  it('should close the context without awaiting the failed download', async ({browser, server, httpsServer, browserName, headless}, testInfo) => {
     it.skip(browserName !== 'chromium', 'Only Chromium downloads on alt-click');
 
     const page = await browser.newPage({ acceptDownloads: true });
@@ -379,13 +377,10 @@ it.describe('download event', () => {
       page.context().close(),
     ]);
     expect(downloadPath).toBe(null);
-    if (chromiumVersionLessThan(browserVersion, '91.0.4472.0'))
-      expect(saveError.message).toContain('File deleted upon browser context closure.');
-    else
-      expect(saveError.message).toContain('File not found on disk. Check download.failure() for details.');
+    expect(saveError.message).toContain('File not found on disk. Check download.failure() for details.');
   });
 
-  it('should close the context without awaiting the download', async ({browser, server, browserName, platform}, testInfo) => {
+  it('should close the context without awaiting the download', async ({browser, server, browserName, platform, headless}, testInfo) => {
     it.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
 
     server.setRoute('/downloadStall', (req, res) => {
@@ -409,7 +404,10 @@ it.describe('download event', () => {
       page.context().close(),
     ]);
     expect(downloadPath).toBe(null);
-    expect(saveError.message).toContain('File deleted upon browser context closure.');
+    if (browserName === 'chromium' && headless)
+      expect(saveError.message).toContain('.saveAs: canceled');
+    else
+      expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 
   it('should throw if browser dies', async ({ server, browserType, browserName, browserOptions, platform}, testInfo) => {

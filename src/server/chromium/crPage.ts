@@ -149,6 +149,10 @@ export class CRPage implements PageDelegate {
     return this._sessionForFrame(frame);
   }
 
+  willBeginDownload() {
+    this._mainFrameSession._willBeginDownload();
+  }
+
   async pageOrError(): Promise<Page | Error> {
     return this._pagePromise;
   }
@@ -415,8 +419,6 @@ class FrameSession {
   private _addBrowserListeners() {
     this._eventListeners.push(...[
       helper.addEventListener(this._client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
-      helper.addEventListener(this._client, 'Page.downloadWillBegin', event => this._onDownloadWillBegin(event)),
-      helper.addEventListener(this._client, 'Page.downloadProgress', event => this._onDownloadProgress(event)),
       helper.addEventListener(this._client, 'Page.screencastFrame', event => this._onScreencastFrame(event)),
       helper.addEventListener(this._client, 'Page.windowOpen', event => this._onWindowOpen(event)),
     ]);
@@ -818,26 +820,14 @@ class FrameSession {
     await this._page._onFileChooserOpened(handle);
   }
 
-  _onDownloadWillBegin(payload: Protocol.Page.downloadWillBeginPayload) {
+  _willBeginDownload() {
     let originPage = this._crPage._initializedPage;
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       this._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
-      if (this._crPage._opener)
-        originPage = this._crPage._opener._initializedPage;
     }
-    if (!originPage)
-      return;
-    this._crPage._browserContext._browser._downloadCreated(originPage, payload.guid, payload.url, payload.suggestedFilename);
-  }
-
-  _onDownloadProgress(payload: Protocol.Page.downloadProgressPayload) {
-    if (payload.state === 'completed')
-      this._crPage._browserContext._browser._downloadFinished(payload.guid, '');
-    if (payload.state === 'canceled')
-      this._crPage._browserContext._browser._downloadFinished(payload.guid, 'canceled');
   }
 
   _onScreencastFrame(payload: Protocol.Page.screencastFramePayload) {
