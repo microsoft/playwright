@@ -312,14 +312,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       origins: tOptional(tArray(tType('OriginStorage'))),
     })),
   });
-  scheme.BrowserCrNewBrowserCDPSessionParams = tOptional(tObject({}));
-  scheme.BrowserCrStartTracingParams = tObject({
+  scheme.BrowserNewBrowserCDPSessionParams = tOptional(tObject({}));
+  scheme.BrowserStartTracingParams = tObject({
     page: tOptional(tChannel('Page')),
     path: tOptional(tString),
     screenshots: tOptional(tBoolean),
     categories: tOptional(tArray(tString)),
   });
-  scheme.BrowserCrStopTracingParams = tOptional(tObject({}));
+  scheme.BrowserStopTracingParams = tOptional(tObject({}));
   scheme.BrowserContextAddCookiesParams = tObject({
     cookies: tArray(tType('SetNetworkCookie')),
   });
@@ -381,7 +381,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     saveStorage: tOptional(tString),
     outputFile: tOptional(tString),
   });
-  scheme.BrowserContextCrNewCDPSessionParams = tObject({
+  scheme.BrowserContextNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
@@ -504,15 +504,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       right: tOptional(tString),
     })),
   });
-  scheme.PageCrStartJSCoverageParams = tObject({
+  scheme.PageStartJSCoverageParams = tObject({
     resetOnNavigation: tOptional(tBoolean),
     reportAnonymousScripts: tOptional(tBoolean),
   });
-  scheme.PageCrStopJSCoverageParams = tOptional(tObject({}));
-  scheme.PageCrStartCSSCoverageParams = tObject({
+  scheme.PageStopJSCoverageParams = tOptional(tObject({}));
+  scheme.PageStartCSSCoverageParams = tObject({
     resetOnNavigation: tOptional(tBoolean),
   });
-  scheme.PageCrStopCSSCoverageParams = tOptional(tObject({}));
+  scheme.PageStopCSSCoverageParams = tOptional(tObject({}));
   scheme.PageBringToFrontParams = tOptional(tObject({}));
   scheme.FrameEvalOnSelectorParams = tObject({
     selector: tString,

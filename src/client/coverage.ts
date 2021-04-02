@@ -17,26 +17,26 @@
 import * as channels from '../protocol/channels';
 import * as api from '../../types/types';
 
-export class ChromiumCoverage implements api.ChromiumCoverage {
+export class Coverage implements api.Coverage {
   private _channel: channels.PageChannel;
 
   constructor(channel: channels.PageChannel) {
     this._channel = channel;
   }
 
-  async startJSCoverage(options: channels.PageCrStartJSCoverageOptions = {}) {
-    await this._channel.crStartJSCoverage(options);
+  async startJSCoverage(options: channels.PageStartJSCoverageOptions = {}) {
+    await this._channel.startJSCoverage(options);
   }
 
-  async stopJSCoverage(): Promise<channels.PageCrStopJSCoverageResult['entries']> {
-    return (await this._channel.crStopJSCoverage()).entries;
+  async stopJSCoverage(): Promise<channels.PageStopJSCoverageResult['entries']> {
+    return (await this._channel.stopJSCoverage()).entries;
   }
 
-  async startCSSCoverage(options: channels.PageCrStartCSSCoverageOptions = {}) {
-    await this._channel.crStartCSSCoverage(options);
+  async startCSSCoverage(options: channels.PageStartCSSCoverageOptions = {}) {
+    await this._channel.startCSSCoverage(options);
   }
 
-  async stopCSSCoverage(): Promise<channels.PageCrStopCSSCoverageResult['entries']> {
-    return (await this._channel.crStopCSSCoverage()).entries;
+  async stopCSSCoverage(): Promise<channels.PageStopCSSCoverageResult['entries']> {
+    return (await this._channel.stopCSSCoverage()).entries;
   }
 }

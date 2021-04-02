@@ -217,22 +217,22 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     await this._page.bringToFront();
   }
 
-  async crStartJSCoverage(params: channels.PageCrStartJSCoverageParams, metadata: CallMetadata): Promise<void> {
+  async startJSCoverage(params: channels.PageStartJSCoverageParams, metadata: CallMetadata): Promise<void> {
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startJSCoverage(params);
   }
 
-  async crStopJSCoverage(params: channels.PageCrStopJSCoverageParams, metadata: CallMetadata): Promise<channels.PageCrStopJSCoverageResult> {
+  async stopJSCoverage(params: channels.PageStopJSCoverageParams, metadata: CallMetadata): Promise<channels.PageStopJSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
     return { entries: await coverage.stopJSCoverage() };
   }
 
-  async crStartCSSCoverage(params: channels.PageCrStartCSSCoverageParams, metadata: CallMetadata): Promise<void> {
+  async startCSSCoverage(params: channels.PageStartCSSCoverageParams, metadata: CallMetadata): Promise<void> {
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startCSSCoverage(params);
   }
 
-  async crStopCSSCoverage(params: channels.PageCrStopCSSCoverageParams, metadata: CallMetadata): Promise<channels.PageCrStopCSSCoverageResult> {
+  async stopCSSCoverage(params: channels.PageStopCSSCoverageParams, metadata: CallMetadata): Promise<channels.PageStopCSSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
     return { entries: await coverage.stopCSSCoverage() };
   }

@@ -17,7 +17,6 @@
 
 import domain from 'domain';
 import { folio } from './fixtures';
-import type { ChromiumBrowser } from '..';
 const { it, expect } = folio;
 
 it('should work', async ({browser}) => {
@@ -90,7 +89,7 @@ it('should scope CDPSession handles', (test, { browserName }) => {
   };
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
-  const session = await (browser as ChromiumBrowser).newBrowserCDPSession();
+  const session = await browser.newBrowserCDPSession();
   await expectScopeState(browserType, {
     _guid: '',
     objects: [

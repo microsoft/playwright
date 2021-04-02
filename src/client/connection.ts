@@ -31,11 +31,7 @@ import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
 import * as channels from '../protocol/channels';
-import { ChromiumBrowser } from './chromiumBrowser';
-import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Stream } from './stream';
-import { WebKitBrowser } from './webkitBrowser';
-import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
@@ -162,26 +158,12 @@ export class Connection {
       case 'BindingCall':
         result = new BindingCall(parent, type, guid, initializer);
         break;
-      case 'Browser': {
-        const browserName = (initializer as channels.BrowserInitializer).name;
-        if (browserName === 'chromium')
-          result = new ChromiumBrowser(parent, type, guid, initializer);
-        else if (browserName === 'webkit')
-          result = new WebKitBrowser(parent, type, guid, initializer);
-        else if (browserName === 'firefox')
-          result = new FirefoxBrowser(parent, type, guid, initializer);
-        else
-          result = new Browser(parent, type, guid, initializer);
+      case 'Browser':
+        result = new Browser(parent, type, guid, initializer);
         break;
-      }
-      case 'BrowserContext': {
-        const {isChromium} = (initializer as channels.BrowserContextInitializer);
-        if (isChromium)
-          result = new ChromiumBrowserContext(parent, type, guid, initializer);
-        else
-          result = new BrowserContext(parent, type, guid, initializer);
+      case 'BrowserContext':
+        result = new BrowserContext(parent, type, guid, initializer);
         break;
-      }
       case 'BrowserType':
         result = new BrowserType(parent, type, guid, initializer);
         break;

@@ -430,9 +430,9 @@ export interface BrowserChannel extends Channel {
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
   close(params?: BrowserCloseParams, metadata?: Metadata): Promise<BrowserCloseResult>;
   newContext(params: BrowserNewContextParams, metadata?: Metadata): Promise<BrowserNewContextResult>;
-  crNewBrowserCDPSession(params?: BrowserCrNewBrowserCDPSessionParams, metadata?: Metadata): Promise<BrowserCrNewBrowserCDPSessionResult>;
-  crStartTracing(params: BrowserCrStartTracingParams, metadata?: Metadata): Promise<BrowserCrStartTracingResult>;
-  crStopTracing(params?: BrowserCrStopTracingParams, metadata?: Metadata): Promise<BrowserCrStopTracingResult>;
+  newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: Metadata): Promise<BrowserNewBrowserCDPSessionResult>;
+  startTracing(params: BrowserStartTracingParams, metadata?: Metadata): Promise<BrowserStartTracingResult>;
+  stopTracing(params?: BrowserStopTracingParams, metadata?: Metadata): Promise<BrowserStopTracingResult>;
 }
 export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {};
@@ -556,27 +556,27 @@ export type BrowserNewContextOptions = {
 export type BrowserNewContextResult = {
   context: BrowserContextChannel,
 };
-export type BrowserCrNewBrowserCDPSessionParams = {};
-export type BrowserCrNewBrowserCDPSessionOptions = {};
-export type BrowserCrNewBrowserCDPSessionResult = {
+export type BrowserNewBrowserCDPSessionParams = {};
+export type BrowserNewBrowserCDPSessionOptions = {};
+export type BrowserNewBrowserCDPSessionResult = {
   session: CDPSessionChannel,
 };
-export type BrowserCrStartTracingParams = {
+export type BrowserStartTracingParams = {
   page?: PageChannel,
   path?: string,
   screenshots?: boolean,
   categories?: string[],
 };
-export type BrowserCrStartTracingOptions = {
+export type BrowserStartTracingOptions = {
   page?: PageChannel,
   path?: string,
   screenshots?: boolean,
   categories?: string[],
 };
-export type BrowserCrStartTracingResult = void;
-export type BrowserCrStopTracingParams = {};
-export type BrowserCrStopTracingOptions = {};
-export type BrowserCrStopTracingResult = {
+export type BrowserStartTracingResult = void;
+export type BrowserStopTracingParams = {};
+export type BrowserStopTracingOptions = {};
+export type BrowserStopTracingResult = {
   binary: Binary,
 };
 
@@ -590,8 +590,8 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
-  on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
-  on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
+  on(event: 'backgroundPage', callback: (params: BrowserContextBackgroundPageEvent) => void): this;
+  on(event: 'serviceWorker', callback: (params: BrowserContextServiceWorkerEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams, metadata?: Metadata): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams, metadata?: Metadata): Promise<BrowserContextAddInitScriptResult>;
   clearCookies(params?: BrowserContextClearCookiesParams, metadata?: Metadata): Promise<BrowserContextClearCookiesResult>;
@@ -611,7 +611,7 @@ export interface BrowserContextChannel extends Channel {
   storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
-  crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
+  newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -627,10 +627,10 @@ export type BrowserContextRouteEvent = {
 export type BrowserContextVideoEvent = {
   artifact: ArtifactChannel,
 };
-export type BrowserContextCrBackgroundPageEvent = {
+export type BrowserContextBackgroundPageEvent = {
   page: PageChannel,
 };
-export type BrowserContextCrServiceWorkerEvent = {
+export type BrowserContextServiceWorkerEvent = {
   worker: WorkerChannel,
 };
 export type BrowserContextAddCookiesParams = {
@@ -779,13 +779,13 @@ export type BrowserContextRecorderSupplementEnableOptions = {
   outputFile?: string,
 };
 export type BrowserContextRecorderSupplementEnableResult = void;
-export type BrowserContextCrNewCDPSessionParams = {
+export type BrowserContextNewCDPSessionParams = {
   page: PageChannel,
 };
-export type BrowserContextCrNewCDPSessionOptions = {
+export type BrowserContextNewCDPSessionOptions = {
 
 };
-export type BrowserContextCrNewCDPSessionResult = {
+export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
 
@@ -847,10 +847,10 @@ export interface PageChannel extends Channel {
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: Metadata): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: Metadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: Metadata): Promise<PagePdfResult>;
-  crStartJSCoverage(params: PageCrStartJSCoverageParams, metadata?: Metadata): Promise<PageCrStartJSCoverageResult>;
-  crStopJSCoverage(params?: PageCrStopJSCoverageParams, metadata?: Metadata): Promise<PageCrStopJSCoverageResult>;
-  crStartCSSCoverage(params: PageCrStartCSSCoverageParams, metadata?: Metadata): Promise<PageCrStartCSSCoverageResult>;
-  crStopCSSCoverage(params?: PageCrStopCSSCoverageParams, metadata?: Metadata): Promise<PageCrStopCSSCoverageResult>;
+  startJSCoverage(params: PageStartJSCoverageParams, metadata?: Metadata): Promise<PageStartJSCoverageResult>;
+  stopJSCoverage(params?: PageStopJSCoverageParams, metadata?: Metadata): Promise<PageStopJSCoverageResult>;
+  startCSSCoverage(params: PageStartCSSCoverageParams, metadata?: Metadata): Promise<PageStartCSSCoverageResult>;
+  stopCSSCoverage(params?: PageStopCSSCoverageParams, metadata?: Metadata): Promise<PageStopCSSCoverageResult>;
   bringToFront(params?: PageBringToFrontParams, metadata?: Metadata): Promise<PageBringToFrontResult>;
 }
 export type PageBindingCallEvent = {
@@ -1185,18 +1185,18 @@ export type PagePdfOptions = {
 export type PagePdfResult = {
   pdf: Binary,
 };
-export type PageCrStartJSCoverageParams = {
+export type PageStartJSCoverageParams = {
   resetOnNavigation?: boolean,
   reportAnonymousScripts?: boolean,
 };
-export type PageCrStartJSCoverageOptions = {
+export type PageStartJSCoverageOptions = {
   resetOnNavigation?: boolean,
   reportAnonymousScripts?: boolean,
 };
-export type PageCrStartJSCoverageResult = void;
-export type PageCrStopJSCoverageParams = {};
-export type PageCrStopJSCoverageOptions = {};
-export type PageCrStopJSCoverageResult = {
+export type PageStartJSCoverageResult = void;
+export type PageStopJSCoverageParams = {};
+export type PageStopJSCoverageOptions = {};
+export type PageStopJSCoverageResult = {
   entries: {
     url: string,
     scriptId: string,
@@ -1212,16 +1212,16 @@ export type PageCrStopJSCoverageResult = {
     }[],
   }[],
 };
-export type PageCrStartCSSCoverageParams = {
+export type PageStartCSSCoverageParams = {
   resetOnNavigation?: boolean,
 };
-export type PageCrStartCSSCoverageOptions = {
+export type PageStartCSSCoverageOptions = {
   resetOnNavigation?: boolean,
 };
-export type PageCrStartCSSCoverageResult = void;
-export type PageCrStopCSSCoverageParams = {};
-export type PageCrStopCSSCoverageOptions = {};
-export type PageCrStopCSSCoverageResult = {
+export type PageStartCSSCoverageResult = void;
+export type PageStopCSSCoverageParams = {};
+export type PageStopCSSCoverageOptions = {};
+export type PageStopCSSCoverageResult = {
   entries: {
     url: string,
     text?: string,

@@ -97,6 +97,12 @@ ${overrides}
 ${classes.map(classDesc => classToString(classDesc)).join('\n')}
 ${objectDefinitionsToString(overrides)}
 ${generateDevicesTypes()}
+
+export interface ChromiumBrowserContext extends BrowserContext { }
+export interface ChromiumBrowser extends Browser { }
+export interface FirefoxBrowser extends Browser { }
+export interface WebKitBrowser extends Browser { }
+export interface ChromiumCoverage extends Coverage { }
 `;
   for (const [key, value] of Object.entries(exported))
     output = output.replace(new RegExp('\\b' + key + '\\b', 'g'), value);

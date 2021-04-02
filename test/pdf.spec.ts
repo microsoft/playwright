@@ -26,9 +26,3 @@ it('should be able to save file', (test, { browserName, headful }) => {
   await page.pdf({path: outputFile});
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
 });
-
-it('should only have pdf in chromium', (test, { browserName }) => {
-  test.skip(browserName === 'chromium');
-}, async ({page}) => {
-  expect(page.pdf).toBe(undefined);
-});

@@ -26,7 +26,7 @@ Deletes the video file. Will wait for the video to finish if necessary.
 - returns: <[path]>
 
 Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem
-upon closing the browser context. This method throws when connected remotely via [`method: BrowserType.connect`].
+upon closing the browser context. This method throws when connected remotely.
 
 ## async method: Video.saveAs
 

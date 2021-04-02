@@ -462,11 +462,11 @@ Browser:
       returns:
         context: BrowserContext
 
-    crNewBrowserCDPSession:
+    newBrowserCDPSession:
       returns:
         session: CDPSession
 
-    crStartTracing:
+    startTracing:
       parameters:
         page: Page?
         path: string?
@@ -475,7 +475,7 @@ Browser:
           type: array?
           items: string
 
-    crStopTracing:
+    stopTracing:
       returns:
         binary: binary
 
@@ -598,7 +598,7 @@ BrowserContext:
         saveStorage: string?
         outputFile: string?
 
-    crNewCDPSession:
+    newCDPSession:
       parameters:
         page: Page
       returns:
@@ -625,11 +625,11 @@ BrowserContext:
       parameters:
         artifact: Artifact
 
-    crBackgroundPage:
+    backgroundPage:
       parameters:
         page: Page
 
-    crServiceWorker:
+    serviceWorker:
       parameters:
         worker: Worker
 
@@ -859,12 +859,12 @@ Page:
       returns:
         pdf: binary
 
-    crStartJSCoverage:
+    startJSCoverage:
       parameters:
         resetOnNavigation: boolean?
         reportAnonymousScripts: boolean?
 
-    crStopJSCoverage:
+    stopJSCoverage:
       returns:
         entries:
           type: array
@@ -890,11 +890,11 @@ Page:
                           endOffset: number
                           count: number
 
-    crStartCSSCoverage:
+    startCSSCoverage:
       parameters:
         resetOnNavigation: boolean?
 
-    crStopCSSCoverage:
+    stopCSSCoverage:
       returns:
         entries:
           type: array

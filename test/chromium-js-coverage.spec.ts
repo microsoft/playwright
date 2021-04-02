@@ -16,13 +16,6 @@
 
 import { it, expect, describe } from './fixtures';
 
-it('should be missing', (test, { browserName }) => {
-  test.skip(browserName === 'chromium');
-},
-async function({page}) {
-  expect(page.coverage).toBe(null);
-});
-
 describe('JS Coverage', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');
 }, () => {

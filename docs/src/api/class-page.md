@@ -597,10 +597,13 @@ Get the browser context that the page belongs to.
 
 ## property: Page.coverage
 * langs: js
-- type: <[null]|[ChromiumCoverage]>
+- type: <[Coverage]>
 
-Browser-specific Coverage implementation, only available for Chromium atm. See
-[ChromiumCoverage](#class-chromiumcoverage) for more details.
+:::note
+Only available for Chromium atm.
+:::
+
+Browser-specific Coverage implementation. See [Coverage](#class-coverage) for more details.
 
 ## async method: Page.dblclick
 

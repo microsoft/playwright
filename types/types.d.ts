@@ -1484,10 +1484,11 @@ export interface Page {
   context(): BrowserContext;
 
   /**
-   * Browser-specific Coverage implementation, only available for Chromium atm. See
-   * [ChromiumCoverage](#class-chromiumcoverage) for more details.
+   * > NOTE: Only available for Chromium atm.
+   * 
+   * Browser-specific Coverage implementation. See [Coverage](#class-coverage) for more details.
    */
-  coverage: null|ChromiumCoverage;
+  coverage: Coverage;
 
   /**
    * This method double clicks an element matching `selector` by performing the following steps:
@@ -4626,6 +4627,18 @@ export interface BrowserContext {
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<void>;
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
   /**
+   * > NOTE: Only works with Chromium browser's persistent context.
+   * 
+   * Emitted when new background page is created in the context.
+   * 
+   * ```js
+   * const backgroundPage = await context.waitForEvent('backgroundpage');
+   * ```
+   * 
+   */
+  on(event: 'backgroundpage', listener: (page: Page) => void): this;
+
+  /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
@@ -4655,6 +4668,25 @@ export interface BrowserContext {
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   on(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  on(event: 'serviceworker', listener: (worker: Worker) => void): this;
+
+  /**
+   * > NOTE: Only works with Chromium browser's persistent context.
+   * 
+   * Emitted when new background page is created in the context.
+   * 
+   * ```js
+   * const backgroundPage = await context.waitForEvent('backgroundpage');
+   * ```
+   * 
+   */
+  once(event: 'backgroundpage', listener: (page: Page) => void): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -4688,6 +4720,25 @@ export interface BrowserContext {
   once(event: 'page', listener: (page: Page) => void): this;
 
   /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  once(event: 'serviceworker', listener: (worker: Worker) => void): this;
+
+  /**
+   * > NOTE: Only works with Chromium browser's persistent context.
+   * 
+   * Emitted when new background page is created in the context.
+   * 
+   * ```js
+   * const backgroundPage = await context.waitForEvent('backgroundpage');
+   * ```
+   * 
+   */
+  addListener(event: 'backgroundpage', listener: (page: Page) => void): this;
+
+  /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
@@ -4717,6 +4768,25 @@ export interface BrowserContext {
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   addListener(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  addListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
+
+  /**
+   * > NOTE: Only works with Chromium browser's persistent context.
+   * 
+   * Emitted when new background page is created in the context.
+   * 
+   * ```js
+   * const backgroundPage = await context.waitForEvent('backgroundpage');
+   * ```
+   * 
+   */
+  removeListener(event: 'backgroundpage', listener: (page: Page) => void): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -4750,6 +4820,25 @@ export interface BrowserContext {
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  removeListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
+
+  /**
+   * > NOTE: Only works with Chromium browser's persistent context.
+   * 
+   * Emitted when new background page is created in the context.
+   * 
+   * ```js
+   * const backgroundPage = await context.waitForEvent('backgroundpage');
+   * ```
+   * 
+   */
+  off(event: 'backgroundpage', listener: (page: Page) => void): this;
+
+  /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
@@ -4779,6 +4868,13 @@ export interface BrowserContext {
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   off(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  off(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
    * Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
@@ -4874,6 +4970,13 @@ export interface BrowserContext {
      */
     content?: string;
   }, arg?: Serializable): Promise<void>;
+
+  /**
+   * > NOTE: Background pages are only supported on Chromium-based browsers.
+   * 
+   * All existing background pages in the context.
+   */
+  backgroundPages(): Array<Page>;
 
   /**
    * Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
@@ -4979,6 +5082,14 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
+   * > NOTE: CDP sessions are only supported on Chromium-based browsers.
+   * 
+   * Returns the newly created session.
+   * @param page Page to create new session for.
+   */
+  newCDPSession(page: Page): Promise<CDPSession>;
+
+  /**
    * Creates a new page in the browser context.
    */
   newPage(): Promise<Page>;
@@ -5023,6 +5134,13 @@ export interface BrowserContext {
    * @param handler handler function to route the request.
    */
   route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * All existing service workers in the context.
+   */
+  serviceWorkers(): Array<Worker>;
 
   /**
    * This setting will change the default maximum navigation time for the following methods and related shortcuts:
@@ -5166,6 +5284,18 @@ export interface BrowserContext {
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
 
   /**
+   * > NOTE: Only works with Chromium browser's persistent context.
+   * 
+   * Emitted when new background page is created in the context.
+   * 
+   * ```js
+   * const backgroundPage = await context.waitForEvent('backgroundpage');
+   * ```
+   * 
+   */
+  waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+
+  /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
@@ -5195,6 +5325,13 @@ export interface BrowserContext {
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean, timeout?: number } | ((worker: Worker) => boolean)): Promise<Worker>;
 }
 
 /**
@@ -6866,112 +7003,6 @@ export interface BrowserType<Browser> {
   name(): string;}
 
 /**
- * - extends: [Browser]
- * 
- * Chromium-specific features including Tracing, service worker support, etc. You can use
- * [chromiumBrowser.startTracing([page, options])](https://playwright.dev/docs/api/class-chromiumbrowser#chromiumbrowserstarttracingpage-options)
- * and [chromiumBrowser.stopTracing()](https://playwright.dev/docs/api/class-chromiumbrowser#chromiumbrowserstoptracing) to
- * create a trace file which can be opened in Chrome DevTools or
- * [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
- * 
- * ```js
- * await browser.startTracing(page, {path: 'trace.json'});
- * await page.goto('https://www.google.com');
- * await browser.stopTracing();
- * ```
- * 
- * [ChromiumBrowser] can also be used for testing Chrome Extensions.
- * 
- * > NOTE: Extensions in Chrome / Chromium currently only work in non-headless mode.
- * 
- * The following is code for getting a handle to the
- * [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in
- * `./my-extension`:
- * 
- * ```js
- * const { chromium } = require('playwright');
- * 
- * (async () => {
- *   const pathToExtension = require('path').join(__dirname, 'my-extension');
- *   const userDataDir = '/tmp/test-user-data-dir';
- *   const browserContext = await chromium.launchPersistentContext(userDataDir,{
- *     headless: false,
- *     args: [
- *       `--disable-extensions-except=${pathToExtension}`,
- *       `--load-extension=${pathToExtension}`
- *     ]
- *   });
- *   const backgroundPage = browserContext.backgroundPages()[0];
- *   // Test the background page as you would any other page.
- *   await browserContext.close();
- * })();
- * ```
- * 
- */
-export interface ChromiumBrowser extends Browser {
-  /**
-   * Returns an array of all open browser contexts. In a newly created browser, this will return zero browser contexts.
-   * 
-   * ```js
-   * const browser = await pw.webkit.launch();
-   * console.log(browser.contexts().length); // prints `0`
-   * 
-   * const context = await browser.newContext();
-   * console.log(browser.contexts().length); // prints `1`
-   * ```
-   * 
-   */
-  contexts(): Array<ChromiumBrowserContext>;
-  /**
-   * Creates a new browser context. It won't share cookies/cache with other browser contexts.
-   * 
-   * ```js
-   * (async () => {
-   *   const browser = await playwright.firefox.launch();  // Or 'chromium' or 'webkit'.
-   *   // Create a new incognito browser context.
-   *   const context = await browser.newContext();
-   *   // Create a new page in a pristine context.
-   *   const page = await context.newPage();
-   *   await page.goto('https://example.com');
-   * })();
-   * ```
-   * 
-   * @param options 
-   */
-  newContext(options?: BrowserContextOptions): Promise<ChromiumBrowserContext>;
-  /**
-   * Returns the newly created browser session.
-   */
-  newBrowserCDPSession(): Promise<CDPSession>;
-
-  /**
-   * Only one trace can be active at a time per browser.
-   * @param page Optional, if specified, tracing includes screenshots of the given page.
-   * @param options 
-   */
-  startTracing(page?: Page, options?: {
-    /**
-     * specify custom categories to use instead of default.
-     */
-    categories?: Array<string>;
-
-    /**
-     * A path to write the trace file to.
-     */
-    path?: string;
-
-    /**
-     * captures screenshots in the trace.
-     */
-    screenshots?: boolean;
-  }): Promise<void>;
-
-  /**
-   * Returns the buffer with trace data.
-   */
-  stopTracing(): Promise<Buffer>;}
-
-/**
  * - extends: [EventEmitter]
  * 
  * The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
@@ -7817,7 +7848,7 @@ export interface AndroidDevice {
        */
       height: number;
     };
-  }): Promise<ChromiumBrowserContext>;
+  }): Promise<BrowserContext>;
 
   /**
    * Performs a long tap on the widget defined by `selector`.
@@ -8321,6 +8352,13 @@ export interface Browser extends EventEmitter {
   isConnected(): boolean;
 
   /**
+   * > NOTE: CDP Sessions are only supported on Chromium-based browsers.
+   * 
+   * Returns the newly created browser session.
+   */
+  newBrowserCDPSession(): Promise<CDPSession>;
+
+  /**
    * Creates a new browser context. It won't share cookies/cache with other browser contexts.
    * 
    * ```js
@@ -8653,6 +8691,47 @@ export interface Browser extends EventEmitter {
   }): Promise<Page>;
 
   /**
+   * > NOTE: Tracing is only supported on Chromium-based browsers.
+   * 
+   * You can use
+   * [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browserstarttracingpage-options)
+   * and [browser.stopTracing()](https://playwright.dev/docs/api/class-browser#browserstoptracing) to create a trace file
+   * that can be opened in Chrome DevTools performance panel.
+   * 
+   * ```js
+   * await browser.startTracing(page, {path: 'trace.json'});
+   * await page.goto('https://www.google.com');
+   * await browser.stopTracing();
+   * ```
+   * 
+   * @param page Optional, if specified, tracing includes screenshots of the given page.
+   * @param options 
+   */
+  startTracing(page?: Page, options?: {
+    /**
+     * specify custom categories to use instead of default.
+     */
+    categories?: Array<string>;
+
+    /**
+     * A path to write the trace file to.
+     */
+    path?: string;
+
+    /**
+     * captures screenshots in the trace.
+     */
+    screenshots?: boolean;
+  }): Promise<void>;
+
+  /**
+   * > NOTE: Tracing is only supported on Chromium-based browsers.
+   * 
+   * Returns the buffer with trace data.
+   */
+  stopTracing(): Promise<Buffer>;
+
+  /**
    * Returns the browser version.
    */
   version(): string;
@@ -8710,296 +8789,45 @@ export interface BrowserServer {
 }
 
 /**
- * - extends: [BrowserContext]
- * 
- * Chromium-specific features including background pages, service worker support, etc.
- * 
- * ```js
- * const backgroundPage = await context.waitForEvent('backgroundpage');
- * ```
- * 
+ * [ConsoleMessage] objects are dispatched by page via the
+ * [page.on('console')](https://playwright.dev/docs/api/class-page#pageonconsole) event.
  */
-export interface ChromiumBrowserContext extends BrowserContext {
-  /**
-   * Emitted when new background page is created in the context.
-   * 
-   * > NOTE: Only works with persistent context.
-   */
-  on(event: 'backgroundpage', listener: (page: Page) => void): this;
+export interface ConsoleMessage {
+  args(): Array<JSHandle>;
+
+  location(): {
+    /**
+     * URL of the resource.
+     */
+    url: string;
+
+    /**
+     * 0-based line number in the resource.
+     */
+    lineNumber: number;
+
+    /**
+     * 0-based column number in the resource.
+     */
+    columnNumber: number;
+  };
+
+  text(): string;
 
   /**
-   * Emitted when new service worker is created in the context.
+   * One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
+   * `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`,
+   * `'count'`, `'timeEnd'`.
    */
-  on(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
-   * Emitted when Browser context gets closed. This might happen because of one of the following:
-   * - Browser context is closed.
-   * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
-   */
-  on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-   * also fire for popup pages. See also [page.on('popup')](https://playwright.dev/docs/api/class-page#pageonpopup) to
-   * receive events about popups relevant to a specific page.
-   * 
-   * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
-   * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-   * done and its response has started loading in the popup.
-   * 
-   * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
-   * ]);
-   * console.log(await newPage.evaluate('location.href'));
-   * ```
-   * 
-   * > NOTE: Use
-   * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#pagewaitforloadstatestate-options)
-   * to wait until the page gets to a particular state (you should not need it in most cases).
-   */
-  on(event: 'page', listener: (page: Page) => void): this;
-
-  /**
-   * Emitted when new background page is created in the context.
-   * 
-   * > NOTE: Only works with persistent context.
-   */
-  once(event: 'backgroundpage', listener: (page: Page) => void): this;
-
-  /**
-   * Emitted when new service worker is created in the context.
-   */
-  once(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
-   * Emitted when Browser context gets closed. This might happen because of one of the following:
-   * - Browser context is closed.
-   * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
-   */
-  once(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-   * also fire for popup pages. See also [page.on('popup')](https://playwright.dev/docs/api/class-page#pageonpopup) to
-   * receive events about popups relevant to a specific page.
-   * 
-   * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
-   * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-   * done and its response has started loading in the popup.
-   * 
-   * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
-   * ]);
-   * console.log(await newPage.evaluate('location.href'));
-   * ```
-   * 
-   * > NOTE: Use
-   * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#pagewaitforloadstatestate-options)
-   * to wait until the page gets to a particular state (you should not need it in most cases).
-   */
-  once(event: 'page', listener: (page: Page) => void): this;
-
-  /**
-   * Emitted when new background page is created in the context.
-   * 
-   * > NOTE: Only works with persistent context.
-   */
-  addListener(event: 'backgroundpage', listener: (page: Page) => void): this;
-
-  /**
-   * Emitted when new service worker is created in the context.
-   */
-  addListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
-   * Emitted when Browser context gets closed. This might happen because of one of the following:
-   * - Browser context is closed.
-   * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
-   */
-  addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-   * also fire for popup pages. See also [page.on('popup')](https://playwright.dev/docs/api/class-page#pageonpopup) to
-   * receive events about popups relevant to a specific page.
-   * 
-   * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
-   * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-   * done and its response has started loading in the popup.
-   * 
-   * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
-   * ]);
-   * console.log(await newPage.evaluate('location.href'));
-   * ```
-   * 
-   * > NOTE: Use
-   * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#pagewaitforloadstatestate-options)
-   * to wait until the page gets to a particular state (you should not need it in most cases).
-   */
-  addListener(event: 'page', listener: (page: Page) => void): this;
-
-  /**
-   * Emitted when new background page is created in the context.
-   * 
-   * > NOTE: Only works with persistent context.
-   */
-  removeListener(event: 'backgroundpage', listener: (page: Page) => void): this;
-
-  /**
-   * Emitted when new service worker is created in the context.
-   */
-  removeListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
-   * Emitted when Browser context gets closed. This might happen because of one of the following:
-   * - Browser context is closed.
-   * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
-   */
-  removeListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-   * also fire for popup pages. See also [page.on('popup')](https://playwright.dev/docs/api/class-page#pageonpopup) to
-   * receive events about popups relevant to a specific page.
-   * 
-   * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
-   * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-   * done and its response has started loading in the popup.
-   * 
-   * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
-   * ]);
-   * console.log(await newPage.evaluate('location.href'));
-   * ```
-   * 
-   * > NOTE: Use
-   * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#pagewaitforloadstatestate-options)
-   * to wait until the page gets to a particular state (you should not need it in most cases).
-   */
-  removeListener(event: 'page', listener: (page: Page) => void): this;
-
-  /**
-   * Emitted when new background page is created in the context.
-   * 
-   * > NOTE: Only works with persistent context.
-   */
-  off(event: 'backgroundpage', listener: (page: Page) => void): this;
-
-  /**
-   * Emitted when new service worker is created in the context.
-   */
-  off(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
-   * Emitted when Browser context gets closed. This might happen because of one of the following:
-   * - Browser context is closed.
-   * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
-   */
-  off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-   * also fire for popup pages. See also [page.on('popup')](https://playwright.dev/docs/api/class-page#pageonpopup) to
-   * receive events about popups relevant to a specific page.
-   * 
-   * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
-   * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-   * done and its response has started loading in the popup.
-   * 
-   * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
-   * ]);
-   * console.log(await newPage.evaluate('location.href'));
-   * ```
-   * 
-   * > NOTE: Use
-   * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#pagewaitforloadstatestate-options)
-   * to wait until the page gets to a particular state (you should not need it in most cases).
-   */
-  off(event: 'page', listener: (page: Page) => void): this;
-
-  /**
-   * All existing background pages in the context.
-   */
-  backgroundPages(): Array<Page>;
-
-  /**
-   * Returns the newly created session.
-   * @param page Page to create new session for.
-   */
-  newCDPSession(page: Page): Promise<CDPSession>;
-
-  /**
-   * All existing service workers in the context.
-   */
-  serviceWorkers(): Array<Worker>;
-
-  /**
-   * Emitted when new background page is created in the context.
-   * 
-   * > NOTE: Only works with persistent context.
-   */
-  waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
-
-  /**
-   * Emitted when new service worker is created in the context.
-   */
-  waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean, timeout?: number } | ((worker: Worker) => boolean)): Promise<Worker>;
-
-  /**
-   * Emitted when Browser context gets closed. This might happen because of one of the following:
-   * - Browser context is closed.
-   * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
-   */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean, timeout?: number } | ((browserContext: BrowserContext) => boolean)): Promise<BrowserContext>;
-
-  /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-   * also fire for popup pages. See also [page.on('popup')](https://playwright.dev/docs/api/class-page#pageonpopup) to
-   * receive events about popups relevant to a specific page.
-   * 
-   * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
-   * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
-   * done and its response has started loading in the popup.
-   * 
-   * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
-   * ]);
-   * console.log(await newPage.evaluate('location.href'));
-   * ```
-   * 
-   * > NOTE: Use
-   * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#pagewaitforloadstatestate-options)
-   * to wait until the page gets to a particular state (you should not need it in most cases).
-   */
-  waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
-
+  type(): string;
 }
 
 /**
  * Coverage gathers information about parts of JavaScript and CSS that were used by the page.
  * 
  * An example of using JavaScript coverage to produce Istanbul report for page load:
+ * 
+ * > NOTE: Coverage APIs are only supported on Chromium-based browsers.
  * 
  * ```js
  * const { chromium } = require('playwright');
@@ -9022,7 +8850,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
  * ```
  * 
  */
-export interface ChromiumCoverage {
+export interface Coverage {
   /**
    * Returns coverage is started
    * @param options 
@@ -9127,40 +8955,6 @@ export interface ChromiumCoverage {
 }
 
 /**
- * [ConsoleMessage] objects are dispatched by page via the
- * [page.on('console')](https://playwright.dev/docs/api/class-page#pageonconsole) event.
- */
-export interface ConsoleMessage {
-  args(): Array<JSHandle>;
-
-  location(): {
-    /**
-     * URL of the resource.
-     */
-    url: string;
-
-    /**
-     * 0-based line number in the resource.
-     */
-    lineNumber: number;
-
-    /**
-     * 0-based column number in the resource.
-     */
-    columnNumber: number;
-  };
-
-  text(): string;
-
-  /**
-   * One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
-   * `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`,
-   * `'count'`, `'timeEnd'`.
-   */
-  type(): string;
-}
-
-/**
  * [Dialog] objects are dispatched by page via the
  * [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) event.
  * 
@@ -9256,8 +9050,7 @@ export interface Download {
 
   /**
    * Returns path to the downloaded file in case of successful download. The method will wait for the download to finish if
-   * necessary. The method throws when connected remotely via
-   * [browserType.connect(params)](https://playwright.dev/docs/api/class-browsertype#browsertypeconnectparams).
+   * necessary. The method throws when connected remotely.
    */
   path(): Promise<null|string>;
 
@@ -9436,15 +9229,6 @@ export interface FileChooser {
      */
     timeout?: number;
   }): Promise<void>;
-}
-
-/**
- * - extends: [Browser]
- * 
- * Firefox browser instance does not expose Firefox-specific features.
- */
-export interface FirefoxBrowser extends Browser {
-
 }
 
 /**
@@ -10241,8 +10025,7 @@ export interface Video {
 
   /**
    * Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem
-   * upon closing the browser context. This method throws when connected remotely via
-   * [browserType.connect(params)](https://playwright.dev/docs/api/class-browsertype#browsertypeconnectparams).
+   * upon closing the browser context. This method throws when connected remotely.
    */
   path(): Promise<string>;
 
@@ -10252,15 +10035,6 @@ export interface Video {
    * @param path Path where the video should be saved.
    */
   saveAs(path: string): Promise<void>;
-}
-
-/**
- * - extends: [Browser]
- * 
- * WebKit browser instance does not expose WebKit-specific features.
- */
-export interface WebKitBrowser extends Browser {
-
 }
 
 /**
@@ -11100,3 +10874,9 @@ type Devices = {
   "Pixel 5 landscape": DeviceDescriptor;
   [key: string]: DeviceDescriptor;
 }
+
+export interface ChromiumBrowserContext extends BrowserContext { }
+export interface ChromiumBrowser extends Browser { }
+export interface FirefoxBrowser extends Browser { }
+export interface WebKitBrowser extends Browser { }
+export interface ChromiumCoverage extends Coverage { }

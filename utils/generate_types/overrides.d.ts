@@ -144,11 +144,6 @@ export interface BrowserType<Browser> {
 
 }
 
-export interface ChromiumBrowser extends Browser {
-  contexts(): Array<ChromiumBrowserContext>;
-  newContext(options?: BrowserContextOptions): Promise<ChromiumBrowserContext>;
-}
-
 export interface CDPSession {
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;

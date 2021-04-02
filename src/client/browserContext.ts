@@ -23,6 +23,7 @@ import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
 import { deprecate, evaluationScript, urlMatches } from './clientHelper';
 import { Browser } from './browser';
+import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
@@ -31,6 +32,7 @@ import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
+import { CDPSession } from './cdpSession';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
@@ -47,6 +49,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     sdkLanguage: 'javascript'
   };
 
+  readonly _backgroundPages = new Set<Page>();
+  readonly _serviceWorkers = new Set<Worker>();
+  readonly _isChromium: boolean;
+
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
   }
@@ -59,11 +65,23 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     super(parent, type, guid, initializer);
     if (parent instanceof Browser)
       this._browser = parent;
+    this._isChromium = this._browser?._name === 'chromium';
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+    this._channel.on('backgroundPage', ({ page }) => {
+      const backgroundPage = Page.from(page);
+      this._backgroundPages.add(backgroundPage);
+      this.emit(Events.BrowserContext.BackgroundPage, backgroundPage);
+    });
+    this._channel.on('serviceWorker', ({worker}) => {
+      const serviceWorker = Worker.from(worker);
+      serviceWorker._context = this;
+      this._serviceWorkers.add(serviceWorker);
+      this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
+    });
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -235,6 +253,21 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
         await fsWriteFileAsync(options.path, JSON.stringify(state, undefined, 2), 'utf8');
       }
       return state;
+    });
+  }
+
+  backgroundPages(): Page[] {
+    return [...this._backgroundPages];
+  }
+
+  serviceWorkers(): Worker[] {
+    return [...this._serviceWorkers];
+  }
+
+  async newCDPSession(page: Page): Promise<api.CDPSession> {
+    return this._wrapApiCall('browserContext.newCDPSession', async (channel: channels.BrowserContextChannel) => {
+      const result = await channel.newCDPSession({ page: page._channel });
+      return CDPSession.from(result.session);
     });
   }
 

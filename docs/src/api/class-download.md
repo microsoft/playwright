@@ -73,7 +73,7 @@ Returns download error if any. Will wait for the download to finish if necessary
 - returns: <[null]|[path]>
 
 Returns path to the downloaded file in case of successful download. The method will
-wait for the download to finish if necessary. The method throws when connected remotely via [`method: BrowserType.connect`].
+wait for the download to finish if necessary. The method throws when connected remotely.
 
 ## async method: Download.saveAs
 

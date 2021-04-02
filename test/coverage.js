@@ -40,18 +40,17 @@ function traceAPICoverage(apiCoverage, api, events) {
       uninstalls.push(() => Reflect.set(classType.prototype, methodName, method));
     }
     if (events[name]) {
-      const emitClassType = (name === 'BrowserContext' ? api['ChromiumBrowserContext'] : undefined) || classType;
       for (const event of Object.values(events[name])) {
         if (typeof event !== 'symbol')
           apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, false);
       }
-      const method = Reflect.get(emitClassType.prototype, 'emit');
-      Reflect.set(emitClassType.prototype, 'emit', function(event, ...args) {
+      const method = Reflect.get(classType.prototype, 'emit');
+      Reflect.set(classType.prototype, 'emit', function(event, ...args) {
         if (typeof event !== 'symbol' && this.listenerCount(event))
           apiCoverage.set(`${className}.emit(${JSON.stringify(event)})`, true);
         return method.call(this, event, ...args);
       });
-      uninstalls.push(() => Reflect.set(emitClassType.prototype, 'emit', method));
+      uninstalls.push(() => Reflect.set(classType.prototype, 'emit', method));
     }
   }
   return () => uninstalls.forEach(u => u());

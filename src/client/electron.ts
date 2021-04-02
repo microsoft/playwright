@@ -20,7 +20,6 @@ import * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import type { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
@@ -90,8 +89,8 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     });
   }
 
-  context(): ChromiumBrowserContext {
-    return this._context! as ChromiumBrowserContext;
+  context(): BrowserContext {
+    return this._context! as BrowserContext;
   }
 
   async close() {
