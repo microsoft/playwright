@@ -54,9 +54,7 @@ it('should report console logs', async function({page}) {
   expect(page.url()).not.toContain('blob');
 });
 
-it('should not report console logs from workers twice', (test, {browserName}) => {
-  test.fail(browserName === 'firefox');
-}, async function({page}) {
+it('should not report console logs from workers twice', async function({page}) {
   const messages = [];
   page.on('console', msg => messages.push(msg.text()));
   await Promise.all([

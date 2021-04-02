@@ -194,7 +194,7 @@ export module Protocol {
           width: number;
           height: number;
         };
-        deviceScaleFactor: number;
+        deviceScaleFactor?: number;
       }|null;
     };
     export type setDefaultViewportReturnValue = void;
@@ -294,7 +294,7 @@ export module Protocol {
         width: number;
         height: number;
       };
-      deviceScaleFactor: number;
+      deviceScaleFactor?: number;
     };
     export type DOMQuad = {
       p1: {
@@ -530,18 +530,6 @@ export module Protocol {
       frameId: string;
     };
     export type reloadReturnValue = void;
-    export type getBoundingBoxParameters = {
-      frameId: string;
-      objectId: string;
-    };
-    export type getBoundingBoxReturnValue = {
-      boundingBox: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      }|null;
-    };
     export type adoptNodeParameters = {
       frameId: string;
       objectId: string;
@@ -558,13 +546,13 @@ export module Protocol {
     };
     export type screenshotParameters = {
       mimeType: ("image/png"|"image/jpeg");
-      fullPage?: boolean;
       clip?: {
         x: number;
         y: number;
         width: number;
         height: number;
       };
+      omitDeviceScaleFactor?: boolean;
     };
     export type screenshotReturnValue = {
       data: string;
@@ -1068,7 +1056,6 @@ export module Protocol {
     "Page.goBack": Page.goBackParameters;
     "Page.goForward": Page.goForwardParameters;
     "Page.reload": Page.reloadParameters;
-    "Page.getBoundingBox": Page.getBoundingBoxParameters;
     "Page.adoptNode": Page.adoptNodeParameters;
     "Page.screenshot": Page.screenshotParameters;
     "Page.getContentQuads": Page.getContentQuadsParameters;
@@ -1142,7 +1129,6 @@ export module Protocol {
     "Page.goBack": Page.goBackReturnValue;
     "Page.goForward": Page.goForwardReturnValue;
     "Page.reload": Page.reloadReturnValue;
-    "Page.getBoundingBox": Page.getBoundingBoxReturnValue;
     "Page.adoptNode": Page.adoptNodeReturnValue;
     "Page.screenshot": Page.screenshotReturnValue;
     "Page.getContentQuads": Page.getContentQuadsReturnValue;
