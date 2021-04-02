@@ -14,54 +14,31 @@
  * limitations under the License.
  */
 
+import { newTestType } from '../folio/out';
+import type { Page } from '../../index';
+import type { ServerTestArgs } from './serverTest';
+import type { BrowserTestArgs } from './browserTest';
 import * as http from 'http';
-import path from 'path';
-import { ChildProcess, spawn } from 'child_process';
-import { folio as baseFolio } from '../fixtures';
-import type { BrowserType, Browser, Page } from '../..';
-export { config } from 'folio';
+import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
-import { recorderPageGetter } from '../utils';
+import { ChildProcess, spawn } from 'child_process';
+export { expect } from 'folio';
 
-type WorkerFixtures = {
-  browserType: BrowserType<Browser>;
-  browser: Browser;
-  httpServer: httpServer;
-};
+interface CLIHTTPServer {
+  setHandler: (handler: http.RequestListener) => void
+  PREFIX: string
+}
 
-type TestFixtures = {
-  recorder: Recorder;
+export type CLITestArgs = BrowserTestArgs & {
+  page: Page;
+  httpServer: CLIHTTPServer;
+  openRecorder: () => Promise<Recorder>;
   runCLI: (args: string[]) => CLIMock;
 };
 
-export const fixtures = baseFolio.extend<TestFixtures, WorkerFixtures>();
+export const test = newTestType<CLITestArgs & ServerTestArgs>();
 
-fixtures.recorder.init(async ({ page, context, toImpl }, runTest) => {
-  await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
-  const recorderPage = await recorderPageGetter(context, toImpl);
-  await runTest(new Recorder(page, recorderPage));
-});
-
-fixtures.httpServer.init(async ({testWorkerIndex}, runTest) => {
-  let handler = (req: http.IncomingMessage, res: http.ServerResponse) => res.end();
-  const port = 9907 + testWorkerIndex;
-  const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => handler(req, res)).listen(port);
-  await runTest({
-    setHandler: newHandler => handler = newHandler,
-    PREFIX: `http://127.0.0.1:${port}`,
-  });
-  server.close();
-}, { scope: 'worker' });
-
-function removeAnsiColors(input: string): string {
-  const pattern = [
-    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-    '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
-  ].join('|');
-  return input.replace(new RegExp(pattern, 'g'), '');
-}
-
-class Recorder {
+export class Recorder {
   page: Page;
   _highlightCallback: Function
   _highlightInstalled: boolean
@@ -150,17 +127,7 @@ class Recorder {
   }
 }
 
-fixtures.runCLI.init(async ({ browserName, browserChannel, headful }, runTest) => {
-  let cli: CLIMock;
-  const cliFactory = (args: string[]) => {
-    cli = new CLIMock(browserName, browserChannel, !headful, args);
-    return cli;
-  };
-  await runTest(cliFactory);
-  await cli.exited;
-});
-
-class CLIMock {
+export class CLIMock {
   private process: ChildProcess;
   private data: string;
   private waitForText: string;
@@ -210,9 +177,10 @@ class CLIMock {
   }
 }
 
-interface httpServer {
-  setHandler: (handler: http.RequestListener) => void
-  PREFIX: string
+function removeAnsiColors(input: string): string {
+  const pattern = [
+    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+    '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
+  ].join('|');
+  return input.replace(new RegExp(pattern, 'g'), '');
 }
-
-export const folio = fixtures.build();

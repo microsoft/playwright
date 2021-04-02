@@ -136,31 +136,22 @@ export function newTestTypeImpl(): any {
   function hook(name: string, fn: Function) {
     if (!currentFile)
       throw errorWithCallLocation(`Hook can only be defined in a test file.`);
+    ensureSuiteForCurrentLocation();
     suites[0]._addHook(name, fn);
   }
 
   const modifier = (type: 'skip' | 'fail' | 'fixme', arg?: boolean | string, description?: string) => {
-    const processed = interpretCondition(arg, description);
-    if (!processed.condition)
-      return;
-
     if (currentFile) {
-      suites[0]._annotations.push({ type, description: processed.description });
+      const processed = interpretCondition(arg, description);
+      if (processed.condition)
+        suites[0]._annotations.push({ type, description: processed.description });
       return;
     }
 
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.${type} can only be called inside the test`);
-
-    testInfo.annotations.push({ type, description: processed.description });
-    if (type === 'skip' || type === 'fixme') {
-      testInfo.expectedStatus = 'skipped';
-      throw new SkipError(processed.description);
-    } else if (type === 'fail') {
-      if (testInfo.expectedStatus !== 'skipped')
-        testInfo.expectedStatus = 'failed';
-    }
+    (testInfo[type] as any)(arg, description);
   };
 
   const test: any = spec.bind(null, 'default');
@@ -195,9 +186,6 @@ export function newTestTypeImpl(): any {
     });
   };
   return test;
-}
-
-export class SkipError extends Error {
 }
 
 export function setConfig(config: Config) {

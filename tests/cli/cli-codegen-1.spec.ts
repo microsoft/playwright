@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import { folio } from './cli.fixtures';
+import { test, expect } from '../config/cliTest';
 import * as http from 'http';
 
-const { it, describe, expect } = folio;
+test.describe('cli codegen', () => {
+  test.beforeEach(async ({ mode, browserName, headful }) => {
+    test.skip(mode !== 'default');
+    test.fixme(browserName === 'firefox' && headful, 'Focus is off');
+  });
 
-describe('cli codegen', (suite, { browserName, headful, mode }) => {
-  suite.skip(mode !== 'default');
-  suite.fixme(browserName === 'firefox' && headful, 'Focus is off');
-}, () => {
-  it('should click', async ({ page, recorder }) => {
+  test('should click', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
 
     const selector = await recorder.hoverOverElement('button');
@@ -58,7 +60,9 @@ await page.ClickAsync("text=Submit");`);
     expect(message.text()).toBe('click');
   });
 
-  it('should click after same-document navigation', async ({ page, recorder, httpServer }) => {
+  test('should click after same-document navigation', async ({ page, openRecorder, httpServer }) => {
+    const recorder = await openRecorder();
+
     httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end('');
@@ -87,7 +91,9 @@ await page.ClickAsync("text=Submit");`);
     expect(message.text()).toBe('click');
   });
 
-  it('should work with TrustedTypes', async ({ page, recorder }) => {
+  test('should work with TrustedTypes', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`
       <head>
         <meta http-equiv="Content-Security-Policy" content="trusted-types unsafe escape; require-trusted-types-for 'script'">
@@ -128,7 +134,9 @@ await page.ClickAsync("text=Submit");`);
     expect(message.text()).toBe('click');
   });
 
-  it('should not target selector preview by text regexp', async ({ page, recorder }) => {
+  test('should not target selector preview by text regexp', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<span>dummy</span>`);
 
     // Force highlight.
@@ -160,7 +168,9 @@ await page.ClickAsync("text=Submit");`);
     expect(message.text()).toBe('click');
   });
 
-  it('should fill', async ({ page, recorder }) => {
+  test('should fill', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<input id="input" name="name" oninput="console.log(input.value)"></input>`);
     const selector = await recorder.focusElement('input');
     expect(selector).toBe('input[name="name"]');
@@ -193,7 +203,9 @@ await page.FillAsync(\"input[name=\\\"name\\\"]\", \"John\");`);
     expect(message.text()).toBe('John');
   });
 
-  it('should fill textarea', async ({ page, recorder }) => {
+  test('should fill textarea', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<textarea id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
     const selector = await recorder.focusElement('textarea');
     expect(selector).toBe('textarea[name="name"]');
@@ -209,7 +221,9 @@ await page.FillAsync(\"input[name=\\\"name\\\"]\", \"John\");`);
     expect(message.text()).toBe('John');
   });
 
-  it('should press', async ({ page, recorder }) => {
+  test('should press', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<input name="name" onkeypress="console.log('press')"></input>`);
 
     const selector = await recorder.focusElement('input');
@@ -246,7 +260,9 @@ await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
     expect(messages[0].text()).toBe('press');
   });
 
-  it('should update selected element after pressing Tab', async ({ page, recorder }) => {
+  test('should update selected element after pressing Tab', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`
       <input name="one"></input>
       <input name="two"></input>
@@ -276,7 +292,9 @@ await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
   await page.fill('input[name="two"]', 'barfoo321');`);
   });
 
-  it('should record ArrowDown', async ({ page, recorder }) => {
+  test('should record ArrowDown', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<input name="name" onkeydown="console.log('press:' + event.key)"></input>`);
 
     const selector = await recorder.focusElement('input');
@@ -297,7 +315,9 @@ await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
     expect(messages[0].text()).toBe('press:ArrowDown');
   });
 
-  it('should emit single keyup on ArrowDown', async ({ page, recorder }) => {
+  test('should emit single keyup on ArrowDown', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<input name="name" onkeydown="console.log('down:' + event.key)" onkeyup="console.log('up:' + event.key)"></input>`);
 
     const selector = await recorder.focusElement('input');
@@ -320,7 +340,9 @@ await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
     expect(messages[1].text()).toBe('up:ArrowDown');
   });
 
-  it('should check', async ({ page, recorder }) => {
+  test('should check', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
 
     const selector = await recorder.focusElement('input');
@@ -355,7 +377,9 @@ await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
     expect(message.text()).toBe('true');
   });
 
-  it('should check with keyboard', async ({ page, recorder }) => {
+  test('should check with keyboard', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
 
     const selector = await recorder.focusElement('input');
@@ -373,7 +397,9 @@ await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
     expect(message.text()).toBe('true');
   });
 
-  it('should uncheck', async ({ page, recorder }) => {
+  test('should uncheck', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" checked name="accept" onchange="console.log(checkbox.checked)"></input>`);
 
     const selector = await recorder.focusElement('input');
@@ -408,7 +434,9 @@ await page.UncheckAsync(\"input[name=\\\"accept\\\"]\");`);
     expect(message.text()).toBe('false');
   });
 
-  it('should select', async ({ page, recorder }) => {
+  test('should select', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait('<select id="age" onchange="console.log(age.selectedOptions[0].value)"><option value="1"><option value="2"></select>');
 
     const selector = await recorder.hoverOverElement('select');
@@ -443,9 +471,10 @@ await page.SelectOptionAsync(\"select\", \"2\");`);
     expect(message.text()).toBe('2');
   });
 
-  it('should await popup', (test, { browserName, headful }) => {
+  test('should await popup', async ({ page, openRecorder, browserName, headful }) => {
     test.fixme(browserName === 'webkit' && headful, 'Middle click does not open a popup in our webkit embedder');
-  }, async ({ page, recorder }) => {
+
+    const recorder = await openRecorder();
     await recorder.setContentAndWait('<a target=_blank rel=noopener href="about:blank">link</a>');
 
     const selector = await recorder.hoverOverElement('a');
@@ -491,7 +520,9 @@ await Task.WhenAll(
     expect(popup.url()).toBe('about:blank');
   });
 
-  it('should assert navigation', async ({ page, recorder }) => {
+  test('should assert navigation', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<a onclick="window.location.href='about:blank#foo'">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');
@@ -531,7 +562,9 @@ await page.ClickAsync(\"text=link\");
   });
 
 
-  it('should await navigation', async ({ page, recorder }) => {
+  test('should await navigation', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<a onclick="setTimeout(() => window.location.href='about:blank#foo', 1000)">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');

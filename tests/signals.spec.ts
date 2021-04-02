@@ -29,95 +29,88 @@ test('should close the browser when the node process closes', async ({startRemot
   expect(await remoteServer.childExitCode()).toBe(isWindows ? 1 : 0);
 });
 
-test('should report browser close signal', async ({startRemoteServer, server, platform, headful}) => {
-  test.skip(platform === 'win32' || headful);
+test.describe('signals', () => {
+  test.beforeEach(async ({platform, headful}) => {
+    test.skip(platform === 'win32' || headful);
+  });
 
-  const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
-  const pid = await remoteServer.out('pid');
-  process.kill(-pid, 'SIGTERM');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGTERM');
-  process.kill(remoteServer.child().pid);
-  await remoteServer.childExitCode();
-});
+  test('should report browser close signal', async ({startRemoteServer, server}) => {
+    const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
+    const pid = await remoteServer.out('pid');
+    process.kill(-pid, 'SIGTERM');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGTERM');
+    process.kill(remoteServer.child().pid);
+    await remoteServer.childExitCode();
+  });
 
-test('should report browser close signal 2', async ({startRemoteServer, server, platform, headful}) => {
-  test.skip(platform === 'win32' || headful);
+  test('should report browser close signal 2', async ({startRemoteServer, server}) => {
+    const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
+    const pid = await remoteServer.out('pid');
+    process.kill(-pid, 'SIGKILL');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    process.kill(remoteServer.child().pid);
+    await remoteServer.childExitCode();
+  });
 
-  const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
-  const pid = await remoteServer.out('pid');
-  process.kill(-pid, 'SIGKILL');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGKILL');
-  process.kill(remoteServer.child().pid);
-  await remoteServer.childExitCode();
-});
+  test('should close the browser on SIGINT', async ({startRemoteServer, server, browserChannel}) => {
+    test.fixme(!!browserChannel, 'Uncomment on roll');
 
-test('should close the browser on SIGINT', async ({startRemoteServer, server, browserChannel, platform, headful}) => {
-  test.skip(platform === 'win32' || headful);
-  test.fixme(!!browserChannel, 'Uncomment on roll');
+    const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    expect(await remoteServer.out('exitCode')).toBe('0');
+    expect(await remoteServer.out('signal')).toBe('null');
+    expect(await remoteServer.childExitCode()).toBe(130);
+  });
 
-  const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  expect(await remoteServer.out('exitCode')).toBe('0');
-  expect(await remoteServer.out('signal')).toBe('null');
-  expect(await remoteServer.childExitCode()).toBe(130);
-});
+  test('should close the browser on SIGTERM', async ({startRemoteServer, server, browserChannel}) => {
+    test.fixme(!!browserChannel, 'Uncomment on roll');
 
-test('should close the browser on SIGTERM', async ({startRemoteServer, server, browserChannel, platform, headful}) => {
-  test.skip(platform === 'win32' || headful);
-  test.fixme(!!browserChannel, 'Uncomment on roll');
+    const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
+    process.kill(remoteServer.child().pid, 'SIGTERM');
+    expect(await remoteServer.out('exitCode')).toBe('0');
+    expect(await remoteServer.out('signal')).toBe('null');
+    expect(await remoteServer.childExitCode()).toBe(0);
+  });
 
-  const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
-  process.kill(remoteServer.child().pid, 'SIGTERM');
-  expect(await remoteServer.out('exitCode')).toBe('0');
-  expect(await remoteServer.out('signal')).toBe('null');
-  expect(await remoteServer.childExitCode()).toBe(0);
-});
+  test('should close the browser on SIGHUP', async ({startRemoteServer, server, browserChannel}) => {
+    test.fixme(!!browserChannel, 'Uncomment on roll');
 
-test('should close the browser on SIGHUP', async ({startRemoteServer, server, browserChannel, platform, headful}) => {
-  test.skip(platform === 'win32' || headful);
-  test.fixme(!!browserChannel, 'Uncomment on roll');
+    const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
+    process.kill(remoteServer.child().pid, 'SIGHUP');
+    expect(await remoteServer.out('exitCode')).toBe('0');
+    expect(await remoteServer.out('signal')).toBe('null');
+    expect(await remoteServer.childExitCode()).toBe(0);
+  });
 
-  const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
-  process.kill(remoteServer.child().pid, 'SIGHUP');
-  expect(await remoteServer.out('exitCode')).toBe('0');
-  expect(await remoteServer.out('signal')).toBe('null');
-  expect(await remoteServer.childExitCode()).toBe(0);
-});
+  test('should kill the browser on double SIGINT', async ({startRemoteServer, server}) => {
+    const remoteServer = await startRemoteServer({ stallOnClose: true, url: server.EMPTY_PAGE });
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    await remoteServer.out('stalled');
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    expect(await remoteServer.childExitCode()).toBe(130);
+  });
 
-test('should kill the browser on double SIGINT', async ({startRemoteServer, server, platform, headful}) => {
-  test.skip(platform === 'win32' || headful);
+  test('should kill the browser on SIGINT + SIGTERM', async ({startRemoteServer, server}) => {
+    const remoteServer = await startRemoteServer({ stallOnClose: true, url: server.EMPTY_PAGE });
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    await remoteServer.out('stalled');
+    process.kill(remoteServer.child().pid, 'SIGTERM');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    expect(await remoteServer.childExitCode()).toBe(0);
+  });
 
-  const remoteServer = await startRemoteServer({ stallOnClose: true, url: server.EMPTY_PAGE });
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  await remoteServer.out('stalled');
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGKILL');
-  expect(await remoteServer.childExitCode()).toBe(130);
-});
-
-test('should kill the browser on SIGINT + SIGTERM', async ({startRemoteServer, server, platform, headful}) => {
-  test.skip(platform === 'win32' || headful);
-
-  const remoteServer = await startRemoteServer({ stallOnClose: true, url: server.EMPTY_PAGE });
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  await remoteServer.out('stalled');
-  process.kill(remoteServer.child().pid, 'SIGTERM');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGKILL');
-  expect(await remoteServer.childExitCode()).toBe(0);
-});
-
-test('should kill the browser on SIGTERM + SIGINT', async ({startRemoteServer, server, platform, headful}) => {
-  test.skip(platform === 'win32' || headful);
-
-  const remoteServer = await startRemoteServer({ stallOnClose: true, url: server.EMPTY_PAGE });
-  process.kill(remoteServer.child().pid, 'SIGTERM');
-  await remoteServer.out('stalled');
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGKILL');
-  expect(await remoteServer.childExitCode()).toBe(130);
+  test('should kill the browser on SIGTERM + SIGINT', async ({startRemoteServer, server}) => {
+    const remoteServer = await startRemoteServer({ stallOnClose: true, url: server.EMPTY_PAGE });
+    process.kill(remoteServer.child().pid, 'SIGTERM');
+    await remoteServer.out('stalled');
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    expect(await remoteServer.childExitCode()).toBe(130);
+  });
 });

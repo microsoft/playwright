@@ -16,16 +16,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { folio } from './cli.fixtures';
+import { test, expect } from '../config/cliTest';
 
-const { it, expect } = folio;
-
-const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
+const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'test', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
   return channel ? `.setHeadless(false)\n        .setChannel("${channel}")` : '.setHeadless(false)';
 };
 
-it('should print the correct imports and context options', async ({ runCLI, browserChannel, browserName }) => {
+test('should print the correct imports and context options', async ({ runCLI, browserChannel, browserName }) => {
   const cli = runCLI(['--target=java', emptyHTML]);
   const expectedResult = `import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.*;
@@ -40,7 +38,7 @@ public class Example {
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options for custom settings', async ({ runCLI, browserName }) => {
+test('should print the correct context options for custom settings', async ({ runCLI, browserName }) => {
   const cli = runCLI(['--color-scheme=light', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT));`;
@@ -48,9 +46,9 @@ it('should print the correct context options for custom settings', async ({ runC
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device', (test, { browserName }) => {
+test('should print the correct context options when using a device', async ({ browserName, runCLI }) => {
   test.skip(browserName !== 'chromium');
-}, async ({ runCLI }) => {
+
   const cli = runCLI(['--device=Pixel 2', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Mobile Safari/537.36")
@@ -62,9 +60,9 @@ it('should print the correct context options when using a device', (test, { brow
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, runCLI }) => {
   test.skip(browserName !== 'webkit');
-}, async ({ runCLI }) => {
+
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT)
@@ -77,7 +75,7 @@ it('should print the correct context options when using a device and additional 
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print load/save storage_state', async ({ runCLI, browserName, testInfo }) => {
+test('should print load/save storage_state', async ({ runCLI, browserName }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
