@@ -25,8 +25,8 @@ export class ServerEnv {
   private _socksServer: any;
 
   async beforeAll(workerInfo: WorkerInfo) {
-    const assetsPath = path.join(__dirname, '..', 'assets');
-    const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
+    const assetsPath = path.join(__dirname, '..', '..', 'test', 'assets');
+    const cachedPath = path.join(__dirname, '..', '..', 'test', 'assets', 'cached');
 
     const port = 8907 + workerInfo.workerIndex * 2;
     this._server = await TestServer.create(assetsPath, port);

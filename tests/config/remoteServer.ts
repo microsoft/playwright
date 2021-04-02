@@ -14,43 +14,17 @@
  * limitations under the License.
  */
 
-import { folio as base } from './fixtures';
-
 import path from 'path';
 import { spawn } from 'child_process';
-import type { BrowserType, Browser, LaunchOptions } from '..';
+import type { BrowserType, Browser, LaunchOptions } from '../../index';
 
-type ServerFixtures = {
-  remoteServer: RemoteServer;
-  stallingRemoteServer: RemoteServer;
-  clusterRemoteServer: RemoteServer;
+const playwrightPath = path.join(__dirname, '..', '..');
+
+export type RemoteServerOptions = {
+  stallOnClose?: boolean;
+  inCluster?: boolean;
+  url?: string;
 };
-const fixtures = base.extend<ServerFixtures>();
-
-fixtures.remoteServer.init(async ({ browserType, browserOptions }, run) => {
-  const remoteServer = new RemoteServer();
-  await remoteServer._start(browserType, browserOptions);
-  await run(remoteServer);
-  await remoteServer.close();
-});
-
-fixtures.stallingRemoteServer.init(async ({ browserType, browserOptions }, run) => {
-  const remoteServer = new RemoteServer();
-  await remoteServer._start(browserType, browserOptions, { stallOnClose: true });
-  await run(remoteServer);
-  await remoteServer.close();
-});
-
-fixtures.clusterRemoteServer.init(async ({ browserType, browserOptions }, run) => {
-  const remoteServer = new RemoteServer();
-  await remoteServer._start(browserType, browserOptions, { inCluster: true });
-  await run(remoteServer);
-  await remoteServer.close();
-});
-
-export const folio = fixtures.build();
-
-const playwrightPath = path.join(__dirname, '..');
 
 export class RemoteServer {
   _output: Map<any, any>;
@@ -63,7 +37,7 @@ export class RemoteServer {
   _didExit: boolean;
   _wsEndpoint: string;
 
-  async _start(browserType: BrowserType<Browser>, browserOptions: LaunchOptions, extraOptions?: { stallOnClose?: boolean; inCluster?: boolean }) {
+  async _start(browserType: BrowserType<Browser>, browserOptions: LaunchOptions, remoteServerOptions: RemoteServerOptions = {}) {
     this._output = new Map();
     this._outputCallback = new Map();
     this._didExit = false;
@@ -81,9 +55,9 @@ export class RemoteServer {
       playwrightPath,
       browserTypeName: browserType.name(),
       launchOptions,
-      ...extraOptions,
+      ...remoteServerOptions,
     };
-    this._child = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), JSON.stringify(options)], { env: process.env });
+    this._child = spawn('node', [path.join(__dirname, 'remote-server-impl.js'), JSON.stringify(options)], { env: process.env });
     this._child.on('error', (...args) => console.log('ERROR', ...args));
     this._exitPromise = new Promise(resolve => this._child.on('exit', (exitCode, signal) => {
       this._didExit = true;
@@ -108,6 +82,12 @@ export class RemoteServer {
     });
 
     this._wsEndpoint = await this.out('wsEndpoint');
+
+    if (remoteServerOptions.url) {
+      this._browser = await this._browserType.connect({ wsEndpoint: this._wsEndpoint });
+      const page = await this._browser.newPage();
+      await page.goto(remoteServerOptions.url);
+    }
   }
 
   _addOutput(key, value) {
@@ -137,6 +117,10 @@ export class RemoteServer {
   }
 
   async close() {
+    if (this._browser) {
+      await this._browser.close();
+      this._browser = undefined;
+    }
     if (!this._didExit)
       this._child.kill();
     return await this.childExitCode();

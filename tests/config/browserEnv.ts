@@ -27,6 +27,7 @@ import * as util from 'util';
 import * as childProcess from 'child_process';
 import { PlaywrightTestArgs } from './playwrightTest';
 import { BrowserTestArgs } from './browserTest';
+import { RemoteServer, RemoteServerOptions } from './remoteServer';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
@@ -107,6 +108,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   private _coverage: ReturnType<typeof installCoverageHooks> | undefined;
   private _userDataDirs: string[] = [];
   private _persistentContext: BrowserContext | undefined;
+  private _remoteServer: RemoteServer | undefined;
 
   constructor(browserName: BrowserName, options: LaunchOptions & TestOptions) {
     this._browserName = browserName;
@@ -150,6 +152,14 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
     return { context: this._persistentContext, page };
   }
 
+  private async _startRemoteServer(options?: RemoteServerOptions): Promise<RemoteServer> {
+    if (this._remoteServer)
+      throw new Error('can only start one remote server');
+    this._remoteServer = new RemoteServer();
+    await this._remoteServer._start(this._browserType, this._browserOptions, options);
+    return this._remoteServer;
+  }
+
   async beforeEach(testInfo: TestInfo) {
     // Different screenshots per browser.
     testInfo.snapshotPathSegment = this._browserName;
@@ -172,6 +182,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
       createUserDataDir: this._createUserDataDir.bind(this),
       launchPersistent: this._launchPersistent.bind(this),
       toImpl: (this._playwright as any)._toImpl,
+      startRemoteServer: this._startRemoteServer.bind(this),
     };
   }
 
@@ -181,6 +192,10 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
     if (this._persistentContext) {
       await this._persistentContext.close();
       this._persistentContext = undefined;
+    }
+    if (this._remoteServer) {
+      await this._remoteServer.close();
+      this._remoteServer = undefined;
     }
   }
 
