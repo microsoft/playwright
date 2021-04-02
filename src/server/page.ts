@@ -111,7 +111,6 @@ export class Page extends SdkObject {
     FrameDetached: 'framedetached',
     InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
     Load: 'load',
-    Popup: 'popup',
     Video: 'video',
     WebSocket: 'websocket',
     Worker: 'worker',
@@ -197,6 +196,8 @@ export class Page extends SdkObject {
       this._setIsError(error);
     }
     this._browserContext.emit(BrowserContext.Events.Page, this);
+    if (this.isClosed())
+      this.emit(Page.Events.Close);
   }
 
   async _doSlowMo() {
@@ -210,8 +211,7 @@ export class Page extends SdkObject {
     this._frameManager.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
-    // Ensure that page creation event is fired before the close event.
-    this._delegate.pageOrError().then(() => this.emit(Page.Events.Close));
+    this.emit(Page.Events.Close);
     this._closedCallback();
   }
 

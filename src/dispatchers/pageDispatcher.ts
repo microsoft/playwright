@@ -74,7 +74,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     page.on(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
     page.on(Page.Events.Load, () => this._dispatchEvent('load'));
     page.on(Page.Events.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
-    page.on(Page.Events.Popup, page => this._dispatchEvent('popup', { page: lookupDispatcher<PageDispatcher>(page) }));
     page.on(Page.Events.Request, request => this._dispatchEvent('request', { request: RequestDispatcher.from(this._scope, request) }));
     page.on(Page.Events.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
       request: RequestDispatcher.from(this._scope, request),
