@@ -27,8 +27,8 @@ it('should work for open shadow roots', async ({page, server}) => {
   expect(await page.$$(`data-testid:light=foo`)).toEqual([]);
 });
 
-it('should click on links in shadow dom', (test, { browserName }) => {
-  test.fixme(browserName === 'chromium', 'Cannot get link quads, see  #5765');
+it('should click on links in shadow dom', (test, { browserName, browserChannel }) => {
+  test.fixme(browserName === 'chromium' && !!browserChannel, 'Enable when crrev.com/864024 get to the stable channel');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/shadow-dom-link.html');
   expect(await page.evaluate(() => (window as any).clickCount)).toBe(0);
