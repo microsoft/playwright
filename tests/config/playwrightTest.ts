@@ -24,7 +24,6 @@ export { expect } from '../folio/out';
 export type PlaywrightTestArgs = CommonTestArgs & {
   browserType: BrowserType<Browser>;
   browserOptions: LaunchOptions;
-  headful: boolean;
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
   startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;

@@ -29,7 +29,7 @@ const config: Config = {
 if (process.env.CI) {
   config.workers = 1;
   config.forbidOnly = true;
-  config.retries = 3;
+  config.retries = 1;  // Multiple retries are too slow on Android.
 }
 setConfig(config);
 
