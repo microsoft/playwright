@@ -46,7 +46,7 @@ export class FFPage implements PageDelegate {
   private _pagePromise: Promise<Page | Error>;
   private _pageCallback: (pageOrError: Page | Error) => void = () => {};
   _initializedPage: Page | null = null;
-  private _initialiazationFailed = false;
+  private _initializationFailed = false;
   readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
@@ -111,9 +111,9 @@ export class FFPage implements PageDelegate {
 
   async _markAsError(error: Error) {
     // Same error may be report twice: channer disconnected and session.send fails.
-    if (this._initialiazationFailed)
+    if (this._initializationFailed)
       return;
-    this._initialiazationFailed = true;
+    this._initializationFailed = true;
 
     if (!this._initializedPage) {
       await this._page.initOpener(this._opener);

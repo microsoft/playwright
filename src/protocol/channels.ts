@@ -829,7 +829,6 @@ export interface PageChannel extends Channel {
   exposeBinding(params: PageExposeBindingParams, metadata?: Metadata): Promise<PageExposeBindingResult>;
   goBack(params: PageGoBackParams, metadata?: Metadata): Promise<PageGoBackResult>;
   goForward(params: PageGoForwardParams, metadata?: Metadata): Promise<PageGoForwardResult>;
-  opener(params?: PageOpenerParams, metadata?: Metadata): Promise<PageOpenerResult>;
   reload(params: PageReloadParams, metadata?: Metadata): Promise<PageReloadResult>;
   screenshot(params: PageScreenshotParams, metadata?: Metadata): Promise<PageScreenshotResult>;
   setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, metadata?: Metadata): Promise<PageSetExtraHTTPHeadersResult>;
@@ -985,11 +984,6 @@ export type PageGoForwardOptions = {
 };
 export type PageGoForwardResult = {
   response?: ResponseChannel,
-};
-export type PageOpenerParams = {};
-export type PageOpenerOptions = {};
-export type PageOpenerResult = {
-  page?: PageChannel,
 };
 export type PageReloadParams = {
   timeout?: number,

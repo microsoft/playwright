@@ -715,10 +715,6 @@ Page:
       returns:
         response: Response?
 
-    opener:
-      returns:
-        page: Page?
-
     reload:
       parameters:
         timeout: number?

@@ -228,6 +228,8 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async opener(): Promise<Page | null> {
+    if (!this._opener || this._opener.isClosed())
+      return null;
     return this._opener;
   }
 

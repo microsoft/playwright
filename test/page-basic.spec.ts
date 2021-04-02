@@ -87,14 +87,14 @@ it('should provide access to the opener page', async ({page}) => {
   expect(opener).toBe(page);
 });
 
-it('should return parent page even if it has been closed', async ({page}) => {
+it('should return null if parent page has been closed', async ({page}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank')),
   ]);
   await page.close();
   const opener = await popup.opener();
-  expect(opener).toBe(page);
+  expect(opener).toBe(null);
 });
 
 it('should fire domcontentloaded when expected', async ({page}) => {

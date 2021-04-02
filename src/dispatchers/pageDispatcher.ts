@@ -38,7 +38,7 @@ import { Download } from '../server/download';
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
 
-  private static from(scope: DispatcherScope, page: Page | undefined): PageDispatcher | undefined {
+  private static fromNullable(scope: DispatcherScope, page: Page | undefined): PageDispatcher | undefined {
     if (!page)
       return undefined;
     const result = existingDispatcher<PageDispatcher>(page);
@@ -52,7 +52,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
       viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed(),
-      opener: PageDispatcher.from(scope, page.opener())
+      opener: PageDispatcher.fromNullable(scope, page.opener())
     }, true);
     this._page = page;
     page.on(Page.Events.Close, () => {
@@ -98,10 +98,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
 
   async setDefaultTimeoutNoReply(params: channels.PageSetDefaultTimeoutNoReplyParams, metadata: CallMetadata): Promise<void> {
     this._page.setDefaultTimeout(params.timeout);
-  }
-
-  async opener(params: channels.PageOpenerParams, metadata: CallMetadata): Promise<channels.PageOpenerResult> {
-    return { page: lookupNullableDispatcher<PageDispatcher>(await this._page.opener()) };
   }
 
   async exposeBinding(params: channels.PageExposeBindingParams, metadata: CallMetadata): Promise<void> {
