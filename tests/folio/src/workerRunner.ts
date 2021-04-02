@@ -17,13 +17,13 @@
 import fs from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { monotonicTime, raceAgainstDeadline, serializeError } from './util';
+import { interpretCondition, monotonicTime, raceAgainstDeadline, serializeError } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import { Spec, Suite, Test } from './test';
 import { TestInfo, WorkerInfo } from './types';
-import { SkipError, RunListDescription } from './spec';
+import { RunListDescription } from './spec';
 
 export class WorkerRunner extends EventEmitter {
   private _params: WorkerInitParams;
@@ -230,6 +230,9 @@ export class WorkerRunner extends EventEmitter {
         return path.join(basePath, ...pathSegments);
       },
       testOptions: spec.testOptions,
+      skip: (arg?: boolean | string, description?: string) => modifier(testInfo, 'skip', arg, description),
+      fixme: (arg?: boolean | string, description?: string) => modifier(testInfo, 'fixme', arg, description),
+      fail: (arg?: boolean | string, description?: string) => modifier(testInfo, 'fail', arg, description),
     };
     this._setCurrentTestInfo(testInfo);
 
@@ -437,4 +440,21 @@ function buildTestEndPayload(testId: string, testInfo: TestInfo): TestEndPayload
     annotations: testInfo.annotations,
     timeout: testInfo.timeout,
   };
+}
+
+function modifier(testInfo: TestInfo, type: 'skip' | 'fail' | 'fixme', arg?: boolean | string, description?: string) {
+  const processed = interpretCondition(arg, description);
+  if (!processed.condition)
+    return;
+  testInfo.annotations.push({ type, description: processed.description });
+  if (type === 'skip' || type === 'fixme') {
+    testInfo.expectedStatus = 'skipped';
+    throw new SkipError(processed.description);
+  } else if (type === 'fail') {
+    if (testInfo.expectedStatus !== 'skipped')
+      testInfo.expectedStatus = 'failed';
+  }
+}
+
+class SkipError extends Error {
 }

@@ -16,17 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import { folio } from './cli.fixtures';
+import { test, expect } from '../config/cliTest';
 
-const { it, expect } = folio;
-
-const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
+const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'test', 'assets', 'empty.html')).toString();
 
 const launchOptions = (channel: string) => {
   return channel ? `headless: false,\n    channel: '${channel}'` : 'headless: false';
 };
 
-it('should print the correct imports and context options', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct imports and context options', async ({ browserName, browserChannel, runCLI }) => {
   const cli = runCLI([emptyHTML]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
@@ -39,7 +37,7 @@ it('should print the correct imports and context options', async ({ browserName,
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options for custom settings', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct context options for custom settings', async ({ browserName, browserChannel, runCLI }) => {
   const cli = runCLI(['--color-scheme=light', emptyHTML]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
@@ -55,9 +53,9 @@ it('should print the correct context options for custom settings', async ({ brow
 });
 
 
-it('should print the correct context options when using a device', (test, { browserName, browserChannel }) => {
+test('should print the correct context options when using a device', async ({ browserName, browserChannel, runCLI }) => {
   test.skip(browserName !== 'chromium');
-}, async ({ browserChannel, runCLI }) => {
+
   const cli = runCLI(['--device=Pixel 2', emptyHTML]);
   const expectedResult = `const { chromium, devices } = require('playwright');
 
@@ -72,9 +70,9 @@ it('should print the correct context options when using a device', (test, { brow
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, browserChannel, runCLI }) => {
   test.skip(browserName !== 'webkit');
-}, async ({ browserChannel, runCLI }) => {
+
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', emptyHTML]);
   const expectedResult = `const { webkit, devices } = require('playwright');
 
@@ -90,7 +88,7 @@ it('should print the correct context options when using a device and additional 
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should save the codegen output to a file if specified', async ({ browserName, browserChannel, runCLI, testInfo }) => {
+test('should save the codegen output to a file if specified', async ({ browserName, browserChannel, runCLI }, testInfo) => {
   const tmpFile = testInfo.outputPath('script.js');
   const cli = runCLI(['--output', tmpFile, emptyHTML]);
   await cli.exited;
@@ -118,7 +116,7 @@ it('should save the codegen output to a file if specified', async ({ browserName
 })();`);
 });
 
-it('should print load/save storageState', async ({ browserName, browserChannel, runCLI, testInfo }) => {
+test('should print load/save storageState', async ({ browserName, browserChannel, runCLI }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');

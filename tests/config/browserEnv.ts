@@ -100,7 +100,7 @@ class DefaultMode {
 
 export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   private _mode: DriverMode | ServiceMode | DefaultMode;
-  private _browserName: BrowserName;
+  protected _browserName: BrowserName;
   protected _options: LaunchOptions & TestOptions;
   protected _browserOptions: LaunchOptions;
   private _playwright: typeof import('../../index');
@@ -200,6 +200,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   }
 
   async afterAll(workerInfo: WorkerInfo) {
+    await this._mode.teardown();
     const { coverage, uninstall } = this._coverage!;
     uninstall();
     const coveragePath = path.join(__dirname, '..', '..', 'test', 'coverage-report', workerInfo.workerIndex + '.json');

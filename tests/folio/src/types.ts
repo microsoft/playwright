@@ -40,6 +40,23 @@ export interface Config extends RunWithConfig {
 }
 export type FullConfig = Required<Config>;
 
+interface TestModifier {
+  skip(): void;
+  skip(condition: boolean): void;
+  skip(description: string): void;
+  skip(condition: boolean, description: string): void;
+
+  fixme(): void;
+  fixme(condition: boolean): void;
+  fixme(description: string): void;
+  fixme(condition: boolean, description: string): void;
+
+  fail(): void;
+  fail(condition: boolean): void;
+  fail(description: string): void;
+  fail(condition: boolean, description: string): void;
+}
+
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
 
 export interface WorkerInfo {
@@ -48,7 +65,7 @@ export interface WorkerInfo {
   globalSetupResult: any;
 }
 
-export interface TestInfo extends WorkerInfo {
+export interface TestInfo extends WorkerInfo, TestModifier {
   // Declaration
   title: string;
   file: string;
@@ -87,7 +104,7 @@ interface TestFunction<TestArgs, TestOptions> {
   (name: string, options: TestOptions, fn: (args: TestArgs, testInfo: TestInfo) => any): void;
 }
 
-export interface TestType<TestArgs, TestOptions> extends TestFunction<TestArgs, TestOptions> {
+export interface TestType<TestArgs, TestOptions> extends TestFunction<TestArgs, TestOptions>, TestModifier {
   only: TestFunction<TestArgs, TestOptions>;
   describe: SuiteFunction & {
     only: SuiteFunction;
@@ -99,21 +116,6 @@ export interface TestType<TestArgs, TestOptions> extends TestFunction<TestArgs, 
   afterAll: (inner: (workerInfo: WorkerInfo) => Promise<void> | void) => void;
 
   expect: Expect;
-
-  skip(): void;
-  skip(condition: boolean): void;
-  skip(description: string): void;
-  skip(condition: boolean, description: string): void;
-
-  fixme(): void;
-  fixme(condition: boolean): void;
-  fixme(description: string): void;
-  fixme(condition: boolean, description: string): void;
-
-  fail(): void;
-  fail(condition: boolean): void;
-  fail(description: string): void;
-  fail(condition: boolean, description: string): void;
 
   runWith(config?: RunWithConfig): void;
   runWith(alias: string, config?: RunWithConfig): void;

@@ -16,11 +16,9 @@
 
 import path from 'path';
 import fs from 'fs';
-import { folio } from './cli.fixtures';
+import { test, expect } from '../config/cliTest';
 
-const { it, expect } = folio;
-
-const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
+const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'test', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
   return channel ? `headless: false,\n    channel: "${channel}"` : 'headless: false';
 };
@@ -29,7 +27,7 @@ function capitalize(browserName: string): string {
   return browserName[0].toUpperCase() + browserName.slice(1);
 }
 
-it('should print the correct imports and context options', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct imports and context options', async ({ browserName, browserChannel, runCLI }) => {
   const cli = runCLI(['--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
@@ -41,7 +39,7 @@ var context = await browser.NewContextAsync();`;
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options for custom settings', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct context options for custom settings', async ({ browserName, browserChannel, runCLI }) => {
   const cli = runCLI([
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
@@ -81,9 +79,9 @@ var context = await browser.NewContextAsync(
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device', (test, { browserName }) => {
+test('should print the correct context options when using a device', async ({ browserName, browserChannel, runCLI }) => {
   test.skip(browserName !== 'chromium');
-}, async ({ browserChannel, runCLI }) => {
+
   const cli = runCLI(['--device=Pixel 2', '--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
@@ -95,9 +93,9 @@ var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print the correct context options when using a device and additional options', (test, { browserName }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, browserChannel, runCLI }) => {
   test.skip(browserName !== 'webkit');
-}, async ({ browserChannel, runCLI }) => {
+
   const cli = runCLI([
     '--device=iPhone 11',
     '--color-scheme=dark',
@@ -141,7 +139,7 @@ var context = await browser.NewContextAsync(new BrowserContextOptions(playwright
   expect(cli.text()).toContain(expectedResult);
 });
 
-it('should print load/save storageState', async ({ browserName, browserChannel, runCLI, testInfo }) => {
+test('should print load/save storageState', async ({ browserName, browserChannel, runCLI }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');

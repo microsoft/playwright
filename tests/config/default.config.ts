@@ -20,9 +20,11 @@ import { test as playwrightTest, slowTest as playwrightSlowTest } from './playwr
 import { test as browserTest } from './browserTest';
 import { test as pageTest } from './pageTest';
 import { test as electronTest } from './electronTest';
+import { test as cliTest } from './cliTest';
 import { PlaywrightEnv, BrowserEnv, PageEnv, BrowserName } from './browserEnv';
 import { ServerEnv } from './serverEnv';
 import { ElectronEnv } from './electronEnv';
+import { CLIEnv } from './cliEnv';
 
 const config: Config = {
   testDir: path.join(__dirname, '..'),
@@ -63,6 +65,7 @@ for (const browserName of browsers) {
   playwrightSlowTest.runWith(browserName, serverEnv, new PlaywrightEnv(browserName, options), { timeout: config.timeout * 3 });
   browserTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, options), {});
   pageTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
+  cliTest.runWith(browserName, serverEnv, new CLIEnv(browserName, options), {});
   if (browserName === 'chromium')
     electronTest.runWith(browserName, serverEnv, new ElectronEnv({ mode }));
 }

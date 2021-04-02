@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import { folio } from './cli.fixtures';
+import { test, expect } from '../config/cliTest';
 import * as http from 'http';
 import * as url from 'url';
 
-const { it, describe, expect } = folio;
+test.describe('cli codegen', () => {
+  test.beforeEach(async ({ mode }) => {
+    test.skip(mode !== 'default');
+  });
 
-describe('cli codegen', (suite, { mode }) => {
-  suite.skip(mode !== 'default');
-}, () => {
-  it('should contain open page', async ({ recorder }) => {
+  test('should contain open page', async ({ openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(``);
     const sources = await recorder.waitForOutput('<javascript>', `page.goto`);
 
@@ -48,9 +50,11 @@ describe('cli codegen', (suite, { mode }) => {
 var page = await context.NewPageAsync();`);
   });
 
-  it('should contain second page', async ({ context, recorder }) => {
+  test('should contain second page', async ({ openRecorder, page }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(``);
-    await context.newPage();
+    await page.context().newPage();
     const sources = await recorder.waitForOutput('<javascript>', 'page1');
 
     expect(sources.get('<javascript>').text).toContain(`
@@ -74,9 +78,11 @@ var page = await context.NewPageAsync();`);
 var page1 = await context.NewPageAsync();`);
   });
 
-  it('should contain close page', async ({ context, recorder }) => {
+  test('should contain close page', async ({ openRecorder, page }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(``);
-    await context.newPage();
+    await page.context().newPage();
     await recorder.page.close();
     const sources = await recorder.waitForOutput('<javascript>', 'page.close();');
 
@@ -96,9 +102,11 @@ var page1 = await context.NewPageAsync();`);
 await page.CloseAsync();`);
   });
 
-  it('should not lead to an error if html gets clicked', async ({ context, recorder }) => {
+  test('should not lead to an error if html gets clicked', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait('');
-    await context.newPage();
+    await page.context().newPage();
     const errors: any[] = [];
     recorder.page.on('pageerror', e => errors.push(e));
     await recorder.page.evaluate(() => document.querySelector('body').remove());
@@ -109,9 +117,10 @@ await page.CloseAsync();`);
     expect(errors.length).toBe(0);
   });
 
-  it('should upload a single file', (test, { browserName }) => {
+  test('should upload a single file', async ({ page, openRecorder, browserName }) => {
     test.fixme(browserName === 'firefox', 'Hangs');
-  }, async ({ page, recorder }) => {
+
+    const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
       <input type="file">
@@ -146,9 +155,10 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt
 
   });
 
-  it('should upload multiple files', (test, { browserName }) => {
+  test('should upload multiple files', async ({ page, openRecorder, browserName }) => {
     test.fixme(browserName === 'firefox', 'Hangs');
-  }, async ({ page, recorder }) => {
+
+    const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
       <input type="file" multiple>
@@ -182,9 +192,10 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt
 await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
-  it('should clear files', (test, { browserName }) => {
+  test('should clear files', async ({ page, openRecorder, browserName }) => {
     test.fixme(browserName === 'firefox', 'Hangs');
-  }, async ({ page, recorder }) => {
+
+    const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
       <input type="file" multiple>
@@ -219,7 +230,9 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
 
   });
 
-  it('should download files', async ({ page, recorder, httpServer }) => {
+  test('should download files', async ({ page, openRecorder, httpServer }) => {
+    const recorder = await openRecorder();
+
     httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
       const pathName = url.parse(req.url!).path;
       if (pathName === '/download') {
@@ -274,7 +287,9 @@ await Task.WhenAll(
     page.ClickAsync(\"text=Download\"));`);
   });
 
-  it('should handle dialogs', async ({ page, recorder }) => {
+  test('should handle dialogs', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`
     <button onclick="alert()">click me</button>
     `);
@@ -325,7 +340,9 @@ await page.ClickAsync(\"text=click me\");`);
 
   });
 
-  it('should handle history.postData', async ({ page, recorder, httpServer }) => {
+  test('should handle history.postData', async ({ page, openRecorder, httpServer }) => {
+    const recorder = await openRecorder();
+
     httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end('Hello world');
@@ -343,9 +360,10 @@ await page.ClickAsync(\"text=click me\");`);
     }
   });
 
-  it('should record open in a new tab with url', (test, { browserName }) => {
+  test('should record open in a new tab with url', async ({ page, openRecorder, browserName, platform }) => {
     test.fixme(browserName === 'webkit', 'Ctrl+click does not open in new tab on WebKit');
-  }, async ({ page, recorder, browserName, platform }) => {
+
+    const recorder = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');
@@ -371,9 +389,10 @@ await page.ClickAsync(\"text=click me\");`);
     }
   });
 
-  it('should not clash pages', (test, { browserName }) => {
+  test('should not clash pages', async ({ page, openRecorder, browserName }) => {
     test.fixme(browserName === 'firefox', 'Times out on Firefox, maybe the focus issue');
-  }, async ({ page, recorder }) => {
+
+    const recorder = await openRecorder();
     const [popup1] = await Promise.all([
       page.context().waitForEvent('page'),
       page.evaluate(`window.open('about:blank')`)
@@ -409,7 +428,9 @@ await page.ClickAsync(\"text=click me\");`);
     expect(sources.get('<csharp>').text).toContain(`await page2.FillAsync(\"input\", \"TextB\");`);
   });
 
-  it('click should emit events in order', async ({ page, recorder }) => {
+  test('click should emit events in order', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`
       <button id=button>
       <script>
@@ -428,7 +449,9 @@ await page.ClickAsync(\"text=click me\");`);
     expect(messages).toEqual(['mousedown', 'mouseup', 'click']);
   });
 
-  it('should update hover model on action', async ({ page, recorder }) => {
+  test('should update hover model on action', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
     const [ models ] = await Promise.all([
       recorder.waitForActionPerformed(),
@@ -437,10 +460,11 @@ await page.ClickAsync(\"text=click me\");`);
     expect(models.hovered).toBe('input[name="updated"]');
   });
 
-  it('should update active model on action', (test, { browserName, headful }) => {
+  test('should update active model on action', async ({ page, openRecorder, browserName, headful }) => {
     test.fixme(browserName === 'webkit' && !headful);
     test.fixme(browserName === 'firefox' && !headful);
-  }, async ({ page, recorder }) => {
+
+    const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
     const [ models ] = await Promise.all([
       recorder.waitForActionPerformed(),
@@ -449,7 +473,8 @@ await page.ClickAsync(\"text=click me\");`);
     expect(models.active).toBe('input[name="updated"]');
   });
 
-  it('should check input with chaning id', async ({ page, recorder }) => {
+  test('should check input with chaning id', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name = 'updated'"></input>`);
     await Promise.all([
       recorder.waitForActionPerformed(),
@@ -457,7 +482,8 @@ await page.ClickAsync(\"text=click me\");`);
     ]);
   });
 
-  it('should prefer frame name', async ({ page, recorder, server }) => {
+  test('should prefer frame name', async ({ page, openRecorder, server }) => {
+    const recorder = await openRecorder();
     await recorder.setContentAndWait(`
       <iframe src='./frames/frame.html' name='one'></iframe>
       <iframe src='./frames/frame.html' name='two'></iframe>
@@ -549,7 +575,8 @@ await page.GetFrame(name: \"two\").ClickAsync(\"text=Hi, I'm frame\");`);
 await page.GetFrame(url: \"http://localhost:${server.PORT}/frames/frame.html\").ClickAsync(\"text=Hi, I'm frame\");`);
   });
 
-  it('should record navigations after identical pushState', async ({ page, recorder, httpServer }) => {
+  test('should record navigations after identical pushState', async ({ page, openRecorder, httpServer }) => {
+    const recorder = await openRecorder();
     httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end('Hello world');
