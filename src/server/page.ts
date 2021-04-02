@@ -196,6 +196,9 @@ export class Page extends SdkObject {
       this._setIsError(error);
     }
     this._browserContext.emit(BrowserContext.Events.Page, this);
+    // I may happen that page iniatialization finishes after Close event has already been sent,
+    // in that case we fire another Close event to ensure that each reported Page will have
+    // corresponding Close event after it is reported on the context.
     if (this.isClosed())
       this.emit(Page.Events.Close);
   }
