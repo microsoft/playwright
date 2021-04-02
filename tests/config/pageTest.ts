@@ -26,6 +26,8 @@ export type CommonTestArgs = {
 
   playwright: typeof import('../../index');
   toImpl: (rpcObject: any) => any;
+  browserName: 'chromium' | 'firefox' | 'webkit';
+  browserChannel: string | undefined;
 
   isChromium: boolean;
   isFirefox: boolean;

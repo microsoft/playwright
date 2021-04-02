@@ -22,9 +22,7 @@ import { RemoteServer, RemoteServerOptions } from './remoteServer';
 export { expect } from 'folio';
 
 export type PlaywrightTestArgs = CommonTestArgs & {
-  browserName: 'chromium' | 'firefox' | 'webkit';
   browserType: BrowserType<Browser>;
-  browserChannel: string | undefined;
   browserOptions: LaunchOptions;
   headful: boolean;
   createUserDataDir: () => Promise<string>;
