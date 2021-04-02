@@ -91,6 +91,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
 
   _dispose() {
     assert(!this._disposed);
+    this._disposed = true;
 
     // Clean up from parent and connection.
     if (this._parent)
