@@ -797,6 +797,7 @@ export type PageInitializer = {
     height: number,
   },
   isClosed: boolean,
+  opener?: PageChannel,
 };
 export interface PageChannel extends Channel {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
@@ -811,7 +812,6 @@ export interface PageChannel extends Channel {
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
   on(event: 'load', callback: (params: PageLoadEvent) => void): this;
   on(event: 'pageError', callback: (params: PagePageErrorEvent) => void): this;
-  on(event: 'popup', callback: (params: PagePopupEvent) => void): this;
   on(event: 'request', callback: (params: PageRequestEvent) => void): this;
   on(event: 'requestFailed', callback: (params: PageRequestFailedEvent) => void): this;
   on(event: 'requestFinished', callback: (params: PageRequestFinishedEvent) => void): this;
@@ -829,7 +829,6 @@ export interface PageChannel extends Channel {
   exposeBinding(params: PageExposeBindingParams, metadata?: Metadata): Promise<PageExposeBindingResult>;
   goBack(params: PageGoBackParams, metadata?: Metadata): Promise<PageGoBackResult>;
   goForward(params: PageGoForwardParams, metadata?: Metadata): Promise<PageGoForwardResult>;
-  opener(params?: PageOpenerParams, metadata?: Metadata): Promise<PageOpenerResult>;
   reload(params: PageReloadParams, metadata?: Metadata): Promise<PageReloadResult>;
   screenshot(params: PageScreenshotParams, metadata?: Metadata): Promise<PageScreenshotResult>;
   setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, metadata?: Metadata): Promise<PageSetExtraHTTPHeadersResult>;
@@ -883,9 +882,6 @@ export type PageFrameDetachedEvent = {
 export type PageLoadEvent = {};
 export type PagePageErrorEvent = {
   error: SerializedError,
-};
-export type PagePopupEvent = {
-  page: PageChannel,
 };
 export type PageRequestEvent = {
   request: RequestChannel,
@@ -988,11 +984,6 @@ export type PageGoForwardOptions = {
 };
 export type PageGoForwardResult = {
   response?: ResponseChannel,
-};
-export type PageOpenerParams = {};
-export type PageOpenerOptions = {};
-export type PageOpenerResult = {
-  page?: PageChannel,
 };
 export type PageReloadParams = {
   timeout?: number,

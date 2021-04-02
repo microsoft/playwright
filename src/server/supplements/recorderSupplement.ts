@@ -304,17 +304,14 @@ export class RecorderSupplement {
     });
     frame.on(Frame.Events.Navigation, () => this._onFrameNavigated(frame, page));
     page.on(Page.Events.Download, () => this._onDownload(page));
-    page.on(Page.Events.Popup, popup => this._onPopup(page, popup));
     page.on(Page.Events.Dialog, () => this._onDialog(page));
     const suffix = this._pageAliases.size ? String(++this._lastPopupOrdinal) : '';
     const pageAlias = 'page' + suffix;
     this._pageAliases.set(page, pageAlias);
 
-    const isPopup = !!await page.opener();
-    // Could happen due to the await above.
-    if (page.isClosed())
-      return;
-    if (!isPopup) {
+    if (page.opener()) {
+      this._onPopup(page.opener()!, page);
+    } else {
       this._generator.addAction({
         pageAlias,
         ...describeFrame(page.mainFrame()),

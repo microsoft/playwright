@@ -644,6 +644,7 @@ Page:
         width: number
         height: number
     isClosed: boolean
+    opener: Page?
 
   commands:
 
@@ -713,10 +714,6 @@ Page:
           - networkidle
       returns:
         response: Response?
-
-    opener:
-      returns:
-        page: Page?
 
     reload:
       parameters:
@@ -957,10 +954,6 @@ Page:
     pageError:
       parameters:
         error: SerializedError
-
-    popup:
-      parameters:
-        page: Page
 
     request:
       parameters:

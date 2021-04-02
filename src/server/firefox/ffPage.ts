@@ -46,6 +46,7 @@ export class FFPage implements PageDelegate {
   private _pagePromise: Promise<Page | Error>;
   private _pageCallback: (pageOrError: Page | Error) => void = () => {};
   _initializedPage: Page | null = null;
+  private _initializationFailed = false;
   readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
@@ -91,8 +92,12 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.webSocketFrameSent', this._onWebSocketFrameSent.bind(this)),
     ];
     this._pagePromise = new Promise(f => this._pageCallback = f);
-    session.once(FFSessionEvents.Disconnected, () => this._page._didDisconnect());
-    this._session.once('Page.ready', () => {
+    session.once(FFSessionEvents.Disconnected, () => {
+      this._markAsError(new Error('Page closed'));
+      this._page._didDisconnect();
+    });
+    this._session.once('Page.ready', async () => {
+      await this._page.initOpener(this._opener);
       // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
       // so that anyone who awaits pageOrError got a ready and reported page.
       this._initializedPage = this._page;
@@ -104,8 +109,14 @@ export class FFPage implements PageDelegate {
     this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: '', worldName: UTILITY_WORLD_NAME }).catch(e => this._markAsError(e));
   }
 
-  _markAsError(error: Error) {
+  async _markAsError(error: Error) {
+    // Same error may be report twice: channer disconnected and session.send fails.
+    if (this._initializationFailed)
+      return;
+    this._initializationFailed = true;
+
     if (!this._initializedPage) {
+      await this._page.initOpener(this._opener);
       this._page.reportAsNew(error);
       this._pageCallback(error);
     }
@@ -113,10 +124,6 @@ export class FFPage implements PageDelegate {
 
   async pageOrError(): Promise<Page | Error> {
     return this._pagePromise;
-  }
-
-  openerDelegate(): PageDelegate | null {
-    return this._opener;
   }
 
   _onWebSocketCreated(event: Protocol.Page.webSocketCreatedPayload) {
@@ -310,8 +317,6 @@ export class FFPage implements PageDelegate {
   }
 
   didClose() {
-    if (!this._initializedPage)
-      this._markAsError(new Error('Page has been closed'));
     this._session.dispose();
     helper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
@@ -356,15 +361,6 @@ export class FFPage implements PageDelegate {
 
   async setFileChooserIntercepted(enabled: boolean) {
     await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
-  }
-
-  async opener(): Promise<Page | null> {
-    if (!this._opener)
-      return null;
-    const result = await this._opener.pageOrError();
-    if (result instanceof Page && !result.isClosed())
-      return result;
-    return null;
   }
 
   async reload(): Promise<void> {

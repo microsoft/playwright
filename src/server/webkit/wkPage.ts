@@ -273,10 +273,6 @@ export class WKPage implements PageDelegate {
     return this._pagePromise;
   }
 
-  openerDelegate(): PageDelegate | null {
-    return this._opener;
-  }
-
   private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
     const { targetInfo } = event;
     const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, `The ${targetInfo.type} has been closed.`, (message: any) => {
@@ -316,6 +312,7 @@ export class WKPage implements PageDelegate {
         // Avoid rejection on disconnect.
         this._firstNonInitialNavigationCommittedPromise.catch(() => {});
       }
+      await this._page.initOpener(this._opener);
       // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
       // so that anyone who awaits pageOrError got a ready and reported page.
       this._initializedPage = pageOrError instanceof Page ? pageOrError : null;
@@ -662,15 +659,6 @@ export class WKPage implements PageDelegate {
 
   async setFileChooserIntercepted(enabled: boolean) {
     await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
-  }
-
-  async opener(): Promise<Page | null> {
-    if (!this._opener)
-      return null;
-    const openerPage = await this._opener.pageOrError();
-    if (openerPage instanceof Page && !openerPage.isClosed())
-      return openerPage;
-    return null;
   }
 
   async reload(): Promise<void> {

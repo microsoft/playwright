@@ -415,7 +415,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
   });
-  scheme.PageOpenerParams = tOptional(tObject({}));
   scheme.PageReloadParams = tObject({
     timeout: tOptional(tNumber),
     waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
