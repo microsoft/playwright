@@ -24,6 +24,7 @@ import { Loader } from './loader';
 import { Spec, Suite, Test } from './test';
 import { TestInfo, WorkerInfo } from './types';
 import { RunListDescription } from './spec';
+import { extendAgain } from './expect';
 
 export class WorkerRunner extends EventEmitter {
   private _params: WorkerInitParams;
@@ -128,6 +129,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     this._loader.loadTestFile(this._file);
+    extendAgain();
     const fileSuite = this._runList.fileSuites.get(this._file);
     if (fileSuite) {
       fileSuite._renumber();

@@ -51,3 +51,8 @@ function toMatchSnapshot(received: Buffer | string, nameOrOptions?: string | { n
 }
 
 expectLibrary.extend({ toMatchSnapshot });
+
+// TEMPORARY HACK: two folios currently fight for their own toMatchSnapshot.
+export function extendAgain() {
+  expectLibrary.extend({ toMatchSnapshot });
+}

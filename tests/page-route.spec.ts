@@ -124,7 +124,7 @@ it('should contain referer header', async ({page, server}) => {
 });
 
 it('should properly return navigation response when URL has cookies', async ({page, server}) => {
-  it.skip(process.env.PW_ANDROID_TESTS);
+  it.skip(!!process.env.PW_ANDROID_TESTS);
 
   // Setup cookie.
   await page.goto(server.EMPTY_PAGE);

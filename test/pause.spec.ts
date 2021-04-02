@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import { expect } from 'folio';
 import { Page } from '..';
 import { folio } from './fixtures';
 import { recorderPageGetter } from './utils';
-const { afterEach, it, describe } = folio;
+const { afterEach, it, describe, expect } = folio;
 
 describe('pause', (suite, { mode }) => {
   suite.skip(mode !== 'default');

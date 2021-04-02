@@ -77,7 +77,7 @@ it('should throw when added with content to the CSP page', async ({page, server}
 });
 
 it('should throw when added with URL to the CSP page', async ({page, server}) => {
-  it.skip(process.env.PW_ANDROID_TESTS);
+  it.skip(!!process.env.PW_ANDROID_TESTS);
 
   await page.goto(server.PREFIX + '/csp.html');
   let error = null;

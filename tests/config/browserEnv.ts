@@ -187,8 +187,6 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   }
 
   async afterEach(testInfo: TestInfo) {
-    await removeFolders(this._userDataDirs);
-    this._userDataDirs = [];
     if (this._persistentContext) {
       await this._persistentContext.close();
       this._persistentContext = undefined;
@@ -197,6 +195,8 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
       await this._remoteServer.close();
       this._remoteServer = undefined;
     }
+    await removeFolders(this._userDataDirs);
+    this._userDataDirs = [];
   }
 
   async afterAll(workerInfo: WorkerInfo) {
@@ -204,7 +204,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
     const { coverage, uninstall } = this._coverage!;
     uninstall();
     const coveragePath = path.join(__dirname, '..', '..', 'test', 'coverage-report', workerInfo.workerIndex + '.json');
-    const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
+    const coverageJSON = Array.from(coverage.keys()).filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
   }
