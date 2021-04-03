@@ -22,7 +22,7 @@ import * as http from 'http';
 import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
 import { ChildProcess, spawn } from 'child_process';
-export { expect } from 'folio';
+export { expect } from '../folio/out';
 
 interface CLIHTTPServer {
   setHandler: (handler: http.RequestListener) => void

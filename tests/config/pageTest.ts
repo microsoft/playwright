@@ -17,7 +17,7 @@
 import { newTestType } from '../folio/out';
 import type { Page } from '../../index';
 import type { ServerTestArgs } from './serverTest';
-export { expect } from 'folio';
+export { expect } from '../folio/out';
 
 export type CommonTestArgs = {
   mode: 'default' | 'driver' | 'service';
@@ -37,6 +37,7 @@ export type CommonTestArgs = {
   isLinux: boolean;
 };
 
+// Page test does not guarantee an isolated context, just a new page (because Android).
 export type PageTestArgs = CommonTestArgs & {
   page: Page;
 };

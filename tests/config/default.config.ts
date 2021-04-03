@@ -17,7 +17,7 @@
 import { setConfig, Config } from '../folio/out';
 import * as path from 'path';
 import { test as playwrightTest, slowTest as playwrightSlowTest } from './playwrightTest';
-import { test as browserTest } from './browserTest';
+import { test as browserTest, contextTest, proxyTest } from './browserTest';
 import { test as pageTest } from './pageTest';
 import { test as electronTest } from './electronTest';
 import { test as cliTest } from './cliTest';
@@ -64,7 +64,11 @@ for (const browserName of browsers) {
   playwrightTest.runWith(browserName, serverEnv, new PlaywrightEnv(browserName, options), {});
   playwrightSlowTest.runWith(browserName, serverEnv, new PlaywrightEnv(browserName, options), { timeout: config.timeout * 3 });
   browserTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, options), {});
+  // TODO: perhaps export proxyTest from the test file?
+  proxyTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, { ...options, proxy: { server: 'per-context' } }), {});
   pageTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
+  // TODO: get rid of contextTest if there isn't too many of them.
+  contextTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
   cliTest.runWith(browserName, serverEnv, new CLIEnv(browserName, options), {});
   if (browserName === 'chromium')
     electronTest.runWith(browserName, serverEnv, new ElectronEnv({ mode }));

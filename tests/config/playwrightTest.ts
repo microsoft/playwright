@@ -19,7 +19,7 @@ import type { Browser, BrowserType, LaunchOptions, BrowserContext, Page } from '
 import { CommonTestArgs } from './pageTest';
 import type { ServerTestArgs } from './serverTest';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
-export { expect } from 'folio';
+export { expect } from '../folio/out';
 
 export type PlaywrightTestArgs = CommonTestArgs & {
   browserType: BrowserType<Browser>;

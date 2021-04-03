@@ -42,7 +42,7 @@ it('should fire for fetches', async ({page, server}) => {
 });
 
 it('should report requests and responses handled by service worker', async ({page, server}) => {
-  it.fixme(process.env.PW_ANDROID_TESTS);
+  it.fixme(!!process.env.PW_ANDROID_TESTS);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);

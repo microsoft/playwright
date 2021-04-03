@@ -18,7 +18,7 @@ import { test as it } from './config/pageTest';
 
 it('should not hit scroll bar', async ({page, server, isWebKit, platform}) => {
   it.fixme(isWebKit && platform === 'darwin');
-  it.skip(process.env.PW_ANDROID_TESTS);
+  it.skip(!!process.env.PW_ANDROID_TESTS);
 
   await page.setContent(`
     <style>

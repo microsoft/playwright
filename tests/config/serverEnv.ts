@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import type { WorkerInfo, TestInfo } from '../folio/out';
+import type { WorkerInfo, TestInfo, Env } from '../folio/out';
 import { TestServer } from '../../utils/testserver';
 import * as path from 'path';
 import socks from 'socksv5';
+import { ServerTestArgs } from './serverTest';
 
-export class ServerEnv {
+export class ServerEnv implements Env<ServerTestArgs> {
   private _server: TestServer;
   private _httpsServer: TestServer;
   private _socksServer: any;
+  private _socksPort: number;
 
   async beforeAll(workerInfo: WorkerInfo) {
     const assetsPath = path.join(__dirname, '..', '..', 'test', 'assets');
@@ -52,8 +54,8 @@ export class ServerEnv {
         ].join('\r\n'));
       }
     });
-    const socksPort = 9107 + workerInfo.workerIndex * 2;
-    this._socksServer.listen(socksPort, 'localhost');
+    this._socksPort = 9107 + workerInfo.workerIndex * 2;
+    this._socksServer.listen(this._socksPort, 'localhost');
     this._socksServer.useAuth(socks.auth.None());
   }
 
@@ -61,9 +63,10 @@ export class ServerEnv {
     this._server.reset();
     this._httpsServer.reset();
     return {
-      asset: (p: string) => path.join(__dirname, '..', 'assets', p),
+      asset: (p: string) => path.join(__dirname, '..', '..', 'test', 'assets', p),
       server: this._server,
       httpsServer: this._httpsServer,
+      socksPort: this._socksPort,
     };
   }
 

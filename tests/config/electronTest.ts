@@ -18,7 +18,7 @@ import { newTestType } from '../folio/out';
 import { ElectronApplication, Page } from '../../index';
 import type { CommonTestArgs } from './pageTest';
 import type { ServerTestArgs } from './serverTest';
-export { expect } from 'folio';
+export { expect } from '../folio/out';
 
 export type ElectronTestArgs = CommonTestArgs & {
   electronApp: ElectronApplication;
