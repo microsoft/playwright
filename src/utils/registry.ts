@@ -108,7 +108,7 @@ const DOWNLOAD_URLS = {
   },
   'firefox': {
     'ubuntu18.04': '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip',
-    'ubuntu20.04': '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip',
+    'ubuntu20.04': '%s/builds/firefox/%s/firefox-ubuntu-20.04.zip',
     'mac10.13': '%s/builds/firefox/%s/firefox-mac-10.14.zip',
     'mac10.14': '%s/builds/firefox/%s/firefox-mac-10.14.zip',
     'mac10.15': '%s/builds/firefox/%s/firefox-mac-10.14.zip',
