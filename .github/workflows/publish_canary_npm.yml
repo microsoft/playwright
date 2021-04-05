@@ -10,11 +10,11 @@ on:
 jobs:
   publish-canary-npm:
     name: "publish to NPM"
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@v2
       with:
         node-version: 10
         registry-url: 'https://registry.npmjs.org'

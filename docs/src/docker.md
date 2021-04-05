@@ -16,7 +16,7 @@ This image is published on [Docker Hub](https://hub.docker.com/_/microsoft-playw
 ### Pull the image
 
 ```
-$ docker pull mcr.microsoft.com/playwright:bionic
+docker pull mcr.microsoft.com/playwright:focal
 ```
 
 ### Run the image
