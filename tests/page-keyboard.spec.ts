@@ -433,9 +433,8 @@ it('should move around the selection in a contenteditable', async ({page, isMac}
   expect(await page.evaluate(() => window.getSelection().toString())).toBe('World');
 });
 
-it('should move to the start of the document', (test, {platform}) => {
-  test.skip(platform !== 'darwin');
-}, async ({page}) => {
+it('should move to the start of the document', async ({page, isMac}) => {
+  it.skip(!isMac);
   await page.setContent(`<div contenteditable></div>`);
   await page.focus('div');
   await page.keyboard.type('1\n2\n3\n');
