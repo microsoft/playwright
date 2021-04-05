@@ -229,6 +229,8 @@ it('should accept single file', async ({page, server}) => {
 });
 
 it('should detect mime type', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ANDROID_TESTS);
+
   let files;
   server.setRoute('/upload', async (req, res) => {
     const form = new formidable.IncomingForm();

@@ -66,12 +66,12 @@ export class Dispatcher {
 
     const shard = this._loader.config().shard;
     if (shard) {
-      total = 0;
       const shardSize = Math.ceil(total / shard.total);
       const from = shardSize * shard.current;
       const to = shardSize * (shard.current + 1);
       shardDetails = `, shard ${shard.current + 1} of ${shard.total}`;
       let current = 0;
+      total = 0;
       const filteredQueue: DispatcherEntry[] = [];
       for (const entry of this._queue) {
         if (current >= from && current < to) {
@@ -183,24 +183,28 @@ export class Dispatcher {
       // When worker encounters error, we will stop it and create a new one.
       worker.stop();
 
-      // In case of fatal error, we are done with the entry.
+      let remaining = params.remaining;
+      const failedTestIds = new Set<string>();
+
+      // In case of fatal error, report all remaining tests as failing with this error.
       if (params.fatalError) {
-        // Report all the tests are failing with this error.
-        for (const { testId } of entry.runPayload.entries) {
+        for (const { testId } of remaining) {
           const { test, result } = this._testById.get(testId);
           this._reporter.onTestBegin(test);
           result.error = params.fatalError;
           this._reportTestEnd(test, result, 'failed');
+          failedTestIds.add(testId);
         }
-        doneCallback();
-        return;
+        // Since we pretent that all remaining tests failed, there is nothing else to run,
+        // except for possible retries.
+        remaining = [];
       }
-
-      const remaining = params.remaining;
+      if (params.failedTestId)
+        failedTestIds.add(params.failedTestId);
 
       // Only retry expected failures, not passes and only if the test failed.
-      if (this._loader.config().retries && params.failedTestId) {
-        const pair = this._testById.get(params.failedTestId);
+      for (const testId of failedTestIds) {
+        const pair = this._testById.get(testId);
         if (pair.test.expectedStatus === 'passed' && pair.test.results.length < this._loader.config().retries + 1) {
           pair.result = pair.test._appendTestResult();
           remaining.unshift({

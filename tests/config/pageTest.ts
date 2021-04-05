@@ -23,6 +23,7 @@ export type CommonTestArgs = {
   mode: 'default' | 'driver' | 'service';
   platform: 'win32' | 'darwin' | 'linux';
   video: boolean;
+  headful: boolean;
 
   playwright: typeof import('../../index');
   toImpl: (rpcObject: any) => any;

@@ -22,7 +22,7 @@ declare const e;
 declare const MyButton;
 
 it('should report that selector does not match anymore', async ({page, server}) => {
-  it.fail();
+  it.fixme();
 
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {

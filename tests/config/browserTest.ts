@@ -27,6 +27,7 @@ export type BrowserTestArgs = PlaywrightTestArgs & {
 };
 
 export const test = newTestType<BrowserTestArgs & ServerTestArgs>();
+export const slowTest = newTestType<BrowserTestArgs & ServerTestArgs>();
 export const proxyTest = newTestType<BrowserTestArgs & ServerTestArgs>();
 
 // Context test guarantees an isolated context.

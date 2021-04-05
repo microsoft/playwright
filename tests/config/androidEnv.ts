@@ -30,7 +30,7 @@ export class AndroidEnv implements Env<AndroidTestArgs> {
     this._device = (await playwright._android.devices())[0];
     await this._device.shell('am force-stop org.chromium.webview_shell');
     await this._device.shell('am force-stop com.android.chrome');
-    this._device.setDefaultTimeout(120000);
+    this._device.setDefaultTimeout(90000);
   }
 
   async beforeEach(testInfo: TestInfo) {
@@ -48,6 +48,7 @@ export class AndroidEnv implements Env<AndroidTestArgs> {
       isLinux: os.platform() === 'linux',
       platform: os.platform() as ('win32' | 'darwin' | 'linux'),
       video: false,
+      headful: true,
       toImpl: (playwright as any)._toImpl,
       playwright,
       androidDevice: this._device!,
@@ -71,13 +72,16 @@ export class AndroidPageEnv extends AndroidEnv implements Env<PageTestArgs> {
 
   async beforeEach(testInfo: TestInfo) {
     const result = await super.beforeEach(testInfo);
-    for (const page of this._context!.pages())
-      await page.close();
     const page = await this._context!.newPage();
     return {
       ...result,
       androidDevice: undefined,
       page,
     };
+  }
+
+  async afterEach(testInfo: TestInfo) {
+    for (const page of this._context!.pages())
+      await page.close();
   }
 }

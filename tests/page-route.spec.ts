@@ -535,7 +535,7 @@ it('should support cors with GET', async ({page, server}) => {
 });
 
 it('should support cors with POST', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel, 'https://github.com/microsoft/playwright/issues/6016');
+  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
@@ -559,7 +559,7 @@ it('should support cors with POST', async ({page, server, isChromium, browserCha
 });
 
 it('should support cors with credentials', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel, 'https://github.com/microsoft/playwright/issues/6016');
+  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
@@ -619,7 +619,7 @@ it('should reject cors with disallowed credentials', async ({page, server}) => {
 });
 
 it('should support cors for different methods', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel, 'https://github.com/microsoft/playwright/issues/6016');
+  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async (route, request) => {
