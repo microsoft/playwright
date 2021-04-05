@@ -225,6 +225,7 @@ export class BrowserEnv extends PlaywrightEnv implements Env<BrowserTestArgs> {
   private _browser: Browser | undefined;
   private _contextOptions: BrowserContextOptions;
   private _contexts: BrowserContext[] = [];
+  protected _browserVersion: string;
 
   constructor(browserName: BrowserName, options: LaunchOptions & BrowserContextOptions & TestOptions) {
     super(browserName, options);
@@ -234,6 +235,7 @@ export class BrowserEnv extends PlaywrightEnv implements Env<BrowserTestArgs> {
   async beforeAll(workerInfo: WorkerInfo) {
     await super.beforeAll(workerInfo);
     this._browser = await this._browserType.launch(this._browserOptions);
+    this._browserVersion = await this._browser.version();
   }
 
   async beforeEach(testInfo: TestInfo) {
@@ -244,6 +246,8 @@ export class BrowserEnv extends PlaywrightEnv implements Env<BrowserTestArgs> {
       _traceDir: this._options.trace ? testInfo.outputPath('') : undefined,
       ...this._contextOptions,
     } as BrowserContextOptions;
+
+    testInfo.data.browserVersion = this._browserVersion;
 
     const contextFactory = async (options: BrowserContextOptions = {}) => {
       const context = await this._browser.newContext({ ...contextOptions, ...options });
@@ -281,6 +285,7 @@ export class PageEnv extends BrowserEnv {
     const page = await context.newPage();
     return {
       ...result,
+      browserVersion: this._browserVersion,
       context,
       page,
     };

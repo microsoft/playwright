@@ -40,6 +40,7 @@ export type CommonTestArgs = {
 
 // Page test does not guarantee an isolated context, just a new page (because Android).
 export type PageTestArgs = CommonTestArgs & {
+  browserVersion: string;
   page: Page;
 };
 

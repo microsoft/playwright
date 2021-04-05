@@ -25,11 +25,19 @@ const playwright: typeof import('../../index') = require('../../index');
 
 export class AndroidEnv implements Env<AndroidTestArgs> {
   protected _device?: AndroidDevice;
+  protected _browserVersion: string;
 
   async beforeAll(workerInfo: WorkerInfo) {
     this._device = (await playwright._android.devices())[0];
     await this._device.shell('am force-stop org.chromium.webview_shell');
     await this._device.shell('am force-stop com.android.chrome');
+    this._browserVersion = (await this._device.shell('dumpsys package com.android.chrome'))
+        .toString('utf8')
+        .split('\n')
+        .find(line => line.includes('versionName='))
+        .trim()
+        .split('=')[1];
+    console.log(this._browserVersion);
     this._device.setDefaultTimeout(90000);
   }
 
@@ -75,6 +83,7 @@ export class AndroidPageEnv extends AndroidEnv implements Env<PageTestArgs> {
     const page = await this._context!.newPage();
     return {
       ...result,
+      browserVersion: this._browserVersion,
       androidDevice: undefined,
       page,
     };
