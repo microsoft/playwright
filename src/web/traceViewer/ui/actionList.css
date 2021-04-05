@@ -15,14 +15,13 @@
 */
 
 .action-list {
-  width: var(--sidebar-width);
   display: flex;
   flex-direction: column;
-  flex: none;
+  flex: auto;
   position: relative;
-  padding: 0 var(--layout-gap);
   user-select: none;
   color: #555;
+  overflow: auto;
 }
 
 .action-entry {
@@ -49,6 +48,7 @@
 }
 
 .action-title {
+  flex: none;
   display: inline;
   white-space: nowrap;
 }
@@ -62,12 +62,14 @@
 
 .action-selector {
   display: inline;
+  flex: none;
   padding-left: 5px;
   color: var(--orange);
 }
 
 .action-url {
   display: inline;
+  flex: none;
   padding-left: 5px;
   color: var(--blue);
 }
