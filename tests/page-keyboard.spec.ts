@@ -420,6 +420,28 @@ it('should scroll with PageDown', async ({page, server}) => {
   await page.waitForFunction(() => scrollY > 0);
 });
 
+it('should move around the selection in a contenteditable', async ({page, isMac}) => {
+  await page.setContent(`<div contenteditable></div>`);
+  await page.focus('div');
+  const modifier = isMac ? 'Alt' : 'Control';
+  await page.keyboard.type('Hello World');
+  await page.keyboard.down(modifier);
+  await page.keyboard.down('Shift');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.up('Shift');
+  await page.keyboard.up(modifier);
+  expect(await page.evaluate(() => window.getSelection().toString())).toBe('World');
+});
+
+it('should move to the start of the document', async ({page, isMac}) => {
+  it.skip(!isMac);
+  await page.setContent(`<div contenteditable></div>`);
+  await page.focus('div');
+  await page.keyboard.type('1\n2\n3\n');
+  await page.keyboard.press('Shift+Meta+ArrowUp');
+  expect(await page.evaluate(() => window.getSelection().toString())).toBe('1\n2\n3\n');
+});
+
 async function captureLastKeydown(page) {
   const lastEvent = await page.evaluateHandle(() => {
     const lastEvent = {
