@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect } from '../fixtures';
 
-it('should pass firefox user preferences', (test, { browserName }) => {
-  test.skip(browserName !== 'firefox');
-}, async ({browserType, browserOptions}) => {
+import { test as it, expect } from '../config/playwrightTest';
+
+it('should pass firefox user preferences', async ({browserType, browserOptions, browserName}) => {
+  it.skip(browserName !== 'firefox');
+
   const browser = await browserType.launch({
     ...browserOptions,
     firefoxUserPrefs: {

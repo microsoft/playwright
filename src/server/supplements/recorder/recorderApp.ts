@@ -99,15 +99,15 @@ export class RecorderApp extends EventEmitter {
       '--window-size=600,600',
       '--window-position=1280,10',
     ];
-    if (isUnderTest())
-      args.push(`--remote-debugging-port=0`);
+    if (process.env.PW_RECORDER_PORT)
+      args.push(`--remote-debugging-port=${process.env.PW_RECORDER_PORT}`);
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
       channel: inspectedContext._browser.options.channel,
       sdkLanguage: inspectedContext._options.sdkLanguage,
       args,
       noDefaultViewport: true,
       headless: !!process.env.PWCLI_HEADLESS_FOR_TEST || (isUnderTest() && !inspectedContext._browser.options.headful),
-      useWebSocket: isUnderTest()
+      useWebSocket: !!process.env.PW_RECORDER_PORT
     });
     const controller = new ProgressController(internalCallMetadata(), context._browser);
     await controller.run(async progress => {

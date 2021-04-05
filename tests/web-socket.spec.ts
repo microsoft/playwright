@@ -15,7 +15,12 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { test as it, expect } from './config/pageTest';
+import { Server as WebSocketServer } from 'ws';
+
+it.beforeEach(async () => {
+  it.skip(!!process.env.PW_ANDROID_TESTS);
+});
 
 it('should work', async ({ page, server }) => {
   const value = await page.evaluate(port => {
@@ -47,7 +52,7 @@ it('should emit close events', async ({ page, server }) => {
   expect(webSocket.isClosed()).toBeTruthy();
 });
 
-it('should emit frame events', async ({ page, server, isFirefox }) => {
+it('should emit frame events', async ({ page, server }) => {
   let socketClosed;
   const socketClosePromise = new Promise(f => socketClosed = f);
   const log = [];
@@ -69,7 +74,7 @@ it('should emit frame events', async ({ page, server, isFirefox }) => {
   expect(log.join(':')).toBe('close:open:received<incoming>:sent<outgoing>');
 });
 
-it('should pass self as argument to close event', async ({ page, server, isFirefox }) => {
+it('should pass self as argument to close event', async ({ page, server }) => {
   let socketClosed;
   const socketClosePromise = new Promise(f => socketClosed = f);
   let webSocket;
@@ -170,9 +175,10 @@ it('should reject waitForEvent on page close', async ({page, server}) => {
   expect((await error).message).toContain('Page closed');
 });
 
-it('should turn off when offline', test => {
-  test.fixme();
-}, async ({page, webSocketServer}) => {
+it('should turn off when offline', async ({page}) => {
+  it.fixme();
+
+  const webSocketServer = new WebSocketServer();
   const address = webSocketServer.address();
   const [socket, wsHandle] = await Promise.all([
     new Promise<import('ws')>(x => webSocketServer.once('connection', x)),
@@ -195,4 +201,5 @@ it('should turn off when offline', test => {
   await page.context().setOffline(true);
   await wsHandle.evaluate(ws => ws.send('if this arrives it failed'));
   expect(await result).toBe('successfully closed');
+  await new Promise(x => webSocketServer.close(x));
 });

@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { expect, folio } from './fixtures';
-import { ElementHandle } from '..';
+
+import { test as it, expect } from './config/browserTest';
+import { ElementHandle, Page } from '../index';
 import type { ServerResponse } from 'http';
 
-const fixtures = folio.extend();
-fixtures.page.override(async ({browser}, runTest) => {
-  const page = await browser.newPage({
+let page: Page;
+
+it.beforeEach(async ({browser}) => {
+  page = await browser.newPage({
     hasTouch: true
   });
-  await runTest(page);
+});
+
+it.afterEach(async () => {
   await page.close();
 });
-const { it } = fixtures.build();
 
-it('should send all of the correct events', async ({page}) => {
+it('should send all of the correct events', async ({}) => {
   await page.setContent(`
   <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
   <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
@@ -47,7 +50,7 @@ it('should send all of the correct events', async ({page}) => {
   ]);
 });
 
-it('should not send mouse events touchstart is canceled', async ({page}) => {
+it('should not send mouse events touchstart is canceled', async ({}) => {
   await page.setContent(`<div style="width: 50px; height: 50px; background: red">`);
   await page.evaluate(() => {
     // touchstart is not cancelable unless passive is false
@@ -63,7 +66,7 @@ it('should not send mouse events touchstart is canceled', async ({page}) => {
   ]);
 });
 
-it('should not send mouse events when touchend is canceled', async ({page}) => {
+it('should not send mouse events when touchend is canceled', async ({}) => {
   await page.setContent(`<div style="width: 50px; height: 50px; background: red">`);
   await page.evaluate(() => {
     document.addEventListener('touchend', t => t.preventDefault());
@@ -78,7 +81,7 @@ it('should not send mouse events when touchend is canceled', async ({page}) => {
   ]);
 });
 
-it('should wait for a navigation caused by a tap', async ({server, page}) => {
+it('should wait for a navigation caused by a tap', async ({server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
   <a href="/intercept-this.html">link</a>;
@@ -101,7 +104,7 @@ it('should wait for a navigation caused by a tap', async ({server, page}) => {
   expect(resolved).toBe(true);
 });
 
-it('should work with modifiers', async ({page}) => {
+it('should work with modifiers', async ({}) => {
   await page.setContent('hello world');
   const altKeyPromise = page.evaluate(() => new Promise(resolve => {
     document.addEventListener('touchstart', event => {
@@ -116,7 +119,7 @@ it('should work with modifiers', async ({page}) => {
   expect(await altKeyPromise).toBe(true);
 });
 
-it('should send well formed touch points', async ({page}) => {
+it('should send well formed touch points', async ({}) => {
   const promises = Promise.all([
     page.evaluate(() => new Promise(resolve => {
       document.addEventListener('touchstart', event => {
@@ -168,7 +171,7 @@ it('should send well formed touch points', async ({page}) => {
   expect(touchend).toEqual([]);
 });
 
-it('should wait until an element is visible to tap it', async ({page}) => {
+it('should wait until an element is visible to tap it', async ({}) => {
   const div = await page.evaluateHandle(() => {
     const button = document.createElement('button');
     button.textContent = 'not clicked';

@@ -18,7 +18,7 @@ import type { Env, TestInfo, WorkerInfo } from '../folio/out';
 import { PageEnv } from './browserEnv';
 import { CLIMock, CLITestArgs, Recorder } from './cliTest';
 import * as http from 'http';
-import { recorderPageGetter } from '../../test/utils';
+import { chromium } from '../../index';
 
 export class CLIEnv extends PageEnv implements Env<CLITestArgs> {
   private _server: http.Server | undefined;
@@ -29,8 +29,9 @@ export class CLIEnv extends PageEnv implements Env<CLITestArgs> {
   async beforeAll(workerInfo: WorkerInfo) {
     await super.beforeAll(workerInfo);
 
-    this._port = 9907 + workerInfo.workerIndex;
+    this._port = 10907 + workerInfo.workerIndex * 2;
     this._server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => this._handler(req, res)).listen(this._port);
+    process.env.PW_RECORDER_PORT = String(this._port + 1);
   }
 
   private _runCLI(args: string[]) {
@@ -41,6 +42,14 @@ export class CLIEnv extends PageEnv implements Env<CLITestArgs> {
   async beforeEach(testInfo: TestInfo) {
     const result = await super.beforeEach(testInfo);
     const { page, context, toImpl } = result;
+    const recorderPageGetter = async () => {
+      while (!toImpl(context).recorderAppForTest)
+        await new Promise(f => setTimeout(f, 100));
+      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
+      const browser = await chromium.connectOverCDP({ wsEndpoint });
+      const c = browser.contexts()[0];
+      return c.pages()[0] || await c.waitForEvent('page');
+    };
     return {
       ...result,
       httpServer: {
@@ -50,9 +59,9 @@ export class CLIEnv extends PageEnv implements Env<CLITestArgs> {
       runCLI: this._runCLI.bind(this),
       openRecorder: async () => {
         await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
-        const recorderPage = await recorderPageGetter(context, toImpl);
-        return new Recorder(page, recorderPage);
+        return new Recorder(page, await recorderPageGetter());
       },
+      recorderPageGetter,
     };
   }
 

@@ -14,21 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, describe } from '../fixtures';
+
+import { test as pageTest, expect } from '../config/pageTest';
+import { test as playwrightTest } from '../config/playwrightTest';
 import http from 'http';
 
-describe('chromium', (suite, { browserName }) => {
-  suite.skip(browserName !== 'chromium');
-}, () => {
-  it('should create a worker from a service worker', async ({page, server, context}) => {
+pageTest.describe('chromium', () => {
+  pageTest.beforeEach(async ({ browserName }) => {
+    pageTest.skip(browserName !== 'chromium');
+    pageTest.skip(!!process.env.PW_ANDROID_TESTS);
+  });
+
+  pageTest('should create a worker from a service worker', async ({page, server}) => {
     const [worker] = await Promise.all([
-      context.waitForEvent('serviceworker'),
+      page.context().waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
     ]);
     expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
   });
 
-  it('serviceWorkers() should return current workers', async ({page, server, context}) => {
+  pageTest('serviceWorkers() should return current workers', async ({page, server}) => {
+    const context = page.context();
     const [worker1] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -46,31 +52,17 @@ describe('chromium', (suite, { browserName }) => {
     expect(workers).toContain(worker2);
   });
 
-  it('should not create a worker from a shared worker', async ({page, server, context}) => {
+  pageTest('should not create a worker from a shared worker', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     let serviceWorkerCreated;
-    context.once('serviceworker', () => serviceWorkerCreated = true);
+    page.context().once('serviceworker', () => serviceWorkerCreated = true);
     await page.evaluate(() => {
       new SharedWorker('data:text/javascript,console.log("hi")');
     });
     expect(serviceWorkerCreated).not.toBeTruthy();
   });
 
-  it('should close service worker together with the context', async ({browser, server}) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    const [worker] = await Promise.all([
-      context.waitForEvent('serviceworker'),
-      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
-    ]);
-    const messages = [];
-    context.on('close', () => messages.push('context'));
-    worker.on('close', () => messages.push('worker'));
-    await context.close();
-    expect(messages.join('|')).toBe('worker|context');
-  });
-
-  it('Page.route should work with intervention headers', async ({server, page}) => {
+  pageTest('Page.route should work with intervention headers', async ({server, page}) => {
     server.setRoute('/intervention', (req, res) => res.end(`
       <script>
         document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
@@ -89,9 +81,31 @@ describe('chromium', (suite, { browserName }) => {
     // make it work with Edgium.
     expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
   });
+});
 
-  it('should connect to an existing cdp session', async ({browserType, testWorkerIndex, browserOptions }) => {
-    const port = 9339 + testWorkerIndex;
+playwrightTest.describe('chromium', () => {
+  playwrightTest.beforeEach(async ({ browserName }) => {
+    playwrightTest.skip(browserName !== 'chromium');
+  });
+
+  playwrightTest('should close service worker together with the context', async ({browserType, browserOptions, server}) => {
+    const browser = await browserType.launch(browserOptions);
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const [worker] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+    ]);
+    const messages = [];
+    context.on('close', () => messages.push('context'));
+    worker.on('close', () => messages.push('worker'));
+    await context.close();
+    expect(messages.join('|')).toBe('worker|context');
+    await browser.close();
+  });
+
+  playwrightTest('should connect to an existing cdp session', async ({ browserType, browserOptions }, testInfo) => {
+    const port = 9339 + testInfo.workerIndex;
     const browserServer = await browserType.launch({
       ...browserOptions,
       args: ['--remote-debugging-port=' + port]
@@ -115,8 +129,8 @@ describe('chromium', (suite, { browserName }) => {
     }
   });
 
-  it('should connect to an existing cdp session twice', async ({browserType, testWorkerIndex, browserOptions, server }) => {
-    const port = 9339 + testWorkerIndex;
+  playwrightTest('should connect to an existing cdp session twice', async ({ browserType, browserOptions, server }, testInfo) => {
+    const port = 9339 + testInfo.workerIndex;
     const browserServer = await browserType.launch({
       ...browserOptions,
       args: ['--remote-debugging-port=' + port]
@@ -157,8 +171,8 @@ describe('chromium', (suite, { browserName }) => {
     }
   });
 
-  it('should connect to existing service workers', async ({browserType, testWorkerIndex, browserOptions, server}) => {
-    const port = 9339 + testWorkerIndex;
+  playwrightTest('should connect to existing service workers', async ({browserType, browserOptions, server}, testInfo) => {
+    const port = 9339 + testInfo.workerIndex;
     const browserServer = await browserType.launch({
       ...browserOptions,
       args: ['--remote-debugging-port=' + port]

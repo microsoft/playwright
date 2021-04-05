@@ -16,12 +16,15 @@
  */
 
 import path from 'path';
-import { it } from './fixtures';
+import { test as it } from './config/browserTest';
 
-it('should load svg favicon with prefer-color-scheme', (test, {browserName, browserChannel, headful}) => {
-  test.skip(!headful && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
-  test.skip(headful && browserName === 'webkit' && !browserChannel, 'playwright headful webkit does not have a favicon feature');
-}, async ({page, server}) => {
+it('should load svg favicon with prefer-color-scheme', async ({contextFactory, server, browserName, browserChannel, headful}) => {
+  it.skip(!headful && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
+  it.skip(headful && browserName === 'webkit' && !browserChannel, 'playwright headful webkit does not have a favicon feature');
+
+  const context = await contextFactory();
+  const page = await context.newPage();
+
   // Browsers aggresively cache favicons, so force bust with the
   // `d` parameter to make iterating on this test more predictable and isolated.
   const favicon = `/favicon.svg?d=${Date.now()}`;
@@ -57,4 +60,6 @@ it('should load svg favicon with prefer-color-scheme', (test, {browserName, brow
   await page.waitForTimeout(500);
   // Text still being around ensures we haven't actually lost our browser to a crash.
   await page.waitForSelector('text=favicons');
+
+  await page.close();
 });

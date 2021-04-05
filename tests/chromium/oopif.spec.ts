@@ -14,30 +14,41 @@
  * limitations under the License.
  */
 
-import { folio } from '../fixtures';
+import { test as it, expect } from '../config/playwrightTest';
+import type { Browser, Page } from '../../index';
 
-const fixtures = folio.extend();
-fixtures.browser.override(async ({browserType, browserOptions}, run) => {
-  const browser = await browserType.launch({
-    ...browserOptions,
-    args: (browserOptions.args || []).concat(['--site-per-process'])
+it.describe('oopif', () => {
+  let browser: Browser;
+  let page: Page;
+
+  it.beforeEach(async ({ browserName, browserType, browserOptions }) => {
+    it.skip(browserName !== 'chromium');
+
+    if (!browser) {
+      browser = await browserType.launch({
+        ...browserOptions,
+        args: (browserOptions.args || []).concat(['--site-per-process'])
+      });
+    }
+    page = await browser.newPage();
   });
-  await run(browser);
-  await browser.close();
-});
-const { it, expect, describe } = fixtures.build();
 
-describe('oopif', (suite, { browserName }) => {
-  suite.skip(browserName !== 'chromium');
-}, () => {
-  it('should report oopif frames', async function({browser, page, server}) {
+  it.afterEach(async () => {
+    await page.close();
+  });
+
+  it.afterAll(async () => {
+    await browser.close();
+  });
+
+  it('should report oopif frames', async function({server}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
     expect(page.frames().length).toBe(2);
     expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
   });
 
-  it('should handle oopif detach', async function({browser, page, server}) {
+  it('should handle oopif detach', async function({server}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
     expect(page.frames().length).toBe(2);
@@ -50,7 +61,7 @@ describe('oopif', (suite, { browserName }) => {
     expect(detachedFrame).toBe(frame);
   });
 
-  it('should handle remote -> local -> remote transitions', async function({browser, page, server}) {
+  it('should handle remote -> local -> remote transitions', async function({server}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
@@ -69,10 +80,9 @@ describe('oopif', (suite, { browserName }) => {
     expect(await countOOPIFs(browser)).toBe(1);
   });
 
-  it('should get the proper viewport', (test, { browserName }) => {
-    test.fixme(browserName === 'chromium');
-    test.skip(browserName !== 'chromium');
-  }, async ({browser, page, server}) => {
+  it('should get the proper viewport', async ({server}) => {
+    it.fixme();
+
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
@@ -91,7 +101,7 @@ describe('oopif', (suite, { browserName }) => {
     expect(await oopif.evaluate(() => 'ontouchstart' in window)).toBe(false);
   });
 
-  it('should expose function', async ({browser, page, server}) => {
+  it('should expose function', async ({server}) => {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
@@ -103,7 +113,7 @@ describe('oopif', (suite, { browserName }) => {
     expect(result).toBe(36);
   });
 
-  it('should emulate media', async ({browser, page, server}) => {
+  it('should emulate media', async ({server}) => {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
@@ -113,17 +123,17 @@ describe('oopif', (suite, { browserName }) => {
     expect(await oopif.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
   });
 
-  it('should emulate offline', async ({browser, page, context, server}) => {
+  it('should emulate offline', async ({server}) => {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
     const oopif = page.frames()[1];
     expect(await oopif.evaluate(() => navigator.onLine)).toBe(true);
-    await context.setOffline(true);
+    await page.context().setOffline(true);
     expect(await oopif.evaluate(() => navigator.onLine)).toBe(false);
   });
 
-  it('should support context options', async ({browser, server, playwright}) => {
+  it('should support context options', async ({server, playwright}) => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone, timezoneId: 'America/Jamaica', locale: 'fr-CH', userAgent: 'UA' });
     const page = await context.newPage();
@@ -145,7 +155,7 @@ describe('oopif', (suite, { browserName }) => {
     await context.close();
   });
 
-  it('should respect route', async ({browser, page, server}) => {
+  it('should respect route', async ({server}) => {
     let intercepted = false;
     await page.route('**/digits/0.png', route => {
       intercepted = true;
@@ -157,7 +167,7 @@ describe('oopif', (suite, { browserName }) => {
     expect(intercepted).toBe(true);
   });
 
-  it('should take screenshot', async ({browser, page, server}) => {
+  it('should take screenshot', async ({server}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
@@ -165,13 +175,13 @@ describe('oopif', (suite, { browserName }) => {
     expect(await page.screenshot()).toMatchSnapshot('screenshot-oopif.png', { threshold: 0.3 });
   });
 
-  it('should load oopif iframes with subresources and route', async function({browser, page, server, context}) {
+  it('should load oopif iframes with subresources and route', async function({server}) {
     await page.route('**/*', route => route.continue());
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
   });
 
-  it('should report main requests', async function({browser, page, server}) {
+  it('should report main requests', async function({server}) {
     const requestFrames = [];
     page.on('request', r => requestFrames.push(r.frame()));
     const finishedFrames = [];
@@ -209,8 +219,8 @@ describe('oopif', (suite, { browserName }) => {
     expect(finishedFrames[2]).toBe(grandChild);
   });
 
-  it('should support exposeFunction', async function({browser, context, page, server}) {
-    await context.exposeFunction('dec', a => a - 1);
+  it('should support exposeFunction', async function({server}) {
+    await page.context().exposeFunction('dec', a => a - 1);
     await page.exposeFunction('inc', a => a + 1);
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
@@ -221,8 +231,8 @@ describe('oopif', (suite, { browserName }) => {
     expect(await page.frames()[1].evaluate(() => window['dec'](4))).toBe(3);
   });
 
-  it('should support addInitScript', async function({browser, context, page, server}) {
-    await context.addInitScript(() => window['bar'] = 17);
+  it('should support addInitScript', async function({server}) {
+    await page.context().addInitScript(() => window['bar'] = 17);
     await page.addInitScript(() => window['foo'] = 42);
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
@@ -233,7 +243,7 @@ describe('oopif', (suite, { browserName }) => {
     expect(await page.frames()[1].evaluate(() => window['bar'])).toBe(17);
   });
   // @see https://github.com/microsoft/playwright/issues/1240
-  it('should click a button when it overlays oopif', async function({browser, page, server}) {
+  it('should click a button when it overlays oopif', async function({server}) {
     await page.goto(server.PREFIX + '/button-overlay-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);
     await page.click('button');
@@ -265,7 +275,7 @@ describe('oopif', (suite, { browserName }) => {
     await browser.close();
   });
 
-  it('ElementHandle.boundingBox() should work', async function({browser, page, server}) {
+  it('ElementHandle.boundingBox() should work', async function({server}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     await page.$eval('iframe', iframe => {
       iframe.style.width = '500px';
@@ -288,7 +298,7 @@ describe('oopif', (suite, { browserName }) => {
     expect(await handle2.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
   });
 
-  it('should click', async function({browser, page, server}) {
+  it('should click', async function({server}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     await page.$eval('iframe', iframe => {
       iframe.style.width = '500px';

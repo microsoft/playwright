@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import { folio } from './fixtures';
-const { it, expect, beforeEach, describe } = folio;
-
+import { test as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
 
-describe('download event', () => {
-  beforeEach(async ({server}) => {
+it.describe('download event', () => {
+  it.beforeEach(async ({server}) => {
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment');
@@ -35,7 +33,8 @@ describe('download event', () => {
     });
   });
 
-  it('should report downloads with acceptDownloads: false', async ({page, server}) => {
+  it('should report downloads with acceptDownloads: false', async ({browser, server}) => {
+    const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
@@ -47,6 +46,7 @@ describe('download event', () => {
     await download.path().catch(e => error = e);
     expect(await download.failure()).toContain('acceptDownloads');
     expect(error.message).toContain('acceptDownloads: true');
+    await page.close();
   });
 
   it('should report downloads with acceptDownloads: true', async ({browser, server}) => {
@@ -62,10 +62,9 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should report proper download url when download is from download attribute', (test, {browserName}) => {
-    // @see https://github.com/microsoft/playwright/issues/5537
-    test.fixme(browserName === 'webkit');
-  }, async ({browser, server}) => {
+  it('should report proper download url when download is from download attribute', async ({browser, server, browserName}) => {
+    it.fixme(browserName === 'webkit', '@see https://github.com/microsoft/playwright/issues/5537');
+
     const page = await browser.newPage({ acceptDownloads: true });
     await page.goto(server.PREFIX + '/empty.html');
     await page.setContent(`<a href="${server.PREFIX}/chromium-linux.zip" download="foo.zip">download</a>`);
@@ -91,7 +90,7 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should save to user-specified path', async ({testInfo, browser, server}) => {
+  it('should save to user-specified path', async ({browser, server}, testInfo) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -105,7 +104,7 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should save to user-specified path without updating original path', async ({testInfo, browser, server}) => {
+  it('should save to user-specified path without updating original path', async ({browser, server}, testInfo) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -123,7 +122,7 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should save to two different paths with multiple saveAs calls', async ({testInfo, browser, server}) => {
+  it('should save to two different paths with multiple saveAs calls', async ({browser, server}, testInfo) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -142,7 +141,7 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should save to overwritten filepath', async ({testInfo, browser, server}) => {
+  it('should save to overwritten filepath', async ({browser, server}, testInfo) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -160,7 +159,7 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should create subdirectories when saving to non-existent user-specified path', async ({testInfo, browser, server}) => {
+  it('should create subdirectories when saving to non-existent user-specified path', async ({browser, server}, testInfo) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -174,7 +173,7 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should error when saving with downloads disabled', async ({testInfo, browser, server}) => {
+  it('should error when saving with downloads disabled', async ({browser, server}, testInfo) => {
     const page = await browser.newPage({ acceptDownloads: false });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -187,7 +186,7 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should error when saving after deletion', async ({testInfo, browser, server}) => {
+  it('should error when saving after deletion', async ({browser, server}, testInfo) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -235,6 +234,7 @@ describe('download event', () => {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
+
   it(`should report download path within page.on('download', …) handler for Blobs`, async ({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     const onDownloadPath = new Promise<string>(res => {
@@ -248,9 +248,10 @@ describe('download event', () => {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
-  it('should report alt-click downloads', (test, { browserName }) => {
-    test.fixme(browserName === 'firefox' || browserName === 'webkit');
-  }, async ({browser, server}) => {
+
+  it('should report alt-click downloads', async ({browser, server, browserName}) => {
+    it.fixme(browserName === 'firefox' || browserName === 'webkit');
+
     // Firefox does not download on alt-click by default.
     // Our WebKit embedder does not download on alt-click, although Safari does.
     server.setRoute('/download', (req, res) => {
@@ -271,9 +272,9 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should report new window downloads', (test, { browserName, headful }) => {
-    test.fixme(browserName === 'chromium' && headful);
-  }, async ({browser, server}) => {
+  it('should report new window downloads', async ({browser, server, browserName, headful}) => {
+    it.fixme(browserName === 'chromium' && headful);
+
     // TODO: - the test fails in headful Chromium as the popup page gets closed along
     // with the session before download completed event arrives.
     // - WebKit doesn't close the popup page
@@ -359,9 +360,9 @@ describe('download event', () => {
     expect(fs.existsSync(path.join(path1, '..'))).toBeFalsy();
   });
 
-  it('should close the context without awaiting the failed download', (test, { browserName }) => {
-    test.skip(browserName !== 'chromium', 'Only Chromium downloads on alt-click');
-  }, async ({browser, server, httpsServer, testInfo}) => {
+  it('should close the context without awaiting the failed download', async ({browser, server, httpsServer, browserName}, testInfo) => {
+    it.skip(browserName !== 'chromium', 'Only Chromium downloads on alt-click');
+
     const page = await browser.newPage({ acceptDownloads: true });
     await page.goto(server.EMPTY_PAGE);
     await page.setContent(`<a href="${httpsServer.PREFIX}/downloadWithFilename" download="file.txt">click me</a>`);
@@ -380,9 +381,9 @@ describe('download event', () => {
     expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 
-  it('should close the context without awaiting the download', (test, { browserName, platform }) => {
-    test.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
-  }, async ({browser, server, testInfo}) => {
+  it('should close the context without awaiting the download', async ({browser, server, browserName, platform}, testInfo) => {
+    it.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
+
     server.setRoute('/downloadStall', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment; filename=file.txt');

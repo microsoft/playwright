@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { expect, it } from './fixtures';
+import { test as it, expect } from './config/browserTest';
 
-it('should work', async ({ page, server }) => {
+it('should work', async ({ contextFactory, server }) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
   const [request] = await Promise.all([
     page.waitForEvent('requestfinished'),
     page.goto(server.EMPTY_PAGE)
@@ -28,9 +30,12 @@ it('should work', async ({ page, server }) => {
   expect(timing.responseStart).toBeGreaterThanOrEqual(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
   expect(timing.responseEnd).toBeLessThan(10000);
+  await context.close();
 });
 
-it('should work for subresource', async ({ page, server }) => {
+it('should work for subresource', async ({ contextFactory, server }) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
   const requests = [];
   page.on('requestfinished', request => requests.push(request));
   await page.goto(server.PREFIX + '/one-style.html');
@@ -41,6 +46,7 @@ it('should work for subresource', async ({ page, server }) => {
   expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
   expect(timing.responseEnd).toBeLessThan(10000);
+  await context.close();
 });
 
 it('should work for SSL', async ({ browser, httpsServer }) => {
@@ -58,9 +64,11 @@ it('should work for SSL', async ({ browser, httpsServer }) => {
   await page.close();
 });
 
-it('should work for redirect', (test, { browserName }) => {
-  test.fixme(browserName === 'webkit', `In WebKit, redirects don't carry the timing info`);
-}, async ({ page, server }) => {
+it('should work for redirect', async ({ contextFactory, browserName, server }) => {
+  it.fixme(browserName === 'webkit', `In WebKit, redirects don't carry the timing info`);
+
+  const context = await contextFactory();
+  const page = await context.newPage();
   server.setRedirect('/foo.html', '/empty.html');
   const responses = [];
   page.on('response', response => responses.push(response));
@@ -84,6 +92,8 @@ it('should work for redirect', (test, { browserName }) => {
   expect(timing2.responseStart).toBeGreaterThan(timing2.requestStart);
   expect(timing2.responseEnd).toBeGreaterThanOrEqual(timing2.responseStart);
   expect(timing2.responseEnd).toBeLessThan(10000);
+
+  await context.close();
 });
 
 function verifyTimingValue(value: number, previous: number) {

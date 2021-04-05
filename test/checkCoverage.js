@@ -17,7 +17,7 @@ const path = require('path');
 const fs = require('fs');
 const {installCoverageHooks} = require('./coverage');
 
-const browserName = process.env.BROWSER || 'chromium';
+const browserName = process.argv[2] || 'chromium';
 
 let api = new Set(installCoverageHooks(browserName).coverage.keys());
 
@@ -30,8 +30,21 @@ if (browserName === 'chromium') {
 
 if (browserName !== 'chromium') {
   // we don't have CDPSession in non-chromium browsers
+  api.delete('browser.newBrowserCDPSession');
+  api.delete('browser.startTracing');
+  api.delete('browser.stopTracing');
+  api.delete('browserContext.backgroundPages');
+  api.delete('browserContext.serviceWorkers');
+  api.delete('browserContext.newCDPSession');
+  api.delete('browserContext.emit("backgroundpage")');
+  api.delete('browserContext.emit("serviceworker")');
   api.delete('cDPSession.send');
   api.delete('cDPSession.detach');
+  api.delete('coverage.startJSCoverage');
+  api.delete('coverage.stopJSCoverage');
+  api.delete('coverage.startCSSCoverage');
+  api.delete('coverage.stopCSSCoverage');
+  api.delete('page.pdf');
 }
 
 // Some permissions tests are disabled in webkit. See permissions.jest.js

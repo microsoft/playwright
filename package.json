@@ -9,11 +9,11 @@
     "node": ">=10.17.0"
   },
   "scripts": {
-    "ctest": "cross-env BROWSER=chromium folio test/",
-    "ftest": "cross-env BROWSER=firefox folio test/",
-    "wtest": "cross-env BROWSER=webkit folio test/",
-    "atest": "cross-env BROWSER=chromium PW_ANDROID_TESTS=1 npx folio test/android --workers=1 --reporter=list",
-    "test": "folio test/",
+    "ctest": "npm run build-folio && node tests/folio/cli.js --config=tests/config/default.config.ts chromium",
+    "ftest": "npm run build-folio && node tests/folio/cli.js --config=tests/config/default.config.ts firefox",
+    "wtest": "npm run build-folio && node tests/folio/cli.js --config=tests/config/default.config.ts webkit",
+    "atest": "npm run build-folio && node tests/folio/cli.js --config=tests/config/android.config.ts",
+    "test": "npm run build-folio && node tests/folio/cli.js --config=tests/config/default.config.ts",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts . || eslint --ext js,ts .",
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
@@ -29,8 +29,7 @@
     "build-android-driver": "./utils/build_android_driver.sh",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public",
-    "build-folio": "tsc -p ./tests/folio",
-    "folio": "npm run build-folio && node tests/folio/cli.js --config=tests/config/default.config.ts"
+    "build-folio": "tsc -p ./tests/folio"
   },
   "author": {
     "name": "Microsoft Corporation"

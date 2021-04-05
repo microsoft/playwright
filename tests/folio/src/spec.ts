@@ -55,10 +55,18 @@ function mergeEnvs(envs: any[]): any {
       }
     },
     afterAll: async (workerInfo: WorkerInfo) => {
+      let error: Error | undefined;
       for (const env of backward) {
-        if (env.afterAll)
-          await env.afterAll(workerInfo);
+        if (env.afterAll) {
+          try {
+            await env.afterAll(workerInfo);
+          } catch (e) {
+            error = error || e;
+          }
+        }
       }
+      if (error)
+        throw error;
     },
     beforeEach: async (testInfo: TestInfo) => {
       let result = undefined;
@@ -71,10 +79,18 @@ function mergeEnvs(envs: any[]): any {
       return result;
     },
     afterEach: async (testInfo: TestInfo) => {
+      let error: Error | undefined;
       for (const env of backward) {
-        if (env.afterEach)
-          await env.afterEach(testInfo);
+        if (env.afterEach) {
+          try {
+            await env.afterEach(testInfo);
+          } catch (e) {
+            error = error || e;
+          }
+        }
       }
+      if (error)
+        throw error;
     },
   };
 }
