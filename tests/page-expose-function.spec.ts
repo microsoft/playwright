@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { attachFrame } from '../test/utils';
+import { attachFrame } from './config/utils';
 import type { ElementHandle } from '../index';
 
 it('exposeBinding should work', async ({page}) => {

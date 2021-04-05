@@ -18,8 +18,6 @@
 import { test as it, expect } from './config/pageTest';
 import { test as browserTest } from './config/browserTest';
 import fs from 'fs';
-import path from 'path';
-
 
 it('should work', async ({page, server}) => {
   await page.route('**/*', route => {
@@ -51,12 +49,12 @@ it('should work with status code 422', async ({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should allow mocking binary responses', async ({page, server, browserName, headful}) => {
+it('should allow mocking binary responses', async ({page, server, browserName, headful, asset}) => {
   it.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
   it.skip(!!process.env.PW_ANDROID_TESTS);
 
   await page.route('**/*', route => {
-    const imageBuffer = fs.readFileSync(path.join(__dirname, '..', 'test', 'assets', 'pptr.png'));
+    const imageBuffer = fs.readFileSync(asset('pptr.png'));
     route.fulfill({
       contentType: 'image/png',
       body: imageBuffer
@@ -93,10 +91,10 @@ it('should allow mocking svg with charset', async ({page, server, browserName, h
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
-it('should work with file path', async ({page, server}) => {
+it('should work with file path', async ({page, server, asset}) => {
   it.skip(!!process.env.PW_ANDROID_TESTS);
 
-  await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, '..', 'test', 'assets', 'pptr.png') }));
+  await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
   await page.evaluate(PREFIX => {
     const img = document.createElement('img');
     img.src = PREFIX + '/does-not-exist.png';

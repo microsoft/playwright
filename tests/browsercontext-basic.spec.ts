@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/browserTest';
-import { verifyViewport } from '../test/utils';
+import { verifyViewport } from './config/utils';
 
 it('should create new context', async function({browser}) {
   expect(browser.contexts().length).toBe(0);

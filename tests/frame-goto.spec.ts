@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { attachFrame } from '../test/utils';
+import { attachFrame } from './config/utils';
 
 it('should navigate subframes', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');

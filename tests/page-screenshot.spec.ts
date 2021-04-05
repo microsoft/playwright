@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './config/pageTest';
 import { test as browserTest, slowTest as slowBrowserTest } from './config/browserTest';
-import { verifyViewport } from '../test/utils';
+import { verifyViewport } from './config/utils';
 import path from 'path';
 import fs from 'fs';
 import { PNG } from 'pngjs';

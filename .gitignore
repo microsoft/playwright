@@ -1,6 +1,5 @@
 /node_modules/
 /test-results/
-/test/coverage-report
 /tests/coverage-report
 .local-browsers/
 /.dev_profile*
@@ -9,10 +8,8 @@
 *.pyc
 .vscode
 yarn.lock
-/node6
 /src/generated/*
 lib/
-jest-report.json
 drivers/
 .android-sdk/
 .gradle/

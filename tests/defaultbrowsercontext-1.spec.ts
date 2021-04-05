@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/playwrightTest';
-import { verifyViewport } from '../test/utils';
+import { verifyViewport } from './config/utils';
 import fs from 'fs';
 
 it('context.cookies() should work', async ({server, launchPersistent}) => {

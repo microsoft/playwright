@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { attachFrame } from '../test/utils';
+import { attachFrame } from './config/utils';
 
 it('should work for main frame navigation request', async ({page, server}) => {
   const requests = [];

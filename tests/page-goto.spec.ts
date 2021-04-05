@@ -15,21 +15,20 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import url from 'url';
 import { test as it, expect } from './config/pageTest';
 import { slowTest } from './config/browserTest';
-import { expectedSSLError } from '../test/utils';
+import { expectedSSLError } from './config/utils';
 
 it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with file URL', async ({page}) => {
+it('should work with file URL', async ({page, asset}) => {
   it.skip(!!process.env.PW_ANDROID_TESTS, 'No files on Android');
 
-  const fileurl = url.pathToFileURL(path.join(__dirname, '..', 'test', 'assets', 'frames', 'two-frames.html')).href;
+  const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   await page.goto(fileurl);
   expect(page.url().toLowerCase()).toBe(fileurl.toLowerCase());
   expect(page.frames().length).toBe(3);

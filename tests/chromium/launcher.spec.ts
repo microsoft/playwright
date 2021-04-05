@@ -15,7 +15,6 @@
  */
 
 import { test as it, expect } from '../config/playwrightTest';
-import path from 'path';
 
 it.beforeEach(async ({ browserName }) => {
   it.skip(browserName !== 'chromium');
@@ -57,9 +56,9 @@ it('should open devtools when "devtools: true" option is given', async ({browser
   await browser.close();
 });
 
-it('should return background pages', async ({browserType, browserOptions, createUserDataDir}) => {
+it('should return background pages', async ({browserType, browserOptions, createUserDataDir, asset}) => {
   const userDataDir = await createUserDataDir();
-  const extensionPath = path.join(__dirname, '..', '..', 'test', 'assets', 'simple-extension');
+  const extensionPath = asset('simple-extension');
   const extensionOptions = {...browserOptions,
     headless: false,
     args: [
@@ -78,9 +77,9 @@ it('should return background pages', async ({browserType, browserOptions, create
   await context.close();
 });
 
-it('should return background pages when recording video', async ({browserType, browserOptions, createUserDataDir}, testInfo) => {
+it('should return background pages when recording video', async ({browserType, browserOptions, createUserDataDir, asset}, testInfo) => {
   const userDataDir = await createUserDataDir();
-  const extensionPath = path.join(__dirname, '..', '..', 'test', 'assets', 'simple-extension');
+  const extensionPath = asset('simple-extension');
   const extensionOptions = {...browserOptions,
     headless: false,
     args: [

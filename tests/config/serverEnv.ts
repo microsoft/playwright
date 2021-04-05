@@ -27,8 +27,8 @@ export class ServerEnv implements Env<ServerTestArgs> {
   private _socksPort: number;
 
   async beforeAll(workerInfo: WorkerInfo) {
-    const assetsPath = path.join(__dirname, '..', '..', 'test', 'assets');
-    const cachedPath = path.join(__dirname, '..', '..', 'test', 'assets', 'cached');
+    const assetsPath = path.join(__dirname, '..', 'assets');
+    const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
     const port = 8907 + workerInfo.workerIndex * 3;
     this._server = await TestServer.create(assetsPath, port);
@@ -63,7 +63,7 @@ export class ServerEnv implements Env<ServerTestArgs> {
     this._server.reset();
     this._httpsServer.reset();
     return {
-      asset: (p: string) => path.join(__dirname, '..', '..', 'test', 'assets', p),
+      asset: (p: string) => path.join(__dirname, '..', 'assets', ...p.split('/')),
       server: this._server,
       httpsServer: this._httpsServer,
       socksPort: this._socksPort,

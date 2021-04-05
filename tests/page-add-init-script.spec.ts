@@ -16,7 +16,6 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import path from 'path';
 
 it('should evaluate before anything else on the page', async ({ page, server }) => {
   await page.addInitScript(function() {
@@ -26,8 +25,8 @@ it('should evaluate before anything else on the page', async ({ page, server }) 
   expect(await page.evaluate(() => window['result'])).toBe(123);
 });
 
-it('should work with a path', async ({ page, server }) => {
-  await page.addInitScript({ path: path.join(__dirname, '../test/assets/injectedfile.js') });
+it('should work with a path', async ({ page, server, asset }) => {
+  await page.addInitScript({ path: asset('injectedfile.js') });
   await page.goto(server.PREFIX + '/tamperable.html');
   expect(await page.evaluate(() => window['result'])).toBe(123);
 });

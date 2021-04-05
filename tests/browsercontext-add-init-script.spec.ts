@@ -16,7 +16,6 @@
  */
 
 import { contextTest as it, expect } from './config/browserTest';
-import path from 'path';
 
 it('should work with browser context scripts', async ({ context, server }) => {
   await context.addInitScript(() => window['temp'] = 123);
@@ -53,8 +52,8 @@ it('should work without navigation in popup', async ({ context }) => {
   expect(await popup.evaluate(() => window['temp'])).toBe(123);
 });
 
-it('should work with browser context scripts with a path', async ({ context, server }) => {
-  await context.addInitScript({ path: path.join(__dirname, '../test/assets/injectedfile.js') });
+it('should work with browser context scripts with a path', async ({ context, server, asset }) => {
+  await context.addInitScript({ path: asset('injectedfile.js') });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/tamperable.html');
   expect(await page.evaluate(() => window['result'])).toBe(123);

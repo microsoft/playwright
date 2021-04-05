@@ -16,7 +16,7 @@
 
 import type { Env, WorkerInfo, TestInfo } from 'folio';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions } from '../../index';
-import { installCoverageHooks } from '../../test/coverage';
+import { installCoverageHooks } from './coverage';
 import { start } from '../../lib/outofprocess';
 import { PlaywrightClient } from '../../lib/remote/playwrightClient';
 import { removeFolders } from '../../lib/utils/utils';
@@ -202,7 +202,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
     await this._mode.teardown();
     const { coverage, uninstall } = this._coverage!;
     uninstall();
-    const coveragePath = path.join(__dirname, '..', '..', 'test', 'coverage-report', workerInfo.workerIndex + '.json');
+    const coveragePath = path.join(__dirname, '..', 'coverage-report', workerInfo.workerIndex + '.json');
     const coverageJSON = Array.from(coverage.keys()).filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');

@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { attachFrame, detachFrame } from '../test/utils';
+import { attachFrame, detachFrame } from './config/utils';
 
 async function giveItTimeToLog(frame) {
   await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));

@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/browserTest';
-import { attachFrame } from '../test/utils';
+import { attachFrame } from './config/utils';
 
 it('should work', async ({browser, server}) => {
   {

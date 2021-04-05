@@ -18,7 +18,7 @@ import path from 'path';
 import fs from 'fs';
 import { test, expect } from '../config/cliTest';
 
-const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'test', 'assets', 'empty.html')).toString();
+const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
   return channel ? `headless: false,\n    channel: "${channel}"` : 'headless: false';
 };
