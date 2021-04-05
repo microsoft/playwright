@@ -52,6 +52,8 @@ const serverEnv = new ServerEnv();
 const browsers = ['chromium', 'webkit', 'firefox'] as BrowserName[];
 for (const browserName of browsers) {
   const executablePath = getExecutablePath(browserName);
+  if (executablePath && (process.env.FOLIO_WORKER_INDEX === undefined || process.env.FOLIO_WORKER_INDEX === ''))
+    console.error(`Using executable at ${executablePath}`);
   const mode = (process.env.PWMODE || 'default') as ('default' | 'driver' | 'service');
   const options = {
     mode,

@@ -349,6 +349,7 @@ class Worker extends EventEmitter {
       env: {
         FORCE_COLOR: process.stdout.isTTY ? '1' : '0',
         DEBUG_COLORS: process.stdout.isTTY ? '1' : '0',
+        FOLIO_WORKER_INDEX: String(this.index),
         ...process.env
       },
       // Can't pipe since piping slows down termination for some reason.
