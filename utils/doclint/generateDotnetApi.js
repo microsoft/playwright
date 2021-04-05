@@ -108,11 +108,11 @@ const customTypeNames = new Map([
   }
 
   /**
-   * 
-   * @param {string} kind 
-   * @param {string} name 
+   *
+   * @param {string} kind
+   * @param {string} name
    * @param {Documentation.MarkdownNode[]} spec
-   * @param {function(string[]): void} callback 
+   * @param {function(string[]): void} callback
    * @param {string} folder
    * @param {string} extendsName
    */
@@ -139,7 +139,7 @@ const customTypeNames = new Map([
 
     callback(out);
 
-    // we want to separate the items with a space and this is nicer, than holding 
+    // we want to separate the items with a space and this is nicer, than holding
     // an index in each iterator down the line
     const lastLine = out.pop();
     if (lastLine !== '')
@@ -201,9 +201,9 @@ const customTypeNames = new Map([
 }
 
 /**
- * @param {string} memberKind  
- * @param {string} name 
- * @param {Documentation.Member} member 
+ * @param {string} memberKind
+ * @param {string} name
+ * @param {Documentation.Member} member
  */
 function translateMemberName(memberKind, name, member = null) {
   if (!name) return name;
@@ -256,9 +256,9 @@ function translateMemberName(memberKind, name, member = null) {
 }
 
 /**
- * 
- * @param {Documentation.Member} member 
- * @param {Documentation.Class|Documentation.Type} parent 
+ *
+ * @param {Documentation.Member} member
+ * @param {Documentation.Class|Documentation.Type} parent
  * @param {string[]} out
  */
 function renderMember(member, parent, out) {
@@ -309,11 +309,11 @@ function renderMember(member, parent, out) {
 }
 
 /**
- * 
- * @param {Documentation.Member} member 
- * @param {string} name 
- * @param {Documentation.Type} t 
- * @param {*} parent 
+ *
+ * @param {Documentation.Member} member
+ * @param {string} name
+ * @param {Documentation.Type} t
+ * @param {*} parent
  */
 function generateNameDefault(member, name, t, parent) {
   if (!t.properties
@@ -388,9 +388,9 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
 
 /**
  * Rendering a method is so _special_, with so many weird edge cases, that it
- * makes sense to put it separate from the other logic. 
- * @param {Documentation.Member} member 
- * @param {Documentation.Class|Documentation.Type} parent 
+ * makes sense to put it separate from the other logic.
+ * @param {Documentation.Member} member
+ * @param {Documentation.Class|Documentation.Type} parent
  * @param {Function} output
  */
 function renderMethod(member, parent, output, name) {
@@ -479,10 +479,10 @@ function renderMethod(member, parent, output, name) {
   // render args
   let args = [];
   /**
-   * 
-   * @param {string} innerArgType 
-   * @param {string} innerArgName 
-   * @param {Documentation.Member} argument 
+   *
+   * @param {string} innerArgType
+   * @param {string} innerArgName
+   * @param {Documentation.Member} argument
    */
   const pushArg = (innerArgType, innerArgName, argument) => {
     let isEnum = enumTypes.has(innerArgType);
@@ -572,14 +572,14 @@ function renderMethod(member, parent, output, name) {
 }
 
 /**
- * 
+ *
  *  @callback generateNameCallback
  *  @param {Documentation.Type} t
  *  @returns {string}
  */
 
 /**
- *  @param {Documentation.Type} type 
+ *  @param {Documentation.Type} type
  *  @param {Documentation.Class|Documentation.Type} parent
  *  @param {generateNameCallback} generateNameCallback
 */
@@ -669,7 +669,7 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
     // take care of some common cases
     // TODO: this can be genericized
     if (type.templates && type.templates.length == 2) {
-      // get the inner types of both templates, and if they're strings, it's a keyvaluepair string, string, 
+      // get the inner types of both templates, and if they're strings, it's a keyvaluepair string, string,
       let keyType = translateType(type.templates[0], parent, generateNameCallback);
       let valueType = translateType(type.templates[1], parent, generateNameCallback);
       return `IEnumerable<KeyValuePair<${keyType}, ${valueType}>>`;
@@ -740,9 +740,9 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
 }
 
 /**
- * 
- * @param {string} typeName 
- * @param {Documentation.Type} type 
+ *
+ * @param {string} typeName
+ * @param {Documentation.Type} type
  */
 function registerAdditionalType(typeName, type) {
   if (['object', 'string', 'int'].includes(typeName))
