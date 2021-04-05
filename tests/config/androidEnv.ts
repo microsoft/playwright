@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Env, WorkerInfo, TestInfo } from '../folio/out';
+import type { Env, WorkerInfo, TestInfo } from 'folio';
 import type { AndroidDevice, BrowserContext } from '../../index';
 import * as os from 'os';
 import { AndroidTestArgs } from './androidTest';

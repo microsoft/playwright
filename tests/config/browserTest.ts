@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { newTestType } from '../folio/out';
+import { newTestType } from 'folio';
 import type { Browser, BrowserContextOptions, BrowserContext, Page } from '../../index';
 import type { PlaywrightTestArgs } from './playwrightTest';
 import type { ServerTestArgs } from './serverTest';
-export { expect } from '../folio/out';
+export { expect } from 'folio';
 
 export type BrowserTestArgs = PlaywrightTestArgs & {
   browser: Browser;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Env, TestInfo, WorkerInfo } from '../folio/out';
+import type { Env, TestInfo, WorkerInfo } from 'folio';
 import { PageEnv } from './browserEnv';
 import { CLIMock, CLITestArgs, Recorder } from './cliTest';
 import * as http from 'http';

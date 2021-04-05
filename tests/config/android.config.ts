@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { setConfig, Config } from '../folio/out';
+import { setConfig, Config } from 'folio';
 import * as path from 'path';
 import { test as pageTest } from './pageTest';
 import { test as androidTest } from './androidTest';

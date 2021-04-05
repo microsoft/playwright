@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { expect } from './fixtures';
+import { expect } from 'folio';
 import type { Frame, Page } from '../index';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {

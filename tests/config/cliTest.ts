@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { newTestType } from '../folio/out';
+import { newTestType } from 'folio';
 import type { Page, BrowserContext } from '../../index';
 import type { ServerTestArgs } from './serverTest';
 import type { BrowserTestArgs } from './browserTest';
@@ -22,7 +22,7 @@ import * as http from 'http';
 import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
 import { ChildProcess, spawn } from 'child_process';
-export { expect } from '../folio/out';
+export { expect } from 'folio';
 
 interface CLIHTTPServer {
   setHandler: (handler: http.RequestListener) => void

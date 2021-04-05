@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { setConfig, Config } from '../folio/out';
+import { setConfig, Config } from 'folio';
 import * as path from 'path';
 import { test as playwrightTest, slowTest as playwrightSlowTest } from './playwrightTest';
 import { test as browserTest, contextTest, proxyTest, slowTest as browserSlowTest } from './browserTest';
