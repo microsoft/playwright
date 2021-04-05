@@ -47,16 +47,16 @@ it('should throw an error if loading from url fail', async ({page, server}) => {
   expect(error).not.toBe(null);
 });
 
-it('should work with a path', async ({page, server}) => {
+it('should work with a path', async ({page, server, asset}) => {
   await page.goto(server.EMPTY_PAGE);
-  const styleHandle = await page.addStyleTag({ path: path.join(__dirname, '../test/assets/injectedstyle.css') });
+  const styleHandle = await page.addStyleTag({ path: asset('injectedstyle.css') });
   expect(styleHandle.asElement()).not.toBeNull();
   expect(await page.evaluate(`window.getComputedStyle(document.querySelector('body')).getPropertyValue('background-color')`)).toBe('rgb(255, 0, 0)');
 });
 
-it('should include sourceURL when path is provided', async ({page, server}) => {
+it('should include sourceURL when path is provided', async ({page, server, asset}) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.addStyleTag({ path: path.join(__dirname, '../test/assets/injectedstyle.css') });
+  await page.addStyleTag({ path: asset('injectedstyle.css') });
   const styleHandle = await page.$('style');
   const styleContent = await page.evaluate(style => style.innerHTML, styleHandle);
   expect(styleContent).toContain(path.join('assets', 'injectedstyle.css'));

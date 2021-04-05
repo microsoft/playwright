@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { attachFrame, detachFrame } from '../test/utils';
+import { attachFrame, detachFrame } from './config/utils';
 import type { Frame } from '../src/client/frame';
 
 it('should have different execution contexts', async ({ page, server }) => {

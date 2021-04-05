@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './config/pageTest';
 import { test as browserTest } from './config/browserTest';
-import { attachFrame } from '../test/utils';
+import { attachFrame } from './config/utils';
 
 it.beforeEach(async () => {
   it.skip(!!process.env.PW_ANDROID_TESTS);

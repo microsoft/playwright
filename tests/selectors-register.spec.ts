@@ -16,7 +16,6 @@
  */
 
 import { test as it, expect } from './config/browserTest';
-import path from 'path';
 
 it('should work', async ({playwright, browser}) => {
   const createTagSelector = () => ({
@@ -52,9 +51,9 @@ it('should work', async ({playwright, browser}) => {
   await context.close();
 });
 
-it('should work with path', async ({playwright, browser}) => {
+it('should work with path', async ({playwright, browser, asset}) => {
   const page = await browser.newPage();
-  await playwright.selectors.register('foo', { path: path.join(__dirname, '../test/assets/sectionselectorengine.js') });
+  await playwright.selectors.register('foo', { path: asset('sectionselectorengine.js') });
   await page.setContent('<section></section>');
   expect(await page.$eval('foo=whatever', e => e.nodeName)).toBe('SECTION');
 });

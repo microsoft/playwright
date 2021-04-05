@@ -58,7 +58,7 @@ export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
     // for tests.
     if (isUnderTest() && fileName.includes(path.join('playwright', 'src')))
       continue;
-    if (isUnderTest() && fileName.includes(path.join('playwright', 'test', 'coverage.js')))
+    if (isUnderTest() && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       continue;
     frames.push({
       file: fileName,

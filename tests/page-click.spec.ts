@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { attachFrame } from '../test/utils';
+import { attachFrame } from './config/utils';
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)

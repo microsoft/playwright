@@ -117,7 +117,7 @@ await page.CloseAsync();`);
     expect(errors.length).toBe(0);
   });
 
-  test('should upload a single file', async ({ page, openRecorder, browserName }) => {
+  test('should upload a single file', async ({ page, openRecorder, browserName, asset }) => {
     test.fixme(browserName === 'firefox', 'Hangs');
 
     const recorder = await openRecorder();
@@ -128,7 +128,7 @@ await page.CloseAsync();`);
   `);
 
     await page.focus('input[type=file]');
-    await page.setInputFiles('input[type=file]', 'test/assets/file-to-upload.txt');
+    await page.setInputFiles('input[type=file]', asset('file-to-upload.txt'));
     await page.click('input[type=file]');
 
     const sources = await recorder.waitForOutput('<javascript>', 'setInputFiles');
@@ -155,7 +155,7 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt
 
   });
 
-  test('should upload multiple files', async ({ page, openRecorder, browserName }) => {
+  test('should upload multiple files', async ({ page, openRecorder, browserName, asset }) => {
     test.fixme(browserName === 'firefox', 'Hangs');
 
     const recorder = await openRecorder();
@@ -166,7 +166,7 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt
   `);
 
     await page.focus('input[type=file]');
-    await page.setInputFiles('input[type=file]', ['test/assets/file-to-upload.txt', 'test/assets/file-to-upload-2.txt']);
+    await page.setInputFiles('input[type=file]', [asset('file-to-upload.txt'), asset('file-to-upload-2.txt')]);
     await page.click('input[type=file]');
 
     const sources = await recorder.waitForOutput('<javascript>', 'setInputFiles');
@@ -192,7 +192,7 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt
 await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
-  test('should clear files', async ({ page, openRecorder, browserName }) => {
+  test('should clear files', async ({ page, openRecorder, browserName, asset }) => {
     test.fixme(browserName === 'firefox', 'Hangs');
 
     const recorder = await openRecorder();
@@ -202,7 +202,7 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-up
     </form>
   `);
     await page.focus('input[type=file]');
-    await page.setInputFiles('input[type=file]', 'test/assets/file-to-upload.txt');
+    await page.setInputFiles('input[type=file]', asset('file-to-upload.txt'));
     await page.setInputFiles('input[type=file]', []);
     await page.click('input[type=file]');
 

@@ -54,7 +54,7 @@ if (browserName === 'webkit')
 // Android coverage is abysmal.
 api = new Set(Array.from(api).filter(name => !name.toLowerCase().startsWith('android')));
 
-const coverageDir = path.join(__dirname, 'coverage-report');
+const coverageDir = path.join(__dirname, '..', 'coverage-report');
 
 const coveredMethods = new Set();
 for (const file of getCoverageFiles(coverageDir)) {

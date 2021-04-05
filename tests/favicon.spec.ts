@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { test as it } from './config/browserTest';
 
-it('should load svg favicon with prefer-color-scheme', async ({contextFactory, server, browserName, browserChannel, headful}) => {
+it('should load svg favicon with prefer-color-scheme', async ({contextFactory, server, browserName, browserChannel, headful, asset}) => {
   it.skip(!headful && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(headful && browserName === 'webkit' && !browserChannel, 'playwright headful webkit does not have a favicon feature');
 
@@ -29,7 +28,7 @@ it('should load svg favicon with prefer-color-scheme', async ({contextFactory, s
   // `d` parameter to make iterating on this test more predictable and isolated.
   const favicon = `/favicon.svg?d=${Date.now()}`;
   server.setRoute(favicon, (req, res) => {
-    server.serveFile(req, res, path.join(__dirname, 'assets', 'media-query-prefers-color-scheme.svg'));
+    server.serveFile(req, res, asset('media-query-prefers-color-scheme.svg'));
   });
 
   server.setRoute('/page.html', (_, res) => {

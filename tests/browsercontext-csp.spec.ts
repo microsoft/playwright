@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/browserTest';
-import { attachFrame } from '../test/utils';
+import { attachFrame } from './config/utils';
 
 it('should bypass CSP meta tag', async ({browser, server}) => {
   // Make sure CSP prohibits addScriptTag.

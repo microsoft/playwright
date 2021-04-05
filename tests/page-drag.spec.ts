@@ -16,7 +16,7 @@
 
 import type { ElementHandle } from '../index';
 import { test as it, expect } from './config/pageTest';
-import { attachFrame } from '../test/utils';
+import { attachFrame } from './config/utils';
 
 it.describe('Drag and drop', () => {
   it.beforeEach(async ({ browserName }) => {

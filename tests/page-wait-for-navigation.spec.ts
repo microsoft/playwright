@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './config/pageTest';
 import type { Frame } from '../index';
-import { expectedSSLError } from '../test/utils';
+import { expectedSSLError } from './config/utils';
 
 it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);

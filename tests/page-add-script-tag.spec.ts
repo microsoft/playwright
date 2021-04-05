@@ -42,9 +42,9 @@ it('should work with a url and type=module', async ({page, server}) => {
   expect(await page.evaluate(() => window['__es6injected'])).toBe(42);
 });
 
-it('should work with a path and type=module', async ({page, server}) => {
+it('should work with a path and type=module', async ({page, server, asset}) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.addScriptTag({ path: path.join(__dirname, '../test/assets/es6/es6pathimport.js'), type: 'module' });
+  await page.addScriptTag({ path: asset('es6/es6pathimport.js'), type: 'module' });
   await page.waitForFunction('window.__es6injected');
   expect(await page.evaluate(() => window['__es6injected'])).toBe(42);
 });
@@ -67,18 +67,18 @@ it('should throw an error if loading from url fail', async ({page, server}) => {
   expect(error).not.toBe(null);
 });
 
-it('should work with a path', async ({page, server}) => {
+it('should work with a path', async ({page, server, asset}) => {
   await page.goto(server.EMPTY_PAGE);
-  const scriptHandle = await page.addScriptTag({ path: path.join(__dirname, '../test/assets/injectedfile.js') });
+  const scriptHandle = await page.addScriptTag({ path: asset('injectedfile.js') });
   expect(scriptHandle.asElement()).not.toBeNull();
   expect(await page.evaluate(() => window['__injected'])).toBe(42);
 });
 
-it('should include sourceURL when path is provided', async ({page, server, isWebKit}) => {
+it('should include sourceURL when path is provided', async ({page, server, isWebKit, asset}) => {
   it.skip(isWebKit);
 
   await page.goto(server.EMPTY_PAGE);
-  await page.addScriptTag({ path: path.join(__dirname, '../test/assets/injectedfile.js') });
+  await page.addScriptTag({ path: asset('injectedfile.js') });
   const result = await page.evaluate(() => window['__injectedError'].stack);
   expect(result).toContain(path.join('assets', 'injectedfile.js'));
 });

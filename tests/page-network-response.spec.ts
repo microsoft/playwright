@@ -17,7 +17,6 @@
 
 import { test as it, expect } from './config/pageTest';
 import fs from 'fs';
-import path from 'path';
 
 it('should work', async ({page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
@@ -95,17 +94,17 @@ it('should return json', async ({page, server}) => {
   expect(await response.json()).toEqual({foo: 'bar'});
 });
 
-it('should return body', async ({page, server}) => {
+it('should return body', async ({page, server, asset}) => {
   const response = await page.goto(server.PREFIX + '/pptr.png');
-  const imageBuffer = fs.readFileSync(path.join(__dirname, '..', 'test', 'assets', 'pptr.png'));
+  const imageBuffer = fs.readFileSync(asset('pptr.png'));
   const responseBuffer = await response.body();
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return body with compression', async ({page, server}) => {
+it('should return body with compression', async ({page, server, asset}) => {
   server.enableGzip('/pptr.png');
   const response = await page.goto(server.PREFIX + '/pptr.png');
-  const imageBuffer = fs.readFileSync(path.join(__dirname, '..', 'test', 'assets', 'pptr.png'));
+  const imageBuffer = fs.readFileSync(asset('pptr.png'));
   const responseBuffer = await response.body();
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
