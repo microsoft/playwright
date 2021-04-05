@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe } from './fixtures';
+import { slowTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
@@ -151,15 +151,13 @@ function expectRedFrames(videoFile: string, size: { width: number, height: numbe
   }
 }
 
-describe('screencast', suite => {
-  suite.slow();
-}, () => {
+it.describe('screencast', () => {
   it('videoSize should require videosPath', async ({browser}) => {
     const error = await browser.newContext({ videoSize: { width: 100, height: 100 } }).catch(e => e);
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should work with old options', async ({browser, testInfo}) => {
+  it('should work with old options', async ({browser}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -182,7 +180,7 @@ describe('screencast', suite => {
     expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
   });
 
-  it('should capture static page', async ({browser, testInfo}) => {
+  it('should capture static page', async ({browser}, testInfo) => {
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
       recordVideo: {
@@ -201,7 +199,7 @@ describe('screencast', suite => {
     expectRedFrames(videoFile, size);
   });
 
-  it('should expose video path', async ({browser, testInfo}) => {
+  it('should expose video path', async ({browser}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -219,7 +217,7 @@ describe('screencast', suite => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should saveAs video', async ({browser, testInfo}) => {
+  it('should saveAs video', async ({browser}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -239,7 +237,7 @@ describe('screencast', suite => {
     expect(fs.existsSync(saveAsPath)).toBeTruthy();
   });
 
-  it('saveAs should throw when no video frames', async ({browser, browserName, testInfo}) => {
+  it('saveAs should throw when no video frames', async ({browser, browserName}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -269,7 +267,7 @@ describe('screencast', suite => {
       expect(error.message).toContain('Page did not produce any video frames');
   });
 
-  it('should delete video', async ({browser, testInfo}) => {
+  it('should delete video', async ({browser}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -290,7 +288,7 @@ describe('screencast', suite => {
     expect(fs.existsSync(videoPath)).toBeFalsy();
   });
 
-  it('should expose video path blank page', async ({browser, testInfo}) => {
+  it('should expose video path blank page', async ({browser}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -307,7 +305,7 @@ describe('screencast', suite => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should expose video path blank popup', async ({browser, testInfo}) => {
+  it('should expose video path blank popup', async ({browser}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -328,7 +326,7 @@ describe('screencast', suite => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should capture navigation', async ({browser, server, testInfo}) => {
+  it('should capture navigation', async ({browser, server}, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -359,10 +357,10 @@ describe('screencast', suite => {
     }
   });
 
-  it('should capture css transformation', (test, { headful, browserName, platform }) => {
-    test.fixme(headful, 'Fails on headful');
-    test.fixme(browserName === 'webkit' && platform === 'win32', 'Fails on headful');
-  }, async ({browser, server, testInfo}) => {
+  it('should capture css transformation', async ({browser, server, headful, browserName, platform}, testInfo) => {
+    it.fixme(headful, 'Fails on headful');
+    it.fixme(browserName === 'webkit' && platform === 'win32', 'Fails on headful');
+
     const size = { width: 320, height: 240 };
     // Set viewport equal to screencast frame size to avoid scaling.
     const context = await browser.newContext({
@@ -389,7 +387,7 @@ describe('screencast', suite => {
     }
   });
 
-  it('should work for popups', async ({browser, testInfo, server}) => {
+  it('should work for popups', async ({browser, server}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -419,9 +417,9 @@ describe('screencast', suite => {
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should scale frames down to the requested size ', (test, parameters) => {
-    test.fixme(parameters.headful, 'Fails on headful');
-  }, async ({browser, testInfo, server}) => {
+  it('should scale frames down to the requested size ', async ({browser, server, headful}, testInfo) => {
+    it.fixme(headful, 'Fails on headful');
+
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -467,7 +465,7 @@ describe('screencast', suite => {
     }
   });
 
-  it('should use viewport scaled down to fit into 800x800 as default size', async ({browser, testInfo}) => {
+  it('should use viewport scaled down to fit into 800x800 as default size', async ({browser}, testInfo) => {
     const size = {width: 1600, height: 1200};
     const context = await browser.newContext({
       recordVideo: {
@@ -486,7 +484,7 @@ describe('screencast', suite => {
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should be 800x450 by default', async ({ browser, testInfo }) => {
+  it('should be 800x450 by default', async ({ browser }, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -503,9 +501,9 @@ describe('screencast', suite => {
     expect(videoPlayer.videoHeight).toBe(450);
   });
 
-  it('should be 800x600 with null viewport', (test, { headful, browserName }) => {
-    test.fixme(browserName === 'firefox' && !headful, 'Fails in headless on bots');
-  }, async ({ browser, testInfo }) => {
+  it('should be 800x600 with null viewport', async ({ browser, headful, browserName }, testInfo) => {
+    it.fixme(browserName === 'firefox' && !headful, 'Fails in headless on bots');
+
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -523,7 +521,7 @@ describe('screencast', suite => {
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should capture static page in persistent context', async ({launchPersistent, testInfo}) => {
+  it('should capture static page in persistent context', async ({launchPersistent}, testInfo) => {
     const size = { width: 320, height: 240 };
     const { context, page } = await launchPersistent({
       recordVideo: {
@@ -551,9 +549,9 @@ describe('screencast', suite => {
     }
   });
 
-  it('should emulate an iphone', (test, { browserName }) => {
-    test.skip(browserName === 'firefox', 'isMobile is not supported in Firefox');
-  }, async ({contextFactory, playwright, contextOptions, testInfo}) => {
+  it('should emulate an iphone', async ({contextFactory, playwright, contextOptions, browserName}, testInfo) => {
+    it.skip(browserName === 'firefox', 'isMobile is not supported in Firefox');
+
     const device = playwright.devices['iPhone 6'];
     const context = await contextFactory({
       ...contextOptions,

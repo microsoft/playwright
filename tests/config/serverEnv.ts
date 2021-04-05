@@ -30,7 +30,7 @@ export class ServerEnv implements Env<ServerTestArgs> {
     const assetsPath = path.join(__dirname, '..', '..', 'test', 'assets');
     const cachedPath = path.join(__dirname, '..', '..', 'test', 'assets', 'cached');
 
-    const port = 8907 + workerInfo.workerIndex * 2;
+    const port = 8907 + workerInfo.workerIndex * 3;
     this._server = await TestServer.create(assetsPath, port);
     this._server.enableHTTPCache(cachedPath);
 
@@ -54,7 +54,7 @@ export class ServerEnv implements Env<ServerTestArgs> {
         ].join('\r\n'));
       }
     });
-    this._socksPort = 9107 + workerInfo.workerIndex * 2;
+    this._socksPort = port + 2;
     this._socksServer.listen(this._socksPort, 'localhost');
     this._socksServer.useAuth(socks.auth.None());
   }

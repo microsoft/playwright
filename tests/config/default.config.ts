@@ -70,7 +70,8 @@ for (const browserName of browsers) {
   pageTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
   // TODO: get rid of contextTest if there isn't too many of them.
   contextTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
-  cliTest.runWith(browserName, serverEnv, new CLIEnv(browserName, options), {});
+  if (mode !== 'service')
+    cliTest.runWith(browserName, serverEnv, new CLIEnv(browserName, options), {});
   if (browserName === 'chromium')
     electronTest.runWith(browserName, serverEnv, new ElectronEnv({ mode }));
 }

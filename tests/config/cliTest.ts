@@ -15,7 +15,7 @@
  */
 
 import { newTestType } from '../folio/out';
-import type { Page } from '../../index';
+import type { Page, BrowserContext } from '../../index';
 import type { ServerTestArgs } from './serverTest';
 import type { BrowserTestArgs } from './browserTest';
 import * as http from 'http';
@@ -31,7 +31,9 @@ interface CLIHTTPServer {
 
 export type CLITestArgs = BrowserTestArgs & {
   page: Page;
+  context: BrowserContext;
   httpServer: CLIHTTPServer;
+  recorderPageGetter: () => Promise<Page>;
   openRecorder: () => Promise<Recorder>;
   runCLI: (args: string[]) => CLIMock;
 };

@@ -13,31 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect } from '../fixtures';
 
+import { test as it, expect } from '../config/playwrightTest';
 import path from 'path';
 
-it('should throw with remote-debugging-pipe argument', (test, { browserName, mode }) => {
-  test.skip(mode !== 'default' || browserName !== 'chromium');
-}, async ({browserType, browserOptions}) => {
+it.beforeEach(async ({ browserName }) => {
+  it.skip(browserName !== 'chromium');
+});
+
+it('should throw with remote-debugging-pipe argument', async ({browserType, browserOptions, mode}) => {
+  it.skip(mode !== 'default');
+
   const options = Object.assign({}, browserOptions);
   options.args = ['--remote-debugging-pipe'].concat(options.args || []);
   const error = await browserType.launchServer(options).catch(e => e);
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it('should not throw with remote-debugging-port argument', (test, { browserName, mode }) => {
-  test.skip(mode !== 'default' || browserName !== 'chromium');
-}, async ({browserType, browserOptions}) => {
+it('should not throw with remote-debugging-port argument', async ({browserType, browserOptions, mode}) => {
+  it.skip(mode !== 'default');
+
   const options = Object.assign({}, browserOptions);
   options.args = ['--remote-debugging-port=0'].concat(options.args || []);
   const browser = await browserType.launchServer(options);
   await browser.close();
 });
 
-it('should open devtools when "devtools: true" option is given', (test, { mode, browserName, platform}) => {
-  test.skip(browserName !== 'chromium' || mode !== 'default' || platform === 'win32');
-}, async ({browserType, browserOptions}) => {
+it('should open devtools when "devtools: true" option is given', async ({browserType, browserOptions, mode, platform}) => {
+  it.skip(mode !== 'default' || platform === 'win32');
+
   let devtoolsCallback;
   const devtoolsPromise = new Promise(f => devtoolsCallback = f);
   const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
@@ -53,11 +57,9 @@ it('should open devtools when "devtools: true" option is given', (test, { mode, 
   await browser.close();
 });
 
-it('should return background pages', (test, { browserName }) => {
-  test.skip(browserName !== 'chromium');
-}, async ({browserType, browserOptions, createUserDataDir}) => {
+it('should return background pages', async ({browserType, browserOptions, createUserDataDir}) => {
   const userDataDir = await createUserDataDir();
-  const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
+  const extensionPath = path.join(__dirname, '..', '..', 'test', 'assets', 'simple-extension');
   const extensionOptions = {...browserOptions,
     headless: false,
     args: [
@@ -76,11 +78,9 @@ it('should return background pages', (test, { browserName }) => {
   await context.close();
 });
 
-it('should return background pages when recording video', (test, { browserName }) => {
-  test.skip(browserName !== 'chromium');
-}, async ({browserType, testInfo, browserOptions, createUserDataDir}) => {
+it('should return background pages when recording video', async ({browserType, browserOptions, createUserDataDir}, testInfo) => {
   const userDataDir = await createUserDataDir();
-  const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
+  const extensionPath = path.join(__dirname, '..', '..', 'test', 'assets', 'simple-extension');
   const extensionOptions = {...browserOptions,
     headless: false,
     args: [
@@ -102,9 +102,7 @@ it('should return background pages when recording video', (test, { browserName }
   await context.close();
 });
 
-it('should not create pages automatically', (test, { browserName }) => {
-  test.skip(browserName !== 'chromium');
-}, async ({browserType, browserOptions}) => {
+it('should not create pages automatically', async ({browserType, browserOptions}) => {
   const browser = await browserType.launch(browserOptions);
   const browserSession = await browser.newBrowserCDPSession();
   const targets = [];

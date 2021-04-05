@@ -58,7 +58,7 @@ class ServiceMode {
   private _serviceProcess: childProcess.ChildProcess;
 
   async setup(workerInfo: WorkerInfo) {
-    const port = 9407 + workerInfo.workerIndex * 2;
+    const port = 10507 + workerInfo.workerIndex;
     this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'service.js'), [String(port)], {
       stdio: 'pipe'
     });
@@ -69,7 +69,6 @@ class ServiceMode {
           f();
       });
     });
-    this._serviceProcess.unref();
     this._serviceProcess.on('exit', this._onExit);
     this._client = await PlaywrightClient.connect(`ws://localhost:${port}/ws`);
     this._playwrightObejct = this._client.playwright();

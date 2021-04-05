@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-import { Page } from '..';
-import { folio } from './fixtures';
-import { recorderPageGetter } from './utils';
-const { afterEach, it, describe, expect } = folio;
+import { Page } from '../index';
+import { test as it, expect } from './config/cliTest';
 
-describe('pause', (suite, { mode }) => {
-  suite.skip(mode !== 'default');
-}, () => {
-  afterEach(async ({ context, toImpl }) => {
+it.describe('pause', () => {
+  it.beforeEach(async ({ mode }) => {
+    it.skip(mode !== 'default');
+  });
+
+  it.afterEach(async ({ recorderPageGetter }) => {
     try {
-      const recorderPage = await recorderPageGetter(context, toImpl);
+      const recorderPage = await recorderPageGetter();
       recorderPage.click('[title=Resume]').catch(() => {});
     } catch (e) {
       // Some tests close context.
     }
   });
 
-  it('should pause and resume the script', async ({ page, context, toImpl }) => {
+  it('should pause and resume the script', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       await page.pause();
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
@@ -52,33 +52,33 @@ describe('pause', (suite, { mode }) => {
     await scriptPromise;
   });
 
-  it('should pause after a navigation', async ({page, server, context, toImpl}) => {
+  it('should pause after a navigation', async ({page, server, recorderPageGetter}) => {
     const scriptPromise = (async () => {
       await page.goto(server.EMPTY_PAGE);
       await page.pause();
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
 
-  it('should show source', async ({page, context, toImpl}) => {
+  it('should show source', async ({page, recorderPageGetter}) => {
     const scriptPromise = (async () => {
       await page.pause();
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     const source = await recorderPage.textContent('.source-line-paused .source-code');
     expect(source).toContain('page.pause()');
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
 
-  it('should pause on next pause', async ({page, context, toImpl}) => {
+  it('should pause on next pause', async ({page, recorderPageGetter}) => {
     const scriptPromise = (async () => {
       await page.pause();  // 1
       await page.pause();  // 2
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     const source = await recorderPage.textContent('.source-line-paused');
     expect(source).toContain('page.pause();  // 1');
     await recorderPage.click('[title=Resume]');
@@ -87,13 +87,13 @@ describe('pause', (suite, { mode }) => {
     await scriptPromise;
   });
 
-  it('should step', async ({page, context, toImpl}) => {
+  it('should step', async ({page, recorderPageGetter}) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
       await page.click('button');
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     const source = await recorderPage.textContent('.source-line-paused');
     expect(source).toContain('page.pause();');
 
@@ -104,13 +104,13 @@ describe('pause', (suite, { mode }) => {
     await scriptPromise;
   });
 
-  it('should highlight pointer', async ({page, context, toImpl}) => {
+  it('should highlight pointer', async ({page, recorderPageGetter}) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
       await page.click('button');
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over"]');
 
     const point = await page.waitForSelector('x-pw-action-point');
@@ -130,28 +130,28 @@ describe('pause', (suite, { mode }) => {
     await scriptPromise;
   });
 
-  it('should skip input when resuming', async ({page, context, toImpl}) => {
+  it('should skip input when resuming', async ({page, recorderPageGetter}) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
       await page.click('button');
       await page.pause();  // 2
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
 
-  it('should populate log', async ({page, context, toImpl}) => {
+  it('should populate log', async ({page, recorderPageGetter}) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
       await page.click('button');
       await page.pause();  // 2
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
@@ -163,7 +163,7 @@ describe('pause', (suite, { mode }) => {
     await scriptPromise;
   });
 
-  it('should highlight waitForEvent', async ({page, context, toImpl}) => {
+  it('should highlight waitForEvent', async ({page, recorderPageGetter}) => {
     await page.setContent('<button onclick="console.log(1)">Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
@@ -172,7 +172,7 @@ describe('pause', (suite, { mode }) => {
         page.click('button'),
       ]);
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.click")');
     await recorderPage.waitForSelector('.source-line-running:has-text("page.waitForEvent")');
@@ -180,7 +180,7 @@ describe('pause', (suite, { mode }) => {
     await scriptPromise;
   });
 
-  it('should populate log with waitForEvent', async ({page, context, toImpl}) => {
+  it('should populate log with waitForEvent', async ({page, recorderPageGetter}) => {
     await page.setContent('<button onclick="console.log(1)">Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
@@ -190,7 +190,7 @@ describe('pause', (suite, { mode }) => {
       ]);
       await page.pause();  // 2
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
@@ -203,13 +203,13 @@ describe('pause', (suite, { mode }) => {
     await scriptPromise;
   });
 
-  it('should populate log with error', async ({page, context, toImpl}) => {
+  it('should populate log with error', async ({page, recorderPageGetter}) => {
     await page.setContent('<button onclick="console.log(1)">Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
       await page.isChecked('button');
     })().catch(e => e);
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Resume"]');
     await recorderPage.waitForSelector('.source-line-error');
     expect(await sanitizeLog(recorderPage)).toEqual([
@@ -223,7 +223,7 @@ describe('pause', (suite, { mode }) => {
     expect(error.message).toContain('Not a checkbox or radio button');
   });
 
-  it('should populate log with error in waitForEvent', async ({page, context, toImpl}) => {
+  it('should populate log with error in waitForEvent', async ({page, recorderPageGetter}) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
@@ -232,7 +232,7 @@ describe('pause', (suite, { mode }) => {
         page.click('button'),
       ]);
     })().catch(() => {});
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.click")');
     await recorderPage.waitForSelector('.source-line-error:has-text("page.waitForEvent")');
@@ -247,36 +247,36 @@ describe('pause', (suite, { mode }) => {
     await scriptPromise;
   });
 
-  it('should pause on page close', async ({ page, context, toImpl }) => {
+  it('should pause on page close', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       await page.pause();
       await page.close();
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.close();")');
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
 
-  it('should pause on context close', async ({ page, context, toImpl }) => {
+  it('should pause on context close', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       await page.pause();
       await page.context().close();
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.context().close();")');
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
 
-  it('should highlight on explore', async ({ page, context, toImpl }) => {
+  it('should highlight on explore', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
     })();
-    const recorderPage = await recorderPageGetter(context, toImpl);
+    const recorderPage = await recorderPageGetter();
     const [element] = await Promise.all([
       page.waitForSelector('x-pw-highlight:visible'),
       recorderPage.fill('input[placeholder="Playwright Selector"]', 'text=Submit'),

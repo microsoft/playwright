@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import { it, expect, describe } from './fixtures';
+import { test as it, expect } from '../config/pageTest';
 
-describe('CSS Coverage', (suite, { browserName }) => {
-  suite.skip(browserName !== 'chromium');
-}, () => {
-  it('should work', async function({browserType, page, server}) {
+it.describe('CSS Coverage', () => {
+  it.beforeEach(async ({ browserName }) => {
+    it.skip(browserName !== 'chromium');
+  });
+
+  it('should work', async function({page, server}) {
     await page.coverage.startCSSCoverage();
     await page.goto(server.PREFIX + '/csscoverage/simple.html');
     const coverage = await page.coverage.stopCSSCoverage();

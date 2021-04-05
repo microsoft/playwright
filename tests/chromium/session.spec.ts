@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, describe } from '../fixtures';
 
-describe('session', (suite, { browserName }) => {
-  suite.skip(browserName !== 'chromium');
-}, () => {
+import { test as it, expect } from '../config/pageTest';
+import { test as browserTest } from '../config/browserTest';
+
+it.describe('session', () => {
+  it.beforeEach(async ({ browserName }) => {
+    it.skip(browserName !== 'chromium');
+  });
+
   it('should work', async function({page}) {
     const client = await page.context().newCDPSession(page);
 
@@ -88,8 +92,14 @@ describe('session', (suite, { browserName }) => {
       await client.send('ThisCommand.DoesNotExist');
     }
   });
+});
 
-  it('should not break page.close()', async function({browser}) {
+browserTest.describe('session', () => {
+  browserTest.beforeEach(async ({ browserName }) => {
+    browserTest.skip(browserName !== 'chromium');
+  });
+
+  browserTest('should not break page.close()', async function({browser}) {
     const context = await browser.newContext();
     const page = await context.newPage();
     const session = await page.context().newCDPSession(page);
@@ -98,7 +108,7 @@ describe('session', (suite, { browserName }) => {
     await context.close();
   });
 
-  it('should detach when page closes', async function({browser}) {
+  browserTest('should detach when page closes', async function({browser}) {
     const context = await browser.newContext();
     const page = await context.newPage();
     const session = await context.newCDPSession(page);
@@ -109,7 +119,7 @@ describe('session', (suite, { browserName }) => {
     await context.close();
   });
 
-  it('should work with newBrowserCDPSession', async function({browser}) {
+  browserTest('should work with newBrowserCDPSession', async function({browser}) {
     const session = await browser.newBrowserCDPSession();
 
     const version = await session.send('Browser.getVersion');

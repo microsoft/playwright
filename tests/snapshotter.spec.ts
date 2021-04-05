@@ -14,40 +14,45 @@
  * limitations under the License.
  */
 
-import { folio } from './fixtures';
+import { test as it, expect } from './config/browserTest';
 import { InMemorySnapshotter } from '../lib/server/snapshot/inMemorySnapshotter';
 import { HttpServer } from '../lib/utils/httpServer';
 import { SnapshotServer } from '../lib/server/snapshot/snapshotServer';
-const { it, describe, expect, beforeEach, afterEach } = folio;
+import type { BrowserContext, Page } from '../index';
 
-describe('snapshots', (suite, { mode }) => {
-  suite.skip(mode !== 'default');
-}, () => {
+it.describe('snapshots', () => {
+  let context: BrowserContext;
+  let page: Page;
   let snapshotter: any;
   let httpServer: any;
   let snapshotPort: number;
 
-  beforeEach(async ({ context, toImpl, testWorkerIndex }) => {
+  it.beforeEach(async ({ mode, toImpl, contextFactory }, testInfo) => {
+    it.skip(mode !== 'default');
+
+    context = await contextFactory();
+    page = await context.newPage();
     snapshotter = new InMemorySnapshotter(toImpl(context));
     await snapshotter.initialize();
     httpServer = new HttpServer();
     new SnapshotServer(httpServer, snapshotter);
-    snapshotPort = 9700 + testWorkerIndex;
+    snapshotPort = 9700 + testInfo.workerIndex;
     httpServer.start(snapshotPort);
   });
 
-  afterEach(async () => {
+  it.afterEach(async () => {
     await snapshotter.dispose();
     httpServer.stop();
+    await context.close();
   });
 
-  it('should collect snapshot', async ({ page, toImpl }) => {
+  it('should collect snapshot', async ({ toImpl }) => {
     await page.setContent('<button>Hello</button>');
     const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
     expect(distillSnapshot(snapshot)).toBe('<BUTTON>Hello</BUTTON>');
   });
 
-  it('should capture resources', async ({ page, toImpl, server }) => {
+  it('should capture resources', async ({ toImpl, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/style.css', route => {
       route.fulfill({ body: 'button { color: red; }', }).catch(() => {});
@@ -59,7 +64,7 @@ describe('snapshots', (suite, { mode }) => {
     expect(resources[cssHref]).toBeTruthy();
   });
 
-  it('should collect multiple', async ({ page, toImpl }) => {
+  it('should collect multiple', async ({ toImpl }) => {
     await page.setContent('<button>Hello</button>');
     const snapshots = [];
     snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
@@ -68,7 +73,7 @@ describe('snapshots', (suite, { mode }) => {
     expect(snapshots.length).toBe(2);
   });
 
-  it('should only collect on change', async ({ page }) => {
+  it('should only collect on change', async ({}) => {
     await page.setContent('<button>Hello</button>');
     const snapshots = [];
     snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
@@ -83,7 +88,7 @@ describe('snapshots', (suite, { mode }) => {
     expect(snapshots.length).toBe(2);
   });
 
-  it('should respect inline CSSOM change', async ({ page }) => {
+  it('should respect inline CSSOM change', async ({}) => {
     await page.setContent('<style>button { color: red; }</style><button>Hello</button>');
     const snapshots = [];
     snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
@@ -102,7 +107,7 @@ describe('snapshots', (suite, { mode }) => {
     expect(distillSnapshot(snapshots[1])).toBe('<style>button { color: blue; }</style><BUTTON>Hello</BUTTON>');
   });
 
-  it('should respect subresource CSSOM change', async ({ page, server }) => {
+  it('should respect subresource CSSOM change', async ({ server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/style.css', route => {
       route.fulfill({ body: 'button { color: red; }', }).catch(() => {});
@@ -129,9 +134,9 @@ describe('snapshots', (suite, { mode }) => {
     expect(snapshotter.resourceContent(sha1).toString()).toBe('button { color: blue; }');
   });
 
-  it('should capture iframe', (test, { browserName }) => {
-    test.skip(browserName === 'firefox');
-  }, async ({ contextFactory, page, server, toImpl }) => {
+  it('should capture iframe', async ({ contextFactory, server, toImpl, browserName }) => {
+    it.skip(browserName === 'firefox');
+
     await page.route('**/empty.html', route => {
       route.fulfill({
         body: '<iframe src="iframe.html"></iframe>',
@@ -170,7 +175,7 @@ describe('snapshots', (suite, { mode }) => {
     expect(await button.textContent()).toBe('Hello iframe');
   });
 
-  it('should capture snapshot target', async ({ page, toImpl }) => {
+  it('should capture snapshot target', async ({ toImpl }) => {
     await page.setContent('<button>Hello</button><button>World</button>');
     {
       const handle = await page.$('text=Hello');
@@ -184,7 +189,7 @@ describe('snapshots', (suite, { mode }) => {
     }
   });
 
-  it('should collect on attribute change', async ({ page, toImpl }) => {
+  it('should collect on attribute change', async ({ toImpl }) => {
     await page.setContent('<button>Hello</button>');
     {
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');

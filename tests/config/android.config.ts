@@ -24,10 +24,10 @@ import { AndroidEnv, AndroidPageEnv } from './androidEnv';
 const config: Config = {
   testDir: path.join(__dirname, '..'),
   timeout: 120000,
-  globalTimeout: 5400000,
+  globalTimeout: 7200000,
+  workers: 1,
 };
 if (process.env.CI) {
-  config.workers = 1;
   config.forbidOnly = true;
   config.retries = 1;  // Multiple retries are too slow on Android.
 }
