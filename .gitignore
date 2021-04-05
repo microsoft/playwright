@@ -1,7 +1,7 @@
 /node_modules/
 /test-results/
 /test/coverage-report
-/test/test-user-data-dir*
+/tests/coverage-report
 .local-browsers/
 /.dev_profile*
 .DS_Store

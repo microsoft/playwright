@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { newTestType } from '../folio/out';
+import { newTestType } from 'folio';
 import type { Page } from '../../index';
 import type { ServerTestArgs } from './serverTest';
-export { expect } from '../folio/out';
+export { expect } from 'folio';
 
 export type CommonTestArgs = {
   mode: 'default' | 'driver' | 'service';

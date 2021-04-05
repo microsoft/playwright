@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Env, TestInfo } from '../folio/out';
+import type { Env, TestInfo } from 'folio';
 import { PlaywrightEnv } from './browserEnv';
 import * as path from 'path';
 import { ElectronTestArgs } from './electronTest';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Env, WorkerInfo, TestInfo } from '../folio/out';
+import type { Env, WorkerInfo, TestInfo } from 'folio';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions } from '../../index';
 import { installCoverageHooks } from '../../test/coverage';
 import { start } from '../../lib/outofprocess';

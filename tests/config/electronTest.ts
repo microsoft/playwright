@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { newTestType } from '../folio/out';
+import { newTestType } from 'folio';
 import { ElectronApplication, Page } from '../../index';
 import type { CommonTestArgs } from './pageTest';
 import type { ServerTestArgs } from './serverTest';
-export { expect } from '../folio/out';
+export { expect } from 'folio';
 
 export type ElectronTestArgs = CommonTestArgs & {
   electronApp: ElectronApplication;

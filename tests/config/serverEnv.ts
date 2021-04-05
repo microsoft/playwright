@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { WorkerInfo, TestInfo, Env } from '../folio/out';
+import type { WorkerInfo, TestInfo, Env } from 'folio';
 import { TestServer } from '../../utils/testserver';
 import * as path from 'path';
 import socks from 'socksv5';
