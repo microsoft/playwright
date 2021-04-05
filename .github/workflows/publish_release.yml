@@ -67,10 +67,10 @@ jobs:
         # GITHUB_REF has a form of `refs/tags/v1.3.0`.
         # TAG_NAME would be `v1.3.0`
         TAG_NAME=${GITHUB_REF#refs/tags/}
-        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:latest
         ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:bionic
-        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:${TAG_NAME}
         ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:${TAG_NAME}-bionic
 
+        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:latest
         ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:focal
+        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:${TAG_NAME}
         ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:${TAG_NAME}-focal
