@@ -19,6 +19,12 @@ This image is published on [Docker Hub](https://hub.docker.com/_/microsoft-playw
 docker pull mcr.microsoft.com/playwright:focal
 ```
 
+or pinned to a specific Playwright version (recommended). Replace 1.9.0 with your Playwright version:
+
+```sh
+docker pull mcr.microsoft.com/playwright:v1.9.0-focal
+```
+
 ### Run the image
 
 By default, the Docker image will use the `root` user to run the browsers. This will disable the Chromium sandbox which is not available with root. If you run trusted code (e.g. End-to-end tests) and want to avoid the hassle of managing separate user then the root user may be fine. For web scraping or crawling, we recommend to create a separate user inside the Docker container and use the seccomp profile.
@@ -28,7 +34,7 @@ By default, the Docker image will use the `root` user to run the browsers. This 
 On trusted websites, you can avoid creating a separate user and use root for it since you trust the code which will run on the browsers.
 
 ```
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright:bionic /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright:focal /bin/bash
 ```
 
 #### Crawling and scraping
@@ -36,7 +42,7 @@ docker run -it --rm --ipc=host mcr.microsoft.com/playwright:bionic /bin/bash
 On untrusted websites, it's recommended to use a separate user for launching the browsers in combination with the seccomp profile. Inside the container or if you are using the Docker image as a base image you have to use `adduser` for it.
 
 ```
-$ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:bionic /bin/bash
+$ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:focal /bin/bash
 ```
 
 [`seccomp_profile.json`](https://github.com/microsoft/playwright/blob/master/utils/docker/seccomp_profile.json) is needed to run Chromium with sandbox. This is a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b04cf6e00ed3fc27e81fc3d94e7eda70af3/profiles/seccomp/default.json) with extra user namespace cloning permissions:
@@ -89,10 +95,16 @@ $ docker run --rm -it playwright:localbuild /bin/bash
 
 ### Push
 
-Docker images are published automatically by GitHub Actions. We currently publish the following
-images:
+Docker images are published automatically by GitHub Actions. We currently publish the following images. `1.9.0` in this case is an example:
+
 - `mcr.microsoft.com/playwright:next` - tip-of-tree image version.
+- `mcr.microsoft.com/playwright:next-focal` - tip-of-tree image version.
+- `mcr.microsoft.com/playwright:next-bionic` - tip-of-tree image version.
 - `mcr.microsoft.com/playwright:bionic` - last Playwright release docker image.
+- `mcr.microsoft.com/playwright:focal` - last Playwright release docker image.
+- `mcr.microsoft.com/playwright:v1.9.0` - version specific Docker image (1.9.0 is an example)
+- `mcr.microsoft.com/playwright:v1.9.0-focal` - version specific Docker image (1.9.0 is an example)
+- `mcr.microsoft.com/playwright:v1.9.0-bionic` - version specific Docker image (1.9.0 is an example)
 - `mcr.microsoft.com/playwright:sha-XXXXXXX` - docker image for every commit that changed
   docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
 

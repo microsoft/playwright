@@ -33,8 +33,8 @@ jobs:
     - run: ./utils/docker/build.sh focal playwright:localbuild-focal
     - name: tag & publish
       run: |
-        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:next
         ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:next-bionic
-        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
+        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:next
+        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
         ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:next-focal
 
