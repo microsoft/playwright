@@ -15,14 +15,11 @@
  * limitations under the License.
  */
 
-import { test as it } from './config/browserTest';
+import { test as it } from './config/contextTest';
 
-it('should load svg favicon with prefer-color-scheme', async ({contextFactory, server, browserName, browserChannel, headful, asset}) => {
+it('should load svg favicon with prefer-color-scheme', async ({page, server, browserName, browserChannel, headful, asset}) => {
   it.skip(!headful && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(headful && browserName === 'webkit' && !browserChannel, 'playwright headful webkit does not have a favicon feature');
-
-  const context = await contextFactory();
-  const page = await context.newPage();
 
   // Browsers aggresively cache favicons, so force bust with the
   // `d` parameter to make iterating on this test more predictable and isolated.
@@ -59,6 +56,4 @@ it('should load svg favicon with prefer-color-scheme', async ({contextFactory, s
   await page.waitForTimeout(500);
   // Text still being around ensures we haven't actually lost our browser to a crash.
   await page.waitForSelector('text=favicons');
-
-  await page.close();
 });

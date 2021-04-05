@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/browserTest';
+import { test as it, expect } from './config/contextTest';
 
 function getPermission(page, name) {
   return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);
@@ -26,91 +26,64 @@ it.describe('permissions', () => {
     it.skip(browserName === 'webkit', 'Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)');
   });
 
-  it('should be prompt by default', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should be prompt by default', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
-    await context.close();
   });
 
-  it('should deny permission when not listed', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should deny permission when not listed', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions([], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('denied');
-    await context.close();
   });
 
-  it('should fail when bad permission is given', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should fail when bad permission is given', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     let error: Error;
     await context.grantPermissions(['foo'], { origin: server.EMPTY_PAGE }).catch(e => error = e);
     expect(error.message).toContain('Unknown permission: foo');
-    await context.close();
   });
 
-  it('should grant geolocation permission when origin is listed', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should grant geolocation permission when origin is listed', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('granted');
-    await context.close();
   });
 
-  it('should prompt for geolocation permission when origin is not listed', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should prompt for geolocation permission when origin is not listed', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     await page.goto(server.EMPTY_PAGE.replace('localhost', '127.0.0.1'));
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
-    await context.close();
   });
 
-  it('should grant notifications permission when listed', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should grant notifications permission when listed', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['notifications'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'notifications')).toBe('granted');
-    await context.close();
   });
 
-  it('should accumulate when adding', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should accumulate when adding', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     await context.grantPermissions(['notifications']);
     expect(await getPermission(page, 'geolocation')).toBe('granted');
     expect(await getPermission(page, 'notifications')).toBe('granted');
-    await context.close();
   });
 
-  it('should clear permissions', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should clear permissions', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     await context.clearPermissions();
     await context.grantPermissions(['notifications']);
     expect(await getPermission(page, 'geolocation')).not.toBe('granted');
     expect(await getPermission(page, 'notifications')).toBe('granted');
-    await context.close();
   });
 
-  it('should grant permission when listed for all domains', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should grant permission when listed for all domains', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     expect(await getPermission(page, 'geolocation')).toBe('granted');
-    await context.close();
   });
 
   it('should grant permission when creating context', async ({server, browser}) => {
@@ -121,23 +94,18 @@ it.describe('permissions', () => {
     await context.close();
   });
 
-  it('should reset permissions', async ({contextFactory, server}) => {
-    const context = await contextFactory();
-    const page = await context.newPage();
+  it('should reset permissions', async ({page, context, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('granted');
     await context.clearPermissions();
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
-    await context.close();
   });
 
-  it('should trigger permission onchange', async ({contextFactory, server, browserName, headful}) => {
+  it('should trigger permission onchange', async ({page, context, server, browserName, headful}) => {
     it.fail(browserName === 'webkit');
     it.fail(browserName === 'chromium' && headful);
 
-    const context = await contextFactory();
-    const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
       window['events'] = [];
@@ -155,7 +123,6 @@ it.describe('permissions', () => {
     expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted']);
     await context.clearPermissions();
     expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
-    await context.close();
   });
 
   it('should isolate permissions between browser contexts', async ({server, browser}) => {
@@ -180,13 +147,11 @@ it.describe('permissions', () => {
     await context.close();
   });
 
-  it('should support clipboard read', async ({contextFactory, server, browserName, headful}) => {
+  it('should support clipboard read', async ({page, context, server, browserName, headful}) => {
     it.fail(browserName === 'webkit');
     it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
     it.fixme(browserName === 'chromium' && headful);
 
-    const context = await contextFactory();
-    const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');
     let error;
@@ -195,6 +160,5 @@ it.describe('permissions', () => {
     await context.grantPermissions(['clipboard-read']);
     expect(await getPermission(page, 'clipboard-read')).toBe('granted');
     await page.evaluate(() => navigator.clipboard.readText());
-    await context.close();
   });
 });

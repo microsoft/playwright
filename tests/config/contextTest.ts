@@ -15,16 +15,14 @@
  */
 
 import { newTestType } from 'folio';
-import type { Browser, BrowserContextOptions, BrowserContext } from '../../index';
-import type { PlaywrightTestArgs } from './playwrightTest';
+import type { BrowserContext, Page } from '../../index';
+import type { BrowserTestArgs } from './browserTest';
 import type { ServerTestArgs } from './serverTest';
 export { expect } from 'folio';
 
-export type BrowserTestArgs = PlaywrightTestArgs & {
-  browser: Browser;
-  contextOptions: BrowserContextOptions;
-  contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
+// Context test guarantees an isolated context.
+export type ContextTestArgs = BrowserTestArgs & {
+  context: BrowserContext;
+  page: Page;
 };
-
-export const test = newTestType<BrowserTestArgs & ServerTestArgs>();
-export const slowTest = newTestType<BrowserTestArgs & ServerTestArgs>();
+export const test = newTestType<ContextTestArgs & ServerTestArgs>();

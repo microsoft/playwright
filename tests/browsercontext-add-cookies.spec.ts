@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { contextTest as it, expect } from './config/browserTest';
+import { test as it, expect } from './config/contextTest';
 import { slowTest as playwrightTest } from './config/playwrightTest';
 
 it('should work', async ({context, page, server}) => {

@@ -17,7 +17,8 @@
 import { setConfig, Config } from 'folio';
 import * as path from 'path';
 import { test as playwrightTest, slowTest as playwrightSlowTest } from './playwrightTest';
-import { test as browserTest, contextTest, proxyTest, slowTest as browserSlowTest } from './browserTest';
+import { test as browserTest, slowTest as browserSlowTest } from './browserTest';
+import { test as contextTest } from './contextTest';
 import { test as pageTest } from './pageTest';
 import { test as electronTest } from './electronTest';
 import { test as cliTest } from './cliTest';
@@ -67,10 +68,7 @@ for (const browserName of browsers) {
   playwrightSlowTest.runWith(browserName, serverEnv, new PlaywrightEnv(browserName, options), { timeout: config.timeout * 3 });
   browserTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, options), {});
   browserSlowTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, options), { timeout: config.timeout * 3 });
-  // TODO: perhaps export proxyTest from the test file?
-  proxyTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, { ...options, proxy: { server: 'per-context' } }), {});
   pageTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
-  // TODO: get rid of contextTest if there isn't too many of them.
   contextTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
   if (mode !== 'service')
     cliTest.runWith(browserName, serverEnv, new CLIEnv(browserName, options), {});

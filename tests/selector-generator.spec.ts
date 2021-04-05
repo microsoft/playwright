@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { contextTest as it, expect } from './config/browserTest';
+import { test as it, expect } from './config/contextTest';
 import type { Page, Frame } from '../index';
 
 async function generate(pageOrFrame: Page | Frame, target: string): Promise<string> {
