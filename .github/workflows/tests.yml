@@ -14,7 +14,6 @@ env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
   FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
-  FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
 
 jobs:
   test_linux:
@@ -39,7 +38,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- ${{ matrix.browser }} --reporter=dot,json"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- --tag=${{ matrix.browser }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
@@ -65,7 +64,7 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
-    - run: npm run test -- ${{ matrix.browser }} --reporter=dot,json
+    - run: npm run test -- --tag=${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1
@@ -92,7 +91,7 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps
-    - run: npm run test -- ${{ matrix.browser }} --reporter=dot,json
+    - run: npm run test -- --tag=${{ matrix.browser }}
       shell: bash
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
@@ -143,7 +142,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- ${{ matrix.browser }} --reporter=dot,json"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- --tag=${{ matrix.browser }}"
       if: ${{ always() }}
       env:
         HEADFUL: 1
@@ -176,7 +175,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- chromium --reporter=dot,json"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run ctest"
       env:
         PWMODE: "${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -208,7 +207,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- ${{ matrix.browser }} --reporter=dot,json"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- --tag=${{ matrix.browser }}"
       env:
         PWVIDEO: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -241,7 +240,7 @@ jobs:
     - name: Start Android Emulator
       run: utils/avd_start.sh
     - name: Run tests
-      run: npm run atest -- --reporter=dot,json --shard=${{ matrix.shard }}/2
+      run: npm run atest -- --shard=${{ matrix.shard }}/2
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1
@@ -273,7 +272,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- chromium --reporter=dot,json"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run ctest"
       env:
         PW_CHROMIUM_CHANNEL: "chrome"
     - uses: actions/upload-artifact@v1
@@ -299,7 +298,7 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
-    - run: npm run test -- chromium --reporter=dot,json
+    - run: npm run ctest
       shell: bash
       env:
         PW_CHROMIUM_CHANNEL: "chrome"
@@ -323,7 +322,7 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
-    - run: npm run test -- chromium --reporter=dot,json
+    - run: npm run ctest
       env:
         PW_CHROMIUM_CHANNEL: "chrome"
     - uses: actions/upload-artifact@v1
@@ -349,7 +348,7 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
-    - run: npm run test -- chromium --reporter=dot,json
+    - run: npm run ctest
       shell: bash
       env:
         PW_CHROMIUM_CHANNEL: "msedge"

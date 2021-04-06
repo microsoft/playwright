@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { setConfig, Config } from 'folio';
+import * as folio from 'folio';
 import * as path from 'path';
 import { test as playwrightTest, slowTest as playwrightSlowTest } from './playwrightTest';
 import { test as browserTest, slowTest as browserSlowTest } from './browserTest';
@@ -27,7 +27,7 @@ import { ServerEnv } from './serverEnv';
 import { ElectronEnv } from './electronEnv';
 import { CLIEnv } from './cliEnv';
 
-const config: Config = {
+const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
   timeout: process.env.PWVIDEO ? 60000 : 30000,
   globalTimeout: 5400000,
@@ -37,7 +37,14 @@ if (process.env.CI) {
   config.forbidOnly = true;
   config.retries = 3;
 }
-setConfig(config);
+folio.setConfig(config);
+
+if (process.env.CI) {
+  folio.setReporters([
+    new folio.reporters.dot(),
+    new folio.reporters.json({ outputFile: path.join(__dirname, '..', 'test-results', 'report.json') }),
+  ]);
+}
 
 const getExecutablePath = (browserName: BrowserName) => {
   if (browserName === 'chromium' && process.env.CRPATH)
@@ -64,14 +71,14 @@ for (const browserName of browsers) {
     channel: process.env.PW_CHROMIUM_CHANNEL as any,
     video: !!process.env.PWVIDEO,
   };
-  playwrightTest.runWith(browserName, serverEnv, new PlaywrightEnv(browserName, options), {});
-  playwrightSlowTest.runWith(browserName, serverEnv, new PlaywrightEnv(browserName, options), { timeout: config.timeout * 3 });
-  browserTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, options), {});
-  browserSlowTest.runWith(browserName, serverEnv, new BrowserEnv(browserName, options), { timeout: config.timeout * 3 });
-  pageTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
-  contextTest.runWith(browserName, serverEnv, new PageEnv(browserName, options), {});
+  playwrightTest.runWith(folio.merge(serverEnv, new PlaywrightEnv(browserName, options)), { tag: browserName });
+  playwrightSlowTest.runWith(folio.merge(serverEnv, new PlaywrightEnv(browserName, options)), { timeout: config.timeout * 3, tag: browserName });
+  browserTest.runWith(folio.merge(serverEnv, new BrowserEnv(browserName, options)), { tag: browserName });
+  browserSlowTest.runWith(folio.merge(serverEnv, new BrowserEnv(browserName, options)), { timeout: config.timeout * 3, tag: browserName });
+  pageTest.runWith(folio.merge(serverEnv, new PageEnv(browserName, options)), { tag: browserName });
+  contextTest.runWith(folio.merge(serverEnv, new PageEnv(browserName, options)), { tag: browserName });
   if (mode !== 'service')
-    cliTest.runWith(browserName, serverEnv, new CLIEnv(browserName, options), {});
+    cliTest.runWith(folio.merge(serverEnv, new CLIEnv(browserName, options)), { tag: browserName });
   if (browserName === 'chromium')
-    electronTest.runWith(browserName, serverEnv, new ElectronEnv({ mode }));
+    electronTest.runWith(folio.merge(serverEnv, new ElectronEnv({ mode })), { tag: browserName });
 }
