@@ -235,7 +235,7 @@ export class BrowserEnv extends PlaywrightEnv implements Env<BrowserTestArgs> {
   async beforeAll(workerInfo: WorkerInfo) {
     await super.beforeAll(workerInfo);
     this._browser = await this._browserType.launch(this._browserOptions);
-    this._browserVersion = await this._browser.version();
+    this._browserVersion = this._browser.version();
   }
 
   async beforeEach(testInfo: TestInfo) {

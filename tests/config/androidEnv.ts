@@ -37,7 +37,6 @@ export class AndroidEnv implements Env<AndroidTestArgs> {
         .find(line => line.includes('versionName='))
         .trim()
         .split('=')[1];
-    console.log(this._browserVersion);
     this._device.setDefaultTimeout(90000);
   }
 
