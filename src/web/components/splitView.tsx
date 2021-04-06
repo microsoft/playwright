@@ -19,7 +19,8 @@ import * as React from 'react';
 
 export interface SplitViewProps {
   sidebarSize: number,
-  sidebarHidden?: boolean
+  sidebarHidden?: boolean,
+  sidebarIsFirst?: boolean,
   orientation?: 'vertical' | 'horizontal',
 }
 
@@ -27,7 +28,8 @@ const kMinSidebarSize = 50;
 
 export const SplitView: React.FC<SplitViewProps> = ({
   sidebarSize,
-  sidebarHidden,
+  sidebarHidden = false,
+  sidebarIsFirst = false,
   orientation = 'vertical',
   children
 }) => {
@@ -36,10 +38,20 @@ export const SplitView: React.FC<SplitViewProps> = ({
 
   const childrenArray = React.Children.toArray(children);
   document.body.style.userSelect = resizing ? 'none' : 'inherit';
-  const resizerStyle = orientation === 'vertical' ?
-    {bottom: resizing ? 0 : size - 4, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 } :
-    {right: resizing ? 0 : size - 4, left: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
-  return <div className={'split-view ' + orientation}>
+  let resizerStyle: any = {};
+  if (orientation === 'vertical') {
+    if (sidebarIsFirst)
+      resizerStyle = { top: resizing ? 0 : size - 4, bottom: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
+    else
+      resizerStyle = { bottom: resizing ? 0 : size - 4, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
+} else {
+    if (sidebarIsFirst)
+      resizerStyle = { left: resizing ? 0 : size - 4, right: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
+    else
+      resizerStyle = { right: resizing ? 0 : size - 4, left: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
+  }
+
+  return <div className={'split-view ' + orientation + (sidebarIsFirst ? ' sidebar-first' : '') }>
     <div className='split-view-main'>{childrenArray[0]}</div>
     { !sidebarHidden && <div style={{flexBasis: size}} className='split-view-sidebar'>{childrenArray[1]}</div> }
     { !sidebarHidden && <div
@@ -48,10 +60,13 @@ export const SplitView: React.FC<SplitViewProps> = ({
       onMouseDown={event => setResizing({ offset: orientation === 'vertical' ? event.clientY : event.clientX, size })}
       onMouseUp={() => setResizing(null)}
       onMouseMove={event => {
-        if (!event.buttons)
+        if (!event.buttons) {
           setResizing(null);
-        else if (resizing)
-          setSize(Math.max(kMinSidebarSize, resizing.size - (orientation === 'vertical' ? event.clientY : event.clientX) + resizing.offset));
+        } else if (resizing) {
+          const clientOffset = orientation === 'vertical' ? event.clientY : event.clientX;
+          const resizingPosition = sidebarIsFirst ? clientOffset : resizing.size - clientOffset + resizing.offset;
+          setSize(Math.max(kMinSidebarSize, resizingPosition));
+        }
       }}
     ></div> }
   </div>;

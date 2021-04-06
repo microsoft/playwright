@@ -72,19 +72,7 @@ export const Workbench: React.FunctionComponent<{
         onTimeSelected={time => setSelectedTime(time)}
       />
     </div>
-    <div className='hbox'>
-      <div style={{ display: 'flex', flex: 'none', overflow: 'auto', borderRight: '1px solid #ddd' }}>
-        <ActionList
-          actions={actions}
-          selectedAction={selectedAction}
-          highlightedAction={highlightedAction}
-          onSelected={action => {
-            setSelectedAction(action);
-            setSelectedTime(undefined);
-          }}
-          onHighlighted={action => setHighlightedAction(action)}
-        />
-      </div>
+    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={250}>
         <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} selection={snapshotSelection} boundaries={boundaries} />
         <TabbedPane tabs={[
@@ -92,8 +80,17 @@ export const Workbench: React.FunctionComponent<{
           { id: 'source', title: 'Source', render: () => <SourceTab actionEntry={selectedAction} /> },
           { id: 'network', title: 'Network', render: () => <NetworkTab actionEntry={selectedAction} /> },
         ]}/>
-
       </SplitView>
-    </div>
+      <ActionList
+        actions={actions}
+        selectedAction={selectedAction}
+        highlightedAction={highlightedAction}
+        onSelected={action => {
+          setSelectedAction(action);
+          setSelectedTime(undefined);
+        }}
+        onHighlighted={action => setHighlightedAction(action)}
+      />
+    </SplitView>
   </div>;
 };
