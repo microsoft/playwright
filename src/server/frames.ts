@@ -26,7 +26,7 @@ import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
 import { assert, createGuid, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
-import { CallMetadata, SdkObject } from './instrumentation';
+import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
 
 type ContextData = {
@@ -1079,6 +1079,18 @@ export class Frame extends SdkObject {
     return controller.run(
         progress => this._scheduleRerunnableHandleTask(progress, 'main', task),
         this._page._timeoutSettings.timeout(options));
+  }
+
+  async waitForFunctionValue<R>(progress: Progress, pageFunction: js.Func1<any, R>) {
+    const expression = `() => {
+      const result = (${pageFunction})();
+      if (!result)
+        return result;
+      return JSON.stringify(result);
+
+    }`;
+    const handle = await this._page.mainFrame()._waitForFunctionExpression(internalCallMetadata(), expression, true, undefined, { timeout: progress.timeUntilDeadline() });
+    return JSON.parse(handle.rawValue()) as R;
   }
 
   async title(): Promise<string> {

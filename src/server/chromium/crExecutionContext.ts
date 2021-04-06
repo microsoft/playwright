@@ -69,10 +69,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return returnByValue ? parseEvaluationResultValue(remoteObject.value) : utilityScript._context.createHandle(remoteObject);
   }
 
-  async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
-    const objectId = handle._objectId;
-    if (!objectId)
-      return new Map();
+  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
     const response = await this._client.send('Runtime.getProperties', {
       objectId,
       ownProperties: true
@@ -81,7 +78,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     for (const property of response.result) {
       if (!property.enumerable || !property.value)
         continue;
-      result.set(property.name, handle._context.createHandle(property.value));
+      result.set(property.name, context.createHandle(property.value));
     }
     return result;
   }
@@ -90,10 +87,8 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return new js.JSHandle(context, remoteObject.subtype || remoteObject.type, remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
-  async releaseHandle(handle: js.JSHandle): Promise<void> {
-    if (!handle._objectId)
-      return;
-    await releaseObject(this._client, handle._objectId);
+  async releaseHandle(objectId: js.ObjectId): Promise<void> {
+    await releaseObject(this._client, objectId);
   }
 }
 
