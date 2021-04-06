@@ -450,8 +450,6 @@ function renderMethod(member, parent, output, name) {
       output(`${type} ${name} { get; }`);
       return;
     }
-    if (!/Is[A-Z]/.test(name))
-      name = `Get${name}`;
   } else if (member.args.size == 1
     && type === 'void'
     && name.startsWith('Set')
