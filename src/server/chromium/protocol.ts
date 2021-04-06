@@ -854,6 +854,7 @@ CORS RFC1918 enforcement.
       corsErrorStatus: Network.CorsErrorStatus;
       isWarning: boolean;
       request: AffectedRequest;
+      initiatorOrigin?: string;
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
     }
@@ -7546,6 +7547,10 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
        */
       errors?: SignedExchangeError[];
     }
+    /**
+     * List of content encodings supported by the backend.
+     */
+    export type ContentEncoding = "deflate"|"gzip"|"br";
     export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate";
     export type IPAddressSpace = "Local"|"Private"|"Public"|"Unknown";
     export interface ClientSecurityState {
@@ -8130,6 +8135,24 @@ preemptively (e.g. a cache hit).
       issuedTokenCount?: number;
     }
     
+    /**
+     * Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
+     */
+    export type setAcceptedEncodingsParameters = {
+      /**
+       * List of accepted content encodings.
+       */
+      encodings: ContentEncoding[];
+    }
+    export type setAcceptedEncodingsReturnValue = {
+    }
+    /**
+     * Clears accepted encodings set by setAcceptedEncodings
+     */
+    export type clearAcceptedEncodingsOverrideParameters = {
+    }
+    export type clearAcceptedEncodingsOverrideReturnValue = {
+    }
     /**
      * Tells whether clearing browser cache is supported.
      */
@@ -16444,6 +16467,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Memory.getAllTimeSamplingProfile": Memory.getAllTimeSamplingProfileParameters;
     "Memory.getBrowserSamplingProfile": Memory.getBrowserSamplingProfileParameters;
     "Memory.getSamplingProfile": Memory.getSamplingProfileParameters;
+    "Network.setAcceptedEncodings": Network.setAcceptedEncodingsParameters;
+    "Network.clearAcceptedEncodingsOverride": Network.clearAcceptedEncodingsOverrideParameters;
     "Network.canClearBrowserCache": Network.canClearBrowserCacheParameters;
     "Network.canClearBrowserCookies": Network.canClearBrowserCookiesParameters;
     "Network.canEmulateNetworkConditions": Network.canEmulateNetworkConditionsParameters;
@@ -16956,6 +16981,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Memory.getAllTimeSamplingProfile": Memory.getAllTimeSamplingProfileReturnValue;
     "Memory.getBrowserSamplingProfile": Memory.getBrowserSamplingProfileReturnValue;
     "Memory.getSamplingProfile": Memory.getSamplingProfileReturnValue;
+    "Network.setAcceptedEncodings": Network.setAcceptedEncodingsReturnValue;
+    "Network.clearAcceptedEncodingsOverride": Network.clearAcceptedEncodingsOverrideReturnValue;
     "Network.canClearBrowserCache": Network.canClearBrowserCacheReturnValue;
     "Network.canClearBrowserCookies": Network.canClearBrowserCookiesReturnValue;
     "Network.canEmulateNetworkConditions": Network.canEmulateNetworkConditionsReturnValue;
