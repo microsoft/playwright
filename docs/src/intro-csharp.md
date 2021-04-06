@@ -48,8 +48,7 @@ Command Line Interface [CLI](./cli.md) can be used to record user interactions a
 
 ## System requirements
 
-Playwright requires Python version 3.7 or above. The browser binaries for Chromium,
-Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
+The browser binaries for Chromium, Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
 
 * **Windows**: Works with Windows and Windows Subsystem for Linux (WSL).
 * **macOS**: Requires 10.14 or above.
