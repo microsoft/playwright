@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { setConfig, Config } from 'folio';
+import * as folio from 'folio';
 import * as path from 'path';
 import { test as pageTest } from './pageTest';
 import { test as androidTest } from './androidTest';
 import { ServerEnv } from './serverEnv';
 import { AndroidEnv, AndroidPageEnv } from './androidEnv';
 
-const config: Config = {
+const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
   timeout: 120000,
   globalTimeout: 7200000,
@@ -31,8 +31,15 @@ if (process.env.CI) {
   config.forbidOnly = true;
   config.retries = 1;  // Multiple retries are too slow on Android.
 }
-setConfig(config);
+folio.setConfig(config);
+
+if (process.env.CI) {
+  folio.setReporters([
+    new folio.reporters.dot(),
+    new folio.reporters.json({ outputFile: path.join(__dirname, '..', 'test-results', 'report.json') }),
+  ]);
+}
 
 const serverEnv = new ServerEnv();
-pageTest.runWith('android', serverEnv, new AndroidPageEnv(), {});
-androidTest.runWith('android', serverEnv, new AndroidEnv(), {});
+pageTest.runWith(folio.merge(serverEnv, new AndroidPageEnv()), { tag: 'android' });
+androidTest.runWith(folio.merge(serverEnv, new AndroidEnv()), { tag: 'android' });
