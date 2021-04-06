@@ -102,7 +102,7 @@ Maximum time in milliseconds to wait for the connection to be established. Defau
 `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## async method: BrowserType.connectOverCDP
-* langs: js
+* langs: java, js
 - returns: <[Browser]>
 
 This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
@@ -114,6 +114,7 @@ Connecting over the Chrome DevTools Protocol is only supported for Chromium-base
 :::
 
 ### param: BrowserType.connectOverCDP.params
+* langs: js
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A CDP websocket endpoint to connect to.
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you

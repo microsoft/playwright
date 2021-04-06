@@ -88,6 +88,20 @@ playwright.close();
 
 ### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
 
+### option: BrowserType.connectOverCDP.slowMo
+* langs: java
+- `slowMo` <[float]>
+
+Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
+can see what is going on. Defaults to 0.
+
+### option: BrowserType.connectOverCDP.timeout
+* langs: java
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the connection to be established. Defaults to
+`30000` (30 seconds). Pass `0` to disable timeout.
+
 ### option: BrowserType.launch.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
 ### option: BrowserType.launchPersistentContext.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
 ### option: BrowserType.launch.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
