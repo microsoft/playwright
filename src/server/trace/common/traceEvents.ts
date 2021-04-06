@@ -47,6 +47,15 @@ export type PageDestroyedTraceEvent = {
   pageId: string,
 };
 
+export type ScreencastFrameTraceEvent = {
+  timestamp: number,
+  type: 'page-screencast-frame',
+  contextId: string,
+  pageId: string,
+  pageTimestamp: number,
+  sha1: string
+};
+
 export type ActionTraceEvent = {
   timestamp: number,
   type: 'action',
@@ -93,6 +102,7 @@ export type TraceEvent =
     ContextDestroyedTraceEvent |
     PageCreatedTraceEvent |
     PageDestroyedTraceEvent |
+    ScreencastFrameTraceEvent |
     ActionTraceEvent |
     DialogOpenedEvent |
     DialogClosedEvent |

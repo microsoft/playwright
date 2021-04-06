@@ -21,6 +21,7 @@ import { Boundaries } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import { msToString } from '../../uiUtils';
+import { FilmStrip } from './filmStrip';
 
 type TimelineBar = {
   entry?: ActionEntry;
@@ -40,8 +41,7 @@ export const Timeline: React.FunctionComponent<{
   selectedAction: ActionEntry | undefined,
   highlightedAction: ActionEntry | undefined,
   onSelected: (action: ActionEntry) => void,
-  onTimeSelected: (time: number | undefined) => void,
-}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onTimeSelected }) => {
+}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
   const [hoveredBarIndex, setHoveredBarIndex] = React.useState<number | undefined>();
@@ -143,12 +143,10 @@ export const Timeline: React.FunctionComponent<{
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
     setPreviewX(x);
-    onTimeSelected(positionToTime(measure.width, boundaries, x));
     setHoveredBarIndex(findHoveredBarIndex(x));
   };
   const onMouseLeave = () => {
     setPreviewX(undefined);
-    onTimeSelected(undefined);
   };
   const onClick = (event: React.MouseEvent) => {
     if (!ref.current)
@@ -194,6 +192,7 @@ export const Timeline: React.FunctionComponent<{
         ></div>;
       })
     }</div>
+    <FilmStrip context={context} boundaries={boundaries} previewX={previewX} />
     <div className='timeline-marker timeline-marker-hover' style={{
       display: (previewX !== undefined) ? 'block' : 'none',
       left: (previewX || 0) + 'px',

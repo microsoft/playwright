@@ -15,35 +15,28 @@
  */
 
 import { ActionEntry } from '../../../server/trace/viewer/traceModel';
-import { Boundaries, Size } from '../geometry';
+import { Size } from '../geometry';
 import './snapshotTab.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
-import { msToString } from '../../uiUtils';
 import type { Point } from '../../../common/types';
 
 export const SnapshotTab: React.FunctionComponent<{
   actionEntry: ActionEntry | undefined,
   snapshotSize: Size,
-  selection: { pageId: string, time: number } | undefined,
-  boundaries: Boundaries,
-}> = ({ actionEntry, snapshotSize, selection, boundaries }) => {
+}> = ({ actionEntry, snapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
   const snapshots = actionEntry ? (actionEntry.snapshots || []) : [];
-  const { pageId, time } = selection || { pageId: undefined, time: 0 };
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
   React.useEffect(() => {
     if (!iframeRef.current)
       return;
-
     let snapshotUri = undefined;
     let point: Point | undefined = undefined;
-    if (pageId) {
-      snapshotUri = `${pageId}?time=${time}`;
-    } else if (actionEntry) {
+    if (actionEntry) {
       const snapshot = snapshots[snapshotIndex];
       if (snapshot && snapshot.snapshotName) {
         snapshotUri = `${actionEntry.metadata.pageId}?name=${snapshot.snapshotName}`;
@@ -56,7 +49,7 @@ export const SnapshotTab: React.FunctionComponent<{
       (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
     } catch (e) {
     }
-  }, [actionEntry, snapshotIndex, pageId, time]);
+  }, [actionEntry, snapshotIndex]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   const scaledSize = {
@@ -64,11 +57,8 @@ export const SnapshotTab: React.FunctionComponent<{
     height: snapshotSize.height * scale,
   };
   return <div className='snapshot-tab'>
-    <div className='snapshot-controls'>{
-      selection && <div key='selectedTime' className='snapshot-toggle'>
-        {msToString(selection.time - boundaries.minimum)}
-      </div>
-    }{!selection && snapshots.map((snapshot, index) => {
+    <div className='snapshot-controls'>
+      {snapshots.map((snapshot, index) => {
         return <div
           key={snapshot.title}
           className={'snapshot-toggle' + (snapshotIndex === index ? ' toggled' : '')}

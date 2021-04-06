@@ -34,7 +34,6 @@ export const Workbench: React.FunctionComponent<{
   const [context, setContext] = React.useState(contexts[0]);
   const [selectedAction, setSelectedAction] = React.useState<ActionEntry | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionEntry | undefined>();
-  const [selectedTime, setSelectedTime] = React.useState<number | undefined>();
 
   const actions = React.useMemo(() => {
     const actions: ActionEntry[] = [];
@@ -45,7 +44,6 @@ export const Workbench: React.FunctionComponent<{
 
   const snapshotSize = context.created.viewportSize || { width: 1280, height: 720 };
   const boundaries = { minimum: context.startTime, maximum: context.endTime };
-  const snapshotSelection = context.pages.length && selectedTime !== undefined ? { pageId: context.pages[0].created.pageId, time: selectedTime } : undefined;
 
   return <div className='vbox workbench'>
     <div className='hbox header'>
@@ -58,7 +56,6 @@ export const Workbench: React.FunctionComponent<{
         onChange={context => {
           setContext(context);
           setSelectedAction(undefined);
-          setSelectedTime(undefined);
         }}
       />
     </div>
@@ -69,12 +66,11 @@ export const Workbench: React.FunctionComponent<{
         selectedAction={selectedAction}
         highlightedAction={highlightedAction}
         onSelected={action => setSelectedAction(action)}
-        onTimeSelected={time => setSelectedTime(time)}
       />
     </div>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={250}>
-        <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} selection={snapshotSelection} boundaries={boundaries} />
+        <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} />
         <TabbedPane tabs={[
           { id: 'logs', title: 'Log', render: () => <LogsTab actionEntry={selectedAction} /> },
           { id: 'source', title: 'Source', render: () => <SourceTab actionEntry={selectedAction} /> },
@@ -87,7 +83,6 @@ export const Workbench: React.FunctionComponent<{
         highlightedAction={highlightedAction}
         onSelected={action => {
           setSelectedAction(action);
-          setSelectedTime(undefined);
         }}
         onHighlighted={action => setHighlightedAction(action)}
       />

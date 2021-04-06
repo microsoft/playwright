@@ -46,12 +46,13 @@ export class PersistentSnapshotter extends EventEmitter implements SnapshotterDe
     this._snapshotter = new Snapshotter(context, this);
   }
 
-  async start(): Promise<void> {
+  async start(autoSnapshots: boolean): Promise<void> {
     await fsMkdirAsync(this._resourcesDir, {recursive: true}).catch(() => {});
     await fsAppendFileAsync(this._networkTrace, Buffer.from([]));
     await fsAppendFileAsync(this._snapshotTrace, Buffer.from([]));
     await this._snapshotter.initialize();
-    await this._snapshotter.setAutoSnapshotInterval(kSnapshotInterval);
+    if (autoSnapshots)
+      await this._snapshotter.setAutoSnapshotInterval(kSnapshotInterval);
   }
 
   async dispose() {

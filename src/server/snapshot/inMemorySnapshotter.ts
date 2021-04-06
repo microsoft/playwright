@@ -25,8 +25,6 @@ import { BaseSnapshotStorage } from './snapshotStorage';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { ElementHandle } from '../dom';
 
-const kSnapshotInterval = 25;
-
 export class InMemorySnapshotter extends BaseSnapshotStorage implements SnapshotterDelegate {
   private _blobs = new Map<string, Buffer>();
   private _server: HttpServer;
@@ -42,10 +40,6 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
   async initialize(): Promise<string> {
     await this._snapshotter.initialize();
     return await this._server.start();
-  }
-
-  async start(): Promise<void> {
-    await this._snapshotter.setAutoSnapshotInterval(kSnapshotInterval);
   }
 
   async dispose() {
@@ -68,7 +62,7 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     });
   }
 
-  async setAutoSnapshotInterval(interval: number): Promise<void> {
+  async setAutoSnapshotIntervalForTest(interval: number): Promise<void> {
     await this._snapshotter.setAutoSnapshotInterval(interval);
   }
 
