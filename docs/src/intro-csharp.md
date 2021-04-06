@@ -55,5 +55,5 @@ The browser binaries for Chromium, Firefox and WebKit work across the 3 platform
 * **Linux**: Depending on your Linux distribution, you might need to install additional
   dependencies to run the browsers.
   * Firefox requires Ubuntu 18.04+
-  * For Ubuntu 18.04, the additional dependencies are defined in [our Docker image](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.focal),
+  * For Ubuntu 20.04, the additional dependencies are defined in [our Docker image](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.focal),
     which is based on Ubuntu.
