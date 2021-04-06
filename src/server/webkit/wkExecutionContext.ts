@@ -118,10 +118,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
-    const objectId = handle._objectId;
-    if (!objectId)
-      return new Map();
+  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getProperties', {
       objectId,
       ownProperties: true
@@ -130,7 +127,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     for (const property of response.properties) {
       if (!property.enumerable || !property.value)
         continue;
-      result.set(property.name, handle._context.createHandle(property.value));
+      result.set(property.name, context.createHandle(property.value));
     }
     return result;
   }
@@ -140,10 +137,8 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
-  async releaseHandle(handle: js.JSHandle): Promise<void> {
-    if (!handle._objectId)
-      return;
-    await this._session.send('Runtime.releaseObject', {objectId: handle._objectId});
+  async releaseHandle(objectId: js.ObjectId): Promise<void> {
+    await this._session.send('Runtime.releaseObject', { objectId });
   }
 }
 

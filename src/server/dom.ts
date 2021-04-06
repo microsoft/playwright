@@ -51,7 +51,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return js.evaluate(this, true /* returnByValue */, pageFunction, arg);
   }
 
-  async evaluateHandle<Arg, R>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
+  async evaluateHandle<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<js.SmartHandle<R>> {
     return js.evaluate(this, false /* returnByValue */, pageFunction, arg);
   }
 

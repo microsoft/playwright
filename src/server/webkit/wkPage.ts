@@ -27,6 +27,7 @@ import { helper, RegisteredListener } from '../helper';
 import { JSHandle } from '../javascript';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate } from '../page';
+import { Progress } from '../progress';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { getAccessibilityTree } from './wkAccessibility';
@@ -750,7 +751,7 @@ export class WKPage implements PageDelegate {
     this._recordingVideoFile = null;
   }
 
-  async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
     const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport' });
     const prefix = 'data:image/png;base64,';

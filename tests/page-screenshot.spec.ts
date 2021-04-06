@@ -368,4 +368,21 @@ browserTest.describe('page screenshot', () => {
     expect(pixel(0, 8339).r).toBeLessThan(128);
     expect(pixel(0, 8339).b).toBeGreaterThan(128);
   });
+
+  it('should take fullPage screenshots during navigation', async ({page, server}) => {
+    await page.setViewportSize({width: 500, height: 500});
+    await page.goto(server.PREFIX + '/grid.html');
+    const reloadSeveralTimes = async () => {
+      for (let i = 0; i < 5; ++i)
+        await page.reload();
+    };
+    const screenshotSeveralTimes = async () => {
+      for (let i = 0; i < 5; ++i)
+        await page.screenshot({ fullPage: true });
+    };
+    await Promise.all([
+      reloadSeveralTimes(),
+      screenshotSeveralTimes()
+    ]);
+  });
 });

@@ -21,7 +21,6 @@ import * as frames from '../frames';
 import { helper, RegisteredListener } from '../helper';
 import { assert } from '../../utils/utils';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
-import { kScreenshotDuringNavigationError } from '../screenshotter';
 import * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
 import { FFBrowserContext } from './ffBrowser';
@@ -30,7 +29,7 @@ import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { Progress } from '../progress';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -394,10 +393,9 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     if (!documentRect) {
-      const context = await this._page.mainFrame()._utilityContext();
-      const scrollOffset = await context.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+      const scrollOffset = await this._page.mainFrame().waitForFunctionValue(progress, () => ({ x: window.scrollX, y: window.scrollY }));
       documentRect = {
         x: viewportRect!.x + scrollOffset.x,
         y: viewportRect!.y + scrollOffset.y,
@@ -407,13 +405,10 @@ export class FFPage implements PageDelegate {
     }
     // TODO: remove fullPage option from Page.screenshot.
     // TODO: remove Page.getBoundingBox method.
+    progress.throwIfAborted();
     const { data } = await this._session.send('Page.screenshot', {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
       clip: documentRect,
-    }).catch(e => {
-      if (e instanceof Error && e.message.includes('document.documentElement is null'))
-        rewriteErrorMessage(e, kScreenshotDuringNavigationError);
-      throw e;
     });
     return Buffer.from(data, 'base64');
   }
