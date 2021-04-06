@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/browserTest';
+import { test as it, expect } from './config/contextTest';
 
 it('should close browser with beforeunload page', async ({server, browserType, browserOptions }) => {
   const browser = await browserType.launch(browserOptions);
@@ -27,18 +27,15 @@ it('should close browser with beforeunload page', async ({server, browserType, b
   await browser.close();
 });
 
-it('should close browsercontext with beforeunload page', async ({server, contextFactory }) => {
-  const browserContext = await contextFactory();
-  const page = await browserContext.newPage();
+it('should close browsercontext with beforeunload page', async ({server, page, context }) => {
   await page.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
   // fire.
   await page.click('body');
-  await browserContext.close();
+  await context.close();
 });
 
-it('should close page with beforeunload listener', async ({contextFactory, server}) => {
-  const context = await contextFactory();
+it('should close page with beforeunload listener', async ({context, server}) => {
   const newPage = await context.newPage();
   await newPage.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
@@ -47,8 +44,7 @@ it('should close page with beforeunload listener', async ({contextFactory, serve
   await newPage.close();
 });
 
-it('should run beforeunload if asked for', async ({contextFactory, server, isChromium, isWebKit}) => {
-  const context = await contextFactory();
+it('should run beforeunload if asked for', async ({context, server, isChromium, isWebKit}) => {
   const newPage = await context.newPage();
   await newPage.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
@@ -72,9 +68,7 @@ it('should run beforeunload if asked for', async ({contextFactory, server, isChr
   ]);
 });
 
-it('should access page after beforeunload', async ({contextFactory, server}) => {
-  const context = await contextFactory();
-  const page = await context.newPage();
+it('should access page after beforeunload', async ({page, server}) => {
   await page.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
   // fire.

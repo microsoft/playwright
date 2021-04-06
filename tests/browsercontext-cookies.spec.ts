@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { contextTest as it, expect } from './config/browserTest';
+import { test as it, expect } from './config/contextTest';
 
 it('should return no cookies in pristine browser context', async ({context, page, server}) => {
   expect(await context.cookies()).toEqual([]);

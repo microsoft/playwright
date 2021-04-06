@@ -16,20 +16,16 @@
 
 import os from 'os';
 import url from 'url';
-import { test as it, expect } from './config/browserTest';
+import { test as it, expect } from './config/contextTest';
 
-it('Web Assembly should work', async function({contextFactory, server, browserName, platform}) {
+it('Web Assembly should work', async function({page, server, browserName, platform}) {
   it.fail(browserName === 'webkit' && platform === 'win32');
 
-  const context = await contextFactory();
-  const page = await context.newPage();
   await page.goto(server.PREFIX + '/wasm/table2.html');
   expect(await page.evaluate('loadTable()')).toBe('42, 83');
 });
 
-it('WebSocket should work', async ({contextFactory, server}) => {
-  const context = await contextFactory();
-  const page = await context.newPage();
+it('WebSocket should work', async ({page, server}) => {
   const value = await page.evaluate(port => {
     let cb;
     const result = new Promise(f => cb = f);
@@ -41,7 +37,7 @@ it('WebSocket should work', async ({contextFactory, server}) => {
   expect(value).toBe('incoming');
 });
 
-it('should respect CSP', async ({contextFactory, server}) => {
+it('should respect CSP', async ({page, server}) => {
   server.setRoute('/empty.html', async (req, res) => {
     res.setHeader('Content-Security-Policy', `script-src 'unsafe-inline';`);
     res.end(`
@@ -51,21 +47,16 @@ it('should respect CSP', async ({contextFactory, server}) => {
       </script>`);
   });
 
-  const context = await contextFactory();
-  const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video', async ({contextFactory, asset, isWebKit, browserName, platform}) => {
+it('should play video', async ({page, asset, isWebKit, browserName, platform}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
   it.fixme(browserName === 'webkit' && platform !== 'darwin');
   it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) >= 20, 'Does not work on BigSur');
-
-  const context = await contextFactory();
-  const page = await context.newPage();
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
   const fileName = isWebKit ? 'video_mp4.html' : 'video.html';
@@ -77,11 +68,9 @@ it('should play video', async ({contextFactory, asset, isWebKit, browserName, pl
   await page.$eval('video', v => v.pause());
 });
 
-it('should support webgl', async ({contextFactory, browserName, headful}) => {
+it('should support webgl', async ({page, browserName, headful}) => {
   it.fixme(browserName === 'firefox' && !headful);
 
-  const context = await contextFactory();
-  const page = await context.newPage();
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
@@ -89,13 +78,11 @@ it('should support webgl', async ({contextFactory, browserName, headful}) => {
   expect(hasWebGL).toBe(true);
 });
 
-it('should support webgl 2', async ({contextFactory, browserName, headful}) => {
+it('should support webgl 2', async ({page, browserName, headful}) => {
   it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
   it.fixme(browserName === 'firefox' && !headful);
   it.fixme(browserName === 'chromium' && headful, 'chromium doesn\'t like webgl2 when running under xvfb');
 
-  const context = await contextFactory();
-  const page = await context.newPage();
   const hasWebGL2 = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl2');
