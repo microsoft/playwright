@@ -280,10 +280,7 @@ function renderMember(member, parent, out) {
         throw new Error(`No Event Type for ${name} in ${parent.name}`);
       if (member.spec)
         output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-      if (parent && (classNameMap.get(parent.name) === type))
-        output(`event EventHandler ${name};`); // event sender will be the type, so we're fine to ignore
-      else
-        output(`event EventHandler<${type}> ${name};`);
+      output(`event EventHandler<${type}> ${name};`);
     } else if (member.kind === 'property') {
       if (member.spec)
         output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
