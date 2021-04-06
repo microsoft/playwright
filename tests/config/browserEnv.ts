@@ -162,6 +162,18 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   async beforeEach(testInfo: TestInfo) {
     // Different screenshots per browser.
     testInfo.snapshotPathSegment = this._browserName;
+    testInfo.data = {
+      browserName: this._browserName,
+    };
+    const headful = !this._browserOptions.headless;
+    if (headful)
+      testInfo.data.headful = true;
+    if (this._options.mode !== 'default')
+      testInfo.data.mode = this._options.mode;
+    if (this._options.video)
+      testInfo.data.video = true;
+    if (this._options.trace)
+      testInfo.data.trace = true;
     return {
       playwright: this._playwright,
       browserName: this._browserName,
@@ -174,7 +186,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
       isWindows: os.platform() === 'win32',
       isMac: os.platform() === 'darwin',
       isLinux: os.platform() === 'linux',
-      headful: !this._browserOptions.headless,
+      headful,
       video: !!this._options.video,
       mode: this._options.mode,
       platform: os.platform() as ('win32' | 'darwin' | 'linux'),
