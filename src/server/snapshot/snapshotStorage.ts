@@ -38,6 +38,13 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
   }>();
   protected _contextResources: ContextResources = new Map();
 
+  clear() {
+    this._resources = [];
+    this._resourceMap.clear();
+    this._frameSnapshots.clear();
+    this._contextResources.clear();
+  }
+
   addResource(resource: ResourceSnapshot): void {
     this._resourceMap.set(resource.resourceId, resource);
     this._resources.push(resource);
@@ -91,10 +98,14 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
-  private _resourcesDir: any;
+  private _resourcesDir: string;
 
-  async load(tracePrefix: string, resourcesDir: string) {
+  constructor(resourcesDir: string) {
+    super();
     this._resourcesDir = resourcesDir;
+  }
+
+  async load(tracePrefix: string) {
     const networkTrace = await fsReadFileAsync(tracePrefix + '-network.trace', 'utf8');
     const resources = networkTrace.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as ResourceSnapshot[];
     resources.forEach(r => this.addResource(r));

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { createGuid } from '../../../utils/utils';
 import * as trace from '../common/traceEvents';
 import { ContextResources, ResourceSnapshot } from '../../snapshot/snapshotTypes';
 import { SnapshotStorage } from '../../snapshot/snapshotStorage';
@@ -48,7 +47,6 @@ export class TraceModel {
     switch (event.type) {
       case 'context-created': {
         this.contextEntries.set(event.contextId, {
-          name: event.debugName || createGuid(),
           startTime: Number.MAX_VALUE,
           endTime: Number.MIN_VALUE,
           created: event,
@@ -135,7 +133,6 @@ export class TraceModel {
 }
 
 export type ContextEntry = {
-  name: string;
   startTime: number;
   endTime: number;
   created: trace.ContextCreatedTraceEvent;
@@ -150,7 +147,12 @@ export type PageEntry = {
   destroyed: trace.PageDestroyedTraceEvent;
   actions: ActionEntry[];
   interestingEvents: InterestingPageEvent[];
-  screencastFrames: { sha1: string, timestamp: number }[]
+  screencastFrames: {
+    sha1: string,
+    timestamp: number,
+    width: number,
+    height: number,
+  }[]
 }
 
 export type ActionEntry = trace.ActionTraceEvent & {

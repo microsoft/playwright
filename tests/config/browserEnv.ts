@@ -36,7 +36,7 @@ export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type TestOptions = {
   mode: 'default' | 'driver' | 'service';
   video?: boolean;
-  trace?: boolean;
+  traceDir?: string;
 };
 
 class DriverMode {
@@ -172,7 +172,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
       testInfo.data.mode = this._options.mode;
     if (this._options.video)
       testInfo.data.video = true;
-    if (this._options.trace)
+    if (this._options.traceDir)
       testInfo.data.trace = true;
     return {
       playwright: this._playwright,
@@ -240,10 +240,11 @@ export class BrowserEnv extends PlaywrightEnv implements Env<BrowserTestArgs> {
 
   async beforeEach(testInfo: TestInfo) {
     const result = await super.beforeEach(testInfo);
-
+    const debugName = path.relative(testInfo.config.outputDir, testInfo.outputPath('')).replace(/[\/\\]/g, '-');
     const contextOptions = {
       recordVideo: this._options.video ? { dir: testInfo.outputPath('') } : undefined,
-      _traceDir: this._options.trace ? testInfo.outputPath('') : undefined,
+      _traceDir: this._options.traceDir,
+      _debugName: debugName,
       ...this._contextOptions,
     } as BrowserContextOptions;
 

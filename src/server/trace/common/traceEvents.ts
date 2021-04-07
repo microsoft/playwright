@@ -53,7 +53,9 @@ export type ScreencastFrameTraceEvent = {
   contextId: string,
   pageId: string,
   pageTimestamp: number,
-  sha1: string
+  sha1: string,
+  width: number,
+  height: number,
 };
 
 export type ActionTraceEvent = {

@@ -26,14 +26,19 @@ import { SourceTab } from './sourceTab';
 import { SnapshotTab } from './snapshotTab';
 import { LogsTab } from './logsTab';
 import { SplitView } from '../../components/splitView';
+import { useAsyncMemo } from './helpers';
 
 
 export const Workbench: React.FunctionComponent<{
-  contexts: ContextEntry[],
-}> = ({ contexts }) => {
-  const [context, setContext] = React.useState(contexts[0]);
+  debugNames: string[],
+}> = ({ debugNames }) => {
+  const [debugName, setDebugName] = React.useState(debugNames[0]);
   const [selectedAction, setSelectedAction] = React.useState<ActionEntry | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionEntry | undefined>();
+
+  let context = useAsyncMemo(async () => {
+    return (await fetch(`/context/${debugName}`).then(response => response.json())) as ContextEntry;
+  }, [debugName], emptyContext);
 
   const actions = React.useMemo(() => {
     const actions: ActionEntry[] = [];
@@ -51,10 +56,10 @@ export const Workbench: React.FunctionComponent<{
       <div className='product'>Playwright</div>
       <div className='spacer'></div>
       <ContextSelector
-        contexts={contexts}
-        context={context}
-        onChange={context => {
-          setContext(context);
+        debugNames={debugNames}
+        debugName={debugName}
+        onChange={debugName => {
+          setDebugName(debugName);
           setSelectedAction(undefined);
         }}
       />
@@ -88,4 +93,26 @@ export const Workbench: React.FunctionComponent<{
       />
     </SplitView>
   </div>;
+};
+
+const now = performance.now();
+const emptyContext: ContextEntry = {
+  startTime: now,
+  endTime: now,
+  created: {
+    timestamp: now,
+    type: 'context-created',
+    browserName: '',
+    contextId: '<empty>',
+    deviceScaleFactor: 1,
+    isMobile: false,
+    viewportSize: { width: 1280, height: 800 },
+    debugName: '<empty>',
+  },
+  destroyed: {
+    timestamp: now,
+    type: 'context-destroyed',
+    contextId: '<empty>',      
+  },
+  pages: []
 };
