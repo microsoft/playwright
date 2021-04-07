@@ -10,7 +10,7 @@ REMOTE_BROWSER_UPSTREAM="browser_upstream"
 BUILD_BRANCH="playwright-build"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit] [custom_checkout_path]"
+  echo "usage: $(basename $0) [firefox|firefox-stable|webkit] [custom_checkout_path]"
   echo
   echo "Prepares browser checkout. The checkout is a GIT repository that:"
   echo "- has a '$REMOTE_BROWSER_UPSTREAM' remote pointing to a REMOTE_URL from UPSTREAM_CONFIG.sh"
@@ -88,6 +88,18 @@ elif [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
   FIREFOX_EXTRA_FOLDER_PATH="$PWD/firefox/juggler"
   BUILD_NUMBER=$(head -1 "$PWD/firefox/BUILD_NUMBER")
   source "./firefox/UPSTREAM_CONFIG.sh"
+  if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
+    echo "WARNING: using checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
+    CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
+    FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
+  fi
+elif [[ ("$1" == "firefox-stable") ]]; then
+  FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox-stable/checkout";
+  CHECKOUT_PATH="$PWD/firefox-stable/checkout"
+  PATCHES_PATH="$PWD/firefox-stable/patches"
+  FIREFOX_EXTRA_FOLDER_PATH="$PWD/firefox-stable/juggler"
+  BUILD_NUMBER=$(head -1 "$PWD/firefox-stable/BUILD_NUMBER")
+  source "./firefox-stable/UPSTREAM_CONFIG.sh"
   if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
     echo "WARNING: using checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
     CHECKOUT_PATH="${FF_CHECKOUT_PATH}"

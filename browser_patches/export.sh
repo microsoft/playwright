@@ -53,6 +53,19 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
     CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
     FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
   fi
+elif [[ ("$1" == "firefox-stable") ]]; then
+  FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox-stable/checkout";
+  CHECKOUT_PATH="$PWD/firefox-stable/checkout"
+  EXTRA_FOLDER_PW_PATH="$PWD/firefox-stable/juggler"
+  EXTRA_FOLDER_CHECKOUT_RELPATH="juggler"
+  EXPORT_PATH="$PWD/firefox-stable"
+  BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/master/browser_patches/firefox-stable/BUILD_NUMBER"
+  source "./firefox-stable/UPSTREAM_CONFIG.sh"
+  if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
+    echo "WARNING: using checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
+    CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
+    FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
+  fi
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"
@@ -129,8 +142,9 @@ NEW_BASE_REVISION=$(git merge-base $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH $CURREN
 NEW_DIFF=$(git diff --diff-algorithm=myers --full-index $NEW_BASE_REVISION $CURRENT_BRANCH -- . ":!${EXTRA_FOLDER_CHECKOUT_RELPATH}")
 
 # Increment BUILD_NUMBER
-BUILD_NUMBER=$(curl ${BUILD_NUMBER_UPSTREAM_URL} | head -1)
-BUILD_NUMBER=$((BUILD_NUMBER+1))
+#BUILD_NUMBER=$(curl ${BUILD_NUMBER_UPSTREAM_URL} | head -1)
+#BUILD_NUMBER=$((BUILD_NUMBER+1))
+BUILD_NUMBER=1242
 
 echo "REMOTE_URL=\"$REMOTE_URL\"
 BASE_BRANCH=\"$BASE_BRANCH\"
