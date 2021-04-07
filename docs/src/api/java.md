@@ -58,6 +58,12 @@ page.navigate("https://www.w3.org/");
 playwright.close();
 ```
 
+### option: BrowserType.connectOverCDP.wsEndpoint
+* langs: java
+- `wsEndpoint` <[string]>
+
+A CDP websocket endpoint to connect to.
+
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
