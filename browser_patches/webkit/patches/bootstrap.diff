@@ -8362,7 +8362,7 @@ index 86ae8ddb91927ea0362f395c7fdae0aa8db2e642..0a49dfca7e4beafb00b865d1180307bd
  #if !LOG_DISABLED
              LOG(NetworkSession, "%llu didReceiveResponse completionHandler (%d)", taskIdentifier, policyAction);
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index e9fdf357d64f8916b35e5e00469b997580db3abd..445d478fb919f9250df56f2069b34baab4a8884e 100644
+index e9fdf357d64f8916b35e5e00469b997580db3abd..32135740fb58e7ca124a4fdc8514ebfc2e0712de 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 @@ -26,9 +26,13 @@
@@ -8473,28 +8473,11 @@ index e9fdf357d64f8916b35e5e00469b997580db3abd..445d478fb919f9250df56f2069b34baa
          m_curlRequest->setStartTime(m_startTime);
          m_curlRequest->start();
  
-@@ -516,4 +556,16 @@ bool NetworkDataTaskCurl::isThirdPartyRequest(const WebCore::ResourceRequest& re
-     return !WebCore::areRegistrableDomainsEqual(request.url(), request.firstPartyForCookies());
- }
- 
-+String NetworkDataTaskCurl::suggestedFilename() const
-+{
-+    if (!m_suggestedFilename.isEmpty())
-+        return m_suggestedFilename;
-+
-+    String suggestedFilename = m_response.suggestedFilename();
-+    if (!suggestedFilename.isEmpty())
-+        return suggestedFilename;
-+
-+    return decodeURLEscapeSequences(m_response.url().lastPathComponent());
-+}
-+
- } // namespace WebKit
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
-index 46c215a99a9bb31546e8880ce6f0876193c075fe..de1c44c27db360c6ff92d3825809ab0d4cf2e0ce 100644
+index 46c215a99a9bb31546e8880ce6f0876193c075fe..3509c62ac2c970fdcf78db2503c0cc4259f56dbd 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
-@@ -85,6 +85,7 @@ private:
+@@ -85,14 +85,13 @@ private:
  
      void appendCookieHeader(WebCore::ResourceRequest&);
      void handleCookieHeaders(const WebCore::ResourceRequest&, const WebCore::CurlResponse&);
@@ -8502,6 +8485,14 @@ index 46c215a99a9bb31546e8880ce6f0876193c075fe..de1c44c27db360c6ff92d3825809ab0d
  
      bool isThirdPartyRequest(const WebCore::ResourceRequest&);
      bool shouldBlockCookies(const WebCore::ResourceRequest&);
+     void blockCookies();
+     void unblockCookies();
+ 
+-    String suggestedFilename() const override;
+-
+     State m_state { State::Suspended };
+ 
+     RefPtr<WebCore::CurlRequest> m_curlRequest;
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 index a0a2a30b0960e0f091ea9d87190a586a2d9e7f09..53298616f94e1336c8ac928c0d6bf588426a4849 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
