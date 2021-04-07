@@ -29,6 +29,7 @@ import { CLIEnv } from './cliEnv';
 
 const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
+  outputDir: path.join(__dirname, '..', '..', 'test-results'),
   timeout: process.env.PWVIDEO ? 60000 : 30000,
   globalTimeout: 5400000,
 };

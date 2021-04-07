@@ -23,6 +23,7 @@ import { AndroidEnv, AndroidPageEnv } from './androidEnv';
 
 const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
+  outputDir: path.join(__dirname, '..', '..', 'test-results'),
   timeout: 120000,
   globalTimeout: 7200000,
   workers: 1,
@@ -36,7 +37,7 @@ folio.setConfig(config);
 if (process.env.CI) {
   folio.setReporters([
     new folio.reporters.dot(),
-    new folio.reporters.json({ outputFile: path.join(__dirname, '..', 'test-results', 'report.json') }),
+    new folio.reporters.json({ outputFile: path.join(__dirname, '..', '..', 'test-results', 'report.json') }),
   ]);
 }
 
