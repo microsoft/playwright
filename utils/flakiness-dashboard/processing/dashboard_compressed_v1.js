@@ -63,11 +63,15 @@ function compressReports(reports) {
         // In our case, all data will be identical - so pick
         // from the first result.
         const testParameters = test.results[0].data;
-        // Overwrite test platform parameter with a more specific information from
-        // build run.
-        const osName = report.metadata.osName.toUpperCase().startsWith('MINGW') ? 'Windows' : report.metadata.osName;
-        const arch = report.metadata.arch && !report.metadata.arch.includes('x86') ? report.metadata.arch : '';
-        const platform = (osName + ' ' + report.metadata.osVersion + ' ' + arch).trim();
+        // Prefer test platform when it exists, and fallback to
+        // the host platform when it doesn't. This way we can attribute
+        // android tests to android.
+        let platform = testParameters.platform;
+        if (!platform) {
+          const osName = report.metadata.osName.toUpperCase().startsWith('MINGW') ? 'Windows' : report.metadata.osName;
+          const arch = report.metadata.arch && !report.metadata.arch.includes('x86') ? report.metadata.arch : '';
+          platform = (osName + ' ' + report.metadata.osVersion + ' ' + arch).trim();
+        }
         const browserName = testParameters.browserName || 'N/A';
 
         const testName = getTestName(browserName, platform, testParameters);
