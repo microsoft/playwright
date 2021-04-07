@@ -819,6 +819,10 @@ export class WKPage implements PageDelegate {
     });
   }
 
+  async setScreencastEnabled(enabled: boolean): Promise<void> {
+    throw new Error('Not implemented');
+  }
+
   rafCountForStablePosition(): number {
     return process.platform === 'win32' ? 5 : 1;
   }

@@ -68,6 +68,7 @@ export class TraceModel {
           destroyed: undefined as any,
           actions: [],
           interestingEvents: [],
+          screencastFrames: [],
         };
         const contextEntry = this.contextEntries.get(event.contextId)!;
         this.pageEntries.set(event.pageId, { pageEntry, contextEntry });
@@ -76,6 +77,10 @@ export class TraceModel {
       }
       case 'page-destroyed': {
         this.pageEntries.get(event.pageId)!.pageEntry.destroyed = event;
+        break;
+      }
+      case 'page-screencast-frame': {
+        this.pageEntries.get(event.pageId)!.pageEntry.screencastFrames.push(event);
         break;
       }
       case 'action': {
@@ -145,6 +150,7 @@ export type PageEntry = {
   destroyed: trace.PageDestroyedTraceEvent;
   actions: ActionEntry[];
   interestingEvents: InterestingPageEvent[];
+  screencastFrames: { sha1: string, timestamp: number }[]
 }
 
 export type ActionEntry = trace.ActionTraceEvent & {

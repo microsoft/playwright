@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as util from 'util';
-import { createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
+import { calculateSha1, createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { BrowserContext } from '../../browserContext';
 import { Dialog } from '../../dialog';
 import { ElementHandle } from '../../dom';
@@ -105,7 +105,7 @@ class ContextTracer {
   }
 
   async start() {
-    await this._snapshotter.start();
+    await this._snapshotter.start(false);
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
@@ -191,6 +191,20 @@ class ContextTracer {
         pageId,
       };
       this._appendTraceEvent(event);
+    });
+
+    page.on(Page.Events.ScreencastFrame, params => {
+      const sha1 = calculateSha1(params.buffer);
+      const event: trace.ScreencastFrameTraceEvent = {
+        type: 'page-screencast-frame',
+        pageId: page.uniqueId,
+        contextId: this._contextId,
+        sha1,
+        pageTimestamp: params.timestamp,
+        timestamp: monotonicTime()
+      };
+      this._appendTraceEvent(event);
+      this._snapshotter.onBlob({ sha1, buffer: params.buffer });
     });
 
     page.once(Page.Events.Close, () => {

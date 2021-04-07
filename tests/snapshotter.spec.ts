@@ -73,7 +73,7 @@ it.describe('snapshots', () => {
     snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
     await Promise.all([
       new Promise(f => snapshotter.once('snapshot', f)),
-      snapshotter.setAutoSnapshotInterval(25),
+      snapshotter.setAutoSnapshotIntervalForTest(25),
     ]);
     await Promise.all([
       new Promise(f => snapshotter.once('snapshot', f)),
@@ -88,7 +88,7 @@ it.describe('snapshots', () => {
     snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
     await Promise.all([
       new Promise(f => snapshotter.once('snapshot', f)),
-      snapshotter.setAutoSnapshotInterval(25),
+      snapshotter.setAutoSnapshotIntervalForTest(25),
     ]);
     expect(distillSnapshot(snapshots[0])).toBe('<style>button { color: red; }</style><BUTTON>Hello</BUTTON>');
 
@@ -112,7 +112,7 @@ it.describe('snapshots', () => {
     snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
     await Promise.all([
       new Promise(f => snapshotter.once('snapshot', f)),
-      snapshotter.setAutoSnapshotInterval(25),
+      snapshotter.setAutoSnapshotIntervalForTest(25),
     ]);
     expect(distillSnapshot(snapshots[0])).toBe('<LINK rel=\"stylesheet\" href=\"style.css\"><BUTTON>Hello</BUTTON>');
 

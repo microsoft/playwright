@@ -135,6 +135,7 @@ export class Snapshotter {
     this._eventListeners.push(helper.addEventListener(page, Page.Events.Response, (response: network.Response) => {
       this._saveResource(page, response).catch(e => debugLogger.log('error', e));
     }));
+    page.setScreencastEnabled(true);
   }
 
   private async _saveResource(page: Page, response: network.Response) {
