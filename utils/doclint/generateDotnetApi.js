@@ -48,7 +48,7 @@ const customTypeNames = new Map([
 ]);
 
 {
-  const typesDir = process.argv[2] || '../generate_types/csharp/';
+  const typesDir = process.argv[2] || path.join(__dirname, 'generate_types', 'csharp');
   let checkAndMakeDir = (path) => {
     if (!fs.existsSync(path))
       fs.mkdirSync(path, { recursive: true });
@@ -78,7 +78,7 @@ const customTypeNames = new Map([
   });
 
   // get the template for a class
-  const template = fs.readFileSync("./templates/interface.cs", 'utf-8')
+  const template = fs.readFileSync(path.join(__dirname, 'templates', 'interface.cs'), 'utf-8')
     .replace('[PW_TOOL_VERSION]', `${__filename.substring(path.join(__dirname, '..', '..').length).split(path.sep).join(path.posix.sep)}`);
 
   // we have some "predefined" types, like the mixed state enum, that we can map in advance
