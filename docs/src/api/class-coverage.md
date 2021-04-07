@@ -1,5 +1,5 @@
 # class: Coverage
-* langs: js
+* langs: js, csharp
 
 Coverage gathers information about parts of JavaScript and CSS that were used by the page.
 

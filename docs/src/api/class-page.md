@@ -596,7 +596,7 @@ Gets the full HTML contents of the page, including the doctype.
 Get the browser context that the page belongs to.
 
 ## property: Page.coverage
-* langs: js
+* langs: js, csharp
 - type: <[Coverage]>
 
 :::note
