@@ -37,6 +37,7 @@ type TestOptions = {
   mode: 'default' | 'driver' | 'service';
   video?: boolean;
   traceDir?: string;
+  coverageBrowserName?: string;
 };
 
 class DriverMode {
@@ -120,7 +121,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   }
 
   async beforeAll(workerInfo: WorkerInfo) {
-    this._coverage = installCoverageHooks(this._browserName);
+    this._coverage = installCoverageHooks(this._options.coverageBrowserName || this._browserName);
     require('../../lib/utils/utils').setUnderTest();
     this._playwright = await this._mode.setup(workerInfo);
     this._browserType = this._playwright[this._browserName];

@@ -19,6 +19,7 @@ import { test as it, expect } from '../config/pageTest';
 it.describe('JS Coverage', () => {
   it.beforeEach(async ({ browserName }) => {
     it.skip(browserName !== 'chromium');
+    it.fixme(!!process.env.PW_ELECTRON_TESTS);
   });
 
   it('should work', async function({page, server}) {

@@ -51,9 +51,6 @@ if (browserName !== 'chromium') {
 if (browserName === 'webkit')
   api.delete('browserContext.clearPermissions');
 
-// Android coverage is abysmal.
-api = new Set(Array.from(api).filter(name => !name.toLowerCase().startsWith('android')));
-
 const coverageDir = path.join(__dirname, '..', 'coverage-report');
 
 const coveredMethods = new Set();

@@ -19,21 +19,30 @@ import { PlaywrightEnv } from './browserEnv';
 import * as path from 'path';
 import { ElectronTestArgs } from './electronTest';
 import { ElectronApplication, Page } from '../../index';
+import { PageTestArgs } from './pageTest';
 
 export class ElectronEnv extends PlaywrightEnv implements Env<ElectronTestArgs> {
   private _electronApp: ElectronApplication | undefined;
   private _windows: Page[] = [];
 
-  constructor(options: { mode: 'default' | 'driver' | 'service' }) {
-    super('chromium', options);
+  constructor() {
+    super('chromium', { mode: 'default', coverageBrowserName: 'electron' });
+    // This env prevents 'Electron Security Policy' console message.
+    process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
   }
 
   private async _newWindow() {
     const [ window ] = await Promise.all([
       this._electronApp!.waitForEvent('window'),
       this._electronApp!.evaluate(electron => {
-        const window = new electron.BrowserWindow({ width: 800, height: 600 });
-        window.loadURL('data:text/html,<title>Hello World 1</title>');
+        const window = new electron.BrowserWindow({
+          width: 800,
+          height: 600,
+          // Sandboxed windows share process with their window.open() children
+          // and can script them. We use that heavily in our tests.
+          webPreferences: { sandbox: true }
+        });
+        window.loadURL('about:blank');
       })
     ]);
     this._windows.push(window);
@@ -61,5 +70,17 @@ export class ElectronEnv extends PlaywrightEnv implements Env<ElectronTestArgs> 
       this._electronApp = undefined;
     }
     await super.afterEach(testInfo);
+  }
+}
+
+export class ElectronPageEnv extends ElectronEnv implements Env<PageTestArgs> {
+  async beforeEach(testInfo: TestInfo) {
+    const result = await super.beforeEach(testInfo);
+    const page = await result.newWindow();
+    return {
+      ...result,
+      browserVersion: require('electron/package.json').version,
+      page,
+    };
   }
 }

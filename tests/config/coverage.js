@@ -64,9 +64,12 @@ function apiForBrowser(browserName) {
   const api = require('../../lib/client/api');
   const otherBrowsers = ['chromium', 'webkit', 'firefox'].filter(name => name.toLowerCase() !== browserName.toLowerCase());
   const filteredKeys = Object.keys(api).filter(apiName => {
+    if (apiName.toLowerCase().startsWith('android'))
+      return browserName === 'android';
     if (apiName.toLowerCase().startsWith('electron'))
-      return browserName === 'chromium';
-    return !otherBrowsers.some(otherName => apiName.toLowerCase().startsWith(otherName));
+      return browserName === 'electron';
+    return browserName !== 'electron' && browserName !== 'android' &&
+        !otherBrowsers.some(otherName => apiName.toLowerCase().startsWith(otherName));
   });
   const filteredAPI = {};
   for (const key of filteredKeys)

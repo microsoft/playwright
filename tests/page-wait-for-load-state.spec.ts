@@ -132,6 +132,8 @@ it('should work with clicking target=_blank', async ({page, server}) => {
 });
 
 it('should wait for load state of newPage', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+
   const [newPage] = await Promise.all([
     page.context().waitForEvent('page'),
     page.context().newPage(),

@@ -242,6 +242,7 @@ it('should work with internal bindings', async ({page, toImpl, server, mode, bro
   it.skip(mode !== 'default');
   it.skip(browserName !== 'chromium');
   it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.skip(!!process.env.PW_ELECTRON_TESTS);
 
   const implPage: import('../src/server/page').Page = toImpl(page);
   let foo;

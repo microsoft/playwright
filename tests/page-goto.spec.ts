@@ -490,6 +490,8 @@ it('should fail when canceled by another navigation', async ({page, server}) => 
 });
 
 it('should work with lazy loading iframes', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+
   await page.goto(server.PREFIX + '/frames/lazy-frame.html');
   expect(page.frames().length).toBe(2);
 });

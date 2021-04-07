@@ -132,6 +132,8 @@ it('should fail with error upon disconnect', async ({page}) => {
 });
 
 it('page.url should work', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+
   expect(page.url()).toBe('about:blank');
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
@@ -182,6 +184,7 @@ it('page.frame should respect url', async function({page, server}) {
 
 it('should have sane user agent', async ({page, isChromium, isFirefox}) => {
   it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.skip(!!process.env.PW_ELECTRON_TESTS);
 
   const userAgent = await page.evaluate(() => navigator.userAgent);
   const [

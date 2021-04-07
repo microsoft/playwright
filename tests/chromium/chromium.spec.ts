@@ -23,6 +23,7 @@ pageTest.describe('chromium', () => {
   pageTest.beforeEach(async ({ browserName }) => {
     pageTest.skip(browserName !== 'chromium');
     pageTest.skip(!!process.env.PW_ANDROID_TESTS);
+    pageTest.skip(!!process.env.PW_ELECTRON_TESTS);
   });
 
   pageTest('should create a worker from a service worker', async ({page, server}) => {

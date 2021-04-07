@@ -28,6 +28,8 @@ it('should fire', async ({page, server}) => {
 });
 
 it('should allow accepting prompts', async ({page}) => {
+  it.skip(!!process.env.PW_ELECTRON_TESTS, 'prompt() is not a thing in electron');
+
   page.on('dialog', dialog => {
     expect(dialog.type()).toBe('prompt');
     expect(dialog.defaultValue()).toBe('yes.');
@@ -39,6 +41,8 @@ it('should allow accepting prompts', async ({page}) => {
 });
 
 it('should dismiss the prompt', async ({page}) => {
+  it.skip(!!process.env.PW_ELECTRON_TESTS, 'prompt() is not a thing in electron');
+
   page.on('dialog', dialog => {
     dialog.dismiss();
   });
@@ -101,6 +105,8 @@ it('should handle multiple confirms', async ({page}) => {
 });
 
 it('should auto-dismiss the prompt without listeners', async ({page}) => {
+  it.skip(!!process.env.PW_ELECTRON_TESTS, 'prompt() is not a thing in electron');
+
   const result = await page.evaluate(() => prompt('question?'));
   expect(result).toBe(null);
 });
