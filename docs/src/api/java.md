@@ -58,7 +58,7 @@ page.navigate("https://www.w3.org/");
 playwright.close();
 ```
 
-### option: BrowserType.connectOverCDP.wsEndpoint
+### param: BrowserType.connectOverCDP.wsEndpoint
 * langs: java
 - `wsEndpoint` <[string]>
 
