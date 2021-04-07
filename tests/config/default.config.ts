@@ -42,7 +42,7 @@ folio.setConfig(config);
 if (process.env.CI) {
   folio.setReporters([
     new folio.reporters.dot(),
-    new folio.reporters.json({ outputFile: path.join(__dirname, '..', 'test-results', 'report.json') }),
+    new folio.reporters.json({ outputFile: path.join(__dirname, '..', '..', 'test-results', 'report.json') }),
   ]);
 }
 
