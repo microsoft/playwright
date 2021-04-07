@@ -4107,8 +4107,8 @@ might return multiple quads for inline nodes.
     export type setDeviceMetricsOverrideParameters = {
       width: number;
       height: number;
-      deviceScaleFactor: number;
       fixedLayout: boolean;
+      deviceScaleFactor?: number;
     }
     export type setDeviceMetricsOverrideReturnValue = {
     }
@@ -6692,6 +6692,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Indicates the coordinate system of the supplied rectangle.
        */
       coordinateSystem: CoordinateSystem;
+      /**
+       * By default, screenshot is inflated by device scale factor to avoid blurry image. This flag disables it.
+       */
+      omitDeviceScaleFactor?: boolean;
     }
     export type snapshotRectReturnValue = {
       /**
