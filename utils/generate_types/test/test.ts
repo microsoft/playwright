@@ -804,8 +804,7 @@ playwright.chromium.launch().then(async browser => {
 (async () => {
   const browserType = {} as playwright.BrowserType<playwright.Browser & {foo: 'string'}>;
   const browser = await browserType.launch();
-  // @ts-expect-error
-  browser.foo;
+  await browser.close();
 })
 
 // exported types
