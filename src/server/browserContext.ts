@@ -16,7 +16,7 @@
  */
 
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { isDebugMode, mkdirIfNeeded } from '../utils/utils';
+import { isDebugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
 import { Browser, BrowserOptions } from './browser';
 import { Download } from './download';
 import * as frames from './frames';
@@ -380,6 +380,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (isDebugMode())
     options.bypassCSP = true;
   verifyGeolocation(options.geolocation);
+  if (!options._debugName)
+    options._debugName = createGuid();
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {

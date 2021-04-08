@@ -23,6 +23,6 @@ import '../common.css';
 
 (async () => {
   applyTheme();
-  const contexts = await fetch('/contexts').then(response => response.json());
-  ReactDOM.render(<Workbench contexts={contexts} />, document.querySelector('#root'));
+  const debugNames = await fetch('/contexts').then(response => response.json());
+  ReactDOM.render(<Workbench debugNames={debugNames} />, document.querySelector('#root'));
 })();

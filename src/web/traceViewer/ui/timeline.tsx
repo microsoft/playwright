@@ -54,6 +54,8 @@ export const Timeline: React.FunctionComponent<{
     const bars: TimelineBar[] = [];
     for (const page of context.pages) {
       for (const entry of page.actions) {
+        if (!entry.metadata.params)
+          console.log(entry);
         let detail = entry.metadata.params.selector || '';
         if (entry.metadata.method === 'goto')
           detail = entry.metadata.params.url || '';

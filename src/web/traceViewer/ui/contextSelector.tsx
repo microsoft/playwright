@@ -15,27 +15,26 @@
 */
 
 import * as React from 'react';
-import { ContextEntry } from '../../../server/trace/viewer/traceModel';
 import './contextSelector.css';
 
 export const ContextSelector: React.FunctionComponent<{
-  contexts: ContextEntry[],
-  context: ContextEntry,
-  onChange: (contextEntry: ContextEntry) => void,
-}> = ({ contexts, context, onChange }) => {
+  debugNames: string[],
+  debugName: string,
+  onChange: (debugName: string) => void,
+}> = ({ debugNames, debugName, onChange }) => {
   return (
     <select
       className='context-selector'
       style={{
-        visibility: contexts.length <= 1 ? 'hidden' : 'visible',
+        visibility: debugNames.length <= 1 ? 'hidden' : 'visible',
       }}
-      value={context.created.contextId}
+      value={debugName}
       onChange={e => {
         const newIndex = e.target.selectedIndex;
-        onChange(contexts[newIndex]);
+        onChange(debugNames[newIndex]);
       }}
     >
-      {contexts.map(entry => <option value={entry.created.contextId} key={entry.created.contextId}>{entry.name}</option>)}
+      {debugNames.map(debugName => <option value={debugName} key={debugName}>{debugName}</option>)}
     </select>
   );
 };

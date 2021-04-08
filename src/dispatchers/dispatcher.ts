@@ -206,7 +206,7 @@ export class DispatcherConnection {
       endTime: 0,
       type: dispatcher._type,
       method,
-      params,
+      params: params || {},
       log: [],
     };
 

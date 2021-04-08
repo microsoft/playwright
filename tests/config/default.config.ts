@@ -30,7 +30,7 @@ import { CLIEnv } from './cliEnv';
 const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
   outputDir: path.join(__dirname, '..', '..', 'test-results'),
-  timeout: process.env.PWVIDEO ? 60000 : 30000,
+  timeout: process.env.PWVIDEO || process.env.PWTRACE ? 60000 : 30000,
   globalTimeout: 5400000,
 };
 if (process.env.CI) {
@@ -67,7 +67,7 @@ for (const browserName of browsers) {
   const options = {
     mode,
     executablePath,
-    trace: !!process.env.PWTRACE,
+    traceDir: process.env.PWTRACE ? path.join(config.outputDir, 'trace') : undefined,
     headless: !process.env.HEADFUL,
     channel: process.env.PW_CHROMIUM_CHANNEL as any,
     video: !!process.env.PWVIDEO,

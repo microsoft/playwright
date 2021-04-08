@@ -39,7 +39,7 @@ export class Tracer implements InstrumentationListener {
     if (!traceDir)
       return;
     const resourcesDir = envTrace || path.join(traceDir, 'resources');
-    const tracePath = path.join(traceDir, createGuid());
+    const tracePath = path.join(traceDir, context._options._debugName!);
     const contextTracer = new ContextTracer(context, resourcesDir, tracePath);
     await contextTracer.start();
     this._contextTracers.set(context, contextTracer);
@@ -201,6 +201,8 @@ class ContextTracer {
         contextId: this._contextId,
         sha1,
         pageTimestamp: params.timestamp,
+        width: params.width,
+        height: params.height,
         timestamp: monotonicTime()
       };
       this._appendTraceEvent(event);
