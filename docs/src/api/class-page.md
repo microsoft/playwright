@@ -509,18 +509,18 @@ Brings page to front (activates tab).
 ## async method: Page.check
 
 This method checks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
-1. Ensure that the element is now checked. If not, this method rejects.
+1. Ensure that the element is now checked. If not, this method throws.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for main frame's [`method: Frame.check`].
@@ -536,7 +536,7 @@ Shortcut for main frame's [`method: Frame.check`].
 ## async method: Page.click
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -544,7 +544,7 @@ This method clicks an element matching [`param: selector`] by performing the fol
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for main frame's [`method: Frame.click`].
@@ -610,16 +610,16 @@ Browser-specific Coverage implementation. See [Coverage](#class-coverage) for mo
   - alias-csharp: DblClickAsync
 
 This method double clicks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
-   if the first click of the `dblclick()` triggers a navigation event, this method will reject.
+   if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
@@ -1637,7 +1637,7 @@ Referer header value. If provided it will take preference over the referer heade
 ## async method: Page.hover
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -1645,7 +1645,7 @@ This method hovers over an element matching [`param: selector`] by performing th
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for main frame's [`method: Frame.hover`].
@@ -2387,7 +2387,7 @@ page.goto("https://example.com")
 ## async method: Page.tap
 
 This method taps an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -2395,7 +2395,7 @@ This method taps an element matching [`param: selector`] by performing the follo
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
@@ -2483,18 +2483,18 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ## async method: Page.uncheck
 
 This method unchecks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
-1. Ensure that the element is now unchecked. If not, this method rejects.
+1. Ensure that the element is now unchecked. If not, this method throws.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for main frame's [`method: Frame.uncheck`].

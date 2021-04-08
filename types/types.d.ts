@@ -1344,18 +1344,18 @@ export interface Page {
 
   /**
    * This method checks an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    *    checked, this method returns immediately.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to click in the center of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 1. Ensure that the element is now checked. If not, this method rejects.
+   * 1. Ensure that the element is now checked. If not, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * Shortcut for main frame's
    * [frame.check(selector[, options])](https://playwright.dev/docs/api/class-frame#framecheckselector-options).
@@ -1386,7 +1386,7 @@ export interface Page {
 
   /**
    * This method clicks an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
@@ -1394,8 +1394,8 @@ export interface Page {
    *    the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * Shortcut for main frame's
    * [frame.click(selector[, options])](https://playwright.dev/docs/api/class-frame#frameclickselector-options).
@@ -1492,17 +1492,17 @@ export interface Page {
 
   /**
    * This method double clicks an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to double click in the center of the
    *    element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the
-   *    first click of the `dblclick()` triggers a navigation event, this method will reject.
+   *    first click of the `dblclick()` triggers a navigation event, this method will throw.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * > NOTE: `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * 
@@ -1895,7 +1895,7 @@ export interface Page {
 
   /**
    * This method hovers over an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
@@ -1903,8 +1903,8 @@ export interface Page {
    *    the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * Shortcut for main frame's
    * [frame.hover(selector[, options])](https://playwright.dev/docs/api/class-frame#framehoverselector-options).
@@ -2658,7 +2658,7 @@ export interface Page {
 
   /**
    * This method taps an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
@@ -2666,8 +2666,8 @@ export interface Page {
    *    element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * > NOTE: [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#pagetapselector-options) requires
    * that the `hasTouch` option of the browser context be set to true.
@@ -2781,18 +2781,18 @@ export interface Page {
 
   /**
    * This method unchecks an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    *    unchecked, this method returns immediately.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to click in the center of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 1. Ensure that the element is now unchecked. If not, this method rejects.
+   * 1. Ensure that the element is now unchecked. If not, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * Shortcut for main frame's
    * [frame.uncheck(selector[, options])](https://playwright.dev/docs/api/class-frame#frameuncheckselector-options).
@@ -3539,18 +3539,18 @@ export interface Frame {
 
   /**
    * This method checks an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    *    checked, this method returns immediately.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to click in the center of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 1. Ensure that the element is now checked. If not, this method rejects.
+   * 1. Ensure that the element is now checked. If not, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options 
    */
@@ -3580,7 +3580,7 @@ export interface Frame {
 
   /**
    * This method clicks an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
@@ -3588,8 +3588,8 @@ export interface Frame {
    *    the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options 
    */
@@ -3653,17 +3653,17 @@ export interface Frame {
 
   /**
    * This method double clicks an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to double click in the center of the
    *    element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the
-   *    first click of the `dblclick()` triggers a navigation event, this method will reject.
+   *    first click of the `dblclick()` triggers a navigation event, this method will throw.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * > NOTE: `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -3891,7 +3891,7 @@ export interface Frame {
 
   /**
    * This method hovers over an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
@@ -3899,8 +3899,8 @@ export interface Frame {
    *    the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options 
    */
@@ -4278,7 +4278,7 @@ export interface Frame {
 
   /**
    * This method taps an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
@@ -4286,8 +4286,8 @@ export interface Frame {
    *    element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * > NOTE: `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -4392,18 +4392,18 @@ export interface Frame {
 
   /**
    * This method checks an element matching `selector` by performing the following steps:
-   * 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    *    unchecked, this method returns immediately.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to click in the center of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 1. Ensure that the element is now unchecked. If not, this method rejects.
+   * 1. Ensure that the element is now unchecked. If not, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options 
    */
@@ -5694,18 +5694,18 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method checks the element by performing the following steps:
-   * 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already
-   *    checked, this method returns immediately.
+   * 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already checked,
+   *    this method returns immediately.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to click in the center of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 1. Ensure that the element is now checked. If not, this method rejects.
+   * 1. Ensure that the element is now checked. If not, this method throws.
    * 
-   * If the element is detached from the DOM at any moment during the action, this method rejects.
+   * If the element is detached from the DOM at any moment during the action, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * @param options 
    */
   check(options?: {
@@ -5738,10 +5738,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *    the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * If the element is detached from the DOM at any moment during the action, this method rejects.
+   * If the element is detached from the DOM at any moment during the action, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * @param options 
    */
   click(options?: {
@@ -5809,12 +5809,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to double click in the center of the
    *    element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the
-   *    first click of the `dblclick()` triggers a navigation event, this method will reject.
+   *    first click of the `dblclick()` triggers a navigation event, this method will throw.
    * 
-   * If the element is detached from the DOM at any moment during the action, this method rejects.
+   * If the element is detached from the DOM at any moment during the action, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * > NOTE: `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * @param options 
@@ -5946,10 +5946,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *    the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * If the element is detached from the DOM at any moment during the action, this method rejects.
+   * If the element is detached from the DOM at any moment during the action, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * @param options 
    */
   hover(options?: {
@@ -6281,10 +6281,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *    element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
-   * If the element is detached from the DOM at any moment during the action, this method rejects.
+   * If the element is detached from the DOM at any moment during the action, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * 
    * > NOTE: `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
    * @param options 
@@ -6378,18 +6378,18 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method checks the element by performing the following steps:
-   * 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   * 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    *    unchecked, this method returns immediately.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
    * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#pagemouse) to click in the center of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 1. Ensure that the element is now unchecked. If not, this method rejects.
+   * 1. Ensure that the element is now unchecked. If not, this method throws.
    * 
-   * If the element is detached from the DOM at any moment during the action, this method rejects.
+   * If the element is detached from the DOM at any moment during the action, this method throws.
    * 
-   * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
-   * Passing zero timeout disables this.
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
    * @param options 
    */
   uncheck(options?: {
