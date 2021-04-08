@@ -408,7 +408,8 @@ it.describe('download event', () => {
     expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 
-  it('should throw if browser dies', async ({ server, browserType, browserOptions}, testInfo) => {
+  it('should throw if browser dies', async ({ server, browserType, browserName, browserOptions, platform}, testInfo) => {
+    it.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
     server.setRoute('/downloadStall', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
