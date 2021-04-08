@@ -570,4 +570,25 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoWidth).toBe(374);
     expect(videoPlayer.videoHeight).toBe(666);
   });
+
+  it('should throw on browser close', async ({browserType, browserOptions, contextOptions}, testInfo) => {
+    const size = { width: 320, height: 240 };
+    const browser = await browserType.launch(browserOptions);
+    const context = await browser.newContext({
+      ...contextOptions,
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+        size,
+      },
+      viewport: size,
+    });
+
+    const page = await context.newPage();
+    await new Promise(r => setTimeout(r, 1000));
+    await browser.close();
+
+    const file = testInfo.outputPath('saved-video-');
+    const saveResult = await page.video().saveAs(file).catch(e => e);
+    expect(saveResult.message).toContain('browser has been closed');
+  });
 });

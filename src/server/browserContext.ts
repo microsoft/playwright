@@ -93,10 +93,6 @@ export abstract class BrowserContext extends SdkObject {
     }
     this._closedStatus = 'closed';
     this._downloads.clear();
-    for (const [id, video] of this._browser._idToVideo) {
-      if (video.context === this)
-        this._browser._idToVideo.delete(id);
-    }
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
