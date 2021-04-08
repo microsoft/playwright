@@ -27,8 +27,8 @@ it('should work for open shadow roots', async ({page, server}) => {
   expect(await page.$$(`data-testid:light=foo`)).toEqual([]);
 });
 
-it('should click on links in shadow dom', async ({page, server, browserName, browserChannel}) => {
-  it.fixme(browserName === 'chromium' && !!browserChannel, 'Enable when crrev.com/864024 get to the stable channel');
+it('should click on links in shadow dom', async ({page, server, browserName, browserVersion}) => {
+  it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'Remove when crrev.com/864024 gets to the stable channel');
   it.fixme(!!process.env.PW_ANDROID_TESTS);
   it.fixme(!!process.env.PW_ELECTRON_TESTS);
 
