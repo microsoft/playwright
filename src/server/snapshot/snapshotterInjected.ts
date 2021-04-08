@@ -31,15 +31,9 @@ export type SnapshotData = {
   collectionTime: number,
 };
 
-export const kSnapshotStreamer = '__playwright_snapshot_streamer_';
-export const kSnapshotBinding = '__playwright_snapshot_binding_';
-
-export function frameSnapshotStreamer() {
+export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding: string) {
   // Communication with Playwright.
-  const kSnapshotStreamer = '__playwright_snapshot_streamer_';
-  const kSnapshotBinding = '__playwright_snapshot_binding_';
-
-  if ((window as any)[kSnapshotStreamer])
+  if ((window as any)[snapshotStreamer])
     return;
 
   // Attributes present in the snapshot.
@@ -186,7 +180,7 @@ export function frameSnapshotStreamer() {
       try {
         const snapshot = this._captureSnapshot(snapshotName);
         if (snapshot)
-          (window as any)[kSnapshotBinding](snapshot);
+          (window as any)[snapshotBinding](snapshot);
       } catch (e) {
       }
       if (this._interval)
@@ -458,5 +452,5 @@ export function frameSnapshotStreamer() {
     }
   }
 
-  (window as any)[kSnapshotStreamer] = new Streamer();
+  (window as any)[snapshotStreamer] = new Streamer();
 }
