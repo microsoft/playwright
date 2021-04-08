@@ -141,7 +141,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 }
 
 export interface BrowserType<Unused = {}> {
-
+  connectOverCDP(options: ConnectOverCDPOptions): Promise<Browser>;
+  /**
+   * Option `wsEndpoint` is deprecated. Instead use `endpointURL`.
+   * @deprecated
+   */
+  connectOverCDP(options: ConnectOptions): Promise<Browser>;
 }
 
 export interface CDPSession {

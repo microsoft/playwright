@@ -58,11 +58,11 @@ page.navigate("https://www.w3.org/");
 playwright.close();
 ```
 
-### param: BrowserType.connectOverCDP.wsEndpoint
+### param: BrowserType.connectOverCDP.endpointURL
 * langs: java
-- `wsEndpoint` <[string]>
+- `endpointURL` <[string]>
 
-A CDP websocket endpoint to connect to.
+A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
 
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 

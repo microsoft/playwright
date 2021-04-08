@@ -32,6 +32,7 @@ import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
 import { findChromiumChannel } from './findChromiumChannel';
+import http from 'http';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -49,12 +50,12 @@ export class Chromium extends BrowserType {
     return super.executablePath(options);
   }
 
-  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number) {
+  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number) {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browserLogsCollector = new RecentLogsCollector();
     return controller.run(async progress => {
-      const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint);
+      const chromeTransport = await WebSocketTransport.connect(progress, await urlToWSEndpoint(endpointURL));
       const browserProcess: BrowserProcess = {
         close: async () => {
           await chromeTransport.closeAndWait();
@@ -192,3 +193,17 @@ const DEFAULT_ARGS = [
   '--password-store=basic',
   '--use-mock-keychain',
 ];
+
+async function urlToWSEndpoint(endpointURL: string) {
+  if (endpointURL.startsWith('ws'))
+    return endpointURL;
+  const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
+  const json = await new Promise<string>((resolve, reject) => {
+    http.get(httpURL, resp => {
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => resolve(data));
+    }).on('error', reject);
+  });
+  return JSON.parse(json).webSocketDebuggerUrl;
+}

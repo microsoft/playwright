@@ -112,15 +112,8 @@ playwrightTest.describe('chromium', () => {
       args: ['--remote-debugging-port=' + port]
     });
     try {
-      const json = await new Promise<string>((resolve, reject) => {
-        http.get(`http://localhost:${port}/json/version/`, resp => {
-          let data = '';
-          resp.on('data', chunk => data += chunk);
-          resp.on('end', () => resolve(data));
-        }).on('error', reject);
-      });
       const cdpBrowser = await browserType.connectOverCDP({
-        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+        endpointURL: `http://localhost:${port}/`,
       });
       const contexts = cdpBrowser.contexts();
       expect(contexts.length).toBe(1);
@@ -137,18 +130,11 @@ playwrightTest.describe('chromium', () => {
       args: ['--remote-debugging-port=' + port]
     });
     try {
-      const json = await new Promise<string>((resolve, reject) => {
-        http.get(`http://localhost:${port}/json/version/`, resp => {
-          let data = '';
-          resp.on('data', chunk => data += chunk);
-          resp.on('end', () => resolve(data));
-        }).on('error', reject);
-      });
       const cdpBrowser1 = await browserType.connectOverCDP({
-        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+        endpointURL: `http://localhost:${port}/`,
       });
       const cdpBrowser2 = await browserType.connectOverCDP({
-        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+        endpointURL: `http://localhost:${port}/`,
       });
       const contexts1 = cdpBrowser1.contexts();
       expect(contexts1.length).toBe(1);
@@ -179,15 +165,8 @@ playwrightTest.describe('chromium', () => {
       args: ['--remote-debugging-port=' + port]
     });
     try {
-      const json = await new Promise<string>((resolve, reject) => {
-        http.get(`http://localhost:${port}/json/version/`, resp => {
-          let data = '';
-          resp.on('data', chunk => data += chunk);
-          resp.on('end', () => resolve(data));
-        }).on('error', reject);
-      });
       const cdpBrowser1 = await browserType.connectOverCDP({
-        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+        endpointURL: `http://localhost:${port}`,
       });
       const context = cdpBrowser1.contexts()[0];
       const page = await cdpBrowser1.contexts()[0].newPage();
@@ -199,10 +178,42 @@ playwrightTest.describe('chromium', () => {
       await cdpBrowser1.close();
 
       const cdpBrowser2 = await browserType.connectOverCDP({
-        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+        endpointURL: `http://localhost:${port}`,
       });
       const context2 = cdpBrowser2.contexts()[0];
       expect(context2.serviceWorkers().length).toBe(1);
+      await cdpBrowser2.close();
+    } finally {
+      await browserServer.close();
+    }
+  });
+  playwrightTest('should connect over a ws endpoint', async ({browserType, browserOptions, server}, testInfo) => {
+    const port = 9339 + testInfo.workerIndex;
+    const browserServer = await browserType.launch({
+      ...browserOptions,
+      args: ['--remote-debugging-port=' + port]
+    });
+    try {
+      const json = await new Promise<string>((resolve, reject) => {
+        http.get(`http://localhost:${port}/json/version/`, resp => {
+          let data = '';
+          resp.on('data', chunk => data += chunk);
+          resp.on('end', () => resolve(data));
+        }).on('error', reject);
+      });
+      const cdpBrowser = await browserType.connectOverCDP({
+        endpointURL: JSON.parse(json).webSocketDebuggerUrl,
+      });
+      const contexts = cdpBrowser.contexts();
+      expect(contexts.length).toBe(1);
+      await cdpBrowser.close();
+
+      // also connect with the depercreated wsEndpoint option
+      const cdpBrowser2 = await browserType.connectOverCDP({
+        wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
+      });
+      const contexts2 = cdpBrowser.contexts();
+      expect(contexts2.length).toBe(1);
       await cdpBrowser2.close();
     } finally {
       await browserServer.close();

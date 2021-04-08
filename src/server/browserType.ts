@@ -248,7 +248,7 @@ export abstract class BrowserType extends SdkObject {
     return { browserProcess, downloadsPath, transport };
   }
 
-  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
+  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
   }
 

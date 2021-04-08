@@ -187,14 +187,16 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     }, logger);
   }
 
-  async connectOverCDP(params: ConnectOptions): Promise<Browser> {
+  async connectOverCDP(params: api.ConnectOverCDPOptions): Promise<Browser>
+  async connectOverCDP(params: api.ConnectOptions): Promise<Browser>
+  async connectOverCDP(params: api.ConnectOverCDPOptions | api.ConnectOptions): Promise<Browser> {
     if (this.name() !== 'chromium')
       throw new Error('Connecting over CDP is only supported in Chromium.');
     const logger = params.logger;
     return this._wrapApiCall('browserType.connectOverCDP', async (channel: channels.BrowserTypeChannel) => {
       const result = await channel.connectOverCDP({
         sdkLanguage: 'javascript',
-        wsEndpoint: params.wsEndpoint,
+        endpointURL: 'endpointURL' in params ? params.endpointURL : params.wsEndpoint,
         slowMo: params.slowMo,
         timeout: params.timeout
       });

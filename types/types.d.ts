@@ -6460,13 +6460,6 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  * 
  */
 export interface BrowserType<Unused = {}> {
-
-  /**
-   * This methods attaches Playwright to an existing browser instance.
-   * @param params 
-   */
-  connect(params: ConnectOptions): Promise<Browser>;
-
   /**
    * This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
    * 
@@ -6476,29 +6469,17 @@ export interface BrowserType<Unused = {}> {
    * > NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
    * @param params 
    */
-  connectOverCDP(params: {
-    /**
-     * A CDP websocket endpoint to connect to.
-     */
-    wsEndpoint: string;
-
-    /**
-     * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-     * Defaults to 0.
-     */
-    slowMo?: number;
-
-    /**
-     * Logger sink for Playwright logging. Optional.
-     */
-    logger?: Logger;
-
-    /**
-     * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
-     * disable timeout.
-     */
-    timeout?: number;
-  }): Promise<Browser>;
+  connectOverCDP(options: ConnectOverCDPOptions): Promise<Browser>;
+  /**
+   * Option `wsEndpoint` is deprecated. Instead use `endpointURL`.
+   * @deprecated
+   */
+  connectOverCDP(options: ConnectOptions): Promise<Browser>;
+  /**
+   * This methods attaches Playwright to an existing browser instance.
+   * @param params 
+   */
+  connect(params: ConnectOptions): Promise<Browser>;
 
   /**
    * A path where Playwright expects to find a bundled browser executable.
@@ -10682,6 +10663,31 @@ export interface LaunchOptions {
 
   /**
    * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
+   * disable timeout.
+   */
+  timeout?: number;
+}
+
+export interface ConnectOverCDPOptions {
+  /**
+   * A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or
+   * `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+   */
+  endpointURL: string;
+
+  /**
+   * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+   * Defaults to 0.
+   */
+  slowMo?: number;
+
+  /**
+   * Logger sink for Playwright logging. Optional.
+   */
+  logger?: Logger;
+
+  /**
+   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
    * disable timeout.
    */
   timeout?: number;
