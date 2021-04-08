@@ -13057,10 +13057,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..4463301d7cbe4831ee35f91664fe0ec2e8288fe6
+index 0000000000000000000000000000000000000000..f55fb6443a7478fb8532c73e3ec7ae8f0f3e8380
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,894 @@
+@@ -0,0 +1,888 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -13558,12 +13558,6 @@ index 0000000000000000000000000000000000000000..4463301d7cbe4831ee35f91664fe0ec2
 +    }
 +    for (auto* page : pages)
 +        page->closePage();
-+
-+    if (!WebProcessPool::allProcessPools().size()) {
-+        m_client->closeBrowser();
-+        callback(String());
-+        return;
-+    }
 +
 +    if (!m_defaultContext) {
 +        m_client->closeBrowser();
