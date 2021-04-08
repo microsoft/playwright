@@ -20,11 +20,9 @@ import { test as playwrightTest, slowTest as playwrightSlowTest } from './playwr
 import { test as browserTest, slowTest as browserSlowTest } from './browserTest';
 import { test as contextTest } from './contextTest';
 import { test as pageTest } from './pageTest';
-import { test as electronTest } from './electronTest';
 import { test as cliTest } from './cliTest';
 import { PlaywrightEnv, BrowserEnv, PageEnv, BrowserName } from './browserEnv';
 import { ServerEnv } from './serverEnv';
-import { ElectronEnv } from './electronEnv';
 import { CLIEnv } from './cliEnv';
 
 const config: folio.Config = {
@@ -80,6 +78,4 @@ for (const browserName of browsers) {
   contextTest.runWith(folio.merge(serverEnv, new PageEnv(browserName, options)), { tag: browserName });
   if (mode !== 'service')
     cliTest.runWith(folio.merge(serverEnv, new CLIEnv(browserName, options)), { tag: browserName });
-  if (browserName === 'chromium')
-    electronTest.runWith(folio.merge(serverEnv, new ElectronEnv({ mode })), { tag: browserName });
 }

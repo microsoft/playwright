@@ -125,6 +125,7 @@ it('should contain referer header', async ({page, server}) => {
 
 it('should properly return navigation response when URL has cookies', async ({page, server}) => {
   it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'error: Browser context management is not supported.');
 
   // Setup cookie.
   await page.goto(server.EMPTY_PAGE);
@@ -535,7 +536,7 @@ it('should support cors with GET', async ({page, server}) => {
 });
 
 it('should support cors with POST', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
+  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS && !process.env.PW_ELECTRON_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
@@ -559,7 +560,7 @@ it('should support cors with POST', async ({page, server, isChromium, browserCha
 });
 
 it('should support cors with credentials', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
+  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS && !process.env.PW_ELECTRON_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
@@ -619,7 +620,7 @@ it('should reject cors with disallowed credentials', async ({page, server}) => {
 });
 
 it('should support cors for different methods', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
+  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS && !process.env.PW_ELECTRON_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async (route, request) => {

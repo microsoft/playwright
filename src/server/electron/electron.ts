@@ -79,7 +79,8 @@ export class ElectronApplication extends SdkObject {
     // Needs to be sync.
     const windowId = ++this._lastWindowId;
     page.on(Page.Events.Close, () => {
-      page.browserWindow.dispose();
+      if (page.browserWindow)
+        page.browserWindow.dispose();
       this._windows.delete(page);
     });
     page._browserWindowId = windowId;

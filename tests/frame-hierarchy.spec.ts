@@ -155,6 +155,8 @@ it('should report frame from-inside shadow DOM', async ({page, server}) => {
 });
 
 it('should report frame.name()', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+
   await attachFrame(page, 'theFrameId', server.EMPTY_PAGE);
   await page.evaluate(url => {
     const frame = document.createElement('iframe');
@@ -177,6 +179,8 @@ it('should report frame.parent()', async ({page, server}) => {
 });
 
 it('should report different frame instance when frame re-attaches', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await page.evaluate(() => {
     window['frame'] = document.querySelector('#frame1');

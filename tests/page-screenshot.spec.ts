@@ -146,6 +146,8 @@ it.describe('page screenshot', () => {
   });
 
   it('should render white background on jpeg file', async ({page, server}) => {
+    it.fixme(!!process.env.PW_ELECTRON_TESTS, 'omitBackground with jpeg does not work');
+
     await page.setViewportSize({ width: 100, height: 100 });
     await page.goto(server.EMPTY_PAGE);
     const screenshot = await page.screenshot({omitBackground: true, type: 'jpeg'});
@@ -223,6 +225,8 @@ it.describe('page screenshot', () => {
   });
 
   it('path option should detect jpeg', async ({page, server}, testInfo) => {
+    it.fixme(!!process.env.PW_ELECTRON_TESTS, 'omitBackground with jpeg does not work');
+
     await page.setViewportSize({ width: 100, height: 100 });
     await page.goto(server.EMPTY_PAGE);
     const outputPath = testInfo.outputPath('screenshot.jpg');

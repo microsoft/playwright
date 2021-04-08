@@ -98,6 +98,7 @@ it('should allow cross-frame element handles', async ({ page, server }) => {
 
 it('should not allow cross-frame element handles when frames do not script each other', async ({ page, server }) => {
   it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.fixme(!!process.env.PW_ELECTRON_TESTS);
 
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');

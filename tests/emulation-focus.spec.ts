@@ -24,6 +24,8 @@ it('should think that it is focused by default', async ({page}) => {
 });
 
 it('should think that all pages are focused', async ({page}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+
   const page2 = await page.context().newPage();
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
   expect(await page2.evaluate('document.hasFocus()')).toBe(true);
@@ -41,6 +43,8 @@ it('should focus popups by default', async ({page, server}) => {
 });
 
 it('should provide target for keyboard events', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+
   const page2 = await page.context().newPage();
   await Promise.all([
     page.goto(server.PREFIX + '/input/textarea.html'),
@@ -64,6 +68,8 @@ it('should provide target for keyboard events', async ({page, server}) => {
 });
 
 it('should not affect mouse event target page', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+
   const page2 = await page.context().newPage();
   function clickCounter() {
     document.onclick = () => window['clickCount']  = (window['clickCount'] || 0) + 1;
@@ -86,6 +92,8 @@ it('should not affect mouse event target page', async ({page, server}) => {
 });
 
 it('should change document.activeElement', async ({page, server}) => {
+  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+
   const page2 = await page.context().newPage();
   await Promise.all([
     page.goto(server.PREFIX + '/input/textarea.html'),
@@ -105,6 +113,7 @@ it('should change document.activeElement', async ({page, server}) => {
 it('should not affect screenshots', async ({page, server, browserName, headful}) => {
   it.skip(browserName === 'firefox' && headful);
   it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
 
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();

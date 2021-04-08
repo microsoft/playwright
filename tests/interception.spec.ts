@@ -113,6 +113,7 @@ it('should intercept network activity from worker', async function({page, server
 
 it('should intercept network activity from worker 2', async function({page, server}) {
   it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.fixme(!!process.env.PW_ELECTRON_TESTS);
 
   const url = server.PREFIX + '/worker/worker.js';
   await page.route(url, route => {
@@ -130,6 +131,8 @@ it('should intercept network activity from worker 2', async function({page, serv
 });
 
 it('should work with regular expression passed from a different context', async ({page, server}) => {
+  it.skip(!!process.env.PW_ELECTRON_TESTS);
+
   const ctx = vm.createContext();
   const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx);
   let intercepted = false;

@@ -20,7 +20,8 @@ import { test as browserTest } from './config/browserTest';
 import { verifyViewport } from './config/utils';
 
 it.beforeEach(async () => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.skip(!!process.env.PW_ANDROID_TESTS, 'Default viewport is null');
+  it.skip(!!process.env.PW_ELECTRON_TESTS, 'Default viewport is null');
 });
 
 it('should get the proper default viewport size', async ({page, server}) => {

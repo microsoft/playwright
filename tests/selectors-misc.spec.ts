@@ -30,6 +30,7 @@ it('should work for open shadow roots', async ({page, server}) => {
 it('should click on links in shadow dom', async ({page, server, browserName, browserChannel}) => {
   it.fixme(browserName === 'chromium' && !!browserChannel, 'Enable when crrev.com/864024 get to the stable channel');
   it.fixme(!!process.env.PW_ANDROID_TESTS);
+  it.fixme(!!process.env.PW_ELECTRON_TESTS);
 
   await page.goto(server.PREFIX + '/shadow-dom-link.html');
   expect(await page.evaluate(() => (window as any).clickCount)).toBe(0);
