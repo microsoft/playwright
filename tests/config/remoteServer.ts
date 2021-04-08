@@ -29,7 +29,7 @@ export type RemoteServerOptions = {
 export class RemoteServer {
   _output: Map<any, any>;
   _outputCallback: Map<any, any>;
-  _browserType: BrowserType<Browser>;
+  _browserType: BrowserType;
   _child: import('child_process').ChildProcess;
   _exitPromise: Promise<unknown>;
   _exitAndDisconnectPromise: Promise<any>;
@@ -37,7 +37,7 @@ export class RemoteServer {
   _didExit: boolean;
   _wsEndpoint: string;
 
-  async _start(browserType: BrowserType<Browser>, browserOptions: LaunchOptions, remoteServerOptions: RemoteServerOptions = {}) {
+  async _start(browserType: BrowserType, browserOptions: LaunchOptions, remoteServerOptions: RemoteServerOptions = {}) {
     this._output = new Map();
     this._outputCallback = new Map();
     this._didExit = false;

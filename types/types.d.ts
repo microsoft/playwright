@@ -6459,7 +6459,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  * ```
  * 
  */
-export interface BrowserType<Browser> {
+export interface BrowserType<Unused = {}> {
 
   /**
    * This methods attaches Playwright to an existing browser instance.

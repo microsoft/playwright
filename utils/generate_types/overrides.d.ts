@@ -140,7 +140,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
 }
 
-export interface BrowserType<Browser> {
+export interface BrowserType<Unused = {}> {
 
 }
 
