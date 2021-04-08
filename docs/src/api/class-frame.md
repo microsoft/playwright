@@ -711,9 +711,9 @@ Headless mode doesn't support navigation to a PDF document. See the
 
 URL to navigate frame to. The url should include scheme, e.g. `https://`.
 
-### option: Frame.goto.timeout = %%-navigation-timeout-%%
-
 ### option: Frame.goto.waitUntil = %%-navigation-wait-until-%%
+
+### option: Frame.goto.timeout = %%-navigation-timeout-%%
 
 ### option: Frame.goto.referer
 - `referer` <[string]>
@@ -1289,11 +1289,11 @@ Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/Hist
 a navigation.
 :::
 
-### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
-
 ### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
 
 ### option: Frame.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
+
+### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
 
 ## async method: Frame.waitForSelector
 - returns: <[null]|[ElementHandle]>
