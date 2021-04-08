@@ -1376,6 +1376,16 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout)
@@ -2813,6 +2823,16 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout)
@@ -3566,6 +3586,16 @@ export interface Frame {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -4419,6 +4449,16 @@ export interface Frame {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -5722,6 +5762,16 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     noWaitAfter?: boolean;
 
     /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout)
@@ -6404,6 +6454,16 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by

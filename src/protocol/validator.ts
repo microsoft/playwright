@@ -538,6 +538,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
+    position: tOptional(tType('Point')),
     timeout: tOptional(tNumber),
   });
   scheme.FrameClickParams = tObject({
@@ -704,6 +705,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
+    position: tOptional(tType('Point')),
     timeout: tOptional(tNumber),
   });
   scheme.FrameWaitForFunctionParams = tObject({
@@ -766,6 +768,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElementHandleCheckParams = tObject({
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
+    position: tOptional(tType('Point')),
     timeout: tOptional(tNumber),
   });
   scheme.ElementHandleClickParams = tObject({
@@ -876,6 +879,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElementHandleUncheckParams = tObject({
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
+    position: tOptional(tType('Point')),
     timeout: tOptional(tNumber),
   });
   scheme.ElementHandleWaitForElementStateParams = tObject({
