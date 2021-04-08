@@ -116,7 +116,7 @@ Connecting over the Chrome DevTools Protocol is only supported for Chromium-base
 ### param: BrowserType.connectOverCDP.params
 * langs: js
 - `params` <[Object]>
-  - `wsEndpoint` <[string]> A CDP websocket endpoint to connect to.
+  - `endpointURL` <[string]> A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
     can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.

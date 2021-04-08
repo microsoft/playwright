@@ -422,7 +422,7 @@ BrowserType:
     connectOverCDP:
       parameters:
         sdkLanguage: string
-        wsEndpoint: string
+        endpointURL: string
         slowMo: number?
         timeout: number?
       returns:

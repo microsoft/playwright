@@ -408,7 +408,7 @@ export type BrowserTypeLaunchPersistentContextResult = {
 };
 export type BrowserTypeConnectOverCDPParams = {
   sdkLanguage: string,
-  wsEndpoint: string,
+  endpointURL: string,
   slowMo?: number,
   timeout?: number,
 };
