@@ -314,8 +314,7 @@ Documentation.Member = class {
       this.args.set(arg.name, arg);
       arg.enclosingMethod = this;
       if (arg.name === 'options') {
-        arg.type.properties.sort((p1, p2) => p1.name.localeCompare(p2.name));
-        arg.type.properties.forEach(p => p.enclosingMethod = this);
+        arg.type.properties.forEach(p => p.enclosingMethod = this );
       }
     }
   }
@@ -498,6 +497,17 @@ Documentation.Type = class {
         return type.properties;
     }
     return [];
+  }
+
+  /**
+    * @returns {Documentation.Member[]}
+  */
+  sortedProperties() {
+    if (!this.properties)
+      return this.properties;
+    const sortedProperties = [...this.properties];
+    sortedProperties.sort((p1, p2) => p1.name.localeCompare(p2.name));
+    return sortedProperties;
   }
 
   /**
