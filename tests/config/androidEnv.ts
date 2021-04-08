@@ -43,6 +43,12 @@ export class AndroidEnv implements Env<AndroidTestArgs> {
   async beforeEach(testInfo: TestInfo) {
     // Use chromium screenshots.
     testInfo.snapshotPathSegment = 'chromium';
+    testInfo.data = {
+      browserName: 'chromium',
+      platform: 'Android',
+      headful: true,
+      browserVersion: this._browserVersion,
+    };
     return {
       mode: 'default' as const,
       isChromium: true,
