@@ -799,6 +799,14 @@ playwright.chromium.launch().then(async browser => {
   await browser.close();
 })();
 
+// for backwards compat, BrowserType is templated
+
+(async () => {
+  const browserType = {} as playwright.BrowserType<playwright.Browser & {foo: 'string'}>;
+  const browser = await browserType.launch();
+  await browser.close();
+})
+
 // exported types
 import {
   LaunchOptions,

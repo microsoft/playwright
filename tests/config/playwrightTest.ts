@@ -15,17 +15,17 @@
  */
 
 import { newTestType } from 'folio';
-import type { Browser, BrowserType, LaunchOptions, BrowserContext, Page } from '../../index';
+import type { BrowserType, LaunchOptions, BrowserContext, Page } from '../../index';
 import { CommonTestArgs } from './pageTest';
 import type { ServerTestArgs } from './serverTest';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 export { expect } from 'folio';
 
 export type PlaywrightTestArgs = CommonTestArgs & {
-  browserType: BrowserType<Browser>;
+  browserType: BrowserType;
   browserOptions: LaunchOptions;
   createUserDataDir: () => Promise<string>;
-  launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
+  launchPersistent: (options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
   startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;
 };
 

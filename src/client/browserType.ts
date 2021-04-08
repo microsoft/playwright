@@ -46,7 +46,7 @@ export interface BrowserServer extends api.BrowserServer {
   kill(): Promise<void>;
 }
 
-export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> implements api.BrowserType<api.Browser> {
+export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> implements api.BrowserType {
   private _timeoutSettings = new TimeoutSettings();
   _serverLauncher?: BrowserServerLauncher;
 

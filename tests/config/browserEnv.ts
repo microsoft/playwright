@@ -104,7 +104,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   protected _options: LaunchOptions & TestOptions;
   protected _browserOptions: LaunchOptions;
   private _playwright: typeof import('../../index');
-  protected _browserType: BrowserType<Browser>;
+  protected _browserType: BrowserType;
   private _coverage: ReturnType<typeof installCoverageHooks> | undefined;
   private _userDataDirs: string[] = [];
   private _persistentContext: BrowserContext | undefined;
@@ -143,7 +143,7 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
     return dir;
   }
 
-  private async _launchPersistent(options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) {
+  private async _launchPersistent(options?: Parameters<BrowserType['launchPersistentContext']>[1]) {
     if (this._persistentContext)
       throw new Error('can only launch one persitent context');
     const userDataDir = await this._createUserDataDir();
