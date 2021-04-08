@@ -45,6 +45,10 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserIniti
     await this._object.close();
   }
 
+  async killForTests(): Promise<void> {
+    await this._object.killForTests();
+  }
+
   async newBrowserCDPSession(): Promise<channels.BrowserNewBrowserCDPSessionResult> {
     if (!this._object.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);

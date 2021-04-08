@@ -254,6 +254,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
   });
   scheme.BrowserCloseParams = tOptional(tObject({}));
+  scheme.BrowserKillForTestsParams = tOptional(tObject({}));
   scheme.BrowserNewContextParams = tObject({
     sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),

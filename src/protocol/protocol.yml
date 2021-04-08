@@ -440,6 +440,8 @@ Browser:
 
     close:
 
+    killForTests:
+
     newContext:
       parameters:
         $mixin: ContextOptions

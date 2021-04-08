@@ -92,6 +92,7 @@ export abstract class BrowserContext extends SdkObject {
       return;
     }
     this._closedStatus = 'closed';
+    this._deleteAllDownloads();
     this._downloads.clear();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
@@ -221,6 +222,10 @@ export abstract class BrowserContext extends SdkObject {
     return this._closedStatus !== 'open';
   }
 
+  private async _deleteAllDownloads(): Promise<void> {
+    await Promise.all(Array.from(this._downloads).map(download => download.artifact.deleteOnContextClose()));
+  }
+
   async close(metadata: CallMetadata) {
     if (this._closedStatus === 'open') {
       this.emit(BrowserContext.Events.BeforeClose);
@@ -244,11 +249,9 @@ export abstract class BrowserContext extends SdkObject {
         if (context === this)
           promises.push(artifact.finishedPromise());
       }
-      for (const download of this._downloads) {
-        // We delete downloads after context closure
-        // so that browser does not write to the download file anymore.
-        promises.push(download.artifact.deleteOnContextClose());
-      }
+      // We delete downloads after context closure
+      // so that browser does not write to the download file anymore.
+      promises.push(this._deleteAllDownloads());
       await Promise.all(promises);
 
       // Persistent context should also close the browser.
