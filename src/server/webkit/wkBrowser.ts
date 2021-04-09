@@ -132,7 +132,7 @@ export class WKBrowser extends Browser {
   }
 
   _onScreencastFinished(payload: Protocol.Playwright.screencastFinishedPayload) {
-    this._videoFinished(payload.screencastId);
+    this._takeVideo(payload.screencastId)?.reportFinished();
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
