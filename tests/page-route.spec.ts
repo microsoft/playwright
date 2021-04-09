@@ -535,9 +535,7 @@ it('should support cors with GET', async ({page, server}) => {
   }
 });
 
-it('should support cors with POST', async ({page, server, isChromium, browserChannel, isElectron, isAndroid}) => {
-  it.fail(isChromium && !browserChannel && !isAndroid && !isElectron, 'https://github.com/microsoft/playwright/issues/6016');
-
+it('should support cors with POST', async ({page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
     await route.fulfill({
@@ -559,9 +557,7 @@ it('should support cors with POST', async ({page, server, isChromium, browserCha
   expect(resp).toEqual(['electric', 'gas']);
 });
 
-it('should support cors with credentials', async ({page, server, isChromium, browserChannel, isElectron, isAndroid}) => {
-  it.fail(isChromium && !browserChannel && !isAndroid && !isElectron, 'https://github.com/microsoft/playwright/issues/6016');
-
+it('should support cors with credentials', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
     await route.fulfill({
@@ -619,9 +615,7 @@ it('should reject cors with disallowed credentials', async ({page, server}) => {
   expect(error).toBeTruthy();
 });
 
-it('should support cors for different methods', async ({page, server, isChromium, browserChannel, isElectron, isAndroid}) => {
-  it.fail(isChromium && !browserChannel && !isAndroid && !isElectron, 'https://github.com/microsoft/playwright/issues/6016');
-
+it('should support cors for different methods', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async (route, request) => {
     await route.fulfill({

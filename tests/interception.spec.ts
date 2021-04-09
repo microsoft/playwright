@@ -156,9 +156,7 @@ it('should work with regular expression passed from a different context', async 
   expect(intercepted).toBe(true);
 });
 
-it('should not break remote worker importScripts', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'chromium');
-
+it('should not break remote worker importScripts', async ({ page, server }) => {
   await page.route('**', async request => {
     await request.continue();
   });
