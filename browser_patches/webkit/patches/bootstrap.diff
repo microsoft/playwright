@@ -10774,10 +10774,10 @@ index fe3c63e61f778762dc2c2080c74ec53fdf8c2e5f..c43a8226c9be702e248f1712e465efa3
          ID3D11DeviceContext1* immediateContext { nullptr };
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..dc8af6fe1c57bcd62d605fd1daa3da13361858bb
+index 0000000000000000000000000000000000000000..cfb57a48ce387b79613b757e2eb4de2c378aac30
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,61 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10809,14 +10809,18 @@ index 0000000000000000000000000000000000000000..dc8af6fe1c57bcd62d605fd1daa3da13
 +#if ENABLE(REMOTE_INSPECTOR)
 +
 +#include "InspectorPlaywrightAgent.h"
-+#include "RemoteInspectorPipe.h"
-+#include <wtf/NeverDestroyed.h>
 +#include "InspectorPlaywrightAgentClient.h"
++#include "RemoteInspectorPipe.h"
++#include "WebKit2Initialize.h"
++#include <wtf/NeverDestroyed.h>
 +
 +namespace WebKit {
 +
 +void initializeBrowserInspectorPipe(std::unique_ptr<InspectorPlaywrightAgentClient> client)
 +{
++    // Initialize main loop before creating inspecor agent and pipe queues.
++    WebKit::InitializeWebKit2();
++
 +    class BrowserInspectorPipe {
 +    public:
 +        BrowserInspectorPipe(std::unique_ptr<InspectorPlaywrightAgentClient> client)
@@ -14193,10 +14197,10 @@ index dc95430a8ab5f1ec789b5400af005553c7023f9a..70171e5523d35e235df6ca04c0d7d406
      virtual void didNotHandleTapAsClick(const WebCore::IntPoint&) = 0;
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..1d1eb4591ab865688bec7505334a208e00918701
+index 0000000000000000000000000000000000000000..dd8b28e692dca4078eb710b2a97e61716126a4cb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
-@@ -0,0 +1,226 @@
+@@ -0,0 +1,224 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14338,8 +14342,6 @@ index 0000000000000000000000000000000000000000..1d1eb4591ab865688bec7505334a208e
 +RemoteInspectorPipe::RemoteInspectorPipe(InspectorPlaywrightAgent& playwrightAgent)
 +    : m_playwrightAgent(playwrightAgent)
 +{
-+    // Initialize main loop before creating WorkQueue
-+    WTF::initializeMainThread();
 +    m_remoteFrontendChannel = makeUnique<RemoteFrontendChannel>();
 +    start();
 +}
@@ -14406,7 +14408,7 @@ index 0000000000000000000000000000000000000000..1d1eb4591ab865688bec7505334a208e
 +
 +            if (end > start) {
 +                String message = String::fromUTF8(line.data() + start, end - start);
-+                RunLoop::main().dispatch([this, message] {
++                RunLoop::main().dispatch([this, message = WTFMove(message)] {
 +                    if (!m_terminated)
 +                        m_playwrightAgent.dispatchMessageFromFrontend(message);
 +                });
