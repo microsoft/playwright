@@ -20,7 +20,7 @@ import * as network from '../network';
 import { helper, RegisteredListener } from '../helper';
 import { debugLogger } from '../../utils/debugLogger';
 import { Frame } from '../frames';
-import { SnapshotData, frameSnapshotStreamer, kSnapshotBinding, kSnapshotStreamer } from './snapshotterInjected';
+import { SnapshotData, frameSnapshotStreamer } from './snapshotterInjected';
 import { calculateSha1, createGuid, monotonicTime } from '../../utils/utils';
 import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 import { ElementHandle } from '../dom';
@@ -41,6 +41,8 @@ export class Snapshotter {
   private _delegate: SnapshotterDelegate;
   private _eventListeners: RegisteredListener[] = [];
   private _interval = 0;
+  private _snapshotStreamer: string;
+  private _snapshotBinding: string;
 
   constructor(context: BrowserContext, delegate: SnapshotterDelegate) {
     this._context = context;
@@ -50,10 +52,13 @@ export class Snapshotter {
     this._eventListeners = [
       helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
+    const guid = createGuid();
+    this._snapshotStreamer = '__playwright_snapshot_streamer_' + guid;
+    this._snapshotBinding = '__playwright_snapshot_binding_' + guid;
   }
 
   async initialize() {
-    await this._context.exposeBinding(kSnapshotBinding, false, (source, data: SnapshotData) => {
+    await this._context.exposeBinding(this._snapshotBinding, false, (source, data: SnapshotData) => {
       const snapshot: FrameSnapshot = {
         snapshotName: data.snapshotName,
         pageId: source.page.uniqueId,
@@ -79,7 +84,7 @@ export class Snapshotter {
       }
       this._delegate.onFrameSnapshot(snapshot);
     });
-    const initScript = '(' + frameSnapshotStreamer.toString() + ')()';
+    const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}", "${this._snapshotBinding}")`;
     await this._context._doAddInitScript(initScript);
     const frames = [];
     for (const page of this._context.pages())
@@ -95,7 +100,7 @@ export class Snapshotter {
 
   captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle) {
     // This needs to be sync, as in not awaiting for anything before we issue the command.
-    const expression = `window[${JSON.stringify(kSnapshotStreamer)}].captureSnapshot(${JSON.stringify(snapshotName)})`;
+    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
     element?.callFunctionNoReply((element: Element, snapshotName: string) => {
       element.setAttribute('__playwright_target__', snapshotName);
     }, snapshotName);
@@ -111,15 +116,14 @@ export class Snapshotter {
     const frames = [];
     for (const page of this._context.pages())
       frames.push(...page.frames());
-    await Promise.all(frames.map(frame => setIntervalInFrame(frame, interval)));
+    await Promise.all(frames.map(frame => this._setIntervalInFrame(frame, interval)));
   }
 
   private _onPage(page: Page) {
     const processNewFrame = (frame: Frame) => {
-      annotateFrameHierarchy(frame);
-      setIntervalInFrame(frame, this._interval);
-      // FIXME: make addInitScript work for pages w/ setContent.
-      const initScript = '(' + frameSnapshotStreamer.toString() + ')()';
+      this._annotateFrameHierarchy(frame);
+      this._setIntervalInFrame(frame, this._interval);
+      const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}", "${this._snapshotBinding}")`;
       frame._existingMainContext()?.rawEvaluate(initScript).catch(debugExceptionHandler);
     };
     for (const frame of page.frames())
@@ -128,7 +132,7 @@ export class Snapshotter {
 
     // Push streamer interval on navigation.
     this._eventListeners.push(helper.addEventListener(page, Page.Events.InternalFrameNavigatedToNewDocument, frame => {
-      setIntervalInFrame(frame, this._interval);
+      this._setIntervalInFrame(frame, this._interval);
     }));
 
     // Capture resources.
@@ -182,27 +186,27 @@ export class Snapshotter {
     if (body)
       this._delegate.onBlob({ sha1: responseSha1, buffer: body });
   }
-}
 
-async function setIntervalInFrame(frame: Frame, interval: number) {
-  const context = frame._existingMainContext();
-  await context?.evaluate(({ kSnapshotStreamer, interval }) => {
-    (window as any)[kSnapshotStreamer].setSnapshotInterval(interval);
-  }, { kSnapshotStreamer, interval }).catch(debugExceptionHandler);
-}
+  private async _setIntervalInFrame(frame: Frame, interval: number) {
+    const context = frame._existingMainContext();
+    await context?.evaluate(({ snapshotStreamer, interval }) => {
+      (window as any)[snapshotStreamer].setSnapshotInterval(interval);
+    }, { snapshotStreamer: this._snapshotStreamer, interval }).catch(debugExceptionHandler);
+  }
 
-async function annotateFrameHierarchy(frame: Frame) {
-  try {
-    const frameElement = await frame.frameElement();
-    const parent = frame.parentFrame();
-    if (!parent)
-      return;
-    const context = await parent._mainContext();
-    await context?.evaluate(({ kSnapshotStreamer, frameElement, frameId }) => {
-      (window as any)[kSnapshotStreamer].markIframe(frameElement, frameId);
-    }, { kSnapshotStreamer, frameElement, frameId: frame.uniqueId });
-    frameElement.dispose();
-  } catch (e) {
+  private async _annotateFrameHierarchy(frame: Frame) {
+    try {
+      const frameElement = await frame.frameElement();
+      const parent = frame.parentFrame();
+      if (!parent)
+        return;
+      const context = await parent._mainContext();
+      await context?.evaluate(({ snapshotStreamer, frameElement, frameId }) => {
+        (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
+      }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.uniqueId });
+      frameElement.dispose();
+    } catch (e) {
+    }
   }
 }
 
