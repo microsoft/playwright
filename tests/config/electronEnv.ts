@@ -24,11 +24,13 @@ import { PageTestArgs } from './pageTest';
 export class ElectronEnv extends PlaywrightEnv implements Env<ElectronTestArgs> {
   private _electronApp: ElectronApplication | undefined;
   private _windows: Page[] = [];
+  protected _browserVersion: string;
 
   constructor() {
     super('chromium', { mode: 'default', coverageBrowserName: 'electron' });
     // This env prevents 'Electron Security Policy' console message.
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+    this._browserVersion = require('electron/package.json').version;
   }
 
   private async _newWindow() {
@@ -54,6 +56,10 @@ export class ElectronEnv extends PlaywrightEnv implements Env<ElectronTestArgs> 
     this._electronApp = await result.playwright._electron.launch({
       args: [path.join(__dirname, 'electron-app.js')],
     });
+    testInfo.data = {
+      browserName: 'electron',
+      browserVersion: this._browserVersion,
+    };
     return {
       ...result,
       electronApp: this._electronApp,
@@ -79,7 +85,7 @@ export class ElectronPageEnv extends ElectronEnv implements Env<PageTestArgs> {
     const page = await result.newWindow();
     return {
       ...result,
-      browserVersion: require('electron/package.json').version,
+      browserVersion: this._browserVersion,
       page,
     };
   }
