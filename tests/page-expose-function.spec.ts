@@ -222,8 +222,8 @@ it('exposeBindingHandle should throw for multiple arguments', async ({page}) => 
   expect(error.message).toContain('exposeBindingHandle supports a single argument, 2 received');
 });
 
-it('should not result in unhandled rejection', async ({page}) => {
-  it.fixme(!!process.env.PW_ANDROID_TESTS);
+it('should not result in unhandled rejection', async ({page, isAndroid}) => {
+  it.fixme(isAndroid);
 
   const closedPromise = page.waitForEvent('close');
   await page.exposeFunction('foo', async () => {
@@ -238,11 +238,11 @@ it('should not result in unhandled rejection', async ({page}) => {
   expect(await page.evaluate('1 + 1').catch(e => e)).toBeInstanceOf(Error);
 });
 
-it('should work with internal bindings', async ({page, toImpl, server, mode, browserName}) => {
+it('should work with internal bindings', async ({page, toImpl, server, mode, browserName, isElectron, isAndroid}) => {
   it.skip(mode !== 'default');
   it.skip(browserName !== 'chromium');
-  it.skip(!!process.env.PW_ANDROID_TESTS);
-  it.skip(!!process.env.PW_ELECTRON_TESTS);
+  it.skip(isAndroid);
+  it.skip(isElectron);
 
   const implPage: import('../src/server/page').Page = toImpl(page);
   let foo;

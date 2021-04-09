@@ -68,9 +68,9 @@ it('should handle object', async ({page, isChromium, isFirefox}) => {
   expect(error.message).toBe(isChromium ? 'Object' : '[object Object]');
 });
 
-it('should handle window', async ({page, isChromium, isFirefox}) => {
+it('should handle window', async ({page, isChromium, isFirefox, isElectron}) => {
   it.fixme(isFirefox);
-  it.skip(!!process.env.PW_ELECTRON_TESTS);
+  it.skip(isElectron);
 
   // Firefox just does not report this error.
   const [error] = await Promise.all([

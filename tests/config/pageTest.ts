@@ -33,6 +33,8 @@ export type CommonTestArgs = {
   isChromium: boolean;
   isFirefox: boolean;
   isWebKit: boolean;
+  isAndroid: boolean;
+  isElectron: boolean;
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;

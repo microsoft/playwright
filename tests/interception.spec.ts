@@ -44,8 +44,8 @@ browserTest('should work with ignoreHTTPSErrors', async ({browser, httpsServer})
   await context.close();
 });
 
-it('should intercept after a service worker', async ({page, server}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it('should intercept after a service worker', async ({page, server, isAndroid}) => {
+  it.skip(isAndroid);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);
@@ -90,8 +90,8 @@ it('should work with glob', async () => {
   expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
 });
 
-it('should intercept network activity from worker', async function({page, server}) {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it('should intercept network activity from worker', async function({page, server, isAndroid}) {
+  it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/data_for_worker', (req, res) => res.end('failed to intercept'));
@@ -111,9 +111,9 @@ it('should intercept network activity from worker', async function({page, server
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should intercept network activity from worker 2', async function({page, server}) {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
-  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+it('should intercept network activity from worker 2', async function({page, server, isElectron, isAndroid}) {
+  it.skip(isAndroid);
+  it.fixme(isElectron);
 
   const url = server.PREFIX + '/worker/worker.js';
   await page.route(url, route => {
@@ -130,8 +130,8 @@ it('should intercept network activity from worker 2', async function({page, serv
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should work with regular expression passed from a different context', async ({page, server}) => {
-  it.skip(!!process.env.PW_ELECTRON_TESTS);
+it('should work with regular expression passed from a different context', async ({page, server, isElectron}) => {
+  it.skip(isElectron);
 
   const ctx = vm.createContext();
   const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx);

@@ -71,8 +71,8 @@ it.describe('', () => {
   });
 
   it('should be able to close context when page crashes', async args => {
-    it.skip(!!process.env.PW_ANDROID_TESTS);
-    it.skip(!!process.env.PW_ELECTRON_TESTS);
+    it.skip(args.isAndroid);
+    it.skip(args.isElectron);
 
     const { page } = args;
     await page.setContent(`<div>This page should crash</div>`);

@@ -41,6 +41,6 @@ if (process.env.CI) {
   ]);
 }
 
-const serverEnv = new ServerEnv();
+const serverEnv = new ServerEnv('10.0.2.2');
 pageTest.runWith(folio.merge(serverEnv, new AndroidPageEnv()), { tag: 'android' });
 androidTest.runWith(folio.merge(serverEnv, new AndroidEnv()), { tag: 'android' });

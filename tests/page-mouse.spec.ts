@@ -143,8 +143,8 @@ it('should set modifier keys on click', async ({page, server, isFirefox, isMac})
   }
 });
 
-it('should tween mouse movement', async ({page, isWebKit}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'Bad rounding');
+it('should tween mouse movement', async ({page, isWebKit, isAndroid}) => {
+  it.skip(isAndroid, 'Bad rounding');
 
   // The test becomes flaky on WebKit without next line.
   if (isWebKit)

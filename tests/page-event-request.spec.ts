@@ -41,8 +41,8 @@ it('should fire for fetches', async ({page, server}) => {
   expect(requests.length).toBe(2);
 });
 
-it('should report requests and responses handled by service worker', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ANDROID_TESTS);
+it('should report requests and responses handled by service worker', async ({page, server, isAndroid}) => {
+  it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);

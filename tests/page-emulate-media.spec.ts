@@ -19,8 +19,8 @@ import { test as it, expect } from './config/pageTest';
 import { test as browserTest } from './config/browserTest';
 import { attachFrame } from './config/utils';
 
-it.beforeEach(async () => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it.beforeEach(async ({ isAndroid }) => {
+  it.skip(isAndroid);
 });
 
 it('should emulate type', async ({page}) => {

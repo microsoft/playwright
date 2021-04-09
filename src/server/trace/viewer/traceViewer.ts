@@ -131,7 +131,7 @@ class TraceViewer {
       sdkLanguage: 'javascript',
       args,
       noDefaultViewport: true,
-      headless: !!process.env.PWCLI_HEADLESS_FOR_TEST,
+      headless: !!process.env.PWTEST_CLI_HEADLESS,
       useWebSocket: isUnderTest()
     });
 

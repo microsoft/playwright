@@ -16,7 +16,6 @@
 
 import type { Env, WorkerInfo, TestInfo } from 'folio';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions } from '../../index';
-import { installCoverageHooks } from './coverage';
 import { start } from '../../lib/outofprocess';
 import { PlaywrightClient } from '../../lib/remote/playwrightClient';
 import { removeFolders } from '../../lib/utils/utils';
@@ -37,7 +36,6 @@ type TestOptions = {
   mode: 'default' | 'driver' | 'service';
   video?: boolean;
   traceDir?: string;
-  coverageBrowserName?: string;
 };
 
 class DriverMode {
@@ -105,7 +103,6 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   protected _browserOptions: LaunchOptions;
   private _playwright: typeof import('../../index');
   protected _browserType: BrowserType;
-  private _coverage: ReturnType<typeof installCoverageHooks> | undefined;
   private _userDataDirs: string[] = [];
   private _persistentContext: BrowserContext | undefined;
   private _remoteServer: RemoteServer | undefined;
@@ -121,7 +118,6 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
   }
 
   async beforeAll(workerInfo: WorkerInfo) {
-    this._coverage = installCoverageHooks(this._options.coverageBrowserName || this._browserName);
     require('../../lib/utils/utils').setUnderTest();
     this._playwright = await this._mode.setup(workerInfo);
     this._browserType = this._playwright[this._browserName];
@@ -184,6 +180,8 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
       isChromium: this._browserName === 'chromium',
       isFirefox: this._browserName === 'firefox',
       isWebKit: this._browserName === 'webkit',
+      isAndroid: false,
+      isElectron: false,
       isWindows: os.platform() === 'win32',
       isMac: os.platform() === 'darwin',
       isLinux: os.platform() === 'linux',
@@ -213,12 +211,6 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
 
   async afterAll(workerInfo: WorkerInfo) {
     await this._mode.teardown();
-    const { coverage, uninstall } = this._coverage!;
-    uninstall();
-    const coveragePath = path.join(__dirname, '..', 'coverage-report', workerInfo.workerIndex + '.json');
-    const coverageJSON = Array.from(coverage.keys()).filter(key => coverage.get(key));
-    await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
-    await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
   }
 }
 

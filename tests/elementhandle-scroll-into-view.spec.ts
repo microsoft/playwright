@@ -17,8 +17,8 @@
 
 import { test as it, expect } from './config/pageTest';
 
-it('should work', async ({ page, server }) => {
-  it.fixme(!!process.env.PW_ANDROID_TESTS);
+it('should work', async ({ page, server, isAndroid }) => {
+  it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/offscreenbuttons.html');
   for (let i = 0; i < 11; ++i) {

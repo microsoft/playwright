@@ -123,9 +123,9 @@ it('should contain referer header', async ({page, server}) => {
   expect(requests[1].headers().referer).toContain('/one-style.html');
 });
 
-it('should properly return navigation response when URL has cookies', async ({page, server}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
-  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'error: Browser context management is not supported.');
+it('should properly return navigation response when URL has cookies', async ({page, server, isElectron, isAndroid}) => {
+  it.skip(isAndroid, 'No isolated context');
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
 
   // Setup cookie.
   await page.goto(server.EMPTY_PAGE);
@@ -535,8 +535,8 @@ it('should support cors with GET', async ({page, server}) => {
   }
 });
 
-it('should support cors with POST', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS && !process.env.PW_ELECTRON_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
+it('should support cors with POST', async ({page, server, isChromium, browserChannel, isElectron, isAndroid}) => {
+  it.fail(isChromium && !browserChannel && !isAndroid && !isElectron, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
@@ -559,8 +559,8 @@ it('should support cors with POST', async ({page, server, isChromium, browserCha
   expect(resp).toEqual(['electric', 'gas']);
 });
 
-it('should support cors with credentials', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS && !process.env.PW_ELECTRON_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
+it('should support cors with credentials', async ({page, server, isChromium, browserChannel, isElectron, isAndroid}) => {
+  it.fail(isChromium && !browserChannel && !isAndroid && !isElectron, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
@@ -619,8 +619,8 @@ it('should reject cors with disallowed credentials', async ({page, server}) => {
   expect(error).toBeTruthy();
 });
 
-it('should support cors for different methods', async ({page, server, isChromium, browserChannel}) => {
-  it.fail(isChromium && !browserChannel && !process.env.PW_ANDROID_TESTS && !process.env.PW_ELECTRON_TESTS, 'https://github.com/microsoft/playwright/issues/6016');
+it('should support cors for different methods', async ({page, server, isChromium, browserChannel, isElectron, isAndroid}) => {
+  it.fail(isChromium && !browserChannel && !isAndroid && !isElectron, 'https://github.com/microsoft/playwright/issues/6016');
 
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async (route, request) => {

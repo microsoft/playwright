@@ -19,8 +19,8 @@ import { test as it, expect } from './config/pageTest';
 import { attachFrame } from './config/utils';
 
 it.describe('Drag and drop', () => {
-  it.beforeEach(async ({ browserName }) => {
-    it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.beforeEach(async ({ browserName, isAndroid }) => {
+    it.skip(isAndroid);
     it.fixme(browserName === 'chromium');
   });
 

@@ -20,6 +20,7 @@ import { test as electronTest } from './electronTest';
 import { test as pageTest } from './pageTest';
 import { ServerEnv } from './serverEnv';
 import { ElectronEnv, ElectronPageEnv } from './electronEnv';
+import { CoverageEnv } from './coverage';
 
 const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
@@ -42,5 +43,6 @@ if (process.env.CI) {
 }
 
 const serverEnv = new ServerEnv();
-electronTest.runWith(folio.merge(serverEnv, new ElectronEnv()), { tag: 'electron' });
-pageTest.runWith(folio.merge(serverEnv, new ElectronPageEnv()), { tag: 'electron' });
+const coverageEnv = new CoverageEnv('electron');
+electronTest.runWith(folio.merge(coverageEnv, serverEnv, new ElectronEnv()), { tag: 'electron' });
+pageTest.runWith(folio.merge(coverageEnv, serverEnv, new ElectronPageEnv()), { tag: 'electron' });

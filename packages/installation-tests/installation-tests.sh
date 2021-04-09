@@ -453,7 +453,7 @@ function test_playwright_cli_codegen_should_work {
   npm install ${PLAYWRIGHT_TGZ}
 
   echo "Running playwright codegen"
-  OUTPUT=$(PWCLI_EXIT_FOR_TEST=1 xvfb-run --auto-servernum -- bash -c "npx playwright codegen")
+  OUTPUT=$(PWTEST_CLI_EXIT=1 xvfb-run --auto-servernum -- bash -c "npx playwright codegen")
   if [[ "${OUTPUT}" != *"chromium.launch"* ]]; then
     echo "ERROR: missing chromium.launch in the output"
     exit 1
@@ -464,7 +464,7 @@ function test_playwright_cli_codegen_should_work {
   fi
 
   echo "Running playwright codegen --target=python"
-  OUTPUT=$(PWCLI_EXIT_FOR_TEST=1 xvfb-run --auto-servernum -- bash -c "npx playwright codegen --target=python")
+  OUTPUT=$(PWTEST_CLI_EXIT=1 xvfb-run --auto-servernum -- bash -c "npx playwright codegen --target=python")
   if [[ "${OUTPUT}" != *"chromium.launch"* ]]; then
     echo "ERROR: missing chromium.launch in the output"
     exit 1

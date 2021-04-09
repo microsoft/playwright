@@ -97,8 +97,8 @@ it('should amend method on main request', async ({page, server}) => {
 });
 
 it.describe('', () => {
-  it.beforeEach(async () => {
-    it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.beforeEach(async ({ isAndroid }) => {
+    it.fixme(isAndroid, 'Post data does not work');
   });
 
   it('should amend post data', async ({page, server}) => {

@@ -28,8 +28,8 @@ function initServer(server: TestServer): string[] {
   return messages;
 }
 
-it.beforeEach(async () => {
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'Too flaky on Android');
+it.beforeEach(async ({ isAndroid }) => {
+  it.skip(isAndroid, 'Too flaky on Android');
 });
 
 it('should await navigation when clicking anchor', async ({page, server}) => {

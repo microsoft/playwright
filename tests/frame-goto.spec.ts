@@ -40,8 +40,8 @@ it('should reject when frame detaches', async ({page, server}) => {
   expect(error.message).toContain('frame was detached');
 });
 
-it('should continue after client redirect', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ANDROID_TESTS);
+it('should continue after client redirect', async ({page, server, isAndroid}) => {
+  it.fixme(isAndroid);
 
   server.setRoute('/frames/script.js', () => {});
   const url = server.PREFIX + '/frames/child-redirect.html';

@@ -32,8 +32,8 @@ it('should set the page close state', async ({page}) => {
   expect(page.isClosed()).toBe(true);
 });
 
-it('should pass page to close event', async ({page}) => {
-  it.fixme(!!process.env.PW_ANDROID_TESTS);
+it('should pass page to close event', async ({page, isAndroid}) => {
+  it.fixme(isAndroid);
 
   const [closedPage] = await Promise.all([
     page.waitForEvent('close'),
@@ -121,8 +121,8 @@ it('should pass self as argument to load event', async ({page}) => {
   expect(eventArg).toBe(page);
 });
 
-it('should fail with error upon disconnect', async ({page}) => {
-  it.fixme(!!process.env.PW_ANDROID_TESTS);
+it('should fail with error upon disconnect', async ({page, isAndroid}) => {
+  it.fixme(isAndroid);
 
   let error;
   const waitForPromise = page.waitForEvent('download').catch(e => error = e);
@@ -131,8 +131,8 @@ it('should fail with error upon disconnect', async ({page}) => {
   expect(error.message).toContain('Page closed');
 });
 
-it('page.url should work', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+it('page.url should work', async ({page, server, isElectron}) => {
+  it.fixme(isElectron);
 
   expect(page.url()).toBe('about:blank');
   await page.goto(server.EMPTY_PAGE);
@@ -182,9 +182,9 @@ it('page.frame should respect url', async function({page, server}) {
   expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should have sane user agent', async ({page, isChromium, isFirefox}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
-  it.skip(!!process.env.PW_ELECTRON_TESTS);
+it('should have sane user agent', async ({page, isChromium, isFirefox, isElectron, isAndroid}) => {
+  it.skip(isAndroid);
+  it.skip(isElectron);
 
   const userAgent = await page.evaluate(() => navigator.userAgent);
   const [

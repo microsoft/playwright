@@ -99,15 +99,15 @@ export class RecorderApp extends EventEmitter {
       '--window-size=600,600',
       '--window-position=1280,10',
     ];
-    if (process.env.PW_RECORDER_PORT)
-      args.push(`--remote-debugging-port=${process.env.PW_RECORDER_PORT}`);
+    if (process.env.PWTEST_RECORDER_PORT)
+      args.push(`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`);
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
       channel: inspectedContext._browser.options.channel,
       sdkLanguage: inspectedContext._options.sdkLanguage,
       args,
       noDefaultViewport: true,
-      headless: !!process.env.PWCLI_HEADLESS_FOR_TEST || (isUnderTest() && !inspectedContext._browser.options.headful),
-      useWebSocket: !!process.env.PW_RECORDER_PORT
+      headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !inspectedContext._browser.options.headful),
+      useWebSocket: !!process.env.PWTEST_RECORDER_PORT
     });
     const controller = new ProgressController(internalCallMetadata(), context._browser);
     await controller.run(async progress => {
@@ -145,7 +145,7 @@ export class RecorderApp extends EventEmitter {
 
     // Testing harness for runCLI mode.
     {
-      if (process.env.PWCLI_EXIT_FOR_TEST && sources.length) {
+      if (process.env.PWTEST_CLI_EXIT && sources.length) {
         process.stdout.write('\n-------------8<-------------\n');
         process.stdout.write(sources[0].text);
         process.stdout.write('\n-------------8<-------------\n');

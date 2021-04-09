@@ -25,8 +25,8 @@ it('should work', async ({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with file URL', async ({page, asset}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'No files on Android');
+it('should work with file URL', async ({page, asset, isAndroid}) => {
+  it.skip(isAndroid, 'No files on Android');
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   await page.goto(fileurl);
@@ -34,8 +34,8 @@ it('should work with file URL', async ({page, asset}) => {
   expect(page.frames().length).toBe(3);
 });
 
-it('should use http for no protocol', async ({page, server}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it('should use http for no protocol', async ({page, server, isAndroid}) => {
+  it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE.substring('http://'.length));
   expect(page.url()).toBe(server.EMPTY_PAGE);
@@ -236,8 +236,8 @@ it('should fail when exceeding maximum navigation timeout', async ({page, server
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding default maximum navigation timeout', async ({page, server, playwright}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'No context per test');
+it('should fail when exceeding default maximum navigation timeout', async ({page, server, playwright, isAndroid}) => {
+  it.skip(isAndroid, 'No context per test');
 
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
@@ -250,8 +250,8 @@ it('should fail when exceeding default maximum navigation timeout', async ({page
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding browser context navigation timeout', async ({page, server, playwright}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'No context per test');
+it('should fail when exceeding browser context navigation timeout', async ({page, server, playwright, isAndroid}) => {
+  it.skip(isAndroid, 'No context per test');
 
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
@@ -263,8 +263,8 @@ it('should fail when exceeding browser context navigation timeout', async ({page
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding default maximum timeout', async ({page, server, playwright}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'No context per test');
+it('should fail when exceeding default maximum timeout', async ({page, server, playwright, isAndroid}) => {
+  it.skip(isAndroid, 'No context per test');
 
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
@@ -277,8 +277,8 @@ it('should fail when exceeding default maximum timeout', async ({page, server, p
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding browser context timeout', async ({page, server, playwright}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'No context per test');
+it('should fail when exceeding browser context timeout', async ({page, server, playwright, isAndroid}) => {
+  it.skip(isAndroid, 'No context per test');
 
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
@@ -489,8 +489,8 @@ it('should fail when canceled by another navigation', async ({page, server}) => 
   expect(error.message).toBeTruthy();
 });
 
-it('should work with lazy loading iframes', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+it('should work with lazy loading iframes', async ({page, server, isElectron}) => {
+  it.fixme(isElectron);
 
   await page.goto(server.PREFIX + '/frames/lazy-frame.html');
   expect(page.frames().length).toBe(2);

@@ -31,7 +31,7 @@ export class CLIEnv extends PageEnv implements Env<CLITestArgs> {
 
     this._port = 10907 + workerInfo.workerIndex * 2;
     this._server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => this._handler(req, res)).listen(this._port);
-    process.env.PW_RECORDER_PORT = String(this._port + 1);
+    process.env.PWTEST_RECORDER_PORT = String(this._port + 1);
   }
 
   private _runCLI(args: string[]) {

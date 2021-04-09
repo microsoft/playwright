@@ -138,8 +138,8 @@ it('should wait for networkidle from the child frame', async ({page, server}) =>
   });
 });
 
-it('should wait for networkidle from the popup', async ({page, server}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'Too slow');
+it('should wait for networkidle from the popup', async ({page, server, isAndroid}) => {
+  it.skip(isAndroid, 'Too slow');
 
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`

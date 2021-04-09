@@ -20,10 +20,10 @@ import { test as playwrightTest } from '../config/playwrightTest';
 import http from 'http';
 
 pageTest.describe('chromium', () => {
-  pageTest.beforeEach(async ({ browserName }) => {
+  pageTest.beforeEach(async ({ browserName, isElectron, isAndroid }) => {
     pageTest.skip(browserName !== 'chromium');
-    pageTest.skip(!!process.env.PW_ANDROID_TESTS);
-    pageTest.skip(!!process.env.PW_ELECTRON_TESTS);
+    pageTest.skip(isAndroid);
+    pageTest.skip(isElectron);
   });
 
   pageTest('should create a worker from a service worker', async ({page, server}) => {

@@ -177,7 +177,7 @@ jobs:
     # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run ctest"
       env:
-        PWMODE: "${{ matrix.mode }}"
+        PWTEST_MODE: "${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1
@@ -209,7 +209,7 @@ jobs:
     # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- --tag=${{ matrix.browser }}"
       env:
-        PWVIDEO: 1
+        PWTEST_VIDEO: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1
@@ -272,7 +272,7 @@ jobs:
     # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run ctest"
       env:
-        PW_CHROMIUM_CHANNEL: "chrome"
+        PWTEST_CHANNEL: "chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1
@@ -301,7 +301,7 @@ jobs:
     - run: npm run ctest
       shell: bash
       env:
-        PW_CHROMIUM_CHANNEL: "chrome"
+        PWTEST_CHANNEL: "chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
       shell: bash
@@ -327,7 +327,7 @@ jobs:
     - run: node lib/cli/cli install ffmpeg
     - run: npm run ctest
       env:
-        PW_CHROMIUM_CHANNEL: "chrome"
+        PWTEST_CHANNEL: "chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     - uses: actions/upload-artifact@v1
@@ -356,7 +356,7 @@ jobs:
     - run: npm run ctest
       shell: bash
       env:
-        PW_CHROMIUM_CHANNEL: "msedge"
+        PWTEST_CHANNEL: "msedge"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:

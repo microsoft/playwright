@@ -149,8 +149,8 @@ export class CLIMock {
     this.process = spawn('node', nodeArgs, {
       env: {
         ...process.env,
-        PWCLI_EXIT_FOR_TEST: '1',
-        PWCLI_HEADLESS_FOR_TEST: headless ? '1' : undefined,
+        PWTEST_CLI_EXIT: '1',
+        PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
       },
       stdio: 'pipe'
     });

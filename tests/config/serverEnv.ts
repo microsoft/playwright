@@ -25,17 +25,22 @@ export class ServerEnv implements Env<ServerTestArgs> {
   private _httpsServer: TestServer;
   private _socksServer: any;
   private _socksPort: number;
+  private _loopback: string | undefined;
+
+  constructor(loopback?: string) {
+    this._loopback = loopback;
+  }
 
   async beforeAll(workerInfo: WorkerInfo) {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
     const port = 8907 + workerInfo.workerIndex * 3;
-    this._server = await TestServer.create(assetsPath, port);
+    this._server = await TestServer.create(assetsPath, port, this._loopback);
     this._server.enableHTTPCache(cachedPath);
 
     const httpsPort = port + 1;
-    this._httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
+    this._httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, this._loopback);
     this._httpsServer.enableHTTPCache(cachedPath);
 
     this._socksServer = socks.createServer((info, accept, deny) => {
