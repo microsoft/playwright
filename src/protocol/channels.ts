@@ -177,16 +177,9 @@ export type PlaywrightInitializer = {
     },
   }[],
   selectors: SelectorsChannel,
+  preLaunchedBrowser?: BrowserChannel,
 };
 export interface PlaywrightChannel extends Channel {
-}
-
-// ----------- RemoteBrowser -----------
-export type RemoteBrowserInitializer = {
-  browser: BrowserChannel,
-  selectors: SelectorsChannel,
-};
-export interface RemoteBrowserChannel extends Channel {
 }
 
 // ----------- Selectors -----------

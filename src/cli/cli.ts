@@ -22,7 +22,7 @@ import path from 'path';
 import program from 'commander';
 import os from 'os';
 import fs from 'fs';
-import { runServer, printApiJson, launchBrowserServer, installBrowsers } from './driver';
+import { runDriver, runServer, printApiJson, launchBrowserServer, installBrowsers } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
@@ -176,7 +176,9 @@ if (process.env.PWTRACE) {
 }
 
 if (process.argv[2] === 'run-driver')
-  runServer();
+  runDriver();
+else if (process.argv[2] === 'run-server')
+  runServer(process.argv[3] ? +process.argv[3] : undefined);
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')

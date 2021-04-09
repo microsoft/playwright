@@ -58,7 +58,7 @@ class ServiceMode {
 
   async setup(workerInfo: WorkerInfo) {
     const port = 10507 + workerInfo.workerIndex;
-    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'service.js'), [String(port)], {
+    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), ['run-server', String(port)], {
       stdio: 'pipe'
     });
     this._serviceProcess.stderr.pipe(process.stderr);
