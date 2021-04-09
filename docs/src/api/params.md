@@ -209,7 +209,7 @@ Whether to ignore HTTPS errors during navigation. Defaults to `false`.
 Toggles bypassing page's Content-Security-Policy.
 
 ## context-option-viewport
-* langs: js, java
+* langs: js, java, csharp
   - alias-java: viewportSize
   - alias-csharp: viewportSize
 - `viewport` <[null]|[Object]>
