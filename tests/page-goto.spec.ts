@@ -16,6 +16,7 @@
  */
 
 import url from 'url';
+import os from 'os';
 import { test as it, expect } from './config/pageTest';
 import { slowTest } from './config/browserTest';
 import { expectedSSLError } from './config/utils';
@@ -514,7 +515,8 @@ it('should not throw unhandled rejections on invalid url', async ({page, server}
   expect(e.toString()).toContain('Panel Title');
 });
 
-it('should not crash when RTCPeerConnection is used', async ({ page, server }) => {
+it('should not crash when RTCPeerConnection is used', async ({ page, server, browserName, platform }) => {
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 18, 'Does not work on MacOS 10.14');
   server.setRoute('/rtc.html', (_, res) => {
     res.end(`
       <!DOCTYPE html>
