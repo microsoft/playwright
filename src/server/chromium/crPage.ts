@@ -900,9 +900,10 @@ class FrameSession {
     this._screencastId = null;
     const recorder = this._videoRecorder!;
     this._videoRecorder = null;
+    const video = this._crPage._browserContext._browser._takeVideo(screencastId);
     await this._stopScreencast(recorder);
     await recorder.stop().catch(() => {});
-    this._crPage._browserContext._browser._videoFinished(screencastId);
+    video?.reportFinished();
   }
 
   async _startScreencast(client: any, options: Protocol.Page.startScreencastParameters = {}) {

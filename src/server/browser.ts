@@ -107,10 +107,10 @@ export abstract class Browser extends SdkObject {
     });
   }
 
-  _videoFinished(videoId: string) {
+  _takeVideo(videoId: string): Artifact | undefined {
     const video = this._idToVideo.get(videoId);
     this._idToVideo.delete(videoId);
-    video?.artifact.reportFinished();
+    return video?.artifact;
   }
 
   _didClose() {
