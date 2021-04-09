@@ -18,8 +18,8 @@
 import { test as it, expect } from './config/pageTest';
 import { Server as WebSocketServer } from 'ws';
 
-it.beforeEach(async () => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it.beforeEach(async ({ isAndroid }) => {
+  it.skip(isAndroid);
 });
 
 it('should work', async ({ page, server }) => {

@@ -49,9 +49,9 @@ it('should work with status code 422', async ({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should allow mocking binary responses', async ({page, server, browserName, headful, asset}) => {
+it('should allow mocking binary responses', async ({page, server, browserName, headful, asset, isAndroid}) => {
   it.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.skip(isAndroid);
 
   await page.route('**/*', route => {
     const imageBuffer = fs.readFileSync(asset('pptr.png'));
@@ -70,9 +70,9 @@ it('should allow mocking binary responses', async ({page, server, browserName, h
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should allow mocking svg with charset', async ({page, server, browserName, headful}) => {
+it('should allow mocking svg with charset', async ({page, server, browserName, headful, isAndroid}) => {
   it.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+  it.skip(isAndroid);
 
   // Firefox headful produces a different image.
   await page.route('**/*', route => {
@@ -91,8 +91,8 @@ it('should allow mocking svg with charset', async ({page, server, browserName, h
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
-it('should work with file path', async ({page, server, asset}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it('should work with file path', async ({page, server, asset, isAndroid}) => {
+  it.skip(isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
   await page.evaluate(PREFIX => {
@@ -159,8 +159,8 @@ it('should not modify the headers sent to the server', async ({page, server}) =>
   expect(interceptedRequests[1].headers).toEqual(interceptedRequests[0].headers);
 });
 
-it('should include the origin header', async ({page, server}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it('should include the origin header', async ({page, server, isAndroid}) => {
+  it.skip(isAndroid, 'No cross-process on Android');
 
   await page.goto(server.PREFIX + '/empty.html');
   let interceptedRequest;

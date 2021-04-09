@@ -348,7 +348,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 }
 
 async function open(options: Options, url: string | undefined, language: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWCLI_HEADLESS_FOR_TEST);
+  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS);
   await context._enableRecorder({
     language,
     launchOptions,
@@ -357,12 +357,12 @@ async function open(options: Options, url: string | undefined, language: string)
     saveStorage: options.saveStorage,
   });
   await openPage(context, url);
-  if (process.env.PWCLI_EXIT_FOR_TEST)
+  if (process.env.PWTEST_CLI_EXIT)
     await Promise.all(context.pages().map(p => p.close()));
 }
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWCLI_HEADLESS_FOR_TEST);
+  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS);
   if (process.env.PWTRACE)
     contextOptions._traceDir = path.join(process.cwd(), '.trace');
   await context._enableRecorder({
@@ -375,7 +375,7 @@ async function codegen(options: Options, url: string | undefined, language: stri
     outputFile: outputFile ? path.resolve(outputFile) : undefined
   });
   await openPage(context, url);
-  if (process.env.PWCLI_EXIT_FOR_TEST)
+  if (process.env.PWTEST_CLI_EXIT)
     await Promise.all(context.pages().map(p => p.close()));
 }
 

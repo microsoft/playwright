@@ -52,9 +52,9 @@ it('page.goBack should work with HistoryAPI', async ({page, server}) => {
   expect(page.url()).toBe(server.PREFIX + '/first.html');
 });
 
-it('page.goBack should work for file urls', async ({page, server, asset, browserName, platform}) => {
+it('page.goBack should work for file urls', async ({page, server, asset, browserName, platform, isAndroid}) => {
   it.fail(browserName === 'webkit' && platform === 'darwin');
-  it.skip(!!process.env.PW_ANDROID_TESTS, 'No files on Android');
+  it.skip(isAndroid, 'No files on Android');
 
   // WebKit embedder fails to go back/forward to the file url.
   const url1 = url.pathToFileURL(asset('empty.html')).href;

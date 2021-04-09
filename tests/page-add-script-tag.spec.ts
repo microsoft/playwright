@@ -98,8 +98,8 @@ it('should throw when added with content to the CSP page', async ({page, server}
   expect(error).toBeTruthy();
 });
 
-it('should throw when added with URL to the CSP page', async ({page, server}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it('should throw when added with URL to the CSP page', async ({page, server, isAndroid}) => {
+  it.skip(isAndroid, 'No cross-process on Android');
 
   await page.goto(server.PREFIX + '/csp.html');
   let error = null;

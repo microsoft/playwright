@@ -93,7 +93,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         ${injectedScriptSource.source}
         return new pwExport(
           ${this.frame._page._delegate.rafCountForStablePosition()},
-          ${!!process.env.PW_USE_TIMEOUT_FOR_RAF},
+          ${!!process.env.PWTEST_USE_TIMEOUT_FOR_RAF},
           [${custom.join(',\n')}]
         );
         })();

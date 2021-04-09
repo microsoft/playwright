@@ -34,8 +34,8 @@ it('should return null for non-existing element', async ({page, server}) => {
   expect(second).toBe(null);
 });
 
-it('should work for adopted elements', async ({page,server}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+it('should work for adopted elements', async ({page, server, isElectron}) => {
+  it.fixme(isElectron);
 
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([

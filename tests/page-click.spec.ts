@@ -370,8 +370,8 @@ it('should click the button with em border with offset', async ({page, server, i
   expect(await page.evaluate('offsetY')).toBe(isWebKit ? 12 * 2 + 10 : 10);
 });
 
-it('should click a very large button with offset', async ({page, server, isWebKit}) => {
-  it.skip(process.env.PWTESTREPORT);
+it('should click a very large button with offset', async ({page, server, isWebKit, isAndroid}) => {
+  it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
@@ -383,8 +383,8 @@ it('should click a very large button with offset', async ({page, server, isWebKi
   expect(await page.evaluate('offsetY')).toBe(isWebKit ? 1910 + 8 : 1910);
 });
 
-it('should click a button in scrolling container with offset', async ({page, server, isWebKit}) => {
-  it.skip(process.env.PWTESTREPORT);
+it('should click a button in scrolling container with offset', async ({page, server, isWebKit, isAndroid}) => {
+  it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {

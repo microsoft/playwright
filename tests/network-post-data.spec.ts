@@ -16,8 +16,8 @@
 
 import { test as it, expect } from './config/pageTest';
 
-it.beforeEach(async () => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it.beforeEach(async ({ isAndroid }) => {
+  it.fixme(isAndroid, 'Post data  does not work');
 });
 
 it('should return correct postData buffer for utf-8 body', async ({page, server}) => {

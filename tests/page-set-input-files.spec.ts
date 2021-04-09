@@ -226,8 +226,8 @@ it('should accept single file', async ({page, asset}) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-it('should detect mime type', async ({page, server, asset}) => {
-  it.fixme(!!process.env.PW_ANDROID_TESTS);
+it('should detect mime type', async ({page, server, asset, isAndroid}) => {
+  it.fixme(isAndroid);
 
   let files;
   server.setRoute('/upload', async (req, res) => {

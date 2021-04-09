@@ -27,8 +27,8 @@ it('should fire', async ({page, server}) => {
   await page.evaluate(() => alert('yo'));
 });
 
-it('should allow accepting prompts', async ({page}) => {
-  it.skip(!!process.env.PW_ELECTRON_TESTS, 'prompt() is not a thing in electron');
+it('should allow accepting prompts', async ({page, isElectron}) => {
+  it.skip(isElectron, 'prompt() is not a thing in electron');
 
   page.on('dialog', dialog => {
     expect(dialog.type()).toBe('prompt');
@@ -40,8 +40,8 @@ it('should allow accepting prompts', async ({page}) => {
   expect(result).toBe('answer!');
 });
 
-it('should dismiss the prompt', async ({page}) => {
-  it.skip(!!process.env.PW_ELECTRON_TESTS, 'prompt() is not a thing in electron');
+it('should dismiss the prompt', async ({page, isElectron}) => {
+  it.skip(isElectron, 'prompt() is not a thing in electron');
 
   page.on('dialog', dialog => {
     dialog.dismiss();
@@ -104,8 +104,8 @@ it('should handle multiple confirms', async ({page}) => {
   expect(await page.textContent('p')).toBe('Hello World');
 });
 
-it('should auto-dismiss the prompt without listeners', async ({page}) => {
-  it.skip(!!process.env.PW_ELECTRON_TESTS, 'prompt() is not a thing in electron');
+it('should auto-dismiss the prompt without listeners', async ({page, isElectron}) => {
+  it.skip(isElectron, 'prompt() is not a thing in electron');
 
   const result = await page.evaluate(() => prompt('question?'));
   expect(result).toBe(null);

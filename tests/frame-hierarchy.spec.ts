@@ -35,8 +35,8 @@ function dumpFrames(frame: Frame, indentation: string = ''): string[] {
   return result;
 }
 
-it('should handle nested frames', async ({page, server}) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
+it('should handle nested frames', async ({page, server, isAndroid}) => {
+  it.skip(isAndroid, 'No cross-process on Android');
 
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   expect(dumpFrames(page.mainFrame())).toEqual([
@@ -154,8 +154,8 @@ it('should report frame from-inside shadow DOM', async ({page, server}) => {
   expect(page.frames()[1].url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should report frame.name()', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+it('should report frame.name()', async ({page, server, isElectron}) => {
+  it.fixme(isElectron);
 
   await attachFrame(page, 'theFrameId', server.EMPTY_PAGE);
   await page.evaluate(url => {
@@ -178,8 +178,8 @@ it('should report frame.parent()', async ({page, server}) => {
   expect(page.frames()[2].parentFrame()).toBe(page.mainFrame());
 });
 
-it('should report different frame instance when frame re-attaches', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+it('should report different frame instance when frame re-attaches', async ({page, server, isElectron}) => {
+  it.fixme(isElectron);
 
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await page.evaluate(() => {

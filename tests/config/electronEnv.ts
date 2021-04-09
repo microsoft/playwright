@@ -27,7 +27,7 @@ export class ElectronEnv extends PlaywrightEnv implements Env<ElectronTestArgs> 
   protected _browserVersion: string;
 
   constructor() {
-    super('chromium', { mode: 'default', coverageBrowserName: 'electron' });
+    super('chromium', { mode: 'default' });
     // This env prevents 'Electron Security Policy' console message.
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
     this._browserVersion = require('electron/package.json').version;
@@ -62,6 +62,7 @@ export class ElectronEnv extends PlaywrightEnv implements Env<ElectronTestArgs> 
     };
     return {
       ...result,
+      isElectron: true,
       electronApp: this._electronApp,
       newWindow: this._newWindow.bind(this),
     };

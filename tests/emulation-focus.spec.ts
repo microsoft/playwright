@@ -23,8 +23,8 @@ it('should think that it is focused by default', async ({page}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should think that all pages are focused', async ({page}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+it('should think that all pages are focused', async ({page, isElectron}) => {
+  it.fixme(isElectron, 'BrowserContext.newPage does not work in Electron');
 
   const page2 = await page.context().newPage();
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
@@ -42,8 +42,8 @@ it('should focus popups by default', async ({page, server}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should provide target for keyboard events', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+it('should provide target for keyboard events', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'BrowserContext.newPage does not work in Electron');
 
   const page2 = await page.context().newPage();
   await Promise.all([
@@ -67,8 +67,8 @@ it('should provide target for keyboard events', async ({page, server}) => {
   expect(results).toEqual([text, text2]);
 });
 
-it('should not affect mouse event target page', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+it('should not affect mouse event target page', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'BrowserContext.newPage does not work in Electron');
 
   const page2 = await page.context().newPage();
   function clickCounter() {
@@ -91,8 +91,8 @@ it('should not affect mouse event target page', async ({page, server}) => {
   expect(counters).toEqual([1,1]);
 });
 
-it('should change document.activeElement', async ({page, server}) => {
-  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+it('should change document.activeElement', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'BrowserContext.newPage does not work in Electron');
 
   const page2 = await page.context().newPage();
   await Promise.all([
@@ -110,10 +110,10 @@ it('should change document.activeElement', async ({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it('should not affect screenshots', async ({page, server, browserName, headful}) => {
+it('should not affect screenshots', async ({page, server, browserName, headful, isElectron, isAndroid}) => {
   it.skip(browserName === 'firefox' && headful);
-  it.skip(!!process.env.PW_ANDROID_TESTS);
-  it.fixme(!!process.env.PW_ELECTRON_TESTS, 'BrowserContext.newPage does not work in Electron');
+  it.skip(isAndroid);
+  it.fixme(isElectron, 'BrowserContext.newPage does not work in Electron');
 
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();

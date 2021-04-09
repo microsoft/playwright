@@ -96,9 +96,9 @@ it('should allow cross-frame element handles', async ({ page, server }) => {
   expect(result.trim()).toBe('<div>Hi, I\'m frame</div>');
 });
 
-it('should not allow cross-frame element handles when frames do not script each other', async ({ page, server }) => {
-  it.skip(!!process.env.PW_ANDROID_TESTS);
-  it.fixme(!!process.env.PW_ELECTRON_TESTS);
+it('should not allow cross-frame element handles when frames do not script each other', async ({ page, server, isElectron, isAndroid }) => {
+  it.skip(isAndroid, 'No cross-process on Android');
+  it.fixme(isElectron);
 
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');

@@ -24,11 +24,12 @@ import { test as cliTest } from './cliTest';
 import { PlaywrightEnv, BrowserEnv, PageEnv, BrowserName } from './browserEnv';
 import { ServerEnv } from './serverEnv';
 import { CLIEnv } from './cliEnv';
+import { CoverageEnv } from './coverage';
 
 const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
   outputDir: path.join(__dirname, '..', '..', 'test-results'),
-  timeout: process.env.PWVIDEO || process.env.PWTRACE ? 60000 : 30000,
+  timeout: process.env.PWTEST_VIDEO || process.env.PWTRACE ? 60000 : 30000,
   globalTimeout: 5400000,
 };
 if (process.env.CI) {
@@ -54,28 +55,27 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-const serverEnv = new ServerEnv();
-
 const browsers = ['chromium', 'webkit', 'firefox'] as BrowserName[];
 for (const browserName of browsers) {
   const executablePath = getExecutablePath(browserName);
   if (executablePath && (process.env.FOLIO_WORKER_INDEX === undefined || process.env.FOLIO_WORKER_INDEX === ''))
     console.error(`Using executable at ${executablePath}`);
-  const mode = (process.env.PWMODE || 'default') as ('default' | 'driver' | 'service');
+  const mode = (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service');
   const options = {
     mode,
     executablePath,
     traceDir: process.env.PWTRACE ? path.join(config.outputDir, 'trace') : undefined,
     headless: !process.env.HEADFUL,
-    channel: process.env.PW_CHROMIUM_CHANNEL as any,
-    video: !!process.env.PWVIDEO,
+    channel: process.env.PWTEST_CHANNEL as any,
+    video: !!process.env.PWTEST_VIDEO,
   };
-  playwrightTest.runWith(folio.merge(serverEnv, new PlaywrightEnv(browserName, options)), { tag: browserName });
-  playwrightSlowTest.runWith(folio.merge(serverEnv, new PlaywrightEnv(browserName, options)), { timeout: config.timeout * 3, tag: browserName });
-  browserTest.runWith(folio.merge(serverEnv, new BrowserEnv(browserName, options)), { tag: browserName });
-  browserSlowTest.runWith(folio.merge(serverEnv, new BrowserEnv(browserName, options)), { timeout: config.timeout * 3, tag: browserName });
-  pageTest.runWith(folio.merge(serverEnv, new PageEnv(browserName, options)), { tag: browserName });
-  contextTest.runWith(folio.merge(serverEnv, new PageEnv(browserName, options)), { tag: browserName });
+  const commonEnv = folio.merge(new CoverageEnv(browserName), new ServerEnv());
+  playwrightTest.runWith(folio.merge(commonEnv, new PlaywrightEnv(browserName, options)), { tag: browserName });
+  playwrightSlowTest.runWith(folio.merge(commonEnv, new PlaywrightEnv(browserName, options)), { timeout: config.timeout * 3, tag: browserName });
+  browserTest.runWith(folio.merge(commonEnv, new BrowserEnv(browserName, options)), { tag: browserName });
+  browserSlowTest.runWith(folio.merge(commonEnv, new BrowserEnv(browserName, options)), { timeout: config.timeout * 3, tag: browserName });
+  pageTest.runWith(folio.merge(commonEnv, new PageEnv(browserName, options)), { tag: browserName });
+  contextTest.runWith(folio.merge(commonEnv, new PageEnv(browserName, options)), { tag: browserName });
   if (mode !== 'service')
-    cliTest.runWith(folio.merge(serverEnv, new CLIEnv(browserName, options)), { tag: browserName });
+    cliTest.runWith(folio.merge(commonEnv, new CLIEnv(browserName, options)), { tag: browserName });
 }

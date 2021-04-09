@@ -23,9 +23,9 @@ import fs from 'fs';
 import { PNG } from 'pngjs';
 
 it.describe('page screenshot', () => {
-  it.beforeEach(async ({ browserName, headful }) => {
+  it.beforeEach(async ({ browserName, headful, isAndroid }) => {
     it.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
-    it.skip(!!process.env.PW_ANDROID_TESTS, 'Different viewport');
+    it.skip(isAndroid, 'Different viewport');
   });
 
   it('should work', async ({page, server}) => {
@@ -145,8 +145,8 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('transparent.png');
   });
 
-  it('should render white background on jpeg file', async ({page, server}) => {
-    it.fixme(!!process.env.PW_ELECTRON_TESTS, 'omitBackground with jpeg does not work');
+  it('should render white background on jpeg file', async ({page, server, isElectron}) => {
+    it.fixme(isElectron, 'omitBackground with jpeg does not work');
 
     await page.setViewportSize({ width: 100, height: 100 });
     await page.goto(server.EMPTY_PAGE);
@@ -224,8 +224,8 @@ it.describe('page screenshot', () => {
     expect(await fs.promises.readFile(outputPath)).toMatchSnapshot('screenshot-sanity.png');
   });
 
-  it('path option should detect jpeg', async ({page, server}, testInfo) => {
-    it.fixme(!!process.env.PW_ELECTRON_TESTS, 'omitBackground with jpeg does not work');
+  it('path option should detect jpeg', async ({page, server, isElectron}, testInfo) => {
+    it.fixme(isElectron, 'omitBackground with jpeg does not work');
 
     await page.setViewportSize({ width: 100, height: 100 });
     await page.goto(server.EMPTY_PAGE);
@@ -271,9 +271,9 @@ it.describe('page screenshot', () => {
 });
 
 browserTest.describe('page screenshot', () => {
-  browserTest.beforeEach(async ({ browserName, headful }) => {
+  browserTest.beforeEach(async ({ browserName, headful, isAndroid }) => {
     browserTest.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
-    browserTest.skip(!!process.env.PW_ANDROID_TESTS, 'Different viewport');
+    browserTest.skip(isAndroid, 'Different viewport');
   });
 
   browserTest('should run in parallel in multiple pages', async ({server, contextFactory}) => {
