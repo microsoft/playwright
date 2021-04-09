@@ -591,4 +591,26 @@ it.describe('screencast', () => {
     const saveResult = await page.video().saveAs(file).catch(e => e);
     expect(saveResult.message).toContain('browser has been closed');
   });
+
+  it('should throw if browser dies', async ({browserType, browserOptions, contextOptions}, testInfo) => {
+    const size = { width: 320, height: 240 };
+    const browser = await browserType.launch(browserOptions);
+
+    const context = await browser.newContext({
+      ...contextOptions,
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+        size,
+      },
+      viewport: size,
+    });
+
+    const page = await context.newPage();
+    await new Promise(r => setTimeout(r, 1000));
+    await (browser as any)._channel.killForTests();
+
+    const file = testInfo.outputPath('saved-video-');
+    const saveResult = await page.video().saveAs(file).catch(e => e);
+    expect(saveResult.message).toContain('rowser has been closed');
+  });
 });

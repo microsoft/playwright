@@ -429,6 +429,7 @@ export type BrowserInitializer = {
 export interface BrowserChannel extends Channel {
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
   close(params?: BrowserCloseParams, metadata?: Metadata): Promise<BrowserCloseResult>;
+  killForTests(params?: BrowserKillForTestsParams, metadata?: Metadata): Promise<BrowserKillForTestsResult>;
   newContext(params: BrowserNewContextParams, metadata?: Metadata): Promise<BrowserNewContextResult>;
   newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: Metadata): Promise<BrowserNewBrowserCDPSessionResult>;
   startTracing(params: BrowserStartTracingParams, metadata?: Metadata): Promise<BrowserStartTracingResult>;
@@ -438,6 +439,9 @@ export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {};
 export type BrowserCloseOptions = {};
 export type BrowserCloseResult = void;
+export type BrowserKillForTestsParams = {};
+export type BrowserKillForTestsOptions = {};
+export type BrowserKillForTestsResult = void;
 export type BrowserNewContextParams = {
   sdkLanguage: string,
   noDefaultViewport?: boolean,

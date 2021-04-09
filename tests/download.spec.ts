@@ -407,4 +407,30 @@ it.describe('download event', () => {
     expect(downloadPath).toBe(null);
     expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
+
+  it('should throw if browser dies', async ({ server, browserType, browserName, browserOptions, platform}, testInfo) => {
+    it.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
+    server.setRoute('/downloadStall', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+      res.writeHead(200);
+      res.flushHeaders();
+      res.write(`Hello world`);
+    });
+
+    const browser = await browserType.launch(browserOptions);
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/downloadStall">click me</a>`);
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const [downloadPath, saveError] = await Promise.all([
+      download.path(),
+      download.saveAs(testInfo.outputPath('download.txt')).catch(e => e),
+      (browser as any)._channel.killForTests(),
+    ]);
+    expect(downloadPath).toBe(null);
+    expect(saveError.message).toContain('File deleted upon browser context closure.');
+  });
 });
