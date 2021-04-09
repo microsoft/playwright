@@ -30,6 +30,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { Progress } from '../progress';
+import { splitErrorMessage } from '../../utils/stackTrace';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -221,9 +222,11 @@ export class FFPage implements PageDelegate {
   }
 
   _onUncaughtError(params: Protocol.Page.uncaughtErrorPayload) {
-    const message = params.message.startsWith('Error: ') ? params.message.substring(7) : params.message;
+    const {name, message} = splitErrorMessage(params.message);
+
     const error = new Error(message);
     error.stack = params.stack;
+    error.name = name;
     this._page.emit(Page.Events.PageError, error);
   }
 

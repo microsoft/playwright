@@ -18,6 +18,7 @@
 import * as jpeg from 'jpeg-js';
 import path from 'path';
 import * as png from 'pngjs';
+import { splitErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray } from '../../utils/utils';
 import * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
@@ -490,7 +491,7 @@ export class WKPage implements PageDelegate {
       return;
     }
     if (level === 'error' && source === 'javascript') {
-      const message = text.startsWith('Error: ') ? text.substring(7) : text;
+      const {name, message} = splitErrorMessage(text);
       const error = new Error(message);
       if (event.message.stackTrace) {
         error.stack = event.message.stackTrace.map(callFrame => {
@@ -499,6 +500,7 @@ export class WKPage implements PageDelegate {
       } else {
         error.stack = '';
       }
+      error.name = name;
       this._page.emit(Page.Events.PageError, error);
       return;
     }
