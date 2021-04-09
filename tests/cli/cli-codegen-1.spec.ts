@@ -611,7 +611,8 @@ await Task.WhenAll(
     expect(page.url()).toContain('about:blank#foo');
   });
 
-  test('should ignore AltGraph', async ({ openRecorder }) => {
+  test('should ignore AltGraph', async ({ openRecorder, isFirefox }, testInfo) => {
+    testInfo.skip(isFirefox, 'The TextInputProcessor in Firefox does not work with AltGraph.');
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input></input>`);
 
