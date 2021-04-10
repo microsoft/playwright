@@ -5721,8 +5721,61 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      * UTC time in seconds, counted from January 1, 1970.
      */
     export type TimeSinceEpoch = number;
+    export interface DragDataItem {
+      /**
+       * Mime type of the dragged data.
+       */
+      mimeType: string;
+      /**
+       * Depending of the value of `mimeType`, it contains the dragged link,
+text, HTML markup or any other data.
+       */
+      data: string;
+      /**
+       * Title associated with a link. Only valid when `mimeType` == "text/uri-list".
+       */
+      title?: string;
+      /**
+       * Stores the base URL for the contained markup. Only valid when `mimeType`
+== "text/html".
+       */
+      baseURL?: string;
+    }
+    export interface DragData {
+      items: DragDataItem[];
+      /**
+       * Bit field representing allowed drag operations. Copy = 1, Link = 2, Move = 16
+       */
+      dragOperationsMask: number;
+    }
     
     
+    /**
+     * Dispatches a drag event into the page.
+     */
+    export type dispatchDragEventParameters = {
+      /**
+       * Type of the drag event.
+       */
+      type: "dragEnter"|"dragOver"|"drop"|"dragCancel";
+      /**
+       * X coordinate of the event relative to the main frame's viewport in CSS pixels.
+       */
+      x: number;
+      /**
+       * Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to
+the top of the viewport and Y increases as it proceeds towards the bottom of the viewport.
+       */
+      y: number;
+      data: DragData;
+      /**
+       * Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8
+(default: 0).
+       */
+      modifiers?: number;
+    }
+    export type dispatchDragEventReturnValue = {
+    }
     /**
      * Dispatches a key event to the page.
      */
@@ -8971,6 +9024,34 @@ continueInterceptedRequest call.
        */
       nodeId: DOM.NodeId;
     }
+    export interface ScrollSnapContainerHighlightConfig {
+      /**
+       * The style of the snapport border (default: transparent)
+       */
+      snapportBorder?: LineStyle;
+      /**
+       * The style of the snap area border (default: transparent)
+       */
+      snapAreaBorder?: LineStyle;
+      /**
+       * The margin highlight fill color (default: transparent).
+       */
+      scrollMarginColor?: DOM.RGBA;
+      /**
+       * The padding highlight fill color (default: transparent).
+       */
+      scrollPaddingColor?: DOM.RGBA;
+    }
+    export interface ScrollSnapHighlightConfig {
+      /**
+       * A descriptor for the highlight appearance of scroll snap containers.
+       */
+      scrollSnapContainerHighlightConfig: ScrollSnapContainerHighlightConfig;
+      /**
+       * Identifier of the node to highlight.
+       */
+      nodeId: DOM.NodeId;
+    }
     /**
      * Configuration for dual screen hinge
      */
@@ -9299,6 +9380,14 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
       flexNodeHighlightConfigs: FlexNodeHighlightConfig[];
     }
     export type setShowFlexOverlaysReturnValue = {
+    }
+    export type setShowScrollSnapOverlaysParameters = {
+      /**
+       * An array of node identifiers and descriptors for the highlight appearance.
+       */
+      scrollSnapHighlightConfigs: ScrollSnapHighlightConfig[];
+    }
+    export type setShowScrollSnapOverlaysReturnValue = {
     }
     /**
      * Requests that backend shows paint rectangles
@@ -16432,6 +16521,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "IndexedDB.getMetadata": IndexedDB.getMetadataParameters;
     "IndexedDB.requestDatabase": IndexedDB.requestDatabaseParameters;
     "IndexedDB.requestDatabaseNames": IndexedDB.requestDatabaseNamesParameters;
+    "Input.dispatchDragEvent": Input.dispatchDragEventParameters;
     "Input.dispatchKeyEvent": Input.dispatchKeyEventParameters;
     "Input.insertText": Input.insertTextParameters;
     "Input.dispatchMouseEvent": Input.dispatchMouseEventParameters;
@@ -16518,6 +16608,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowFPSCounter": Overlay.setShowFPSCounterParameters;
     "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysParameters;
     "Overlay.setShowFlexOverlays": Overlay.setShowFlexOverlaysParameters;
+    "Overlay.setShowScrollSnapOverlays": Overlay.setShowScrollSnapOverlaysParameters;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsParameters;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsParameters;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsParameters;
@@ -16946,6 +17037,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "IndexedDB.getMetadata": IndexedDB.getMetadataReturnValue;
     "IndexedDB.requestDatabase": IndexedDB.requestDatabaseReturnValue;
     "IndexedDB.requestDatabaseNames": IndexedDB.requestDatabaseNamesReturnValue;
+    "Input.dispatchDragEvent": Input.dispatchDragEventReturnValue;
     "Input.dispatchKeyEvent": Input.dispatchKeyEventReturnValue;
     "Input.insertText": Input.insertTextReturnValue;
     "Input.dispatchMouseEvent": Input.dispatchMouseEventReturnValue;
@@ -17032,6 +17124,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowFPSCounter": Overlay.setShowFPSCounterReturnValue;
     "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysReturnValue;
     "Overlay.setShowFlexOverlays": Overlay.setShowFlexOverlaysReturnValue;
+    "Overlay.setShowScrollSnapOverlays": Overlay.setShowScrollSnapOverlaysReturnValue;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsReturnValue;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsReturnValue;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsReturnValue;
