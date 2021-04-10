@@ -18,6 +18,7 @@
 import * as os from 'os';
 import fs from 'fs';
 import path from 'path';
+import { assert } from '../../utils/utils';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType } from '../browserType';
@@ -29,6 +30,18 @@ import * as types from '../types';
 export class Firefox extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
     super('firefox', playwrightOptions);
+  }
+
+  executablePath(channel?: types.BrowserChannel): string {
+    if (channel) {
+      let executablePath = undefined;
+      if ((channel as any) === 'firefox-stable')
+        executablePath = this._registry.executablePath('firefox-stable');
+      assert(executablePath, `unsupported firefox channel "${channel}"`);
+      assert(fs.existsSync(executablePath), `"${channel}" channel is not installed. Try running 'npx playwright install ${channel}'`);
+      return executablePath;
+    }
+    return super.executablePath(channel);
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
