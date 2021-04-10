@@ -155,6 +155,8 @@ it('should work with position selectors', async ({page}) => {
   expect(await page.$eval('div:right-of(#id0)', e => e.id)).toBe('id7');
   expect(await page.$eval('div:right-of(#id8)', e => e.id)).toBe('id9');
   expect(await page.$$eval('div:right-of(#id3)', els => els.map(e => e.id).join(','))).toBe('id4,id2,id5,id7,id8,id9');
+  expect(await page.$$eval('div:right-of(#id3, 50)', els => els.map(e => e.id).join(','))).toBe('id2,id5,id7,id8');
+  expect(await page.$$eval('div:right-of(#id3, 49)', els => els.map(e => e.id).join(','))).toBe('id7,id8');
 
   expect(await page.$eval('div:left-of(#id2)', e => e.id)).toBe('id1');
   expect(await page.$('div:left-of(#id0)')).toBe(null);
@@ -162,6 +164,7 @@ it('should work with position selectors', async ({page}) => {
   expect(await page.$eval('div:left-of(#id9)', e => e.id)).toBe('id8');
   expect(await page.$eval('div:left-of(#id4)', e => e.id)).toBe('id3');
   expect(await page.$$eval('div:left-of(#id5)', els => els.map(e => e.id).join(','))).toBe('id0,id7,id3,id1,id6,id8');
+  expect(await page.$$eval('div:left-of(#id5, 3)', els => els.map(e => e.id).join(','))).toBe('id7,id8');
 
   expect(await page.$eval('div:above(#id0)', e => e.id)).toBe('id3');
   expect(await page.$eval('div:above(#id5)', e => e.id)).toBe('id4');
@@ -170,6 +173,7 @@ it('should work with position selectors', async ({page}) => {
   expect(await page.$eval('div:above(#id9)', e => e.id)).toBe('id8');
   expect(await page.$('div:above(#id2)')).toBe(null);
   expect(await page.$$eval('div:above(#id5)', els => els.map(e => e.id).join(','))).toBe('id4,id2,id3,id1');
+  expect(await page.$$eval('div:above(#id5, 20)', els => els.map(e => e.id).join(','))).toBe('id4,id3');
 
   expect(await page.$eval('div:below(#id4)', e => e.id)).toBe('id5');
   expect(await page.$eval('div:below(#id3)', e => e.id)).toBe('id0');
@@ -179,16 +183,22 @@ it('should work with position selectors', async ({page}) => {
   expect(await page.$eval('div:below(#id8)', e => e.id)).toBe('id9');
   expect(await page.$('div:below(#id9)')).toBe(null);
   expect(await page.$$eval('div:below(#id3)', els => els.map(e => e.id).join(','))).toBe('id0,id5,id6,id7,id8,id9');
+  expect(await page.$$eval('div:below(#id3, 105)', els => els.map(e => e.id).join(','))).toBe('id0,id5,id6,id7');
 
   expect(await page.$eval('div:near(#id0)', e => e.id)).toBe('id3');
   expect(await page.$$eval('div:near(#id7)', els => els.map(e => e.id).join(','))).toBe('id0,id5,id3,id6');
   expect(await page.$$eval('div:near(#id0)', els => els.map(e => e.id).join(','))).toBe('id3,id6,id7,id8,id1,id5');
   expect(await page.$$eval('div:near(#id6)', els => els.map(e => e.id).join(','))).toBe('id0,id3,id7');
+  expect(await page.$$eval('div:near(#id6, 10)', els => els.map(e => e.id).join(','))).toBe('id0');
+  expect(await page.$$eval('div:near(#id0, 100)', els => els.map(e => e.id).join(','))).toBe('id3,id6,id7,id8,id1,id5,id4,id2');
 
   expect(await page.$$eval('div:below(#id5):above(#id8)', els => els.map(e => e.id).join(','))).toBe('id7,id6');
   expect(await page.$eval('div:below(#id5):above(#id8)', e => e.id)).toBe('id7');
 
   expect(await page.$$eval('div:right-of(#id0) + div:above(#id8)', els => els.map(e => e.id).join(','))).toBe('id5,id6,id3');
+
+  const error = await page.$(':near(50)').catch(e => e);
+  expect(error.message).toContain('"near" engine expects a selector list and optional maximum distance in pixels');
 });
 
 it('should escape the scope with >>', async ({ page }) => {
