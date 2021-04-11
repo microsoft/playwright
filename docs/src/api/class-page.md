@@ -2149,13 +2149,13 @@ Enabling routing disables http cache.
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 
 ### param: Page.route.handler
-* langs: js, python
+* langs: js, python, csharp
 - `handler` <[function]\([Route], [Request]\)>
 
 handler function to route the request.
 
 ### param: Page.route.handler
-* langs: csharp, java
+* langs: java
 - `handler` <[function]\([Route]\)>
 
 handler function to route the request.
@@ -2518,13 +2518,13 @@ the [`param: url`].
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 
 ### param: Page.unroute.handler
-* langs: js, python
+* langs: js, python, csharp
 - `handler` <[function]\([Route], [Request]\)>
 
 Optional handler function to route the request.
 
 ### param: Page.unroute.handler
-* langs: csharp, java
+* langs: java
 - `handler` <[function]\([Route]\)>
 
 Optional handler function to route the request.
