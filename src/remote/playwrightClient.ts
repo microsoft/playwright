@@ -17,6 +17,9 @@
 import WebSocket from 'ws';
 import { Connection } from '../client/connection';
 import { Playwright } from '../client/playwright';
+// const http = require('http');
+import { createServer, IncomingMessage, ServerResponse, request } from 'http';
+import axios, { AxiosResponse } from 'axios';
 
 export class PlaywrightClient {
   private _playwright: Playwright;
@@ -26,8 +29,35 @@ export class PlaywrightClient {
   static async connect(wsEndpoint: string): Promise<PlaywrightClient> {
     const connection = new Connection();
     const ws = new WebSocket(wsEndpoint);
-    connection.onmessage = message => ws.send(JSON.stringify(message));
-    ws.on('message', message => connection.dispatch(JSON.parse(message.toString())));
+    connection.onmessage = message => ws.send(JSON.stringify({"httpResponse": null, "playwright": message}));
+
+    ws.on('message', async message => {
+      // demultiplex the messages from the server
+      let wsmessage = JSON.parse(message.toString());
+
+      if (wsmessage["playwright"] != null)
+        connection.dispatch(wsmessage["playwright"]);
+
+      let httpRequest = wsmessage["httpResponse"];
+
+      if (httpRequest != null) {
+
+        let headers = httpRequest.headers;
+        let url = httpRequest.url;
+        let method = httpRequest.method;
+        let requestBody = httpRequest.requestBody;
+        let requestId = httpRequest.requestId;
+        let resp: AxiosResponse = await axios({
+          method: method,
+          url: url,
+          headers: headers,
+          data: requestBody
+        });
+        // TODO: handle resp headers and status
+        ws.send(JSON.stringify({"httpResponse": {"response" : resp.data, "requestId" : requestId}, "playwright": null}))
+      }
+    });
+
     const errorPromise = new Promise((_, reject) => ws.on('error', error => reject(error)));
     const closePromise = new Promise((_, reject) => ws.on('close', () => reject(new Error('Connection closed'))));
     const playwright = await Promise.race([
