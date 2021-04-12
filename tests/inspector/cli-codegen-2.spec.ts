@@ -442,7 +442,10 @@ await page1.GoToAsync("about:blank?foo");`);
     `);
 
     const messages: any[] = [];
-    page.on('console', message => messages.push(message.text()));
+    page.on('console', message => {
+      if (message.type() !== 'error')
+        messages.push(message.text());
+    });
     await Promise.all([
       page.click('button'),
       recorder.waitForOutput('<javascript>', 'page.click')

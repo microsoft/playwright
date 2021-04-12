@@ -29,7 +29,7 @@ test.describe('cli codegen', () => {
     expect(selector).toBe('text=Submit');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'click'),
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
@@ -77,7 +77,7 @@ await page.ClickAsync("text=Submit");`);
     expect(selector).toBe('text=Submit');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'click'),
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
@@ -103,7 +103,7 @@ await page.ClickAsync("text=Submit");`);
     expect(selector).toBe('text=Submit');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'click'),
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
@@ -155,7 +155,7 @@ await page.ClickAsync("text=Submit");`);
     expect(divContents).toBe(`<div onclick="console.log('click')"> Some long text here </div>`);
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'click'),
       page.dispatchEvent('div', 'click', { detail: 1 })
     ]);
@@ -173,7 +173,7 @@ await page.ClickAsync("text=Submit");`);
     expect(selector).toBe('input[name="name"]');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'fill'),
       page.fill('input', 'John')
     ]);
@@ -208,7 +208,7 @@ await page.FillAsync(\"input[name=\\\"name\\\"]\", \"John\");`);
     expect(selector).toBe('textarea[name="name"]');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'fill'),
       page.fill('textarea', 'John')
     ]);
@@ -322,7 +322,8 @@ await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
 
     const messages: any[] = [];
     page.on('console', message => {
-      messages.push(message);
+      if (message.type() !== 'error')
+        messages.push(message);
     });
     const [, sources] = await Promise.all([
       recorder.waitForActionPerformed(),
@@ -346,7 +347,7 @@ await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
     expect(selector).toBe('input[name="accept"]');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'check'),
       page.click('input')
     ]);
@@ -383,7 +384,7 @@ await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
     expect(selector).toBe('input[name="accept"]');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'check'),
       page.keyboard.press('Space')
     ]);
@@ -403,7 +404,7 @@ await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
     expect(selector).toBe('input[name="accept"]');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'uncheck'),
       page.click('input')
     ]);
@@ -440,7 +441,7 @@ await page.UncheckAsync(\"input[name=\\\"accept\\\"]\");`);
     expect(selector).toBe('select');
 
     const [message, sources] = await Promise.all([
-      page.waitForEvent('console'),
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('<javascript>', 'select'),
       page.selectOption('select', '2')
     ]);

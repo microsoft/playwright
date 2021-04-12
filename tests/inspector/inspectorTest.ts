@@ -93,12 +93,17 @@ class Recorder {
     let callback;
     const result = new Promise(f => callback = f);
     await page.goto(url);
-    const frames = new Set<any>();
-    await page.exposeBinding('_recorderScriptReadyForTest', (source, arg) => {
-      frames.add(source.frame);
-      if (frames.size === frameCount)
-        callback(arg);
-    });
+    let msgCount = 0;
+    const listener = msg => {
+      if (msg.text() === 'Recorder script ready for test') {
+        ++msgCount;
+        if (msgCount === frameCount) {
+          page.off('console', listener);
+          callback();
+        }
+      }
+    };
+    page.on('console', listener);
     await Promise.all([
       result,
       page.setContent(content)
@@ -128,23 +133,35 @@ class Recorder {
   }
 
   async waitForHighlight(action: () => Promise<void>): Promise<string> {
-    if (!this._highlightInstalled) {
-      this._highlightInstalled = true;
-      await this.page.exposeBinding('_highlightUpdatedForTest', (source, arg) => this._highlightCallback(arg));
-    }
+    let callback;
+    const result = new Promise<string>(f => callback = f);
+    const listener = async msg => {
+      const prefix = 'Highlight updated for test: ';
+      if (msg.text().startsWith(prefix)) {
+        this.page.off('console', listener);
+        callback(msg.text().substr(prefix.length));
+      }
+    };
+    this.page.on('console', listener);
     const [ generatedSelector ] = await Promise.all([
-      new Promise<string>(f => this._highlightCallback = f),
+      result,
       action()
     ]);
     return generatedSelector;
   }
 
   async waitForActionPerformed(): Promise<{ hovered: string | null, active: string | null }> {
-    if (!this._actionReporterInstalled) {
-      this._actionReporterInstalled = true;
-      await this.page.exposeBinding('_actionPerformedForTest', (source, arg) => this._actionPerformedCallback(arg));
-    }
-    return await new Promise(f => this._actionPerformedCallback = f);
+    let callback;
+    const listener = async msg => {
+      const prefix = 'Action performed for test: ';
+      if (msg.text().startsWith(prefix)) {
+        this.page.off('console', listener);
+        const arg = JSON.parse(msg.text().substr(prefix.length));
+        callback(arg);
+      }
+    };
+    this.page.on('console', listener);
+    return new Promise(f => callback = f);
   }
 
   async hoverOverElement(selector: string): Promise<string> {

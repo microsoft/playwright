@@ -33,7 +33,7 @@ import { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
 
-const UTILITY_WORLD_NAME = '__playwright_utility_world__';
+export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class FFPage implements PageDelegate {
   readonly cspErrorsAsynchronousForInlineScipts = true;
@@ -317,9 +317,8 @@ export class FFPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding) {
-    if (binding.world !== 'main')
-      throw new Error('Only main context bindings are supported in Firefox.');
-    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
+    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : '';
+    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source, worldName });
   }
 
   didClose() {

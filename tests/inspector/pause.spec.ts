@@ -166,7 +166,7 @@ it.describe('pause', () => {
     const scriptPromise = (async () => {
       await page.pause();
       await Promise.all([
-        page.waitForEvent('console'),
+        page.waitForEvent('console', msg => msg.type() === 'log' && msg.text() === '1'),
         page.click('button'),
       ]);
     })();
