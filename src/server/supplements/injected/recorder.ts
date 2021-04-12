@@ -492,8 +492,8 @@ export class Recorder {
   }
 
   private _shouldGenerateKeyPressFor(event: KeyboardEvent): boolean {
-    // Backspace, Delete are changing input, will handle it there.
-    if (['Backspace', 'Delete'].includes(event.key))
+    // Backspace, Delete, AltGraph are changing input, will handle it there.
+    if (['Backspace', 'Delete', 'AltGraph'].includes(event.key))
       return false;
     // Ignore the QWERTZ shortcut for creating a at sign on MacOS
     if (event.key === '@' && event.code === 'KeyL')

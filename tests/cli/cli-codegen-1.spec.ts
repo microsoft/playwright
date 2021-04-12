@@ -610,4 +610,18 @@ await Task.WhenAll(
 
     expect(page.url()).toContain('about:blank#foo');
   });
+
+  test('should ignore AltGraph', async ({ openRecorder, isFirefox }, testInfo) => {
+    testInfo.skip(isFirefox, 'The TextInputProcessor in Firefox does not work with AltGraph.');
+    const recorder = await openRecorder();
+    await recorder.setContentAndWait(`<input></input>`);
+
+    await recorder.page.type('input', 'playwright');
+    await recorder.page.keyboard.press('AltGraph');
+    await recorder.page.keyboard.insertText('@');
+    await recorder.page.keyboard.type('example.com');
+    await recorder.waitForOutput('<javascript>', 'example.com');
+    expect(recorder.sources().get('<javascript>').text).not.toContain(`await page.press('input', 'AltGraph');`);
+    expect(recorder.sources().get('<javascript>').text).toContain(`await page.fill('input', 'playwright@example.com');`);
+  });
 });
