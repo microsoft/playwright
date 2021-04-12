@@ -2545,12 +2545,21 @@ Video object associated with this page.
   - `height` <[int]> page height in pixels.
 
 ## method: Page.waitForClose
-* langs: csharp, java
+* langs: java
 - returns: <[Page]>
 
 Performs action and waits for the Page to close.
 
 ### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
+
+## async method: Page.waitForCloseAsync
+* langs: csharp
+ -  alias-csharp: WaitForCloseAsync
+- returns: <[Page]>
+
+Performs action and waits for the Page to close.
+
+### option: Page.waitForCloseAsync.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForConsoleMessage
 * langs: csharp, java, python
