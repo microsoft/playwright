@@ -2544,7 +2544,7 @@ Video object associated with this page.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-## method: Page.waitForClose
+## async method: Page.waitForClose
 * langs: csharp, java
 - returns: <[Page]>
 
