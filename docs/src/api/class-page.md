@@ -2557,7 +2557,7 @@ Performs action and waits for the Page to close.
   - alias-python: expect_console_message
 - returns: <[ConsoleMessage]>
 
-Performs action and waits for a [ConoleMessage] to be logged by in the page. If predicate is provided, it passes
+Performs action and waits for a [ConsoleMessage] to be logged by in the page. If predicate is provided, it passes
 [ConsoleMessage] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
 Will throw an error if the page is closed before the console event is fired.
 
