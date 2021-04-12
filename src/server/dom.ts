@@ -608,7 +608,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, 'input');
   }
 
-  async check(metadata: CallMetadata, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async check(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._setChecked(progress, true, options);
@@ -616,7 +616,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async uncheck(metadata: CallMetadata, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async uncheck(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._setChecked(progress, false, options);
@@ -624,7 +624,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+  async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
       const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
       return throwRetargetableDOMError(throwFatalDOMError(result));

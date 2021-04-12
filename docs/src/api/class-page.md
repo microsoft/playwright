@@ -531,6 +531,8 @@ Shortcut for main frame's [`method: Frame.check`].
 
 ### option: Page.check.noWaitAfter = %%-input-no-wait-after-%%
 
+### option: Page.check.position = %%-input-position-%%
+
 ### option: Page.check.timeout = %%-input-timeout-%%
 
 ## async method: Page.click
@@ -2504,6 +2506,8 @@ Shortcut for main frame's [`method: Frame.uncheck`].
 ### option: Page.uncheck.force = %%-input-force-%%
 
 ### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+
+### option: Page.uncheck.position = %%-input-position-%%
 
 ### option: Page.uncheck.timeout = %%-input-timeout-%%
 

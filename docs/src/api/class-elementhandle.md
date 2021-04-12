@@ -134,6 +134,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.check.noWaitAfter = %%-input-no-wait-after-%%
 
+### option: ElementHandle.check.position = %%-input-position-%%
+
 ### option: ElementHandle.check.timeout = %%-input-timeout-%%
 
 ## async method: ElementHandle.click
@@ -781,6 +783,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.uncheck.force = %%-input-force-%%
 
 ### option: ElementHandle.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+
+### option: ElementHandle.uncheck.position = %%-input-position-%%
 
 ### option: ElementHandle.uncheck.timeout = %%-input-timeout-%%
 

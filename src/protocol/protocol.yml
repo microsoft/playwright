@@ -1045,6 +1045,7 @@ Frame:
         selector: string
         force: boolean?
         noWaitAfter: boolean?
+        position: Point?
         timeout: number?
 
     click:
@@ -1352,6 +1353,7 @@ Frame:
         selector: string
         force: boolean?
         noWaitAfter: boolean?
+        position: Point?
         timeout: number?
 
     waitForFunction:
@@ -1524,6 +1526,7 @@ ElementHandle:
       parameters:
         force: boolean?
         noWaitAfter: boolean?
+        position: Point?
         timeout: number?
 
     click:
@@ -1753,6 +1756,7 @@ ElementHandle:
       parameters:
         force: boolean?
         noWaitAfter: boolean?
+        position: Point?
         timeout: number?
 
     waitForElementState:

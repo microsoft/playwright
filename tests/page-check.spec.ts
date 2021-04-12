@@ -107,3 +107,15 @@ it('should check the box inside a button', async ({page}) => {
   expect(await page.isChecked('input')).toBe(true);
   expect(await (await page.$('input')).isChecked()).toBe(true);
 });
+
+it('should check the label with position', async ({page, server}) => {
+  await page.setContent(`
+    <input id='checkbox' type='checkbox' style='width: 5px; height: 5px;'>
+    <label for='checkbox'>
+      <a href=${JSON.stringify(server.EMPTY_PAGE)}>I am a long link that goes away so that nothing good will happen if you click on me</a>
+      Click me
+    </label>`);
+  const box = await (await page.$('text=Click me')).boundingBox();
+  await page.check('text=Click me', { position: { x: box.width - 10, y: 2 } });
+  expect(await page.$eval('input', input => input.checked)).toBe(true);
+});

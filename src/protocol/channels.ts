@@ -1336,11 +1336,13 @@ export type FrameCheckParams = {
   selector: string,
   force?: boolean,
   noWaitAfter?: boolean,
+  position?: Point,
   timeout?: number,
 };
 export type FrameCheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
+  position?: Point,
   timeout?: number,
 };
 export type FrameCheckResult = void;
@@ -1698,11 +1700,13 @@ export type FrameUncheckParams = {
   selector: string,
   force?: boolean,
   noWaitAfter?: boolean,
+  position?: Point,
   timeout?: number,
 };
 export type FrameUncheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
+  position?: Point,
   timeout?: number,
 };
 export type FrameUncheckResult = void;
@@ -1902,11 +1906,13 @@ export type ElementHandleBoundingBoxResult = {
 export type ElementHandleCheckParams = {
   force?: boolean,
   noWaitAfter?: boolean,
+  position?: Point,
   timeout?: number,
 };
 export type ElementHandleCheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
+  position?: Point,
   timeout?: number,
 };
 export type ElementHandleCheckResult = void;
@@ -2174,11 +2180,13 @@ export type ElementHandleTypeResult = void;
 export type ElementHandleUncheckParams = {
   force?: boolean,
   noWaitAfter?: boolean,
+  position?: Point,
   timeout?: number,
 };
 export type ElementHandleUncheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
+  position?: Point,
   timeout?: number,
 };
 export type ElementHandleUncheckResult = void;
