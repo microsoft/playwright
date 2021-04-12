@@ -16,7 +16,7 @@
 
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
-import { BrowserType, RemoteBrowser } from './browserType';
+import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
@@ -196,9 +196,6 @@ export class Connection {
         break;
       case 'Playwright':
         result = new Playwright(parent, type, guid, initializer);
-        break;
-      case 'RemoteBrowser':
-        result = new RemoteBrowser(parent, type, guid, initializer);
         break;
       case 'Request':
         result = new Request(parent, type, guid, initializer);

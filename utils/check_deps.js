@@ -149,7 +149,6 @@ DEPS['src/web/traceViewer/'] = ['src/common/', 'src/web/'];
 DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/web/traceViewer/', 'src/web/', 'src/server/trace/viewer/', 'src/server/trace/', 'src/server/trace/common/', 'src/server/snapshot/snapshotTypes.ts'];
 // The service is a cross-cutting feature, and so it depends on a bunch of things.
 DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/server/trace/'];
-DEPS['src/service.ts'] = ['src/remote/'];
 
 // CLI should only use client-side features.
 DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/install/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**'];

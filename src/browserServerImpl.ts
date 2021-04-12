@@ -16,11 +16,9 @@
 
 import { LaunchServerOptions, Logger } from './client/types';
 import { BrowserType } from './server/browserType';
-import * as ws from 'ws';
 import { Browser } from './server/browser';
-import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
-import { Dispatcher, DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
+import { DispatcherScope } from './dispatchers/dispatcher';
 import { BrowserDispatcher } from './dispatchers/browserDispatcher';
 import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
 import * as channels from './protocol/channels';
@@ -30,123 +28,69 @@ import { createGuid } from './utils/utils';
 import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
 import { ProtocolLogger } from './server/types';
-import { CallMetadata, internalCallMetadata, SdkObject } from './server/instrumentation';
+import { CallMetadata, internalCallMetadata } from './server/instrumentation';
+import { Playwright } from './server/playwright';
+import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
+import { PlaywrightServer, PlaywrightServerDelegate } from './remote/playwrightServer';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
+  private _playwright: Playwright;
   private _browserType: BrowserType;
 
-  constructor(browserType: BrowserType) {
+  constructor(playwright: Playwright, browserType: BrowserType) {
+    this._playwright = playwright;
     this._browserType = browserType;
   }
 
-  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServerImpl> {
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+    // 1. Pre-launch the browser
     const browser = await this._browserType.launch(internalCallMetadata(), {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     }, toProtocolLogger(options.logger));
-    return BrowserServerImpl.start(browser, options.port);
-  }
-}
 
-export class BrowserServerImpl extends EventEmitter implements BrowserServer {
-  private _server: ws.Server;
-  private _browser: Browser;
-  private _wsEndpoint: string;
-  private _process: ChildProcess;
-  private _ready: Promise<void>;
-
-  static async start(browser: Browser, port: number = 0): Promise<BrowserServerImpl> {
-    const server = new BrowserServerImpl(browser, port);
-    await server._ready;
-    return server;
-  }
-
-  constructor(browser: Browser, port: number) {
-    super();
-
-    this._browser = browser;
-    this._wsEndpoint = '';
-    this._process = browser.options.browserProcess.process!;
-
-    let readyCallback = () => {};
-    this._ready = new Promise<void>(f => readyCallback = f);
-
-    const token = createGuid();
-    this._server = new ws.Server({ port, path: '/' + token }, () => {
-      const address = this._server.address();
-      this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
-      readyCallback();
-    });
-
-    this._server.on('connection', (socket: ws, req) => {
-      this._clientAttached(socket);
-    });
-
-    browser.options.browserProcess.onclose = (exitCode, signal) => {
-      this._server.close();
-      this.emit('close', exitCode, signal);
+    // 2. Start the server
+    const delegate: PlaywrightServerDelegate = {
+      path: '/' + createGuid(),
+      allowMultipleClients: true,
+      onClose: () => {},
+      onConnect: this._onConnect.bind(this, browser),
     };
-  }
+    const server = new PlaywrightServer(delegate);
+    const wsEndpoint = await server.listen(options.port);
 
-  process(): ChildProcess {
-    return this._process;
-  }
-
-  wsEndpoint(): string {
-    return this._wsEndpoint;
-  }
-
-  async close(): Promise<void> {
-    await this._browser.options.browserProcess.close();
-  }
-
-  async kill(): Promise<void> {
-    await this._browser.options.browserProcess.kill();
-  }
-
-  private _clientAttached(socket: ws) {
-    const connection = new DispatcherConnection();
-    connection.onmessage = message => {
-      if (socket.readyState !== ws.CLOSING)
-        socket.send(JSON.stringify(message));
+    // 3. Return the BrowserServer interface
+    const browserServer = new EventEmitter() as (BrowserServer & EventEmitter);
+    browserServer.process = () => browser.options.browserProcess.process!;
+    browserServer.wsEndpoint = () => wsEndpoint;
+    browserServer.close = () => browser.options.browserProcess.close();
+    browserServer.kill = () => browser.options.browserProcess.kill();
+    browser.options.browserProcess.onclose = async (exitCode, signal) => {
+      server.close();
+      browserServer.emit('close', exitCode, signal);
     };
-    socket.on('message', (message: string) => {
-      connection.dispatch(JSON.parse(Buffer.from(message).toString()));
-    });
-    socket.on('error', () => {});
+    return browserServer;
+  }
+
+  private _onConnect(browser: Browser, scope: DispatcherScope) {
     const selectors = new Selectors();
-    const scope = connection.rootDispatcher();
-    const remoteBrowser = new RemoteBrowserDispatcher(scope, this._browser, selectors);
-    socket.on('close', () => {
-      // Avoid sending any more messages over closed socket.
-      connection.onmessage = () => {};
+    const selectorsDispatcher = new SelectorsDispatcher(scope, selectors);
+    const browserDispatcher = new ConnectedBrowser(scope, browser, selectors);
+    new PlaywrightDispatcher(scope, this._playwright, selectorsDispatcher, browserDispatcher);
+    return () => {
       // Cleanup contexts upon disconnect.
-      remoteBrowser.connectedBrowser.close().catch(e => {});
-    });
+      browserDispatcher.close().catch(e => {});
+    };
   }
 }
 
-class RemoteBrowserDispatcher extends Dispatcher<SdkObject, channels.RemoteBrowserInitializer> implements channels.PlaywrightChannel {
-  readonly connectedBrowser: ConnectedBrowser;
-
-  constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
-    const connectedBrowser = new ConnectedBrowser(scope, browser, selectors);
-    super(scope, browser, 'RemoteBrowser', {
-      selectors: new SelectorsDispatcher(scope, selectors),
-      browser: connectedBrowser,
-    }, false, 'remoteBrowser');
-    this.connectedBrowser = connectedBrowser;
-    connectedBrowser._remoteBrowser = this;
-  }
-}
-
+// This class implements multiplexing multiple BrowserDispatchers over a single Browser instance.
 class ConnectedBrowser extends BrowserDispatcher {
   private _contexts: BrowserContextDispatcher[] = [];
   private _selectors: Selectors;
-  _closed = false;
-  _remoteBrowser?: RemoteBrowserDispatcher;
+  private _closed = false;
 
   constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
     super(scope, browser);

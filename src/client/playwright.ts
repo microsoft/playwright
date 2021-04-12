@@ -42,6 +42,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
   readonly devices: Devices;
   readonly selectors: Selectors;
   readonly errors: { TimeoutError: typeof TimeoutError };
+  private _selectorsOwner: SelectorsOwner;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
@@ -55,6 +56,12 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
       this.devices[name] = descriptor;
     this.selectors = sharedSelectors;
     this.errors = { TimeoutError };
-    this.selectors._addChannel(SelectorsOwner.from(initializer.selectors));
+
+    this._selectorsOwner = SelectorsOwner.from(initializer.selectors);
+    this.selectors._addChannel(this._selectorsOwner);
+  }
+
+  _cleanup() {
+    this.selectors._removeChannel(this._selectorsOwner);
   }
 }
