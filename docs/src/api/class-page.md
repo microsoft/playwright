@@ -1571,9 +1571,9 @@ last redirect. If can not go back, returns `null`.
 
 Navigate to the previous page in history.
 
-### option: Page.goBack.timeout = %%-navigation-timeout-%%
-
 ### option: Page.goBack.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.goBack.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.goForward
 - returns: <[null]|[Response]>
@@ -1583,9 +1583,9 @@ last redirect. If can not go forward, returns `null`.
 
 Navigate to the next page in history.
 
-### option: Page.goForward.timeout = %%-navigation-timeout-%%
-
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.goForward.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.goto
 * langs:
@@ -1624,9 +1624,9 @@ Shortcut for main frame's [`method: Frame.goto`]
 
 URL to navigate page to. The url should include scheme, e.g. `https://`.
 
-### option: Page.goto.timeout = %%-navigation-timeout-%%
-
 ### option: Page.goto.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.goto.timeout = %%-navigation-timeout-%%
 
 ### option: Page.goto.referer
 - `referer` <[string]>
@@ -2060,9 +2060,9 @@ Shortcut for main frame's [`method: Frame.querySelectorAll`].
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
 last redirect.
 
-### option: Page.reload.timeout = %%-navigation-timeout-%%
-
 ### option: Page.reload.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.reload.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.route
 
@@ -2859,11 +2859,11 @@ a navigation.
 
 Shortcut for main frame's [`method: Frame.waitForNavigation`].
 
-### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
-
 ### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
 
 ### option: Page.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.waitForPopup
 * langs: csharp, java, python
