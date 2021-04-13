@@ -21,6 +21,7 @@ import { DispatcherConnection, DispatcherScope } from '../dispatchers/dispatcher
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
+import { serverSelectors } from '../server/selectors';
 
 const debugLog = debug('pw:server');
 
@@ -37,13 +38,17 @@ export class PlaywrightServer {
   private _delegate: PlaywrightServerDelegate;
 
   static async startDefault(port: number = 0): Promise<string> {
+    const cleanup = async () => {
+      await gracefullyCloseAll().catch(e => {});
+      serverSelectors.unregisterAll();
+    };
     const delegate: PlaywrightServerDelegate = {
       path: '/ws',
       allowMultipleClients: false,
-      onClose: gracefullyCloseAll,
+      onClose: cleanup,
       onConnect: (rootScope: DispatcherScope) => {
         new PlaywrightDispatcher(rootScope, createPlaywright());
-        return () => gracefullyCloseAll().catch(e => {});
+        return cleanup;
       },
     };
     const server = new PlaywrightServer(delegate);
