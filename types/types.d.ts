@@ -2875,7 +2875,7 @@ export interface Page {
   /**
    * Emitted when the page closes.
    */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
@@ -2894,7 +2894,7 @@ export interface Page {
    * ```
    * 
    */
-  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean)): Promise<ConsoleMessage>;
+  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
 
   /**
    * Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes,
@@ -2914,7 +2914,7 @@ export interface Page {
    * ```
    * 
    */
-  waitForEvent(event: 'crash', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+  waitForEvent(event: 'crash', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
@@ -2926,13 +2926,13 @@ export interface Page {
    * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#pageondialog) listeners are present, all
    * dialogs are automatically dismissed.
    */
-  waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean, timeout?: number } | ((dialog: Dialog) => boolean)): Promise<Dialog>;
+  waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
   /**
    * Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
    * event is dispatched.
    */
-  waitForEvent(event: 'domcontentloaded', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+  waitForEvent(event: 'domcontentloaded', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
@@ -2942,7 +2942,7 @@ export interface Page {
    * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
    * performed and user has no access to the downloaded files.
    */
-  waitForEvent(event: 'download', optionsOrPredicate?: { predicate?: (download: Download) => boolean, timeout?: number } | ((download: Download) => boolean)): Promise<Download>;
+  waitForEvent(event: 'download', optionsOrPredicate?: { predicate?: (download: Download) => boolean | Promise<boolean>, timeout?: number } | ((download: Download) => boolean | Promise<boolean>)): Promise<Download>;
 
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
@@ -2957,32 +2957,32 @@ export interface Page {
    * ```
    * 
    */
-  waitForEvent(event: 'filechooser', optionsOrPredicate?: { predicate?: (fileChooser: FileChooser) => boolean, timeout?: number } | ((fileChooser: FileChooser) => boolean)): Promise<FileChooser>;
+  waitForEvent(event: 'filechooser', optionsOrPredicate?: { predicate?: (fileChooser: FileChooser) => boolean | Promise<boolean>, timeout?: number } | ((fileChooser: FileChooser) => boolean | Promise<boolean>)): Promise<FileChooser>;
 
   /**
    * Emitted when a frame is attached.
    */
-  waitForEvent(event: 'frameattached', optionsOrPredicate?: { predicate?: (frame: Frame) => boolean, timeout?: number } | ((frame: Frame) => boolean)): Promise<Frame>;
+  waitForEvent(event: 'frameattached', optionsOrPredicate?: { predicate?: (frame: Frame) => boolean | Promise<boolean>, timeout?: number } | ((frame: Frame) => boolean | Promise<boolean>)): Promise<Frame>;
 
   /**
    * Emitted when a frame is detached.
    */
-  waitForEvent(event: 'framedetached', optionsOrPredicate?: { predicate?: (frame: Frame) => boolean, timeout?: number } | ((frame: Frame) => boolean)): Promise<Frame>;
+  waitForEvent(event: 'framedetached', optionsOrPredicate?: { predicate?: (frame: Frame) => boolean | Promise<boolean>, timeout?: number } | ((frame: Frame) => boolean | Promise<boolean>)): Promise<Frame>;
 
   /**
    * Emitted when a frame is navigated to a new url.
    */
-  waitForEvent(event: 'framenavigated', optionsOrPredicate?: { predicate?: (frame: Frame) => boolean, timeout?: number } | ((frame: Frame) => boolean)): Promise<Frame>;
+  waitForEvent(event: 'framenavigated', optionsOrPredicate?: { predicate?: (frame: Frame) => boolean | Promise<boolean>, timeout?: number } | ((frame: Frame) => boolean | Promise<boolean>)): Promise<Frame>;
 
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  waitForEvent(event: 'load', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+  waitForEvent(event: 'load', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when an uncaught exception happens within the page.
    */
-  waitForEvent(event: 'pageerror', optionsOrPredicate?: { predicate?: (error: Error) => boolean, timeout?: number } | ((error: Error) => boolean)): Promise<Error>;
+  waitForEvent(event: 'pageerror', optionsOrPredicate?: { predicate?: (error: Error) => boolean | Promise<boolean>, timeout?: number } | ((error: Error) => boolean | Promise<boolean>)): Promise<Error>;
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
@@ -3005,14 +3005,14 @@ export interface Page {
    * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
-  waitForEvent(event: 'popup', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+  waitForEvent(event: 'popup', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
    * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler) or
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler).
    */
-  waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean, timeout?: number } | ((request: Request) => boolean)): Promise<Request>;
+  waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 
   /**
    * Emitted when a request fails, for example by timing out.
@@ -3021,30 +3021,30 @@ export interface Page {
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
    * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
    */
-  waitForEvent(event: 'requestfailed', optionsOrPredicate?: { predicate?: (request: Request) => boolean, timeout?: number } | ((request: Request) => boolean)): Promise<Request>;
+  waitForEvent(event: 'requestfailed', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 
   /**
    * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
    * sequence of events is `request`, `response` and `requestfinished`.
    */
-  waitForEvent(event: 'requestfinished', optionsOrPredicate?: { predicate?: (request: Request) => boolean, timeout?: number } | ((request: Request) => boolean)): Promise<Request>;
+  waitForEvent(event: 'requestfinished', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 
   /**
    * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
    * is `request`, `response` and `requestfinished`.
    */
-  waitForEvent(event: 'response', optionsOrPredicate?: { predicate?: (response: Response) => boolean, timeout?: number } | ((response: Response) => boolean)): Promise<Response>;
+  waitForEvent(event: 'response', optionsOrPredicate?: { predicate?: (response: Response) => boolean | Promise<boolean>, timeout?: number } | ((response: Response) => boolean | Promise<boolean>)): Promise<Response>;
 
   /**
    * Emitted when [WebSocket] request is sent.
    */
-  waitForEvent(event: 'websocket', optionsOrPredicate?: { predicate?: (webSocket: WebSocket) => boolean, timeout?: number } | ((webSocket: WebSocket) => boolean)): Promise<WebSocket>;
+  waitForEvent(event: 'websocket', optionsOrPredicate?: { predicate?: (webSocket: WebSocket) => boolean | Promise<boolean>, timeout?: number } | ((webSocket: WebSocket) => boolean | Promise<boolean>)): Promise<WebSocket>;
 
   /**
    * Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
    * page.
    */
-  waitForEvent(event: 'worker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean, timeout?: number } | ((worker: Worker) => boolean)): Promise<Worker>;
+  waitForEvent(event: 'worker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
 
 
   /**
@@ -3151,7 +3151,7 @@ export interface Page {
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Request] object.
    * @param options 
    */
-  waitForRequest(urlOrPredicate: string|RegExp|((request: Request) => boolean), options?: {
+  waitForRequest(urlOrPredicate: string|RegExp|((request: Request) => boolean|Promise<boolean>), options?: {
     /**
      * Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
      * changed by using the
@@ -3172,7 +3172,7 @@ export interface Page {
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Response] object.
    * @param options 
    */
-  waitForResponse(urlOrPredicate: string|RegExp|((response: Response) => boolean), options?: {
+  waitForResponse(urlOrPredicate: string|RegExp|((response: Response) => boolean|Promise<boolean>), options?: {
     /**
      * Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
      * changed by using the
@@ -5333,7 +5333,7 @@ export interface BrowserContext {
    * ```
    * 
    */
-  waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+  waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -5341,7 +5341,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean, timeout?: number } | ((browserContext: BrowserContext) => boolean)): Promise<BrowserContext>;
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean | Promise<boolean>, timeout?: number } | ((browserContext: BrowserContext) => boolean | Promise<boolean>)): Promise<BrowserContext>;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -5364,14 +5364,14 @@ export interface BrowserContext {
    * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
-  waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+  waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
    * 
    * Emitted when new service worker is created in the context.
    */
-  waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean, timeout?: number } | ((worker: Worker) => boolean)): Promise<Worker>;
+  waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
 }
 
 /**
@@ -7369,13 +7369,13 @@ export interface ElectronApplication {
   /**
    * This event is issued when the application closes.
    */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean | Promise<boolean>, timeout?: number } | (() => boolean | Promise<boolean>)): Promise<void>;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can be used
    * for Playwright automation.
    */
-  waitForEvent(event: 'window', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
+  waitForEvent(event: 'window', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
 
   /**
@@ -8108,7 +8108,7 @@ export interface AndroidDevice {
   /**
    * Emitted when a new WebView instance is detected.
    */
-  waitForEvent(event: 'webview', optionsOrPredicate?: { predicate?: (androidWebView: AndroidWebView) => boolean, timeout?: number } | ((androidWebView: AndroidWebView) => boolean)): Promise<AndroidWebView>;
+  waitForEvent(event: 'webview', optionsOrPredicate?: { predicate?: (androidWebView: AndroidWebView) => boolean | Promise<boolean>, timeout?: number } | ((androidWebView: AndroidWebView) => boolean | Promise<boolean>)): Promise<AndroidWebView>;
 
 
   /**
@@ -10249,7 +10249,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket closes.
    */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (webSocket: WebSocket) => boolean, timeout?: number } | ((webSocket: WebSocket) => boolean)): Promise<WebSocket>;
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (webSocket: WebSocket) => boolean | Promise<boolean>, timeout?: number } | ((webSocket: WebSocket) => boolean | Promise<boolean>)): Promise<WebSocket>;
 
   /**
    * Fired when the websocket receives a frame.
@@ -10259,12 +10259,12 @@ export interface WebSocket {
    * frame payload
    */
   payload: string|Buffer;
-}) => boolean, timeout?: number } | ((data: {
+}) => boolean | Promise<boolean>, timeout?: number } | ((data: {
   /**
    * frame payload
    */
   payload: string|Buffer;
-}) => boolean)): Promise<{
+}) => boolean | Promise<boolean>)): Promise<{
   /**
    * frame payload
    */
@@ -10279,12 +10279,12 @@ export interface WebSocket {
    * frame payload
    */
   payload: string|Buffer;
-}) => boolean, timeout?: number } | ((data: {
+}) => boolean | Promise<boolean>, timeout?: number } | ((data: {
   /**
    * frame payload
    */
   payload: string|Buffer;
-}) => boolean)): Promise<{
+}) => boolean | Promise<boolean>)): Promise<{
   /**
    * frame payload
    */
@@ -10294,7 +10294,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: String) => boolean, timeout?: number } | ((string: String) => boolean)): Promise<String>;
+  waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: String) => boolean | Promise<boolean>, timeout?: number } | ((string: String) => boolean | Promise<boolean>)): Promise<String>;
 
 }
 

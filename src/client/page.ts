@@ -377,7 +377,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.waitForURL(url, options));
   }
 
-  async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: { timeout?: number } = {}): Promise<Request> {
+  async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Request> {
     return this._wrapApiCall('page.waitForRequest', async (channel: channels.PageChannel) => {
       const predicate = (request: Request) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
@@ -390,7 +390,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean), options: { timeout?: number } = {}): Promise<Response> {
+  async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Response> {
     return this._wrapApiCall('page.waitForResponse', async (channel: channels.PageChannel) => {
       const predicate = (response: Response) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))

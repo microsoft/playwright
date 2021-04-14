@@ -2934,6 +2934,12 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 
 Request URL string, regex or predicate receiving [Request] object.
 
+### param: Page.waitForRequest.urlOrPredicate
+* langs: js
+- `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]|[Promise]<[boolean]>>
+
+Request URL string, regex or predicate receiving [Request] object.
+
 ### option: Page.waitForRequest.timeout
 - `timeout` <[float]>
 
@@ -2987,6 +2993,12 @@ return response.ok
 
 ### param: Page.waitForResponse.urlOrPredicate
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
+
+Request URL string, regex or predicate receiving [Response] object.
+
+### param: Page.waitForResponse.urlOrPredicate
+* langs: js
+- `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Response] object.
 
