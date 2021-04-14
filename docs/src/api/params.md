@@ -209,14 +209,22 @@ Whether to ignore HTTPS errors during navigation. Defaults to `false`.
 Toggles bypassing page's Content-Security-Policy.
 
 ## context-option-viewport
-* langs: js, java, csharp
+* langs: js, java
   - alias-java: viewportSize
-  - alias-csharp: viewportSize
 - `viewport` <[null]|[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
 Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+
+## csharp-context-option-viewport
+* langs: csharp
+  - alias-csharp: viewportSize
+- `viewport` <[null]|[Object]>
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
+
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable the default viewport.
 
 ## context-option-screen
 * langs:
@@ -556,6 +564,7 @@ is considered matching if all specified properties match.
 - %%-context-option-ignorehttpserrors-%%
 - %%-context-option-bypasscsp-%%
 - %%-context-option-viewport-%%
+- %%-csharp-context-option-viewport-%%
 - %%-python-context-option-viewport-%%
 - %%-context-option-screen-%%
 - %%-python-context-option-no-viewport-%%
