@@ -213,7 +213,7 @@ function test_skip_browser_download_inspect_with_custom_executable {
     return
   fi
 
-  OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PWDEBUG=1 node inspector-custom-executable.js)
+  OUTPUT=$(PWDEBUG=1 node inspector-custom-executable.js)
   if [[ "${OUTPUT}" != *"SUCCESS"* ]]; then
     echo "missing log message that launch succeeded: ${OUTPUT}"
     exit 1
