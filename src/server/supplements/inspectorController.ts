@@ -18,14 +18,17 @@ import { BrowserContext } from '../browserContext';
 import { RecorderSupplement } from './recorderSupplement';
 import { debugLogger } from '../../utils/debugLogger';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
-import { isDebugMode, isUnderTest } from '../../utils/utils';
+import { debugMode, isUnderTest } from '../../utils/utils';
+import * as consoleApiSource from '../../generated/consoleApiSource';
 
 export class InspectorController implements InstrumentationListener {
   private _waitOperations = new Map<string, CallMetadata>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
-    if (isDebugMode())
+    if (debugMode() === 'inspector')
       await RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
+    else if (debugMode() === 'console')
+      await context.extendInjectedScript(consoleApiSource.source);
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -98,7 +101,7 @@ export class InspectorController implements InstrumentationListener {
     if (!sdkObject.attribution.context)
       return;
     const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
-    await recorder?.updateCallLog([metadata]);
+    recorder?.updateCallLog([metadata]);
   }
 }
 

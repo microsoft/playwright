@@ -88,9 +88,11 @@ export function isError(obj: any): obj is Error {
   return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
 }
 
-const isInDebugMode = !!getFromENV('PWDEBUG');
-export function isDebugMode(): boolean {
-  return isInDebugMode;
+const debugEnv = getFromENV('PWDEBUG') || '';
+export function debugMode() {
+  if (debugEnv === 'console')
+    return 'console';
+  return debugEnv ? 'inspector' : '';
 }
 
 let _isUnderTest = false;

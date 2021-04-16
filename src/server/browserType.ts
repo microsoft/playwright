@@ -28,7 +28,7 @@ import { Progress, ProgressController } from './progress';
 import * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
-import { isDebugMode } from '../utils/utils';
+import { debugMode } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
@@ -269,7 +269,7 @@ function copyTestHooks(from: object, to: object) {
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
   const { devtools = false } = options;
   let { headless = !devtools } = options;
-  if (isDebugMode())
+  if (debugMode())
     headless = false;
   return { ...options, devtools, headless };
 }
