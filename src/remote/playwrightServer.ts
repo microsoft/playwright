@@ -34,6 +34,7 @@ export interface PlaywrightServerDelegate {
 
 export class PlaywrightServer {
   private _server: http.Server | undefined;
+  private _wsServer: ws.Server | undefined;
   private _clientsCount = 0;
   private _delegate: PlaywrightServerDelegate;
 
@@ -77,8 +78,8 @@ export class PlaywrightServer {
     this._server = server;
     debugLog('Listening at ' + wsEndpoint);
 
-    const wsServer = new ws.Server({ server: this._server, path });
-    wsServer.on('connection', async socket => {
+    this._wsServer = new ws.Server({ server: this._server, path });
+    this._wsServer.on('connection', async socket => {
       if (this._clientsCount && !this._delegate.allowMultipleClients) {
         socket.close();
         return;
@@ -120,6 +121,8 @@ export class PlaywrightServer {
     if (!this._server)
       return;
     debugLog('Closing server');
+    // First disconnect all remaining clients.
+    await new Promise(f => this._wsServer!.close(f));
     await new Promise(f => this._server!.close(f));
     await this._delegate.onClose();
   }
