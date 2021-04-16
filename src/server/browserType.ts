@@ -51,7 +51,7 @@ export abstract class BrowserType extends SdkObject {
     this._registry = playwrightOptions.registry;
   }
 
-  executablePath(options?: types.LaunchOptions): string {
+  executablePath(channel?: types.BrowserChannel): string {
     return this._registry.executablePath(this._name) || '';
   }
 
@@ -166,7 +166,7 @@ export abstract class BrowserType extends SdkObject {
     else
       browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
 
-    const executable = executablePath || this.executablePath(options);
+    const executable = executablePath || this.executablePath(options.channel);
     if (!executable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
     if (!(await existsAsync(executable))) {

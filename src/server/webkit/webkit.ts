@@ -31,16 +31,16 @@ export class WebKit extends BrowserType {
     super('webkit', playwrightOptions);
   }
 
-  executablePath(options?: types.LaunchOptions): string {
-    if (options?.channel) {
+  executablePath(channel?: types.BrowserChannel): string {
+    if (channel) {
       let executablePath = undefined;
-      if ((options.channel as any) === 'technology-preview')
+      if ((channel as any) === 'technology-preview')
         executablePath = this._registry.executablePath('webkit-technology-preview');
-      assert(executablePath, `unsupported webkit channel "${options.channel}"`);
-      assert(fs.existsSync(executablePath), `webkit channel "${options.channel}" is not installed. Try running 'npx playwright install webkit-technology-preview'`);
+      assert(executablePath, `unsupported webkit channel "${channel}"`);
+      assert(fs.existsSync(executablePath), `webkit channel "${channel}" is not installed. Try running 'npx playwright install webkit-technology-preview'`);
       return executablePath;
     }
-    return super.executablePath(options);
+    return super.executablePath(channel);
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
