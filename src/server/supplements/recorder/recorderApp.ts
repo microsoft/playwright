@@ -28,6 +28,7 @@ import { BrowserContext } from '../../browserContext';
 import { isUnderTest } from '../../../utils/utils';
 
 const readFileAsync = util.promisify(fs.readFile);
+const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
 declare global {
   interface Window {
@@ -101,8 +102,13 @@ export class RecorderApp extends EventEmitter {
     ];
     if (process.env.PWTEST_RECORDER_PORT)
       args.push(`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`);
+    const defaultExecutablePath = recorderPlaywright.chromium.executablePath(inspectedContext._browser.options);
+    let executablePath: string | undefined;
+    if (!(await existsAsync(defaultExecutablePath)) && inspectedContext._browser.options.isChromium)
+      executablePath = inspectedContext._browser.options.browserProcess.customExecutablePath;
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
       channel: inspectedContext._browser.options.channel,
+      executablePath,
       sdkLanguage: inspectedContext._options.sdkLanguage,
       args,
       noDefaultViewport: true,

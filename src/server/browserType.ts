@@ -234,6 +234,7 @@ export abstract class BrowserType extends SdkObject {
     }
     browserProcess = {
       onclose: undefined,
+      customExecutablePath: executablePath || undefined,
       process: launchedProcess,
       close: () => closeOrKill((options as any).__testHookBrowserCloseTimeout || DEFAULT_TIMEOUT),
       kill

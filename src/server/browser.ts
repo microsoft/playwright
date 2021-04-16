@@ -28,6 +28,7 @@ import { kBrowserClosedError } from '../utils/errors';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
+  customExecutablePath?: string;
   process?: ChildProcess;
   kill(): Promise<void>;
   close(): Promise<void>;
