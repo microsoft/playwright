@@ -46,6 +46,7 @@ export type BrowserOptions = PlaywrightOptions & {
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,
+  customExecutablePath?: string;
   proxy?: ProxySettings,
   protocolLogger: types.ProtocolLogger,
   browserLogsCollector: RecentLogsCollector,

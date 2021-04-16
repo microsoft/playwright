@@ -44,10 +44,10 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  executablePath(options?: types.LaunchOptions): string {
-    if (options?.channel)
-      return findChromiumChannel(options.channel);
-    return super.executablePath(options);
+  executablePath(channel?: types.BrowserChannel): string {
+    if (channel)
+      return findChromiumChannel(channel);
+    return super.executablePath(channel);
   }
 
   async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number) {
