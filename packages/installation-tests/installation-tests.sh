@@ -53,26 +53,26 @@ function copy_test_scripts {
 }
 
 function run_tests {
-  # test_screencast
-  # test_typescript_types
-  # test_skip_browser_download
+  test_screencast
+  test_typescript_types
+  test_skip_browser_download
   test_skip_browser_download_inspect_with_custom_executable
-  # test_playwright_global_installation_subsequent_installs
-  # test_playwright_should_work
-  # test_playwright_should_work_with_relative_home_path
-  # test_playwright_should_work_with_relative_browsers_path
-  # test_playwright_chromium_should_work
-  # test_playwright_webkit_should_work
-  # test_playwright_firefox_should_work
-  # test_playwright_global_installation
-  # test_playwright_global_installation_cross_package
-  # test_playwright_electron_should_work
-  # test_electron_types
-  # test_android_types
-  # test_playwright_cli_screenshot_should_work
-  # test_playwright_cli_install_should_work
-  # test_playwright_cli_codegen_should_work
-  # test_playwright_driver_should_work
+  test_playwright_global_installation_subsequent_installs
+  test_playwright_should_work
+  test_playwright_should_work_with_relative_home_path
+  test_playwright_should_work_with_relative_browsers_path
+  test_playwright_chromium_should_work
+  test_playwright_webkit_should_work
+  test_playwright_firefox_should_work
+  test_playwright_global_installation
+  test_playwright_global_installation_cross_package
+  test_playwright_electron_should_work
+  test_electron_types
+  test_android_types
+  test_playwright_cli_screenshot_should_work
+  test_playwright_cli_install_should_work
+  test_playwright_cli_codegen_should_work
+  test_playwright_driver_should_work
 }
 
 function test_screencast {
