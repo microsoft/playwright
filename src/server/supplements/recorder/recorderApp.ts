@@ -109,7 +109,7 @@ export class RecorderApp extends EventEmitter {
       channel = inspectedContext._browser.options.channel;
       const defaultExecutablePath = recorderPlaywright.chromium.executablePath(channel);
       if (!(await existsAsync(defaultExecutablePath)))
-        executablePath = inspectedContext._browser.options.browserProcess.customExecutablePath;
+        executablePath = inspectedContext._browser.options.customExecutablePath;
     }
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
       channel,

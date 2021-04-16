@@ -28,7 +28,6 @@ import { kBrowserClosedError } from '../utils/errors';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
-  customExecutablePath?: string;
   process?: ChildProcess;
   kill(): Promise<void>;
   close(): Promise<void>;
@@ -47,6 +46,7 @@ export type BrowserOptions = PlaywrightOptions & {
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,
+  customExecutablePath?: string;
   proxy?: ProxySettings,
   protocolLogger: types.ProtocolLogger,
   browserLogsCollector: RecentLogsCollector,

@@ -110,6 +110,7 @@ export abstract class BrowserType extends SdkObject {
       headful: !options.headless,
       downloadsPath,
       browserProcess,
+      customExecutablePath: options.executablePath,
       proxy: options.proxy,
       protocolLogger,
       browserLogsCollector,
@@ -234,7 +235,6 @@ export abstract class BrowserType extends SdkObject {
     }
     browserProcess = {
       onclose: undefined,
-      customExecutablePath: executablePath || undefined,
       process: launchedProcess,
       close: () => closeOrKill((options as any).__testHookBrowserCloseTimeout || DEFAULT_TIMEOUT),
       kill
