@@ -3,7 +3,7 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "869727",
+      "revision": "878941",
       "installByDefault": true
     },
     {
