@@ -154,7 +154,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     contentScript: tOptional(tBoolean),
   });
   scheme.BrowserTypeLaunchParams = tObject({
-    channel: tOptional(tEnum(['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary'])),
+    channel: tOptional(tEnum(['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary', 'firefox-stable'])),
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
@@ -178,7 +178,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
-    channel: tOptional(tEnum(['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary'])),
+    channel: tOptional(tEnum(['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary', 'firefox-stable'])),
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
