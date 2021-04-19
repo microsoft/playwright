@@ -192,6 +192,7 @@ const DEFAULT_ARGS = [
   '--enable-automation',
   '--password-store=basic',
   '--use-mock-keychain',
+  '--no-service-autorun',
 ];
 
 async function urlToWSEndpoint(endpointURL: string) {
