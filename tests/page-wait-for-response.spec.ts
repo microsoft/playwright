@@ -53,7 +53,7 @@ it('should log the url', async ({page}) => {
 it('should work with predicate', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
-    page.waitForEvent('request', response => response.url() === server.PREFIX + '/digits/2.png'),
+    page.waitForEvent('response', response => response.url() === server.PREFIX + '/digits/2.png'),
     page.evaluate(() => {
       fetch('/digits/1.png');
       fetch('/digits/2.png');
@@ -61,6 +61,44 @@ it('should work with predicate', async ({page, server}) => {
     })
   ]);
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
+});
+
+it('should work with async predicate', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  const [response1, response2] = await Promise.all([
+    page.waitForEvent('response', async response => {
+      const text = await response.text();
+      return text.includes('contents of the file');
+    }),
+    page.waitForResponse(async response => {
+      const text = await response.text();
+      return text.includes('bar');
+    }),
+    page.evaluate(() => {
+      fetch('/simple.json').then(r => r.json());
+      fetch('/file-to-upload.txt').then(r => r.text());
+    })
+  ]);
+  expect(response1.url()).toBe(server.PREFIX + '/file-to-upload.txt');
+  expect(response2.url()).toBe(server.PREFIX + '/simple.json');
+});
+
+it('sync predicate should be only called once', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  let counter = 0;
+  const [response] = await Promise.all([
+    page.waitForEvent('response', response => {
+      ++counter;
+      return response.url() === server.PREFIX + '/digits/1.png';
+    }),
+    page.evaluate(() => {
+      fetch('/digits/1.png');
+      fetch('/digits/2.png');
+      fetch('/digits/3.png');
+    })
+  ]);
+  expect(response.url()).toBe(server.PREFIX + '/digits/1.png');
+  expect(counter).toBe(1);
 });
 
 it('should work with no timeout', async ({page, server}) => {

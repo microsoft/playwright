@@ -42,12 +42,12 @@ export class Waiter {
     return new Waiter(channelOwner, `${target}.waitForEvent(${event})`);
   }
 
-  async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean): Promise<T> {
+  async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {
     const { promise, dispose } = waitForEvent(emitter, event, predicate);
     return this.waitForPromise(promise, dispose);
   }
 
-  rejectOnEvent<T = void>(emitter: EventEmitter, event: string, error: Error, predicate?: (arg: T) => boolean) {
+  rejectOnEvent<T = void>(emitter: EventEmitter, event: string, error: Error, predicate?: (arg: T) => boolean | Promise<boolean>) {
     const { promise, dispose } = waitForEvent(emitter, event, predicate);
     this._rejectOn(promise.then(() => { throw error; }), dispose);
   }
@@ -92,12 +92,12 @@ export class Waiter {
   }
 }
 
-function waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean): { promise: Promise<T>, dispose: () => void } {
+function waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
   let listener: (eventArg: any) => void;
   const promise = new Promise<T>((resolve, reject) => {
-    listener = (eventArg: any) => {
+    listener = async (eventArg: any) => {
       try {
-        if (predicate && !predicate(eventArg))
+        if (predicate && !(await predicate(eventArg)))
           return;
         emitter.removeListener(event, listener);
         resolve(eventArg);
