@@ -65,7 +65,7 @@ export const Timeline: React.FunctionComponent<{
           rightTime: entry.metadata.endTime,
           leftPosition: timeToPosition(measure.width, boundaries, entry.metadata.startTime),
           rightPosition: timeToPosition(measure.width, boundaries, entry.metadata.endTime),
-          label: entry.metadata.method + ' ' + detail,
+          label: entry.metadata.apiName + ' ' + detail,
           type: entry.metadata.method,
           priority: 0,
         });

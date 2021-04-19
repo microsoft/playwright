@@ -47,12 +47,12 @@ export const FilmStrip: React.FunctionComponent<{
   }
   {previewImage && previewX !== undefined &&
     <div className='film-strip-hover' style={{
-      width: previewImage.width,
-      height: previewImage.height,
+      width: previewSize.width,
+      height: previewSize.height,
       top: measure.bottom + 5,
       left: Math.min(previewX, measure.width - previewSize.width - 10),
     }}>
-      <img src={`/sha1/${previewImage.sha1}`} width={previewImage.width} height={previewImage.height} />
+      <img src={`/sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
     </div>
   }
   </div>;

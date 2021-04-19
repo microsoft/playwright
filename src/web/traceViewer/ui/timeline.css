@@ -46,7 +46,7 @@
   pointer-events: none;
   overflow: hidden;
   flex: none;
-  flex-basis: 20px;
+  flex-basis: 30px;
   position: relative;
 }
 
@@ -66,10 +66,11 @@
 
 .timeline-bar {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  height: 9px;
+  top: 11px;
   background-color: red;
-  border-radius: 3px;
+  border-radius: 2px;
+  min-width: 3px;
   --action-color: 'transparent';
   background-color: var(--action-color);
 }
@@ -104,16 +105,24 @@
   --action-color: var(--blue);
 }
 
+.timeline-bar.evaluateExpression {
+  --action-color: var(--yellow);
+}
+
 .timeline-bar.dialog {
+  top: 22px;
   --action-color: var(--transparent-blue);
 }
 
 .timeline-bar.navigation {
-  --action-color: var(--purple);
+  top: 22px;
+  --action-color: var(--blue);
 }
 
-.timeline-bar.load {
-  --action-color: var(--yellow);
+.timeline-bar.waitForEventInfo {
+  bottom: inherit;
+  top: 0;
+  --action-color: var(--gray);
 }
 
 .timeline-label {
