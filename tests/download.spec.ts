@@ -31,6 +31,14 @@ it.describe('download event', () => {
       res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
       res.end(`Hello world`);
     });
+    server.setRoute('/downloadWithDelay', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+      res.write('foo');
+      setTimeout(() => {
+        res.end('bar');
+      }, 5000);
+    });
   });
 
   it('should report downloads with acceptDownloads: false', async ({browser, server}) => {
@@ -432,5 +440,36 @@ it.describe('download event', () => {
     ]);
     expect(downloadPath).toBe(null);
     expect(saveError.message).toContain('File deleted upon browser context closure.');
+  });
+
+  it('should be able to cancel pending downloads', async ({browser, server, browserName}) => {
+    it.skip(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/downloadWithDelay">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    await download.cancel();
+    const failure = await download.failure();
+    expect(failure).toBe('canceled');
+    await page.close();
+  });
+
+  it('should not fail explicitly to cancel a download even if that is already finished', async ({browser, server, browserName}) => {
+    it.skip(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    await download.cancel();
+    const failure = await download.failure();
+    expect(failure).toBe(null);
+    await page.close();
   });
 });

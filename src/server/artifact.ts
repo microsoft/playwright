@@ -16,12 +16,14 @@
 
 import fs from 'fs';
 import * as util from 'util';
+import { Download } from './download';
 
 type SaveCallback = (localPath: string, error?: string) => Promise<void>;
 
 export class Artifact {
   private _localPath: string;
   private _unaccessibleErrorMessage: string | undefined;
+  private _owner: Download | undefined;
   private _finishedCallback: () => void;
   private _finishedPromise: Promise<void>;
   private _saveCallbacks: SaveCallback[] = [];
@@ -29,9 +31,10 @@ export class Artifact {
   private _deleted = false;
   private _failureError: string | null = null;
 
-  constructor(localPath: string, unaccessibleErrorMessage?: string) {
+  constructor(localPath: string, unaccessibleErrorMessage?: string, owner?: Download) {
     this._localPath = localPath;
     this._unaccessibleErrorMessage = unaccessibleErrorMessage;
+    this._owner = owner;
     this._finishedCallback = () => {};
     this._finishedPromise = new Promise(f => this._finishedCallback = f);
   }
@@ -73,6 +76,13 @@ export class Artifact {
       return this._unaccessibleErrorMessage;
     await this._finishedPromise;
     return this._failureError;
+  }
+
+  async cancel(): Promise<void> {
+    // XXX: Refactor the Download / Video / Artifact interface to make the structure clearer?
+    if (this._owner === undefined)
+      throw new Error('Unexpected scenario. No bounded owner to apply the action to.');
+    await this._owner.cancel();
   }
 
   async delete(): Promise<void> {

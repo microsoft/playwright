@@ -937,6 +937,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ArtifactSaveAsStreamParams = tOptional(tObject({}));
   scheme.ArtifactFailureParams = tOptional(tObject({}));
   scheme.ArtifactStreamParams = tOptional(tObject({}));
+  scheme.ArtifactCancelParams = tOptional(tObject({}));
   scheme.ArtifactDeleteParams = tOptional(tObject({}));
   scheme.StreamReadParams = tObject({
     size: tOptional(tNumber),

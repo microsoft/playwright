@@ -71,6 +71,12 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel, channels.Ar
     });
   }
 
+  async cancel(): Promise<void> {
+    return this._wrapApiCall(`${this._apiName}.cancel`, async (channel: channels.ArtifactChannel) => {
+      return channel.cancel();
+    });
+  }
+
   async delete(): Promise<void> {
     return this._wrapApiCall(`${this._apiName}.delete`, async (channel: channels.ArtifactChannel) => {
       return channel.delete();
