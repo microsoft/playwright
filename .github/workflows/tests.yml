@@ -32,13 +32,9 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- --tag=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -136,13 +132,9 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- --tag=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
       if: ${{ always() }}
       env:
         HEADFUL: 1
@@ -169,13 +161,9 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run ctest"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
       env:
         PWTEST_MODE: "${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -201,13 +189,9 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- --tag=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
       env:
         PWTEST_VIDEO: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -264,13 +248,9 @@ jobs:
     - run: node lib/cli/cli install-deps chromium
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run ctest"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
       env:
         PWTEST_CHANNEL: "chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -374,13 +354,9 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run etest"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run etest"
     - run: node tests/config/checkCoverage.js electron
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
