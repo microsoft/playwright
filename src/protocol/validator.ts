@@ -46,7 +46,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.WaitForEventInfo = tObject({
     waitId: tString,
     phase: tEnum(['before', 'after', 'log']),
-    name: tOptional(tString),
+    apiName: tOptional(tString),
     stack: tOptional(tArray(tType('StackFrame'))),
     message: tOptional(tString),
     error: tOptional(tString),

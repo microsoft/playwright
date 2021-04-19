@@ -29,10 +29,10 @@ export class Waiter {
   private _waitId: string;
   private _error: string | undefined;
 
-  constructor(channelOwner: ChannelOwner, name: string) {
+  constructor(channelOwner: ChannelOwner, apiName: string) {
     this._waitId = createGuid();
     this._channelOwner = channelOwner;
-    this._channelOwner._waitForEventInfoBefore(this._waitId, name, captureStackTrace().frames);
+    this._channelOwner._waitForEventInfoBefore(this._waitId, apiName, captureStackTrace().frames);
     this._dispose = [
       () => this._channelOwner._waitForEventInfoAfter(this._waitId, this._error)
     ];

@@ -41,7 +41,7 @@ WaitForEventInfo:
       - before
       - after
       - log
-    name: string?
+    apiName: string?
     stack:
       type: array?
       items: StackFrame

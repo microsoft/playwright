@@ -132,6 +132,7 @@ export class DispatcherConnection {
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
   private _validateMetadata: (metadata: any) => { stack?: StackFrame[] };
+  private _waitOperations = new Map<string, CallMetadata>();
 
   sendMessageToClient(guid: string, method: string, params: any) {
     this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params) });
@@ -197,7 +198,7 @@ export class DispatcherConnection {
     }
 
     const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
-    const callMetadata: CallMetadata = {
+    let callMetadata: CallMetadata = {
       id,
       ...validMetadata,
       pageId: sdkObject?.attribution.page?.uniqueId,
@@ -211,8 +212,27 @@ export class DispatcherConnection {
     };
 
     try {
-      if (sdkObject)
+      if (sdkObject) {
+        // Process logs for waitForNavigation/waitForLoadState
+        if (params?.info?.waitId) {
+          const info = params.info;
+          switch (info.phase) {
+            case 'before':
+              callMetadata.apiName = info.apiName;
+              callMetadata.stack = info.stack;
+              this._waitOperations.set(info.waitId, callMetadata);
+              break;
+            case 'log':
+              const originalMetadata = this._waitOperations.get(info.waitId)!;
+              originalMetadata.log.push(info.message);
+              sdkObject.instrumentation.onCallLog('api', info.message, sdkObject, originalMetadata);
+              // Fall through.
+            case 'after':
+              return;
+          }
+        }
         await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
+      }
       const result = await (dispatcher as any)[method](validParams, callMetadata);
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
@@ -223,8 +243,27 @@ export class DispatcherConnection {
       this.onmessage({ id, error: serializeError(e) });
     } finally {
       callMetadata.endTime = monotonicTime();
-      if (sdkObject)
+      if (sdkObject) {
+        // Process logs for waitForNavigation/waitForLoadState
+        if (params?.info?.waitId) {
+          const info = params.info;
+          switch (info.phase) {
+            case 'before':
+              callMetadata.endTime = 0;
+              // Fall through.
+            case 'log':
+              return;
+            case 'after':
+              const originalMetadata = this._waitOperations.get(info.waitId)!;
+              originalMetadata.endTime = callMetadata.endTime;
+              originalMetadata.error = info.error;
+              this._waitOperations.delete(info.waitId);
+              callMetadata = originalMetadata;
+              break;
+          }
+        }
         await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
+      }
     }
   }
 

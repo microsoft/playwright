@@ -83,8 +83,6 @@ export class TraceModel {
       }
       case 'action': {
         const metadata = event.metadata;
-        if (metadata.method === 'waitForEventInfo')
-          break;
         const { pageEntry } = this.pageEntries.get(metadata.pageId!)!;
         const actionId = event.contextId + '/' + metadata.pageId + '/' + pageEntry.actions.length;
         const action: ActionEntry = {

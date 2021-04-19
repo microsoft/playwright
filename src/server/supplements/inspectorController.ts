@@ -21,8 +21,6 @@ import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumenta
 import { isDebugMode, isUnderTest } from '../../utils/utils';
 
 export class InspectorController implements InstrumentationListener {
-  private _waitOperations = new Map<string, CallMetadata>();
-
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode())
       await RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
@@ -32,25 +30,6 @@ export class InspectorController implements InstrumentationListener {
     const context = sdkObject.attribution.context;
     if (!context)
       return;
-
-    // Process logs for waitForNavigation/waitForLoadState
-    if (metadata.params?.info?.waitId) {
-      const info = metadata.params.info;
-      switch (info.phase) {
-        case 'before':
-          metadata.method = info.name;
-          metadata.stack = info.stack;
-          this._waitOperations.set(info.waitId, metadata);
-          break;
-        case 'log':
-          const originalMetadata = this._waitOperations.get(info.waitId)!;
-          originalMetadata.log.push(info.message);
-          this.onCallLog('api', info.message, sdkObject, originalMetadata);
-          // Fall through.
-        case 'after':
-          return;
-      }
-    }
 
     if (shouldOpenInspector(sdkObject, metadata))
       await RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
@@ -62,26 +41,6 @@ export class InspectorController implements InstrumentationListener {
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!sdkObject.attribution.context)
       return;
-
-    // Process logs for waitForNavigation/waitForLoadState
-    if (metadata.params?.info?.waitId) {
-      const info = metadata.params.info;
-      switch (info.phase) {
-        case 'before':
-          metadata.endTime = 0;
-          // Fall through.
-        case 'log':
-          return;
-        case 'after':
-          const originalMetadata = this._waitOperations.get(info.waitId)!;
-          originalMetadata.endTime = metadata.endTime;
-          originalMetadata.error = info.error;
-          this._waitOperations.delete(info.waitId);
-          metadata = originalMetadata;
-          break;
-      }
-    }
-
     const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
     await recorder?.onAfterCall(sdkObject, metadata);
   }
@@ -98,7 +57,7 @@ export class InspectorController implements InstrumentationListener {
     if (!sdkObject.attribution.context)
       return;
     const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
-    await recorder?.updateCallLog([metadata]);
+    recorder?.updateCallLog([metadata]);
   }
 }
 
