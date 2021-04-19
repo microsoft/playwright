@@ -56,8 +56,16 @@ export const SnapshotTab: React.FunctionComponent<{
     width: snapshotSize.width * scale,
     height: snapshotSize.height * scale,
   };
-  return <div className='snapshot-tab'>
-    <div className='snapshot-controls'>
+  return <div
+    className='snapshot-tab'
+    tabIndex={0}
+    onKeyDown={event => {
+      if (event.key === 'ArrowDown')
+        setSnapshotIndex(Math.min(snapshotIndex + 1, snapshots.length - 1));
+      if (event.key === 'ArrowUp')
+        setSnapshotIndex(Math.max(snapshotIndex - 1, 0));
+    }}
+  ><div className='snapshot-controls'>
       {snapshots.map((snapshot, index) => {
         return <div
           key={snapshot.title}

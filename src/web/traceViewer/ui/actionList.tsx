@@ -33,7 +33,27 @@ export const ActionList: React.FC<ActionListProps> = ({
   onSelected = () => {},
   onHighlighted = () => {},
 }) => {
-  return <div className='action-list'>{actions.map(actionEntry => {
+  return <div
+    className='action-list'
+    tabIndex={0}
+    onKeyDown={event => {
+      if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp')
+        return;
+      const index = selectedAction ? actions.indexOf(selectedAction) : -1;
+      if (event.key === 'ArrowDown') {
+        if (index === -1)
+          onSelected(actions[0]);
+        else
+          onSelected(actions[Math.min(index + 1, actions.length - 1)]);
+      }
+      if (event.key === 'ArrowUp') {
+        if (index === -1)
+          onSelected(actions[actions.length - 1]);
+        else
+          onSelected(actions[Math.max(index - 1, 0)]);
+      }
+    }}
+  >{actions.map((actionEntry, index) => {
     const { metadata, actionId } = actionEntry;
     return <div
       className={'action-entry' + (actionEntry === selectedAction ? ' selected' : '')}

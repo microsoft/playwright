@@ -46,8 +46,12 @@
   pointer-events: none;
   overflow: hidden;
   flex: none;
-  flex-basis: 30px;
+  height: 30px;
   position: relative;
+}
+
+.timeline-lane.timeline-labels {
+  height: 20px;
 }
 
 .timeline-grid {
