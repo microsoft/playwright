@@ -41,7 +41,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run test -- --tag=${{ matrix.browser }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: always()
       with:
@@ -66,7 +66,7 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --tag=${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -94,7 +94,7 @@ jobs:
     - run: npm run test -- --tag=${{ matrix.browser }}
       shell: bash
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
       shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
@@ -147,7 +147,7 @@ jobs:
       env:
         HEADFUL: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -179,7 +179,7 @@ jobs:
       env:
         PWTEST_MODE: "${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -211,7 +211,7 @@ jobs:
       env:
         PWTEST_VIDEO: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -240,7 +240,7 @@ jobs:
     - name: Run tests
       run: npm run atest -- --shard=${{ matrix.shard }}/2
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -274,7 +274,7 @@ jobs:
       env:
         PWTEST_CHANNEL: "chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -303,7 +303,7 @@ jobs:
       env:
         PWTEST_CHANNEL: "chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
       shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
@@ -329,7 +329,7 @@ jobs:
       env:
         PWTEST_CHANNEL: "chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -383,7 +383,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npm run etest"
     - run: node tests/config/checkCoverage.js electron
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && github.repository == 'microsoft/playwright' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
