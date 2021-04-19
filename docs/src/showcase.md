@@ -38,6 +38,7 @@ title: "Community Showcase"
 * [QA Wolf](https://github.com/qawolf/qawolf): Record and create Playwright tests and then run them in CI
 * [Root Cause OSS](https://github.com/testimio/root-cause): Capture screenshots on every step and display in a viewer with logs for easy troubleshooting.
 * [Sauce Labs](https://saucelabs.com/platform/automation-tools/playwright): Run Playwright tests in parallel in the cloud or your own docker environment.
+* [Selenium Box - Enterprise Test Grid](https://seleniumbox.com): Execute Playwright tests securely inside your firewall at scale
 * [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
 * [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
 * [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
