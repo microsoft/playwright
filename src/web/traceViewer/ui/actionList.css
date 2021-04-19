@@ -22,6 +22,7 @@
   user-select: none;
   color: #555;
   overflow: auto;
+  outline: none;
 }
 
 .action-entry {
@@ -32,19 +33,19 @@
   white-space: nowrap;
   line-height: 28px;
   padding-left: 3px;
-  border-left: 3px solid transparent;
-}
-
-.action-entry:hover, .action-entry.selected {
-  color: #333;
 }
 
 .action-entry.selected {
-  border-left: 3px solid #666;
+  color: white;
+  background-color: var(--gray);
 }
 
-.action-entry.selected:focus {
-  border-color: var(--orange);
+.action-list:focus .action-entry.selected {
+  background-color: var(--blue);
+}
+
+.action-entry.selected > div {
+  color: white;
 }
 
 .action-title {
