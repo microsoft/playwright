@@ -98,6 +98,7 @@ const customTypeNames = new Map([
   classNameMap.set('path', 'string');
   classNameMap.set('URL', 'string');
   classNameMap.set('RegExp', 'Regex');
+  classNameMap.set('Readable', 'Stream');
 
   // this are types that we don't explicility render even if we get the specs
   const ignoredTypes = ['TimeoutException'];
