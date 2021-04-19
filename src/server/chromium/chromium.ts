@@ -192,6 +192,7 @@ const DEFAULT_ARGS = [
   '--enable-automation',
   '--password-store=basic',
   '--use-mock-keychain',
+  // See https://chromium-review.googlesource.com/c/chromium/src/+/2436773
   '--no-service-autorun',
 ];
 
