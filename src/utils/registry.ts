@@ -16,7 +16,6 @@
  */
 
 import { execSync } from 'child_process';
-import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
 import * as util from 'util';
@@ -235,7 +234,9 @@ export class Registry {
   }
 
   constructor(packagePath: string) {
-    const browsersJSON = JSON.parse(fs.readFileSync(path.join(packagePath, 'browsers.json'), 'utf8'));
+    // require() needs to be used there otherwise it breaks on Vercel serverless
+    // functions. See https://github.com/microsoft/playwright/pull/6186
+    const browsersJSON = require(path.join(packagePath, 'browsers.json'));
     this._descriptors = browsersJSON['browsers'].map((obj: any) => {
       const name = obj.name;
       const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
