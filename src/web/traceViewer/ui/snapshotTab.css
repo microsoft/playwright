@@ -17,17 +17,20 @@
 .snapshot-tab {
   display: flex;
   flex: auto;
+  flex-direction: column;
   align-items: stretch;
   outline: none;
-  padding-right: 60px;
 }
 
 .snapshot-controls {
-  flex: 0 0 60px;
+  flex: none;
+  color: var(--toolbar-color);
   display: flex;
-  flex-direction: column;
+  box-shadow: var(--box-shadow);
+  background-color: var(--toolbar-bg-color);
+  height: 32px;
   align-items: center;
-  padding: 5px 0 0 5px;
+  justify-content: center;
 }
 
 .snapshot-toggle {
