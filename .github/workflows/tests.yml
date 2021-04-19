@@ -34,7 +34,6 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -135,7 +134,6 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
       if: ${{ always() }}
       env:
@@ -165,7 +163,6 @@ jobs:
     - run: node lib/cli/cli install-deps chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
       env:
         PWTEST_MODE: "${{ matrix.mode }}"
@@ -194,7 +191,6 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
       env:
         PWTEST_VIDEO: 1
@@ -254,7 +250,6 @@ jobs:
     - run: node lib/cli/cli install ffmpeg
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
       env:
         PWTEST_CHANNEL: "chrome"
@@ -361,7 +356,6 @@ jobs:
     - run: node lib/cli/cli install-deps chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run etest"
     - run: node tests/config/checkCoverage.js electron
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
