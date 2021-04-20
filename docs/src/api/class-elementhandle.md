@@ -138,6 +138,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.check.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.check.trial = %%-input-trial-%%
+
 ## async method: ElementHandle.click
 
 This method clicks the element by performing the following steps:
@@ -166,6 +168,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.click.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: ElementHandle.click.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.click.trial = %%-input-trial-%%
 
 ## async method: ElementHandle.contentFrame
 - returns: <[null]|[Frame]>
@@ -205,6 +209,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: ElementHandle.dblclick.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.dblclick.trial = %%-input-trial-%%
 
 ## async method: ElementHandle.dispatchEvent
 
@@ -433,6 +439,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.hover.force = %%-input-force-%%
 
 ### option: ElementHandle.hover.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.hover.trial = %%-input-trial-%%
 
 ## async method: ElementHandle.innerHTML
 - returns: <[string]>
@@ -693,6 +701,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.tap.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.tap.trial = %%-input-trial-%%
+
 ## async method: ElementHandle.textContent
 - returns: <[null]|[string]>
 
@@ -787,6 +797,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.uncheck.position = %%-input-position-%%
 
 ### option: ElementHandle.uncheck.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.uncheck.trial = %%-input-trial-%%
 
 ## async method: ElementHandle.waitForElementState
 

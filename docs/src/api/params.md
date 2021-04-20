@@ -82,6 +82,11 @@ Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
 
 defaults to 1. See [UIEvent.detail].
 
+## input-trial
+- `trial` <[boolean]>
+
+When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
+
 ## query-selector
 - `selector` <[string]>
 

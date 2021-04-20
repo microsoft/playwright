@@ -119,3 +119,15 @@ it('should check the label with position', async ({page, server}) => {
   await page.check('text=Click me', { position: { x: box.width - 10, y: 2 } });
   expect(await page.$eval('input', input => input.checked)).toBe(true);
 });
+
+it('trial run should not check', async ({page}) => {
+  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+  await page.check('input', { trial: true });
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
+});
+
+it('trial run should not uncheck', async ({page}) => {
+  await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
+  await page.uncheck('input', { trial: true });
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
+});
