@@ -150,7 +150,7 @@ if (!args.some(arg => arg === '--no-cleanup')) {
         require: './index.js',
       },
       // Anything else can be required/imported by providing a relative path.
-      './': './',
+      './*': './*',
     },
     scripts: {
       install: 'node install.js',
