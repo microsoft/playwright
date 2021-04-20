@@ -18,12 +18,15 @@ import { BrowserContext } from '../browserContext';
 import { RecorderSupplement } from './recorderSupplement';
 import { debugLogger } from '../../utils/debugLogger';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
-import { isDebugMode, isUnderTest } from '../../utils/utils';
+import { debugMode, isUnderTest } from '../../utils/utils';
+import * as consoleApiSource from '../../generated/consoleApiSource';
 
 export class InspectorController implements InstrumentationListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
-    if (isDebugMode())
+    if (debugMode() === 'inspector')
       await RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
+    else if (debugMode() === 'console')
+      await context.extendInjectedScript(consoleApiSource.source);
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {

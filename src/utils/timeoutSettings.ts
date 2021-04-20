@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { isDebugMode } from './utils';
+import { debugMode } from './utils';
 
 export const DEFAULT_TIMEOUT = 30000;
-const TIMEOUT = isDebugMode() ? 0 : DEFAULT_TIMEOUT;
+const TIMEOUT = debugMode() ? 0 : DEFAULT_TIMEOUT;
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;

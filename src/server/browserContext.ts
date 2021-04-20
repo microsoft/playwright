@@ -16,7 +16,7 @@
  */
 
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { isDebugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
+import { debugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
 import { Browser, BrowserOptions } from './browser';
 import { Download } from './download';
 import * as frames from './frames';
@@ -377,7 +377,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'per-context' } })"`);
     options.proxy = normalizeProxySettings(options.proxy);
   }
-  if (isDebugMode())
+  if (debugMode() === 'inspector')
     options.bypassCSP = true;
   verifyGeolocation(options.geolocation);
   if (!options._debugName)
