@@ -329,7 +329,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install-deps firefox
-    - run: node lib/cli/cli install ffmpeg firefox-stable
+    - run: node lib/cli/cli install ffmpeg firefox-stable chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ftest"
@@ -358,8 +358,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # This only created problems, should we move ffmpeg back into npm?
-    - run: node lib/cli/cli install ffmpeg firefox-stable
+    - run: node lib/cli/cli install ffmpeg firefox-stable chromium
     - run: npm run ftest
       shell: bash
       env:
@@ -385,8 +384,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # This only created problems, should we move ffmpeg back into npm?
-    - run: node lib/cli/cli install ffmpeg firefox-stable
+    - run: node lib/cli/cli install ffmpeg firefox-stable chromium
     - run: npm run ftest
       env:
         PWTEST_CHANNEL: "firefox-stable"
