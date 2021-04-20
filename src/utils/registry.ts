@@ -292,21 +292,25 @@ export class Registry {
 
   linuxLddDirectories(browserName: BrowserName): string[] {
     const browserDirectory = this.browserDirectory(browserName);
-    if (browserName === 'chromium')
-      return [path.join(browserDirectory, 'chrome-linux')];
-    if (browserName === 'firefox')
-      return [path.join(browserDirectory, 'firefox')];
-    if (browserName === 'webkit') {
-      return [
-        path.join(browserDirectory, 'minibrowser-gtk'),
-        path.join(browserDirectory, 'minibrowser-gtk', 'bin'),
-        path.join(browserDirectory, 'minibrowser-gtk', 'lib'),
-        path.join(browserDirectory, 'minibrowser-wpe'),
-        path.join(browserDirectory, 'minibrowser-wpe', 'bin'),
-        path.join(browserDirectory, 'minibrowser-wpe', 'lib'),
-      ];
+    switch (browserName) {
+      case 'chromium':
+        return [path.join(browserDirectory, 'chrome-linux')];
+      case 'webkit':
+      case 'webkit-technology-preview':
+        return [
+          path.join(browserDirectory, 'minibrowser-gtk'),
+          path.join(browserDirectory, 'minibrowser-gtk', 'bin'),
+          path.join(browserDirectory, 'minibrowser-gtk', 'lib'),
+          path.join(browserDirectory, 'minibrowser-wpe'),
+          path.join(browserDirectory, 'minibrowser-wpe', 'bin'),
+          path.join(browserDirectory, 'minibrowser-wpe', 'lib'),
+        ];
+      case 'firefox':
+      case 'firefox-stable':
+        return [path.join(browserDirectory, 'firefox')];
+      default:
+        return [];
     }
-    return [];
   }
 
   windowsExeAndDllDirectories(browserName: BrowserName): string[] {
@@ -345,14 +349,13 @@ export class Registry {
     return util.format(urlTemplate, downloadHost, browser.revision);
   }
 
-  shouldRetain(browserName: BrowserName): boolean {
+  isSupportedBrowser(browserName: string): boolean {
     // We retain browsers if they are found in the descriptor.
     // Note, however, that there are older versions out in the wild that rely on
     // the "download" field in the browser descriptor and use its value
     // to retain and download browsers.
     // As of v1.10, we decided to abandon "download" field.
-    const browser = this._descriptors.find(browser => browser.name === browserName);
-    return !!browser;
+    return this._descriptors.some(browser => browser.name === browserName);
   }
 
   installByDefault(): BrowserName[] {

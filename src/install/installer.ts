@@ -74,7 +74,7 @@ async function validateCache(linksDir: string, browserNames: BrowserName[]) {
       linkTarget = (await fsReadFileAsync(linkPath)).toString();
       const linkRegistry = new Registry(linkTarget);
       for (const browserName of allBrowserNames) {
-        if (!linkRegistry.shouldRetain(browserName))
+        if (!linkRegistry.isSupportedBrowser(browserName))
           continue;
         const usedBrowserPath = linkRegistry.browserDirectory(browserName);
         const browserRevision = linkRegistry.revision(browserName);

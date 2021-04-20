@@ -178,10 +178,11 @@ export abstract class BrowserType extends SdkObject {
       throw new Error(errorMessageLines.join('\n'));
     }
 
-    if (!executable) {
-      // Only validate dependencies for bundled browsers.
+    // Only validate dependencies for downloadable browsers.
+    if (!executablePath && !options.channel)
       await validateHostRequirements(this._registry, this._name);
-    }
+    else if (!executablePath && options.channel && this._registry.isSupportedBrowser(options.channel))
+      await validateHostRequirements(this._registry, options.channel as registry.BrowserName);
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
     const wsEndpoint = options.useWebSocket ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
