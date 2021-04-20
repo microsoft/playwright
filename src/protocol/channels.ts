@@ -208,7 +208,7 @@ export interface BrowserTypeChannel extends Channel {
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: Metadata): Promise<BrowserTypeConnectOverCDPResult>;
 }
 export type BrowserTypeLaunchParams = {
-  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -232,7 +232,7 @@ export type BrowserTypeLaunchParams = {
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
-  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -259,7 +259,7 @@ export type BrowserTypeLaunchResult = {
   browser: BrowserChannel,
 };
 export type BrowserTypeLaunchPersistentContextParams = {
-  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -329,7 +329,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
-  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,

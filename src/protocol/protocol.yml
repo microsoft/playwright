@@ -237,6 +237,7 @@ LaunchOptions:
       - msedge-beta
       - msedge-dev
       - msedge-canary
+      - firefox-stable
     executablePath: string?
     args:
       type: array?

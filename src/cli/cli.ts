@@ -84,18 +84,18 @@ program
 program
     .command('install [browserType...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(browserType) {
+    .action(async function(browserTypes) {
       try {
         const allBrowsers = new Set(allBrowserNames);
-        for (const type of browserType) {
-          if (!allBrowsers.has(type)) {
-            console.log(`Invalid browser name: '${type}'. Expecting one of: ${allBrowserNames.map(name => `'${name}'`).join(', ')}`);
+        for (const browserType of browserTypes) {
+          if (!allBrowsers.has(browserType)) {
+            console.log(`Invalid browser name: '${browserType}'. Expecting one of: ${allBrowserNames.map(name => `'${name}'`).join(', ')}`);
             process.exit(1);
           }
         }
-        if (browserType.length && browserType.includes('chromium'))
-          browserType = browserType.concat('ffmpeg');
-        await installBrowsers(browserType.length ? browserType : undefined);
+        if (browserTypes.length && browserTypes.includes('chromium'))
+          browserTypes = browserTypes.concat('ffmpeg');
+        await installBrowsers(browserTypes.length ? browserTypes : undefined);
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
