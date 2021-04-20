@@ -34,6 +34,8 @@ it.describe('download event', () => {
     server.setRoute('/downloadWithDelay', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+      // Chromium requires a large enough payload to trigger the download event soon enough
+      res.write('a'.repeat(4096));
       res.write('foo');
       setTimeout(() => {
         res.end('bar');
