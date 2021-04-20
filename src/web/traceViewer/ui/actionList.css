@@ -27,7 +27,6 @@
   color: #555;
   overflow: auto;
   outline: none;
-  padding: 5px 0 0 5px;
 }
 
 .action-entry {
@@ -37,7 +36,7 @@
   align-items: center;
   white-space: nowrap;
   line-height: 28px;
-  padding-left: 3px;
+  padding-left: 5px;
 }
 
 .action-entry.highlighted,
@@ -68,7 +67,6 @@
 
 .action-error {
   color: red;
-  top: 2px;
   position: relative;
   margin-right: 2px;
 }
