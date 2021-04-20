@@ -24,7 +24,6 @@ declare global {
   interface Window {
     _playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
     _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
-    _playwrightRecorderCommitAction: () => Promise<void>;
     _playwrightRecorderState: () => Promise<UIState>;
     _playwrightRecorderSetSelector: (selector: string) => Promise<void>;
     _playwrightRefreshOverlay: () => void;
@@ -335,15 +334,14 @@ export class Recorder {
     if (this._hoveredElement === target)
       return;
     this._hoveredElement = target;
-    // Mouse moved -> mark last action as committed via committing a commit action.
-    this._commitActionAndUpdateModelForHoveredElement();
+    this._updateModelForHoveredElement();
   }
 
   private _onMouseLeave(event: MouseEvent) {
     // Leaving iframe.
     if (this._deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
       this._hoveredElement = null;
-      this._commitActionAndUpdateModelForHoveredElement();
+      this._updateModelForHoveredElement();
     }
   }
 
@@ -355,7 +353,7 @@ export class Recorder {
       (window as any)._highlightUpdatedForTest(result ? result.selector : null);
   }
 
-  private _commitActionAndUpdateModelForHoveredElement() {
+  private _updateModelForHoveredElement() {
     if (!this._hoveredElement) {
       this._hoveredModel = null;
       this._updateHighlight();
@@ -365,7 +363,6 @@ export class Recorder {
     const { selector, elements } = generateSelector(this._injectedScript, hoveredElement);
     if ((this._hoveredModel && this._hoveredModel.selector === selector) || this._hoveredElement !== hoveredElement)
       return;
-    window._playwrightRecorderCommitAction();
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
     if ((window as any)._highlightUpdatedForTest)
@@ -571,7 +568,7 @@ export class Recorder {
     this._performingAction = false;
 
     // Action could have changed DOM, update hovered model selectors.
-    this._commitActionAndUpdateModelForHoveredElement();
+    this._updateModelForHoveredElement();
     // If that was a keyboard action, it similarly requires new selectors for active model.
     this._onFocus();
 
