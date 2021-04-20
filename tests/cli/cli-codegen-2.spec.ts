@@ -376,7 +376,15 @@ await page.ClickAsync(\"text=click me\");`);
       expect(sources.get('<javascript>').text).toContain(`
   // Open new page
   const page1 = await context.newPage();
-  page1.goto('about:blank?foo');`);
+  await page1.goto('about:blank?foo');`);
+      expect(sources.get('<async python>').text).toContain(`
+    # Open new page
+    page1 = await context.new_page()
+    await page1.goto("about:blank?foo")`);
+      expect(sources.get('<csharp>').text).toContain(`
+// Open new page
+var page1 = await context.NewPageAsync();
+await page1.GoToAsync("about:blank?foo");`);
     } else if (browserName === 'firefox') {
       expect(sources.get('<javascript>').text).toContain(`
   // Click text=link

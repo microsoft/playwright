@@ -35,7 +35,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (action.name === 'openPage') {
       formatter.add(`var ${pageAlias} = await context.NewPageAsync();`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        formatter.add(`${pageAlias}.GoToAsync('${action.url}');`);
+        formatter.add(`await ${pageAlias}.GoToAsync(${quote(action.url)});`);
       return formatter.format();
     }
 
