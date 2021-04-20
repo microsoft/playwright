@@ -898,7 +898,12 @@ export class WKPage implements PageDelegate {
         redirectedFrom = request.request;
       }
     }
-    const frame = this._page._frameManager.frame(event.frameId)!;
+    const frame = redirectedFrom ? redirectedFrom.frame() : this._page._frameManager.frame(event.frameId);
+    // sometimes we get stray network events for detached frames
+    // TODO(einbinder) why?
+    if (!frame)
+      return;
+
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
