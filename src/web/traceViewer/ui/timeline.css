@@ -20,7 +20,6 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid #ddd;
   padding: 20px 0 5px;
   cursor: text;
 }

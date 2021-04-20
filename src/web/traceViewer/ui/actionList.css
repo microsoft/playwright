@@ -14,7 +14,11 @@
   limitations under the License.
 */
 
-.action-list {
+.action-list-title {
+  padding: 0 10px;
+}
+
+.action-list-content {
   display: flex;
   flex-direction: column;
   flex: auto;
@@ -23,6 +27,7 @@
   color: #555;
   overflow: auto;
   outline: none;
+  padding: 5px 0 0 5px;
 }
 
 .action-entry {
@@ -35,15 +40,22 @@
   padding-left: 3px;
 }
 
+.action-entry.highlighted,
 .action-entry.selected {
   color: white;
   background-color: var(--gray);
 }
 
-.action-list:focus .action-entry.selected {
+.action-entry.highlighted {
+  color: white;
+  background-color: var(--light-gray);
+}
+
+.action-list-content:focus .action-entry.selected {
   background-color: var(--blue);
 }
 
+.action-entry.highlighted > div,
 .action-entry.selected > div {
   color: white;
 }

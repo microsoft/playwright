@@ -41,7 +41,8 @@ export const Timeline: React.FunctionComponent<{
   selectedAction: ActionEntry | undefined,
   highlightedAction: ActionEntry | undefined,
   onSelected: (action: ActionEntry) => void,
-}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected }) => {
+  onHighlighted: (action: ActionEntry | undefined) => void,
+}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
   const [hoveredBarIndex, setHoveredBarIndex] = React.useState<number | undefined>();
@@ -144,13 +145,21 @@ export const Timeline: React.FunctionComponent<{
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
+    const index = findHoveredBarIndex(x);
     setPreviewX(x);
-    setHoveredBarIndex(findHoveredBarIndex(x));
+    setHoveredBarIndex(index);
+    if (typeof index === 'number')
+      onHighlighted(bars[index].entry);
   };
+
   const onMouseLeave = () => {
     setPreviewX(undefined);
+    setHoveredBarIndex(undefined);
+    onHighlighted(undefined);
   };
+
   const onClick = (event: React.MouseEvent) => {
+    setPreviewX(undefined);
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;

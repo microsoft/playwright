@@ -64,17 +64,18 @@ export const Workbench: React.FunctionComponent<{
         }}
       />
     </div>
-    <div style={{ background: 'white', paddingLeft: '20px', flex: 'none' }}>
+    <div style={{ background: 'white', paddingLeft: '20px', flex: 'none', borderBottom: '1px solid #ddd' }}>
       <Timeline
         context={context}
         boundaries={boundaries}
         selectedAction={selectedAction}
         highlightedAction={highlightedAction}
         onSelected={action => setSelectedAction(action)}
+        onHighlighted={action => setHighlightedAction(action)}
       />
     </div>
-    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
-      <SplitView sidebarSize={250}>
+    <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
+      <SplitView sidebarSize={300} orientation='horizontal'>
         <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} />
         <TabbedPane tabs={[
           { id: 'logs', title: 'Log', render: () => <LogsTab actionEntry={selectedAction} /> },
