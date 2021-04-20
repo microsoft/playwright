@@ -16,6 +16,7 @@
 
 import { EventEmitter } from 'events';
 import { Point, StackFrame } from '../common/types';
+import { createGuid } from '../utils/utils';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { BrowserType } from './browserType';
@@ -50,11 +51,13 @@ export type CallMetadata = {
 };
 
 export class SdkObject extends EventEmitter {
+  guid: string;
   attribution: Attribution;
   instrumentation: Instrumentation;
 
-  protected constructor(parent: SdkObject) {
+  protected constructor(parent: SdkObject, guidPrefix?: string, guid?: string) {
     super();
+    this.guid = guid || `${guidPrefix || ''}@${createGuid()}`;
     this.setMaxListeners(0);
     this.attribution = { ...parent.attribution };
     this.instrumentation = parent.instrumentation;

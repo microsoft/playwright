@@ -60,6 +60,7 @@ export type FrameSnapshot = {
   html: NodeSnapshot,
   resourceOverrides: ResourceOverride[],
   viewport: { width: number, height: number },
+  isMainFrame: boolean,
 };
 
 export type ContextResources = Map<string, { resourceId: string, frameId: string }[]>;

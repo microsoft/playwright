@@ -66,7 +66,7 @@ export abstract class Browser extends SdkObject {
   readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
 
   constructor(options: BrowserOptions) {
-    super(options.rootSdkObject);
+    super(options.rootSdkObject, 'browser');
     this.attribution.browser = this;
     this.options = options;
   }
@@ -97,7 +97,7 @@ export abstract class Browser extends SdkObject {
   }
 
   _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
-    const artifact = new Artifact(path);
+    const artifact = new Artifact(context, path);
     this._idToVideo.set(videoId, { context, artifact });
     context.emit(BrowserContext.Events.VideoStarted, artifact);
     pageOrError.then(page => {

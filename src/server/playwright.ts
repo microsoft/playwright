@@ -46,7 +46,7 @@ export class Playwright extends SdkObject {
       listeners.push(new InspectorController());
     }
     const instrumentation = multiplexInstrumentation(listeners);
-    super({ attribution: {}, instrumentation } as any);
+    super({ attribution: {}, instrumentation } as any, undefined, 'Playwright');
     this.options = {
       registry: new Registry(path.join(__dirname, '..', '..')),
       rootSdkObject: this,

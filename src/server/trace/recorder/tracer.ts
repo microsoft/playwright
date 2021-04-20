@@ -130,7 +130,7 @@ class ContextTracer {
   }
 
   private _onPage(page: Page) {
-    const pageId = page.uniqueId;
+    const pageId = page.guid;
 
     const event: trace.PageCreatedTraceEvent = {
       timestamp: monotonicTime(),
@@ -197,7 +197,7 @@ class ContextTracer {
       const sha1 = calculateSha1(params.buffer);
       const event: trace.ScreencastFrameTraceEvent = {
         type: 'page-screencast-frame',
-        pageId: page.uniqueId,
+        pageId: page.guid,
         contextId: this._contextId,
         sha1,
         pageTimestamp: params.timestamp,

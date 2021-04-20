@@ -19,6 +19,7 @@ import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
 import { ParsedSelector, parseSelector } from './common/selectorParser';
+import { createGuid } from '../utils/utils';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,
@@ -29,6 +30,7 @@ export type SelectorInfo = {
 export class Selectors {
   readonly _builtinEngines: Set<string>;
   readonly _engines: Map<string, { source: string, contentScript: boolean }>;
+  readonly guid = `selectors@${createGuid()}`;
 
   constructor() {
     // Note: keep in sync with InjectedScript class.

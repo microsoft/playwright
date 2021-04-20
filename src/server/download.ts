@@ -27,7 +27,7 @@ export class Download {
 
   constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
     const unaccessibleErrorMessage = !page._browserContext._options.acceptDownloads ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
-    this.artifact = new Artifact(path.join(downloadsPath, uuid), unaccessibleErrorMessage);
+    this.artifact = new Artifact(page, path.join(downloadsPath, uuid), unaccessibleErrorMessage);
     this._page = page;
     this.url = url;
     this._suggestedFilename = suggestedFilename;

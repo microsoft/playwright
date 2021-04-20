@@ -99,7 +99,7 @@ export class Request extends SdkObject {
 
   constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
-    super(frame);
+    super(frame, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     assert(!(routeDelegate && redirectedFrom), 'Should not be able to intercept redirects');
     this._routeDelegate = routeDelegate;
@@ -210,7 +210,7 @@ export class Route extends SdkObject {
   private _handled = false;
 
   constructor(request: Request, delegate: RouteDelegate) {
-    super(request.frame());
+    super(request.frame(), 'route');
     this._request = request;
     this._delegate = delegate;
   }
@@ -277,7 +277,7 @@ export class Response extends SdkObject {
   private _timing: ResourceTiming;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback) {
-    super(request.frame());
+    super(request.frame(), 'response');
     this._request = request;
     this._timing = timing;
     this._status = status;
@@ -357,7 +357,7 @@ export class WebSocket extends SdkObject {
   };
 
   constructor(parent: SdkObject, url: string) {
-    super(parent);
+    super(parent, 'ws');
     this._url = url;
   }
 

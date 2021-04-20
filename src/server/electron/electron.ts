@@ -64,7 +64,7 @@ export class ElectronApplication extends SdkObject {
   readonly _timeoutSettings = new TimeoutSettings();
 
   constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection) {
-    super(parent);
+    super(parent, 'electron-app');
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._browserContext.on(BrowserContext.Events.Close, () => {
       // Emit application closed after context closed.
@@ -122,7 +122,7 @@ export class Electron extends SdkObject {
   private _playwrightOptions: PlaywrightOptions;
 
   constructor(playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject);
+    super(playwrightOptions.rootSdkObject, 'electron');
     this._playwrightOptions = playwrightOptions;
   }
 

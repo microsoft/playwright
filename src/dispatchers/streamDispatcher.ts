@@ -17,18 +17,19 @@
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as stream from 'stream';
+import { createGuid } from '../utils/utils';
 
-export class StreamDispatcher extends Dispatcher<stream.Readable, channels.StreamInitializer> implements channels.StreamChannel {
+export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamInitializer> implements channels.StreamChannel {
   constructor(scope: DispatcherScope, stream: stream.Readable) {
-    super(scope, stream, 'Stream', {});
+    super(scope, { guid: createGuid(), stream }, 'Stream', {});
   }
 
   async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
-    const buffer = this._object.read(Math.min(this._object.readableLength, params.size || this._object.readableLength));
+    const buffer = this._object.stream.read(Math.min(this._object.stream.readableLength, params.size || this._object.stream.readableLength));
     return { binary: buffer ? buffer.toString('base64') : '' };
   }
 
   async close() {
-    this._object.destroy();
+    this._object.stream.destroy();
   }
 }

@@ -28,7 +28,7 @@ import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import { Progress, ProgressController } from './progress';
-import { assert, createGuid, isError } from '../utils/utils';
+import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
@@ -145,14 +145,12 @@ export class Page extends SdkObject {
   private _serverRequestInterceptor: network.RouteHandler | undefined;
   _ownedContext: BrowserContext | undefined;
   readonly selectors: Selectors;
-  readonly uniqueId: string;
   _pageIsError: Error | undefined;
   _video: Artifact | null = null;
   _opener: Page | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
-    super(browserContext);
-    this.uniqueId = 'page@' + createGuid();
+    super(browserContext, 'page');
     this.attribution.page = this;
     this._delegate = delegate;
     this._closedCallback = () => {};
@@ -296,7 +294,7 @@ export class Page extends SdkObject {
   }
 
   _addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
-    const message = new ConsoleMessage(type, text, args, location);
+    const message = new ConsoleMessage(this, type, text, args, location);
     const intercepted = this._frameManager.interceptConsoleMessage(message);
     if (intercepted || !this.listenerCount(Page.Events.Console))
       args.forEach(arg => arg.dispose());
@@ -519,7 +517,7 @@ export class Worker extends SdkObject {
   _existingExecutionContext: js.ExecutionContext | null = null;
 
   constructor(parent: SdkObject, url: string) {
-    super(parent);
+    super(parent, 'worker');
     this._url = url;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);

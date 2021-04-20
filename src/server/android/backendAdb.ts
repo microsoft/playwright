@@ -19,6 +19,7 @@ import debug from 'debug';
 import * as net from 'net';
 import { EventEmitter } from 'events';
 import { Backend, DeviceBackend, SocketBackend } from './android';
+import { createGuid } from '../../utils/utils';
 
 export class AdbBackend implements Backend {
   async devices(): Promise<DeviceBackend[]> {
@@ -99,6 +100,7 @@ function encodeMessage(message: string): Buffer {
 }
 
 class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
+  readonly guid = createGuid();
   private _socket: net.Socket;
   private _buffer = Buffer.from([]);
   private _isSocket = false;
@@ -149,7 +151,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
     await this._connectPromise;
     assert(!this._isSocket, 'Can not read by length in socket mode');
     while (this._buffer.length < length)
-      await new Promise(f => this._notifyReader = f);
+      await new Promise<void>(f => this._notifyReader = f);
     const result = this._buffer.slice(0, length);
     this._buffer = this._buffer.slice(length);
     debug('pw:adb:recv')(result.toString().substring(0, 100) + '...');
@@ -158,7 +160,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
 
   async readAll(): Promise<Buffer> {
     while (!this._isClosed)
-      await new Promise(f => this._notifyReader = f);
+      await new Promise<void>(f => this._notifyReader = f);
     return this._buffer;
   }
 

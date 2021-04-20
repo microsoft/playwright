@@ -20,7 +20,7 @@ import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
-import { createHandle } from './elementHandlerDispatcher';
+import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
 export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronInitializer> implements channels.ElectronChannel {
   constructor(scope: DispatcherScope, electron: Electron) {
@@ -44,7 +44,7 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
     electronApplication.on(ElectronApplication.Events.Window, (page: ElectronPage) => {
       this._dispatchEvent('window', {
         page: lookupDispatcher<PageDispatcher>(page),
-        browserWindow: createHandle(this._scope, page.browserWindow),
+        browserWindow: ElementHandleDispatcher.fromJSHandle(this._scope, page.browserWindow),
       });
     });
   }
@@ -57,7 +57,7 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
   async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
     const handle = this._object._nodeElectronHandle!;
     const result = await handle.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
-    return { handle: createHandle(this._scope, result) };
+    return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, result) };
   }
 
   async close(): Promise<void> {

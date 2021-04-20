@@ -38,6 +38,6 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       deviceDescriptors,
       selectors: customSelectors || new SelectorsDispatcher(scope, playwright.selectors),
       preLaunchedBrowser,
-    }, false, 'Playwright');
+    }, false);
   }
 }

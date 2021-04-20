@@ -799,7 +799,7 @@ class FrameSession {
         lineNumber: lineNumber || 0,
         columnNumber: 0,
       };
-      this._page.emit(Page.Events.Console, new ConsoleMessage(level, text, [], location));
+      this._page.emit(Page.Events.Console, new ConsoleMessage(this._page, level, text, [], location));
     }
   }
 

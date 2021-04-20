@@ -17,14 +17,14 @@
 import { ConsoleMessage } from '../server/console';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { createHandle } from './elementHandlerDispatcher';
+import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
 export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageInitializer> implements channels.ConsoleMessageChannel {
   constructor(scope: DispatcherScope, message: ConsoleMessage) {
     super(scope, message, 'ConsoleMessage', {
       type: message.type(),
       text: message.text(),
-      args: message.args().map(a => createHandle(scope, a)),
+      args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(scope, a)),
       location: message.location(),
     });
   }

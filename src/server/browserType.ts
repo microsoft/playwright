@@ -44,7 +44,7 @@ export abstract class BrowserType extends SdkObject {
   readonly _playwrightOptions: PlaywrightOptions;
 
   constructor(browserName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject);
+    super(playwrightOptions.rootSdkObject, 'browser-type');
     this.attribution.browserType = this;
     this._playwrightOptions = playwrightOptions;
     this._name = browserName;

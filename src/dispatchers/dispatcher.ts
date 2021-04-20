@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
 import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
-import { assert, createGuid, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
+import { assert, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
@@ -41,7 +41,7 @@ export function lookupNullableDispatcher<DispatcherType>(object: any | null): Di
   return object ? lookupDispatcher(object) : undefined;
 }
 
-export class Dispatcher<Type, Initializer> extends EventEmitter implements channels.Channel {
+export class Dispatcher<Type extends { guid: string }, Initializer> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
   private _isScope: boolean;
   // Parent is always "isScope".
@@ -55,7 +55,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
   readonly _scope: Dispatcher<any, any>;
   _object: Type;
 
-  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: Initializer, isScope?: boolean, guid = type + '@' + createGuid()) {
+  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: Initializer, isScope?: boolean) {
     super();
 
     this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
@@ -63,6 +63,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
     this._parent = parent instanceof DispatcherConnection ? undefined : parent;
     this._scope = isScope ? this : this._parent!;
 
+    const guid = object.guid;
     assert(!this._connection._dispatchers.has(guid));
     this._connection._dispatchers.set(guid, this);
     if (this._parent) {
@@ -120,9 +121,9 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
 }
 
 export type DispatcherScope = Dispatcher<any, any>;
-class Root extends Dispatcher<{}, {}> {
+class Root extends Dispatcher<{ guid: '' }, {}> {
   constructor(connection: DispatcherConnection) {
-    super(connection, {}, '', {}, true, '');
+    super(connection, { guid: '' }, '', {}, true);
   }
 }
 
@@ -201,8 +202,8 @@ export class DispatcherConnection {
     let callMetadata: CallMetadata = {
       id,
       ...validMetadata,
-      pageId: sdkObject?.attribution.page?.uniqueId,
-      frameId: sdkObject?.attribution.frame?.uniqueId,
+      pageId: sdkObject?.attribution.page?.guid,
+      frameId: sdkObject?.attribution.frame?.guid,
       startTime: monotonicTime(),
       endTime: 0,
       type: dispatcher._type,
