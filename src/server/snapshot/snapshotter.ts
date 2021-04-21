@@ -61,8 +61,8 @@ export class Snapshotter {
     await this._context.exposeBinding(this._snapshotBinding, false, (source, data: SnapshotData) => {
       const snapshot: FrameSnapshot = {
         snapshotName: data.snapshotName,
-        pageId: source.page.uniqueId,
-        frameId: source.frame.uniqueId,
+        pageId: source.page.guid,
+        frameId: source.frame.guid,
         frameUrl: data.url,
         doctype: data.doctype,
         html: data.html,
@@ -71,6 +71,7 @@ export class Snapshotter {
         pageTimestamp: data.timestamp,
         collectionTime: data.collectionTime,
         resourceOverrides: [],
+        isMainFrame: source.page.mainFrame() === source.frame
       };
       for (const { url, content } of data.resourceOverrides) {
         if (typeof content === 'string') {
@@ -167,8 +168,8 @@ export class Snapshotter {
     const body = await response.body().catch(e => debugLogger.log('error', e));
     const responseSha1 = body ? calculateSha1(body) : 'none';
     const resource: ResourceSnapshot = {
-      pageId: page.uniqueId,
-      frameId: response.frame().uniqueId,
+      pageId: page.guid,
+      frameId: response.frame().guid,
       resourceId: 'resource@' + createGuid(),
       url,
       contentType,
@@ -203,7 +204,7 @@ export class Snapshotter {
       const context = await parent._mainContext();
       await context?.evaluate(({ snapshotStreamer, frameElement, frameId }) => {
         (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
-      }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.uniqueId });
+      }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.guid });
       frameElement.dispose();
     } catch (e) {
     }

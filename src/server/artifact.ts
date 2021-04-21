@@ -16,10 +16,11 @@
 
 import fs from 'fs';
 import * as util from 'util';
+import { SdkObject } from './instrumentation';
 
 type SaveCallback = (localPath: string, error?: string) => Promise<void>;
 
-export class Artifact {
+export class Artifact extends SdkObject {
   private _localPath: string;
   private _unaccessibleErrorMessage: string | undefined;
   private _finishedCallback: () => void;
@@ -29,7 +30,8 @@ export class Artifact {
   private _deleted = false;
   private _failureError: string | null = null;
 
-  constructor(localPath: string, unaccessibleErrorMessage?: string) {
+  constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string) {
+    super(parent, 'artifact');
     this._localPath = localPath;
     this._unaccessibleErrorMessage = unaccessibleErrorMessage;
     this._finishedCallback = () => {};

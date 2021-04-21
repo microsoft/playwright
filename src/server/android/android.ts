@@ -50,6 +50,7 @@ export interface DeviceBackend {
 }
 
 export interface SocketBackend extends EventEmitter {
+  guid: string;
   write(data: Buffer): Promise<void>;
   close(): void;
 }
@@ -61,7 +62,7 @@ export class Android extends SdkObject {
   readonly _playwrightOptions: PlaywrightOptions;
 
   constructor(backend: Backend, playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject);
+    super(playwrightOptions.rootSdkObject, 'android');
     this._backend = backend;
     this._playwrightOptions = playwrightOptions;
     this._timeoutSettings = new TimeoutSettings();
@@ -115,7 +116,7 @@ export class AndroidDevice extends SdkObject {
   private _isClosed = false;
 
   constructor(android: Android, backend: DeviceBackend, model: string) {
-    super(android);
+    super(android, 'android-device');
     this._android = android;
     this._backend = backend;
     this.model = model;

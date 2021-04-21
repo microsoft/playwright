@@ -137,9 +137,11 @@ export class CRSession extends EventEmitter {
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  readonly guid: string;
 
   constructor(connection: CRConnection, rootSessionId: string, targetType: string, sessionId: string) {
     super();
+    this.guid = `cdp-session@${sessionId}`;
     this.setMaxListeners(0);
     this._connection = connection;
     this._rootSessionId = rootSessionId;

@@ -131,7 +131,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       return;
     }
     await this._context._setRequestInterceptor((route, request) => {
-      this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }
 

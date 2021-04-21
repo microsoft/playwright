@@ -25,8 +25,7 @@ export interface SnapshotStorage {
   resources(): ResourceSnapshot[];
   resourceContent(sha1: string): Buffer | undefined;
   resourceById(resourceId: string): ResourceSnapshot | undefined;
-  snapshotByName(frameId: string, snapshotName: string): SnapshotRenderer | undefined;
-  snapshotByTime(frameId: string, timestamp: number): SnapshotRenderer | undefined;
+  snapshotByName(pageOrFrameId: string, snapshotName: string): SnapshotRenderer | undefined;
 }
 
 export abstract class BaseSnapshotStorage extends EventEmitter implements SnapshotStorage {
@@ -64,6 +63,8 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
         renderer: [],
       };
       this._frameSnapshots.set(snapshot.frameId, frameSnapshots);
+      if (snapshot.isMainFrame)
+        this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
     }
     frameSnapshots.raw.push(snapshot);
     const renderer = new SnapshotRenderer(new Map(this._contextResources), frameSnapshots.raw, frameSnapshots.raw.length - 1);
@@ -81,17 +82,9 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
     return this._resources.slice();
   }
 
-  snapshotByName(frameId: string, snapshotName: string): SnapshotRenderer | undefined {
-    return this._frameSnapshots.get(frameId)?.renderer.find(r => r.snapshotName === snapshotName);
-  }
-
-  snapshotByTime(frameId: string, timestamp: number): SnapshotRenderer | undefined {
-    let result: SnapshotRenderer | undefined = undefined;
-    for (const snapshot of this._frameSnapshots.get(frameId)?.renderer.values() || []) {
-      if (timestamp && snapshot.snapshot().timestamp <= timestamp)
-        result = snapshot;
-    }
-    return result;
+  snapshotByName(pageOrFrameId: string, snapshotName: string): SnapshotRenderer | undefined {
+    const snapshot = this._frameSnapshots.get(pageOrFrameId);
+    return snapshot?.renderer.find(r => r.snapshotName === snapshotName);
   }
 }
 

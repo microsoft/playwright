@@ -53,7 +53,7 @@ export abstract class BrowserContext extends SdkObject {
   private _origins = new Set<string>();
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
-    super(browser);
+    super(browser, 'browser-context');
     this.attribution.context = this;
     this._browser = browser;
     this._options = options;
