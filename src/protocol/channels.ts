@@ -1338,12 +1338,14 @@ export type FrameCheckParams = {
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameCheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameCheckResult = void;
 export type FrameClickParams = {
@@ -1356,6 +1358,7 @@ export type FrameClickParams = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameClickOptions = {
   force?: boolean,
@@ -1366,6 +1369,7 @@ export type FrameClickOptions = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameClickResult = void;
 export type FrameContentParams = {};
@@ -1382,6 +1386,7 @@ export type FrameDblclickParams = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameDblclickOptions = {
   force?: boolean,
@@ -1391,6 +1396,7 @@ export type FrameDblclickOptions = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameDblclickResult = void;
 export type FrameDispatchEventParams = {
@@ -1484,12 +1490,14 @@ export type FrameHoverParams = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameHoverOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
@@ -1659,6 +1667,7 @@ export type FrameTapParams = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameTapOptions = {
   force?: boolean,
@@ -1666,6 +1675,7 @@ export type FrameTapOptions = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameTapResult = void;
 export type FrameTextContentParams = {
@@ -1702,12 +1712,14 @@ export type FrameUncheckParams = {
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameUncheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameUncheckResult = void;
 export type FrameWaitForFunctionParams = {
@@ -1908,12 +1920,14 @@ export type ElementHandleCheckParams = {
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleCheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleCheckResult = void;
 export type ElementHandleClickParams = {
@@ -1925,6 +1939,7 @@ export type ElementHandleClickParams = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleClickOptions = {
   force?: boolean,
@@ -1935,6 +1950,7 @@ export type ElementHandleClickOptions = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleClickResult = void;
 export type ElementHandleContentFrameParams = {};
@@ -1950,6 +1966,7 @@ export type ElementHandleDblclickParams = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleDblclickOptions = {
   force?: boolean,
@@ -1959,6 +1976,7 @@ export type ElementHandleDblclickOptions = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleDblclickResult = void;
 export type ElementHandleDispatchEventParams = {
@@ -1996,12 +2014,14 @@ export type ElementHandleHoverParams = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleHoverOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleHoverResult = void;
 export type ElementHandleInnerHTMLParams = {};
@@ -2151,6 +2171,7 @@ export type ElementHandleTapParams = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleTapOptions = {
   force?: boolean,
@@ -2158,6 +2179,7 @@ export type ElementHandleTapOptions = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleTapResult = void;
 export type ElementHandleTextContentParams = {};
@@ -2182,12 +2204,14 @@ export type ElementHandleUncheckParams = {
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleUncheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleUncheckResult = void;
 export type ElementHandleWaitForElementStateParams = {

@@ -1048,6 +1048,7 @@ Frame:
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
+        trial: boolean?
 
     click:
       parameters:
@@ -1073,6 +1074,7 @@ Frame:
           - middle
         clickCount: number?
         timeout: number?
+        trial: boolean?
 
     content:
       returns:
@@ -1101,6 +1103,7 @@ Frame:
           - right
           - middle
         timeout: number?
+        trial: boolean?
 
     dispatchEvent:
       parameters:
@@ -1188,6 +1191,7 @@ Frame:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     innerHTML:
       parameters:
@@ -1329,6 +1333,7 @@ Frame:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     textContent:
       parameters:
@@ -1356,6 +1361,7 @@ Frame:
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
+        trial: boolean?
 
     waitForFunction:
       parameters:
@@ -1529,6 +1535,7 @@ ElementHandle:
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
+        trial: boolean?
 
     click:
       parameters:
@@ -1553,6 +1560,7 @@ ElementHandle:
           - middle
         clickCount: number?
         timeout: number?
+        trial: boolean?
 
     contentFrame:
       returns:
@@ -1580,6 +1588,7 @@ ElementHandle:
           - right
           - middle
         timeout: number?
+        trial: boolean?
 
     dispatchEvent:
       parameters:
@@ -1614,6 +1623,7 @@ ElementHandle:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     innerHTML:
       returns:
@@ -1741,6 +1751,7 @@ ElementHandle:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     textContent:
       returns:
@@ -1759,6 +1770,7 @@ ElementHandle:
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
+        trial: boolean?
 
     waitForElementState:
       parameters:

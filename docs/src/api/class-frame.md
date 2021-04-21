@@ -177,6 +177,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.check.timeout = %%-input-timeout-%%
 
+### option: Frame.check.trial = %%-input-trial-%%
+
 ## method: Frame.childFrames
 - returns: <[Array]<[Frame]>>
 
@@ -211,6 +213,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.click.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Frame.click.timeout = %%-input-timeout-%%
+
+### option: Frame.click.trial = %%-input-trial-%%
 
 ## async method: Frame.content
 - returns: <[string]>
@@ -253,6 +257,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Frame.dblclick.timeout = %%-input-timeout-%%
+
+### option: Frame.dblclick.trial = %%-input-trial-%%
 
 ## async method: Frame.dispatchEvent
 
@@ -747,6 +753,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.hover.timeout = %%-input-timeout-%%
 
+### option: Frame.hover.trial = %%-input-trial-%%
+
 ## async method: Frame.innerHTML
 - returns: <[string]>
 
@@ -1022,6 +1030,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.tap.timeout = %%-input-timeout-%%
 
+### option: Frame.tap.trial = %%-input-trial-%%
+
 ## async method: Frame.textContent
 - returns: <[null]|[string]>
 
@@ -1107,6 +1117,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.uncheck.position = %%-input-position-%%
 
 ### option: Frame.uncheck.timeout = %%-input-timeout-%%
+
+### option: Frame.uncheck.trial = %%-input-trial-%%
 
 ## method: Frame.url
 - returns: <[string]>

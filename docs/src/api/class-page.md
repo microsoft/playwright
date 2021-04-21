@@ -535,6 +535,8 @@ Shortcut for main frame's [`method: Frame.check`].
 
 ### option: Page.check.timeout = %%-input-timeout-%%
 
+### option: Page.check.trial = %%-input-trial-%%
+
 ## async method: Page.click
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
@@ -568,6 +570,8 @@ Shortcut for main frame's [`method: Frame.click`].
 ### option: Page.click.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Page.click.timeout = %%-input-timeout-%%
+
+### option: Page.click.trial = %%-input-trial-%%
 
 ## async method: Page.close
 
@@ -645,6 +649,8 @@ Shortcut for main frame's [`method: Frame.dblclick`].
 ### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Page.dblclick.timeout = %%-input-timeout-%%
+
+### option: Page.dblclick.trial = %%-input-trial-%%
 
 ## async method: Page.dispatchEvent
 
@@ -1662,6 +1668,8 @@ Shortcut for main frame's [`method: Frame.hover`].
 
 ### option: Page.hover.timeout = %%-input-timeout-%%
 
+### option: Page.hover.trial = %%-input-trial-%%
+
 ## async method: Page.innerHTML
 - returns: <[string]>
 
@@ -2418,6 +2426,8 @@ Shortcut for main frame's [`method: Frame.tap`].
 
 ### option: Page.tap.timeout = %%-input-timeout-%%
 
+### option: Page.tap.trial = %%-input-trial-%%
+
 ## async method: Page.textContent
 - returns: <[null]|[string]>
 
@@ -2510,6 +2520,8 @@ Shortcut for main frame's [`method: Frame.uncheck`].
 ### option: Page.uncheck.position = %%-input-position-%%
 
 ### option: Page.uncheck.timeout = %%-input-timeout-%%
+
+### option: Page.uncheck.trial = %%-input-trial-%%
 
 ## async method: Page.unroute
 

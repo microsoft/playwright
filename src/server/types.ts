@@ -35,6 +35,7 @@ export type NavigatingActionWaitOptions = TimeoutOptions & {
 
 export type PointerActionWaitOptions = TimeoutOptions & {
   force?: boolean,
+  trial?: boolean;
 };
 
 export type ElementScreenshotOptions = TimeoutOptions & {
