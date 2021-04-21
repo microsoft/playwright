@@ -199,10 +199,6 @@ export class RecorderSupplement {
     await this._context.exposeBinding('_playwrightRecorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
-    // Commits last action so that no further signals are added to it.
-    await this._context.exposeBinding('_playwrightRecorderCommitAction', false,
-        (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
-
     await this._context.exposeBinding('_playwrightRecorderState', false, source => {
       let snapshotUrl: string | undefined;
       let actionSelector = this._highlightedSelector;
@@ -334,6 +330,9 @@ export class RecorderSupplement {
   }
 
   private async _performAction(frame: Frame, action: actions.Action) {
+    // Commit last action so that no further signals are added to it.
+    this._generator.commitLastAction();
+
     const page = frame._page;
     const actionInContext: ActionInContext = {
       pageAlias: this._pageAliases.get(page)!,
@@ -364,6 +363,7 @@ export class RecorderSupplement {
       return;
     }
     const timer = setTimeout(() => {
+      // Commit the action after 5 seconds so that no further signals are added to it.
       actionInContext.committed = true;
       this._timers.delete(timer);
     }, 5000);
@@ -372,6 +372,9 @@ export class RecorderSupplement {
   }
 
   private async _recordAction(frame: Frame, action: actions.Action) {
+    // Commit last action so that no further signals are added to it.
+    this._generator.commitLastAction();
+
     this._generator.addAction({
       pageAlias: this._pageAliases.get(frame._page)!,
       ...describeFrame(frame),

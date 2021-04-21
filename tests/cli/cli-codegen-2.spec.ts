@@ -593,4 +593,29 @@ await page.GetFrame(url: \"http://localhost:${server.PORT}/frames/frame.html\").
     await page.goto(httpServer.PREFIX + '/page2.html');
     await recorder.waitForOutput('<javascript>', `await page.goto('${httpServer.PREFIX}/page2.html');`);
   });
+
+  test('should record slow navigation signal after mouse move', async ({ page, openRecorder, server }) => {
+    const recorder = await openRecorder();
+    await recorder.setContentAndWait(`
+    <script>
+      async function onClick() {
+        await new Promise(f => setTimeout(f, 100));
+        await window.letTheMouseMove();
+        window.location = ${JSON.stringify(server.EMPTY_PAGE)};
+      }
+    </script>
+    <button onclick="onClick()">Click me</button>
+    `);
+    await page.exposeBinding('letTheMouseMove', async () => {
+      await page.mouse.move(200, 200);
+    });
+
+    const [, sources] = await Promise.all([
+      // This will click, finish the click, then mouse move, then navigate.
+      page.click('button'),
+      recorder.waitForOutput('<javascript>', 'waitForNavigation'),
+    ]);
+
+    expect(sources.get('<javascript>').text).toContain(`page.waitForNavigation(/*{ url: '${server.EMPTY_PAGE}' }*/)`);
+  });
 });
