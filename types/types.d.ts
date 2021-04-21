@@ -6603,7 +6603,8 @@ export interface BrowserType<Unused = {}> {
     bypassCSP?: boolean;
 
     /**
-     * Browser distribution channel.
+     * Browser distribution channel. Read more about using
+     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
     channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
 
@@ -6930,6 +6931,12 @@ export interface BrowserType<Unused = {}> {
      * [here](http://peter.sh/experiments/chromium-command-line-switches/).
      */
     args?: Array<string>;
+
+    /**
+     * Browser distribution channel. Read more about using
+     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+     */
+    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
 
     /**
      * Enable Chromium sandboxing. Defaults to `true`.
