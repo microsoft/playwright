@@ -75,6 +75,7 @@ export type ConnectOptions = {
   logger?: Logger,
 };
 export type LaunchServerOptions = {
+  channel?: channels.BrowserTypeLaunchOptions['channel'],
   executablePath?: string,
   args?: string[],
   ignoreDefaultArgs?: boolean | string[],

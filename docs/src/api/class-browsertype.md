@@ -295,7 +295,7 @@ Whether to run browser in headless mode. More details for
 ### option: BrowserType.launchPersistentContext.channel
 - `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
 
-Browser distribution channel.
+Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 
 ### option: BrowserType.launchPersistentContext.executablePath
 - `executablePath` <[path]>
@@ -398,6 +398,11 @@ Whether to run browser in headless mode. More details for
 - `port` <[int]>
 
 Port to use for the web socket. Defaults to 0 that picks any available port.
+
+### option: BrowserType.launchServer.channel
+- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
+
+Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 
 ### option: BrowserType.launchServer.executablePath
 - `executablePath` <[path]>
