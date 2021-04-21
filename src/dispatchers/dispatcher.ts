@@ -220,7 +220,6 @@ export class DispatcherConnection {
           switch (info.phase) {
             case 'before':
               callMetadata.apiName = info.apiName;
-              callMetadata.stack = info.stack;
               this._waitOperations.set(info.waitId, callMetadata);
               break;
             case 'log':
