@@ -18,54 +18,36 @@ import { BrowserContext } from '../browserContext';
 import { RecorderSupplement } from './recorderSupplement';
 import { debugLogger } from '../../utils/debugLogger';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
-import { debugMode, isUnderTest } from '../../utils/utils';
-import * as consoleApiSource from '../../generated/consoleApiSource';
+import { ContextDebugger } from './debugger';
 
 export class InspectorController implements InstrumentationListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
-    if (debugMode() === 'inspector')
-      await RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
-    else if (debugMode() === 'console')
-      await context.extendInjectedScript(consoleApiSource.source);
+    const contextDebugger = ContextDebugger.lookup(context)!;
+    if (contextDebugger.isPaused())
+      RecorderSupplement.show(context, {}).catch(() => {});
+    contextDebugger.on(ContextDebugger.Events.PausedStateChanged, () => {
+      RecorderSupplement.show(context, {}).catch(() => {});
+    });
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    const context = sdkObject.attribution.context;
-    if (!context)
-      return;
-
-    if (shouldOpenInspector(sdkObject, metadata))
-      await RecorderSupplement.getOrCreate(context, { pauseOnNextStatement: true });
-
-    const recorder = await RecorderSupplement.getNoCreate(context);
-    await recorder?.onBeforeCall(sdkObject, metadata);
+    const recorder = await RecorderSupplement.lookup(sdkObject.attribution.context);
+    recorder?.onBeforeCall(sdkObject, metadata);
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (!sdkObject.attribution.context)
-      return;
-    const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
-    await recorder?.onAfterCall(sdkObject, metadata);
+    const recorder = await RecorderSupplement.lookup(sdkObject.attribution.context);
+    recorder?.onAfterCall(sdkObject, metadata);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (!sdkObject.attribution.context)
-      return;
-    const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
-    await recorder?.onBeforeInputAction(sdkObject, metadata);
+    const recorder = await RecorderSupplement.lookup(sdkObject.attribution.context);
+    recorder?.onBeforeInputAction(sdkObject, metadata);
   }
 
   async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     debugLogger.log(logName as any, message);
-    if (!sdkObject.attribution.context)
-      return;
-    const recorder = await RecorderSupplement.getNoCreate(sdkObject.attribution.context);
+    const recorder = await RecorderSupplement.lookup(sdkObject.attribution.context);
     recorder?.updateCallLog([metadata]);
   }
-}
-
-function shouldOpenInspector(sdkObject: SdkObject, metadata: CallMetadata): boolean {
-  if (!sdkObject.attribution.browser?.options.headful && !isUnderTest())
-    return false;
-  return metadata.method === 'pause';
 }
