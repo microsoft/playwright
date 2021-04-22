@@ -28,6 +28,7 @@ import { InspectorController } from './supplements/inspectorController';
 import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
 import { InstrumentationListener, multiplexInstrumentation, SdkObject } from './instrumentation';
+import { Debugger } from './supplements/debugger';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -41,6 +42,7 @@ export class Playwright extends SdkObject {
   constructor(isInternal: boolean) {
     const listeners: InstrumentationListener[] = [];
     if (!isInternal) {
+      listeners.push(new Debugger());
       listeners.push(new Tracer());
       listeners.push(new HarTracer());
       listeners.push(new InspectorController());
