@@ -16,7 +16,7 @@
  */
 
 import domain from 'domain';
-import { test as it, expect } from './config/playwrightTest';
+import { playwrightTest as it, expect } from './config/browserTest';
 
 it('should scope context handles', async ({browserType, browserOptions, server}) => {
   const browser = await browserType.launch(browserOptions);

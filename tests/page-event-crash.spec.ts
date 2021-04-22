@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { test as it, expect, PageTestArgs } from './config/pageTest';
+import { test as it, expect } from './config/pageTest';
 import * as os from 'os';
 
-function crash({ page, toImpl, browserName, platform, mode }: PageTestArgs) {
+function crash({ page, toImpl, browserName, platform, mode }: any) {
   if (browserName === 'chromium') {
     page.goto('chrome://crash').catch(e => {});
   } else if (browserName === 'webkit') {

@@ -18,7 +18,7 @@
 import url from 'url';
 import os from 'os';
 import { test as it, expect } from './config/pageTest';
-import { slowTest } from './config/browserTest';
+import { slowBrowserTest as slowTest } from './config/browserTest';
 import { expectedSSLError } from './config/utils';
 
 it('should work', async ({page, server}) => {

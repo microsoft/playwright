@@ -93,35 +93,6 @@ function installCoverageHooks(browserName) {
   return {coverage, uninstall};
 }
 
-class CoverageEnv {
-  /**
-   * @param {string} browserName
-   */
-  constructor(browserName) {
-    this.browserName = browserName;
-  }
-
-  /**
-   * @param {import('folio').WorkerInfo} workerInfo
-   */
-  async beforeAll(workerInfo) {
-    this.coverage = installCoverageHooks(this.browserName);
-  }
-
-  /**
-   * @param {import('folio').WorkerInfo} workerInfo
-   */
-   async afterAll(workerInfo) {
-    const { coverage, uninstall } = this.coverage;
-    uninstall();
-    const coveragePath = path.join(__dirname, '..', 'coverage-report', workerInfo.workerIndex + '.json');
-    const coverageJSON = Array.from(coverage.keys()).filter(key => coverage.get(key));
-    await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
-    await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
-  }
-}
-
 module.exports = {
   installCoverageHooks,
-  CoverageEnv
 };

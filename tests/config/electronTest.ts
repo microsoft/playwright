@@ -14,15 +14,67 @@
  * limitations under the License.
  */
 
-import { newTestType } from 'folio';
+import { CommonTestArgs, test as baseTest } from './baseTest';
 import { ElectronApplication, Page } from '../../index';
-import type { CommonTestArgs } from './pageTest';
-import type { ServerTestArgs } from './serverTest';
+import * as folio from 'folio';
+import * as path from 'path';
 export { expect } from 'folio';
 
-export type ElectronTestArgs = CommonTestArgs & {
+type ElectronTestArgs = {
   electronApp: ElectronApplication;
   newWindow: () => Promise<Page>;
 };
 
-export const test = newTestType<ElectronTestArgs & ServerTestArgs>();
+export class ElectronEnv {
+  private _electronApp: ElectronApplication | undefined;
+  private _windows: Page[] = [];
+  protected _browserVersion: string;
+
+  private async _newWindow() {
+    const [ window ] = await Promise.all([
+      this._electronApp!.waitForEvent('window'),
+      this._electronApp!.evaluate(electron => {
+        const window = new electron.BrowserWindow({
+          width: 800,
+          height: 600,
+          // Sandboxed windows share process with their window.open() children
+          // and can script them. We use that heavily in our tests.
+          webPreferences: { sandbox: true }
+        });
+        window.loadURL('about:blank');
+      })
+    ]);
+    this._windows.push(window);
+    return window;
+  }
+
+  async beforeAll() {
+    // This env prevents 'Electron Security Policy' console message.
+    process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+    this._browserVersion = require('electron/package.json').version;
+    return {};
+  }
+
+  async beforeEach(args: CommonTestArgs, testInfo: folio.TestInfo): Promise<ElectronTestArgs> {
+    this._electronApp = await args.playwright._electron.launch({
+      args: [path.join(__dirname, 'electron-app.js')],
+    });
+    testInfo.data.browserVersion = this._browserVersion;
+    return {
+      electronApp: this._electronApp,
+      newWindow: this._newWindow.bind(this),
+    };
+  }
+
+  async afterEach({}, testInfo: folio.TestInfo) {
+    for (const window of this._windows)
+      await window.close();
+    this._windows = [];
+    if (this._electronApp) {
+      await this._electronApp.close();
+      this._electronApp = undefined;
+    }
+  }
+}
+
+export const electronTest = baseTest.extend(new ElectronEnv());

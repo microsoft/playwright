@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/contextTest';
+import { contextTest as it, expect } from './config/browserTest';
 
 it('should close browser with beforeunload page', async ({server, browserType, browserOptions }) => {
   const browser = await browserType.launch(browserOptions);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/browserTest';
+import { browserTest as it, expect } from './config/browserTest';
 
 it('should inherit user agent from browser context', async function({browser, server}) {
   const context = await browser.newContext({

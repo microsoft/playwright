@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { test, expect } from '../config/electronTest';
+import { electronTest as test, expect } from '../config/electronTest';
 
 test('should fire close event', async ({ playwright }) => {
   const electronApp = await playwright._electron.launch({

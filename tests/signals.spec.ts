@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { slowTest as test, expect } from './config/playwrightTest';
+import { slowPlaywrightTest as test, expect } from './config/browserTest';
 import { execSync } from 'child_process';
 
 test('should close the browser when the node process closes', async ({startRemoteServer, isWindows, server}) => {

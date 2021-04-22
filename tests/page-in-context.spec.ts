@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/browserTest';
+import { browserTest as it, expect } from './config/browserTest';
 import { attachFrame } from './config/utils';
 
 it('should not be visible in context.pages', async ({contextFactory}) => {

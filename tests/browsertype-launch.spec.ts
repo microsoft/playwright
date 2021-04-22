@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, slowTest, expect } from './config/playwrightTest';
+import { playwrightTest as it, slowPlaywrightTest as slowTest, expect } from './config/browserTest';
 
 it('should reject all promises when browser is closed', async ({browserType, browserOptions}) => {
   const browser = await browserType.launch(browserOptions);

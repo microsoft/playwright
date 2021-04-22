@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './config/browserTest';
+import { browserTest as test, expect } from './config/browserTest';
 
 test('should create new page', async function({browser}) {
   const page1 = await browser.newPage();
