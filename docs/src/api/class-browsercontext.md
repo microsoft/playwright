@@ -227,7 +227,7 @@ Script to be evaluated in all pages in the browser context.
 Script to be evaluated in all pages in the browser context.
 
 ### param: BrowserContext.addInitScript.arg
-* langs: js
+* langs: js, csharp
 - `arg` <[Serializable]>
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).

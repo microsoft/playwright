@@ -294,7 +294,7 @@ function renderMember(member, parent, out) {
         type = `IEnumerable<${parent.name}>`;
       }
 
-      if(!type.endsWith('?') && !member.required && nullableTypes.includes(type))
+      if (!type.endsWith('?') && !member.required && nullableTypes.includes(type))
         type = `${type}?`;
       output(`public ${type} ${name} { get; set; }`);
     } else {
@@ -481,6 +481,10 @@ function renderMethod(member, parent, output, name) {
    * @param {Documentation.Member} argument
    */
   const pushArg = (innerArgType, innerArgName, argument) => {
+    // this hack is here because sometimes, the arg is of T type, as it's converted from [Serializable]
+    // but for all our current known use-cases, that can be translated to object
+    if(innerArgType === 'T')
+      innerArgType = 'object';
     let isNullable = nullableTypes.includes(innerArgType);
     const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
     const requiredSuffix = argument.required ? "" : " = default";
