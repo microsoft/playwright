@@ -22,6 +22,7 @@ const playwrightPath = path.join(__dirname, '..', '..');
 
 export type RemoteServerOptions = {
   stallOnClose?: boolean;
+  disconnectOnSIGHUP?: boolean;
   inCluster?: boolean;
   url?: string;
 };

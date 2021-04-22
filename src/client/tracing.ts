@@ -42,7 +42,7 @@ export class Tracing {
       return await channel.tracingExport();
     });
     const artifact = Artifact.from(result.artifact);
-    if (this._context.browser()?._isRemote)
+    if (this._context.browser()?._remoteType)
       artifact._isRemote = true;
     await artifact.saveAs(path);
     await artifact.delete();
