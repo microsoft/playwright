@@ -103,8 +103,8 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     }
   }
 
-  _waitForEventInfoBefore(waitId: string, apiName: string, stack: StackFrame[]) {
-    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { apiName, waitId, phase: 'before', stack } }, undefined).catch(() => {});
+  _waitForEventInfoBefore(waitId: string, apiName: string) {
+    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { apiName, waitId, phase: 'before' } }, undefined).catch(() => {});
   }
 
   _waitForEventInfoAfter(waitId: string, error?: string) {
