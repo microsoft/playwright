@@ -30,7 +30,7 @@ function usage() {
 usage: ${SCRIPT_NAME} <browser> <revision>
 
 Roll the <browser> to a specific <revision> and generate new protocol.
-Supported browsers: chromium, firefox, webkit, ffmpeg.
+Supported browsers: chromium, firefox, webkit, ffmpeg, firefox-stable, webkit-technology-preview.
 
 Example:
   ${SCRIPT_NAME} chromium 123456
@@ -52,8 +52,10 @@ Example:
     console.log(`Try running ${SCRIPT_NAME} --help`);
     process.exit(1);
   }
+  const browsersJSON = require(path.join(ROOT_PATH, 'browsers.json'));
   const browserName = args[0].toLowerCase();
-  if (!['chromium', 'firefox', 'webkit', 'ffmpeg'].includes(browserName)) {
+  const descriptor = browsersJSON.browsers.find(b => b.name === browserName);
+  if (!descriptor) {
     console.log(`Unknown browser "${browserName}"`);
     console.log(`Try running ${SCRIPT_NAME} --help`);
     process.exit(1);
@@ -63,26 +65,26 @@ Example:
 
   // 2. Update browsers.json.
   console.log('\nUpdating browsers.json...');
-  const browsersJSON = require(path.join(ROOT_PATH, 'browsers.json'));
-  browsersJSON.browsers.find(b => b.name === browserName).revision = String(revision);
+  descriptor.revision = String(revision);
   fs.writeFileSync(path.join(ROOT_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
 
-  // 3. Download new browser.
-  console.log('\nDownloading new browser...');
-  const { installBrowsersWithProgressBar } = require('../lib/install/installer');
-  await installBrowsersWithProgressBar();
+  if (descriptor.installByDefault) {
+    // 3. Download new browser.
+    console.log('\nDownloading new browser...');
+    const { installBrowsersWithProgressBar } = require('../lib/install/installer');
+    await installBrowsersWithProgressBar();
 
-  // 4. Generate types.
-  console.log('\nGenerating protocol types...');
-  const executablePath = new Registry(ROOT_PATH).executablePath(browserName);
-  await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);
+    // 4. Generate types.
+    console.log('\nGenerating protocol types...');
+    const executablePath = new Registry(ROOT_PATH).executablePath(browserName);
+    await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);
 
-  // 5. Update docs.
-  console.log('\nUpdating documentation...');
-  try {
-    process.stdout.write(execSync('npm run --silent doc'));
-  } catch (e) {
+    // 5. Update docs.
+    console.log('\nUpdating documentation...');
+    try {
+      process.stdout.write(execSync('npm run --silent doc'));
+    } catch (e) {
+    }
   }
-
   console.log(`\nRolled ${browserName} to ${revision}`);
 })();
