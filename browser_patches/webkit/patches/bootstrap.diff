@@ -1425,7 +1425,7 @@ index f89806c56b260522fc7c7b98af852cf733f8985f..0ae692ba821d4a6c5210fe12ce77b84a
  #include <wtf/unicode/icu/ICUHelpers.h>
  
 diff --git a/Source/JavaScriptCore/runtime/JSDateMath.cpp b/Source/JavaScriptCore/runtime/JSDateMath.cpp
-index ea0bfb0d7a5a64c1570da5333199f99b552a5ff6..3b9bd5729e835e909efdaedc590b28b23e32acf4 100644
+index ea0bfb0d7a5a64c1570da5333199f99b552a5ff6..2ebe8c6c5ac4343e0b373ccc271e86a4080a98dc 100644
 --- a/Source/JavaScriptCore/runtime/JSDateMath.cpp
 +++ b/Source/JavaScriptCore/runtime/JSDateMath.cpp
 @@ -76,6 +76,7 @@
@@ -1447,21 +1447,38 @@ index ea0bfb0d7a5a64c1570da5333199f99b552a5ff6..3b9bd5729e835e909efdaedc590b28b2
  #if HAVE(ICU_C_TIMEZONE_API)
      auto& timeZone = *timeZoneCache();
      Vector<UChar, 32> buffer;
-@@ -382,6 +387,14 @@ Ref<DateInstanceData> DateCache::cachedDateInstanceData(double millisecondsFromE
+@@ -382,16 +387,29 @@ Ref<DateInstanceData> DateCache::cachedDateInstanceData(double millisecondsFromE
  void DateCache::timeZoneCacheSlow()
  {
      ASSERT(!m_timeZoneCache);
 +
 +    String override = WTF::timeZoneForAutomation();
+ #if HAVE(ICU_C_TIMEZONE_API)
+     auto* cache = new OpaqueICUTimeZone;
++    // ucal_open checks that the status is success, so it has to be initialized here.
++    UErrorCode status = U_ZERO_ERROR;
+     Vector<UChar, 32> timeZoneID;
+-    auto status = callBufferProducingFunction(ucal_getHostTimeZone, timeZoneID);
+-    ASSERT_UNUSED(status, U_SUCCESS(status));
++    if (override.isEmpty()) {
++        status = callBufferProducingFunction(ucal_getHostTimeZone, timeZoneID);
++        ASSERT_UNUSED(status, U_SUCCESS(status));
++    } else {
++        timeZoneID = override.charactersWithoutNullTermination();
++    }
+     cache->m_calendar = std::unique_ptr<UCalendar, ICUDeleter<ucal_close>>(ucal_open(timeZoneID.data(), timeZoneID.size(), "", UCAL_DEFAULT, &status));
+     ASSERT_UNUSED(status, U_SUCCESS(status));
+     ucal_setGregorianChange(cache->m_calendar.get(), minECMAScriptTime, &status); // Ignore "unsupported" error.
+     m_timeZoneCache = std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter>(cache);
+ #else
 +    if (!override.isEmpty()) {
 +        auto* timezone = icu::TimeZone::createTimeZone(override.utf8().data());
 +        m_timeZoneCache = std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter>(bitwise_cast<OpaqueICUTimeZone*>(timezone));
 +        return;
 +    }
-+
- #if HAVE(ICU_C_TIMEZONE_API)
-     auto* cache = new OpaqueICUTimeZone;
-     Vector<UChar, 32> timeZoneID;
+     // Do not use icu::TimeZone::createDefault. ICU internally has a cache for timezone and createDefault returns this cached value.
+     m_timeZoneCache = std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter>(bitwise_cast<OpaqueICUTimeZone*>(icu::TimeZone::detectHostTimeZone()));
+ #endif
 diff --git a/Source/ThirdParty/libwebrtc/CMakeLists.txt b/Source/ThirdParty/libwebrtc/CMakeLists.txt
 index 351db7adbf094984f04bd2fc923420eba7682abe..1744bd94c21838a8d8eb2cce386458ada38514fc 100644
 --- a/Source/ThirdParty/libwebrtc/CMakeLists.txt
