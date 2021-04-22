@@ -10998,7 +10998,7 @@ index b645593fb8f32fceb3ce65a632a493f845f64568..3c9a7d273b950b111fc5543aa11d6a86
  {
      if (!m_uiDelegate)
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm b/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
-index e37adf8e47a53311e43a24f0d51246588e5882cd..2b1e231bdb8db2631046be1f0fc600a7aac655b5 100644
+index e37adf8e47a53311e43a24f0d51246588e5882cd..5b0da0500cb8798af12b22dffa45e6cd132ebb00 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
 +++ b/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
 @@ -34,6 +34,7 @@
@@ -11009,7 +11009,7 @@ index e37adf8e47a53311e43a24f0d51246588e5882cd..2b1e231bdb8db2631046be1f0fc600a7
  #import "QuickLookThumbnailLoader.h"
  #import "SafeBrowsingSPI.h"
  #import "SafeBrowsingWarning.h"
-@@ -219,9 +220,64 @@ bool WebPageProxy::scrollingUpdatesDisabledForTesting()
+@@ -219,9 +220,66 @@ bool WebPageProxy::scrollingUpdatesDisabledForTesting()
  
  void WebPageProxy::startDrag(const DragItem& dragItem, const ShareableBitmap::Handle& dragImageHandle)
  {
@@ -11021,10 +11021,12 @@ index e37adf8e47a53311e43a24f0d51246588e5882cd..2b1e231bdb8db2631046be1f0fc600a7
 +        m_dragSourceOperationMask = WebCore::anyDragOperation();
 +
 +        if (auto& info = dragItem.promisedAttachmentInfo) {
-+            NSString *utiType = info.contentType;
-+            if (auto attachment = attachmentForIdentifier(info.attachmentIdentifier))
-+                utiType = attachment->utiType();
-+
++            auto attachment = attachmentForIdentifier(info.attachmentIdentifier);
++            if (!attachment) {
++                dragCancelled();
++                return;
++            }
++            NSString *utiType = attachment->utiType();
 +            if (!utiType.length) {
 +                dragCancelled();
 +                return;
@@ -14215,6 +14217,16 @@ index 1439fd006810addf5cd7e72f6a9ffcae7751f4d1..ffeaebed8e571b9c18b0066c36d98b09
  #endif
  #if PLATFORM(IOS_FAMILY)
      virtual void didNotHandleTapAsClick(const WebCore::IntPoint&) = 0;
+diff --git a/Source/WebKit/UIProcess/ProvisionalPageProxy.cpp b/Source/WebKit/UIProcess/ProvisionalPageProxy.cpp
+index 226d2933405ea5b6f0bc369e51fd07862e37af76..7796abccb6b80baccf826a24fe4f45a4a56bb9d6 100644
+--- a/Source/WebKit/UIProcess/ProvisionalPageProxy.cpp
++++ b/Source/WebKit/UIProcess/ProvisionalPageProxy.cpp
+@@ -598,3 +598,5 @@ bool ProvisionalPageProxy::sendMessage(UniqueRef<IPC::Encoder>&& encoder, Option
+ }
+ 
+ } // namespace WebKit
++
++#undef MESSAGE_CHECK
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..dd8b28e692dca4078eb710b2a97e61716126a4cb
