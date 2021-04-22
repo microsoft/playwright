@@ -47,7 +47,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     waitId: tString,
     phase: tEnum(['before', 'after', 'log']),
     apiName: tOptional(tString),
-    stack: tOptional(tArray(tType('StackFrame'))),
     message: tOptional(tString),
     error: tOptional(tString),
   });

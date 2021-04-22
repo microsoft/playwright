@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { captureStackTrace, rewriteErrorMessage } from '../utils/stackTrace';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from '../utils/errors';
 import { createGuid } from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
@@ -32,7 +32,7 @@ export class Waiter {
   constructor(channelOwner: ChannelOwner, apiName: string) {
     this._waitId = createGuid();
     this._channelOwner = channelOwner;
-    this._channelOwner._waitForEventInfoBefore(this._waitId, apiName, captureStackTrace().frames);
+    this._channelOwner._waitForEventInfoBefore(this._waitId, apiName);
     this._dispose = [
       () => this._channelOwner._waitForEventInfoAfter(this._waitId, this._error)
     ];

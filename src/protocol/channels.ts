@@ -39,7 +39,6 @@ export type WaitForEventInfo = {
   waitId: string,
   phase: 'before' | 'after' | 'log',
   apiName?: string,
-  stack?: StackFrame[],
   message?: string,
   error?: string,
 };
