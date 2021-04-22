@@ -286,6 +286,10 @@ page.keyboard.type("World", delay=100) # types slower, like a user
 Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
 :::
 
+:::note
+For characters that are not on a US keyboard, only an `input` event will be sent.
+:::
+
 ### param: Keyboard.type.text
 - `text` <[string]>
 
