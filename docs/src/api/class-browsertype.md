@@ -88,7 +88,7 @@ This methods attaches Playwright to an existing browser instance.
 
 A browser websocket endpoint to connect to.
 
-### param: BrowserType.connect.headers
+### option: BrowserType.connect.headers
 * langs: java, python
 - `headers` <[string]>
 
