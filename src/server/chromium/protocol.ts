@@ -858,12 +858,23 @@ CORS RFC1918 enforcement.
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
     }
+    export type AttributionReportingIssueType = "PermissionPolicyDisabled";
+    /**
+     * Details for issues around "Attribution Reporting API" usage.
+Explainer: https://github.com/WICG/conversion-measurement-api
+     */
+    export interface AttributionReportingIssueDetails {
+      violationType: AttributionReportingIssueType;
+      frame?: AffectedFrame;
+      request?: AffectedRequest;
+      violatingNodeId?: DOM.BackendNodeId;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -879,6 +890,7 @@ add a new optional field to this type.
       twaQualityEnforcementDetails?: TrustedWebActivityIssueDetails;
       lowTextContrastIssueDetails?: LowTextContrastIssueDetails;
       corsIssueDetails?: CorsIssueDetails;
+      attributionReportingIssueDetails?: AttributionReportingIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -1163,6 +1175,48 @@ Note that userVisibleOnly = true is the only currently supported type.
       buckets: Bucket[];
     }
     
+    /**
+     * Fired when page is about to start a download.
+     */
+    export type downloadWillBeginPayload = {
+      /**
+       * Id of the frame that caused the download to begin.
+       */
+      frameId: Page.FrameId;
+      /**
+       * Global unique identifier of the download.
+       */
+      guid: string;
+      /**
+       * URL of the resource being downloaded.
+       */
+      url: string;
+      /**
+       * Suggested file name of the resource (the actual name of the file saved on disk may differ).
+       */
+      suggestedFilename: string;
+    }
+    /**
+     * Fired when download makes progress. Last call has |done| == true.
+     */
+    export type downloadProgressPayload = {
+      /**
+       * Global unique identifier of the download.
+       */
+      guid: string;
+      /**
+       * Total expected bytes to download.
+       */
+      totalBytes: number;
+      /**
+       * Total bytes received.
+       */
+      receivedBytes: number;
+      /**
+       * Download status.
+       */
+      state: "inProgress"|"completed"|"canceled";
+    }
     
     /**
      * Set permission settings for given origin.
@@ -1233,6 +1287,10 @@ their dowmload guids.
 or 'allowAndName'.
        */
       downloadPath?: string;
+      /**
+       * Whether to emit download events (defaults to false).
+       */
+      eventsEnabled?: boolean;
     }
     export type setDownloadBehaviorReturnValue = {
     }
@@ -2737,7 +2795,9 @@ fire DOM events for nodes known to the client.
        */
       pseudoElements?: Node[];
       /**
-       * Import document for the HTMLImport links.
+       * Deprecated, as the HTML Imports API has been removed (crbug.com/937746).
+This property used to return the imported document for the HTMLImport links.
+The property is always undefined now.
        */
       importedDocument?: Node;
       /**
@@ -4442,6 +4502,14 @@ captureSnapshot was true.
        * The client rect of nodes. Only available when includeDOMRects is set to true
        */
       clientRects?: Rectangle[];
+      /**
+       * The list of background colors that are blended with colors of overlapping elements.
+       */
+      blendedBackgroundColors?: StringIndex[];
+      /**
+       * The list of computed text opacities.
+       */
+      textColorOpacities?: number[];
     }
     /**
      * Table of details of the post layout rendered text positions. The exact layout should not be regarded as
@@ -4540,6 +4608,18 @@ flattened.
        * Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
        */
       includeDOMRects?: boolean;
+      /**
+       * Whether to include blended background colors in the snapshot (default: false).
+Blended background color is achieved by blending background colors of all elements
+that overlap with the current element.
+       */
+      includeBlendedBackgroundColors?: boolean;
+      /**
+       * Whether to include text color opacity in the snapshot (default: false).
+An element might have the opacity property set that affects the text color of the element.
+The final text color opacity is computed based on the opacity of all overlapping elements.
+       */
+      includeTextColorOpacities?: boolean;
     }
     export type captureSnapshotReturnValue = {
       /**
@@ -4808,7 +4888,7 @@ Missing optional values will be filled in by the target with what it would norma
     /**
      * Enum of image types that can be disabled.
      */
-    export type DisabledImageType = "avif"|"webp";
+    export type DisabledImageType = "avif"|"jxl"|"webp";
     
     /**
      * Notification sent after the virtual time budget for the current VirtualTimePolicy has run out.
@@ -5749,6 +5829,13 @@ text, HTML markup or any other data.
       dragOperationsMask: number;
     }
     
+    /**
+     * Emitted only when `Input.setInterceptDrags` is enabled. Use this data with `Input.dispatchDragEvent` to
+restore normal drag and drop behavior.
+     */
+    export type dragInterceptedPayload = {
+      data: DragData;
+    }
     
     /**
      * Dispatches a drag event into the page.
@@ -6017,6 +6104,15 @@ one by one.
       ignore: boolean;
     }
     export type setIgnoreInputEventsReturnValue = {
+    }
+    /**
+     * Prevents default drag and drop behavior and instead emits `Input.dragIntercepted` events.
+Drag and drop behavior can be directly controlled via `Input.dispatchDragEvent`.
+     */
+    export type setInterceptDragsParameters = {
+      enabled: boolean;
+    }
+    export type setInterceptDragsReturnValue = {
     }
     /**
      * Synthesizes a pinch gesture over a time period by issuing appropriate touch events.
@@ -10043,6 +10139,7 @@ guaranteed to start.
     }
     /**
      * Fired when page is about to start a download.
+Deprecated. Use Browser.downloadWillBegin instead.
      */
     export type downloadWillBeginPayload = {
       /**
@@ -10064,6 +10161,7 @@ guaranteed to start.
     }
     /**
      * Fired when download makes progress. Last call has |done| == true.
+Deprecated. Use Browser.downloadProgress instead.
      */
     export type downloadProgressPayload = {
       /**
@@ -16175,6 +16273,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Audits.issueAdded": Audits.issueAddedPayload;
     "BackgroundService.recordingStateChanged": BackgroundService.recordingStateChangedPayload;
     "BackgroundService.backgroundServiceEventReceived": BackgroundService.backgroundServiceEventReceivedPayload;
+    "Browser.downloadWillBegin": Browser.downloadWillBeginPayload;
+    "Browser.downloadProgress": Browser.downloadProgressPayload;
     "CSS.fontsUpdated": CSS.fontsUpdatedPayload;
     "CSS.mediaQueryResultChanged": CSS.mediaQueryResultChangedPayload;
     "CSS.styleSheetAdded": CSS.styleSheetAddedPayload;
@@ -16203,6 +16303,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Database.addDatabase": Database.addDatabasePayload;
     "Emulation.virtualTimeBudgetExpired": Emulation.virtualTimeBudgetExpiredPayload;
     "HeadlessExperimental.needsBeginFramesChanged": HeadlessExperimental.needsBeginFramesChangedPayload;
+    "Input.dragIntercepted": Input.dragInterceptedPayload;
     "Inspector.detached": Inspector.detachedPayload;
     "Inspector.targetCrashed": Inspector.targetCrashedPayload;
     "Inspector.targetReloadedAfterCrash": Inspector.targetReloadedAfterCrashPayload;
@@ -16528,6 +16629,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Input.dispatchTouchEvent": Input.dispatchTouchEventParameters;
     "Input.emulateTouchFromMouseEvent": Input.emulateTouchFromMouseEventParameters;
     "Input.setIgnoreInputEvents": Input.setIgnoreInputEventsParameters;
+    "Input.setInterceptDrags": Input.setInterceptDragsParameters;
     "Input.synthesizePinchGesture": Input.synthesizePinchGestureParameters;
     "Input.synthesizeScrollGesture": Input.synthesizeScrollGestureParameters;
     "Input.synthesizeTapGesture": Input.synthesizeTapGestureParameters;
@@ -17044,6 +17146,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Input.dispatchTouchEvent": Input.dispatchTouchEventReturnValue;
     "Input.emulateTouchFromMouseEvent": Input.emulateTouchFromMouseEventReturnValue;
     "Input.setIgnoreInputEvents": Input.setIgnoreInputEventsReturnValue;
+    "Input.setInterceptDrags": Input.setInterceptDragsReturnValue;
     "Input.synthesizePinchGesture": Input.synthesizePinchGestureReturnValue;
     "Input.synthesizeScrollGesture": Input.synthesizeScrollGestureReturnValue;
     "Input.synthesizeTapGesture": Input.synthesizeTapGestureReturnValue;
