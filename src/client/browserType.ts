@@ -117,6 +117,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         perMessageDeflate: false,
         maxPayload: 256 * 1024 * 1024, // 256Mb,
         handshakeTimeout: this._timeoutSettings.timeout(params),
+        headers: params.extraHTTPHeaders,
       });
 
       // The 'ws' module in node sometimes sends us multiple messages in a single task.
@@ -133,9 +134,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         ws.send(JSON.stringify(message));
       };
       ws.addEventListener('message', event => {
-        waitForNextTask(() => connection.dispatch(JSON.parse(event.data)));
+        waitForNextTask(() => {
+          try {
+            connection.dispatch(JSON.parse(event.data));
+          } catch (e) {
+            ws.close();
+          }
+        });
       });
-
       return await new Promise<Browser>(async (fulfill, reject) => {
         if ((params as any).__testHookBeforeCreateBrowser) {
           try {

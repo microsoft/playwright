@@ -10902,6 +10902,11 @@ export interface ConnectOptions {
   wsEndpoint: string;
 
   /**
+   * Additional HTTP headers to be sent with web socket connect request. Optional.
+   */
+  extraHTTPHeaders?: { [key: string]: string; };
+
+  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
    * Defaults to 0.
    */

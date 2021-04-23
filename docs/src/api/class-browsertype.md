@@ -75,6 +75,7 @@ This methods attaches Playwright to an existing browser instance.
 * langs: js
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
+  - `extraHTTPHeaders` <[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
     can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
@@ -86,6 +87,12 @@ This methods attaches Playwright to an existing browser instance.
 - `wsEndpoint` <[string]>
 
 A browser websocket endpoint to connect to.
+
+### param: BrowserType.connect.extraHTTPHeaders
+* langs: java, python
+- `extraHTTPHeaders` <[string]>
+
+Additional HTTP headers to be sent with web socket connect request. Optional.
 
 ### option: BrowserType.connect.slowMo
 * langs: java, python

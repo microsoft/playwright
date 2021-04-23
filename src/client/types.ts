@@ -70,6 +70,7 @@ export type LaunchPersistentContextOptions = Omit<LaunchOptionsBase & BrowserCon
 
 export type ConnectOptions = {
   wsEndpoint: string,
+  extraHTTPHeaders?: { [key: string]: string; };
   slowMo?: number,
   timeout?: number,
   logger?: Logger,

@@ -60,6 +60,21 @@ test('should be able to connect two browsers at the same time', async ({browserT
   await browser2.close();
 });
 
+test('should send extra headers with connect request', async ({browserType, startRemoteServer, server}) => {
+  const [request] = await Promise.all([
+    server.waitForWebSocketConnectionRequest(),
+    browserType.connect({
+      wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+      extraHTTPHeaders: {
+        'User-Agent': 'Playwright',
+        'foo': 'bar',
+      }
+    }).catch(() => {})
+  ]);
+  expect(request.headers['user-agent']).toBe('Playwright');
+  expect(request.headers['foo']).toBe('bar');
+});
+
 test('disconnected event should be emitted when browser is closed or server is closed', async ({browserType, startRemoteServer}) => {
   const remoteServer = await startRemoteServer();
 
