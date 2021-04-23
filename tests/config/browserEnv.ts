@@ -252,6 +252,7 @@ export class BrowserEnv extends PlaywrightEnv implements Env<BrowserTestArgs> {
     return {
       ...result,
       browser: this._browser,
+      browserVersion: this._browserVersion,
       contextOptions: this._contextOptions as BrowserContextOptions,
       contextFactory,
     };

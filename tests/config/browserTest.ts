@@ -22,6 +22,7 @@ export { expect } from 'folio';
 
 export type BrowserTestArgs = PlaywrightTestArgs & {
   browser: Browser;
+  browserVersion: string;
   contextOptions: BrowserContextOptions;
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
