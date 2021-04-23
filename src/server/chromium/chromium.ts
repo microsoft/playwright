@@ -134,9 +134,6 @@ export class Chromium extends BrowserType {
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
-      // See http://crbug.com/1200964
-      if (process.platform === 'win32')
-        chromeArguments.push('--use-gl=swiftshader');
       chromeArguments.push(
           '--headless',
           '--hide-scrollbars',
