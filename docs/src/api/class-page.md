@@ -2902,19 +2902,39 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
   * alias-python: expect_request
 - returns: <[Request]>
 
-Waits for the matching request and returns it.
+Waits for the matching request and returns it.  See [waiting for event](./events.md#waiting-for-event) for more details about events.
 
 ```js
-const firstRequest = await page.waitForRequest('http://example.com/resource');
-const finalRequest = await page.waitForRequest(request => request.url() === 'http://example.com' && request.method() === 'GET');
-return firstRequest.url();
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the request.
+const [request] = await Promise.all([
+  // Waits for the next request with the specified url
+  page.waitForRequest('https://example.com/resource'),
+  // Triggers the request
+  page.click('button.triggers-request'),
+]);
+
+// Alternative way with a predicate.
+const [request] = await Promise.all([
+  // Waits for the next request matching some conditions
+  page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET'),
+  // Triggers the request
+  page.click('button.triggers-request'),
+]);
 ```
 
 ```java
-Request firstRequest = page.waitForRequest("http://example.com/resource");
-Object finalRequest = page.waitForRequest(
-  request -> "http://example.com".equals(request.url()) && "GET".equals(request.method()), () -> {});
-return firstRequest.url();
+// Waits for the next response with the specified url
+Request request = page.waitForRequest("https://example.com/resource", () -> {
+  // Triggers the request
+  page.click("button.triggers-request");
+});
+
+// Waits for the next request matching some conditions
+Request request = page.waitForRequest(request -> "https://example.com".equals(request.url()) && "GET".equals(request.method()), () -> {
+  // Triggers the request
+  page.click("button.triggers-request");
+});
 ```
 
 ```python async
@@ -2922,6 +2942,7 @@ async with page.expect_request("http://example.com/resource") as first:
     await page.click('button')
 first_request = await first.value
 
+# or with a lambda
 async with page.expect_request(lambda request: request.url == "http://example.com" and request.method == "get") as second:
     await page.click('img')
 second_request = await second.value
@@ -2932,6 +2953,7 @@ with page.expect_request("http://example.com/resource") as first:
     page.click('button')
 first_request = first.value
 
+# or with a lambda
 with page.expect_request(lambda request: request.url == "http://example.com" and request.method == "get") as second:
     page.click('img')
 second_request = second.value
@@ -2963,18 +2985,39 @@ changed by using the [`method: Page.setDefaultTimeout`] method.
   * alias-python: expect_response
 - returns: <[Response]>
 
-Returns the matched response.
+Returns the matched response. See [waiting for event](./events.md#waiting-for-event) for more details about events.
 
 ```js
-const firstResponse = await page.waitForResponse('https://example.com/resource');
-const finalResponse = await page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);
-return finalResponse.ok();
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the response.
+const [response] = await Promise.all([
+  // Waits for the next response with the specified url
+  page.waitForResponse('https://example.com/resource'),
+  // Triggers the response
+  page.click('button.triggers-response'),
+]);
+
+// Alternative way with a predicate.
+const [response] = await Promise.all([
+  // Waits for the next response matching some conditions
+  page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200),
+  // Triggers the response
+  page.click('button.triggers-response'),
+]);
 ```
 
 ```java
-Response firstResponse = page.waitForResponse("https://example.com/resource", () -> {});
-Response finalResponse = page.waitForResponse(response -> "https://example.com".equals(response.url()) && response.status() == 200, () -> {});
-return finalResponse.ok();
+// Waits for the next response with the specified url
+Response response = page.waitForResponse("https://example.com/resource", () -> {
+  // Triggers the response
+  page.click("button.triggers-response");
+});
+
+// Waits for the next response matching some conditions
+Response response = page.waitForResponse(response -> "https://example.com".equals(response.url()) && response.status() == 200, () -> {
+  // Triggers the response
+  page.click("button.triggers-response");
+});
 ```
 
 ```python async

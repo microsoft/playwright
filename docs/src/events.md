@@ -17,8 +17,11 @@ awaiting patterns.
 Wait for a request with the specified url:
 
 ```js
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the request.
 const [request] = await Promise.all([
   page.waitForRequest('**/*logo*.png'),
+  // This action triggers the request
   page.goto('https://wikipedia.org')
 ]);
 console.log(request.url());
@@ -49,8 +52,11 @@ print(first.value.url)
 Wait for popup window:
 
 ```js
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the popup.
 const [popup] = await Promise.all([
   page.waitForEvent('popup'),
+  // This action triggers the popup
   page.evaluate('window.open()')
 ]);
 await popup.goto('https://wikipedia.org');
