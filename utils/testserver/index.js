@@ -293,6 +293,12 @@ class TestServer {
     }
   }
 
+  waitForWebSocketConnectionRequest() {
+    return new Promise(fullfil => {
+      this._wsServer.once('connection', (ws, req) => fullfil(req));
+    });
+  }
+
   _onWebSocketConnection(ws) {
     ws.send('incoming');
   }

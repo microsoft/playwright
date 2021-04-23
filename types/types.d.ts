@@ -10878,6 +10878,11 @@ export interface ConnectOverCDPOptions {
   endpointURL: string;
 
   /**
+   * Additional HTTP headers to be sent with connect request. Optional.
+   */
+  headers?: { [key: string]: string; };
+
+  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
    * Defaults to 0.
    */
@@ -10900,6 +10905,11 @@ export interface ConnectOptions {
    * A browser websocket endpoint to connect to.
    */
   wsEndpoint: string;
+
+  /**
+   * Additional HTTP headers to be sent with web socket connect request. Optional.
+   */
+  headers?: { [key: string]: string; };
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.

@@ -75,6 +75,7 @@ This methods attaches Playwright to an existing browser instance.
 * langs: js
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
+  - `headers` <[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
     can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
@@ -86,6 +87,12 @@ This methods attaches Playwright to an existing browser instance.
 - `wsEndpoint` <[string]>
 
 A browser websocket endpoint to connect to.
+
+### param: BrowserType.connect.headers
+* langs: java, python
+- `headers` <[string]>
+
+Additional HTTP headers to be sent with web socket connect request. Optional.
 
 ### option: BrowserType.connect.slowMo
 * langs: java, python
@@ -117,6 +124,7 @@ Connecting over the Chrome DevTools Protocol is only supported for Chromium-base
 * langs: js
 - `params` <[Object]>
   - `endpointURL` <[string]> A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+  - `headers` <[Object]<[string], [string]>> Additional HTTP headers to be sent with connect request. Optional.
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
     can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
@@ -128,6 +136,12 @@ Connecting over the Chrome DevTools Protocol is only supported for Chromium-base
 - `endpointURL` <[string]>
 
 A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+
+### option: BrowserType.connectOverCDP.headers
+* langs: java, python
+- `headers` <[Object]<[string], [string]>>
+
+Additional HTTP headers to be sent with connect request. Optional.
 
 ### option: BrowserType.connectOverCDP.slowMo
 * langs: java, python
