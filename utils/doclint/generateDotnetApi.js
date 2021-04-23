@@ -597,7 +597,8 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
         const innerTypeName = translateType(type.union[1], parent, generateNameCallback);
         // if type is primitive, or an enum, then it's nullable
         if (innerTypeName === 'bool'
-          || innerTypeName === 'int') {
+          || innerTypeName === 'int'
+          || enumTypes.has(innerTypeName)) {
           return `${innerTypeName}?`;
         }
 
