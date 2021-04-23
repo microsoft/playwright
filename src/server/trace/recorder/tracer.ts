@@ -32,53 +32,18 @@ const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
 const envTrace = getFromENV('PWTRACE_RESOURCE_DIR');
 
 export class Tracer implements InstrumentationListener {
-  private _contextTracers = new Map<BrowserContext, ContextTracer>();
-
-  async onContextCreated(context: BrowserContext): Promise<void> {
-    const traceDir = context._options._traceDir;
-    if (!traceDir)
-      return;
-    const resourcesDir = envTrace || path.join(traceDir, 'resources');
-    const tracePath = path.join(traceDir, context._options._debugName!);
-    const contextTracer = new ContextTracer(context, resourcesDir, tracePath);
-    await contextTracer.start();
-    this._contextTracers.set(context, contextTracer);
-  }
-
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {
-    const contextTracer = this._contextTracers.get(context);
-    if (contextTracer) {
-      await contextTracer.dispose().catch(e => {});
-      this._contextTracers.delete(context);
-    }
-  }
-
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onBeforeInputAction(sdkObject, metadata, element);
-  }
-
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onBeforeCall(sdkObject, metadata);
-  }
-
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onAfterCall(sdkObject, metadata);
-  }
-
-  async onEvent(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?.onEvent(sdkObject, metadata);
-  }
-}
-
-class ContextTracer {
   private _contextId: string;
   private _appendEventChain: Promise<string>;
   private _snapshotter: PersistentSnapshotter;
   private _eventListeners: RegisteredListener[];
   private _disposed = false;
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata }>();
+  private _context: BrowserContext;
 
-  constructor(context: BrowserContext, resourcesDir: string, tracePrefix: string) {
+  constructor(context: BrowserContext, traceDir: string) {
+    this._context = context;
+    const resourcesDir = envTrace || path.join(traceDir, 'resources');
+    const tracePrefix = path.join(traceDir, context._options._debugName!);
     const traceFile = tracePrefix + '-actions.trace';
     this._contextId = 'context@' + createGuid();
     this._appendEventChain = mkdirIfNeeded(traceFile).then(() => traceFile);
@@ -99,10 +64,6 @@ class ContextTracer {
     ];
   }
 
-  async start() {
-    await this._snapshotter.start(false);
-  }
-
   _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
     if (!sdkObject.attribution.page)
       return;
@@ -111,16 +72,20 @@ class ContextTracer {
     this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName, element);
   }
 
-  onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+  async onContextCreated(): Promise<void> {
+    await this._snapshotter.start(false);
+  }
+
+  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
     this._captureSnapshot('before', sdkObject, metadata);
     this._pendingCalls.set(metadata.id, { sdkObject, metadata });
   }
 
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
     this._captureSnapshot('action', sdkObject, metadata, element);
   }
 
-  onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
     this._captureSnapshot('after', sdkObject, metadata);
     if (!sdkObject.attribution.page)
       return;
@@ -239,7 +204,7 @@ class ContextTracer {
     });
   }
 
-  async dispose() {
+  async onContextDestroyed() {
     this._disposed = true;
     helper.removeEventListeners(this._eventListeners);
     await this._snapshotter.dispose();

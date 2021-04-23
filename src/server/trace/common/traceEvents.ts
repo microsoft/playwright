@@ -63,7 +63,6 @@ export type ActionTraceEvent = {
   type: 'action' | 'event',
   contextId: string,
   metadata: CallMetadata,
-  snapshots?: { title: string, snapshotName: string }[],
 };
 
 export type DialogOpenedEvent = {

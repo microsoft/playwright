@@ -19,7 +19,7 @@ import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toS
 import { ActionInContext } from './codeGenerator';
 import { Action, actionTitle } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
-import deviceDescriptors = require('../../deviceDescriptors');
+import deviceDescriptors from '../../deviceDescriptors';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id = 'javascript';

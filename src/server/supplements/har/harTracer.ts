@@ -20,36 +20,16 @@ import { BrowserContext } from '../../browserContext';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
-import { InstrumentationListener } from '../../instrumentation';
 import * as har from './har';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-
-export class HarTracer implements InstrumentationListener {
-  private _contextTracers = new Map<BrowserContext, HarContextTracer>();
-
-  async onContextCreated(context: BrowserContext): Promise<void> {
-    if (!context._options.recordHar)
-      return;
-    const contextTracer = new HarContextTracer(context, context._options.recordHar);
-    this._contextTracers.set(context, contextTracer);
-  }
-
-  async onContextWillDestroy(context: BrowserContext): Promise<void> {
-    const contextTracer = this._contextTracers.get(context);
-    if (contextTracer) {
-      this._contextTracers.delete(context);
-      await contextTracer.flush();
-    }
-  }
-}
 
 type HarOptions = {
   path: string;
   omitContent?: boolean;
 };
 
-class HarContextTracer {
+export class HarTracer {
   private _options: HarOptions;
   private _log: har.Log;
   private _pageEntries = new Map<Page, har.Page>();

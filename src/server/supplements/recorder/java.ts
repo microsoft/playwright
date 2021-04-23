@@ -19,7 +19,7 @@ import { LanguageGenerator, LanguageGeneratorOptions, toSignalMap } from './lang
 import { ActionInContext } from './codeGenerator';
 import { Action, actionTitle } from './recorderActions';
 import { toModifiers } from './utils';
-import deviceDescriptors = require('../../deviceDescriptors');
+import deviceDescriptors from '../../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
 
 export class JavaLanguageGenerator implements LanguageGenerator {

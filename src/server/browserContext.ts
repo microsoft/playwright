@@ -27,7 +27,11 @@ import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 import path from 'path';
-import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
+import { CallMetadata, internalCallMetadata, createInstrumentation, SdkObject } from './instrumentation';
+import { Debugger } from './supplements/debugger';
+import { Tracer } from './trace/recorder/tracer';
+import { HarTracer } from './supplements/har/harTracer';
+import { RecorderSupplement } from './supplements/recorderSupplement';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -51,6 +55,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   private _origins = new Set<string>();
+  private _harTracer: HarTracer | undefined;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -60,6 +65,9 @@ export abstract class BrowserContext extends SdkObject {
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+
+    if (this._options.recordHar)
+      this._harTracer = new HarTracer(this, this._options.recordHar);
   }
 
   _setSelectors(selectors: Selectors) {
@@ -71,7 +79,31 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _initialize() {
-    await this.instrumentation.onContextCreated(this);
+    if (this.attribution.isInternal)
+      return;
+    // Create instrumentation per context.
+    this.instrumentation = createInstrumentation();
+
+    // Debugger will pause execution upon page.pause in headed mode.
+    const contextDebugger = new Debugger(this);
+    this.instrumentation.addListener(contextDebugger);
+
+    if (this._options._traceDir)
+      this.instrumentation.addListener(new Tracer(this, this._options._traceDir));
+
+
+    // When PWDEBUG=1, show inspector for each context.
+    if (debugMode() === 'inspector')
+      await RecorderSupplement.show(this, { pauseOnNextStatement: true });
+
+    // When paused, show inspector.
+    if (contextDebugger.isPaused())
+      RecorderSupplement.showInspector(this);
+    contextDebugger.on(Debugger.Events.PausedStateChanged, () => {
+      RecorderSupplement.showInspector(this);
+    });
+
+    await this.instrumentation.onContextCreated();
   }
 
   async _ensureVideosPath() {
@@ -231,7 +263,7 @@ export abstract class BrowserContext extends SdkObject {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      await this.instrumentation.onContextWillDestroy(this);
+      await this._harTracer?.flush();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
@@ -260,7 +292,7 @@ export abstract class BrowserContext extends SdkObject {
         await this._browser.close();
 
       // Bookkeeping.
-      await this.instrumentation.onContextDidDestroy(this);
+      await this.instrumentation.onContextDestroyed();
       this._didCloseInternal();
     }
     await this._closePromise;
