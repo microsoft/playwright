@@ -3172,12 +3172,26 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
-   * Waits for the matching request and returns it.
+   * Waits for the matching request and returns it.  See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details
+   * about events.
    * 
    * ```js
-   * const firstRequest = await page.waitForRequest('http://example.com/resource');
-   * const finalRequest = await page.waitForRequest(request => request.url() === 'http://example.com' && request.method() === 'GET');
-   * return firstRequest.url();
+   * // Note that Promise.all prevents a race condition
+   * // between clicking and waiting for the request.
+   * const [request] = await Promise.all([
+   *   // Waits for the next request with the specified url
+   *   page.waitForRequest('https://example.com/resource'),
+   *   // Triggers the request
+   *   page.click('button.triggers-request'),
+   * ]);
+   * 
+   * // Alternative way with a predicate.
+   * const [request] = await Promise.all([
+   *   // Waits for the next request matching some conditions
+   *   page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET'),
+   *   // Triggers the request
+   *   page.click('button.triggers-request'),
+   * ]);
    * ```
    * 
    * ```js
@@ -3197,12 +3211,25 @@ export interface Page {
   }): Promise<Request>;
 
   /**
-   * Returns the matched response.
+   * Returns the matched response. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details about events.
    * 
    * ```js
-   * const firstResponse = await page.waitForResponse('https://example.com/resource');
-   * const finalResponse = await page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);
-   * return finalResponse.ok();
+   * // Note that Promise.all prevents a race condition
+   * // between clicking and waiting for the response.
+   * const [response] = await Promise.all([
+   *   // Waits for the next response with the specified url
+   *   page.waitForResponse('https://example.com/resource'),
+   *   // Triggers the response
+   *   page.click('button.triggers-response'),
+   * ]);
+   * 
+   * // Alternative way with a predicate.
+   * const [response] = await Promise.all([
+   *   // Waits for the next response matching some conditions
+   *   page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200),
+   *   // Triggers the response
+   *   page.click('button.triggers-response'),
+   * ]);
    * ```
    * 
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Response] object.
