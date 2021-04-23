@@ -65,7 +65,7 @@ test('should send extra headers with connect request', async ({browserType, star
     server.waitForWebSocketConnectionRequest(),
     browserType.connect({
       wsEndpoint: `ws://localhost:${server.PORT}/ws`,
-      extraHTTPHeaders: {
+      headers: {
         'User-Agent': 'Playwright',
         'foo': 'bar',
       }

@@ -415,6 +415,9 @@ BrowserType:
       parameters:
         sdkLanguage: string
         endpointURL: string
+        headers:
+          type: array?
+          items: NameValue
         slowMo: number?
         timeout: number?
       returns:

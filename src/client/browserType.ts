@@ -26,7 +26,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, makeWaitForNextTask } from '../utils/utils';
+import { assert, headersObjectToArray, makeWaitForNextTask } from '../utils/utils';
 import { kBrowserClosedError } from '../utils/errors';
 import * as api from '../../types/types';
 import type { Playwright } from './playwright';
@@ -117,7 +117,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         perMessageDeflate: false,
         maxPayload: 256 * 1024 * 1024, // 256Mb,
         handshakeTimeout: this._timeoutSettings.timeout(params),
-        headers: params.extraHTTPHeaders,
+        headers: params.headers,
       });
 
       // The 'ws' module in node sometimes sends us multiple messages in a single task.
@@ -199,9 +199,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       throw new Error('Connecting over CDP is only supported in Chromium.');
     const logger = params.logger;
     return this._wrapApiCall('browserType.connectOverCDP', async (channel: channels.BrowserTypeChannel) => {
+      const headers = params.headers ? headersObjectToArray(params.headers) : undefined;
       const result = await channel.connectOverCDP({
         sdkLanguage: 'javascript',
         endpointURL: 'endpointURL' in params ? params.endpointURL : params.wsEndpoint,
+        headers,
         slowMo: params.slowMo,
         timeout: params.timeout
       });

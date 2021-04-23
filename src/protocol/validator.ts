@@ -249,6 +249,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserTypeConnectOverCDPParams = tObject({
     sdkLanguage: tString,
     endpointURL: tString,
+    headers: tOptional(tArray(tType('NameValue'))),
     slowMo: tOptional(tNumber),
     timeout: tOptional(tNumber),
   });

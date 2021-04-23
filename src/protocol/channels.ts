@@ -401,10 +401,12 @@ export type BrowserTypeLaunchPersistentContextResult = {
 export type BrowserTypeConnectOverCDPParams = {
   sdkLanguage: string,
   endpointURL: string,
+  headers?: NameValue[],
   slowMo?: number,
   timeout?: number,
 };
 export type BrowserTypeConnectOverCDPOptions = {
+  headers?: NameValue[],
   slowMo?: number,
   timeout?: number,
 };
