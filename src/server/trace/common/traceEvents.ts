@@ -60,7 +60,7 @@ export type ScreencastFrameTraceEvent = {
 
 export type ActionTraceEvent = {
   timestamp: number,
-  type: 'action',
+  type: 'action' | 'event',
   contextId: string,
   metadata: CallMetadata,
   snapshots?: { title: string, snapshotName: string }[],

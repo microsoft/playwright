@@ -33,7 +33,7 @@ export type Attribution = {
 };
 
 export type CallMetadata = {
-  id: number;
+  id: string;
   startTime: number;
   endTime: number;
   pauseStartTime?: number;
@@ -44,8 +44,10 @@ export type CallMetadata = {
   apiName?: string;
   stack?: StackFrame[];
   log: string[];
+  snapshots: { title: string, snapshotName: string }[];
   error?: string;
   point?: Point;
+  objectId?: string;
   pageId?: string;
   frameId?: string;
 };
@@ -71,9 +73,10 @@ export interface Instrumentation {
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
-  onAfterInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+
+  onEvent(sdkObject: SdkObject, metadata: CallMetadata): void;
 }
 
 export interface InstrumentationListener {
@@ -83,9 +86,10 @@ export interface InstrumentationListener {
 
   onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
-  onAfterInputAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onCallLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+
+  onEvent?(sdkObject: SdkObject, metadata: CallMetadata): void;
 }
 
 export function multiplexInstrumentation(listeners: InstrumentationListener[]): Instrumentation {
@@ -103,12 +107,13 @@ export function multiplexInstrumentation(listeners: InstrumentationListener[]): 
 
 export function internalCallMetadata(): CallMetadata {
   return {
-    id: 0,
+    id: '',
     startTime: 0,
     endTime: 0,
     type: 'Internal',
     method: '',
     params: {},
     log: [],
+    snapshots: []
   };
 }

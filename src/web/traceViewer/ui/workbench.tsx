@@ -44,6 +44,7 @@ export const Workbench: React.FunctionComponent<{
     const actions: ActionEntry[] = [];
     for (const page of context.pages)
       actions.push(...page.actions);
+    actions.sort((a, b) => a.timestamp - b.timestamp);
     return actions;
   }, [context]);
 

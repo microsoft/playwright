@@ -84,9 +84,8 @@ export class TraceModel {
       case 'action': {
         const metadata = event.metadata;
         const { pageEntry } = this.pageEntries.get(metadata.pageId!)!;
-        const actionId = event.contextId + '/' + metadata.pageId + '/' + pageEntry.actions.length;
         const action: ActionEntry = {
-          actionId,
+          actionId: metadata.id,
           resources: [],
           ...event,
         };
@@ -105,28 +104,6 @@ export class TraceModel {
     const contextEntry = this.contextEntries.get(event.contextId)!;
     contextEntry.startTime = Math.min(contextEntry.startTime, event.timestamp);
     contextEntry.endTime = Math.max(contextEntry.endTime, event.timestamp);
-  }
-
-  actionById(actionId: string): { context: ContextEntry, page: PageEntry, action: ActionEntry } {
-    const [contextId, pageId, actionIndex] = actionId.split('/');
-    const context = this.contextEntries.get(contextId)!;
-    const page = context.pages.find(entry => entry.created.pageId === pageId)!;
-    const action = page.actions[+actionIndex];
-    return { context, page, action };
-  }
-
-  findPage(pageId: string): { contextEntry: ContextEntry | undefined, pageEntry: PageEntry | undefined } {
-    let contextEntry;
-    let pageEntry;
-    for (const c of this.contextEntries.values()) {
-      for (const p of c.pages) {
-        if (p.created.pageId === pageId) {
-          contextEntry = c;
-          pageEntry = p;
-        }
-      }
-    }
-    return { contextEntry, pageEntry };
   }
 }
 

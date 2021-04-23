@@ -68,7 +68,7 @@ export const SourceTab: React.FunctionComponent<{
     return value;
   }, [stackInfo, selectedFrame], '');
 
-  const targetLine = typeof stackInfo === 'string' ? 0 : stackInfo.frames[selectedFrame].line || 0;
+  const targetLine = typeof stackInfo === 'string' ? 0 : stackInfo.frames[selectedFrame]?.line || 0;
 
   const targetLineRef = React.createRef<HTMLDivElement>();
   React.useLayoutEffect(() => {

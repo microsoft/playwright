@@ -33,7 +33,7 @@ export type UIState = {
 export type CallLogStatus = 'in-progress' | 'done' | 'error' | 'paused';
 
 export type CallLog = {
-  id: number;
+  id: string;
   title: string;
   messages: string[];
   status: CallLogStatus;
