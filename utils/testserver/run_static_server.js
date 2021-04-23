@@ -20,8 +20,8 @@ const {TestServer} = require('.');
 
 const port = 8907;
 const httpsPort = 8908;
-const assetsPath = path.join(__dirname, 'assets');
-const cachedPath = path.join(__dirname, 'assets', 'cached');
+const assetsPath = path.join(__dirname, '../../tests/assets');
+const cachedPath = path.join(__dirname, '../../tests/assets/cached');
 
 Promise.all([
   TestServer.create(assetsPath, port),
