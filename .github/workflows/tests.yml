@@ -28,7 +28,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
@@ -56,7 +56,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
@@ -83,7 +83,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps
@@ -128,7 +128,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
@@ -157,7 +157,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
@@ -185,7 +185,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
@@ -238,7 +238,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - name: Install Chrome Stable
       run: sudo apt install google-chrome-stable
     - run: npm ci
@@ -271,7 +271,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -298,7 +298,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -323,7 +323,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -353,7 +353,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -379,7 +379,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -406,7 +406,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -430,7 +430,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium

@@ -144,7 +144,7 @@ it('should work when subframe issues window.stop()', async ({page, server}) => {
   server.setRoute('/frames/style.css', (req, res) => {});
   const navigationPromise = page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = await new Promise<Frame>(f => page.once('frameattached', f));
-  await new Promise(fulfill => page.on('framenavigated', f => {
+  await new Promise<void>(fulfill => page.on('framenavigated', f => {
     if (f === frame)
       fulfill();
   }));

@@ -50,7 +50,7 @@ export function expectedSSLError(browserName: string): string {
     if (process.platform === 'darwin')
       expectedSSLError = 'The certificate for this server is invalid';
     else if (process.platform === 'win32')
-      expectedSSLError = 'SSL peer certificate or SSH remote key was not OK';
+      expectedSSLError = 'SSL connect error';
     else
       expectedSSLError = 'Unacceptable TLS certificate';
   } else {
