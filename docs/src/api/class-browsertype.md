@@ -139,7 +139,7 @@ A CDP websocket endpoint or http url to connect to. For example `http://localhos
 
 ### option: BrowserType.connectOverCDP.headers
 * langs: java, python
-  - `headers` <[Object]<[string], [string]>>
+- `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with connect request. Optional.
 
