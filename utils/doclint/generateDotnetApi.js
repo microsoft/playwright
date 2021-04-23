@@ -288,7 +288,8 @@ function renderMember(member, parent, out) {
       let propertyOrigin = member.name;
       if (member.type.expression === '[string]|[float]')
         propertyOrigin = `${member.name}String`;
-      output(`[JsonPropertyName("${propertyOrigin}")]`)
+      if(!member.clazz)
+        output(`[JsonPropertyName("${propertyOrigin}")]`)
       if (parent && member && member.name === 'children') {  // this is a special hack for Accessibility
         console.warn(`children property found in ${parent.name}, assuming array.`);
         type = `IEnumerable<${parent.name}>`;
@@ -296,7 +297,10 @@ function renderMember(member, parent, out) {
 
       if(!type.endsWith('?') && !member.required && nullableTypes.includes(type))
         type = `${type}?`;
-      output(`public ${type} ${name} { get; set; }`);
+      if(member.clazz)
+        output(`public ${type} ${name} { get; }`);
+      else
+        output(`public ${type} ${name} { get; set; }`);
     } else {
       throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
     }
