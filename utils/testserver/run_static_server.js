@@ -16,7 +16,7 @@
  */
 
 const path = require('path');
-const {TestServer} = require('../utils/testserver/');
+const {TestServer} = require('.');
 
 const port = 8907;
 const httpsPort = 8908;
