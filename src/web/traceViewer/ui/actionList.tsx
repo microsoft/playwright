@@ -80,7 +80,7 @@ export const ActionList: React.FC<ActionListProps> = ({
           onMouseLeave={() => (highlightedAction === actionEntry) && onHighlighted(undefined)}
         >
           <div className={'action-error codicon codicon-issues'} hidden={!metadata.error} />
-          <div className='action-title'>{metadata.apiName}</div>
+          <div className='action-title'>{metadata.apiName || metadata.method}</div>
           {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
           {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
         </div>;

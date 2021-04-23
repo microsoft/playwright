@@ -54,26 +54,20 @@ export class Tracer implements InstrumentationListener {
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('action', sdkObject, metadata, element);
+    this._contextTracers.get(sdkObject.attribution.context!)?.onBeforeInputAction(sdkObject, metadata, element);
   }
 
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('before', sdkObject, metadata, element);
+  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?.onBeforeCall(sdkObject, metadata);
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('after', sdkObject, metadata);
     this._contextTracers.get(sdkObject.attribution.context!)?.onAfterCall(sdkObject, metadata);
   }
-}
 
-const snapshotsSymbol = Symbol('snapshots');
-
-// This is an official way to pass snapshots between onBefore/AfterInputAction and onAfterCall.
-function snapshotsForMetadata(metadata: CallMetadata): { title: string, snapshotName: string }[] {
-  if (!(metadata as any)[snapshotsSymbol])
-    (metadata as any)[snapshotsSymbol] = [];
-  return (metadata as any)[snapshotsSymbol];
+  async onEvent(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    this._contextTracers.get(sdkObject.attribution.context!)?.onEvent(sdkObject, metadata);
+  }
 }
 
 class ContextTracer {
@@ -82,6 +76,7 @@ class ContextTracer {
   private _snapshotter: PersistentSnapshotter;
   private _eventListeners: RegisteredListener[];
   private _disposed = false;
+  private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata }>();
 
   constructor(context: BrowserContext, resourcesDir: string, tracePrefix: string) {
     const traceFile = tracePrefix + '-actions.trace';
@@ -108,23 +103,45 @@ class ContextTracer {
     await this._snapshotter.start(false);
   }
 
-  async _captureSnapshot(name: 'before' | 'after' | 'action', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
+  _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
     if (!sdkObject.attribution.page)
       return;
     const snapshotName = `${name}@${metadata.id}`;
-    snapshotsForMetadata(metadata).push({ title: name, snapshotName });
+    metadata.snapshots.push({ title: name, snapshotName });
     this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName, element);
   }
 
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    this._captureSnapshot('before', sdkObject, metadata);
+    this._pendingCalls.set(metadata.id, { sdkObject, metadata });
+  }
+
+  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
+    this._captureSnapshot('action', sdkObject, metadata, element);
+  }
+
+  onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    this._captureSnapshot('after', sdkObject, metadata);
     if (!sdkObject.attribution.page)
       return;
     const event: trace.ActionTraceEvent = {
-      timestamp: monotonicTime(),
+      timestamp: metadata.startTime,
       type: 'action',
       contextId: this._contextId,
       metadata,
-      snapshots: snapshotsForMetadata(metadata),
+    };
+    this._appendTraceEvent(event);
+    this._pendingCalls.delete(metadata.id);
+  }
+
+  onEvent(sdkObject: SdkObject, metadata: CallMetadata) {
+    if (!sdkObject.attribution.page)
+      return;
+    const event: trace.ActionTraceEvent = {
+      timestamp: metadata.startTime,
+      type: 'event',
+      contextId: this._contextId,
+      metadata,
     };
     this._appendTraceEvent(event);
   }
@@ -226,6 +243,8 @@ class ContextTracer {
     this._disposed = true;
     helper.removeEventListeners(this._eventListeners);
     await this._snapshotter.dispose();
+    for (const { sdkObject, metadata } of this._pendingCalls.values())
+      this.onAfterCall(sdkObject, metadata);
     const event: trace.ContextDestroyedTraceEvent = {
       timestamp: monotonicTime(),
       type: 'context-destroyed',

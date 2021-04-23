@@ -56,9 +56,9 @@ export class RecorderSupplement {
   private _recorderSources: Source[];
   private _userSources = new Map<string, Source>();
   private _snapshotter: InMemorySnapshotter;
-  private _hoveredSnapshot: { callLogId: number, phase: 'before' | 'after' | 'action' } | undefined;
+  private _hoveredSnapshot: { callLogId: string, phase: 'before' | 'after' | 'action' } | undefined;
   private _snapshots = new Set<string>();
-  private _allMetadatas = new Map<number, CallMetadata>();
+  private _allMetadatas = new Map<string, CallMetadata>();
   private _contextDebugger: ContextDebugger;
 
   static show(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<RecorderSupplement> {

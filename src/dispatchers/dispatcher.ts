@@ -77,7 +77,7 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
 
     (object as any)[dispatcherSymbol] = this;
     if (this._parent)
-      this._connection.sendMessageToClient(this._parent._guid, '__create__', { type, initializer, guid });
+      this._connection.sendMessageToClient(this._parent._guid, type, '__create__', { type, initializer, guid });
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
@@ -87,7 +87,8 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
       // Just ignore this event outside of tests.
       return;
     }
-    this._connection.sendMessageToClient(this._guid, method, params);
+    const sdkObject = this._object instanceof SdkObject ? this._object : undefined;
+    this._connection.sendMessageToClient(this._guid, this._type, method, params, sdkObject);
   }
 
   _dispose() {
@@ -105,7 +106,7 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
     this._dispatchers.clear();
 
     if (this._isScope)
-      this._connection.sendMessageToClient(this._guid, '__dispose__', {});
+      this._connection.sendMessageToClient(this._guid, this._type, '__dispose__', {});
   }
 
   _debugScopeState(): any {
@@ -135,8 +136,25 @@ export class DispatcherConnection {
   private _validateMetadata: (metadata: any) => { stack?: StackFrame[] };
   private _waitOperations = new Map<string, CallMetadata>();
 
-  sendMessageToClient(guid: string, method: string, params: any) {
-    this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params) });
+  sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
+    params = this._replaceDispatchersWithGuids(params);
+    if (sdkObject) {
+      const eventMetadata: CallMetadata = {
+        id: `event@${++lastEventId}`,
+        objectId: sdkObject?.guid,
+        pageId: sdkObject?.attribution.page?.guid,
+        frameId: sdkObject?.attribution.frame?.guid,
+        startTime: monotonicTime(),
+        endTime: 0,
+        type,
+        method,
+        params: params || {},
+        log: [],
+        snapshots: []
+      };
+      sdkObject.instrumentation.onEvent(sdkObject, eventMetadata);
+    }
+    this.onmessage({ guid, method, params });
   }
 
   constructor() {
@@ -200,8 +218,9 @@ export class DispatcherConnection {
 
     const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
     let callMetadata: CallMetadata = {
-      id,
+      id: `call@${id}`,
       ...validMetadata,
+      objectId: sdkObject?.guid,
       pageId: sdkObject?.attribution.page?.guid,
       frameId: sdkObject?.attribution.frame?.guid,
       startTime: monotonicTime(),
@@ -210,6 +229,7 @@ export class DispatcherConnection {
       method,
       params: params || {},
       log: [],
+      snapshots: []
     };
 
     try {
@@ -295,3 +315,5 @@ function formatLogRecording(log: string[]): string {
   const rightLength = headerLength - header.length - leftLength;
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
+
+let lastEventId = 0;
