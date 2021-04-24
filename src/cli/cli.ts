@@ -235,9 +235,6 @@ async function launchContext(options: Options, headless: boolean): Promise<{ bro
   if (contextOptions.isMobile && browserType.name() === 'firefox')
     contextOptions.isMobile = undefined;
 
-  if (process.env.PWTRACE)
-    (contextOptions as any)._traceDir = path.join(process.cwd(), '.trace');
-
   // Proxy
 
   if (options.proxyServer) {
@@ -365,8 +362,6 @@ async function open(options: Options, url: string | undefined, language: string)
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS);
-  if (process.env.PWTRACE)
-    contextOptions._traceDir = path.join(process.cwd(), '.trace');
   await context._enableRecorder({
     language,
     launchOptions,

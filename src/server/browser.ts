@@ -43,6 +43,7 @@ export type BrowserOptions = PlaywrightOptions & {
   isChromium: boolean,
   channel?: types.BrowserChannel,
   downloadsPath?: string,
+  traceDir?: string,
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,

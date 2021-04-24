@@ -121,10 +121,12 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
     require('../../lib/utils/utils').setUnderTest();
     this._playwright = await this._mode.setup(workerInfo);
     this._browserType = this._playwright[this._browserName];
-    this._browserOptions = {
+    const options = {
       ...this._options,
+      _traceDir: this._options.traceDir,
       handleSIGINT: false,
     };
+    this._browserOptions = options;
   }
 
   private async _createUserDataDir() {
@@ -169,8 +171,6 @@ export class PlaywrightEnv implements Env<PlaywrightTestArgs> {
       testInfo.data.mode = this._options.mode;
     if (this._options.video)
       testInfo.data.video = true;
-    if (this._options.traceDir)
-      testInfo.data.trace = true;
     return {
       playwright: this._playwright,
       browserName: this._browserName,
@@ -236,7 +236,6 @@ export class BrowserEnv extends PlaywrightEnv implements Env<BrowserTestArgs> {
     const debugName = path.relative(testInfo.config.outputDir, testInfo.outputPath('')).replace(/[\/\\]/g, '-');
     const contextOptions = {
       recordVideo: this._options.video ? { dir: testInfo.outputPath('') } : undefined,
-      _traceDir: this._options.traceDir,
       _debugName: debugName,
       ...this._contextOptions,
     } as BrowserContextOptions;

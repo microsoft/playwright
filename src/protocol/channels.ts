@@ -226,6 +226,7 @@ export type BrowserTypeLaunchParams = {
     password?: string,
   },
   downloadsPath?: string,
+  _traceDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   slowMo?: number,
@@ -250,6 +251,7 @@ export type BrowserTypeLaunchOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  _traceDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   slowMo?: number,
@@ -277,6 +279,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     password?: string,
   },
   downloadsPath?: string,
+  _traceDir?: string,
   chromiumSandbox?: boolean,
   sdkLanguage: string,
   noDefaultViewport?: boolean,
@@ -311,7 +314,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -347,6 +349,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  _traceDir?: string,
   chromiumSandbox?: boolean,
   noDefaultViewport?: boolean,
   viewport?: {
@@ -380,7 +383,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -470,7 +472,6 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -527,7 +528,6 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -610,6 +610,8 @@ export interface BrowserContextChannel extends Channel {
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
+  startTracing(params?: BrowserContextStartTracingParams, metadata?: Metadata): Promise<BrowserContextStartTracingResult>;
+  stopTracing(params?: BrowserContextStopTracingParams, metadata?: Metadata): Promise<BrowserContextStopTracingResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -786,6 +788,12 @@ export type BrowserContextNewCDPSessionOptions = {
 export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
+export type BrowserContextStartTracingParams = {};
+export type BrowserContextStartTracingOptions = {};
+export type BrowserContextStartTracingResult = void;
+export type BrowserContextStopTracingParams = {};
+export type BrowserContextStopTracingOptions = {};
+export type BrowserContextStopTracingResult = void;
 
 // ----------- Page -----------
 export type PageInitializer = {
@@ -2850,7 +2858,6 @@ export type AndroidDeviceLaunchBrowserParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -2895,7 +2902,6 @@ export type AndroidDeviceLaunchBrowserOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,

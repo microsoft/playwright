@@ -18,7 +18,6 @@ import { EventEmitter } from 'events';
 import { debugMode, isUnderTest, monotonicTime } from '../../utils/utils';
 import { BrowserContext } from '../browserContext';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
-import * as consoleApiSource from '../../generated/consoleApiSource';
 import { debugLogger } from '../../utils/debugLogger';
 
 const symbol = Symbol('Debugger');
@@ -46,11 +45,6 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     if (!context)
       return;
     return (context as any)[symbol] as Debugger | undefined;
-  }
-
-  async onContextCreated() {
-    if (debugMode() === 'console')
-      await this._context.extendInjectedScript(consoleApiSource.source);
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {

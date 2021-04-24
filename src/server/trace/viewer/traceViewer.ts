@@ -18,11 +18,10 @@ import fs from 'fs';
 import path from 'path';
 import { createPlaywright } from '../../playwright';
 import * as util from 'util';
-import { TraceModel } from './traceModel';
+import { PersistentSnapshotStorage, TraceModel } from './traceModel';
 import { TraceEvent } from '../common/traceEvents';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
-import { PersistentSnapshotStorage } from '../../snapshot/snapshotStorage';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { isUnderTest } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
@@ -51,9 +50,9 @@ class TraceViewer {
     // - "/snapshot/pageId/..." - actual snapshot html.
     // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
     //   and translates them into "/resources/<resourceId>".
-    const actionTraces = fs.readdirSync(traceDir).filter(name => name.endsWith('-actions.trace'));
+    const actionTraces = fs.readdirSync(traceDir).filter(name => name.endsWith('.trace'));
     const debugNames = actionTraces.map(name => {
-      const tracePrefix = path.join(traceDir, name.substring(0, name.indexOf('-actions.trace')));
+      const tracePrefix = path.join(traceDir, name.substring(0, name.indexOf('.trace')));
       return path.basename(tracePrefix);
     });
 
@@ -76,12 +75,11 @@ class TraceViewer {
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
       (async () => {
-        await snapshotStorage.load(tracePrefix);
-        const traceContent = await fsReadFileAsync(tracePrefix + '-actions.trace', 'utf8');
+        const traceContent = await fsReadFileAsync(tracePrefix + '.trace', 'utf8');
         const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
-        const model = new TraceModel();
+        const model = new TraceModel(snapshotStorage);
         model.appendEvents(events, snapshotStorage);
-        response.end(JSON.stringify(model.contextEntries.values().next().value));
+        response.end(JSON.stringify(model.contextEntry));
       })().catch(e => console.error(e));
       return true;
     };
