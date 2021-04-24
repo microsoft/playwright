@@ -158,11 +158,16 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };
   }
 
-  async startTracing(params: channels.BrowserContextStartTracingParams): Promise<void> {
-    await this._context.startTracing();
+  async tracingStart(params: channels.BrowserContextTracingStartParams): Promise<channels.BrowserContextTracingStartResult> {
+    await this._context.tracing.start(params);
   }
 
-  async stopTracing(): Promise<channels.BrowserContextStopTracingResult> {
-    await this._context.stopTracing();
+  async tracingStop(params: channels.BrowserContextTracingStopParams): Promise<channels.BrowserContextTracingStopResult> {
+    await this._context.tracing.stop();
+  }
+
+  async tracingExport(params: channels.BrowserContextTracingExportParams): Promise<channels.BrowserContextTracingExportResult> {
+    const artifact = await this._context.tracing.export();
+    return { artifact: new ArtifactDispatcher(this._scope, artifact) };
   }
 }
