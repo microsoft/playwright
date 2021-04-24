@@ -103,18 +103,12 @@ const emptyContext: ContextEntry = {
   endTime: now,
   created: {
     timestamp: now,
-    type: 'context-created',
+    type: 'context-metadata',
     browserName: '',
-    contextId: '<empty>',
     deviceScaleFactor: 1,
     isMobile: false,
     viewportSize: { width: 1280, height: 800 },
     debugName: '<empty>',
-  },
-  destroyed: {
-    timestamp: now,
-    type: 'context-destroyed',
-    contextId: '<empty>',      
   },
   pages: []
 };

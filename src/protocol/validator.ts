@@ -172,6 +172,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
+    _traceDir: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
     firefoxUserPrefs: tOptional(tAny),
     slowMo: tOptional(tNumber),
@@ -196,6 +197,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
+    _traceDir: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
     sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
@@ -230,7 +232,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceDir: tOptional(tString),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
@@ -289,7 +290,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceDir: tOptional(tString),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
@@ -385,6 +385,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });
+  scheme.BrowserContextStartTracingParams = tOptional(tObject({}));
+  scheme.BrowserContextStopTracingParams = tOptional(tObject({}));
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });
@@ -1091,7 +1093,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceDir: tOptional(tString),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,

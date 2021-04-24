@@ -157,4 +157,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };
   }
+
+  async startTracing(params: channels.BrowserContextStartTracingParams): Promise<void> {
+    await this._context.startTracing();
+  }
+
+  async stopTracing(): Promise<channels.BrowserContextStopTracingResult> {
+    await this._context.stopTracing();
+  }
 }

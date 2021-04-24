@@ -18,41 +18,35 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
-import { BrowserContext } from '../browserContext';
-import { Page } from '../page';
-import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
-import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { ElementHandle } from '../dom';
-
+import { BrowserContext } from '../../browserContext';
+import { Page } from '../../page';
+import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
+import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
+import { ElementHandle } from '../../dom';
+import { TraceEvent } from '../common/traceEvents';
+import { monotonicTime } from '../../../utils/utils';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
-const kSnapshotInterval = 100;
-
-export class PersistentSnapshotter extends EventEmitter implements SnapshotterDelegate {
+export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegate {
   private _snapshotter: Snapshotter;
   private _resourcesDir: string;
   private _writeArtifactChain = Promise.resolve();
-  private _networkTrace: string;
-  private _snapshotTrace: string;
+  private _appendTraceEvent: (traceEvent: TraceEvent) => void;
+  private _context: BrowserContext;
 
-  constructor(context: BrowserContext, tracePrefix: string, resourcesDir: string) {
+  constructor(context: BrowserContext, resourcesDir: string, appendTraceEvent: (traceEvent: TraceEvent) => void) {
     super();
+    this._context = context;
     this._resourcesDir = resourcesDir;
-    this._networkTrace = tracePrefix + '-network.trace';
-    this._snapshotTrace = tracePrefix + '-dom.trace';
     this._snapshotter = new Snapshotter(context, this);
+    this._appendTraceEvent = appendTraceEvent;
+    this._writeArtifactChain = fsMkdirAsync(resourcesDir, { recursive: true });
   }
 
-  async start(autoSnapshots: boolean): Promise<void> {
-    await fsMkdirAsync(this._resourcesDir, {recursive: true}).catch(() => {});
-    await fsAppendFileAsync(this._networkTrace, Buffer.from([]));
-    await fsAppendFileAsync(this._snapshotTrace, Buffer.from([]));
+  async start(): Promise<void> {
     await this._snapshotter.initialize();
-    if (autoSnapshots)
-      await this._snapshotter.setAutoSnapshotInterval(kSnapshotInterval);
   }
 
   async dispose() {
@@ -70,15 +64,19 @@ export class PersistentSnapshotter extends EventEmitter implements SnapshotterDe
     });
   }
 
-  onResourceSnapshot(resource: ResourceSnapshot): void {
-    this._writeArtifactChain = this._writeArtifactChain.then(async () => {
-      await fsAppendFileAsync(this._networkTrace, JSON.stringify(resource) + '\n');
+  onResourceSnapshot(snapshot: ResourceSnapshot): void {
+    this._appendTraceEvent({
+      timestamp: monotonicTime(),
+      type: 'resource-snapshot',
+      snapshot,
     });
   }
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
-    this._writeArtifactChain = this._writeArtifactChain.then(async () => {
-      await fsAppendFileAsync(this._snapshotTrace, JSON.stringify(snapshot) + '\n');
+    this._appendTraceEvent({
+      timestamp: monotonicTime(),
+      type: 'frame-snapshot',
+      snapshot,
     });
   }
 }

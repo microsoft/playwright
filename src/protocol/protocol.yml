@@ -260,6 +260,7 @@ LaunchOptions:
         username: string?
         password: string?
     downloadsPath: string?
+    _traceDir: string?
     chromiumSandbox: boolean?
 
 
@@ -312,7 +313,6 @@ ContextOptions:
       - light
       - no-preference
     acceptDownloads: boolean?
-    _traceDir: string?
     _debugName: string?
     recordVideo:
       type: object?
@@ -600,6 +600,10 @@ BrowserContext:
         page: Page
       returns:
         session: CDPSession
+
+    startTracing:
+
+    stopTracing:
 
   events:
 
@@ -2321,7 +2325,6 @@ AndroidDevice:
           - light
           - no-preference
         acceptDownloads: boolean?
-        _traceDir: string?
         _debugName: string?
         recordVideo:
           type: object?

@@ -247,7 +247,6 @@ export type BrowserContextOptions = {
     path: string
   },
   proxy?: ProxySettings,
-  _traceDir?: string,
   _debugName?: string,
 };
 
@@ -273,6 +272,7 @@ type LaunchOptionsBase = {
   chromiumSandbox?: boolean,
   slowMo?: number,
   useWebSocket?: boolean,
+  _traceDir?: string,
 };
 export type LaunchOptions = LaunchOptionsBase & {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },

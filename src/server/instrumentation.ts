@@ -69,8 +69,7 @@ export class SdkObject extends EventEmitter {
 
 export interface Instrumentation {
   addListener(listener: InstrumentationListener): void;
-  onContextCreated(): Promise<void>;
-  onContextDestroyed(): Promise<void>;
+  removeListener(listener: InstrumentationListener): void;
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
@@ -79,8 +78,6 @@ export interface Instrumentation {
 }
 
 export interface InstrumentationListener {
-  onContextCreated?(): Promise<void>;
-  onContextDestroyed?(): Promise<void>;
   onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onCallLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
@@ -94,6 +91,8 @@ export function createInstrumentation(): Instrumentation {
     get: (obj: any, prop: string) => {
       if (prop === 'addListener')
         return (listener: InstrumentationListener) => listeners.push(listener);
+      if (prop === 'removeListener')
+        return (listener: InstrumentationListener) => listeners.splice(listeners.indexOf(listener), 1);
       if (!prop.startsWith('on'))
         return obj[prop];
       return async (...params: any[]) => {
