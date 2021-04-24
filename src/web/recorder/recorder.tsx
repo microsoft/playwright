@@ -34,7 +34,7 @@ declare global {
 export interface RecorderProps {
   sources: Source[],
   paused: boolean,
-  log: Map<number, CallLog>,
+  log: Map<string, CallLog>,
   mode: Mode,
   initialSelector?: string,
 }

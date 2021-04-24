@@ -23,15 +23,15 @@ it('should scope context handles', async ({browserType, browserOptions, server})
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
-      { _guid: 'Android', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [
-        { _guid: 'Browser', objects: [] }
+      { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [
+        { _guid: 'browser', objects: [] }
       ] },
-      { _guid: 'Electron', objects: [] },
+      { _guid: 'electron', objects: [] },
       { _guid: 'Playwright', objects: [] },
-      { _guid: 'Selectors', objects: [] },
+      { _guid: 'selectors', objects: [] },
     ]
   };
   await expectScopeState(browser, GOLDEN_PRECONDITION);
@@ -42,23 +42,23 @@ it('should scope context handles', async ({browserType, browserOptions, server})
   await expectScopeState(browser, {
     _guid: '',
     objects: [
-      { _guid: 'Android', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [
-        { _guid: 'Browser', objects: [
-          { _guid: 'BrowserContext', objects: [
-            { _guid: 'Frame', objects: [] },
-            { _guid: 'Page', objects: [
-              { _guid: 'Request', objects: [] },
-              { _guid: 'Response', objects: [] },
+      { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [
+        { _guid: 'browser', objects: [
+          { _guid: 'browser-context', objects: [
+            { _guid: 'frame', objects: [] },
+            { _guid: 'page', objects: [
+              { _guid: 'request', objects: [] },
+              { _guid: 'response', objects: [] },
             ]},
           ]},
         ] },
       ] },
-      { _guid: 'Electron', objects: [] },
+      { _guid: 'electron', objects: [] },
       { _guid: 'Playwright', objects: [] },
-      { _guid: 'Selectors', objects: [] },
+      { _guid: 'selectors', objects: [] },
     ]
   });
 
@@ -74,15 +74,15 @@ it('should scope CDPSession handles', async ({browserType, browserOptions, brows
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
-      { _guid: 'Android', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [
-        { _guid: 'Browser', objects: [] }
+      { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [
+        { _guid: 'browser', objects: [] }
       ] },
-      { _guid: 'Electron', objects: [] },
+      { _guid: 'electron', objects: [] },
       { _guid: 'Playwright', objects: [] },
-      { _guid: 'Selectors', objects: [] },
+      { _guid: 'selectors', objects: [] },
     ]
   };
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
@@ -91,17 +91,17 @@ it('should scope CDPSession handles', async ({browserType, browserOptions, brows
   await expectScopeState(browserType, {
     _guid: '',
     objects: [
-      { _guid: 'Android', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [
-        { _guid: 'Browser', objects: [
-          { _guid: 'CDPSession', objects: [] },
+      { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [
+        { _guid: 'browser', objects: [
+          { _guid: 'cdp-session', objects: [] },
         ] },
       ] },
-      { _guid: 'Electron', objects: [] },
+      { _guid: 'electron', objects: [] },
       { _guid: 'Playwright', objects: [] },
-      { _guid: 'Selectors', objects: [] },
+      { _guid: 'selectors', objects: [] },
     ]
   });
 
@@ -115,13 +115,13 @@ it('should scope browser handles', async ({browserType, browserOptions}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
-      { _guid: 'Android', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'Electron', objects: [] },
+      { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'electron', objects: [] },
       { _guid: 'Playwright', objects: [] },
-      { _guid: 'Selectors', objects: [] },
+      { _guid: 'selectors', objects: [] },
     ]
   };
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
@@ -131,20 +131,20 @@ it('should scope browser handles', async ({browserType, browserOptions}) => {
   await expectScopeState(browserType, {
     _guid: '',
     objects: [
-      { _guid: 'Android', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [
+      { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [
         {
-          _guid: 'Browser', objects: [
-            { _guid: 'BrowserContext', objects: [] }
+          _guid: 'browser', objects: [
+            { _guid: 'browser-context', objects: [] }
           ]
         },
       ]
       },
-      { _guid: 'Electron', objects: [] },
+      { _guid: 'electron', objects: [] },
       { _guid: 'Playwright', objects: [] },
-      { _guid: 'Selectors', objects: [] },
+      { _guid: 'selectors', objects: [] },
     ]
   });
 

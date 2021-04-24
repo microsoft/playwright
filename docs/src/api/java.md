@@ -58,12 +58,6 @@ page.navigate("https://www.w3.org/");
 playwright.close();
 ```
 
-### param: BrowserType.connectOverCDP.endpointURL
-* langs: java
-- `endpointURL` <[string]>
-
-A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
-
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
@@ -93,20 +87,6 @@ A CDP websocket endpoint or http url to connect to. For example `http://localhos
 ### param: WebSocket.waitForFrameSent.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
-
-### option: BrowserType.connectOverCDP.slowMo
-* langs: java
-- `slowMo` <[float]>
-
-Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
-can see what is going on. Defaults to 0.
-
-### option: BrowserType.connectOverCDP.timeout
-* langs: java
-- `timeout` <[float]>
-
-Maximum time in milliseconds to wait for the connection to be established. Defaults to
-`30000` (30 seconds). Pass `0` to disable timeout.
 
 ### option: BrowserType.launch.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
 ### option: BrowserType.launchPersistentContext.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%

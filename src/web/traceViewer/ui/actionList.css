@@ -14,7 +14,11 @@
   limitations under the License.
 */
 
-.action-list {
+.action-list-title {
+  padding: 0 10px;
+}
+
+.action-list-content {
   display: flex;
   flex-direction: column;
   flex: auto;
@@ -22,6 +26,7 @@
   user-select: none;
   color: #555;
   overflow: auto;
+  outline: none;
 }
 
 .action-entry {
@@ -31,20 +36,27 @@
   align-items: center;
   white-space: nowrap;
   line-height: 28px;
-  padding-left: 3px;
-  border-left: 3px solid transparent;
+  padding-left: 5px;
 }
 
-.action-entry:hover, .action-entry.selected {
-  color: #333;
-}
-
+.action-entry.highlighted,
 .action-entry.selected {
-  border-left: 3px solid #666;
+  color: white;
+  background-color: var(--gray);
 }
 
-.action-entry.selected:focus {
-  border-color: var(--orange);
+.action-entry.highlighted {
+  color: white;
+  background-color: var(--light-gray);
+}
+
+.action-list-content:focus .action-entry.selected {
+  background-color: var(--blue);
+}
+
+.action-entry.highlighted > div,
+.action-entry.selected > div {
+  color: white;
 }
 
 .action-title {
@@ -55,7 +67,6 @@
 
 .action-error {
   color: red;
-  top: 2px;
   position: relative;
   margin-right: 2px;
 }

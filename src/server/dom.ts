@@ -304,14 +304,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     while (progress.isRunning()) {
       if (retry) {
-        progress.log(`retrying ${actionName} action, attempt #${retry}`);
+        progress.log(`retrying ${actionName} action${options.trial ? ' (trial run)' : ''}, attempt #${retry}`);
         const timeout = waitTime[Math.min(retry - 1, waitTime.length - 1)];
         if (timeout) {
           progress.log(`  waiting ${timeout}ms`);
           await this.evaluateInUtility(([injected, node, timeout]) => new Promise(f => setTimeout(f, timeout)), timeout);
         }
       } else {
-        progress.log(`attempting ${actionName} action`);
+        progress.log(`attempting ${actionName} action${options.trial ? ' (trial run)' : ''}`);
       }
       const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
       const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
@@ -381,8 +381,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
 
     progress.metadata.point = point;
-    await progress.beforeInputAction(this);
+    if (options.trial)  {
+      progress.log(`  trial ${actionName} has finished`);
+      return 'done';
+    }
 
+    await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       if ((options as any).__testHookBeforePointerAction)
         await (options as any).__testHookBeforePointerAction();
@@ -634,6 +638,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const result = await this._click(progress, options);
     if (result !== 'done')
       return result;
+    if (options.trial)
+      return 'done';
     if (await isChecked() !== state)
       throw new Error('Clicking the checkbox did not change its state');
     return 'done';

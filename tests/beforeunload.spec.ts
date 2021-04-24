@@ -61,7 +61,7 @@ it('should run beforeunload if asked for', async ({context, server, isChromium, 
   else if (isWebKit)
     expect(dialog.message()).toBe('Leave?');
   else
-    expect(dialog.message()).toBe('This page is asking you to confirm that you want to leave — information you’ve entered may not be saved.');
+    expect(dialog.message()).toContain('This page is asking you to confirm that you want to leave');
   await Promise.all([
     dialog.accept(),
     newPage.waitForEvent('close'),

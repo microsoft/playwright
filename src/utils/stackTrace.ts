@@ -69,3 +69,11 @@ export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
   }
   return { stack, frames };
 }
+
+export function splitErrorMessage(message: string): { name: string, message: string } {
+  const separationIdx = message.indexOf(':');
+  return {
+    name: separationIdx !== -1 ? message.slice(0, separationIdx) : '',
+    message: separationIdx !== -1 && separationIdx + 2 <= message.length ? message.substring(separationIdx + 2) : message,
+  };
+}

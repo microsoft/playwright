@@ -376,7 +376,15 @@ await page.ClickAsync(\"text=click me\");`);
       expect(sources.get('<javascript>').text).toContain(`
   // Open new page
   const page1 = await context.newPage();
-  page1.goto('about:blank?foo');`);
+  await page1.goto('about:blank?foo');`);
+      expect(sources.get('<async python>').text).toContain(`
+    # Open new page
+    page1 = await context.new_page()
+    await page1.goto("about:blank?foo")`);
+      expect(sources.get('<csharp>').text).toContain(`
+// Open new page
+var page1 = await context.NewPageAsync();
+await page1.GoToAsync("about:blank?foo");`);
     } else if (browserName === 'firefox') {
       expect(sources.get('<javascript>').text).toContain(`
   // Click text=link
@@ -592,5 +600,30 @@ await page.GetFrame(url: \"http://localhost:${server.PORT}/frames/frame.html\").
 
     await page.goto(httpServer.PREFIX + '/page2.html');
     await recorder.waitForOutput('<javascript>', `await page.goto('${httpServer.PREFIX}/page2.html');`);
+  });
+
+  test('should record slow navigation signal after mouse move', async ({ page, openRecorder, server }) => {
+    const recorder = await openRecorder();
+    await recorder.setContentAndWait(`
+    <script>
+      async function onClick() {
+        await new Promise(f => setTimeout(f, 100));
+        await window.letTheMouseMove();
+        window.location = ${JSON.stringify(server.EMPTY_PAGE)};
+      }
+    </script>
+    <button onclick="onClick()">Click me</button>
+    `);
+    await page.exposeBinding('letTheMouseMove', async () => {
+      await page.mouse.move(200, 200);
+    });
+
+    const [, sources] = await Promise.all([
+      // This will click, finish the click, then mouse move, then navigate.
+      page.click('button'),
+      recorder.waitForOutput('<javascript>', 'waitForNavigation'),
+    ]);
+
+    expect(sources.get('<javascript>').text).toContain(`page.waitForNavigation(/*{ url: '${server.EMPTY_PAGE}' }*/)`);
   });
 });

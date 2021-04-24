@@ -42,9 +42,6 @@ WaitForEventInfo:
       - after
       - log
     apiName: string?
-    stack:
-      type: array?
-      items: StackFrame
     message: string?
     error: string?
 
@@ -237,6 +234,7 @@ LaunchOptions:
       - msedge-beta
       - msedge-dev
       - msedge-canary
+      - firefox-stable
     executablePath: string?
     args:
       type: array?
@@ -262,6 +260,7 @@ LaunchOptions:
         username: string?
         password: string?
     downloadsPath: string?
+    _traceDir: string?
     chromiumSandbox: boolean?
 
 
@@ -314,7 +313,6 @@ ContextOptions:
       - light
       - no-preference
     acceptDownloads: boolean?
-    _traceDir: string?
     _debugName: string?
     recordVideo:
       type: object?
@@ -417,6 +415,9 @@ BrowserType:
       parameters:
         sdkLanguage: string
         endpointURL: string
+        headers:
+          type: array?
+          items: NameValue
         slowMo: number?
         timeout: number?
       returns:
@@ -599,6 +600,10 @@ BrowserContext:
         page: Page
       returns:
         session: CDPSession
+
+    startTracing:
+
+    stopTracing:
 
   events:
 
@@ -1047,6 +1052,7 @@ Frame:
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
+        trial: boolean?
 
     click:
       parameters:
@@ -1072,6 +1078,7 @@ Frame:
           - middle
         clickCount: number?
         timeout: number?
+        trial: boolean?
 
     content:
       returns:
@@ -1100,6 +1107,7 @@ Frame:
           - right
           - middle
         timeout: number?
+        trial: boolean?
 
     dispatchEvent:
       parameters:
@@ -1187,6 +1195,7 @@ Frame:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     innerHTML:
       parameters:
@@ -1328,6 +1337,7 @@ Frame:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     textContent:
       parameters:
@@ -1355,6 +1365,7 @@ Frame:
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
+        trial: boolean?
 
     waitForFunction:
       parameters:
@@ -1528,6 +1539,7 @@ ElementHandle:
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
+        trial: boolean?
 
     click:
       parameters:
@@ -1552,6 +1564,7 @@ ElementHandle:
           - middle
         clickCount: number?
         timeout: number?
+        trial: boolean?
 
     contentFrame:
       returns:
@@ -1579,6 +1592,7 @@ ElementHandle:
           - right
           - middle
         timeout: number?
+        trial: boolean?
 
     dispatchEvent:
       parameters:
@@ -1613,6 +1627,7 @@ ElementHandle:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     innerHTML:
       returns:
@@ -1740,6 +1755,7 @@ ElementHandle:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     textContent:
       returns:
@@ -1758,6 +1774,7 @@ ElementHandle:
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
+        trial: boolean?
 
     waitForElementState:
       parameters:
@@ -2310,7 +2327,6 @@ AndroidDevice:
           - light
           - no-preference
         acceptDownloads: boolean?
-        _traceDir: string?
         _debugName: string?
         recordVideo:
           type: object?

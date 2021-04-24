@@ -16,15 +16,14 @@
  */
 
 import { execSync } from 'child_process';
-import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
 import * as util from 'util';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV } from './utils';
 
-export type BrowserName = 'chromium'|'webkit'|'firefox'|'ffmpeg'|'webkit-technology-preview';
-export const allBrowserNames: BrowserName[] = ['chromium', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview'];
+export type BrowserName = 'chromium'|'webkit'|'firefox'|'firefox-stable'|'ffmpeg'|'webkit-technology-preview';
+export const allBrowserNames: BrowserName[] = ['chromium', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview', 'firefox-stable'];
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
@@ -49,6 +48,17 @@ const EXECUTABLE_PATHS = {
     'win64': ['chrome-win', 'chrome.exe'],
   },
   'firefox': {
+    'ubuntu18.04': ['firefox', 'firefox'],
+    'ubuntu20.04': ['firefox', 'firefox'],
+    'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'mac10.14': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'mac11': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'mac11-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'win32': ['firefox', 'firefox.exe'],
+    'win64': ['firefox', 'firefox.exe'],
+  },
+  'firefox-stable': {
     'ubuntu18.04': ['firefox', 'firefox'],
     'ubuntu20.04': ['firefox', 'firefox'],
     'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
@@ -116,6 +126,17 @@ const DOWNLOAD_URLS = {
     'mac11-arm64': '%s/builds/firefox/%s/firefox-mac-11.0-arm64.zip',
     'win32': '%s/builds/firefox/%s/firefox-win32.zip',
     'win64': '%s/builds/firefox/%s/firefox-win64.zip',
+  },
+  'firefox-stable': {
+    'ubuntu18.04': '%s/builds/firefox-stable/%s/firefox-stable-ubuntu-18.04.zip',
+    'ubuntu20.04': '%s/builds/firefox-stable/%s/firefox-stable-ubuntu-20.04.zip',
+    'mac10.13': '%s/builds/firefox-stable/%s/firefox-stable-mac-10.14.zip',
+    'mac10.14': '%s/builds/firefox-stable/%s/firefox-stable-mac-10.14.zip',
+    'mac10.15': '%s/builds/firefox-stable/%s/firefox-stable-mac-10.14.zip',
+    'mac11': '%s/builds/firefox-stable/%s/firefox-stable-mac-10.14.zip',
+    'mac11-arm64': '%s/builds/firefox-stable/%s/firefox-stable-mac-11.0-arm64.zip',
+    'win32': '%s/builds/firefox-stable/%s/firefox-stable-win32.zip',
+    'win64': '%s/builds/firefox-stable/%s/firefox-stable-win64.zip',
   },
   'webkit': {
     'ubuntu18.04': '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip',
@@ -235,7 +256,9 @@ export class Registry {
   }
 
   constructor(packagePath: string) {
-    const browsersJSON = JSON.parse(fs.readFileSync(path.join(packagePath, 'browsers.json'), 'utf8'));
+    // require() needs to be used there otherwise it breaks on Vercel serverless
+    // functions. See https://github.com/microsoft/playwright/pull/6186
+    const browsersJSON = require(path.join(packagePath, 'browsers.json'));
     this._descriptors = browsersJSON['browsers'].map((obj: any) => {
       const name = obj.name;
       const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
@@ -269,21 +292,25 @@ export class Registry {
 
   linuxLddDirectories(browserName: BrowserName): string[] {
     const browserDirectory = this.browserDirectory(browserName);
-    if (browserName === 'chromium')
-      return [path.join(browserDirectory, 'chrome-linux')];
-    if (browserName === 'firefox')
-      return [path.join(browserDirectory, 'firefox')];
-    if (browserName === 'webkit') {
-      return [
-        path.join(browserDirectory, 'minibrowser-gtk'),
-        path.join(browserDirectory, 'minibrowser-gtk', 'bin'),
-        path.join(browserDirectory, 'minibrowser-gtk', 'lib'),
-        path.join(browserDirectory, 'minibrowser-wpe'),
-        path.join(browserDirectory, 'minibrowser-wpe', 'bin'),
-        path.join(browserDirectory, 'minibrowser-wpe', 'lib'),
-      ];
+    switch (browserName) {
+      case 'chromium':
+        return [path.join(browserDirectory, 'chrome-linux')];
+      case 'webkit':
+      case 'webkit-technology-preview':
+        return [
+          path.join(browserDirectory, 'minibrowser-gtk'),
+          path.join(browserDirectory, 'minibrowser-gtk', 'bin'),
+          path.join(browserDirectory, 'minibrowser-gtk', 'lib'),
+          path.join(browserDirectory, 'minibrowser-wpe'),
+          path.join(browserDirectory, 'minibrowser-wpe', 'bin'),
+          path.join(browserDirectory, 'minibrowser-wpe', 'lib'),
+        ];
+      case 'firefox':
+      case 'firefox-stable':
+        return [path.join(browserDirectory, 'firefox')];
+      default:
+        return [];
     }
-    return [];
   }
 
   windowsExeAndDllDirectories(browserName: BrowserName): string[] {
@@ -309,6 +336,7 @@ export class Registry {
     const envDownloadHost: { [key: string]: string } = {
       'chromium': 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
       'firefox': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
+      'firefox-stable': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
       'webkit': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
       'webkit-technology-preview': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
       'ffmpeg': 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST',
@@ -321,14 +349,13 @@ export class Registry {
     return util.format(urlTemplate, downloadHost, browser.revision);
   }
 
-  shouldRetain(browserName: BrowserName): boolean {
+  isSupportedBrowser(browserName: string): boolean {
     // We retain browsers if they are found in the descriptor.
     // Note, however, that there are older versions out in the wild that rely on
     // the "download" field in the browser descriptor and use its value
     // to retain and download browsers.
     // As of v1.10, we decided to abandon "download" field.
-    const browser = this._descriptors.find(browser => browser.name === browserName);
-    return !!browser;
+    return this._descriptors.some(browser => browser.name === browserName);
   }
 
   installByDefault(): BrowserName[] {

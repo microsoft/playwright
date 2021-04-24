@@ -50,6 +50,7 @@ export class CodeGenerator extends EventEmitter {
     this._currentAction = null;
     this._lastAction = null;
     this._actions = [];
+    this.emit('change');
   }
 
   setEnabled(enabled: boolean) {
@@ -99,12 +100,10 @@ export class CodeGenerator extends EventEmitter {
           return;
         }
       }
-      for (const name of ['check', 'uncheck']) {
-        // Check and uncheck erase click.
-        if (lastAction && action.name === name && lastAction.name === 'click') {
-          if ((action as any).selector === (lastAction as any).selector)
-            eraseLastAction = true;
-        }
+      // Check and uncheck erase click.
+      if (lastAction && (action.name === 'check' || action.name === 'uncheck') && lastAction.name === 'click') {
+        if (action.selector === lastAction.selector)
+          eraseLastAction = true;
       }
     }
 

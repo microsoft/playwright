@@ -131,7 +131,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       return;
     }
     await this._context._setRequestInterceptor((route, request) => {
-      this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }
 
@@ -144,7 +144,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
-    await RecorderSupplement.getOrCreate(this._context, params);
+    await RecorderSupplement.show(this._context, params);
   }
 
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
@@ -156,5 +156,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };
+  }
+
+  async startTracing(params: channels.BrowserContextStartTracingParams): Promise<void> {
+    await this._context.startTracing();
+  }
+
+  async stopTracing(): Promise<channels.BrowserContextStopTracingResult> {
+    await this._context.stopTracing();
   }
 }

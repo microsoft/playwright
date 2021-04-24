@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
 import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
-import { assert, createGuid, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
+import { assert, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
@@ -41,7 +41,7 @@ export function lookupNullableDispatcher<DispatcherType>(object: any | null): Di
   return object ? lookupDispatcher(object) : undefined;
 }
 
-export class Dispatcher<Type, Initializer> extends EventEmitter implements channels.Channel {
+export class Dispatcher<Type extends { guid: string }, Initializer> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
   private _isScope: boolean;
   // Parent is always "isScope".
@@ -55,7 +55,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
   readonly _scope: Dispatcher<any, any>;
   _object: Type;
 
-  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: Initializer, isScope?: boolean, guid = type + '@' + createGuid()) {
+  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: Initializer, isScope?: boolean) {
     super();
 
     this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
@@ -63,6 +63,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
     this._parent = parent instanceof DispatcherConnection ? undefined : parent;
     this._scope = isScope ? this : this._parent!;
 
+    const guid = object.guid;
     assert(!this._connection._dispatchers.has(guid));
     this._connection._dispatchers.set(guid, this);
     if (this._parent) {
@@ -76,7 +77,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
 
     (object as any)[dispatcherSymbol] = this;
     if (this._parent)
-      this._connection.sendMessageToClient(this._parent._guid, '__create__', { type, initializer, guid });
+      this._connection.sendMessageToClient(this._parent._guid, type, '__create__', { type, initializer, guid });
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
@@ -86,7 +87,8 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
       // Just ignore this event outside of tests.
       return;
     }
-    this._connection.sendMessageToClient(this._guid, method, params);
+    const sdkObject = this._object instanceof SdkObject ? this._object : undefined;
+    this._connection.sendMessageToClient(this._guid, this._type, method, params, sdkObject);
   }
 
   _dispose() {
@@ -104,7 +106,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
     this._dispatchers.clear();
 
     if (this._isScope)
-      this._connection.sendMessageToClient(this._guid, '__dispose__', {});
+      this._connection.sendMessageToClient(this._guid, this._type, '__dispose__', {});
   }
 
   _debugScopeState(): any {
@@ -120,9 +122,9 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
 }
 
 export type DispatcherScope = Dispatcher<any, any>;
-class Root extends Dispatcher<{}, {}> {
+class Root extends Dispatcher<{ guid: '' }, {}> {
   constructor(connection: DispatcherConnection) {
-    super(connection, {}, '', {}, true, '');
+    super(connection, { guid: '' }, '', {}, true);
   }
 }
 
@@ -134,8 +136,25 @@ export class DispatcherConnection {
   private _validateMetadata: (metadata: any) => { stack?: StackFrame[] };
   private _waitOperations = new Map<string, CallMetadata>();
 
-  sendMessageToClient(guid: string, method: string, params: any) {
-    this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params) });
+  sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
+    params = this._replaceDispatchersWithGuids(params);
+    if (sdkObject) {
+      const eventMetadata: CallMetadata = {
+        id: `event@${++lastEventId}`,
+        objectId: sdkObject?.guid,
+        pageId: sdkObject?.attribution.page?.guid,
+        frameId: sdkObject?.attribution.frame?.guid,
+        startTime: monotonicTime(),
+        endTime: 0,
+        type,
+        method,
+        params: params || {},
+        log: [],
+        snapshots: []
+      };
+      sdkObject.instrumentation.onEvent(sdkObject, eventMetadata);
+    }
+    this.onmessage({ guid, method, params });
   }
 
   constructor() {
@@ -199,16 +218,18 @@ export class DispatcherConnection {
 
     const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
     let callMetadata: CallMetadata = {
-      id,
+      id: `call@${id}`,
       ...validMetadata,
-      pageId: sdkObject?.attribution.page?.uniqueId,
-      frameId: sdkObject?.attribution.frame?.uniqueId,
+      objectId: sdkObject?.guid,
+      pageId: sdkObject?.attribution.page?.guid,
+      frameId: sdkObject?.attribution.frame?.guid,
       startTime: monotonicTime(),
       endTime: 0,
       type: dispatcher._type,
       method,
       params: params || {},
       log: [],
+      snapshots: []
     };
 
     try {
@@ -219,7 +240,6 @@ export class DispatcherConnection {
           switch (info.phase) {
             case 'before':
               callMetadata.apiName = info.apiName;
-              callMetadata.stack = info.stack;
               this._waitOperations.set(info.waitId, callMetadata);
               break;
             case 'log':
@@ -295,3 +315,5 @@ function formatLogRecording(log: string[]): string {
   const rightLength = headerLength - header.length - leftLength;
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
+
+let lastEventId = 0;

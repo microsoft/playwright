@@ -52,9 +52,9 @@ export class WebSocketTransport implements ConnectionTransport {
   onclose?: () => void;
   readonly wsEndpoint: string;
 
-  static async connect(progress: Progress, url: string): Promise<WebSocketTransport> {
+  static async connect(progress: Progress, url: string, headers?: { [key: string]: string; }): Promise<WebSocketTransport> {
     progress.log(`<ws connecting> ${url}`);
-    const transport = new WebSocketTransport(progress, url);
+    const transport = new WebSocketTransport(progress, url, headers);
     let success = false;
     progress.cleanupWhenAborted(async () => {
       if (!success)
@@ -75,12 +75,13 @@ export class WebSocketTransport implements ConnectionTransport {
     return transport;
   }
 
-  constructor(progress: Progress, url: string) {
+  constructor(progress: Progress, url: string, headers?: { [key: string]: string; }) {
     this.wsEndpoint = url;
     this._ws = new WebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       handshakeTimeout: progress.timeUntilDeadline(),
+      headers
     });
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
@@ -91,8 +92,12 @@ export class WebSocketTransport implements ConnectionTransport {
 
     this._ws.addEventListener('message', event => {
       messageWrap(() => {
-        if (this.onmessage)
-          this.onmessage.call(null, JSON.parse(event.data));
+        try {
+          if (this.onmessage)
+            this.onmessage.call(null, JSON.parse(event.data));
+        } catch (e) {
+          this._ws.close();
+        }
       });
     });
 

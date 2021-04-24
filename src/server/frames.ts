@@ -24,7 +24,7 @@ import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
-import { assert, createGuid, makeWaitForNextTask } from '../utils/utils';
+import { assert, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
@@ -132,11 +132,8 @@ export class FrameManager {
     if (progress)
       progress.cleanupWhenAborted(() => this._signalBarriers.delete(barrier));
     const result = await action();
-    if (source === 'input') {
+    if (source === 'input')
       await this._page._delegate.inputActionEpilogue();
-      if (progress)
-        await progress.afterInputAction();
-    }
     await barrier.waitFor();
     this._signalBarriers.delete(barrier);
     // Resolve in the next task, after all waitForNavigations.
@@ -411,11 +408,9 @@ export class Frame extends SdkObject {
   private _setContentCounter = 0;
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
-  readonly uniqueId: string;
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
-    super(page);
-    this.uniqueId = parentFrame ? `frame@${createGuid()}` : page.uniqueId;
+    super(page, 'frame');
     this.attribution.frame = this;
     this._id = id;
     this._page = page;

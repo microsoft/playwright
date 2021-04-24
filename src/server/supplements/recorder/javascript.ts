@@ -19,7 +19,7 @@ import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toS
 import { ActionInContext } from './codeGenerator';
 import { Action, actionTitle } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
-import deviceDescriptors = require('../../deviceDescriptors');
+import deviceDescriptors from '../../deviceDescriptors';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id = 'javascript';
@@ -35,7 +35,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (action.name === 'openPage') {
       formatter.add(`const ${pageAlias} = await context.newPage();`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        formatter.add(`${pageAlias}.goto('${action.url}');`);
+        formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
       return formatter.format();
     }
 

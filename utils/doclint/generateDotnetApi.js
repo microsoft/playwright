@@ -98,6 +98,7 @@ const customTypeNames = new Map([
   classNameMap.set('path', 'string');
   classNameMap.set('URL', 'string');
   classNameMap.set('RegExp', 'Regex');
+  classNameMap.set('Readable', 'Stream');
 
   // this are types that we don't explicility render even if we get the specs
   const ignoredTypes = ['TimeoutException'];
@@ -596,7 +597,8 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
         const innerTypeName = translateType(type.union[1], parent, generateNameCallback);
         // if type is primitive, or an enum, then it's nullable
         if (innerTypeName === 'bool'
-          || innerTypeName === 'int') {
+          || innerTypeName === 'int'
+          || enumTypes.has(innerTypeName)) {
           return `${innerTypeName}?`;
         }
 

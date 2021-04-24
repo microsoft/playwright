@@ -28,7 +28,7 @@ import { Progress, ProgressController } from './progress';
 import * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
-import { isDebugMode } from '../utils/utils';
+import { debugMode } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
@@ -44,7 +44,7 @@ export abstract class BrowserType extends SdkObject {
   readonly _playwrightOptions: PlaywrightOptions;
 
   constructor(browserName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject);
+    super(playwrightOptions.rootSdkObject, 'browser-type');
     this.attribution.browserType = this;
     this._playwrightOptions = playwrightOptions;
     this._name = browserName;
@@ -115,6 +115,7 @@ export abstract class BrowserType extends SdkObject {
       protocolLogger,
       browserLogsCollector,
       wsEndpoint: options.useWebSocket ? (transport as WebSocketTransport).wsEndpoint : undefined,
+      traceDir: options._traceDir,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
@@ -178,10 +179,11 @@ export abstract class BrowserType extends SdkObject {
       throw new Error(errorMessageLines.join('\n'));
     }
 
-    if (!executable) {
-      // Only validate dependencies for bundled browsers.
+    // Only validate dependencies for downloadable browsers.
+    if (!executablePath && !options.channel)
       await validateHostRequirements(this._registry, this._name);
-    }
+    else if (!executablePath && options.channel && this._registry.isSupportedBrowser(options.channel))
+      await validateHostRequirements(this._registry, options.channel as registry.BrowserName);
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
     const wsEndpoint = options.useWebSocket ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
@@ -270,7 +272,7 @@ function copyTestHooks(from: object, to: object) {
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
   const { devtools = false } = options;
   let { headless = !devtools } = options;
-  if (isDebugMode())
+  if (debugMode())
     headless = false;
   return { ...options, devtools, headless };
 }

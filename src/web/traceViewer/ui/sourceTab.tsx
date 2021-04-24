@@ -68,7 +68,7 @@ export const SourceTab: React.FunctionComponent<{
     return value;
   }, [stackInfo, selectedFrame], '');
 
-  const targetLine = typeof stackInfo === 'string' ? 0 : stackInfo.frames[selectedFrame].line || 0;
+  const targetLine = typeof stackInfo === 'string' ? 0 : stackInfo.frames[selectedFrame]?.line || 0;
 
   const targetLineRef = React.createRef<HTMLDivElement>();
   React.useLayoutEffect(() => {
@@ -78,7 +78,7 @@ export const SourceTab: React.FunctionComponent<{
     }
   }, [needReveal, targetLineRef]);
 
-  return <SplitView sidebarSize={250} orientation='horizontal'>
+  return <SplitView sidebarSize={100} orientation='vertical'>
     <SourceView text={content} language='javascript' highlight={[{ line: targetLine, type: 'running' }]} revealLine={targetLine}></SourceView>
     <StackTraceView actionEntry={actionEntry} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}></StackTraceView>
   </SplitView>;

@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as util from 'util';
-import { calculateSha1, createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
+import { calculateSha1, getFromENV, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { BrowserContext } from '../../browserContext';
 import { Dialog } from '../../dialog';
 import { ElementHandle } from '../../dom';
@@ -25,117 +25,108 @@ import { Frame, NavigationEvent } from '../../frames';
 import { helper, RegisteredListener } from '../../helper';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
-import { PersistentSnapshotter } from '../../snapshot/persistentSnapshotter';
 import * as trace from '../common/traceEvents';
+import { TraceSnapshotter } from './traceSnapshotter';
 
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
 const envTrace = getFromENV('PWTRACE_RESOURCE_DIR');
 
 export class Tracer implements InstrumentationListener {
-  private _contextTracers = new Map<BrowserContext, ContextTracer>();
-
-  async onContextCreated(context: BrowserContext): Promise<void> {
-    const traceDir = context._options._traceDir;
-    if (!traceDir)
-      return;
-    const resourcesDir = envTrace || path.join(traceDir, 'resources');
-    const tracePath = path.join(traceDir, context._options._debugName!);
-    const contextTracer = new ContextTracer(context, resourcesDir, tracePath);
-    await contextTracer.start();
-    this._contextTracers.set(context, contextTracer);
-  }
-
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {
-    const contextTracer = this._contextTracers.get(context);
-    if (contextTracer) {
-      await contextTracer.dispose().catch(e => {});
-      this._contextTracers.delete(context);
-    }
-  }
-
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('action', sdkObject, metadata, element);
-  }
-
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('before', sdkObject, metadata, element);
-  }
-
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this._contextTracers.get(sdkObject.attribution.context!)?._captureSnapshot('after', sdkObject, metadata);
-    this._contextTracers.get(sdkObject.attribution.context!)?.onAfterCall(sdkObject, metadata);
-  }
-}
-
-const snapshotsSymbol = Symbol('snapshots');
-
-// This is an official way to pass snapshots between onBefore/AfterInputAction and onAfterCall.
-function snapshotsForMetadata(metadata: CallMetadata): { title: string, snapshotName: string }[] {
-  if (!(metadata as any)[snapshotsSymbol])
-    (metadata as any)[snapshotsSymbol] = [];
-  return (metadata as any)[snapshotsSymbol];
-}
-
-class ContextTracer {
-  private _contextId: string;
   private _appendEventChain: Promise<string>;
-  private _snapshotter: PersistentSnapshotter;
-  private _eventListeners: RegisteredListener[];
+  private _snapshotter: TraceSnapshotter;
+  private _eventListeners: RegisteredListener[] = [];
   private _disposed = false;
+  private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata }>();
+  private _context: BrowserContext;
 
-  constructor(context: BrowserContext, resourcesDir: string, tracePrefix: string) {
-    const traceFile = tracePrefix + '-actions.trace';
-    this._contextId = 'context@' + createGuid();
+  constructor(context: BrowserContext, traceDir: string) {
+    this._context = context;
+    this._context.instrumentation.addListener(this);
+    const resourcesDir = envTrace || path.join(traceDir, 'resources');
+    const tracePrefix = path.join(traceDir, context._options._debugName!);
+    const traceFile = tracePrefix + '.trace';
     this._appendEventChain = mkdirIfNeeded(traceFile).then(() => traceFile);
+    this._snapshotter = new TraceSnapshotter(context, resourcesDir, traceEvent => this._appendTraceEvent(traceEvent));
+  }
+
+  async start(): Promise<void> {
     const event: trace.ContextCreatedTraceEvent = {
       timestamp: monotonicTime(),
-      type: 'context-created',
-      browserName: context._browser.options.name,
-      contextId: this._contextId,
-      isMobile: !!context._options.isMobile,
-      deviceScaleFactor: context._options.deviceScaleFactor || 1,
-      viewportSize: context._options.viewport || undefined,
-      debugName: context._options._debugName,
+      type: 'context-metadata',
+      browserName: this._context._browser.options.name,
+      isMobile: !!this._context._options.isMobile,
+      deviceScaleFactor: this._context._options.deviceScaleFactor || 1,
+      viewportSize: this._context._options.viewport || undefined,
+      debugName: this._context._options._debugName,
     };
     this._appendTraceEvent(event);
-    this._snapshotter = new PersistentSnapshotter(context, tracePrefix, resourcesDir);
     this._eventListeners = [
-      helper.addEventListener(context, BrowserContext.Events.Page, this._onPage.bind(this)),
+      helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
+    await this._snapshotter.start();
   }
 
-  async start() {
-    await this._snapshotter.start(false);
+  async stop() {
+    this._disposed = true;
+    this._context.instrumentation.removeListener(this);
+    helper.removeEventListeners(this._eventListeners);
+    await this._snapshotter.dispose();
+    for (const { sdkObject, metadata } of this._pendingCalls.values())
+      this.onAfterCall(sdkObject, metadata);
+
+    // Ensure all writes are finished.
+    await this._appendEventChain;
   }
 
-  async _captureSnapshot(name: 'before' | 'after' | 'action', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
+  _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
     if (!sdkObject.attribution.page)
       return;
     const snapshotName = `${name}@${metadata.id}`;
-    snapshotsForMetadata(metadata).push({ title: name, snapshotName });
+    metadata.snapshots.push({ title: name, snapshotName });
     this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName, element);
   }
 
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    this._captureSnapshot('before', sdkObject, metadata);
+    this._pendingCalls.set(metadata.id, { sdkObject, metadata });
+  }
+
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
+    this._captureSnapshot('action', sdkObject, metadata, element);
+  }
+
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    if (!this._pendingCalls.has(metadata.id))
+      return;
+    this._captureSnapshot('after', sdkObject, metadata);
     if (!sdkObject.attribution.page)
       return;
     const event: trace.ActionTraceEvent = {
-      timestamp: monotonicTime(),
+      timestamp: metadata.startTime,
       type: 'action',
-      contextId: this._contextId,
       metadata,
-      snapshots: snapshotsForMetadata(metadata),
+    };
+    this._appendTraceEvent(event);
+    this._pendingCalls.delete(metadata.id);
+  }
+
+  onEvent(sdkObject: SdkObject, metadata: CallMetadata) {
+    if (!sdkObject.attribution.page)
+      return;
+    const event: trace.ActionTraceEvent = {
+      timestamp: metadata.startTime,
+      type: 'event',
+      metadata,
     };
     this._appendTraceEvent(event);
   }
 
   private _onPage(page: Page) {
-    const pageId = page.uniqueId;
+    const pageId = page.guid;
 
     const event: trace.PageCreatedTraceEvent = {
       timestamp: monotonicTime(),
       type: 'page-created',
-      contextId: this._contextId,
       pageId,
     };
     this._appendTraceEvent(event);
@@ -146,7 +137,6 @@ class ContextTracer {
       const event: trace.DialogOpenedEvent = {
         timestamp: monotonicTime(),
         type: 'dialog-opened',
-        contextId: this._contextId,
         pageId,
         dialogType: dialog.type(),
         message: dialog.message(),
@@ -160,7 +150,6 @@ class ContextTracer {
       const event: trace.DialogClosedEvent = {
         timestamp: monotonicTime(),
         type: 'dialog-closed',
-        contextId: this._contextId,
         pageId,
         dialogType: dialog.type(),
       };
@@ -173,7 +162,6 @@ class ContextTracer {
       const event: trace.NavigationEvent = {
         timestamp: monotonicTime(),
         type: 'navigation',
-        contextId: this._contextId,
         pageId,
         url: navigationEvent.url,
         sameDocument: !navigationEvent.newDocument,
@@ -187,7 +175,6 @@ class ContextTracer {
       const event: trace.LoadEvent = {
         timestamp: monotonicTime(),
         type: 'load',
-        contextId: this._contextId,
         pageId,
       };
       this._appendTraceEvent(event);
@@ -197,8 +184,7 @@ class ContextTracer {
       const sha1 = calculateSha1(params.buffer);
       const event: trace.ScreencastFrameTraceEvent = {
         type: 'page-screencast-frame',
-        pageId: page.uniqueId,
-        contextId: this._contextId,
+        pageId: page.guid,
         sha1,
         pageTimestamp: params.timestamp,
         width: params.width,
@@ -215,26 +201,10 @@ class ContextTracer {
       const event: trace.PageDestroyedTraceEvent = {
         timestamp: monotonicTime(),
         type: 'page-destroyed',
-        contextId: this._contextId,
         pageId,
       };
       this._appendTraceEvent(event);
     });
-  }
-
-  async dispose() {
-    this._disposed = true;
-    helper.removeEventListeners(this._eventListeners);
-    await this._snapshotter.dispose();
-    const event: trace.ContextDestroyedTraceEvent = {
-      timestamp: monotonicTime(),
-      type: 'context-destroyed',
-      contextId: this._contextId,
-    };
-    this._appendTraceEvent(event);
-
-    // Ensure all writes are finished.
-    await this._appendEventChain;
   }
 
   private _appendTraceEvent(event: any) {

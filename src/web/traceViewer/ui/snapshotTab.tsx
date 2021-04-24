@@ -17,6 +17,7 @@
 import { ActionEntry } from '../../../server/trace/viewer/traceModel';
 import { Size } from '../geometry';
 import './snapshotTab.css';
+import './tabbedPane.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import type { Point } from '../../../common/types';
@@ -26,9 +27,16 @@ export const SnapshotTab: React.FunctionComponent<{
   snapshotSize: Size,
 }> = ({ actionEntry, snapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
-  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
+  let [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
-  const snapshots = actionEntry ? (actionEntry.snapshots || []) : [];
+  const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
+  for (const snapshot of actionEntry?.metadata.snapshots || [])
+    snapshotMap.set(snapshot.title, snapshot);
+  const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
+  const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
+
+  if (snapshotIndex >= snapshots.length)
+    snapshotIndex = snapshots.length - 1;
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
   React.useEffect(() => {
@@ -56,17 +64,24 @@ export const SnapshotTab: React.FunctionComponent<{
     width: snapshotSize.width * scale,
     height: snapshotSize.height * scale,
   };
-  return <div className='snapshot-tab'>
-    <div className='snapshot-controls'>
+  return <div
+    className='snapshot-tab'
+    tabIndex={0}
+    onKeyDown={event => {
+      if (event.key === 'ArrowRight')
+        setSnapshotIndex(Math.min(snapshotIndex + 1, snapshots.length - 1));
+      if (event.key === 'ArrowLeft')
+        setSnapshotIndex(Math.max(snapshotIndex - 1, 0));
+    }}
+  ><div className='tab-strip'>
       {snapshots.map((snapshot, index) => {
-        return <div
-          key={snapshot.title}
-          className={'snapshot-toggle' + (snapshotIndex === index ? ' toggled' : '')}
-          onClick={() => setSnapshotIndex(index)}>
-          {snapshot.title}
+        return <div className={'tab-element ' + (snapshotIndex === index ? ' selected' : '')}
+          onClick={() => setSnapshotIndex(index)}
+          key={snapshot.title}>
+          <div className='tab-label'>{renderTitle(snapshot.title)}</div>
         </div>
-      })
-    }</div>
+      })}
+    </div>
     <div ref={ref} className='snapshot-wrapper'>
       <div className='snapshot-container' style={{
         width: snapshotSize.width + 'px',
@@ -78,3 +93,13 @@ export const SnapshotTab: React.FunctionComponent<{
     </div>
   </div>;
 };
+
+function renderTitle(snapshotTitle: string): string {
+  if (snapshotTitle === 'before')
+    return 'Before';
+  if (snapshotTitle === 'after')
+    return 'After';
+  if (snapshotTitle === 'action')
+    return 'Action';
+  return snapshotTitle;
+}

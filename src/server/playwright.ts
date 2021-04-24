@@ -15,7 +15,6 @@
  */
 
 import path from 'path';
-import { Tracer } from './trace/recorder/tracer';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
 import { PlaywrightOptions } from './browser';
@@ -23,11 +22,9 @@ import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
 import { Selectors, serverSelectors } from './selectors';
-import { HarTracer } from './supplements/har/harTracer';
-import { InspectorController } from './supplements/inspectorController';
 import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
-import { InstrumentationListener, multiplexInstrumentation, SdkObject } from './instrumentation';
+import { createInstrumentation, SdkObject } from './instrumentation';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -39,14 +36,7 @@ export class Playwright extends SdkObject {
   readonly options: PlaywrightOptions;
 
   constructor(isInternal: boolean) {
-    const listeners: InstrumentationListener[] = [];
-    if (!isInternal) {
-      listeners.push(new Tracer());
-      listeners.push(new HarTracer());
-      listeners.push(new InspectorController());
-    }
-    const instrumentation = multiplexInstrumentation(listeners);
-    super({ attribution: {}, instrumentation } as any);
+    super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.options = {
       registry: new Registry(path.join(__dirname, '..', '..')),
       rootSdkObject: this,

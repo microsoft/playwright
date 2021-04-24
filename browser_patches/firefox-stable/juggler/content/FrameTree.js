@@ -54,7 +54,7 @@ class FrameTree {
       this._onWorkerCreated(workerDebugger);
 
     const flags = Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT |
-                  Ci.nsIWebProgress.NOTIFY_FRAME_LOCATION;
+                  Ci.nsIWebProgress.NOTIFY_LOCATION;
     this._eventListeners = [
       helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
       helper.addObserver(this._onDOMWindowCreated.bind(this), 'juggler-dom-window-reused'),
@@ -231,7 +231,7 @@ class FrameTree {
       this.emit(FrameTree.Events.Load, frame);
   }
 
-  onFrameLocationChange(progress, request, location, flags) {
+  onLocationChange(progress, request, location, flags) {
     const docShell = progress.DOMWindow.docShell;
     const frame = this._docShellToFrame.get(docShell);
     const sameDocumentNavigation = !!(flags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT);

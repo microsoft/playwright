@@ -16,7 +16,7 @@
  */
 
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { isDebugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
+import { debugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
 import { Browser, BrowserOptions } from './browser';
 import { Download } from './download';
 import * as frames from './frames';
@@ -27,7 +27,12 @@ import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 import path from 'path';
-import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
+import { CallMetadata, internalCallMetadata, createInstrumentation, SdkObject } from './instrumentation';
+import { Debugger } from './supplements/debugger';
+import { Tracer } from './trace/recorder/tracer';
+import { HarTracer } from './supplements/har/harTracer';
+import { RecorderSupplement } from './supplements/recorderSupplement';
+import * as consoleApiSource from '../generated/consoleApiSource';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -51,15 +56,20 @@ export abstract class BrowserContext extends SdkObject {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   private _origins = new Set<string>();
+  private _harTracer: HarTracer | undefined;
+  private _tracer: Tracer | null = null;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
-    super(browser);
+    super(browser, 'browser-context');
     this.attribution.context = this;
     this._browser = browser;
     this._options = options;
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+
+    if (this._options.recordHar)
+      this._harTracer = new HarTracer(this, this._options.recordHar);
   }
 
   _setSelectors(selectors: Selectors) {
@@ -71,7 +81,28 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _initialize() {
-    await this.instrumentation.onContextCreated(this);
+    if (this.attribution.isInternal)
+      return;
+    // Create instrumentation per context.
+    this.instrumentation = createInstrumentation();
+
+    // Debugger will pause execution upon page.pause in headed mode.
+    const contextDebugger = new Debugger(this);
+    this.instrumentation.addListener(contextDebugger);
+
+    // When PWDEBUG=1, show inspector for each context.
+    if (debugMode() === 'inspector')
+      await RecorderSupplement.show(this, { pauseOnNextStatement: true });
+
+    // When paused, show inspector.
+    if (contextDebugger.isPaused())
+      RecorderSupplement.showInspector(this);
+    contextDebugger.on(Debugger.Events.PausedStateChanged, () => {
+      RecorderSupplement.showInspector(this);
+    });
+
+    if (debugMode() === 'console')
+      await this.extendInjectedScript(consoleApiSource.source);
   }
 
   async _ensureVideosPath() {
@@ -232,7 +263,8 @@ export abstract class BrowserContext extends SdkObject {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      await this.instrumentation.onContextWillDestroy(this);
+      await this._harTracer?.flush();
+      await this._tracer?.stop();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
@@ -261,7 +293,6 @@ export abstract class BrowserContext extends SdkObject {
         await this._browser.close();
 
       // Bookkeeping.
-      await this.instrumentation.onContextDidDestroy(this);
       this._didCloseInternal();
     }
     await this._closePromise;
@@ -340,6 +371,21 @@ export abstract class BrowserContext extends SdkObject {
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
   }
+
+  async startTracing() {
+    if (this._tracer)
+      throw new Error('Tracing has already been started');
+    const traceDir = this._browser.options.traceDir;
+    if (!traceDir)
+      throw new Error('Tracing directory is not specified when launching the browser');
+    this._tracer = new Tracer(this, traceDir);
+    await this._tracer.start();
+  }
+
+  async stopTracing() {
+    await this._tracer?.stop();
+    this._tracer = null;
+  }
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContext) {
@@ -378,7 +424,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'per-context' } })"`);
     options.proxy = normalizeProxySettings(options.proxy);
   }
-  if (isDebugMode())
+  if (debugMode() === 'inspector')
     options.bypassCSP = true;
   verifyGeolocation(options.geolocation);
   if (!options._debugName)

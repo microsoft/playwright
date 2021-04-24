@@ -61,7 +61,7 @@ Will not fail if the download is already finished or canceled.
 Upon successful cancellations, `download.failure()` would resolve to `'canceled'`.
 
 ## async method: Download.createReadStream
-* langs: java, js
+* langs: java, js, csharp
 - returns: <[null]|[Readable]>
 
 Returns readable stream for current download or `null` if download failed.

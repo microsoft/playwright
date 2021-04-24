@@ -79,6 +79,7 @@ function archive_compiled_chromium() {
       "resources.pak"
       "swiftshader"
       "v8_context_snapshot.bin"
+      "vk_swiftshader_icd.json"
       "xdg-mime"
       "xdg-settings"
     )
@@ -108,6 +109,8 @@ function archive_compiled_chromium() {
       "swiftshader/libEGL.dll"
       "swiftshader/libGLESv2.dll"
       "v8_context_snapshot.bin"
+      "vk_swiftshader.dll"
+      "vk_swiftshader_icd.json"
     )
   else
     echo "ERROR: unknown command, use --help for details"

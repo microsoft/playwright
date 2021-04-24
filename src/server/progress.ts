@@ -27,7 +27,6 @@ export interface Progress {
   cleanupWhenAborted(cleanup: () => any): void;
   throwIfAborted(): void;
   beforeInputAction(element: ElementHandle): Promise<void>;
-  afterInputAction(): Promise<void>;
   metadata: CallMetadata;
 }
 
@@ -90,9 +89,6 @@ export class ProgressController {
       },
       beforeInputAction: async (element: ElementHandle) => {
         await this.instrumentation.onBeforeInputAction(this.sdkObject, this.metadata, element);
-      },
-      afterInputAction: async () => {
-        await this.instrumentation.onAfterInputAction(this.sdkObject, this.metadata);
       },
       metadata: this.metadata
     };

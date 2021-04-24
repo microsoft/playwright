@@ -28,6 +28,7 @@ export class TestServer {
   setRoute(path: string, handler: (message: IncomingMessage & {postBody: Buffer}, response: ServerResponse) => void);
   setRedirect(from: string, to: string);
   waitForRequest(path: string): Promise<IncomingMessage & {postBody: Buffer}>;
+  waitForWebSocketConnectionRequest(): Promise<IncomingMessage>;
   reset();
   serveFile(request: IncomingMessage, response: ServerResponse);
   serveFile(request: IncomingMessage, response: ServerResponse, filePath: string);

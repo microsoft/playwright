@@ -70,11 +70,13 @@ export type LaunchPersistentContextOptions = Omit<LaunchOptionsBase & BrowserCon
 
 export type ConnectOptions = {
   wsEndpoint: string,
+  headers?: { [key: string]: string; };
   slowMo?: number,
   timeout?: number,
   logger?: Logger,
 };
 export type LaunchServerOptions = {
+  channel?: channels.BrowserTypeLaunchOptions['channel'],
   executablePath?: string,
   args?: string[],
   ignoreDefaultArgs?: boolean | string[],

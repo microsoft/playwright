@@ -44,6 +44,7 @@ export const Workbench: React.FunctionComponent<{
     const actions: ActionEntry[] = [];
     for (const page of context.pages)
       actions.push(...page.actions);
+    actions.sort((a, b) => a.timestamp - b.timestamp);
     return actions;
   }, [context]);
 
@@ -64,17 +65,18 @@ export const Workbench: React.FunctionComponent<{
         }}
       />
     </div>
-    <div style={{ background: 'white', paddingLeft: '20px', flex: 'none' }}>
+    <div style={{ background: 'white', paddingLeft: '20px', flex: 'none', borderBottom: '1px solid #ddd' }}>
       <Timeline
         context={context}
         boundaries={boundaries}
         selectedAction={selectedAction}
         highlightedAction={highlightedAction}
         onSelected={action => setSelectedAction(action)}
+        onHighlighted={action => setHighlightedAction(action)}
       />
     </div>
-    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
-      <SplitView sidebarSize={250}>
+    <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
+      <SplitView sidebarSize={300} orientation='horizontal'>
         <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} />
         <TabbedPane tabs={[
           { id: 'logs', title: 'Log', render: () => <LogsTab actionEntry={selectedAction} /> },
@@ -101,18 +103,12 @@ const emptyContext: ContextEntry = {
   endTime: now,
   created: {
     timestamp: now,
-    type: 'context-created',
+    type: 'context-metadata',
     browserName: '',
-    contextId: '<empty>',
     deviceScaleFactor: 1,
     isMobile: false,
     viewportSize: { width: 1280, height: 800 },
     debugName: '<empty>',
-  },
-  destroyed: {
-    timestamp: now,
-    type: 'context-destroyed',
-    contextId: '<empty>',      
   },
   pages: []
 };

@@ -12,6 +12,11 @@
       "installByDefault": true
     },
     {
+      "name": "firefox-stable",
+      "revision": "1244",
+      "installByDefault": false
+    },
+    {
       "name": "webkit",
       "revision": "1463",
       "installByDefault": true,

@@ -87,7 +87,7 @@ if [[ $1 == "--full" || $2 == "--full" ]]; then
     rm -rf "$HOME/.mozbuild/node"
     mv node "$HOME/.mozbuild/"
   elif [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
-    SHELL=/bin/sh ./mach bootstrap --no-interactive --application-choice=browser --no-system-changes
+    SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser --no-system-changes
   fi
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.

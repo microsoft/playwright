@@ -56,7 +56,7 @@ export class ExecutionContext extends SdkObject {
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
 
   constructor(parent: SdkObject, delegate: ExecutionContextDelegate) {
-    super(parent);
+    super(parent, 'execution-context');
     this._delegate = delegate;
   }
 
@@ -104,7 +104,7 @@ export class JSHandle<T = any> extends SdkObject {
   private _previewCallback: ((preview: string) => void) | undefined;
 
   constructor(context: ExecutionContext, type: string, objectId?: ObjectId, value?: any) {
-    super(context);
+    super(context, 'handle');
     this._context = context;
     this._objectId = objectId;
     this._value = value;

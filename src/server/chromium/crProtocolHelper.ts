@@ -21,6 +21,7 @@ import fs from 'fs';
 import * as util from 'util';
 import * as types from '../types';
 import { mkdirIfNeeded } from '../../utils/utils';
+import { splitErrorMessage } from '../../utils/stackTrace';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)
@@ -74,18 +75,18 @@ export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDet
   const messageWithStack = getExceptionMessage(exceptionDetails);
   const lines = messageWithStack.split('\n');
   const firstStackTraceLine = lines.findIndex(line => line.startsWith('    at'));
-  let message = '';
+  let messageWithName = '';
   let stack = '';
   if (firstStackTraceLine === -1) {
-    message = messageWithStack;
+    messageWithName = messageWithStack;
   } else {
-    message = lines.slice(0, firstStackTraceLine).join('\n');
+    messageWithName = lines.slice(0, firstStackTraceLine).join('\n');
     stack = messageWithStack;
   }
-  const match = message.match(/^[a-zA-Z0-0_]*Error: (.*)$/);
-  if (match)
-    message = match[1];
+  const {name, message} = splitErrorMessage(messageWithName);
+
   const err = new Error(message);
   err.stack = stack;
+  err.name = name;
   return err;
 }

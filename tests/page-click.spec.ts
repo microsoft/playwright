@@ -456,6 +456,68 @@ it('should wait for becoming hit target', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
+it('should wait for becoming hit target with trial run', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.$eval('button', button => {
+    button.style.borderWidth = '0';
+    button.style.width = '200px';
+    button.style.height = '20px';
+    document.body.style.margin = '0';
+    document.body.style.position = 'relative';
+    const flyOver = document.createElement('div');
+    flyOver.className = 'flyover';
+    flyOver.style.position = 'absolute';
+    flyOver.style.width = '400px';
+    flyOver.style.height = '20px';
+    flyOver.style.left = '-200px';
+    flyOver.style.top = '0';
+    flyOver.style.background = 'red';
+    document.body.appendChild(flyOver);
+  });
+  let clicked = false;
+  const clickPromise = page.click('button', { trial: true }).then(() => clicked = true);
+  expect(clicked).toBe(false);
+
+  await page.$eval('.flyover', flyOver => flyOver.style.left = '0');
+  await giveItAChanceToClick(page);
+  expect(clicked).toBe(false);
+
+  await page.$eval('.flyover', flyOver => flyOver.style.left = '200px');
+  await clickPromise;
+  expect(clicked).toBe(true);
+
+  // Should not actually click.
+  expect(await page.evaluate(() => window['result'])).toBe('Was not clicked');
+});
+
+it('trial run should work with short timeout', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.$eval('button', button => button.disabled = true);
+  const error = await page.click('button', { trial: true, timeout: 500 }).catch(e => e);
+  expect(error.message).toContain('click action (trial run)');
+  expect(await page.evaluate(() => window['result'])).toBe('Was not clicked');
+});
+
+it('trial run should not click', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.click('button', { trial: true });
+  expect(await page.evaluate(() => window['result'])).toBe('Was not clicked');
+});
+
+it('trial run should not double click', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.evaluate(() => {
+    window['double'] = false;
+    const button = document.querySelector('button');
+    button.addEventListener('dblclick', event => {
+      window['double'] = true;
+    });
+  });
+  await page.dblclick('button', { trial: true });
+  expect(await page.evaluate('double')).toBe(false);
+  expect(await page.evaluate('result')).toBe('Was not clicked');
+});
+
 it('should fail when obscured and not waiting for hit target', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');

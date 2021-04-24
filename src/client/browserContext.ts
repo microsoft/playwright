@@ -279,6 +279,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this.emit(Events.BrowserContext.Close, this);
   }
 
+  async _startTracing() {
+    return await this._wrapApiCall('browserContext.startTracing', async (channel: channels.BrowserContextChannel) => {
+      await channel.startTracing();
+    });
+  }
+
+  async _stopTracing() {
+    return await this._wrapApiCall('browserContext.stopTracing', async (channel: channels.BrowserContextChannel) => {
+      await channel.stopTracing();
+    });
+  }
+
   async close(): Promise<void> {
     try {
       await this._wrapApiCall('browserContext.close', async (channel: channels.BrowserContextChannel) => {

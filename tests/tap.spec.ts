@@ -50,6 +50,17 @@ it('should send all of the correct events', async ({}) => {
   ]);
 });
 
+it('trial run should not tap', async ({}) => {
+  await page.setContent(`
+    <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
+    <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
+  `);
+  await page.tap('#a');
+  const eventsHandle = await trackEvents(await page.$('#b'));
+  await page.tap('#b', { trial: true });
+  expect(await eventsHandle.jsonValue()).toEqual([]);
+});
+
 it('should not send mouse events touchstart is canceled', async ({}) => {
   await page.setContent(`<div style="width: 50px; height: 50px; background: red">`);
   await page.evaluate(() => {

@@ -19,21 +19,30 @@
   flex: auto;
   flex-direction: column;
   align-items: stretch;
+  outline: none;
 }
 
 .snapshot-controls {
-  flex: 0 0 24px;
+  flex: none;
+  color: var(--toolbar-color);
   display: flex;
-  flex-direction: row;
+  box-shadow: var(--box-shadow);
+  background-color: var(--toolbar-bg-color);
+  height: 32px;
   align-items: center;
-  padding: 10px 4px 0 0;
+  justify-content: center;
 }
 
 .snapshot-toggle {
+  margin-top: 4px;
   padding: 4px 8px;
   cursor: pointer;
   border-radius: 20px;
   margin-left: 4px;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .snapshot-toggle:hover {
@@ -41,7 +50,12 @@
 }
 
 .snapshot-toggle.toggled {
-  background: var(--inactive-focus-ring);
+  background: var(--gray);
+  color: white;
+}
+
+.snapshot-tab:focus .snapshot-toggle.toggled {
+  background: var(--blue);
 }
 
 .snapshot-wrapper {

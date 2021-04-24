@@ -156,10 +156,9 @@ export class SnapshotServer {
     response.statusCode = 200;
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/json');
-    const [ pageId, query ] = request.url!.substring('/snapshot/'.length).split('?');
+    const [ pageOrFrameId, query ] = request.url!.substring('/snapshot/'.length).split('?');
     const parsed: any = querystring.parse(query);
-
-    const snapshot = parsed.name ? this._snapshotStorage.snapshotByName(pageId, parsed.name) : this._snapshotStorage.snapshotByTime(pageId, parsed.time);
+    const snapshot = this._snapshotStorage.snapshotByName(pageOrFrameId, parsed.name);
     const snapshotData: any = snapshot ? snapshot.render() : { html: '' };
     response.end(JSON.stringify(snapshotData));
     return true;

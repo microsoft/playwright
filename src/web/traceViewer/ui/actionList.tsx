@@ -16,6 +16,7 @@
 
 import { ActionEntry } from '../../../server/trace/viewer/traceModel';
 import './actionList.css';
+import './tabbedPane.css';
 import * as React from 'react';
 
 export interface ActionListProps {
@@ -33,19 +34,57 @@ export const ActionList: React.FC<ActionListProps> = ({
   onSelected = () => {},
   onHighlighted = () => {},
 }) => {
-  return <div className='action-list'>{actions.map(actionEntry => {
-    const { metadata, actionId } = actionEntry;
-    return <div
-      className={'action-entry' + (actionEntry === selectedAction ? ' selected' : '')}
-      key={actionId}
-      onClick={() => onSelected(actionEntry)}
-      onMouseEnter={() => onHighlighted(actionEntry)}
-      onMouseLeave={() => (highlightedAction === actionEntry) && onHighlighted(undefined)}
+  const actionListRef = React.createRef<HTMLDivElement>();
+
+  React.useEffect(() => {
+    actionListRef.current?.focus();
+  }, [selectedAction]);
+
+  return <div className='action-list vbox'>
+    <div className='.action-list-title tab-strip'>
+      <div className='tab-element'>
+        <div className='tab-label'>Actions</div>
+      </div>
+    </div>
+    <div
+      className='action-list-content'
+      tabIndex={0}
+      onKeyDown={event => {
+        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp')
+          return;
+        const index = selectedAction ? actions.indexOf(selectedAction) : -1;
+        if (event.key === 'ArrowDown') {
+          if (index === -1)
+            onSelected(actions[0]);
+          else
+            onSelected(actions[Math.min(index + 1, actions.length - 1)]);
+        }
+        if (event.key === 'ArrowUp') {
+          if (index === -1)
+            onSelected(actions[actions.length - 1]);
+          else
+            onSelected(actions[Math.max(index - 1, 0)]);
+        }
+      }}
+      ref={actionListRef}
     >
-      <div className={'action-error codicon codicon-issues'} hidden={!metadata.error} />
-      <div className='action-title'>{metadata.apiName}</div>
-      {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
-      {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
-    </div>;
-  })}</div>;
+      {actions.map(actionEntry => {
+        const { metadata, actionId } = actionEntry;
+        const selectedSuffix = actionEntry === selectedAction ? ' selected' : '';
+        const highlightedSuffix = actionEntry === highlightedAction ? ' highlighted' : '';
+        return <div
+          className={'action-entry' + selectedSuffix + highlightedSuffix}
+          key={actionId}
+          onClick={() => onSelected(actionEntry)}
+          onMouseEnter={() => onHighlighted(actionEntry)}
+          onMouseLeave={() => (highlightedAction === actionEntry) && onHighlighted(undefined)}
+        >
+          <div className={'action-error codicon codicon-issues'} hidden={!metadata.error} />
+          <div className='action-title'>{metadata.apiName || metadata.method}</div>
+          {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
+          {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
+        </div>;
+      })}
+    </div>
+  </div>;
 };

@@ -39,7 +39,6 @@ export type WaitForEventInfo = {
   waitId: string,
   phase: 'before' | 'after' | 'log',
   apiName?: string,
-  stack?: StackFrame[],
   message?: string,
   error?: string,
 };
@@ -208,7 +207,7 @@ export interface BrowserTypeChannel extends Channel {
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: Metadata): Promise<BrowserTypeConnectOverCDPResult>;
 }
 export type BrowserTypeLaunchParams = {
-  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -227,12 +226,13 @@ export type BrowserTypeLaunchParams = {
     password?: string,
   },
   downloadsPath?: string,
+  _traceDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
-  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -251,6 +251,7 @@ export type BrowserTypeLaunchOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  _traceDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   slowMo?: number,
@@ -259,7 +260,7 @@ export type BrowserTypeLaunchResult = {
   browser: BrowserChannel,
 };
 export type BrowserTypeLaunchPersistentContextParams = {
-  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -278,6 +279,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     password?: string,
   },
   downloadsPath?: string,
+  _traceDir?: string,
   chromiumSandbox?: boolean,
   sdkLanguage: string,
   noDefaultViewport?: boolean,
@@ -312,7 +314,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -329,7 +330,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
-  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary',
+  channel?: 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable',
   executablePath?: string,
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
@@ -348,6 +349,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  _traceDir?: string,
   chromiumSandbox?: boolean,
   noDefaultViewport?: boolean,
   viewport?: {
@@ -381,7 +383,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -402,10 +403,12 @@ export type BrowserTypeLaunchPersistentContextResult = {
 export type BrowserTypeConnectOverCDPParams = {
   sdkLanguage: string,
   endpointURL: string,
+  headers?: NameValue[],
   slowMo?: number,
   timeout?: number,
 };
 export type BrowserTypeConnectOverCDPOptions = {
+  headers?: NameValue[],
   slowMo?: number,
   timeout?: number,
 };
@@ -469,7 +472,6 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -526,7 +528,6 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -609,6 +610,8 @@ export interface BrowserContextChannel extends Channel {
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
+  startTracing(params?: BrowserContextStartTracingParams, metadata?: Metadata): Promise<BrowserContextStartTracingResult>;
+  stopTracing(params?: BrowserContextStopTracingParams, metadata?: Metadata): Promise<BrowserContextStopTracingResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -785,6 +788,12 @@ export type BrowserContextNewCDPSessionOptions = {
 export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
+export type BrowserContextStartTracingParams = {};
+export type BrowserContextStartTracingOptions = {};
+export type BrowserContextStartTracingResult = void;
+export type BrowserContextStopTracingParams = {};
+export type BrowserContextStopTracingOptions = {};
+export type BrowserContextStopTracingResult = void;
 
 // ----------- Page -----------
 export type PageInitializer = {
@@ -1338,12 +1347,14 @@ export type FrameCheckParams = {
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameCheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameCheckResult = void;
 export type FrameClickParams = {
@@ -1356,6 +1367,7 @@ export type FrameClickParams = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameClickOptions = {
   force?: boolean,
@@ -1366,6 +1378,7 @@ export type FrameClickOptions = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameClickResult = void;
 export type FrameContentParams = {};
@@ -1382,6 +1395,7 @@ export type FrameDblclickParams = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameDblclickOptions = {
   force?: boolean,
@@ -1391,6 +1405,7 @@ export type FrameDblclickOptions = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameDblclickResult = void;
 export type FrameDispatchEventParams = {
@@ -1484,12 +1499,14 @@ export type FrameHoverParams = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameHoverOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
@@ -1659,6 +1676,7 @@ export type FrameTapParams = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameTapOptions = {
   force?: boolean,
@@ -1666,6 +1684,7 @@ export type FrameTapOptions = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameTapResult = void;
 export type FrameTextContentParams = {
@@ -1702,12 +1721,14 @@ export type FrameUncheckParams = {
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameUncheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type FrameUncheckResult = void;
 export type FrameWaitForFunctionParams = {
@@ -1908,12 +1929,14 @@ export type ElementHandleCheckParams = {
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleCheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleCheckResult = void;
 export type ElementHandleClickParams = {
@@ -1925,6 +1948,7 @@ export type ElementHandleClickParams = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleClickOptions = {
   force?: boolean,
@@ -1935,6 +1959,7 @@ export type ElementHandleClickOptions = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleClickResult = void;
 export type ElementHandleContentFrameParams = {};
@@ -1950,6 +1975,7 @@ export type ElementHandleDblclickParams = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleDblclickOptions = {
   force?: boolean,
@@ -1959,6 +1985,7 @@ export type ElementHandleDblclickOptions = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleDblclickResult = void;
 export type ElementHandleDispatchEventParams = {
@@ -1996,12 +2023,14 @@ export type ElementHandleHoverParams = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleHoverOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleHoverResult = void;
 export type ElementHandleInnerHTMLParams = {};
@@ -2151,6 +2180,7 @@ export type ElementHandleTapParams = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleTapOptions = {
   force?: boolean,
@@ -2158,6 +2188,7 @@ export type ElementHandleTapOptions = {
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleTapResult = void;
 export type ElementHandleTextContentParams = {};
@@ -2182,12 +2213,14 @@ export type ElementHandleUncheckParams = {
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleUncheckOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
+  trial?: boolean,
 };
 export type ElementHandleUncheckResult = void;
 export type ElementHandleWaitForElementStateParams = {
@@ -2829,7 +2862,6 @@ export type AndroidDeviceLaunchBrowserParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -2874,7 +2906,6 @@ export type AndroidDeviceLaunchBrowserOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceDir?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,

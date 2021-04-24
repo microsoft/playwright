@@ -42,6 +42,8 @@ function copy_test_scripts {
   cp "${SCRIPTS_PATH}/inspector-custom-executable.js" .
   cp "${SCRIPTS_PATH}/sanity.js" .
   cp "${SCRIPTS_PATH}/screencast.js" .
+  cp "${SCRIPTS_PATH}/validate-dependencies.js" .
+  cp "${SCRIPTS_PATH}/validate-dependencies-skip-executable-path.js" .
   cp "${SCRIPTS_PATH}/esm.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright-chromium.mjs" .
@@ -64,6 +66,8 @@ function run_tests {
   test_playwright_chromium_should_work
   test_playwright_webkit_should_work
   test_playwright_firefox_should_work
+  test_playwright_validate_dependencies
+  test_playwright_validate_dependencies_skip_executable_path
   test_playwright_global_installation
   test_playwright_global_installation_cross_package
   test_playwright_electron_should_work
@@ -354,6 +358,36 @@ function test_playwright_firefox_should_work {
   if [[ "${NODE_VERSION}" == *"v14."* ]]; then
     echo "Running esm.js"
     node esm-playwright-firefox.mjs
+  fi
+
+  echo "${FUNCNAME[0]} success"
+}
+
+function test_playwright_validate_dependencies {
+  initialize_test "${FUNCNAME[0]}"
+
+  npm install ${PLAYWRIGHT_TGZ}
+  copy_test_scripts
+
+  OUTPUT="$(node validate-dependencies.js)"
+  if [[ "${OUTPUT}" != *"PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS"* ]]; then
+    echo "ERROR: validateDependencies was not called"
+    exit 1
+  fi
+
+  echo "${FUNCNAME[0]} success"
+}
+
+function test_playwright_validate_dependencies_skip_executable_path {
+  initialize_test "${FUNCNAME[0]}"
+
+  npm install ${PLAYWRIGHT_TGZ}
+  copy_test_scripts
+
+  OUTPUT="$(node validate-dependencies-skip-executable-path.js)"
+  if [[ "${OUTPUT}" == *"PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS"* ]]; then
+    echo "ERROR: validateDependencies was called"
+    exit 1
   fi
 
   echo "${FUNCNAME[0]} success"

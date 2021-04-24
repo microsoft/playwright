@@ -32,7 +32,7 @@ export class Dialog extends SdkObject {
   private _defaultValue: string;
 
   constructor(page: Page, type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
-    super(page);
+    super(page, 'dialog');
     this._page = page;
     this._type = type;
     this._message = message;

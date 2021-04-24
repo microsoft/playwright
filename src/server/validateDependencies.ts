@@ -47,6 +47,7 @@ const DL_OPEN_LIBRARIES = {
   'webkit': ['libGLESv2.so.2', 'libx264.so'],
   'webkit-technology-preview': ['libGLESv2.so.2', 'libx264.so'],
   'firefox': [],
+  'firefox-stable': [],
   'clank': [],
   'ffmpeg': [],
 };

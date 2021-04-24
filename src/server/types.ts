@@ -35,6 +35,7 @@ export type NavigatingActionWaitOptions = TimeoutOptions & {
 
 export type PointerActionWaitOptions = TimeoutOptions & {
   force?: boolean,
+  trial?: boolean;
 };
 
 export type ElementScreenshotOptions = TimeoutOptions & {
@@ -246,13 +247,12 @@ export type BrowserContextOptions = {
     path: string
   },
   proxy?: ProxySettings,
-  _traceDir?: string,
   _debugName?: string,
 };
 
 export type EnvArray = { name: string, value: string }[];
 
-export type BrowserChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
+export type BrowserChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable';
 
 type LaunchOptionsBase = {
   channel?: BrowserChannel,
@@ -272,6 +272,7 @@ type LaunchOptionsBase = {
   chromiumSandbox?: boolean,
   slowMo?: number,
   useWebSocket?: boolean,
+  _traceDir?: string,
 };
 export type LaunchOptions = LaunchOptionsBase & {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },

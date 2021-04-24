@@ -219,4 +219,34 @@ playwrightTest.describe('chromium', () => {
       await browserServer.close();
     }
   });
+  playwrightTest('should send extra headers with connect request', async ({browserType, browserOptions, server}, testInfo) => {
+    {
+      const [request] = await Promise.all([
+        server.waitForWebSocketConnectionRequest(),
+        browserType.connectOverCDP({
+          wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+          headers: {
+            'User-Agent': 'Playwright',
+            'foo': 'bar',
+          }
+        }).catch(() => {})
+      ]);
+      expect(request.headers['user-agent']).toBe('Playwright');
+      expect(request.headers['foo']).toBe('bar');
+    }
+    {
+      const [request] = await Promise.all([
+        server.waitForWebSocketConnectionRequest(),
+        browserType.connectOverCDP({
+          endpointURL: `ws://localhost:${server.PORT}/ws`,
+          headers: {
+            'User-Agent': 'Playwright',
+            'foo': 'bar',
+          }
+        }).catch(() => {})
+      ]);
+      expect(request.headers['user-agent']).toBe('Playwright');
+      expect(request.headers['foo']).toBe('bar');
+    }
+  });
 });

@@ -13,7 +13,6 @@ on:
 jobs:
   publish-canary-docker:
     name: "publish to DockerHub"
-    # We use `docker push --all-tags` to push all tags which is a newly addition to docker
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:

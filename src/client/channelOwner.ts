@@ -16,12 +16,11 @@
 
 import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
-import type { Connection } from './connection';
-import type { Logger } from './types';
+import { createScheme, ValidationError, Validator } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
 import { rewriteErrorMessage } from '../utils/stackTrace';
-import { createScheme, Validator, ValidationError } from '../protocol/validator';
-import { StackFrame } from '../common/types';
+import type { Connection } from './connection';
+import type { Logger } from './types';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
@@ -103,8 +102,8 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     }
   }
 
-  _waitForEventInfoBefore(waitId: string, apiName: string, stack: StackFrame[]) {
-    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { apiName, waitId, phase: 'before', stack } }, undefined).catch(() => {});
+  _waitForEventInfoBefore(waitId: string, apiName: string) {
+    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { apiName, waitId, phase: 'before' } }, undefined).catch(() => {});
   }
 
   _waitForEventInfoAfter(waitId: string, error?: string) {

@@ -17,25 +17,32 @@
 import { ElementHandle } from '../server/dom';
 import * as js from '../server/javascript';
 import * as channels from '../protocol/channels';
-import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
+import { DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 
-export function createHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
-  return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
-}
-
 export class ElementHandleDispatcher extends JSHandleDispatcher implements channels.ElementHandleChannel {
   readonly _elementHandle: ElementHandle;
 
-  static createNullable(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | undefined {
-    if (!handle)
-      return undefined;
-    return new ElementHandleDispatcher(scope, handle);
+  static from(scope: DispatcherScope, handle: ElementHandle): ElementHandleDispatcher {
+    return existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
   }
 
-  constructor(scope: DispatcherScope, elementHandle: ElementHandle) {
+  static fromNullable(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | undefined {
+    if (!handle)
+      return undefined;
+    return existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
+  }
+
+  static fromJSHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
+    const result = existingDispatcher<JSHandleDispatcher>(handle);
+    if (result)
+      return result;
+    return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
+  }
+
+  private constructor(scope: DispatcherScope, elementHandle: ElementHandle) {
     super(scope, elementHandle);
     this._elementHandle = elementHandle;
   }
@@ -162,12 +169,12 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
 
   async querySelector(params: channels.ElementHandleQuerySelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleQuerySelectorResult> {
     const handle = await this._elementHandle.$(params.selector);
-    return { element: handle ? new ElementHandleDispatcher(this._scope, handle) : undefined };
+    return { element: ElementHandleDispatcher.fromNullable(this._scope, handle) };
   }
 
   async querySelectorAll(params: channels.ElementHandleQuerySelectorAllParams, metadata: CallMetadata): Promise<channels.ElementHandleQuerySelectorAllResult> {
     const elements = await this._elementHandle.$$(params.selector);
-    return { elements: elements.map(e => new ElementHandleDispatcher(this._scope, e)) };
+    return { elements: elements.map(e => ElementHandleDispatcher.from(this._scope, e)) };
   }
 
   async evalOnSelector(params: channels.ElementHandleEvalOnSelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleEvalOnSelectorResult> {
@@ -183,6 +190,6 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async waitForSelector(params: channels.ElementHandleWaitForSelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleWaitForSelectorResult> {
-    return { element: ElementHandleDispatcher.createNullable(this._scope, await this._elementHandle.waitForSelector(metadata, params.selector, params)) };
+    return { element: ElementHandleDispatcher.fromNullable(this._scope, await this._elementHandle.waitForSelector(metadata, params.selector, params)) };
   }
 }

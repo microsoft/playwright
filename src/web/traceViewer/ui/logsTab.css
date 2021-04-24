@@ -20,6 +20,7 @@
   white-space: pre;
   overflow: auto;
   padding-top: 3px;
+  user-select: text;
 }
 
 .log-line {
