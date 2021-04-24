@@ -434,3 +434,18 @@ it.describe('download event', () => {
     expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 });
+
+it.only('should download binary.zip complete', async ({browser, server, browserName}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.setContent(`<a href="${server.PREFIX}/binary.zip" download="binary.zip">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const downloadPath = await download.path();
+  const downloadFileSize = fs.statSync(downloadPath).size;
+  const originalFileSize = fs.statSync(path.join(__dirname, 'assets','binary.zip')).size;
+  expect(downloadFileSize).toEqual(originalFileSize);
+  await page.close();
+});
