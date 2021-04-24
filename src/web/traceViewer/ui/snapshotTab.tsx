@@ -30,7 +30,7 @@ export const SnapshotTab: React.FunctionComponent<{
   let [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
   const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
-  for (const snapshot of actionEntry?.snapshots || [])
+  for (const snapshot of actionEntry?.metadata.snapshots || [])
     snapshotMap.set(snapshot.title, snapshot);
   const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];

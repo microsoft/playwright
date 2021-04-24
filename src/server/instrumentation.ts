@@ -25,6 +25,7 @@ import type { Frame } from './frames';
 import type { Page } from './page';
 
 export type Attribution = {
+  isInternal: boolean,
   browserType?: BrowserType;
   browser?: Browser;
   context?: BrowserContext;
@@ -67,34 +68,32 @@ export class SdkObject extends EventEmitter {
 }
 
 export interface Instrumentation {
-  onContextCreated(context: BrowserContext): Promise<void>;
-  onContextWillDestroy(context: BrowserContext): Promise<void>;
-  onContextDidDestroy(context: BrowserContext): Promise<void>;
-
+  addListener(listener: InstrumentationListener): void;
+  onContextCreated(): Promise<void>;
+  onContextDestroyed(): Promise<void>;
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-
   onEvent(sdkObject: SdkObject, metadata: CallMetadata): void;
 }
 
 export interface InstrumentationListener {
-  onContextCreated?(context: BrowserContext): Promise<void>;
-  onContextWillDestroy?(context: BrowserContext): Promise<void>;
-  onContextDidDestroy?(context: BrowserContext): Promise<void>;
-
+  onContextCreated?(): Promise<void>;
+  onContextDestroyed?(): Promise<void>;
   onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onCallLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-
   onEvent?(sdkObject: SdkObject, metadata: CallMetadata): void;
 }
 
-export function multiplexInstrumentation(listeners: InstrumentationListener[]): Instrumentation {
+export function createInstrumentation(): Instrumentation {
+  const listeners: InstrumentationListener[] = [];
   return new Proxy({}, {
     get: (obj: any, prop: string) => {
+      if (prop === 'addListener')
+        return (listener: InstrumentationListener) => listeners.push(listener);
       if (!prop.startsWith('on'))
         return obj[prop];
       return async (...params: any[]) => {

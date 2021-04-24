@@ -19,7 +19,7 @@ import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toS
 import { ActionInContext } from './codeGenerator';
 import { actionTitle, Action } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
-import deviceDescriptors = require('../../deviceDescriptors');
+import deviceDescriptors from '../../deviceDescriptors';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
   id = 'python';

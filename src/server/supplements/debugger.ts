@@ -19,54 +19,38 @@ import { debugMode, isUnderTest, monotonicTime } from '../../utils/utils';
 import { BrowserContext } from '../browserContext';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import * as consoleApiSource from '../../generated/consoleApiSource';
+import { debugLogger } from '../../utils/debugLogger';
 
-export class Debugger implements InstrumentationListener {
-  async onContextCreated(context: BrowserContext): Promise<void> {
-    ContextDebugger.getOrCreate(context);
-    if (debugMode() === 'console')
-      await context.extendInjectedScript(consoleApiSource.source);
-  }
+const symbol = Symbol('Debugger');
 
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    await ContextDebugger.lookup(sdkObject.attribution.context!)?.onBeforeCall(sdkObject, metadata);
-  }
-
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    await ContextDebugger.lookup(sdkObject.attribution.context!)?.onBeforeInputAction(sdkObject, metadata);
-  }
-}
-
-const symbol = Symbol('ContextDebugger');
-
-export class ContextDebugger extends EventEmitter {
+export class Debugger extends EventEmitter implements InstrumentationListener {
   private _pauseOnNextStatement = false;
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
   private _enabled: boolean;
+  private _context: BrowserContext;
 
   static Events = {
     PausedStateChanged: 'pausedstatechanged'
   };
 
-  static getOrCreate(context: BrowserContext): ContextDebugger {
-    let contextDebugger = (context as any)[symbol] as ContextDebugger;
-    if (!contextDebugger) {
-      contextDebugger = new ContextDebugger();
-      (context as any)[symbol] = contextDebugger;
-    }
-    return contextDebugger;
-  }
-
-  constructor() {
+  constructor(context: BrowserContext) {
     super();
+    this._context = context;
+    (this._context as any)[symbol] = this;
     this._enabled = debugMode() === 'inspector';
     if (this._enabled)
       this.pauseOnNextStatement();
   }
 
-  static lookup(context?: BrowserContext): ContextDebugger | undefined {
+  static lookup(context?: BrowserContext): Debugger | undefined {
     if (!context)
       return;
-    return (context as any)[symbol] as ContextDebugger | undefined;
+    return (context as any)[symbol] as Debugger | undefined;
+  }
+
+  async onContextCreated() {
+    if (debugMode() === 'console')
+      await this._context.extendInjectedScript(consoleApiSource.source);
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -79,13 +63,17 @@ export class ContextDebugger extends EventEmitter {
       await this.pause(sdkObject, metadata);
   }
 
+  async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    debugLogger.log(logName as any, message);
+  }
+
   async pause(sdkObject: SdkObject, metadata: CallMetadata) {
     this._enabled = true;
     metadata.pauseStartTime = monotonicTime();
     const result = new Promise<void>(resolve => {
       this._pausedCallsMetadata.set(metadata, { resolve, sdkObject });
     });
-    this.emit(ContextDebugger.Events.PausedStateChanged);
+    this.emit(Debugger.Events.PausedStateChanged);
     return result;
   }
 
@@ -97,7 +85,7 @@ export class ContextDebugger extends EventEmitter {
       resolve();
     }
     this._pausedCallsMetadata.clear();
-    this.emit(ContextDebugger.Events.PausedStateChanged);
+    this.emit(Debugger.Events.PausedStateChanged);
   }
 
   pauseOnNextStatement() {
