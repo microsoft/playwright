@@ -140,7 +140,6 @@ export class Snapshotter {
     this._eventListeners.push(helper.addEventListener(page, Page.Events.Response, (response: network.Response) => {
       this._saveResource(page, response).catch(e => debugLogger.log('error', e));
     }));
-    page.setScreencastEnabled(true);
   }
 
   private async _saveResource(page: Page, response: network.Response) {
@@ -163,10 +162,10 @@ export class Snapshotter {
     const method = original.method();
     const status = response.status();
     const requestBody = original.postDataBuffer();
-    const requestSha1 = requestBody ? calculateSha1(requestBody) : 'none';
+    const requestSha1 = requestBody ? calculateSha1(requestBody) : '';
     const requestHeaders = original.headers();
     const body = await response.body().catch(e => debugLogger.log('error', e));
-    const responseSha1 = body ? calculateSha1(body) : 'none';
+    const responseSha1 = body ? calculateSha1(body) : '';
     const resource: ResourceSnapshot = {
       pageId: page.guid,
       frameId: response.frame().guid,

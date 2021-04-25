@@ -75,7 +75,7 @@ export class TraceModel {
         this.pageEntries.get(event.pageId)!.destroyed = event;
         break;
       }
-      case 'page-screencast-frame': {
+      case 'screencast-frame': {
         this.pageEntries.get(event.pageId)!.screencastFrames.push(event);
         break;
       }

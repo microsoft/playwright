@@ -57,7 +57,7 @@ export abstract class BrowserContext extends SdkObject {
   private _selectors?: Selectors;
   private _origins = new Set<string>();
   private _harTracer: HarTracer | undefined;
-  private _tracer: Tracer | null = null;
+  readonly tracing: Tracer;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -70,6 +70,7 @@ export abstract class BrowserContext extends SdkObject {
 
     if (this._options.recordHar)
       this._harTracer = new HarTracer(this, this._options.recordHar);
+    this.tracing = new Tracer(this);
   }
 
   _setSelectors(selectors: Selectors) {
@@ -263,7 +264,7 @@ export abstract class BrowserContext extends SdkObject {
       this._closedStatus = 'closing';
 
       await this._harTracer?.flush();
-      await this._tracer?.stop();
+      await this.tracing.stop();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
@@ -369,21 +370,6 @@ export abstract class BrowserContext extends SdkObject {
     };
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
-  }
-
-  async startTracing() {
-    if (this._tracer)
-      throw new Error('Tracing has already been started');
-    const traceDir = this._browser.options.traceDir;
-    if (!traceDir)
-      throw new Error('Tracing directory is not specified when launching the browser');
-    this._tracer = new Tracer(this, traceDir);
-    await this._tracer.start();
-  }
-
-  async stopTracing() {
-    await this._tracer?.stop();
-    this._tracer = null;
   }
 }
 
