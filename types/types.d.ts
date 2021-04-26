@@ -8987,7 +8987,10 @@ export interface ConsoleMessage {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   page.evaluate(() => console.log('hello', 5, {foo: 'bar'})),
+   *   const [message] = await Promise.all([
+   *     page.waitForEvent('console'),
+   *     page.evaluate(() => console.log('hello', 5, { foo: 'bar' })),
+   *   ]);
    *   console.log(await message.args()[0].jsonValue()); // It will print 'hello'
    *   console.log(await message.args()[1].jsonValue()); // It will print 5
    *   console.log((await message.args()[2].jsonValue()).foo); // It will print 'bar'
