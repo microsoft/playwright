@@ -24,7 +24,8 @@ import { Firefox } from './firefox/firefox';
 import { Selectors, serverSelectors } from './selectors';
 import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
-import { createInstrumentation, SdkObject } from './instrumentation';
+import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
+import { debugLogger } from '../utils/debugLogger';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -37,6 +38,11 @@ export class Playwright extends SdkObject {
 
   constructor(isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
+    this.instrumentation.addListener({
+      onCallLog: (logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata) => {
+        debugLogger.log(logName as any, message);
+      }
+    });
     this.options = {
       registry: new Registry(path.join(__dirname, '..', '..')),
       rootSdkObject: this,
