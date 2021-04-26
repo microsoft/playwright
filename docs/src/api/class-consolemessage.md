@@ -13,9 +13,9 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  await Promise.all([
-    page.evaluate(() => console.log('hello', 5, {foo: 'bar'})),
-    page.waitForEvent('console')
+  const [message] = await Promise.all([
+    page.waitForEvent('console'),
+    page.evaluate(() => console.log('hello', 5, { foo: 'bar' })),
   ]);
   console.log(await message.args()[0].jsonValue()); // It will print 'hello'
   console.log(await message.args()[1].jsonValue()); // It will print 5
