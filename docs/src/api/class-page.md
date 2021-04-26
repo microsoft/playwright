@@ -732,6 +732,8 @@ Optional event-specific initialization properties.
 
 ## async method: Page.emulateMedia
 
+This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media feature, using the `colorScheme` argument.
+
 ```js
 await page.evaluate(() => matchMedia('screen').matches);
 // → true
