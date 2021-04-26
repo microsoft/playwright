@@ -5440,7 +5440,7 @@ index 38fd7b29b53eab484e30963b51c8ae525c5d7a38..3c2f2104e3f364d3d6201e3009a448b4
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
 diff --git a/Source/WebCore/page/Page.cpp b/Source/WebCore/page/Page.cpp
-index 79baa83b4977d2a7d8f894a27c2fb6ad23b2084a..27ae4e64de76432d4e05406b363ae09e7e5425f1 100644
+index 79baa83b4977d2a7d8f894a27c2fb6ad23b2084a..c31f53be4a09a39d00619064fa0bec411f587e62 100644
 --- a/Source/WebCore/page/Page.cpp
 +++ b/Source/WebCore/page/Page.cpp
 @@ -440,6 +440,37 @@ void Page::setOverrideViewportArguments(const Optional<ViewportArguments>& viewp
@@ -5481,6 +5481,18 @@ index 79baa83b4977d2a7d8f894a27c2fb6ad23b2084a..27ae4e64de76432d4e05406b363ae09e
  ScrollingCoordinator* Page::scrollingCoordinator()
  {
      if (!m_scrollingCoordinator && m_settings->scrollingCoordinatorEnabled()) {
+@@ -1252,11 +1283,6 @@ void Page::didCommitLoad()
+ #if ENABLE(EDITABLE_REGION)
+     m_isEditableRegionEnabled = false;
+ #endif
+-
+-#if HAVE(OS_DARK_MODE_SUPPORT)
+-    setUseDarkAppearanceOverride(WTF::nullopt);
+-#endif
+-
+     resetSeenPlugins();
+     resetSeenMediaEngines();
+ }
 diff --git a/Source/WebCore/page/Page.h b/Source/WebCore/page/Page.h
 index 6b76cc1158c3f6a440870409f13f0f7221983234..875f3af89f3b684032751ed4848e09f765c84f4d 100644
 --- a/Source/WebCore/page/Page.h
