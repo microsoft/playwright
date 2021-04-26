@@ -8978,6 +8978,24 @@ export interface BrowserServer {
  * [page.on('console')](https://playwright.dev/docs/api/class-page#pageonconsole) event.
  */
 export interface ConsoleMessage {
+  /**
+   * List or arguments passed to a `console` function call.
+   * 
+   * ```js
+   * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+   * 
+   * (async () => {
+   *   const browser = await chromium.launch();
+   *   const page = await browser.newPage();
+   *   page.evaluate(() => console.log('hello', 5, {foo: 'bar'})),
+   *   console.log(await message.args()[0].jsonValue()); // It will print 'hello'
+   *   console.log(await message.args()[1].jsonValue()); // It will print 5
+   *   console.log((await message.args()[2].jsonValue()).foo); // It will print 'bar'
+   *   await browser.close();
+   * })();
+   * ```
+   * 
+   */
   args(): Array<JSHandle>;
 
   location(): {
@@ -8997,6 +9015,9 @@ export interface ConsoleMessage {
     columnNumber: number;
   };
 
+  /**
+   * The text of the console message.
+   */
   text(): string;
 
   /**

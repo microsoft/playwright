@@ -5,6 +5,25 @@
 ## method: ConsoleMessage.args
 - returns: <[Array]<[JSHandle]>>
 
+List or arguments passed to a `console` function call.
+
+```js
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  await Promise.all([
+    page.evaluate(() => console.log('hello', 5, {foo: 'bar'})),
+    page.waitForEvent('console')
+  ]);
+  console.log(await message.args()[0].jsonValue()); // It will print 'hello'
+  console.log(await message.args()[1].jsonValue()); // It will print 5
+  console.log((await message.args()[2].jsonValue()).foo); // It will print 'bar'
+  await browser.close();
+})();
+```
+
 ## method: ConsoleMessage.location
 * langs: js, python
 - returns: <[Object]>
@@ -20,6 +39,8 @@ URL of the resource followed by 0-based line and column numbers in the resource 
 
 ## method: ConsoleMessage.text
 - returns: <[string]>
+
+The text of the console message.
 
 ## method: ConsoleMessage.type
 - returns: <[string]>
