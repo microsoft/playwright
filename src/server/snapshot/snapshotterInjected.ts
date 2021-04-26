@@ -51,6 +51,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
     cssText?: string, // Text for stylesheets.
     cssRef?: number, // Previous snapshotNumber for overridden stylesheets.
   };
+
+  function resetCachedData(obj: any) {
+    delete obj[kCachedData];
+  }
+
   function ensureCachedData(obj: any): CachedData {
     if (!obj[kCachedData])
       obj[kCachedData] = {};
@@ -69,14 +74,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
 
   class Streamer {
     private _removeNoScript = true;
-    private _timer: NodeJS.Timeout | undefined;
     private _lastSnapshotNumber = 0;
     private _staleStyleSheets = new Set<CSSStyleSheet>();
-    private _allStyleSheetsWithUrlOverride = new Set<CSSStyleSheet>();
     private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
     private _fakeBase: HTMLBaseElement;
     private _observer: MutationObserver;
-    private _interval = 0;
 
     constructor() {
       this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'insertRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
@@ -125,8 +127,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
       if (this._readingStyleSheet)
         return;
       this._staleStyleSheets.add(sheet);
-      if (sheet.href !== null)
-        this._allStyleSheetsWithUrlOverride.add(sheet);
     }
 
     private _updateStyleElementStyleSheetTextIfNeeded(sheet: CSSStyleSheet): string | undefined {
@@ -162,29 +162,29 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
       (iframeElement as any)[kSnapshotFrameId] = frameId;
     }
 
-    captureSnapshot(snapshotName?: string) {
-      this._streamSnapshot(snapshotName);
+    reset() {
+      this._staleStyleSheets.clear();
+
+      const visitNode = (node: Node | ShadowRoot) => {
+        resetCachedData(node);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
+          if (element.shadowRoot)
+            visitNode(element.shadowRoot);
+        }
+        for (let child = node.firstChild; child; child = child.nextSibling)
+          visitNode(child);
+      };
+      visitNode(document.documentElement);
     }
 
-    setSnapshotInterval(interval: number) {
-      this._interval = interval;
-      if (interval)
-        this._streamSnapshot();
-    }
-
-    private _streamSnapshot(snapshotName?: string) {
-      if (this._timer) {
-        clearTimeout(this._timer);
-        this._timer = undefined;
-      }
+    captureSnapshot(snapshotName: string) {
       try {
         const snapshot = this._captureSnapshot(snapshotName);
         if (snapshot)
           (window as any)[snapshotBinding](snapshot);
       } catch (e) {
       }
-      if (this._interval)
-        this._timer = setTimeout(() => this._streamSnapshot(), this._interval);
     }
 
     private _sanitizeUrl(url: string): string {
@@ -298,11 +298,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
         const result: NodeSnapshot = [nodeName, attrs];
 
         const visitChild = (child: Node) => {
-          const snapshotted = visitNode(child);
-          if (snapshotted) {
-            result.push(snapshotted.n);
+          const snapshot = visitNode(child);
+          if (snapshot) {
+            result.push(snapshot.n);
             expectValue(child);
-            equals = equals && snapshotted.equals;
+            equals = equals && snapshot.equals;
           }
         };
 
@@ -432,10 +432,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
       };
 
       let allOverridesAreRefs = true;
-      for (const sheet of this._allStyleSheetsWithUrlOverride) {
+      for (const sheet of this._staleStyleSheets) {
+        if (sheet.href === null)
+          continue;
         const content = this._updateLinkStyleSheetTextIfNeeded(sheet, snapshotNumber);
         if (content === undefined) {
-          // Unable to capture stylsheet contents.
+          // Unable to capture stylesheet contents.
           continue;
         }
         if (typeof content !== 'number')

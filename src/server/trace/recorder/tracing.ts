@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import yazl from 'yazl';
-import { createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
+import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dialog } from '../../dialog';
@@ -40,14 +40,14 @@ export type TracerOptions = {
   screenshots?: boolean;
 };
 
-export class Tracer implements InstrumentationListener {
+export class Tracing implements InstrumentationListener {
   private _appendEventChain = Promise.resolve();
-  private _snapshotter: TraceSnapshotter | undefined;
+  private _snapshotter: TraceSnapshotter;
   private _eventListeners: RegisteredListener[] = [];
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata }>();
   private _context: BrowserContext;
   private _traceFile: string | undefined;
-  private _resourcesDir: string | undefined;
+  private _resourcesDir: string;
   private _sha1s: string[] = [];
   private _started = false;
   private _traceDir: string | undefined;
@@ -55,19 +55,18 @@ export class Tracer implements InstrumentationListener {
   constructor(context: BrowserContext) {
     this._context = context;
     this._traceDir = context._browser.options.traceDir;
+    this._resourcesDir = path.join(this._traceDir || '', 'resources');
+    this._snapshotter = new TraceSnapshotter(this._context, this._resourcesDir, traceEvent => this._appendTraceEvent(traceEvent));
   }
 
   async start(options: TracerOptions): Promise<void> {
+    // context + page must be the first events added, this method can't have awaits before them.
     if (!this._traceDir)
       throw new Error('Tracing directory is not specified when launching the browser');
     if (this._started)
       throw new Error('Tracing has already been started');
     this._started = true;
     this._traceFile = path.join(this._traceDir, (options.name || createGuid()) + '.trace');
-    if (options.screenshots || options.snapshots) {
-      this._resourcesDir = path.join(this._traceDir, 'resources');
-      await fsMkdirAsync(this._resourcesDir, { recursive: true });
-    }
 
     this._appendEventChain = mkdirIfNeeded(this._traceFile);
     const event: trace.ContextCreatedTraceEvent = {
@@ -80,13 +79,18 @@ export class Tracer implements InstrumentationListener {
       debugName: this._context._options._debugName,
     };
     this._appendTraceEvent(event);
+    for (const page of this._context.pages())
+      this._onPage(options.screenshots, page);
     this._eventListeners.push(
         helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this, options.screenshots)),
     );
+
+    // context + page must be the first events added, no awaits above this line.
+    await fsMkdirAsync(this._resourcesDir, { recursive: true });
+
     this._context.instrumentation.addListener(this);
     if (options.snapshots)
-      this._snapshotter = new TraceSnapshotter(this._context, this._resourcesDir!, traceEvent => this._appendTraceEvent(traceEvent));
-    await this._snapshotter?.start();
+      await this._snapshotter.start();
   }
 
   async stop(): Promise<void> {
@@ -95,8 +99,6 @@ export class Tracer implements InstrumentationListener {
     this._started = false;
     this._context.instrumentation.removeListener(this);
     helper.removeEventListeners(this._eventListeners);
-    await this._snapshotter?.dispose();
-    this._snapshotter = undefined;
     for (const { sdkObject, metadata } of this._pendingCalls.values())
       this.onAfterCall(sdkObject, metadata);
     for (const page of this._context.pages())
@@ -104,6 +106,10 @@ export class Tracer implements InstrumentationListener {
 
     // Ensure all writes are finished.
     await this._appendEventChain;
+  }
+
+  async dispose() {
+    await this._snapshotter.dispose();
   }
 
   async export(): Promise<Artifact> {
@@ -228,11 +234,11 @@ export class Tracer implements InstrumentationListener {
         }),
 
         helper.addEventListener(page, Page.Events.ScreencastFrame, params => {
-          const guid = createGuid();
+          const sha1 = calculateSha1(createGuid()); // no need to compute sha1 for screenshots
           const event: trace.ScreencastFrameTraceEvent = {
             type: 'screencast-frame',
             pageId: page.guid,
-            sha1: guid,  // no need to compute sha1 for screenshots
+            sha1,
             pageTimestamp: params.timestamp,
             width: params.width,
             height: params.height,
@@ -240,7 +246,7 @@ export class Tracer implements InstrumentationListener {
           };
           this._appendTraceEvent(event);
           this._appendEventChain = this._appendEventChain.then(async () => {
-            await fsWriteFileAsync(path.join(this._resourcesDir!, guid), params.buffer).catch(() => {});
+            await fsWriteFileAsync(path.join(this._resourcesDir!, sha1), params.buffer).catch(() => {});
           });
         }),
 

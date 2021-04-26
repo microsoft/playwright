@@ -67,62 +67,29 @@ it.describe('snapshots', () => {
     expect(snapshots.length).toBe(2);
   });
 
-  it('should only collect on change', async ({ page }) => {
-    await page.setContent('<button>Hello</button>');
-    const snapshots = [];
-    snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
-    await Promise.all([
-      new Promise(f => snapshotter.once('snapshot', f)),
-      snapshotter.setAutoSnapshotIntervalForTest(25),
-    ]);
-    await Promise.all([
-      new Promise(f => snapshotter.once('snapshot', f)),
-      page.setContent('<button>Hello 2</button>')
-    ]);
-    expect(snapshots.length).toBe(2);
-  });
-
-  it('should respect inline CSSOM change', async ({ page }) => {
+  it('should respect inline CSSOM change', async ({ page, toImpl }) => {
     await page.setContent('<style>button { color: red; }</style><button>Hello</button>');
-    const snapshots = [];
-    snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
-    await Promise.all([
-      new Promise(f => snapshotter.once('snapshot', f)),
-      snapshotter.setAutoSnapshotIntervalForTest(25),
-    ]);
-    expect(distillSnapshot(snapshots[0])).toBe('<style>button { color: red; }</style><BUTTON>Hello</BUTTON>');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    expect(distillSnapshot(snapshot1)).toBe('<style>button { color: red; }</style><BUTTON>Hello</BUTTON>');
 
-    await Promise.all([
-      new Promise(f => snapshotter.once('snapshot', f)),
-      page.evaluate(() => {
-        (document.styleSheets[0].cssRules[0] as any).style.color = 'blue';
-      })
-    ]);
-    expect(distillSnapshot(snapshots[1])).toBe('<style>button { color: blue; }</style><BUTTON>Hello</BUTTON>');
+    await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    expect(distillSnapshot(snapshot2)).toBe('<style>button { color: blue; }</style><BUTTON>Hello</BUTTON>');
   });
 
-  it('should respect subresource CSSOM change', async ({ page, server }) => {
+  it('should respect subresource CSSOM change', async ({ page, server, toImpl }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/style.css', route => {
       route.fulfill({ body: 'button { color: red; }', }).catch(() => {});
     });
     await page.setContent('<link rel="stylesheet" href="style.css"><button>Hello</button>');
 
-    const snapshots = [];
-    snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
-    await Promise.all([
-      new Promise(f => snapshotter.once('snapshot', f)),
-      snapshotter.setAutoSnapshotIntervalForTest(25),
-    ]);
-    expect(distillSnapshot(snapshots[0])).toBe('<LINK rel=\"stylesheet\" href=\"style.css\"><BUTTON>Hello</BUTTON>');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    expect(distillSnapshot(snapshot1)).toBe('<LINK rel=\"stylesheet\" href=\"style.css\"><BUTTON>Hello</BUTTON>');
 
-    await Promise.all([
-      new Promise(f => snapshotter.once('snapshot', f)),
-      page.evaluate(() => {
-        (document.styleSheets[0].cssRules[0] as any).style.color = 'blue';
-      })
-    ]);
-    const { resources } = snapshots[1].render();
+    await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const { resources } = snapshot2.render();
     const cssHref = `http://localhost:${server.PORT}/style.css`;
     const { sha1 } = resources[cssHref];
     expect(snapshotter.resourceContent(sha1).toString()).toBe('button { color: blue; }');

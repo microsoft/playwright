@@ -38,7 +38,7 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
   }
 
   async initialize(): Promise<string> {
-    await this._snapshotter.initialize();
+    await this._snapshotter.start();
     return await this._server.start();
   }
 
@@ -60,10 +60,6 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
         }
       });
     });
-  }
-
-  async setAutoSnapshotIntervalForTest(interval: number): Promise<void> {
-    await this._snapshotter.setAutoSnapshotInterval(interval);
   }
 
   onBlob(blob: SnapshotterBlob): void {
