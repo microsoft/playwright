@@ -29,7 +29,7 @@ import * as types from './types';
 import path from 'path';
 import { CallMetadata, internalCallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { Debugger } from './supplements/debugger';
-import { Tracer } from './trace/recorder/tracer';
+import { Tracing } from './trace/recorder/tracing';
 import { HarTracer } from './supplements/har/harTracer';
 import { RecorderSupplement } from './supplements/recorderSupplement';
 import * as consoleApiSource from '../generated/consoleApiSource';
@@ -57,7 +57,7 @@ export abstract class BrowserContext extends SdkObject {
   private _selectors?: Selectors;
   private _origins = new Set<string>();
   private _harTracer: HarTracer | undefined;
-  readonly tracing: Tracer;
+  readonly tracing: Tracing;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -70,7 +70,7 @@ export abstract class BrowserContext extends SdkObject {
 
     if (this._options.recordHar)
       this._harTracer = new HarTracer(this, this._options.recordHar);
-    this.tracing = new Tracer(this);
+    this.tracing = new Tracing(this);
   }
 
   _setSelectors(selectors: Selectors) {
@@ -264,7 +264,7 @@ export abstract class BrowserContext extends SdkObject {
       this._closedStatus = 'closing';
 
       await this._harTracer?.flush();
-      await this.tracing.stop();
+      await this.tracing.dispose();
 
       // Cleanup.
       const promises: Promise<void>[] = [];

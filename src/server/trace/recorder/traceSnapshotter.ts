@@ -43,7 +43,7 @@ export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegat
   }
 
   async start(): Promise<void> {
-    await this._snapshotter.initialize();
+    await this._snapshotter.start();
   }
 
   async dispose() {

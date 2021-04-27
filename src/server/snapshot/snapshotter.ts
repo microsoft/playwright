@@ -40,24 +40,46 @@ export class Snapshotter {
   private _context: BrowserContext;
   private _delegate: SnapshotterDelegate;
   private _eventListeners: RegisteredListener[] = [];
-  private _interval = 0;
   private _snapshotStreamer: string;
   private _snapshotBinding: string;
+  private _initialized = false;
+  private _started = false;
+  private _fetchedResponses = new Map<network.Response, string>();
 
   constructor(context: BrowserContext, delegate: SnapshotterDelegate) {
     this._context = context;
     this._delegate = delegate;
-    for (const page of context.pages())
-      this._onPage(page);
-    this._eventListeners = [
-      helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
-    ];
     const guid = createGuid();
     this._snapshotStreamer = '__playwright_snapshot_streamer_' + guid;
     this._snapshotBinding = '__playwright_snapshot_binding_' + guid;
   }
 
-  async initialize() {
+  async start() {
+    this._started = true;
+    if (!this._initialized) {
+      this._initialized = true;
+      await this._initialize();
+    }
+    this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
+
+    // Replay resources loaded in all pages.
+    for (const page of this._context.pages()) {
+      for (const response of page._frameManager._responses)
+        this._saveResource(page, response).catch(e => debugLogger.log('error', e));
+    }
+  }
+
+  async stop() {
+    this._started = false;
+  }
+
+  async _initialize() {
+    for (const page of this._context.pages())
+      this._onPage(page);
+    this._eventListeners = [
+      helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
+    ];
+
     await this._context.exposeBinding(this._snapshotBinding, false, (source, data: SnapshotData) => {
       const snapshot: FrameSnapshot = {
         snapshotName: data.snapshotName,
@@ -87,11 +109,15 @@ export class Snapshotter {
     });
     const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}", "${this._snapshotBinding}")`;
     await this._context._doAddInitScript(initScript);
+    this._runInAllFrames(initScript);
+  }
+
+  private _runInAllFrames(expression: string) {
     const frames = [];
     for (const page of this._context.pages())
       frames.push(...page.frames());
     frames.map(frame => {
-      frame._existingMainContext()?.rawEvaluate(initScript).catch(debugExceptionHandler);
+      frame._existingMainContext()?.rawEvaluate(expression).catch(debugExceptionHandler);
     });
   }
 
@@ -112,37 +138,20 @@ export class Snapshotter {
     page.frames().map(frame => snapshotFrame(frame));
   }
 
-  async setAutoSnapshotInterval(interval: number): Promise<void> {
-    this._interval = interval;
-    const frames = [];
-    for (const page of this._context.pages())
-      frames.push(...page.frames());
-    await Promise.all(frames.map(frame => this._setIntervalInFrame(frame, interval)));
-  }
-
   private _onPage(page: Page) {
-    const processNewFrame = (frame: Frame) => {
-      this._annotateFrameHierarchy(frame);
-      this._setIntervalInFrame(frame, this._interval);
-      const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}", "${this._snapshotBinding}")`;
-      frame._existingMainContext()?.rawEvaluate(initScript).catch(debugExceptionHandler);
-    };
+    // Annotate frame hierarchy so that snapshots could include frame ids.
     for (const frame of page.frames())
-      processNewFrame(frame);
-    this._eventListeners.push(helper.addEventListener(page, Page.Events.FrameAttached, processNewFrame));
+      this._annotateFrameHierarchy(frame);
+    this._eventListeners.push(helper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
 
-    // Push streamer interval on navigation.
-    this._eventListeners.push(helper.addEventListener(page, Page.Events.InternalFrameNavigatedToNewDocument, frame => {
-      this._setIntervalInFrame(frame, this._interval);
-    }));
-
-    // Capture resources.
     this._eventListeners.push(helper.addEventListener(page, Page.Events.Response, (response: network.Response) => {
       this._saveResource(page, response).catch(e => debugLogger.log('error', e));
     }));
   }
 
   private async _saveResource(page: Page, response: network.Response) {
+    if (!this._started)
+      return;
     const isRedirect = response.status() >= 300 && response.status() <= 399;
     if (isRedirect)
       return;
@@ -163,9 +172,25 @@ export class Snapshotter {
     const status = response.status();
     const requestBody = original.postDataBuffer();
     const requestSha1 = requestBody ? calculateSha1(requestBody) : '';
+    if (requestBody)
+      this._delegate.onBlob({ sha1: requestSha1, buffer: requestBody });
     const requestHeaders = original.headers();
-    const body = await response.body().catch(e => debugLogger.log('error', e));
-    const responseSha1 = body ? calculateSha1(body) : '';
+
+    // Only fetch response bodies once.
+    let responseSha1 = this._fetchedResponses.get(response);
+    {
+      if (responseSha1 === undefined) {
+        const body = await response.body().catch(e => debugLogger.log('error', e));
+        // Bail out after each async hop.
+        if (!this._started)
+          return;
+        responseSha1 = body ? calculateSha1(body) : '';
+        if (body)
+          this._delegate.onBlob({ sha1: responseSha1, buffer: body });
+        this._fetchedResponses.set(response, responseSha1);
+      }
+    }
+
     const resource: ResourceSnapshot = {
       pageId: page.guid,
       frameId: response.frame().guid,
@@ -181,17 +206,6 @@ export class Snapshotter {
       timestamp: monotonicTime()
     };
     this._delegate.onResourceSnapshot(resource);
-    if (requestBody)
-      this._delegate.onBlob({ sha1: requestSha1, buffer: requestBody });
-    if (body)
-      this._delegate.onBlob({ sha1: responseSha1, buffer: body });
-  }
-
-  private async _setIntervalInFrame(frame: Frame, interval: number) {
-    const context = frame._existingMainContext();
-    await context?.evaluate(({ snapshotStreamer, interval }) => {
-      (window as any)[snapshotStreamer].setSnapshotInterval(interval);
-    }, { snapshotStreamer: this._snapshotStreamer, interval }).catch(debugExceptionHandler);
   }
 
   private async _annotateFrameHierarchy(frame: Frame) {
