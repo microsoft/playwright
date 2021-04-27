@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+  <meta charset="utf-8" />
+  <title>Long Polling Test</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <body>
+    <form action="javascript:void(0);">
+        <label for="fname">long poll server:</label>
+        <input type="text" id="http-long-poll-server" name="long poll server"><br><br>
+        <input id="submit" type="submit" value="Submit">
+    </form>
+  </body>
+  <script language="javascript" type="text/javascript">
+
+  var output;
+
+  function writeToScreen(message)
+  {
+    var pre = document.createElement("p");
+    pre.style.wordWrap = "break-word";
+    pre.innerHTML = message;
+    output.appendChild(pre);
+  }
+
+    function callNode(longPollUri) {
+        $.get(longPollUri, function(data, status){
+            writeToScreen(data);
+            callNode(longPollUri);
+        });
+    };
+
+  function init()
+  {
+    output = document.getElementById("output");
+    document.getElementById("submit").onclick = testHttpLongPoll;
+  }
+
+  function testHttpLongPoll() {
+    longPollUri = document.getElementById("http-long-poll-server").value;
+    callNode(longPollUri);
+  }
+
+  window.addEventListener("load", init, false);
+
+  </script>
+
+  <h2>http long polling test</h2>
+
+  <div id="output"></div>

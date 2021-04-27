@@ -14,131 +14,243 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
-import * as http from 'http';
-import WebSocket from 'ws';
-import { DispatcherConnection } from '../dispatchers/dispatcher';
-import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
-import { createPlaywright } from '../server/playwright';
-import { gracefullyCloseAll } from '../server/processLauncher';
-import { createServer, IncomingMessage, ServerResponse } from 'http';
-import { PassThrough } from 'stream';
-import { v1 as uuidv1 } from 'uuid';
+ import debug from 'debug';
+ import * as http from 'http';
+ import WebSocket from 'ws';
+ import { DispatcherConnection } from '../dispatchers/dispatcher';
+ import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
+ import { createPlaywright } from '../server/playwright';
+ import { gracefullyCloseAll } from '../server/processLauncher';
+ import { createServer, IncomingMessage, ServerResponse } from 'http';
+ import { PassThrough } from 'stream';
+ import { IWSMessage, TcpData, WsMessage} from './wsMessageInterface';
+ const path = require('path');
+ import * as net from "net";
+import { exception } from 'console';
+import { serverSelectors } from '../server/selectors';
+import { EventEmitter } from 'events';
 
-const debugLog = debug('pw:server');
-const tunnelPort = 5000;
+const eventsEmitter = new EventEmitter();
 
-const delay = (ms:any)  => new Promise(res => setTimeout(res, ms));
 
-export class PlaywrightServer {
-  private _server: http.Server | undefined;
-  private _client: WebSocket | undefined;
-  private _responseObject: { [id: string] : any } = {};
+const {
+  v1: uuidv1,
+  v4: uuidv4,
+} = require('uuid');
 
-  private _tunnelServer: http.Server | undefined;
 
-  listen(port: number) {
+ const debugLog = debug('pw:server');
+ const delay = (ms:any)  => new Promise(res => setTimeout(res, ms));
+ export class PlaywrightServer {
+   private _client: WebSocket | undefined;
+   private _tcpConnections: {[uuid:string]: net.Socket} ;
+   private _playwrightServerPort: number | undefined;
+   private _tunnelServer: http.Server | undefined;
+   private _tcpServers: net.Server[];
+   private _allPortsOpened: boolean;
+   private _allPortsClosed: boolean;
 
-    this._tunnelServer = createServer(async (request: IncomingMessage, response: ServerResponse) => {
-      console.log("received request to make a request");
-      const chunks: any = [];
-      request.on('data', (chunk) => {
-        chunks.push(chunk);
-      });
-      let requestId: string = uuidv1();
+   constructor() {
+     this._tcpConnections = {};
+     this._tcpServers = [];
+     this._allPortsOpened = false;
+     this._allPortsClosed = false;
+   }
 
-      request.on('end', () => {
-        const result = Buffer.concat(chunks);
-        // TODO: test if buffer can be converted to JSON
-        // TODO: test the request response parsing locally
+   listen(port: number) {
+     this._playwrightServerPort = port;
+     this._tunnelServer = createServer(async (request: IncomingMessage, response: ServerResponse) => {
+        response.end("running playwright server on : " + this._playwrightServerPort);
+     });
 
-        let requestBody = result;
-        let method = request.method;
-        let url = "http://localhost:1234/";
-        let headers = request.headers;
-      
-        let httpRequestObject = {
-          headers: headers,
-          url: url,
-          method: method,
-          requestBody: requestBody,
-          requestId: requestId
+     this._tunnelServer.listen(port, (error: any) => {
+       if (error) {
+         console.log(error);
+       } else {
+         console.log(`Tunnel  Server listening on port ${port}`);
+       }
+     });
+
+     const wsServer = new WebSocket.Server({ server:  this._tunnelServer, path: '/ws' });
+
+     wsServer.on('connection', async (ws: any) => {
+       if (this._client) {
+         ws.close();
+         return;
+       }
+       this._client = ws;
+       this._allPortsClosed = false;
+       this._allPortsOpened = false;
+
+       debugLog('Incoming connection');
+       const dispatcherConnection = new DispatcherConnection();
+
+       ws.on('message', async (message: any) => {
+         debugLog("DEBUG::: Received WS message : " + message);
+         let wsMessageObject: IWSMessage = JSON.parse(message.toString());
+
+         if (wsMessageObject.playwright)
+           dispatcherConnection.dispatch(wsMessageObject.playwright);
+
+         if (wsMessageObject.TcpData)
+            this._processIncomingData(wsMessageObject.TcpData, wsMessageObject.clientId);
+
+         if (wsMessageObject.ports)
+           this._openPorts(wsMessageObject.ports);
+
+       });
+
+       ws.on('close', () => {
+         debugLog('Client closed');
+         this._onDisconnect();
+       });
+
+       ws.on('error', (error: any) => {
+         debugLog('Client error ' + error);
+         this._onDisconnect();
+       });
+
+       // dispatcherConnection.onmessage = message => ws.send(JSON.stringify({"httpResponse": undefined, "playwright": message}));
+       dispatcherConnection.onmessage = message => ws.send(JSON.stringify(new WsMessage({playwright:  message})));
+       new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), createPlaywright());
+     });
+   }
+
+   private async _processIncomingData(tcpData: TcpData, clientId: string | undefined) {
+      if (clientId == undefined)
+        throw exception("clientId is undefined");
+
+      let tcpConn = this._tcpConnections[clientId];
+
+      switch(tcpData.event) {
+        case 'data': {
+          if (tcpData.data == undefined)
+            throw exception("empty data sent from the playwright server");
+          let tcpDataBinary = Buffer.from(tcpData.data, 'base64');
+          await new Promise<void>(f => tcpConn.write(tcpDataBinary, f));
+          break;
         }
-        console.log("DEBUG::: Received request message : " + JSON.stringify(httpRequestObject));
-        this._client?.send(JSON.stringify({"httpResponse": httpRequestObject, "playwright": null}));
-      });
 
-      while (this._responseObject[requestId] == null) {
-        console.log("waiting for the response .... ");
-        await delay(10);
+        case 'error' : {
+          debugLog('got error on the tcp connection for the client : ' + clientId);
+          // delete this._tcpConnections[clientId];
+          break;
+        }
+        case 'close' : {
+          debugLog('got close on the tcp connection for the client : ' + clientId);
+          // delete this._tcpConnections[clientId];
+          break;
+        }
+        default :
+          throw exception("undefined event from the client.");
       }
+   }
 
-      response.end(this._responseObject[requestId]);
-      
-      delete this._responseObject[requestId];
-    });
+   private async _openPorts(ports: [number]) {
+      if (this._client == undefined)
+        throw exception("client is undefined");
 
-    this._tunnelServer.listen(port, (error: any) => {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log(`Tunnel  Server listening  on     port ${port}`);
-      }
-    });
+      ports.forEach(async port => {
+        let tcpServer: net.Server = net.createServer();
+        tcpServer.listen(port);
+        this._tcpServers.push(tcpServer);
+        tcpServer.on('connection', tcpconn => {
+          let clientId: string = uuidv4();
+          this._tcpConnections[clientId] = tcpconn;
 
-    // this._server = http.createServer((request, response) => {
-    //   response.end('Running');
-    // });
-    // this._server.on('error', error => debugLog(error));
-    // this._server.listen(port);
-    // debugLog('ws server Listening on ' + port);
+          tcpconn.on("data", async (buffer: Buffer) => {
+            await new Promise<Error | undefined>(f => {
+              if (this._client == undefined)
+                throw exception("client doesn't exist");
+              this._client.send(JSON.stringify(new WsMessage({ TcpData : {port: port, data: buffer.toString('base64'), event: 'data'}, clientId: clientId})), f);
+            });
+          });
 
-    const wsServer = new WebSocket.Server({ server:  this._tunnelServer, path: '/ws' });
-    wsServer.on('connection', async ws => {
-      if (this._client) {
-        ws.close();
-        return;
-      }
-      this._client = ws;
-      debugLog('Incoming connection');
-      const dispatcherConnection = new DispatcherConnection();
 
-      ws.on('message', message => {
-        console.log("DEBUG::: Received WS message : " + message);
+          tcpconn.on("error", async (err) => {
+            debugLog('api', port + ":: [SYSTEM] --> TCP Error " + err);
+            await new Promise<Error | undefined>(f => {
+              if (this._client == undefined)
+                throw exception("client doesn't exist");
+              this._client.send(JSON.stringify(new WsMessage({ TcpData : {port: port, event: 'error'}, clientId: clientId})), f);
+            });
+          });
 
-        let wsMessageObject = JSON.parse(message.toString());
-
-        if (wsMessageObject["playwright"] != null)
-          dispatcherConnection.dispatch(wsMessageObject["playwright"]);
-
-        let httpResponse = wsMessageObject["httpResponse"];
-        if (httpResponse != null)
-          this._responseObject[httpResponse.requestId] = httpResponse.response;
+          tcpconn.on("close", async () => {
+            debugLog('api', port + ":: [SYSTEM] --> TCP connection close.");
+            await new Promise<Error | undefined>(f => {
+              if (this._client == undefined)
+                throw exception("client doesn't exist");
+              this._client.send(JSON.stringify(new WsMessage({ TcpData : {port: port, event: 'close'}, clientId: clientId})), f);
+            });
+            if (this._tcpConnections.hasOwnProperty(clientId)) {
+              await new Promise<void>(async f => {
+                // wait for the data to be completely flushed out
+                if (this._tcpConnections[clientId].writableLength != this._tcpConnections[clientId].writableHighWaterMark)
+                this._tcpConnections[clientId].on('drain', f);
+                else
+                  f();
+              });
+            }
+          });
+        });
+        if (this._tcpServers.length == ports.length) {
+          // when all the ports are opened emit the event
+          debugLog('all ports opened');
+          this._allPortsOpened = true;
+          eventsEmitter.emit('allPortsOpened');
+        }
       });
+      await new Promise<void>(f => {
+        if (this._allPortsOpened)
+          f();
+        eventsEmitter.on('allPortsOpened', f);
+      });
+      debugLog("opened all the tcp ports");
+      // echo back the ports indicating all the ports have been opened successfully
+      this._client.send(JSON.stringify(new WsMessage({ports: ports})));
+   }
 
-      ws.on('close', () => {
-        debugLog('Client closed');
-        this._onDisconnect();
-      });
-      ws.on('error', error => {
-        debugLog('Client error ' + error);
-        this._onDisconnect();
-      });
-      dispatcherConnection.onmessage = message => ws.send(JSON.stringify({"httpResponse": null, "playwright": message}));
-      new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), createPlaywright());
+   async closeAllTcpServers() {
+    let _closedServers: net.Server[] = [];
+
+    this._tcpServers.forEach(async server => {
+      await new Promise<Error | undefined>(f => server.close(() => {
+        _closedServers.push(server);
+        if (_closedServers.length == this._tcpServers.length) {
+          this._allPortsClosed = true;
+          eventsEmitter.emit('tcpServersClosed');
+        }
+      }));
     });
-  }
+    await new Promise<void>(f => {
+      if (this._allPortsClosed)
+        f();
+      eventsEmitter.on('tcpServersClosed', f);
+    });
+    this._allPortsClosed = false;
+    this._allPortsOpened = false;
+    this._tcpServers = [];
+   }
 
-  async close() {
-    if (!this._server)
-      return;
-    debugLog('Closing server');
-    await new Promise(f => this._server!.close(f));
+   async close() {
+     if (!this._tunnelServer)
+       return;
+     debugLog('Closing all the active tcp servers');
+     await this.closeAllTcpServers();
+     debugLog("closed all the tcp servers");
+     await new Promise(f => this._tunnelServer!.close(f));
+     await gracefullyCloseAll();
+     serverSelectors.unregisterAll();
+   }
+
+   private async _onDisconnect() {
+    debugLog('Closing all the active tcp connections');
+    debugLog('Closing all the active tcp servers');
+    await this.closeAllTcpServers();
+    debugLog("closed all the tcp servers");
     await gracefullyCloseAll();
-  }
-
-  private async _onDisconnect() {
-    await gracefullyCloseAll();
+    serverSelectors.unregisterAll();
     this._client = undefined;
-  }
-}
+   }
+ }

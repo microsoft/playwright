@@ -55,6 +55,10 @@ export class Selectors {
     this._engines.set(name, { source, contentScript });
   }
 
+  unregisterAll() {
+    this._engines.clear();
+  }
+  
   async _query(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     const info = this._parseSelector(selector);
     const context = await frame._context(info.world);

@@ -40,7 +40,6 @@
   },
   "dependencies": {
     "@types/uuid": "^8.3.0",
-    "axios": "^0.21.1",
     "commander": "^6.1.0",
     "debug": "^4.1.1",
     "extract-zip": "^2.0.1",
