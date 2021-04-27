@@ -9583,6 +9583,7 @@ export interface Keyboard {
    * ```
    * 
    * > NOTE: Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+   * > NOTE: For characters that are not on a US keyboard, only an `input` event will be sent.
    * @param text A text to type into a focused element.
    * @param options 
    */
