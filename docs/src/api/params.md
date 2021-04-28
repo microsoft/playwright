@@ -447,9 +447,13 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
   - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
   - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
 
-Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this
-option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example
-`launch({ proxy: { server: 'per-context' } })`.
+Network proxy settings to use with this context.
+
+:::note
+For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all
+contexts override the proxy, global proxy will be never used and can be any string, for example
+`launch({ proxy: { server: 'http://per-context' } })`.
+:::
 
 ## select-options-values
 * langs: java, js

@@ -26,12 +26,35 @@ it.afterAll(async () => {
   await browser.close();
 });
 
-it('should throw for missing global proxy', async ({ browserType, browserOptions, server }) => {
+it('should throw for missing global proxy on Chromium Windows', async ({ browserName, platform, browserType, browserOptions, server }) => {
+  it.skip(browserName !== 'chromium' || platform !== 'win32');
+
   delete browserOptions.proxy;
   const browser = await browserType.launch(browserOptions);
   const error = await browser.newContext({ proxy: { server: `localhost:${server.PORT}` } }).catch(e => e);
   expect(error.toString()).toContain('Browser needs to be launched with the global proxy');
   await browser.close();
+});
+
+it('should work when passing the proxy only on the context level', async ({browserName, platform, browserType, browserOptions, contextOptions, server}) => {
+  // Currently an upstream bug in the network stack of Chromium which leads that
+  // the wrong proxy gets used in the BrowserContext.
+  it.fixme(browserName === 'chromium' && platform === 'win32');
+
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  delete browserOptions.proxy;
+  const browserWithoutProxyInLaunch = await browserType.launch(browserOptions);
+  const context = await browserWithoutProxyInLaunch.newContext({
+    ...contextOptions,
+    proxy: { server: `localhost:${server.PORT}` }
+  });
+
+  const page = await context.newPage();
+  await page.goto('http://non-existent.com/target.html');
+  expect(await page.title()).toBe('Served by the proxy');
+  await browserWithoutProxyInLaunch.close();
 });
 
 it('should throw for bad server value', async ({ contextOptions }) => {
