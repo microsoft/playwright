@@ -93,6 +93,27 @@ function almostRed(r, g, b, alpha) {
   expect(alpha).toBe(255);
 }
 
+function almostBlue(r, g, b, alpha) {
+  expect(r).toBeLessThan(70);
+  expect(g).toBeLessThan(70);
+  expect(b).toBeGreaterThan(185);
+  expect(alpha).toBe(255);
+}
+
+function almostGreen(r, g, b, alpha) {
+  expect(r).toBeLessThan(70);
+  expect(g).toBeGreaterThan(185);
+  expect(b).toBeLessThan(70);
+  expect(alpha).toBe(255);
+}
+
+function almostYellow(r, g, b, alpha) {
+  expect(r).toBeGreaterThan(185);
+  expect(g).toBeGreaterThan(185);
+  expect(b).toBeLessThan(70);
+  expect(alpha).toBe(255);
+}
+
 function almostBlack(r, g, b, alpha) {
   expect(r).toBeLessThan(70);
   expect(g).toBeLessThan(70);
@@ -612,5 +633,41 @@ it.describe('screencast', () => {
     const file = testInfo.outputPath('saved-video-');
     const saveResult = await page.video().saveAs(file).catch(e => e);
     expect(saveResult.message).toContain('rowser has been closed');
+  });
+  it('should work with more than one color', async ({launchPersistent, isFirefox}, testInfo) => {
+    testInfo.fail(isFirefox); // firefox reports corrupted video frames
+    const size = { width: 320, height: 240 };
+    const { context, page } = await launchPersistent({
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+        size,
+      },
+      viewport: size,
+    });
+
+    await page.setContent(`
+      <div style="position: absolute; top: 0; left: 0; right: 50%; bottom: 50%; background: red"></div>
+      <div style="position: absolute; top: 0; left: 50%; right: 0; bottom: 50%; background: #0F0"></div>
+      <div style="position: absolute; top: 50%; left: 0; right: 50%; bottom: 0; background: blue"></div>
+      <div style="position: absolute; top: 50%; left: 50%; right: 0; bottom: 0; background: yellow"></div>
+    `);
+    await new Promise(r => setTimeout(r, 1000));
+    await context.close();
+
+    const videoFile = await page.video().path();
+    const videoPlayer = new VideoPlayer(videoFile);
+    const duration = videoPlayer.duration;
+    expect(duration).toBeGreaterThan(0);
+
+    expect(videoPlayer.videoWidth).toBe(320);
+    expect(videoPlayer.videoHeight).toBe(240);
+
+    {
+      expectAll(videoPlayer.seekLastFrame({x: 10, y: 10}).data, almostRed);
+      expectAll(videoPlayer.seekLastFrame({x: 200, y: 10}).data, almostGreen);
+      expectAll(videoPlayer.seekLastFrame({x: 10, y: 200}).data, almostBlue);
+      expectAll(videoPlayer.seekLastFrame({x: 200, y: 200}).data, almostYellow);
+    }
+
   });
 });
