@@ -435,7 +435,7 @@ it.describe('download event', () => {
     expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 
-  it.only('should download large binary.zip', async ({browser, server, browserName}, testInfo) => {
+  it('should download large binary.zip', async ({browser, server, browserName}, testInfo) => {
     const zipFile = testInfo.outputPath('binary.zip');
     const content = crypto.randomBytes(1 << 20);
     fs.writeFileSync(zipFile, content);
