@@ -26,12 +26,11 @@ export type SnapshotData = {
   }[],
   viewport: { width: number, height: number },
   url: string,
-  snapshotName?: string,
   timestamp: number,
   collectionTime: number,
 };
 
-export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding: string) {
+export function frameSnapshotStreamer(snapshotStreamer: string) {
   // Communication with Playwright.
   if ((window as any)[snapshotStreamer])
     return;
@@ -178,15 +177,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
       visitNode(document.documentElement);
     }
 
-    captureSnapshot(snapshotName: string) {
-      try {
-        const snapshot = this._captureSnapshot(snapshotName);
-        if (snapshot)
-          (window as any)[snapshotBinding](snapshot);
-      } catch (e) {
-      }
-    }
-
     private _sanitizeUrl(url: string): string {
       if (url.startsWith('javascript:'))
         return '';
@@ -234,7 +224,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
       }
     }
 
-    private _captureSnapshot(snapshotName?: string): SnapshotData | undefined {
+    captureSnapshot(): SnapshotData | undefined {
       const timestamp = performance.now();
       const snapshotNumber = ++this._lastSnapshotNumber;
       let nodeCounter = 0;
@@ -408,10 +398,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
       };
 
       let html: NodeSnapshot;
-      let htmlEquals = false;
       if (document.documentElement) {
-        const { equals, n } = visitNode(document.documentElement)!;
-        htmlEquals = equals;
+        const { n } = visitNode(document.documentElement)!;
         html = n;
       } else {
         html = ['html'];
@@ -426,12 +414,10 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
           height: Math.max(document.body ? document.body.offsetHeight : 0, document.documentElement ? document.documentElement.offsetHeight : 0),
         },
         url: location.href,
-        snapshotName,
         timestamp,
         collectionTime: 0,
       };
 
-      let allOverridesAreRefs = true;
       for (const sheet of this._staleStyleSheets) {
         if (sheet.href === null)
           continue;
@@ -440,16 +426,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string, snapshotBinding:
           // Unable to capture stylesheet contents.
           continue;
         }
-        if (typeof content !== 'number')
-          allOverridesAreRefs = false;
         const base = this._getSheetBase(sheet);
         const url = removeHash(this._resolveUrl(base, sheet.href!));
         result.resourceOverrides.push({ url, content });
       }
 
       result.collectionTime = performance.now() - result.timestamp;
-      if (!snapshotName && htmlEquals && allOverridesAreRefs)
-        return undefined;
       return result;
     }
   }

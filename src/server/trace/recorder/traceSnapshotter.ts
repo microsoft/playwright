@@ -51,8 +51,8 @@ export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegat
     await this._writeArtifactChain;
   }
 
-  captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle) {
-    this._snapshotter.captureSnapshot(page, snapshotName, element);
+  async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle) {
+    await this._snapshotter.captureSnapshot(page, snapshotName, element).catch(() => {});
   }
 
   onBlob(blob: SnapshotterBlob): void {

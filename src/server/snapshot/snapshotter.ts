@@ -20,7 +20,7 @@ import * as network from '../network';
 import { helper, RegisteredListener } from '../helper';
 import { debugLogger } from '../../utils/debugLogger';
 import { Frame } from '../frames';
-import { SnapshotData, frameSnapshotStreamer } from './snapshotterInjected';
+import { frameSnapshotStreamer, SnapshotData } from './snapshotterInjected';
 import { calculateSha1, createGuid, monotonicTime } from '../../utils/utils';
 import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 import { ElementHandle } from '../dom';
@@ -41,7 +41,6 @@ export class Snapshotter {
   private _delegate: SnapshotterDelegate;
   private _eventListeners: RegisteredListener[] = [];
   private _snapshotStreamer: string;
-  private _snapshotBinding: string;
   private _initialized = false;
   private _started = false;
   private _fetchedResponses = new Map<network.Response, string>();
@@ -51,7 +50,6 @@ export class Snapshotter {
     this._delegate = delegate;
     const guid = createGuid();
     this._snapshotStreamer = '__playwright_snapshot_streamer_' + guid;
-    this._snapshotBinding = '__playwright_snapshot_binding_' + guid;
   }
 
   async start() {
@@ -60,7 +58,7 @@ export class Snapshotter {
       this._initialized = true;
       await this._initialize();
     }
-    this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
+    await this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
 
     // Replay resources loaded in all pages.
     for (const page of this._context.pages()) {
@@ -80,11 +78,44 @@ export class Snapshotter {
       helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
 
-    await this._context.exposeBinding(this._snapshotBinding, false, (source, data: SnapshotData) => {
+    const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}")`;
+    await this._context._doAddInitScript(initScript);
+    await this._runInAllFrames(initScript);
+  }
+
+  private async _runInAllFrames(expression: string) {
+    const frames = [];
+    for (const page of this._context.pages())
+      frames.push(...page.frames());
+    await Promise.all(frames.map(frame => {
+      return frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(debugExceptionHandler);
+    }));
+  }
+
+  dispose() {
+    helper.removeEventListeners(this._eventListeners);
+  }
+
+  async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle): Promise<void> {
+    // Prepare expression synchronously.
+    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
+
+    // In a best-effort manner, without waiting for it, mark target element.
+    element?.callFunctionNoReply((element: Element, snapshotName: string) => {
+      element.setAttribute('__playwright_target__', snapshotName);
+    }, snapshotName);
+
+    // In each frame, in a non-stalling manner, capture the snapshots.
+    const snapshots = page.frames().map(async frame => {
+      const data = await frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(debugExceptionHandler) as SnapshotData;
+      // Something went wrong -> bail out, our snapshots are best-efforty.
+      if (!data)
+        return;
+
       const snapshot: FrameSnapshot = {
-        snapshotName: data.snapshotName,
-        pageId: source.page.guid,
-        frameId: source.frame.guid,
+        snapshotName,
+        pageId: page.guid,
+        frameId: frame.guid,
         frameUrl: data.url,
         doctype: data.doctype,
         html: data.html,
@@ -93,7 +124,7 @@ export class Snapshotter {
         pageTimestamp: data.timestamp,
         collectionTime: data.collectionTime,
         resourceOverrides: [],
-        isMainFrame: source.page.mainFrame() === source.frame
+        isMainFrame: page.mainFrame() === frame
       };
       for (const { url, content } of data.resourceOverrides) {
         if (typeof content === 'string') {
@@ -107,35 +138,7 @@ export class Snapshotter {
       }
       this._delegate.onFrameSnapshot(snapshot);
     });
-    const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}", "${this._snapshotBinding}")`;
-    await this._context._doAddInitScript(initScript);
-    this._runInAllFrames(initScript);
-  }
-
-  private _runInAllFrames(expression: string) {
-    const frames = [];
-    for (const page of this._context.pages())
-      frames.push(...page.frames());
-    frames.map(frame => {
-      frame._existingMainContext()?.rawEvaluate(expression).catch(debugExceptionHandler);
-    });
-  }
-
-  dispose() {
-    helper.removeEventListeners(this._eventListeners);
-  }
-
-  captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle) {
-    // This needs to be sync, as in not awaiting for anything before we issue the command.
-    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
-    element?.callFunctionNoReply((element: Element, snapshotName: string) => {
-      element.setAttribute('__playwright_target__', snapshotName);
-    }, snapshotName);
-    const snapshotFrame = (frame: Frame) => {
-      const context = frame._existingMainContext();
-      context?.rawEvaluate(expression).catch(debugExceptionHandler);
-    };
-    page.frames().map(frame => snapshotFrame(frame));
+    await Promise.all(snapshots);
   }
 
   private _onPage(page: Page) {

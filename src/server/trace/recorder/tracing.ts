@@ -100,7 +100,7 @@ export class Tracing implements InstrumentationListener {
     this._context.instrumentation.removeListener(this);
     helper.removeEventListeners(this._eventListeners);
     for (const { sdkObject, metadata } of this._pendingCalls.values())
-      this.onAfterCall(sdkObject, metadata);
+      await this.onAfterCall(sdkObject, metadata);
     for (const page of this._context.pages())
       page.setScreencastEnabled(false);
 
@@ -130,38 +130,38 @@ export class Tracing implements InstrumentationListener {
     return artifact;
   }
 
-  _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
+  async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
     if (!sdkObject.attribution.page)
       return;
     if (!this._snapshotter)
       return;
     const snapshotName = `${name}@${metadata.id}`;
     metadata.snapshots.push({ title: name, snapshotName });
-    this._snapshotter!.captureSnapshot(sdkObject.attribution.page, snapshotName, element);
+    await this._snapshotter!.captureSnapshot(sdkObject.attribution.page, snapshotName, element);
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    this._captureSnapshot('before', sdkObject, metadata);
+    await this._captureSnapshot('before', sdkObject, metadata);
     this._pendingCalls.set(metadata.id, { sdkObject, metadata });
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
-    this._captureSnapshot('action', sdkObject, metadata, element);
+    await this._captureSnapshot('action', sdkObject, metadata, element);
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
     if (!this._pendingCalls.has(metadata.id))
       return;
-    this._captureSnapshot('after', sdkObject, metadata);
+    this._pendingCalls.delete(metadata.id);
     if (!sdkObject.attribution.page)
       return;
+    await this._captureSnapshot('after', sdkObject, metadata);
     const event: trace.ActionTraceEvent = {
       timestamp: metadata.startTime,
       type: 'action',
       metadata,
     };
     this._appendTraceEvent(event);
-    this._pendingCalls.delete(metadata.id);
   }
 
   onEvent(sdkObject: SdkObject, metadata: CallMetadata) {

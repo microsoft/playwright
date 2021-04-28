@@ -217,7 +217,7 @@ export class DispatcherConnection {
     }
 
     const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
-    let callMetadata: CallMetadata = {
+    const callMetadata: CallMetadata = {
       id: `call@${id}`,
       ...validMetadata,
       objectId: sdkObject?.guid,
@@ -232,59 +232,52 @@ export class DispatcherConnection {
       snapshots: []
     };
 
-    try {
-      if (sdkObject) {
-        // Process logs for waitForNavigation/waitForLoadState
-        if (params?.info?.waitId) {
-          const info = params.info;
-          switch (info.phase) {
-            case 'before':
-              callMetadata.apiName = info.apiName;
-              this._waitOperations.set(info.waitId, callMetadata);
-              break;
-            case 'log':
-              const originalMetadata = this._waitOperations.get(info.waitId)!;
-              originalMetadata.log.push(info.message);
-              sdkObject.instrumentation.onCallLog('api', info.message, sdkObject, originalMetadata);
-              // Fall through.
-            case 'after':
-              return;
-          }
+    if (sdkObject && params?.info?.waitId) {
+      // Process logs for waitForNavigation/waitForLoadState
+      const info = params.info;
+      switch (info.phase) {
+        case 'before': {
+          callMetadata.apiName = info.apiName;
+          this._waitOperations.set(info.waitId, callMetadata);
+          await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
+          return;
+        } case 'log': {
+          const originalMetadata = this._waitOperations.get(info.waitId)!;
+          originalMetadata.log.push(info.message);
+          sdkObject.instrumentation.onCallLog('api', info.message, sdkObject, originalMetadata);
+          return;
+        } case 'after': {
+          const originalMetadata = this._waitOperations.get(info.waitId)!;
+          originalMetadata.endTime = monotonicTime();
+          originalMetadata.error = info.error;
+          this._waitOperations.delete(info.waitId);
+          await sdkObject.instrumentation.onAfterCall(sdkObject, originalMetadata);
+          return;
         }
-        await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
       }
-      const result = await (dispatcher as any)[method](validParams, callMetadata);
-      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
+    }
+
+
+    let result: any;
+    let error: any;
+    await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
+    try {
+      result = await (dispatcher as any)[method](validParams, callMetadata);
     } catch (e) {
       // Dispatching error
       callMetadata.error = e.message;
       if (callMetadata.log.length)
         rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log) + kLoggingNote);
-      this.onmessage({ id, error: serializeError(e) });
+      error = serializeError(e);
     } finally {
       callMetadata.endTime = monotonicTime();
-      if (sdkObject) {
-        // Process logs for waitForNavigation/waitForLoadState
-        if (params?.info?.waitId) {
-          const info = params.info;
-          switch (info.phase) {
-            case 'before':
-              callMetadata.endTime = 0;
-              // Fall through.
-            case 'log':
-              return;
-            case 'after':
-              const originalMetadata = this._waitOperations.get(info.waitId)!;
-              originalMetadata.endTime = callMetadata.endTime;
-              originalMetadata.error = info.error;
-              this._waitOperations.delete(info.waitId);
-              callMetadata = originalMetadata;
-              break;
-          }
-        }
-        await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
-      }
+      await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
+
+    if (error)
+      this.onmessage({ id, error });
+    else
+      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
   }
 
   private _replaceDispatchersWithGuids(payload: any): any {
