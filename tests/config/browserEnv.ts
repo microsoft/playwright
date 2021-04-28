@@ -251,6 +251,7 @@ export class BrowserEnv extends PlaywrightEnv implements Env<BrowserTestArgs> {
     return {
       ...result,
       browser: this._browser,
+      browserVersion: this._browserVersion,
       contextOptions: this._contextOptions as BrowserContextOptions,
       contextFactory,
     };
@@ -278,7 +279,6 @@ export class PageEnv extends BrowserEnv {
     const page = await context.newPage();
     return {
       ...result,
-      browserVersion: this._browserVersion,
       context,
       page,
     };
