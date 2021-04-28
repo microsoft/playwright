@@ -449,13 +449,8 @@ it.describe('download event', () => {
       page.click('a')
     ]);
     const downloadPath = await download.path();
-    console.log('statSync >>');
-    const downloadFileSize = fs.statSync(downloadPath).size;
-    console.log('statSync <<');
-    const originalFileSize = content.byteLength;
-    expect(downloadFileSize).toEqual(originalFileSize);
-
     const fileContent = fs.readFileSync(downloadPath);
+    expect(fileContent.byteLength).toBe(content.byteLength);
     expect(fileContent.equals(content)).toBe(true);
 
     const stream = await download.createReadStream();
@@ -463,10 +458,7 @@ it.describe('download event', () => {
       const bufs = [];
       stream.on('data', d => bufs.push(d));
       stream.on('error', reject);
-      stream.on('end', () => {
-        console.trace('end');
-        fulfill(Buffer.concat(bufs));
-      });
+      stream.on('end', () => fulfill(Buffer.concat(bufs)));
     });
     expect(data.byteLength).toBe(content.byteLength);
     expect(data.equals(content)).toBe(true);
