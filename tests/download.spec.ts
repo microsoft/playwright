@@ -438,7 +438,7 @@ it.describe('download event', () => {
   it.only('should download large binary.zip', async ({browser, server, browserName}, testInfo) => {
     const zipFile = testInfo.outputPath('binary.zip');
     const content = crypto.randomBytes(1 << 20);
-    await fs.promises.writeFile(zipFile, content);
+    fs.writeFileSync(zipFile, content);
     server.setRoute('/binary.zip', (req, res) => server.serveFile(req, res, zipFile));
 
     const page = await browser.newPage({ acceptDownloads: true });
@@ -460,8 +460,8 @@ it.describe('download event', () => {
       stream.on('error', reject);
       stream.on('end', () => fulfill(Buffer.concat(bufs)));
     });
-    expect(content.byteLength).toBe(data.byteLength);
-    expect(content.toString('hex')).toEqual(data.toString('hex'));
+    expect(data.byteLength).toBe(content.byteLength);
+    expect(data.equals(content)).toBe(true);
     await page.close();
   });
 });
