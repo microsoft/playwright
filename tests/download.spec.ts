@@ -454,10 +454,11 @@ it.describe('download event', () => {
     expect(downloadFileSize).toEqual(originalFileSize);
 
     const stream = await download.createReadStream();
-    const data = await new Promise<Buffer>(f => {
+    const data = await new Promise<Buffer>((fulfill, reject) => {
       const bufs = [];
       stream.on('data', d => bufs.push(d));
-      stream.on('end', () => f(Buffer.concat(bufs)));
+      stream.on('error', reject);
+      stream.on('end', () => fulfill(Buffer.concat(bufs)));
     });
     expect(content.byteLength).toBe(data.byteLength);
     expect(content.toString('hex')).toEqual(data.toString('hex'));
