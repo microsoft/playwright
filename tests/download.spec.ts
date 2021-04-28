@@ -449,9 +449,14 @@ it.describe('download event', () => {
       page.click('a')
     ]);
     const downloadPath = await download.path();
+    console.log('statSync >>');
     const downloadFileSize = fs.statSync(downloadPath).size;
+    console.log('statSync <<');
     const originalFileSize = content.byteLength;
     expect(downloadFileSize).toEqual(originalFileSize);
+
+    const fileContent = fs.readFileSync(downloadPath);
+    expect(fileContent.equals(content)).toBe(true);
 
     const stream = await download.createReadStream();
     const data = await new Promise<Buffer>((fulfill, reject) => {
