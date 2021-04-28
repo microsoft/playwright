@@ -435,7 +435,7 @@ it.describe('download event', () => {
     expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 
-  it('should download large binary.zip', async ({browser, server, browserName}, testInfo) => {
+  it.only('should download large binary.zip', async ({browser, server, browserName}, testInfo) => {
     const zipFile = testInfo.outputPath('binary.zip');
     const content = crypto.randomBytes(1 << 20);
     await fs.promises.writeFile(zipFile, content);
@@ -459,7 +459,8 @@ it.describe('download event', () => {
       stream.on('data', d => bufs.push(d));
       stream.on('end', () => f(Buffer.concat(bufs)));
     });
-    expect(content.equals(data)).toBe(true);
+    expect(content.byteLength).toBe(data.byteLength);
+    expect(content.toString('hex')).toEqual(data.toString('hex'));
     await page.close();
   });
 });
