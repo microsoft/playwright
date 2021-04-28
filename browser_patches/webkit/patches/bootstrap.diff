@@ -5440,7 +5440,7 @@ index 38fd7b29b53eab484e30963b51c8ae525c5d7a38..3c2f2104e3f364d3d6201e3009a448b4
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
 diff --git a/Source/WebCore/page/Page.cpp b/Source/WebCore/page/Page.cpp
-index 79baa83b4977d2a7d8f894a27c2fb6ad23b2084a..27ae4e64de76432d4e05406b363ae09e7e5425f1 100644
+index 79baa83b4977d2a7d8f894a27c2fb6ad23b2084a..c31f53be4a09a39d00619064fa0bec411f587e62 100644
 --- a/Source/WebCore/page/Page.cpp
 +++ b/Source/WebCore/page/Page.cpp
 @@ -440,6 +440,37 @@ void Page::setOverrideViewportArguments(const Optional<ViewportArguments>& viewp
@@ -5481,6 +5481,18 @@ index 79baa83b4977d2a7d8f894a27c2fb6ad23b2084a..27ae4e64de76432d4e05406b363ae09e
  ScrollingCoordinator* Page::scrollingCoordinator()
  {
      if (!m_scrollingCoordinator && m_settings->scrollingCoordinatorEnabled()) {
+@@ -1252,11 +1283,6 @@ void Page::didCommitLoad()
+ #if ENABLE(EDITABLE_REGION)
+     m_isEditableRegionEnabled = false;
+ #endif
+-
+-#if HAVE(OS_DARK_MODE_SUPPORT)
+-    setUseDarkAppearanceOverride(WTF::nullopt);
+-#endif
+-
+     resetSeenPlugins();
+     resetSeenMediaEngines();
+ }
 diff --git a/Source/WebCore/page/Page.h b/Source/WebCore/page/Page.h
 index 6b76cc1158c3f6a440870409f13f0f7221983234..875f3af89f3b684032751ed4848e09f765c84f4d 100644
 --- a/Source/WebCore/page/Page.h
@@ -8382,7 +8394,7 @@ index 88abe8c29c43b8c8881d29e25a21e4dd370ab498..c5e3439a0ce52a9d368b984c7849fac7
  #if !LOG_DISABLED
              LOG(NetworkSession, "%llu didReceiveResponse completionHandler (%d)", taskIdentifier, policyAction);
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index e9fdf357d64f8916b35e5e00469b997580db3abd..32135740fb58e7ca124a4fdc8514ebfc2e0712de 100644
+index e9fdf357d64f8916b35e5e00469b997580db3abd..7f44429cde3a8d2e44b47d3f65549b76a24ed38a 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 @@ -26,9 +26,13 @@
@@ -8416,7 +8428,17 @@ index e9fdf357d64f8916b35e5e00469b997580db3abd..32135740fb58e7ca124a4fdc8514ebfc
      m_curlRequest->setStartTime(m_startTime);
      m_curlRequest->start();
  }
-@@ -153,6 +160,7 @@ void NetworkDataTaskCurl::curlDidReceiveResponse(CurlRequest& request, CurlRespo
+@@ -109,6 +116,9 @@ void NetworkDataTaskCurl::cancel()
+ 
+     if (m_curlRequest)
+         m_curlRequest->cancel();
++
++    if (isDownload())
++        deleteDownloadFile();
+ }
+ 
+ void NetworkDataTaskCurl::invalidateAndCancel()
+@@ -153,6 +163,7 @@ void NetworkDataTaskCurl::curlDidReceiveResponse(CurlRequest& request, CurlRespo
      m_response = ResourceResponse(receivedResponse);
      m_response.setCertificateInfo(WTFMove(receivedResponse.certificateInfo));
      m_response.setDeprecatedNetworkLoadMetrics(Box<NetworkLoadMetrics>::create(WTFMove(receivedResponse.networkLoadMetrics)));
@@ -8424,38 +8446,51 @@ index e9fdf357d64f8916b35e5e00469b997580db3abd..32135740fb58e7ca124a4fdc8514ebfc
  
      handleCookieHeaders(request.resourceRequest(), receivedResponse);
  
-@@ -180,7 +188,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
+@@ -180,7 +191,10 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
      auto protectedThis = makeRef(*this);
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
 -
 +    if (isDownload()) {
-+        FileSystem::PlatformFileHandle file = FileSystem::openFile(m_pendingDownloadLocation, FileSystem::FileOpenMode::Write);
-+        FileSystem::writeToFile(file, buffer->data(), buffer->size());
-+        FileSystem::closeFile(file);
++        FileSystem::writeToFile(m_downloadDestinationFile, buffer->data(), buffer->size());
 +        return;
 +    }
      m_client->didReceiveData(WTFMove(buffer));
  }
  
-@@ -189,6 +202,12 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
+@@ -189,9 +203,26 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
  
 +    if (isDownload()) {
 +        auto* download = m_session->networkProcess().downloadManager().download(m_pendingDownloadID);
 +        ASSERT(download);
++        FileSystem::closeFile(m_downloadDestinationFile);
++        m_downloadDestinationFile = FileSystem::invalidPlatformFileHandle;
 +        download->didFinish();
 +        return;
 +    }
      m_client->didCompleteWithError({ }, WTFMove(networkLoadMetrics));
  }
  
-@@ -202,6 +221,13 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
++void NetworkDataTaskCurl::deleteDownloadFile()
++{
++    if (m_downloadDestinationFile != FileSystem::invalidPlatformFileHandle) {
++        FileSystem::closeFile(m_downloadDestinationFile);
++        FileSystem::deleteFile(m_pendingDownloadLocation);
++        m_downloadDestinationFile = FileSystem::invalidPlatformFileHandle;
++    }
++}
++
+ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceError&& resourceError, CertificateInfo&& certificateInfo)
+ {
+     if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
+@@ -202,6 +233,14 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
          return;
      }
  
 +    if (isDownload()) {
++        deleteDownloadFile();
 +        auto* download = m_session->networkProcess().downloadManager().download(m_pendingDownloadID);
 +        ASSERT(download);
 +        download->didFail(resourceError, IPC::DataReference());
@@ -8465,7 +8500,7 @@ index e9fdf357d64f8916b35e5e00469b997580db3abd..32135740fb58e7ca124a4fdc8514ebfc
      m_client->didCompleteWithError(resourceError);
  }
  
-@@ -239,6 +265,18 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
+@@ -239,6 +278,19 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
          case PolicyAction::Ignore:
              invalidateAndCancel();
              break;
@@ -8475,6 +8510,7 @@ index e9fdf357d64f8916b35e5e00469b997580db3abd..32135740fb58e7ca124a4fdc8514ebfc
 +            auto download = makeUnique<Download>(downloadManager, m_pendingDownloadID, *this, *m_session, suggestedFilename());
 +            auto* downloadPtr = download.get();
 +            downloadManager.dataTaskBecameDownloadTask(m_pendingDownloadID, WTFMove(download));
++            m_downloadDestinationFile = FileSystem::openFile(m_pendingDownloadLocation, FileSystem::FileOpenMode::Write);
 +            downloadPtr->didCreateDestination(m_pendingDownloadLocation);
 +
 +            if (m_curlRequest)
@@ -8484,7 +8520,7 @@ index e9fdf357d64f8916b35e5e00469b997580db3abd..32135740fb58e7ca124a4fdc8514ebfc
          default:
              notImplemented();
              break;
-@@ -321,6 +359,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
+@@ -321,6 +373,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
              m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
              m_curlRequest->setAuthenticationScheme(ProtectionSpaceAuthenticationSchemeHTTPBasic);
          }
@@ -8494,10 +8530,18 @@ index e9fdf357d64f8916b35e5e00469b997580db3abd..32135740fb58e7ca124a4fdc8514ebfc
          m_curlRequest->start();
  
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
-index 46c215a99a9bb31546e8880ce6f0876193c075fe..3509c62ac2c970fdcf78db2503c0cc4259f56dbd 100644
+index 46c215a99a9bb31546e8880ce6f0876193c075fe..82c3afd36a91962c540e69d176c086b98e80ddc1 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
-@@ -85,14 +85,13 @@ private:
+@@ -32,6 +32,7 @@
+ #include <WebCore/ProtectionSpace.h>
+ #include <WebCore/ResourceResponse.h>
+ #include <WebCore/ShouldRelaxThirdPartyCookieBlocking.h>
++#include <wtf/FileSystem.h>
+ #include <wtf/MonotonicTime.h>
+ 
+ namespace WebCore {
+@@ -85,13 +86,13 @@ private:
  
      void appendCookieHeader(WebCore::ResourceRequest&);
      void handleCookieHeaders(const WebCore::ResourceRequest&, const WebCore::CurlResponse&);
@@ -8507,12 +8551,21 @@ index 46c215a99a9bb31546e8880ce6f0876193c075fe..3509c62ac2c970fdcf78db2503c0cc42
      bool shouldBlockCookies(const WebCore::ResourceRequest&);
      void blockCookies();
      void unblockCookies();
- 
--    String suggestedFilename() const override;
 -
+-    String suggestedFilename() const override;
++    void deleteDownloadFile();
+ 
      State m_state { State::Suspended };
  
-     RefPtr<WebCore::CurlRequest> m_curlRequest;
+@@ -104,6 +105,8 @@ private:
+     WebCore::FrameIdentifier m_frameID;
+     WebCore::PageIdentifier m_pageID;
+ 
++    FileSystem::PlatformFileHandle m_downloadDestinationFile { FileSystem::invalidPlatformFileHandle };
++
+     bool m_blockingCookies { false };
+ 
+     WebCore::ShouldRelaxThirdPartyCookieBlocking m_shouldRelaxThirdPartyCookieBlocking { WebCore::ShouldRelaxThirdPartyCookieBlocking::No };
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 index 0d690beb77a8d299b6e0137ac3f21d40eff2f2d9..25a05f893cb10aaeaaf17c7c27bd2a1e61abe384 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp

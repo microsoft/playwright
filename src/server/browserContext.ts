@@ -29,7 +29,7 @@ import * as types from './types';
 import path from 'path';
 import { CallMetadata, internalCallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { Debugger } from './supplements/debugger';
-import { Tracer } from './trace/recorder/tracer';
+import { Tracing } from './trace/recorder/tracing';
 import { HarTracer } from './supplements/har/harTracer';
 import { RecorderSupplement } from './supplements/recorderSupplement';
 import * as consoleApiSource from '../generated/consoleApiSource';
@@ -57,7 +57,7 @@ export abstract class BrowserContext extends SdkObject {
   private _selectors?: Selectors;
   private _origins = new Set<string>();
   private _harTracer: HarTracer | undefined;
-  private _tracer: Tracer | null = null;
+  readonly tracing: Tracing;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -70,6 +70,7 @@ export abstract class BrowserContext extends SdkObject {
 
     if (this._options.recordHar)
       this._harTracer = new HarTracer(this, this._options.recordHar);
+    this.tracing = new Tracing(this);
   }
 
   _setSelectors(selectors: Selectors) {
@@ -263,7 +264,7 @@ export abstract class BrowserContext extends SdkObject {
       this._closedStatus = 'closing';
 
       await this._harTracer?.flush();
-      await this._tracer?.stop();
+      await this.tracing.dispose();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
@@ -369,21 +370,6 @@ export abstract class BrowserContext extends SdkObject {
     };
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
-  }
-
-  async startTracing() {
-    if (this._tracer)
-      throw new Error('Tracing has already been started');
-    const traceDir = this._browser.options.traceDir;
-    if (!traceDir)
-      throw new Error('Tracing directory is not specified when launching the browser');
-    this._tracer = new Tracer(this, traceDir);
-    await this._tracer.start();
-  }
-
-  async stopTracing() {
-    await this._tracer?.stop();
-    this._tracer = null;
   }
 }
 

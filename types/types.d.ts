@@ -2382,6 +2382,18 @@ export interface Page {
    * await browser.close();
    * ```
    * 
+   * It is possible to examine the request to decide the route action. For example, mocking all requests that contain some
+   * post data, and leaving all other requests as is:
+   * 
+   * ```js
+   * await page.route('/api/**', route => {
+   *   if (route.request().postData().includes('my-string'))
+   *     route.fulfill({ body: 'mocked-data' });
+   *   else
+   *     route.continue();
+   * });
+   * ```
+   * 
    * Page routes take precedence over browser context routes (set up with
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler))
    * when request matches both handlers.
@@ -5260,6 +5272,18 @@ export interface BrowserContext {
    * const page = await context.newPage();
    * await page.goto('https://example.com');
    * await browser.close();
+   * ```
+   * 
+   * It is possible to examine the request to decide the route action. For example, mocking all requests that contain some
+   * post data, and leaving all other requests as is:
+   * 
+   * ```js
+   * await context.route('/api/**', route => {
+   *   if (route.request().postData().includes('my-string'))
+   *     route.fulfill({ body: 'mocked-data' });
+   *   else
+   *     route.continue();
+   * });
    * ```
    * 
    * Page routes (set up with [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler))
@@ -9559,6 +9583,7 @@ export interface Keyboard {
    * ```
    * 
    * > NOTE: Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+   * > NOTE: For characters that are not on a US keyboard, only an `input` event will be sent.
    * @param text A text to type into a focused element.
    * @param options 
    */

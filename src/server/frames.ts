@@ -71,6 +71,7 @@ export class FrameManager {
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
+  readonly _responses: network.Response[] = [];
 
   constructor(page: Page) {
     this._page = page;
@@ -198,6 +199,7 @@ export class FrameManager {
     frame._onClearLifecycle();
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
     frame.emit(Frame.Events.Navigation, navigationEvent);
+    this._responses.length = 0;
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
@@ -264,8 +266,10 @@ export class FrameManager {
   }
 
   requestReceivedResponse(response: network.Response) {
-    if (!response.request()._isFavicon)
-      this._page.emit(Page.Events.Response, response);
+    if (response.request()._isFavicon)
+      return;
+    this._responses.push(response);
+    this._page.emit(Page.Events.Response, response);
   }
 
   requestFinished(request: network.Request) {

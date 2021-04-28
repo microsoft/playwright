@@ -27,26 +27,23 @@ import { TraceEvent } from '../common/traceEvents';
 import { monotonicTime } from '../../../utils/utils';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
 export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegate {
   private _snapshotter: Snapshotter;
   private _resourcesDir: string;
   private _writeArtifactChain = Promise.resolve();
   private _appendTraceEvent: (traceEvent: TraceEvent) => void;
-  private _context: BrowserContext;
 
-  constructor(context: BrowserContext, resourcesDir: string, appendTraceEvent: (traceEvent: TraceEvent) => void) {
+  constructor(context: BrowserContext, resourcesDir: string, appendTraceEvent: (traceEvent: TraceEvent, sha1?: string) => void) {
     super();
-    this._context = context;
     this._resourcesDir = resourcesDir;
     this._snapshotter = new Snapshotter(context, this);
     this._appendTraceEvent = appendTraceEvent;
-    this._writeArtifactChain = fsMkdirAsync(resourcesDir, { recursive: true });
+    this._writeArtifactChain = Promise.resolve();
   }
 
   async start(): Promise<void> {
-    await this._snapshotter.initialize();
+    await this._snapshotter.start();
   }
 
   async dispose() {

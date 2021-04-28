@@ -66,7 +66,7 @@ async def handle(route, request):
         "foo": "bar" # set "foo" header
         "origin": None # remove "origin" header
     }
-    await route.continue(headers=headers)
+    await route.continue_(headers=headers)
 }
 await page.route("**/*", handle)
 ```
@@ -79,7 +79,7 @@ def handle(route, request):
         "foo": "bar" # set "foo" header
         "origin": None # remove "origin" header
     }
-    route.continue(headers=headers)
+    route.continue_(headers=headers)
 }
 page.route("**/*", handle)
 ```
