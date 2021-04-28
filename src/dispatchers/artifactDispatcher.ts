@@ -61,7 +61,6 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactIn
         }
         try {
           const readable = fs.createReadStream(localPath);
-          await new Promise(f => readable.on('readable', f));
           const stream = new StreamDispatcher(this._scope, readable);
           // Resolve with a stream, so that client starts saving the data.
           resolve({ stream });
@@ -83,7 +82,6 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactIn
     if (!fileName)
       return {};
     const readable = fs.createReadStream(fileName);
-    await new Promise(f => readable.on('readable', f));
     return { stream: new StreamDispatcher(this._scope, readable) };
   }
 
