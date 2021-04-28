@@ -83,7 +83,7 @@ const FilmStripLane: React.FunctionComponent<{
 
   const frames: JSX.Element[] = [];
   let i = 0;
-  for (let time = startTime; time <= endTime; time += frameDuration, ++i) {
+  for (let time = startTime; startTime && frameDuration && time <= endTime; time += frameDuration, ++i) {
     const index = upperBound(screencastFrames, time, timeComparator) - 1;
     frames.push(<div className='film-strip-frame' key={i} style={{
       width: frameSize.width,

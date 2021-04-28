@@ -36,13 +36,13 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
   React.useEffect(() => {
     const readResources = async  () => {
-      if (resource.requestSha1 !== 'none') {
+      if (resource.requestSha1) {
         const response = await fetch(`/sha1/${resource.requestSha1}`);
         const requestResource = await response.text();
         setRequestBody(requestResource);
       }
 
-      if (resource.responseSha1 !== 'none') {
+      if (resource.responseSha1) {
         const useBase64 = resource.contentType.includes('image');
         const response = await fetch(`/sha1/${resource.responseSha1}`);
         if (useBase64) {
@@ -113,10 +113,10 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         <div className='network-request-headers'>{resource.requestHeaders.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
         <h4>Response Headers</h4>
         <div className='network-request-headers'>{resource.responseHeaders.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-        {resource.requestSha1 !== 'none' ? <h4>Request Body</h4> : ''}
-        {resource.requestSha1 !== 'none' ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
+        {resource.requestSha1 ? <h4>Request Body</h4> : ''}
+        {resource.requestSha1 ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
         <h4>Response Body</h4>
-        {resource.responseSha1 === 'none' ? <div className='network-request-response-body'>Response body is not available for this request.</div> : ''}
+        {!resource.responseSha1 ? <div className='network-request-response-body'>Response body is not available for this request.</div> : ''}
         {responseBody !== null && responseBody.dataUrl ? <img src={responseBody.dataUrl} /> : ''}
         {responseBody !== null && responseBody.text ? <div className='network-request-response-body'>{formatBody(responseBody.text, resource.contentType)}</div> : ''}
       </div>

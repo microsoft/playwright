@@ -385,8 +385,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });
-  scheme.BrowserContextStartTracingParams = tOptional(tObject({}));
-  scheme.BrowserContextStopTracingParams = tOptional(tObject({}));
+  scheme.BrowserContextTracingStartParams = tObject({
+    name: tOptional(tString),
+    snapshots: tOptional(tBoolean),
+    screenshots: tOptional(tBoolean),
+  });
+  scheme.BrowserContextTracingStopParams = tOptional(tObject({}));
+  scheme.BrowserContextTracingExportParams = tOptional(tObject({}));
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });

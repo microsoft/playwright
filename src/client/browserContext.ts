@@ -33,6 +33,7 @@ import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
+import { Tracing } from './tracing';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
@@ -48,6 +49,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _options: channels.BrowserNewContextParams = {
     sdkLanguage: 'javascript'
   };
+
+  readonly _tracing: Tracing;
 
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
@@ -66,6 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     if (parent instanceof Browser)
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
+    this._tracing = new Tracing(this);
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -277,18 +281,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     if (this._browser)
       this._browser._contexts.delete(this);
     this.emit(Events.BrowserContext.Close, this);
-  }
-
-  async _startTracing() {
-    return await this._wrapApiCall('browserContext.startTracing', async (channel: channels.BrowserContextChannel) => {
-      await channel.startTracing();
-    });
-  }
-
-  async _stopTracing() {
-    return await this._wrapApiCall('browserContext.stopTracing', async (channel: channels.BrowserContextChannel) => {
-      await channel.stopTracing();
-    });
   }
 
   async close(): Promise<void> {

@@ -98,5 +98,6 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactIn
 
   async delete(): Promise<void> {
     await this._object.delete();
+    this._dispose();
   }
 }

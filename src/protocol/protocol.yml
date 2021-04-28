@@ -601,9 +601,17 @@ BrowserContext:
       returns:
         session: CDPSession
 
-    startTracing:
+    tracingStart:
+      parameters:
+        name: string?
+        snapshots: boolean?
+        screenshots: boolean?
 
-    stopTracing:
+    tracingStop:
+
+    tracingExport:
+      returns:
+        artifact: Artifact
 
   events:
 

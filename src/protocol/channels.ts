@@ -610,8 +610,9 @@ export interface BrowserContextChannel extends Channel {
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
-  startTracing(params?: BrowserContextStartTracingParams, metadata?: Metadata): Promise<BrowserContextStartTracingResult>;
-  stopTracing(params?: BrowserContextStopTracingParams, metadata?: Metadata): Promise<BrowserContextStopTracingResult>;
+  tracingStart(params: BrowserContextTracingStartParams, metadata?: Metadata): Promise<BrowserContextTracingStartResult>;
+  tracingStop(params?: BrowserContextTracingStopParams, metadata?: Metadata): Promise<BrowserContextTracingStopResult>;
+  tracingExport(params?: BrowserContextTracingExportParams, metadata?: Metadata): Promise<BrowserContextTracingExportResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -788,12 +789,25 @@ export type BrowserContextNewCDPSessionOptions = {
 export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
-export type BrowserContextStartTracingParams = {};
-export type BrowserContextStartTracingOptions = {};
-export type BrowserContextStartTracingResult = void;
-export type BrowserContextStopTracingParams = {};
-export type BrowserContextStopTracingOptions = {};
-export type BrowserContextStopTracingResult = void;
+export type BrowserContextTracingStartParams = {
+  name?: string,
+  snapshots?: boolean,
+  screenshots?: boolean,
+};
+export type BrowserContextTracingStartOptions = {
+  name?: string,
+  snapshots?: boolean,
+  screenshots?: boolean,
+};
+export type BrowserContextTracingStartResult = void;
+export type BrowserContextTracingStopParams = {};
+export type BrowserContextTracingStopOptions = {};
+export type BrowserContextTracingStopResult = void;
+export type BrowserContextTracingExportParams = {};
+export type BrowserContextTracingExportOptions = {};
+export type BrowserContextTracingExportResult = {
+  artifact: ArtifactChannel,
+};
 
 // ----------- Page -----------
 export type PageInitializer = {

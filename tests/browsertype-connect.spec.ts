@@ -350,7 +350,7 @@ test('should error when saving download after deletion', async ({server, browser
   const userPath = testInfo.outputPath('download.txt');
   await download.delete();
   const { message } = await download.saveAs(userPath).catch(e => e);
-  expect(message).toContain('File already deleted. Save before deleting.');
+  expect(message).toContain('Target page, context or browser has been closed');
   await browser.close();
 });
 

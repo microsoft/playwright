@@ -90,7 +90,7 @@ A browser websocket endpoint to connect to.
 
 ### option: BrowserType.connect.headers
 * langs: java, python
-- `headers` <[string]>
+- `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with web socket connect request. Optional.
 

@@ -41,7 +41,7 @@ export type PageDestroyedTraceEvent = {
 
 export type ScreencastFrameTraceEvent = {
   timestamp: number,
-  type: 'page-screencast-frame',
+  type: 'screencast-frame',
   pageId: string,
   pageTimestamp: number,
   sha1: string,
