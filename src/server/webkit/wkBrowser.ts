@@ -325,6 +325,6 @@ export class WKBrowserContext extends BrowserContext {
 
   async _doCancelDownload(uuid: string) {
     // TODO: Have this implemented
-    throw new Error('Download cancellation not yet implemented in Firefox');
+    throw new Error('Download cancellation not yet implemented in WebKit');
   }
 }

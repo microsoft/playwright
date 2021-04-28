@@ -21,16 +21,16 @@ import { Artifact } from './artifact';
 
 export class Download {
   readonly artifact: Artifact;
-  readonly uuid: string;
   readonly url: string;
   private _page: Page;
   private _suggestedFilename: string | undefined;
 
   constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
     const unaccessibleErrorMessage = !page._browserContext._options.acceptDownloads ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
-    this.artifact = new Artifact(page, path.join(downloadsPath, uuid), unaccessibleErrorMessage, this);
+    this.artifact = new Artifact(page, path.join(downloadsPath, uuid), unaccessibleErrorMessage, () => {
+      return this._page._browserContext._doCancelDownload(uuid);
+    });
     this._page = page;
-    this.uuid = uuid;
     this.url = url;
     this._suggestedFilename = suggestedFilename;
     page._browserContext._downloads.add(this);
@@ -46,9 +46,5 @@ export class Download {
 
   suggestedFilename(): string {
     return this._suggestedFilename!;
-  }
-
-  async cancel(): Promise<void> {
-    await this._page._browserContext._doCancelDownload(this.uuid);
   }
 }

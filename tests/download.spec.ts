@@ -37,9 +37,7 @@ it.describe('download event', () => {
       // Chromium requires a large enough payload to trigger the download event soon enough
       res.write('a'.repeat(4096));
       res.write('foo');
-      setTimeout(() => {
-        res.end('bar');
-      }, 5000);
+      res.uncork();
     });
   });
 
@@ -444,8 +442,10 @@ it.describe('download event', () => {
     expect(saveError.message).toContain('File deleted upon browser context closure.');
   });
 
-  it('should be able to cancel pending downloads', async ({browser, server, browserName}) => {
-    it.skip(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
+  it('should be able to cancel pending downloads', async ({browser, server, browserName, browserVersion}) => {
+    // The exact upstream change is in b449b5c, which still does not appear in the first few 91.* tags until 91.0.4437.0.
+    it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
+    it.fixme(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/downloadWithDelay">download</a>`);
     const [ download ] = await Promise.all([
@@ -458,8 +458,10 @@ it.describe('download event', () => {
     await page.close();
   });
 
-  it('should not fail explicitly to cancel a download even if that is already finished', async ({browser, server, browserName}) => {
-    it.skip(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
+  it('should not fail explicitly to cancel a download even if that is already finished', async ({browser, server, browserName, browserVersion}) => {
+    // The exact upstream change is in b449b5c, which still does not appear in the first few 91.* tags until 91.0.4437.0.
+    it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
+    it.fixme(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([

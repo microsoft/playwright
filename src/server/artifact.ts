@@ -16,15 +16,16 @@
 
 import fs from 'fs';
 import * as util from 'util';
-import { Download } from './download';
+import { assert } from '../utils/utils';
 import { SdkObject } from './instrumentation';
 
 type SaveCallback = (localPath: string, error?: string) => Promise<void>;
+type CancelCallback = () => Promise<void>;
 
 export class Artifact extends SdkObject {
   private _localPath: string;
   private _unaccessibleErrorMessage: string | undefined;
-  private _owner: Download | undefined;
+  private _cancelCallback: CancelCallback | undefined;
   private _finishedCallback: () => void;
   private _finishedPromise: Promise<void>;
   private _saveCallbacks: SaveCallback[] = [];
@@ -32,11 +33,11 @@ export class Artifact extends SdkObject {
   private _deleted = false;
   private _failureError: string | null = null;
 
-  constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string, owner?: Download) {
+  constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string, cancelCallback?: CancelCallback) {
     super(parent, 'artifact');
     this._localPath = localPath;
     this._unaccessibleErrorMessage = unaccessibleErrorMessage;
-    this._owner = owner;
+    this._cancelCallback = cancelCallback;
     this._finishedCallback = () => {};
     this._finishedPromise = new Promise(f => this._finishedCallback = f);
   }
@@ -81,10 +82,8 @@ export class Artifact extends SdkObject {
   }
 
   async cancel(): Promise<void> {
-    // XXX: Refactor the Download / Video / Artifact interface to make the structure clearer?
-    if (this._owner === undefined)
-      throw new Error('Unexpected scenario. No bounded owner to apply the action to.');
-    await this._owner.cancel();
+    assert(this._cancelCallback !== undefined);
+    return this._cancelCallback();
   }
 
   async delete(): Promise<void> {
