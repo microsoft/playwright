@@ -41,7 +41,9 @@ class StreamImpl extends Readable {
   }
 
   async _read(size: number) {
+    console.log(`read ${size} >>`);
     const result = await this._channel.read({ size });
+    console.log(`read << data.len = ${result.binary.length}`);
     if (result.binary)
       this.push(Buffer.from(result.binary, 'base64'));
     else
@@ -49,6 +51,7 @@ class StreamImpl extends Readable {
   }
 
   _destroy(error: Error | null, callback: (error: Error | null) => void): void {
+    console.trace('_destroy');
     // Stream might be destroyed after the connection was closed.
     this._channel.close().catch(e => null);
     super._destroy(error, callback);
