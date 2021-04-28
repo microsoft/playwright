@@ -58,7 +58,7 @@ it('trial run should not tap', async ({}) => {
   await page.tap('#a');
   const eventsHandle = await trackEvents(await page.$('#b'));
   await page.tap('#b', { trial: true });
-  expect(await eventsHandle.jsonValue()).toEqual([]);
+  expect(await eventsHandle.jsonValue()).toEqual(['pointerover', 'pointerenter', 'pointerout', 'pointerleave']);
 });
 
 it('should not send mouse events touchstart is canceled', async ({}) => {
