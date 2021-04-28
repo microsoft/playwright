@@ -18,6 +18,7 @@ import { test as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
+import crypto from 'crypto';
 
 it.describe('download event', () => {
   it.beforeEach(async ({server}) => {
@@ -432,5 +433,33 @@ it.describe('download event', () => {
     ]);
     expect(downloadPath).toBe(null);
     expect(saveError.message).toContain('File deleted upon browser context closure.');
+  });
+
+  it('should download large binary.zip', async ({browser, server, browserName}, testInfo) => {
+    const zipFile = testInfo.outputPath('binary.zip');
+    const content = crypto.randomBytes(1 << 20);
+    await fs.promises.writeFile(zipFile, content);
+    server.setRoute('/binary.zip', (req, res) => server.serveFile(req, res, zipFile));
+
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.goto(server.PREFIX + '/empty.html');
+    await page.setContent(`<a href="${server.PREFIX}/binary.zip" download="binary.zip">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const downloadPath = await download.path();
+    const downloadFileSize = fs.statSync(downloadPath).size;
+    const originalFileSize = content.byteLength;
+    expect(downloadFileSize).toEqual(originalFileSize);
+
+    const stream = await download.createReadStream();
+    const data = await new Promise<Buffer>(f => {
+      const bufs = [];
+      stream.on('data', d => bufs.push(d));
+      stream.on('end', () => f(Buffer.concat(bufs)));
+    });
+    expect(content.equals(data)).toBe(true);
+    await page.close();
   });
 });
