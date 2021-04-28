@@ -25,13 +25,20 @@ export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.
   }
 
   async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
-    const buffer = this._object.stream.read(Math.min(this._object.stream.readableLength, params.size || this._object.stream.readableLength));
-    console.log(`stream.read ${Math.min(this._object.stream.readableLength, params.size || this._object.stream.readableLength)} of ${this._object.stream.readableLength}`);
+    const stream = this._object.stream;
+    if (!stream.readable)
+      return { binary: '' };
+    if (!stream.readableLength) {
+      await new Promise((fulfill, reject) => {
+        stream.once('readable', fulfill);
+        stream.once('error', reject);
+      });
+    }
+    const buffer = stream.read(Math.min(stream.readableLength, params.size || stream.readableLength));
     return { binary: buffer ? buffer.toString('base64') : '' };
   }
 
   async close() {
-    console.trace('StreamDispatcher.close');
     this._object.stream.destroy();
   }
 }
