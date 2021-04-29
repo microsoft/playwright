@@ -92,7 +92,7 @@ index 4fa1d742bd5e0c03b1c93b8bf7cca2fcc8cbded1..1af645fdb86c4a803e1a5f0be08c1d09
    DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
  
 diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
-index d34a1cfc86d41f1e597784b496ad9ddb86196365..f96b762065f37841f48c6d92bdec215e67c2d9f3 100644
+index e3f88b09d5259ebb3a0f2ef43fdf91df3ea01534..7827085030b4549cee46df9cae9b588f847b3455 100644
 --- a/browser/installer/allowed-dupes.mn
 +++ b/browser/installer/allowed-dupes.mn
 @@ -65,6 +65,12 @@ browser/defaults/settings/main/example.json
@@ -172,7 +172,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 6fdd14c5e3d5cf35d88728ba9c58ea102681eaf7..fdee095fccb786d441f9a9c92d763b7c18327dcd 100644
+index d99ddc3181cf9092633558ac5798f38860ad4f7d..6fbeec60b7ff51e5591c8e8c50e713bc9323603d 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -820,7 +820,7 @@ index ee93e6ecd9707d28485c72c6382ed492949f4982..56e5fd2c15c3d6e39d2bc85c5da4b54b
      // care of lowering the present active window. This happens in
      // a separate runnable to avoid touching multiple windows in
 diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
-index c299d88007d28d51448934734c6111d45e5b59a9..5f472793bf3d4381b6d6c37db940befa27f8c4db 100644
+index f1b9496cb8c7ebdaec68cec1774cd1b7f92ac88a..1e29eb18a89fafd8b9446eb5e94aa42b7f8f4ced 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
 +++ b/dom/base/nsGlobalWindowOuter.cpp
 @@ -2458,7 +2458,7 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
