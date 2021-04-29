@@ -8694,9 +8694,11 @@ export interface Browser extends EventEmitter {
     permissions?: Array<string>;
 
     /**
-     * Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this
-     * option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example
-     * `launch({ proxy: { server: 'per-context' } })`.
+     * Network proxy settings to use with this context.
+     * 
+     * > NOTE: For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all
+     * contexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: {
+     * server: 'http://per-context' } })`.
      */
     proxy?: {
       /**
@@ -10545,9 +10547,11 @@ export interface BrowserContextOptions {
   permissions?: Array<string>;
 
   /**
-   * Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this
-   * option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example
-   * `launch({ proxy: { server: 'per-context' } })`.
+   * Network proxy settings to use with this context.
+   * 
+   * > NOTE: For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all
+   * contexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: {
+   * server: 'http://per-context' } })`.
    */
   proxy?: {
     /**
