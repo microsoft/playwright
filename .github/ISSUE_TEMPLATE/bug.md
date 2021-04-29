@@ -15,7 +15,7 @@ assignees: ''
 - Extra: [any specific details about your environment]
 
 <!-- CLI to auto-capture this info -->
-<!-- npx envinfo --preset playwright -->
+<!-- npx envinfo --preset playwright --markdown -->
 
 **Code Snippet**
 
