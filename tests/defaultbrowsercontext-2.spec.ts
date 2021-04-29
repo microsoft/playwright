@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, slowTest, expect } from './config/playwrightTest';
+import { playwrightTest as it, slowPlaywrightTest as slowTest, expect } from './config/browserTest';
 import fs from 'fs';
 
 it('should support hasTouch option', async ({server, launchPersistent}) => {
@@ -146,14 +146,14 @@ it('should throw if page argument is passed', async ({browserType, browserOption
   expect(error.message).toContain('can not specify page');
 });
 
-it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, browserOptions, server, createUserDataDir, toImpl, mode}) => {
+it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, browserOptions, server, createUserDataDir, toImpl, mode, isFirefox}) => {
   it.skip(mode !== 'default');
 
   const userDataDir = await createUserDataDir();
   const args = toImpl(browserType)._defaultArgs(browserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
   const options = {
     ...browserOptions,
-    args: [...args, server.EMPTY_PAGE],
+    args: isFirefox ? [...args, '-new-tab', server.EMPTY_PAGE] : [...args, server.EMPTY_PAGE],
     ignoreDefaultArgs: true,
   };
   const browserContext = await browserType.launchPersistentContext(userDataDir, options);

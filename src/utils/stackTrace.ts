@@ -44,7 +44,10 @@ const PW_LIB_DIRS = [
 ].map(packageName => path.sep + path.join(packageName, 'lib'));
 
 export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
+  const stackTraceLimit = Error.stackTraceLimit;
+  Error.stackTraceLimit = 30;
   const stack = new Error().stack!;
+  Error.stackTraceLimit = stackTraceLimit;
   const frames: StackFrame[] = [];
   for (const line of stack.split('\n')) {
     const frame = stackUtils.parseLine(line);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, slowTest, expect } from './config/playwrightTest';
+import { playwrightTest as it, slowPlaywrightTest as slowTest, expect } from './config/browserTest';
 
 it('should have default url when launching browser', async ({browserType, browserOptions, createUserDataDir}) => {
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false });

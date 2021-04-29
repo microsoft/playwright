@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { test, expect } from '../config/cliTest';
+import { cliTest as test, expect } from '../config/cliTest';
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {

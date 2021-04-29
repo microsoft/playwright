@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/playwrightTest';
+import { playwrightTest as it, expect } from './config/browserTest';
 
 it.describe('launch server', () => {
   it.beforeEach(async ({ mode}) => {
@@ -45,7 +45,7 @@ it.describe('launch server', () => {
   it('should fire "close" event during kill', async ({browserType, browserOptions}) => {
     const order = [];
     const browserServer = await browserType.launchServer(browserOptions);
-    const closedPromise = new Promise(f => browserServer.on('close', () => {
+    const closedPromise = new Promise<void>(f => browserServer.on('close', () => {
       order.push('closed');
       f();
     }));

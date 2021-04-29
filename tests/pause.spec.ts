@@ -15,7 +15,7 @@
  */
 
 import { Page } from '../index';
-import { test as it, expect } from './config/cliTest';
+import { cliTest as it, expect } from './config/cliTest';
 
 it.describe('pause', () => {
   it.beforeEach(async ({ mode }) => {

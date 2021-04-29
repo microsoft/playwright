@@ -30,7 +30,17 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     this._executionContextId = executionContextId;
   }
 
-  async rawEvaluate(expression: string): Promise<string> {
+  async rawEvaluateJSON(expression: string): Promise<any> {
+    const payload = await this._session.send('Runtime.evaluate', {
+      expression,
+      returnByValue: true,
+      executionContextId: this._executionContextId,
+    }).catch(rewriteError);
+    checkException(payload.exceptionDetails);
+    return payload.result!.value;
+  }
+
+  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
     const payload = await this._session.send('Runtime.evaluate', {
       expression,
       returnByValue: false,

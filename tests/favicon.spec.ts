@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it } from './config/contextTest';
+import { contextTest as it } from './config/browserTest';
 
 it('should load svg favicon with prefer-color-scheme', async ({page, server, browserName, browserChannel, headful, asset}) => {
   it.skip(!headful && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');

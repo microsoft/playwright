@@ -14,14 +14,46 @@
  * limitations under the License.
  */
 
-import { newTestType } from 'folio';
 import type { AndroidDevice } from '../../index';
-import type { CommonTestArgs } from './pageTest';
-import type { ServerTestArgs } from './serverTest';
+import { CommonWorkerArgs, test as baseTest } from './baseTest';
+import * as folio from 'folio';
 export { expect } from 'folio';
 
-export type AndroidTestArgs = CommonTestArgs & {
+type AndroidTestArgs = {
   androidDevice: AndroidDevice;
 };
 
-export const test = newTestType<AndroidTestArgs & ServerTestArgs>();
+export class AndroidEnv {
+  protected _device?: AndroidDevice;
+  protected _browserVersion: string;
+
+  async beforeAll(args: CommonWorkerArgs, workerInfo: folio.WorkerInfo) {
+    this._device = (await args.playwright._android.devices())[0];
+    await this._device.shell('am force-stop org.chromium.webview_shell');
+    await this._device.shell('am force-stop com.android.chrome');
+    this._browserVersion = (await this._device.shell('dumpsys package com.android.chrome'))
+        .toString('utf8')
+        .split('\n')
+        .find(line => line.includes('versionName='))
+        .trim()
+        .split('=')[1];
+    this._device.setDefaultTimeout(90000);
+  }
+
+  async beforeEach({}, testInfo: folio.TestInfo): Promise<AndroidTestArgs> {
+    testInfo.data.platform = 'Android';
+    testInfo.data.headful = true;
+    testInfo.data.browserVersion = this._browserVersion;
+    return {
+      androidDevice: this._device!,
+    };
+  }
+
+  async afterAll({}, workerInfo: folio.WorkerInfo) {
+    if (this._device)
+      await this._device.close();
+    this._device = undefined;
+  }
+}
+
+export const androidTest = baseTest.extend(new AndroidEnv());

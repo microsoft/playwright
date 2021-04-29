@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/browserTest';
+import { browserTest as it, expect } from './config/browserTest';
 
 it('should fail without credentials', async ({browser, server, browserName, headful}) => {
   it.fail(browserName === 'chromium' && headful);

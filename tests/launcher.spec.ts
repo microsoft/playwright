@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/playwrightTest';
+import { playwrightTest as it, expect } from './config/browserTest';
 
 it('should require top-level Errors', async ({}) => {
   const Errors = require('../lib/utils/errors.js');

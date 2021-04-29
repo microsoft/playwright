@@ -31,7 +31,18 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     this._contextId = contextPayload.id;
   }
 
-  async rawEvaluate(expression: string): Promise<string> {
+  async rawEvaluateJSON(expression: string): Promise<any> {
+    const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
+      expression,
+      contextId: this._contextId,
+      returnByValue: true,
+    }).catch(rewriteError);
+    if (exceptionDetails)
+      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+    return remoteObject.value;
+  }
+
+  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
       expression,
       contextId: this._contextId,

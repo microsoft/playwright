@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { test as browserTest } from './config/browserTest';
+import { browserTest } from './config/browserTest';
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();

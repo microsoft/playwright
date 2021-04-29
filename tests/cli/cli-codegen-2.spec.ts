@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from '../config/cliTest';
+import { cliTest as test, expect } from '../config/cliTest';
 import * as http from 'http';
 import * as url from 'url';
 

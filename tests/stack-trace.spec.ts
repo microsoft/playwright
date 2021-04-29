@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './config/playwrightTest';
+import { playwrightTest as test, expect } from './config/browserTest';
 import path from 'path';
 import * as stackTrace from '../src/utils/stackTrace';
 import { setUnderTest } from '../src/utils/utils';

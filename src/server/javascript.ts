@@ -43,7 +43,8 @@ export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R |
 export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>;
 
 export interface ExecutionContextDelegate {
-  rawEvaluate(expression: string): Promise<ObjectId>;
+  rawEvaluateJSON(expression: string): Promise<any>;
+  rawEvaluateHandle(expression: string): Promise<ObjectId>;
   rawCallFunctionNoReply(func: Function, ...args: any[]): void;
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
   getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>>;
@@ -75,7 +76,7 @@ export class ExecutionContext extends SdkObject {
         ${utilityScriptSource.source}
         return new pwExport();
       })();`;
-      this._utilityScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new JSHandle(this, 'object', objectId));
+      this._utilityScriptPromise = this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', objectId));
     }
     return this._utilityScriptPromise;
   }
@@ -84,9 +85,8 @@ export class ExecutionContext extends SdkObject {
     return this._delegate.createHandle(this, remoteObject);
   }
 
-  async rawEvaluate(expression: string): Promise<void> {
-    // Make sure to never return a value.
-    await this._delegate.rawEvaluate(expression + '; 0');
+  async rawEvaluateJSON(expression: string): Promise<any> {
+    return await this._delegate.rawEvaluateJSON(expression);
   }
 
   async doSlowMo() {

@@ -15,7 +15,7 @@
  */
 
 import { test as it, expect } from '../config/pageTest';
-import { test as browserTest } from '../config/browserTest';
+import { browserTest } from '../config/browserTest';
 
 it.describe('session', () => {
   it.beforeEach(async ({ browserName }) => {
@@ -58,7 +58,7 @@ it.describe('session', () => {
     page.on('console', console.log);
     // generate a script in page and wait for the event.
     await Promise.all([
-      new Promise(f => client.on('Debugger.scriptParsed', event => {
+      new Promise<void>(f => client.on('Debugger.scriptParsed', event => {
         if (event.url === 'foo.js')
           f();
       })),

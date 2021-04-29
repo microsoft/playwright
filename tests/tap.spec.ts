@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/browserTest';
+import { browserTest as it, expect } from './config/browserTest';
 import { ElementHandle, Page } from '../index';
 import type { ServerResponse } from 'http';
 

@@ -29,7 +29,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   constructor(session: WKSession, contextId: number | undefined) {
     this._session = session;
     this._contextId = contextId;
-    this._executionContextDestroyedPromise = new Promise((resolve, reject) => {
+    this._executionContextDestroyedPromise = new Promise<void>((resolve, reject) => {
       this._contextDestroyedCallback = resolve;
     });
   }
@@ -38,7 +38,22 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     this._contextDestroyedCallback();
   }
 
-  async rawEvaluate(expression: string): Promise<string> {
+  async rawEvaluateJSON(expression: string): Promise<any> {
+    try {
+      const response = await this._session.send('Runtime.evaluate', {
+        expression,
+        contextId: this._contextId,
+        returnByValue: true
+      });
+      if (response.wasThrown)
+        throw new Error('Evaluation failed: ' + response.result.description);
+      return response.result.value;
+    } catch (error) {
+      throw rewriteError(error);
+    }
+  }
+
+  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
     try {
       const response = await this._session.send('Runtime.evaluate', {
         expression,

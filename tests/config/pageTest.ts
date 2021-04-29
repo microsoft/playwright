@@ -14,36 +14,14 @@
  * limitations under the License.
  */
 
-import { newTestType } from 'folio';
+import { test as baseTest } from './baseTest';
 import type { Page } from '../../index';
-import type { ServerTestArgs } from './serverTest';
 export { expect } from 'folio';
 
-export type CommonTestArgs = {
-  mode: 'default' | 'driver' | 'service';
-  platform: 'win32' | 'darwin' | 'linux';
-  video: boolean;
-  headful: boolean;
-
-  playwright: typeof import('../../index');
-  toImpl: (rpcObject: any) => any;
-  browserName: 'chromium' | 'firefox' | 'webkit';
-  browserChannel: string | undefined;
-
-  isChromium: boolean;
-  isFirefox: boolean;
-  isWebKit: boolean;
-  isAndroid: boolean;
-  isElectron: boolean;
-  isWindows: boolean;
-  isMac: boolean;
-  isLinux: boolean;
-};
-
 // Page test does not guarantee an isolated context, just a new page (because Android).
-export type PageTestArgs = CommonTestArgs & {
+export type PageTestArgs = {
   browserVersion: string;
   page: Page;
 };
 
-export const test = newTestType<PageTestArgs & ServerTestArgs>();
+export const test = baseTest.declare<PageTestArgs>();

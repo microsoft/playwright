@@ -16,7 +16,7 @@
  */
 
 import { test as pageTest, expect } from '../config/pageTest';
-import { test as playwrightTest } from '../config/playwrightTest';
+import { playwrightTest } from '../config/browserTest';
 import http from 'http';
 
 pageTest.describe('chromium', () => {

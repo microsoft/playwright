@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/browserTest';
+import { browserTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 
 it('should capture local storage', async ({ contextFactory }) => {

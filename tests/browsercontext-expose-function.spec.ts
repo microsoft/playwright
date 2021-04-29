@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/contextTest';
+import { contextTest as it, expect } from './config/browserTest';
 
 it('expose binding should work', async ({context}) => {
   let bindingSource;

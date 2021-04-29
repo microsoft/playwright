@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from '../config/electronTest';
+import { electronTest as test, expect } from '../config/electronTest';
 
 test('should click the button', async ({newWindow, server}) => {
   const window = await newWindow();

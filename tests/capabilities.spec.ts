@@ -16,7 +16,7 @@
 
 import os from 'os';
 import url from 'url';
-import { test as it, expect } from './config/contextTest';
+import { contextTest as it, expect } from './config/browserTest';
 
 it('Web Assembly should work', async function({page, server, browserName, platform}) {
   it.fail(browserName === 'webkit' && platform === 'win32');

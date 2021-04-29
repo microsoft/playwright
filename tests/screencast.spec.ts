@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { slowTest as it, expect } from './config/browserTest';
+import { slowBrowserTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
