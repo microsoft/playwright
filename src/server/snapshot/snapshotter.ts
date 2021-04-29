@@ -52,6 +52,10 @@ export class Snapshotter {
     this._snapshotStreamer = '__playwright_snapshot_streamer_' + guid;
   }
 
+  started(): boolean {
+    return this._started;
+  }
+
   async start() {
     this._started = true;
     if (!this._initialized) {

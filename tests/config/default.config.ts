@@ -16,7 +16,7 @@
 
 import * as folio from 'folio';
 import * as path from 'path';
-import { playwrightTest, slowPlaywrightTest, contextTest } from './browserTest';
+import { playwrightTest, slowPlaywrightTest, contextTest, tracingTest } from './browserTest';
 import { test as pageTest } from './pageTest';
 import { BrowserName, CommonTestArgs, CommonWorkerArgs } from './baseTest';
 import type { Browser, BrowserContext } from '../../index';
@@ -115,4 +115,5 @@ for (const browserName of browsers) {
   playwrightTest.runWith(envConfig);
   slowPlaywrightTest.runWith({ ...envConfig, timeout: config.timeout * 3 });
   pageTest.runWith(envConfig, new PageEnv());
+  tracingTest.runWith({ options: { ...envConfig.options, traceDir: path.join(config.outputDir, 'trace-' + process.env.FOLIO_WORKER_INDEX) }, tag: browserName });
 }
