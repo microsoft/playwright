@@ -49,65 +49,6 @@ class WorkerData {
   }
 }
 
-class FrameData {
-  constructor(agent, runtime, frame) {
-    this._agent = agent;
-    this._runtime = runtime;
-    this._frame = frame;
-    this._isolatedWorlds = new Map();
-    this._initialNavigationDone = false;
-    this.reset();
-  }
-
-  reset() {
-    for (const world of this._isolatedWorlds.values())
-      this._runtime.destroyExecutionContext(world);
-    this._isolatedWorlds.clear();
-
-    for (const {script, worldName} of this._agent._isolatedWorlds.values()) {
-      const context = worldName ? this.createIsolatedWorld(worldName) : this._frame.executionContext();
-      try {
-        let result = context.evaluateScript(script);
-        if (result && result.objectId)
-          context.disposeObject(result.objectId);
-      } catch (e) {
-      }
-    }
-  }
-
-  createIsolatedWorld(name) {
-    const principal = [this._frame.domWindow()]; // extended principal
-    const sandbox = Cu.Sandbox(principal, {
-      sandboxPrototype: this._frame.domWindow(),
-      wantComponents: false,
-      wantExportHelpers: false,
-      wantXrays: true,
-    });
-    const world = this._runtime.createExecutionContext(this._frame.domWindow(), sandbox, {
-      frameId: this._frame.id(),
-      name,
-    });
-    this._isolatedWorlds.set(world.id(), world);
-    return world;
-  }
-
-  unsafeObject(objectId) {
-    const contexts = [this._frame.executionContext(), ...this._isolatedWorlds.values()];
-    for (const context of contexts) {
-      const result = context.unsafeObject(objectId);
-      if (result)
-        return result.object;
-    }
-    throw new Error('Cannot find object with id = ' + objectId);
-  }
-
-  dispose() {
-    for (const world of this._isolatedWorlds.values())
-      this._runtime.destroyExecutionContext(world);
-    this._isolatedWorlds.clear();
-  }
-}
-
 class PageAgent {
   constructor(messageManager, browserChannel, frameTree) {
     this._messageManager = messageManager;
@@ -116,10 +57,7 @@ class PageAgent {
     this._frameTree = frameTree;
     this._runtime = frameTree.runtime();
 
-    this._frameData = new Map();
     this._workerData = new Map();
-    this._scriptsToEvaluateOnNewDocument = new Map();
-    this._isolatedWorlds = new Map();
 
     const docShell = frameTree.mainFrame().docShell();
     this._docShell = docShell;
@@ -169,7 +107,6 @@ class PageAgent {
       helper.on(this._frameTree, 'bindingcalled', this._onBindingCalled.bind(this)),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
       helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
-      helper.on(this._frameTree, 'globalobjectcreated', this._onGlobalObjectCreated.bind(this)),
       helper.on(this._frameTree, 'navigationstarted', this._onNavigationStarted.bind(this)),
       helper.on(this._frameTree, 'navigationcommitted', this._onNavigationCommitted.bind(this)),
       helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
@@ -198,7 +135,7 @@ class PageAgent {
       this._runtime.events.onExecutionContextDestroyed(this._onExecutionContextDestroyed.bind(this)),
       browserChannel.register('page', {
         addBinding: ({ name, script }) => this._frameTree.addBinding(name, script),
-        addScriptToEvaluateOnNewDocument: this._addScriptToEvaluateOnNewDocument.bind(this),
+        addScriptToEvaluateOnNewDocument: ({script, worldName}) => this._frameTree.addScriptToEvaluateOnNewDocument(script, worldName),
         adoptNode: this._adoptNode.bind(this),
         crash: this._crash.bind(this),
         describeNode: this._describeNode.bind(this),
@@ -213,7 +150,7 @@ class PageAgent {
         insertText: this._insertText.bind(this),
         navigate: this._navigate.bind(this),
         reload: this._reload.bind(this),
-        removeScriptToEvaluateOnNewDocument: this._removeScriptToEvaluateOnNewDocument.bind(this),
+        removeScriptToEvaluateOnNewDocument: ({scriptId}) => this._frameTree.removeScriptToEvaluateOnNewDocument(scriptId),
         screenshot: this._screenshot.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setCacheDisabled: this._setCacheDisabled.bind(this),
@@ -225,27 +162,6 @@ class PageAgent {
         disposeObject: this._runtime.disposeObject.bind(this._runtime),
       }),
     ];
-  }
-
-  _addScriptToEvaluateOnNewDocument({script, worldName}) {
-    if (worldName)
-      return this._createIsolatedWorld({script, worldName});
-    return {scriptId: this._frameTree.addScriptToEvaluateOnNewDocument(script)};
-  }
-
-  _createIsolatedWorld({script, worldName}) {
-    const scriptId = helper.generateId();
-    this._isolatedWorlds.set(scriptId, {script, worldName});
-    for (const frameData of this._frameData.values())
-      frameData.createIsolatedWorld(worldName);
-    return {scriptId};
-  }
-
-  _removeScriptToEvaluateOnNewDocument({scriptId}) {
-    if (this._isolatedWorlds.has(scriptId))
-      this._isolatedWorlds.delete(scriptId);
-    else
-      this._frameTree.removeScriptToEvaluateOnNewDocument(scriptId);
   }
 
   _setCacheDisabled({cacheDisabled}) {
@@ -333,16 +249,16 @@ class PageAgent {
   _filePickerShown(inputElement) {
     if (inputElement.ownerGlobal.docShell !== this._docShell)
       return;
-    const frameData = this._findFrameForNode(inputElement);
+    const frame = this._findFrameForNode(inputElement);
     this._browserPage.emit('pageFileChooserOpened', {
-      executionContextId: frameData._frame.executionContext().id(),
-      element: frameData._frame.executionContext().rawValueToRemoteObject(inputElement)
+      executionContextId: frame.executionContext().id(),
+      element: frame.executionContext().rawValueToRemoteObject(inputElement)
     });
   }
 
   _findFrameForNode(node) {
-    return Array.from(this._frameData.values()).find(data => {
-      const doc = data._frame.domWindow().document;
+    return this._frameTree.frames().find(frame => {
+      const doc = frame.domWindow().document;
       return node === doc || node.ownerDocument === doc;
     });
   }
@@ -404,10 +320,9 @@ class PageAgent {
       navigationId,
       errorText,
     });
-    const frameData = this._frameData.get(frame);
-    if (!frameData._initialNavigationDone && frame !== this._frameTree.mainFrame())
+    if (!frame._initialNavigationDone && frame !== this._frameTree.mainFrame())
       this._emitAllEvents(frame);
-    frameData._initialNavigationDone = true;
+    frame._initialNavigationDone = true;
   }
 
   _onSameDocumentNavigation(frame) {
@@ -424,11 +339,7 @@ class PageAgent {
       url: frame.url(),
       name: frame.name(),
     });
-    this._frameData.get(frame)._initialNavigationDone = true;
-  }
-
-  _onGlobalObjectCreated({ frame }) {
-    this._frameData.get(frame).reset();
+    frame._initialNavigationDone = true;
   }
 
   _onFrameAttached(frame) {
@@ -436,11 +347,9 @@ class PageAgent {
       frameId: frame.id(),
       parentFrameId: frame.parentFrame() ? frame.parentFrame().id() : undefined,
     });
-    this._frameData.set(frame, new FrameData(this, this._runtime, frame));
   }
 
   _onFrameDetached(frame) {
-    this._frameData.delete(frame);
     this._browserPage.emit('pageFrameDetached', {
       frameId: frame.id(),
     });
@@ -458,9 +367,6 @@ class PageAgent {
     for (const workerData of this._workerData.values())
       workerData.dispose();
     this._workerData.clear();
-    for (const frameData of this._frameData.values())
-      frameData.dispose();
-    this._frameData.clear();
     helper.removeListeners(this._eventListeners);
   }
 
@@ -525,7 +431,7 @@ class PageAgent {
     const frame = this._frameTree.frame(frameId);
     if (!frame)
       throw new Error('Failed to find frame with id = ' + frameId);
-    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
+    const unsafeObject = frame.unsafeObject(objectId);
     const context = this._runtime.findExecutionContext(executionContextId);
     const fromPrincipal = unsafeObject.nodePrincipal;
     const toFrame = this._frameTree.frame(context.auxData().frameId);
@@ -539,7 +445,7 @@ class PageAgent {
     const frame = this._frameTree.frame(frameId);
     if (!frame)
       throw new Error('Failed to find frame with id = ' + frameId);
-    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
+    const unsafeObject = frame.unsafeObject(objectId);
     if (!unsafeObject)
       throw new Error('Object is not input!');
     const nsFiles = await Promise.all(files.map(filePath => File.createFromFileName(filePath)));
@@ -550,7 +456,7 @@ class PageAgent {
     const frame = this._frameTree.frame(frameId);
     if (!frame)
       throw new Error('Failed to find frame with id = ' + frameId);
-    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
+    const unsafeObject = frame.unsafeObject(objectId);
     if (!unsafeObject.getBoxQuads)
       throw new Error('RemoteObject is not a node');
     const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document}).map(quad => {
@@ -568,7 +474,7 @@ class PageAgent {
     const frame = this._frameTree.frame(frameId);
     if (!frame)
       throw new Error('Failed to find frame with id = ' + frameId);
-    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
+    const unsafeObject = frame.unsafeObject(objectId);
     const browsingContextGroup = frame.docShell().browsingContext.group;
     const frames = this._frameTree.allFramesInBrowsingContextGroup(browsingContextGroup);
     let contentFrame;
@@ -590,7 +496,7 @@ class PageAgent {
     const frame = this._frameTree.frame(frameId);
     if (!frame)
       throw new Error('Failed to find frame with id = ' + frameId);
-    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
+    const unsafeObject = frame.unsafeObject(objectId);
     if (!unsafeObject.isConnected)
       throw new Error('Node is detached from document');
     if (!rect)
@@ -877,7 +783,7 @@ class PageAgent {
   async _getFullAXTree({objectId}) {
     let unsafeObject = null;
     if (objectId) {
-      unsafeObject = this._frameData.get(this._frameTree.mainFrame()).unsafeObject(objectId);
+      unsafeObject = this._frameTree.mainFrame().unsafeObject(objectId);
       if (!unsafeObject)
         throw new Error(`No object found for id "${objectId}"`);
     }
