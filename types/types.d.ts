@@ -9244,7 +9244,8 @@ export interface Dialog {
 export interface Download {
   /**
    * **Chromium-only** Cancels a download. Will not fail if the download is already finished or canceled. Upon successful
-   * cancellations, `download.failure()` would resolve to `'canceled'`.
+   * cancellations, `download.failure()` would resolve to `'canceled'`. Currently **experimental** and may subject to further
+   * changes.
    */
   cancel(): Promise<void>;
 

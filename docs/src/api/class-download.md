@@ -59,6 +59,7 @@ not performed and user has no access to the downloaded files.
 **Chromium-only** Cancels a download.
 Will not fail if the download is already finished or canceled.
 Upon successful cancellations, `download.failure()` would resolve to `'canceled'`.
+Currently **experimental** and may subject to further changes.
 
 ## async method: Download.createReadStream
 * langs: java, js, csharp
