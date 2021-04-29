@@ -24,9 +24,9 @@ it.describe('snapshots', () => {
   let httpServer: any;
   let snapshotPort: number;
 
-  it.beforeEach(async ({ mode, toImpl, context }, testInfo) => {
-    it.skip(mode !== 'default');
+  it.skip(({ mode }) => mode !== 'default');
 
+  it.beforeEach(async ({ toImpl, context }, testInfo) => {
     snapshotter = new InMemorySnapshotter(toImpl(context));
     await snapshotter.initialize();
     httpServer = new HttpServer();

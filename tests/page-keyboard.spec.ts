@@ -18,9 +18,7 @@
 import { test as it, expect } from './config/pageTest';
 import { attachFrame } from './config/utils';
 
-it.beforeEach(async ({ isAndroid }) => {
-  it.skip(isAndroid);
-});
+it.skip(({ isAndroid }) => isAndroid);
 
 it('should type into a textarea', async ({page}) => {
   await page.evaluate(() => {

@@ -28,9 +28,7 @@ function initServer(server: TestServer): string[] {
   return messages;
 }
 
-it.beforeEach(async ({ isAndroid }) => {
-  it.skip(isAndroid, 'Too flaky on Android');
-});
+it.skip(({ isAndroid }) => isAndroid, 'Too flaky on Android');
 
 it('should await navigation when clicking anchor', async ({page, server}) => {
   const messages = initServer(server);

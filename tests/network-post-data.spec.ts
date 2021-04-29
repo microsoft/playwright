@@ -16,9 +16,7 @@
 
 import { test as it, expect } from './config/pageTest';
 
-it.beforeEach(async ({ isAndroid }) => {
-  it.fixme(isAndroid, 'Post data  does not work');
-});
+it.fixme(({ isAndroid }) => isAndroid, 'Post data  does not work');
 
 it('should return correct postData buffer for utf-8 body', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);

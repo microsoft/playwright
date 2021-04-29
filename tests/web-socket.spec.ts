@@ -18,9 +18,7 @@
 import { test as it, expect } from './config/pageTest';
 import { Server as WebSocketServer } from 'ws';
 
-it.beforeEach(async ({ isAndroid }) => {
-  it.skip(isAndroid);
-});
+it.skip(({ isAndroid }) => isAndroid);
 
 it('should work', async ({ page, server }) => {
   const value = await page.evaluate(port => {

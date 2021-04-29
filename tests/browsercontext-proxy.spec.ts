@@ -18,9 +18,8 @@ import { browserTest as it, expect } from './config/browserTest';
 import type { Browser } from '../index';
 
 let browser: Browser;
-it.beforeEach(async ({ browserType, browserOptions }) => {
-  if (!browser)
-    browser = await browserType.launch({ ...browserOptions, proxy: { server: 'per-context' } });
+it.beforeAll(async ({ browserType, browserOptions }) => {
+  browser = await browserType.launch({ ...browserOptions, proxy: { server: 'per-context' } });
 });
 it.afterAll(async () => {
   await browser.close();

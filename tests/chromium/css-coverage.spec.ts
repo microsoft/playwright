@@ -17,9 +17,7 @@
 import { test as it, expect } from '../config/pageTest';
 
 it.describe('CSS Coverage', () => {
-  it.beforeEach(async ({ browserName }) => {
-    it.skip(browserName !== 'chromium');
-  });
+  it.skip(({ browserName }) => browserName !== 'chromium');
 
   it('should work', async function({page, server}) {
     await page.coverage.startCSSCoverage();

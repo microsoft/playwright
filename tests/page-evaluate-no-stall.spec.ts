@@ -17,9 +17,7 @@
 import { test, expect } from './config/pageTest';
 
 test.describe('non-stalling evaluate', () => {
-  test.beforeEach(async ({mode}) => {
-    test.skip(mode !== 'default');
-  });
+  test.skip(({mode}) => mode !== 'default');
 
   test('should work', async ({page, server, toImpl}) => {
     await page.goto(server.EMPTY_PAGE);

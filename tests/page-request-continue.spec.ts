@@ -97,9 +97,7 @@ it('should amend method on main request', async ({page, server}) => {
 });
 
 it.describe('', () => {
-  it.beforeEach(async ({ isAndroid }) => {
-    it.fixme(isAndroid, 'Post data does not work');
-  });
+  it.fixme(({ isAndroid }) => isAndroid, 'Post data does not work');
 
   it('should amend post data', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);

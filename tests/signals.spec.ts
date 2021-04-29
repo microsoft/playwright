@@ -30,9 +30,7 @@ test('should close the browser when the node process closes', async ({startRemot
 });
 
 test.describe('signals', () => {
-  test.beforeEach(async ({platform, headful}) => {
-    test.skip(platform === 'win32' || headful);
-  });
+  test.skip(({platform, headful}) => platform === 'win32' || headful);
 
   test('should report browser close signal', async ({startRemoteServer, server}) => {
     const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });

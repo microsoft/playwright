@@ -15,7 +15,7 @@
  */
 
 import type { AndroidDevice } from '../../index';
-import { CommonWorkerArgs, test as baseTest } from './baseTest';
+import { CommonArgs, baseTest } from './baseTest';
 import * as folio from 'folio';
 export { expect } from 'folio';
 
@@ -28,7 +28,7 @@ export class AndroidEnv {
   protected _browserVersion: string;
   protected _browserMajorVersion: number;
 
-  async beforeAll(args: CommonWorkerArgs, workerInfo: folio.WorkerInfo) {
+  async beforeAll(args: CommonArgs, workerInfo: folio.WorkerInfo) {
     this._device = (await args.playwright._android.devices())[0];
     await this._device.shell('am force-stop org.chromium.webview_shell');
     await this._device.shell('am force-stop com.android.chrome');

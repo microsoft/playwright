@@ -19,9 +19,7 @@ import * as http from 'http';
 import * as url from 'url';
 
 test.describe('cli codegen', () => {
-  test.beforeEach(async ({ mode }) => {
-    test.skip(mode !== 'default');
-  });
+  test.skip(({ mode }) => mode !== 'default');
 
   test('should contain open page', async ({ openRecorder }) => {
     const recorder = await openRecorder();

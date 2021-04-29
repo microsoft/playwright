@@ -23,10 +23,8 @@ import fs from 'fs';
 import { PNG } from 'pngjs';
 
 it.describe('page screenshot', () => {
-  it.beforeEach(async ({ browserName, headful, isAndroid }) => {
-    it.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
-    it.skip(isAndroid, 'Different viewport');
-  });
+  it.skip(({ browserName, headful }) => browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
+  it.skip(({ isAndroid }) => isAndroid, 'Different viewport');
 
   it('should work', async ({page, server}) => {
     await page.setViewportSize({width: 500, height: 500});
@@ -279,10 +277,7 @@ it.describe('page screenshot', () => {
 });
 
 browserTest.describe('page screenshot', () => {
-  browserTest.beforeEach(async ({ browserName, headful, isAndroid }) => {
-    browserTest.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
-    browserTest.skip(isAndroid, 'Different viewport');
-  });
+  browserTest.skip(({ browserName, headful }) => browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
 
   browserTest('should run in parallel in multiple pages', async ({server, contextFactory}) => {
     const context = await contextFactory();

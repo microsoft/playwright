@@ -20,11 +20,9 @@ import { playwrightTest } from '../config/browserTest';
 import http from 'http';
 
 pageTest.describe('chromium', () => {
-  pageTest.beforeEach(async ({ browserName, isElectron, isAndroid }) => {
-    pageTest.skip(browserName !== 'chromium');
-    pageTest.skip(isAndroid);
-    pageTest.skip(isElectron);
-  });
+  pageTest.skip(({ browserName }) => browserName !== 'chromium');
+  pageTest.skip(({ isAndroid }) => isAndroid);
+  pageTest.skip(({ isElectron }) => isElectron);
 
   pageTest('should create a worker from a service worker', async ({page, server}) => {
     const [worker] = await Promise.all([
@@ -85,9 +83,7 @@ pageTest.describe('chromium', () => {
 });
 
 playwrightTest.describe('chromium', () => {
-  playwrightTest.beforeEach(async ({ browserName }) => {
-    playwrightTest.skip(browserName !== 'chromium');
-  });
+  playwrightTest.skip(({ browserName }) => browserName !== 'chromium');
 
   playwrightTest('should close service worker together with the context', async ({browserType, browserOptions, server}) => {
     const browser = await browserType.launch(browserOptions);

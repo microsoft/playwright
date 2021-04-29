@@ -26,7 +26,7 @@ import { PlaywrightClient } from '../../lib/remote/playwrightClient';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type Mode = 'default' | 'driver' | 'service';
-type BaseTestArgs = {
+type BaseWorkerArgs = {
   mode: Mode;
   platform: 'win32' | 'darwin' | 'linux';
   video: boolean;
@@ -40,22 +40,14 @@ type BaseTestArgs = {
   isChromium: boolean;
   isFirefox: boolean;
   isWebKit: boolean;
-  isAndroid: boolean;
-  isElectron: boolean;
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
 };
 
-type BaseWorkerArgs = {
-  playwright: typeof import('../../index');
-  browserName: BrowserName;
-  channel: string | undefined;
-};
-
 type BaseOptions = {
   mode: Mode;
-  engine: 'chromium' | 'firefox' | 'webkit' | 'android' | 'electron';
+  browserName: BrowserName;
   channel?: string;
   video?: boolean;
   headful?: boolean;
@@ -128,10 +120,6 @@ class BaseEnv {
     return {} as any;
   }
 
-  private _browserName(): BrowserName {
-    return (this._options.engine === 'android' || this._options.engine === 'electron') ? 'chromium' : this._options.engine;
-  }
-
   async beforeAll(options: BaseOptions, workerInfo: folio.WorkerInfo): Promise<BaseWorkerArgs> {
     this._options = options;
     this._mode = {
@@ -143,32 +131,11 @@ class BaseEnv {
     this._playwright = await this._mode.setup(workerInfo);
     return {
       playwright: this._playwright,
-      browserName: this._browserName(),
-      channel: this._options.channel,
-    };
-  }
-
-  async beforeEach({}, testInfo: folio.TestInfo): Promise<BaseTestArgs> {
-    const browserName = this._browserName();
-    testInfo.snapshotPathSegment = browserName;
-    testInfo.data = {
-      browserName,
-    };
-    if (this._options.headful)
-      testInfo.data.headful = true;
-    if (this._options.mode !== 'default')
-      testInfo.data.mode = this._options.mode;
-    if (this._options.video)
-      testInfo.data.video = true;
-    return {
-      playwright: this._playwright,
-      browserName,
+      browserName: this._options.browserName,
       browserChannel: this._options.channel,
-      isChromium: browserName === 'chromium',
-      isFirefox: browserName === 'firefox',
-      isWebKit: browserName === 'webkit',
-      isAndroid: this._options.engine === 'android',
-      isElectron: this._options.engine === 'electron',
+      isChromium: this._options.browserName === 'chromium',
+      isFirefox: this._options.browserName === 'firefox',
+      isWebKit: this._options.browserName === 'webkit',
       isWindows: process.platform === 'win32',
       isMac: process.platform === 'darwin',
       isLinux: process.platform === 'linux',
@@ -180,12 +147,24 @@ class BaseEnv {
     };
   }
 
+  async beforeEach({}, testInfo: folio.TestInfo) {
+    testInfo.snapshotPathSegment = this._options.browserName;
+    testInfo.data = { browserName: this._options.browserName };
+    if (this._options.headful)
+      testInfo.data.headful = true;
+    if (this._options.mode !== 'default')
+      testInfo.data.mode = this._options.mode;
+    if (this._options.video)
+      testInfo.data.video = true;
+    return {};
+  }
+
   async afterAll({}, workerInfo: folio.WorkerInfo) {
     await this._mode.teardown();
   }
 }
 
-type ServerTestArgs = {
+type ServerWorkerArgs = {
   asset: (path: string) => string;
   socksPort: number;
   server: TestServer;
@@ -237,18 +216,18 @@ class ServerEnv {
     this._socksPort = port + 2;
     this._socksServer.listen(this._socksPort, 'localhost');
     this._socksServer.useAuth(socks.auth.None());
-    return {};
-  }
-
-  async beforeEach({}, testInfo: folio.TestInfo): Promise<ServerTestArgs> {
-    this._server.reset();
-    this._httpsServer.reset();
     return {
       asset: (p: string) => path.join(__dirname, '..', 'assets', ...p.split('/')),
       server: this._server,
       httpsServer: this._httpsServer,
       socksPort: this._socksPort,
     };
+  }
+
+  async beforeEach({}, testInfo: folio.TestInfo) {
+    this._server.reset();
+    this._httpsServer.reset();
+    return {};
   }
 
   async afterAll({}, workerInfo: folio.WorkerInfo) {
@@ -290,7 +269,6 @@ class CoverageEnv {
 }
 
 export type CommonOptions = BaseOptions;
-export type CommonTestArgs = BaseTestArgs & ServerTestArgs;
-export type CommonWorkerArgs = BaseWorkerArgs;
+export type CommonArgs = BaseWorkerArgs & ServerWorkerArgs;
 
-export const test = folio.test.extend(new CoverageEnv()).extend(new ServerEnv()).extend(new BaseEnv());
+export const baseTest = folio.test.extend(new CoverageEnv()).extend(new ServerEnv()).extend(new BaseEnv());
