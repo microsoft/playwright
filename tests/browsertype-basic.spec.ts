@@ -16,7 +16,7 @@
  */
 
 import fs from 'fs';
-import { test, expect } from './config/playwrightTest';
+import { playwrightTest as test, expect } from './config/browserTest';
 
 test('browserType.executablePath should work', async ({ browserType, browserChannel, browserOptions }) => {
   test.skip(!!browserChannel, 'We skip browser download when testing a channel');

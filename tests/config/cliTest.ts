@@ -14,33 +14,78 @@
  * limitations under the License.
  */
 
-import { newTestType } from 'folio';
-import type { Page, BrowserContext } from '../../index';
-import type { ServerTestArgs } from './serverTest';
-import type { BrowserTestArgs } from './browserTest';
+import { contextTest } from './browserTest';
+import type { Page } from '../../index';
 import * as http from 'http';
 import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
 import { ChildProcess, spawn } from 'child_process';
+import { chromium } from '../../index';
+import * as folio from 'folio';
 export { expect } from 'folio';
 
 interface CLIHTTPServer {
-  setHandler: (handler: http.RequestListener) => void
-  PREFIX: string
+  setHandler: (handler: http.RequestListener) => void;
+  PREFIX: string;
 }
 
-export type CLITestArgs = BrowserTestArgs & {
-  page: Page;
-  context: BrowserContext;
+type CLITestArgs = {
   httpServer: CLIHTTPServer;
   recorderPageGetter: () => Promise<Page>;
   openRecorder: () => Promise<Recorder>;
   runCLI: (args: string[]) => CLIMock;
 };
 
-export const test = newTestType<CLITestArgs & ServerTestArgs>();
+export const cliTest = contextTest.extend({
+  async beforeAll({}, workerInfo: folio.WorkerInfo) {
+    this._port = 10907 + workerInfo.workerIndex * 2;
+    this._server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => this._handler(req, res)).listen(this._port);
+    process.env.PWTEST_RECORDER_PORT = String(this._port + 1);
+  },
 
-export class Recorder {
+  async beforeEach({ page, context, toImpl, browserName, browserChannel, headful, mode }, testInfo: folio.TestInfo): Promise<CLITestArgs> {
+    testInfo.skip(mode === 'service');
+    const recorderPageGetter = async () => {
+      while (!toImpl(context).recorderAppForTest)
+        await new Promise(f => setTimeout(f, 100));
+      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
+      const browser = await chromium.connectOverCDP({ wsEndpoint });
+      const c = browser.contexts()[0];
+      return c.pages()[0] || await c.waitForEvent('page');
+    };
+    return {
+      httpServer: {
+        setHandler: newHandler => this._handler = newHandler,
+        PREFIX: `http://127.0.0.1:${this._port}`,
+      },
+      runCLI: (cliArgs: string[]) => {
+        this._cli = new CLIMock(browserName, browserChannel, !headful, cliArgs);
+        return this._cli;
+      },
+      openRecorder: async () => {
+        await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
+        return new Recorder(page, await recorderPageGetter());
+      },
+      recorderPageGetter,
+    };
+  },
+
+  async afterEach({}, testInfo: folio.TestInfo) {
+    if (this._cli) {
+      await this._cli.exited;
+      this._cli = undefined;
+    }
+  },
+
+  async afterAll({}, workerInfo: folio.WorkerInfo) {
+    if (this._server) {
+      this._server.close();
+      this._server = undefined;
+    }
+  },
+});
+
+class Recorder {
   page: Page;
   _highlightCallback: Function
   _highlightInstalled: boolean
@@ -129,7 +174,7 @@ export class Recorder {
   }
 }
 
-export class CLIMock {
+class CLIMock {
   private process: ChildProcess;
   private data: string;
   private waitForText: string;

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { slowTest as test, expect } from './config/playwrightTest';
+import { slowPlaywrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
 

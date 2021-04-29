@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/contextTest';
+import { contextTest as it, expect } from './config/browserTest';
 import { InMemorySnapshotter } from '../lib/server/snapshot/inMemorySnapshotter';
 import { HttpServer } from '../lib/utils/httpServer';
 import { SnapshotServer } from '../lib/server/snapshot/snapshotServer';

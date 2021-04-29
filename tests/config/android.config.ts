@@ -17,9 +17,8 @@
 import * as folio from 'folio';
 import * as path from 'path';
 import { test as pageTest } from './pageTest';
-import { test as androidTest } from './androidTest';
-import { ServerEnv } from './serverEnv';
-import { AndroidEnv, AndroidPageEnv } from './androidEnv';
+import { AndroidEnv, androidTest } from './androidTest';
+import type { BrowserContext } from '../../index';
 
 const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
@@ -41,6 +40,34 @@ if (process.env.CI) {
   ]);
 }
 
-const serverEnv = new ServerEnv('10.0.2.2');
-pageTest.runWith(folio.merge(serverEnv, new AndroidPageEnv()), { tag: 'android' });
-androidTest.runWith(folio.merge(serverEnv, new AndroidEnv()), { tag: 'android' });
+class AndroidPageEnv extends AndroidEnv {
+  private _context?: BrowserContext;
+
+  async beforeAll(args: any, workerInfo: folio.WorkerInfo) {
+    await super.beforeAll(args, workerInfo);
+    this._context = await this._device!.launchBrowser();
+  }
+
+  async beforeEach(args: any, testInfo: folio.TestInfo) {
+    const result = await super.beforeEach(args, testInfo);
+    const page = await this._context!.newPage();
+    return { ...result, browserVersion: this._browserVersion, page };
+  }
+
+  async afterEach({}, testInfo: folio.TestInfo) {
+    for (const page of this._context!.pages())
+      await page.close();
+  }
+}
+
+const envConfig = {
+  tag: 'android',
+  options: {
+    mode: 'default' as const,
+    engine: 'android' as const,
+    loopback: '10.0.2.2',
+  }
+};
+
+pageTest.runWith(envConfig, new AndroidPageEnv());
+androidTest.runWith(envConfig);

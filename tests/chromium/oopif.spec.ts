@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/playwrightTest';
+import { playwrightTest as it, expect } from '../config/browserTest';
 import type { Browser, Page } from '../../index';
 
 it.describe('oopif', () => {

@@ -16,11 +16,8 @@
 
 import * as folio from 'folio';
 import * as path from 'path';
-import { test as electronTest } from './electronTest';
+import { ElectronEnv, electronTest } from './electronTest';
 import { test as pageTest } from './pageTest';
-import { ServerEnv } from './serverEnv';
-import { ElectronEnv, ElectronPageEnv } from './electronEnv';
-import { CoverageEnv } from './coverage';
 
 const config: folio.Config = {
   testDir: path.join(__dirname, '..'),
@@ -42,7 +39,26 @@ if (process.env.CI) {
   ]);
 }
 
-const serverEnv = new ServerEnv();
-const coverageEnv = new CoverageEnv('electron');
-electronTest.runWith(folio.merge(coverageEnv, serverEnv, new ElectronEnv()), { tag: 'electron' });
-pageTest.runWith(folio.merge(coverageEnv, serverEnv, new ElectronPageEnv()), { tag: 'electron' });
+class ElectronPageEnv extends ElectronEnv {
+  async beforeEach(args: any, testInfo: folio.TestInfo) {
+    const result = await super.beforeEach(args, testInfo);
+    const page = await result.newWindow();
+    return {
+      ...result,
+      browserVersion: this._browserVersion,
+      page,
+    };
+  }
+}
+
+const envConfig = {
+  tag: 'electron',
+  options: {
+    mode: 'default' as const,
+    engine: 'electron' as const,
+    coverageName: 'electron'
+  }
+};
+
+electronTest.runWith(envConfig);
+pageTest.runWith(envConfig, new ElectronPageEnv());

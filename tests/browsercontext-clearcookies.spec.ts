@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/contextTest';
+import { contextTest as it, expect } from './config/browserTest';
 
 it('should clear cookies', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);

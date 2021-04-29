@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/contextTest';
+import { contextTest as it, expect } from './config/browserTest';
 
 it('should work with browser context scripts', async ({ context, server }) => {
   await context.addInitScript(() => window['temp'] = 123);

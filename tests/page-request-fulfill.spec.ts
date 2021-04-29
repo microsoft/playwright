@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { test as browserTest } from './config/browserTest';
+import { browserTest } from './config/browserTest';
 import fs from 'fs';
 
 it('should work', async ({page, server}) => {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/browserTest';
+import { browserTest as it, expect } from './config/browserTest';
 
 it('should work', async ({ browser }) => {
   const func = () => new Date(1479579154987).toString();

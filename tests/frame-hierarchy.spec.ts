@@ -20,7 +20,7 @@ import { attachFrame, detachFrame } from './config/utils';
 import type { Frame } from '../index';
 
 function dumpFrames(frame: Frame, indentation: string = ''): string[] {
-  let description = frame.url().replace(/:\d{4}\//, ':<PORT>/');
+  let description = frame.url().replace(/:\d+\//, ':<PORT>/');
   if (frame.name())
     description += ' (' + frame.name() + ')';
   const result = [indentation + description];

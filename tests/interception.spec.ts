@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './config/pageTest';
-import { test as browserTest } from './config/browserTest';
+import { browserTest } from './config/browserTest';
 import { globToRegex } from '../lib/client/clientHelper';
 import vm from 'vm';
 
@@ -157,10 +157,10 @@ it('should work with regular expression passed from a different context', async 
 });
 
 it('should not break remote worker importScripts', async ({ page, server, isChromium, browserVersion }) => {
-  it.fail(isChromium && +browserVersion.split('.')[0] < 91);
+  it.fixme(isChromium && +browserVersion.split('.')[0] < 91);
 
-  await page.route('**', async request => {
-    await request.continue();
+  await page.route('**', async route => {
+    await route.continue();
   });
   await page.goto(server.PREFIX + '/worker/worker-http-import.html');
   await page.waitForSelector("#status:has-text('finished')");
