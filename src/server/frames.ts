@@ -1092,7 +1092,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
+  async _waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
     const controller = new ProgressController(metadata, this);
     if (typeof options.pollingInterval === 'number')
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
@@ -1116,19 +1116,18 @@ export class Frame extends SdkObject {
       return injectedScript.pollInterval(polling, (progress, continuePolling) => predicate(arg) || continuePolling);
     }, { expression, isFunction, polling: options.pollingInterval, arg });
     return controller.run(
-        progress => this._scheduleRerunnableHandleTask(progress, 'main', task),
+        progress => this._scheduleRerunnableHandleTask(progress, world, task),
         this._page._timeoutSettings.timeout(options));
   }
 
-  async waitForFunctionValue<R>(progress: Progress, pageFunction: js.Func1<any, R>) {
+  async waitForFunctionValueInUtility<R>(progress: Progress, pageFunction: js.Func1<any, R>) {
     const expression = `() => {
       const result = (${pageFunction})();
       if (!result)
         return result;
       return JSON.stringify(result);
-
     }`;
-    const handle = await this._page.mainFrame()._waitForFunctionExpression(internalCallMetadata(), expression, true, undefined, { timeout: progress.timeUntilDeadline() });
+    const handle = await this._waitForFunctionExpression(internalCallMetadata(), expression, true, undefined, { timeout: progress.timeUntilDeadline() }, 'utility');
     return JSON.parse(handle.rawValue()) as R;
   }
 
