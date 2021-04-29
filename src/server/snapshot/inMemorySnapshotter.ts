@@ -51,7 +51,7 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     if (this._frameSnapshots.has(snapshotName))
       throw new Error('Duplicate snapshot name: ' + snapshotName);
 
-    this._snapshotter.captureSnapshot(page, snapshotName, element);
+    this._snapshotter.captureSnapshot(page, snapshotName, element).catch(() => {});
     return new Promise<SnapshotRenderer>(fulfill => {
       const listener = helper.addEventListener(this, 'snapshot', (renderer: SnapshotRenderer) => {
         if (renderer.snapshotName === snapshotName) {
