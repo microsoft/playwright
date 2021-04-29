@@ -398,7 +398,7 @@ export class FFPage implements PageDelegate {
 
   async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     if (!documentRect) {
-      const scrollOffset = await this._page.mainFrame().waitForFunctionValue(progress, () => ({ x: window.scrollX, y: window.scrollY }));
+      const scrollOffset = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => ({ x: window.scrollX, y: window.scrollY }));
       documentRect = {
         x: viewportRect!.x + scrollOffset.x,
         y: viewportRect!.y + scrollOffset.y,

@@ -268,6 +268,14 @@ it.describe('page screenshot', () => {
     await page.screenshot();
     expect(resizeTriggered).toBeFalsy();
   });
+
+  it('should work with Array deleted', async ({page, server}) => {
+    await page.setViewportSize({width: 500, height: 500});
+    await page.goto(server.PREFIX + '/grid.html');
+    await page.evaluate(() => delete window.Array);
+    const screenshot = await page.screenshot({ fullPage: true });
+    expect(screenshot).toMatchSnapshot('screenshot-grid-fullpage.png');
+  });
 });
 
 browserTest.describe('page screenshot', () => {
