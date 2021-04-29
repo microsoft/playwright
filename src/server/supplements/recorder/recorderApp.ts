@@ -20,7 +20,6 @@ import * as util from 'util';
 import { CRPage } from '../../chromium/crPage';
 import { Page } from '../../page';
 import { ProgressController } from '../../progress';
-import { createPlaywright } from '../../playwright';
 import { EventEmitter } from 'events';
 import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
@@ -95,7 +94,7 @@ export class RecorderApp extends EventEmitter {
   }
 
   static async open(inspectedContext: BrowserContext): Promise<RecorderApp> {
-    const recorderPlaywright = createPlaywright(true);
+    const recorderPlaywright = require('../../playwright').createPlaywright(true) as import('../../playwright').Playwright;
     const args = [
       '--app=data:text/html,',
       '--window-size=600,600',

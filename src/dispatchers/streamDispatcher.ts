@@ -20,12 +20,26 @@ import * as stream from 'stream';
 import { createGuid } from '../utils/utils';
 
 export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamInitializer> implements channels.StreamChannel {
+  private _ended: boolean = false;
   constructor(scope: DispatcherScope, stream: stream.Readable) {
     super(scope, { guid: createGuid(), stream }, 'Stream', {});
+    // In Node v12.9.0+ we can use readableEnded.
+    stream.once('end', () => this._ended =  true);
+    stream.once('error', () => this._ended =  true);
   }
 
   async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
-    const buffer = this._object.stream.read(Math.min(this._object.stream.readableLength, params.size || this._object.stream.readableLength));
+    const stream = this._object.stream;
+    if (this._ended)
+      return { binary: '' };
+    if (!stream.readableLength) {
+      await new Promise((fulfill, reject) => {
+        stream.once('readable', fulfill);
+        stream.once('end', fulfill);
+        stream.once('error', reject);
+      });
+    }
+    const buffer = stream.read(Math.min(stream.readableLength, params.size || stream.readableLength));
     return { binary: buffer ? buffer.toString('base64') : '' };
   }
 
