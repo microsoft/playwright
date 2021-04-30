@@ -18,7 +18,7 @@ import * as folio from 'folio';
 import * as path from 'path';
 import { playwrightTest, slowPlaywrightTest, contextTest, tracingTest } from './browserTest';
 import { test as pageTest } from './pageTest';
-import { BrowserName, CommonTestArgs, CommonWorkerArgs } from './baseTest';
+import { BrowserName, CommonArgs } from './baseTest';
 import type { Browser, BrowserContext } from '../../index';
 
 const config: folio.Config = {
@@ -59,11 +59,11 @@ class PageEnv {
   private _browserMajorVersion: number;
   private _context: BrowserContext | undefined;
 
-  async beforeAll(args: AllOptions & CommonWorkerArgs, workerInfo: folio.WorkerInfo) {
+  async beforeAll(args: AllOptions & CommonArgs, workerInfo: folio.WorkerInfo) {
     this._browser = await args.playwright[args.browserName].launch({
       ...args.launchOptions,
       _traceDir: args.traceDir,
-      channel: args.channel,
+      channel: args.browserChannel,
       headless: !args.headful,
       handleSIGINT: false,
     } as any);
@@ -72,14 +72,20 @@ class PageEnv {
     return {};
   }
 
-  async beforeEach(args: AllOptions & CommonTestArgs, testInfo: folio.TestInfo) {
+  async beforeEach(args: CommonArgs, testInfo: folio.TestInfo) {
     testInfo.data.browserVersion = this._browserVersion;
     this._context = await this._browser.newContext({
       recordVideo: args.video ? { dir: testInfo.outputPath('') } : undefined,
-      ...args.contextOptions,
     });
     const page = await this._context.newPage();
-    return { context: this._context, page, browserVersion: this._browserVersion, browserMajorVersion: this._browserMajorVersion };
+    return {
+      context: this._context,
+      page,
+      browserVersion: this._browserVersion,
+      browserMajorVersion: this._browserMajorVersion,
+      isAndroid: false,
+      isElectron: false,
+    };
   }
 
   async afterEach({}) {
@@ -102,7 +108,7 @@ for (const browserName of browsers) {
   const envConfig = {
     options: {
       mode,
-      engine: browserName,
+      browserName,
       headful: !!process.env.HEADFUL,
       channel: process.env.PWTEST_CHANNEL as any,
       video: !!process.env.PWTEST_VIDEO,

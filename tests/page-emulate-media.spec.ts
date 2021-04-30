@@ -19,9 +19,7 @@ import { test as it, expect } from './config/pageTest';
 import { browserTest } from './config/browserTest';
 import { attachFrame } from './config/utils';
 
-it.beforeEach(async ({ isAndroid }) => {
-  it.skip(isAndroid);
-});
+it.skip(({ isAndroid }) => isAndroid);
 
 it('should emulate type', async ({page}) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);

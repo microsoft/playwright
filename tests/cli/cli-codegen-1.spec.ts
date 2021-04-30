@@ -18,10 +18,8 @@ import { cliTest as test, expect } from '../config/cliTest';
 import * as http from 'http';
 
 test.describe('cli codegen', () => {
-  test.beforeEach(async ({ mode, browserName, headful }) => {
-    test.skip(mode !== 'default');
-    test.fixme(browserName === 'firefox' && headful, 'Focus is off');
-  });
+  test.skip(({ mode }) => mode !== 'default');
+  test.fixme(({ browserName, headful }) => browserName === 'firefox' && headful, 'Focus is off');
 
   test('should click', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();

@@ -18,9 +18,7 @@
 import { playwrightTest as it, expect } from './config/browserTest';
 
 it.describe('launch server', () => {
-  it.beforeEach(async ({ mode}) => {
-    it.skip(mode !== 'default');
-  });
+  it.skip(({ mode}) => mode !== 'default');
 
   it('should work', async ({browserType, browserOptions}) => {
     const browserServer = await browserType.launchServer(browserOptions);

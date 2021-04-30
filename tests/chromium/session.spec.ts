@@ -18,9 +18,7 @@ import { test as it, expect } from '../config/pageTest';
 import { browserTest } from '../config/browserTest';
 
 it.describe('session', () => {
-  it.beforeEach(async ({ browserName }) => {
-    it.skip(browserName !== 'chromium');
-  });
+  it.skip(({ browserName }) => browserName !== 'chromium');
 
   it('should work', async function({page}) {
     const client = await page.context().newCDPSession(page);
@@ -95,9 +93,7 @@ it.describe('session', () => {
 });
 
 browserTest.describe('session', () => {
-  browserTest.beforeEach(async ({ browserName }) => {
-    browserTest.skip(browserName !== 'chromium');
-  });
+  browserTest.skip(({ browserName }) => browserName !== 'chromium');
 
   browserTest('should not break page.close()', async function({browser}) {
     const context = await browser.newContext();

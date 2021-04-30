@@ -23,10 +23,8 @@ import path from 'path';
 import fs from 'fs';
 
 it.describe('element screenshot', () => {
-  it.beforeEach(async ({ browserName, headful, isAndroid }) => {
-    it.skip(browserName === 'firefox' && headful);
-    it.skip(isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');
-  });
+  it.skip(({ browserName, headful }) => browserName === 'firefox' && headful);
+  it.skip(({ isAndroid }) => isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');
 
   it('should work', async ({page, server}) => {
     await page.setViewportSize({width: 500, height: 500});
@@ -277,10 +275,7 @@ it.describe('element screenshot', () => {
 });
 
 browserTest.describe('element sceenshot', () => {
-  browserTest.beforeEach(async ({ browserName, headful, isAndroid }) => {
-    browserTest.skip(browserName === 'firefox' && headful);
-    browserTest.skip(isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');
-  });
+  browserTest.skip(({ browserName, headful }) => browserName === 'firefox' && headful);
 
   browserTest('should work with a mobile viewport', async ({browser, server, browserName}) => {
     browserTest.skip(browserName === 'firefox');

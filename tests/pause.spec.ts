@@ -18,9 +18,7 @@ import { Page } from '../index';
 import { cliTest as it, expect } from './config/cliTest';
 
 it.describe('pause', () => {
-  it.beforeEach(async ({ mode }) => {
-    it.skip(mode !== 'default');
-  });
+  it.skip(({ mode }) => mode !== 'default');
 
   it.afterEach(async ({ recorderPageGetter }) => {
     try {

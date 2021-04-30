@@ -19,9 +19,7 @@ import fs from 'fs';
 import path from 'path';
 
 it.describe('tracing', () => {
-  it.beforeEach(async ({ browserName }) => {
-    it.skip(browserName !== 'chromium');
-  });
+  it.skip(({ browserName }) => browserName !== 'chromium');
 
   it('should output a trace', async ({browser, server}, testInfo) => {
     const page = await browser.newPage();

@@ -18,9 +18,7 @@
 import { test as it, expect } from './config/pageTest';
 import { browserTest } from './config/browserTest';
 
-it.beforeEach(async ({ isAndroid }) => {
-  it.skip(isAndroid);
-});
+it.skip(({ isAndroid }) => isAndroid);
 
 it('should work', async ({ page, server, browserName, headful }) => {
   it.fail(browserName === 'firefox' && headful);

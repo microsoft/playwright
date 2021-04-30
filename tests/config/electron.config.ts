@@ -48,6 +48,8 @@ class ElectronPageEnv extends ElectronEnv {
       browserVersion: this._browserVersion,
       browserMajorVersion: this._browserMajorVersion,
       page,
+      isAndroid: false,
+      isElectron: true,
     };
   }
 }
@@ -56,7 +58,7 @@ const envConfig = {
   tag: 'electron',
   options: {
     mode: 'default' as const,
-    engine: 'electron' as const,
+    browserName: 'chromium' as const,
     coverageName: 'electron'
   }
 };

@@ -22,9 +22,10 @@ async function generate(pageOrFrame: Page | Frame, target: string): Promise<stri
 }
 
 it.describe('selector generator', () => {
-  it.beforeEach(async ({ mode, context }) => {
+  it.skip(({ mode }) => mode !== 'default');
+
+  it.beforeEach(async ({ context }) => {
     await (context as any)._enableRecorder({ language: 'javascript' });
-    it.skip(mode !== 'default');
   });
 
   it('should prefer button over inner span', async ({ page }) => {

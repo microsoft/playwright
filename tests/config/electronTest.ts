@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { CommonTestArgs, test as baseTest } from './baseTest';
+import { baseTest, CommonArgs } from './baseTest';
 import { ElectronApplication, Page } from '../../index';
 import * as folio from 'folio';
 import * as path from 'path';
@@ -57,7 +57,7 @@ export class ElectronEnv {
     return {};
   }
 
-  async beforeEach(args: CommonTestArgs, testInfo: folio.TestInfo): Promise<ElectronTestArgs> {
+  async beforeEach(args: CommonArgs, testInfo: folio.TestInfo): Promise<ElectronTestArgs> {
     this._electronApp = await args.playwright._electron.launch({
       args: [path.join(__dirname, 'electron-app.js')],
     });

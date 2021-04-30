@@ -19,10 +19,8 @@ import { test as it, expect } from './config/pageTest';
 import { attachFrame } from './config/utils';
 
 it.describe('Drag and drop', () => {
-  it.beforeEach(async ({ browserName, isAndroid }) => {
-    it.skip(isAndroid);
-    it.fixme(browserName === 'chromium');
-  });
+  it.skip(({ isAndroid }) => isAndroid);
+  it.fixme(({ browserName }) => browserName === 'chromium');
 
   it('should work', async ({page, server}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
@@ -74,9 +72,7 @@ it.describe('Drag and drop', () => {
   });
 
   it.describe('iframe', () => {
-    it.beforeEach(async () => {
-      it.fixme('implement dragging with iframes');
-    });
+    it.fixme('implement dragging with iframes');
 
     it('should drag into an iframe', async ({server, page, isFirefox}) => {
       await page.goto(server.PREFIX + '/drag-n-drop.html');
@@ -158,13 +154,13 @@ it.describe('Drag and drop', () => {
         window['dropped'] = false;
 
         document.querySelector('div').addEventListener('dragstart', event => {
-          event.dataTransfer.effectAllowed = effectAllowed;
+          event.dataTransfer.effectAllowed = effectAllowed as any;
           event.dataTransfer.setData('text/plain', 'drag data');
         });
 
         const dropTarget: HTMLElement = document.querySelector('drop-target');
         dropTarget.addEventListener('dragover', event => {
-          event.dataTransfer.dropEffect = dropEffect;
+          event.dataTransfer.dropEffect = dropEffect as any;
           event.preventDefault();
         });
         dropTarget.addEventListener('drop', event => {

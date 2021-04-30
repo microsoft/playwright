@@ -19,10 +19,8 @@ import { test as it, expect } from './config/pageTest';
 import { browserTest } from './config/browserTest';
 import { verifyViewport } from './config/utils';
 
-it.beforeEach(async ({ isElectron, isAndroid }) => {
-  it.skip(isAndroid, 'Default viewport is null');
-  it.skip(isElectron, 'Default viewport is null');
-});
+it.skip(({ isAndroid }) => isAndroid, 'Default viewport is null');
+it.skip(({ isElectron }) => isElectron, 'Default viewport is null');
 
 it('should get the proper default viewport size', async ({page, server}) => {
   await verifyViewport(page, 1280, 720);

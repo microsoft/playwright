@@ -51,7 +51,7 @@ class AndroidPageEnv extends AndroidEnv {
   async beforeEach(args: any, testInfo: folio.TestInfo) {
     const result = await super.beforeEach(args, testInfo);
     const page = await this._context!.newPage();
-    return { ...result, browserVersion: this._browserVersion, browserMajorVersion: this._browserMajorVersion, page };
+    return { ...result, browserVersion: this._browserVersion, browserMajorVersion: this._browserMajorVersion, page, isAndroid: true, isElectron: false };
   }
 
   async afterEach({}, testInfo: folio.TestInfo) {
@@ -64,7 +64,7 @@ const envConfig = {
   tag: 'android',
   options: {
     mode: 'default' as const,
-    engine: 'android' as const,
+    browserName: 'chromium' as const,
     loopback: '10.0.2.2',
   }
 };

@@ -17,10 +17,8 @@
 import { test as it, expect } from '../config/pageTest';
 
 it.describe('JS Coverage', () => {
-  it.beforeEach(async ({ browserName, isElectron }) => {
-    it.skip(browserName !== 'chromium');
-    it.fixme(isElectron);
-  });
+  it.skip(({ browserName }) => browserName !== 'chromium');
+  it.fixme(({ isElectron }) => isElectron);
 
   it('should work', async function({page, server}) {
     await page.coverage.startJSCoverage();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as baseTest } from './baseTest';
+import { baseTest } from './baseTest';
 import type { Page } from '../../index';
 export { expect } from 'folio';
 
@@ -23,6 +23,8 @@ export type PageTestArgs = {
   browserVersion: string;
   browserMajorVersion: number;
   page: Page;
+  isAndroid: boolean;
+  isElectron: boolean;
 };
 
 export const test = baseTest.declare<PageTestArgs>();
