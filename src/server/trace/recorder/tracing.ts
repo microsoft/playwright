@@ -118,13 +118,13 @@ export class Tracing implements InstrumentationListener {
     const zipFile = new yazl.ZipFile();
     zipFile.addFile(this._traceFile, 'trace.trace');
     const zipFileName = this._traceFile + '.zip';
+    this._traceFile = undefined;
     for (const sha1 of this._sha1s)
       zipFile.addFile(path.join(this._resourcesDir!, sha1), path.join('resources', sha1));
-    const zipPromise = new Promise(f => {
+    zipFile.end();
+    await new Promise(f => {
       zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', f);
     });
-    zipFile.end();
-    await zipPromise;
     const artifact = new Artifact(this._context, zipFileName);
     artifact.reportFinished();
     return artifact;
@@ -133,7 +133,7 @@ export class Tracing implements InstrumentationListener {
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
     if (!sdkObject.attribution.page)
       return;
-    if (!this._snapshotter)
+    if (!this._snapshotter.started())
       return;
     const snapshotName = `${name}@${metadata.id}`;
     metadata.snapshots.push({ title: name, snapshotName });

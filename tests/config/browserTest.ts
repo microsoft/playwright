@@ -209,5 +209,6 @@ class ContextEnv {
 }
 
 export const contextTest = browserTest.extend(new ContextEnv());
+export const tracingTest = baseTest.extend(new PlaywrightEnv()).extend(new BrowserEnv()).extend(new ContextEnv());
 
 export { expect } from 'folio';
