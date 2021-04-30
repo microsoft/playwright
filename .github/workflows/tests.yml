@@ -83,7 +83,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 10
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps
