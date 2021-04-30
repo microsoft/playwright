@@ -6,7 +6,7 @@
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=10.17.0"
+    "node": ">=12"
   },
   "scripts": {
     "ctest": "folio --config=tests/config/default.config.ts --tag=chromium",
