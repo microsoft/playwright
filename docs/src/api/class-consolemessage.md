@@ -5,7 +5,7 @@
 ## method: ConsoleMessage.args
 - returns: <[Array]<[JSHandle]>>
 
-List of arguments passed to a `console` function call. See also [`event: Page.console`]
+List of arguments passed to a `console` function call. See also [`event: Page.console`].
 
 ## method: ConsoleMessage.location
 * langs: js, python
