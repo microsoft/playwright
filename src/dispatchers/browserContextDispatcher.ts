@@ -63,6 +63,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
       context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
+    context.on(BrowserContext.Events.Request, request => this._dispatchEvent('request', {
+      request: RequestDispatcher.from(this._scope, request)
+    }));
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {

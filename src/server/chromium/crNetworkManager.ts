@@ -264,6 +264,7 @@ export class CRNetworkManager {
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
     this._page._frameManager.requestStarted(request.request);
+    this._page._browserContext.requestStarted(request.request);
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {

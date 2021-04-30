@@ -86,6 +86,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       this._serviceWorkers.add(serviceWorker);
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
+    this._channel.on('request', ({ request }) => this.emit(Events.BrowserContext.Request, network.Request.from(request)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 

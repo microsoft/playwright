@@ -62,6 +62,7 @@ export class FFNetworkManager {
     const request = new InterceptableRequest(this._session, frame, redirectedFrom, event);
     this._requests.set(request._id, request);
     this._page._frameManager.requestStarted(request.request);
+    this._page._browserContext.requestStarted(request.request);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {

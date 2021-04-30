@@ -907,6 +907,7 @@ export class WKPage implements PageDelegate {
     const request = new WKInterceptableRequest(session, allowInterception, frame, event, redirectedFrom, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
+    this._page._browserContext.requestStarted(request.request);
   }
 
   private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {

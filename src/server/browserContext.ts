@@ -39,6 +39,7 @@ export abstract class BrowserContext extends SdkObject {
   static Events = {
     Close: 'close',
     Page: 'page',
+    Request: 'request',
     BeforeClose: 'beforeclose',
     VideoStarted: 'videostarted',
   };
@@ -297,6 +298,10 @@ export abstract class BrowserContext extends SdkObject {
       this._didCloseInternal();
     }
     await this._closePromise;
+  }
+
+  requestStarted(request: network.Request) {
+    this.emit(BrowserContext.Events.Request, request);
   }
 
   async newPage(metadata: CallMetadata): Promise<Page> {
