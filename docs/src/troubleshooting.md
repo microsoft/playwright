@@ -10,7 +10,9 @@ title: "Troubleshooting"
 Playwright does self-inspection every time it runs to make sure the browsers can be launched successfully. If there are missing
 dependencies, playwright will print instructions to acquire them.
 
-We also provide [Ubuntu 18.04 dockerfile](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.bionic) and [Ubuntu 20.04 dockerfile](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.focal) with the list of Debian dependencies.
+See also in the [Command Line Interface](./cli.md#install-system-dependencies)
+which has a command to install all necessary dependencies automatically for Ubuntu
+LTS releases.
 
 ## Code transpilation issues
 

@@ -128,10 +128,23 @@ $ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="co
 Playwright requires **Java 8** or newer. The browser binaries for Chromium,
 Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
 
-* **Windows**: Works with Windows and Windows Subsystem for Linux (WSL).
-* **macOS**: Requires 10.14 or above.
-* **Linux**: Depending on your Linux distribution, you might need to install additional
-  dependencies to run the browsers.
-  * Firefox requires Ubuntu 18.04+
-  * For Ubuntu 20.04, the additional dependencies are defined in [our Docker image](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.focal),
-    which is based on Ubuntu.
+### Windows
+
+Works with Windows and Windows Subsystem for Linux (WSL).
+
+### macOS
+
+Requires 10.14 (Mojave) or above.
+
+### Linux
+
+Depending on your Linux distribution, you might need to install additional
+dependencies to run the browsers.
+
+:::note
+Only Ubuntu 18.04 and Ubuntu 20.04 are officially supported.
+:::
+
+See also in the [Command Line Interface](./cli.md#install-system-dependencies)
+which has a command to install all necessary dependencies automatically for Ubuntu
+LTS releases.
