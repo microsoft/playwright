@@ -26,6 +26,7 @@ type AndroidTestArgs = {
 export class AndroidEnv {
   protected _device?: AndroidDevice;
   protected _browserVersion: string;
+  protected _browserMajorVersion: number;
 
   async beforeAll(args: CommonWorkerArgs, workerInfo: folio.WorkerInfo) {
     this._device = (await args.playwright._android.devices())[0];
@@ -37,6 +38,7 @@ export class AndroidEnv {
         .find(line => line.includes('versionName='))
         .trim()
         .split('=')[1];
+    this._browserMajorVersion = Number(this._browserVersion.split('.')[0]);
     this._device.setDefaultTimeout(90000);
   }
 
