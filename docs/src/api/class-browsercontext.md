@@ -155,6 +155,35 @@ await browser_context.add_cookies([cookie_object1, cookie_object2])
 browser_context.add_cookies([cookie_object1, cookie_object2])
 ```
 
+## event: BrowserContext.request
+- argument: <[Request]>
+
+Emitted when a request is issued from any pages created through this context.
+The [request] object is read-only. In order to intercept and mutate requests,
+see [`method: BrowserContext.route`] or [`method: page.route`].
+
+## event: BrowserContext.requestFailed
+- argument: <[Request]>
+
+Emitted when a request fails, for example by timing out.
+
+:::note
+HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete
+with [`event: BrowserContext.requestFinished`] event and not with [`event: BrowserContext.requestFailed`].
+:::
+
+## event: BrowserContext.requestFinished
+- argument: <[Request]>
+
+Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+sequence of events is `request`, `response` and `requestfinished`.
+
+## event: BrowserContext.response
+- argument: <[Response]>
+
+Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+is `request`, `response` and `requestfinished`.
+
 ### param: BrowserContext.addCookies.cookies
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]>
