@@ -228,6 +228,7 @@ function applyTemplates(body, params) {
     if (node.text && node.text.includes('-inline- = %%')) {
       const [name, key] = node.text.split('-inline- = ');
       const list = paramsMap.get(key);
+      const newChildren = [];
       if (!list)
         throw new Error('Bad template: ' + key);
       for (const prop of list.children) {
@@ -236,12 +237,14 @@ function applyTemplates(body, params) {
           throw new Error('Bad template: ' + prop.text);
         const children = childrenWithoutProperties(template);
         const { name: argName } = parseVariable(children[0].text);
-        parent.children.push({
+        newChildren.push({
           type: node.type,
           text: name + argName,
           children: template.children.map(c => md.clone(c))
         });
       }
+      const nodeIndex = parent.children.indexOf(node);
+      parent.children = [...parent.children.slice(0, nodeIndex), ...newChildren, ...parent.children.slice(nodeIndex + 1)];
     } else if (node.text && node.text.includes(' = %%')) {
       const [name, key] = node.text.split(' = ');
       node.text = name;
