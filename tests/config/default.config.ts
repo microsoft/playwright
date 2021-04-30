@@ -77,7 +77,7 @@ class PageEnv {
       ...args.contextOptions,
     });
     const page = await this._context.newPage();
-    return { context: this._context, page, browserVersion: this._browserVersion };
+    return { context: this._context, page, browserVersion: this._browserVersion, browesrMajorVersion: Number(this._browserVersion.split('.')[0]) };
   }
 
   async afterEach({}) {

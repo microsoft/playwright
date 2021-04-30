@@ -156,8 +156,8 @@ it('should work with regular expression passed from a different context', async 
   expect(intercepted).toBe(true);
 });
 
-it('should not break remote worker importScripts', async ({ page, server, isChromium, browserVersion }) => {
-  it.fixme(isChromium && +browserVersion.split('.')[0] < 91);
+it('should not break remote worker importScripts', async ({ page, server, isChromium, browesrMajorVersion }) => {
+  it.fixme(isChromium && browesrMajorVersion < 91);
 
   await page.route('**', async route => {
     await route.continue();

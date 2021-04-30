@@ -172,8 +172,8 @@ it('rich text editable fields should have children', async function({page, isFir
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', async function({page, isFirefox, browserName}) {
-  it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
+it('rich text editable fields with role should have children', async function({page, isFirefox, isWebKit, isChromium, browesrMajorVersion}) {
+  it.skip(isWebKit, 'WebKit rich text accessibility is iffy');
 
   await page.setContent(`
   <div contenteditable="true" role='textbox'>
@@ -190,6 +190,7 @@ it('rich text editable fields with role should have children', async function({p
   } : {
     role: 'textbox',
     name: '',
+    multiline: (isChromium && browesrMajorVersion >= 92) ? true : undefined,
     value: 'Edit this image: ',
     children: [{
       role: 'text',
@@ -201,44 +202,6 @@ it('rich text editable fields with role should have children', async function({p
   };
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0]).toEqual(golden);
-});
-
-it.describe('contenteditable', () => {
-  it.beforeEach(async ({browserName}) => {
-    it.skip(browserName === 'firefox', 'Firefox does not support contenteditable="plaintext-only"');
-    it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
-  });
-
-  it('plain text field with role should not have children', async function({page}) {
-    await page.setContent(`
-      <div contenteditable="plaintext-only" role='textbox'>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
-    const snapshot = await page.accessibility.snapshot();
-    expect(snapshot.children[0]).toEqual({
-      role: 'textbox',
-      name: '',
-      value: 'Edit this image:'
-    });
-  });
-
-  it('plain text field without role should not have content', async function({page}) {
-    await page.setContent(`
-    <div contenteditable="plaintext-only">Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
-    const snapshot = await page.accessibility.snapshot();
-    expect(snapshot.children[0]).toEqual({
-      role: 'generic',
-      name: ''
-    });
-  });
-
-  it('plain text field with tabindex and without role should not have content', async function({page}) {
-    await page.setContent(`
-    <div contenteditable="plaintext-only" tabIndex=0>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
-    const snapshot = await page.accessibility.snapshot();
-    expect(snapshot.children[0]).toEqual({
-      role: 'generic',
-      name: ''
-    });
-  });
 });
 
 it('non editable textbox with role and tabIndex and label should not have children', async function({page, isChromium, isFirefox}) {
