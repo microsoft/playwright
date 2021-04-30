@@ -58,7 +58,8 @@ export class ElectronApplication extends SdkObject {
   private _nodeConnection: CRConnection;
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
-  _nodeElectronHandle: js.JSHandle<any> | undefined;
+  _nodeElectronHandlePromised: Promise<js.JSHandle<any>>;
+  private _resolveNodeElectronHandle!: (handle: js.JSHandle<any>) => void;
   private _windows = new Set<ElectronPage>();
   private _lastWindowId = 0;
   readonly _timeoutSettings = new TimeoutSettings();
@@ -73,6 +74,7 @@ export class ElectronApplication extends SdkObject {
     this._browserContext.on(BrowserContext.Events.Page, event => this._onPage(event));
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
+    this._nodeElectronHandlePromised = new Promise(resolve => this._resolveNodeElectronHandle = resolve);
   }
 
   private async _onPage(page: ElectronPage) {
@@ -87,7 +89,7 @@ export class ElectronApplication extends SdkObject {
     this._windows.add(page);
 
     // Below is async.
-    const handle = await this._nodeElectronHandle!.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), windowId).catch(e => {});
+    const handle = await (await this._nodeElectronHandlePromised).evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), windowId).catch(e => {});
     if (!handle)
       return;
     page.browserWindow = handle;
@@ -103,7 +105,7 @@ export class ElectronApplication extends SdkObject {
   async close() {
     const progressController = new ProgressController(internalCallMetadata(), this);
     const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise, this._timeoutSettings.timeout({}));
-    await this._nodeElectronHandle!.evaluate(({ app }) => app.quit());
+    await (await this._nodeElectronHandlePromised).evaluate(({ app }) => app.quit());
     this._nodeConnection.close();
     await closed;
   }
@@ -114,7 +116,8 @@ export class ElectronApplication extends SdkObject {
         this._nodeExecutionContext = new js.ExecutionContext(this, new CRExecutionContext(this._nodeSession, event.context));
     });
     await this._nodeSession.send('Runtime.enable', {}).catch(e => {});
-    this._nodeElectronHandle = await js.evaluate(this._nodeExecutionContext!, false /* returnByValue */, `process.mainModule.require('electron')`);
+    js.evaluate(this._nodeExecutionContext!, false /* returnByValue */, `process.mainModule.require('electron')`)
+        .then(this._resolveNodeElectronHandle);
   }
 }
 
