@@ -64,24 +64,26 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
       context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
-    context.on(BrowserContext.Events.Request, (request: Request) => this._dispatchEvent('request', {
-      request: RequestDispatcher.from(this._scope, request),
-      page: request.frame()._page
-    }));
+    context.on(BrowserContext.Events.Request, (request: Request) =>  {
+      return this._dispatchEvent('request', {
+        request: RequestDispatcher.from(this._scope, request),
+        page: request.frame()._page.initializedOrNull()
+      });
+    });
     context.on(BrowserContext.Events.Response, (response: Response) => this._dispatchEvent('response', {
       response: ResponseDispatcher.from(this._scope, response),
-      page: response.frame()._page
+      page: response.frame()._page.initializedOrNull()
     }));
     context.on(BrowserContext.Events.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
       request: RequestDispatcher.from(this._scope, request),
       failureText: request._failureText,
       responseEndTiming: request._responseEndTiming,
-      page: request.frame()._page
+      page: request.frame()._page.initializedOrNull()
     }));
     context.on(BrowserContext.Events.RequestFinished, (request: Request) => this._dispatchEvent('requestFinished', {
       request: RequestDispatcher.from(scope, request),
       responseEndTiming: request._responseEndTiming,
-      page: request.frame()._page
+      page: request.frame()._page.initializedOrNull()
     }));
   }
 

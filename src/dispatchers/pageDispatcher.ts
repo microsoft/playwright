@@ -16,7 +16,6 @@
 
 import { BrowserContext } from '../server/browserContext';
 import { Frame } from '../server/frames';
-import { Request } from '../server/network';
 import { Page, Worker } from '../server/page';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, existingDispatcher, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';

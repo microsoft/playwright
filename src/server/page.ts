@@ -203,6 +203,11 @@ export class Page extends SdkObject {
       this.emit(Page.Events.Close);
   }
 
+  initializedOrNull() {
+    this.reportAsNew();
+    return this;
+  }
+
   async _doSlowMo() {
     const slowMo = this._browserContext._browser.options.slowMo;
     if (!slowMo)
