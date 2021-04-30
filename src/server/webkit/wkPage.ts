@@ -906,15 +906,17 @@ export class WKPage implements PageDelegate {
     const allowInterception = this._page._needsRequestInterception() && !redirectedFrom;
     const request = new WKInterceptableRequest(session, allowInterception, frame, event, redirectedFrom, documentId);
     this._requestIdToRequest.set(event.requestId, request);
-    this._page._frameManager.requestStarted(request.request);
     this._page._browserContext.requestStarted(request.request);
+    this._page._frameManager.requestStarted(request.request);
   }
 
   private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
     const response = request.createResponse(responsePayload);
     response._requestFinished(responsePayload.timing ? helper.secondsToRoundishMillis(timestamp - request._timestamp) : -1, 'Response body is unavailable for redirect responses');
     this._requestIdToRequest.delete(request._requestId);
+    this._page._browserContext.requestReceivedResponse(response);
     this._page._frameManager.requestReceivedResponse(response);
+    this._page._browserContext.requestFinished(request.request);
     this._page._frameManager.requestFinished(request.request);
   }
 
@@ -939,6 +941,7 @@ export class WKPage implements PageDelegate {
     const response = request.createResponse(event.response);
     if (event.response.requestHeaders && Object.keys(event.response.requestHeaders).length)
       request.request.updateWithRawHeaders(headersObjectToArray(event.response.requestHeaders));
+    this._page._browserContext.requestReceivedResponse(response);
     this._page._frameManager.requestReceivedResponse(response);
 
     if (response.status() === 204) {
@@ -963,6 +966,7 @@ export class WKPage implements PageDelegate {
     if (response)
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     this._requestIdToRequest.delete(request._requestId);
+    this._page._browserContext.requestFinished(request.request);
     this._page._frameManager.requestFinished(request.request);
   }
 
@@ -977,6 +981,7 @@ export class WKPage implements PageDelegate {
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     this._requestIdToRequest.delete(request._requestId);
     request.request._setFailureText(event.errorText);
+    this._page._browserContext.requestFailed(request.request);
     this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
   }
 

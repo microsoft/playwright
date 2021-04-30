@@ -642,6 +642,25 @@ BrowserContext:
       parameters:
         worker: Worker
 
+    request:
+      parameters:
+        request: Request
+
+    requestFailed:
+      parameters:
+        request: Request
+        failureText: string?
+        responseEndTiming: number
+
+    requestFinished:
+      parameters:
+        request: Request
+        responseEndTiming: number
+
+    response:
+      parameters:
+        response: Response
+
 Page:
   type: interface
 

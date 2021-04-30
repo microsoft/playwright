@@ -40,6 +40,9 @@ export const Events = {
     BackgroundPage: 'backgroundpage',
     ServiceWorker: 'serviceworker',
     Request: 'request',
+    Response: 'response',
+    RequestFailed: 'requestfailed',
+    RequestFinished: 'requestfinished',
   },
 
   BrowserServer: {

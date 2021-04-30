@@ -40,6 +40,9 @@ export abstract class BrowserContext extends SdkObject {
     Close: 'close',
     Page: 'page',
     Request: 'request',
+    Response: 'response',
+    RequestFailed: 'requestfailed',
+    RequestFinished: 'requestfinished',
     BeforeClose: 'beforeclose',
     VideoStarted: 'videostarted',
   };
@@ -301,7 +304,23 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   requestStarted(request: network.Request) {
-    this.emit(BrowserContext.Events.Request, request);
+    if (!request._isFavicon)
+      this.emit(BrowserContext.Events.Request, request);
+  }
+
+  requestReceivedResponse(response: network.Response) {
+    if (!response.request()._isFavicon)
+      this.emit(BrowserContext.Events.Response, response);
+  }
+
+  requestFinished(request: network.Request) {
+    if (!request._isFavicon)
+      this.emit(BrowserContext.Events.RequestFinished, request);
+  }
+
+  requestFailed(request: network.Request) {
+    if (!request._isFavicon)
+      this.emit(BrowserContext.Events.RequestFailed, request);
   }
 
   async newPage(metadata: CallMetadata): Promise<Page> {

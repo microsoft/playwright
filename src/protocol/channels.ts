@@ -584,13 +584,16 @@ export type BrowserContextInitializer = {
 };
 export interface BrowserContextChannel extends Channel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
-  on(event: 'close', scallback: (params: BrowserContextCloseEvent) => void): this;
+  on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
   on(event: 'backgroundPage', callback: (params: BrowserContextBackgroundPageEvent) => void): this;
   on(event: 'serviceWorker', callback: (params: BrowserContextServiceWorkerEvent) => void): this;
-  on(event: 'request', callback: (params: PageRequestEvent) => void): this;
+  on(event: 'request', callback: (params: BrowserContextRequestEvent) => void): this;
+  on(event: 'requestFailed', callback: (params: BrowserContextRequestFailedEvent) => void): this;
+  on(event: 'requestFinished', callback: (params: BrowserContextRequestFinishedEvent) => void): this;
+  on(event: 'response', callback: (params: BrowserContextResponseEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams, metadata?: Metadata): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams, metadata?: Metadata): Promise<BrowserContextAddInitScriptResult>;
   clearCookies(params?: BrowserContextClearCookiesParams, metadata?: Metadata): Promise<BrowserContextClearCookiesResult>;
@@ -637,6 +640,18 @@ export type BrowserContextServiceWorkerEvent = {
 };
 export type BrowserContextRequestEvent = {
   request: RequestChannel,
+};
+export type BrowserContextRequestFailedEvent = {
+  request: RequestChannel,
+  failureText?: string,
+  responseEndTiming: number,
+};
+export type BrowserContextRequestFinishedEvent = {
+  request: RequestChannel,
+  responseEndTiming: number,
+};
+export type BrowserContextResponseEvent = {
+  response: ResponseChannel,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: SetNetworkCookie[],

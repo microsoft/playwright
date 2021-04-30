@@ -263,8 +263,8 @@ export class CRNetworkManager {
       redirectedFrom
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
-    this._page._frameManager.requestStarted(request.request);
     this._page._browserContext.requestStarted(request.request);
+    this._page._frameManager.requestStarted(request.request);
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
@@ -306,7 +306,9 @@ export class CRNetworkManager {
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
+    this._page._browserContext.requestReceivedResponse(response);
     this._page._frameManager.requestReceivedResponse(response);
+    this._page._browserContext.requestFinished(request.request);
     this._page._frameManager.requestFinished(request.request);
   }
 
@@ -316,6 +318,7 @@ export class CRNetworkManager {
     if (!request)
       return;
     const response = this._createResponse(request, event.response);
+    this._page._browserContext.requestReceivedResponse(response);
     this._page._frameManager.requestReceivedResponse(response);
   }
 
@@ -336,6 +339,7 @@ export class CRNetworkManager {
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
+    this._page._browserContext.requestFinished(request.request);
     this._page._frameManager.requestFinished(request.request);
   }
 
@@ -354,6 +358,7 @@ export class CRNetworkManager {
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
     request.request._setFailureText(event.errorText);
+    this._page._browserContext.requestFailed(request.request);
     this._page._frameManager.requestFailed(request.request, !!event.canceled);
   }
 

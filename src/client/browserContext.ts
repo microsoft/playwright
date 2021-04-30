@@ -87,6 +87,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
     this._channel.on('request', ({ request }) => this.emit(Events.BrowserContext.Request, network.Request.from(request)));
+    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText));
+    this._channel.on('requestFinished', ({ request, responseEndTiming }) => this._onRequestFinished(network.Request.from(request), responseEndTiming));
+    this._channel.on('response', ({ response }) => this.emit(Events.BrowserContext.Response, network.Response.from(response)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -95,6 +98,19 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this.emit(Events.BrowserContext.Page, page);
     if (page._opener && !page._opener.isClosed())
       page._opener.emit(Events.Page.Popup, page);
+  }
+
+  private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined) {
+    request._failureText = failureText || null;
+    if (request._timing)
+      request._timing.responseEnd = responseEndTiming;
+    this.emit(Events.Page.RequestFailed,  request);
+  }
+
+  private _onRequestFinished(request: network.Request, responseEndTiming: number) {
+    if (request._timing)
+      request._timing.responseEnd = responseEndTiming;
+    this.emit(Events.Page.RequestFinished, request);
   }
 
   _onRoute(route: network.Route, request: network.Request) {
