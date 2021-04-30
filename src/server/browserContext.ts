@@ -303,26 +303,6 @@ export abstract class BrowserContext extends SdkObject {
     await this._closePromise;
   }
 
-  requestStarted(request: network.Request) {
-    if (!request._isFavicon)
-      this.emit(BrowserContext.Events.Request, request);
-  }
-
-  requestReceivedResponse(response: network.Response) {
-    if (!response.request()._isFavicon)
-      this.emit(BrowserContext.Events.Response, response);
-  }
-
-  requestFinished(request: network.Request) {
-    if (!request._isFavicon)
-      this.emit(BrowserContext.Events.RequestFinished, request);
-  }
-
-  requestFailed(request: network.Request) {
-    if (!request._isFavicon)
-      this.emit(BrowserContext.Events.RequestFailed, request);
-  }
-
   async newPage(metadata: CallMetadata): Promise<Page> {
     const pageDelegate = await this.newPageDelegate();
     const pageOrError = await pageDelegate.pageOrError();

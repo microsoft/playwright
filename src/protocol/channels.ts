@@ -640,18 +640,22 @@ export type BrowserContextServiceWorkerEvent = {
 };
 export type BrowserContextRequestEvent = {
   request: RequestChannel,
+  page?: PageChannel,
 };
 export type BrowserContextRequestFailedEvent = {
   request: RequestChannel,
   failureText?: string,
   responseEndTiming: number,
+  page?: PageChannel,
 };
 export type BrowserContextRequestFinishedEvent = {
   request: RequestChannel,
   responseEndTiming: number,
+  page?: PageChannel,
 };
 export type BrowserContextResponseEvent = {
   response: ResponseChannel,
+  page?: PageChannel,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: SetNetworkCookie[],
@@ -851,10 +855,6 @@ export interface PageChannel extends Channel {
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
   on(event: 'load', callback: (params: PageLoadEvent) => void): this;
   on(event: 'pageError', callback: (params: PagePageErrorEvent) => void): this;
-  on(event: 'request', callback: (params: PageRequestEvent) => void): this;
-  on(event: 'requestFailed', callback: (params: PageRequestFailedEvent) => void): this;
-  on(event: 'requestFinished', callback: (params: PageRequestFinishedEvent) => void): this;
-  on(event: 'response', callback: (params: PageResponseEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
@@ -921,21 +921,6 @@ export type PageFrameDetachedEvent = {
 export type PageLoadEvent = {};
 export type PagePageErrorEvent = {
   error: SerializedError,
-};
-export type PageRequestEvent = {
-  request: RequestChannel,
-};
-export type PageRequestFailedEvent = {
-  request: RequestChannel,
-  failureText?: string,
-  responseEndTiming: number,
-};
-export type PageRequestFinishedEvent = {
-  request: RequestChannel,
-  responseEndTiming: number,
-};
-export type PageResponseEvent = {
-  response: ResponseChannel,
 };
 export type PageRouteEvent = {
   route: RouteChannel,

@@ -645,21 +645,25 @@ BrowserContext:
     request:
       parameters:
         request: Request
+        page: Page?
 
     requestFailed:
       parameters:
         request: Request
         failureText: string?
         responseEndTiming: number
+        page: Page?
 
     requestFinished:
       parameters:
         request: Request
         responseEndTiming: number
+        page: Page?
 
     response:
       parameters:
         response: Response
+        page: Page?
 
 Page:
   type: interface
@@ -982,25 +986,6 @@ Page:
     pageError:
       parameters:
         error: SerializedError
-
-    request:
-      parameters:
-        request: Request
-
-    requestFailed:
-      parameters:
-        request: Request
-        failureText: string?
-        responseEndTiming: number
-
-    requestFinished:
-      parameters:
-        request: Request
-        responseEndTiming: number
-
-    response:
-      parameters:
-        response: Response
 
     route:
       parameters:

@@ -86,10 +86,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       this._serviceWorkers.add(serviceWorker);
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
-    this._channel.on('request', ({ request }) => this.emit(Events.BrowserContext.Request, network.Request.from(request)));
-    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText));
-    this._channel.on('requestFinished', ({ request, responseEndTiming }) => this._onRequestFinished(network.Request.from(request), responseEndTiming));
-    this._channel.on('response', ({ response }) => this.emit(Events.BrowserContext.Response, network.Response.from(response)));
+    this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), page));
+    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, page));
+    this._channel.on('requestFinished', ({ request, responseEndTiming, page }) => this._onRequestFinished(network.Request.from(request), responseEndTiming, page));
+    this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), page));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -100,17 +100,45 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       page._opener.emit(Events.Page.Popup, page);
   }
 
-  private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined) {
+  private _onRequest(request: network.Request, pageChannel: channels.PageChannel | undefined) {
+    this.emit(Events.BrowserContext.Request, request);
+    if (pageChannel) {
+      const page = Page.from(pageChannel);
+      if (page._opener && !page._opener.isClosed())
+        page.emit(Events.Page.Request, request);
+    }
+  }
+
+  private _onResponse(response: network.Response, pageChannel: channels.PageChannel | undefined) {
+    this.emit(Events.BrowserContext.Response, response);
+    if (pageChannel) {
+      const page = Page.from(pageChannel);
+      if (page._opener && !page._opener.isClosed())
+        page.emit(Events.Page.Response, response);
+    }
+  }
+
+  private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined, pageChannel: channels.PageChannel | undefined) {
     request._failureText = failureText || null;
     if (request._timing)
       request._timing.responseEnd = responseEndTiming;
-    this.emit(Events.Page.RequestFailed,  request);
+    this.emit(Events.BrowserContext.RequestFailed, request);
+    if (pageChannel) {
+      const page = Page.from(pageChannel);
+      if (page._opener && !page._opener.isClosed())
+        page.emit(Events.Page.RequestFailed, request);
+    }
   }
 
-  private _onRequestFinished(request: network.Request, responseEndTiming: number) {
+  private _onRequestFinished(request: network.Request, responseEndTiming: number, pageChannel: channels.PageChannel | undefined) {
     if (request._timing)
       request._timing.responseEnd = responseEndTiming;
-    this.emit(Events.Page.RequestFinished, request);
+    this.emit(Events.BrowserContext.RequestFinished, request);
+    if (pageChannel) {
+      const page = Page.from(pageChannel);
+      if (page._opener && !page._opener.isClosed())
+        page.emit(Events.Page.RequestFinished, request);
+    }
   }
 
   _onRoute(route: network.Route, request: network.Request) {

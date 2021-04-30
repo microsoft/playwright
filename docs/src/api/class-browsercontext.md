@@ -160,7 +160,7 @@ browser_context.add_cookies([cookie_object1, cookie_object2])
 
 Emitted when a request is issued from any pages created through this context.
 The [request] object is read-only. In order to intercept and mutate requests,
-see [`method: BrowserContext.route`] or [`method: page.route`].
+see [`method: BrowserContext.route`] or [`method: Page.route`].
 
 ## event: BrowserContext.requestFailed
 - argument: <[Request]>

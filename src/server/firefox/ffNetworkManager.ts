@@ -61,7 +61,6 @@ export class FFNetworkManager {
       this._requests.delete(redirectedFrom._id);
     const request = new InterceptableRequest(this._session, frame, redirectedFrom, event);
     this._requests.set(request._id, request);
-    this._page._browserContext.requestStarted(request.request);
     this._page._frameManager.requestStarted(request.request);
   }
 
@@ -90,7 +89,6 @@ export class FFNetworkManager {
       responseStart: this._relativeTiming(event.timing.responseStart),
     };
     const response = new network.Response(request.request, event.status, event.statusText, event.headers, timing, getResponseBody);
-    this._page._browserContext.requestReceivedResponse(response);
     this._page._frameManager.requestReceivedResponse(response);
   }
 
@@ -107,7 +105,6 @@ export class FFNetworkManager {
       this._requests.delete(request._id);
       response._requestFinished(this._relativeTiming(event.responseEndTime));
     }
-    this._page._browserContext.requestFinished(request.request);
     this._page._frameManager.requestFinished(request.request);
   }
 
@@ -120,7 +117,6 @@ export class FFNetworkManager {
     if (response)
       response._requestFinished(-1);
     request.request._setFailureText(event.errorCode);
-    this._page._browserContext.requestFailed(request.request);
     this._page._frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
   }
 
