@@ -137,7 +137,7 @@ The arguments passed into `console.log` appear as arguments on the event handler
 An example of handling `console` event:
 
 ```js
-page.on('console', msg => {
+page.on('console', async msg => {
   for (let i = 0; i < msg.args().length; ++i)
     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
 });
