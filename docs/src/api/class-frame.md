@@ -169,11 +169,11 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: Frame.check.selector = %%-input-selector-%%
 
+### option: Frame.check.position = %%-input-position-%%
+
 ### option: Frame.check.force = %%-input-force-%%
 
 ### option: Frame.check.noWaitAfter = %%-input-no-wait-after-%%
-
-### option: Frame.check.position = %%-input-position-%%
 
 ### option: Frame.check.timeout = %%-input-timeout-%%
 
@@ -1110,11 +1110,11 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: Frame.uncheck.selector = %%-input-selector-%%
 
+### option: Frame.uncheck.position = %%-input-position-%%
+
 ### option: Frame.uncheck.force = %%-input-force-%%
 
 ### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
-
-### option: Frame.uncheck.position = %%-input-position-%%
 
 ### option: Frame.uncheck.timeout = %%-input-timeout-%%
 

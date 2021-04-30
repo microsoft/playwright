@@ -130,11 +130,11 @@ If the element is detached from the DOM at any moment during the action, this me
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
+### option: ElementHandle.check.position = %%-input-position-%%
+
 ### option: ElementHandle.check.force = %%-input-force-%%
 
 ### option: ElementHandle.check.noWaitAfter = %%-input-no-wait-after-%%
-
-### option: ElementHandle.check.position = %%-input-position-%%
 
 ### option: ElementHandle.check.timeout = %%-input-timeout-%%
 
@@ -790,11 +790,11 @@ If the element is detached from the DOM at any moment during the action, this me
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
+### option: ElementHandle.uncheck.position = %%-input-position-%%
+
 ### option: ElementHandle.uncheck.force = %%-input-force-%%
 
 ### option: ElementHandle.uncheck.noWaitAfter = %%-input-no-wait-after-%%
-
-### option: ElementHandle.uncheck.position = %%-input-position-%%
 
 ### option: ElementHandle.uncheck.timeout = %%-input-timeout-%%
 
