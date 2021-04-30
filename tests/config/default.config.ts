@@ -56,6 +56,7 @@ type AllOptions = WorkerOptionsFor<typeof contextTest>;
 class PageEnv {
   private _browser: Browser
   private _browserVersion: string;
+  private _browserMajorVersion: number;
   private _context: BrowserContext | undefined;
 
   async beforeAll(args: AllOptions & CommonWorkerArgs, workerInfo: folio.WorkerInfo) {
@@ -67,6 +68,7 @@ class PageEnv {
       handleSIGINT: false,
     } as any);
     this._browserVersion = this._browser.version();
+    this._browserMajorVersion = Number(this._browserVersion.split('.')[0]);
     return {};
   }
 
@@ -77,7 +79,7 @@ class PageEnv {
       ...args.contextOptions,
     });
     const page = await this._context.newPage();
-    return { context: this._context, page, browserVersion: this._browserVersion, browesrMajorVersion: Number(this._browserVersion.split('.')[0]) };
+    return { context: this._context, page, browserVersion: this._browserVersion, browserMajorVersion: this._browserMajorVersion };
   }
 
   async afterEach({}) {

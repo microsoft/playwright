@@ -46,6 +46,7 @@ class ElectronPageEnv extends ElectronEnv {
     return {
       ...result,
       browserVersion: this._browserVersion,
+      browserMajorVersion: this._browserMajorVersion,
       page,
     };
   }

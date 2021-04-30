@@ -29,6 +29,7 @@ export class ElectronEnv {
   private _electronApp: ElectronApplication | undefined;
   private _windows: Page[] = [];
   protected _browserVersion: string;
+  protected _browserMajorVersion: number;
 
   private async _newWindow() {
     const [ window ] = await Promise.all([
@@ -52,6 +53,7 @@ export class ElectronEnv {
     // This env prevents 'Electron Security Policy' console message.
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
     this._browserVersion = require('electron/package.json').version;
+    this._browserMajorVersion = Number(this._browserVersion.split('.')[0]);
     return {};
   }
 
