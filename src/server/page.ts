@@ -410,6 +410,7 @@ export class Page extends SdkObject {
   }
 
   _requestStarted(request: network.Request) {
+    this.emit(Page.Events.Request, request);
     const route = request._route();
     if (!route)
       return;
