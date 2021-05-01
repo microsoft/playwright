@@ -1,3 +1,3 @@
-const { app, BrowserWindow } = require('electron');
+const { app } = require('electron');
 
 app.on('window-all-closed', e => e.preventDefault());

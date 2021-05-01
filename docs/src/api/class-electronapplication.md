@@ -45,6 +45,16 @@ This event is issued when the application closes.
 This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can
 be used for Playwright automation.
 
+## async method: ElectronApplication.browserWindow
+- returns: <[JSHandle]>
+
+Returns the BrowserWindow object that corresponds to the given Playwright page.
+
+### param: ElectronApplication.browserWindow.page
+- `page` <[Page]>
+
+Page to retrieve the window for.
+
 ## async method: ElectronApplication.close
 
 Closes Electron application.

@@ -16,7 +16,7 @@
 
 import * as folio from 'folio';
 import * as path from 'path';
-import { ElectronEnv, electronTest } from './electronTest';
+import { baseElectronTest, ElectronEnv, electronTest } from './electronTest';
 import { test as pageTest } from './pageTest';
 
 const config: folio.Config = {
@@ -63,5 +63,6 @@ const envConfig = {
   }
 };
 
+baseElectronTest.runWith(envConfig);
 electronTest.runWith(envConfig);
 pageTest.runWith(envConfig, new ElectronPageEnv());
