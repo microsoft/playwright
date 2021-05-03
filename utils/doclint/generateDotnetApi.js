@@ -394,13 +394,34 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
  * @param {Documentation.Member} member
  * @param {Documentation.Class|Documentation.Type} parent
  * @param {Function} output
+ * @param {number=} overload
  */
-function renderMethod(member, parent, output, name) {
+function renderMethod(member, parent, output, name, overload = null) {
   const typeResolve = (type) => translateType(type, parent, (t) => {
     let newName = `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
     documentedResults.set(newName, `Result of calling <see cref="${translateMemberName("interface", parent.name)}.${translateMemberName(member.kind, member.name, member)}"/>.`);
     return newName;
   });
+
+  const possibleOverloads = (member) => {
+    const argsArray = Array.from(member.args.values());
+
+    if(!argsArray.length)
+      return null;
+
+    if(argsArray[0].type.union && !isEnum(argsArray[0].type))
+      return argsArray[0].type.union.length;
+
+    if(argsArray[0].name === 'options' && argsArray[0].type.properties[0].type.union && !isEnum(argsArray[0].type.properties[0].type))
+      return argsArray[0].type.properties[0].type.length;
+  };
+
+  const overloads = possibleOverloads(member);
+  if (overload === null && overloads !== null) {
+    for(let overloadIndex = 0; overloadIndex < overloads; overloadIndex++)
+      renderMethod(member, parent, output, name, overloadIndex);
+    return;
+  }
 
   /** @type {Map<string, string[]>} */
   const paramDocs = new Map();
@@ -491,9 +512,9 @@ function renderMethod(member, parent, output, name) {
     args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);
   };
 
-  let parseArg = (/** @type {Documentation.Member} */ arg) => {
-    if (arg.name === "options") {
-      arg.type.properties.forEach(parseArg);
+  let parseArg = (/** @type {Documentation.Member} */ arg, /** @type {number} */ index) => {
+    if (arg.name === 'options') {
+      arg.type.properties.forEach((t, i) => parseArg(t, index === 0 ? i : null));
       return;
     }
 
@@ -522,12 +543,16 @@ function renderMethod(member, parent, output, name) {
       return;
     }
 
-    const argName = translateMemberName('argument', arg.alias || arg.name, null);
-    const argType = translateType(arg.type, parent, (t) => generateNameDefault(member, argName, t, parent));
+    let type = arg.type;
+    if(index === 0 && overload !== null && arg.type.union && arg.name !== 'options')
+      type = arg.type.union[overload];
 
-    if (argType === null && arg.type.union) {
+    const argName = translateMemberName('argument', arg.alias || arg.name, null);
+    const argType = translateType(type, parent, (t) => generateNameDefault(member, argName, t, parent));
+
+    if (argType === null && type.union) {
       // we might have to split this into multiple arguments
-      let translatedArguments = arg.type.union.map(t => translateType(t, parent, (x) => generateNameDefault(member, argName, x, parent)));
+      let translatedArguments = type.union.map(t => translateType(t, parent, (x) => generateNameDefault(member, argName, x, parent)));
       if (translatedArguments.includes(null))
         throw new Error('Unexpected null in translated argument types. Aborting.');
 
@@ -611,8 +636,7 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
       }
     }
 
-    if (type.union.filter(u => u.name.startsWith(`"`)).length == type.union.length
-      || isNullableEnum) {
+    if (isEnum(type) || isNullableEnum) {
       // this is an enum
       let enumName = generateNameCallback(type);
       if (!enumName)
@@ -735,6 +759,14 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
   // this is also where we map known types, like boolean -> bool, etc.
   let name = classNameMap.get(type.name) || type.name;
   return `${name}`;
+}
+
+/**
+ *
+ * @param {Documentation.Type} type
+ */
+function isEnum(type) {
+  return type.union.filter(u => u.name.startsWith(`"`)).length == type.union.length;
 }
 
 /**
