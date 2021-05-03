@@ -206,7 +206,6 @@ export class Page extends SdkObject {
   }
 
   initializedOrUndefined() {
-    this.reportAsNew();
     return this._initialized ? this : undefined;
   }
 
