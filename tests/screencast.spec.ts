@@ -157,7 +157,8 @@ it.describe('screencast', () => {
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should work with old options', async ({browser}, testInfo) => {
+  it('should work with old options', async ({browser, isFirefox, isWindows}, testInfo) => {
+    it.fail(isFirefox && isWindows);
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -180,7 +181,8 @@ it.describe('screencast', () => {
     expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
   });
 
-  it('should capture static page', async ({browser}, testInfo) => {
+  it('should capture static page', async ({browser, isFirefox, isWindows}, testInfo) => {
+    it.fail(isFirefox && isWindows);
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
       recordVideo: {
