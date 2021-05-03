@@ -24,6 +24,7 @@ const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { Type } = require('./documentation');
 const { EOL } = require('os');
+const { execSync } = require('child_process');
 
 const maxDocumentationColumnWidth = 80;
 
@@ -199,6 +200,11 @@ const customTypeNames = new Map([
         out.push(`\t${escapedName},`);
       });
     }, enumsDir));
+  
+  if (process.argv[3] !== "--skip-format") {
+    // run the formatting tool for .net, to ensure the files are prepped
+    execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
+  }
 }
 
 /**
