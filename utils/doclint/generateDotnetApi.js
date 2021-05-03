@@ -201,7 +201,7 @@ const customTypeNames = new Map([
       });
     }, enumsDir));
   
-  if (process.argv[3] !== "--skip") {
+  if (process.argv[3] !== "--skip-format") {
     // run the formatting tool for .net, to ensure the files are prepped
     execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
   }
