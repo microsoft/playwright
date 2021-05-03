@@ -31,8 +31,16 @@ Playwright team maintains a Playwright Firefox version that matches the latest F
 Using `firefox-stable` is a 2-steps process:
 
 1. Installing `firefox-stable` with Playwright CLI.
-    ```shell
+    ```sh js
     $ npx playwright install firefox-stable
+    ```
+
+    ```sh java
+    $ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install firefox-stable"
+    ```
+
+    ```sh python
+    $ playwright install firefox-stable
     ```
 
 2. Using `firefox-stable` channel when launching browser.
