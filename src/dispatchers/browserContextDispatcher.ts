@@ -152,6 +152,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       await this._context._setRequestInterceptor(undefined);
       return;
     }
+    await this._context._setRequestInterceptor((route, request) => {
+      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+    });
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {
