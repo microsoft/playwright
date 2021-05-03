@@ -58,6 +58,8 @@ jobs:
       with:
         node-version: 12
     - run: npm ci
+      env:
+        DEBUG=extract-zip
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --tag=${{ matrix.browser }}
@@ -85,6 +87,8 @@ jobs:
       with:
         node-version: 12
     - run: npm ci
+      env:
+        DEBUG=extract-zip
     - run: npm run build
     - run: node lib/cli/cli install-deps
     - run: npm run test -- --tag=${{ matrix.browser }}
@@ -113,6 +117,8 @@ jobs:
       with:
         node-version: ${{ matrix.node_version }}
     - run: npm ci
+      env:
+        DEBUG=extract-zip
     - run: npm run build
     - run: node lib/cli/cli install-deps
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash packages/installation-tests/installation-tests.sh
