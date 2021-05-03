@@ -6765,7 +6765,7 @@ export interface BrowserType<Unused = {}> {
      * Browser distribution channel. Read more about using
      * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
-    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable";
 
     /**
      * Enable Chromium sandboxing. Defaults to `true`.
@@ -7095,7 +7095,7 @@ export interface BrowserType<Unused = {}> {
      * Browser distribution channel. Read more about using
      * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
-    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable";
 
     /**
      * Enable Chromium sandboxing. Defaults to `true`.
@@ -10785,7 +10785,7 @@ export interface LaunchOptions {
    * Browser distribution channel. Read more about using
    * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
    */
-  channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+  channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable";
 
   /**
    * Enable Chromium sandboxing. Defaults to `false`.
