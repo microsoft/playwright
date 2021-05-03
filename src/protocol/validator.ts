@@ -974,6 +974,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     env: tOptional(tArray(tType('NameValue'))),
     timeout: tOptional(tNumber),
   });
+  scheme.ElectronApplicationBrowserWindowParams = tObject({
+    page: tChannel('Page'),
+  });
   scheme.ElectronApplicationEvaluateExpressionParams = tObject({
     expression: tString,
     isFunction: tOptional(tBoolean),

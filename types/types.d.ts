@@ -7512,6 +7512,12 @@ export interface ElectronApplication {
   off(event: 'window', listener: (page: Page) => void): this;
 
   /**
+   * Returns the BrowserWindow object that corresponds to the given Playwright page.
+   * @param page Page to retrieve the window for.
+   */
+  browserWindow(page: Page): Promise<JSHandle>;
+
+  /**
    * Closes Electron application.
    */
   close(): Promise<void>;
