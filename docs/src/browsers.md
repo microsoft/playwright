@@ -26,7 +26,7 @@ build.
 
 ### Firefox-Stable
 
-Playwright team maintains a Playwright Firefox version that matches the latest Firefox Stable, aka `firefox-stable`.
+Playwright team maintains a Playwright Firefox version that matches the latest Firefox Stable, a.k.a. `firefox-stable`.
 
 Using `firefox-stable` is a 2-steps process:
 
