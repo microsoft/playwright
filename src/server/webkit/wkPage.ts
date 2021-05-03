@@ -924,8 +924,10 @@ export class WKPage implements PageDelegate {
 
   _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
-    if (!request)
+    if (!request) {
+      this._session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
       return;
+    }
     if (!request._allowInterception) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
