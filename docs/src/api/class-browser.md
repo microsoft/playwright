@@ -200,7 +200,7 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 
 ## async method: Browser.startTracing
-* langs: js, python
+* langs: java, js, python
 
 :::note
 Tracing is only supported on Chromium-based browsers.
@@ -213,6 +213,13 @@ be opened in Chrome DevTools performance panel.
 await browser.startTracing(page, {path: 'trace.json'});
 await page.goto('https://www.google.com');
 await browser.stopTracing();
+```
+
+```java
+browser.startTracing(page, new Browser.StartTracingOptions()
+  .setPath(Paths.get("trace.json")));
+page.goto('https://www.google.com');
+browser.stopTracing();
 ```
 
 ```python async
@@ -248,7 +255,7 @@ captures screenshots in the trace.
 specify custom categories to use instead of default.
 
 ## async method: Browser.stopTracing
-* langs: js, python
+* langs: java, js, python
 - returns: <[Buffer]>
 
 :::note
