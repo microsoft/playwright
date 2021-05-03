@@ -160,7 +160,7 @@ browser_context.add_cookies([cookie_object1, cookie_object2])
 
 Emitted when a request is issued from any pages created through this context.
 The [request] object is read-only. To only listen for requests from a particular
-page, use [`method: Page.request`].
+page, use [`event: Page.request`].
 
 In order to intercept and mutate requests, see [`method: BrowserContext.route`] or [`method: Page.route`].
 
@@ -168,7 +168,7 @@ In order to intercept and mutate requests, see [`method: BrowserContext.route`] 
 - argument: <[Request]>
 
 Emitted when a request fails, for example by timing out. To only listen for
-failed requests from a particular page, use [`method: Page.requestFailed`].
+failed requests from a particular page, use [`event: Page.requestFailed`].
 
 :::note
 HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete
@@ -180,14 +180,14 @@ with [`event: BrowserContext.requestFinished`] event and not with [`event: Brows
 
 Emitted when a request finishes successfully after downloading the response body. For a successful response, the
 sequence of events is `request`, `response` and `requestfinished`. To listen for
-successful requests from a particular page, use [`method: Page.requestFinished`].
+successful requests from a particular page, use [`event: Page.requestFinished`].
 
 ## event: BrowserContext.response
 - argument: <[Response]>
 
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
 is `request`, `response` and `requestfinished`. To listen for response events
-from a particular page, use [`method: Page.response`].
+from a particular page, use [`event: Page.response`].
 
 ### param: BrowserContext.addCookies.cookies
 - `cookies` <[Array]<[Object]>>

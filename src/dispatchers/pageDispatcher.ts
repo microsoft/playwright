@@ -38,7 +38,7 @@ import { createGuid } from '../utils/utils';
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
 
-  private static fromNullable(scope: DispatcherScope, page: Page | undefined): PageDispatcher | undefined {
+  static fromNullable(scope: DispatcherScope, page: Page | undefined): PageDispatcher | undefined {
     if (!page)
       return undefined;
     const result = existingDispatcher<PageDispatcher>(page);

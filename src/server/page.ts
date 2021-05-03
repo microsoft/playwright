@@ -122,6 +122,7 @@ export class Page extends SdkObject {
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
   private _disconnected = false;
+  private _initialized = false;
   private _disconnectedCallback: (e: Error) => void;
   readonly _disconnectedPromise: Promise<Error>;
   private _crashedCallback: (e: Error) => void;
@@ -195,6 +196,7 @@ export class Page extends SdkObject {
         return;
       this._setIsError(error);
     }
+    this._initialized = true;
     this._browserContext.emit(BrowserContext.Events.Page, this);
     // I may happen that page iniatialization finishes after Close event has already been sent,
     // in that case we fire another Close event to ensure that each reported Page will have
@@ -203,9 +205,9 @@ export class Page extends SdkObject {
       this.emit(Page.Events.Close);
   }
 
-  initializedOrNull() {
+  initializedOrUndefined() {
     this.reportAsNew();
-    return this;
+    return this._initialized ? this : undefined;
   }
 
   async _doSlowMo() {
