@@ -898,7 +898,12 @@ export class WKPage implements PageDelegate {
         redirectedFrom = request.request;
       }
     }
-    const frame = this._page._frameManager.frame(event.frameId)!;
+    const frame = redirectedFrom ? redirectedFrom.frame() : this._page._frameManager.frame(event.frameId);
+    // sometimes we get stray network events for detached frames
+    // TODO(einbinder) why?
+    if (!frame)
+      return;
+
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
@@ -919,8 +924,10 @@ export class WKPage implements PageDelegate {
 
   _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
-    if (!request)
+    if (!request) {
+      this._session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
       return;
+    }
     if (!request._allowInterception) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
