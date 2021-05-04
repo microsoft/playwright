@@ -1724,16 +1724,19 @@ export interface Page {
 
   /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
-   * element, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has
-   * associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be
-   * filled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this
-   * method throws an error. Note that you can pass an empty string to clear the input field.
+   * element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input
+   * field.
+   * 
+   * If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+   * However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled
+   * instead.
    * 
    * To send fine-grained keyboard events, use
    * [page.type(selector, text[, options])](https://playwright.dev/docs/api/class-page#pagetypeselector-text-options).
    * 
    * Shortcut for main frame's
-   * [frame.fill(selector, value[, options])](https://playwright.dev/docs/api/class-frame#framefillselector-value-options)
+   * [frame.fill(selector, value[, options])](https://playwright.dev/docs/api/class-frame#framefillselector-value-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options 
@@ -2479,12 +2482,16 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
+   * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, waits until
+   * all specified options are present in the `<select>` element and selects these options.
+   * 
+   * If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+   * 
    * Returns the array of option values that have been successfully selected.
    * 
-   * Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-   * matching `selector`, the method throws an error.
-   * 
-   * Will wait until all specified options are present in the `<select>` element.
+   * Triggers a `change` and `input` event once all the provided options have been selected.
    * 
    * ```js
    * // single selection matching the value
@@ -2499,7 +2506,7 @@ export interface Page {
    * ```
    * 
    * Shortcut for main frame's
-   * [frame.selectOption(selector, values[, options])](https://playwright.dev/docs/api/class-frame#frameselectoptionselector-values-options)
+   * [frame.selectOption(selector, values[, options])](https://playwright.dev/docs/api/class-frame#frameselectoptionselector-values-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
    * is considered matching if all specified properties match.
@@ -3889,10 +3896,13 @@ export interface Frame {
 
   /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
-   * element, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has
-   * associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be
-   * filled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this
-   * method throws an error. Note that you can pass an empty string to clear the input field.
+   * element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input
+   * field.
+   * 
+   * If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+   * However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled
+   * instead.
    * 
    * To send fine-grained keyboard events, use
    * [frame.type(selector, text[, options])](https://playwright.dev/docs/api/class-frame#frametypeselector-text-options).
@@ -4257,12 +4267,16 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, waits until
+   * all specified options are present in the `<select>` element and selects these options.
+   * 
+   * If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+   * 
    * Returns the array of option values that have been successfully selected.
    * 
-   * Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-   * matching `selector`, the method throws an error.
-   * 
-   * Will wait until all specified options are present in the `<select>` element.
+   * Triggers a `change` and `input` event once all the provided options have been selected.
    * 
    * ```js
    * // single selection matching the value
@@ -6097,10 +6111,15 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the element, fills it and triggers an `input`
-   * event after filling. If the element is inside the `<label>` element that has associated
-   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled
-   * instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method
-   * throws an error. Note that you can pass an empty string to clear the input field.
+   * event after filling. Note that you can pass an empty string to clear the input field.
+   * 
+   * If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+   * However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled
+   * instead.
+   * 
+   * To send fine-grained keyboard events, use
+   * [elementHandle.type(text[, options])](https://playwright.dev/docs/api/class-elementhandle#elementhandletypetext-options).
    * @param value Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options 
    */
@@ -6333,12 +6352,16 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;
 
   /**
+   * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, waits until all specified options are present in the
+   * `<select>` element and selects these options.
+   * 
+   * If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+   * 
    * Returns the array of option values that have been successfully selected.
    * 
-   * Triggers a `change` and `input` event once all the provided options have been selected. If element is not a `<select>`
-   * element, the method throws an error.
-   * 
-   * Will wait until all specified options are present in the `<select>` element.
+   * Triggers a `change` and `input` event once all the provided options have been selected.
    * 
    * ```js
    * // single selection matching the value
