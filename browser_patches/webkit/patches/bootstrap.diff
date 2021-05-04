@@ -1272,10 +1272,10 @@ index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936af
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..a51b42b2a2b575927509e11dc7241ab6f203c104
+index 0000000000000000000000000000000000000000..b8bf514e01071898216b2c8b00210f5b6bbde440
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,63 @@
 +{
 +    "domain": "Screencast",
 +    "availability": ["web"],
@@ -1288,7 +1288,7 @@ index 0000000000000000000000000000000000000000..a51b42b2a2b575927509e11dc7241ab6
 +    ],
 +    "commands": [
 +        {
-+            "name": "start",
++            "name": "startVideo",
 +            "description": "Starts recoring video to speified file.",
 +            "parameters": [
 +                { "name": "file", "type": "string", "description": "Output file location." },
@@ -1301,9 +1301,41 @@ index 0000000000000000000000000000000000000000..a51b42b2a2b575927509e11dc7241ab6
 +            ]
 +        },
 +        {
-+            "name": "stop",
++            "name": "stopVideo",
 +            "async": true,
 +            "description": "Stops recoding video. Returns after the file has been closed."
++        },
++        {
++            "name": "startScreencast",
++            "description": "Starts screencast.",
++            "parameters": [
++                { "name": "width", "type": "integer" },
++                { "name": "height", "type": "integer" },
++                { "name": "quality", "type": "integer" }
++            ],
++            "returns": [
++                { "name": "generation", "type": "integer", "description": "Screencast session generation." }
++            ]
++        },
++        {
++            "name": "stopScreencast",
++            "description": "Stops screencast."
++        },
++        {
++            "name": "screencastFrameAck",
++            "parameters": [
++                { "name": "generation", "type": "integer", "description": "Screencast session generation" }
++            ]
++        }
++    ],
++    "events": [
++        {
++            "name": "screencastFrame",
++            "parameters": [
++                { "name": "data", "type": "string", "description": "Base64 data" },
++                { "name": "deviceWidth", "type": "integer" },
++                { "name": "deviceHeight", "type": "integer" }
++            ]
 +        }
 +    ]
 +}
@@ -9447,7 +9479,7 @@ index 85d6f74114f4e7f82d9502d1b99d69098d6a49b6..6896c9756edb233dda46c7031e1af699
      return WebTouchEvent();
  }
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
-index d6adbee324b7daee827b4e29f685a4f7e2197354..b95548dd4237a5f87db00b1a19c654d337412b57 100644
+index d6adbee324b7daee827b4e29f685a4f7e2197354..aea36a14dc998c3feaf8f46b41f33c1f416a9e25 100644
 --- a/Source/WebKit/Sources.txt
 +++ b/Source/WebKit/Sources.txt
 @@ -289,11 +289,14 @@ Shared/WebsiteData/WebsiteData.cpp
@@ -9482,9 +9514,11 @@ index d6adbee324b7daee827b4e29f685a4f7e2197354..b95548dd4237a5f87db00b1a19c654d3
  UIProcess/WebPageProxy.cpp
  UIProcess/WebPasteboardProxy.cpp
  UIProcess/WebPreferences.cpp
-@@ -465,6 +471,9 @@ UIProcess/Inspector/WebPageDebuggable.cpp
+@@ -464,7 +470,11 @@ UIProcess/Inspector/WebInspectorUtilities.cpp
+ UIProcess/Inspector/WebPageDebuggable.cpp
  UIProcess/Inspector/WebPageInspectorController.cpp
  
++UIProcess/Inspector/Agents/CairoJpegEncoder.cpp
  UIProcess/Inspector/Agents/InspectorBrowserAgent.cpp
 +UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 +UIProcess/Inspector/Agents/ScreencastEncoder.cpp
@@ -11466,12 +11500,295 @@ index b0722e7da81e56530deb570b82ed7cfece970362..05ec3e3ea97ba49135a27d7f9b91f14c
 +    DidChangeAcceleratedCompositingMode(bool enabled)
 +#endif
  }
+diff --git a/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..d56b71ee99786d8452424858b026af226538df27
+--- /dev/null
++++ b/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp
+@@ -0,0 +1,241 @@
++/* Copyright 2018 Bernhard R. Fischer, 4096R/8E24F29D <bf@abenteuerland.at>
++ *
++ * This file is part of Cairo_JPG.
++ *
++ * Cairo_JPG is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU Lesser General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * Cairo_JPG is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with Cairo_JPG.  If not, see <https://www.gnu.org/licenses/>.
++ */
++
++/*! \file cairo_jpg.c
++ * This file contains two functions for reading and writing JPEG files from
++ * and to Cairo image surfaces. It uses the functions from the libjpeg.
++ * Most of the code is directly derived from the online example at
++ * http://libjpeg-turbo.virtualgl.org/Documentation/Documentation
++ *
++ * All prototypes are defined in cairo_jpg.h All functions and their parameters
++ * and return values are described below directly at the functions. You may
++ * also have a look at the preprocessor macros defined below.
++ *
++ * To compile this code you need to have installed the packages libcairo2-dev
++ * and libjpeg-dev. Compile with the following to create an object file to link
++ * with your code:
++ * gcc -std=c99 -Wall -c `pkg-config cairo libjpeg --cflags --libs` cairo_jpg.c
++ * Use the following command to include the main() function and create an
++ * executable for testing of this code:
++ * gcc -std=c99 -Wall -o cairo_jpg -DCAIRO_JPEG_MAIN `pkg-config cairo libjpeg --cflags --libs` cairo_jpg.c
++ *
++ * @author Bernhard R. Fischer, 4096R/8E24F29D bf@abenteuerland.at
++ * @version 2020/01/18
++ * @license LGPL3.
++ */
++
++#if USE(CAIRO)
++
++#include "CairoJpegEncoder.h"
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <stdint.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <cairo.h>
++#include <jpeglib.h>
++
++/*! Macro to activate main() function. This is only used for testing. Comment
++ * it out (#undef) if you link this file to your own program.
++ */
++//#define CAIRO_JPEG_MAIN
++//
++/*! Define this to use an alternate implementation of
++ * cairo_image_surface_create_from_jpeg() which fstat(3)s the file before
++ * reading (see below). For huge files this /may/ be slightly faster.
++ */
++#undef CAIRO_JPEG_USE_FSTAT
++
++/*! This is the read block size for the stream reader
++ * cairo_image_surface_create_from_jpeg_stream().
++ */
++#ifdef USE_CAIRO_READ_FUNC_LEN_T
++#define CAIRO_JPEG_IO_BLOCK_SIZE 4096
++#else
++/*! Block size has to be one if cairo_read_func_t is in use because of the lack
++ * to detect EOF (truncated reads).
++ */
++#define CAIRO_JPEG_IO_BLOCK_SIZE 1
++/*! In case of original cairo_read_func_t is used fstat() should be used for
++ * performance reasons (see CAIRO_JPEG_USE_FSTAT above).
++ */
++#define CAIRO_JPEG_USE_FSTAT
++#endif
++
++/*! Define this to test jpeg creation with non-image surfaces. This is only for
++ * testing and is to be used together with CAIRO_JPEG_MAIN.  
++ */
++#undef CAIRO_JPEG_TEST_SIMILAR
++#if defined(CAIRO_JPEG_TEST_SIMILAR) && defined(CAIRO_JPEG_MAIN)
++#include <cairo-pdf.h>
++#endif
++
++
++#ifndef LIBJPEG_TURBO_VERSION
++/*! This function makes a covnersion for "odd" pixel sizes which typically is a
++ * conversion from a 3-byte to a 4-byte (or more) pixel size or vice versa.
++ * The conversion is done from the source buffer src to the destination buffer
++ * dst. The caller MUST ensure that src and dst have the correct memory size.
++ * This is dw * num for dst and sw * num for src. src and dst may point to the
++ * same memory address.
++ * @param dst Pointer to destination buffer.
++ * @param dw Pixel width (in bytes) of pixels in destination buffer, dw >= 3.
++ * @param src Pointer to source buffer.
++ * @param sw Pixel width (in bytes) of pixels in source buffer, sw >= 3.
++ * @param num Number of pixels to convert, num >= 1;
++ */
++static void pix_conv(unsigned char *dst, int dw, const unsigned char *src, int sw, int num)
++{
++   int si, di;
++
++   // safety check
++   if (dw < 3 || sw < 3 || dst == NULL || src == NULL)
++      return;
++
++   num--;
++   for (si = num * sw, di = num * dw; si >= 0; si -= sw, di -= dw)
++   {
++#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++      dst[di + 2] = src[si    ];
++      dst[di + 1] = src[si + 1];
++      dst[di + 0] = src[si + 2];
++#else
++      // FIXME: This is untested, it may be wrong.
++      dst[di - 3] = src[si - 3];
++      dst[di - 2] = src[si - 2];
++      dst[di - 1] = src[si - 1];
++#endif
++   }
++}
++#endif
++
++
++/*! This function creates a JPEG file in memory from a Cairo image surface.
++ * @param sfc Pointer to a Cairo surface. It should be an image surface of
++ * either CAIRO_FORMAT_ARGB32 or CAIRO_FORMAT_RGB24. Other formats are
++ * converted to CAIRO_FORMAT_RGB24 before compression.
++ * Please note that this may give unexpected results because JPEG does not
++ * support transparency. Thus, default background color is used to replace
++ * transparent regions. The default background color is black if not specified
++ * explicitly. Thus converting e.g. PDF surfaces without having any specific
++ * background color set will apear with black background and not white as you
++ * might expect. In such cases it is suggested to manually convert the surface
++ * to RGB24 before calling this function.
++ * @param data Pointer to a memory pointer. This parameter receives a pointer
++ * to the memory area where the final JPEG data is found in memory. This
++ * function reserves the memory properly and it has to be freed by the caller
++ * with free(3).
++ * @param len Pointer to a variable of type size_t which will receive the final
++ * lenght of the memory buffer.
++ * @param quality Compression quality, 0-100.
++ * @return On success the function returns CAIRO_STATUS_SUCCESS. In case of
++ * error CAIRO_STATUS_INVALID_FORMAT is returned.
++ */
++cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality)
++{
++   struct jpeg_compress_struct cinfo;
++   struct jpeg_error_mgr jerr;
++   JSAMPROW row_pointer[1];
++   cairo_surface_t *other = NULL;
++
++   // check valid input format (must be IMAGE_SURFACE && (ARGB32 || RGB24))
++   if (cairo_surface_get_type(sfc) != CAIRO_SURFACE_TYPE_IMAGE ||
++         (cairo_image_surface_get_format(sfc) != CAIRO_FORMAT_ARGB32 &&
++         cairo_image_surface_get_format(sfc) != CAIRO_FORMAT_RGB24))
++   {
++      // create a similar surface with a proper format if supplied input format
++      // does not fulfill the requirements
++      double x1, y1, x2, y2;
++      other = sfc;
++      cairo_t *ctx = cairo_create(other);
++      // get extents of original surface
++      cairo_clip_extents(ctx, &x1, &y1, &x2, &y2);
++      cairo_destroy(ctx);
++
++      // create new image surface
++      sfc = cairo_surface_create_similar_image(other, CAIRO_FORMAT_RGB24, x2 - x1, y2 - y1);
++      if (cairo_surface_status(sfc) != CAIRO_STATUS_SUCCESS)
++         return CAIRO_STATUS_INVALID_FORMAT;
++
++      // paint original surface to new surface
++      ctx = cairo_create(sfc);
++      cairo_set_source_surface(ctx, other, 0, 0);
++      cairo_paint(ctx);
++      cairo_destroy(ctx);
++   }
++
++   // finish queued drawing operations
++   cairo_surface_flush(sfc);
++
++   // init jpeg compression structures
++   cinfo.err = jpeg_std_error(&jerr);
++   jpeg_create_compress(&cinfo);
++
++   // set compression parameters
++   jpeg_mem_dest(&cinfo, data, len);
++   cinfo.image_width = cairo_image_surface_get_width(sfc);
++   cinfo.image_height = cairo_image_surface_get_height(sfc);
++#ifdef LIBJPEG_TURBO_VERSION
++#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++   //cinfo.in_color_space = JCS_EXT_BGRX;
++   cinfo.in_color_space = cairo_image_surface_get_format(sfc) == CAIRO_FORMAT_ARGB32 ? JCS_EXT_BGRA : JCS_EXT_BGRX;
++#else
++   //cinfo.in_color_space = JCS_EXT_XRGB;
++   cinfo.in_color_space = cairo_image_surface_get_format(sfc) == CAIRO_FORMAT_ARGB32 ? JCS_EXT_ARGB : JCS_EXT_XRGB;
++#endif
++   cinfo.input_components = 4;
++#else
++   cinfo.in_color_space = JCS_RGB;
++   cinfo.input_components = 3;
++#endif
++   jpeg_set_defaults(&cinfo);
++   jpeg_set_quality(&cinfo, quality, TRUE);
++
++   // start compressor
++   jpeg_start_compress(&cinfo, TRUE);
++
++   // loop over all lines and compress
++   while (cinfo.next_scanline < cinfo.image_height)
++   {
++#ifdef LIBJPEG_TURBO_VERSION
++      row_pointer[0] = cairo_image_surface_get_data(sfc) + (cinfo.next_scanline
++            * cairo_image_surface_get_stride(sfc));
++#else
++      unsigned char row_buf[3 * cinfo.image_width];
++      pix_conv(row_buf, 3, cairo_image_surface_get_data(sfc) +
++            (cinfo.next_scanline * cairo_image_surface_get_stride(sfc)), 4, cinfo.image_width);
++      row_pointer[0] = row_buf;
++#endif
++      (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
++   }
++
++   // finalize and close everything
++   jpeg_finish_compress(&cinfo);
++   jpeg_destroy_compress(&cinfo);
++
++   // destroy temporary image surface (if available)
++   if (other != NULL)
++      cairo_surface_destroy(sfc);
++
++   return CAIRO_STATUS_SUCCESS;
++}
++
++#endif
+diff --git a/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a384fc7ad
+--- /dev/null
++++ b/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.h
+@@ -0,0 +1,30 @@
++/*
++ * Copyright (C) Microsoft. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include <cairo.h>
++
++cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e22949e7e7
+index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b85a94e24
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,168 @@
+@@ -0,0 +1,253 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -11506,23 +11823,31 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +#include "WebPageInspectorController.h"
 +#include "WebPageProxy.h"
 +#include "WebsiteDataStore.h"
-+#include <JavaScriptCore/InspectorFrontendDispatchers.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +#include <WebCore/NotImplemented.h>
 +#include <wtf/RunLoop.h>
 +#include <wtf/UUID.h>
++#include <wtf/text/Base64.h>
 +
 +#if USE(CAIRO)
++#include "CairoJpegEncoder.h"
 +#include "DrawingAreaProxyCoordinatedGraphics.h"
 +#include "DrawingAreaProxy.h"
 +#endif
 +
++#if PLATFORM(MAC)
++#include <WebCore/ImageBufferUtilitiesCG.h>
++#endif
++
 +namespace WebKit {
++
++const int kMaxFramesInFlight = 1;
 +
 +using namespace Inspector;
 +
 +InspectorScreencastAgent::InspectorScreencastAgent(BackendDispatcher& backendDispatcher, Inspector::FrontendRouter& frontendRouter, WebPageProxy& page)
 +    : InspectorAgentBase("Screencast"_s)
++    , m_frontendDispatcher(makeUnique<ScreencastFrontendDispatcher>(frontendRouter))
 +    , m_backendDispatcher(ScreencastBackendDispatcher::create(backendDispatcher, this))
 +    , m_page(page)
 +{
@@ -11555,10 +11880,32 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +{
 +    if (m_encoder)
 +        m_encoder->encodeFrame(surface, m_page.drawingArea()->size());
++    if (m_screencast) {
++        if (m_screencastFramesInFlight > kMaxFramesInFlight)
++            return;
++        // Scale image to fit width / height
++        WebCore::IntSize size = m_page.drawingArea()->size();
++        double scale = std::min(m_screencastWidth / size.width(), m_screencastHeight / size.height());
++        cairo_matrix_t transform;
++        cairo_matrix_init_scale(&transform, scale, scale);
++
++        RefPtr<cairo_surface_t> scaledSurface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, ceil(size.width() * scale), ceil(size.height() * scale)));
++        RefPtr<cairo_t> cr = adoptRef(cairo_create(scaledSurface.get()));
++        cairo_transform(cr.get(), &transform);
++        cairo_set_source_surface(cr.get(), surface, 0, 0);
++        cairo_paint(cr.get());
++
++        unsigned char *data = nullptr;
++        size_t len = 0;
++        cairo_image_surface_write_to_jpeg_mem(scaledSurface.get(), &data, &len, m_screencastQuality);
++        String result = base64Encode(data, len);
++        ++m_screencastFramesInFlight;
++        m_frontendDispatcher->screencastFrame(result, size.width(), size.height());
++    }
 +}
 +#endif
 +
-+Inspector::Protocol::ErrorStringOr<String /* screencastID */> InspectorScreencastAgent::start(const String& file, int width, int height, Optional<double>&& scale)
++Inspector::Protocol::ErrorStringOr<String /* screencastID */> InspectorScreencastAgent::startVideo(const String& file, int width, int height, Optional<double>&& scale)
 +{
 +    if (m_encoder)
 +        return makeUnexpected("Already recording"_s);
@@ -11579,16 +11926,12 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +#if PLATFORM(MAC)
 +    m_encoder->setOffsetTop(m_page.pageClient().browserToolbarHeight());
 +#endif
-+#if !PLATFORM(WPE)
-+    scheduleFrameEncoding();
-+#endif
-+    // Force at least one frame on WPE.
-+    m_page.forceRepaint([] { });
 +
++    kickFramesStarted();
 +    return { { m_currentScreencastID } };
 +}
 +
-+void InspectorScreencastAgent::stop(Ref<StopCallback>&& callback)
++void InspectorScreencastAgent::stopVideo(Ref<StopVideoCallback>&& callback)
 +{
 +    if (!m_encoder) {
 +        callback->sendFailure("Not recording"_s);
@@ -11602,12 +11945,57 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +        callback->sendSuccess();
 +    });
 +    m_encoder = nullptr;
++    if (!m_screencast)
++      m_framesAreGoing = false;
++}
++
++Inspector::Protocol::ErrorStringOr<int /* generation */> InspectorScreencastAgent::startScreencast(int width, int height, int quality)
++{
++    if (m_screencast)
++        return makeUnexpected("Already screencasting"_s);
++    m_screencast = true;
++    m_screencastWidth = width;
++    m_screencastHeight = height;
++    m_screencastQuality = quality;
++    m_screencastFramesInFlight = 0;
++    ++m_screencastGeneration;
++    kickFramesStarted();
++    return m_screencastGeneration;
++}
++
++Inspector::Protocol::ErrorStringOr<void> InspectorScreencastAgent::screencastFrameAck(int generation)
++{
++    if (m_screencastGeneration != generation)
++        return { };
++    --m_screencastFramesInFlight;
++    return { };
++}
++
++Inspector::Protocol::ErrorStringOr<void> InspectorScreencastAgent::stopScreencast()
++{
++    if (!m_screencast)
++        return makeUnexpected("Not screencasting"_s);
++    m_screencast = false;
++    if (!m_encoder)
++      m_framesAreGoing = false;
++    return { };
++}
++
++void InspectorScreencastAgent::kickFramesStarted()
++{
++    if (!m_framesAreGoing) {
++        m_framesAreGoing = true;
++#if !PLATFORM(WPE)
++        scheduleFrameEncoding();
++#endif
++    }
++    m_page.forceRepaint([] { });
 +}
 +
 +#if !PLATFORM(WPE)
 +void InspectorScreencastAgent::scheduleFrameEncoding()
 +{
-+    if (!m_encoder)
++    if (!m_encoder && !m_screencast)
 +        return;
 +
 +    RunLoop::main().dispatchAfter(Seconds(1.0 / ScreencastEncoder::fps), [agent = makeWeakPtr(this)]() mutable {
@@ -11623,15 +12011,29 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +#if PLATFORM(MAC)
 +void InspectorScreencastAgent::encodeFrame()
 +{
++    if (!m_encoder && !m_screencast)
++        return;
++    RetainPtr<CGImageRef> imageRef = m_page.pageClient().takeSnapshotForAutomation();
++    if (m_screencast && m_screencastFramesInFlight <= kMaxFramesInFlight) {
++        auto cfData = adoptCF(CFDataCreateMutable(kCFAllocatorDefault, 0));
++        WebCore::encodeImage(imageRef.get(), CFSTR("public.jpeg"), m_screencastQuality * 0.1, cfData.get());
++        Vector<char> base64Data;
++        base64Encode(CFDataGetBytePtr(cfData.get()), CFDataGetLength(cfData.get()), base64Data);
++        ++m_screencastFramesInFlight;
++        m_frontendDispatcher->screencastFrame(
++            String(base64Data.data(), base64Data.size()),
++            CGImageGetWidth(imageRef.get()),
++            CGImageGetHeight(imageRef.get()));
++    }
 +    if (m_encoder)
-+        m_encoder->encodeFrame(m_page.pageClient().takeSnapshotForAutomation());
++        m_encoder->encodeFrame(WTFMove(imageRef));
 +}
 +#endif
 +
 +#if USE(CAIRO) && !PLATFORM(WPE)
 +void InspectorScreencastAgent::encodeFrame()
 +{
-+    if (!m_encoder)
++    if (!m_encoder && !m_screencast)
 +        return;
 +
 +    if (auto* drawingArea = m_page.drawingArea())
@@ -11642,10 +12044,10 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0d4a837cbb0bbba71e32ed083a4c4cfe9b5e4a27
+index 0000000000000000000000000000000000000000..d21ed6104abefa1d465d565a519db4b130bbcecf
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,77 @@
+@@ -0,0 +1,91 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -11675,6 +12077,7 @@ index 0000000000000000000000000000000000000000..0d4a837cbb0bbba71e32ed083a4c4cfe
 +
 +#include <JavaScriptCore/InspectorAgentBase.h>
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include <JavaScriptCore/InspectorFrontendDispatchers.h>
 +
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
@@ -11706,9 +12109,12 @@ index 0000000000000000000000000000000000000000..0d4a837cbb0bbba71e32ed083a4c4cfe
 +    void didPaint(cairo_surface_t*);
 +#endif
 +
-+    Inspector::Protocol::ErrorStringOr<String /* screencastID */> start(const String& file, int width, int height, Optional<double>&& scale) override;
-+    void stop(Ref<StopCallback>&&) override;
++    Inspector::Protocol::ErrorStringOr<String /* screencastID */> startVideo(const String& file, int width, int height, Optional<double>&& scale) override;
++    void stopVideo(Ref<StopVideoCallback>&&) override;
 +
++    Inspector::Protocol::ErrorStringOr<int /* generation */> startScreencast(int width, int height, int quality) override;
++    Inspector::Protocol::ErrorStringOr<void> screencastFrameAck(int generation) override;
++    Inspector::Protocol::ErrorStringOr<void> stopScreencast() override;
 +
 +private:
 +#if !PLATFORM(WPE)
@@ -11716,9 +12122,19 @@ index 0000000000000000000000000000000000000000..0d4a837cbb0bbba71e32ed083a4c4cfe
 +    void encodeFrame();
 +#endif
 +
++    void kickFramesStarted();
++
++    std::unique_ptr<Inspector::ScreencastFrontendDispatcher> m_frontendDispatcher;
 +    Ref<Inspector::ScreencastBackendDispatcher> m_backendDispatcher;
 +    WebPageProxy& m_page;
 +    RefPtr<ScreencastEncoder> m_encoder;
++    bool m_screencast = false;
++    bool m_framesAreGoing = false;
++    double m_screencastWidth = 0;
++    double m_screencastHeight = 0;
++    int m_screencastQuality = 0;
++    int m_screencastGeneration = 0;
++    int m_screencastFramesInFlight = 0;
 +    String m_currentScreencastID;
 +};
 +
