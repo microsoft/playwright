@@ -142,15 +142,14 @@ export abstract class BrowserType extends SdkObject {
 
     const tempDirectories = [];
     const ensurePath = async (tmpPrefix: string, pathFromOptions?: string) => {
-      let dir;
       if (pathFromOptions) {
-        dir = pathFromOptions;
-        await mkdirAsync(pathFromOptions, { recursive: true });
-      } else {
-        dir = await mkdtempAsync(tmpPrefix);
-        tempDirectories.push(dir);
+        const absoltePathFromOptions = path.isAbsolute(pathFromOptions) ? pathFromOptions : path.join(process.cwd(), pathFromOptions);
+        await mkdirAsync(absoltePathFromOptions, { recursive: true });
+        return absoltePathFromOptions;
       }
-      return dir;
+      const tmpDir = await mkdtempAsync(tmpPrefix);
+      tempDirectories.push(tmpDir);
+      return tmpDir;
     };
     // TODO: add downloadsPath to newContext().
     const downloadsPath = await ensurePath(DOWNLOADS_FOLDER, options.downloadsPath);
