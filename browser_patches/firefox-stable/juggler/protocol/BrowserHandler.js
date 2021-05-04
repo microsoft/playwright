@@ -138,7 +138,12 @@ class BrowserHandler {
       "navigator:browser"
     );
     if (browserWindow && browserWindow.gBrowserInit) {
-      await browserWindow.gBrowserInit.idleTasksFinishedPromise;
+      // idleTasksFinishedPromise does not resolve when the window
+      // is closed early enough, so we race against window closure.
+      await Promise.race([
+        browserWindow.gBrowserInit.idleTasksFinishedPromise,
+        waitForWindowClosed(browserWindow),
+      ]);
     }
     // Try to fully initialize browser before closing.
     // See comment in `Browser.enable`.
@@ -279,6 +284,22 @@ async function waitForAddonManager() {
     };
     AddonManager.addManagerListener(listener);
   });
+}
+
+async function waitForWindowClosed(browserWindow) {
+  if (browserWindow.closed)
+    return;
+  await new Promise((resolve => {
+    const listener = {
+      onCloseWindow: window => {
+        if (window === browserWindow) {
+          Services.wm.removeListener(listener);
+          resolve();
+        }
+      },
+    };
+    Services.wm.addListener(listener);
+  }));
 }
 
 function nullToUndefined(value) {
