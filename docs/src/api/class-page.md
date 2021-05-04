@@ -1467,14 +1467,13 @@ Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 
-This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
-If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead.
-If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
-Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
 To send fine-grained keyboard events, use [`method: Page.type`].
 
-Shortcut for main frame's [`method: Frame.fill`]
+Shortcut for main frame's [`method: Frame.fill`].
 
 ### param: Page.fill.selector = %%-input-selector-%%
 
@@ -2255,12 +2254,13 @@ Defaults to `false`.
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>
 
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+
+If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+
 Returns the array of option values that have been successfully selected.
 
-Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-matching [`param: selector`], the method throws an error.
-
-Will wait until all specified options are present in the `<select>` element.
+Triggers a `change` and `input` event once all the provided options have been selected.
 
 ```js
 // single selection matching the value
@@ -2301,7 +2301,7 @@ page.select_option("select#colors", label="blue")
 page.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
-Shortcut for main frame's [`method: Frame.selectOption`]
+Shortcut for main frame's [`method: Frame.selectOption`].
 
 ### param: Page.selectOption.selector = %%-input-selector-%%
 
