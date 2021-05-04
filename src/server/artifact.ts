@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import * as util from 'util';
 import { SdkObject } from './instrumentation';
 
@@ -32,7 +33,7 @@ export class Artifact extends SdkObject {
 
   constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string) {
     super(parent, 'artifact');
-    this._localPath = localPath;
+    this._localPath = path.isAbsolute(localPath) ? localPath : path.join(process.cwd(), localPath);
     this._unaccessibleErrorMessage = unaccessibleErrorMessage;
     this._finishedCallback = () => {};
     this._finishedPromise = new Promise(f => this._finishedCallback = f);

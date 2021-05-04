@@ -29,7 +29,7 @@ const config: folio.Config = {
 };
 if (process.env.CI) {
   config.workers = 1;
-  config.forbidOnly = true;
+  // config.forbidOnly = true;
   config.retries = 3;
 }
 folio.setConfig(config);
