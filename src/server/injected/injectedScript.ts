@@ -41,11 +41,16 @@ export type InjectedScriptPoll<T> = {
 export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked';
 export type ElementState = ElementStateWithoutStable | 'stable';
 
+export type HitTargetInterceptionResult = 'error:notconnected' | {
+  stop: () => 'done' | { hitTargetDescription: string };
+};
+
 export class InjectedScript {
   private _enginesV1: Map<string, SelectorEngine>;
   _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
   private _replaceRafWithTimeout: boolean;
+  private _hitTargetListeners: { listener: (event: Event) => void, event: string }[] = [];
 
   constructor(stableRafCount: number, replaceRafWithTimeout: boolean, customEngines: { name: string, engine: SelectorEngine}[]) {
     this._enginesV1 = new Map();
@@ -594,36 +599,82 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  checkHitTargetAt(node: Node, point: { x: number, y: number }): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
+  private _removeHitTargetListeners() {
+    for (const { event, listener } of this._hitTargetListeners)
+      window.removeEventListener(event, listener, { capture: true });
+    this._hitTargetListeners = [];
+  }
+
+  setupHitTargetInterceptor(node: Node, action: 'hover' | 'click' | 'dblclick' | 'tap', blockAllEvents: boolean): HitTargetInterceptionResult {
     let element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element || !element.isConnected)
       return 'error:notconnected';
     element = element.closest('button, [role=button]') || element;
-    let hitElement = this.deepElementFromPoint(document, point.x, point.y);
-    const hitParents: Element[] = [];
-    while (hitElement && hitElement !== element) {
-      hitParents.push(hitElement);
-      hitElement = parentElementOrShadowHost(hitElement);
-    }
-    if (hitElement === element)
-      return 'done';
-    const hitTargetDescription = this.previewNode(hitParents[0]);
-    // Root is the topmost element in the hitTarget's chain that is not in the
-    // element's chain. For example, it might be a dialog element that overlays
-    // the target.
-    let rootHitTargetDescription: string | undefined;
-    while (element) {
-      const index = hitParents.indexOf(element);
-      if (index !== -1) {
-        if (index > 1)
-          rootHitTargetDescription = this.previewNode(hitParents[index - 1]);
-        break;
+
+    const events: string[] = [];
+    if (action === 'hover')
+      events.push('mousemove');
+    else if (action === 'tap')
+      events.push('pointerdown', 'pointerup', 'touchstart', 'touchend', 'touchcancel');
+    else
+      events.push('mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'auxclick', 'dblclick', 'contextmenu');
+
+    let result: 'done' | { hitTargetDescription: string } | undefined;
+
+    const listener = (event: Event) => {
+      if (!event.isTrusted)
+        return;
+
+      // Determine whether we hit the target element, unless we have already failed.
+      if (result === undefined || result === 'done') {
+        const hitNode = event.composedPath()[0] as Node;
+        let hitElement = hitNode.nodeType === Node.ELEMENT_NODE ? (hitNode as Element) : (hitNode.parentElement || undefined);
+        const hitParents: Element[] = [];
+        while (hitElement && hitElement !== element) {
+          hitParents.push(hitElement);
+          hitElement = parentElementOrShadowHost(hitElement);
+        }
+        if (hitElement === element) {
+          result = 'done';
+        } else {
+          const hitTargetDescription = this.previewNode(hitParents[0]);
+          // Root is the topmost element in the hitTarget's chain that is not in the
+          // element's chain. For example, it might be a dialog element that overlays
+          // the target.
+          let rootHitTargetDescription: string | undefined;
+          while (element) {
+            const index = hitParents.indexOf(element);
+            if (index !== -1) {
+              if (index > 1)
+                rootHitTargetDescription = this.previewNode(hitParents[index - 1]);
+              break;
+            }
+            element = parentElementOrShadowHost(element);
+          }
+          if (rootHitTargetDescription)
+            result = { hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree` };
+          else
+            result = { hitTargetDescription };
+        }
       }
-      element = parentElementOrShadowHost(element);
+      if (blockAllEvents || result !== 'done') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+
+    const stop = () => {
+      this._removeHitTargetListeners();
+      return result!;
+    };
+
+    this._removeHitTargetListeners();
+    for (const eventName of events) {
+      window.addEventListener(eventName, listener, { capture: true });
+      this._hitTargetListeners.push({ event: eventName, listener });
     }
-    if (rootHitTargetDescription)
-      return { hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree` };
-    return { hitTargetDescription };
+
+    return { stop };
   }
 
   dispatchEvent(node: Node, type: string, eventInit: Object) {

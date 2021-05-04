@@ -16,7 +16,7 @@
 
 import * as frames from './frames';
 import { assert } from '../utils/utils';
-import type { ElementStateWithoutStable, InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
+import type { ElementStateWithoutStable, HitTargetInterceptionResult, InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as js from './javascript';
 import { Page } from './page';
@@ -285,7 +285,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
+  async _retryPointerAction(progress: Progress, actionName: 'hover' | 'click' | 'dblclick' | 'tap', waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
     options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
@@ -339,7 +339,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
+  async _performPointerAction(progress: Progress, actionName: 'hover' | 'click' | 'dblclick' | 'tap', waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
@@ -369,25 +369,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (typeof maybePoint === 'string')
       return maybePoint;
     const point = roundPoint(maybePoint);
+    progress.metadata.point = point;
+    await progress.beforeInputAction(this);
 
+    let hitTargetInterceptionHandle: js.JSHandle<Exclude<HitTargetInterceptionResult, string>> | undefined;
     if (!force) {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
-      progress.log(`  checking that element receives pointer events at (${point.x},${point.y})`);
-      const hitTargetResult = await this._checkHitTargetAt(point);
-      if (hitTargetResult !== 'done')
-        return hitTargetResult;
-      progress.log(`  element does receive pointer events`);
+      const handle = await this.evaluateHandleInUtility(([injected, node, { actionName, trial }]) => injected.setupHitTargetInterceptor(node, actionName, trial), { actionName, trial: !!options.trial });
+      if (!handle._objectId)
+        return handle.rawValue() as RetargetableDOMError;
+      hitTargetInterceptionHandle = handle as any;
+      progress.cleanupWhenAborted(() => {
+        // Do not await here, just in case the renderer is stuck (e.g. on alert)
+        // and we won't be able to cleanup.
+        hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
+      });
     }
 
-    progress.metadata.point = point;
-    if (options.trial)  {
-      progress.log(`  trial ${actionName} has finished`);
-      return 'done';
-    }
-
-    await progress.beforeInputAction(this);
-    await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
+    const actionResult = await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       if ((options as any).__testHookBeforePointerAction)
         await (options as any).__testHookBeforePointerAction();
       progress.throwIfAborted();  // Avoid action that has side-effects.
@@ -396,15 +396,26 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
       progress.log(`  performing ${actionName} action`);
       await action(point);
+      if (restoreModifiers)
+        await this._page.keyboard._ensureModifiers(restoreModifiers);
+      if (hitTargetInterceptionHandle) {
+        const stopHitTargetInterception = hitTargetInterceptionHandle.evaluate(h => h.stop()).catch(e => 'done' as const);
+        if (!options.noWaitAfter) {
+          const hitTargetResult = await stopHitTargetInterception;
+          if (hitTargetResult !== 'done')
+            return hitTargetResult;
+        }
+      }
       progress.log(`  ${actionName} action done`);
       progress.log('  waiting for scheduled navigations to finish');
       if ((options as any).__testHookAfterPointerAction)
         await (options as any).__testHookAfterPointerAction();
-      if (restoreModifiers)
-        await this._page.keyboard._ensureModifiers(restoreModifiers);
+      return 'done';
     }, 'input');
-    progress.log('  navigations have finished');
+    if (actionResult !== 'done')
+      return actionResult;
 
+    progress.log('  navigations have finished');
     return 'done';
   }
 
@@ -769,19 +780,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     else
       progress.log('  element is visible and stable');
     return throwFatalDOMError(result);
-  }
-
-  async _checkHitTargetAt(point: types.Point): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
-    const frame = await this.ownerFrame();
-    if (frame && frame.parentFrame()) {
-      const element = await frame.frameElement();
-      const box = await element.boundingBox();
-      if (!box)
-        return 'error:notconnected';
-      // Translate from viewport coordinates to frame coordinates.
-      point = { x: point.x - box.x, y: point.y - box.y };
-    }
-    return this.evaluateInUtility(([injected, node, point]) => injected.checkHitTargetAt(node, point), point);
   }
 }
 
