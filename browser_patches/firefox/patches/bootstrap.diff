@@ -92,7 +92,7 @@ index 4fa1d742bd5e0c03b1c93b8bf7cca2fcc8cbded1..1af645fdb86c4a803e1a5f0be08c1d09
    DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
  
 diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
-index e3f88b09d5259ebb3a0f2ef43fdf91df3ea01534..7827085030b4549cee46df9cae9b588f847b3455 100644
+index 4442320c7f893aae5b4bde833ea27b08c22e4d00..6662a380e53b05adbbcf2e6286b36576ae53ea31 100644
 --- a/browser/installer/allowed-dupes.mn
 +++ b/browser/installer/allowed-dupes.mn
 @@ -65,6 +65,12 @@ browser/defaults/settings/main/example.json
@@ -709,10 +709,10 @@ index 500726d37231a0f3b17ad0215bf1ee01576cfb3b..1fe38db213b318a9ead7f1de81020a40
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
 diff --git a/dom/base/nsContentUtils.cpp b/dom/base/nsContentUtils.cpp
-index 2290e61c7adc718c98c9e5763b7b193498b8c8bb..86a84baa8dd80fcba5568ff1448de23d08170f9c 100644
+index 2a93cd1902c778594a53c0884fa164ddfea6ff85..7e7332f20bad484f32aabb8cb257652aeea5706f 100644
 --- a/dom/base/nsContentUtils.cpp
 +++ b/dom/base/nsContentUtils.cpp
-@@ -8058,7 +8058,8 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -8059,7 +8059,8 @@ nsresult nsContentUtils::SendMouseEvent(
      bool aIgnoreRootScrollFrame, float aPressure,
      unsigned short aInputSourceArg, uint32_t aIdentifier, bool aToWindow,
      bool* aPreventDefault, bool aIsDOMEventSynthesized,
@@ -722,7 +722,7 @@ index 2290e61c7adc718c98c9e5763b7b193498b8c8bb..86a84baa8dd80fcba5568ff1448de23d
    nsPoint offset;
    nsCOMPtr<nsIWidget> widget = GetWidget(aPresShell, &offset);
    if (!widget) return NS_ERROR_FAILURE;
-@@ -8115,6 +8116,7 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -8116,6 +8117,7 @@ nsresult nsContentUtils::SendMouseEvent(
    event.mTime = PR_IntervalNow();
    event.mFlags.mIsSynthesizedForTests = aIsDOMEventSynthesized;
    event.mExitFrom = exitFrom;
@@ -731,10 +731,10 @@ index 2290e61c7adc718c98c9e5763b7b193498b8c8bb..86a84baa8dd80fcba5568ff1448de23d
    nsPresContext* presContext = aPresShell->GetPresContext();
    if (!presContext) return NS_ERROR_FAILURE;
 diff --git a/dom/base/nsContentUtils.h b/dom/base/nsContentUtils.h
-index 7b1e0bd9193b8a215c6e38de8958b8f22de85a7d..644470b28b5d054236bd9f6a9d6f6a8fdd92a57b 100644
+index 82f971243e3b9b63f65c74cfbcb78ed775075b39..75fa9f61f1f320e5d2c2d9e03a5d3ee612866582 100644
 --- a/dom/base/nsContentUtils.h
 +++ b/dom/base/nsContentUtils.h
-@@ -2909,7 +2909,7 @@ class nsContentUtils {
+@@ -2910,7 +2910,7 @@ class nsContentUtils {
        int32_t aModifiers, bool aIgnoreRootScrollFrame, float aPressure,
        unsigned short aInputSourceArg, uint32_t aIdentifier, bool aToWindow,
        bool* aPreventDefault, bool aIsDOMEventSynthesized,
