@@ -394,9 +394,9 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
  * @param {Documentation.Member} member
  * @param {Documentation.Class|Documentation.Type} parent
  * @param {Function} output
- * @param {number=} overload
+ * @param {number=} currentOverload
  */
-function renderMethod(member, parent, output, name, overload = null) {
+function renderMethod(member, parent, output, name, currentOverload = null) {
   const typeResolve = (type) => translateType(type, parent, (t) => {
     let newName = `${parent.name}${translateMemberName(member.kind, member.name, null)}Result`;
     documentedResults.set(newName, `Result of calling <see cref="${translateMemberName("interface", parent.name)}.${translateMemberName(member.kind, member.name, member)}"/>.`);
@@ -409,15 +409,21 @@ function renderMethod(member, parent, output, name, overload = null) {
     if(!argsArray.length)
       return null;
 
-    if(argsArray[0].type.union && !isEnum(argsArray[0].type))
+    // We don't consider this a possible overload, yet
+    if(argsArray[0].type.expression === '[string]|[path]')
+      return null;
+
+    if(argsArray[0].type.union && !isEnum(argsArray[0].type) && !isNullable(argsArray[0].type))
       return argsArray[0].type.union.length;
 
-    if(argsArray[0].name === 'options' && argsArray[0].type.properties[0].type.union && !isEnum(argsArray[0].type.properties[0].type))
-      return argsArray[0].type.properties[0].type.length;
+    if(argsArray[0].name === 'options' && argsArray[0].type.properties[0].type.union && !isEnum(argsArray[0].type.properties[0].type) &&  !isNullable(argsArray[0].type.properties[0].type))
+      return argsArray[0].type.properties[0].type.union.length;
+
+    return null;
   };
 
   const overloads = possibleOverloads(member);
-  if (overload === null && overloads !== null) {
+  if (currentOverload === null && overloads !== null) {
     for(let overloadIndex = 0; overloadIndex < overloads; overloadIndex++)
       renderMethod(member, parent, output, name, overloadIndex);
     return;
@@ -544,8 +550,8 @@ function renderMethod(member, parent, output, name, overload = null) {
     }
 
     let type = arg.type;
-    if(index === 0 && overload !== null && arg.type.union && arg.name !== 'options')
-      type = arg.type.union[overload];
+    if(index === 0 && currentOverload !== null && arg.type.union && arg.name !== 'options')
+      type = arg.type.union[currentOverload];
 
     const argName = translateMemberName('argument', arg.alias || arg.name, null);
     const argType = translateType(type, parent, (t) => generateNameDefault(member, argName, t, parent));
@@ -767,6 +773,17 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
  */
 function isEnum(type) {
   return type.union.filter(u => u.name.startsWith(`"`)).length == type.union.length;
+}
+
+/**
+ *
+ * @param {Documentation.Type} type
+ */
+function isNullable(type) {
+  if(!type.union)
+    return false;
+
+  return type.union.length === 2 && type.union[0].name === 'null';
 }
 
 /**
