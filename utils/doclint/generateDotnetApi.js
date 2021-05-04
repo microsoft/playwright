@@ -200,7 +200,7 @@ const customTypeNames = new Map([
         out.push(`\t${escapedName},`);
       });
     }, enumsDir));
-  
+
   if (process.argv[3] !== "--skip-format") {
     // run the formatting tool for .net, to ensure the files are prepped
     execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
@@ -294,16 +294,16 @@ function renderMember(member, parent, out) {
       let propertyOrigin = member.name;
       if (member.type.expression === '[string]|[float]')
         propertyOrigin = `${member.name}String`;
-      if(!member.clazz)
+      if (!member.clazz)
         output(`[JsonPropertyName("${propertyOrigin}")]`)
       if (parent && member && member.name === 'children') {  // this is a special hack for Accessibility
         console.warn(`children property found in ${parent.name}, assuming array.`);
         type = `IEnumerable<${parent.name}>`;
       }
 
-      if(!type.endsWith('?') && !member.required && nullableTypes.includes(type))
+      if (!type.endsWith('?') && !member.required && nullableTypes.includes(type))
         type = `${type}?`;
-      if(member.clazz)
+      if (member.clazz)
         output(`public ${type} ${name} { get; }`);
       else
         output(`public ${type} ${name} { get; set; }`);
@@ -484,18 +484,27 @@ function renderMethod(member, parent, output, name) {
 
   // render args
   let args = [];
+  let explodedArgs = [];
+  let argTypeMap = new Map([]);
   /**
    *
    * @param {string} innerArgType
    * @param {string} innerArgName
    * @param {Documentation.Member} argument
+   * @param {boolean} isExploded
    */
-  const pushArg = (innerArgType, innerArgName, argument) => {
+  const pushArg = (innerArgType, innerArgName, argument, isExploded = false) => {
     let isNullable = nullableTypes.includes(innerArgType);
     const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
     const requiredSuffix = argument.required ? "" : " = default";
-    args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);
+    var push = `${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`;
+    if (isExploded)
+      explodedArgs.push(push)
+    else
+      args.push(push);
+    argTypeMap.set(push, innerArgName);
   };
+
 
   let parseArg = (/** @type {Documentation.Member} */ arg) => {
     if (arg.name === "options") {
@@ -541,9 +550,10 @@ function renderMethod(member, parent, output, name) {
       for (const newArg of translatedArguments) {
         const sanitizedArgName = newArg.match(/(?<=^[\s"']*)(\w+)/g, '')[0] || newArg;
         const newArgName = `${argName}${sanitizedArgName[0].toUpperCase() + sanitizedArgName.substring(1)}`;
-        pushArg(newArg, newArgName, arg);
+        pushArg(newArg, newArgName, arg, true); // push the exploded arg
         addParamsDoc(newArgName, argDocumentation);
       }
+      args.push('EXPLODED_ARG');
       return;
     }
 
@@ -561,8 +571,7 @@ function renderMethod(member, parent, output, name) {
     .sort((a, b) => b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
     .forEach(parseArg);
 
-  output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-  paramDocs.forEach((val, ind) => {
+  let printArgDoc = function (val, ind) {
     if (val && val.length === 1)
       output(`/// <param name="${ind}">${val}</param>`);
     else {
@@ -570,8 +579,38 @@ function renderMethod(member, parent, output, name) {
       output(val.map(l => `/// ${l}`));
       output(`/// </param>`);
     }
-  });
-  output(`${type} ${name}(${args.join(', ')});`);
+  }
+
+  let getArgType = function (argType) {
+    var type = argTypeMap.get(argType);
+    return type;
+  }
+
+  if (!explodedArgs.length) {
+    output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+    paramDocs.forEach((val, ind) => printArgDoc(val, ind));
+    output(`${type} ${name}(${args.join(', ')});`);
+  } else {
+    explodedArgs.forEach((explodedArg, argIndex) => {
+      output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      let overloadedArgs = [];
+      for (var i = 0; i < args.length; i++) {
+        let arg = args[i];
+        if (arg === 'EXPLODED_ARG') {
+          let argType = getArgType(explodedArg);
+          printArgDoc(paramDocs.get(argType), argType);
+          overloadedArgs.push(explodedArg);
+        } else {
+          let argType = getArgType(arg);
+          printArgDoc(paramDocs.get(argType), argType);
+          overloadedArgs.push(arg);
+        }
+      }
+      output(`${type} ${name}(${overloadedArgs.join(', ')});`);
+      if (argIndex < explodedArgs.length - 1)
+        output(``); // output a special blank line
+    });
+  }
 }
 
 /**
