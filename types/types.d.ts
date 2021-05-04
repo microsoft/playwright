@@ -4821,13 +4821,6 @@ export interface BrowserContext {
   on(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * > NOTE: Service workers are only supported on Chromium-based browsers.
-   * 
-   * Emitted when new service worker is created in the context.
-   */
-  on(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
@@ -4863,6 +4856,13 @@ export interface BrowserContext {
    * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
    */
   on(event: 'response', listener: (response: Response) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  on(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
    * > NOTE: Only works with Chromium browser's persistent context.
@@ -4908,13 +4908,6 @@ export interface BrowserContext {
   once(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * > NOTE: Service workers are only supported on Chromium-based browsers.
-   * 
-   * Emitted when new service worker is created in the context.
-   */
-  once(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
@@ -4950,6 +4943,13 @@ export interface BrowserContext {
    * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
    */
   once(event: 'response', listener: (response: Response) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  once(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
    * > NOTE: Only works with Chromium browser's persistent context.
@@ -4995,13 +4995,6 @@ export interface BrowserContext {
   addListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * > NOTE: Service workers are only supported on Chromium-based browsers.
-   * 
-   * Emitted when new service worker is created in the context.
-   */
-  addListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
@@ -5037,6 +5030,13 @@ export interface BrowserContext {
    * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
    */
   addListener(event: 'response', listener: (response: Response) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  addListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
    * > NOTE: Only works with Chromium browser's persistent context.
@@ -5082,13 +5082,6 @@ export interface BrowserContext {
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * > NOTE: Service workers are only supported on Chromium-based browsers.
-   * 
-   * Emitted when new service worker is created in the context.
-   */
-  removeListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
@@ -5124,6 +5117,13 @@ export interface BrowserContext {
    * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
    */
   removeListener(event: 'response', listener: (response: Response) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  removeListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
    * > NOTE: Only works with Chromium browser's persistent context.
@@ -5169,13 +5169,6 @@ export interface BrowserContext {
   off(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * > NOTE: Service workers are only supported on Chromium-based browsers.
-   * 
-   * Emitted when new service worker is created in the context.
-   */
-  off(event: 'serviceworker', listener: (worker: Worker) => void): this;
-
-  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
@@ -5211,6 +5204,13 @@ export interface BrowserContext {
    * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
    */
   off(event: 'response', listener: (response: Response) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  off(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
    * Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
@@ -5675,13 +5675,6 @@ export interface BrowserContext {
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
-   * > NOTE: Service workers are only supported on Chromium-based browsers.
-   * 
-   * Emitted when new service worker is created in the context.
-   */
-  waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
-
-  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
@@ -5717,6 +5710,13 @@ export interface BrowserContext {
    * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
    */
   waitForEvent(event: 'response', optionsOrPredicate?: { predicate?: (response: Response) => boolean | Promise<boolean>, timeout?: number } | ((response: Response) => boolean | Promise<boolean>)): Promise<Response>;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   * 
+   * Emitted when new service worker is created in the context.
+   */
+  waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
 }
 
 /**

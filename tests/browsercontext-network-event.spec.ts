@@ -30,7 +30,6 @@ it('BrowserContext.Events.Request', async ({browser, server}) => {
   ]);
   await popup.close();
   const urls = requests.map(r => r.url());
-  expect(requests.length).toBe(3);
   expect(urls).toEqual([
     server.EMPTY_PAGE,
     `${server.PREFIX}/one-style.html`,
@@ -51,7 +50,6 @@ it('BrowserContext.Events.Response', async ({browser, server}) => {
   ]);
   await page1.waitForEvent('load');
   const urls = responses.map(r => r.url());
-  expect(responses.length).toBe(3);
   expect(urls).toEqual([
     server.EMPTY_PAGE,
     `${server.PREFIX}/one-style.html`,
