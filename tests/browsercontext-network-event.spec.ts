@@ -24,11 +24,11 @@ it('BrowserContext.Events.Request', async ({browser, server}) => {
   context.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
+  const [page1] = await Promise.all([
+    context.waitForEvent('page'),
     page.click('a'),
   ]);
-  await popup.close();
+  await page1.waitForEvent('load');
   const urls = requests.map(r => r.url());
   expect(urls).toEqual([
     server.EMPTY_PAGE,
