@@ -72,7 +72,7 @@ it.describe('downloads path', () => {
     await downloadsBrowser.close();
   });
 
-  it.only('should report downloads in downloadsPath folder with a relative path', async ({browserType, browserOptions, server}, testInfo) => {
+  it('should report downloads in downloadsPath folder with a relative path', async ({browserType, browserOptions, server}, testInfo) => {
     const downloadsBrowser = await browserType.launch({ ...browserOptions, downloadsPath: path.relative(process.cwd(), testInfo.outputPath('')) });
     const page = await downloadsBrowser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
