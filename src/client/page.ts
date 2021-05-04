@@ -220,7 +220,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._browserContext;
   }
 
-  async opener(): Promise<Page | null> {
+  opener(): Page | null {
     if (!this._opener || this._opener.isClosed())
       return null;
     return this._opener;

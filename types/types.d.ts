@@ -2121,7 +2121,7 @@ export interface Page {
   /**
    * Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
    */
-  opener(): Promise<null|Page>;
+  opener(): null|Page;
 
   /**
    * Pauses script execution. Playwright will stop executing the script and wait for the user to either press 'Resume' button

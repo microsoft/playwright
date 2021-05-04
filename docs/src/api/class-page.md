@@ -1759,7 +1759,7 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 ## property: Page.mouse
 - type: <[Mouse]>
 
-## async method: Page.opener
+## method: Page.opener
 - returns: <[null]|[Page]>
 
 Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.

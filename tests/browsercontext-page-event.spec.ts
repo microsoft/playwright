@@ -135,8 +135,8 @@ it('should have an opener', async ({browser, server}) => {
     page.goto(server.PREFIX + '/popup/window-open.html')
   ]);
   expect(popup.url()).toBe(server.PREFIX + '/popup/popup.html');
-  expect(await popup.opener()).toBe(page);
-  expect(await page.opener()).toBe(null);
+  expect(popup.opener()).toBe(page);
+  expect(page.opener()).toBe(null);
   await context.close();
 });
 
@@ -168,7 +168,7 @@ it('should work with Shift-clicking', async ({browser, server, browserName}) => 
     context.waitForEvent('page'),
     page.click('a', { modifiers: ['Shift'] }),
   ]);
-  expect(await popup.opener()).toBe(null);
+  expect(popup.opener()).toBe(null);
   await context.close();
 });
 
@@ -184,6 +184,6 @@ it('should work with Ctrl-clicking', async ({browser, server, isMac, browserName
     context.waitForEvent('page'),
     page.click('a', { modifiers: [ isMac ? 'Meta' : 'Control'] }),
   ]);
-  expect(await popup.opener()).toBe(null);
+  expect(popup.opener()).toBe(null);
   await context.close();
 });

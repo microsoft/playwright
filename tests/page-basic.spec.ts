@@ -85,7 +85,7 @@ it('should provide access to the opener page', async ({page}) => {
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank')),
   ]);
-  const opener = await popup.opener();
+  const opener = popup.opener();
   expect(opener).toBe(page);
 });
 
@@ -95,7 +95,7 @@ it('should return null if parent page has been closed', async ({page}) => {
     page.evaluate(() => window.open('about:blank')),
   ]);
   await page.close();
-  const opener = await popup.opener();
+  const opener = popup.opener();
   expect(opener).toBe(null);
 });
 
