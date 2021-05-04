@@ -140,7 +140,7 @@ nsScreencastService::nsScreencastService() = default;
 nsScreencastService::~nsScreencastService() {
 }
 
-nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const nsACString& aFileName, uint32_t width, uint32_t height, double scale, int32_t offsetTop, nsAString& sessionId) {
+nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const nsACString& aFileName, uint32_t width, uint32_t height, uint32_t viewportWidth, uint32_t viewportHeight, double scale, int32_t offsetTop, nsAString& sessionId) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread(), "Screencast service must be started on the Main thread.");
 
   PresShell* presShell = aDocShell->GetPresShell();
@@ -164,15 +164,13 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
     maybeScale = Some(scale);
 
   gfx::IntMargin margin;
-  // On GTK the bottom of the client rect is below the bounds and
-  // client size is actually equal to the size of the bounds so
-  // we don't need an adjustment.
-#ifndef MOZ_WIDGET_GTK
   auto bounds = widget->GetScreenBounds().ToUnknownRect();
   auto clientBounds = widget->GetClientBounds().ToUnknownRect();
+  // The browser window has a minimum size, so it might be larger than the viewport size.
+  clientBounds.width = std::min((int)viewportWidth, clientBounds.width);
+  clientBounds.height = std::min((int)viewportHeight, clientBounds.height);
   // Crop the image to exclude frame (if any).
   margin = bounds - clientBounds;
-#endif
   // Crop the image to exclude controls.
   margin.top += offsetTop;
 
