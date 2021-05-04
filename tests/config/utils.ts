@@ -58,3 +58,15 @@ export function expectedSSLError(browserName: string): string {
   }
   return expectedSSLError;
 }
+
+export function chromiumVersionLessThan(a: string, b: string) {
+  const left: number[] = a.split('.').map(e => Number(e));
+  const right: number[] = b.split('.').map(e => Number(e));
+  for (let i = 0; i < 4; i++) {
+    if (left[i] > right[i])
+      return false;
+    if (left[i] < right[i])
+      return true;
+  }
+  return false;
+}

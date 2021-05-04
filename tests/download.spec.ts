@@ -19,6 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import crypto from 'crypto';
+import { chromiumVersionLessThan } from './config/utils';
 
 it.describe('download event', () => {
   it.beforeEach(async ({server}) => {
@@ -361,7 +362,7 @@ it.describe('download event', () => {
     expect(fs.existsSync(path.join(path1, '..'))).toBeFalsy();
   });
 
-  it('should close the context without awaiting the failed download', async ({browser, server, httpsServer, browserName}, testInfo) => {
+  it('should close the context without awaiting the failed download', async ({browser, server, httpsServer, browserName, browserVersion}, testInfo) => {
     it.skip(browserName !== 'chromium', 'Only Chromium downloads on alt-click');
 
     const page = await browser.newPage({ acceptDownloads: true });
@@ -379,7 +380,10 @@ it.describe('download event', () => {
       page.context().close(),
     ]);
     expect(downloadPath).toBe(null);
-    expect(saveError.message).toContain('File deleted upon browser context closure.');
+    if (chromiumVersionLessThan(browserVersion, '91.0.4472.0'))
+      expect(saveError.message).toContain('File deleted upon browser context closure.');
+    else
+      expect(saveError.message).toContain('File not found on disk. Check download.failure() for details.');
   });
 
   it('should close the context without awaiting the download', async ({browser, server, browserName, platform}, testInfo) => {
