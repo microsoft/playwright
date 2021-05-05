@@ -21,10 +21,10 @@ import { Readable } from 'stream';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
-  state: 'visible'|'attached';
+  state?: 'visible'|'attached';
 };
 type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelectorOptions & {
-  state: 'visible'|'attached';
+  state?: 'visible'|'attached';
 };
 
 /**
