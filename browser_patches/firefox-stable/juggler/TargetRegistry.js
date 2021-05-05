@@ -504,7 +504,8 @@ class PageTarget {
     // Exclude address bar and navigation control from the video.
     const rect = this.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._window.devicePixelRatio;
-    const videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
+    const viewport = this._viewportSize || this._browserContext.defaultViewportSize || {width: 0, height: 0};
+    const videoSessionId = screencast.startVideoRecording(docShell, file, width, height, viewport.width, viewport.height, scale || 0, devicePixelRatio * rect.top);
     this._screencastInfo = { videoSessionId, file };
     this.emit(PageTarget.Events.ScreencastStarted);
   }
