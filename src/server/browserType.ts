@@ -271,8 +271,10 @@ function copyTestHooks(from: object, to: object) {
 
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
   const { devtools = false } = options;
-  let { headless = !devtools } = options;
+  let { headless = !devtools, downloadsPath } = options;
   if (debugMode())
     headless = false;
-  return { ...options, devtools, headless };
+  if (downloadsPath && !path.isAbsolute(downloadsPath))
+    downloadsPath = path.join(process.cwd(), downloadsPath);
+  return { ...options, devtools, headless, downloadsPath };
 }
