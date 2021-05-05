@@ -11088,6 +11088,12 @@ type Devices = {
   "Galaxy S III landscape": DeviceDescriptor;
   "Galaxy S5": DeviceDescriptor;
   "Galaxy S5 landscape": DeviceDescriptor;
+  "Galaxy S8": DeviceDescriptor;
+  "Galaxy S8 landscape": DeviceDescriptor;
+  "Galaxy S9+": DeviceDescriptor;
+  "Galaxy S9+ landscape": DeviceDescriptor;
+  "Galaxy Tab S4": DeviceDescriptor;
+  "Galaxy Tab S4 landscape": DeviceDescriptor;
   "iPad (gen 6)": DeviceDescriptor;
   "iPad (gen 6) landscape": DeviceDescriptor;
   "iPad (gen 7)": DeviceDescriptor;
@@ -11158,6 +11164,10 @@ type Devices = {
   "Pixel 2 landscape": DeviceDescriptor;
   "Pixel 2 XL": DeviceDescriptor;
   "Pixel 2 XL landscape": DeviceDescriptor;
+  "Pixel 3": DeviceDescriptor;
+  "Pixel 3 landscape": DeviceDescriptor;
+  "Pixel 4": DeviceDescriptor;
+  "Pixel 4 landscape": DeviceDescriptor;
   "Pixel 4a (5G)": DeviceDescriptor;
   "Pixel 4a (5G) landscape": DeviceDescriptor;
   "Pixel 5": DeviceDescriptor;
