@@ -16,7 +16,7 @@
  */
 
 import { browserTest as it, expect } from './config/browserTest';
-import { attachFrame } from './config/utils';
+import { attachFrame, chromiumVersionLessThan } from './config/utils';
 
 it('should not be visible in context.pages', async ({contextFactory}) => {
   const context = await contextFactory();
@@ -79,7 +79,7 @@ it('should click the button with deviceScaleFactor set', async ({browser, server
   await context.close();
 });
 
-it('should click the button with offset with page scale', async ({browser, server, isWebKit, isChromium, headful, browserName}) => {
+it('should click the button with offset with page scale', async ({browser, server, isWebKit, isChromium, headful, browserName, browserVersion}) => {
   it.skip(browserName === 'firefox');
 
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
@@ -98,6 +98,9 @@ it('should click the button with offset with page scale', async ({browser, serve
     expected = { x: 29, y: 19 };
   } else if (isChromium && !headful) {
     // Headless Chromium rounds down during css -> dip -> css conversion.
+    expected = { x: 27, y: 18 };
+  } else if (isChromium && headful && !chromiumVersionLessThan(browserVersion, '92.0.4498.0')) {
+    // New headed Chromium rounds down during css -> dip -> css conversion as well.
     expected = { x: 27, y: 18 };
   }
   expect(round(await page.evaluate('pageX'))).toBe(expected.x);
