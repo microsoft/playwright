@@ -1512,7 +1512,7 @@ index ea0bfb0d7a5a64c1570da5333199f99b552a5ff6..2ebe8c6c5ac4343e0b373ccc271e86a4
      m_timeZoneCache = std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter>(bitwise_cast<OpaqueICUTimeZone*>(icu::TimeZone::detectHostTimeZone()));
  #endif
 diff --git a/Source/ThirdParty/libwebrtc/CMakeLists.txt b/Source/ThirdParty/libwebrtc/CMakeLists.txt
-index cd182454433e66fab776b45813dcbe74f5c1efde..404b745d1d0df6631fe19321037d2bee50a11682 100644
+index cd182454433e66fab776b45813dcbe74f5c1efde..c4495e9f87ddb9f97b799aaea9d6b577f19ec8e4 100644
 --- a/Source/ThirdParty/libwebrtc/CMakeLists.txt
 +++ b/Source/ThirdParty/libwebrtc/CMakeLists.txt
 @@ -290,6 +290,11 @@ set(webrtc_SOURCES
@@ -1527,12 +1527,13 @@ index cd182454433e66fab776b45813dcbe74f5c1efde..404b745d1d0df6631fe19321037d2bee
      Source/third_party/libyuv/source/compare_common.cc
      Source/third_party/libyuv/source/compare_gcc.cc
      Source/third_party/libyuv/source/convert.cc
-@@ -1697,6 +1702,9 @@ set(webrtc_INCLUDE_DIRECTORIES PRIVATE
+@@ -1697,6 +1702,10 @@ set(webrtc_INCLUDE_DIRECTORIES PRIVATE
      Source/third_party/libsrtp/config
      Source/third_party/libsrtp/crypto/include
      Source/third_party/libsrtp/include
 +# Playwright begin
 +    Source/third_party/libwebm
++    Source/third_party/libvpx/source/libvpx
 +# Playwright end
      Source/third_party/libyuv/include
      Source/third_party/opus/src/celt
