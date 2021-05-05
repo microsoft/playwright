@@ -737,7 +737,7 @@ export class WKPage implements PageDelegate {
 
   async _startScreencast(options: types.PageScreencastOptions): Promise<void> {
     assert(!this._recordingVideoFile);
-    const { screencastId } = await this._pageProxySession.send('Screencast.start', {
+    const { screencastId } = await this._pageProxySession.send('Screencast.startVideo', {
       file: options.outputFile,
       width: options.width,
       height: options.height,
@@ -749,7 +749,7 @@ export class WKPage implements PageDelegate {
   async _stopScreencast(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
-    await this._pageProxySession.sendMayFail('Screencast.stop');
+    await this._pageProxySession.sendMayFail('Screencast.stopVideo');
     this._recordingVideoFile = null;
   }
 
