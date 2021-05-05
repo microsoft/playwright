@@ -142,14 +142,15 @@ export abstract class BrowserType extends SdkObject {
 
     const tempDirectories = [];
     const ensurePath = async (tmpPrefix: string, pathFromOptions?: string) => {
+      let dir;
       if (pathFromOptions) {
-        const absoltePathFromOptions = path.isAbsolute(pathFromOptions) ? pathFromOptions : path.join(process.cwd(), pathFromOptions);
-        await mkdirAsync(absoltePathFromOptions, { recursive: true });
-        return absoltePathFromOptions;
+        dir = pathFromOptions;
+        await mkdirAsync(pathFromOptions, { recursive: true });
+      } else {
+        dir = await mkdtempAsync(tmpPrefix);
+        tempDirectories.push(dir);
       }
-      const tmpDir = await mkdtempAsync(tmpPrefix);
-      tempDirectories.push(tmpDir);
-      return tmpDir;
+      return dir;
     };
     // TODO: add downloadsPath to newContext().
     const downloadsPath = await ensurePath(DOWNLOADS_FOLDER, options.downloadsPath);
@@ -270,8 +271,10 @@ function copyTestHooks(from: object, to: object) {
 
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
   const { devtools = false } = options;
-  let { headless = !devtools } = options;
+  let { headless = !devtools, downloadsPath } = options;
   if (debugMode())
     headless = false;
-  return { ...options, devtools, headless };
+  if (downloadsPath && !path.isAbsolute(downloadsPath))
+    downloadsPath = path.join(process.cwd(), downloadsPath);
+  return { ...options, devtools, headless, downloadsPath };
 }
