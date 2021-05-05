@@ -426,7 +426,6 @@ const Browser = {
         dir: t.String,
         width: t.Number,
         height: t.Number,
-        scale: t.Optional(t.Number),
       },
     },
   },
@@ -895,16 +894,6 @@ const Page = {
         workerId: t.String,
         message: t.String,
       },
-    },
-    'startVideoRecording': {
-      params: {
-        file: t.String,
-        width: t.Number,
-        height: t.Number,
-        scale: t.Optional(t.Number),
-      },
-    },
-    'stopVideoRecording': {
     },
   },
 };
