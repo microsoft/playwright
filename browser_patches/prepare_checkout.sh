@@ -146,7 +146,14 @@ fi
 # if there's no checkout folder - checkout one.
 if ! [[ -d $CHECKOUT_PATH ]]; then
   echo "-- $FRIENDLY_CHECKOUT_PATH is missing - checking out.."
-  git clone --single-branch --depth 1 --branch $BASE_BRANCH $REMOTE_URL $CHECKOUT_PATH
+  if [[ -n "$CI" ]]; then
+    # In CI environment, we re-checkout constantly, so we do a shallow checkout to save time.
+    git clone --single-branch --depth 1 --branch $BASE_BRANCH $REMOTE_URL $CHECKOUT_PATH
+  else
+    # In non-CI environment, do a full checkout. This takes time,
+    # but liberates from the `git fetch --unshallow`.
+    git clone --single-branch --branch $BASE_BRANCH $REMOTE_URL $CHECKOUT_PATH
+  fi
 else
   echo "-- checking $FRIENDLY_CHECKOUT_PATH folder - OK"
 fi
