@@ -495,8 +495,8 @@ function renderMethod(member, parent, output, name) {
    */
   const pushArg = (innerArgType, innerArgName, argument, isExploded = false) => {
     let isNullable = nullableTypes.includes(innerArgType);
-    const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
-    const requiredSuffix = argument.required ? "" : " = default";
+    const requiredPrefix = (argument.required || isExploded) ? "" : isNullable ? "?" : "";
+    const requiredSuffix = (argument.required || isExploded) ? "" : " = default";
     var push = `${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`;
     if (isExploded)
       explodedArgs.push(push)
@@ -553,7 +553,7 @@ function renderMethod(member, parent, output, name) {
         pushArg(newArg, newArgName, arg, true); // push the exploded arg
         addParamsDoc(newArgName, argDocumentation);
       }
-      args.push('EXPLODED_ARG');
+      args.push(arg.required ? 'EXPLODED_ARG' : 'OPTIONAL_EXPLODED_ARG');
       return;
     }
 
@@ -591,12 +591,14 @@ function renderMethod(member, parent, output, name) {
     paramDocs.forEach((val, ind) => printArgDoc(val, ind));
     output(`${type} ${name}(${args.join(', ')});`);
   } else {
+    let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
       output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       let overloadedArgs = [];
       for (var i = 0; i < args.length; i++) {
         let arg = args[i];
-        if (arg === 'EXPLODED_ARG') {
+        if (arg === 'EXPLODED_ARG' || arg === 'OPTIONAL_EXPLODED_ARG') {
+          containsOptionalExplodedArgs = arg === 'OPTIONAL_EXPLODED_ARG';
           let argType = getArgType(explodedArg);
           printArgDoc(paramDocs.get(argType), argType);
           overloadedArgs.push(explodedArg);
@@ -610,6 +612,22 @@ function renderMethod(member, parent, output, name) {
       if (argIndex < explodedArgs.length - 1)
         output(``); // output a special blank line
     });
+
+    // If the exploded union arguments are optional, we also output a special
+    // signature, to help prevent compilation errors with ambigious overloads.
+    // That particular overload only contains the required arguments, or rather
+    // contains all the arguments *except* the exploded ones.
+    if (containsOptionalExplodedArgs) {
+      var filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
+      output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      filteredArgs.forEach((arg) => {
+        if (arg === 'EXPLODED_ARG')
+          throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);
+        let argType = getArgType(arg);
+        printArgDoc(paramDocs.get(argType), argType);
+      });
+      output(`${type} ${name}(${filteredArgs.join(', ')});`);
+    }
   }
 }
 
