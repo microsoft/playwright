@@ -162,3 +162,15 @@ it('should not change default locale in another context', async ({browser, serve
     await context.close();
   }
 });
+
+it('should format number in workers', async ({browser, server}) => {
+  const context = await browser.newContext({ locale: 'ru-RU' });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  const [worker] = await Promise.all([
+    page.waitForEvent('worker'),
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'})))),
+  ]);
+  expect(await worker.evaluate(() => (10000.20).toLocaleString())).toBe('10\u00A0000,2');
+  await context.close();
+});
