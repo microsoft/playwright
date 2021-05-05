@@ -502,7 +502,7 @@ export class Page extends SdkObject {
   }
 
   setScreencastEnabled(enabled: boolean) {
-    this._delegate.setScreencastEnabled(enabled).catch(() => {});
+    this._delegate.setScreencastEnabled(enabled).catch(e => debugLogger.log('error', e));
   }
 }
 

@@ -54,7 +54,6 @@ export type FrameSnapshot = {
   frameId: string,
   frameUrl: string,
   timestamp: number,
-  pageTimestamp: number,
   collectionTime: number,
   doctype?: string,
   html: NodeSnapshot,

@@ -45,8 +45,7 @@ test('should collect trace', async ({ context, page, server, browserName }, test
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(events.some(e => e.type === 'resource-snapshot')).toBeTruthy();
-  if (browserName === 'chromium')
-    expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
+  expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
 });
 
 test('should collect trace', async ({ context, page, server }, testInfo) => {

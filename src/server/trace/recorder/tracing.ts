@@ -239,7 +239,6 @@ export class Tracing implements InstrumentationListener {
             type: 'screencast-frame',
             pageId: page.guid,
             sha1,
-            pageTimestamp: params.timestamp,
             width: params.width,
             height: params.height,
             timestamp: monotonicTime()
