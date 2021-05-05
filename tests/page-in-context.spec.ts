@@ -96,8 +96,11 @@ it('should click the button with offset with page scale', async ({browser, serve
   if (isWebKit) {
     // WebKit rounds up during css -> dip -> css conversion.
     expected = { x: 29, y: 19 };
-  } else if (isChromium && !headful && chromiumVersionLessThan('92.0.4498.0')) {
+  } else if (isChromium && !headful) {
     // Headless Chromium rounds down during css -> dip -> css conversion.
+    expected = { x: 27, y: 18 };
+  } else if (isChromium && headful && !chromiumVersionLessThan(browserVersion, '92.0.4498.0')) {
+    // New headed Chromium rounds down during css -> dip -> css conversion as well.
     expected = { x: 27, y: 18 };
   }
   expect(round(await page.evaluate('pageX'))).toBe(expected.x);
