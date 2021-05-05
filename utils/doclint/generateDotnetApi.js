@@ -548,7 +548,8 @@ function renderMethod(member, parent, output, name) {
 
       let argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
-        const sanitizedArgName = newArg.match(/(?<=^[\s"']*)(\w+)/g, '')[0] || newArg;
+        let nonGenericType = newArg.replace(/\IEnumerable<(.*)\>/g, (m, v) => 'Enumerable' + v[0].toUpperCase() + v.substring(1))
+        const sanitizedArgName = nonGenericType.match(/(?<=^[\s"']*)(\w+)/g, '')[0] || nonGenericType;
         const newArgName = `${argName}${sanitizedArgName[0].toUpperCase() + sanitizedArgName.substring(1)}`;
         pushArg(newArg, newArgName, arg, true); // push the exploded arg
         addParamsDoc(newArgName, argDocumentation);
@@ -709,9 +710,7 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
     } else if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
       return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
     else if (type.union[0].name === 'path')
-      // we don't support path, but we know it's usually an object on the other end, and we expect
-      // the dotnet folks to use [NameOfTheObject].LoadFromPath(); method which we can provide separately
-      return translateType(type.union[1], parent, generateNameCallback);
+      return null;
     else if (type.expression === '[float]|"raf"')
       return `Polling`; // hardcoded because there's no other way to denote this
 
