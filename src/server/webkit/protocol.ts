@@ -8031,11 +8031,19 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type ScreencastId = string;
     
+    export type screencastFramePayload = {
+      /**
+       * Base64 data
+       */
+      data: string;
+      deviceWidth: number;
+      deviceHeight: number;
+    }
     
     /**
      * Starts recoring video to speified file.
      */
-    export type startParameters = {
+    export type startVideoParameters = {
       /**
        * Output file location.
        */
@@ -8044,7 +8052,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       height: number;
       scale?: number;
     }
-    export type startReturnValue = {
+    export type startVideoReturnValue = {
       /**
        * Unique identifier of the screencast.
        */
@@ -8053,9 +8061,38 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * Stops recoding video. Returns after the file has been closed.
      */
-    export type stopParameters = {
+    export type stopVideoParameters = {
     }
-    export type stopReturnValue = {
+    export type stopVideoReturnValue = {
+    }
+    /**
+     * Starts screencast.
+     */
+    export type startScreencastParameters = {
+      width: number;
+      height: number;
+      quality: number;
+    }
+    export type startScreencastReturnValue = {
+      /**
+       * Screencast session generation.
+       */
+      generation: number;
+    }
+    /**
+     * Stops screencast.
+     */
+    export type stopScreencastParameters = {
+    }
+    export type stopScreencastReturnValue = {
+    }
+    export type screencastFrameAckParameters = {
+      /**
+       * Screencast session generation
+       */
+      generation: number;
+    }
+    export type screencastFrameAckReturnValue = {
     }
   }
   
@@ -8612,6 +8649,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.downloadFinished": Playwright.downloadFinishedPayload;
     "Playwright.screencastFinished": Playwright.screencastFinishedPayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
+    "Screencast.screencastFrame": Screencast.screencastFramePayload;
     "ScriptProfiler.trackingStart": ScriptProfiler.trackingStartPayload;
     "ScriptProfiler.trackingUpdate": ScriptProfiler.trackingUpdatePayload;
     "ScriptProfiler.trackingComplete": ScriptProfiler.trackingCompletePayload;
@@ -8895,8 +8933,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Runtime.enableControlFlowProfiler": Runtime.enableControlFlowProfilerParameters;
     "Runtime.disableControlFlowProfiler": Runtime.disableControlFlowProfilerParameters;
     "Runtime.getBasicBlocks": Runtime.getBasicBlocksParameters;
-    "Screencast.start": Screencast.startParameters;
-    "Screencast.stop": Screencast.stopParameters;
+    "Screencast.startVideo": Screencast.startVideoParameters;
+    "Screencast.stopVideo": Screencast.stopVideoParameters;
+    "Screencast.startScreencast": Screencast.startScreencastParameters;
+    "Screencast.stopScreencast": Screencast.stopScreencastParameters;
+    "Screencast.screencastFrameAck": Screencast.screencastFrameAckParameters;
     "ScriptProfiler.startTracking": ScriptProfiler.startTrackingParameters;
     "ScriptProfiler.stopTracking": ScriptProfiler.stopTrackingParameters;
     "ServiceWorker.getInitializationInfo": ServiceWorker.getInitializationInfoParameters;
@@ -9184,8 +9225,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Runtime.enableControlFlowProfiler": Runtime.enableControlFlowProfilerReturnValue;
     "Runtime.disableControlFlowProfiler": Runtime.disableControlFlowProfilerReturnValue;
     "Runtime.getBasicBlocks": Runtime.getBasicBlocksReturnValue;
-    "Screencast.start": Screencast.startReturnValue;
-    "Screencast.stop": Screencast.stopReturnValue;
+    "Screencast.startVideo": Screencast.startVideoReturnValue;
+    "Screencast.stopVideo": Screencast.stopVideoReturnValue;
+    "Screencast.startScreencast": Screencast.startScreencastReturnValue;
+    "Screencast.stopScreencast": Screencast.stopScreencastReturnValue;
+    "Screencast.screencastFrameAck": Screencast.screencastFrameAckReturnValue;
     "ScriptProfiler.startTracking": ScriptProfiler.startTrackingReturnValue;
     "ScriptProfiler.stopTracking": ScriptProfiler.stopTrackingReturnValue;
     "ServiceWorker.getInitializationInfo": ServiceWorker.getInitializationInfoReturnValue;
