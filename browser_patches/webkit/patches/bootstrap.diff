@@ -11502,10 +11502,10 @@ index b0722e7da81e56530deb570b82ed7cfece970362..05ec3e3ea97ba49135a27d7f9b91f14c
  }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d56b71ee99786d8452424858b026af226538df27
+index 0000000000000000000000000000000000000000..f59da55bac614259ea9a991279f25922f26c8728
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp
-@@ -0,0 +1,241 @@
+@@ -0,0 +1,244 @@
 +/* Copyright 2018 Bernhard R. Fischer, 4096R/8E24F29D <bf@abenteuerland.at>
 + *
 + * This file is part of Cairo_JPG.
@@ -11556,10 +11556,10 @@ index 0000000000000000000000000000000000000000..d56b71ee99786d8452424858b026af22
 +#include <stdint.h>
 +#include <sys/types.h>
 +#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <unistd.h>
 +#include <cairo.h>
-+#include <jpeglib.h>
++extern "C" {
++#include "jpeglib.h"
++}
 +
 +/*! Macro to activate main() function. This is only used for testing. Comment
 + * it out (#undef) if you link this file to your own program.
@@ -11698,7 +11698,10 @@ index 0000000000000000000000000000000000000000..d56b71ee99786d8452424858b026af22
 +   jpeg_create_compress(&cinfo);
 +
 +   // set compression parameters
-+   jpeg_mem_dest(&cinfo, data, len);
++   unsigned long targetSize;
++   jpeg_mem_dest(&cinfo, data, &targetSize);
++   *len = targetSize;
++
 +   cinfo.image_width = cairo_image_surface_get_width(sfc);
 +   cinfo.image_height = cairo_image_surface_get_height(sfc);
 +#ifdef LIBJPEG_TURBO_VERSION
@@ -12044,10 +12047,10 @@ index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..d21ed6104abefa1d465d565a519db4b130bbcecf
+index 0000000000000000000000000000000000000000..759ea406372f734dec37955becb5ec7499645198
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,95 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -12078,6 +12081,10 @@ index 0000000000000000000000000000000000000000..d21ed6104abefa1d465d565a519db4b1
 +#include <JavaScriptCore/InspectorAgentBase.h>
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
 +#include <JavaScriptCore/InspectorFrontendDispatchers.h>
++
++#if USE(CAIRO)
++#include <cairo.h>
++#endif
 +
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
