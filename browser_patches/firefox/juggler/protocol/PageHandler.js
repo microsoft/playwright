@@ -379,10 +379,6 @@ class PageHandler {
       throw new Error('ERROR: cannot find worker with id ' + workerId);
     return await worker.sendMessage(JSON.parse(message));
   }
-
-  async ['Page.stopVideoRecording']() {
-    await this._pageTarget.stopVideoRecording();
-  }
 }
 
 var EXPORTED_SYMBOLS = ['PageHandler'];

@@ -488,7 +488,7 @@ class PageTarget {
     return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
   }
 
-  async _startVideoRecording({width, height, scale, dir}) {
+  async _startVideoRecording({width, height, dir}) {
     // On Mac the window may not yet be visible when TargetCreated and its
     // NSWindow.windowNumber may be -1, so we wait until the window is known
     // to be initialized and visible.
@@ -496,16 +496,13 @@ class PageTarget {
     const file = OS.Path.join(dir, helper.generateId() + '.webm');
     if (width < 10 || width > 10000 || height < 10 || height > 10000)
       throw new Error("Invalid size");
-    if (scale && (scale <= 0 || scale > 1))
-      throw new Error("Unsupported scale");
 
     const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
     const docShell = this._gBrowser.ownerGlobal.docShell;
     // Exclude address bar and navigation control from the video.
     const rect = this.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._window.devicePixelRatio;
-    const viewport = this._viewportSize || this._browserContext.defaultViewportSize || {width: 0, height: 0};
-    const videoSessionId = screencast.startVideoRecording(docShell, file, width, height, viewport.width, viewport.height, scale || 0, devicePixelRatio * rect.top);
+    const videoSessionId = screencast.startVideoRecording(docShell, file, width, height, devicePixelRatio * rect.top);
     this._screencastInfo = { videoSessionId, file };
     this.emit(PageTarget.Events.ScreencastStarted);
   }
