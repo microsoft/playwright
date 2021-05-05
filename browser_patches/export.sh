@@ -53,9 +53,11 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
     CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
     FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
   fi
-elif [[ ("$1" == "firefox-stable") ]]; then
-  FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox-stable/checkout";
-  CHECKOUT_PATH="$PWD/firefox-stable/checkout"
+elif [[ ("$1" == "firefox-stable") || ("$1" == "ff-stable") ]]; then
+  # NOTE: firefox-stable re-uses firefox checkout.
+  FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
+  CHECKOUT_PATH="$PWD/firefox/checkout"
+
   EXTRA_FOLDER_PW_PATH="$PWD/firefox-stable/juggler"
   EXTRA_FOLDER_CHECKOUT_RELPATH="juggler"
   EXPORT_PATH="$PWD/firefox-stable"
