@@ -9036,6 +9036,10 @@ export interface BrowserServer {
  * [page.on('console')](https://playwright.dev/docs/api/class-page#pageonconsole) event.
  */
 export interface ConsoleMessage {
+  /**
+   * List of arguments passed to a `console` function call. See also
+   * [page.on('console')](https://playwright.dev/docs/api/class-page#pageonconsole).
+   */
   args(): Array<JSHandle>;
 
   location(): {
@@ -9055,6 +9059,9 @@ export interface ConsoleMessage {
     columnNumber: number;
   };
 
+  /**
+   * The text of the console message.
+   */
   text(): string;
 
   /**

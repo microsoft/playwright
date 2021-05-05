@@ -35,10 +35,10 @@ await msg.args[1].jsonValue() // 42
 
 ```java
 // Listen for all System.out.printlns
-page.onConsole(msg -> System.out.println(msg.text()));
+page.onConsoleMessage(msg -> System.out.println(msg.text()));
 
 // Listen for all console events and handle errors
-page.onConsole(msg -> {
+page.onConsoleMessage(msg -> {
   if ("error".equals(msg.type()))
     System.out.println("Error text: " + msg.text());
 });

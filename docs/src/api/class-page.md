@@ -145,7 +145,7 @@ await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 ```
 
 ```java
-page.onConsole(msg -> {
+page.onConsoleMessage(msg -> {
   for (int i = 0; i < msg.args().size(); ++i)
     System.out.println(i + ": " + msg.args().get(i).jsonValue());
 });
