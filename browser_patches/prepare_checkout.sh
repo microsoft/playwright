@@ -93,9 +93,11 @@ elif [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
     CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
     FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
   fi
-elif [[ ("$1" == "firefox-stable") ]]; then
-  FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox-stable/checkout";
-  CHECKOUT_PATH="$PWD/firefox-stable/checkout"
+elif [[ ("$1" == "firefox-stable") || ("$1" == "ff-stable") ]]; then
+  # NOTE: firefox-stable re-uses firefox checkout.
+  FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
+  CHECKOUT_PATH="$PWD/firefox/checkout"
+
   PATCHES_PATH="$PWD/firefox-stable/patches"
   FIREFOX_EXTRA_FOLDER_PATH="$PWD/firefox-stable/juggler"
   BUILD_NUMBER=$(head -1 "$PWD/firefox-stable/BUILD_NUMBER")
@@ -236,7 +238,7 @@ elif [[ ! -z "${FIREFOX_EXTRA_FOLDER_PATH}" ]]; then
   git add $EMBEDDER_DIR
 fi
 
-git commit -a --author="playwright-devops <devops@playwright.dev>" -m "chore: bootstrap build #$BUILD_NUMBER"
+git commit -a --author="playwright-devops <devops@playwright.dev>" -m "chore($1): bootstrap build #$BUILD_NUMBER"
 
 echo
 echo

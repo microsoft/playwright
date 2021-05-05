@@ -8,7 +8,7 @@ if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
   echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
 else
   cd "$(dirname $0)"
-  cd "checkout"
+  cd "../firefox/checkout"
 fi
 
 OBJ_FOLDER="obj-build-playwright"
