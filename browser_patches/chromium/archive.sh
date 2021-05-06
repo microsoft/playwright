@@ -57,61 +57,14 @@ function archive_compiled_chromium() {
     CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
   elif [[ $1 == "--compile-linux" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-linux"
-    CHROMIUM_FILES_TO_ARCHIVE=(
-      "chrome"
-      "chrome_100_percent.pak"
-      "chrome_200_percent.pak"
-      "chrome_sandbox"
-      "chrome-wrapper"
-      "ClearKeyCdm"
-      "crashpad_handler"
-      "icudtl.dat"
-      "libEGL.so"
-      "libGLESv2.so"
-      "locales"
-      "MEIPreload"
-      "nacl_helper"
-      "nacl_helper_bootstrap"
-      "nacl_helper_nonsfi"
-      "nacl_irt_x86_64.nexe"
-      "product_logo_48.png"
-      "resources"
-      "resources.pak"
-      "swiftshader"
-      "v8_context_snapshot.bin"
-      "vk_swiftshader_icd.json"
-      "xdg-mime"
-      "xdg-settings"
-    )
-  elif [[ $1 == "--compile-win"* ]]; then
+    # Run python script and convert output to array.
+    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($("${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/linux/FILES.cfg"))
+  elif [[ $1 == "--compile-win32" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-win"
-    CHROMIUM_FILES_TO_ARCHIVE=(
-      "chrome.dll"
-      "chrome.exe"
-      "chrome_100_percent.pak"
-      "chrome_200_percent.pak"
-      "chrome_elf.dll"
-      "chrome_proxy.exe"
-      "chrome_pwa_launcher.exe"
-      "D3DCompiler_47.dll"
-      "elevation_service.exe"
-      "eventlog_provider.dll"
-      "First Run"
-      "icudtl.dat"
-      "libEGL.dll"
-      "libGLESv2.dll"
-      "locales"
-      "MEIPreload"
-      "mojo_core.dll"
-      "nacl_irt_x86_64.nexe"
-      "notification_helper.exe"
-      "resources.pak"
-      "swiftshader/libEGL.dll"
-      "swiftshader/libGLESv2.dll"
-      "v8_context_snapshot.bin"
-      "vk_swiftshader.dll"
-      "vk_swiftshader_icd.json"
-    )
+    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($("${SCRIPT_PATH}/compute_files_to_archive.py" 32bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))
+  elif [[ $1 == "--compile-win64" ]]; then
+    CHROMIUM_FOLDER_NAME="chrome-win"
+    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($("${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))
   else
     echo "ERROR: unknown command, use --help for details"
     exit 1
