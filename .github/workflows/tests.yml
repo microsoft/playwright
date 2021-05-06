@@ -34,7 +34,7 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -62,7 +62,7 @@ jobs:
         DEBUG: extract-zip
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
-    - run: npm run test -- --tag=${{ matrix.browser }}
+    - run: npm run test -- --project=${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -91,7 +91,7 @@ jobs:
         DEBUG: extract-zip
     - run: npm run build
     - run: node lib/cli/cli install-deps
-    - run: npm run test -- --tag=${{ matrix.browser }}
+    - run: npm run test -- --project=${{ matrix.browser }}
       shell: bash
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -140,7 +140,7 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
       if: ${{ always() }}
       env:
         HEADFUL: 1
@@ -197,7 +197,7 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --tag=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
       env:
         PWTEST_VIDEO: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json

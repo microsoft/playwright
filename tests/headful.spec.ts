@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { playwrightTest as it, slowPlaywrightTest as slowTest, expect } from './config/browserTest';
+import { playwrightTest as it, expect } from './config/browserTest';
 
 it('should have default url when launching browser', async ({browserType, browserOptions, createUserDataDir}) => {
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false });
@@ -23,7 +23,9 @@ it('should have default url when launching browser', async ({browserType, browse
   await browserContext.close();
 });
 
-slowTest('should close browser with beforeunload page', async ({browserType, browserOptions, server, createUserDataDir}) => {
+it('should close browser with beforeunload page', async ({browserType, browserOptions, server, createUserDataDir}) => {
+  it.slow();
+
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false});
   const page = await browserContext.newPage();
   await page.goto(server.PREFIX + '/beforeunload.html');

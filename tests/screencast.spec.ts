@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { slowBrowserTest as it, expect } from './config/browserTest';
+import { browserTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
@@ -152,6 +152,8 @@ function expectRedFrames(videoFile: string, size: { width: number, height: numbe
 }
 
 it.describe('screencast', () => {
+  it.slow();
+
   it('videoSize should require videosPath', async ({browser}) => {
     const error = await browser.newContext({ videoSize: { width: 100, height: 100 } }).catch(e => e);
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');

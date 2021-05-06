@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { playwrightTest as it, slowPlaywrightTest as slowTest, expect } from './config/browserTest';
+import { playwrightTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 
 it('should support hasTouch option', async ({server, launchPersistent}) => {
@@ -82,7 +82,9 @@ it('should accept userDataDir', async ({createUserDataDir, browserType, browserO
   expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
 });
 
-slowTest('should restore state from userDataDir', async ({browserType, browserOptions, server, createUserDataDir}) => {
+it('should restore state from userDataDir', async ({browserType, browserOptions, server, createUserDataDir}) => {
+  it.slow();
+
   const userDataDir = await createUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, browserOptions);
   const page = await browserContext.newPage();
@@ -104,8 +106,9 @@ slowTest('should restore state from userDataDir', async ({browserType, browserOp
   await browserContext3.close();
 });
 
-slowTest('should restore cookies from userDataDir', async ({browserType, browserOptions,  server, createUserDataDir, platform, browserChannel}) => {
-  slowTest.fixme(platform === 'win32' && browserChannel === 'chrome');
+it('should restore cookies from userDataDir', async ({browserType, browserOptions,  server, createUserDataDir, platform, browserChannel}) => {
+  it.fixme(platform === 'win32' && browserChannel === 'chrome');
+  it.slow();
 
   const userDataDir = await createUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, browserOptions);

@@ -79,5 +79,5 @@ export class ElectronEnv {
   }
 }
 
-export const baseElectronTest = baseTest.extend({});
+export const baseElectronTest = baseTest;
 export const electronTest = baseTest.extend(new ElectronEnv());

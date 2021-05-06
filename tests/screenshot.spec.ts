@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { expect, browserTest, slowBrowserTest } from './config/browserTest';
+import { expect, browserTest } from './config/browserTest';
 import { PNG } from 'pngjs';
 import { verifyViewport } from './config/utils';
 
@@ -83,9 +83,9 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  // Large screenshot is slow.
-  slowBrowserTest('should work with large size', async ({ browserName, headful, platform, contextFactory }) => {
-    slowBrowserTest.fixme(browserName === 'chromium' && headful === true && platform === 'linux', 'Chromium has gpu problems on linux with large screnshots');
+  browserTest('should work with large size', async ({ browserName, headful, platform, contextFactory }) => {
+    browserTest.fixme(browserName === 'chromium' && headful === true && platform === 'linux', 'Chromium has gpu problems on linux with large screnshots');
+    browserTest.slow('Large screenshot is slow');
 
     const context = await contextFactory();
     const page = await context.newPage();

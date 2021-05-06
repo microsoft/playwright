@@ -45,14 +45,6 @@ type BaseWorkerArgs = {
   isLinux: boolean;
 };
 
-type BaseOptions = {
-  mode: Mode;
-  browserName: BrowserName;
-  channel?: string;
-  video?: boolean;
-  headful?: boolean;
-};
-
 class DriverMode {
   private _playwrightObject: any;
 
@@ -111,49 +103,59 @@ class DefaultMode {
   }
 }
 
+type BaseOptions = {
+  mode?: Mode;
+  browserName?: BrowserName;
+  channel?: string;
+  video?: boolean;
+  headful?: boolean;
+};
+
 class BaseEnv {
   private _mode: DriverMode | ServiceMode | DefaultMode;
+  private _browserName: BrowserName;
   private _options: BaseOptions;
   private _playwright: typeof import('../../index');
 
-  optionsType(): BaseOptions {
-    return {} as any;
+  hasBeforeAllOptions(options: BaseOptions) {
+    return 'mode' in options || 'browserName' in options || 'channel' in options || 'video' in options || 'headful' in options;
   }
 
   async beforeAll(options: BaseOptions, workerInfo: folio.WorkerInfo): Promise<BaseWorkerArgs> {
     this._options = options;
+    this._browserName = options.browserName || 'chromium';
     this._mode = {
       default: new DefaultMode(),
       service: new ServiceMode(),
       driver: new DriverMode(),
-    }[this._options.mode];
+    }[this._options.mode || 'default'];
     require('../../lib/utils/utils').setUnderTest();
     this._playwright = await this._mode.setup(workerInfo);
     return {
       playwright: this._playwright,
-      browserName: this._options.browserName,
+      browserName: this._browserName,
       browserChannel: this._options.channel,
-      isChromium: this._options.browserName === 'chromium',
-      isFirefox: this._options.browserName === 'firefox',
-      isWebKit: this._options.browserName === 'webkit',
+      isChromium: this._browserName === 'chromium',
+      isFirefox: this._browserName === 'firefox',
+      isWebKit: this._browserName === 'webkit',
       isWindows: process.platform === 'win32',
       isMac: process.platform === 'darwin',
       isLinux: process.platform === 'linux',
       headful: !!this._options.headful,
       video: !!this._options.video,
-      mode: this._options.mode,
+      mode: this._options.mode || 'default',
       platform: process.platform as ('win32' | 'darwin' | 'linux'),
       toImpl: (this._playwright as any)._toImpl,
     };
   }
 
   async beforeEach({}, testInfo: folio.TestInfo) {
-    testInfo.snapshotPathSegment = this._options.browserName;
-    testInfo.data = { browserName: this._options.browserName };
+    testInfo.snapshotPathSegment = this._browserName;
+    testInfo.data = { browserName: this._browserName };
     if (this._options.headful)
       testInfo.data.headful = true;
-    if (this._options.mode !== 'default')
-      testInfo.data.mode = this._options.mode;
+    if ((this._options.mode || 'default') !== 'default')
+      testInfo.data.mode = this._options.mode || 'default';
     if (this._options.video)
       testInfo.data.video = true;
     return {};
@@ -181,8 +183,8 @@ class ServerEnv {
   private _socksServer: any;
   private _socksPort: number;
 
-  optionsType(): ServerOptions {
-    return {};
+  hasBeforeAllOptions(options: ServerOptions) {
+    return 'loopback' in options;
   }
 
   async beforeAll(options: ServerOptions, workerInfo: folio.WorkerInfo) {
@@ -246,8 +248,8 @@ type CoverageOptions = {
 class CoverageEnv {
   private _coverage: ReturnType<typeof installCoverageHooks> | undefined;
 
-  optionsType(): CoverageOptions {
-    return {};
+  hasBeforeAllOptions(options: CoverageOptions) {
+    return 'coverageName' in options;
   }
 
   async beforeAll(options: CoverageOptions, workerInfo: folio.WorkerInfo) {
@@ -268,7 +270,7 @@ class CoverageEnv {
   }
 }
 
-export type CommonOptions = BaseOptions;
+export type CommonOptions = BaseOptions & ServerOptions & CoverageOptions;
 export type CommonArgs = BaseWorkerArgs & ServerWorkerArgs;
 
 export const baseTest = folio.test.extend(new CoverageEnv()).extend(new ServerEnv()).extend(new BaseEnv());
