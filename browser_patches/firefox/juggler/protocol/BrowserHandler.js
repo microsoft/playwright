@@ -40,7 +40,7 @@ class BrowserHandler {
     ];
 
     const onScreencastStopped = (subject, topic, data) => {
-      this._session.emitEvent('Browser.screencastFinished', {screencastId: '' + data});
+      this._session.emitEvent('Browser.videoRecordingFinished', {screencastId: '' + data});
     };
     Services.obs.addObserver(onScreencastStopped, 'juggler-screencast-stopped');
     this._eventListeners.push(() => Services.obs.removeObserver(onScreencastStopped, 'juggler-screencast-stopped'));
@@ -204,8 +204,8 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setColorScheme(nullToUndefined(colorScheme));
   }
 
-  async ['Browser.setScreencastOptions']({browserContextId, dir, width, height, scale}) {
-    await this._targetRegistry.browserContextForId(browserContextId).setScreencastOptions({dir, width, height, scale});
+  async ['Browser.setVideoRecordingOptions']({browserContextId, dir, width, height, scale}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setVideoRecordingOptions({dir, width, height, scale});
   }
 
   async ['Browser.setUserAgentOverride']({browserContextId, userAgent}) {

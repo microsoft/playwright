@@ -159,8 +159,8 @@ class TargetRegistry {
       target.updateColorSchemeOverride();
       if (!hasExplicitSize)
         target.updateViewportSize();
-      if (browserContext.screencastOptions)
-        target._startVideoRecording(browserContext.screencastOptions);
+      if (browserContext.videoRecordingOptions)
+        target._startVideoRecording(browserContext.videoRecordingOptions);
     };
 
     const onTabCloseListener = event => {
@@ -333,7 +333,8 @@ class PageTarget {
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
-    this._screencastInfo = undefined;
+    this._videoRecordingInfo = undefined;
+    this._screencastRecordingInfo = undefined;
     this._dialogs = new Map();
 
     const navigationListener = {
@@ -352,6 +353,7 @@ class PageTarget {
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
 
     this._registry.emit(TargetRegistry.Events.TargetCreated, this);
+    this._screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
   }
 
   dialog(dialogId) {
@@ -497,43 +499,69 @@ class PageTarget {
     if (width < 10 || width > 10000 || height < 10 || height > 10000)
       throw new Error("Invalid size");
 
-    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
     const docShell = this._gBrowser.ownerGlobal.docShell;
     // Exclude address bar and navigation control from the video.
     const rect = this.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._window.devicePixelRatio;
-    const videoSessionId = screencast.startVideoRecording(docShell, file, width, height, devicePixelRatio * rect.top);
-    this._screencastInfo = { videoSessionId, file };
+    const sessionId = this._screencast.startVideoRecording(docShell, true, file, width, height, 0, devicePixelRatio * rect.top);
+    this._videoRecordingInfo = { sessionId, file };
     this.emit(PageTarget.Events.ScreencastStarted);
   }
 
-  async _stopVideoRecording() {
-    if (!this._screencastInfo)
+  _stopVideoRecording() {
+    if (!this._videoRecordingInfo)
       throw new Error('No video recording in progress');
-    const screencastInfo = this._screencastInfo;
-    this._screencastInfo = undefined;
-    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
-    const result = new Promise(resolve =>
-      Services.obs.addObserver(function onStopped(subject, topic, data) {
-        if (screencastInfo.videoSessionId != data)
-          return;
-
-        Services.obs.removeObserver(onStopped, 'juggler-screencast-stopped');
-        resolve();
-      }, 'juggler-screencast-stopped')
-    );
-    screencast.stopVideoRecording(screencastInfo.videoSessionId);
-    return result;
+    const videoRecordingInfo = this._videoRecordingInfo;
+    this._videoRecordingInfo = undefined;
+    this._screencast.stopVideoRecording(videoRecordingInfo.sessionId);
   }
 
-  screencastInfo() {
-    return this._screencastInfo;
+  videoRecordingInfo() {
+    return this._videoRecordingInfo;
+  }
+
+  async startScreencast({ width, height, quality }) {
+    // On Mac the window may not yet be visible when TargetCreated and its
+    // NSWindow.windowNumber may be -1, so we wait until the window is known
+    // to be initialized and visible.
+    await this.windowReady();
+    if (width < 10 || width > 10000 || height < 10 || height > 10000)
+      throw new Error("Invalid size");
+
+    const docShell = this._gBrowser.ownerGlobal.docShell;
+    // Exclude address bar and navigation control from the video.
+    const rect = this.linkedBrowser().getBoundingClientRect();
+    const devicePixelRatio = this._window.devicePixelRatio;
+    const screencastId = this._screencast.startVideoRecording(docShell, false, '', width, height, quality || 90, devicePixelRatio * rect.top);
+    const onFrame = (subject, topic, data) => {
+      this.emit(PageTarget.Events.ScreencastFrame, data);
+    };
+    Services.obs.addObserver(onFrame, 'juggler-screencast-frame');
+    this._screencastRecordingInfo = { screencastId, onFrame };
+    return { screencastId };
+  }
+
+  screencastFrameAck({ screencastId }) {
+    if (!this._screencastRecordingInfo || this._screencastRecordingInfo.screencastId !== screencastId)
+      return;
+    this._screencast.screencastFrameAck(screencastId);
+  }
+
+  stopScreencast() {
+    if (!this._screencastRecordingInfo)
+      throw new Error('No screencast in progress');
+    const screencastInfo = this._screencastRecordingInfo;
+    Services.obs.removeObserver(screencastInfo.onFrame, 'juggler-screencast-frame');
+    this._screencastRecordingInfo = undefined;
+    this._screencast.stopVideoRecording(screencastInfo.screencastId);
   }
 
   dispose() {
     this._disposed = true;
-    if (this._screencastInfo)
-      this._stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
+    if (this._videoRecordingInfo)
+      this._stopVideoRecording();
+    if (this._screencastRecordingInfo)
+      this.stopScreencast();
     this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
@@ -551,6 +579,7 @@ class PageTarget {
 
 PageTarget.Events = {
   ScreencastStarted: Symbol('PageTarget.ScreencastStarted'),
+  ScreencastFrame: Symbol('PageTarget.ScreencastFrame'),
   Crashed: Symbol('PageTarget.Crashed'),
   DialogOpened: Symbol('PageTarget.DialogOpened'),
   DialogClosed: Symbol('PageTarget.DialogClosed'),
@@ -591,7 +620,7 @@ class BrowserContext {
     this.defaultUserAgent = null;
     this.touchOverride = false;
     this.colorScheme = 'none';
-    this.screencastOptions = undefined;
+    this.videoRecordingOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
     this.bindings = [];
     this.settings = {};
@@ -788,8 +817,8 @@ class BrowserContext {
     return result;
   }
 
-  async setScreencastOptions(options) {
-    this.screencastOptions = options;
+  async setVideoRecordingOptions(options) {
+    this.videoRecordingOptions = options;
     if (!options)
       return;
     const promises = [];
