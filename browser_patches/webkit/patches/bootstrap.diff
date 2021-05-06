@@ -11515,7 +11515,7 @@ index b0722e7da81e56530deb570b82ed7cfece970362..05ec3e3ea97ba49135a27d7f9b91f14c
  }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f59da55bac614259ea9a991279f25922f26c8728
+index 0000000000000000000000000000000000000000..9426d9eed59f433eac62b8eb6a16139b84079949
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/CairoJpegEncoder.cpp
 @@ -0,0 +1,244 @@
@@ -11713,7 +11713,6 @@ index 0000000000000000000000000000000000000000..f59da55bac614259ea9a991279f25922
 +   // set compression parameters
 +   unsigned long targetSize;
 +   jpeg_mem_dest(&cinfo, data, &targetSize);
-+   *len = targetSize;
 +
 +   cinfo.image_width = cairo_image_surface_get_width(sfc);
 +   cinfo.image_height = cairo_image_surface_get_height(sfc);
@@ -11759,6 +11758,7 @@ index 0000000000000000000000000000000000000000..f59da55bac614259ea9a991279f25922
 +   if (other != NULL)
 +      cairo_surface_destroy(sfc);
 +
++   *len = targetSize;
 +   return CAIRO_STATUS_SUCCESS;
 +}
 +
