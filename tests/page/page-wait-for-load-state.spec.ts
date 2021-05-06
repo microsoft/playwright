@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 import type { Route } from '../../index';
 
 it('should pick up ongoing navigation', async ({page, server}) => {

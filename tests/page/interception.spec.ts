@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 import { globToRegex } from '../../lib/client/clientHelper';
 import vm from 'vm';
 

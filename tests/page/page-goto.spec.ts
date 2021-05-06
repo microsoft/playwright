@@ -17,7 +17,7 @@
 
 import url from 'url';
 import os from 'os';
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 import { expectedSSLError } from '../config/utils';
 
 it('should work', async ({page, server}) => {

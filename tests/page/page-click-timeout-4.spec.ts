@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should timeout waiting for stable position', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

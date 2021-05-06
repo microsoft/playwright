@@ -15,16 +15,14 @@
  * limitations under the License.
  */
 
-import { test as pageTest, expect } from '../config/pageTest';
+import { contextTest as test, expect } from '../config/browserTest';
 import { playwrightTest } from '../config/browserTest';
 import http from 'http';
 
-pageTest.describe('chromium', () => {
-  pageTest.skip(({ browserName }) => browserName !== 'chromium');
-  pageTest.skip(({ isAndroid }) => isAndroid);
-  pageTest.skip(({ isElectron }) => isElectron);
+test.describe('chromium', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium');
 
-  pageTest('should create a worker from a service worker', async ({page, server}) => {
+  test('should create a worker from a service worker', async ({page, server}) => {
     const [worker] = await Promise.all([
       page.context().waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -32,7 +30,7 @@ pageTest.describe('chromium', () => {
     expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
   });
 
-  pageTest('serviceWorkers() should return current workers', async ({page, server}) => {
+  test('serviceWorkers() should return current workers', async ({page, server}) => {
     const context = page.context();
     const [worker1] = await Promise.all([
       context.waitForEvent('serviceworker'),
@@ -51,7 +49,7 @@ pageTest.describe('chromium', () => {
     expect(workers).toContain(worker2);
   });
 
-  pageTest('should not create a worker from a shared worker', async ({page, server}) => {
+  test('should not create a worker from a shared worker', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     let serviceWorkerCreated;
     page.context().once('serviceworker', () => serviceWorkerCreated = true);
@@ -61,7 +59,7 @@ pageTest.describe('chromium', () => {
     expect(serviceWorkerCreated).not.toBeTruthy();
   });
 
-  pageTest('Page.route should work with intervention headers', async ({server, page}) => {
+  test('Page.route should work with intervention headers', async ({server, page}) => {
     server.setRoute('/intervention', (req, res) => res.end(`
       <script>
         document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');

@@ -17,7 +17,7 @@
 import * as folio from 'folio';
 import * as path from 'path';
 import { playwrightTest, slowPlaywrightTest, contextTest, tracingTest } from './browserTest';
-import { test as pageTest } from './pageTest';
+import { test as pageTest } from '../page/pageTest';
 import { BrowserName, CommonArgs } from './baseTest';
 import type { Browser, BrowserContext } from '../../index';
 

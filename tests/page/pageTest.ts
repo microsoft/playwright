@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { baseTest } from './baseTest';
+import { baseTest } from '../config/baseTest';
 import type { Page } from '../../index';
 export { expect } from 'folio';
 

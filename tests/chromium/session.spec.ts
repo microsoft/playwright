@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { contextTest as it, expect } from '../config/browserTest';
 import { browserTest } from '../config/browserTest';
 
 it.describe('session', () => {

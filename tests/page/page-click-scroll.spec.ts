@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it } from '../config/pageTest';
+import { test as it } from './pageTest';
 
 it('should not hit scroll bar', async ({page, isAndroid, isWebKit, platform}) => {
   it.fixme(isWebKit && platform === 'darwin');

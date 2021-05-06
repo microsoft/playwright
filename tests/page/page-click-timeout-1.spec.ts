@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should avoid side effects after timeout', async ({page, server, mode}) => {
   it.skip(mode !== 'default');

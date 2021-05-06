@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 import type { ElementHandle } from '../../index';
 
 it('should work', async ({page}) => {

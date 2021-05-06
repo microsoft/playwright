@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should have a nice preview', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);

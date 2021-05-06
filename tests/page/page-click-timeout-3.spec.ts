@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should fail when element jumps during hit testing', async ({page, mode}) => {
   it.skip(mode !== 'default');

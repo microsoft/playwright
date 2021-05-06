@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { contextTest as it, expect } from '../config/browserTest';
 
 it.describe('CSS Coverage', () => {
   it.skip(({ browserName }) => browserName !== 'chromium');

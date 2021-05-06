@@ -17,7 +17,7 @@
 import * as folio from 'folio';
 import * as path from 'path';
 import { baseElectronTest, ElectronEnv, electronTest } from './electronTest';
-import { test as pageTest } from './pageTest';
+import { test as pageTest } from '../page/pageTest';
 
 const config: folio.Config = {
   testDir: path.join(__dirname, '..'),

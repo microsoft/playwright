@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should throw for non-string selector', async ({page}) => {
   const error = await page.$(null).catch(e => e);

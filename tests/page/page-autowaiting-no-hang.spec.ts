@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it } from '../config/pageTest';
+import { test as it } from './pageTest';
 
 it('clicking on links which do not commit navigation', async ({page, server, httpsServer}) => {
   await page.goto(server.EMPTY_PAGE);

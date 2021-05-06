@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should query existing element', async ({page, server}) => {
   await page.goto(server.PREFIX + '/playground.html');
