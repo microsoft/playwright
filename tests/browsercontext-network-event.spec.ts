@@ -28,7 +28,7 @@ it('BrowserContext.Events.Request', async ({browser, server}) => {
     context.waitForEvent('page'),
     page.click('a'),
   ]);
-  await page1.waitForEvent('load');
+  await page1.waitForLoadState();
   const urls = requests.map(r => r.url());
   expect(urls).toEqual([
     server.EMPTY_PAGE,
@@ -48,7 +48,7 @@ it('BrowserContext.Events.Response', async ({browser, server}) => {
     context.waitForEvent('page'),
     page.click('a'),
   ]);
-  await page1.waitForEvent('load');
+  await page1.waitForLoadState();
   const urls = responses.map(r => r.url());
   expect(urls).toEqual([
     server.EMPTY_PAGE,
