@@ -23,24 +23,6 @@ it('should have default url when launching browser', async ({browserType, browse
   await browserContext.close();
 });
 
-slowTest('headless should be able to read cookies written by headful', async ({browserType, browserOptions, server, createUserDataDir}) => {
-  // see https://github.com/microsoft/playwright/issues/717
-  const userDataDir = await createUserDataDir();
-  // Write a cookie in headful chrome
-  const headfulContext = await browserType.launchPersistentContext(userDataDir, {...browserOptions, headless: false});
-  const headfulPage = await headfulContext.newPage();
-  await headfulPage.goto(server.EMPTY_PAGE);
-  await headfulPage.evaluate(() => document.cookie = 'foo=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
-  await headfulContext.close();
-  // Read the cookie from headless chrome
-  const headlessContext = await browserType.launchPersistentContext(userDataDir, {...browserOptions, headless: true});
-  const headlessPage = await headlessContext.newPage();
-  await headlessPage.goto(server.EMPTY_PAGE);
-  const cookie = await headlessPage.evaluate(() => document.cookie);
-  await headlessContext.close();
-  expect(cookie).toBe('foo=true');
-});
-
 slowTest('should close browser with beforeunload page', async ({browserType, browserOptions, server, createUserDataDir}) => {
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false});
   const page = await browserContext.newPage();
