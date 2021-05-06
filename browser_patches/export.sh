@@ -81,6 +81,19 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
     CHECKOUT_PATH="${WK_CHECKOUT_PATH}"
     FRIENDLY_CHECKOUT_PATH="<WK_CHECKOUT_PATH>"
   fi
+elif [[ ("$1" == "deprecated-webkit-mac-10.14") ]]; then
+  FRIENDLY_CHECKOUT_PATH="//browser_patches/deprecated-webkit-mac-10.14/checkout";
+  CHECKOUT_PATH="$PWD/deprecated-webkit-mac-10.14/checkout"
+  EXTRA_FOLDER_PW_PATH="$PWD/deprecated-webkit-mac-10.14/embedder/Playwright"
+  EXTRA_FOLDER_CHECKOUT_RELPATH="Tools/Playwright"
+  EXPORT_PATH="$PWD/deprecated-webkit-mac-10.14"
+  BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/master/browser_patches/deprecated-webkit-mac-10.14/BUILD_NUMBER"
+  source "./deprecated-webkit-mac-10.14/UPSTREAM_CONFIG.sh"
+  if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
+    echo "WARNING: using checkout path from WK_CHECKOUT_PATH env: ${WK_CHECKOUT_PATH}"
+    CHECKOUT_PATH="${WK_CHECKOUT_PATH}"
+    FRIENDLY_CHECKOUT_PATH="<WK_CHECKOUT_PATH>"
+  fi
 else
   echo ERROR: unknown browser to export - "$1"
   exit 1
