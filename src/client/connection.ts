@@ -52,9 +52,12 @@ export class Connection {
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
   private _rootObject: ChannelOwner;
+  private _disconnectedErrorMessage: string | undefined;
+  private _onClose?: () => void;
 
-  constructor() {
+  constructor(onClose?: () => void) {
     this._rootObject = new Root(this);
+    this._onClose = onClose;
   }
 
   async waitForObjectWithKnownName(guid: string): Promise<any> {
@@ -75,6 +78,8 @@ export class Connection {
     debugLogger.log('channel:command', converted);
     this.onmessage({ ...converted, metadata: { stack: frames, apiName } });
     try {
+      if (this._disconnectedErrorMessage)
+        throw new Error(this._disconnectedErrorMessage);
       return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
     } catch (e) {
       const innerStack = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? e.stack.substring(e.stack.indexOf(e.message) + e.message.length) : '';
@@ -118,6 +123,22 @@ export class Connection {
     if (!object)
       throw new Error(`Cannot find object to emit "${method}": ${guid}`);
     object._channel.emit(method, this._replaceGuidsWithChannels(params));
+  }
+
+  close() {
+    if (this._onClose)
+      this._onClose();
+  }
+
+  didDisconnect(errorMessage: string) {
+    this._disconnectedErrorMessage = errorMessage;
+    for (const callback of this._callbacks.values())
+      callback.reject(new Error(errorMessage));
+    this._callbacks.clear();
+  }
+
+  isDisconnected() {
+    return !!this._disconnectedErrorMessage;
   }
 
   private _replaceGuidsWithChannels(payload: any): any {

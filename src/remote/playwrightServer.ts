@@ -28,7 +28,7 @@ const debugLog = debug('pw:server');
 export interface PlaywrightServerDelegate {
   path: string;
   allowMultipleClients: boolean;
-  onConnect(rootScope: DispatcherScope): () => any;
+  onConnect(rootScope: DispatcherScope, forceDisconnect: () => void): () => any;
   onClose: () => any;
 }
 
@@ -94,9 +94,10 @@ export class PlaywrightServer {
         connection.dispatch(JSON.parse(Buffer.from(message).toString()));
       });
 
+      const forceDisconnect = () => socket.close();
       const scope = connection.rootDispatcher();
-      const onDisconnect = this._delegate.onConnect(scope);
-      const disconnect = () => {
+      const onDisconnect = this._delegate.onConnect(scope, forceDisconnect);
+      const disconnected = () => {
         this._clientsCount--;
         // Avoid sending any more messages over closed socket.
         connection.onmessage = () => {};
@@ -104,11 +105,11 @@ export class PlaywrightServer {
       };
       socket.on('close', () => {
         debugLog('Client closed');
-        disconnect();
+        disconnected();
       });
       socket.on('error', error => {
         debugLog('Client error ' + error);
-        disconnect();
+        disconnected();
       });
     });
 
@@ -122,6 +123,7 @@ export class PlaywrightServer {
     // First disconnect all remaining clients.
     await new Promise(f => this._wsServer!.close(f));
     await new Promise(f => this._wsServer!.options.server!.close(f));
+    this._wsServer = undefined;
     await this._delegate.onClose();
   }
 }

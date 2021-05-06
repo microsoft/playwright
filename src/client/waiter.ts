@@ -23,6 +23,7 @@ import { ChannelOwner } from './channelOwner';
 export class Waiter {
   private _dispose: (() => void)[];
   private _failures: Promise<any>[] = [];
+  private _immediateError?: Error;
   // TODO: can/should we move these logs into wrapApiCall?
   private _logs: string[] = [];
   private _channelOwner: ChannelOwner;
@@ -59,6 +60,10 @@ export class Waiter {
     this._rejectOn(promise.then(() => { throw new TimeoutError(message); }), dispose);
   }
 
+  rejectImmediately(error: Error) {
+    this._immediateError = error;
+  }
+
   dispose() {
     for (const dispose of this._dispose)
       dispose();
@@ -66,6 +71,8 @@ export class Waiter {
 
   async waitForPromise<T>(promise: Promise<T>, dispose?: () => void): Promise<T> {
     try {
+      if (this._immediateError)
+        throw this._immediateError;
       const result = await Promise.race([promise, ...this._failures]);
       if (dispose)
         dispose();
