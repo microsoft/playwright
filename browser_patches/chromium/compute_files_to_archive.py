@@ -4,15 +4,15 @@ import sys
 import json
 
 if len(sys.argv) < 2:
-    print "ERROR: expected arch: 32bit or 64bit"
+    print("ERROR: expected arch: 32bit or 64bit")
     sys.exit(1)
 
 if str(sys.argv[1]) == "--help" or str(sys.argv[1]) == "-h":
-    print "Usage: read_files.py [32bit|64bit] <files.cfg path>"
+    print("Usage: read_files.py [32bit|64bit] <files.cfg path>")
     sys.exit(1)
 
 if len(sys.argv) < 3:
-    print "ERROR: expected FILE.cfg path"
+    print("ERROR: expected FILE.cfg path")
     sys.exit(1)
 
 exclude_list = [
