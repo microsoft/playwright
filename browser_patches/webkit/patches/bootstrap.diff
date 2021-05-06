@@ -1846,6 +1846,18 @@ index 7ca8cb87efabbab3fd6be8b2cd85a98d9462141d..318918af23f08fb1da4cbadb6c5c1041
  #endif
  
  #if !defined(ENABLE_TOUCH_ACTION_REGIONS)
+diff --git a/Source/WTF/wtf/PlatformGTK.cmake b/Source/WTF/wtf/PlatformGTK.cmake
+index fa6958fbd30fabfd1d237aaf1a89f6eb5fa3b366..c0d6541242d79dc6d615a43710343b895e23aadc 100644
+--- a/Source/WTF/wtf/PlatformGTK.cmake
++++ b/Source/WTF/wtf/PlatformGTK.cmake
+@@ -73,6 +73,7 @@ list(APPEND WTF_LIBRARIES
+     ${GLIB_LIBRARIES}
+     Threads::Threads
+     ZLIB::ZLIB
++    stdc++fs
+ )
+ 
+ if (Systemd_FOUND)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
 index 0e140926fe4083d8383b5cb0f798fc304ad0977d..46714ada927cf6464d159febbf9cdcb00c13e83e 100644
 --- a/Source/WTF/wtf/PlatformHave.h
@@ -1859,6 +1871,18 @@ index 0e140926fe4083d8383b5cb0f798fc304ad0977d..46714ada927cf6464d159febbf9cdcb0
  #define HAVE_OS_DARK_MODE_SUPPORT 1
  #endif
  
+diff --git a/Source/WTF/wtf/PlatformWPE.cmake b/Source/WTF/wtf/PlatformWPE.cmake
+index 46148f8b54b062bd7f8d6c3fd76c18983d6be28f..c35180cd3327e9331c4ebc097acb318d4611ebe1 100644
+--- a/Source/WTF/wtf/PlatformWPE.cmake
++++ b/Source/WTF/wtf/PlatformWPE.cmake
+@@ -47,6 +47,7 @@ list(APPEND WTF_LIBRARIES
+     ${GLIB_LIBRARIES}
+     Threads::Threads
+     ZLIB::ZLIB
++    stdc++fs
+ )
+ 
+ if (Systemd_FOUND)
 diff --git a/Source/WebCore/DerivedSources.make b/Source/WebCore/DerivedSources.make
 index e005f633f8e5c81798aea6cb63d41625c4abc529..4a6e10e1f7cd01fd0231062ee89d53a2f8dd7b08 100644
 --- a/Source/WebCore/DerivedSources.make
