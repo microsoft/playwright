@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should select textarea', async ({ page, server, isFirefox }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');

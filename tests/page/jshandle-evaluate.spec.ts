@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should work with function', async ({page}) => {
   const windowHandle = await page.evaluateHandle(() => {

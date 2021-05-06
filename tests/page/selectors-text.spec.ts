@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should work', async ({page}) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);

@@ -15,12 +15,9 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/pageTest';
+import { contextTest as it, expect } from './config/browserTest';
 import { browserTest } from './config/browserTest';
 import { verifyViewport } from './config/utils';
-
-it.skip(({ isAndroid }) => isAndroid, 'Default viewport is null');
-it.skip(({ isElectron }) => isElectron, 'Default viewport is null');
 
 it('should get the proper default viewport size', async ({page, server}) => {
   await verifyViewport(page, 1280, 720);

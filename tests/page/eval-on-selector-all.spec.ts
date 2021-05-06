@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should work with css selector', async ({page, server}) => {
   await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');

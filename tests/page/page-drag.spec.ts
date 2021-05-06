@@ -15,7 +15,7 @@
  */
 
 import type { ElementHandle } from '../../index';
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
 it.describe('Drag and drop', () => {

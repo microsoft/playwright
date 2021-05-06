@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should work', async function({page, browserName}) {
   it.skip(browserName === 'firefox');

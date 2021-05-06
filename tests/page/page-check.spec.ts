@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should check the box', async ({page}) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);

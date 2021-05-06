@@ -16,7 +16,7 @@
 
 import * as folio from 'folio';
 import * as path from 'path';
-import { test as pageTest } from './pageTest';
+import { test as pageTest } from '../page/pageTest';
 import { AndroidEnv, androidTest } from './androidTest';
 import type { BrowserContext } from '../../index';
 

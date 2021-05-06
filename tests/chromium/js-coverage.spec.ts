@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { contextTest as it, expect } from '../config/browserTest';
 
 it.describe('JS Coverage', () => {
   it.skip(({ browserName }) => browserName !== 'chromium');
-  it.fixme(({ isElectron }) => isElectron);
 
   it('should work', async function({page, server}) {
     await page.coverage.startJSCoverage();

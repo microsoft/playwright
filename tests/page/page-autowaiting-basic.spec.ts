@@ -16,7 +16,7 @@
  */
 
 import { TestServer } from '../../utils/testserver';
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 function initServer(server: TestServer): string[] {
   const messages = [];

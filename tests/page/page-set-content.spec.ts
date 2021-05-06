@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
 

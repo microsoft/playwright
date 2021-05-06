@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 async function giveItAChanceToResolve(page) {
   for (let i = 0; i < 5; i++)

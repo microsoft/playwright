@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 import { verifyViewport } from '../config/utils';
 import path from 'path';
 import fs from 'fs';

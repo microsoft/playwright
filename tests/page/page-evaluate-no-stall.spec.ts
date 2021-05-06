@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from '../config/pageTest';
+import { test, expect } from './pageTest';
 
 test.describe('non-stalling evaluate', () => {
   test.skip(({mode}) => mode !== 'default');

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from '../config/pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should close page with active dialog', async ({page}) => {
   await page.setContent(`<button onclick="setTimeout(() => alert(1))">alert</button>`);
