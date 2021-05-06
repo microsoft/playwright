@@ -1242,7 +1242,7 @@ index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936af
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..a51b42b2a2b575927509e11dc7241ab6f203c104
+index 0000000000000000000000000000000000000000..c0d817dd5af1b06106d865ca39b1d2b2ff1a29e4
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 @@ -0,0 +1,31 @@
@@ -1258,7 +1258,7 @@ index 0000000000000000000000000000000000000000..a51b42b2a2b575927509e11dc7241ab6
 +    ],
 +    "commands": [
 +        {
-+            "name": "start",
++            "name": "startVideo",
 +            "description": "Starts recoring video to speified file.",
 +            "parameters": [
 +                { "name": "file", "type": "string", "description": "Output file location." },
@@ -1271,7 +1271,7 @@ index 0000000000000000000000000000000000000000..a51b42b2a2b575927509e11dc7241ab6
 +            ]
 +        },
 +        {
-+            "name": "stop",
++            "name": "stopVideo",
 +            "async": true,
 +            "description": "Stops recoding video. Returns after the file has been closed."
 +        }
@@ -11280,7 +11280,7 @@ index b0722e7da81e56530deb570b82ed7cfece970362..05ec3e3ea97ba49135a27d7f9b91f14c
  }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e22949e7e7
+index 0000000000000000000000000000000000000000..b06ab6bf9f72a364f91f437c1bf4a7be79d1d3fb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 @@ -0,0 +1,168 @@
@@ -11370,7 +11370,7 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +}
 +#endif
 +
-+Inspector::Protocol::ErrorStringOr<String /* screencastID */> InspectorScreencastAgent::start(const String& file, int width, int height, Optional<double>&& scale)
++Inspector::Protocol::ErrorStringOr<String /* screencastID */> InspectorScreencastAgent::startVideo(const String& file, int width, int height, Optional<double>&& scale)
 +{
 +    if (m_encoder)
 +        return makeUnexpected("Already recording"_s);
@@ -11400,7 +11400,7 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +    return { { m_currentScreencastID } };
 +}
 +
-+void InspectorScreencastAgent::stop(Ref<StopCallback>&& callback)
++void InspectorScreencastAgent::stopVideo(Ref<StopCallback>&& callback)
 +{
 +    if (!m_encoder) {
 +        callback->sendFailure("Not recording"_s);
@@ -11454,7 +11454,7 @@ index 0000000000000000000000000000000000000000..3f7bfd524cff408bfaea96177e39a4e2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0d4a837cbb0bbba71e32ed083a4c4cfe9b5e4a27
+index 0000000000000000000000000000000000000000..5c0a908c67f4996ae007395bf0424fc95f2cf30e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 @@ -0,0 +1,77 @@
@@ -11518,8 +11518,8 @@ index 0000000000000000000000000000000000000000..0d4a837cbb0bbba71e32ed083a4c4cfe
 +    void didPaint(cairo_surface_t*);
 +#endif
 +
-+    Inspector::Protocol::ErrorStringOr<String /* screencastID */> start(const String& file, int width, int height, Optional<double>&& scale) override;
-+    void stop(Ref<StopCallback>&&) override;
++    Inspector::Protocol::ErrorStringOr<String /* screencastID */> startVideo(const String& file, int width, int height, Optional<double>&& scale) override;
++    void stopVideo(Ref<StopCallback>&&) override;
 +
 +
 +private:
