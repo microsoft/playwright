@@ -19,6 +19,7 @@ import * as jpeg from 'jpeg-js';
 import path from 'path';
 import * as png from 'pngjs';
 import { splitErrorMessage } from '../../utils/stackTrace';
+import { hostPlatform } from '../../utils/registry';
 import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray } from '../../utils/utils';
 import * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
@@ -737,7 +738,8 @@ export class WKPage implements PageDelegate {
 
   async _startScreencast(options: types.PageScreencastOptions): Promise<void> {
     assert(!this._recordingVideoFile);
-    const { screencastId } = await this._pageProxySession.send('Screencast.startVideo', {
+    const START_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.start' : 'Screencast.startVideo';
+    const { screencastId } = await this._pageProxySession.send(START_VIDEO_PROTOCOL_COMMAND as any, {
       file: options.outputFile,
       width: options.width,
       height: options.height,
@@ -749,7 +751,8 @@ export class WKPage implements PageDelegate {
   async _stopScreencast(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
-    await this._pageProxySession.sendMayFail('Screencast.stopVideo');
+    const STOP_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.stop' : 'Screencast.stopVideo';
+    await this._pageProxySession.sendMayFail(STOP_VIDEO_PROTOCOL_COMMAND as any);
     this._recordingVideoFile = null;
   }
 
