@@ -58,13 +58,13 @@ function archive_compiled_chromium() {
   elif [[ $1 == "--compile-linux" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-linux"
     # Run python script and convert output to array.
-    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($("${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/linux/FILES.cfg"))
+    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/linux/FILES.cfg"))
   elif [[ $1 == "--compile-win32" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-win"
-    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($("${SCRIPT_PATH}/compute_files_to_archive.py" 32bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))
+    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 32bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))
   elif [[ $1 == "--compile-win64" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-win"
-    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($("${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))
+    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))
   else
     echo "ERROR: unknown command, use --help for details"
     exit 1
