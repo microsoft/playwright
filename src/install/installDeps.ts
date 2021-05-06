@@ -28,9 +28,7 @@ export async function installDeps(browserTypes: string[]) {
   browserTypes.push('tools');
 
   const ubuntuVersion = await getUbuntuVersion();
-  if (ubuntuVersion === '21.04') {
-    console.warn('WARNING: webkit does not work on Ubuntu 21.04');
-  } else if (ubuntuVersion !== '18.04' && ubuntuVersion !== '20.04') {
+  if (ubuntuVersion !== '18.04' && ubuntuVersion !== '20.04' && ubuntuVersion !== '21.04') {
     console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console
     return;
   }
