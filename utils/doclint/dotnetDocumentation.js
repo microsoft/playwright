@@ -23,11 +23,22 @@ const Documentation = require('./documentation');
  *   name: string,
  *   specs: Documentation.MarkdownNode[],
  *   members: string[],
+ *   parents: string[]
  * }} DocClass
  */
+
+/** 
+ * @typedef {{
+ *  arg: Documentation.Member,
+ *  docs: string[],
+ *  signature: string
+ * }} ArgumentWrapper
+ */
+
 /** @type {Map<string, DocClass>} */
 const classDocumentation = new Map([]);
 
+/** @type {DocClass} */
 let currentClass;
 /**
  * 
@@ -35,12 +46,36 @@ let currentClass;
  * @param {string} newName
  */
 function registerInterface(clazz, newName) {
-  currentClass = newName;
-  console.log(`---> DOCS: ${newName}, formerly known as ${clazz.name}`);
+  /** @type {DocClass} */
+  let wrapper = {
+    name: newName,
+    specs: clazz.spec,
+    members: [],
+    parents: []
+  };
+  currentClass = wrapper;
+  classDocumentation.set(newName, wrapper);
 }
 
-function registerMember(signature) {
-  console.log(`-------> [${currentClass}]:  ${signature} `);
+/**
+ * 
+ * @param {Documentation.Member} member 
+ * @param {string} signature 
+ * @param {Map<string, ArgumentWrapper>} paramsMap
+ */
+function registerMethod(member, signature, paramsMap) {
+  if (!currentClass)
+    throw new Error("Parent is null.");
+  currentClass.members.push(signature);
 }
 
-module.exports = { registerInterface, registerMember }
+function getDocumentation() {
+  return classDocumentation;
+}
+
+function registerInheritance(parent) {
+  if (!parent) return;
+  currentClass.parents.push(parent);
+}
+
+module.exports = { registerInterface, registerMethod, getDocumentation, registerInheritance }

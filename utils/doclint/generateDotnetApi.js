@@ -137,6 +137,7 @@ const customTypeNames = new Map([
     if (extendsName === 'IEventEmitter')
       extendsName = null;
 
+    DotnetDocumentation.registerInheritance(extendsName);
     out.push(`public ${kind} ${name}${extendsName ? ` : ${extendsName}` : ''}`);
     out.push('{');
 
@@ -409,14 +410,15 @@ function renderMethod(member, parent, output, name) {
     return newName;
   });
 
-  /** @type {Map<string, string[]>} */
+
+  /** @type {Map<string, DotnetDocumentation.ArgumentWrapper>} */
   const paramDocs = new Map();
-  const addParamsDoc = (paramName, docs) => {
+  const addParamsDoc = (paramName, docs, arg, signature) => {
     if (paramName.startsWith('@'))
       paramName = paramName.substring(1);
     if (paramDocs.get(paramName))
       throw new Error(`Parameter ${paramName} already exists in the docs.`);
-    paramDocs.set(paramName, docs);
+    paramDocs.set(paramName, { arg: arg, docs: docs, signature: signature });
   };
 
   /** @type {string} */
@@ -504,8 +506,8 @@ function renderMethod(member, parent, output, name) {
     else
       args.push(push);
     argTypeMap.set(push, innerArgName);
+    return push;
   };
-
 
   let parseArg = (/** @type {Documentation.Member} */ arg) => {
     if (arg.name === "options") {
@@ -515,11 +517,11 @@ function renderMethod(member, parent, output, name) {
 
     if (arg.type.expression === '[string]|[path]') {
       let argName = translateMemberName('argument', arg.name, null);
-      pushArg("string", `${argName} = null`, arg);
-      pushArg("string", `${argName}Path = null`, arg);
+      let leftArgSignature = pushArg("string", `${argName} = null`, arg);
+      let rightArgSignature = pushArg("string", `${argName}Path = null`, arg);
       if (arg.spec) {
-        addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
-        addParamsDoc(`${argName}Path`, [`Instead of specifying <paramref name="${argName}"/>, gives the file name to load from.`]);
+        addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth), arg, leftArgSignature);
+        addParamsDoc(`${argName}Path`, [`Instead of specifying <paramref name="${argName}"/>, gives the file name to load from.`], arg, rightArgSignature);
       }
       return;
     } else if (arg.type.expression === '[boolean]|[Array]<[string]>') {
@@ -529,11 +531,11 @@ function renderMethod(member, parent, output, name) {
       let leftArgType = translateType(arg.type.union[0], parent, (t) => { throw new Error('Not supported'); });
       let rightArgType = translateType(arg.type.union[1], parent, (t) => { throw new Error('Not supported'); });
 
-      pushArg(leftArgType, argName, arg);
-      pushArg(rightArgType, `${argName}Values`, arg);
+      let leftArgSignature = pushArg(leftArgType, argName, arg);
+      let rightArgSignature = pushArg(rightArgType, `${argName}Values`, arg);
 
-      addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
-      addParamsDoc(`${argName}Values`, [`The values to take into account when <paramref name="${argName}"/> is <code>true</code>.`]);
+      addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth), arg, leftArgSignature);
+      addParamsDoc(`${argName}Values`, [`The values to take into account when <paramref name="${argName}"/> is <code>true</code>.`], arg, rightArgSignature);
 
       return;
     }
@@ -552,21 +554,21 @@ function renderMethod(member, parent, output, name) {
         let nonGenericType = newArg.replace(/\IEnumerable<(.*)\>/g, (m, v) => 'Enumerable' + v[0].toUpperCase() + v.substring(1))
         const sanitizedArgName = nonGenericType.match(/(?<=^[\s"']*)(\w+)/g, '')[0] || nonGenericType;
         const newArgName = `${argName}${sanitizedArgName[0].toUpperCase() + sanitizedArgName.substring(1)}`;
-        pushArg(newArg, newArgName, arg, true); // push the exploded arg
-        addParamsDoc(newArgName, argDocumentation);
+        let argSignature = pushArg(newArg, newArgName, arg, true); // push the exploded arg
+        addParamsDoc(newArgName, argDocumentation, arg, argSignature);
       }
       args.push(arg.required ? 'EXPLODED_ARG' : 'OPTIONAL_EXPLODED_ARG');
       return;
     }
-
-    addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
 
     if (argName === 'timeout' && argType === 'decimal') {
       args.push(`int timeout = 0`); // a special argument, we ignore our convention
       return;
     }
 
-    pushArg(argType, argName, arg);
+    let argSignature = pushArg(argType, argName, arg);
+
+    addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth), arg, argSignature);
   };
 
   member.argsArray
@@ -590,29 +592,35 @@ function renderMethod(member, parent, output, name) {
 
   if (!explodedArgs.length) {
     output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-    paramDocs.forEach((val, ind) => printArgDoc(val, ind));
+    paramDocs.forEach((val, ind) => printArgDoc(val.docs, ind));
     output(`${type} ${name}(${args.join(', ')});`);
-
-    DotnetDocumentation.registerMember(`${type} ${name}(${args.join(', ')})`);
+    DotnetDocumentation.registerMethod(member, `${type} ${name}(${args.join(', ')})`, paramDocs);
   } else {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
       output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       let overloadedArgs = [];
+      /**  @type {Map<string, DotnetDocumentation.ArgumentWrapper>}*/
+      const argsBuffer = new Map([]);
       for (var i = 0; i < args.length; i++) {
         let arg = args[i];
         if (arg === 'EXPLODED_ARG' || arg === 'OPTIONAL_EXPLODED_ARG') {
           containsOptionalExplodedArgs = arg === 'OPTIONAL_EXPLODED_ARG';
           let argType = getArgType(explodedArg);
-          printArgDoc(paramDocs.get(argType), argType);
+          let mappedArg = paramDocs.get(argType);
+          printArgDoc(mappedArg.docs, argType);
           overloadedArgs.push(explodedArg);
+          argsBuffer.set(argType, mappedArg);
         } else {
           let argType = getArgType(arg);
-          printArgDoc(paramDocs.get(argType), argType);
+          let mappedArg = paramDocs.get(argType);
+          printArgDoc(mappedArg.docs, argType);
           overloadedArgs.push(arg);
+          argsBuffer.set(argType, mappedArg);
         }
       }
-      output(`${type} ${name}(${overloadedArgs.join(', ')});`);
+      DotnetDocumentation.registerMethod(member,  `${type} ${name}(${overloadedArgs.join(', ')})`, argsBuffer);
+      output( `${type} ${name}(${overloadedArgs.join(', ')});`);
       if (argIndex < explodedArgs.length - 1)
         output(``); // output a special blank line
     });
@@ -628,7 +636,7 @@ function renderMethod(member, parent, output, name) {
         if (arg === 'EXPLODED_ARG')
           throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);
         let argType = getArgType(arg);
-        printArgDoc(paramDocs.get(argType), argType);
+        printArgDoc(paramDocs.get(argType).docs, argType);
       });
       output(`${type} ${name}(${filteredArgs.join(', ')});`);
     }
