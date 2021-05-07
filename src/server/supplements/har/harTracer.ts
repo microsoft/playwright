@@ -21,6 +21,7 @@ import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
 import * as har from './har';
+import * as types from '../../types';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
@@ -68,7 +69,7 @@ export class HarTracer {
     this._pageEntries.set(page, pageEntry);
     this._log.pages.push(pageEntry);
     page.on(Page.Events.Request, (request: network.Request) => this._onRequest(page, request));
-    page.on(Page.Events.Response, (response: network.Response) => this._onResponse(page, response));
+    page.on(Page.Events.RequestFinished, (request: network.Request) => this._onRequestFinished(page, request));
 
     page.on(Page.Events.DOMContentLoaded, () => {
       const promise = page.mainFrame().evaluateExpression(String(() => {
@@ -120,18 +121,18 @@ export class HarTracer {
       request: {
         method: request.method(),
         url: request.url(),
-        httpVersion: 'HTTP/1.1',
+        httpVersion: 'http/1.1',
         cookies: [],
         headers: [],
         queryString: [...url.searchParams].map(e => ({ name: e[0], value: e[1] })),
-        postData: undefined,
+        postData: postDataForHar(request) || undefined,
         headersSize: -1,
         bodySize: -1,
       },
       response: {
         status: -1,
         statusText: '',
-        httpVersion: 'HTTP/1.1',
+        httpVersion: 'http/1.1',
         cookies: [],
         headers: [],
         content: {
@@ -140,7 +141,8 @@ export class HarTracer {
         },
         headersSize: -1,
         bodySize: -1,
-        redirectURL: ''
+        redirectURL: '',
+        _transferSize: -1
       },
       cache: {
         beforeRequest: null,
@@ -152,38 +154,48 @@ export class HarTracer {
         receive: -1
       },
     };
-    if (request.redirectedFrom()) {
-      const fromEntry = this._entries.get(request.redirectedFrom()!)!;
-      fromEntry.response.redirectURL = request.url();
-    }
+
     this._log.entries.push(harEntry);
     this._entries.set(request, harEntry);
   }
 
-  private _onResponse(page: Page, response: network.Response) {
+  private async _onRequestFinished(page: Page, request: network.Request) {
     const pageEntry = this._pageEntries.get(page)!;
-    const harEntry = this._entries.get(response.request())!;
+    const harEntry = this._entries.get(request)!;
     // Rewrite provisional headers with actual
-    const request = response.request();
     harEntry.request.headers = request.headers().map(header => ({ name: header.name, value: header.value }));
     harEntry.request.cookies = cookiesForHar(request.headerValue('cookie'), ';');
-    harEntry.request.postData = postDataForHar(request) || undefined;
+
+    const response = await request.response();
+
+    if (!response) return;
+
+    const transferSize = response.encodedDataLength();
+    const headersSize = calcResponseHeadersSize(response.protocol(), response.status(), response.statusText(), response.headers());
+    const bodySize = transferSize - headersSize;
 
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
-      httpVersion: 'HTTP/1.1',
+      httpVersion: response.protocol() || 'http/1.1',
       cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {
         size: -1,
         mimeType: response.headerValue('content-type') || 'application/octet-stream',
       },
-      headersSize: -1,
-      bodySize: -1,
-      redirectURL: ''
+      headersSize: headersSize || -1,
+      bodySize: bodySize || -1,
+      redirectURL: '',
+      _transferSize: transferSize || -1
     };
     const timing = response.timing();
+
+    if (request.redirectedFrom()) {
+      const fromEntry = this._entries.get(request.redirectedFrom()!)!;
+      fromEntry.response.redirectURL = request.url();
+    }
+
     if (pageEntry.startedDateTime.valueOf() > timing.startTime)
       pageEntry.startedDateTime = new Date(timing.startTime);
     harEntry.timings = {
@@ -198,6 +210,8 @@ export class HarTracer {
       const promise = response.body().then(buffer => {
         harEntry.response.content.text = buffer.toString('base64');
         harEntry.response.content.encoding = 'base64';
+        harEntry.response.content.size = buffer.length;
+        harEntry.response.content.compression = buffer.length - harEntry.response.bodySize;
       }).catch(() => {});
       this._addBarrier(page, promise);
     }
@@ -277,4 +291,13 @@ function parseCookie(c: string): har.Cookie {
       cookie.secure = true;
   }
   return cookie;
+}
+
+function calcResponseHeadersSize(protocol: string, status: number, statusText: string , headers: types.HeadersArray) {
+  let buffer = util.format('%s %d %s\r\n', protocol, status, statusText);
+  headers.forEach(header => {
+    buffer = buffer.concat(util.format('%s: %s\r\n', header.name, header.value));
+  });
+  buffer = buffer.concat('\r\n');
+  return buffer.length;
 }

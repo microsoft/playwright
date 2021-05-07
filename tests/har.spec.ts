@@ -92,7 +92,7 @@ it('should include request', async ({ contextFactory, server }, testInfo) => {
   expect(entry.pageref).toBe('page_0');
   expect(entry.request.url).toBe(server.EMPTY_PAGE);
   expect(entry.request.method).toBe('GET');
-  expect(entry.request.httpVersion).toBe('HTTP/1.1');
+  expect(entry.request.httpVersion).toBe('http/1.1');
   expect(entry.request.headers.length).toBeGreaterThan(1);
   expect(entry.request.headers.find(h => h.name.toLowerCase() === 'user-agent')).toBeTruthy();
 });
@@ -104,7 +104,7 @@ it('should include response', async ({ contextFactory, server }, testInfo) => {
   const entry = log.entries[0];
   expect(entry.response.status).toBe(200);
   expect(entry.response.statusText).toBe('OK');
-  expect(entry.response.httpVersion).toBe('HTTP/1.1');
+  expect(entry.response.httpVersion).toBe('http/1.1');
   expect(entry.response.headers.length).toBeGreaterThan(1);
   expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type').value).toContain('text/html');
 });
@@ -241,13 +241,24 @@ it('should include content', async ({ contextFactory, server }, testInfo) => {
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
 
-  const content1 = log.entries[0].response.content;
-  expect(content1.encoding).toBe('base64');
-  expect(content1.mimeType).toBe('text/html; charset=utf-8');
-  expect(Buffer.from(content1.text, 'base64').toString()).toContain('HAR Page');
+  const response1 = log.entries[0].response;
+  expect(response1.content.encoding).toBe('base64');
+  expect(response1.content.mimeType).toBe('text/html; charset=utf-8');
+  expect(Buffer.from(response1.content.text, 'base64').toString()).toContain('HAR Page');
+  expect(response1.bodySize).toBe(96);
+  expect(response1.headersSize).toBe(198);
+  expect(response1._transferSize).toBe(294);
+  expect(response1.content.size).toBe(96);
+  expect(response1.content.compression).toBe(0);
 
-  const content2 = log.entries[1].response.content;
-  expect(content2.encoding).toBe('base64');
-  expect(content2.mimeType).toBe('text/css; charset=utf-8');
-  expect(Buffer.from(content2.text, 'base64').toString()).toContain('pink');
+  const response2 = log.entries[1].response;
+  expect(response2.content.encoding).toBe('base64');
+  expect(response2.content.mimeType).toBe('text/css; charset=utf-8');
+  expect(Buffer.from(response2.content.text, 'base64').toString()).toContain('pink');
+  expect(response2.bodySize).toBe(37);
+  expect(response2.headersSize).toBe(197);
+  expect(response2._transferSize).toBe(234);
+  expect(response2.content.size).toBe(37);
+  expect(response2.content.compression).toBe(0);
 });
+

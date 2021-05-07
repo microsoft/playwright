@@ -296,7 +296,7 @@ export class CRNetworkManager {
         responseStart: -1,
       };
     }
-    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
+    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody, responsePayload.protocol);
   }
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
@@ -330,8 +330,10 @@ export class CRNetworkManager {
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
-    if (response)
+    if (response) {
+      response.setEncodedDataLength(event.encodedDataLength);
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
+    }
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);

@@ -275,8 +275,10 @@ export class Response extends SdkObject {
   private _headersMap = new Map<string, string>();
   private _getResponseBodyCallback: GetResponseBodyCallback;
   private _timing: ResourceTiming;
+  private _protocol: string | undefined;
+  private _encodedDataLength: number;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, protocol: string | undefined) {
     super(request.frame(), 'response');
     this._request = request;
     this._timing = timing;
@@ -291,11 +293,17 @@ export class Response extends SdkObject {
       this._finishedPromiseCallback = f;
     });
     this._request._setResponse(this);
+    this._protocol = protocol;
+    this._encodedDataLength = -1;
   }
 
   _requestFinished(responseEndTiming: number, error?: string) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
     this._finishedPromiseCallback({ error });
+  }
+
+  setEncodedDataLength(bytes: number) {
+    this._encodedDataLength = bytes;
   }
 
   url(): string {
@@ -343,6 +351,13 @@ export class Response extends SdkObject {
 
   frame(): frames.Frame {
     return this._request.frame();
+  }
+  protocol(): string {
+    return this._protocol || 'http/1.1';
+  }
+
+  encodedDataLength(): number {
+    return this._encodedDataLength;
   }
 }
 
