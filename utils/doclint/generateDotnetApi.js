@@ -18,7 +18,8 @@
 
 const path = require('path');
 const Documentation = require('./documentation');
-const XmlDoc = require('./xmlDocumentation')
+const XmlDoc = require('./xmlDocumentation');
+const DotnetDocumentation = require('./dotnetDocumentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
@@ -156,7 +157,7 @@ const customTypeNames = new Map([
     const name = classNameMap.get(element.name);
     if (ignoredTypes.includes(name))
       continue;
-
+    DotnetDocumentation.registerInterface(element, name);
     innerRenderElement('partial interface', name, element.spec, (out) => {
       for (const member of element.membersArray) {
         renderMember(member, element, out);
@@ -591,6 +592,8 @@ function renderMethod(member, parent, output, name) {
     output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
     paramDocs.forEach((val, ind) => printArgDoc(val, ind));
     output(`${type} ${name}(${args.join(', ')});`);
+
+    DotnetDocumentation.registerMember(`${type} ${name}(${args.join(', ')})`);
   } else {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
