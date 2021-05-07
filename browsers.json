@@ -8,7 +8,7 @@
     },
     {
       "name": "firefox",
-      "revision": "1250",
+      "revision": "1254",
       "installByDefault": true
     },
     {
