@@ -88,8 +88,8 @@ class PageHandler {
     // to be ignored by the protocol clients.
     this._isPageReady = false;
 
-    if (this._pageTarget.screencastInfo())
-      this._onScreencastStarted();
+    if (this._pageTarget.videoRecordingInfo())
+      this._onVideoRecordingStarted();
 
     this._eventListeners = [
       helper.on(this._pageTarget, PageTarget.Events.DialogOpened, this._onDialogOpened.bind(this)),
@@ -97,7 +97,8 @@ class PageHandler {
       helper.on(this._pageTarget, PageTarget.Events.Crashed, () => {
         this._session.emitEvent('Page.crashed', {});
       }),
-      helper.on(this._pageTarget, PageTarget.Events.ScreencastStarted, this._onScreencastStarted.bind(this)),
+      helper.on(this._pageTarget, PageTarget.Events.ScreencastStarted, this._onVideoRecordingStarted.bind(this)),
+      helper.on(this._pageTarget, PageTarget.Events.ScreencastFrame, this._onScreencastFrame.bind(this)),
       helper.on(this._pageNetwork, PageNetwork.Events.Request, this._handleNetworkEvent.bind(this, 'Network.requestWillBeSent')),
       helper.on(this._pageNetwork, PageNetwork.Events.Response, this._handleNetworkEvent.bind(this, 'Network.responseReceived')),
       helper.on(this._pageNetwork, PageNetwork.Events.RequestFinished, this._handleNetworkEvent.bind(this, 'Network.requestFinished')),
@@ -146,9 +147,13 @@ class PageHandler {
     helper.removeListeners(this._eventListeners);
   }
 
-  _onScreencastStarted() {
-    const info = this._pageTarget.screencastInfo();
-    this._session.emitEvent('Page.screencastStarted', { screencastId: info.videoSessionId, file: info.file });
+  _onVideoRecordingStarted() {
+    const info = this._pageTarget.videoRecordingInfo();
+    this._session.emitEvent('Page.videoRecordingStarted', { screencastId: info.sessionId, file: info.file });
+  }
+
+  _onScreencastFrame(data) {
+    this._session.emitEvent('Page.screencastFrame', { data, deviceWidth: 0, deviceHeight: 0 });
   }
 
   _onPageReady(event) {
@@ -371,6 +376,18 @@ class PageHandler {
 
   async ['Page.setInterceptFileChooserDialog'](options) {
     return await this._contentPage.send('setInterceptFileChooserDialog', options);
+  }
+
+  async ['Page.startScreencast'](options) {
+    return await this._pageTarget.startScreencast(options);
+  }
+
+  async ['Page.screencastFrameAck'](options) {
+    await this._pageTarget.screencastFrameAck(options);
+  }
+
+  async ['Page.stopScreencast'](options) {
+    await this._pageTarget.stopScreencast(options);
   }
 
   async ['Page.sendMessageToWorker']({workerId, message}) {
