@@ -32,7 +32,7 @@ type PlaywrightTestArgs = {
   startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;
 };
 
-type PlaywrightEnvOptions = {
+export type PlaywrightEnvOptions = {
   launchOptions?: LaunchOptions;
   traceDir?: string;
 };
@@ -49,8 +49,8 @@ class PlaywrightEnv {
   private _persistentContext: BrowserContext | undefined;
   private _remoteServer: RemoteServer | undefined;
 
-  optionsType(): PlaywrightEnvOptions {
-    return {};
+  hasBeforeAllOptions(options: PlaywrightEnvOptions) {
+    return 'launchOptions' in options || 'traceDir' in options;
   }
 
   async beforeAll(args: CommonArgs & PlaywrightEnvOptions, workerInfo: folio.WorkerInfo): Promise<PlaywrightWorkerArgs> {
@@ -137,7 +137,7 @@ class BrowserEnv {
   }
 
   async beforeEach(options: CommonArgs, testInfo: folio.TestInfo): Promise<BrowserTestArgs> {
-    const debugName = path.relative(testInfo.config.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
+    const debugName = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
     const contextOptions = {
       recordVideo: options.video ? { dir: testInfo.outputPath('') } : undefined,
       _debugName: debugName,
@@ -181,10 +181,7 @@ class ContextEnv {
 }
 
 export const playwrightTest = baseTest.extend(new PlaywrightEnv());
-export const slowPlaywrightTest = baseTest.extend(new PlaywrightEnv());
 export const browserTest = playwrightTest.extend(new BrowserEnv());
-export const slowBrowserTest = slowPlaywrightTest.extend(new BrowserEnv());
 export const contextTest = browserTest.extend(new ContextEnv());
-export const tracingTest = baseTest.extend(new PlaywrightEnv()).extend(new BrowserEnv()).extend(new ContextEnv());
 
 export { expect } from 'folio';

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { browserTest as it, expect, slowBrowserTest } from './config/browserTest';
+import { browserTest as it, expect } from './config/browserTest';
 import { attachFrame, chromiumVersionLessThan } from './config/utils';
 
 it('should not be visible in context.pages', async ({contextFactory}) => {
@@ -108,8 +108,9 @@ it('should click the button with offset with page scale', async ({browser, serve
   await context.close();
 });
 
-// We open 20 pages here!
-slowBrowserTest('should not leak listeners during navigation of 20 pages', async ({contextFactory, server}) => {
+it('should not leak listeners during navigation of 20 pages', async ({contextFactory, server}) => {
+  it.slow('We open 20 pages here!');
+
   const context = await contextFactory();
   let warning = null;
   const warningHandler = w => warning = w;

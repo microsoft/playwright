@@ -15,13 +15,15 @@
  */
 
 import path from 'path';
-import { expect, tracingTest as test } from './config/browserTest';
+import { expect, contextTest as test } from './config/browserTest';
 import yauzl from 'yauzl';
 import removeFolder from 'rimraf';
 
-test.beforeEach(async ({}, testInfo) => {
-  const folder = path.join(testInfo.config.outputDir, 'trace-' + process.env.FOLIO_WORKER_INDEX);
-  await new Promise(f => removeFolder(folder, f));
+const traceDir = path.join(__dirname, '..', 'test-results', 'trace-' + process.env.FOLIO_WORKER_INDEX);
+test.useOptions({ traceDir });
+
+test.beforeEach(async () => {
+  await new Promise(f => removeFolder(traceDir, f));
 });
 
 test('should collect trace', async ({ context, page, server, browserName }, testInfo) => {

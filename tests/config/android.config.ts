@@ -17,28 +17,10 @@
 import * as folio from 'folio';
 import * as path from 'path';
 import { test as pageTest } from '../page/pageTest';
-import { AndroidEnv, androidTest } from './androidTest';
+import { AndroidEnv } from './androidTest';
 import type { BrowserContext } from '../../index';
-
-const config: folio.Config = {
-  testDir: path.join(__dirname, '..'),
-  outputDir: path.join(__dirname, '..', '..', 'test-results'),
-  timeout: 120000,
-  globalTimeout: 7200000,
-  workers: 1,
-};
-if (process.env.CI) {
-  config.forbidOnly = true;
-  config.retries = 1;  // Multiple retries are too slow on Android.
-}
-folio.setConfig(config);
-
-if (process.env.CI) {
-  folio.setReporters([
-    new folio.reporters.dot(),
-    new folio.reporters.json({ outputFile: path.join(__dirname, '..', '..', 'test-results', 'report.json') }),
-  ]);
-}
+import { PlaywrightEnvOptions } from './browserTest';
+import { CommonOptions } from './baseTest';
 
 class AndroidPageEnv extends AndroidEnv {
   private _context?: BrowserContext;
@@ -60,14 +42,40 @@ class AndroidPageEnv extends AndroidEnv {
   }
 }
 
-const envConfig = {
-  tag: 'android',
-  options: {
-    mode: 'default' as const,
-    browserName: 'chromium' as const,
-    loopback: '10.0.2.2',
-  }
+type AllOptions = PlaywrightEnvOptions & CommonOptions;
+
+const outputDir = path.join(__dirname, '..', '..', 'test-results');
+const testDir = path.join(__dirname, '..');
+const config: folio.Config<AllOptions> = {
+  testDir,
+  outputDir,
+  timeout: 120000,
+  globalTimeout: 7200000,
+  workers: 1,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [
+    'dot',
+    { name: 'json', outputFile: path.join(outputDir, 'report.json') },
+  ] : 'line',
+  projects: [],
 };
 
-pageTest.runWith(envConfig, new AndroidPageEnv());
-androidTest.runWith(envConfig);
+config.projects.push({
+  name: 'android',
+  options: {
+    loopback: '10.0.2.2',
+  },
+  testDir: path.join(testDir, 'android'),
+});
+
+config.projects.push({
+  name: 'android',
+  options: {
+    loopback: '10.0.2.2',
+  },
+  testDir: path.join(testDir, 'page'),
+  define: { test: pageTest, env: new AndroidPageEnv() },
+});
+
+export default config;

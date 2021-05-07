@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { slowPlaywrightTest as test, expect } from './config/browserTest';
+import { playwrightTest as test, expect } from './config/browserTest';
 import { execSync } from 'child_process';
+
+test.slow('All signal tests are slow');
 
 test('should close the browser when the node process closes', async ({startRemoteServer, isWindows, server}) => {
   const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });

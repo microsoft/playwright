@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { contextTest as it, slowPlaywrightTest, expect } from './config/browserTest';
+import { contextTest as it, playwrightTest, expect } from './config/browserTest';
 
 it('should work', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -157,7 +157,9 @@ it('should isolate send cookie header', async ({server, context, browser}) => {
   }
 });
 
-slowPlaywrightTest('should isolate cookies between launches', async ({browserType, server, browserOptions}) => {
+playwrightTest('should isolate cookies between launches', async ({browserType, server, browserOptions}) => {
+  playwrightTest.slow();
+
   const browser1 = await browserType.launch(browserOptions);
   const context1 = await browser1.newContext();
   await context1.addCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);
