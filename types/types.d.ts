@@ -7285,6 +7285,14 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
+     * Whether to show visible scrollbars for the browser. Defaults to `false` in headless mode. Otherwise defaults to true.
+     *
+     * This option has no effect on a Mac or with WebKit browsers. This is because MacOS uses overlay scrollbars which are not
+     * visible by default.
+     */
+    scrollbars?: boolean;
+
+    /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
      */
     slowMo?: number;
@@ -8336,6 +8344,14 @@ export interface AndroidDevice {
     };
 
     /**
+     * Whether to show visible scrollbars for the browser. Defaults to `false` in headless mode. Otherwise defaults to true.
+     *
+     * This option has no effect on a Mac or with WebKit browsers. This is because MacOS uses overlay scrollbars which are not
+     * visible by default.
+     */
+    scrollbars?: boolean;
+
+    /**
      * Changes the timezone of the context. See
      * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
      * for a list of supported timezone IDs.
@@ -9130,6 +9146,14 @@ export interface Browser extends EventEmitter {
        */
       height: number;
     };
+
+    /**
+     * Whether to show visible scrollbars for the browser. Defaults to `false` in headless mode. Otherwise defaults to true.
+     *
+     * This option has no effect on a Mac or with WebKit browsers. This is because MacOS uses overlay scrollbars which are not
+     * visible by default.
+     */
+    scrollbars?: boolean;
 
     /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -11241,6 +11265,14 @@ export interface BrowserContextOptions {
      */
     height: number;
   };
+
+  /**
+   * Whether to show visible scrollbars for the browser. Defaults to `false` in headless mode. Otherwise defaults to true.
+   *
+   * This option has no effect on a Mac or with WebKit browsers. This is because MacOS uses overlay scrollbars which are not
+   * visible by default.
+   */
+  scrollbars?: boolean;
 
   /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information

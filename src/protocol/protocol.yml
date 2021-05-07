@@ -306,6 +306,7 @@ ContextOptions:
       literals:
       - reduce
       - no-preference
+    scrollbars: boolean?
     acceptDownloads: boolean?
     baseURL: string?
     _debugName: string?

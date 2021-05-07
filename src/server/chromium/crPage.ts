@@ -524,6 +524,7 @@ class FrameSession {
     promises.push(this._updateOffline(true));
     promises.push(this._updateHttpCredentials(true));
     promises.push(this._updateEmulateMedia(true));
+    promises.push(this._updateScrollbars(true));
     for (const binding of this._crPage._page.allBindings())
       promises.push(this._initBinding(binding));
     for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
@@ -1004,6 +1005,13 @@ class FrameSession {
     ];
     // Empty string disables the override.
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
+  }
+
+  async _updateScrollbars(initial: boolean): Promise<void> {
+    const {headful} = this._crPage._browserContext._browser.options;
+    const {scrollbars} = this._crPage._browserContext._options;
+    if (scrollbars === undefined ? !headful : !scrollbars)
+      await this._client.send('Emulation.setScrollbarsHidden', {hidden: true});
   }
 
   async _updateRequestInterception(): Promise<void> {
