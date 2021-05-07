@@ -23,6 +23,7 @@ import { installCoverageHooks } from './coverage';
 import * as childProcess from 'child_process';
 import { start } from '../../lib/outofprocess';
 import { PlaywrightClient } from '../../lib/remote/playwrightClient';
+import removeFolder from 'rimraf';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type Mode = 'default' | 'driver' | 'service';
@@ -43,6 +44,8 @@ type BaseWorkerArgs = {
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
+
+  createTempDir: () => string;
 };
 
 type BaseOptions = {
@@ -115,6 +118,7 @@ class BaseEnv {
   private _mode: DriverMode | ServiceMode | DefaultMode;
   private _options: BaseOptions;
   private _playwright: typeof import('../../index');
+  private _tempDir: { dir: string; counter: number } | undefined;
 
   optionsType(): BaseOptions {
     return {} as any;
@@ -144,6 +148,18 @@ class BaseEnv {
       mode: this._options.mode,
       platform: process.platform as ('win32' | 'darwin' | 'linux'),
       toImpl: (this._playwright as any)._toImpl,
+      createTempDir: () => {
+        if (!this._tempDir) {
+          fs.mkdirSync(workerInfo.config.outputDir, { recursive: true });
+          this._tempDir = {
+            dir: fs.mkdtempSync(path.join(workerInfo.config.outputDir, 'temp-')),
+            counter: 0,
+          };
+        }
+        const subDir = path.join(this._tempDir.dir, String(this._tempDir.counter++));
+        fs.mkdirSync(subDir);
+        return subDir;
+      },
     };
   }
 
@@ -161,6 +177,10 @@ class BaseEnv {
 
   async afterAll({}, workerInfo: folio.WorkerInfo) {
     await this._mode.teardown();
+    if (this._tempDir) {
+      await new Promise(f => removeFolder(this._tempDir.dir, f));
+      this._tempDir = undefined;
+    }
   }
 }
 

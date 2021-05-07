@@ -26,6 +26,7 @@ const ffmpeg = registry.executablePath('ffmpeg') || '';
 
 export class VideoPlayer {
   fileName: string;
+  frameFilePrefix: string;
   output: string;
   duration: number;
   frames: number;
@@ -33,11 +34,12 @@ export class VideoPlayer {
   videoHeight: number;
   cache = new Map<number, PNG>();
 
-  constructor(fileName: string) {
+  constructor(fileName: string, tempDir: string) {
     this.fileName = fileName;
+    this.frameFilePrefix = path.join(tempDir, 'frame');
     // Force output frame rate to 25 fps as otherwise it would produce one image per timebase unit
     // which is 1 / (25 * 1000).
-    this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%03d.png`]).stderr.toString();
+    this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.frameFilePrefix}-%03d.png`]).stderr.toString();
 
     const lines = this.output.split('\n');
     let framesLine = lines.find(l => l.startsWith('frame='))!;
@@ -76,7 +78,7 @@ export class VideoPlayer {
   frame(frame: number, offset = { x: 10, y: 10 }): PNG {
     if (!this.cache.has(frame)) {
       const gap = '0'.repeat(3 - String(frame).length);
-      const buffer = fs.readFileSync(`${this.fileName}-${gap}${frame}.png`);
+      const buffer = fs.readFileSync(`${this.frameFilePrefix}-${gap}${frame}.png`);
       this.cache.set(frame, PNG.sync.read(buffer));
     }
     const decoded = this.cache.get(frame);
@@ -133,8 +135,8 @@ function findVideos(videoDir: string) {
   return files.filter(file => file.endsWith('webm')).map(file => path.join(videoDir, file));
 }
 
-function expectRedFrames(videoFile: string, size: { width: number, height: number }) {
-  const videoPlayer = new VideoPlayer(videoFile);
+function expectRedFrames(videoFile: string, size: { width: number, height: number }, tempDir: string) {
+  const videoPlayer = new VideoPlayer(videoFile, tempDir);
   const duration = videoPlayer.duration;
   expect(duration).toBeGreaterThan(0);
 
@@ -157,7 +159,7 @@ it.describe('screencast', () => {
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should work with old options', async ({browser, isFirefox, isWindows}, testInfo) => {
+  it('should work with old options', async ({browser, isFirefox, isWindows, createTempDir}, testInfo) => {
     it.fail(isFirefox && isWindows);
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
@@ -173,7 +175,7 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    expectRedFrames(videoFile, size);
+    expectRedFrames(videoFile, size, createTempDir());
   });
 
   it('should throw without recordVideo.dir', async ({ browser }) => {
@@ -181,7 +183,7 @@ it.describe('screencast', () => {
     expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
   });
 
-  it('should capture static page', async ({browser, isFirefox, isWindows}, testInfo) => {
+  it('should capture static page', async ({browser, isFirefox, isWindows, createTempDir}, testInfo) => {
     it.fail(isFirefox && isWindows);
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -198,7 +200,7 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    expectRedFrames(videoFile, size);
+    expectRedFrames(videoFile, size, createTempDir());
   });
 
   it('should expose video path', async ({browser}, testInfo) => {
@@ -328,7 +330,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should capture navigation', async ({browser, server}, testInfo) => {
+  it('should capture navigation', async ({browser, server, createTempDir}, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -344,7 +346,7 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
+    const videoPlayer = new VideoPlayer(videoFile, createTempDir());
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
 
@@ -359,7 +361,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should capture css transformation', async ({browser, server, headful, browserName, platform}, testInfo) => {
+  it('should capture css transformation', async ({browser, server, headful, browserName, platform, createTempDir}, testInfo) => {
     it.fixme(headful, 'Fails on headful');
     it.fixme(browserName === 'webkit' && platform === 'win32', 'Fails on headful');
 
@@ -379,7 +381,7 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
+    const videoPlayer = new VideoPlayer(videoFile, createTempDir());
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
 
@@ -389,7 +391,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should work for popups', async ({browser, server}, testInfo) => {
+  it('should work for popups', async ({browser, server, createTempDir}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -413,13 +415,13 @@ it.describe('screencast', () => {
     const pageVideoFile = await page.video().path();
     const popupVideoFile = await popup.video().path();
     expect(pageVideoFile).not.toEqual(popupVideoFile);
-    expectRedFrames(popupVideoFile, size);
+    expectRedFrames(popupVideoFile, size, createTempDir());
 
     const videoFiles = findVideos(videosPath);
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should scale frames down to the requested size ', async ({browser, server, headful}, testInfo) => {
+  it('should scale frames down to the requested size ', async ({browser, server, headful, createTempDir}, testInfo) => {
     it.fixme(headful, 'Fails on headful');
 
     const context = await browser.newContext({
@@ -445,7 +447,7 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
+    const videoPlayer = new VideoPlayer(videoFile, createTempDir());
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
 
@@ -467,7 +469,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should use viewport scaled down to fit into 800x800 as default size', async ({browser}, testInfo) => {
+  it('should use viewport scaled down to fit into 800x800 as default size', async ({browser, createTempDir}, testInfo) => {
     const size = {width: 1600, height: 1200};
     const context = await browser.newContext({
       recordVideo: {
@@ -481,12 +483,12 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
+    const videoPlayer = new VideoPlayer(videoFile, createTempDir());
     expect(videoPlayer.videoWidth).toBe(800);
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should be 800x450 by default', async ({ browser }, testInfo) => {
+  it('should be 800x450 by default', async ({ browser, createTempDir }, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -498,12 +500,12 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
+    const videoPlayer = new VideoPlayer(videoFile, createTempDir());
     expect(videoPlayer.videoWidth).toBe(800);
     expect(videoPlayer.videoHeight).toBe(450);
   });
 
-  it('should be 800x600 with null viewport', async ({ browser, headful, browserName }, testInfo) => {
+  it('should be 800x600 with null viewport', async ({ browser, headful, browserName, createTempDir }, testInfo) => {
     it.fixme(browserName === 'firefox' && !headful, 'Fails in headless on bots');
 
     const context = await browser.newContext({
@@ -518,12 +520,12 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
+    const videoPlayer = new VideoPlayer(videoFile, createTempDir());
     expect(videoPlayer.videoWidth).toBe(800);
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should capture static page in persistent context', async ({launchPersistent}, testInfo) => {
+  it('should capture static page in persistent context', async ({launchPersistent, createTempDir}, testInfo) => {
     const size = { width: 320, height: 240 };
     const { context, page } = await launchPersistent({
       recordVideo: {
@@ -538,7 +540,7 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
+    const videoPlayer = new VideoPlayer(videoFile, createTempDir());
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
 
@@ -551,7 +553,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should emulate an iphone', async ({contextFactory, playwright, contextOptions, browserName}, testInfo) => {
+  it('should emulate an iphone', async ({contextFactory, playwright, contextOptions, browserName, createTempDir}, testInfo) => {
     it.skip(browserName === 'firefox', 'isMobile is not supported in Firefox');
 
     const device = playwright.devices['iPhone 6'];
@@ -568,7 +570,7 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
+    const videoPlayer = new VideoPlayer(videoFile, createTempDir());
     expect(videoPlayer.videoWidth).toBe(374);
     expect(videoPlayer.videoHeight).toBe(666);
   });

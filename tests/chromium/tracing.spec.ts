@@ -21,9 +21,9 @@ import path from 'path';
 it.describe('tracing', () => {
   it.skip(({ browserName }) => browserName !== 'chromium');
 
-  it('should output a trace', async ({browser, server}, testInfo) => {
+  it('should output a trace', async ({browser, server, createTempDir}, testInfo) => {
     const page = await browser.newPage();
-    const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
+    const outputTraceFile = path.join(createTempDir(), `trace.json`);
     await browser.startTracing(page, {screenshots: true, path: outputTraceFile});
     await page.goto(server.PREFIX + '/grid.html');
     await browser.stopTracing();
@@ -31,9 +31,9 @@ it.describe('tracing', () => {
     await page.close();
   });
 
-  it('should create directories as needed', async ({browser, server}, testInfo) => {
+  it('should create directories as needed', async ({browser, server, createTempDir}, testInfo) => {
     const page = await browser.newPage();
-    const filePath = testInfo.outputPath(path.join('these', 'are', 'directories', 'trace.json'));
+    const filePath = path.join(createTempDir(), 'these', 'are', 'directories', 'trace.json');
     await browser.startTracing(page, {screenshots: true, path: filePath});
     await page.goto(server.PREFIX + '/grid.html');
     await browser.stopTracing();
@@ -41,9 +41,9 @@ it.describe('tracing', () => {
     await page.close();
   });
 
-  it('should run with custom categories if provided', async ({browser}, testInfo) => {
+  it('should run with custom categories if provided', async ({browser, createTempDir}, testInfo) => {
     const page = await browser.newPage();
-    const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
+    const outputTraceFile = path.join(createTempDir(), `trace.json`);
     await browser.startTracing(page, {path: outputTraceFile, categories: ['disabled-by-default-v8.cpu_profiler.hires']});
     await browser.stopTracing();
 
@@ -52,9 +52,9 @@ it.describe('tracing', () => {
     await page.close();
   });
 
-  it('should throw if tracing on two pages', async ({browser}, testInfo) => {
+  it('should throw if tracing on two pages', async ({browser, createTempDir}, testInfo) => {
     const page = await browser.newPage();
-    const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
+    const outputTraceFile = path.join(createTempDir(), `trace.json`);
     await browser.startTracing(page, {path: outputTraceFile});
     const newPage = await browser.newPage();
     let error = null;
@@ -65,9 +65,9 @@ it.describe('tracing', () => {
     await page.close();
   });
 
-  it('should return a buffer', async ({browser, server}, testInfo) => {
+  it('should return a buffer', async ({browser, server, createTempDir}, testInfo) => {
     const page = await browser.newPage();
-    const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
+    const outputTraceFile = path.join(createTempDir(), `trace.json`);
     await browser.startTracing(page, {screenshots: true, path: outputTraceFile});
     await page.goto(server.PREFIX + '/grid.html');
     const trace = await browser.stopTracing();
