@@ -40,6 +40,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
+import { debugLogger } from '../../utils/debugLogger';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -72,6 +73,7 @@ export class WKPage implements PageDelegate {
   // until the popup page proxy arrives.
   private _nextWindowOpenPopupFeatures?: string[];
   private _recordingVideoFile: string | null = null;
+  private _screencastGeneration: number = 0;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -90,6 +92,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._pageProxySession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
+      helper.addEventListener(this._pageProxySession, 'Screencast.screencastFrame', this._onScreencastFrame.bind(this)),
     ];
     this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
@@ -121,7 +124,7 @@ export class WKPage implements PageDelegate {
     if (this._browserContext._options.recordVideo) {
       const outputFile = path.join(this._browserContext._options.recordVideo.dir, createGuid() + '.webm');
       promises.push(this._browserContext._ensureVideosPath().then(() => {
-        return this._startScreencast({
+        return this._startVideo({
           // validateBrowserContextOptions ensures correct video size.
           ...this._browserContext._options.recordVideo!.size!,
           outputFile,
@@ -721,7 +724,7 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._stopScreencast();
+    await this._stopVideo();
     await this._pageProxySession.sendMayFail('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
@@ -736,7 +739,7 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async _startScreencast(options: types.PageScreencastOptions): Promise<void> {
+  private async _startVideo(options: types.PageScreencastOptions): Promise<void> {
     assert(!this._recordingVideoFile);
     const START_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.start' : 'Screencast.startVideo';
     const { screencastId } = await this._pageProxySession.send(START_VIDEO_PROTOCOL_COMMAND as any, {
@@ -748,7 +751,7 @@ export class WKPage implements PageDelegate {
     this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this.pageOrError());
   }
 
-  async _stopScreencast(): Promise<void> {
+  private async _stopVideo(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
     const STOP_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.stop' : 'Screencast.stopVideo';
@@ -825,7 +828,22 @@ export class WKPage implements PageDelegate {
   }
 
   async setScreencastEnabled(enabled: boolean): Promise<void> {
-    throw new Error('Not implemented');
+    if (enabled) {
+      const { generation } = await this._pageProxySession.send('Screencast.startScreencast', { width: 800, height: 600, quality: 70 });
+      this._screencastGeneration = generation;
+    } else {
+      await this._pageProxySession.send('Screencast.stopScreencast');
+    }
+  }
+
+  private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
+    const buffer = Buffer.from(event.data, 'base64');
+    this._page.emit(Page.Events.ScreencastFrame, {
+      buffer,
+      width: event.deviceWidth,
+      height: event.deviceHeight,
+    });
+    this._pageProxySession.send('Screencast.screencastFrameAck', { generation: this._screencastGeneration }).catch(e => debugLogger.log('error', e));
   }
 
   rafCountForStablePosition(): number {

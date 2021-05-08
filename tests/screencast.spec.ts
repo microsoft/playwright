@@ -160,7 +160,6 @@ it.describe('screencast', () => {
   });
 
   it('should work with old options', async ({browser, isFirefox, isWindows}, testInfo) => {
-    it.fail(isFirefox && isWindows);
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -184,7 +183,6 @@ it.describe('screencast', () => {
   });
 
   it('should capture static page', async ({browser, isFirefox, isWindows}, testInfo) => {
-    it.fail(isFirefox && isWindows);
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
       recordVideo: {
