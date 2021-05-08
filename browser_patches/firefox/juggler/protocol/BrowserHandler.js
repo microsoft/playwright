@@ -37,13 +37,10 @@ class BrowserHandler {
       helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadCreated, this._onDownloadCreated.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadFinished, this._onDownloadFinished.bind(this)),
+      helper.on(this._targetRegistry, TargetRegistry.Events.ScreencastStopped, sessionId => {
+        this._session.emitEvent('Browser.videoRecordingFinished', {screencastId: '' + sessionId});
+      })
     ];
-
-    const onScreencastStopped = (subject, topic, data) => {
-      this._session.emitEvent('Browser.videoRecordingFinished', {screencastId: '' + data});
-    };
-    Services.obs.addObserver(onScreencastStopped, 'juggler-screencast-stopped');
-    this._eventListeners.push(() => Services.obs.removeObserver(onScreencastStopped, 'juggler-screencast-stopped'));
 
     for (const target of this._targetRegistry.targets())
       this._onTargetCreated(target);

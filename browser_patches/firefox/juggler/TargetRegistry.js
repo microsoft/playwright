@@ -88,6 +88,8 @@ class DownloadInterceptor {
   }
 }
 
+const screencastService = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+
 class TargetRegistry {
   constructor() {
     EventEmitter.decorate(this);
@@ -353,7 +355,6 @@ class PageTarget {
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
 
     this._registry.emit(TargetRegistry.Events.TargetCreated, this);
-    this._screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
   }
 
   dialog(dialogId) {
@@ -503,7 +504,17 @@ class PageTarget {
     // Exclude address bar and navigation control from the video.
     const rect = this.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._window.devicePixelRatio;
-    const sessionId = this._screencast.startVideoRecording(docShell, true, file, width, height, 0, devicePixelRatio * rect.top);
+    let sessionId;
+    const registry = this._registry;
+    const screencastClient = {
+      QueryInterface: ChromeUtils.generateQI([Ci.nsIScreencastServiceClient]),
+      screencastFrame(data, deviceWidth, deviceHeight) {
+      },
+      screencastStopped() {
+        registry.emit(TargetRegistry.Events.ScreencastStopped, sessionId);
+      },
+    };
+    sessionId = screencastService.startVideoRecording(screencastClient, docShell, true, file, width, height, 0, devicePixelRatio * rect.top);
     this._videoRecordingInfo = { sessionId, file };
     this.emit(PageTarget.Events.ScreencastStarted);
   }
@@ -513,7 +524,7 @@ class PageTarget {
       throw new Error('No video recording in progress');
     const videoRecordingInfo = this._videoRecordingInfo;
     this._videoRecordingInfo = undefined;
-    this._screencast.stopVideoRecording(videoRecordingInfo.sessionId);
+    screencastService.stopVideoRecording(videoRecordingInfo.sessionId);
   }
 
   videoRecordingInfo() {
@@ -532,28 +543,34 @@ class PageTarget {
     // Exclude address bar and navigation control from the video.
     const rect = this.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._window.devicePixelRatio;
-    const screencastId = this._screencast.startVideoRecording(docShell, false, '', width, height, quality || 90, devicePixelRatio * rect.top);
-    const onFrame = (subject, topic, data) => {
-      this.emit(PageTarget.Events.ScreencastFrame, data);
+
+    const self = this;
+    const screencastClient = {
+      QueryInterface: ChromeUtils.generateQI([Ci.nsIScreencastServiceClient]),
+      screencastFrame(data, deviceWidth, deviceHeight) {
+        if (self._screencastRecordingInfo)
+          self.emit(PageTarget.Events.ScreencastFrame, { data, deviceWidth, deviceHeight });
+      },
+      screencastStopped() {
+      },
     };
-    Services.obs.addObserver(onFrame, 'juggler-screencast-frame');
-    this._screencastRecordingInfo = { screencastId, onFrame };
+    const screencastId = screencastService.startVideoRecording(screencastClient, docShell, false, '', width, height, quality || 90, devicePixelRatio * rect.top);
+    this._screencastRecordingInfo = { screencastId };
     return { screencastId };
   }
 
   screencastFrameAck({ screencastId }) {
     if (!this._screencastRecordingInfo || this._screencastRecordingInfo.screencastId !== screencastId)
       return;
-    this._screencast.screencastFrameAck(screencastId);
+    screencastService.screencastFrameAck(screencastId);
   }
 
   stopScreencast() {
     if (!this._screencastRecordingInfo)
       throw new Error('No screencast in progress');
-    const screencastInfo = this._screencastRecordingInfo;
-    Services.obs.removeObserver(screencastInfo.onFrame, 'juggler-screencast-frame');
+    const { screencastId } = this._screencastRecordingInfo;
     this._screencastRecordingInfo = undefined;
-    this._screencast.stopVideoRecording(screencastInfo.screencastId);
+    screencastService.stopVideoRecording(screencastId);
   }
 
   dispose() {
@@ -934,6 +951,7 @@ TargetRegistry.Events = {
   TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
   DownloadCreated: Symbol('TargetRegistry.Events.DownloadCreated'),
   DownloadFinished: Symbol('TargetRegistry.Events.DownloadFinished'),
+  ScreencastStopped: Symbol('TargetRegistry.ScreencastStopped'),
 };
 
 var EXPORTED_SYMBOLS = ['TargetRegistry', 'PageTarget'];
