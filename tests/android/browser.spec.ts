@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { androidTest as test, expect } from '../config/androidTest';
+import { androidTest as test, expect } from './androidTest';
 
 test('androidDevice.model', async function({ androidDevice }) {
   expect(androidDevice.model()).toBe('sdk_gphone_x86_arm');

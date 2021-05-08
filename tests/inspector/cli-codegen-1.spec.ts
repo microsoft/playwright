@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { cliTest as test, expect } from '../config/cliTest';
-import * as http from 'http';
+import { test, expect } from './inspectorTest';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
@@ -58,14 +57,14 @@ await page.ClickAsync("text=Submit");`);
     expect(message.text()).toBe('click');
   });
 
-  test('should click after same-document navigation', async ({ page, openRecorder, httpServer }) => {
+  test('should click after same-document navigation', async ({ page, openRecorder, server }) => {
     const recorder = await openRecorder();
 
-    httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
+    server.setRoute('/foo.html', (req, res) => {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end('');
     });
-    await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`, httpServer.PREFIX + '/foo.html');
+    await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`, server.PREFIX + '/foo.html');
     await Promise.all([
       page.waitForNavigation(),
       page.evaluate(() => history.pushState({}, '', '/url.html')),

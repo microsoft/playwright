@@ -95,14 +95,17 @@ const config: folio.Config<AllOptions> = {
   projects: [],
 };
 
-for (const browserName of ['chromium', 'webkit', 'firefox'] as BrowserName[]) {
+const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];
+for (const browserName of browserNames) {
   const executablePath = getExecutablePath(browserName);
   if (executablePath && (process.env.FOLIO_WORKER_INDEX === undefined || process.env.FOLIO_WORKER_INDEX === ''))
     console.error(`Using executable at ${executablePath}`);
+  const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
+  testIgnore.push(/android/, /electron/);
   config.projects.push({
     name: browserName,
     testDir,
-    testIgnore: [/android/, /electron/],
+    testIgnore,
     options: {
       mode: (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service'),
       browserName,

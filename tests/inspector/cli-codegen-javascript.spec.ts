@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { cliTest as test, expect } from '../config/cliTest';
+import { test, expect } from './inspectorTest';
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empty.html')).toString();
 

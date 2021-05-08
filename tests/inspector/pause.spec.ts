@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Page } from '../index';
-import { cliTest as it, expect } from './config/cliTest';
+import { Page } from '../../index';
+import { test as it, expect } from './inspectorTest';
 
 it.describe('pause', () => {
   it.skip(({ mode }) => mode !== 'default');
