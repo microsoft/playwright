@@ -344,6 +344,51 @@ it('should be able to prevent selectAll', async ({page, server, isMac}) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
 });
 
+it('should handle copy & paste text', async ({ page, server, isMac, browserName }) => {
+  it.fail(browserName === 'webkit');
+
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  const textarea = await page.$('textarea');
+  await textarea.type('copy text');
+  const modifier = isMac ? 'Meta' : 'Control';
+  await textarea.selectText();
+  await page.keyboard.press(`${modifier}+c`);
+  await textarea.fill('');
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
+  await page.keyboard.press(`${modifier}+v`);
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('copy text');
+});
+
+it('should handle cut text', async ({ page, server, isMac, browserName }) => {
+  it.fail(browserName === 'webkit');
+
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  const textarea = await page.$('textarea');
+  await textarea.type('cut text');
+  const modifier = isMac ? 'Meta' : 'Control';
+  await textarea.selectText();
+  await page.keyboard.press(`${modifier}+x`);
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
+  await page.keyboard.press(`${modifier}+v`);
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('cut text');
+});
+
+it('should handle undo & redo', async ({ page, server, isMac, browserName }) => {
+  it.fail(browserName === 'webkit');
+
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  const textarea = await page.$('textarea');
+  await textarea.type('example text');
+  const modifier = isMac ? 'Meta' : 'Control';
+  await textarea.selectText();
+  await page.keyboard.press('Backspace');
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
+  await page.keyboard.press(`${modifier}+z`);
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('example text');
+  await page.keyboard.press(`Shift+${modifier}+z`);
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
+});
+
 it('should support MacOS shortcuts', async ({page, server, platform, browserName}) => {
   it.skip(platform !== 'darwin');
   // @see https://github.com/microsoft/playwright/issues/5721
