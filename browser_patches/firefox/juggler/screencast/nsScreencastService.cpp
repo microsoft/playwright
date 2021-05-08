@@ -16,7 +16,6 @@
 #include "nsIRandomGenerator.h"
 #include "nsISupportsPrimitives.h"
 #include "nsThreadManager.h"
-#include "nsReadableUtils.h"
 #include "nsView.h"
 #include "nsViewManager.h"
 #include "webrtc/modules/desktop_capture/desktop_capturer.h"
@@ -59,28 +58,6 @@ rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> CreateWindowCapturer(nsIWidget*
   return webrtc::DesktopCaptureImpl::Create(++moduleId, windowId.get(), webrtc::CaptureDeviceType::Window, captureCursor);
 }
 
-void NotifyScreencastStopped(const nsString& sessionId) {
-  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
-  if (!observerService) {
-    fprintf(stderr, "NotifyScreencastStopped error: no observer service\n");
-    return;
-  }
-
-  observerService->NotifyObservers(nullptr, "juggler-screencast-stopped", sessionId.get());
-}
-
-void NotifyScreencastFrame(const nsCString& frameData) {
-  nsString wideString;
-  CopyASCIItoUTF16(frameData, wideString);
-  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
-  if (!observerService) {
-    fprintf(stderr, "NotifyScreencastFrame error: no observer service\n");
-    return;
-  }
-
-  observerService->NotifyObservers(nullptr, "juggler-screencast-frame", wideString.get());
-}
-
 nsresult generateUid(nsString& uid) {
   nsresult rv = NS_OK;
   nsCOMPtr<nsIRandomGenerator> rg = do_GetService("@mozilla.org/security/random-generator;1", &rv);
@@ -102,8 +79,9 @@ nsresult generateUid(nsString& uid) {
 class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
                                      public webrtc::RawFrameCallback {
  public:
-  Session(rtc::scoped_refptr<webrtc::VideoCaptureModuleEx>&& capturer, RefPtr<ScreencastEncoder>&& encoder, gfx::IntMargin margin, uint32_t jpegQuality)
-      : mCaptureModule(std::move(capturer))
+  Session(nsIScreencastServiceClient* client, rtc::scoped_refptr<webrtc::VideoCaptureModuleEx>&& capturer, RefPtr<ScreencastEncoder>&& encoder, gfx::IntMargin margin, uint32_t jpegQuality)
+      : mClient(client)
+      , mCaptureModule(std::move(capturer))
       , mEncoder(std::move(encoder))
       , mJpegQuality(jpegQuality)
       , mMargin(margin) {
@@ -129,23 +107,32 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
     return true;
   }
 
-  void Stop(std::function<void()>&& callback) {
+  void Stop() {
     if (mEncoder)
       mCaptureModule->DeRegisterCaptureDataCallback(this);
     else
-      mCaptureModule->RegisterRawFrameCallback(this);
+      mCaptureModule->DeRegisterRawFrameCallback(this);
     int error = mCaptureModule->StopCapture();
     if (error) {
       fprintf(stderr, "StopCapture error %d\n", error);
     }
-    if (mEncoder)
-      mEncoder->finish(std::move(callback));
-    else
-      callback();
+    if (mEncoder) {
+      rtc::CritScope lock(&mCaptureCallbackCs);
+      mEncoder->finish([client = std::move(mClient)] {
+        NS_DispatchToMainThread(NS_NewRunnableFunction(
+            "NotifyScreencastStopped", [client = std::move(client)]() -> void {
+              client->ScreencastStopped();
+            }));
+      });
+    } else {
+      rtc::CritScope lock(&mCaptureCallbackCs);
+      mClient->ScreencastStopped();
+      mClient = nullptr;
+    }
   }
 
   void ScreencastFrameAck() {
-    rtc::CritScope lock(&mFramesInFlightCs);
+    rtc::CritScope lock(&mCaptureCallbackCs);
     --mFramesInFlight;
   }
 
@@ -158,13 +145,14 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
 
   // These callbacks end up running on the VideoCapture thread.
   void OnRawFrame(uint8_t* videoFrame, size_t videoFrameStride, const webrtc::VideoCaptureCapability& frameInfo) override {
-    if (!mJpegQuality)
-      return;
     {
-      rtc::CritScope lock(&mFramesInFlightCs);
-      if (mFramesInFlight >= kMaxFramesInFlight)
+      rtc::CritScope lock(&mCaptureCallbackCs);
+      if (mFramesInFlight >= kMaxFramesInFlight) {
         return;
+      }
       ++mFramesInFlight;
+      if (!mClient)
+        return;
     }
 
     jpeg_compress_struct info;
@@ -211,22 +199,27 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
 
     nsCString base64;
     nsresult rv = mozilla::Base64Encode(reinterpret_cast<char *>(bufferPtr), bufferSize, base64);
-    if (NS_WARN_IF(NS_FAILED(rv)))
-      return;
-
-    NS_DispatchToMainThread(NS_NewRunnableFunction(
-        "NotifyScreencastFrame", [base64]() -> void {
-          NotifyScreencastFrame(base64);
-        }));
-
     free(bufferPtr);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+
+    uint32_t deviceWidth = info.image_width;
+    uint32_t deviceHeight = info.image_height;
+    nsIScreencastServiceClient* client = mClient.get();
+    NS_DispatchToMainThread(NS_NewRunnableFunction(
+        "NotifyScreencastFrame", [client, base64, deviceWidth, deviceHeight]() -> void {
+          NS_ConvertUTF8toUTF16 utf16(base64);
+          client->ScreencastFrame(utf16, deviceWidth, deviceHeight);
+        }));
   }
 
  private:
+  RefPtr<nsIScreencastServiceClient> mClient;
   rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> mCaptureModule;
   RefPtr<ScreencastEncoder> mEncoder;
   uint32_t mJpegQuality;
-  rtc::CriticalSection mFramesInFlightCs;
+  rtc::CriticalSection mCaptureCallbackCs;
   uint32_t mFramesInFlight = 0;
   gfx::IntMargin mMargin;
 };
@@ -248,7 +241,7 @@ nsScreencastService::nsScreencastService() = default;
 nsScreencastService::~nsScreencastService() {
 }
 
-nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, bool isVideo, const nsACString& aVideoFileName, uint32_t width, uint32_t height, uint32_t quality, int32_t offsetTop, nsAString& sessionId) {
+nsresult nsScreencastService::StartVideoRecording(nsIScreencastServiceClient* aClient, nsIDocShell* aDocShell, bool isVideo, const nsACString& aVideoFileName, uint32_t width, uint32_t height, uint32_t quality, int32_t offsetTop, nsAString& sessionId) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread(), "Screencast service must be started on the Main thread.");
 
   PresShell* presShell = aDocShell->GetPresShell();
@@ -289,7 +282,7 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, bool i
   NS_ENSURE_SUCCESS(rv, rv);
   sessionId = uid;
 
-  auto session = std::make_unique<Session>(std::move(capturer), std::move(encoder), margin, isVideo ? 0 : quality);
+  auto session = std::make_unique<Session>(aClient, std::move(capturer), std::move(encoder), margin, isVideo ? 0 : quality);
   if (!session->Start())
     return NS_ERROR_FAILURE;
   mIdToSession.emplace(sessionId, std::move(session));
@@ -301,12 +294,7 @@ nsresult nsScreencastService::StopVideoRecording(const nsAString& aSessionId) {
   auto it = mIdToSession.find(sessionId);
   if (it == mIdToSession.end())
     return NS_ERROR_INVALID_ARG;
-  it->second->Stop([sessionId] {
-    NS_DispatchToMainThread(NS_NewRunnableFunction(
-        "NotifyScreencastStopped", [sessionId]() -> void {
-          NotifyScreencastStopped(sessionId);
-        }));
-  });
+  it->second->Stop();
   mIdToSession.erase(it);
   return NS_OK;
 }

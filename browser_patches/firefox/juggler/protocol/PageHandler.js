@@ -152,8 +152,8 @@ class PageHandler {
     this._session.emitEvent('Page.videoRecordingStarted', { screencastId: info.sessionId, file: info.file });
   }
 
-  _onScreencastFrame(data) {
-    this._session.emitEvent('Page.screencastFrame', { data, deviceWidth: 0, deviceHeight: 0 });
+  _onScreencastFrame(params) {
+    this._session.emitEvent('Page.screencastFrame', params);
   }
 
   _onPageReady(event) {

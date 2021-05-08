@@ -89,8 +89,13 @@ int32_t HeadlessWindowCapturer::StartCapture(const VideoCaptureCapability& capab
     frameInfo.videoType = VideoType::kBGRA;
 #endif
 
-    for (auto rawFrameCallback : _rawFrameCallbacks) {
-      rawFrameCallback->OnRawFrame(dataSurface->GetData(), dataSurface->Stride(), frameInfo);
+    {
+      rtc::CritScope lock2(&_callBackCs);
+      for (auto rawFrameCallback : _rawFrameCallbacks) {
+        rawFrameCallback->OnRawFrame(dataSurface->GetData(), dataSurface->Stride(), frameInfo);
+      }
+      if (!_dataCallBacks.size())
+        return;
     }
 
     int width = dataSurface->GetSize().width;
