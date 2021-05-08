@@ -23,10 +23,10 @@ class ScreencastEncoder {
 public:
     static constexpr int fps = 25;
 
-    static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale, const gfx::IntMargin& margin);
+    static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, const gfx::IntMargin& margin);
 
     class VPXCodec;
-    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, Maybe<double> scale, const gfx::IntMargin& margin);
+    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, const gfx::IntMargin& margin);
 
     void encodeFrame(const webrtc::VideoFrame& videoFrame);
 
@@ -38,7 +38,6 @@ private:
     void flushLastFrame();
 
     std::unique_ptr<VPXCodec> m_vpxCodec;
-    Maybe<double> m_scale;
     gfx::IntMargin m_margin;
     TimeStamp m_lastFrameTimestamp;
     class VPXFrame;

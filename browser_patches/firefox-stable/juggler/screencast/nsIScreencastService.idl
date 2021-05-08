@@ -6,16 +6,26 @@
 
 interface nsIDocShell;
 
+[scriptable, uuid(0b5d32c4-aeeb-11eb-8529-0242ac130003)]
+interface nsIScreencastServiceClient : nsISupports
+{
+  void screencastFrame(in AString frame, in uint32_t deviceWidth, in uint32_t deviceHeight);
+
+  void screencastStopped();
+};
+
 /**
  * Service for recording window video.
  */
 [scriptable, uuid(d8c4d9e0-9462-445e-9e43-68d3872ad1de)]
 interface nsIScreencastService : nsISupports
 {
-  AString startVideoRecording(in nsIDocShell docShell, in ACString fileName, in uint32_t width, in uint32_t height, in uint32_t viewportWidth, in uint32_t viewportHeight, in double scale, in int32_t offset_top);
+  AString startVideoRecording(in nsIScreencastServiceClient client, in nsIDocShell docShell, in boolean isVideo, in ACString fileName, in uint32_t width, in uint32_t height, in uint32_t quality, in int32_t offset_top);
 
   /**
    * Will emit 'juggler-screencast-stopped' when the video file is saved.
    */
   void stopVideoRecording(in AString sessionId);
+
+  void screencastFrameAck(in AString sessionId);
 };
