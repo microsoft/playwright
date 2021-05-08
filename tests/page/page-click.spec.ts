@@ -29,6 +29,16 @@ it('should click the button', async ({page, server}) => {
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
+it('should click button inside frameset', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/frames/frameset.html');
+  const frameElement = await page.$('frame');
+  await frameElement.evaluate(frame => frame.src = '/input/button.html');
+  const frame = await frameElement.contentFrame();
+  await frame.click('button');
+  expect(await frame.evaluate('result')).toBe('Clicked');
+});
+
+
 it('should click svg', async ({page}) => {
   await page.setContent(`
     <svg height="100" width="100">
