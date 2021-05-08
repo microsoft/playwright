@@ -1143,12 +1143,15 @@ index b3f6b63d2e52b517ca56fc88afb2bd5785717bd3..0b3c3d78468e1ebf7e1df889cbfc5273
    /** Synthesize a touch event. The event types supported are:
     *    touchstart, touchend, touchmove, and touchcancel
 diff --git a/dom/media/systemservices/video_engine/desktop_capture_impl.cc b/dom/media/systemservices/video_engine/desktop_capture_impl.cc
-index 7bc92fe4408c2878c9d7c8bdb97a7c257258ee31..8885feebedf53c0748cef19d80ce5aa23adc900b 100644
+index 7bc92fe4408c2878c9d7c8bdb97a7c257258ee31..b20480c3c0ca96097e61d37f44e127d45ab4648a 100644
 --- a/dom/media/systemservices/video_engine/desktop_capture_impl.cc
 +++ b/dom/media/systemservices/video_engine/desktop_capture_impl.cc
-@@ -125,8 +125,9 @@ int32_t ScreenDeviceInfoImpl::GetOrientation(const char* deviceUniqueIdUTF8,
+@@ -123,10 +123,11 @@ int32_t ScreenDeviceInfoImpl::GetOrientation(const char* deviceUniqueIdUTF8,
+   return 0;
+ }
  
- VideoCaptureModule* DesktopCaptureImpl::Create(const int32_t id,
+-VideoCaptureModule* DesktopCaptureImpl::Create(const int32_t id,
++VideoCaptureModuleEx* DesktopCaptureImpl::Create(const int32_t id,
                                                 const char* uniqueId,
 -                                               const CaptureDeviceType type) {
 -  return new rtc::RefCountedObject<DesktopCaptureImpl>(id, uniqueId, type);
@@ -1199,21 +1202,93 @@ index 7bc92fe4408c2878c9d7c8bdb97a7c257258ee31..8885feebedf53c0748cef19d80ce5aa2
        time_event_(EventWrapper::Create()),
  #if defined(_WIN32)
        capturer_thread_(
+@@ -437,6 +444,19 @@ void DesktopCaptureImpl::DeRegisterCaptureDataCallback(
+   }
+ }
+ 
++void DesktopCaptureImpl::RegisterRawFrameCallback(RawFrameCallback* rawFrameCallback) {
++  rtc::CritScope lock(&_apiCs);
++  _rawFrameCallbacks.insert(rawFrameCallback);
++}
++
++void DesktopCaptureImpl::DeRegisterRawFrameCallback(RawFrameCallback* rawFrameCallback) {
++  rtc::CritScope lock(&_apiCs);
++  auto it = _rawFrameCallbacks.find(rawFrameCallback);
++  if (it != _rawFrameCallbacks.end()) {
++    _rawFrameCallbacks.erase(it);
++  }
++}
++
+ int32_t DesktopCaptureImpl::StopCaptureIfAllClientsClose() {
+   if (_dataCallBacks.empty()) {
+     return StopCapture();
+@@ -644,6 +664,12 @@ void DesktopCaptureImpl::OnCaptureResult(DesktopCapturer::Result result,
+   frameInfo.height = frame->size().height();
+   frameInfo.videoType = VideoType::kARGB;
+ 
++  size_t videoFrameStride =
++      frameInfo.width * DesktopFrame::kBytesPerPixel;
++  for (auto rawFrameCallback : _rawFrameCallbacks) {
++    rawFrameCallback->OnRawFrame(videoFrame, videoFrameStride, frameInfo);
++  }
++
+   size_t videoFrameLength =
+       frameInfo.width * frameInfo.height * DesktopFrame::kBytesPerPixel;
+   IncomingFrame(videoFrame, videoFrameLength, frameInfo);
 diff --git a/dom/media/systemservices/video_engine/desktop_capture_impl.h b/dom/media/systemservices/video_engine/desktop_capture_impl.h
-index 75995564e5438261a2886840ecad32d2f1d7663f..dfdabcedcda4e212ed0ffd7bc4def57079218413 100644
+index 75995564e5438261a2886840ecad32d2f1d7663f..2b6564fba840c5c4cc91ca7828e72e12e0dd2741 100644
 --- a/dom/media/systemservices/video_engine/desktop_capture_impl.h
 +++ b/dom/media/systemservices/video_engine/desktop_capture_impl.h
-@@ -159,7 +159,8 @@ class DesktopCaptureImpl : public DesktopCapturer::Callback,
+@@ -41,6 +41,21 @@ namespace webrtc {
+ 
+ class VideoCaptureEncodeInterface;
+ 
++class RawFrameCallback {
++ public:
++  virtual ~RawFrameCallback() {}
++
++  virtual void OnRawFrame(uint8_t* videoFrame, size_t videoFrameLength, const VideoCaptureCapability& frameInfo) = 0;
++};
++
++class VideoCaptureModuleEx : public VideoCaptureModule {
++ public:
++  virtual ~VideoCaptureModuleEx() {}
++
++  virtual void RegisterRawFrameCallback(RawFrameCallback* rawFrameCallback) = 0;
++  virtual void DeRegisterRawFrameCallback(RawFrameCallback* rawFrameCallback) = 0;
++};
++
+ // simulate deviceInfo interface for video engine, bridge screen/application and
+ // real screen/application device info
+ 
+@@ -153,13 +168,14 @@ class BrowserDeviceInfoImpl : public VideoCaptureModule::DeviceInfo {
+ // As with video, DesktopCaptureImpl is a proxy for screen sharing
+ // and follows the video pipeline design
+ class DesktopCaptureImpl : public DesktopCapturer::Callback,
+-                           public VideoCaptureModule,
++                           public VideoCaptureModuleEx,
+                            public VideoCaptureExternal {
+  public:
    /* Create a screen capture modules object
     */
-   static VideoCaptureModule* Create(const int32_t id, const char* uniqueId,
+-  static VideoCaptureModule* Create(const int32_t id, const char* uniqueId,
 -                                    const CaptureDeviceType type);
++  static VideoCaptureModuleEx* Create(const int32_t id, const char* uniqueId,
 +                                    const CaptureDeviceType type,
 +                                    bool captureCursor = true);
    static VideoCaptureModule::DeviceInfo* CreateDeviceInfo(
        const int32_t id, const CaptureDeviceType type);
  
-@@ -191,7 +192,7 @@ class DesktopCaptureImpl : public DesktopCapturer::Callback,
+@@ -169,6 +185,8 @@ class DesktopCaptureImpl : public DesktopCapturer::Callback,
+   void DeRegisterCaptureDataCallback(
+       rtc::VideoSinkInterface<VideoFrame>* dataCallback) override;
+   int32_t StopCaptureIfAllClientsClose() override;
++  void RegisterRawFrameCallback(RawFrameCallback* rawFrameCallback) override;
++  void DeRegisterRawFrameCallback(RawFrameCallback* rawFrameCallback) override;
+ 
+   int32_t SetCaptureRotation(VideoRotation rotation) override;
+   bool SetApplyRotation(bool enable) override;
+@@ -191,7 +209,7 @@ class DesktopCaptureImpl : public DesktopCapturer::Callback,
  
   protected:
    DesktopCaptureImpl(const int32_t id, const char* uniqueId,
@@ -1222,7 +1297,15 @@ index 75995564e5438261a2886840ecad32d2f1d7663f..dfdabcedcda4e212ed0ffd7bc4def570
    virtual ~DesktopCaptureImpl();
    int32_t DeliverCapturedFrame(webrtc::VideoFrame& captureFrame,
                                 int64_t capture_time);
-@@ -239,6 +240,7 @@ class DesktopCaptureImpl : public DesktopCapturer::Callback,
+@@ -214,6 +232,7 @@ class DesktopCaptureImpl : public DesktopCapturer::Callback,
+   rtc::CriticalSection _apiCs;
+ 
+   std::set<rtc::VideoSinkInterface<VideoFrame>*> _dataCallBacks;
++  std::set<RawFrameCallback*> _rawFrameCallbacks;
+ 
+   int64_t _incomingFrameTimesNanos
+       [kFrameRateCountHistorySize];  // timestamp for local captured frames
+@@ -239,6 +258,7 @@ class DesktopCaptureImpl : public DesktopCapturer::Callback,
    void process();
  
   private:
@@ -1584,6 +1667,18 @@ index 77b4c4ea3581e3b66b0b40dae33c807b2d5aefd8..84af4461b9e946122527ac974dc30da5
    void updateTimeZone();
  
    void internalResyncICUDefaultTimeZone();
+diff --git a/media/libjpeg/jconfig.h b/media/libjpeg/jconfig.h
+index f2723e654098ff27542e1eb16a536c11ad0af617..b0b480551ff7d895dfdeb5a9800874858929c8ba 100644
+--- a/media/libjpeg/jconfig.h
++++ b/media/libjpeg/jconfig.h
+@@ -17,6 +17,7 @@
+ /* #undef D_ARITH_CODING_SUPPORTED */
+ 
+ /* Support in-memory source/destination managers */
++#define MEM_SRCDST_SUPPORTED 1
+ /* #undef MEM_SRCDST_SUPPORTED */
+ 
+ /* Use accelerated SIMD routines. */
 diff --git a/netwerk/base/nsINetworkInterceptController.idl b/netwerk/base/nsINetworkInterceptController.idl
 index 64a4a71b03b28872f376aac8eee12805bebd1bd8..f6fa7d731f3b0c7c4fcb26babad3fc2cdb29aec1 100644
 --- a/netwerk/base/nsINetworkInterceptController.idl

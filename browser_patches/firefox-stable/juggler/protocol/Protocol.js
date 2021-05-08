@@ -226,7 +226,7 @@ const Browser = {
       canceled: t.Optional(t.Boolean),
       error: t.Optional(t.String),
     },
-    'screencastFinished': {
+    'videoRecordingFinished': {
       screencastId: t.String,
     },
   },
@@ -420,13 +420,12 @@ const Browser = {
         colorScheme: t.Nullable(t.Enum(['dark', 'light', 'no-preference'])),
       },
     },
-    'setScreencastOptions': {
+    'setVideoRecordingOptions': {
       params: {
         browserContextId: t.Optional(t.String),
         dir: t.String,
         width: t.Number,
         height: t.Number,
-        scale: t.Optional(t.Number),
       },
     },
   },
@@ -665,7 +664,7 @@ const Page = {
       workerId: t.String,
       message: t.String,
     },
-    'screencastStarted': {
+    'videoRecordingStarted': {
       screencastId: t.String,
       file: t.String,
     },
@@ -696,6 +695,11 @@ const Page = {
       wsid: t.String,
       opcode: t.Number,
       data: t.String,
+    },
+    'screencastFrame': {
+      data: t.String,
+      deviceWidth: t.Number,
+      deviceHeight: t.Number,
     },
   },
 
@@ -896,15 +900,22 @@ const Page = {
         message: t.String,
       },
     },
-    'startVideoRecording': {
+    'startScreencast': {
       params: {
-        file: t.String,
         width: t.Number,
         height: t.Number,
-        scale: t.Optional(t.Number),
+        quality: t.Number,
+      },
+      returns: {
+        screencastId: t.String,
       },
     },
-    'stopVideoRecording': {
+    'screencastFrameAck': {
+      params: {
+        screencastId: t.String,
+      },
+    },
+    'stopScreencast': {
     },
   },
 };
