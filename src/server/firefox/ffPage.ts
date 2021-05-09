@@ -479,9 +479,9 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async setScreencastEnabled(enabled: boolean): Promise<void> {
-    if (enabled) {
-      const { screencastId } = await this._session.send('Page.startScreencast', { width: 800, height: 600, quality: 70 });
+  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
+    if (options) {
+      const { screencastId } = await this._session.send('Page.startScreencast', options);
       this._screencastId = screencastId;
     } else {
       await this._session.send('Page.stopScreencast');

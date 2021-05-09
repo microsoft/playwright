@@ -289,13 +289,13 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
-  async setScreencastEnabled(enabled: boolean): Promise<void> {
-    if (enabled) {
+  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
+    if (options) {
       await this._mainFrameSession._startScreencast(this, {
         format: 'jpeg',
-        quality: 90,
-        maxWidth: 800,
-        maxHeight: 600,
+        quality: options.quality,
+        maxWidth: options.width,
+        maxHeight: options.height
       });
     } else {
       await this._mainFrameSession._stopScreencast(this);

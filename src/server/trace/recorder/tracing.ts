@@ -102,7 +102,7 @@ export class Tracing implements InstrumentationListener {
     for (const { sdkObject, metadata } of this._pendingCalls.values())
       await this.onAfterCall(sdkObject, metadata);
     for (const page of this._context.pages())
-      page.setScreencastEnabled(false);
+      page.setScreencastOptions(null);
 
     // Ensure all writes are finished.
     await this._appendEventChain;
@@ -185,7 +185,7 @@ export class Tracing implements InstrumentationListener {
     };
     this._appendTraceEvent(event);
     if (screenshots)
-      page.setScreencastEnabled(true);
+      page.setScreencastOptions({ width: 800, height: 600, quality: 90 });
 
     this._eventListeners.push(
         helper.addEventListener(page, Page.Events.Dialog, (dialog: Dialog) => {
