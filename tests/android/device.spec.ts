@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import { PNG } from 'pngjs';
-import { androidTest as test, expect } from '../config/androidTest';
+import { androidTest as test, expect } from './androidTest';
 
 test('androidDevice.shell', async function({ androidDevice }) {
   const output = await androidDevice.shell('echo 123');

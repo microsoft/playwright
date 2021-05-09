@@ -16,7 +16,7 @@
 
 import * as folio from 'folio';
 import * as path from 'path';
-import { ElectronEnv } from './electronTest';
+import { ElectronEnv } from '../electron/electronTest';
 import { test as pageTest } from '../page/pageTest';
 import { PlaywrightEnvOptions } from './browserTest';
 import { CommonOptions } from './baseTest';

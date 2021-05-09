@@ -15,7 +15,7 @@
  */
 
 import type { AndroidDevice } from '../../index';
-import { CommonArgs, baseTest } from './baseTest';
+import { CommonArgs, baseTest } from '../config/baseTest';
 import * as folio from 'folio';
 export { expect } from 'folio';
 

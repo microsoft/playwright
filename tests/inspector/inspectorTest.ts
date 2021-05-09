@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { contextTest } from './browserTest';
+import { contextTest } from '../config/browserTest';
 import type { Page } from '../../index';
-import * as http from 'http';
 import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
 import { ChildProcess, spawn } from 'child_process';
@@ -24,23 +23,15 @@ import { chromium } from '../../index';
 import * as folio from 'folio';
 export { expect } from 'folio';
 
-interface CLIHTTPServer {
-  setHandler: (handler: http.RequestListener) => void;
-  PREFIX: string;
-}
-
 type CLITestArgs = {
-  httpServer: CLIHTTPServer;
   recorderPageGetter: () => Promise<Page>;
   openRecorder: () => Promise<Recorder>;
   runCLI: (args: string[]) => CLIMock;
 };
 
-export const cliTest = contextTest.extend({
+export const test = contextTest.extend({
   async beforeAll({}, workerInfo: folio.WorkerInfo) {
-    this._port = 10907 + workerInfo.workerIndex * 2;
-    this._server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => this._handler(req, res)).listen(this._port);
-    process.env.PWTEST_RECORDER_PORT = String(this._port + 1);
+    process.env.PWTEST_RECORDER_PORT = String(10907 + workerInfo.workerIndex);
   },
 
   async beforeEach({ page, context, toImpl, browserName, browserChannel, headful, mode }, testInfo: folio.TestInfo): Promise<CLITestArgs> {
@@ -54,10 +45,6 @@ export const cliTest = contextTest.extend({
       return c.pages()[0] || await c.waitForEvent('page');
     };
     return {
-      httpServer: {
-        setHandler: newHandler => this._handler = newHandler,
-        PREFIX: `http://127.0.0.1:${this._port}`,
-      },
       runCLI: (cliArgs: string[]) => {
         this._cli = new CLIMock(browserName, browserChannel, !headful, cliArgs);
         return this._cli;
@@ -74,13 +61,6 @@ export const cliTest = contextTest.extend({
     if (this._cli) {
       await this._cli.exited;
       this._cli = undefined;
-    }
-  },
-
-  async afterAll({}, workerInfo: folio.WorkerInfo) {
-    if (this._server) {
-      this._server.close();
-      this._server = undefined;
     }
   },
 });

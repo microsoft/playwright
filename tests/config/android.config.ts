@@ -17,7 +17,7 @@
 import * as folio from 'folio';
 import * as path from 'path';
 import { test as pageTest } from '../page/pageTest';
-import { AndroidEnv } from './androidTest';
+import { AndroidEnv } from '../android/androidTest';
 import type { BrowserContext } from '../../index';
 import { PlaywrightEnvOptions } from './browserTest';
 import { CommonOptions } from './baseTest';

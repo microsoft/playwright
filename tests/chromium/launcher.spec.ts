@@ -16,8 +16,6 @@
 
 import { playwrightTest as it, expect } from '../config/browserTest';
 
-it.skip(({ browserName }) => browserName !== 'chromium');
-
 it('should throw with remote-debugging-pipe argument', async ({browserType, browserOptions, mode}) => {
   it.skip(mode !== 'default');
 

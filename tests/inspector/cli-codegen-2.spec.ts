@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { cliTest as test, expect } from '../config/cliTest';
-import * as http from 'http';
+import { test, expect } from './inspectorTest';
 import * as url from 'url';
 
 test.describe('cli codegen', () => {
@@ -228,10 +227,10 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
 
   });
 
-  test('should download files', async ({ page, openRecorder, httpServer }) => {
+  test('should download files', async ({ page, openRecorder, server }) => {
     const recorder = await openRecorder();
 
-    httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
+    server.setRoute('/download', (req, res) => {
       const pathName = url.parse(req.url!).path;
       if (pathName === '/download') {
         res.setHeader('Content-Type', 'application/octet-stream');
@@ -243,8 +242,8 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
       }
     });
     await recorder.setContentAndWait(`
-      <a href="${httpServer.PREFIX}/download" download>Download</a>
-    `, httpServer.PREFIX);
+      <a href="${server.PREFIX}/download" download>Download</a>
+    `, server.PREFIX);
     await recorder.hoverOverElement('text=Download');
     await Promise.all([
       page.waitForEvent('download'),
@@ -338,23 +337,19 @@ await page.ClickAsync(\"text=click me\");`);
 
   });
 
-  test('should handle history.postData', async ({ page, openRecorder, httpServer }) => {
+  test('should handle history.postData', async ({ page, openRecorder, server }) => {
     const recorder = await openRecorder();
 
-    httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.end('Hello world');
-    });
     await recorder.setContentAndWait(`
     <script>
     let seqNum = 0;
     function pushState() {
-      history.pushState({}, 'title', '${httpServer.PREFIX}/#seqNum=' + (++seqNum));
+      history.pushState({}, 'title', '${server.PREFIX}/#seqNum=' + (++seqNum));
     }
-    </script>`, httpServer.PREFIX);
+    </script>`, server.PREFIX);
     for (let i = 1; i < 3; ++i) {
       await page.evaluate('pushState()');
-      await recorder.waitForOutput('<javascript>', `await page.goto('${httpServer.PREFIX}/#seqNum=${i}');`);
+      await recorder.waitForOutput('<javascript>', `await page.goto('${server.PREFIX}/#seqNum=${i}');`);
     }
   });
 
@@ -581,23 +576,23 @@ await page.GetFrame(name: \"two\").ClickAsync(\"text=Hi, I'm frame\");`);
 await page.GetFrame(url: \"http://localhost:${server.PORT}/frames/frame.html\").ClickAsync(\"text=Hi, I'm frame\");`);
   });
 
-  test('should record navigations after identical pushState', async ({ page, openRecorder, httpServer }) => {
+  test('should record navigations after identical pushState', async ({ page, openRecorder, server }) => {
     const recorder = await openRecorder();
-    httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
+    server.setRoute('/page2.html', (req, res) => {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end('Hello world');
     });
     await recorder.setContentAndWait(`
     <script>
     function pushState() {
-      history.pushState({}, 'title', '${httpServer.PREFIX}');
+      history.pushState({}, 'title', '${server.PREFIX}');
     }
-    </script>`, httpServer.PREFIX);
+    </script>`, server.PREFIX);
     for (let i = 1; i < 3; ++i)
       await page.evaluate('pushState()');
 
-    await page.goto(httpServer.PREFIX + '/page2.html');
-    await recorder.waitForOutput('<javascript>', `await page.goto('${httpServer.PREFIX}/page2.html');`);
+    await page.goto(server.PREFIX + '/page2.html');
+    await recorder.waitForOutput('<javascript>', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
   test('should record slow navigation signal after mouse move', async ({ page, openRecorder, server }) => {

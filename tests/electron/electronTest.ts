@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { baseTest, CommonArgs } from './baseTest';
+import { baseTest, CommonArgs } from '../config/baseTest';
 import { ElectronApplication, Page } from '../../index';
 import * as folio from 'folio';
 import * as path from 'path';
@@ -79,5 +79,4 @@ export class ElectronEnv {
   }
 }
 
-export const baseElectronTest = baseTest;
 export const electronTest = baseTest.extend(new ElectronEnv());
