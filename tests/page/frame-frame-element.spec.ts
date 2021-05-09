@@ -40,6 +40,14 @@ it('should work with contentFrame', async ({page, server}) => {
   expect(contentFrame).toBe(frame);
 });
 
+it('should work with frameset', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/frames/frameset.html');
+  const frameElement1 = await page.$('frame');
+  const frame = await frameElement1.contentFrame();
+  const frameElement2 = await frame.frameElement();
+  expect(await frameElement1.evaluate((a, b) => a === b, frameElement2)).toBe(true);
+});
+
 it('should throw when detached', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
