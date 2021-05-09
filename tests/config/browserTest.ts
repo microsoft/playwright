@@ -56,11 +56,11 @@ class PlaywrightEnv {
   async beforeAll(args: CommonArgs & PlaywrightEnvOptions, workerInfo: folio.WorkerInfo): Promise<PlaywrightWorkerArgs> {
     this._browserType = args.playwright[args.browserName];
     this._browserOptions = {
-      ...args.launchOptions,
       _traceDir: args.traceDir,
       channel: args.browserChannel,
       headless: !args.headful,
       handleSIGINT: false,
+      ...args.launchOptions,
     } as any;
     return {
       browserType: this._browserType,
@@ -126,21 +126,30 @@ type BrowserTestArgs = {
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 
+type BrowserTestOptions = {
+  contextOptions?: BrowserContextOptions;
+};
+
 class BrowserEnv {
   private _browser: Browser | undefined;
   private _contexts: BrowserContext[] = [];
   protected _browserVersion: string;
+
+  hasBeforeAllOptions(options: BrowserTestOptions) {
+    return false;
+  }
 
   async beforeAll(args: PlaywrightWorkerArgs, workerInfo: folio.WorkerInfo) {
     this._browser = await args.browserType.launch(args.browserOptions);
     this._browserVersion = this._browser.version();
   }
 
-  async beforeEach(options: CommonArgs, testInfo: folio.TestInfo): Promise<BrowserTestArgs> {
+  async beforeEach(options: CommonArgs & BrowserTestOptions, testInfo: folio.TestInfo): Promise<BrowserTestArgs> {
     const debugName = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
     const contextOptions = {
       recordVideo: options.video ? { dir: testInfo.outputPath('') } : undefined,
       _debugName: debugName,
+      ...options.contextOptions,
     } as BrowserContextOptions;
 
     testInfo.data.browserVersion = this._browserVersion;
