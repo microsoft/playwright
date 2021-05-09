@@ -1272,10 +1272,10 @@ index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936af
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..b8bf514e01071898216b2c8b00210f5b6bbde440
+index 0000000000000000000000000000000000000000..f6c541d63c0b8251874eaf8818aabe0e0449401d
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,65 @@
 +{
 +    "domain": "Screencast",
 +    "availability": ["web"],
@@ -1294,6 +1294,7 @@ index 0000000000000000000000000000000000000000..b8bf514e01071898216b2c8b00210f5b
 +                { "name": "file", "type": "string", "description": "Output file location." },
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" },
++                { "name": "toolbarHeight", "type": "integer" },
 +                { "name": "scale", "type": "number", "optional": true }
 +            ],
 +            "returns": [
@@ -1311,6 +1312,7 @@ index 0000000000000000000000000000000000000000..b8bf514e01071898216b2c8b00210f5b
 +            "parameters": [
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" },
++                { "name": "toolbarHeight", "type": "integer" },
 +                { "name": "quality", "type": "integer" }
 +            ],
 +            "returns": [
@@ -11801,10 +11803,10 @@ index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a
 +cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b85a94e24
+index 0000000000000000000000000000000000000000..46ab327b4e8d87ba9872a9bb5bb1d09e68e19d6b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,253 @@
+@@ -0,0 +1,272 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -11900,28 +11902,32 @@ index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b
 +        if (m_screencastFramesInFlight > kMaxFramesInFlight)
 +            return;
 +        // Scale image to fit width / height
-+        WebCore::IntSize size = m_page.drawingArea()->size();
-+        double scale = std::min(m_screencastWidth / size.width(), m_screencastHeight / size.height());
-+        cairo_matrix_t transform;
-+        cairo_matrix_init_scale(&transform, scale, scale);
-+
-+        RefPtr<cairo_surface_t> scaledSurface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, ceil(size.width() * scale), ceil(size.height() * scale)));
-+        RefPtr<cairo_t> cr = adoptRef(cairo_create(scaledSurface.get()));
-+        cairo_transform(cr.get(), &transform);
-+        cairo_set_source_surface(cr.get(), surface, 0, 0);
-+        cairo_paint(cr.get());
-+
++        WebCore::IntSize displaySize = m_page.drawingArea()->size();
++        double scale = std::min(m_screencastWidth / displaySize.width(), m_screencastHeight / displaySize.height());
++        RefPtr<cairo_surface_t> scaledSurface;
++        if (scale < 1) {
++            WebCore::IntSize scaledSize = displaySize;
++            scaledSize.scale(scale);
++            cairo_matrix_t transform;
++            cairo_matrix_init_scale(&transform, scale, scale);
++            scaledSurface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, scaledSize.width(), scaledSize.height()));
++            RefPtr<cairo_t> cr = adoptRef(cairo_create(scaledSurface.get()));
++            cairo_transform(cr.get(), &transform);
++            cairo_set_source_surface(cr.get(), surface, 0, 0);
++            cairo_paint(cr.get());
++            surface = scaledSurface.get();
++        }
 +        unsigned char *data = nullptr;
 +        size_t len = 0;
-+        cairo_image_surface_write_to_jpeg_mem(scaledSurface.get(), &data, &len, m_screencastQuality);
++        cairo_image_surface_write_to_jpeg_mem(surface, &data, &len, m_screencastQuality);
 +        String result = base64Encode(data, len);
 +        ++m_screencastFramesInFlight;
-+        m_frontendDispatcher->screencastFrame(result, size.width(), size.height());
++        m_frontendDispatcher->screencastFrame(result, displaySize.width(), displaySize.height());
 +    }
 +}
 +#endif
 +
-+Inspector::Protocol::ErrorStringOr<String /* screencastID */> InspectorScreencastAgent::startVideo(const String& file, int width, int height, Optional<double>&& scale)
++Inspector::Protocol::ErrorStringOr<String /* screencastID */> InspectorScreencastAgent::startVideo(const String& file, int width, int height, int toolbarHeight, Optional<double>&& scale)
 +{
 +    if (m_encoder)
 +        return makeUnexpected("Already recording"_s);
@@ -11940,7 +11946,7 @@ index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b
 +    m_currentScreencastID = createCanonicalUUIDString();
 +
 +#if PLATFORM(MAC)
-+    m_encoder->setOffsetTop(m_page.pageClient().browserToolbarHeight());
++    m_encoder->setOffsetTop(toolbarHeight);
 +#endif
 +
 +    kickFramesStarted();
@@ -11965,7 +11971,7 @@ index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b
 +      m_framesAreGoing = false;
 +}
 +
-+Inspector::Protocol::ErrorStringOr<int /* generation */> InspectorScreencastAgent::startScreencast(int width, int height, int quality)
++Inspector::Protocol::ErrorStringOr<int /* generation */> InspectorScreencastAgent::startScreencast(int width, int height, int toolbarHeight, int quality)
 +{
 +    if (m_screencast)
 +        return makeUnexpected("Already screencasting"_s);
@@ -11973,6 +11979,7 @@ index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b
 +    m_screencastWidth = width;
 +    m_screencastHeight = height;
 +    m_screencastQuality = quality;
++    m_screencastToolbarHeight = toolbarHeight;
 +    m_screencastFramesInFlight = 0;
 +    ++m_screencastGeneration;
 +    kickFramesStarted();
@@ -12031,15 +12038,29 @@ index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b
 +        return;
 +    RetainPtr<CGImageRef> imageRef = m_page.pageClient().takeSnapshotForAutomation();
 +    if (m_screencast && m_screencastFramesInFlight <= kMaxFramesInFlight) {
++        CGImage* imagePtr = imageRef.get();
++        WebCore::IntSize imageSize(CGImageGetWidth(imagePtr), CGImageGetHeight(imagePtr));
++        WebCore::IntSize displaySize = imageSize;
++        displaySize.contract(0, m_screencastToolbarHeight);
++        double scale = std::min(m_screencastWidth / displaySize.width(), m_screencastHeight / displaySize.height());
++        RetainPtr<CGImageRef> scaledImageRef;
++        if (scale < 1 || m_screencastToolbarHeight) {
++            WebCore::IntSize screencastSize = displaySize;
++            screencastSize.scale(scale);
++            WebCore::IntSize scaledImageSize = imageSize;
++            scaledImageSize.scale(scale);
++            auto colorSpace = adoptCF(CGColorSpaceCreateDeviceRGB());
++            auto context = adoptCF(CGBitmapContextCreate(nullptr, screencastSize.width(), screencastSize.height(), 8, 4 * screencastSize.width(), colorSpace.get(), kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host));
++            CGContextDrawImage(context.get(), CGRectMake(0, 0, scaledImageSize.width(), scaledImageSize.height()), imagePtr);
++            scaledImageRef = adoptCF(CGBitmapContextCreateImage(context.get()));
++            imagePtr = scaledImageRef.get();
++        }
 +        auto cfData = adoptCF(CFDataCreateMutable(kCFAllocatorDefault, 0));
-+        WebCore::encodeImage(imageRef.get(), CFSTR("public.jpeg"), m_screencastQuality * 0.1, cfData.get());
++        WebCore::encodeImage(imagePtr, CFSTR("public.jpeg"), m_screencastQuality * 0.1, cfData.get());
 +        Vector<char> base64Data;
 +        base64Encode(CFDataGetBytePtr(cfData.get()), CFDataGetLength(cfData.get()), base64Data);
 +        ++m_screencastFramesInFlight;
-+        m_frontendDispatcher->screencastFrame(
-+            String(base64Data.data(), base64Data.size()),
-+            CGImageGetWidth(imageRef.get()),
-+            CGImageGetHeight(imageRef.get()));
++        m_frontendDispatcher->screencastFrame(String(base64Data.data(), base64Data.size()), displaySize.width(), displaySize.height());
 +    }
 +    if (m_encoder)
 +        m_encoder->encodeFrame(WTFMove(imageRef));
@@ -12060,10 +12081,10 @@ index 0000000000000000000000000000000000000000..5cacf99f0c809497b06a54f02767663b
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..759ea406372f734dec37955becb5ec7499645198
+index 0000000000000000000000000000000000000000..85084cced95b8b3c58e08f01f286c42e986b7c1a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,96 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -12129,10 +12150,10 @@ index 0000000000000000000000000000000000000000..759ea406372f734dec37955becb5ec74
 +    void didPaint(cairo_surface_t*);
 +#endif
 +
-+    Inspector::Protocol::ErrorStringOr<String /* screencastID */> startVideo(const String& file, int width, int height, Optional<double>&& scale) override;
++    Inspector::Protocol::ErrorStringOr<String /* screencastID */> startVideo(const String& file, int width, int height, int toolbarHeight, Optional<double>&& scale) override;
 +    void stopVideo(Ref<StopVideoCallback>&&) override;
 +
-+    Inspector::Protocol::ErrorStringOr<int /* generation */> startScreencast(int width, int height, int quality) override;
++    Inspector::Protocol::ErrorStringOr<int /* generation */> startScreencast(int width, int height, int toolbarHeight, int quality) override;
 +    Inspector::Protocol::ErrorStringOr<void> screencastFrameAck(int generation) override;
 +    Inspector::Protocol::ErrorStringOr<void> stopScreencast() override;
 +
@@ -12153,6 +12174,7 @@ index 0000000000000000000000000000000000000000..759ea406372f734dec37955becb5ec74
 +    double m_screencastWidth = 0;
 +    double m_screencastHeight = 0;
 +    int m_screencastQuality = 0;
++    int m_screencastToolbarHeight = 0;
 +    int m_screencastGeneration = 0;
 +    int m_screencastFramesInFlight = 0;
 +    String m_currentScreencastID;
@@ -14683,7 +14705,7 @@ index 7a14cfba15c103a2d4fe263fa49d25af3c396ec2..3ee0e154349661632799057c71f1d1f1
      BOOL result = ::CreateProcess(0, commandLine.data(), 0, 0, true, 0, 0, 0, &startupInfo, &processInformation);
  
 diff --git a/Source/WebKit/UIProcess/PageClient.h b/Source/WebKit/UIProcess/PageClient.h
-index 70c6bb6d64b25fce9f231fbce708c0515fb73789..f60b57b1e844716cc748b290f9ff73457b020a4f 100644
+index 70c6bb6d64b25fce9f231fbce708c0515fb73789..6b970003b28722d9eee029c070b36f31d5377b9f 100644
 --- a/Source/WebKit/UIProcess/PageClient.h
 +++ b/Source/WebKit/UIProcess/PageClient.h
 @@ -312,6 +312,11 @@ public:
@@ -14698,14 +14720,6 @@ index 70c6bb6d64b25fce9f231fbce708c0515fb73789..f60b57b1e844716cc748b290f9ff7345
  #if PLATFORM(COCOA) || PLATFORM(GTK)
      virtual RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&) = 0;
  #endif
-@@ -328,6 +333,7 @@ public:
-     virtual WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect&) = 0;
- #if PLATFORM(MAC)
-     virtual WebCore::IntRect rootViewToWindow(const WebCore::IntRect&) = 0;
-+    virtual int browserToolbarHeight() const { return 0; }
- #endif
- #if PLATFORM(IOS_FAMILY)
-     virtual void didNotHandleTapAsClick(const WebCore::IntPoint&) = 0;
 diff --git a/Source/WebKit/UIProcess/ProvisionalPageProxy.cpp b/Source/WebKit/UIProcess/ProvisionalPageProxy.cpp
 index 226d2933405ea5b6f0bc369e51fd07862e37af76..7796abccb6b80baccf826a24fe4f45a4a56bb9d6 100644
 --- a/Source/WebKit/UIProcess/ProvisionalPageProxy.cpp
@@ -17319,7 +17333,7 @@ index 0000000000000000000000000000000000000000..721826c8c98fc85b68a4f45deaee69c1
 +
 +#endif
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.h b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
-index c58ad478af24f439872c514b17b370601e4e1c93..95dd9423528177d12f16d9975947061d807207b3 100644
+index c58ad478af24f439872c514b17b370601e4e1c93..09f173efa30f7a3489b22a11e0292ba157f73c68 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.h
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
 @@ -53,6 +53,8 @@ class PageClientImpl final : public PageClientImplCocoa
@@ -17331,15 +17345,7 @@ index c58ad478af24f439872c514b17b370601e4e1c93..95dd9423528177d12f16d9975947061d
      PageClientImpl(NSView *, WKWebView *);
      virtual ~PageClientImpl();
  
-@@ -119,6 +121,7 @@ private:
-     WebCore::IntRect rootViewToScreen(const WebCore::IntRect&) override;
- #if PLATFORM(MAC)
-     WebCore::IntRect rootViewToWindow(const WebCore::IntRect&) override;
-+    int browserToolbarHeight() const override;
- #endif
-     WebCore::IntPoint accessibilityScreenToRootView(const WebCore::IntPoint&) override;
-     WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect&) override;
-@@ -165,6 +168,9 @@ private:
+@@ -165,6 +167,9 @@ private:
      void updateAcceleratedCompositingMode(const LayerTreeContext&) override;
      void didFirstLayerFlush(const LayerTreeContext&) override;
  
@@ -17349,7 +17355,7 @@ index c58ad478af24f439872c514b17b370601e4e1c93..95dd9423528177d12f16d9975947061d
      RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&) override;
      void wheelEventWasNotHandledByWebCore(const NativeWebWheelEvent&) override;
  #if ENABLE(MAC_GESTURE_EVENTS)
-@@ -219,6 +225,10 @@ private:
+@@ -219,6 +224,10 @@ private:
      void beganExitFullScreen(const WebCore::IntRect& initialFrame, const WebCore::IntRect& finalFrame) override;
  #endif
  
@@ -17361,7 +17367,7 @@ index c58ad478af24f439872c514b17b370601e4e1c93..95dd9423528177d12f16d9975947061d
      void navigationGestureWillEnd(bool willNavigate, WebBackForwardListItem&) override;
      void navigationGestureDidEnd(bool willNavigate, WebBackForwardListItem&) override;
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-index 67dfe20726b9d6b7e0173801da7b8bae3a87ee28..cfd251d192c0ba17d99fabb533d4b5abe4eb3a18 100644
+index 67dfe20726b9d6b7e0173801da7b8bae3a87ee28..8a21a3b5c9834d2cc4d9726b7b862758976542a2 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 @@ -81,6 +81,7 @@
@@ -17426,23 +17432,7 @@ index 67dfe20726b9d6b7e0173801da7b8bae3a87ee28..cfd251d192c0ba17d99fabb533d4b5ab
  }
  
  void PageClientImpl::toolTipChanged(const String& oldToolTip, const String& newToolTip)
-@@ -466,6 +484,15 @@ IntRect PageClientImpl::rootViewToWindow(const WebCore::IntRect& rect)
-     return enclosingIntRect(tempRect);
- }
- 
-+int PageClientImpl::browserToolbarHeight() const
-+{
-+    // There are no controls in headless mode.
-+    if (_headless)
-+        return 0;
-+
-+    return 55;
-+}
-+
- IntPoint PageClientImpl::accessibilityScreenToRootView(const IntPoint& point)
- {
-     return screenToRootView(point);
-@@ -478,6 +505,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
+@@ -478,6 +496,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
  
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool eventWasHandled)
  {
@@ -17451,7 +17441,7 @@ index 67dfe20726b9d6b7e0173801da7b8bae3a87ee28..cfd251d192c0ba17d99fabb533d4b5ab
      m_impl->doneWithKeyEvent(event.nativeEvent(), eventWasHandled);
  }
  
-@@ -497,6 +526,8 @@ void PageClientImpl::computeCanRevealImage(const URL& imageURL, ShareableBitmap&
+@@ -497,6 +517,8 @@ void PageClientImpl::computeCanRevealImage(const URL& imageURL, ShareableBitmap&
  
  RefPtr<WebPopupMenuProxy> PageClientImpl::createPopupMenuProxy(WebPageProxy& page)
  {
@@ -17460,7 +17450,7 @@ index 67dfe20726b9d6b7e0173801da7b8bae3a87ee28..cfd251d192c0ba17d99fabb533d4b5ab
      return WebPopupMenuProxyMac::create(m_view, page);
  }
  
-@@ -628,6 +659,12 @@ CALayer *PageClientImpl::acceleratedCompositingRootLayer() const
+@@ -628,6 +650,12 @@ CALayer *PageClientImpl::acceleratedCompositingRootLayer() const
      return m_impl->acceleratedCompositingRootLayer();
  }
  
@@ -17473,7 +17463,7 @@ index 67dfe20726b9d6b7e0173801da7b8bae3a87ee28..cfd251d192c0ba17d99fabb533d4b5ab
  RefPtr<ViewSnapshot> PageClientImpl::takeViewSnapshot(Optional<WebCore::IntRect>&&)
  {
      return m_impl->takeViewSnapshot();
-@@ -806,6 +843,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
+@@ -806,6 +834,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
  
  #endif // ENABLE(FULLSCREEN_API)
  
@@ -17487,7 +17477,7 @@ index 67dfe20726b9d6b7e0173801da7b8bae3a87ee28..cfd251d192c0ba17d99fabb533d4b5ab
  void PageClientImpl::navigationGestureDidBegin()
  {
      m_impl->dismissContentRelativeChildWindowsWithAnimation(true);
-@@ -972,6 +1016,9 @@ void PageClientImpl::didRestoreScrollPosition()
+@@ -972,6 +1007,9 @@ void PageClientImpl::didRestoreScrollPosition()
  
  bool PageClientImpl::windowIsFrontWindowUnderMouse(const NativeWebMouseEvent& event)
  {
