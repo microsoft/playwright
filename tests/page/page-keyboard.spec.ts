@@ -344,8 +344,8 @@ it('should be able to prevent selectAll', async ({page, server, isMac}) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
 });
 
-it('should handle copy & paste text', async ({ page, server, isMac, browserName }) => {
-  it.fail(browserName === 'webkit');
+it('should handle copy & paste text', async ({page, server, isMac, browserName, platform}) => {
+  it.skip(browserName === 'webkit' && platform !== 'win32');
 
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
@@ -359,8 +359,8 @@ it('should handle copy & paste text', async ({ page, server, isMac, browserName 
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('copy text');
 });
 
-it('should handle cut text', async ({ page, server, isMac, browserName }) => {
-  it.fail(browserName === 'webkit');
+it('should handle cut text', async ({page, server, isMac, browserName, platform}) => {
+  it.skip(browserName === 'webkit' && platform !== 'win32');
 
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
@@ -373,8 +373,8 @@ it('should handle cut text', async ({ page, server, isMac, browserName }) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('cut text');
 });
 
-it('should handle undo & redo', async ({ page, server, isMac, browserName }) => {
-  it.fail(browserName === 'webkit');
+it('should handle undo & redo', async ({page, server, isMac, browserName, platform}) => {
+  it.skip(browserName === 'webkit' && platform !== 'win32');
 
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
