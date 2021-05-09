@@ -471,7 +471,18 @@ class Frame {
     }, this.domWindow(), {
       defineAs: name,
     });
-    this.domWindow().eval(script);
+    if (this._executionContext)
+      this._evaluateScriptSafely(this._executionContext, script);
+  }
+
+  _evaluateScriptSafely(executionContext, script) {
+    try {
+      let result = executionContext.evaluateScript(script);
+      if (result && result.objectId)
+        executionContext.disposeObject(result.objectId);
+    } catch (e) {
+      dump(`ERROR: ${e.message}\n${e.stack}\n`);
+    }
   }
 
   _onGlobalObjectCleared() {
@@ -489,27 +500,15 @@ class Frame {
     });
     for (const [name, script] of this._frameTree._bindings)
       this._addBinding(name, script);
-    for (const script of this._frameTree._scriptsToEvaluateOnNewDocument.values()) {
-      try {
-        const result = this._executionContext.evaluateScript(script);
-        if (result && result.objectId)
-          this._executionContext.disposeObject(result.objectId);
-      } catch (e) {
-        dump(`ERROR: ${e.message}\n${e.stack}\n`);
-      }
-    }
+    for (const script of this._frameTree._scriptsToEvaluateOnNewDocument.values())
+      this._evaluateScriptSafely(this._executionContext, script);
 
     for (const world of this._isolatedWorlds.values())
       this._runtime.destroyExecutionContext(world);
     this._isolatedWorlds.clear();
     for (const {script, worldName} of this._frameTree._isolatedWorlds.values()) {
       const context = worldName ? this.createIsolatedWorld(worldName) : this.executionContext();
-      try {
-        let result = context.evaluateScript(script);
-        if (result && result.objectId)
-          context.disposeObject(result.objectId);
-      } catch (e) {
-      }
+      this._evaluateScriptSafely(context, script);
     }
   }
 
