@@ -35,6 +35,8 @@ import { BrowserContext } from './server/browserContext';
 import { CRBrowser } from './server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './dispatchers/cdpSessionDispatcher';
 import { PageDispatcher } from './dispatchers/pageDispatcher';
+import { TCPPortForwardingServer, TCPSocket } from './server/tcpSocket';
+import { TCPSocketDispatcher } from './dispatchers/tcpSocketDispatcher';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _playwright: Playwright;
@@ -53,13 +55,14 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     }, toProtocolLogger(options.logger));
+    const tcpPortForwardingServer = new TCPPortForwardingServer(browser, options._acceptForwardedPorts);
 
     // 2. Start the server
     const delegate: PlaywrightServerDelegate = {
       path: '/' + createGuid(),
-      allowMultipleClients: true,
+      allowMultipleClients: options._acceptForwardedPorts ? false : true,
       onClose: () => {},
-      onConnect: this._onConnect.bind(this, browser),
+      onConnect: this._onConnect.bind(this, browser, tcpPortForwardingServer),
     };
     const server = new PlaywrightServer(delegate);
     const wsEndpoint = await server.listen(options.port);
@@ -78,7 +81,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     return browserServer;
   }
 
-  private _onConnect(browser: Browser, scope: DispatcherScope, forceDisconnect: () => void) {
+  private _onConnect(browser: Browser, tcpPortForwardingServer: TCPPortForwardingServer, scope: DispatcherScope, forceDisconnect: () => void) {
     const selectors = new Selectors();
     const selectorsDispatcher = new SelectorsDispatcher(scope, selectors);
     const browserDispatcher = new ConnectedBrowserDispatcher(scope, browser, selectors);
@@ -88,6 +91,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     });
     new PlaywrightDispatcher(scope, this._playwright, selectorsDispatcher, browserDispatcher);
     return () => {
+      tcpPortForwardingServer.stop();
       // Cleanup contexts upon disconnect.
       browserDispatcher.cleanupContexts().catch(e => {});
     };
@@ -102,6 +106,9 @@ class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserIni
   constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
     this._selectors = selectors;
+    browser.on('tcpPortForwardingSocket', (socket: TCPSocket) => {
+      this._dispatchEvent('tcpPortForwardingSocket', { socket: new TCPSocketDispatcher(this._scope, socket) });
+    });
   }
 
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
@@ -146,6 +153,10 @@ class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserIni
     const crBrowser = this._object as CRBrowser;
     const buffer = await crBrowser.stopTracing();
     return { binary: buffer.toString('base64') };
+  }
+
+  async enablePortForwarding(params: channels.BrowserEnablePortForwardingParams): Promise<void> {
+    this._object.enablePortForwarding(params.ports);
   }
 
   async cleanupContexts() {

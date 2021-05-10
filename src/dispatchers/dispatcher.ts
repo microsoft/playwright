@@ -48,7 +48,7 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
   private _parent: Dispatcher<any, any> | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
   private _dispatchers = new Map<string, Dispatcher<any, any>>();
-  private _disposed = false;
+  protected _disposed = false;
 
   readonly _guid: string;
   readonly _type: string;

@@ -321,6 +321,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     categories: tOptional(tArray(tString)),
   });
   scheme.BrowserStopTracingParams = tOptional(tObject({}));
+  scheme.BrowserEnablePortForwardingParams = tObject({
+    ports: tArray(tNumber),
+  });
   scheme.BrowserContextAddCookiesParams = tObject({
     cookies: tArray(tType('SetNetworkCookie')),
   });
@@ -1217,6 +1220,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     scrollable: tBoolean,
     selected: tBoolean,
   });
+  scheme.TCPSocketWriteParams = tObject({
+    data: tBinary,
+  });
+  scheme.TCPSocketEndParams = tOptional(tObject({}));
 
   return scheme;
 }

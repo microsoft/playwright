@@ -24,6 +24,9 @@ import { RecentLogsCollector } from '../utils/debugLogger';
 import * as registry from '../utils/registry';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
+import { kBrowserClosedError } from '../utils/errors';
+import { assert } from '../utils/utils';
+import { TCPPortForwardingServer } from './tcpSocket';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -64,6 +67,7 @@ export abstract class Browser extends SdkObject {
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
   readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
+  _forwardingProxy!: TCPPortForwardingServer;
 
   constructor(options: BrowserOptions) {
     super(options.rootSdkObject, 'browser');
@@ -129,6 +133,11 @@ export abstract class Browser extends SdkObject {
     }
     if (this.isConnected())
       await new Promise(x => this.once(Browser.Events.Disconnected, x));
+  }
+
+  enablePortForwarding(ports: number[]) {
+    assert(this.isConnected());
+    this._forwardingProxy.enablePortForwarding(ports);
   }
 
   async killForTests() {

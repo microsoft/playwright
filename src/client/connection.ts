@@ -36,6 +36,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
 import { Android, AndroidSocket, AndroidDevice } from './android';
+import { TCPSocket } from './tcpSocket';
 import { captureStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 
@@ -238,6 +239,9 @@ export class Connection {
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);
+        break;
+      case 'TCPSocket':
+        result = new TCPSocket(parent, type, guid, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);

@@ -70,4 +70,8 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserIniti
     const buffer = await crBrowser.stopTracing();
     return { binary: buffer.toString('base64') };
   }
+
+  async enablePortForwarding(params: channels.BrowserEnablePortForwardingParams): Promise<void> {
+    this._object.enablePortForwarding(params.ports);
+  }
 }

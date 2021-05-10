@@ -476,11 +476,19 @@ Browser:
       returns:
         binary: binary
 
+    enablePortForwarding:
+      parameters:
+        ports:
+          type: array
+          items: number
+
   events:
 
     close:
 
-
+    tcpPortForwardingSocket:
+      parameters:
+        socket: TCPSocket
 
 BrowserContext:
   type: interface
@@ -2506,3 +2514,23 @@ AndroidElementInfo:
     longClickable: boolean
     scrollable: boolean
     selected: boolean
+
+TCPSocket:
+  type: interface
+
+  initializer:
+    dstAddr: string
+    dstPort: number
+
+  commands:
+    write:
+      parameters:
+        data: binary
+
+    end:
+
+  events:
+    data:
+      parameters:
+        data: binary
+    close:
