@@ -207,6 +207,8 @@ const customTypeNames = new Map([
     // run the formatting tool for .net, to ensure the files are prepped
     execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
   }
+
+  console.log(DotnetDocumentation.getDocumentation());
 }
 
 /**
@@ -418,7 +420,7 @@ function renderMethod(member, parent, output, name) {
       paramName = paramName.substring(1);
     if (paramDocs.get(paramName))
       throw new Error(`Parameter ${paramName} already exists in the docs.`);
-    paramDocs.set(paramName, { arg: arg, docs: docs, signature: signature });
+    paramDocs.set(paramName, { arg: arg, docs: docs, signature: signature, name: paramName });
   };
 
   /** @type {string} */
@@ -594,7 +596,7 @@ function renderMethod(member, parent, output, name) {
     output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
     paramDocs.forEach((val, ind) => printArgDoc(val.docs, ind));
     output(`${type} ${name}(${args.join(', ')});`);
-    DotnetDocumentation.registerMethod(member, `${type} ${name}(${args.join(', ')})`, paramDocs);
+    DotnetDocumentation.registerMethod(member,  name, type, paramDocs);
   } else {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
@@ -619,7 +621,7 @@ function renderMethod(member, parent, output, name) {
           argsBuffer.set(argType, mappedArg);
         }
       }
-      DotnetDocumentation.registerMethod(member,  `${type} ${name}(${overloadedArgs.join(', ')})`, argsBuffer);
+      DotnetDocumentation.registerMethod(member,  name, type, argsBuffer);
       output( `${type} ${name}(${overloadedArgs.join(', ')});`);
       if (argIndex < explodedArgs.length - 1)
         output(``); // output a special blank line
@@ -630,15 +632,19 @@ function renderMethod(member, parent, output, name) {
     // That particular overload only contains the required arguments, or rather
     // contains all the arguments *except* the exploded ones.
     if (containsOptionalExplodedArgs) {
+      const argsBuffer = new Map([]);
       var filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
       output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       filteredArgs.forEach((arg) => {
         if (arg === 'EXPLODED_ARG')
           throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);
         let argType = getArgType(arg);
-        printArgDoc(paramDocs.get(argType).docs, argType);
+        let mappedArg = paramDocs.get(argType);
+        printArgDoc(mappedArg.docs, argType);
+        argsBuffer.set(argType, mappedArg);
       });
       output(`${type} ${name}(${filteredArgs.join(', ')});`);
+      DotnetDocumentation.registerMethod(member,  name, type, argsBuffer);
     }
   }
 }

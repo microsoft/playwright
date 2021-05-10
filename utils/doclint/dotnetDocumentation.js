@@ -31,7 +31,8 @@ const Documentation = require('./documentation');
  * @typedef {{
  *  arg: Documentation.Member,
  *  docs: string[],
- *  signature: string
+ *  signature: string,
+ *  name: string
  * }} ArgumentWrapper
  */
 
@@ -60,13 +61,19 @@ function registerInterface(clazz, newName) {
 /**
  * 
  * @param {Documentation.Member} member 
- * @param {string} signature 
+ * @param {string} name
+ * @param {string} returnType 
  * @param {Map<string, ArgumentWrapper>} paramsMap
  */
-function registerMethod(member, signature, paramsMap) {
+function registerMethod(member, name, returnType, paramsMap) {
   if (!currentClass)
     throw new Error("Parent is null.");
-  currentClass.members.push(signature);
+
+  let args = [];
+  paramsMap.forEach(x => args.push(x.signature));
+  if(member.async)
+    name = "Async " + name;
+  currentClass.members.push(`${returnType} ${name}(${ args.join(', ')})`);
 }
 
 function getDocumentation() {
