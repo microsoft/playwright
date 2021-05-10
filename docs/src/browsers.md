@@ -22,7 +22,7 @@ on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edg
 ## Firefox
 
 Playwright's Firefox version matches the recent [Firefox Beta](https://www.mozilla.org/en-US/firefox/channel/desktop/)
-build. 
+build.
 
 ### Firefox-Stable
 
@@ -32,15 +32,15 @@ Using `firefox-stable` is a 2-steps process:
 
 1. Installing `firefox-stable` with Playwright CLI.
     ```sh js
-    $ npx playwright install firefox-stable
+    npx playwright install firefox-stable
     ```
 
     ```sh java
-    $ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install firefox-stable"
+    mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install firefox-stable"
     ```
 
     ```sh python
-    $ playwright install firefox-stable
+    playwright install firefox-stable
     ```
 
 2. Using `firefox-stable` channel when launching browser.
