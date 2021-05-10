@@ -61,6 +61,24 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class BrowserExamples
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var firefox = playwright.Firefox;
+        var browser = await firefox.LaunchAsync(headless: false);
+        var page = await browser.NewPageAsync();
+        await page.GoToAsync("https://www.bing.com");
+        await browser.CloseAsync();
+    }
+}
+```
+
 ## event: Browser.disconnected
 - argument: <[Browser]>
 
@@ -110,6 +128,14 @@ browser = pw.webkit.launch()
 print(len(browser.contexts())) # prints `0`
 context = browser.new_context()
 print(len(browser.contexts())) # prints `1`
+```
+
+```csharp
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Webkit.LaunchAsync();
+System.Console.WriteLine(browser.Contexts.Count); // prints "0"
+var context = await browser.NewContextAsync();
+System.Console.WriteLine(browser.Contexts.Count); // prints "1"
 ```
 
 ## method: Browser.isConnected
@@ -168,6 +194,16 @@ context = browser.new_context()
 # create a new page in a pristine context.
 page = context.new_page()
 page.goto("https://example.com")
+```
+
+```csharp
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Firefox.LaunchAsync();
+// Create a new incognito browser context.
+var context = await browser.NewContextAsync();
+// Create a new page in a pristine context.
+var page = await context.NewPageAsync(); ;
+await page.GoToAsync("https://www.bing.com");
 ```
 
 ### option: Browser.newContext.-inline- = %%-shared-context-params-list-%%
