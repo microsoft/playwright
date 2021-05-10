@@ -24,6 +24,7 @@ import * as har from './har';
 import * as types from '../../types';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
+const FALLBACK_HTTP_VERSION = 'HTTP/1.1'
 
 type HarOptions = {
   path: string;
@@ -177,7 +178,7 @@ export class HarTracer {
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
-      httpVersion: response.protocol() || 'http/1.1',
+      httpVersion: response.protocol() ? response.protocol().toUpperCase() : FALLBACK_HTTP_VERSION,
       cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {

@@ -236,28 +236,30 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', secure: true });
 });
 
-it('should include content', async ({ contextFactory, server }, testInfo) => {
+it.only('should include content', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
 
   const response1 = log.entries[0].response;
+  expect(response1.bodySize).toBe(96);
+  expect(response1.headersSize).toBe(198);
+  expect(response1.httpVersion).toBe('HTTP/1.1');
+  expect(response1._transferSize).toBe(294);
   expect(response1.content.encoding).toBe('base64');
   expect(response1.content.mimeType).toBe('text/html; charset=utf-8');
   expect(Buffer.from(response1.content.text, 'base64').toString()).toContain('HAR Page');
-  expect(response1.bodySize).toBe(96);
-  expect(response1.headersSize).toBe(198);
-  expect(response1._transferSize).toBe(294);
   expect(response1.content.size).toBe(96);
   expect(response1.content.compression).toBe(0);
 
   const response2 = log.entries[1].response;
+  expect(response2.bodySize).toBe(37);
+  expect(response2.headersSize).toBe(197);
+  expect(response2.httpVersion).toBe('HTTP/1.1');
+  expect(response2._transferSize).toBe(234);
   expect(response2.content.encoding).toBe('base64');
   expect(response2.content.mimeType).toBe('text/css; charset=utf-8');
   expect(Buffer.from(response2.content.text, 'base64').toString()).toContain('pink');
-  expect(response2.bodySize).toBe(37);
-  expect(response2.headersSize).toBe(197);
-  expect(response2._transferSize).toBe(234);
   expect(response2.content.size).toBe(37);
   expect(response2.content.compression).toBe(0);
 });

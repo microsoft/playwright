@@ -278,7 +278,7 @@ export class Response extends SdkObject {
   private _protocol: string | undefined;
   private _encodedDataLength: number;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, protocol: string | undefined) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, protocol?: string) {
     super(request.frame(), 'response');
     this._request = request;
     this._timing = timing;
