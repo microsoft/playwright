@@ -108,6 +108,29 @@ it('should click the button with offset with page scale', async ({browser, serve
   await context.close();
 });
 
+it('should return bounding box with page scale', async ({ browser, server, browserName }) => {
+  it.skip(browserName === 'firefox');
+
+  const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/input/button.html');
+  const button = await page.$('button');
+  await button.evaluate(button => {
+    document.body.style.margin = '0';
+    button.style.borderWidth = '0';
+    button.style.width = '200px';
+    button.style.height = '20px';
+    button.style.marginLeft = '17px';
+    button.style.marginTop = '23px';
+  });
+  const box = await button.boundingBox();
+  expect(Math.round(box.x * 100)).toBe(17 * 100);
+  expect(Math.round(box.y * 100)).toBe(23 * 100);
+  expect(Math.round(box.width * 100)).toBe(200 * 100);
+  expect(Math.round(box.height * 100)).toBe(20 * 100);
+  await context.close();
+});
+
 it('should not leak listeners during navigation of 20 pages', async ({contextFactory, server}) => {
   it.slow('We open 20 pages here!');
 

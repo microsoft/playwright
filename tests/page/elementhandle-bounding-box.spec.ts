@@ -16,7 +16,6 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { browserTest } from '../config/browserTest';
 
 it.skip(({ isAndroid }) => isAndroid);
 
@@ -86,29 +85,6 @@ it('should work with SVG nodes', async ({ page, server }) => {
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   }, element);
   expect(pwBoundingBox).toEqual(webBoundingBox);
-});
-
-browserTest('should work with page scale', async ({ browser, server, browserName }) => {
-  browserTest.skip(browserName === 'firefox');
-
-  const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/input/button.html');
-  const button = await page.$('button');
-  await button.evaluate(button => {
-    document.body.style.margin = '0';
-    button.style.borderWidth = '0';
-    button.style.width = '200px';
-    button.style.height = '20px';
-    button.style.marginLeft = '17px';
-    button.style.marginTop = '23px';
-  });
-  const box = await button.boundingBox();
-  expect(Math.round(box.x * 100)).toBe(17 * 100);
-  expect(Math.round(box.y * 100)).toBe(23 * 100);
-  expect(Math.round(box.width * 100)).toBe(200 * 100);
-  expect(Math.round(box.height * 100)).toBe(20 * 100);
-  await context.close();
 });
 
 it('should work when inline box child is outside of viewport', async ({ page, server }) => {
