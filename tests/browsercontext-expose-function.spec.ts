@@ -85,3 +85,12 @@ it('exposeBindingHandle should work', async ({context}) => {
   expect(await target.evaluate(x => x.foo)).toBe(42);
   expect(result).toEqual(17);
 });
+
+it('should work with CSP', async ({ page, context, server }) => {
+  server.setCSP('/empty.html', 'default-src "self"');
+  await page.goto(server.EMPTY_PAGE);
+  let called = false;
+  await context.exposeBinding('hi', () => called = true);
+  await page.evaluate(() => (window as any).hi());
+  expect(called).toBe(true);
+});

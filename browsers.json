@@ -8,12 +8,12 @@
     },
     {
       "name": "firefox",
-      "revision": "1256",
+      "revision": "1257",
       "installByDefault": true
     },
     {
       "name": "firefox-stable",
-      "revision": "1246",
+      "revision": "1247",
       "installByDefault": false
     },
     {
