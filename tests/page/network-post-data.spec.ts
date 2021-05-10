@@ -87,3 +87,23 @@ it('should return post data for PUT requests', async ({page, server}) => {
   ]);
   expect(request.postDataJSON()).toEqual({ value: 42 });
 });
+
+it('should get post data for file/blob', async ({page, server, isWebKit, isChromium}) => {
+  it.fail(isWebKit || isChromium);
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    page.waitForRequest('**/*'),
+    page.evaluate(() => {
+      const file = new File(['file-contents'], 'filename.txt');
+
+      fetch('/data', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/octet-stream'
+        },
+        body: file
+      });
+    })
+  ]);
+  expect(request.postData()).toBe('file-contents');
+});
