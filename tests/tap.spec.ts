@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-import { browserTest, expect } from './config/browserTest';
+import { contextTest as it, expect } from './config/browserTest';
 import { ElementHandle } from '../index';
 import type { ServerResponse } from 'http';
 
-const it = browserTest.extend({
-  async beforeEach({ browser }) {
-    this.page = await browser.newPage({ hasTouch: true });
-    return { page: this.page };
-  },
-  async afterEach() {
-    await this.page.close();
-  }
-});
+it.useOptions({ contextOptions: { hasTouch: true } });
 
 it('should send all of the correct events', async ({ page }) => {
   await page.setContent(`
