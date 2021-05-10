@@ -13,7 +13,7 @@ and shared libraries it provides, per distribution.
 To generate a map of browser library to package name on Ubuntu:bionic:
 
 ```sh
-$ ./run.sh ubuntu:bionic
+./run.sh ubuntu:bionic
 ```
 
 Results will be saved to the `RUN_RESULT`.

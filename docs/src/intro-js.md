@@ -11,7 +11,7 @@ title: "Getting Started"
 Use npm or Yarn to install Playwright in your Node.js project. See [system requirements](#system-requirements).
 
 ```sh
-$ npm i -D playwright
+npm i -D playwright
 ```
 
 This single command downloads the Playwright NPM package and browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./installation.md).
@@ -66,7 +66,7 @@ firefox.launch({ headless: false, slowMo: 50 });
 Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate JavaScript code.
 
 ```sh
-$ npx playwright codegen wikipedia.org
+npx playwright codegen wikipedia.org
 ```
 
 ## TypeScript support

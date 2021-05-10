@@ -14,18 +14,18 @@ Each version of Playwright needs specific versions of browser binaries to operat
 - `~/.cache/ms-playwright` on Linux
 
 ```sh js
-$ npm i -D playwright
+npm i -D playwright
 ```
 
 ```sh python
-$ pip install playwright
-$ playwright install
+pip install playwright
+playwright install
 ```
 
 These browsers will take few hundreds of megabytes of the disk space when installed:
 
 ```sh
-$ du -hs ./Library/Caches/ms-playwright/*
+du -hs ./Library/Caches/ms-playwright/*
 281M  chromium-XXXXXX
 187M  firefox-XXXX
 180M  webkit-XXXX
@@ -35,53 +35,53 @@ You can override default behavior using environment variables. When installing P
 
 ```sh js
 # Linux/macOS
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i -D playwright
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i -D playwright
 
 # Windows
-$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-$ npm i -D playwright
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
-$ pip install playwright
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python -m playwright install
+pip install playwright
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python -m playwright install
 
 # Windows
-$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-$ pip install playwright
-$ playwright install
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+pip install playwright
+playwright install
 ```
 
 ```sh java
 # Linux/macOS
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn test
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn test
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location.
 
 ```sh js
 # Linux/macOS
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers node playwright-script.js
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers node playwright-script.js
 
 # Windows
-$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-$ node playwright-script.js
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+node playwright-script.js
 ```
 
 ```sh python
 # Linux/macOS
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python playwright_script.js
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python playwright_script.js
 
 # Windows
-$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-$ python playwright_script.py
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+python playwright_script.py
 ```
 
 ```sh java
 # Windows
-$ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-$ mvn test
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+mvn test
 ```
 
 Or you can opt into the hermetic install and place binaries in the local folder:
@@ -89,23 +89,23 @@ Or you can opt into the hermetic install and place binaries in the local folder:
 ```sh js
 # Linux/macOS
 # Places binaries to node_modules/playwright
-$ PLAYWRIGHT_BROWSERS_PATH=0 npm i -D playwright
+PLAYWRIGHT_BROWSERS_PATH=0 npm i -D playwright
 
 # Windows
 # Places binaries to node_modules\playwright
-$ set PLAYWRIGHT_BROWSERS_PATH=0
-$ npm i -D playwright
+set PLAYWRIGHT_BROWSERS_PATH=0
+npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
-$ pip install playwright
-$ PLAYWRIGHT_BROWSERS_PATH=0 playwright install
+pip install playwright
+PLAYWRIGHT_BROWSERS_PATH=0 playwright install
 
 # Windows
-$ set PLAYWRIGHT_BROWSERS_PATH=0
-$ pip install playwright
-$ playwright install
+set PLAYWRIGHT_BROWSERS_PATH=0
+pip install playwright
+playwright install
 ```
 
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
@@ -123,31 +123,31 @@ resources. In this case, Playwright can be configured to download browsers via a
 
 ```sh js
 # Linux/macOS
-$ HTTPS_PROXY=https://192.168.1.78 npm i -D playwright
+HTTPS_PROXY=https://192.168.1.78 npm i -D playwright
 
 # Windows
-$ set HTTPS_PROXY=https://192.168.1.78
-$ npm i -D playwright
+set HTTPS_PROXY=https://192.168.1.78
+npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
-$ pip install playwright
-$ HTTPS_PROXY=https://192.168.1.78 playwright install
+pip install playwright
+HTTPS_PROXY=https://192.168.1.78 playwright install
 
 # Windows
-$ set HTTPS_PROXY=https://192.168.1.78
-$ pip install playwright
-$ playwright install
+set HTTPS_PROXY=https://192.168.1.78
+pip install playwright
+playwright install
 ```
 
 ```sh java
 # Linux/macOS
-$ HTTPS_PROXY=https://192.168.1.78 mvn test
+HTTPS_PROXY=https://192.168.1.78 mvn test
 
 # Windows
-$ set HTTPS_PROXY=https://192.168.1.78
-$ mvn test
+set HTTPS_PROXY=https://192.168.1.78
+mvn test
 ```
 
 ## Download from artifact repository
@@ -160,31 +160,31 @@ location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
 ```sh js
 # Linux/macOS
-$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
 
 # Windows
-$ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
-$ npm i -D playwright
+set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
-$ pip install playwright
-$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 playwright install
+pip install playwright
+PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 playwright install
 
 # Windows
-$ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
-$ pip install playwright
-$ playwright install
+set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+pip install playwright
+playwright install
 ```
 
 ```sh java
 # Linux/macOS
-$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
+PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
 
 # Windows
-$ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
-$ mvn test
+set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+mvn test
 ```
 
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
@@ -194,18 +194,18 @@ It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMI
 
 ```sh js
 # Linux/macOS
-$ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
-$ pip install playwright
-$ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 python -m playwright install
+pip install playwright
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 python -m playwright install
 ```
 
 ```sh java
 # Linux/macOS
-$ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
 ```
 
 ## Skip browser downloads
@@ -217,31 +217,31 @@ This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before i
 
 ```sh js
 # Linux/macOS
-$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 
 # Windows
-$ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-$ npm i -D playwright
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
-$ pip install playwright
-$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
+pip install playwright
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
 
 # Windows
-$ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-$ pip install playwright
-$ playwright install
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+pip install playwright
+playwright install
 ```
 
 ```sh java
 # Linux/macOS
-$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 mvn test
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 mvn test
 
 # Windows
-$ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-$ mvn test
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+mvn test
 ```
 
 ## Download single browser binary
@@ -261,7 +261,7 @@ Using these packages is as easy as using a regular Playwright:
 Install a specific package
 
 ```sh
-$ npm i -D playwright-webkit
+npm i -D playwright-webkit
 ```
 
 Require package
@@ -282,8 +282,8 @@ const { webkit } = require('playwright-webkit');
 Playwright downloads Chromium, Firefox and WebKit browsers by default. To install a specific browser, pass it as an argument during installation.
 
 ```sh
-$ pip install playwright
-$ playwright install firefox
+pip install playwright
+playwright install firefox
 ```
 
 ## Stale browser removal
