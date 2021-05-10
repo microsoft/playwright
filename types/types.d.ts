@@ -11172,6 +11172,8 @@ type Devices = {
   "Pixel 4a (5G) landscape": DeviceDescriptor;
   "Pixel 5": DeviceDescriptor;
   "Pixel 5 landscape": DeviceDescriptor;
+  "Moto G4": DeviceDescriptor;
+  "Moto G4 landscape": DeviceDescriptor;
   [key: string]: DeviceDescriptor;
 }
 
