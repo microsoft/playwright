@@ -3,7 +3,7 @@ set -e
 set +x
 
 RUST_VERSION="1.49.0"
-CBINDGEN_VERSION="0.16.0"
+CBINDGEN_VERSION="0.19.0"
 # Certain minimal SDK Version is required by firefox
 MACOS_SDK_VERSION="10.12"
 # XCode version can be determined from https://en.wikipedia.org/wiki/Xcode
@@ -87,7 +87,7 @@ if [[ $1 == "--full" || $2 == "--full" ]]; then
     rm -rf "$HOME/.mozbuild/node"
     mv node "$HOME/.mozbuild/"
   elif [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
-    SHELL=/bin/sh ./mach bootstrap --application-choice=browser --no-interactive --no-system-changes
+    SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser --no-system-changes
   fi
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.

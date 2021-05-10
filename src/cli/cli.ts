@@ -22,7 +22,7 @@ import path from 'path';
 import program from 'commander';
 import os from 'os';
 import fs from 'fs';
-import { runServer, printApiJson, launchBrowserServer, installBrowsers } from './driver';
+import { runDriver, runServer, printApiJson, launchBrowserServer, installBrowsers } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
@@ -32,6 +32,7 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { installDeps } from '../install/installDeps';
+import { allBrowserNames } from '../utils/registry';
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -83,18 +84,18 @@ program
 program
     .command('install [browserType...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(browserType) {
+    .action(async function(browserTypes) {
       try {
-        const allBrowsers = new Set(['chromium', 'firefox', 'webkit', 'ffmpeg']);
-        for (const type of browserType) {
-          if (!allBrowsers.has(type)) {
-            console.log(`Invalid browser name: '${type}'. Expecting 'chromium', 'firefox' or 'webkit'.`);
+        const allBrowsers = new Set(allBrowserNames);
+        for (const browserType of browserTypes) {
+          if (!allBrowsers.has(browserType)) {
+            console.log(`Invalid browser name: '${browserType}'. Expecting one of: ${allBrowserNames.map(name => `'${name}'`).join(', ')}`);
             process.exit(1);
           }
         }
-        if (browserType.length && browserType.includes('chromium'))
-          browserType = browserType.concat('ffmpeg');
-        await installBrowsers(browserType.length ? browserType : undefined);
+        if (browserTypes.length && browserTypes.includes('chromium'))
+          browserTypes = browserTypes.concat('ffmpeg');
+        await installBrowsers(browserTypes.length ? browserTypes : undefined);
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
@@ -175,7 +176,9 @@ if (process.env.PWTRACE) {
 }
 
 if (process.argv[2] === 'run-driver')
-  runServer();
+  runDriver();
+else if (process.argv[2] === 'run-server')
+  runServer(process.argv[3] ? +process.argv[3] : undefined);
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')
@@ -231,9 +234,6 @@ async function launchContext(options: Options, headless: boolean): Promise<{ bro
 
   if (contextOptions.isMobile && browserType.name() === 'firefox')
     contextOptions.isMobile = undefined;
-
-  if (process.env.PWTRACE)
-    (contextOptions as any)._traceDir = path.join(process.cwd(), '.trace');
 
   // Proxy
 
@@ -347,7 +347,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 }
 
 async function open(options: Options, url: string | undefined, language: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWCLI_HEADLESS_FOR_TEST);
+  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS);
   await context._enableRecorder({
     language,
     launchOptions,
@@ -356,14 +356,12 @@ async function open(options: Options, url: string | undefined, language: string)
     saveStorage: options.saveStorage,
   });
   await openPage(context, url);
-  if (process.env.PWCLI_EXIT_FOR_TEST)
+  if (process.env.PWTEST_CLI_EXIT)
     await Promise.all(context.pages().map(p => p.close()));
 }
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWCLI_HEADLESS_FOR_TEST);
-  if (process.env.PWTRACE)
-    contextOptions._traceDir = path.join(process.cwd(), '.trace');
+  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS);
   await context._enableRecorder({
     language,
     launchOptions,
@@ -374,7 +372,7 @@ async function codegen(options: Options, url: string | undefined, language: stri
     outputFile: outputFile ? path.resolve(outputFile) : undefined
   });
   await openPage(context, url);
-  if (process.env.PWCLI_EXIT_FOR_TEST)
+  if (process.env.PWTEST_CLI_EXIT)
     await Promise.all(context.pages().map(p => p.close()));
 }
 

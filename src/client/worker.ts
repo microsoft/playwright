@@ -20,7 +20,6 @@ import { ChannelOwner } from './channelOwner';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { Page } from './page';
 import { BrowserContext } from './browserContext';
-import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 
@@ -38,7 +37,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel, channels.Worker
       if (this._page)
         this._page._workers.delete(this);
       if (this._context)
-        (this._context as ChromiumBrowserContext)._serviceWorkers.delete(this);
+        this._context._serviceWorkers.delete(this);
       this.emit(Events.Worker.Close, this);
     });
   }

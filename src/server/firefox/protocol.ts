@@ -65,7 +65,7 @@ export module Protocol {
       canceled?: boolean;
       error?: string;
     }
-    export type screencastFinishedPayload = {
+    export type videoRecordingFinishedPayload = {
       screencastId: string;
     }
     export type enableParameters = {
@@ -194,7 +194,7 @@ export module Protocol {
           width: number;
           height: number;
         };
-        deviceScaleFactor: number;
+        deviceScaleFactor?: number;
       }|null;
     };
     export type setDefaultViewportReturnValue = void;
@@ -265,14 +265,13 @@ export module Protocol {
       colorScheme: ("dark"|"light"|"no-preference")|null;
     };
     export type setColorSchemeReturnValue = void;
-    export type setScreencastOptionsParameters = {
+    export type setVideoRecordingOptionsParameters = {
       browserContextId?: string;
       dir: string;
       width: number;
       height: number;
-      scale?: number;
     };
-    export type setScreencastOptionsReturnValue = void;
+    export type setVideoRecordingOptionsReturnValue = void;
   }
   export module Page {
     export type DOMPoint = {
@@ -294,7 +293,7 @@ export module Protocol {
         width: number;
         height: number;
       };
-      deviceScaleFactor: number;
+      deviceScaleFactor?: number;
     };
     export type DOMQuad = {
       p1: {
@@ -409,7 +408,7 @@ export module Protocol {
       workerId: string;
       message: string;
     }
-    export type screencastStartedPayload = {
+    export type videoRecordingStartedPayload = {
       screencastId: string;
       file: string;
     }
@@ -440,6 +439,11 @@ export module Protocol {
       wsid: string;
       opcode: number;
       data: string;
+    }
+    export type screencastFramePayload = {
+      data: string;
+      deviceWidth: number;
+      deviceHeight: number;
     }
     export type closeParameters = {
       runBeforeUnload?: boolean;
@@ -530,18 +534,6 @@ export module Protocol {
       frameId: string;
     };
     export type reloadReturnValue = void;
-    export type getBoundingBoxParameters = {
-      frameId: string;
-      objectId: string;
-    };
-    export type getBoundingBoxReturnValue = {
-      boundingBox: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      }|null;
-    };
     export type adoptNodeParameters = {
       frameId: string;
       objectId: string;
@@ -558,13 +550,13 @@ export module Protocol {
     };
     export type screenshotParameters = {
       mimeType: ("image/png"|"image/jpeg");
-      fullPage?: boolean;
       clip?: {
         x: number;
         y: number;
         width: number;
         height: number;
       };
+      omitDeviceScaleFactor?: boolean;
     };
     export type screenshotReturnValue = {
       data: string;
@@ -657,15 +649,20 @@ export module Protocol {
       message: string;
     };
     export type sendMessageToWorkerReturnValue = void;
-    export type startVideoRecordingParameters = {
-      file: string;
+    export type startScreencastParameters = {
       width: number;
       height: number;
-      scale?: number;
+      quality: number;
     };
-    export type startVideoRecordingReturnValue = void;
-    export type stopVideoRecordingParameters = void;
-    export type stopVideoRecordingReturnValue = void;
+    export type startScreencastReturnValue = {
+      screencastId: string;
+    };
+    export type screencastFrameAckParameters = {
+      screencastId: string;
+    };
+    export type screencastFrameAckReturnValue = void;
+    export type stopScreencastParameters = void;
+    export type stopScreencastReturnValue = void;
   }
   export module Runtime {
     export type RemoteObject = {
@@ -987,7 +984,7 @@ export module Protocol {
     "Browser.detachedFromTarget": Browser.detachedFromTargetPayload;
     "Browser.downloadCreated": Browser.downloadCreatedPayload;
     "Browser.downloadFinished": Browser.downloadFinishedPayload;
-    "Browser.screencastFinished": Browser.screencastFinishedPayload;
+    "Browser.videoRecordingFinished": Browser.videoRecordingFinishedPayload;
     "Page.ready": Page.readyPayload;
     "Page.crashed": Page.crashedPayload;
     "Page.eventFired": Page.eventFiredPayload;
@@ -1007,12 +1004,13 @@ export module Protocol {
     "Page.workerCreated": Page.workerCreatedPayload;
     "Page.workerDestroyed": Page.workerDestroyedPayload;
     "Page.dispatchMessageFromWorker": Page.dispatchMessageFromWorkerPayload;
-    "Page.screencastStarted": Page.screencastStartedPayload;
+    "Page.videoRecordingStarted": Page.videoRecordingStartedPayload;
     "Page.webSocketCreated": Page.webSocketCreatedPayload;
     "Page.webSocketOpened": Page.webSocketOpenedPayload;
     "Page.webSocketClosed": Page.webSocketClosedPayload;
     "Page.webSocketFrameSent": Page.webSocketFrameSentPayload;
     "Page.webSocketFrameReceived": Page.webSocketFrameReceivedPayload;
+    "Page.screencastFrame": Page.screencastFramePayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
     "Runtime.executionContextDestroyed": Runtime.executionContextDestroyedPayload;
     "Runtime.console": Runtime.consolePayload;
@@ -1052,7 +1050,7 @@ export module Protocol {
     "Browser.getCookies": Browser.getCookiesParameters;
     "Browser.setOnlineOverride": Browser.setOnlineOverrideParameters;
     "Browser.setColorScheme": Browser.setColorSchemeParameters;
-    "Browser.setScreencastOptions": Browser.setScreencastOptionsParameters;
+    "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
     "Page.close": Page.closeParameters;
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
     "Page.addBinding": Page.addBindingParameters;
@@ -1068,7 +1066,6 @@ export module Protocol {
     "Page.goBack": Page.goBackParameters;
     "Page.goForward": Page.goForwardParameters;
     "Page.reload": Page.reloadParameters;
-    "Page.getBoundingBox": Page.getBoundingBoxParameters;
     "Page.adoptNode": Page.adoptNodeParameters;
     "Page.screenshot": Page.screenshotParameters;
     "Page.getContentQuads": Page.getContentQuadsParameters;
@@ -1081,8 +1078,9 @@ export module Protocol {
     "Page.handleDialog": Page.handleDialogParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
     "Page.sendMessageToWorker": Page.sendMessageToWorkerParameters;
-    "Page.startVideoRecording": Page.startVideoRecordingParameters;
-    "Page.stopVideoRecording": Page.stopVideoRecordingParameters;
+    "Page.startScreencast": Page.startScreencastParameters;
+    "Page.screencastFrameAck": Page.screencastFrameAckParameters;
+    "Page.stopScreencast": Page.stopScreencastParameters;
     "Runtime.evaluate": Runtime.evaluateParameters;
     "Runtime.callFunction": Runtime.callFunctionParameters;
     "Runtime.disposeObject": Runtime.disposeObjectParameters;
@@ -1126,7 +1124,7 @@ export module Protocol {
     "Browser.getCookies": Browser.getCookiesReturnValue;
     "Browser.setOnlineOverride": Browser.setOnlineOverrideReturnValue;
     "Browser.setColorScheme": Browser.setColorSchemeReturnValue;
-    "Browser.setScreencastOptions": Browser.setScreencastOptionsReturnValue;
+    "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
     "Page.close": Page.closeReturnValue;
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
     "Page.addBinding": Page.addBindingReturnValue;
@@ -1142,7 +1140,6 @@ export module Protocol {
     "Page.goBack": Page.goBackReturnValue;
     "Page.goForward": Page.goForwardReturnValue;
     "Page.reload": Page.reloadReturnValue;
-    "Page.getBoundingBox": Page.getBoundingBoxReturnValue;
     "Page.adoptNode": Page.adoptNodeReturnValue;
     "Page.screenshot": Page.screenshotReturnValue;
     "Page.getContentQuads": Page.getContentQuadsReturnValue;
@@ -1155,8 +1152,9 @@ export module Protocol {
     "Page.handleDialog": Page.handleDialogReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
     "Page.sendMessageToWorker": Page.sendMessageToWorkerReturnValue;
-    "Page.startVideoRecording": Page.startVideoRecordingReturnValue;
-    "Page.stopVideoRecording": Page.stopVideoRecordingReturnValue;
+    "Page.startScreencast": Page.startScreencastReturnValue;
+    "Page.screencastFrameAck": Page.screencastFrameAckReturnValue;
+    "Page.stopScreencast": Page.stopScreencastReturnValue;
     "Runtime.evaluate": Runtime.evaluateReturnValue;
     "Runtime.callFunction": Runtime.callFunctionReturnValue;
     "Runtime.disposeObject": Runtime.disposeObjectReturnValue;

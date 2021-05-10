@@ -523,6 +523,9 @@ page.fill('input:right-of(:text("Username"))', 'value')
 page.click('button:near(.promo-card)')
 ```
 
+All layout selectors support optional maximum pixel distance as the last argument. For example
+`button:near(:text("Username"), 120)` matches a button that is at most 120 pixels away from the element with the text "Username".
+
 ## XPath selectors
 
 XPath selectors are equivalent to calling [`Document.evaluate`](https://developer.mozilla.org/en/docs/Web/API/Document/evaluate).

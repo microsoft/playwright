@@ -34,7 +34,7 @@ import { assertMaxArguments, serializeArgument, parseResult, JSHandle } from './
 import { Request, Response, Route, RouteHandler, WebSocket, validateHeaders } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
-import { ChromiumCoverage } from './chromiumCoverage';
+import { Coverage } from './coverage';
 import { Waiter } from './waiter';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -46,7 +46,7 @@ import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
-import type { ChromiumBrowserContext } from './chromiumBrowserContext';
+import { Artifact } from './artifact';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const mkdirAsync = util.promisify(fs.mkdir);
@@ -72,20 +72,21 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   private _frames = new Set<Frame>();
   _workers = new Set<Worker>();
   private _closed = false;
+  _closedOrCrashedPromise: Promise<void>;
   private _viewportSize: Size | null;
   private _routes: { url: URLMatch, handler: RouteHandler }[] = [];
 
   readonly accessibility: Accessibility;
+  readonly coverage: Coverage;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
   readonly touchscreen: Touchscreen;
-  coverage: ChromiumCoverage | null = null;
-  pdf: (options?: PDFOptions) => Promise<Buffer>;
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   readonly _timeoutSettings: TimeoutSettings;
   _isPageCall = false;
   private _video: Video | null = null;
+  readonly _opener: Page | null;
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -110,6 +111,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._frames.add(this._mainFrame);
     this._viewportSize = initializer.viewportSize || null;
     this._closed = initializer.isClosed;
+    this._opener = Page.fromNullable(initializer.opener);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -120,28 +122,34 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
         dialog.dismiss().catch(() => {});
     });
     this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded, this));
-    this._channel.on('download', ({ download }) => this.emit(Events.Page.Download, Download.from(download)));
+    this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
+      const artifactObject = Artifact.from(artifact);
+      artifactObject._isRemote = !!this._browserContext._browser && !!this._browserContext._browser._remoteType;
+      this.emit(Events.Page.Download, new Download(url, suggestedFilename, artifactObject));
+    });
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('load', () => this.emit(Events.Page.Load, this));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
-    this._channel.on('popup', ({ page }) => this.emit(Events.Page.Popup, Page.from(page)));
     this._channel.on('request', ({ request }) => this.emit(Events.Page.Request, Request.from(request)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming }) => this._onRequestFailed(Request.from(request), responseEndTiming, failureText));
     this._channel.on('requestFinished', ({ request, responseEndTiming }) => this._onRequestFinished(Request.from(request), responseEndTiming));
     this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
-    this._channel.on('video', ({ relativePath }) => this.video()!._setRelativePath(relativePath));
+    this._channel.on('video', ({ artifact }) => {
+      const artifactObject = Artifact.from(artifact);
+      this._forceVideo()._artifactReady(artifactObject);
+    });
     this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
-    if ((this._browserContext as ChromiumBrowserContext)._isChromium) {
-      this.coverage = new ChromiumCoverage(this._channel);
-      this.pdf = options => this._pdf(options);
-    } else {
-      this.pdf = undefined as any;
-    }
+    this.coverage = new Coverage(this._channel);
+
+    this._closedOrCrashedPromise = Promise.race([
+      new Promise<void>(f => this.once(Events.Page.Close, f)),
+      new Promise<void>(f => this.once(Events.Page.Crash, f)),
+    ]);
   }
 
   private _onRequestFailed(request: Request, responseEndTiming: number, failureText: string | undefined) {
@@ -213,9 +221,9 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async opener(): Promise<Page | null> {
-    return this._wrapApiCall('page.opener', async (channel: channels.PageChannel) => {
-      return Page.fromNullable((await channel.opener()).page);
-    });
+    if (!this._opener || this._opener.isClosed())
+      return null;
+    return this._opener;
   }
 
   mainFrame(): Frame {
@@ -247,16 +255,19 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
+  private _forceVideo(): Video {
+    if (!this._video)
+      this._video = new Video(this);
+    return this._video;
+  }
+
   video(): Video | null {
-    if (this._video)
-      return this._video;
+    // Note: we are creating Video object lazily, because we do not know
+    // BrowserContextOptions when constructing the page - it is assigned
+    // too late during launchPersistentContext.
     if (!this._browserContext._options.recordVideo)
       return null;
-    this._video = new Video(this);
-    // In case of persistent profile, we already have it.
-    if (this._initializer.videoRelativePath)
-      this._video._setRelativePath(this._initializer.videoRelativePath);
-    return this._video;
+    return this._forceVideo();
   }
 
   private _attributeToPage<T>(func: () => T): T {
@@ -362,7 +373,11 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.waitForNavigation(options));
   }
 
-  async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: { timeout?: number } = {}): Promise<Request> {
+  async waitForURL(url: URLMatch, options?: { waitUntil?: LifecycleEvent, timeout?: number }): Promise<void> {
+    return this._attributeToPage(() => this._mainFrame.waitForURL(url, options));
+  }
+
+  async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Request> {
     return this._wrapApiCall('page.waitForRequest', async (channel: channels.PageChannel) => {
       const predicate = (request: Request) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
@@ -375,7 +390,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean), options: { timeout?: number } = {}): Promise<Response> {
+  async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Response> {
     return this._wrapApiCall('page.waitForResponse', async (channel: channels.PageChannel) => {
       const predicate = (response: Response) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
@@ -649,7 +664,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async _pdf(options: PDFOptions = {}): Promise<Buffer> {
+  async pdf(options: PDFOptions = {}): Promise<Buffer> {
     return this._wrapApiCall('page.pdf', async (channel: channels.PageChannel) => {
       const transportOptions: channels.PagePdfParams = { ...options } as channels.PagePdfParams;
       if (transportOptions.margin)

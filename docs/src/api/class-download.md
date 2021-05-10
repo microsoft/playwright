@@ -18,7 +18,7 @@ const path = await download.path();
 
 ```java
 // wait for download to start
-Download download  = page.waitForDownload(() -> page.click("a")); 
+Download download  = page.waitForDownload(() -> page.click("a"));
 // wait for download to complete
 Path path = download.path();
 ```
@@ -55,7 +55,7 @@ not performed and user has no access to the downloaded files.
 :::
 
 ## async method: Download.createReadStream
-* langs: java, js
+* langs: java, js, csharp
 - returns: <[null]|[Readable]>
 
 Returns readable stream for current download or `null` if download failed.
@@ -73,7 +73,7 @@ Returns download error if any. Will wait for the download to finish if necessary
 - returns: <[null]|[path]>
 
 Returns path to the downloaded file in case of successful download. The method will
-wait for the download to finish if necessary.
+wait for the download to finish if necessary. The method throws when connected remotely.
 
 ## async method: Download.saveAs
 

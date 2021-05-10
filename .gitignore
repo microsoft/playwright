@@ -1,7 +1,6 @@
 /node_modules/
 /test-results/
-/test/coverage-report
-/test/test-user-data-dir*
+/tests/coverage-report
 .local-browsers/
 /.dev_profile*
 .DS_Store
@@ -9,10 +8,8 @@
 *.pyc
 .vscode
 yarn.lock
-/node6
 /src/generated/*
 lib/
-jest-report.json
 drivers/
 .android-sdk/
 .gradle/

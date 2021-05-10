@@ -13,12 +13,12 @@ const { _electron: electron } = require('playwright');
   const electronApp = await electron.launch({ args: ['main.js'] });
 
   // Evaluation expression in the Electron context.
-  const appPath = await electronApp.evaluate(async (electron) => {
-    // This runs in the main Electron process, |electron| parameter
-    // here is always the result of the require('electron') in the main
-    // app script.
-    return electron.getAppPath();
+  const appPath = await electronApp.evaluate(async ({ app }) => {
+    // This runs in the main Electron process, parameter here is always
+    // the result of the require('electron') in the main app script.
+    return app.getAppPath();
   });
+  console.log(appPath);
 
   // Get the first window that the app opens, wait if necessary.
   const window = await electronApp.firstWindow();
@@ -30,6 +30,8 @@ const { _electron: electron } = require('playwright');
   window.on('console', console.log);
   // Click button.
   await window.click('text=Click me');
+  // Exit app.
+  await electronApp.close();
 })();
 ```
 
@@ -42,6 +44,16 @@ This event is issued when the application closes.
 
 This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can
 be used for Playwright automation.
+
+## async method: ElectronApplication.browserWindow
+- returns: <[JSHandle]>
+
+Returns the BrowserWindow object that corresponds to the given Playwright page.
+
+### param: ElectronApplication.browserWindow.page
+- `page` <[Page]>
+
+Page to retrieve the window for.
 
 ## async method: ElectronApplication.close
 

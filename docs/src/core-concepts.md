@@ -20,7 +20,7 @@ the following primitives.
 A [Browser] refers to an instance of Chromium, Firefox
 or WebKit. Playwright scripts generally start with launching a browser instance
 and end with closing the browser. Browser instances can be launched in headless
-(without a GUI) or headful mode.
+(without a GUI) or headed mode.
 
 ```js
 const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.

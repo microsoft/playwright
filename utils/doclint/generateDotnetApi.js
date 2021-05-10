@@ -24,6 +24,7 @@ const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { Type } = require('./documentation');
 const { EOL } = require('os');
+const { execSync } = require('child_process');
 
 const maxDocumentationColumnWidth = 80;
 
@@ -48,7 +49,7 @@ const customTypeNames = new Map([
 ]);
 
 {
-  const typesDir = process.argv[2] || '../generate_types/csharp/';
+  const typesDir = process.argv[2] || path.join(__dirname, 'generate_types', 'csharp');
   let checkAndMakeDir = (path) => {
     if (!fs.existsSync(path))
       fs.mkdirSync(path, { recursive: true });
@@ -78,7 +79,7 @@ const customTypeNames = new Map([
   });
 
   // get the template for a class
-  const template = fs.readFileSync("./templates/interface.cs", 'utf-8')
+  const template = fs.readFileSync(path.join(__dirname, 'templates', 'interface.cs'), 'utf-8')
     .replace('[PW_TOOL_VERSION]', `${__filename.substring(path.join(__dirname, '..', '..').length).split(path.sep).join(path.posix.sep)}`);
 
   // we have some "predefined" types, like the mixed state enum, that we can map in advance
@@ -98,6 +99,7 @@ const customTypeNames = new Map([
   classNameMap.set('path', 'string');
   classNameMap.set('URL', 'string');
   classNameMap.set('RegExp', 'Regex');
+  classNameMap.set('Readable', 'Stream');
 
   // this are types that we don't explicility render even if we get the specs
   const ignoredTypes = ['TimeoutException'];
@@ -108,11 +110,11 @@ const customTypeNames = new Map([
   }
 
   /**
-   * 
-   * @param {string} kind 
-   * @param {string} name 
+   *
+   * @param {string} kind
+   * @param {string} name
    * @param {Documentation.MarkdownNode[]} spec
-   * @param {function(string[]): void} callback 
+   * @param {function(string[]): void} callback
    * @param {string} folder
    * @param {string} extendsName
    */
@@ -139,7 +141,7 @@ const customTypeNames = new Map([
 
     callback(out);
 
-    // we want to separate the items with a space and this is nicer, than holding 
+    // we want to separate the items with a space and this is nicer, than holding
     // an index in each iterator down the line
     const lastLine = out.pop();
     if (lastLine !== '')
@@ -198,12 +200,17 @@ const customTypeNames = new Map([
         out.push(`\t${escapedName},`);
       });
     }, enumsDir));
+
+  if (process.argv[3] !== "--skip-format") {
+    // run the formatting tool for .net, to ensure the files are prepped
+    execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
+  }
 }
 
 /**
- * @param {string} memberKind  
- * @param {string} name 
- * @param {Documentation.Member} member 
+ * @param {string} memberKind
+ * @param {string} name
+ * @param {Documentation.Member} member
  */
 function translateMemberName(memberKind, name, member = null) {
   if (!name) return name;
@@ -256,9 +263,9 @@ function translateMemberName(memberKind, name, member = null) {
 }
 
 /**
- * 
- * @param {Documentation.Member} member 
- * @param {Documentation.Class|Documentation.Type} parent 
+ *
+ * @param {Documentation.Member} member
+ * @param {Documentation.Class|Documentation.Type} parent
  * @param {string[]} out
  */
 function renderMember(member, parent, out) {
@@ -280,25 +287,26 @@ function renderMember(member, parent, out) {
         throw new Error(`No Event Type for ${name} in ${parent.name}`);
       if (member.spec)
         output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-      if (parent && (classNameMap.get(parent.name) === type))
-        output(`event EventHandler ${name};`); // event sender will be the type, so we're fine to ignore
-      else
-        output(`event EventHandler<${type}> ${name};`);
+      output(`event EventHandler<${type}> ${name};`);
     } else if (member.kind === 'property') {
       if (member.spec)
         output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       let propertyOrigin = member.name;
       if (member.type.expression === '[string]|[float]')
         propertyOrigin = `${member.name}String`;
-      output(`[JsonPropertyName("${propertyOrigin}")]`)
+      if (!member.clazz)
+        output(`[JsonPropertyName("${propertyOrigin}")]`)
       if (parent && member && member.name === 'children') {  // this is a special hack for Accessibility
         console.warn(`children property found in ${parent.name}, assuming array.`);
         type = `IEnumerable<${parent.name}>`;
       }
 
-      if(!type.endsWith('?') && !member.required && nullableTypes.includes(type))
+      if (!type.endsWith('?') && !member.required && nullableTypes.includes(type))
         type = `${type}?`;
-      output(`public ${type} ${name} { get; set; }`);
+      if (member.clazz)
+        output(`public ${type} ${name} { get; }`);
+      else
+        output(`public ${type} ${name} { get; set; }`);
     } else {
       throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
     }
@@ -309,11 +317,11 @@ function renderMember(member, parent, out) {
 }
 
 /**
- * 
- * @param {Documentation.Member} member 
- * @param {string} name 
- * @param {Documentation.Type} t 
- * @param {*} parent 
+ *
+ * @param {Documentation.Member} member
+ * @param {string} name
+ * @param {Documentation.Type} t
+ * @param {*} parent
  */
 function generateNameDefault(member, name, t, parent) {
   if (!t.properties
@@ -388,9 +396,9 @@ function generateEnumNameIfApplicable(member, name, type, parent) {
 
 /**
  * Rendering a method is so _special_, with so many weird edge cases, that it
- * makes sense to put it separate from the other logic. 
- * @param {Documentation.Member} member 
- * @param {Documentation.Class|Documentation.Type} parent 
+ * makes sense to put it separate from the other logic.
+ * @param {Documentation.Member} member
+ * @param {Documentation.Class|Documentation.Type} parent
  * @param {Function} output
  */
 function renderMethod(member, parent, output, name) {
@@ -450,8 +458,6 @@ function renderMethod(member, parent, output, name) {
       output(`${type} ${name} { get; }`);
       return;
     }
-    if (!/Is[A-Z]/.test(name))
-      name = `Get${name}`;
   } else if (member.args.size == 1
     && type === 'void'
     && name.startsWith('Set')
@@ -478,25 +484,31 @@ function renderMethod(member, parent, output, name) {
 
   // render args
   let args = [];
+  let explodedArgs = [];
+  let argTypeMap = new Map([]);
   /**
-   * 
-   * @param {string} innerArgType 
-   * @param {string} innerArgName 
-   * @param {Documentation.Member} argument 
+   *
+   * @param {string} innerArgType
+   * @param {string} innerArgName
+   * @param {Documentation.Member} argument
+   * @param {boolean} isExploded
    */
-  const pushArg = (innerArgType, innerArgName, argument) => {
-    let isEnum = enumTypes.has(innerArgType);
+  const pushArg = (innerArgType, innerArgName, argument, isExploded = false) => {
     let isNullable = nullableTypes.includes(innerArgType);
-    const requiredPrefix = argument.required ? "" : isNullable ? "?" : "";
-    const requiredSuffix = argument.required ? "" : " = default";
-    args.push(`${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`);
+    const requiredPrefix = (argument.required || isExploded) ? "" : isNullable ? "?" : "";
+    const requiredSuffix = (argument.required || isExploded) ? "" : " = default";
+    var push = `${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`;
+    if (isExploded)
+      explodedArgs.push(push)
+    else
+      args.push(push);
+    argTypeMap.set(push, innerArgName);
   };
+
 
   let parseArg = (/** @type {Documentation.Member} */ arg) => {
     if (arg.name === "options") {
-      arg.type.properties.forEach(prop => {
-        parseArg(prop);
-      });
+      arg.type.properties.forEach(parseArg);
       return;
     }
 
@@ -536,11 +548,13 @@ function renderMethod(member, parent, output, name) {
 
       let argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
-        const sanitizedArgName = newArg.match(/(?<=^[\s"']*)(\w+)/g, '')[0] || newArg;
+        let nonGenericType = newArg.replace(/\IEnumerable<(.*)\>/g, (m, v) => 'Enumerable' + v[0].toUpperCase() + v.substring(1))
+        const sanitizedArgName = nonGenericType.match(/(?<=^[\s"']*)(\w+)/g, '')[0] || nonGenericType;
         const newArgName = `${argName}${sanitizedArgName[0].toUpperCase() + sanitizedArgName.substring(1)}`;
-        pushArg(newArg, newArgName, arg);
+        pushArg(newArg, newArgName, arg, true); // push the exploded arg
         addParamsDoc(newArgName, argDocumentation);
       }
+      args.push(arg.required ? 'EXPLODED_ARG' : 'OPTIONAL_EXPLODED_ARG');
       return;
     }
 
@@ -558,8 +572,7 @@ function renderMethod(member, parent, output, name) {
     .sort((a, b) => b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
     .forEach(parseArg);
 
-  output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-  paramDocs.forEach((val, ind) => {
+  let printArgDoc = function (val, ind) {
     if (val && val.length === 1)
       output(`/// <param name="${ind}">${val}</param>`);
     else {
@@ -567,19 +580,67 @@ function renderMethod(member, parent, output, name) {
       output(val.map(l => `/// ${l}`));
       output(`/// </param>`);
     }
-  });
-  output(`${type} ${name}(${args.join(', ')});`);
+  }
+
+  let getArgType = function (argType) {
+    var type = argTypeMap.get(argType);
+    return type;
+  }
+
+  if (!explodedArgs.length) {
+    output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+    paramDocs.forEach((val, ind) => printArgDoc(val, ind));
+    output(`${type} ${name}(${args.join(', ')});`);
+  } else {
+    let containsOptionalExplodedArgs = false;
+    explodedArgs.forEach((explodedArg, argIndex) => {
+      output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      let overloadedArgs = [];
+      for (var i = 0; i < args.length; i++) {
+        let arg = args[i];
+        if (arg === 'EXPLODED_ARG' || arg === 'OPTIONAL_EXPLODED_ARG') {
+          containsOptionalExplodedArgs = arg === 'OPTIONAL_EXPLODED_ARG';
+          let argType = getArgType(explodedArg);
+          printArgDoc(paramDocs.get(argType), argType);
+          overloadedArgs.push(explodedArg);
+        } else {
+          let argType = getArgType(arg);
+          printArgDoc(paramDocs.get(argType), argType);
+          overloadedArgs.push(arg);
+        }
+      }
+      output(`${type} ${name}(${overloadedArgs.join(', ')});`);
+      if (argIndex < explodedArgs.length - 1)
+        output(``); // output a special blank line
+    });
+
+    // If the exploded union arguments are optional, we also output a special
+    // signature, to help prevent compilation errors with ambigious overloads.
+    // That particular overload only contains the required arguments, or rather
+    // contains all the arguments *except* the exploded ones.
+    if (containsOptionalExplodedArgs) {
+      var filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
+      output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      filteredArgs.forEach((arg) => {
+        if (arg === 'EXPLODED_ARG')
+          throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);
+        let argType = getArgType(arg);
+        printArgDoc(paramDocs.get(argType), argType);
+      });
+      output(`${type} ${name}(${filteredArgs.join(', ')});`);
+    }
+  }
 }
 
 /**
- * 
+ *
  *  @callback generateNameCallback
  *  @param {Documentation.Type} t
  *  @returns {string}
  */
 
 /**
- *  @param {Documentation.Type} type 
+ *  @param {Documentation.Type} type
  *  @param {Documentation.Class|Documentation.Type} parent
  *  @param {generateNameCallback} generateNameCallback
 */
@@ -604,7 +665,8 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
         const innerTypeName = translateType(type.union[1], parent, generateNameCallback);
         // if type is primitive, or an enum, then it's nullable
         if (innerTypeName === 'bool'
-          || innerTypeName === 'int') {
+          || innerTypeName === 'int'
+          || enumTypes.has(innerTypeName)) {
           return `${innerTypeName}?`;
         }
 
@@ -648,9 +710,7 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
     } else if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
       return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
     else if (type.union[0].name === 'path')
-      // we don't support path, but we know it's usually an object on the other end, and we expect
-      // the dotnet folks to use [NameOfTheObject].LoadFromPath(); method which we can provide separately
-      return translateType(type.union[1], parent, generateNameCallback);
+      return null;
     else if (type.expression === '[float]|"raf"')
       return `Polling`; // hardcoded because there's no other way to denote this
 
@@ -669,7 +729,7 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
     // take care of some common cases
     // TODO: this can be genericized
     if (type.templates && type.templates.length == 2) {
-      // get the inner types of both templates, and if they're strings, it's a keyvaluepair string, string, 
+      // get the inner types of both templates, and if they're strings, it's a keyvaluepair string, string,
       let keyType = translateType(type.templates[0], parent, generateNameCallback);
       let valueType = translateType(type.templates[1], parent, generateNameCallback);
       return `IEnumerable<KeyValuePair<${keyType}, ${valueType}>>`;
@@ -740,9 +800,9 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
 }
 
 /**
- * 
- * @param {string} typeName 
- * @param {Documentation.Type} type 
+ *
+ * @param {string} typeName
+ * @param {Documentation.Type} type
  */
 function registerAdditionalType(typeName, type) {
   if (['object', 'string', 'int'].includes(typeName))

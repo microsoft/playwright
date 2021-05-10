@@ -79,7 +79,7 @@ function serializeProperty(arg) {
   const result = { ...arg };
   sanitize(result);
   if (arg.type)
-    result.type = serializeType(arg.type)
+    result.type = serializeType(arg.type, arg.name === 'options')
   return result;
 }
 
@@ -92,18 +92,19 @@ function sanitize(result) {
 
 /**
  * @param {Documentation.Type} type
+ * @param {boolean} sortProperties
  */
-function serializeType(type) {
+function serializeType(type, sortProperties = false) {
   /** @type {any} */
   const result = { ...type };
   if (type.properties)
-    result.properties = type.properties.map(serializeProperty);
+    result.properties = (sortProperties ? type.sortedProperties() : type.properties).map(serializeProperty);
   if (type.union)
-    result.union = type.union.map(serializeType);
+    result.union = type.union.map(type => serializeType(type));
   if (type.templates)
-    result.templates = type.templates.map(serializeType);
+    result.templates = type.templates.map(type => serializeType(type));
   if (type.args)
-    result.args = type.args.map(serializeType);
+    result.args = type.args.map(type => serializeType(type));
   if (type.returnType)
     result.returnType = serializeType(type.returnType);
   return result;

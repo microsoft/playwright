@@ -73,7 +73,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     const parserNames = Array.from(customCSSNames).slice();
     parserNames.sort();
     if (allNames.join('|') !== parserNames.join('|'))
-      throw new Error(`Please keep customCSSNames in sync with evaluator engines`);
+      throw new Error(`Please keep customCSSNames in sync with evaluator engines: ${allNames.join('|')} vs ${parserNames.join('|')}`);
   }
 
   begin() {
@@ -536,32 +536,36 @@ export function elementMatchesText(evaluator: SelectorEvaluatorImpl, element: El
   return 'self';
 }
 
-function boxRightOf(box1: DOMRect, box2: DOMRect): number | undefined {
-  if (box1.left < box2.right)
+function boxRightOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
+  const distance = box1.left - box2.right;
+  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
     return;
-  return (box1.left - box2.right) + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
+  return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
 }
 
-function boxLeftOf(box1: DOMRect, box2: DOMRect): number | undefined {
-  if (box1.right > box2.left)
+function boxLeftOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
+  const distance = box2.left - box1.right;
+  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
     return;
-  return (box2.left - box1.right) + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
+  return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
 }
 
-function boxAbove(box1: DOMRect, box2: DOMRect): number | undefined {
-  if (box1.bottom > box2.top)
+function boxAbove(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
+  const distance = box2.top - box1.bottom;
+  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
     return;
-  return (box2.top - box1.bottom) + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
+  return distance + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
 }
 
-function boxBelow(box1: DOMRect, box2: DOMRect): number | undefined {
-  if (box1.top < box2.bottom)
+function boxBelow(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
+  const distance = box1.top - box2.bottom;
+  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
     return;
-  return (box1.top - box2.bottom) + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
+  return distance + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
 }
 
-function boxNear(box1: DOMRect, box2: DOMRect): number | undefined {
-  const kThreshold = 50;
+function boxNear(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
+  const kThreshold = maxDistance === undefined ? 50 : maxDistance;
   let score = 0;
   if (box1.left - box2.right >= 0)
     score += box1.left - box2.right;
@@ -574,17 +578,19 @@ function boxNear(box1: DOMRect, box2: DOMRect): number | undefined {
   return score > kThreshold ? undefined : score;
 }
 
-function createPositionEngine(name: string, scorer: (box1: DOMRect, box2: DOMRect) => number | undefined): SelectorEngine {
+function createPositionEngine(name: string, scorer: (box1: DOMRect, box2: DOMRect, maxDistance: number | undefined) => number | undefined): SelectorEngine {
   return {
     matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
-      if (!args.length)
-        throw new Error(`"${name}" engine expects a selector list`);
+      const maxDistance = args.length && typeof args[args.length - 1] === 'number' ? args[args.length - 1] : undefined;
+      const queryArgs = maxDistance === undefined ? args : args.slice(0, args.length - 1);
+      if (args.length < 1 + (maxDistance === undefined ? 0 : 1))
+        throw new Error(`"${name}" engine expects a selector list and optional maximum distance in pixels`);
       const box = element.getBoundingClientRect();
       let bestScore: number | undefined;
-      for (const e of evaluator.query(context, args)) {
+      for (const e of evaluator.query(context, queryArgs)) {
         if (e === element)
           continue;
-        const score = scorer(box, e.getBoundingClientRect());
+        const score = scorer(box, e.getBoundingClientRect(), maxDistance);
         if (score === undefined)
           continue;
         if (bestScore === undefined || score < bestScore)

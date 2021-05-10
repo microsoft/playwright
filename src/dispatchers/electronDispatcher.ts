@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
-import { Electron, ElectronApplication, ElectronPage } from '../server/electron/electron';
+import { Dispatcher, DispatcherScope } from './dispatcher';
+import { Electron, ElectronApplication } from '../server/electron/electron';
 import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
-import { createHandle } from './elementHandlerDispatcher';
+import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
 export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronInitializer> implements channels.ElectronChannel {
   constructor(scope: DispatcherScope, electron: Electron) {
@@ -35,29 +35,29 @@ export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronIn
 
 export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, channels.ElectronApplicationInitializer> implements channels.ElectronApplicationChannel {
   constructor(scope: DispatcherScope, electronApplication: ElectronApplication) {
-    super(scope, electronApplication, 'ElectronApplication', {}, true);
-    this._dispatchEvent('context', { context: new BrowserContextDispatcher(this._scope, electronApplication.context()) });
+    super(scope, electronApplication, 'ElectronApplication', {
+      context: new BrowserContextDispatcher(scope, electronApplication.context())
+    }, true);
     electronApplication.on(ElectronApplication.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
     });
-    electronApplication.on(ElectronApplication.Events.Window, (page: ElectronPage) => {
-      this._dispatchEvent('window', {
-        page: lookupDispatcher<PageDispatcher>(page),
-        browserWindow: createHandle(this._scope, page.browserWindow),
-      });
-    });
+  }
+
+  async browserWindow(params: channels.ElectronApplicationBrowserWindowParams): Promise<channels.ElectronApplicationBrowserWindowResult> {
+    const handle = await this._object.browserWindow((params.page as PageDispatcher).page());
+    return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, handle) };
   }
 
   async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
-    const handle = this._object._nodeElectronHandle!;
+    const handle = await this._object._nodeElectronHandlePromise;
     return { value: serializeResult(await handle.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
   }
 
   async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
-    const handle = this._object._nodeElectronHandle!;
+    const handle = await this._object._nodeElectronHandlePromise;
     const result = await handle.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
-    return { handle: createHandle(this._scope, result) };
+    return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, result) };
   }
 
   async close(): Promise<void> {

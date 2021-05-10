@@ -4107,8 +4107,8 @@ might return multiple quads for inline nodes.
     export type setDeviceMetricsOverrideParameters = {
       width: number;
       height: number;
-      deviceScaleFactor: number;
       fixedLayout: boolean;
+      deviceScaleFactor?: number;
     }
     export type setDeviceMetricsOverrideReturnValue = {
     }
@@ -6242,6 +6242,12 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       found?: boolean;
     }
+    export interface Insets {
+      top: number;
+      right: number;
+      bottom: number;
+      left: number;
+    }
     
     export type domContentEventFiredPayload = {
       timestamp: number;
@@ -6686,6 +6692,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Indicates the coordinate system of the supplied rectangle.
        */
       coordinateSystem: CoordinateSystem;
+      /**
+       * By default, screenshot is inflated by device scale factor to avoid blurry image. This flag disables it.
+       */
+      omitDeviceScaleFactor?: boolean;
     }
     export type snapshotRectReturnValue = {
       /**
@@ -6803,6 +6813,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       angle?: number;
     }
     export type setOrientationOverrideReturnValue = {
+    }
+    export type setVisibleContentRectsParameters = {
+      unobscuredContentRect?: DOM.Rect;
+      contentInsets?: Insets;
+      obscuredInsets?: Insets;
+      unobscuredInsets?: Insets;
+    }
+    export type setVisibleContentRectsReturnValue = {
     }
   }
   
@@ -8013,11 +8031,19 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type ScreencastId = string;
     
+    export type screencastFramePayload = {
+      /**
+       * Base64 data
+       */
+      data: string;
+      deviceWidth: number;
+      deviceHeight: number;
+    }
     
     /**
      * Starts recoring video to speified file.
      */
-    export type startParameters = {
+    export type startVideoParameters = {
       /**
        * Output file location.
        */
@@ -8026,7 +8052,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       height: number;
       scale?: number;
     }
-    export type startReturnValue = {
+    export type startVideoReturnValue = {
       /**
        * Unique identifier of the screencast.
        */
@@ -8035,9 +8061,38 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * Stops recoding video. Returns after the file has been closed.
      */
-    export type stopParameters = {
+    export type stopVideoParameters = {
     }
-    export type stopReturnValue = {
+    export type stopVideoReturnValue = {
+    }
+    /**
+     * Starts screencast.
+     */
+    export type startScreencastParameters = {
+      width: number;
+      height: number;
+      quality: number;
+    }
+    export type startScreencastReturnValue = {
+      /**
+       * Screencast session generation.
+       */
+      generation: number;
+    }
+    /**
+     * Stops screencast.
+     */
+    export type stopScreencastParameters = {
+    }
+    export type stopScreencastReturnValue = {
+    }
+    export type screencastFrameAckParameters = {
+      /**
+       * Screencast session generation
+       */
+      generation: number;
+    }
+    export type screencastFrameAckReturnValue = {
     }
   }
   
@@ -8594,6 +8649,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.downloadFinished": Playwright.downloadFinishedPayload;
     "Playwright.screencastFinished": Playwright.screencastFinishedPayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
+    "Screencast.screencastFrame": Screencast.screencastFramePayload;
     "ScriptProfiler.trackingStart": ScriptProfiler.trackingStartPayload;
     "ScriptProfiler.trackingUpdate": ScriptProfiler.trackingUpdatePayload;
     "ScriptProfiler.trackingComplete": ScriptProfiler.trackingCompletePayload;
@@ -8842,6 +8898,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setBypassCSP": Page.setBypassCSPParameters;
     "Page.crash": Page.crashParameters;
     "Page.setOrientationOverride": Page.setOrientationOverrideParameters;
+    "Page.setVisibleContentRects": Page.setVisibleContentRectsParameters;
     "Playwright.enable": Playwright.enableParameters;
     "Playwright.disable": Playwright.disableParameters;
     "Playwright.close": Playwright.closeParameters;
@@ -8876,8 +8933,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Runtime.enableControlFlowProfiler": Runtime.enableControlFlowProfilerParameters;
     "Runtime.disableControlFlowProfiler": Runtime.disableControlFlowProfilerParameters;
     "Runtime.getBasicBlocks": Runtime.getBasicBlocksParameters;
-    "Screencast.start": Screencast.startParameters;
-    "Screencast.stop": Screencast.stopParameters;
+    "Screencast.startVideo": Screencast.startVideoParameters;
+    "Screencast.stopVideo": Screencast.stopVideoParameters;
+    "Screencast.startScreencast": Screencast.startScreencastParameters;
+    "Screencast.stopScreencast": Screencast.stopScreencastParameters;
+    "Screencast.screencastFrameAck": Screencast.screencastFrameAckParameters;
     "ScriptProfiler.startTracking": ScriptProfiler.startTrackingParameters;
     "ScriptProfiler.stopTracking": ScriptProfiler.stopTrackingParameters;
     "ServiceWorker.getInitializationInfo": ServiceWorker.getInitializationInfoParameters;
@@ -9130,6 +9190,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setBypassCSP": Page.setBypassCSPReturnValue;
     "Page.crash": Page.crashReturnValue;
     "Page.setOrientationOverride": Page.setOrientationOverrideReturnValue;
+    "Page.setVisibleContentRects": Page.setVisibleContentRectsReturnValue;
     "Playwright.enable": Playwright.enableReturnValue;
     "Playwright.disable": Playwright.disableReturnValue;
     "Playwright.close": Playwright.closeReturnValue;
@@ -9164,8 +9225,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Runtime.enableControlFlowProfiler": Runtime.enableControlFlowProfilerReturnValue;
     "Runtime.disableControlFlowProfiler": Runtime.disableControlFlowProfilerReturnValue;
     "Runtime.getBasicBlocks": Runtime.getBasicBlocksReturnValue;
-    "Screencast.start": Screencast.startReturnValue;
-    "Screencast.stop": Screencast.stopReturnValue;
+    "Screencast.startVideo": Screencast.startVideoReturnValue;
+    "Screencast.stopVideo": Screencast.stopVideoReturnValue;
+    "Screencast.startScreencast": Screencast.startScreencastReturnValue;
+    "Screencast.stopScreencast": Screencast.stopScreencastReturnValue;
+    "Screencast.screencastFrameAck": Screencast.screencastFrameAckReturnValue;
     "ScriptProfiler.startTracking": ScriptProfiler.startTrackingReturnValue;
     "ScriptProfiler.stopTracking": ScriptProfiler.stopTrackingReturnValue;
     "ServiceWorker.getInitializationInfo": ServiceWorker.getInitializationInfoReturnValue;

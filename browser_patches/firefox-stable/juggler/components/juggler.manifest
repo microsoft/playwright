@@ -1,0 +1,3 @@
+component {f7a74a33-e2ab-422d-b022-4fb213dd2639} juggler.js
+contract @mozilla.org/remote/juggler;1 {f7a74a33-e2ab-422d-b022-4fb213dd2639}
+category command-line-handler m-juggler @mozilla.org/remote/juggler;1

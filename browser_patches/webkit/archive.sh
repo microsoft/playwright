@@ -120,6 +120,7 @@ createZipForMac() {
   ditto {./WebKitBuild/Release,$tmpdir}/com.apple.WebKit.Plugin.64.xpc
   ditto {./WebKitBuild/Release,$tmpdir}/com.apple.WebKit.WebContent.xpc
   ditto {./WebKitBuild/Release,$tmpdir}/JavaScriptCore.framework
+  ditto {./WebKitBuild/Release,$tmpdir}/libANGLE-shared.dylib
   ditto {./WebKitBuild/Release,$tmpdir}/libwebrtc.dylib
   ditto {./WebKitBuild/Release,$tmpdir}/Playwright.app
   ditto {./WebKitBuild/Release,$tmpdir}/PluginProcessShim.dylib

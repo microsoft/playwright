@@ -22,7 +22,55 @@ on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edg
 ## Firefox
 
 Playwright's Firefox version matches the recent [Firefox Beta](https://www.mozilla.org/en-US/firefox/channel/desktop/)
-build.
+build. 
+
+### Firefox-Stable
+
+Playwright team maintains a Playwright Firefox version that matches the latest Firefox Stable, a.k.a. `firefox-stable`.
+
+Using `firefox-stable` is a 2-steps process:
+
+1. Installing `firefox-stable` with Playwright CLI.
+    ```sh js
+    $ npx playwright install firefox-stable
+    ```
+
+    ```sh java
+    $ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install firefox-stable"
+    ```
+
+    ```sh python
+    $ playwright install firefox-stable
+    ```
+
+2. Using `firefox-stable` channel when launching browser.
+    ```js
+    const { firefox } = require('playwright');
+    const browser = await firefox.launch({
+      channel: 'firefox-stable'
+    });
+    ```
+
+    ```java
+    import com.microsoft.playwright.*;
+
+    public class Example {
+      public static void main(String[] args) {
+        try (Playwright playwright = Playwright.create()) {
+          BrowserType firefox = playwright.firefox();
+          Browser browser = firefox.launch(new BrowserType.LaunchOptions().setChannel("firefox-stable"));
+        }
+      }
+    }
+    ```
+
+    ```python async
+    browser = await playwright.firefox.launch(channel="firefox-stable")
+    ```
+
+    ```python sync
+    browser = playwright.firefox.launch(channel="firefox-stable")
+    ```
 
 ## WebKit
 

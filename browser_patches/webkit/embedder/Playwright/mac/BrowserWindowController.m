@@ -163,6 +163,7 @@ static void* keyValueObservingContext = &keyValueObservingContext;
 - (void)awakeFromNib
 {
     _webView = [[WKWebView alloc] initWithFrame:[containerView bounds] configuration:_configuration];
+    _webView._windowOcclusionDetectionEnabled = NO;
 
     _webView.allowsMagnification = YES;
     _webView.allowsBackForwardNavigationGestures = YES;
@@ -439,8 +440,6 @@ static BOOL areEssentiallyEqual(double a, double b)
 
 - (void)windowWillClose:(NSNotification *)notification
 {
-    [_webView removeObserver:self forKeyPath:@"title"];
-    [_webView removeObserver:self forKeyPath:@"URL"];
     [_webView removeFromSuperview];
     _textFinder.hideInterfaceCallback = nil;
     [self release];

@@ -102,6 +102,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
 
   private _setupNavigationWaiter(name: string, options: { timeout?: number }): Waiter {
     const waiter = new Waiter(this, name);
+    if (this._page!.isClosed())
+      waiter.rejectImmediately(new Error('Navigation failed because page was closed!'));
     waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
     waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
     waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
@@ -157,6 +159,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
       });
       waiter.dispose();
     });
+  }
+
+  async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {
+    if (urlMatches(this.url(), url))
+      return await this.waitForLoadState(options?.waitUntil, options);
+    await this.waitForNavigation({ url, ...options });
   }
 
   async frameElement(): Promise<ElementHandle> {

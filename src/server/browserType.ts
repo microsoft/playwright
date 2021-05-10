@@ -28,7 +28,7 @@ import { Progress, ProgressController } from './progress';
 import * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
-import { isDebugMode } from '../utils/utils';
+import { debugMode } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
@@ -44,14 +44,14 @@ export abstract class BrowserType extends SdkObject {
   readonly _playwrightOptions: PlaywrightOptions;
 
   constructor(browserName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject);
+    super(playwrightOptions.rootSdkObject, 'browser-type');
     this.attribution.browserType = this;
     this._playwrightOptions = playwrightOptions;
     this._name = browserName;
     this._registry = playwrightOptions.registry;
   }
 
-  executablePath(options?: types.LaunchOptions): string {
+  executablePath(channel?: types.BrowserChannel): string {
     return this._registry.executablePath(this._name) || '';
   }
 
@@ -110,10 +110,12 @@ export abstract class BrowserType extends SdkObject {
       headful: !options.headless,
       downloadsPath,
       browserProcess,
+      customExecutablePath: options.executablePath,
       proxy: options.proxy,
       protocolLogger,
       browserLogsCollector,
       wsEndpoint: options.useWebSocket ? (transport as WebSocketTransport).wsEndpoint : undefined,
+      traceDir: options._traceDir,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
@@ -166,7 +168,7 @@ export abstract class BrowserType extends SdkObject {
     else
       browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
 
-    const executable = executablePath || this.executablePath(options);
+    const executable = executablePath || this.executablePath(options.channel);
     if (!executable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
     if (!(await existsAsync(executable))) {
@@ -177,13 +179,15 @@ export abstract class BrowserType extends SdkObject {
       throw new Error(errorMessageLines.join('\n'));
     }
 
-    if (!executable) {
-      // Only validate dependencies for bundled browsers.
+    // Only validate dependencies for downloadable browsers.
+    if (!executablePath && !options.channel)
       await validateHostRequirements(this._registry, this._name);
-    }
+    else if (!executablePath && options.channel && this._registry.isSupportedBrowser(options.channel))
+      await validateHostRequirements(this._registry, options.channel as registry.BrowserName);
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
-    const wsEndpoint = options.useWebSocket ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
+    const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));
+    const waitForWSEndpoint = shouldWaitForWSListening ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
@@ -239,8 +243,11 @@ export abstract class BrowserType extends SdkObject {
       kill
     };
     progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
+    let wsEndpoint: string | undefined;
+    if (shouldWaitForWSListening)
+      wsEndpoint = await waitForWSEndpoint;
     if (options.useWebSocket) {
-      transport = await WebSocketTransport.connect(progress, await wsEndpoint!);
+      transport = await WebSocketTransport.connect(progress, wsEndpoint!);
     } else {
       const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
       transport = new PipeTransport(stdio[3], stdio[4]);
@@ -248,7 +255,7 @@ export abstract class BrowserType extends SdkObject {
     return { browserProcess, downloadsPath, transport };
   }
 
-  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
+  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
   }
 
@@ -268,8 +275,10 @@ function copyTestHooks(from: object, to: object) {
 
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
   const { devtools = false } = options;
-  let { headless = !devtools } = options;
-  if (isDebugMode())
+  let { headless = !devtools, downloadsPath } = options;
+  if (debugMode())
     headless = false;
-  return { ...options, devtools, headless };
+  if (downloadsPath && !path.isAbsolute(downloadsPath))
+    downloadsPath = path.join(process.cwd(), downloadsPath);
+  return { ...options, devtools, headless, downloadsPath };
 }

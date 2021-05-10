@@ -41,10 +41,7 @@ WaitForEventInfo:
       - before
       - after
       - log
-    name: string?
-    stack:
-      type: array?
-      items: StackFrame
+    apiName: string?
     message: string?
     error: string?
 
@@ -237,6 +234,7 @@ LaunchOptions:
       - msedge-beta
       - msedge-dev
       - msedge-canary
+      - firefox-stable
     executablePath: string?
     args:
       type: array?
@@ -262,6 +260,7 @@ LaunchOptions:
         username: string?
         password: string?
     downloadsPath: string?
+    _traceDir: string?
     chromiumSandbox: boolean?
 
 
@@ -314,7 +313,6 @@ ContextOptions:
       - light
       - no-preference
     acceptDownloads: boolean?
-    _traceDir: string?
     _debugName: string?
     recordVideo:
       type: object?
@@ -371,24 +369,8 @@ Playwright:
                 - firefox
                 - webkit
     selectors: Selectors
-
-
-RemoteBrowser:
-  type: interface
-
-  initializer:
-    browser: Browser
-    selectors: Selectors
-
-  events:
-
-    # Video stream blocks owner context from closing until the stream is closed.
-    # Make sure to close the stream!
-    video:
-      parameters:
-        context: BrowserContext
-        stream: Stream
-        relativePath: string
+    # Only present when connecting remotely via BrowserType.connect() method.
+    preLaunchedBrowser: Browser?
 
 
 Selectors:
@@ -432,7 +414,10 @@ BrowserType:
     connectOverCDP:
       parameters:
         sdkLanguage: string
-        wsEndpoint: string
+        endpointURL: string
+        headers:
+          type: array?
+          items: NameValue
         slowMo: number?
         timeout: number?
       returns:
@@ -449,6 +434,8 @@ Browser:
   commands:
 
     close:
+
+    killForTests:
 
     newContext:
       parameters:
@@ -472,11 +459,11 @@ Browser:
       returns:
         context: BrowserContext
 
-    crNewBrowserCDPSession:
+    newBrowserCDPSession:
       returns:
         session: CDPSession
 
-    crStartTracing:
+    startTracing:
       parameters:
         page: Page?
         path: string?
@@ -485,7 +472,7 @@ Browser:
           type: array?
           items: string
 
-    crStopTracing:
+    stopTracing:
       returns:
         binary: binary
 
@@ -608,11 +595,23 @@ BrowserContext:
         saveStorage: string?
         outputFile: string?
 
-    crNewCDPSession:
+    newCDPSession:
       parameters:
         page: Page
       returns:
         session: CDPSession
+
+    tracingStart:
+      parameters:
+        name: string?
+        snapshots: boolean?
+        screenshots: boolean?
+
+    tracingStop:
+
+    tracingExport:
+      returns:
+        artifact: Artifact
 
   events:
 
@@ -631,11 +630,15 @@ BrowserContext:
         route: Route
         request: Request
 
-    crBackgroundPage:
+    video:
+      parameters:
+        artifact: Artifact
+
+    backgroundPage:
       parameters:
         page: Page
 
-    crServiceWorker:
+    serviceWorker:
       parameters:
         worker: Worker
 
@@ -650,7 +653,7 @@ Page:
         width: number
         height: number
     isClosed: boolean
-    videoRelativePath: string?
+    opener: Page?
 
   commands:
 
@@ -720,10 +723,6 @@ Page:
           - networkidle
       returns:
         response: Response?
-
-    opener:
-      returns:
-        page: Page?
 
     reload:
       parameters:
@@ -866,12 +865,12 @@ Page:
       returns:
         pdf: binary
 
-    crStartJSCoverage:
+    startJSCoverage:
       parameters:
         resetOnNavigation: boolean?
         reportAnonymousScripts: boolean?
 
-    crStopJSCoverage:
+    stopJSCoverage:
       returns:
         entries:
           type: array
@@ -897,11 +896,11 @@ Page:
                           endOffset: number
                           count: number
 
-    crStartCSSCoverage:
+    startCSSCoverage:
       parameters:
         resetOnNavigation: boolean?
 
-    crStopCSSCoverage:
+    stopCSSCoverage:
       returns:
         entries:
           type: array
@@ -940,7 +939,9 @@ Page:
 
     download:
       parameters:
-        download: Download
+        url: string
+        suggestedFilename: string
+        artifact: Artifact
 
     domcontentloaded:
 
@@ -962,10 +963,6 @@ Page:
     pageError:
       parameters:
         error: SerializedError
-
-    popup:
-      parameters:
-        page: Page
 
     request:
       parameters:
@@ -993,7 +990,7 @@ Page:
 
     video:
       parameters:
-        relativePath: string
+        artifact: Artifact
 
     webSocket:
       parameters:
@@ -1061,7 +1058,9 @@ Frame:
         selector: string
         force: boolean?
         noWaitAfter: boolean?
+        position: Point?
         timeout: number?
+        trial: boolean?
 
     click:
       parameters:
@@ -1087,6 +1086,7 @@ Frame:
           - middle
         clickCount: number?
         timeout: number?
+        trial: boolean?
 
     content:
       returns:
@@ -1115,6 +1115,7 @@ Frame:
           - right
           - middle
         timeout: number?
+        trial: boolean?
 
     dispatchEvent:
       parameters:
@@ -1202,6 +1203,7 @@ Frame:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     innerHTML:
       parameters:
@@ -1343,6 +1345,7 @@ Frame:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     textContent:
       parameters:
@@ -1368,7 +1371,9 @@ Frame:
         selector: string
         force: boolean?
         noWaitAfter: boolean?
+        position: Point?
         timeout: number?
+        trial: boolean?
 
     waitForFunction:
       parameters:
@@ -1540,7 +1545,9 @@ ElementHandle:
       parameters:
         force: boolean?
         noWaitAfter: boolean?
+        position: Point?
         timeout: number?
+        trial: boolean?
 
     click:
       parameters:
@@ -1565,6 +1572,7 @@ ElementHandle:
           - middle
         clickCount: number?
         timeout: number?
+        trial: boolean?
 
     contentFrame:
       returns:
@@ -1592,6 +1600,7 @@ ElementHandle:
           - right
           - middle
         timeout: number?
+        trial: boolean?
 
     dispatchEvent:
       parameters:
@@ -1626,6 +1635,7 @@ ElementHandle:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     innerHTML:
       returns:
@@ -1753,6 +1763,7 @@ ElementHandle:
             - Shift
         position: Point?
         timeout: number?
+        trial: boolean?
 
     textContent:
       returns:
@@ -1769,7 +1780,9 @@ ElementHandle:
       parameters:
         force: boolean?
         noWaitAfter: boolean?
+        position: Point?
         timeout: number?
+        trial: boolean?
 
     waitForElementState:
       parameters:
@@ -1991,16 +2004,15 @@ Dialog:
 
 
 
-Download:
+Artifact:
   type: interface
 
   initializer:
-    url: string
-    suggestedFilename: string
+    absolutePath: string
 
   commands:
 
-    path:
+    pathAfterFinished:
       returns:
         value: string?
 
@@ -2023,7 +2035,6 @@ Download:
         stream: Stream?
 
     delete:
-
 
 
 Stream:
@@ -2086,7 +2097,16 @@ Electron:
 ElectronApplication:
   type: interface
 
+  initializer:
+    context: BrowserContext
+
   commands:
+
+    browserWindow:
+      parameters:
+        page: Page
+      returns:
+        handle: JSHandle
 
     evaluateExpression:
       parameters:
@@ -2107,19 +2127,7 @@ ElectronApplication:
     close:
 
   events:
-
-    # This event happens once immediately after creation.
-    context:
-      parameters:
-        context: BrowserContext
-
     close:
-
-    window:
-      parameters:
-        page: Page
-        browserWindow: JSHandle
-
 
 
 Android:
@@ -2322,7 +2330,6 @@ AndroidDevice:
           - light
           - no-preference
         acceptDownloads: boolean?
-        _traceDir: string?
         _debugName: string?
         recordVideo:
           type: object?

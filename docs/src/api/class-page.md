@@ -137,15 +137,15 @@ The arguments passed into `console.log` appear as arguments on the event handler
 An example of handling `console` event:
 
 ```js
-page.on('console', msg => {
+page.on('console', async msg => {
   for (let i = 0; i < msg.args().length; ++i)
     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
 });
-page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 ```
 
 ```java
-page.onConsole(msg -> {
+page.onConsoleMessage(msg -> {
   for (int i = 0; i < msg.args().size(); ++i)
     System.out.println(i + ": " + msg.args().get(i).jsonValue());
 });
@@ -509,23 +509,25 @@ Brings page to front (activates tab).
 ## async method: Page.check
 
 This method checks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
-1. Ensure that the element is now checked. If not, this method rejects.
+1. Ensure that the element is now checked. If not, this method throws.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for main frame's [`method: Frame.check`].
 
 ### param: Page.check.selector = %%-input-selector-%%
+
+### option: Page.check.position = %%-input-position-%%
 
 ### option: Page.check.force = %%-input-force-%%
 
@@ -533,10 +535,12 @@ Shortcut for main frame's [`method: Frame.check`].
 
 ### option: Page.check.timeout = %%-input-timeout-%%
 
+### option: Page.check.trial = %%-input-trial-%%
+
 ## async method: Page.click
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -544,7 +548,7 @@ This method clicks an element matching [`param: selector`] by performing the fol
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for main frame's [`method: Frame.click`].
@@ -566,6 +570,8 @@ Shortcut for main frame's [`method: Frame.click`].
 ### option: Page.click.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Page.click.timeout = %%-input-timeout-%%
+
+### option: Page.click.trial = %%-input-trial-%%
 
 ## async method: Page.close
 
@@ -597,24 +603,29 @@ Get the browser context that the page belongs to.
 
 ## property: Page.coverage
 * langs: js
-- type: <[null]|[ChromiumCoverage]>
+- type: <[Coverage]>
 
-Browser-specific Coverage implementation, only available for Chromium atm. See
-[ChromiumCoverage](#class-chromiumcoverage) for more details.
+:::note
+Only available for Chromium atm.
+:::
+
+Browser-specific Coverage implementation. See [Coverage](#class-coverage) for more details.
 
 ## async method: Page.dblclick
+* langs:
+  - alias-csharp: DblClickAsync
 
 This method double clicks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
-   if the first click of the `dblclick()` triggers a navigation event, this method will reject.
+   if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
@@ -638,6 +649,8 @@ Shortcut for main frame's [`method: Frame.dblclick`].
 ### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Page.dblclick.timeout = %%-input-timeout-%%
+
+### option: Page.dblclick.trial = %%-input-trial-%%
 
 ## async method: Page.dispatchEvent
 
@@ -718,6 +731,8 @@ Optional event-specific initialization properties.
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
 
 ## async method: Page.emulateMedia
+
+This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media feature, using the `colorScheme` argument.
 
 ```js
 await page.evaluate(() => matchMedia('screen').matches);
@@ -1452,14 +1467,13 @@ Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 
-This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
-If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead.
-If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
-Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
 To send fine-grained keyboard events, use [`method: Page.type`].
 
-Shortcut for main frame's [`method: Frame.fill`]
+Shortcut for main frame's [`method: Frame.fill`].
 
 ### param: Page.fill.selector = %%-input-selector-%%
 
@@ -1566,9 +1580,9 @@ last redirect. If can not go back, returns `null`.
 
 Navigate to the previous page in history.
 
-### option: Page.goBack.timeout = %%-navigation-timeout-%%
-
 ### option: Page.goBack.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.goBack.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.goForward
 - returns: <[null]|[Response]>
@@ -1578,9 +1592,9 @@ last redirect. If can not go forward, returns `null`.
 
 Navigate to the next page in history.
 
-### option: Page.goForward.timeout = %%-navigation-timeout-%%
-
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.goForward.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.goto
 * langs:
@@ -1619,9 +1633,9 @@ Shortcut for main frame's [`method: Frame.goto`]
 
 URL to navigate page to. The url should include scheme, e.g. `https://`.
 
-### option: Page.goto.timeout = %%-navigation-timeout-%%
-
 ### option: Page.goto.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.goto.timeout = %%-navigation-timeout-%%
 
 ### option: Page.goto.referer
 - `referer` <[string]>
@@ -1632,7 +1646,7 @@ Referer header value. If provided it will take preference over the referer heade
 ## async method: Page.hover
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -1640,7 +1654,7 @@ This method hovers over an element matching [`param: selector`] by performing th
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for main frame's [`method: Frame.hover`].
@@ -1654,6 +1668,8 @@ Shortcut for main frame's [`method: Frame.hover`].
 ### option: Page.hover.force = %%-input-force-%%
 
 ### option: Page.hover.timeout = %%-input-timeout-%%
+
+### option: Page.hover.trial = %%-input-trial-%%
 
 ## async method: Page.innerHTML
 - returns: <[string]>
@@ -2055,9 +2071,9 @@ Shortcut for main frame's [`method: Frame.querySelectorAll`].
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
 last redirect.
 
-### option: Page.reload.timeout = %%-navigation-timeout-%%
-
 ### option: Page.reload.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.reload.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.route
 
@@ -2129,8 +2145,48 @@ page.goto("https://example.com")
 browser.close()
 ```
 
+It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:
+
+```js
+await page.route('/api/**', route => {
+  if (route.request().postData().includes('my-string'))
+    route.fulfill({ body: 'mocked-data' });
+  else
+    route.continue();
+});
+```
+
+```java
+page.route("/api/**", route -> {
+  if (route.request().postData().contains("my-string"))
+    route.fulfill(new Route.FulfillOptions().setBody("mocked-data"));
+  else
+    route.resume();
+});
+```
+
+```python async
+def handle_route(route):
+  if ("my-string" in route.request.post_data)
+    route.fulfill(body="mocked-data")
+  else
+    route.continue_()
+await page.route("/api/**", handle_route)
+```
+
+```python sync
+def handle_route(route):
+  if ("my-string" in route.request.post_data)
+    route.fulfill(body="mocked-data")
+  else
+    route.continue_()
+page.route("/api/**", handle_route)
+```
+
 Page routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request
 matches both handlers.
+
+To remove a route with its handler you can use [`method: Page.unroute`].
 
 :::note
 Enabling routing disables http cache.
@@ -2198,12 +2254,13 @@ Defaults to `false`.
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>
 
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+
+If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+
 Returns the array of option values that have been successfully selected.
 
-Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-matching [`param: selector`], the method throws an error.
-
-Will wait until all specified options are present in the `<select>` element.
+Triggers a `change` and `input` event once all the provided options have been selected.
 
 ```js
 // single selection matching the value
@@ -2244,7 +2301,7 @@ page.select_option("select#colors", label="blue")
 page.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
-Shortcut for main frame's [`method: Frame.selectOption`]
+Shortcut for main frame's [`method: Frame.selectOption`].
 
 ### param: Page.selectOption.selector = %%-input-selector-%%
 
@@ -2274,6 +2331,7 @@ This setting will change the default maximum navigation time for the following m
 * [`method: Page.reload`]
 * [`method: Page.setContent`]
 * [`method: Page.waitForNavigation`]
+* [`method: Page.waitForURL`]
 
 :::note
 [`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`],
@@ -2379,7 +2437,7 @@ page.goto("https://example.com")
 ## async method: Page.tap
 
 This method taps an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -2387,7 +2445,7 @@ This method taps an element matching [`param: selector`] by performing the follo
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
@@ -2407,6 +2465,8 @@ Shortcut for main frame's [`method: Frame.tap`].
 ### option: Page.tap.force = %%-input-force-%%
 
 ### option: Page.tap.timeout = %%-input-timeout-%%
+
+### option: Page.tap.trial = %%-input-trial-%%
 
 ## async method: Page.textContent
 - returns: <[null]|[string]>
@@ -2475,29 +2535,33 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ## async method: Page.uncheck
 
 This method unchecks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
-1. Ensure that the element is now unchecked. If not, this method rejects.
+1. Ensure that the element is now unchecked. If not, this method throws.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for main frame's [`method: Frame.uncheck`].
 
 ### param: Page.uncheck.selector = %%-input-selector-%%
 
+### option: Page.uncheck.position = %%-input-position-%%
+
 ### option: Page.uncheck.force = %%-input-force-%%
 
 ### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Page.uncheck.timeout = %%-input-timeout-%%
+
+### option: Page.uncheck.trial = %%-input-trial-%%
 
 ## async method: Page.unroute
 
@@ -2536,7 +2600,7 @@ Video object associated with this page.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-## method: Page.waitForClose
+## async method: Page.waitForClose
 * langs: csharp, java
 - returns: <[Page]>
 
@@ -2549,7 +2613,7 @@ Performs action and waits for the Page to close.
   - alias-python: expect_console_message
 - returns: <[ConsoleMessage]>
 
-Performs action and waits for a [ConoleMessage] to be logged by in the page. If predicate is provided, it passes
+Performs action and waits for a [ConsoleMessage] to be logged by in the page. If predicate is provided, it passes
 [ConsoleMessage] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
 Will throw an error if the page is closed before the console event is fired.
 
@@ -2851,11 +2915,11 @@ a navigation.
 
 Shortcut for main frame's [`method: Frame.waitForNavigation`].
 
-### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
-
 ### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
 
 ### option: Page.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
+
+### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.waitForPopup
 * langs: csharp, java, python
@@ -2878,19 +2942,39 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
   * alias-python: expect_request
 - returns: <[Request]>
 
-Waits for the matching request and returns it.
+Waits for the matching request and returns it.  See [waiting for event](./events.md#waiting-for-event) for more details about events.
 
 ```js
-const firstRequest = await page.waitForRequest('http://example.com/resource');
-const finalRequest = await page.waitForRequest(request => request.url() === 'http://example.com' && request.method() === 'GET');
-return firstRequest.url();
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the request.
+const [request] = await Promise.all([
+  // Waits for the next request with the specified url
+  page.waitForRequest('https://example.com/resource'),
+  // Triggers the request
+  page.click('button.triggers-request'),
+]);
+
+// Alternative way with a predicate.
+const [request] = await Promise.all([
+  // Waits for the next request matching some conditions
+  page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET'),
+  // Triggers the request
+  page.click('button.triggers-request'),
+]);
 ```
 
 ```java
-Request firstRequest = page.waitForRequest("http://example.com/resource");
-Object finalRequest = page.waitForRequest(
-  request -> "http://example.com".equals(request.url()) && "GET".equals(request.method()), () -> {});
-return firstRequest.url();
+// Waits for the next response with the specified url
+Request request = page.waitForRequest("https://example.com/resource", () -> {
+  // Triggers the request
+  page.click("button.triggers-request");
+});
+
+// Waits for the next request matching some conditions
+Request request = page.waitForRequest(request -> "https://example.com".equals(request.url()) && "GET".equals(request.method()), () -> {
+  // Triggers the request
+  page.click("button.triggers-request");
+});
 ```
 
 ```python async
@@ -2898,6 +2982,7 @@ async with page.expect_request("http://example.com/resource") as first:
     await page.click('button')
 first_request = await first.value
 
+# or with a lambda
 async with page.expect_request(lambda request: request.url == "http://example.com" and request.method == "get") as second:
     await page.click('img')
 second_request = await second.value
@@ -2908,6 +2993,7 @@ with page.expect_request("http://example.com/resource") as first:
     page.click('button')
 first_request = first.value
 
+# or with a lambda
 with page.expect_request(lambda request: request.url == "http://example.com" and request.method == "get") as second:
     page.click('img')
 second_request = second.value
@@ -2922,6 +3008,12 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 
 Request URL string, regex or predicate receiving [Request] object.
 
+### param: Page.waitForRequest.urlOrPredicate
+* langs: js
+- `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]|[Promise]<[boolean]>>
+
+Request URL string, regex or predicate receiving [Request] object.
+
 ### option: Page.waitForRequest.timeout
 - `timeout` <[float]>
 
@@ -2933,18 +3025,39 @@ changed by using the [`method: Page.setDefaultTimeout`] method.
   * alias-python: expect_response
 - returns: <[Response]>
 
-Returns the matched response.
+Returns the matched response. See [waiting for event](./events.md#waiting-for-event) for more details about events.
 
 ```js
-const firstResponse = await page.waitForResponse('https://example.com/resource');
-const finalResponse = await page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);
-return finalResponse.ok();
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the response.
+const [response] = await Promise.all([
+  // Waits for the next response with the specified url
+  page.waitForResponse('https://example.com/resource'),
+  // Triggers the response
+  page.click('button.triggers-response'),
+]);
+
+// Alternative way with a predicate.
+const [response] = await Promise.all([
+  // Waits for the next response matching some conditions
+  page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200),
+  // Triggers the response
+  page.click('button.triggers-response'),
+]);
 ```
 
 ```java
-Response firstResponse = page.waitForResponse("https://example.com/resource", () -> {});
-Response finalResponse = page.waitForResponse(response -> "https://example.com".equals(response.url()) && response.status() == 200, () -> {});
-return finalResponse.ok();
+// Waits for the next response with the specified url
+Response response = page.waitForResponse("https://example.com/resource", () -> {
+  // Triggers the response
+  page.click("button.triggers-response");
+});
+
+// Waits for the next response matching some conditions
+Response response = page.waitForResponse(response -> "https://example.com".equals(response.url()) && response.status() == 200, () -> {
+  // Triggers the response
+  page.click("button.triggers-response");
+});
 ```
 
 ```python async
@@ -2975,6 +3088,12 @@ return response.ok
 
 ### param: Page.waitForResponse.urlOrPredicate
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
+
+Request URL string, regex or predicate receiving [Response] object.
+
+### param: Page.waitForResponse.urlOrPredicate
+* langs: js
+- `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Response] object.
 
@@ -3108,6 +3227,36 @@ Shortcut for main frame's [`method: Frame.waitForTimeout`].
 - `timeout` <[float]>
 
 A timeout to wait for
+
+## async method: Page.waitForURL
+
+Waits for the main frame to navigate to the given URL.
+
+```js
+await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
+await page.waitForURL('**/target.html');
+```
+
+```java
+page.click("a.delayed-navigation"); // Clicking the link will indirectly cause a navigation
+page.waitForURL("**/target.html");
+```
+
+```python async
+await page.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+await page.wait_for_url("**/target.html")
+```
+
+```python sync
+page.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+page.wait_for_url("**/target.html")
+```
+
+Shortcut for main frame's [`method: Frame.waitForURL`].
+
+### param: Page.waitForURL.url = %%-wait-for-navigation-url-%%
+### option: Page.waitForURL.timeout = %%-navigation-timeout-%%
+### option: Page.waitForURL.waitUntil = %%-navigation-wait-until-%%
 
 ## async method: Page.waitForWebSocket
 * langs: csharp, java

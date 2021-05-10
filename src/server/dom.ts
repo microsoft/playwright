@@ -51,7 +51,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return js.evaluate(this, true /* returnByValue */, pageFunction, arg);
   }
 
-  async evaluateHandle<Arg, R>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
+  async evaluateHandle<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<js.SmartHandle<R>> {
     return js.evaluate(this, false /* returnByValue */, pageFunction, arg);
   }
 
@@ -93,12 +93,12 @@ export class FrameExecutionContext extends js.ExecutionContext {
         ${injectedScriptSource.source}
         return new pwExport(
           ${this.frame._page._delegate.rafCountForStablePosition()},
-          ${!!process.env.PW_USE_TIMEOUT_FOR_RAF},
+          ${!!process.env.PWTEST_USE_TIMEOUT_FOR_RAF},
           [${custom.join(',\n')}]
         );
         })();
       `;
-      this._injectedScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
+      this._injectedScriptPromise = this._delegate.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this, 'object', objectId));
     }
     return this._injectedScriptPromise;
   }
@@ -304,14 +304,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     while (progress.isRunning()) {
       if (retry) {
-        progress.log(`retrying ${actionName} action, attempt #${retry}`);
+        progress.log(`retrying ${actionName} action${options.trial ? ' (trial run)' : ''}, attempt #${retry}`);
         const timeout = waitTime[Math.min(retry - 1, waitTime.length - 1)];
         if (timeout) {
           progress.log(`  waiting ${timeout}ms`);
           await this.evaluateInUtility(([injected, node, timeout]) => new Promise(f => setTimeout(f, timeout)), timeout);
         }
       } else {
-        progress.log(`attempting ${actionName} action`);
+        progress.log(`attempting ${actionName} action${options.trial ? ' (trial run)' : ''}`);
       }
       const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
       const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
@@ -381,8 +381,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
 
     progress.metadata.point = point;
-    await progress.beforeInputAction(this);
+    if (options.trial)  {
+      progress.log(`  trial ${actionName} has finished`);
+      return 'done';
+    }
 
+    await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       if ((options as any).__testHookBeforePointerAction)
         await (options as any).__testHookBeforePointerAction();
@@ -608,7 +612,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, 'input');
   }
 
-  async check(metadata: CallMetadata, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async check(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._setChecked(progress, true, options);
@@ -616,7 +620,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async uncheck(metadata: CallMetadata, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+  async uncheck(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._setChecked(progress, false, options);
@@ -624,7 +628,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+  async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
       const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
       return throwRetargetableDOMError(throwFatalDOMError(result));
@@ -634,6 +638,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const result = await this._click(progress, options);
     if (result !== 'done')
       return result;
+    if (options.trial)
+      return 'done';
     if (await isChecked() !== state)
       throw new Error('Clicking the checkbox did not change its state');
     return 'done';

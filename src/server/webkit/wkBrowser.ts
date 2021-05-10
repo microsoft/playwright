@@ -132,7 +132,7 @@ export class WKBrowser extends Browser {
   }
 
   _onScreencastFinished(payload: Protocol.Playwright.screencastFinishedPayload) {
-    this._videoFinished(payload.screencastId);
+    this._takeVideo(payload.screencastId)?.reportFinished();
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
@@ -155,7 +155,6 @@ export class WKBrowser extends Browser {
     const opener = event.openerId ? this._wkPages.get(event.openerId) : undefined;
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
-    wkPage._page.reportAsNew();
   }
 
   _onPageProxyDestroyed(event: Protocol.Playwright.pageProxyDestroyedPayload) {

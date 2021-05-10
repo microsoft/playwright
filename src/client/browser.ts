@@ -22,12 +22,14 @@ import { Events } from './events';
 import { BrowserContextOptions } from './types';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
+import { CDPSession } from './cdpSession';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;
-  _isRemote = false;
+  _remoteType: 'owns-connection' | 'uses-connection' | null = null;
+  readonly _name: string;
 
   static from(browser: channels.BrowserChannel): Browser {
     return (browser as any)._object;
@@ -39,14 +41,13 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserInitializer) {
     super(parent, type, guid, initializer);
+    this._name = initializer.name;
     this._channel.on('close', () => this._didClose());
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     return this._wrapApiCall('browser.newContext', async (channel: channels.BrowserChannel) => {
-      if (this._isRemote && options._traceDir)
-        throw new Error(`"_traceDir" is not supported in connected browser`);
       const contextOptions = await prepareBrowserContextParams(options);
       const context = BrowserContext.from((await channel.newContext(contextOptions)).context);
       context._options = contextOptions;
@@ -76,10 +77,31 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     return this._isConnected;
   }
 
+  async newBrowserCDPSession(): Promise<api.CDPSession> {
+    return this._wrapApiCall('browser.newBrowserCDPSession', async (channel: channels.BrowserChannel) => {
+      return CDPSession.from((await channel.newBrowserCDPSession()).session);
+    });
+  }
+
+  async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+    return this._wrapApiCall('browser.startTracing', async (channel: channels.BrowserChannel) => {
+      await channel.startTracing({ ...options, page: page ? page._channel : undefined });
+    });
+  }
+
+  async stopTracing(): Promise<Buffer> {
+    return this._wrapApiCall('browser.stopTracing', async (channel: channels.BrowserChannel) => {
+      return Buffer.from((await channel.stopTracing()).binary, 'base64');
+    });
+  }
+
   async close(): Promise<void> {
     try {
       await this._wrapApiCall('browser.close', async (channel: channels.BrowserChannel) => {
-        await channel.close();
+        if (this._remoteType === 'owns-connection')
+          this._connection.close();
+        else
+          await channel.close();
         await this._closedPromise;
       });
     } catch (e) {

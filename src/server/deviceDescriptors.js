@@ -151,6 +151,72 @@ module.exports = {
     'hasTouch': true,
     'defaultBrowserType': 'chromium'
   },
+  'Galaxy S8': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 7.0; SM-G950U Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36',
+    'viewport': {
+      'width': 360,
+      'height': 740
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Galaxy S8 landscape': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 7.0; SM-G950U Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36',
+    'viewport': {
+      'width': 740,
+      'height': 360
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Galaxy S9+': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 8.0.0; SM-G965U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.111 Mobile Safari/537.36',
+    'viewport': {
+      'width': 320,
+      'height': 658
+    },
+    'deviceScaleFactor': 4.5,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Galaxy S9+ landscape': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 8.0.0; SM-G965U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.111 Mobile Safari/537.36',
+    'viewport': {
+      'width': 658,
+      'height': 320
+    },
+    'deviceScaleFactor': 4.5,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Galaxy Tab S4': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 8.1.0; SM-T837A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.80 Safari/537.36',
+    'viewport': {
+      'width': 712,
+      'height': 1138
+    },
+    'deviceScaleFactor': 2.25,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Galaxy Tab S4 landscape': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 8.1.0; SM-T837A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.80 Safari/537.36',
+    'viewport': {
+      'width': 1138,
+      'height': 712
+    },
+    'deviceScaleFactor': 2.25,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
   'iPad (gen 6)': {
     'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
@@ -965,6 +1031,50 @@ module.exports = {
       'height': 411
     },
     'deviceScaleFactor': 3.5,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Pixel 3': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 9; Pixel 3 Build/PQ1A.181105.017.A1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.158 Mobile Safari/537.36',
+    'viewport': {
+      'width': 393,
+      'height': 786
+    },
+    'deviceScaleFactor': 2.75,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Pixel 3 landscape': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 9; Pixel 3 Build/PQ1A.181105.017.A1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.158 Mobile Safari/537.36',
+    'viewport': {
+      'width': 786,
+      'height': 393
+    },
+    'deviceScaleFactor': 2.75,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Pixel 4': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Mobile Safari/537.36',
+    'viewport': {
+      'width': 353,
+      'height': 745
+    },
+    'deviceScaleFactor': 3,
+    'isMobile': true,
+    'hasTouch': true,
+    'defaultBrowserType': 'chromium'
+  },
+  'Pixel 4 landscape': {
+    'userAgent': 'Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Mobile Safari/537.36',
+    'viewport': {
+      'width': 745,
+      'height': 353
+    },
+    'deviceScaleFactor': 3,
     'isMobile': true,
     'hasTouch': true,
     'defaultBrowserType': 'chromium'

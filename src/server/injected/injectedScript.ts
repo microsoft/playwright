@@ -330,7 +330,8 @@ export class InjectedScript {
     let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
     if (!element)
       return null;
-    element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
+    if (!element.matches('input, textarea, select'))
+      element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
     if (behavior === 'follow-label') {
       if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
           !(element as any).isContentEditable) {
@@ -644,7 +645,10 @@ export class InjectedScript {
     let container: Document | ShadowRoot | null = document;
     let element: Element | undefined;
     while (container) {
-      const innerElement = container.elementFromPoint(x, y) as Element | undefined;
+      // elementFromPoint works incorrectly in Chromium (http://crbug.com/1188919),
+      // so we use elementsFromPoint instead.
+      const elements = container.elementsFromPoint(x, y);
+      const innerElement = elements[0] as Element | undefined;
       if (!innerElement || element === innerElement)
         break;
       element = innerElement;

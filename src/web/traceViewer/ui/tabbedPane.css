@@ -31,7 +31,7 @@
   display: flex;
   box-shadow: var(--box-shadow);
   background-color: var(--toolbar-bg-color);
-  height: 40px;
+  height: 32px;
   align-items: center;
   padding-right: 10px;
   flex: none;

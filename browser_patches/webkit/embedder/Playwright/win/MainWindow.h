@@ -35,7 +35,7 @@
 
 class MainWindow : public BrowserWindowClient {
 public:
-    static void configure(bool headless, bool noStartupWindow);
+    static void configure(bool headless, bool controlledRemotely);
 
     MainWindow();
 
@@ -56,7 +56,7 @@ private:
     static std::wstring s_windowClass;
     static size_t s_numInstances;
     static bool s_headless;
-    static bool s_noStartupWindow;
+    static bool s_controlledRemotely;
 
     bool toggleMenuItem(UINT menuID);
     void onURLBarEnter();

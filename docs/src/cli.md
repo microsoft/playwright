@@ -369,5 +369,24 @@ $ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="pd
 $ playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 ```
 
+## Install system dependencies
+
+Ubuntu 18.04 and Ubuntu 20.04 system dependencies can get installed automatically. This is useful for CI environments.
+
+```sh js
+# See command help
+$ npx playwright install-deps
+```
+
+```sh java
+# See command help
+$ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
+```
+
+```sh python
+# See command help
+$ playwright install-deps
+```
+
 ## Known limitations
 Opening WebKit Web Inspector will disconnect Playwright from the browser. In such cases, code generation will stop.

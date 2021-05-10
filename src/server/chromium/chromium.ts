@@ -25,13 +25,14 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { isDebugMode } from '../../utils/utils';
+import { debugMode, headersArrayToObject } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
 import { findChromiumChannel } from './findChromiumChannel';
+import http from 'http';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -39,22 +40,25 @@ export class Chromium extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
     super('chromium', playwrightOptions);
 
-    if (isDebugMode())
+    if (debugMode())
       this._devtools = this._createDevTools();
   }
 
-  executablePath(options?: types.LaunchOptions): string {
-    if (options?.channel)
-      return findChromiumChannel(options.channel);
-    return super.executablePath(options);
+  executablePath(channel?: types.BrowserChannel): string {
+    if (channel)
+      return findChromiumChannel(channel);
+    return super.executablePath(channel);
   }
 
-  async connectOverCDP(metadata: CallMetadata, wsEndpoint: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number) {
+  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string, headers?: types.HeadersArray }, timeout?: number) {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browserLogsCollector = new RecentLogsCollector();
     return controller.run(async progress => {
-      const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint);
+      let headersMap: { [key: string]: string; } | undefined;
+      if (options.headers)
+        headersMap = headersArrayToObject(options.headers, false);
+      const chromeTransport = await WebSocketTransport.connect(progress, await urlToWSEndpoint(endpointURL), headersMap);
       const browserProcess: BrowserProcess = {
         close: async () => {
           await chromeTransport.closeAndWait();
@@ -178,6 +182,7 @@ const DEFAULT_ARGS = [
   '--disable-extensions',
   // BlinkGenPropertyTrees disabled due to crbug.com/937609
   '--disable-features=TranslateUI,BlinkGenPropertyTrees,ImprovedCookieControls,SameSiteByDefaultCookies,LazyFrameLoading',
+  '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',
   '--disable-popup-blocking',
@@ -190,4 +195,20 @@ const DEFAULT_ARGS = [
   '--enable-automation',
   '--password-store=basic',
   '--use-mock-keychain',
+  // See https://chromium-review.googlesource.com/c/chromium/src/+/2436773
+  '--no-service-autorun',
 ];
+
+async function urlToWSEndpoint(endpointURL: string) {
+  if (endpointURL.startsWith('ws'))
+    return endpointURL;
+  const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
+  const json = await new Promise<string>((resolve, reject) => {
+    http.get(httpURL, resp => {
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => resolve(data));
+    }).on('error', reject);
+  });
+  return JSON.parse(json).webSocketDebuggerUrl;
+}

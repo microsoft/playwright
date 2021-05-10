@@ -19,7 +19,7 @@ import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toS
 import { ActionInContext } from './codeGenerator';
 import { actionTitle, Action } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
-import deviceDescriptors = require('../../deviceDescriptors');
+import deviceDescriptors from '../../deviceDescriptors';
 
 export class CSharpLanguageGenerator implements LanguageGenerator {
   id = 'csharp';
@@ -35,7 +35,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (action.name === 'openPage') {
       formatter.add(`var ${pageAlias} = await context.NewPageAsync();`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        formatter.add(`${pageAlias}.GoToAsync('${action.url}');`);
+        formatter.add(`await ${pageAlias}.GoToAsync(${quote(action.url)});`);
       return formatter.format();
     }
 

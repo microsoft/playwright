@@ -117,6 +117,16 @@ print(len(browser.contexts())) # prints `1`
 
 Indicates that the browser is connected.
 
+## async method: Browser.newBrowserCDPSession
+* langs: js, python
+- returns: <[CDPSession]>
+
+:::note
+CDP Sessions are only supported on Chromium-based browsers.
+:::
+
+Returns the newly created browser session.
+
 ## async method: Browser.newContext
 - returns: <[BrowserContext]>
 
@@ -188,6 +198,71 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 ### option: Browser.newPage.storageState = %%-csharp-java-context-option-storage-state-%%
 
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
+
+## async method: Browser.startTracing
+* langs: java, js, python
+
+:::note
+Tracing is only supported on Chromium-based browsers.
+:::
+
+You can use [`method: Browser.startTracing`] and [`method: Browser.stopTracing`] to create a trace file that can
+be opened in Chrome DevTools performance panel.
+
+```js
+await browser.startTracing(page, {path: 'trace.json'});
+await page.goto('https://www.google.com');
+await browser.stopTracing();
+```
+
+```java
+browser.startTracing(page, new Browser.StartTracingOptions()
+  .setPath(Paths.get("trace.json")));
+page.goto('https://www.google.com');
+browser.stopTracing();
+```
+
+```python async
+await browser.start_tracing(page, path="trace.json")
+await page.goto("https://www.google.com")
+await browser.stop_tracing()
+```
+
+```python sync
+browser.start_tracing(page, path="trace.json")
+page.goto("https://www.google.com")
+browser.stop_tracing()
+```
+
+### param: Browser.startTracing.page
+- `page` <[Page]>
+
+Optional, if specified, tracing includes screenshots of the given page.
+
+### option: Browser.startTracing.path
+- `path` <[path]>
+
+A path to write the trace file to.
+
+### option: Browser.startTracing.screenshots
+- `screenshots` <[boolean]>
+
+captures screenshots in the trace.
+
+### option: Browser.startTracing.categories
+- `categories` <[Array]<[string]>>
+
+specify custom categories to use instead of default.
+
+## async method: Browser.stopTracing
+* langs: java, js, python
+- returns: <[Buffer]>
+
+:::note
+Tracing is only supported on Chromium-based browsers.
+:::
+
+Returns the buffer with trace data.
 
 ## method: Browser.version
 - returns: <[string]>

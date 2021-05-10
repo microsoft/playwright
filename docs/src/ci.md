@@ -119,9 +119,9 @@ For Linux agents, you can use [our Docker container](./docker.md) with Azure Pip
 
 ```yml
 pool:
-  vmImage: 'ubuntu-18.04'
+  vmImage: 'ubuntu-20.04'
 
-container: mcr.microsoft.com/playwright:bionic
+container: mcr.microsoft.com/playwright:focal
 
 steps:
 ...
@@ -169,10 +169,10 @@ addons:
     - gstreamer1.0-plugins-bad
     # This is required to run chromium
     - libgbm1
-    # this is needed for running headful tests
+    # this is needed for running headed tests
     - xvfb
 
-# allow headful tests
+# allow headed tests
 before_install:
   # Enable user namespace cloning
   - "sysctl kernel.unprivileged_userns_clone=1"
@@ -189,7 +189,7 @@ Running Playwright on CircleCI requires the following steps:
 
    ```yml
    docker:
-     - image: mcr.microsoft.com/playwright:bionic
+     - image: mcr.microsoft.com/playwright:focal
    environment:
      NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
@@ -211,7 +211,7 @@ to run tests on Jenkins.
 
 ```groovy
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright:bionic' } }
+   agent { docker { image 'mcr.microsoft.com/playwright:focal' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -228,7 +228,7 @@ pipeline {
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
 
 ```yml
-image: mcr.microsoft.com/playwright:bionic
+image: mcr.microsoft.com/playwright:focal
 ```
 
 While the Docker image supports sandboxing for Chromium, it does not work in the Bitbucket Pipelines environment. To launch Chromium on Bitbucket Pipelines, use the `chromiumSandbox: false` launch argument.
@@ -269,7 +269,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:bionic
+  image: mcr.microsoft.com/playwright:focal
   script:
   ...
 ```
@@ -327,7 +327,7 @@ DEBUG=pw:browser* npm run test
 DEBUG=pw:browser* pytest
 ```
 
-## Running headful
+## Running headed
 
 By default, Playwright launches browsers in headless mode. This can be changed by passing a flag when the browser is launched.
 
@@ -371,7 +371,7 @@ with sync_playwright() as p:
    browser = p.chromium.launch(headless=False)
 ```
 
-On Linux agents, headful execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headful mode with Xvfb, add `xvfb-run` before the Node.js command.
+On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the Node.js command.
 
 ```sh js
 xvfb-run node index.js

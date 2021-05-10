@@ -75,7 +75,7 @@ class CRAXNode implements accessibility.AXNode {
   private _isTextOnlyObject(): boolean {
     const role = this._role;
     return (role === 'LineBreak' || role === 'text' ||
-            role === 'InlineTextBox');
+            role === 'InlineTextBox' || role === 'StaticText');
   }
 
   private _hasFocusableChild(): boolean {
@@ -145,7 +145,7 @@ class CRAXNode implements accessibility.AXNode {
     // Here and below: Android heuristics
     if (this._hasFocusableChild())
       return false;
-    if (this._focusable && this._role !== 'WebArea' && this._name)
+    if (this._focusable && this._role !== 'WebArea' && this._role !== 'RootWebArea' && this._name)
       return true;
     if (this._role === 'heading' && this._name)
       return true;
@@ -199,6 +199,17 @@ class CRAXNode implements accessibility.AXNode {
     return this.isLeafNode() && !!this._name;
   }
 
+  normalizedRole() {
+    switch (this._role) {
+      case 'RootWebArea':
+        return 'WebArea';
+      case 'StaticText':
+        return 'text';
+      default:
+        return this._role;
+    }
+  }
+
   serialize(): types.SerializedAXNode {
     const properties: Map<string, number | string | boolean> = new Map();
     for (const property of this._payload.properties || [])
@@ -207,7 +218,7 @@ class CRAXNode implements accessibility.AXNode {
       properties.set('description', this._payload.description.value);
 
     const node: {[x in keyof types.SerializedAXNode]: any} = {
-      role: this._role,
+      role: this.normalizedRole(),
       name: this._payload.name ? (this._payload.name.value || '') : '',
     };
 
@@ -236,7 +247,7 @@ class CRAXNode implements accessibility.AXNode {
     for (const booleanProperty of booleanProperties) {
       // WebArea's treat focus differently than other nodes. They report whether their frame  has focus,
       // not whether focus is specifically on the root node.
-      if (booleanProperty === 'focused' && this._role === 'WebArea')
+      if (booleanProperty === 'focused' && (this._role === 'WebArea' || this._role === 'RootWebArea'))
         continue;
       const value = properties.get(booleanProperty);
       if (!value)

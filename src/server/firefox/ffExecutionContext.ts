@@ -30,7 +30,17 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     this._executionContextId = executionContextId;
   }
 
-  async rawEvaluate(expression: string): Promise<string> {
+  async rawEvaluateJSON(expression: string): Promise<any> {
+    const payload = await this._session.send('Runtime.evaluate', {
+      expression,
+      returnByValue: true,
+      executionContextId: this._executionContextId,
+    }).catch(rewriteError);
+    checkException(payload.exceptionDetails);
+    return payload.result!.value;
+  }
+
+  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
     const payload = await this._session.send('Runtime.evaluate', {
       expression,
       returnByValue: false,
@@ -66,17 +76,14 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return utilityScript._context.createHandle(payload.result!);
   }
 
-  async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
-    const objectId = handle._objectId;
-    if (!objectId)
-      return new Map();
+  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getObjectProperties', {
       executionContextId: this._executionContextId,
       objectId,
     });
     const result = new Map();
     for (const property of response.properties)
-      result.set(property.name, handle._context.createHandle(property.value));
+      result.set(property.name, context.createHandle(property.value));
     return result;
   }
 
@@ -84,12 +91,10 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
-  async releaseHandle(handle: js.JSHandle): Promise<void> {
-    if (!handle._objectId)
-      return;
+  async releaseHandle(objectId: js.ObjectId): Promise<void> {
     await this._session.send('Runtime.disposeObject', {
       executionContextId: this._executionContextId,
-      objectId: handle._objectId,
+      objectId
     });
   }
 }

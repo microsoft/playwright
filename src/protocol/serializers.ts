@@ -36,6 +36,7 @@ export function parseError(error: SerializedError): Error {
   }
   const e = new Error(error.error.message);
   e.stack = error.error.stack || '';
+  e.name = error.error.name;
   return e;
 }
 

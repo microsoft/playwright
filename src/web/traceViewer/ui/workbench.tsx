@@ -26,26 +26,30 @@ import { SourceTab } from './sourceTab';
 import { SnapshotTab } from './snapshotTab';
 import { LogsTab } from './logsTab';
 import { SplitView } from '../../components/splitView';
+import { useAsyncMemo } from './helpers';
 
 
 export const Workbench: React.FunctionComponent<{
-  contexts: ContextEntry[],
-}> = ({ contexts }) => {
-  const [context, setContext] = React.useState(contexts[0]);
+  debugNames: string[],
+}> = ({ debugNames }) => {
+  const [debugName, setDebugName] = React.useState(debugNames[0]);
   const [selectedAction, setSelectedAction] = React.useState<ActionEntry | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionEntry | undefined>();
-  const [selectedTime, setSelectedTime] = React.useState<number | undefined>();
+
+  let context = useAsyncMemo(async () => {
+    return (await fetch(`/context/${debugName}`).then(response => response.json())) as ContextEntry;
+  }, [debugName], emptyContext);
 
   const actions = React.useMemo(() => {
     const actions: ActionEntry[] = [];
     for (const page of context.pages)
       actions.push(...page.actions);
+    actions.sort((a, b) => a.timestamp - b.timestamp);
     return actions;
   }, [context]);
 
   const snapshotSize = context.created.viewportSize || { width: 1280, height: 720 };
   const boundaries = { minimum: context.startTime, maximum: context.endTime };
-  const snapshotSelection = context.pages.length && selectedTime !== undefined ? { pageId: context.pages[0].created.pageId, time: selectedTime } : undefined;
 
   return <div className='vbox workbench'>
     <div className='hbox header'>
@@ -53,47 +57,58 @@ export const Workbench: React.FunctionComponent<{
       <div className='product'>Playwright</div>
       <div className='spacer'></div>
       <ContextSelector
-        contexts={contexts}
-        context={context}
-        onChange={context => {
-          setContext(context);
+        debugNames={debugNames}
+        debugName={debugName}
+        onChange={debugName => {
+          setDebugName(debugName);
           setSelectedAction(undefined);
-          setSelectedTime(undefined);
         }}
       />
     </div>
-    <div style={{ background: 'white', paddingLeft: '20px', flex: 'none' }}>
+    <div style={{ background: 'white', paddingLeft: '20px', flex: 'none', borderBottom: '1px solid #ddd' }}>
       <Timeline
         context={context}
         boundaries={boundaries}
         selectedAction={selectedAction}
         highlightedAction={highlightedAction}
         onSelected={action => setSelectedAction(action)}
-        onTimeSelected={time => setSelectedTime(time)}
+        onHighlighted={action => setHighlightedAction(action)}
       />
     </div>
-    <div className='hbox'>
-      <div style={{ display: 'flex', flex: 'none', overflow: 'auto', borderRight: '1px solid #ddd' }}>
-        <ActionList
-          actions={actions}
-          selectedAction={selectedAction}
-          highlightedAction={highlightedAction}
-          onSelected={action => {
-            setSelectedAction(action);
-            setSelectedTime(undefined);
-          }}
-          onHighlighted={action => setHighlightedAction(action)}
-        />
-      </div>
-      <SplitView sidebarSize={250}>
-        <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} selection={snapshotSelection} boundaries={boundaries} />
+    <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
+      <SplitView sidebarSize={300} orientation='horizontal'>
+        <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} />
         <TabbedPane tabs={[
           { id: 'logs', title: 'Log', render: () => <LogsTab actionEntry={selectedAction} /> },
           { id: 'source', title: 'Source', render: () => <SourceTab actionEntry={selectedAction} /> },
           { id: 'network', title: 'Network', render: () => <NetworkTab actionEntry={selectedAction} /> },
         ]}/>
-
       </SplitView>
-    </div>
+      <ActionList
+        actions={actions}
+        selectedAction={selectedAction}
+        highlightedAction={highlightedAction}
+        onSelected={action => {
+          setSelectedAction(action);
+        }}
+        onHighlighted={action => setHighlightedAction(action)}
+      />
+    </SplitView>
   </div>;
+};
+
+const now = performance.now();
+const emptyContext: ContextEntry = {
+  startTime: now,
+  endTime: now,
+  created: {
+    timestamp: now,
+    type: 'context-metadata',
+    browserName: '',
+    deviceScaleFactor: 1,
+    isMobile: false,
+    viewportSize: { width: 1280, height: 800 },
+    debugName: '<empty>',
+  },
+  pages: []
 };

@@ -82,6 +82,11 @@ Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
 
 defaults to 1. See [UIEvent.detail].
 
+## input-trial
+- `trial` <[boolean]>
+
+When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
+
 ## query-selector
 - `selector` <[string]>
 
@@ -211,12 +216,20 @@ Toggles bypassing page's Content-Security-Policy.
 ## context-option-viewport
 * langs: js, java
   - alias-java: viewportSize
-  - alias-csharp: viewportSize
 - `viewport` <[null]|[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
 Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+
+## csharp-context-option-viewport
+* langs: csharp
+  - alias-csharp: viewportSize
+- `viewport` <[null]|[Object]>
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
+
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable the default viewport.
 
 ## context-option-screen
 * langs:
@@ -442,9 +455,13 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
   - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
   - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
 
-Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this
-option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example
-`launch({ proxy: { server: 'per-context' } })`.
+Network proxy settings to use with this context.
+
+:::note
+For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all
+contexts override the proxy, global proxy will be never used and can be any string, for example
+`launch({ proxy: { server: 'http://per-context' } })`.
+:::
 
 ## select-options-values
 * langs: java, js
@@ -556,6 +573,7 @@ is considered matching if all specified properties match.
 - %%-context-option-ignorehttpserrors-%%
 - %%-context-option-bypasscsp-%%
 - %%-context-option-viewport-%%
+- %%-csharp-context-option-viewport-%%
 - %%-python-context-option-viewport-%%
 - %%-context-option-screen-%%
 - %%-python-context-option-no-viewport-%%

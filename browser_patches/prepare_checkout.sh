@@ -10,7 +10,7 @@ REMOTE_BROWSER_UPSTREAM="browser_upstream"
 BUILD_BRANCH="playwright-build"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit] [custom_checkout_path]"
+  echo "usage: $(basename $0) [firefox|firefox-stable|webkit] [custom_checkout_path]"
   echo
   echo "Prepares browser checkout. The checkout is a GIT repository that:"
   echo "- has a '$REMOTE_BROWSER_UPSTREAM' remote pointing to a REMOTE_URL from UPSTREAM_CONFIG.sh"
@@ -93,6 +93,20 @@ elif [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
     CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
     FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
   fi
+elif [[ ("$1" == "firefox-stable") || ("$1" == "ff-stable") ]]; then
+  # NOTE: firefox-stable re-uses firefox checkout.
+  FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
+  CHECKOUT_PATH="$PWD/firefox/checkout"
+
+  PATCHES_PATH="$PWD/firefox-stable/patches"
+  FIREFOX_EXTRA_FOLDER_PATH="$PWD/firefox-stable/juggler"
+  BUILD_NUMBER=$(head -1 "$PWD/firefox-stable/BUILD_NUMBER")
+  source "./firefox-stable/UPSTREAM_CONFIG.sh"
+  if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
+    echo "WARNING: using checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
+    CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
+    FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
+  fi
 elif [[ ("$1" == "deprecated-webkit-mac-10.14") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/deprecated-webkit-mac-10.14/checkout";
   CHECKOUT_PATH="$PWD/deprecated-webkit-mac-10.14/checkout"
@@ -132,7 +146,14 @@ fi
 # if there's no checkout folder - checkout one.
 if ! [[ -d $CHECKOUT_PATH ]]; then
   echo "-- $FRIENDLY_CHECKOUT_PATH is missing - checking out.."
-  git clone --single-branch --depth 1 --branch $BASE_BRANCH $REMOTE_URL $CHECKOUT_PATH
+  if [[ -n "$CI" ]]; then
+    # In CI environment, we re-checkout constantly, so we do a shallow checkout to save time.
+    git clone --single-branch --depth 1 --branch $BASE_BRANCH $REMOTE_URL $CHECKOUT_PATH
+  else
+    # In non-CI environment, do a full checkout. This takes time,
+    # but liberates from the `git fetch --unshallow`.
+    git clone --single-branch --branch $BASE_BRANCH $REMOTE_URL $CHECKOUT_PATH
+  fi
 else
   echo "-- checking $FRIENDLY_CHECKOUT_PATH folder - OK"
 fi
@@ -224,7 +245,7 @@ elif [[ ! -z "${FIREFOX_EXTRA_FOLDER_PATH}" ]]; then
   git add $EMBEDDER_DIR
 fi
 
-git commit -a --author="playwright-devops <devops@playwright.dev>" -m "chore: bootstrap build #$BUILD_NUMBER"
+git commit -a --author="playwright-devops <devops@playwright.dev>" -m "chore($1): bootstrap build #$BUILD_NUMBER"
 
 echo
 echo

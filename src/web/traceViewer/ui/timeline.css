@@ -20,7 +20,6 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid #ddd;
   padding: 20px 0 5px;
   cursor: text;
 }
@@ -46,8 +45,12 @@
   pointer-events: none;
   overflow: hidden;
   flex: none;
-  flex-basis: 20px;
+  height: 30px;
   position: relative;
+}
+
+.timeline-lane.timeline-labels {
+  height: 20px;
 }
 
 .timeline-grid {
@@ -58,10 +61,6 @@
   left: 0;
 }
 
-.timeline-lane.timeline-labels {
-  margin-top: 10px;
-}
-
 .timeline-lane.timeline-bars {
   pointer-events: auto;
   margin-bottom: 10px;
@@ -70,10 +69,11 @@
 
 .timeline-bar {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  height: 9px;
+  top: 11px;
   background-color: red;
-  border-radius: 3px;
+  border-radius: 2px;
+  min-width: 3px;
   --action-color: 'transparent';
   background-color: var(--action-color);
 }
@@ -108,16 +108,24 @@
   --action-color: var(--blue);
 }
 
+.timeline-bar.evaluateExpression {
+  --action-color: var(--yellow);
+}
+
 .timeline-bar.dialog {
+  top: 22px;
   --action-color: var(--transparent-blue);
 }
 
 .timeline-bar.navigation {
-  --action-color: var(--purple);
+  top: 22px;
+  --action-color: var(--blue);
 }
 
-.timeline-bar.load {
-  --action-color: var(--yellow);
+.timeline-bar.waitForEventInfo {
+  bottom: inherit;
+  top: 0;
+  --action-color: var(--gray);
 }
 
 .timeline-label {

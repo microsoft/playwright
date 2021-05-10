@@ -23,6 +23,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 import { helper } from '../helper';
+import { kBrowserClosedError } from '../../utils/errors';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -49,7 +50,7 @@ export class WKConnection {
     this._onDisconnect = onDisconnect;
     this._protocolLogger = protocolLogger;
     this._browserLogsCollector = browserLogsCollector;
-    this.browserSession = new WKSession(this, '', 'Browser has been closed.', (message: any) => {
+    this.browserSession = new WKSession(this, '', kBrowserClosedError, (message: any) => {
       this.rawSend(message);
     });
   }

@@ -16,59 +16,114 @@
 
 import debug from 'debug';
 import * as http from 'http';
-import WebSocket from 'ws';
-import { DispatcherConnection } from '../dispatchers/dispatcher';
+import * as ws from 'ws';
+import { DispatcherConnection, DispatcherScope } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
+import { serverSelectors } from '../server/selectors';
 
 const debugLog = debug('pw:server');
 
-export class PlaywrightServer {
-  private _server: http.Server | undefined;
-  private _client: WebSocket | undefined;
+export interface PlaywrightServerDelegate {
+  path: string;
+  allowMultipleClients: boolean;
+  onConnect(rootScope: DispatcherScope, forceDisconnect: () => void): () => any;
+  onClose: () => any;
+}
 
-  listen(port: number) {
-    this._server = http.createServer((request, response) => {
+export class PlaywrightServer {
+  private _wsServer: ws.Server | undefined;
+  private _clientsCount = 0;
+  private _delegate: PlaywrightServerDelegate;
+
+  static async startDefault(port: number = 0): Promise<string> {
+    const cleanup = async () => {
+      await gracefullyCloseAll().catch(e => {});
+      serverSelectors.unregisterAll();
+    };
+    const delegate: PlaywrightServerDelegate = {
+      path: '/ws',
+      allowMultipleClients: false,
+      onClose: cleanup,
+      onConnect: (rootScope: DispatcherScope) => {
+        new PlaywrightDispatcher(rootScope, createPlaywright());
+        return cleanup;
+      },
+    };
+    const server = new PlaywrightServer(delegate);
+    return server.listen(port);
+  }
+
+  constructor(delegate: PlaywrightServerDelegate) {
+    this._delegate = delegate;
+  }
+
+  async listen(port: number = 0): Promise<string> {
+    const server = http.createServer((request, response) => {
       response.end('Running');
     });
-    this._server.on('error', error => debugLog(error));
-    this._server.listen(port);
-    debugLog('Listening on ' + port);
+    server.on('error', error => debugLog(error));
 
-    const wsServer = new WebSocket.Server({ server: this._server, path: '/ws' });
-    wsServer.on('connection', async ws => {
-      if (this._client) {
-        ws.close();
+    const path = this._delegate.path;
+    const wsEndpoint = await new Promise<string>(resolve => {
+      server.listen(port, () => {
+        const address = server.address();
+        const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://127.0.0.1:${address.port}${path}`;
+        resolve(wsEndpoint);
+      });
+    });
+
+    debugLog('Listening at ' + wsEndpoint);
+
+    this._wsServer = new ws.Server({ server, path });
+    this._wsServer.on('connection', async socket => {
+      if (this._clientsCount && !this._delegate.allowMultipleClients) {
+        socket.close();
         return;
       }
-      this._client = ws;
+      this._clientsCount++;
       debugLog('Incoming connection');
-      const dispatcherConnection = new DispatcherConnection();
-      ws.on('message', message => dispatcherConnection.dispatch(JSON.parse(message.toString())));
-      ws.on('close', () => {
+
+      const connection = new DispatcherConnection();
+      connection.onmessage = message => {
+        if (socket.readyState !== ws.CLOSING)
+          socket.send(JSON.stringify(message));
+      };
+      socket.on('message', (message: string) => {
+        connection.dispatch(JSON.parse(Buffer.from(message).toString()));
+      });
+
+      const forceDisconnect = () => socket.close();
+      const scope = connection.rootDispatcher();
+      const onDisconnect = this._delegate.onConnect(scope, forceDisconnect);
+      const disconnected = () => {
+        this._clientsCount--;
+        // Avoid sending any more messages over closed socket.
+        connection.onmessage = () => {};
+        onDisconnect();
+      };
+      socket.on('close', () => {
         debugLog('Client closed');
-        this._onDisconnect().catch(debugLog);
+        disconnected();
       });
-      ws.on('error', error => {
+      socket.on('error', error => {
         debugLog('Client error ' + error);
-        this._onDisconnect().catch(debugLog);
+        disconnected();
       });
-      dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
-      new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), createPlaywright());
     });
+
+    return wsEndpoint;
   }
 
   async close() {
-    if (!this._server)
+    if (!this._wsServer)
       return;
     debugLog('Closing server');
-    await new Promise(f => this._server!.close(f));
-    await gracefullyCloseAll();
-  }
-
-  private async _onDisconnect() {
-    await gracefullyCloseAll();
-    this._client = undefined;
+    // First disconnect all remaining clients.
+    await new Promise(f => this._wsServer!.close(f));
+    await new Promise(f => this._wsServer!.options.server!.close(f));
+    this._wsServer = undefined;
+    await this._delegate.onClose();
   }
 }

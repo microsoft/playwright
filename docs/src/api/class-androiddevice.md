@@ -100,7 +100,7 @@ Either a path to the apk file, or apk file content.
 Optional arguments to pass to the `shell:cmd package install` call. Defaults to `-r -t -S`.
 
 ## async method: AndroidDevice.launchBrowser
-- returns: <[ChromiumBrowserContext]>
+- returns: <[BrowserContext]>
 
 Launches Chrome browser on the device, and returns its persistent context.
 

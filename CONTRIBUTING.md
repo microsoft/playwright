@@ -166,7 +166,7 @@ it.skip('should work', async ({server, page}) => {
 });
 ```
 
-- To run tests in non-headless (headful) mode:
+- To run tests in non-headless (headed) mode:
 
 ```bash
 HEADFUL=1 npm run ctest

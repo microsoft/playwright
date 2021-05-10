@@ -13,9 +13,9 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@v2
       with:
-        node-version: 12.x
+        node-version: 12
         registry-url: 'https://registry.npmjs.org'
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci

@@ -25,6 +25,7 @@ title: "Community Showcase"
 
 ## Tools
 
+* [Applitools](https://applitools.com): Add AI-powered visual assertions and run your Playwright tests on all browser, device, and viewport combinations in parallel, without requiring any setup.
 * [CodeceptJS](https://github.com/Codeception/CodeceptJS): Write scenario-driven Playwright tests with synchronous code
 * [dom-to-playwright](https://github.com/Xiphe/dom-to-playwright) to copy a JSDOM snapshot into a Playwright page.
 * [expected-condition-playwright](https://github.com/elaichenkov/expected-condition-playwright): Supplies a set of common expected conditions that can wait for certain states and conditions
@@ -36,10 +37,11 @@ title: "Community Showcase"
 * [playwright-video](https://github.com/qawolf/playwright-video): Capture a video while executing a Playwright script
 * [QA Wolf](https://github.com/qawolf/qawolf): Record and create Playwright tests and then run them in CI
 * [Root Cause OSS](https://github.com/testimio/root-cause): Capture screenshots on every step and display in a viewer with logs for easy troubleshooting.
+* [Sauce Labs](https://saucelabs.com/platform/automation-tools/playwright): Run Playwright tests in parallel in the cloud or your own docker environment.
+* [Selenium Box - Enterprise Test Grid](https://seleniumbox.com): Execute Playwright tests securely inside your firewall at scale
 * [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
 * [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
 * [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
-* [Applitools](https://applitools.com): Add AI-powered visual assertions and run your Playwright tests on all browser, device, and viewport combinations in parallel, without requiring any setup.
 
 ## Frameworks
 
@@ -59,6 +61,7 @@ title: "Community Showcase"
 * [playwright-aws-lambda](https://github.com/austinkelleher/playwright-aws-lambda): Playwright setup on AWS Lambda
 * [playwright-jest-circus-allure](https://github.com/d-shch/playwright-jest-circus-allure): Example how to use allure-report and jest-circus with playwright
 * [Heroku Playwright Example](https://github.com/mxschmitt/heroku-playwright-example): Example using Playwright on Heroku
+* [Sauce Labs Playwright Example](https://github.com/saucelabs/saucectl-playwright-example): Example using Playwright on Sauce Labs
 
 ## Guides
 

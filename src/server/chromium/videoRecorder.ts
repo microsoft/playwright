@@ -43,15 +43,16 @@ export class VideoRecorder {
     const controller = new ProgressController(internalCallMetadata(), page);
     controller.setLogName('browser');
     return await controller.run(async progress => {
-      const recorder = new VideoRecorder(ffmpegPath, progress);
+      const recorder = new VideoRecorder(page, ffmpegPath, progress);
       await recorder._launch(options);
       return recorder;
     });
   }
 
-  private constructor(ffmpegPath: string, progress: Progress) {
+  private constructor(page: Page, ffmpegPath: string, progress: Progress) {
     this._progress = progress;
     this._ffmpegPath = ffmpegPath;
+    page.on(Page.Events.ScreencastFrame, frame => this.writeFrame(frame.buffer, frame.timestamp));
   }
 
   private async _launch(options: types.PageScreencastOptions) {

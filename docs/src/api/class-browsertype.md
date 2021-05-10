@@ -66,7 +66,7 @@ with sync_playwright() as playwright:
 ```
 
 ## async method: BrowserType.connect
-* langs: js, java
+* langs: js, java, python
 - returns: <[Browser]>
 
 This methods attaches Playwright to an existing browser instance.
@@ -75,6 +75,7 @@ This methods attaches Playwright to an existing browser instance.
 * langs: js
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
+  - `headers` <[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
     can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
@@ -82,27 +83,33 @@ This methods attaches Playwright to an existing browser instance.
     `30000` (30 seconds). Pass `0` to disable timeout.
 
 ### param: BrowserType.connect.wsEndpoint
-* langs: java
+* langs: java, python
 - `wsEndpoint` <[string]>
 
 A browser websocket endpoint to connect to.
 
+### option: BrowserType.connect.headers
+* langs: java, python
+- `headers` <[Object]<[string], [string]>>
+
+Additional HTTP headers to be sent with web socket connect request. Optional.
+
 ### option: BrowserType.connect.slowMo
-* langs: java
+* langs: java, python
 - `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
 ### option: BrowserType.connect.timeout
-* langs: java
+* langs: java, python
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## async method: BrowserType.connectOverCDP
-* langs: js
+* langs: java, js, python
 - returns: <[Browser]>
 
 This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
@@ -114,13 +121,41 @@ Connecting over the Chrome DevTools Protocol is only supported for Chromium-base
 :::
 
 ### param: BrowserType.connectOverCDP.params
+* langs: js
 - `params` <[Object]>
-  - `wsEndpoint` <[string]> A CDP websocket endpoint to connect to.
+  - `endpointURL` <[string]> A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+  - `headers` <[Object]<[string], [string]>> Additional HTTP headers to be sent with connect request. Optional.
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
     can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
   - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to
     `30000` (30 seconds). Pass `0` to disable timeout.
+
+### param: BrowserType.connectOverCDP.endpointURL
+* langs: java, python
+- `endpointURL` <[string]>
+
+A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+
+### option: BrowserType.connectOverCDP.headers
+* langs: java, python
+- `headers` <[Object]<[string], [string]>>
+
+Additional HTTP headers to be sent with connect request. Optional.
+
+### option: BrowserType.connectOverCDP.slowMo
+* langs: java, python
+- `slowMo` <[float]>
+
+Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
+can see what is going on. Defaults to 0.
+
+### option: BrowserType.connectOverCDP.timeout
+* langs: java, python
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the connection to be established. Defaults to
+`30000` (30 seconds). Pass `0` to disable timeout.
 
 ## method: BrowserType.executablePath
 - returns: <[string]>
@@ -179,9 +214,9 @@ Whether to run browser in headless mode. More details for
 [`option: devtools`] option is `true`.
 
 ### option: BrowserType.launch.channel
-- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
+- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable">>
 
-Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers#google-chrome--microsoft-edge).
+Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 
 ### option: BrowserType.launch.executablePath
 - `executablePath` <[path]>
@@ -292,9 +327,9 @@ Whether to run browser in headless mode. More details for
 [`option: devtools`] option is `true`.
 
 ### option: BrowserType.launchPersistentContext.channel
-- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
+- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable">>
 
-Browser distribution channel.
+Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 
 ### option: BrowserType.launchPersistentContext.executablePath
 - `executablePath` <[path]>
@@ -397,6 +432,11 @@ Whether to run browser in headless mode. More details for
 - `port` <[int]>
 
 Port to use for the web socket. Defaults to 0 that picks any available port.
+
+### option: BrowserType.launchServer.channel
+- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable">>
+
+Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 
 ### option: BrowserType.launchServer.executablePath
 - `executablePath` <[path]>

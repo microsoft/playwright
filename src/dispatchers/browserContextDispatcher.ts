@@ -23,6 +23,8 @@ import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
 import { CallMetadata } from '../server/instrumentation';
+import { ArtifactDispatcher } from './artifactDispatcher';
+import { Artifact } from '../server/artifact';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -30,6 +32,20 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   constructor(scope: DispatcherScope, context: BrowserContext) {
     super(scope, context, 'BrowserContext', { isChromium: context._browser.options.isChromium }, true);
     this._context = context;
+    // Note: when launching persistent context, dispatcher is created very late,
+    // so we can already have pages, videos and everything else.
+
+    const onVideo = (artifact: Artifact) => {
+      // Note: Video must outlive Page and BrowserContext, so that client can saveAs it
+      // after closing the context. We use |scope| for it.
+      const artifactDispatcher = new ArtifactDispatcher(scope, artifact);
+      this._dispatchEvent('video', { artifact: artifactDispatcher });
+    };
+    context.on(BrowserContext.Events.VideoStarted, onVideo);
+    for (const video of context._browser._idToVideo.values()) {
+      if (video.context === context)
+        onVideo(video.artifact);
+    }
 
     for (const page of context.pages())
       this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) });
@@ -41,11 +57,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
     if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
-        this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) });
-      context.on(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) }));
+        this._dispatchEvent('backgroundPage', { page: new PageDispatcher(this._scope, page) });
+      context.on(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('backgroundPage', { page: new PageDispatcher(this._scope, page) }));
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
-        this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
-      context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
+        this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
+      context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
   }
 
@@ -115,7 +131,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       return;
     }
     await this._context._setRequestInterceptor((route, request) => {
-      this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }
 
@@ -128,17 +144,30 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
-    await RecorderSupplement.getOrCreate(this._context, params);
+    await RecorderSupplement.show(this._context, params);
   }
 
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
     // Inspector controller will take care of this.
   }
 
-  async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {
+  async newCDPSession(params: channels.BrowserContextNewCDPSessionParams): Promise<channels.BrowserContextNewCDPSessionResult> {
     if (!this._object._browser.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };
+  }
+
+  async tracingStart(params: channels.BrowserContextTracingStartParams): Promise<channels.BrowserContextTracingStartResult> {
+    await this._context.tracing.start(params);
+  }
+
+  async tracingStop(params: channels.BrowserContextTracingStopParams): Promise<channels.BrowserContextTracingStopResult> {
+    await this._context.tracing.stop();
+  }
+
+  async tracingExport(params: channels.BrowserContextTracingExportParams): Promise<channels.BrowserContextTracingExportResult> {
+    const artifact = await this._context.tracing.export();
+    return { artifact: new ArtifactDispatcher(this._scope, artifact) };
   }
 }

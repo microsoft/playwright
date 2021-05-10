@@ -20,7 +20,7 @@ import { serializeAsCallArgument } from './common/utilityScriptSerializers';
 import type UtilityScript from './injected/utilityScript';
 import { SdkObject } from './instrumentation';
 
-type ObjectId = string;
+export type ObjectId = string;
 export type RemoteObject = {
   objectId?: ObjectId,
   value?: any
@@ -43,12 +43,13 @@ export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R |
 export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>;
 
 export interface ExecutionContextDelegate {
-  rawEvaluate(expression: string): Promise<ObjectId>;
+  rawEvaluateJSON(expression: string): Promise<any>;
+  rawEvaluateHandle(expression: string): Promise<ObjectId>;
   rawCallFunctionNoReply(func: Function, ...args: any[]): void;
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
-  getProperties(handle: JSHandle): Promise<Map<string, JSHandle>>;
+  getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>>;
   createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
-  releaseHandle(handle: JSHandle): Promise<void>;
+  releaseHandle(objectId: ObjectId): Promise<void>;
 }
 
 export class ExecutionContext extends SdkObject {
@@ -56,7 +57,7 @@ export class ExecutionContext extends SdkObject {
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
 
   constructor(parent: SdkObject, delegate: ExecutionContextDelegate) {
-    super(parent);
+    super(parent, 'execution-context');
     this._delegate = delegate;
   }
 
@@ -75,7 +76,7 @@ export class ExecutionContext extends SdkObject {
         ${utilityScriptSource.source}
         return new pwExport();
       })();`;
-      this._utilityScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new JSHandle(this, 'object', objectId));
+      this._utilityScriptPromise = this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', objectId));
     }
     return this._utilityScriptPromise;
   }
@@ -84,9 +85,8 @@ export class ExecutionContext extends SdkObject {
     return this._delegate.createHandle(this, remoteObject);
   }
 
-  async rawEvaluate(expression: string): Promise<void> {
-    // Make sure to never return a value.
-    await this._delegate.rawEvaluate(expression + '; 0');
+  async rawEvaluateJSON(expression: string): Promise<any> {
+    return await this._delegate.rawEvaluateJSON(expression);
   }
 
   async doSlowMo() {
@@ -104,7 +104,7 @@ export class JSHandle<T = any> extends SdkObject {
   private _previewCallback: ((preview: string) => void) | undefined;
 
   constructor(context: ExecutionContext, type: string, objectId?: ObjectId, value?: any) {
-    super(context);
+    super(context, 'handle');
     this._context = context;
     this._objectId = objectId;
     this._value = value;
@@ -144,8 +144,14 @@ export class JSHandle<T = any> extends SdkObject {
     return result;
   }
 
-  getProperties(): Promise<Map<string, JSHandle>> {
-    return this._context._delegate.getProperties(this);
+  async getProperties(): Promise<Map<string, JSHandle>> {
+    if (!this._objectId)
+      return new Map();
+    return this._context._delegate.getProperties(this._context, this._objectId);
+  }
+
+  rawValue() {
+    return this._value;
   }
 
   async jsonValue(): Promise<T> {
@@ -164,7 +170,8 @@ export class JSHandle<T = any> extends SdkObject {
     if (this._disposed)
       return;
     this._disposed = true;
-    this._context._delegate.releaseHandle(this).catch(e => {});
+    if (this._objectId)
+      this._context._delegate.releaseHandle(this._objectId).catch(e => {});
   }
 
   toString(): string {

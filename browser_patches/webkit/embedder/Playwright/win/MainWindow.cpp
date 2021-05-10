@@ -48,11 +48,11 @@ std::wstring MainWindow::s_windowClass;
 size_t MainWindow::s_numInstances;
 
 bool MainWindow::s_headless = false;
-bool MainWindow::s_noStartupWindow = false;
+bool MainWindow::s_controlledRemotely = false;
 
-void MainWindow::configure(bool headless, bool noStartupWindow) {
+void MainWindow::configure(bool headless, bool controlledRemotely) {
     s_headless = headless;
-    s_noStartupWindow = noStartupWindow;
+    s_controlledRemotely = controlledRemotely;
 }
 
 static std::wstring loadString(int id)
@@ -324,7 +324,7 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
     case WM_NCDESTROY:
         SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
         delete thisWindow;
-        if (s_noStartupWindow || s_numInstances > 0)
+        if (s_controlledRemotely || s_numInstances > 0)
             return 0;
         PostQuitMessage(0);
         break;

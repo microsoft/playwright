@@ -15,37 +15,23 @@
  */
 
 import path from 'path';
-import fs from 'fs';
-import * as util from 'util';
 import { Page } from './page';
 import { assert } from '../utils/utils';
-
-type SaveCallback = (localPath: string, error?: string) => Promise<void>;
+import { Artifact } from './artifact';
 
 export class Download {
-  private _downloadsPath: string;
-  private _uuid: string;
-  private _finishedCallback: () => void;
-  private _finishedPromise: Promise<void>;
-  private _saveCallbacks: SaveCallback[] = [];
-  private _finished: boolean = false;
+  readonly artifact: Artifact;
+  readonly url: string;
   private _page: Page;
-  private _acceptDownloads: boolean;
-  private _failure: string | null = null;
-  private _deleted = false;
-  private _url: string;
   private _suggestedFilename: string | undefined;
 
   constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
+    const unaccessibleErrorMessage = !page._browserContext._options.acceptDownloads ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
+    this.artifact = new Artifact(page, path.join(downloadsPath, uuid), unaccessibleErrorMessage);
     this._page = page;
-    this._downloadsPath = downloadsPath;
-    this._uuid = uuid;
-    this._url = url;
+    this.url = url;
     this._suggestedFilename = suggestedFilename;
-    this._finishedCallback = () => {};
-    this._finishedPromise = new Promise(f => this._finishedCallback = f);
     page._browserContext._downloads.add(this);
-    this._acceptDownloads = !!this._page._browserContext._options.acceptDownloads;
     if (suggestedFilename !== undefined)
       this._page.emit(Page.Events.Download, this);
   }
@@ -56,86 +42,7 @@ export class Download {
     this._page.emit(Page.Events.Download, this);
   }
 
-  url(): string {
-    return this._url;
-  }
-
   suggestedFilename(): string {
     return this._suggestedFilename!;
-  }
-
-  async localPath(): Promise<string | null> {
-    if (!this._acceptDownloads)
-      throw new Error('Pass { acceptDownloads: true } when you are creating your browser context.');
-    const fileName = path.join(this._downloadsPath, this._uuid);
-    await this._finishedPromise;
-    if (this._failure)
-      return null;
-    return fileName;
-  }
-
-  saveAs(saveCallback: SaveCallback) {
-    if (!this._acceptDownloads)
-      throw new Error('Pass { acceptDownloads: true } when you are creating your browser context.');
-    if (this._deleted)
-      throw new Error('Download already deleted. Save before deleting.');
-    if (this._failure)
-      throw new Error('Download not found on disk. Check download.failure() for details.');
-
-    if (this._finished) {
-      saveCallback(path.join(this._downloadsPath, this._uuid)).catch(e => {});
-      return;
-    }
-    this._saveCallbacks.push(saveCallback);
-  }
-
-  async failure(): Promise<string | null> {
-    if (!this._acceptDownloads)
-      return 'Pass { acceptDownloads: true } when you are creating your browser context.';
-    await this._finishedPromise;
-    return this._failure;
-  }
-
-  async delete(): Promise<void> {
-    if (!this._acceptDownloads)
-      return;
-    const fileName = await this.localPath();
-    if (this._deleted)
-      return;
-    this._deleted = true;
-    if (fileName)
-      await util.promisify(fs.unlink)(fileName).catch(e => {});
-  }
-
-  async deleteOnContextClose(): Promise<void> {
-    // Compared to "delete", this method does not wait for the download to finish.
-    // We use it when closing the context to avoid stalling.
-    if (this._deleted)
-      return;
-    this._deleted = true;
-    if (this._acceptDownloads) {
-      const fileName = path.join(this._downloadsPath, this._uuid);
-      await util.promisify(fs.unlink)(fileName).catch(e => {});
-    }
-    await this._reportFinished('Download deleted upon browser context closure.');
-  }
-
-  async _reportFinished(error?: string) {
-    if (this._finished)
-      return;
-    this._finished = true;
-    this._failure = error || null;
-
-    if (error) {
-      for (const callback of this._saveCallbacks)
-        await callback('', error);
-    } else {
-      const fullPath = path.join(this._downloadsPath, this._uuid);
-      for (const callback of this._saveCallbacks)
-        await callback(fullPath);
-    }
-    this._saveCallbacks = [];
-
-    this._finishedCallback();
   }
 }

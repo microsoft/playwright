@@ -31,7 +31,18 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     this._contextId = contextPayload.id;
   }
 
-  async rawEvaluate(expression: string): Promise<string> {
+  async rawEvaluateJSON(expression: string): Promise<any> {
+    const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
+      expression,
+      contextId: this._contextId,
+      returnByValue: true,
+    }).catch(rewriteError);
+    if (exceptionDetails)
+      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+    return remoteObject.value;
+  }
+
+  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
       expression,
       contextId: this._contextId,
@@ -69,10 +80,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return returnByValue ? parseEvaluationResultValue(remoteObject.value) : utilityScript._context.createHandle(remoteObject);
   }
 
-  async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
-    const objectId = handle._objectId;
-    if (!objectId)
-      return new Map();
+  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
     const response = await this._client.send('Runtime.getProperties', {
       objectId,
       ownProperties: true
@@ -81,7 +89,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     for (const property of response.result) {
       if (!property.enumerable || !property.value)
         continue;
-      result.set(property.name, handle._context.createHandle(property.value));
+      result.set(property.name, context.createHandle(property.value));
     }
     return result;
   }
@@ -90,10 +98,8 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return new js.JSHandle(context, remoteObject.subtype || remoteObject.type, remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
-  async releaseHandle(handle: js.JSHandle): Promise<void> {
-    if (!handle._objectId)
-      return;
-    await releaseObject(this._client, handle._objectId);
+  async releaseHandle(objectId: js.ObjectId): Promise<void> {
+    await releaseObject(this._client, objectId);
   }
 }
 

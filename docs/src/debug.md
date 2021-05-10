@@ -16,7 +16,7 @@ for browser automation.
 <img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
 
 
-## Run in headful mode
+## Run in headed mode
 
 Playwright runs browsers in headless mode by default. To change this behavior,
 use `headless: false` as a launch option. You can also use the [`option: slowMo`] option
@@ -42,7 +42,98 @@ chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
 
 ```
 
-## Visual Studio Code debugger (Node.JS)
+## Browser Developer Tools
+
+You can use browser developer tools in Chromium, Firefox and WebKit while running
+a Playwright script in headed mode. Developer tools help to:
+
+* Inspect the DOM tree and **find element selectors**
+* **See console logs** during execution (or learn how to [read logs via API](./verification.md#console-logs))
+* Check **network activity** and other developer tools features
+
+<a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="500" alt="Chromium Developer Tools"></img></a>
+
+Using a [`method: Page.pause`] method is an easy way to pause the Playwright script execution
+and inspect the page in Developer tools. It will also open [Playwright Inspector](./inspector.md) to help with debugging.
+
+:::note
+**For WebKit**: launching WebKit Inspector during the execution will
+  prevent the Playwright script from executing any further.
+:::
+
+:::note
+**For Chromium**: you can also open developer tools through a launch option.
+```js
+await chromium.launch({ devtools: true });
+```
+```java
+chromium.launch(new BrowserType.LaunchOptions().setDevtools(true));
+```
+```python async
+await chromium.launch(devtools=True)
+```
+```python sync
+chromium.launch(devtools=True)
+```
+:::
+
+## Run in Debug Mode
+
+Set the `PWDEBUG` environment variable to run your scripts in debug mode. Using `PWDEBUG=1` will open [Playwright Inspector](./inspector.md).
+
+Using `PWDEBUG=console` will configure the browser for debugging in Developer tools console:
+* **Runs headed**: Browsers always launch in headed mode
+* **Disables timeout**: Sets default timeout to 0 (= no timeout)
+* **Console helper**: Configures a `playwright` object in the browser to generate and highlight
+[Playwright selectors](./selectors.md). This can be used to verify text or
+composite selectors.
+
+```sh js
+# Linux/macOS
+$ PWDEBUG=console npm run test
+
+# Windows
+$ set PWDEBUG=console
+$ npm run test
+```
+
+```sh java
+# Linux/macOS
+$ PWDEBUG=console mvn test
+
+# Windows
+$ set PWDEBUG=console
+$ mvn test
+```
+
+```sh python
+# Linux/macOS
+$ PWDEBUG=console pytest -s
+
+# Windows
+$ set PWDEBUG=console
+$ pytest -s
+```
+
+## Selectors in Developer Tools Console
+
+When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is available in Developer tools console.
+
+1. Run with `PWDEBUG=console`
+1. Setup a breakpoint to pause the execution
+1. Open the console panel in browser developer tools
+1. Use the `playwright` API
+    * `playwright.$(selector)`: Highlight the first occurrence of the selector. This reflects
+      how `page.$` would see the page.
+    * `playwright.$$(selector)`: Highlight all occurrences of the selector. This reflects
+      how `page.$$` would see the page.
+    * `playwright.inspect(selector)`: Inspect the selector in the Elements panel.
+    * `playwright.clear()`: Clear existing highlights.
+    * `playwright.selector(element)`: Generate a selector that points to the element.
+
+<a href="https://user-images.githubusercontent.com/284612/86857345-299abc00-c073-11ea-9e31-02923a9f0d4b.png"><img src="https://user-images.githubusercontent.com/284612/86857345-299abc00-c073-11ea-9e31-02923a9f0d4b.png" width="500" alt="Highlight selectors"></img></a>
+
+## Visual Studio Code debugger (Node.js)
 
 The VS Code debugger can be used to pause and resume execution of Playwright
 scripts with breakpoints. The debugger can be configured in two ways.
@@ -53,110 +144,12 @@ Setup [`launch.json` configuration](https://code.visualstudio.com/docs/nodejs/no
 for your Node.js project. Once configured launch the scripts with F5 and use
 breakpoints.
 
-### Use the new JavaScript debugging terminal
+### Use the JavaScript Debug Terminal
 
+1. Open [JavaScript Debug Terminal](https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_javascript-debug-terminal)
 1. Set a breakpoint in VS Code
     * Use the `debugger` keyword or set a breakpoint in the VS Code UI
 1. Run your Node.js script from the terminal
-
-## Browser Developer Tools
-
-You can use browser developer tools in Chromium, Firefox and WebKit while running
-a Playwright script. Developer tools help to:
-
-* Inspect the DOM tree and **find element selectors**
-* **See console logs** during execution (or learn how to [read logs via API](./verification.md#console-logs))
-* Check **network activity** and other developer tools features
-
-<a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="500" alt="Chromium Developer Tools"></img></a>
-
-> **For WebKit**: Note that launching WebKit Inspector during the execution will
-  prevent the Playwright script from executing any further.
-
-### API for Chromium
-
-In Chromium, you can also open developer tools through a launch option.
-
-```js
-await chromium.launch({ devtools: true });
-```
-
-```java
-chromium.launch(new BrowserType.LaunchOptions().setDevtools(true));
-```
-
-```python async
-await chromium.launch(devtools=True)
-
-```
-
-```python sync
-chromium.launch(devtools=True)
-```
-
-## Run in Debug Mode
-
-Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
-configures the browser for debugging.
-
-```sh js
-# Linux/macOS
-$ PWDEBUG=1 npm run test
-
-# Windows
-$ set PWDEBUG=1
-$ npm run test
-```
-
-```sh java
-# Linux/macOS
-$ PWDEBUG=1 mvn test
-
-# Windows
-$ set PWDEBUG=1
-$ mvn test
-```
-
-```sh python
-# Linux/macOS
-$ PWDEBUG=1 pytest -s
-
-# Windows
-$ set PWDEBUG=1
-$ pytest -s
-```
-
-### Defaults
-
-With PWDEBUG, the following defaults are configured for you:
-
-* **Run in headful**: With PWDEBUG, browsers always launch in headful mode
-* **Disables timeout**: PWDEBUG sets timeout to 0 (= no timeout)
-
-### Debugging Selectors
-
-PWDEBUG configures a `playwright` object in the browser to highlight
-[Playwright selectors](./selectors.md). This can be used to verify text or
-composite selectors. To use this:
-
-1. Setup a breakpoint to pause the execution
-1. Open the console panel in browser developer tools
-1. Use the `playwright` API
-    * `playwright.$(selector)`: Highlight the first occurrence of the selector. This reflects
-      how `page.$` would see the page.
-    * `playwright.$$(selector)`: Highlight all occurrences of the selector. This reflects
-      how `page.$$` would see the page.
-    * `playwright.inspect(selector)`: Inspect the selector in the Elements panel.
-    * `playwright.clear()`: Clear existing highlights.
-
-<a href="https://user-images.githubusercontent.com/284612/86857345-299abc00-c073-11ea-9e31-02923a9f0d4b.png"><img src="https://user-images.githubusercontent.com/284612/86857345-299abc00-c073-11ea-9e31-02923a9f0d4b.png" width="500" alt="Highlight selectors"></img></a>
-
-### Evaluate Source Maps
-
-PWDEBUG also enables source maps for [`method: Page.evaluate`] [executions](./core-concepts.md#evaluation).
-This improves the debugging experience for JavaScript executions in the page context.
-
-<a href="https://user-images.githubusercontent.com/284612/86857568-a6c63100-c073-11ea-82a4-bfd531a4ec87.png"><img src="https://user-images.githubusercontent.com/284612/86857568-a6c63100-c073-11ea-82a4-bfd531a4ec87.png" width="500" alt="Highlight selectors"></img></a>
 
 ## Verbose API logs
 

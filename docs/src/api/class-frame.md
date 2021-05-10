@@ -153,21 +153,23 @@ Raw CSS content to be injected into frame.
 ## async method: Frame.check
 
 This method checks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
-1. Ensure that the element is now checked. If not, this method rejects.
+1. Ensure that the element is now checked. If not, this method throws.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.check.selector = %%-input-selector-%%
+
+### option: Frame.check.position = %%-input-position-%%
 
 ### option: Frame.check.force = %%-input-force-%%
 
@@ -175,13 +177,15 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.check.timeout = %%-input-timeout-%%
 
+### option: Frame.check.trial = %%-input-trial-%%
+
 ## method: Frame.childFrames
 - returns: <[Array]<[Frame]>>
 
 ## async method: Frame.click
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -189,7 +193,7 @@ This method clicks an element matching [`param: selector`] by performing the fol
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.click.selector = %%-input-selector-%%
@@ -210,24 +214,28 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.click.timeout = %%-input-timeout-%%
 
+### option: Frame.click.trial = %%-input-trial-%%
+
 ## async method: Frame.content
 - returns: <[string]>
 
 Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
+* langs:
+  - alias-csharp: DblClickAsync
 
 This method double clicks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
-   if the first click of the `dblclick()` triggers a navigation event, this method will reject.
+   if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
@@ -249,6 +257,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Frame.dblclick.timeout = %%-input-timeout-%%
+
+### option: Frame.dblclick.trial = %%-input-trial-%%
 
 ## async method: Frame.dispatchEvent
 
@@ -599,10 +609,9 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.fill
 
-This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
-If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead.
-If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
-Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
 To send fine-grained keyboard events, use [`method: Frame.type`].
 
@@ -709,9 +718,9 @@ Headless mode doesn't support navigation to a PDF document. See the
 
 URL to navigate frame to. The url should include scheme, e.g. `https://`.
 
-### option: Frame.goto.timeout = %%-navigation-timeout-%%
-
 ### option: Frame.goto.waitUntil = %%-navigation-wait-until-%%
+
+### option: Frame.goto.timeout = %%-navigation-timeout-%%
 
 ### option: Frame.goto.referer
 - `referer` <[string]>
@@ -722,7 +731,7 @@ Referer header value. If provided it will take preference over the referer heade
 ## async method: Frame.hover
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -730,7 +739,7 @@ This method hovers over an element matching [`param: selector`] by performing th
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.hover.selector = %%-input-selector-%%
@@ -742,6 +751,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.hover.force = %%-input-force-%%
 
 ### option: Frame.hover.timeout = %%-input-timeout-%%
+
+### option: Frame.hover.trial = %%-input-trial-%%
 
 ## async method: Frame.innerHTML
 - returns: <[string]>
@@ -908,12 +919,13 @@ returns empty array.
 ## async method: Frame.selectOption
 - returns: <[Array]<[string]>>
 
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+
+If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+
 Returns the array of option values that have been successfully selected.
 
-Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-matching [`param: selector`], the method throws an error.
-
-Will wait until all specified options are present in the `<select>` element.
+Triggers a `change` and `input` event once all the provided options have been selected.
 
 ```js
 // single selection matching the value
@@ -991,7 +1003,7 @@ are resolved relative to the the current working directory. For empty array, cle
 ## async method: Frame.tap
 
 This method taps an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
@@ -999,7 +1011,7 @@ This method taps an element matching [`param: selector`] by performing the follo
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
@@ -1017,6 +1029,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.tap.force = %%-input-force-%%
 
 ### option: Frame.tap.timeout = %%-input-timeout-%%
+
+### option: Frame.tap.trial = %%-input-trial-%%
 
 ## async method: Frame.textContent
 - returns: <[null]|[string]>
@@ -1080,27 +1094,31 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ## async method: Frame.uncheck
 
 This method checks an element matching [`param: selector`] by performing the following steps:
-1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to
+1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
-1. Ensure that the element is now unchecked. If not, this method rejects.
+1. Ensure that the element is now unchecked. If not, this method throws.
 
-When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.uncheck.selector = %%-input-selector-%%
+
+### option: Frame.uncheck.position = %%-input-position-%%
 
 ### option: Frame.uncheck.force = %%-input-force-%%
 
 ### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Frame.uncheck.timeout = %%-input-timeout-%%
+
+### option: Frame.uncheck.trial = %%-input-trial-%%
 
 ## method: Frame.url
 - returns: <[string]>
@@ -1287,11 +1305,11 @@ Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/Hist
 a navigation.
 :::
 
-### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
-
 ### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
 
 ### option: Frame.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
+
+### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
 
 ## async method: Frame.waitForSelector
 - returns: <[null]|[ElementHandle]>
@@ -1395,3 +1413,31 @@ be flaky. Use signals such as network events, selectors becoming visible and oth
 - `timeout` <[float]>
 
 A timeout to wait for
+
+## async method: Frame.waitForURL
+
+Waits for the frame to navigate to the given URL.
+
+```js
+await frame.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
+await frame.waitForURL('**/target.html');
+```
+
+```java
+frame.click("a.delayed-navigation"); // Clicking the link will indirectly cause a navigation
+frame.waitForURL("**/target.html");
+```
+
+```python async
+await frame.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+await frame.wait_for_url("**/target.html")
+```
+
+```python sync
+frame.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+frame.wait_for_url("**/target.html")
+```
+
+### param: Frame.waitForURL.url = %%-wait-for-navigation-url-%%
+### option: Frame.waitForURL.timeout = %%-navigation-timeout-%%
+### option: Frame.waitForURL.waitUntil = %%-navigation-wait-until-%%

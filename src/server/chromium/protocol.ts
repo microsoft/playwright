@@ -811,7 +811,7 @@ some CSP errors in the future.
     export type SharedArrayBufferIssueType = "TransferIssue"|"CreationIssue";
     /**
      * Details for a issue arising from an SAB being instantiated in, or
-transfered to a context that is not cross-origin isolated.
+transferred to a context that is not cross-origin isolated.
      */
     export interface SharedArrayBufferIssueDetails {
       sourceCodeLocation: SourceCodeLocation;
@@ -854,15 +854,28 @@ CORS RFC1918 enforcement.
       corsErrorStatus: Network.CorsErrorStatus;
       isWarning: boolean;
       request: AffectedRequest;
+      initiatorOrigin?: string;
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
+    }
+    export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"InvalidAttributionSourceEventId"|"InvalidAttributionData"|"AttributionSourceUntrustworthyOrigin"|"AttributionUntrustworthyOrigin";
+    /**
+     * Details for issues around "Attribution Reporting API" usage.
+Explainer: https://github.com/WICG/conversion-measurement-api
+     */
+    export interface AttributionReportingIssueDetails {
+      violationType: AttributionReportingIssueType;
+      frame?: AffectedFrame;
+      request?: AffectedRequest;
+      violatingNodeId?: DOM.BackendNodeId;
+      invalidParameter?: string;
     }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -878,6 +891,7 @@ add a new optional field to this type.
       twaQualityEnforcementDetails?: TrustedWebActivityIssueDetails;
       lowTextContrastIssueDetails?: LowTextContrastIssueDetails;
       corsIssueDetails?: CorsIssueDetails;
+      attributionReportingIssueDetails?: AttributionReportingIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -1162,6 +1176,48 @@ Note that userVisibleOnly = true is the only currently supported type.
       buckets: Bucket[];
     }
     
+    /**
+     * Fired when page is about to start a download.
+     */
+    export type downloadWillBeginPayload = {
+      /**
+       * Id of the frame that caused the download to begin.
+       */
+      frameId: Page.FrameId;
+      /**
+       * Global unique identifier of the download.
+       */
+      guid: string;
+      /**
+       * URL of the resource being downloaded.
+       */
+      url: string;
+      /**
+       * Suggested file name of the resource (the actual name of the file saved on disk may differ).
+       */
+      suggestedFilename: string;
+    }
+    /**
+     * Fired when download makes progress. Last call has |done| == true.
+     */
+    export type downloadProgressPayload = {
+      /**
+       * Global unique identifier of the download.
+       */
+      guid: string;
+      /**
+       * Total expected bytes to download.
+       */
+      totalBytes: number;
+      /**
+       * Total bytes received.
+       */
+      receivedBytes: number;
+      /**
+       * Download status.
+       */
+      state: "inProgress"|"completed"|"canceled";
+    }
     
     /**
      * Set permission settings for given origin.
@@ -1228,12 +1284,31 @@ their dowmload guids.
        */
       browserContextId?: BrowserContextID;
       /**
-       * The default path to save downloaded files to. This is requred if behavior is set to 'allow'
+       * The default path to save downloaded files to. This is required if behavior is set to 'allow'
 or 'allowAndName'.
        */
       downloadPath?: string;
+      /**
+       * Whether to emit download events (defaults to false).
+       */
+      eventsEnabled?: boolean;
     }
     export type setDownloadBehaviorReturnValue = {
+    }
+    /**
+     * Cancel a download if in progress
+     */
+    export type cancelDownloadParameters = {
+      /**
+       * Global unique identifier of the download.
+       */
+      guid: string;
+      /**
+       * BrowserContext to perform the action in. When omitted, default browser context is used.
+       */
+      browserContextId?: BrowserContextID;
+    }
+    export type cancelDownloadReturnValue = {
     }
     /**
      * Close browser gracefully.
@@ -2721,7 +2796,9 @@ fire DOM events for nodes known to the client.
        */
       pseudoElements?: Node[];
       /**
-       * Import document for the HTMLImport links.
+       * Deprecated, as the HTML Imports API has been removed (crbug.com/937746).
+This property used to return the imported document for the HTMLImport links.
+The property is always undefined now.
        */
       importedDocument?: Node;
       /**
@@ -2927,11 +3004,11 @@ fire DOM events for nodes known to the client.
       nodeId: NodeId;
     }
     /**
-     * Called when distrubution is changed.
+     * Called when distribution is changed.
      */
     export type distributedNodesUpdatedPayload = {
       /**
-       * Insertion point where distrubuted nodes were updated.
+       * Insertion point where distributed nodes were updated.
        */
       insertionPointId: NodeId;
       /**
@@ -4426,6 +4503,14 @@ captureSnapshot was true.
        * The client rect of nodes. Only available when includeDOMRects is set to true
        */
       clientRects?: Rectangle[];
+      /**
+       * The list of background colors that are blended with colors of overlapping elements.
+       */
+      blendedBackgroundColors?: StringIndex[];
+      /**
+       * The list of computed text opacities.
+       */
+      textColorOpacities?: number[];
     }
     /**
      * Table of details of the post layout rendered text positions. The exact layout should not be regarded as
@@ -4524,6 +4609,18 @@ flattened.
        * Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
        */
       includeDOMRects?: boolean;
+      /**
+       * Whether to include blended background colors in the snapshot (default: false).
+Blended background color is achieved by blending background colors of all elements
+that overlap with the current element.
+       */
+      includeBlendedBackgroundColors?: boolean;
+      /**
+       * Whether to include text color opacity in the snapshot (default: false).
+An element might have the opacity property set that affects the text color of the element.
+The final text color opacity is computed based on the opacity of all overlapping elements.
+       */
+      includeTextColorOpacities?: boolean;
     }
     export type captureSnapshotReturnValue = {
       /**
@@ -4792,7 +4889,7 @@ Missing optional values will be filled in by the target with what it would norma
     /**
      * Enum of image types that can be disabled.
      */
-    export type DisabledImageType = "avif"|"webp";
+    export type DisabledImageType = "avif"|"jxl"|"webp";
     
     /**
      * Notification sent after the virtual time budget for the current VirtualTimePolicy has run out.
@@ -4811,14 +4908,14 @@ Missing optional values will be filled in by the target with what it would norma
       result: boolean;
     }
     /**
-     * Clears the overriden device metrics.
+     * Clears the overridden device metrics.
      */
     export type clearDeviceMetricsOverrideParameters = {
     }
     export type clearDeviceMetricsOverrideReturnValue = {
     }
     /**
-     * Clears the overriden Geolocation Position and Error.
+     * Clears the overridden Geolocation Position and Error.
      */
     export type clearGeolocationOverrideParameters = {
     }
@@ -5096,7 +5193,7 @@ Note any previous deferred policy change is superseded.
        */
       waitForNavigation?: boolean;
       /**
-       * If set, base::Time::Now will be overriden to initially return this value.
+       * If set, base::Time::Now will be overridden to initially return this value.
        */
       initialVirtualTime?: Network.TimeSinceEpoch;
     }
@@ -5272,7 +5369,7 @@ display. Reported for diagnostic uses, may be removed in the future.
    */
   export module IO {
     /**
-     * This is either obtained from another method or specifed as `blob:&lt;uuid&gt;` where
+     * This is either obtained from another method or specified as `blob:&lt;uuid&gt;` where
 `&lt;uuid&gt` is an UUID of a Blob.
      */
     export type StreamHandle = string;
@@ -5317,7 +5414,7 @@ following the last read). Some types of streams may only support sequential read
        */
       data: string;
       /**
-       * Set if the end-of-file condition occured while reading.
+       * Set if the end-of-file condition occurred while reading.
        */
       eof: boolean;
     }
@@ -5705,8 +5802,68 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      * UTC time in seconds, counted from January 1, 1970.
      */
     export type TimeSinceEpoch = number;
+    export interface DragDataItem {
+      /**
+       * Mime type of the dragged data.
+       */
+      mimeType: string;
+      /**
+       * Depending of the value of `mimeType`, it contains the dragged link,
+text, HTML markup or any other data.
+       */
+      data: string;
+      /**
+       * Title associated with a link. Only valid when `mimeType` == "text/uri-list".
+       */
+      title?: string;
+      /**
+       * Stores the base URL for the contained markup. Only valid when `mimeType`
+== "text/html".
+       */
+      baseURL?: string;
+    }
+    export interface DragData {
+      items: DragDataItem[];
+      /**
+       * Bit field representing allowed drag operations. Copy = 1, Link = 2, Move = 16
+       */
+      dragOperationsMask: number;
+    }
     
+    /**
+     * Emitted only when `Input.setInterceptDrags` is enabled. Use this data with `Input.dispatchDragEvent` to
+restore normal drag and drop behavior.
+     */
+    export type dragInterceptedPayload = {
+      data: DragData;
+    }
     
+    /**
+     * Dispatches a drag event into the page.
+     */
+    export type dispatchDragEventParameters = {
+      /**
+       * Type of the drag event.
+       */
+      type: "dragEnter"|"dragOver"|"drop"|"dragCancel";
+      /**
+       * X coordinate of the event relative to the main frame's viewport in CSS pixels.
+       */
+      x: number;
+      /**
+       * Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to
+the top of the viewport and Y increases as it proceeds towards the bottom of the viewport.
+       */
+      y: number;
+      data: DragData;
+      /**
+       * Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8
+(default: 0).
+       */
+      modifiers?: number;
+    }
+    export type dispatchDragEventReturnValue = {
+    }
     /**
      * Dispatches a key event to the page.
      */
@@ -5948,6 +6105,15 @@ one by one.
       ignore: boolean;
     }
     export type setIgnoreInputEventsReturnValue = {
+    }
+    /**
+     * Prevents default drag and drop behavior and instead emits `Input.dragIntercepted` events.
+Drag and drop behavior can be directly controlled via `Input.dispatchDragEvent`.
+     */
+    export type setInterceptDragsParameters = {
+      enabled: boolean;
+    }
+    export type setInterceptDragsReturnValue = {
     }
     /**
      * Synthesizes a pinch gesture over a time period by issuing appropriate touch events.
@@ -6954,7 +7120,7 @@ passed by the developer (e.g. via "fetch") as understood by the backend.
     /**
      * The reason why request was blocked.
      */
-    export type BlockedReason = "other"|"csp"|"mixed-content"|"origin"|"inspector"|"subresource-filter"|"content-type"|"collapsed-by-client"|"coep-frame-resource-needs-coep-header"|"coop-sandboxed-iframe-cannot-navigate-to-coop-page"|"corp-not-same-origin"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep"|"corp-not-same-site";
+    export type BlockedReason = "other"|"csp"|"mixed-content"|"origin"|"inspector"|"subresource-filter"|"content-type"|"coep-frame-resource-needs-coep-header"|"coop-sandboxed-iframe-cannot-navigate-to-coop-page"|"corp-not-same-origin"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep"|"corp-not-same-site";
     /**
      * The reason why request was blocked.
      */
@@ -7408,8 +7574,8 @@ sent. Response will intercept after the response is received.
      */
     export interface RequestPattern {
       /**
-       * Wildcards ('*' -> zero or more, '?' -> exactly one) are allowed. Escape character is
-backslash. Omitting is equivalent to "*".
+       * Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
+backslash. Omitting is equivalent to `"*"`.
        */
       urlPattern?: string;
       /**
@@ -7417,7 +7583,7 @@ backslash. Omitting is equivalent to "*".
        */
       resourceType?: ResourceType;
       /**
-       * Stage at wich to begin intercepting requests. Default is Request.
+       * Stage at which to begin intercepting requests. Default is Request.
        */
       interceptionStage?: InterceptionStage;
     }
@@ -7531,6 +7697,10 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
        */
       errors?: SignedExchangeError[];
     }
+    /**
+     * List of content encodings supported by the backend.
+     */
+    export type ContentEncoding = "deflate"|"gzip"|"br";
     export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate";
     export type IPAddressSpace = "Local"|"Private"|"Public"|"Unknown";
     export interface ClientSecurityState {
@@ -7545,7 +7715,7 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
       reportingEndpoint?: string;
       reportOnlyReportingEndpoint?: string;
     }
-    export type CrossOriginEmbedderPolicyValue = "None"|"RequireCorp";
+    export type CrossOriginEmbedderPolicyValue = "None"|"CorsOrCredentialless"|"RequireCorp";
     export interface CrossOriginEmbedderPolicyStatus {
       value: CrossOriginEmbedderPolicyValue;
       reportOnlyValue: CrossOriginEmbedderPolicyValue;
@@ -8115,6 +8285,24 @@ preemptively (e.g. a cache hit).
       issuedTokenCount?: number;
     }
     
+    /**
+     * Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
+     */
+    export type setAcceptedEncodingsParameters = {
+      /**
+       * List of accepted content encodings.
+       */
+      encodings: ContentEncoding[];
+    }
+    export type setAcceptedEncodingsReturnValue = {
+    }
+    /**
+     * Clears accepted encodings set by setAcceptedEncodings
+     */
+    export type clearAcceptedEncodingsOverrideParameters = {
+    }
+    export type clearAcceptedEncodingsOverrideReturnValue = {
+    }
     /**
      * Tells whether clearing browser cache is supported.
      */
@@ -8933,6 +9121,34 @@ continueInterceptedRequest call.
        */
       nodeId: DOM.NodeId;
     }
+    export interface ScrollSnapContainerHighlightConfig {
+      /**
+       * The style of the snapport border (default: transparent)
+       */
+      snapportBorder?: LineStyle;
+      /**
+       * The style of the snap area border (default: transparent)
+       */
+      snapAreaBorder?: LineStyle;
+      /**
+       * The margin highlight fill color (default: transparent).
+       */
+      scrollMarginColor?: DOM.RGBA;
+      /**
+       * The padding highlight fill color (default: transparent).
+       */
+      scrollPaddingColor?: DOM.RGBA;
+    }
+    export interface ScrollSnapHighlightConfig {
+      /**
+       * A descriptor for the highlight appearance of scroll snap containers.
+       */
+      scrollSnapContainerHighlightConfig: ScrollSnapContainerHighlightConfig;
+      /**
+       * Identifier of the node to highlight.
+       */
+      nodeId: DOM.NodeId;
+    }
     /**
      * Configuration for dual screen hinge
      */
@@ -9262,6 +9478,14 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     }
     export type setShowFlexOverlaysReturnValue = {
     }
+    export type setShowScrollSnapOverlaysParameters = {
+      /**
+       * An array of node identifiers and descriptors for the highlight appearance.
+       */
+      scrollSnapHighlightConfigs: ScrollSnapHighlightConfig[];
+    }
+    export type setShowScrollSnapOverlaysReturnValue = {
+    }
     /**
      * Requests that backend shows paint rectangles
      */
@@ -9363,7 +9587,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      * All Permissions Policy features. This enum should match the one defined
 in renderer/core/feature_policy/feature_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"conversion-measurement"|"cross-origin-isolated"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"conversion-measurement"|"cross-origin-isolated"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -9762,6 +9986,24 @@ Example URLs: http://www.google.com/file.html -> "google.com"
      * The referring-policy used for the navigation.
      */
     export type ReferrerPolicy = "noReferrer"|"noReferrerWhenDowngrade"|"origin"|"originWhenCrossOrigin"|"sameOrigin"|"strictOrigin"|"strictOriginWhenCrossOrigin"|"unsafeUrl";
+    /**
+     * Per-script compilation cache parameters for `Page.produceCompilationCache`
+     */
+    export interface CompilationCacheParams {
+      /**
+       * The URL of the script to produce a compilation cache entry for.
+       */
+      url: string;
+      /**
+       * A hint to the backend whether eager compilation is recommended.
+(the actual compilation mode used is upon backend discretion).
+       */
+      eager?: boolean;
+    }
+    /**
+     * The type of a frameNavigated event.
+     */
+    export type NavigationType = "Navigation"|"BackForwardCacheRestore";
     
     export type domContentEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -9827,6 +10069,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Frame object.
        */
       frame: Frame;
+      type: NavigationType;
     }
     /**
      * Fired when opening document to write to.
@@ -9902,6 +10145,7 @@ guaranteed to start.
     }
     /**
      * Fired when page is about to start a download.
+Deprecated. Use Browser.downloadWillBegin instead.
      */
     export type downloadWillBeginPayload = {
       /**
@@ -9923,6 +10167,7 @@ guaranteed to start.
     }
     /**
      * Fired when download makes progress. Last call has |done| == true.
+Deprecated. Use Browser.downloadProgress instead.
      */
     export type downloadProgressPayload = {
       /**
@@ -10006,6 +10251,22 @@ the page execution. Execution can be resumed via calling Page.handleJavaScriptDi
       loaderId: Network.LoaderId;
       name: string;
       timestamp: Network.MonotonicTime;
+    }
+    /**
+     * Fired for failed bfcache history navigations if BackForwardCache feature is enabled. Do
+not assume any ordering with the Page.frameNavigated event. This event is fired only for
+main-frame history navigation where the document changes (non-same-document navigations),
+when bfcache navigation fails.
+     */
+    export type backForwardCacheNotUsedPayload = {
+      /**
+       * The loader id for the associated navgation.
+       */
+      loaderId: Network.LoaderId;
+      /**
+       * The frame id of the associated frame.
+       */
+      frameId: FrameId;
     }
     export type loadEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -10106,6 +10367,11 @@ This world name will be used as the ExecutionContextDescription::name when the c
 event is emitted.
        */
       worldName?: string;
+      /**
+       * Specifies whether command line API should be available to the script, defaults
+to false.
+       */
+      includeCommandLineAPI?: boolean;
     }
     export type addScriptToEvaluateOnNewDocumentReturnValue = {
       /**
@@ -10168,7 +10434,7 @@ iframes, shadow DOM, external resources, and element-inline styles.
       data: string;
     }
     /**
-     * Clears the overriden device metrics.
+     * Clears the overridden device metrics.
      */
     export type clearDeviceMetricsOverrideParameters = {
     }
@@ -10182,7 +10448,7 @@ iframes, shadow DOM, external resources, and element-inline styles.
     export type clearDeviceOrientationOverrideReturnValue = {
     }
     /**
-     * Clears the overriden Geolocation Position and Error.
+     * Clears the overridden Geolocation Position and Error.
      */
     export type clearGeolocationOverrideParameters = {
     }
@@ -10298,17 +10564,29 @@ information in the `cookies` field.
     }
     export type getLayoutMetricsReturnValue = {
       /**
-       * Metrics relating to the layout viewport.
+       * Deprecated metrics relating to the layout viewport. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssLayoutViewport` instead.
        */
       layoutViewport: LayoutViewport;
       /**
-       * Metrics relating to the visual viewport.
+       * Deprecated metrics relating to the visual viewport. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssVisualViewport` instead.
        */
       visualViewport: VisualViewport;
       /**
-       * Size of scrollable area.
+       * Deprecated size of scrollable area. Can be in DP or in CSS pixels depending on the `enable-use-zoom-for-dsf` flag. Use `cssContentSize` instead.
        */
       contentSize: DOM.Rect;
+      /**
+       * Metrics relating to the layout viewport in CSS pixels.
+       */
+      cssLayoutViewport: LayoutViewport;
+      /**
+       * Metrics relating to the visual viewport in CSS pixels.
+       */
+      cssVisualViewport: VisualViewport;
+      /**
+       * Size of scrollable area in CSS pixels.
+       */
+      cssContentSize: DOM.Rect;
     }
     /**
      * Returns navigation history for the current page.
@@ -10751,7 +11029,7 @@ available (otherwise deny).
        */
       behavior: "deny"|"allow"|"default";
       /**
-       * The default path to save downloaded files to. This is requred if behavior is set to 'allow'
+       * The default path to save downloaded files to. This is required if behavior is set to 'allow'
        */
       downloadPath?: string;
     }
@@ -10873,11 +11151,28 @@ https://github.com/WICG/web-lifecycle/
     }
     /**
      * Forces compilation cache to be generated for every subresource script.
+See also: `Page.produceCompilationCache`.
      */
     export type setProduceCompilationCacheParameters = {
       enabled: boolean;
     }
     export type setProduceCompilationCacheReturnValue = {
+    }
+    /**
+     * Requests backend to produce compilation cache for the specified scripts.
+Unlike setProduceCompilationCache, this allows client to only produce cache
+for specific scripts. `scripts` are appeneded to the list of scripts
+for which the cache for would produced. Disabling compilation cache with
+`setProduceCompilationCache` would reset all pending cache requests.
+The list may also be reset during page navigation.
+When script with a matching URL is encountered, the cache is optionally
+produced upon backend discretion, based on internal heuristics.
+See also: `Page.compilationCacheProduced`.
+     */
+    export type produceCompilationCacheParameters = {
+      scripts: CompilationCacheParams[];
+    }
+    export type produceCompilationCacheReturnValue = {
     }
     /**
      * Seeds compilation cache for given url. Compilation cache does not survive
@@ -11702,7 +11997,7 @@ Tokens from that issuer.
       origin: string;
       /**
        * The quota size (in bytes) to override the original quota with.
-If this is called multiple times, the overriden quota will be equal to
+If this is called multiple times, the overridden quota will be equal to
 the quotaSize provided in the final call. If this is called without
 specifying a quotaSize, the quota will be reset to the default value for
 the specified origin. If this is called multiple times with different
@@ -11765,6 +12060,19 @@ current browsing context.
     }
     export type getTrustTokensReturnValue = {
       tokens: TrustTokens[];
+    }
+    /**
+     * Removes all Trust Tokens issued by the provided issuerOrigin.
+Leaves other stored data, including the issuer's Redemption Records, intact.
+     */
+    export type clearTrustTokensParameters = {
+      issuerOrigin: string;
+    }
+    export type clearTrustTokensReturnValue = {
+      /**
+       * True if any tokens were deleted, false otherwise.
+       */
+      didDeleteTokens: boolean;
     }
   }
   
@@ -12202,7 +12510,7 @@ one.
      */
     export type createTargetParameters = {
       /**
-       * The initial URL the page will be navigated to.
+       * The initial URL the page will be navigated to. An empty string indicates about:blank.
        */
       url: string;
       /**
@@ -12447,6 +12755,14 @@ Keep consistent with memory_dump_request_args.h and
 memory_instrumentation.mojom
      */
     export type MemoryDumpLevelOfDetail = "background"|"light"|"detailed";
+    /**
+     * Backend type to use for tracing. `chrome` uses the Chrome-integrated
+tracing service and is supported on all platforms. `system` is only
+supported on Chrome OS and uses the Perfetto system tracing service.
+`auto` chooses `system` when the perfettoConfig provided to Tracing.start
+specifies at least one non-Chrome data source; otherwise uses `chrome`.
+     */
+    export type TracingBackend = "auto"|"chrome"|"system";
     
     export type bufferUsagePayload = {
       /**
@@ -12585,6 +12901,10 @@ When specified, the parameters `categories`, `options`, `traceConfig`
 are ignored.
        */
       perfettoConfig?: binary;
+      /**
+       * Backend type (defaults to `auto`)
+       */
+      tracingBackend?: TracingBackend;
     }
     export type startReturnValue = {
     }
@@ -12606,8 +12926,8 @@ body is received.
     export type RequestStage = "Request"|"Response";
     export interface RequestPattern {
       /**
-       * Wildcards ('*' -> zero or more, '?' -> exactly one) are allowed. Escape character is
-backslash. Omitting is equivalent to "*".
+       * Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
+backslash. Omitting is equivalent to `"*"`.
        */
       urlPattern?: string;
       /**
@@ -12615,7 +12935,7 @@ backslash. Omitting is equivalent to "*".
        */
       resourceType?: Network.ResourceType;
       /**
-       * Stage at wich to begin intercepting requests. Default is Request.
+       * Stage at which to begin intercepting requests. Default is Request.
        */
       requestStage?: RequestStage;
     }
@@ -12949,7 +13269,7 @@ https://webaudio.github.io/web-audio-api/
        */
       currentTime: number;
       /**
-       * The time spent on rendering graph divided by render qunatum duration,
+       * The time spent on rendering graph divided by render quantum duration,
 and multiplied by 100. 100 means the audio renderer reached the full
 capacity and glitch may occur.
        */
@@ -13170,6 +13490,12 @@ https://w3c.github.io/webauthn#largeBlob
 Defaults to false.
        */
       hasLargeBlob?: boolean;
+      /**
+       * If set to true, the authenticator will support the credBlob extension.
+https://fidoalliance.org/specs/fido-v2.1-rd-20201208/fido-client-to-authenticator-protocol-v2.1-rd-20201208.html#sctn-credBlob-extension
+Defaults to false.
+       */
+      hasCredBlob?: boolean;
       /**
        * If set to true, tests of user presence will succeed immediately.
 Otherwise, they will not be resolved. Defaults to true.
@@ -13400,8 +13726,8 @@ congestion. If batched, events must ALWAYS be in chronological order.
       errors: PlayerError[];
     }
     /**
-     * Called whenever a player is created, or when a new agent joins and recieves
-a list of active players. If an agent is restored, it will recieve the full
+     * Called whenever a player is created, or when a new agent joins and receives
+a list of active players. If an agent is restored, it will receive the full
 list of player ids and all events again.
      */
     export type playersCreatedPayload = {
@@ -14555,6 +14881,10 @@ when the tracking is stopped.
        */
       reportProgress?: boolean;
       treatGlobalObjectsAsRoots?: boolean;
+      /**
+       * If true, numerical values are included in the snapshot
+       */
+      captureNumericValue?: boolean;
     }
     export type stopTrackingHeapObjectsReturnValue = {
     }
@@ -14567,6 +14897,10 @@ when the tracking is stopped.
        * If true, a raw snapshot without artifical roots will be generated
        */
       treatGlobalObjectsAsRoots?: boolean;
+      /**
+       * If true, numerical values are included in the snapshot
+       */
+      captureNumericValue?: boolean;
     }
     export type takeHeapSnapshotReturnValue = {
     }
@@ -15915,6 +16249,9 @@ Each binding function call produces Runtime.bindingCalled notification.
 execution context. If omitted and `executionContextName` is not set,
 the binding is exposed to all execution contexts of the target.
 This parameter is mutually exclusive with `executionContextName`.
+Deprecated in favor of `executionContextName` due to an unclear use case
+and bugs in implementation (crbug.com/1169639). `executionContextId` will be
+removed in the future.
        */
       executionContextId?: ExecutionContextId;
       /**
@@ -15980,6 +16317,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Audits.issueAdded": Audits.issueAddedPayload;
     "BackgroundService.recordingStateChanged": BackgroundService.recordingStateChangedPayload;
     "BackgroundService.backgroundServiceEventReceived": BackgroundService.backgroundServiceEventReceivedPayload;
+    "Browser.downloadWillBegin": Browser.downloadWillBeginPayload;
+    "Browser.downloadProgress": Browser.downloadProgressPayload;
     "CSS.fontsUpdated": CSS.fontsUpdatedPayload;
     "CSS.mediaQueryResultChanged": CSS.mediaQueryResultChangedPayload;
     "CSS.styleSheetAdded": CSS.styleSheetAddedPayload;
@@ -16008,6 +16347,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Database.addDatabase": Database.addDatabasePayload;
     "Emulation.virtualTimeBudgetExpired": Emulation.virtualTimeBudgetExpiredPayload;
     "HeadlessExperimental.needsBeginFramesChanged": HeadlessExperimental.needsBeginFramesChangedPayload;
+    "Input.dragIntercepted": Input.dragInterceptedPayload;
     "Inspector.detached": Inspector.detachedPayload;
     "Inspector.targetCrashed": Inspector.targetCrashedPayload;
     "Inspector.targetReloadedAfterCrash": Inspector.targetReloadedAfterCrashPayload;
@@ -16060,6 +16400,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.javascriptDialogClosed": Page.javascriptDialogClosedPayload;
     "Page.javascriptDialogOpening": Page.javascriptDialogOpeningPayload;
     "Page.lifecycleEvent": Page.lifecycleEventPayload;
+    "Page.backForwardCacheNotUsed": Page.backForwardCacheNotUsedPayload;
     "Page.loadEventFired": Page.loadEventFiredPayload;
     "Page.navigatedWithinDocument": Page.navigatedWithinDocumentPayload;
     "Page.screencastFrame": Page.screencastFramePayload;
@@ -16165,6 +16506,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Browser.grantPermissions": Browser.grantPermissionsParameters;
     "Browser.resetPermissions": Browser.resetPermissionsParameters;
     "Browser.setDownloadBehavior": Browser.setDownloadBehaviorParameters;
+    "Browser.cancelDownload": Browser.cancelDownloadParameters;
     "Browser.close": Browser.closeParameters;
     "Browser.crash": Browser.crashParameters;
     "Browser.crashGpuProcess": Browser.crashGpuProcessParameters;
@@ -16325,12 +16667,14 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "IndexedDB.getMetadata": IndexedDB.getMetadataParameters;
     "IndexedDB.requestDatabase": IndexedDB.requestDatabaseParameters;
     "IndexedDB.requestDatabaseNames": IndexedDB.requestDatabaseNamesParameters;
+    "Input.dispatchDragEvent": Input.dispatchDragEventParameters;
     "Input.dispatchKeyEvent": Input.dispatchKeyEventParameters;
     "Input.insertText": Input.insertTextParameters;
     "Input.dispatchMouseEvent": Input.dispatchMouseEventParameters;
     "Input.dispatchTouchEvent": Input.dispatchTouchEventParameters;
     "Input.emulateTouchFromMouseEvent": Input.emulateTouchFromMouseEventParameters;
     "Input.setIgnoreInputEvents": Input.setIgnoreInputEventsParameters;
+    "Input.setInterceptDrags": Input.setInterceptDragsParameters;
     "Input.synthesizePinchGesture": Input.synthesizePinchGestureParameters;
     "Input.synthesizeScrollGesture": Input.synthesizeScrollGestureParameters;
     "Input.synthesizeTapGesture": Input.synthesizeTapGestureParameters;
@@ -16360,6 +16704,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Memory.getAllTimeSamplingProfile": Memory.getAllTimeSamplingProfileParameters;
     "Memory.getBrowserSamplingProfile": Memory.getBrowserSamplingProfileParameters;
     "Memory.getSamplingProfile": Memory.getSamplingProfileParameters;
+    "Network.setAcceptedEncodings": Network.setAcceptedEncodingsParameters;
+    "Network.clearAcceptedEncodingsOverride": Network.clearAcceptedEncodingsOverrideParameters;
     "Network.canClearBrowserCache": Network.canClearBrowserCacheParameters;
     "Network.canClearBrowserCookies": Network.canClearBrowserCookiesParameters;
     "Network.canEmulateNetworkConditions": Network.canEmulateNetworkConditionsParameters;
@@ -16409,6 +16755,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowFPSCounter": Overlay.setShowFPSCounterParameters;
     "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysParameters;
     "Overlay.setShowFlexOverlays": Overlay.setShowFlexOverlaysParameters;
+    "Overlay.setShowScrollSnapOverlays": Overlay.setShowScrollSnapOverlaysParameters;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsParameters;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsParameters;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsParameters;
@@ -16466,6 +16813,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.setWebLifecycleState": Page.setWebLifecycleStateParameters;
     "Page.stopScreencast": Page.stopScreencastParameters;
     "Page.setProduceCompilationCache": Page.setProduceCompilationCacheParameters;
+    "Page.produceCompilationCache": Page.produceCompilationCacheParameters;
     "Page.addCompilationCache": Page.addCompilationCacheParameters;
     "Page.clearCompilationCache": Page.clearCompilationCacheParameters;
     "Page.generateTestReport": Page.generateTestReportParameters;
@@ -16505,6 +16853,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.untrackCacheStorageForOrigin": Storage.untrackCacheStorageForOriginParameters;
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginParameters;
     "Storage.getTrustTokens": Storage.getTrustTokensParameters;
+    "Storage.clearTrustTokens": Storage.clearTrustTokensParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoParameters;
     "Target.activateTarget": Target.activateTargetParameters;
@@ -16674,6 +17023,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Browser.grantPermissions": Browser.grantPermissionsReturnValue;
     "Browser.resetPermissions": Browser.resetPermissionsReturnValue;
     "Browser.setDownloadBehavior": Browser.setDownloadBehaviorReturnValue;
+    "Browser.cancelDownload": Browser.cancelDownloadReturnValue;
     "Browser.close": Browser.closeReturnValue;
     "Browser.crash": Browser.crashReturnValue;
     "Browser.crashGpuProcess": Browser.crashGpuProcessReturnValue;
@@ -16834,12 +17184,14 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "IndexedDB.getMetadata": IndexedDB.getMetadataReturnValue;
     "IndexedDB.requestDatabase": IndexedDB.requestDatabaseReturnValue;
     "IndexedDB.requestDatabaseNames": IndexedDB.requestDatabaseNamesReturnValue;
+    "Input.dispatchDragEvent": Input.dispatchDragEventReturnValue;
     "Input.dispatchKeyEvent": Input.dispatchKeyEventReturnValue;
     "Input.insertText": Input.insertTextReturnValue;
     "Input.dispatchMouseEvent": Input.dispatchMouseEventReturnValue;
     "Input.dispatchTouchEvent": Input.dispatchTouchEventReturnValue;
     "Input.emulateTouchFromMouseEvent": Input.emulateTouchFromMouseEventReturnValue;
     "Input.setIgnoreInputEvents": Input.setIgnoreInputEventsReturnValue;
+    "Input.setInterceptDrags": Input.setInterceptDragsReturnValue;
     "Input.synthesizePinchGesture": Input.synthesizePinchGestureReturnValue;
     "Input.synthesizeScrollGesture": Input.synthesizeScrollGestureReturnValue;
     "Input.synthesizeTapGesture": Input.synthesizeTapGestureReturnValue;
@@ -16869,6 +17221,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Memory.getAllTimeSamplingProfile": Memory.getAllTimeSamplingProfileReturnValue;
     "Memory.getBrowserSamplingProfile": Memory.getBrowserSamplingProfileReturnValue;
     "Memory.getSamplingProfile": Memory.getSamplingProfileReturnValue;
+    "Network.setAcceptedEncodings": Network.setAcceptedEncodingsReturnValue;
+    "Network.clearAcceptedEncodingsOverride": Network.clearAcceptedEncodingsOverrideReturnValue;
     "Network.canClearBrowserCache": Network.canClearBrowserCacheReturnValue;
     "Network.canClearBrowserCookies": Network.canClearBrowserCookiesReturnValue;
     "Network.canEmulateNetworkConditions": Network.canEmulateNetworkConditionsReturnValue;
@@ -16918,6 +17272,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowFPSCounter": Overlay.setShowFPSCounterReturnValue;
     "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysReturnValue;
     "Overlay.setShowFlexOverlays": Overlay.setShowFlexOverlaysReturnValue;
+    "Overlay.setShowScrollSnapOverlays": Overlay.setShowScrollSnapOverlaysReturnValue;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsReturnValue;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsReturnValue;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsReturnValue;
@@ -16975,6 +17330,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.setWebLifecycleState": Page.setWebLifecycleStateReturnValue;
     "Page.stopScreencast": Page.stopScreencastReturnValue;
     "Page.setProduceCompilationCache": Page.setProduceCompilationCacheReturnValue;
+    "Page.produceCompilationCache": Page.produceCompilationCacheReturnValue;
     "Page.addCompilationCache": Page.addCompilationCacheReturnValue;
     "Page.clearCompilationCache": Page.clearCompilationCacheReturnValue;
     "Page.generateTestReport": Page.generateTestReportReturnValue;
@@ -17014,6 +17370,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.untrackCacheStorageForOrigin": Storage.untrackCacheStorageForOriginReturnValue;
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginReturnValue;
     "Storage.getTrustTokens": Storage.getTrustTokensReturnValue;
+    "Storage.clearTrustTokens": Storage.clearTrustTokensReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoReturnValue;
     "Target.activateTarget": Target.activateTargetReturnValue;

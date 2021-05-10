@@ -61,7 +61,7 @@ export class FFBrowser extends Browser {
     this._connection.on('Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this._connection.on('Browser.downloadCreated', this._onDownloadCreated.bind(this));
     this._connection.on('Browser.downloadFinished', this._onDownloadFinished.bind(this));
-    this._connection.on('Browser.screencastFinished', this._onScreencastFinished.bind(this));
+    this._connection.on('Browser.videoRecordingFinished', this._onVideoRecordingFinished.bind(this));
   }
 
   async _initVersion() {
@@ -107,7 +107,6 @@ export class FFBrowser extends Browser {
     const opener = openerId ? this._ffPages.get(openerId)! : null;
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);
-    ffPage._page.reportAsNew();
   }
 
   _onDownloadCreated(payload: Protocol.Browser.downloadCreatedPayload) {
@@ -120,7 +119,7 @@ export class FFBrowser extends Browser {
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
-      ffPage._pageCallback(new Error('Starting new page download'));
+      ffPage._markAsError(new Error('Starting new page download'));
       if (ffPage._opener)
         originPage = ffPage._opener._initializedPage;
     }
@@ -134,8 +133,8 @@ export class FFBrowser extends Browser {
     this._downloadFinished(payload.uuid, error);
   }
 
-  _onScreencastFinished(payload: Protocol.Browser.screencastFinishedPayload) {
-    this._videoFinished(payload.screencastId);
+  _onVideoRecordingFinished(payload: Protocol.Browser.videoRecordingFinishedPayload) {
+    this._takeVideo(payload.screencastId)?.reportFinished();
   }
 }
 
@@ -195,7 +194,7 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
-        return this._browser._connection.send('Browser.setScreencastOptions', {
+        return this._browser._connection.send('Browser.setVideoRecordingOptions', {
           // validateBrowserContextOptions ensures correct video size.
           ...this._options.recordVideo!.size!,
           dir: this._options.recordVideo!.dir,

@@ -21,6 +21,7 @@ import { Boundaries } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import { msToString } from '../../uiUtils';
+import { FilmStrip } from './filmStrip';
 
 type TimelineBar = {
   entry?: ActionEntry;
@@ -40,8 +41,8 @@ export const Timeline: React.FunctionComponent<{
   selectedAction: ActionEntry | undefined,
   highlightedAction: ActionEntry | undefined,
   onSelected: (action: ActionEntry) => void,
-  onTimeSelected: (time: number | undefined) => void,
-}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onTimeSelected }) => {
+  onHighlighted: (action: ActionEntry | undefined) => void,
+}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
   const [hoveredBarIndex, setHoveredBarIndex] = React.useState<number | undefined>();
@@ -54,6 +55,8 @@ export const Timeline: React.FunctionComponent<{
     const bars: TimelineBar[] = [];
     for (const page of context.pages) {
       for (const entry of page.actions) {
+        if (!entry.metadata.params)
+          console.log(entry);
         let detail = entry.metadata.params.selector || '';
         if (entry.metadata.method === 'goto')
           detail = entry.metadata.params.url || '';
@@ -63,7 +66,7 @@ export const Timeline: React.FunctionComponent<{
           rightTime: entry.metadata.endTime,
           leftPosition: timeToPosition(measure.width, boundaries, entry.metadata.startTime),
           rightPosition: timeToPosition(measure.width, boundaries, entry.metadata.endTime),
-          label: entry.metadata.method + ' ' + detail,
+          label: entry.metadata.apiName + ' ' + detail,
           type: entry.metadata.method,
           priority: 0,
         });
@@ -142,15 +145,21 @@ export const Timeline: React.FunctionComponent<{
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
+    const index = findHoveredBarIndex(x);
     setPreviewX(x);
-    onTimeSelected(positionToTime(measure.width, boundaries, x));
-    setHoveredBarIndex(findHoveredBarIndex(x));
+    setHoveredBarIndex(index);
+    if (typeof index === 'number')
+      onHighlighted(bars[index].entry);
   };
+
   const onMouseLeave = () => {
     setPreviewX(undefined);
-    onTimeSelected(undefined);
+    setHoveredBarIndex(undefined);
+    onHighlighted(undefined);
   };
+
   const onClick = (event: React.MouseEvent) => {
+    setPreviewX(undefined);
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
@@ -194,6 +203,7 @@ export const Timeline: React.FunctionComponent<{
         ></div>;
       })
     }</div>
+    <FilmStrip context={context} boundaries={boundaries} previewX={previewX} />
     <div className='timeline-marker timeline-marker-hover' style={{
       display: (previewX !== undefined) ? 'block' : 'none',
       left: (previewX || 0) + 'px',

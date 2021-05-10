@@ -43,28 +43,21 @@ export type ElectronLaunchOptionsBase = {
   timeout?: number,
 };
 
-export interface ElectronPage extends Page {
-  browserWindow: js.JSHandle<BrowserWindow>;
-  _browserWindowId: number;
-}
-
 export class ElectronApplication extends SdkObject {
   static Events = {
     Close: 'close',
-    Window: 'window',
   };
 
   private _browserContext: CRBrowserContext;
   private _nodeConnection: CRConnection;
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
-  _nodeElectronHandle: js.JSHandle<any> | undefined;
-  private _windows = new Set<ElectronPage>();
+  _nodeElectronHandlePromise: Promise<js.JSHandle<any>>;
   private _lastWindowId = 0;
   readonly _timeoutSettings = new TimeoutSettings();
 
   constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection) {
-    super(parent);
+    super(parent, 'electron-app');
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._browserContext.on(BrowserContext.Events.Close, () => {
       // Emit application closed after context closed.
@@ -73,26 +66,21 @@ export class ElectronApplication extends SdkObject {
     this._browserContext.on(BrowserContext.Events.Page, event => this._onPage(event));
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
+    this._nodeElectronHandlePromise = new Promise(f => {
+      this._nodeSession.on('Runtime.executionContextCreated', async (event: any) => {
+        if (event.context.auxData && event.context.auxData.isDefault) {
+          this._nodeExecutionContext = new js.ExecutionContext(this, new CRExecutionContext(this._nodeSession, event.context));
+          f(await js.evaluate(this._nodeExecutionContext, false /* returnByValue */, `process.mainModule.require('electron')`));
+        }
+      });
+    });
+    this._nodeSession.send('Runtime.enable', {}).catch(e => {});
   }
 
-  private async _onPage(page: ElectronPage) {
+  private async _onPage(page: Page) {
     // Needs to be sync.
     const windowId = ++this._lastWindowId;
-    page.on(Page.Events.Close, () => {
-      page.browserWindow.dispose();
-      this._windows.delete(page);
-    });
-    page._browserWindowId = windowId;
-    this._windows.add(page);
-
-    // Below is async.
-    const handle = await this._nodeElectronHandle!.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), windowId).catch(e => {});
-    if (!handle)
-      return;
-    page.browserWindow = handle;
-    const controller = new ProgressController(internalCallMetadata(), this);
-    await controller.run(progress => page.mainFrame()._waitForLoadState(progress, 'domcontentloaded'), page._timeoutSettings.navigationTimeout({})).catch(e => {}); // can happen after detach
-    this.emit(ElectronApplication.Events.Window, page);
+    (page as any)._browserWindowId = windowId;
   }
 
   context(): BrowserContext {
@@ -102,18 +90,15 @@ export class ElectronApplication extends SdkObject {
   async close() {
     const progressController = new ProgressController(internalCallMetadata(), this);
     const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise, this._timeoutSettings.timeout({}));
-    await this._nodeElectronHandle!.evaluate(({ app }) => app.quit());
+    const electronHandle = await this._nodeElectronHandlePromise;
+    await electronHandle.evaluate(({ app }) => app.quit());
     this._nodeConnection.close();
     await closed;
   }
 
-  async _init()  {
-    this._nodeSession.on('Runtime.executionContextCreated', (event: any) => {
-      if (event.context.auxData && event.context.auxData.isDefault)
-        this._nodeExecutionContext = new js.ExecutionContext(this, new CRExecutionContext(this._nodeSession, event.context));
-    });
-    await this._nodeSession.send('Runtime.enable', {}).catch(e => {});
-    this._nodeElectronHandle = await js.evaluate(this._nodeExecutionContext!, false /* returnByValue */, `process.mainModule.require('electron')`);
+  async browserWindow(page: Page): Promise<js.JSHandle<BrowserWindow>> {
+    const electronHandle = await this._nodeElectronHandlePromise;
+    return await electronHandle.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), (page as any)._browserWindowId);
   }
 }
 
@@ -121,7 +106,7 @@ export class Electron extends SdkObject {
   private _playwrightOptions: PlaywrightOptions;
 
   constructor(playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject);
+    super(playwrightOptions.rootSdkObject, 'electron');
     this._playwrightOptions = playwrightOptions;
   }
 
@@ -184,7 +169,6 @@ export class Electron extends SdkObject {
       };
       const browser = await CRBrowser.connect(chromeTransport, browserOptions);
       app = new ElectronApplication(this, browser, nodeConnection);
-      await app._init();
       return app;
     }, TimeoutSettings.timeout(options));
   }
