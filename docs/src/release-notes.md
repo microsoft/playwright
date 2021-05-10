@@ -21,17 +21,16 @@ title: "Release notes"
 
 #### New APIs
 
-- support for **async predicates** across the API in methods such as [`page.waitForEvent()`](./api/class-page#pagewaitforeventevent-optionsorpredicate), [`page.waitForRequest()`](./api/class-page#pagewaitforrequesturlorpredicate-options) and others
+- support for **async predicates** across the API in methods such as [`method: page.waitForEvent`], [`method: page.waitForRequest`] and others
 - new **emulation devices**: Galaxy S8, Galaxy S9+, Galaxy Tab S4, Pixel 3, Pixel 4
 - new methods:
-    * [`page.waitForURL()`](./api/class-page#pagewaitforurlurl-options) to await navigations to URL
-    * [`video.delete()`](./api/class-video#videodelete) and [`video.saveAs()`](./api/class-video#videosaveaspath) to manage screen recording
-    * [`electronApplication.browserWindow()`](./api/class-electronapplication#electronapplicationbrowserwindowpage) to access browser window
+    * [`method: page.waitForURL`] to await navigations to URL
+    * [`method: video.delete`] and [`method: video.saveAs`] to manage screen recording
 - new options:
-    * `screen` option in the [`browser.newContext()`](./api/class-browser#browsernewcontextoptions) method to emulate `window.screen` dimensions
-    * `position` option in [`page.check()`](./api/class-page#pagecheckselector-options) and [`page.uncheck()`](./api/class-page#pageuncheckselector-options) methods
-    * `trial` option to dry-run actions in [`page.check()`](./api/class-page#pagecheckselector-options), [`page.uncheck()`](./api/class-page#pageuncheckselector-options), [`page.click()`](./api/class-page#pageclickselector-options), [`page.dblclick()`](./api/class-page#pagedblclickselector-options), [`page.hover()`](./api/class-page#pagehoverselector-options) and [`page.tap()`](./api/class-page#pagetapselector-options)
-    * `headers` option in [`browserType.connect()`](./api/class-browsertype#browsertypeconnectparams)
+    * `screen` option in the [`method: browser.newContext`] method to emulate `window.screen` dimensions
+    * `position` option in [`method: page.check`] and [`method: page.uncheck`] methods
+    * `trial` option to dry-run actions in [`method: page.check`], [`method: page.uncheck`], [`method: page.click`], [`method: page.dblclick`], [`method: page.hover`] and [`method: page.tap`]
+    * `headers` option in [`method: browserType.connect`]
 
 ## Version 1.10
 
@@ -63,7 +62,7 @@ This version of Playwright was also tested against the following stable channels
   - **Generate element selectors** for your script by hovering over elements.
   - Set the `PWDEBUG=1` environment variable to launch the Inspector
 
-- **Pause script execution** with [`method: Page.pause`]. in headed mode. Pausing the page launches [Playwright Inspector](./inspector.md) for debugging.
+- **Pause script execution** with [`method: Page.pause`] in headed mode. Pausing the page launches [Playwright Inspector](./inspector.md) for debugging.
 
 - **New has-text pseudo-class** for CSS selectors. `:has-text("example")` matches any element containing `"example"` somewhere inside, possibly in a child or a descendant element. See [more examples](./selectors.md#text-selector).
 
