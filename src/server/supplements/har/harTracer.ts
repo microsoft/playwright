@@ -122,7 +122,7 @@ export class HarTracer {
       request: {
         method: request.method(),
         url: request.url(),
-        httpVersion: 'http/1.1',
+        httpVersion: FALLBACK_HTTP_VERSION,
         cookies: [],
         headers: [],
         queryString: [...url.searchParams].map(e => ({ name: e[0], value: e[1] })),
@@ -133,7 +133,7 @@ export class HarTracer {
       response: {
         status: -1,
         statusText: '',
-        httpVersion: 'http/1.1',
+        httpVersion: FALLBACK_HTTP_VERSION,
         cookies: [],
         headers: [],
         content: {
@@ -171,14 +171,16 @@ export class HarTracer {
 
     if (!response) return;
 
+    const httpVersion = response.protocol() ? response.protocol().toUpperCase() : FALLBACK_HTTP_VERSION;
     const transferSize = response.encodedDataLength();
     const headersSize = calcResponseHeadersSize(response.protocol(), response.status(), response.statusText(), response.headers());
     const bodySize = transferSize - headersSize;
+    harEntry.request.httpVersion = httpVersion;
 
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
-      httpVersion: response.protocol() ? response.protocol().toUpperCase() : FALLBACK_HTTP_VERSION,
+      httpVersion: httpVersion,
       cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {
