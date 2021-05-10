@@ -5,6 +5,34 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.11
+
+🎥  New video: [Playwright: A New Test Automation Framework for the Modern Web](https://youtu.be/_Jla6DyuEu4) ([slides](https://docs.google.com/presentation/d/1xFhZIJrdHkVe2CuMKOrni92HoG2SWslo0DhJJQMR1DI/edit?usp=sharing))
+- We talked about Playwright
+- Showed engineering work behind the scenes
+- Did live demos with new features ✨
+- **Special thanks** to [applitools](http://applitools.com/) for hosting the event and inviting us!
+
+#### Browser Versions
+
+- Chromium 92.0.4498.0
+- Mozilla Firefox 89.0b6
+- WebKit 14.2
+
+#### New APIs
+
+- support for **async predicates** across the API in methods such as [`page.waitForEvent()`](./api/class-page#pagewaitforeventevent-optionsorpredicate), [`page.waitForRequest()`](./api/class-page#pagewaitforrequesturlorpredicate-options) and others
+- new **emulation devices**: Galaxy S8, Galaxy S9+, Galaxy Tab S4, Pixel 3, Pixel 4
+- new methods:
+    * [`page.waitForURL()`](./api/class-page#pagewaitforurlurl-options) to await navigations to URL
+    * [`video.delete()`](./api/class-video#videodelete) and [`video.saveAs()`](./api/class-video#videosaveaspath) to manage screen recording
+    * [`electronApplication.browserWindow()`](./api/class-electronapplication#electronapplicationbrowserwindowpage) to access browser window
+- new options:
+    * `screen` option in the [`browser.newContext()`](./api/class-browser#browsernewcontextoptions) method to emulate `window.screen` dimensions
+    * `position` option in [`page.check()`](./api/class-page#pagecheckselector-options) and [`page.uncheck()`](./api/class-page#pageuncheckselector-options) methods
+    * `trial` option to dry-run actions in [`page.check()`](./api/class-page#pagecheckselector-options), [`page.uncheck()`](./api/class-page#pageuncheckselector-options), [`page.click()`](./api/class-page#pageclickselector-options), [`page.dblclick()`](./api/class-page#pagedblclickselector-options), [`page.hover()`](./api/class-page#pagehoverselector-options) and [`page.tap()`](./api/class-page#pagetapselector-options)
+    * `headers` option in [`browserType.connect()`](./api/class-browsertype#browsertypeconnectparams)
+
 ## Version 1.10
 
 - [Playwright for Java v1.10](https://github.com/microsoft/playwright-java) is **now stable**!
