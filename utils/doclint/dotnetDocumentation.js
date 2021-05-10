@@ -15,14 +15,50 @@
  */
 
 // @ts-check
-
+const { EOL } = require('os');
+const path = require('path');
+const fs = require('fs');
+const md = require('../../../playwright.dev/src/markdown'); // todo: this will probably have to go
 const Documentation = require('./documentation');
+
+class MethodWrapper {
+/**
+ * 
+ *  @param {Documentation.Member} method
+ *  @param {Documentation.MarkdownNode[]} specs
+ *  @param {ArgumentWrapper[]} args
+ *  @param {string} returnType
+ *  @param {string} name
+ * 
+ */
+  constructor(method, specs, args, returnType, name) {
+    this.method = method;
+    this.specs = specs;
+    this.args = args;
+    this.returnType = returnType;
+    this.name = name;
+    this.isAsync = method.async;
+  }
+
+  getSignature = function() {
+    let argTypes = [];
+    this.args.forEach(a => {
+      // this isn't pretty, but it's what we got  
+      /** @type {string} */
+      let sig = a.signature;
+      let name = a.name;
+      let type = sig.substr(0, sig.indexOf(name));
+      argTypes.push(type.trim());
+    });
+    return `${this.name}(${argTypes.join(', ')})`;
+  }
+}
 
 /**
  * @typedef {{
  *   name: string,
  *   specs: Documentation.MarkdownNode[],
- *   members: string[],
+ *   members: MethodWrapper[],
  *   parents: string[]
  * }} DocClass
  */
@@ -47,10 +83,15 @@ let currentClass;
  * @param {string} newName
  */
 function registerInterface(clazz, newName) {
+  let specs = clazz
+    .spec
+    .filter(x => !x.codeLang || x.codeLang === 'csharp')
+    .filter(x => !(x.text || '').startsWith("extends: [EventEmitter]"));
+
   /** @type {DocClass} */
   let wrapper = {
     name: newName,
-    specs: clazz.spec,
+    specs: specs,
     members: [],
     parents: []
   };
@@ -69,15 +110,36 @@ function registerMethod(member, name, returnType, paramsMap) {
   if (!currentClass)
     throw new Error("Parent is null.");
 
-  let args = [];
-  paramsMap.forEach(x => args.push(x.signature));
-  if(member.async)
+  /**  @type {MethodWrapper} */
+  let method = new MethodWrapper(
+    member,
+    member.spec,
+    [],
+    returnType,
+    name);
+
+  paramsMap.forEach((x, name) => method.args.push({
+    arg: x.arg,
+    name: name,
+    docs: x.docs,
+    signature: x.signature
+  }));
+
+  if (member.async)
     name = "Async " + name;
-  currentClass.members.push(`${returnType} ${name}(${ args.join(', ')})`);
+  currentClass.members.push(method);
 }
 
-function getDocumentation() {
-  return classDocumentation;
+/**
+ * @param {string} name
+ * @param {string} type
+ * @param {boolean} isSettable
+ * @param {Documentation.Class | Documentation.Type} parent
+ */
+function registerProperty(name, type, isSettable, parent) {
+  if (!currentClass)
+    throw new Error("No parent.");
+  // currentClass.members.push(`${parent.name}::::${type} ${name} { get; set; /* ${isSettable} */ }`);
 }
 
 function registerInheritance(parent) {
@@ -85,4 +147,47 @@ function registerInheritance(parent) {
   currentClass.parents.push(parent);
 }
 
-module.exports = { registerInterface, registerMethod, getDocumentation, registerInheritance }
+function renderDocumentation(folder) {
+  fs.mkdirSync(folder, { recursive: true });
+  let writeFile = (name, out, folder) => {
+    let content = out.join(`${EOL}`);
+    fs.writeFileSync(path.join(folder, name), content);
+  }
+
+  classDocumentation.forEach((docClass, name) => {
+    const fileName = `class-${docClass.name.toLowerCase()}.mdx`;
+    let buffer = [];
+
+    buffer.push(`---
+id: class-${name.toLowerCase()}
+title: "${name}"
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+`);
+
+    buffer.push(md.render(docClass.specs));
+
+    let membersBuffer = [];
+    // generate TOC 
+    docClass.members.forEach(member => {
+      let signature = member.getSignature();
+      let linkName = signature.toLowerCase().split(',').map(c => c.replace(/[^a-z_]/g, '')).join('');
+
+      let prefix = '';
+      if(member.method.async)
+        prefix +='async ';
+      
+      prefix += `${member.returnType} `;
+
+      buffer.push(`- [${prefix}${signature}]('./api/${fileName}#${linkName})`);
+      membersBuffer.push(`## ${member}`);
+    });
+
+    buffer.push(...membersBuffer);
+
+    writeFile(fileName, buffer, folder);
+  });
+}
+
+module.exports = { registerInterface, registerMethod, renderDocumentation, registerInheritance, registerProperty }

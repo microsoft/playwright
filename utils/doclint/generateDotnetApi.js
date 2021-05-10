@@ -208,7 +208,7 @@ const customTypeNames = new Map([
     execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
   }
 
-  console.log(DotnetDocumentation.getDocumentation());
+  DotnetDocumentation.renderDocumentation(path.join(typesDir, 'docs'));
 }
 
 /**
@@ -311,6 +311,9 @@ function renderMember(member, parent, out) {
         output(`public ${type} ${name} { get; }`);
       else
         output(`public ${type} ${name} { get; set; }`);
+      // only render non-fake types
+      if(parent.properties)
+        DotnetDocumentation.registerProperty(name, type, member.clazz != null, parent);
     } else {
       throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
     }
@@ -596,7 +599,7 @@ function renderMethod(member, parent, output, name) {
     output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
     paramDocs.forEach((val, ind) => printArgDoc(val.docs, ind));
     output(`${type} ${name}(${args.join(', ')});`);
-    DotnetDocumentation.registerMethod(member,  name, type, paramDocs);
+    DotnetDocumentation.registerMethod(member, name, type, paramDocs);
   } else {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
@@ -621,8 +624,8 @@ function renderMethod(member, parent, output, name) {
           argsBuffer.set(argType, mappedArg);
         }
       }
-      DotnetDocumentation.registerMethod(member,  name, type, argsBuffer);
-      output( `${type} ${name}(${overloadedArgs.join(', ')});`);
+      DotnetDocumentation.registerMethod(member, name, type, argsBuffer);
+      output(`${type} ${name}(${overloadedArgs.join(', ')});`);
       if (argIndex < explodedArgs.length - 1)
         output(``); // output a special blank line
     });
@@ -644,7 +647,7 @@ function renderMethod(member, parent, output, name) {
         argsBuffer.set(argType, mappedArg);
       });
       output(`${type} ${name}(${filteredArgs.join(', ')});`);
-      DotnetDocumentation.registerMethod(member,  name, type, argsBuffer);
+      DotnetDocumentation.registerMethod(member, name, type, argsBuffer);
     }
   }
 }
@@ -830,6 +833,8 @@ function registerAdditionalType(typeName, type) {
     console.log(`Type ${typeName} already exists, so skipping...`);
     return;
   }
+
+  console.log(`///////////////// GENERATING ADDITIONAL TYPE: ${typeName}`);
 
   additionalTypes.set(typeName, type);
 }
