@@ -2,8 +2,8 @@
 
 [Download] objects are dispatched by page via the [`event: Page.download`] event.
 
-All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded
-files are deleted when the browser closes.
+If `downloadsPath` isn't specified, all the downloaded files belonging to the browser context are deleted when the
+browser context is closed. And all downloaded files are deleted when the browser closes.
 
 Download event is emitted once the download starts. Download path becomes available once download completes:
 
@@ -77,13 +77,13 @@ wait for the download to finish if necessary. The method throws when connected r
 
 ## async method: Download.saveAs
 
-Saves the download to a user-specified path. It is safe to call this method while the download
-is still in progress.
+Copy the download to a user-specified path. It is safe to call this method while the download
+is still in progress. Will wait for the download to finish if necessary.
 
 ### param: Download.saveAs.path
 - `path` <[path]>
 
-Path where the download should be saved.
+Path where the download should be copied.
 
 ## method: Download.suggestedFilename
 - returns: <[string]>
