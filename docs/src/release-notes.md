@@ -21,16 +21,16 @@ title: "Release notes"
 
 #### New APIs
 
-- support for **async predicates** across the API in methods such as [`method: page.waitForEvent`], [`method: page.waitForRequest`] and others
+- support for **async predicates** across the API in methods such as [`method: Page.waitForEvent`], [`method: Page.waitForRequest`] and others
 - new **emulation devices**: Galaxy S8, Galaxy S9+, Galaxy Tab S4, Pixel 3, Pixel 4
 - new methods:
-    * [`method: page.waitForURL`] to await navigations to URL
-    * [`method: video.delete`] and [`method: video.saveAs`] to manage screen recording
+    * [`method: Page.waitForURL`] to await navigations to URL
+    * [`method: Video.delete`] and [`method: Video.saveAs`] to manage screen recording
 - new options:
-    * `screen` option in the [`method: browser.newContext`] method to emulate `window.screen` dimensions
-    * `position` option in [`method: page.check`] and [`method: page.uncheck`] methods
-    * `trial` option to dry-run actions in [`method: page.check`], [`method: page.uncheck`], [`method: page.click`], [`method: page.dblclick`], [`method: page.hover`] and [`method: page.tap`]
-    * `headers` option in [`method: browserType.connect`]
+    * `screen` option in the [`method: Browser.newContext`] method to emulate `window.screen` dimensions
+    * `position` option in [`method: Page.check`] and [`method: Page.uncheck`] methods
+    * `trial` option to dry-run actions in [`method: Page.check`], [`method: Page.uncheck`], [`method: Page.click`], [`method: Page.dblclick`], [`method: Page.hover`] and [`method: Page.tap`]
+    * `headers` option in [`method: BrowserType.connect`]
 
 ## Version 1.10
 
