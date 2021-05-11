@@ -49,6 +49,18 @@ page.goto("https://example.com")
 context.close()
 ```
 
+```csharp
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Firefox.LaunchAsync(headless: false);
+// Create a new incognito browser context
+var context = await browser.NewContextAsync();
+// Create a new page inside context.
+var page = await context.NewPageAsync();
+await page.GoToAsync("https://bing.com");
+// Dispose context once it"s no longer needed.
+await context.CloseAsync();
+```
+
 ## event: BrowserContext.backgroundPage
 * langs: js, python
 - argument: <[Page]>
@@ -119,6 +131,13 @@ page = page_info.value
 print(page.evaluate("location.href"))
 ```
 
+```csharp
+var popupTask = context.WaitForPageAsync();
+await Task.WhenAll(popupTask, page.ClickAsync("a"));
+
+Console.WriteLine(popupTask.Result.EvaluateAsync<string>("location.href"));
+```
+
 :::note
 Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not need it in most
 cases).
@@ -153,6 +172,10 @@ await browser_context.add_cookies([cookie_object1, cookie_object2])
 
 ```python sync
 browser_context.add_cookies([cookie_object1, cookie_object2])
+```
+
+```csharp
+await context.AddCookiesAsync(new[] { cookie1, cookie2 });
 ```
 
 ### param: BrowserContext.addCookies.cookies
@@ -204,6 +227,10 @@ await browser_context.add_init_script(path="preload.js")
 ```python sync
 # in your playwright script, assuming the preload.js file is in same directory.
 browser_context.add_init_script(path="preload.js")
+```
+
+```csharp
+await context.AddInitScriptAsync(scriptPath: "preload.js");
 ```
 
 :::note
@@ -281,6 +308,15 @@ context = browser.new_context()
 context.grant_permissions(["clipboard-read"])
 # do stuff ..
 context.clear_permissions()
+```
+
+```csharp
+var context = await browser.NewContextAsync();
+await context.GrantPermissionsAsync(new[] { "clipboard-read" });
+// Alternatively, you can use the helper class ContextPermissions 
+//  to specify the permissions...
+// do stuff ...
+await context.ClearPermissionsAsync();
 ```
 
 ## async method: BrowserContext.close
@@ -421,6 +457,32 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Program
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var browser = await playwright.Webkit.LaunchAsync(headless: false);
+        var context = await browser.NewContextAsync();
+
+        await context.ExposeBindingAsync("pageURL", source => source.Page.Url);
+        var page = await context.NewPageAsync();
+        await page.SetContentAsync("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.pageURL();\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>");
+        await page.ClickAsync("button");
+    }
+}
+```
+
 An example of passing an element handle:
 
 ```js
@@ -476,6 +538,26 @@ page.set_content("""
   <div>Click me</div>
   <div>Or click me</div>
 """)
+```
+
+```csharp
+var result = new TaskCompletionSource<string>();
+var page = await Context.NewPageAsync();
+await Context.ExposeBindingAsync("clicked", async (BindingSource _, IJSHandle t) =>
+{
+    return result.TrySetResult(await t.AsElement.TextContentAsync());
+});
+
+await page.SetContentAsync("<script>\n" +
+  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
+  "</script>\n" +
+  "<div>Click me</div>\n" +
+  "<div>Or click me</div>\n");
+
+await page.ClickAsync("div");
+// Note: it makes sense to await the result here, because otherwise, the context 
+//  gets closed and the binding function will throw an exception.
+Assert.Equal("Click me", await result.Task);
 ```
 
 ### param: BrowserContext.exposeBinding.name
@@ -632,6 +714,43 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+
+class BrowserContextExamples
+{
+    public static async Task AddMd5FunctionToAllPagesInContext()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var browser = await playwright.Webkit.LaunchAsync(headless: false);
+        var context = await browser.NewContextAsync();
+
+        // NOTE: md5 is inherently insecure, and we strongly discourage using
+        // this in production in any shape or form
+        await context.ExposeFunctionAsync("sha1", (string input) =>
+        {
+            return Convert.ToBase64String(
+                MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
+        });
+
+        var page = await context.NewPageAsync();
+        await page.SetContentAsync("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>");
+
+        await page.ClickAsync("button");
+        Console.WriteLine(await page.TextContentAsync("div"));
+    }
+}
+```
+
 ### param: BrowserContext.exposeFunction.name
 - `name` <[string]>
 
@@ -737,6 +856,14 @@ page.goto("https://example.com")
 browser.close()
 ```
 
+```csharp
+var context = await browser.NewContextAsync();
+var page = await context.NewPageAsync();
+await context.RouteAsync("**/*.{png,jpg,jpeg}", r => r.AbortAsync());
+await page.GoToAsync("https://theverge.com");
+await browser.CloseAsync();
+```
+
 or the same snippet using a regex pattern instead:
 
 ```js
@@ -772,6 +899,14 @@ page = await context.new_page()
 page = context.new_page()
 page.goto("https://example.com")
 browser.close()
+```
+
+```csharp
+var context = await browser.NewContextAsync();
+var page = await context.NewPageAsync();
+await context.RouteAsync(new System.Text.RegularExpressions.Regex("(\\.png$)|(\\.jpg$)"), r => r.AbortAsync());
+await page.GoToAsync("https://theverge.com");
+await browser.CloseAsync();
 ```
 
 It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:
@@ -810,6 +945,16 @@ def handle_route(route):
   else
     route.continue_()
 context.route("/api/**", handle_route)
+```
+
+```csharp
+await page.RouteAsync("/api/**", async r =>
+{
+    if (r.Request.PostData.Contains("my-string"))
+        await r.FulfillAsync(body: "mocked-data");
+    else
+        await r.ResumeAsync();
+});
 ```
 
 Page routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both
@@ -915,6 +1060,14 @@ await browser_context.set_geolocation({"latitude": 59.95, "longitude": 30.31667}
 
 ```python sync
 browser_context.set_geolocation({"latitude": 59.95, "longitude": 30.31667})
+```
+
+```csharp
+await context.SetGeolocationAsync(new Geolocation()
+{
+    Latitude = 59.95f,
+    Longitude = 30.31667f
+});
 ```
 
 :::note
@@ -1027,6 +1180,13 @@ page = await event_info.value
 with context.expect_event("page") as event_info:
     page.click("button")
 page = event_info.value
+```
+
+```csharp
+var t = page.WaitForEventAsync("page");
+await Task.WhenAll(t, page.ClickAsync("button"))
+    .WithTimeout(1000) // make sure to add Microsoft.Playwright.Helpers
+    .ConfigureAwait(false);
 ```
 
 ### param: BrowserContext.waitForEvent.event
