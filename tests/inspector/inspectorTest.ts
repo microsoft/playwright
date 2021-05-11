@@ -191,7 +191,13 @@ class CLIMock {
       this.process.stderr.on('data', data => {
         console.error(data.toString());
       });
-      this.process.on('exit', f);
+      this.process.on('exit', (exitCode, signal) => {
+        if (exitCode)
+          r(new Error(`Process failed with exit code ${exitCode}`));
+        if (signal)
+          r(new Error(`Process recieved signal: ${signal}`));
+        f(exitCode);
+      });
     });
   }
 
