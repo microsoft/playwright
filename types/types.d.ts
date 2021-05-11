@@ -7737,7 +7737,7 @@ export {};
  * via setting the following environment variable when installing Playwright:
  *
  * ```sh js
- * $ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
+ * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *
  */
@@ -9367,7 +9367,7 @@ export interface Download {
  * via setting the following environment variable when installing Playwright:
  *
  * ```sh js
- * $ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
+ * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *
  */

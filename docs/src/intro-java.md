@@ -120,7 +120,7 @@ playwright.firefox().launch(new BrowserType.LaunchOptions().setHeadless(false).s
 Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate Java code.
 
 ```sh
-$ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
 ```
 
 ## System requirements
