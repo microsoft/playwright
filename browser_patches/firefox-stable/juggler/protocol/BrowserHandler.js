@@ -237,8 +237,8 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
   }
 
-  async ['Browser.addBinding']({browserContextId, name, script}) {
-    await this._targetRegistry.browserContextForId(browserContextId).addBinding(name, script);
+  async ['Browser.addBinding']({browserContextId, worldName, name, script}) {
+    await this._targetRegistry.browserContextForId(browserContextId).addBinding(worldName, name, script);
   }
 
   ['Browser.setCookies']({browserContextId, cookies}) {

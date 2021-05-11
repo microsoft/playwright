@@ -148,10 +148,10 @@ class FrameTree {
     return true;
   }
 
-  addBinding(name, script) {
-    this._bindings.set(name, script);
+  addBinding(worldName, name, script) {
+    this._bindings.set(worldName + ':' + name, {worldName, name, script});
     for (const frame of this.frames())
-      frame._addBinding(name, script);
+      frame._addBinding(worldName, name, script);
   }
 
   frameForDocShell(docShell) {
@@ -297,7 +297,6 @@ class FrameTree {
 }
 
 FrameTree.Events = {
-  BindingCalled: 'bindingcalled',
   FrameAttached: 'frameattached',
   FrameDetached: 'framedetached',
   WorkerCreated: 'workercreated',
@@ -461,18 +460,18 @@ class Frame {
     this._executionContext = null;
   }
 
-  _addBinding(name, script) {
-    Cu.exportFunction((...args) => {
-      this._frameTree.emit(FrameTree.Events.BindingCalled, {
-        frame: this,
-        name,
-        payload: args[0]
-      });
-    }, this.domWindow(), {
-      defineAs: name,
-    });
-    if (this._executionContext)
-      this._evaluateScriptSafely(this._executionContext, script);
+  _getOrCreateIsolatedContext(worldName) {
+    for (let context of this._isolatedWorlds.values()) {
+      if (context.auxData().name === worldName)
+        return context;
+    }
+    return this.createIsolatedWorld(worldName);
+  }
+
+  _addBinding(worldName, name, script) {
+    const executionContext = worldName ? this._getOrCreateIsolatedContext(worldName) : this._executionContext;
+    if (executionContext)
+      executionContext.addBinding(name, script);
   }
 
   _evaluateScriptSafely(executionContext, script) {
@@ -494,20 +493,25 @@ class Frame {
 
     if (this._executionContext)
       this._runtime.destroyExecutionContext(this._executionContext);
+    for (const world of this._isolatedWorlds.values())
+      this._runtime.destroyExecutionContext(world);
+    this._isolatedWorlds.clear();
+
     this._executionContext = this._runtime.createExecutionContext(this.domWindow(), this.domWindow(), {
       frameId: this._frameId,
       name: '',
     });
-    for (const [name, script] of this._frameTree._bindings)
-      this._addBinding(name, script);
+    for (const {script, worldName} of this._frameTree._isolatedWorlds.values())
+      this.createIsolatedWorld(worldName);
+
+    // Add bindings before evaluating scripts.
+    for (const [id, {worldName, name, script}] of this._frameTree._bindings)
+      this._addBinding(worldName, name, script);
+
     for (const script of this._frameTree._scriptsToEvaluateOnNewDocument.values())
       this._evaluateScriptSafely(this._executionContext, script);
-
-    for (const world of this._isolatedWorlds.values())
-      this._runtime.destroyExecutionContext(world);
-    this._isolatedWorlds.clear();
     for (const {script, worldName} of this._frameTree._isolatedWorlds.values()) {
-      const context = worldName ? this.createIsolatedWorld(worldName) : this.executionContext();
+      const context = worldName ? this._getOrCreateIsolatedContext(worldName) : this.executionContext();
       this._evaluateScriptSafely(context, script);
     }
   }

@@ -373,6 +373,7 @@ const Browser = {
     'addBinding': {
       params: {
         browserContextId: t.Optional(t.String),
+        worldName: t.Optional(t.String),
         name: t.String,
         script: t.String,
       },
@@ -523,7 +524,10 @@ const Runtime = {
   events: {
     'executionContextCreated': {
       executionContextId: t.String,
-      auxData: t.Any,
+      auxData: {
+        frameId: t.Optional(t.String),
+        name: t.Optional(t.String),
+      },
     },
     'executionContextDestroyed': {
       executionContextId: t.String,
@@ -718,6 +722,7 @@ const Page = {
     },
     'addBinding': {
       params: {
+        worldName: t.Optional(t.String),
         name: t.String,
         script: t.String,
       },
