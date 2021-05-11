@@ -101,7 +101,7 @@ test('should return browser window', async ({ playwright }) => {
   const electronApp = await playwright._electron.launch({
     args: [path.join(__dirname, '..', 'config', 'electron-window-app.js')],
   });
-  const page = await electronApp.waitForEvent('window');
+  const page = await electronApp.firstWindow();
   const bwHandle = await electronApp.browserWindow(page);
   expect(await bwHandle.evaluate((bw: BrowserWindow) => bw.title)).toBe('Electron');
   await electronApp.close();

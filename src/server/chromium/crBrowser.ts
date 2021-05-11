@@ -61,12 +61,16 @@ export class CRBrowser extends Browser {
       return browser;
     }
     browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
-
     await Promise.all([
-      session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
+      session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(async () => {
+        // Target.setAutoAttach has a bug where it does not wait for new Targets being attached.
+        // However making a dummy call afterwards fixes this.
+        // This can be removed after https://chromium-review.googlesource.com/c/chromium/src/+/2885888 lands in stable.
+        await session.send('Target.getTargetInfo');
+      }),
       (browser._defaultContext as CRBrowserContext)._initialize(),
     ]);
-
+    await browser._waitForAllPagesToBeInitialized();
     return browser;
   }
 
@@ -102,6 +106,10 @@ export class CRBrowser extends Browser {
 
   isClank(): boolean {
     return this.options.name === 'clank';
+  }
+
+  async _waitForAllPagesToBeInitialized() {
+    await Promise.all([...this._crPages.values()].map(page => page.pageOrError()));
   }
 
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
