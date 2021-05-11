@@ -11,6 +11,13 @@ on:
       - .github/workflows/publish_canary_docker.yml
 
 jobs:
+  cancel-previous-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.0
+        with:
+          access_token: ${{ github.token }}
   publish-canary-docker:
     name: "publish to DockerHub"
     runs-on: ubuntu-20.04
