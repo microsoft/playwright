@@ -78,12 +78,18 @@ class PageEnv {
   }
 }
 
+const mode = folio.registerCLIOption('mode', 'Transport mode: default, driver or service').value as ('default' | 'driver' | 'service' | undefined);
+const headful = folio.registerCLIOption('headed', 'Run tests in headed mode (default: headless)', { type: 'boolean' }).value || !!process.env.HEADFUL;
+const channel = folio.registerCLIOption('channel', 'Browser channel (default: no channel)').value;
+const video = !!folio.registerCLIOption('video', 'Record videos for all tests', { type: 'boolean' }).value;
+
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: folio.Config<AllOptions> = {
   testDir,
+  snapshotDir: '__snapshots__',
   outputDir,
-  timeout: process.env.PWTEST_VIDEO || process.env.PWTRACE ? 60000 : 30000,
+  timeout: video || process.env.PWTRACE ? 60000 : 30000,
   globalTimeout: 5400000,
   workers: process.env.CI ? 1 : undefined,
   forbidOnly: !!process.env.CI,
@@ -98,7 +104,7 @@ const config: folio.Config<AllOptions> = {
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];
 for (const browserName of browserNames) {
   const executablePath = getExecutablePath(browserName);
-  if (executablePath && (process.env.FOLIO_WORKER_INDEX === undefined || process.env.FOLIO_WORKER_INDEX === ''))
+  if (executablePath && !process.env.FOLIO_WORKER_INDEX)
     console.error(`Using executable at ${executablePath}`);
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
   testIgnore.push(/android/, /electron/);
@@ -107,11 +113,11 @@ for (const browserName of browserNames) {
     testDir,
     testIgnore,
     options: {
-      mode: (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service'),
+      mode,
       browserName,
-      headful: !!process.env.HEADFUL,
-      channel: process.env.PWTEST_CHANNEL as any,
-      video: !!process.env.PWTEST_VIDEO,
+      headful,
+      channel,
+      video,
       traceDir: process.env.PWTRACE ? path.join(outputDir, 'trace') : undefined,
       launchOptions: {
         executablePath,

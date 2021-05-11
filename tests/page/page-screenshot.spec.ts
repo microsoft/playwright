@@ -150,7 +150,9 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('white.jpg');
   });
 
-  it('should work with odd clip size on Retina displays', async ({page}) => {
+  it('should work with odd clip size on Retina displays', async ({page, isElectron}) => {
+    it.fixme(isElectron, 'Scale is wrong');
+
     const screenshot = await page.screenshot({
       clip: {
         x: 0,
