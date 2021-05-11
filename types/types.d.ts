@@ -9299,6 +9299,11 @@ export interface Download {
   failure(): Promise<null|string>;
 
   /**
+   * Get the page that the download belongs to.
+   */
+  page(): Page;
+
+  /**
    * Returns path to the downloaded file in case of successful download. The method will wait for the download to finish if
    * necessary. The method throws when connected remotely.
    */

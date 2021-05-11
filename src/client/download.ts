@@ -17,16 +17,23 @@
 import { Readable } from 'stream';
 import * as api from '../../types/types';
 import { Artifact } from './artifact';
+import { Page } from './page';
 
 export class Download implements api.Download {
+  private _page: Page;
   private _url: string;
   private _suggestedFilename: string;
   private _artifact: Artifact;
 
-  constructor(url: string, suggestedFilename: string, artifact: Artifact) {
+  constructor(page: Page, url: string, suggestedFilename: string, artifact: Artifact) {
+    this._page = page;
     this._url = url;
     this._suggestedFilename = suggestedFilename;
     this._artifact = artifact;
+  }
+
+  page(): Page {
+    return this._page;
   }
 
   url(): string {

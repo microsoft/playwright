@@ -69,6 +69,11 @@ Deletes the downloaded file. Will wait for the download to finish if necessary.
 
 Returns download error if any. Will wait for the download to finish if necessary.
 
+## method: Download.page
+- returns: <[Page]>
+
+Get the page that the download belongs to.
+
 ## async method: Download.path
 - returns: <[null]|[path]>
 
