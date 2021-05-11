@@ -9264,8 +9264,8 @@ export interface Dialog {
  * [Download] objects are dispatched by page via the
  * [page.on('download')](https://playwright.dev/docs/api/class-page#pageondownload) event.
  *
- * All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded
- * files are deleted when the browser closes.
+ * If `downloadsPath` isn't specified, all the downloaded files belonging to the browser context are deleted when the
+ * browser context is closed. And all downloaded files are deleted when the browser closes.
  *
  * Download event is emitted once the download starts. Download path becomes available once download completes:
  *
@@ -9305,8 +9305,9 @@ export interface Download {
   path(): Promise<null|string>;
 
   /**
-   * Saves the download to a user-specified path. It is safe to call this method while the download is still in progress.
-   * @param path Path where the download should be saved.
+   * Copy the download to a user-specified path. It is safe to call this method while the download is still in progress. Will
+   * wait for the download to finish if necessary.
+   * @param path Path where the download should be copied.
    */
   saveAs(path: string): Promise<void>;
 

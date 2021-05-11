@@ -739,6 +739,12 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
+  private _toolbarHeight(): number {
+    if (this._page._browserContext._browser?.options.headful)
+      return hostPlatform.startsWith('10.15') ? 55 : 59;
+    return 0;
+  }
+
   private async _startVideo(options: types.PageScreencastOptions): Promise<void> {
     assert(!this._recordingVideoFile);
     const START_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.start' : 'Screencast.startVideo';
@@ -746,6 +752,7 @@ export class WKPage implements PageDelegate {
       file: options.outputFile,
       width: options.width,
       height: options.height,
+      toolbarHeight: this._toolbarHeight()
     });
     this._recordingVideoFile = options.outputFile;
     this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this.pageOrError());
@@ -827,9 +834,10 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  async setScreencastEnabled(enabled: boolean): Promise<void> {
-    if (enabled) {
-      const { generation } = await this._pageProxySession.send('Screencast.startScreencast', { width: 800, height: 600, quality: 70 });
+  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
+    if (options) {
+      const so = { ...options, toolbarHeight: this._toolbarHeight() };
+      const { generation } = await this._pageProxySession.send('Screencast.startScreencast', so);
       this._screencastGeneration = generation;
     } else {
       await this._pageProxySession.send('Screencast.stopScreencast');
