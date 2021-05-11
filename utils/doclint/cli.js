@@ -43,6 +43,7 @@ async function run() {
   documentation.filterForLanguage('js');
 
   // Patch README.md
+  /*
   {
     const versions = await getBrowserVersions();
     const params = new Map();
@@ -64,6 +65,7 @@ async function run() {
     });
     writeAssumeNoop(path.join(PROJECT_DIR, 'README.md'), content, dirtyFiles);
   }
+  */
 
   // Validate links
   {

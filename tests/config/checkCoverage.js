@@ -45,7 +45,7 @@ if (browserName !== 'chromium') {
   api.delete('coverage.startCSSCoverage');
   api.delete('coverage.stopCSSCoverage');
   api.delete('page.pdf');
-  api.delete('download.cancel');
+  api.delete('download._cancel');
 }
 
 // Some permissions tests are disabled in webkit. See permissions.jest.js
