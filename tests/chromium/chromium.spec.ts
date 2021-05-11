@@ -238,3 +238,31 @@ playwrightTest('should send extra headers with connect request', async ({browser
     expect(request.headers['foo']).toBe('bar');
   }
 });
+
+playwrightTest('should report all pages in an existing browser', async ({ browserType, browserOptions }, testInfo) => {
+  playwrightTest.fail();
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    ...browserOptions,
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://localhost:${port}/`,
+    });
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    for (let i = 0; i < 3; i++)
+      await contexts[0].newPage();
+    await cdpBrowser.close();
+
+    const cdpBrowser2 = await browserType.connectOverCDP({
+      endpointURL: `http://localhost:${port}/`,
+    });
+    expect(cdpBrowser2.contexts()[0].pages().length).toBe(3);
+
+    await cdpBrowser2.close();
+  } finally {
+    await browserServer.close();
+  }
+});
