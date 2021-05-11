@@ -8050,6 +8050,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       file: string;
       width: number;
       height: number;
+      toolbarHeight: number;
       scale?: number;
     }
     export type startVideoReturnValue = {
@@ -8071,6 +8072,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type startScreencastParameters = {
       width: number;
       height: number;
+      toolbarHeight: number;
       quality: number;
     }
     export type startScreencastReturnValue = {
