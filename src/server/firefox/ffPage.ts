@@ -151,7 +151,7 @@ export class FFPage implements PageDelegate {
 
   _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
     const {executionContextId, auxData} = payload;
-    const frame = this._page._frameManager.frame(auxData ? auxData.frameId : null);
+    const frame = this._page._frameManager.frame(auxData.frameId!);
     if (!frame)
       return;
     const delegate = new FFExecutionContext(this._session, executionContextId);
