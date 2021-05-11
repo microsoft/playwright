@@ -74,6 +74,7 @@ class Runtime {
       onErrorFromWorker: createEvent(),
       onExecutionContextCreated: createEvent(),
       onExecutionContextDestroyed: createEvent(),
+      onBindingCalled: createEvent(),
     };
   }
 
@@ -166,6 +167,10 @@ class Runtime {
   _registerConsoleObserver(Services) {
     const consoleObserver = ({wrappedJSObject}, topic, data) => {
       const executionContext = Array.from(this._executionContexts.values()).find(context => {
+        // There is no easy way to determine isolated world context and we normally don't write
+        // objects to console from utility worlds so we always return main world context here.
+        if (context._isIsolatedWorldContext())
+          return false;
         const domWindow = context._domWindow;
         return domWindow && domWindow.windowGlobalChild.innerWindowId === wrappedJSObject.innerID;
       });
@@ -311,6 +316,10 @@ class ExecutionContext {
     return this._auxData;
   }
 
+  _isIsolatedWorldContext() {
+    return !!this._auxData.name;
+  }
+
   async evaluateScript(script, exceptionDetails = {}) {
     const userInputHelper = this._domWindow ? this._domWindow.windowUtils.setHandlingUserInput(true) : null;
     if (this._domWindow && this._domWindow.document)
@@ -363,6 +372,23 @@ class ExecutionContext {
       obj = awaitResult.obj;
     }
     return this._createRemoteObject(obj);
+  }
+
+  addBinding(name, script) {
+    Cu.exportFunction((...args) => {
+      emitEvent(this._runtime.events.onBindingCalled, {
+        executionContextId: this._id,
+        name,
+        payload: args[0],
+      });
+    }, this._contextGlobal, {
+      defineAs: name,
+    });
+    try {
+      this._global.executeInGlobal(script);
+    } catch (e) {
+      dump(`ERROR: ${e.message}\n${e.stack}\n`);
+    }
   }
 
   unsafeObject(objectId) {

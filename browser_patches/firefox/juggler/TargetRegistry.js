@@ -479,8 +479,8 @@ class PageTarget {
     await this._channel.connect('').send('addScriptToEvaluateOnNewDocument', script).catch(e => void e);
   }
 
-  async addBinding(name, script) {
-    await this._channel.connect('').send('addBinding', { name, script }).catch(e => void e);
+  async addBinding(worldName, name, script) {
+    await this._channel.connect('').send('addBinding', { worldName, name, script }).catch(e => void e);
   }
 
   async applyContextSetting(name, value) {
@@ -717,9 +717,9 @@ class BrowserContext {
     await Promise.all(Array.from(this.pages).map(page => page.addScriptToEvaluateOnNewDocument(script)));
   }
 
-  async addBinding(name, script) {
-    this.bindings.push({ name, script });
-    await Promise.all(Array.from(this.pages).map(page => page.addBinding(name, script)));
+  async addBinding(worldName, name, script) {
+    this.bindings.push({ worldName, name, script });
+    await Promise.all(Array.from(this.pages).map(page => page.addBinding(worldName, name, script)));
   }
 
   async applySetting(name, value) {
