@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import * as os from 'os';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { debugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
 import { Browser, BrowserOptions } from './browser';
@@ -406,8 +407,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     options.recordVideo.size!.height &= ~1;
   }
   if (options.proxy) {
-    if (!browserOptions.proxy)
-      throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'per-context' } })"`);
+    if (!browserOptions.proxy && browserOptions.isChromium && os.platform() === 'win32')
+      throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
     options.proxy = normalizeProxySettings(options.proxy);
   }
   if (debugMode() === 'inspector')

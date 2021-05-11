@@ -25,7 +25,7 @@ export class Video implements api.Video {
 
   constructor(page: Page) {
     const browser = page.context()._browser;
-    this._isRemote = !!browser && browser._isRemote;
+    this._isRemote = !!browser && !!browser._remoteType;
     this._artifact = Promise.race([
       new Promise<Artifact>(f => this._artifactCallback = f),
       page._closedOrCrashedPromise.then(() => null),

@@ -23,7 +23,7 @@ import type { Connection } from './connection';
 import type { Logger } from './types';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
-  private _connection: Connection;
+  protected _connection: Connection;
   private _parent: ChannelOwner | undefined;
   private _objects = new Map<string, ChannelOwner>();
 

@@ -23,6 +23,7 @@ class FrameTree {
       this._browsingContextGroup.__jugglerFrameTrees = new Set();
     this._browsingContextGroup.__jugglerFrameTrees.add(this);
     this._scriptsToEvaluateOnNewDocument = new Map();
+    this._isolatedWorlds = new Map();
 
     this._webSocketEventService = Cc[
       "@mozilla.org/websocketevent/service;1"
@@ -72,6 +73,25 @@ class FrameTree {
     return this._runtime;
   }
 
+  addScriptToEvaluateOnNewDocument(script, worldName) {
+    const scriptId = helper.generateId();
+    if (worldName) {
+      this._isolatedWorlds.set(scriptId, {script, worldName});
+      for (const frame of this.frames())
+        frame.createIsolatedWorld(worldName);
+    } else {
+      this._scriptsToEvaluateOnNewDocument.set(scriptId, script);
+    }
+    return {scriptId};
+  }
+
+  removeScriptToEvaluateOnNewDocument(scriptId) {
+    if (this._isolatedWorlds.has(scriptId))
+      this._isolatedWorlds.delete(scriptId);
+    else
+      this._scriptsToEvaluateOnNewDocument.delete(scriptId);
+  }
+
   _frameForWorker(workerDebugger) {
     if (workerDebugger.type !== Ci.nsIWorkerDebugger.TYPE_DEDICATED)
       return null;
@@ -86,7 +106,6 @@ class FrameTree {
     if (!frame)
       return;
     frame._onGlobalObjectCleared();
-    this.emit(FrameTree.Events.GlobalObjectCreated, { frame, window });
   }
 
   _onWorkerCreated(workerDebugger) {
@@ -129,20 +148,10 @@ class FrameTree {
     return true;
   }
 
-  addScriptToEvaluateOnNewDocument(script) {
-    const scriptId = helper.generateId();
-    this._scriptsToEvaluateOnNewDocument.set(scriptId, script);
-    return scriptId;
-  }
-
-  removeScriptToEvaluateOnNewDocument(scriptId) {
-    this._scriptsToEvaluateOnNewDocument.delete(scriptId);
-  }
-
-  addBinding(name, script) {
-    this._bindings.set(name, script);
+  addBinding(worldName, name, script) {
+    this._bindings.set(worldName + ':' + name, {worldName, name, script});
     for (const frame of this.frames())
-      frame._addBinding(name, script);
+      frame._addBinding(worldName, name, script);
   }
 
   frameForDocShell(docShell) {
@@ -288,10 +297,8 @@ class FrameTree {
 }
 
 FrameTree.Events = {
-  BindingCalled: 'bindingcalled',
   FrameAttached: 'frameattached',
   FrameDetached: 'framedetached',
-  GlobalObjectCreated: 'globalobjectcreated',
   WorkerCreated: 'workercreated',
   WorkerDestroyed: 'workerdestroyed',
   WebSocketCreated: 'websocketcreated',
@@ -329,6 +336,9 @@ class Frame {
 
     this._textInputProcessor = null;
     this._executionContext = null;
+
+    this._isolatedWorlds = new Map();
+    this._initialNavigationDone = false;
 
     this._webSocketListenerInnerWindowId = 0;
     // WebSocketListener calls frameReceived event before webSocketOpened.
@@ -415,23 +425,63 @@ class Frame {
     };
   }
 
+  createIsolatedWorld(name) {
+    const principal = [this.domWindow()]; // extended principal
+    const sandbox = Cu.Sandbox(principal, {
+      sandboxPrototype: this.domWindow(),
+      wantComponents: false,
+      wantExportHelpers: false,
+      wantXrays: true,
+    });
+    const world = this._runtime.createExecutionContext(this.domWindow(), sandbox, {
+      frameId: this.id(),
+      name,
+    });
+    this._isolatedWorlds.set(world.id(), world);
+    return world;
+  }
+
+  unsafeObject(objectId) {
+    const contexts = [this.executionContext(), ...this._isolatedWorlds.values()];
+    for (const context of contexts) {
+      const result = context.unsafeObject(objectId);
+      if (result)
+        return result.object;
+    }
+    throw new Error('Cannot find object with id = ' + objectId);
+  }
+
   dispose() {
+    for (const world of this._isolatedWorlds.values())
+      this._runtime.destroyExecutionContext(world);
+    this._isolatedWorlds.clear();
     if (this._executionContext)
       this._runtime.destroyExecutionContext(this._executionContext);
     this._executionContext = null;
   }
 
-  _addBinding(name, script) {
-    Cu.exportFunction((...args) => {
-      this._frameTree.emit(FrameTree.Events.BindingCalled, {
-        frame: this,
-        name,
-        payload: args[0]
-      });
-    }, this.domWindow(), {
-      defineAs: name,
-    });
-    this.domWindow().eval(script);
+  _getOrCreateIsolatedContext(worldName) {
+    for (let context of this._isolatedWorlds.values()) {
+      if (context.auxData().name === worldName)
+        return context;
+    }
+    return this.createIsolatedWorld(worldName);
+  }
+
+  _addBinding(worldName, name, script) {
+    const executionContext = worldName ? this._getOrCreateIsolatedContext(worldName) : this._executionContext;
+    if (executionContext)
+      executionContext.addBinding(name, script);
+  }
+
+  _evaluateScriptSafely(executionContext, script) {
+    try {
+      let result = executionContext.evaluateScript(script);
+      if (result && result.objectId)
+        executionContext.disposeObject(result.objectId);
+    } catch (e) {
+      dump(`ERROR: ${e.message}\n${e.stack}\n`);
+    }
   }
 
   _onGlobalObjectCleared() {
@@ -443,20 +493,26 @@ class Frame {
 
     if (this._executionContext)
       this._runtime.destroyExecutionContext(this._executionContext);
+    for (const world of this._isolatedWorlds.values())
+      this._runtime.destroyExecutionContext(world);
+    this._isolatedWorlds.clear();
+
     this._executionContext = this._runtime.createExecutionContext(this.domWindow(), this.domWindow(), {
       frameId: this._frameId,
       name: '',
     });
-    for (const [name, script] of this._frameTree._bindings)
-      this._addBinding(name, script);
-    for (const script of this._frameTree._scriptsToEvaluateOnNewDocument.values()) {
-      try {
-        const result = this._executionContext.evaluateScript(script);
-        if (result && result.objectId)
-          this._executionContext.disposeObject(result.objectId);
-      } catch (e) {
-        dump(`ERROR: ${e.message}\n${e.stack}\n`);
-      }
+    for (const {script, worldName} of this._frameTree._isolatedWorlds.values())
+      this.createIsolatedWorld(worldName);
+
+    // Add bindings before evaluating scripts.
+    for (const [id, {worldName, name, script}] of this._frameTree._bindings)
+      this._addBinding(worldName, name, script);
+
+    for (const script of this._frameTree._scriptsToEvaluateOnNewDocument.values())
+      this._evaluateScriptSafely(this._executionContext, script);
+    for (const {script, worldName} of this._frameTree._isolatedWorlds.values()) {
+      const context = worldName ? this._getOrCreateIsolatedContext(worldName) : this.executionContext();
+      this._evaluateScriptSafely(context, script);
     }
   }
 

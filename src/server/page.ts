@@ -70,7 +70,7 @@ export interface PageDelegate {
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
-  setScreencastEnabled(enabled: boolean): Promise<void>;
+  setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void>;
 
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
@@ -501,8 +501,8 @@ export class Page extends SdkObject {
     return this._pageBindings.get(identifier) || this._browserContext._pageBindings.get(identifier);
   }
 
-  setScreencastEnabled(enabled: boolean) {
-    this._delegate.setScreencastEnabled(enabled).catch(() => {});
+  setScreencastOptions(options: { width: number, height: number, quality: number } | null) {
+    this._delegate.setScreencastOptions(options).catch(e => debugLogger.log('error', e));
   }
 }
 

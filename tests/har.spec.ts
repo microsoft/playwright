@@ -251,3 +251,10 @@ it('should include content', async ({ contextFactory, server }, testInfo) => {
   expect(content2.mimeType).toBe('text/css; charset=utf-8');
   expect(Buffer.from(content2.text, 'base64').toString()).toContain('pink');
 });
+
+it('should calculate time', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.PREFIX + '/har.html');
+  const log = await getLog();
+  expect(log.entries[0].time).toBeGreaterThan(0);
+});

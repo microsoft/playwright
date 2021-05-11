@@ -52,6 +52,10 @@ export class Snapshotter {
     this._snapshotStreamer = '__playwright_snapshot_streamer_' + guid;
   }
 
+  started(): boolean {
+    return this._started;
+  }
+
   async start() {
     this._started = true;
     if (!this._initialized) {
@@ -88,7 +92,7 @@ export class Snapshotter {
     for (const page of this._context.pages())
       frames.push(...page.frames());
     await Promise.all(frames.map(frame => {
-      return frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(debugExceptionHandler);
+      return frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(e => debugLogger.log('error', e));
     }));
   }
 
@@ -107,7 +111,7 @@ export class Snapshotter {
 
     // In each frame, in a non-stalling manner, capture the snapshots.
     const snapshots = page.frames().map(async frame => {
-      const data = await frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(debugExceptionHandler) as SnapshotData;
+      const data = await frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(e => debugLogger.log('error', e)) as SnapshotData;
       // Something went wrong -> bail out, our snapshots are best-efforty.
       if (!data)
         return;
@@ -121,7 +125,6 @@ export class Snapshotter {
         html: data.html,
         viewport: data.viewport,
         timestamp: monotonicTime(),
-        pageTimestamp: data.timestamp,
         collectionTime: data.collectionTime,
         resourceOverrides: [],
         isMainFrame: page.mainFrame() === frame
@@ -225,8 +228,4 @@ export class Snapshotter {
     } catch (e) {
     }
   }
-}
-
-function debugExceptionHandler(e: Error) {
-  // console.error(e);
 }

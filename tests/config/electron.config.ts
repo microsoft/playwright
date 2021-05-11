@@ -16,28 +16,10 @@
 
 import * as folio from 'folio';
 import * as path from 'path';
-import { ElectronEnv, electronTest } from './electronTest';
-import { test as pageTest } from './pageTest';
-
-const config: folio.Config = {
-  testDir: path.join(__dirname, '..'),
-  outputDir: path.join(__dirname, '..', '..', 'test-results'),
-  timeout: 30000,
-  globalTimeout: 5400000,
-};
-if (process.env.CI) {
-  config.workers = 1;
-  config.forbidOnly = true;
-  config.retries = 3;
-}
-folio.setConfig(config);
-
-if (process.env.CI) {
-  folio.setReporters([
-    new folio.reporters.dot(),
-    new folio.reporters.json({ outputFile: path.join(__dirname, '..', '..', 'test-results', 'report.json') }),
-  ]);
-}
+import { ElectronEnv } from '../electron/electronTest';
+import { test as pageTest } from '../page/pageTest';
+import { PlaywrightEnvOptions } from './browserTest';
+import { CommonOptions } from './baseTest';
 
 class ElectronPageEnv extends ElectronEnv {
   async beforeEach(args: any, testInfo: folio.TestInfo) {
@@ -46,19 +28,49 @@ class ElectronPageEnv extends ElectronEnv {
     return {
       ...result,
       browserVersion: this._browserVersion,
+      browserMajorVersion: this._browserMajorVersion,
       page,
+      isAndroid: false,
+      isElectron: true,
     };
   }
 }
 
-const envConfig = {
-  tag: 'electron',
-  options: {
-    mode: 'default' as const,
-    engine: 'electron' as const,
-    coverageName: 'electron'
-  }
+type AllOptions = PlaywrightEnvOptions & CommonOptions;
+
+const outputDir = path.join(__dirname, '..', '..', 'test-results');
+const testDir = path.join(__dirname, '..');
+const config: folio.Config<AllOptions> = {
+  testDir,
+  snapshotDir: '__snapshots__',
+  outputDir,
+  timeout: 30000,
+  globalTimeout: 5400000,
+  workers: process.env.CI ? 1 : undefined,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 3 : 0,
+  reporter: process.env.CI ? [
+    'dot',
+    { name: 'json', outputFile: path.join(outputDir, 'report.json') },
+  ] : 'line',
+  projects: [],
 };
 
-electronTest.runWith(envConfig);
-pageTest.runWith(envConfig, new ElectronPageEnv());
+config.projects.push({
+  name: 'electron',
+  options: {
+    coverageName: 'electron'
+  },
+  testDir: path.join(testDir, 'electron'),
+});
+
+config.projects.push({
+  name: 'electron',
+  options: {
+    coverageName: 'electron'
+  },
+  testDir: path.join(testDir, 'page'),
+  define: { test: pageTest, env: new ElectronPageEnv() },
+});
+
+export default config;

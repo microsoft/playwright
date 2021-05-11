@@ -17,29 +17,29 @@
 import path from 'path';
 import { canAccessFile } from '../../utils/utils';
 
-function darwin(channel: string): string | undefined {
+function darwin(channel: string): string[] | undefined {
   switch (channel) {
-    case 'chrome': return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-    case 'chrome-beta': return '/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta';
-    case 'chrome-dev': return '/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev';
-    case 'chrome-canary': return '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary';
-    case 'msedge': return '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
-    case 'msedge-beta': return '/Applications/Microsoft Edge Beta.app/Contents/MacOS/Microsoft Edge Beta';
-    case 'msedge-dev': return '/Applications/Microsoft Edge Dev.app/Contents/MacOS/Microsoft Edge Dev';
-    case 'msedge-canary': return '/Applications/Microsoft Edge Canary.app/Contents/MacOS/Microsoft Edge Canary';
+    case 'chrome': return ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'];
+    case 'chrome-beta': return ['/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta'];
+    case 'chrome-dev': return ['/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev'];
+    case 'chrome-canary': return ['/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'];
+    case 'msedge': return ['/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'];
+    case 'msedge-beta': return ['/Applications/Microsoft Edge Beta.app/Contents/MacOS/Microsoft Edge Beta'];
+    case 'msedge-dev': return ['/Applications/Microsoft Edge Dev.app/Contents/MacOS/Microsoft Edge Dev'];
+    case 'msedge-canary': return ['/Applications/Microsoft Edge Canary.app/Contents/MacOS/Microsoft Edge Canary'];
   }
 }
 
-function linux(channel: string): string | undefined {
+function linux(channel: string): string[] | undefined {
   switch (channel) {
-    case 'chrome': return '/opt/google/chrome/chrome';
-    case 'chrome-beta': return '/opt/google/chrome-beta/chrome';
-    case 'chrome-dev': return '/opt/google/chrome-unstable/chrome';
-    case 'msedge-dev': return '/opt/microsoft/msedge-dev/msedge';
+    case 'chrome': return ['/opt/google/chrome/chrome'];
+    case 'chrome-beta': return ['/opt/google/chrome-beta/chrome'];
+    case 'chrome-dev': return ['/opt/google/chrome-unstable/chrome'];
+    case 'msedge-dev': return ['/opt/microsoft/msedge-dev/msedge'];
   }
 }
 
-function win32(channel: string): string | undefined {
+function win32(channel: string): string[] | undefined {
   let suffix: string | undefined;
   switch (channel) {
     case 'chrome': suffix = `\\Google\\Chrome\\Application\\chrome.exe`; break;
@@ -56,29 +56,27 @@ function win32(channel: string): string | undefined {
   const prefixes = [
     process.env.LOCALAPPDATA, process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)']
   ].filter(Boolean) as string[];
-
-  let result: string | undefined;
-  prefixes.forEach(prefix => {
-    const chromePath = path.join(prefix, suffix!);
-    if (canAccessFile(chromePath))
-      result = chromePath;
-  });
-  return result;
+  return prefixes.map(prefix => path.join(prefix, suffix!));
 }
 
 export function findChromiumChannel(channel: string): string {
-  let result: string | undefined;
+  let installationPaths: string[] | undefined;
   if (process.platform === 'linux')
-    result = linux(channel);
+    installationPaths = linux(channel);
   else if (process.platform === 'win32')
-    result = win32(channel);
+    installationPaths = win32(channel);
   else if (process.platform === 'darwin')
-    result = darwin(channel);
+    installationPaths = darwin(channel);
 
-  if (!result)
+  if (!installationPaths)
     throw new Error(`Chromium distribution '${channel}' is not supported on ${process.platform}`);
 
-  if (canAccessFile(result))
+  let result: string | undefined;
+  installationPaths.forEach(chromePath => {
+    if (canAccessFile(chromePath))
+      result = chromePath;
+  });
+  if (result)
     return result;
-  throw new Error(`Chromium distribution was not found: ${channel}`);
+  throw new Error(`Chromium distribution is not installed on the system: ${channel}`);
 }

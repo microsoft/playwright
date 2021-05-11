@@ -26,7 +26,7 @@ import { PlaywrightClient } from '../../lib/remote/playwrightClient';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type Mode = 'default' | 'driver' | 'service';
-type BaseTestArgs = {
+type BaseWorkerArgs = {
   mode: Mode;
   platform: 'win32' | 'darwin' | 'linux';
   video: boolean;
@@ -40,25 +40,9 @@ type BaseTestArgs = {
   isChromium: boolean;
   isFirefox: boolean;
   isWebKit: boolean;
-  isAndroid: boolean;
-  isElectron: boolean;
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
-};
-
-type BaseWorkerArgs = {
-  playwright: typeof import('../../index');
-  browserName: BrowserName;
-  channel: string | undefined;
-};
-
-type BaseOptions = {
-  mode: Mode;
-  engine: 'chromium' | 'firefox' | 'webkit' | 'android' | 'electron';
-  channel?: string;
-  video?: boolean;
-  headful?: boolean;
 };
 
 class DriverMode {
@@ -119,65 +103,62 @@ class DefaultMode {
   }
 }
 
+type BaseOptions = {
+  mode?: Mode;
+  browserName?: BrowserName;
+  channel?: string;
+  video?: boolean;
+  headful?: boolean;
+};
+
 class BaseEnv {
   private _mode: DriverMode | ServiceMode | DefaultMode;
+  private _browserName: BrowserName;
   private _options: BaseOptions;
   private _playwright: typeof import('../../index');
 
-  optionsType(): BaseOptions {
-    return {} as any;
-  }
-
-  private _browserName(): BrowserName {
-    return (this._options.engine === 'android' || this._options.engine === 'electron') ? 'chromium' : this._options.engine;
+  hasBeforeAllOptions(options: BaseOptions) {
+    return 'mode' in options || 'browserName' in options || 'channel' in options || 'video' in options || 'headful' in options;
   }
 
   async beforeAll(options: BaseOptions, workerInfo: folio.WorkerInfo): Promise<BaseWorkerArgs> {
     this._options = options;
+    this._browserName = options.browserName || 'chromium';
     this._mode = {
       default: new DefaultMode(),
       service: new ServiceMode(),
       driver: new DriverMode(),
-    }[this._options.mode];
+    }[this._options.mode || 'default'];
     require('../../lib/utils/utils').setUnderTest();
     this._playwright = await this._mode.setup(workerInfo);
     return {
       playwright: this._playwright,
-      browserName: this._browserName(),
-      channel: this._options.channel,
-    };
-  }
-
-  async beforeEach({}, testInfo: folio.TestInfo): Promise<BaseTestArgs> {
-    const browserName = this._browserName();
-    testInfo.snapshotPathSegment = browserName;
-    testInfo.data = {
-      browserName,
-    };
-    if (this._options.headful)
-      testInfo.data.headful = true;
-    if (this._options.mode !== 'default')
-      testInfo.data.mode = this._options.mode;
-    if (this._options.video)
-      testInfo.data.video = true;
-    return {
-      playwright: this._playwright,
-      browserName,
+      browserName: this._browserName,
       browserChannel: this._options.channel,
-      isChromium: browserName === 'chromium',
-      isFirefox: browserName === 'firefox',
-      isWebKit: browserName === 'webkit',
-      isAndroid: this._options.engine === 'android',
-      isElectron: this._options.engine === 'electron',
+      isChromium: this._browserName === 'chromium',
+      isFirefox: this._browserName === 'firefox',
+      isWebKit: this._browserName === 'webkit',
       isWindows: process.platform === 'win32',
       isMac: process.platform === 'darwin',
       isLinux: process.platform === 'linux',
       headful: !!this._options.headful,
       video: !!this._options.video,
-      mode: this._options.mode,
+      mode: this._options.mode || 'default',
       platform: process.platform as ('win32' | 'darwin' | 'linux'),
       toImpl: (this._playwright as any)._toImpl,
     };
+  }
+
+  async beforeEach({}, testInfo: folio.TestInfo) {
+    testInfo.snapshotPathSegment = this._browserName;
+    testInfo.data = { browserName: this._browserName };
+    if (this._options.headful)
+      testInfo.data.headful = true;
+    if ((this._options.mode || 'default') !== 'default')
+      testInfo.data.mode = this._options.mode || 'default';
+    if (this._options.video)
+      testInfo.data.video = true;
+    return {};
   }
 
   async afterAll({}, workerInfo: folio.WorkerInfo) {
@@ -185,7 +166,7 @@ class BaseEnv {
   }
 }
 
-type ServerTestArgs = {
+type ServerWorkerArgs = {
   asset: (path: string) => string;
   socksPort: number;
   server: TestServer;
@@ -202,8 +183,8 @@ class ServerEnv {
   private _socksServer: any;
   private _socksPort: number;
 
-  optionsType(): ServerOptions {
-    return {};
+  hasBeforeAllOptions(options: ServerOptions) {
+    return 'loopback' in options;
   }
 
   async beforeAll(options: ServerOptions, workerInfo: folio.WorkerInfo) {
@@ -237,18 +218,18 @@ class ServerEnv {
     this._socksPort = port + 2;
     this._socksServer.listen(this._socksPort, 'localhost');
     this._socksServer.useAuth(socks.auth.None());
-    return {};
-  }
-
-  async beforeEach({}, testInfo: folio.TestInfo): Promise<ServerTestArgs> {
-    this._server.reset();
-    this._httpsServer.reset();
     return {
       asset: (p: string) => path.join(__dirname, '..', 'assets', ...p.split('/')),
       server: this._server,
       httpsServer: this._httpsServer,
       socksPort: this._socksPort,
     };
+  }
+
+  async beforeEach({}, testInfo: folio.TestInfo) {
+    this._server.reset();
+    this._httpsServer.reset();
+    return {};
   }
 
   async afterAll({}, workerInfo: folio.WorkerInfo) {
@@ -267,8 +248,8 @@ type CoverageOptions = {
 class CoverageEnv {
   private _coverage: ReturnType<typeof installCoverageHooks> | undefined;
 
-  optionsType(): CoverageOptions {
-    return {};
+  hasBeforeAllOptions(options: CoverageOptions) {
+    return 'coverageName' in options;
   }
 
   async beforeAll(options: CoverageOptions, workerInfo: folio.WorkerInfo) {
@@ -289,8 +270,7 @@ class CoverageEnv {
   }
 }
 
-export type CommonOptions = BaseOptions;
-export type CommonTestArgs = BaseTestArgs & ServerTestArgs;
-export type CommonWorkerArgs = BaseWorkerArgs;
+export type CommonOptions = BaseOptions & ServerOptions & CoverageOptions;
+export type CommonArgs = BaseWorkerArgs & ServerWorkerArgs;
 
-export const test = folio.test.extend(new CoverageEnv()).extend(new ServerEnv()).extend(new BaseEnv());
+export const baseTest = folio.test.extend(new CoverageEnv()).extend(new ServerEnv()).extend(new BaseEnv());

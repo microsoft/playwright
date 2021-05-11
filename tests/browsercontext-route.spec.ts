@@ -107,3 +107,94 @@ it('should fall back to context.route', async ({browser, server}) => {
   expect(await response.text()).toBe('context');
   await context.close();
 });
+
+it('should support Set-Cookie header', async ({contextFactory, server, browserName}) => {
+  it.fixme(browserName === 'webkit');
+
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await page.route('https://example.com/', (route, request) => {
+    route.fulfill({
+      headers: {
+        'Set-Cookie': 'name=value; domain=.example.com; Path=/'
+      },
+      contentType: 'text/html',
+      body: 'done'
+    });
+  });
+  await page.goto('https://example.com');
+  expect(await context.cookies()).toEqual([{
+    sameSite: 'None',
+    name: 'name',
+    value: 'value',
+    domain: '.example.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false
+  }]);
+});
+
+it('should ignore secure Set-Cookie header for insecure requests', async ({contextFactory, server, browserName}) => {
+  it.fixme(browserName === 'webkit');
+
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await page.route('http://example.com/', (route, request) => {
+    route.fulfill({
+      headers: {
+        'Set-Cookie': 'name=value; domain=.example.com; Path=/; Secure'
+      },
+      contentType: 'text/html',
+      body: 'done'
+    });
+  });
+  await page.goto('http://example.com');
+  expect(await context.cookies()).toEqual([]);
+});
+
+it('should use Set-Cookie header in future requests', async ({contextFactory, server, browserName}) => {
+  it.fixme(browserName === 'webkit');
+
+  const context = await contextFactory();
+  const page = await context.newPage();
+
+  await page.route(server.EMPTY_PAGE, (route, request) => {
+    route.fulfill({
+      headers: {
+        'Set-Cookie': 'name=value'
+      },
+      contentType: 'text/html',
+      body: 'done'
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(await context.cookies()).toEqual([{
+    sameSite: 'None',
+    name: 'name',
+    value: 'value',
+    domain: 'localhost',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false
+  }]);
+
+  let cookie = '';
+  server.setRoute('/foo.html', (req, res) => {
+    cookie = req.headers.cookie;
+    res.end();
+  });
+  await page.goto(server.PREFIX + '/foo.html');
+  expect(cookie).toBe('name=value');
+});
+
+it('should work with ignoreHTTPSErrors', async ({browser, httpsServer}) => {
+  const context = await browser.newContext({ ignoreHTTPSErrors: true });
+  const page = await context.newPage();
+
+  await page.route('**/*', route => route.continue());
+  const response = await page.goto(httpsServer.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  await context.close();
+});

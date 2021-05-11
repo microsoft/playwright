@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { playwrightTest as it, slowPlaywrightTest as slowTest, expect } from './config/browserTest';
+import { playwrightTest as it, expect } from './config/browserTest';
 
 it('should reject all promises when browser is closed', async ({browserType, browserOptions}) => {
   const browser = await browserType.launch(browserOptions);
@@ -105,7 +105,7 @@ it('should report launch log', async ({browserType, browserOptions, mode}) => {
   expect(error.message).toContain('<launching>');
 });
 
-slowTest('should accept objects as options', async ({browserType, browserOptions}) => {
+it('should accept objects as options', async ({browserType, browserOptions}) => {
   // @ts-expect-error process is not a real option.
   const browser = await browserType.launch({ ...browserOptions, process });
   await browser.close();

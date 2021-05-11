@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "strict": true,
-    "target": "es2015",
+    "target": "ES2019",
     "noEmit": true,
     "moduleResolution": "node"
   },

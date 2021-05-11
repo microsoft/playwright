@@ -90,29 +90,29 @@ composite selectors.
 
 ```sh js
 # Linux/macOS
-$ PWDEBUG=console npm run test
+PWDEBUG=console npm run test
 
 # Windows
-$ set PWDEBUG=console
-$ npm run test
+set PWDEBUG=console
+npm run test
 ```
 
 ```sh java
 # Linux/macOS
-$ PWDEBUG=console mvn test
+PWDEBUG=console mvn test
 
 # Windows
-$ set PWDEBUG=console
-$ mvn test
+set PWDEBUG=console
+mvn test
 ```
 
 ```sh python
 # Linux/macOS
-$ PWDEBUG=console pytest -s
+PWDEBUG=console pytest -s
 
 # Windows
-$ set PWDEBUG=console
-$ pytest -s
+set PWDEBUG=console
+pytest -s
 ```
 
 ## Selectors in Developer Tools Console
@@ -157,27 +157,27 @@ Playwright supports verbose logging with the `DEBUG` environment variable.
 
 ```sh js
 # Linux/macOS
-$ DEBUG=pw:api npm run test
+DEBUG=pw:api npm run test
 
 # Windows
-$ set DEBUG=pw:api
-$ npm run test
+set DEBUG=pw:api
+npm run test
 ```
 
 ```sh java
 # Linux/macOS
-$ DEBUG=pw:api mvn test
+DEBUG=pw:api mvn test
 
 # Windows
-$ set DEBUG=pw:api
-$ mvn test
+set DEBUG=pw:api
+mvn test
 ```
 
 ```sh python
 # Linux/macOS
-$ DEBUG=pw:api pytest -s
+DEBUG=pw:api pytest -s
 
 # Windows
-$ set DEBUG=pw:api
-$ pytest -s
+set DEBUG=pw:api
+pytest -s
 ```

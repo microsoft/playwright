@@ -88,6 +88,8 @@ class DownloadInterceptor {
   }
 }
 
+const screencastService = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+
 class TargetRegistry {
   constructor() {
     EventEmitter.decorate(this);
@@ -159,8 +161,8 @@ class TargetRegistry {
       target.updateColorSchemeOverride();
       if (!hasExplicitSize)
         target.updateViewportSize();
-      if (browserContext.screencastOptions)
-        target._startVideoRecording(browserContext.screencastOptions);
+      if (browserContext.videoRecordingOptions)
+        target._startVideoRecording(browserContext.videoRecordingOptions);
     };
 
     const onTabCloseListener = event => {
@@ -333,7 +335,8 @@ class PageTarget {
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
-    this._screencastInfo = undefined;
+    this._videoRecordingInfo = undefined;
+    this._screencastRecordingInfo = undefined;
     this._dialogs = new Map();
 
     const navigationListener = {
@@ -476,8 +479,8 @@ class PageTarget {
     await this._channel.connect('').send('addScriptToEvaluateOnNewDocument', script).catch(e => void e);
   }
 
-  async addBinding(name, script) {
-    await this._channel.connect('').send('addBinding', { name, script }).catch(e => void e);
+  async addBinding(worldName, name, script) {
+    await this._channel.connect('').send('addBinding', { worldName, name, script }).catch(e => void e);
   }
 
   async applyContextSetting(name, value) {
@@ -488,7 +491,7 @@ class PageTarget {
     return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
   }
 
-  async _startVideoRecording({width, height, scale, dir}) {
+  async _startVideoRecording({width, height, dir}) {
     // On Mac the window may not yet be visible when TargetCreated and its
     // NSWindow.windowNumber may be -1, so we wait until the window is known
     // to be initialized and visible.
@@ -496,46 +499,88 @@ class PageTarget {
     const file = OS.Path.join(dir, helper.generateId() + '.webm');
     if (width < 10 || width > 10000 || height < 10 || height > 10000)
       throw new Error("Invalid size");
-    if (scale && (scale <= 0 || scale > 1))
-      throw new Error("Unsupported scale");
 
-    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
     const docShell = this._gBrowser.ownerGlobal.docShell;
     // Exclude address bar and navigation control from the video.
     const rect = this.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._window.devicePixelRatio;
-    const videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
-    this._screencastInfo = { videoSessionId, file };
+    let sessionId;
+    const registry = this._registry;
+    const screencastClient = {
+      QueryInterface: ChromeUtils.generateQI([Ci.nsIScreencastServiceClient]),
+      screencastFrame(data, deviceWidth, deviceHeight) {
+      },
+      screencastStopped() {
+        registry.emit(TargetRegistry.Events.ScreencastStopped, sessionId);
+      },
+    };
+    const viewport = this._viewportSize || this._browserContext.defaultViewportSize || { width: 0, height: 0 };
+    sessionId = screencastService.startVideoRecording(screencastClient, docShell, true, file, width, height, 0, viewport.width, viewport.height, devicePixelRatio * rect.top);
+    this._videoRecordingInfo = { sessionId, file };
     this.emit(PageTarget.Events.ScreencastStarted);
   }
 
-  async _stopVideoRecording() {
-    if (!this._screencastInfo)
+  _stopVideoRecording() {
+    if (!this._videoRecordingInfo)
       throw new Error('No video recording in progress');
-    const screencastInfo = this._screencastInfo;
-    this._screencastInfo = undefined;
-    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
-    const result = new Promise(resolve =>
-      Services.obs.addObserver(function onStopped(subject, topic, data) {
-        if (screencastInfo.videoSessionId != data)
-          return;
-
-        Services.obs.removeObserver(onStopped, 'juggler-screencast-stopped');
-        resolve();
-      }, 'juggler-screencast-stopped')
-    );
-    screencast.stopVideoRecording(screencastInfo.videoSessionId);
-    return result;
+    const videoRecordingInfo = this._videoRecordingInfo;
+    this._videoRecordingInfo = undefined;
+    screencastService.stopVideoRecording(videoRecordingInfo.sessionId);
   }
 
-  screencastInfo() {
-    return this._screencastInfo;
+  videoRecordingInfo() {
+    return this._videoRecordingInfo;
+  }
+
+  async startScreencast({ width, height, quality }) {
+    // On Mac the window may not yet be visible when TargetCreated and its
+    // NSWindow.windowNumber may be -1, so we wait until the window is known
+    // to be initialized and visible.
+    await this.windowReady();
+    if (width < 10 || width > 10000 || height < 10 || height > 10000)
+      throw new Error("Invalid size");
+
+    const docShell = this._gBrowser.ownerGlobal.docShell;
+    // Exclude address bar and navigation control from the video.
+    const rect = this.linkedBrowser().getBoundingClientRect();
+    const devicePixelRatio = this._window.devicePixelRatio;
+
+    const self = this;
+    const screencastClient = {
+      QueryInterface: ChromeUtils.generateQI([Ci.nsIScreencastServiceClient]),
+      screencastFrame(data, deviceWidth, deviceHeight) {
+        if (self._screencastRecordingInfo)
+          self.emit(PageTarget.Events.ScreencastFrame, { data, deviceWidth, deviceHeight });
+      },
+      screencastStopped() {
+      },
+    };
+    const viewport = this._viewportSize || this._browserContext.defaultViewportSize || { width: 0, height: 0 };
+    const screencastId = screencastService.startVideoRecording(screencastClient, docShell, false, '', width, height, quality || 90, viewport.width, viewport.height, devicePixelRatio * rect.top);
+    this._screencastRecordingInfo = { screencastId };
+    return { screencastId };
+  }
+
+  screencastFrameAck({ screencastId }) {
+    if (!this._screencastRecordingInfo || this._screencastRecordingInfo.screencastId !== screencastId)
+      return;
+    screencastService.screencastFrameAck(screencastId);
+  }
+
+  stopScreencast() {
+    if (!this._screencastRecordingInfo)
+      throw new Error('No screencast in progress');
+    const { screencastId } = this._screencastRecordingInfo;
+    this._screencastRecordingInfo = undefined;
+    screencastService.stopVideoRecording(screencastId);
   }
 
   dispose() {
     this._disposed = true;
-    if (this._screencastInfo)
-      this._stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
+    if (this._videoRecordingInfo)
+      this._stopVideoRecording();
+    if (this._screencastRecordingInfo)
+      this.stopScreencast();
     this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
@@ -553,6 +598,7 @@ class PageTarget {
 
 PageTarget.Events = {
   ScreencastStarted: Symbol('PageTarget.ScreencastStarted'),
+  ScreencastFrame: Symbol('PageTarget.ScreencastFrame'),
   Crashed: Symbol('PageTarget.Crashed'),
   DialogOpened: Symbol('PageTarget.DialogOpened'),
   DialogClosed: Symbol('PageTarget.DialogClosed'),
@@ -593,7 +639,7 @@ class BrowserContext {
     this.defaultUserAgent = null;
     this.touchOverride = false;
     this.colorScheme = 'none';
-    this.screencastOptions = undefined;
+    this.videoRecordingOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
     this.bindings = [];
     this.settings = {};
@@ -671,9 +717,9 @@ class BrowserContext {
     await Promise.all(Array.from(this.pages).map(page => page.addScriptToEvaluateOnNewDocument(script)));
   }
 
-  async addBinding(name, script) {
-    this.bindings.push({ name, script });
-    await Promise.all(Array.from(this.pages).map(page => page.addBinding(name, script)));
+  async addBinding(worldName, name, script) {
+    this.bindings.push({ worldName, name, script });
+    await Promise.all(Array.from(this.pages).map(page => page.addBinding(worldName, name, script)));
   }
 
   async applySetting(name, value) {
@@ -790,8 +836,8 @@ class BrowserContext {
     return result;
   }
 
-  async setScreencastOptions(options) {
-    this.screencastOptions = options;
+  async setVideoRecordingOptions(options) {
+    this.videoRecordingOptions = options;
     if (!options)
       return;
     const promises = [];
@@ -907,6 +953,7 @@ TargetRegistry.Events = {
   TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
   DownloadCreated: Symbol('TargetRegistry.Events.DownloadCreated'),
   DownloadFinished: Symbol('TargetRegistry.Events.DownloadFinished'),
+  ScreencastStopped: Symbol('TargetRegistry.ScreencastStopped'),
 };
 
 var EXPORTED_SYMBOLS = ['TargetRegistry', 'PageTarget'];

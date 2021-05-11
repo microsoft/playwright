@@ -123,6 +123,9 @@ function _wrapAndEscape(node, maxColumns = 0) {
   });
   text = text.replace(/(?<!`)\[(.*?)\]/g, (match, link) => `<see cref="${link}"/>`);
   text = text.replace(/`([^`]*)`/g, (match, code) => `<c>${code.replace('<', '&lt;').replace('>', '&gt;')}</c>`);
+  text = text.replace(/ITimeoutError/, 'TimeoutException');
+  text = text.replace(/Promise/, 'Task');
+
   const words = text.split(' ');
   let line = '';
   for (let i = 0; i < words.length; i++) {

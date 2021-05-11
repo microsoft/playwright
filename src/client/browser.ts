@@ -28,7 +28,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;
-  _isRemote = false;
+  _remoteType: 'owns-connection' | 'uses-connection' | null = null;
   readonly _name: string;
 
   static from(browser: channels.BrowserChannel): Browser {
@@ -98,7 +98,10 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   async close(): Promise<void> {
     try {
       await this._wrapApiCall('browser.close', async (channel: channels.BrowserChannel) => {
-        await channel.close();
+        if (this._remoteType === 'owns-connection')
+          this._connection.close();
+        else
+          await channel.close();
         await this._closedPromise;
       });
     } catch (e) {

@@ -1,17 +1,17 @@
 {
   "name": "playwright-internal",
   "private": true,
-  "version": "1.11.0-next",
+  "version": "1.12.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=10.17.0"
+    "node": ">=12"
   },
   "scripts": {
-    "ctest": "folio --config=tests/config/default.config.ts --tag=chromium",
-    "ftest": "folio --config=tests/config/default.config.ts --tag=firefox",
-    "wtest": "folio --config=tests/config/default.config.ts --tag=webkit",
+    "ctest": "folio --config=tests/config/default.config.ts --project=chromium",
+    "ftest": "folio --config=tests/config/default.config.ts --project=firefox",
+    "wtest": "folio --config=tests/config/default.config.ts --project=webkit",
     "atest": "folio --config=tests/config/android.config.ts",
     "etest": "folio --config=tests/config/electron.config.ts",
     "test": "folio --config=tests/config/default.config.ts",
@@ -87,7 +87,7 @@
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react-hooks": "^4.2.0",
     "file-loader": "^6.1.0",
-    "folio": "=0.4.0-alpha4",
+    "folio": "=0.4.0-alpha11",
     "formidable": "^1.2.2",
     "html-webpack-plugin": "^4.4.1",
     "ncp": "^2.0.0",

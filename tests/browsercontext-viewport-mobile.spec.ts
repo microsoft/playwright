@@ -18,9 +18,7 @@
 import { browserTest as it, expect } from './config/browserTest';
 
 it.describe('mobile viewport', () => {
-  it.beforeEach(async ({ browserName }) => {
-    it.skip(browserName === 'firefox');
-  });
+  it.skip(({ browserName }) => browserName === 'firefox');
 
   it('should support mobile emulation', async ({playwright, browser, server}) => {
     const iPhone = playwright.devices['iPhone 6'];
@@ -156,5 +154,23 @@ it.describe('mobile viewport', () => {
     expect(await desktopPage.evaluate(() => matchMedia('(any-pointer: coarse)').matches)).toBe(false);
     expect(await desktopPage.evaluate(() => matchMedia('(any-pointer: fine)').matches)).toBe(true);
     await desktopPage.close();
+  });
+
+  it('mouse should work with mobile viewports and cross process navigations', async ({browser, server, browserName}) => {
+    // @see https://crbug.com/929806
+    const context = await browser.newContext({ viewport: {width: 360, height: 640}, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
+    await page.evaluate(() => {
+      document.addEventListener('click', event => {
+        window['result'] = {x: event.clientX, y: event.clientY};
+      });
+    });
+
+    await page.mouse.click(30, 40);
+
+    expect(await page.evaluate('result')).toEqual({x: 30, y: 40});
+    await context.close();
   });
 });

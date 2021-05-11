@@ -73,7 +73,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     const parserNames = Array.from(customCSSNames).slice();
     parserNames.sort();
     if (allNames.join('|') !== parserNames.join('|'))
-      throw new Error(`Please keep customCSSNames in sync with evaluator engines`);
+      throw new Error(`Please keep customCSSNames in sync with evaluator engines: ${allNames.join('|')} vs ${parserNames.join('|')}`);
   }
 
   begin() {

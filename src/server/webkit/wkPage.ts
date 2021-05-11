@@ -19,6 +19,7 @@ import * as jpeg from 'jpeg-js';
 import path from 'path';
 import * as png from 'pngjs';
 import { splitErrorMessage } from '../../utils/stackTrace';
+import { hostPlatform } from '../../utils/registry';
 import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray } from '../../utils/utils';
 import * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
@@ -39,6 +40,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
+import { debugLogger } from '../../utils/debugLogger';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -71,6 +73,7 @@ export class WKPage implements PageDelegate {
   // until the popup page proxy arrives.
   private _nextWindowOpenPopupFeatures?: string[];
   private _recordingVideoFile: string | null = null;
+  private _screencastGeneration: number = 0;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -89,6 +92,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._pageProxySession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
+      helper.addEventListener(this._pageProxySession, 'Screencast.screencastFrame', this._onScreencastFrame.bind(this)),
     ];
     this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
@@ -120,7 +124,7 @@ export class WKPage implements PageDelegate {
     if (this._browserContext._options.recordVideo) {
       const outputFile = path.join(this._browserContext._options.recordVideo.dir, createGuid() + '.webm');
       promises.push(this._browserContext._ensureVideosPath().then(() => {
-        return this._startScreencast({
+        return this._startVideo({
           // validateBrowserContextOptions ensures correct video size.
           ...this._browserContext._options.recordVideo!.size!,
           outputFile,
@@ -720,7 +724,7 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._stopScreencast();
+    await this._stopVideo();
     await this._pageProxySession.sendMayFail('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
@@ -735,21 +739,30 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async _startScreencast(options: types.PageScreencastOptions): Promise<void> {
+  private _toolbarHeight(): number {
+    if (this._page._browserContext._browser?.options.headful)
+      return hostPlatform.startsWith('10.15') ? 55 : 59;
+    return 0;
+  }
+
+  private async _startVideo(options: types.PageScreencastOptions): Promise<void> {
     assert(!this._recordingVideoFile);
-    const { screencastId } = await this._pageProxySession.send('Screencast.start', {
+    const START_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.start' : 'Screencast.startVideo';
+    const { screencastId } = await this._pageProxySession.send(START_VIDEO_PROTOCOL_COMMAND as any, {
       file: options.outputFile,
       width: options.width,
       height: options.height,
+      toolbarHeight: this._toolbarHeight()
     });
     this._recordingVideoFile = options.outputFile;
     this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this.pageOrError());
   }
 
-  async _stopScreencast(): Promise<void> {
+  private async _stopVideo(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
-    await this._pageProxySession.sendMayFail('Screencast.stop');
+    const STOP_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.stop' : 'Screencast.stopVideo';
+    await this._pageProxySession.sendMayFail(STOP_VIDEO_PROTOCOL_COMMAND as any);
     this._recordingVideoFile = null;
   }
 
@@ -821,8 +834,24 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  async setScreencastEnabled(enabled: boolean): Promise<void> {
-    throw new Error('Not implemented');
+  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
+    if (options) {
+      const so = { ...options, toolbarHeight: this._toolbarHeight() };
+      const { generation } = await this._pageProxySession.send('Screencast.startScreencast', so);
+      this._screencastGeneration = generation;
+    } else {
+      await this._pageProxySession.send('Screencast.stopScreencast');
+    }
+  }
+
+  private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
+    const buffer = Buffer.from(event.data, 'base64');
+    this._page.emit(Page.Events.ScreencastFrame, {
+      buffer,
+      width: event.deviceWidth,
+      height: event.deviceHeight,
+    });
+    this._pageProxySession.send('Screencast.screencastFrameAck', { generation: this._screencastGeneration }).catch(e => debugLogger.log('error', e));
   }
 
   rafCountForStablePosition(): number {
@@ -874,7 +903,7 @@ export class WKPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const handles = await this._page.selectors._queryAll(parent, 'iframe', undefined);
+    const handles = await this._page.selectors._queryAll(parent, 'frame,iframe', undefined);
     const items = await Promise.all(handles.map(async handle => {
       const frame = await handle.contentFrame().catch(e => null);
       return { handle, frame };
@@ -898,7 +927,12 @@ export class WKPage implements PageDelegate {
         redirectedFrom = request.request;
       }
     }
-    const frame = this._page._frameManager.frame(event.frameId)!;
+    const frame = redirectedFrom ? redirectedFrom.frame() : this._page._frameManager.frame(event.frameId);
+    // sometimes we get stray network events for detached frames
+    // TODO(einbinder) why?
+    if (!frame)
+      return;
+
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
@@ -919,8 +953,10 @@ export class WKPage implements PageDelegate {
 
   _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
-    if (!request)
+    if (!request) {
+      this._session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
       return;
+    }
     if (!request._allowInterception) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.

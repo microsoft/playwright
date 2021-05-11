@@ -137,15 +137,15 @@ The arguments passed into `console.log` appear as arguments on the event handler
 An example of handling `console` event:
 
 ```js
-page.on('console', msg => {
+page.on('console', async msg => {
   for (let i = 0; i < msg.args().length; ++i)
     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
 });
-page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 ```
 
 ```java
-page.onConsole(msg -> {
+page.onConsoleMessage(msg -> {
   for (int i = 0; i < msg.args().size(); ++i)
     System.out.println(i + ": " + msg.args().get(i).jsonValue());
 });
@@ -527,11 +527,11 @@ Shortcut for main frame's [`method: Frame.check`].
 
 ### param: Page.check.selector = %%-input-selector-%%
 
+### option: Page.check.position = %%-input-position-%%
+
 ### option: Page.check.force = %%-input-force-%%
 
 ### option: Page.check.noWaitAfter = %%-input-no-wait-after-%%
-
-### option: Page.check.position = %%-input-position-%%
 
 ### option: Page.check.timeout = %%-input-timeout-%%
 
@@ -731,6 +731,8 @@ Optional event-specific initialization properties.
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
 
 ## async method: Page.emulateMedia
+
+This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media feature, using the `colorScheme` argument.
 
 ```js
 await page.evaluate(() => matchMedia('screen').matches);
@@ -1465,14 +1467,13 @@ Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 
-This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
-If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead.
-If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
-Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
 To send fine-grained keyboard events, use [`method: Page.type`].
 
-Shortcut for main frame's [`method: Frame.fill`]
+Shortcut for main frame's [`method: Frame.fill`].
 
 ### param: Page.fill.selector = %%-input-selector-%%
 
@@ -2253,12 +2254,13 @@ Defaults to `false`.
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>
 
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+
+If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+
 Returns the array of option values that have been successfully selected.
 
-Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-matching [`param: selector`], the method throws an error.
-
-Will wait until all specified options are present in the `<select>` element.
+Triggers a `change` and `input` event once all the provided options have been selected.
 
 ```js
 // single selection matching the value
@@ -2299,7 +2301,7 @@ page.select_option("select#colors", label="blue")
 page.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
-Shortcut for main frame's [`method: Frame.selectOption`]
+Shortcut for main frame's [`method: Frame.selectOption`].
 
 ### param: Page.selectOption.selector = %%-input-selector-%%
 
@@ -2551,11 +2553,11 @@ Shortcut for main frame's [`method: Frame.uncheck`].
 
 ### param: Page.uncheck.selector = %%-input-selector-%%
 
+### option: Page.uncheck.position = %%-input-position-%%
+
 ### option: Page.uncheck.force = %%-input-force-%%
 
 ### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-%%
-
-### option: Page.uncheck.position = %%-input-position-%%
 
 ### option: Page.uncheck.timeout = %%-input-timeout-%%
 

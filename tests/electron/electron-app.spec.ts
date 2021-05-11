@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+import type { BrowserWindow } from 'electron';
 import path from 'path';
-import { electronTest as test, expect } from '../config/electronTest';
+import { electronTest as test, expect } from './electronTest';
+import { baseTest } from '../config/baseTest';
 
-test('should fire close event', async ({ playwright }) => {
+baseTest('should fire close event', async ({ playwright }) => {
   const electronApp = await playwright._electron.launch({
-    args: [path.join(__dirname, '..', 'config', 'electron-app.js')],
+    args: [path.join(__dirname, 'electron-app.js')],
   });
   const events = [];
   electronApp.on('close', () => events.push('application'));
@@ -33,7 +35,7 @@ test('should fire close event', async ({ playwright }) => {
 
 test('should script application', async ({ electronApp }) => {
   const appPath = await electronApp.evaluate(async ({ app }) => app.getAppPath());
-  expect(appPath).toBe(path.resolve(__dirname, '..', 'config'));
+  expect(appPath).toBe(path.resolve(__dirname));
 });
 
 test('should return windows', async ({ electronApp, newWindow }) => {
@@ -87,4 +89,21 @@ test('should have a clipboard instance', async ({ electronApp }) => {
   await electronApp.evaluate(async ({clipboard}, text) => clipboard.writeText(text), clipboardContentToWrite);
   const clipboardContentRead = await electronApp.evaluate(async ({clipboard}) => clipboard.readText());
   expect(clipboardContentRead).toEqual(clipboardContentToWrite);
+});
+
+test('should test app that opens window fast', async ({ playwright }) => {
+  const electronApp = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-window-app.js')],
+  });
+  await electronApp.close();
+});
+
+test('should return browser window', async ({ playwright }) => {
+  const electronApp = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-window-app.js')],
+  });
+  const page = await electronApp.waitForEvent('window');
+  const bwHandle = await electronApp.browserWindow(page);
+  expect(await bwHandle.evaluate((bw: BrowserWindow) => bw.title)).toBe('Electron');
+  await electronApp.close();
 });

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/pageTest';
+import { contextTest as it, expect } from './config/browserTest';
 import { attachFrame } from './config/utils';
 
 async function checkSlowMo(toImpl, page, task) {
@@ -46,9 +46,7 @@ async function checkPageSlowMo(toImpl, page, task) {
 }
 
 it.describe('slowMo', () => {
-  it.beforeEach(async ({ mode }) => {
-    it.skip(mode !== 'default');
-  });
+  it.skip(({ mode }) => mode !== 'default');
 
   it('Page SlowMo $$eval', async ({page, toImpl}) => {
     await checkPageSlowMo(toImpl, page, () => page.$$eval('button', () => void 0));

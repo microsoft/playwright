@@ -22,24 +22,22 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as util from 'util';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
-import { CommonOptions, CommonTestArgs, CommonWorkerArgs, test as baseTest } from './baseTest';
+import { CommonArgs, baseTest } from './baseTest';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 type PlaywrightTestArgs = {
-  browserType: BrowserType;
-  browserOptions: LaunchOptions;
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
   startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;
 };
 
-type PlaywrightEnvOptions = {
+export type PlaywrightEnvOptions = {
   launchOptions?: LaunchOptions;
   traceDir?: string;
 };
 
-type PlaywrightEnvWorkerArgs = {
+type PlaywrightWorkerArgs = {
   browserType: BrowserType;
   browserOptions: LaunchOptions;
 };
@@ -51,18 +49,18 @@ class PlaywrightEnv {
   private _persistentContext: BrowserContext | undefined;
   private _remoteServer: RemoteServer | undefined;
 
-  optionsType(): PlaywrightEnvOptions {
-    return {};
+  hasBeforeAllOptions(options: PlaywrightEnvOptions) {
+    return 'launchOptions' in options || 'traceDir' in options;
   }
 
-  async beforeAll(args: CommonWorkerArgs & PlaywrightEnvOptions & CommonOptions, workerInfo: folio.WorkerInfo): Promise<PlaywrightEnvWorkerArgs> {
+  async beforeAll(args: CommonArgs & PlaywrightEnvOptions, workerInfo: folio.WorkerInfo): Promise<PlaywrightWorkerArgs> {
     this._browserType = args.playwright[args.browserName];
     this._browserOptions = {
-      ...args.launchOptions,
       _traceDir: args.traceDir,
-      channel: args.channel,
+      channel: args.browserChannel,
       headless: !args.headful,
       handleSIGINT: false,
+      ...args.launchOptions,
     } as any;
     return {
       browserType: this._browserType,
@@ -101,8 +99,6 @@ class PlaywrightEnv {
 
   async beforeEach({}, testInfo: folio.TestInfo): Promise<PlaywrightTestArgs> {
     return {
-      browserType: this._browserType,
-      browserOptions: this._browserOptions,
       createUserDataDir: this._createUserDataDir.bind(this),
       launchPersistent: this._launchPersistent.bind(this),
       startRemoteServer: this._startRemoteServer.bind(this),
@@ -123,13 +119,6 @@ class PlaywrightEnv {
   }
 }
 
-export const playwrightTest = baseTest.extend(new PlaywrightEnv());
-export const slowPlaywrightTest = baseTest.extend(new PlaywrightEnv());
-
-type BrowserEnvOptions = {
-  contextOptions?: BrowserContextOptions;
-};
-
 type BrowserTestArgs = {
   browser: Browser;
   browserVersion: string;
@@ -137,27 +126,30 @@ type BrowserTestArgs = {
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 
+type BrowserTestOptions = {
+  contextOptions?: BrowserContextOptions;
+};
+
 class BrowserEnv {
   private _browser: Browser | undefined;
-  private _contextOptions: BrowserContextOptions;
   private _contexts: BrowserContext[] = [];
   protected _browserVersion: string;
 
-  optionsType(): BrowserEnvOptions {
-    return {};
+  hasBeforeAllOptions(options: BrowserTestOptions) {
+    return false;
   }
 
-  async beforeAll(args: PlaywrightEnvWorkerArgs, workerInfo: folio.WorkerInfo) {
+  async beforeAll(args: PlaywrightWorkerArgs, workerInfo: folio.WorkerInfo) {
     this._browser = await args.browserType.launch(args.browserOptions);
     this._browserVersion = this._browser.version();
   }
 
-  async beforeEach(options: CommonTestArgs, testInfo: folio.TestInfo): Promise<BrowserTestArgs> {
-    const debugName = path.relative(testInfo.config.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
+  async beforeEach(options: CommonArgs & BrowserTestOptions, testInfo: folio.TestInfo): Promise<BrowserTestArgs> {
+    const debugName = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
     const contextOptions = {
       recordVideo: options.video ? { dir: testInfo.outputPath('') } : undefined,
       _debugName: debugName,
-      ...this._contextOptions,
+      ...options.contextOptions,
     } as BrowserContextOptions;
 
     testInfo.data.browserVersion = this._browserVersion;
@@ -171,7 +163,7 @@ class BrowserEnv {
     return {
       browser: this._browser,
       browserVersion: this._browserVersion,
-      contextOptions: this._contextOptions as BrowserContextOptions,
+      contextOptions,
       contextFactory,
     };
   }
@@ -189,25 +181,16 @@ class BrowserEnv {
   }
 }
 
-export const browserTest = playwrightTest.extend(new BrowserEnv());
-export const slowBrowserTest = slowPlaywrightTest.extend(new BrowserEnv());
-
-type ContextTestArgs = {
-  context: BrowserContext;
-  page: Page;
-};
-
 class ContextEnv {
-  async beforeEach(args: BrowserTestArgs, testInfo: folio.TestInfo): Promise<ContextTestArgs> {
+  async beforeEach(args: BrowserTestArgs, testInfo: folio.TestInfo) {
     const context = await args.contextFactory();
     const page = await context.newPage();
-    return {
-      context,
-      page,
-    };
+    return { context, page };
   }
 }
 
+export const playwrightTest = baseTest.extend(new PlaywrightEnv());
+export const browserTest = playwrightTest.extend(new BrowserEnv());
 export const contextTest = browserTest.extend(new ContextEnv());
 
 export { expect } from 'folio';

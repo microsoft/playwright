@@ -61,7 +61,7 @@ export class FFBrowser extends Browser {
     this._connection.on('Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this._connection.on('Browser.downloadCreated', this._onDownloadCreated.bind(this));
     this._connection.on('Browser.downloadFinished', this._onDownloadFinished.bind(this));
-    this._connection.on('Browser.screencastFinished', this._onScreencastFinished.bind(this));
+    this._connection.on('Browser.videoRecordingFinished', this._onVideoRecordingFinished.bind(this));
   }
 
   async _initVersion() {
@@ -133,7 +133,7 @@ export class FFBrowser extends Browser {
     this._downloadFinished(payload.uuid, error);
   }
 
-  _onScreencastFinished(payload: Protocol.Browser.screencastFinishedPayload) {
+  _onVideoRecordingFinished(payload: Protocol.Browser.videoRecordingFinishedPayload) {
     this._takeVideo(payload.screencastId)?.reportFinished();
   }
 }
@@ -194,7 +194,7 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
-        return this._browser._connection.send('Browser.setScreencastOptions', {
+        return this._browser._connection.send('Browser.setVideoRecordingOptions', {
           // validateBrowserContextOptions ensures correct video size.
           ...this._options.recordVideo!.size!,
           dir: this._options.recordVideo!.dir,

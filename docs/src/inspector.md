@@ -17,30 +17,30 @@ There are several ways of opening Playwright Inspector:
 configures Playwright for debugging and opens the inspector.
   ```sh js
   # Linux/macOS
-  $ PWDEBUG=1 npm run test
+  PWDEBUG=1 npm run test
 
   # Windows
-  $ set PWDEBUG=1
-  $ npm run test
+  set PWDEBUG=1
+  npm run test
   ```
 
   ```sh java
   # Linux/macOS
-  $ PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java src root> mvn test
+  PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java src root> mvn test
 
   # Windows
-  $ set PLAYWRIGHT_JAVA_SRC=<java src root>
-  $ set PWDEBUG=1
-  $ mvn test
+  set PLAYWRIGHT_JAVA_SRC=<java src root>
+  set PWDEBUG=1
+  mvn test
   ```
 
   ```sh python
   # Linux/macOS
-  $ PWDEBUG=1 pytest -s
+  PWDEBUG=1 pytest -s
 
   # Windows
-  $ set PWDEBUG=1
-  $ pytest -s
+  set PWDEBUG=1
+  pytest -s
   ```
 
   Additional useful defaults are configured when `PWDEBUG=1` is set:
@@ -71,15 +71,15 @@ configures Playwright for debugging and opens the inspector.
 
 - Use `open` or `codegen` commands in the Playwright [CLI](./cli.md):
   ```sh js
-  $ npx playwright codegen wikipedia.org
+  npx playwright codegen wikipedia.org
   ```
 
   ```sh java
-  $ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+  mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
   ```
 
   ```sh python
-  $ playwright codegen wikipedia.org
+  playwright codegen wikipedia.org
   ```
 
 ## Stepping through the Playwright script
