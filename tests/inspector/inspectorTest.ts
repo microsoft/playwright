@@ -27,6 +27,7 @@ type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   openRecorder: () => Promise<Recorder>;
   runCLI: (args: string[]) => CLIMock;
+  executablePath: string | undefined;
 };
 
 export const test = contextTest.extend({
@@ -34,7 +35,7 @@ export const test = contextTest.extend({
     process.env.PWTEST_RECORDER_PORT = String(10907 + workerInfo.workerIndex);
   },
 
-  async beforeEach({ page, context, toImpl, browserName, browserChannel, headful, mode }, testInfo: folio.TestInfo): Promise<CLITestArgs> {
+  async beforeEach({ page, context, toImpl, browserName, browserChannel, headful, mode, launchOptions: { executablePath } }, testInfo: folio.TestInfo): Promise<CLITestArgs> {
     testInfo.skip(mode === 'service');
     const recorderPageGetter = async () => {
       while (!toImpl(context).recorderAppForTest)
@@ -46,7 +47,7 @@ export const test = contextTest.extend({
     };
     return {
       runCLI: (cliArgs: string[]) => {
-        this._cli = new CLIMock(browserName, browserChannel, !headful, cliArgs);
+        this._cli = new CLIMock(browserName, browserChannel, !headful, cliArgs, executablePath);
         return this._cli;
       },
       openRecorder: async () => {
@@ -54,6 +55,7 @@ export const test = contextTest.extend({
         return new Recorder(page, await recorderPageGetter());
       },
       recorderPageGetter,
+      executablePath
     };
   },
 
@@ -161,7 +163,7 @@ class CLIMock {
   private waitForCallback: () => void;
   exited: Promise<void>;
 
-  constructor(browserName: string, browserChannel: string, headless: boolean, args: string[]) {
+  constructor(browserName: string, browserChannel: string, headless: boolean, args: string[], executablePath?: string) {
     this.data = '';
     const nodeArgs = [
       path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
@@ -176,6 +178,7 @@ class CLIMock {
         ...process.env,
         PWTEST_CLI_EXIT: '1',
         PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
+        PWTEST_CLI_EXECUTABLE_PATH: executablePath,
       },
       stdio: 'pipe'
     });
@@ -186,7 +189,7 @@ class CLIMock {
     });
     this.exited = new Promise((f, r) => {
       this.process.stderr.on('data', data => {
-        r(new Error(data));
+        console.error(data.toString());
       });
       this.process.on('exit', f);
     });
