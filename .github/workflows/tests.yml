@@ -140,10 +140,8 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }} --headed"
       if: ${{ always() }}
-      env:
-        HEADFUL: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -169,9 +167,7 @@ jobs:
     - run: node lib/cli/cli install-deps chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
-      env:
-        PWTEST_MODE: "${{ matrix.mode }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest -- --mode=${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -197,9 +193,7 @@ jobs:
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
-      env:
-        PWTEST_VIDEO: 1
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }} --video"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -256,9 +250,7 @@ jobs:
     - run: node lib/cli/cli install ffmpeg
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
-      env:
-        PWTEST_CHANNEL: "chrome"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest -- --channel=chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -284,10 +276,8 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
-    - run: npm run ctest
+    - run: npm run ctest -- --channel=chrome
       shell: bash
-      env:
-        PWTEST_CHANNEL: "chrome"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -311,9 +301,7 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
-    - run: npm run ctest
-      env:
-        PWTEST_CHANNEL: "chrome"
+    - run: npm run ctest -- --channel=chrome
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -338,9 +326,7 @@ jobs:
     - run: node lib/cli/cli install ffmpeg firefox-stable chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ftest"
-      env:
-        PWTEST_CHANNEL: "firefox-stable"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ftest -- --channel=firefox-stable"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -365,10 +351,8 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install ffmpeg firefox-stable chromium
-    - run: npm run ftest
+    - run: npm run ftest -- --channel=firefox-stable
       shell: bash
-      env:
-        PWTEST_CHANNEL: "firefox-stable"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -391,9 +375,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install ffmpeg firefox-stable chromium
-    - run: npm run ftest
-      env:
-        PWTEST_CHANNEL: "firefox-stable"
+    - run: npm run ftest -- --channel=firefox-stable
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -419,10 +401,8 @@ jobs:
     - run: npm run build
     # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
-    - run: npm run ctest
+    - run: npm run ctest -- --channel=msedge
       shell: bash
-      env:
-        PWTEST_CHANNEL: "msedge"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:

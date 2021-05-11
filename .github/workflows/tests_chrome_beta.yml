@@ -33,9 +33,7 @@ jobs:
     - run: node lib/cli/cli install ffmpeg
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
-      env:
-        PWTEST_CHANNEL: "chrome-beta"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest -- --channel=chrome-beta"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -63,10 +61,8 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install ffmpeg
-    - run: npm run ctest
+    - run: npm run ctest -- --channel=chrome-beta
       shell: bash
-      env:
-        PWTEST_CHANNEL: "chrome-beta"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -90,9 +86,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install ffmpeg
-    - run: npm run ctest
-      env:
-        PWTEST_CHANNEL: "chrome-beta"
+    - run: npm run ctest -- --channel=chrome-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1

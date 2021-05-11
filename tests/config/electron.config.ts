@@ -42,6 +42,7 @@ const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: folio.Config<AllOptions> = {
   testDir,
+  snapshotDir: '__snapshots__',
   outputDir,
   timeout: 30000,
   globalTimeout: 5400000,
