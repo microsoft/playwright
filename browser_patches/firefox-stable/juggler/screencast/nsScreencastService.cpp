@@ -28,6 +28,7 @@
 extern "C" {
 #include "jpeglib.h"
 }
+#include <libyuv.h>
 
 using namespace mozilla::widget;
 
@@ -79,11 +80,22 @@ nsresult generateUid(nsString& uid) {
 class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
                                      public webrtc::RawFrameCallback {
  public:
-  Session(nsIScreencastServiceClient* client, rtc::scoped_refptr<webrtc::VideoCaptureModuleEx>&& capturer, RefPtr<ScreencastEncoder>&& encoder, gfx::IntMargin margin, uint32_t jpegQuality)
+  Session(
+    nsIScreencastServiceClient* client,
+    rtc::scoped_refptr<webrtc::VideoCaptureModuleEx>&& capturer,
+    RefPtr<ScreencastEncoder>&& encoder,
+    int width, int height,
+    int viewportWidth, int viewportHeight,
+    gfx::IntMargin margin,
+    uint32_t jpegQuality)
       : mClient(client)
       , mCaptureModule(std::move(capturer))
       , mEncoder(std::move(encoder))
       , mJpegQuality(jpegQuality)
+      , mWidth(width)
+      , mHeight(height)
+      , mViewportWidth(viewportWidth)
+      , mViewportHeight(viewportHeight)
       , mMargin(margin) {
   }
 
@@ -145,6 +157,14 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
 
   // These callbacks end up running on the VideoCapture thread.
   void OnRawFrame(uint8_t* videoFrame, size_t videoFrameStride, const webrtc::VideoCaptureCapability& frameInfo) override {
+    int pageWidth = frameInfo.width - mMargin.LeftRight();
+    int pageHeight = frameInfo.height - mMargin.TopBottom();
+    // Headed Firefox brings sizes in sync slowly.
+    if (mViewportWidth && pageWidth > mViewportWidth)
+      pageWidth = mViewportWidth;
+    if (mViewportHeight && pageHeight > mViewportHeight)
+      pageHeight = mViewportHeight;
+
     {
       rtc::CritScope lock(&mCaptureCallbackCs);
       if (mFramesInFlight >= kMaxFramesInFlight) {
@@ -153,6 +173,36 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
       ++mFramesInFlight;
       if (!mClient)
         return;
+    }
+
+    int screenshotWidth = pageWidth;
+    int screenshotHeight = pageHeight;
+    int screenshotTopMargin = mMargin.TopBottom();
+    std::unique_ptr<uint8_t[]> canvas;
+    uint8_t* canvasPtr = videoFrame;
+    int canvasStride = videoFrameStride;
+
+    if (mWidth < pageWidth || mHeight < pageHeight) {
+      double scale = std::min(1., std::min((double)mWidth / pageWidth, (double)mHeight / pageHeight));
+      int canvasWidth = frameInfo.width * scale;
+      int canvasHeight = frameInfo.height * scale;
+      canvasStride = canvasWidth * 4;
+
+      screenshotWidth *= scale;
+      screenshotHeight *= scale;
+      screenshotTopMargin *= scale;
+
+      canvas.reset(new uint8_t[canvasWidth * canvasHeight * 4]);
+      canvasPtr = canvas.get();
+      libyuv::ARGBScale(videoFrame,
+                        videoFrameStride,
+                        frameInfo.width,
+                        frameInfo.height,
+                        canvasPtr,
+                        canvasStride,
+                        canvasWidth,
+                        canvasHeight,
+                        libyuv::kFilterBilinear);
     }
 
     jpeg_compress_struct info;
@@ -164,8 +214,8 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
     unsigned long bufferSize;
     jpeg_mem_dest(&info, &bufferPtr, &bufferSize);
 
-    info.image_width = frameInfo.width - mMargin.LeftRight();
-    info.image_height = frameInfo.height - mMargin.TopBottom();
+    info.image_width = screenshotWidth;
+    info.image_height = screenshotHeight;
 
 #if MOZ_LITTLE_ENDIAN()
     if (frameInfo.videoType == webrtc::VideoType::kARGB)
@@ -187,7 +237,7 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
 
     jpeg_start_compress(&info, true);
     while (info.next_scanline < info.image_height) {
-      JSAMPROW row = videoFrame + (mMargin.top + info.next_scanline) * videoFrameStride + 4 * mMargin.left;
+      JSAMPROW row = canvasPtr + (screenshotTopMargin + info.next_scanline) * canvasStride;
       if (jpeg_write_scanlines(&info, &row, 1) != 1) {
         fprintf(stderr, "JPEG library failed to encode line\n");
         break;
@@ -204,13 +254,11 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
       return;
     }
 
-    uint32_t deviceWidth = info.image_width;
-    uint32_t deviceHeight = info.image_height;
     nsIScreencastServiceClient* client = mClient.get();
     NS_DispatchToMainThread(NS_NewRunnableFunction(
-        "NotifyScreencastFrame", [client, base64, deviceWidth, deviceHeight]() -> void {
+        "NotifyScreencastFrame", [client, base64, pageWidth, pageHeight]() -> void {
           NS_ConvertUTF8toUTF16 utf16(base64);
-          client->ScreencastFrame(utf16, deviceWidth, deviceHeight);
+          client->ScreencastFrame(utf16, pageWidth, pageHeight);
         }));
   }
 
@@ -221,6 +269,10 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
   uint32_t mJpegQuality;
   rtc::CriticalSection mCaptureCallbackCs;
   uint32_t mFramesInFlight = 0;
+  int mWidth;
+  int mHeight;
+  int mViewportWidth;
+  int mViewportHeight;
   gfx::IntMargin mMargin;
 };
 
@@ -241,7 +293,7 @@ nsScreencastService::nsScreencastService() = default;
 nsScreencastService::~nsScreencastService() {
 }
 
-nsresult nsScreencastService::StartVideoRecording(nsIScreencastServiceClient* aClient, nsIDocShell* aDocShell, bool isVideo, const nsACString& aVideoFileName, uint32_t width, uint32_t height, uint32_t quality, int32_t offsetTop, nsAString& sessionId) {
+nsresult nsScreencastService::StartVideoRecording(nsIScreencastServiceClient* aClient, nsIDocShell* aDocShell, bool isVideo, const nsACString& aVideoFileName, uint32_t width, uint32_t height, uint32_t quality, uint32_t viewportWidth, uint32_t viewportHeight, uint32_t offsetTop, nsAString& sessionId) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread(), "Screencast service must be started on the Main thread.");
 
   PresShell* presShell = aDocShell->GetPresShell();
@@ -282,7 +334,7 @@ nsresult nsScreencastService::StartVideoRecording(nsIScreencastServiceClient* aC
   NS_ENSURE_SUCCESS(rv, rv);
   sessionId = uid;
 
-  auto session = std::make_unique<Session>(aClient, std::move(capturer), std::move(encoder), margin, isVideo ? 0 : quality);
+  auto session = std::make_unique<Session>(aClient, std::move(capturer), std::move(encoder), width, height, viewportWidth, viewportHeight, margin, isVideo ? 0 : quality);
   if (!session->Start())
     return NS_ERROR_FAILURE;
   mIdToSession.emplace(sessionId, std::move(session));

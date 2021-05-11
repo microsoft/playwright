@@ -514,7 +514,8 @@ class PageTarget {
         registry.emit(TargetRegistry.Events.ScreencastStopped, sessionId);
       },
     };
-    sessionId = screencastService.startVideoRecording(screencastClient, docShell, true, file, width, height, 0, devicePixelRatio * rect.top);
+    const viewport = this._viewportSize || this._browserContext.defaultViewportSize || { width: 0, height: 0 };
+    sessionId = screencastService.startVideoRecording(screencastClient, docShell, true, file, width, height, 0, viewport.width, viewport.height, devicePixelRatio * rect.top);
     this._videoRecordingInfo = { sessionId, file };
     this.emit(PageTarget.Events.ScreencastStarted);
   }
@@ -554,7 +555,8 @@ class PageTarget {
       screencastStopped() {
       },
     };
-    const screencastId = screencastService.startVideoRecording(screencastClient, docShell, false, '', width, height, quality || 90, devicePixelRatio * rect.top);
+    const viewport = this._viewportSize || this._browserContext.defaultViewportSize || { width: 0, height: 0 };
+    const screencastId = screencastService.startVideoRecording(screencastClient, docShell, false, '', width, height, quality || 90, viewport.width, viewport.height, devicePixelRatio * rect.top);
     this._screencastRecordingInfo = { screencastId };
     return { screencastId };
   }

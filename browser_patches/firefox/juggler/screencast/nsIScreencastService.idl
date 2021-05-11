@@ -20,7 +20,7 @@ interface nsIScreencastServiceClient : nsISupports
 [scriptable, uuid(d8c4d9e0-9462-445e-9e43-68d3872ad1de)]
 interface nsIScreencastService : nsISupports
 {
-  AString startVideoRecording(in nsIScreencastServiceClient client, in nsIDocShell docShell, in boolean isVideo, in ACString fileName, in uint32_t width, in uint32_t height, in uint32_t quality, in int32_t offset_top);
+  AString startVideoRecording(in nsIScreencastServiceClient client, in nsIDocShell docShell, in boolean isVideo, in ACString fileName, in uint32_t width, in uint32_t height, in uint32_t quality, in uint32_t viewportWidth, in uint32_t viewportHeight, in uint32_t offset_top);
 
   /**
    * Will emit 'juggler-screencast-stopped' when the video file is saved.
