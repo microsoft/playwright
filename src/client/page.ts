@@ -209,6 +209,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   _onClose() {
     this._closed = true;
     this._browserContext._pages.delete(this);
+    this._browserContext._backgroundPages.delete(this);
     this.emit(Events.Page.Close, this);
   }
 
