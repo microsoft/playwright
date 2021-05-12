@@ -134,7 +134,7 @@ page.keyboard.press("Meta+A")
 // on Windows and Linux
 await page.Keyboard.PressAsync("Control+A");
 // on macOS
-await page.Keyboard.Press("Meta+A");
+await page.Keyboard.PressAsync("Meta+A");
 ```
 
 ## async method: Keyboard.down
