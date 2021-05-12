@@ -15710,7 +15710,7 @@ index 0000000000000000000000000000000000000000..01b8f65e87b4898b1418f47f4d95c401
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf69b5d4dcb 100644
+index 71dad424cfe199526c1ab9d505a8889df7f22849..cc946e129bef07452a30b63b86fee1a9cbeb0f36 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -239,7 +239,7 @@
@@ -15993,7 +15993,16 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  }
  
  TrackingType WebPageProxy::touchEventTrackingType(const WebTouchEvent& touchStartEvent) const
-@@ -3388,6 +3529,7 @@ void WebPageProxy::receivedNavigationPolicyDecision(PolicyAction policyAction, A
+@@ -3329,6 +3470,8 @@ void WebPageProxy::receivedNavigationPolicyDecision(PolicyAction policyAction, A
+         policyAction = PolicyAction::Download;
+ 
+     if (policyAction != PolicyAction::Use || !frame.isMainFrame() || !navigation) {
++        if (policyAction == PolicyAction::Download && navigation)
++            m_decidePolicyForResponseRequest = navigation->currentRequest();
+         receivedPolicyDecision(policyAction, navigation, WTFMove(policies), WTFMove(navigationAction), WTFMove(sender));
+         return;
+     }
+@@ -3388,6 +3531,7 @@ void WebPageProxy::receivedNavigationPolicyDecision(PolicyAction policyAction, A
  
  void WebPageProxy::receivedPolicyDecision(PolicyAction action, API::Navigation* navigation, RefPtr<API::WebsitePolicies>&& websitePolicies, Variant<Ref<API::NavigationResponse>, Ref<API::NavigationAction>>&& navigationActionOrResponse, Ref<PolicyDecisionSender>&& sender, Optional<SandboxExtension::Handle> sandboxExtensionHandle, WillContinueLoadInNewProcess willContinueLoadInNewProcess)
  {
@@ -16001,7 +16010,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
      if (!hasRunningProcess()) {
          sender->send(PolicyDecision { sender->identifier(), isNavigatingToAppBoundDomain(), PolicyAction::Ignore, 0, WTF::nullopt, WTF::nullopt });
          return;
-@@ -4123,6 +4265,11 @@ void WebPageProxy::pageScaleFactorDidChange(double scaleFactor)
+@@ -4123,6 +4267,11 @@ void WebPageProxy::pageScaleFactorDidChange(double scaleFactor)
      m_pageScaleFactor = scaleFactor;
  }
  
@@ -16013,7 +16022,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  void WebPageProxy::pluginScaleFactorDidChange(double pluginScaleFactor)
  {
      m_pluginScaleFactor = pluginScaleFactor;
-@@ -4455,6 +4602,7 @@ void WebPageProxy::didDestroyNavigation(uint64_t navigationID)
+@@ -4455,6 +4604,7 @@ void WebPageProxy::didDestroyNavigation(uint64_t navigationID)
          return;
  
      m_navigationState->didDestroyNavigation(navigationID);
@@ -16021,7 +16030,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  }
  
  void WebPageProxy::didStartProvisionalLoadForFrame(FrameIdentifier frameID, FrameInfoData&& frameInfo, ResourceRequest&& request, uint64_t navigationID, URL&& url, URL&& unreachableURL, const UserData& userData)
-@@ -4677,6 +4825,8 @@ void WebPageProxy::didFailProvisionalLoadForFrameShared(Ref<WebProcessProxy>&& p
+@@ -4677,6 +4827,8 @@ void WebPageProxy::didFailProvisionalLoadForFrameShared(Ref<WebProcessProxy>&& p
  
      m_failingProvisionalLoadURL = { };
  
@@ -16030,7 +16039,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
      // If the provisional page's load fails then we destroy the provisional page.
      if (m_provisionalPage && m_provisionalPage->mainFrame() == frame && willContinueLoading == WillContinueLoading::No)
          m_provisionalPage = nullptr;
-@@ -5116,7 +5266,14 @@ void WebPageProxy::decidePolicyForNavigationActionAsync(FrameIdentifier frameID,
+@@ -5116,7 +5268,14 @@ void WebPageProxy::decidePolicyForNavigationActionAsync(FrameIdentifier frameID,
      NavigationActionData&& navigationActionData, FrameInfoData&& originatingFrameInfo, Optional<WebPageProxyIdentifier> originatingPageID, const WebCore::ResourceRequest& originalRequest, WebCore::ResourceRequest&& request,
      IPC::FormDataReference&& requestBody, WebCore::ResourceResponse&& redirectResponse, const UserData& userData, uint64_t listenerID)
  {
@@ -16046,7 +16055,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  }
  
  void WebPageProxy::decidePolicyForNavigationActionAsyncShared(Ref<WebProcessProxy>&& process, PageIdentifier webPageID, FrameIdentifier frameID, FrameInfoData&& frameInfo,
-@@ -5633,6 +5790,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
+@@ -5633,6 +5792,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
      auto* originatingPage = m_process->webPage(originatingPageID);
      auto originatingFrameInfo = API::FrameInfo::create(WTFMove(originatingFrameInfoData), originatingPage);
      auto mainFrameURL = m_mainFrame ? m_mainFrame->url() : URL();
@@ -16054,7 +16063,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
      auto completionHandler = [this, protectedThis = makeRef(*this), mainFrameURL, request, reply = WTFMove(reply), privateClickMeasurement = navigationActionData.privateClickMeasurement] (RefPtr<WebPageProxy> newPage) mutable {
          if (!newPage) {
              reply(WTF::nullopt, WTF::nullopt);
-@@ -5673,6 +5831,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
+@@ -5673,6 +5833,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
  void WebPageProxy::showPage()
  {
      m_uiClient->showPage(this);
@@ -16062,7 +16071,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  }
  
  void WebPageProxy::exitFullscreenImmediately()
-@@ -5708,6 +5867,10 @@ void WebPageProxy::closePage()
+@@ -5708,6 +5869,10 @@ void WebPageProxy::closePage()
      if (isClosed())
          return;
  
@@ -16073,7 +16082,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
      RELEASE_LOG_IF_ALLOWED(Process, "closePage:");
      pageClient().clearAllEditCommands();
      m_uiClient->close(this);
-@@ -5744,6 +5907,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, FrameInfoData&& f
+@@ -5744,6 +5909,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, FrameInfoData&& f
      }
  
      runModalJavaScriptDialog(WTFMove(frame), WTFMove(frameInfo), message, [reply = WTFMove(reply)](WebPageProxy& page, WebFrameProxy* frame, FrameInfoData&& frameInfo, const String& message, CompletionHandler<void()>&& completion) mutable {
@@ -16082,7 +16091,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
          page.m_uiClient->runJavaScriptAlert(page, message, frame, WTFMove(frameInfo), [reply = WTFMove(reply), completion = WTFMove(completion)]() mutable {
              reply();
              completion();
-@@ -5765,6 +5930,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, FrameInfoData&&
+@@ -5765,6 +5932,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, FrameInfoData&&
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -16091,7 +16100,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  
      runModalJavaScriptDialog(WTFMove(frame), WTFMove(frameInfo), message, [reply = WTFMove(reply)](WebPageProxy& page, WebFrameProxy* frame, FrameInfoData&& frameInfo, const String& message, CompletionHandler<void()>&& completion) mutable {
          page.m_uiClient->runJavaScriptConfirm(page, message, frame, WTFMove(frameInfo), [reply = WTFMove(reply), completion = WTFMove(completion)](bool result) mutable {
-@@ -5788,6 +5955,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, FrameInfoData&&
+@@ -5788,6 +5957,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, FrameInfoData&&
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -16100,7 +16109,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  
      runModalJavaScriptDialog(WTFMove(frame), WTFMove(frameInfo), message, [reply = WTFMove(reply), defaultValue](WebPageProxy& page, WebFrameProxy* frame, FrameInfoData&& frameInfo, const String& message, CompletionHandler<void()>&& completion) mutable {
          page.m_uiClient->runJavaScriptPrompt(page, message, defaultValue, frame, WTFMove(frameInfo), [reply = WTFMove(reply), completion = WTFMove(completion)](auto& result) mutable {
-@@ -5948,6 +6117,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, FrameInf
+@@ -5948,6 +6119,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, FrameInf
              return;
          }
      }
@@ -16109,7 +16118,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer and the tryClose timer.
      m_process->stopResponsivenessTimer();
-@@ -7152,6 +7323,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7152,6 +7325,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              didFinishProcessingAllPendingMouseEvents();
@@ -16118,7 +16127,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
          }
          break;
      }
-@@ -7178,7 +7351,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7178,7 +7353,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -16126,7 +16135,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          auto event = m_keyEventQueue.takeFirst();
          MESSAGE_CHECK(m_process, type == event.type());
-@@ -7197,7 +7369,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7197,7 +7371,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -16134,7 +16143,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -7206,6 +7377,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7206,6 +7379,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -16142,7 +16151,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
          }
          break;
      }
-@@ -7536,7 +7708,10 @@ void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
+@@ -7536,7 +7710,10 @@ void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
  {
      RELEASE_LOG_ERROR_IF_ALLOWED(Loading, "dispatchProcessDidTerminate: reason=%d", reason);
  
@@ -16154,7 +16163,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
      if (m_loaderClient)
          handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
      else
-@@ -7908,6 +8083,7 @@ static const Vector<ASCIILiteral>& mediaRelatedIOKitClasses()
+@@ -7908,6 +8085,7 @@ static const Vector<ASCIILiteral>& mediaRelatedIOKitClasses()
  
  WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& process, DrawingAreaProxy& drawingArea, RefPtr<API::WebsitePolicies>&& websitePolicies)
  {
@@ -16162,7 +16171,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
      WebPageCreationParameters parameters;
  
      parameters.processDisplayName = configuration().processDisplayName();
-@@ -8100,6 +8276,8 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
+@@ -8100,6 +8278,8 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
      parameters.shouldRelaxThirdPartyCookieBlocking = m_configuration->shouldRelaxThirdPartyCookieBlocking();
      parameters.canUseCredentialStorage = m_canUseCredentialStorage;
  
@@ -16171,7 +16180,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
  #if PLATFORM(GTK)
      parameters.themeName = pageClient().themeName();
  #endif
-@@ -8172,6 +8350,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, Even
+@@ -8172,6 +8352,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, Even
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge, NegotiatedLegacyTLS negotiatedLegacyTLS)
  {
@@ -16186,7 +16195,7 @@ index 71dad424cfe199526c1ab9d505a8889df7f22849..90bba8ab9b5ff466758c281485796bf6
      if (negotiatedLegacyTLS == NegotiatedLegacyTLS::Yes) {
          m_navigationClient->shouldAllowLegacyTLS(*this, authenticationChallenge.get(), [this, protectedThis = makeRef(*this), authenticationChallenge] (bool shouldAllowLegacyTLS) {
              if (shouldAllowLegacyTLS)
-@@ -8265,6 +8451,15 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
+@@ -8265,6 +8453,15 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
              request->deny();
      };
  
