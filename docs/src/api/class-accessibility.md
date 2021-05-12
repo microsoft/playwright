@@ -75,8 +75,8 @@ print(snapshot)
 ```
 
 ```csharp
-var accessibilitySnapshot = await Page.Accessibility.SnapshotAsync();
-Console.WriteLine(accessibilitySnapshot);
+var accessibilitySnapshot = await page.Accessibility.SnapshotAsync();
+Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(accessibilitySnapshot));
 ```
 
 An example of logging the focused node's name:
@@ -98,7 +98,7 @@ function findFocusedNode(node) {
 ```
 
 ```csharp
-Func<AccessibilitySnapshotResult, AccessibilitySnapshotResult> findFocusedNode = root =>
+static AccessibilitySnapshotResult findFocusedNode(AccessibilitySnapshotResult root)
 {
     var nodes = new Stack<AccessibilitySnapshotResult>(new[] { root });
     while (nodes.Count > 0)
@@ -112,12 +112,13 @@ Func<AccessibilitySnapshotResult, AccessibilitySnapshotResult> findFocusedNode =
     }
 
     return null;
-};
+}
 
-var accessibilitySnapshot = await Page.Accessibility.SnapshotAsync();
+var accessibilitySnapshot = await page.Accessibility.SnapshotAsync();
+Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(accessibilitySnapshot));
 var focusedNode = findFocusedNode(accessibilitySnapshot);
-if(focusedNode != null)
-  Console.WriteLine(focusedNode.Name);
+if (focusedNode != null)
+    Console.WriteLine(focusedNode.Name);
 ```
 
 ```java
