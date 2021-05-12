@@ -196,7 +196,7 @@ class CLIMock {
           r(new Error(`Process failed with exit code ${exitCode}`));
         if (signal)
           r(new Error(`Process recieved signal: ${signal}`));
-        f(exitCode);
+        f();
       });
     });
   }
