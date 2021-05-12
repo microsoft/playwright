@@ -41,6 +41,7 @@ export class CodeGenerator extends EventEmitter {
     super();
 
     launchOptions = { headless: false, ...launchOptions };
+    delete launchOptions.executablePath;
     this._enabled = generateHeaders;
     this._options = { browserName, generateHeaders, launchOptions, contextOptions, deviceName, saveStorage };
     this.restart();
