@@ -106,17 +106,22 @@ for (const params of [
     id: 'fit',
     width: 500,
     height: 500,
-  }, {
+  },
+  {
     id: 'crop',
     width: 400, // Less than 450 to test firefox
     height: 800,
-  }, {
+  },
+  {
     id: 'scale',
     width: 1024,
     height: 768,
-  }]) {
-  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName }, testInfo) => {
+  }
+]) {
+  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform }, testInfo) => {
     browserTest.fixme(browserName === 'chromium' && video, 'Same screencast resolution conflicts');
+    browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');
+
     const scale = Math.min(800 / params.width, 600 / params.height, 1);
     const previewWidth = params.width * scale;
     const previewHeight = params.height * scale;
@@ -124,16 +129,18 @@ for (const params of [
     const context = await contextFactory({ viewport: { width: params.width, height: params.height }});
     await (context as any)._tracing.start({ name: 'test', screenshots: true, snapshots: true });
     const page = await context.newPage();
-    await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
     // Make sure we have a chance to paint.
-    for (let i = 0; i < 10; ++i)
+    for (let i = 0; i < 10; ++i) {
+      await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
       await page.evaluate(() => new Promise(requestAnimationFrame));
+    }
     await (context as any)._tracing.stop();
     await (context as any)._tracing.export(testInfo.outputPath('trace.zip'));
 
     const { events, resources } = await parseTrace(testInfo.outputPath('trace.zip'));
     const frames = events.filter(e => e.type === 'screencast-frame');
-    // Check all frame sizes
+
+    // Check all frame sizes.
     for (const frame of frames) {
       expect(frame.width).toBe(params.width);
       expect(frame.height).toBe(params.height);
@@ -143,7 +150,6 @@ for (const params of [
       expect(image.height).toBe(previewHeight);
     }
 
-    // Check last frame content.
     const frame = frames[frames.length - 1]; // pick last frame.
     const buffer = resources.get('resources/' + frame.sha1);
     const image = jpeg.decode(buffer);
