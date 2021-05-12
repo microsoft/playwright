@@ -54,6 +54,20 @@ page.keyboard.press("Backspace")
 # result text will end up saying "Hello!"
 ```
 
+```csharp
+await page.Keyboard.TypeAsync("Hello World!");
+await page.Keyboard.PressAsync("ArrowLeft");
+
+await page.Keyboard.DownAsync("Shift");
+for (int i = 0; i < " World".Length; i++)
+    await page.Keyboard.PressAsync("ArrowLeft");
+
+await page.Keyboard.UpAsync("Shift");
+
+await page.Keyboard.PressAsync("Backspace");
+// Result text will end up saying "Hello!"
+```
+
 An example of pressing uppercase `A`
 
 ```js
@@ -78,6 +92,12 @@ await page.keyboard.press("Shift+A")
 page.keyboard.press("Shift+KeyA")
 # or
 page.keyboard.press("Shift+A")
+```
+
+```csharp
+await page.Keyboard.PressAsync("Shift+KeyA");
+// or 
+await page.Keyboard.PressAsync("Shift+A");
 ```
 
 An example to trigger select-all with the keyboard
@@ -108,6 +128,13 @@ await page.keyboard.press("Meta+A")
 page.keyboard.press("Control+A")
 # on mac_os
 page.keyboard.press("Meta+A")
+```
+
+```csharp
+// on Windows and Linux
+await page.Keyboard.PressAsync("Control+A");
+// on macOS
+await page.Keyboard.Press("Meta+A");
 ```
 
 ## async method: Keyboard.down
@@ -163,6 +190,10 @@ await page.keyboard.insert_text("嗨")
 
 ```python sync
 page.keyboard.insert_text("嗨")
+```
+
+```csharp
+await page.Keyboard.PressAsync("嗨");
 ```
 
 :::note
@@ -242,6 +273,17 @@ page.screenshot(path="o.png")
 browser.close()
 ```
 
+```csharp
+await page.GoToAsync("https://keycode.info");
+await page.Keyboard.PressAsync("A");
+await page.ScreenshotAsync("A.png");
+await page.Keyboard.PressAsync("ArrowLeft");
+await page.ScreenshotAsync("ArrowLeft.png");
+await page.Keyboard.PressAsync("Shift+O");
+await page.ScreenshotAsync("O.png");
+await browser.CloseAsync();
+```
+
 Shortcut for [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
 ### param: Keyboard.press.key
@@ -280,6 +322,11 @@ await page.keyboard.type("World", delay=100) # types slower, like a user
 ```python sync
 page.keyboard.type("Hello") # types instantly
 page.keyboard.type("World", delay=100) # types slower, like a user
+```
+
+```csharp
+await page.Keyboard.TypeAsync("Hello"); // types instantly
+await page.Keyboard.TypeAsync("World"); // types slower, like a user
 ```
 
 :::note
