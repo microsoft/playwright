@@ -205,6 +205,7 @@ export module Protocol {
     export type addScriptToEvaluateOnNewDocumentReturnValue = void;
     export type addBindingParameters = {
       browserContextId?: string;
+      worldName?: string;
       name: string;
       script: string;
     };
@@ -456,6 +457,7 @@ export module Protocol {
     };
     export type setFileInputFilesReturnValue = void;
     export type addBindingParameters = {
+      worldName?: string;
       name: string;
       script: string;
     };
@@ -699,7 +701,10 @@ export module Protocol {
     };
     export type executionContextCreatedPayload = {
       executionContextId: string;
-      auxData: any;
+      auxData: {
+        frameId?: string;
+        name?: string;
+      };
     }
     export type executionContextDestroyedPayload = {
       executionContextId: string;
