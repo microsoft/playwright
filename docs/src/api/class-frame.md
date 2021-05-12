@@ -686,7 +686,6 @@ Attribute name to get the value for.
 ## async method: Frame.goto
 * langs:
   - alias-java: navigate
-  - alias-csharp: GoToAsync
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
