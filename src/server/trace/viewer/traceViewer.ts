@@ -31,10 +31,11 @@ const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
 class TraceViewer {
   private _server: HttpServer;
+  private _browserName: string;
 
-  constructor(traceDir: string, resourcesDir?: string) {
-    if (!resourcesDir)
-      resourcesDir = path.join(traceDir, 'resources');
+  constructor(traceDir: string, browserName: string) {
+    this._browserName = browserName;
+    const resourcesDir = path.join(traceDir, 'resources');
 
     // Served by TraceServer
     // - "/tracemodel" - json with trace model.
@@ -124,7 +125,7 @@ class TraceViewer {
     ];
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
-    const context = await traceViewerPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
+    const context = await traceViewerPlaywright[this._browserName as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
       sdkLanguage: 'javascript',
       args,
@@ -144,7 +145,7 @@ class TraceViewer {
   }
 }
 
-export async function showTraceViewer(traceDir: string, resourcesDir?: string) {
-  const traceViewer = new TraceViewer(traceDir, resourcesDir);
+export async function showTraceViewer(traceDir: string, browserName: string) {
+  const traceViewer = new TraceViewer(traceDir, browserName);
   await traceViewer.show();
 }

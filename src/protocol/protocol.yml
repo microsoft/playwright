@@ -260,7 +260,7 @@ LaunchOptions:
         username: string?
         password: string?
     downloadsPath: string?
-    _traceDir: string?
+    traceDir: string?
     chromiumSandbox: boolean?
 
 

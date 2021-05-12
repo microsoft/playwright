@@ -132,9 +132,9 @@ it.describe('snapshots', () => {
     await previewPage.evaluate(snapshotId => {
       (window as any).showSnapshot(snapshotId);
     }, `${snapshot.snapshot().pageId}?name=snapshot${counter}`);
-    while (previewPage.frames().length < 4)
+    while (previewPage.frames().length < 3)
       await new Promise(f => previewPage.once('frameattached', f));
-    const button = await previewPage.frames()[3].waitForSelector('button');
+    const button = await previewPage.frames()[2].waitForSelector('button');
     expect(await button.textContent()).toBe('Hello iframe');
   });
 

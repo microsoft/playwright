@@ -50,7 +50,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     sdkLanguage: 'javascript'
   };
 
-  readonly _tracing: Tracing;
+  readonly tracing: Tracing;
 
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
@@ -69,7 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     if (parent instanceof Browser)
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
-    this._tracing = new Tracing(this);
+    this.tracing = new Tracing(this);
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());

@@ -56,7 +56,7 @@ class PlaywrightEnv {
   async beforeAll(args: CommonArgs & PlaywrightEnvOptions, workerInfo: folio.WorkerInfo): Promise<PlaywrightWorkerArgs> {
     this._browserType = args.playwright[args.browserName];
     this._browserOptions = {
-      _traceDir: args.traceDir,
+      traceDir: args.traceDir,
       channel: args.browserChannel,
       headless: !args.headful,
       handleSIGINT: false,

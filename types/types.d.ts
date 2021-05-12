@@ -5455,6 +5455,8 @@ export interface BrowserContext {
     }>;
   }>;
 
+  tracing: Tracing;
+
   /**
    * Removes a route created with
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler).
@@ -10262,6 +10264,52 @@ export interface Touchscreen {
    * @param y
    */
   tap(x: number, y: number): Promise<void>;
+}
+
+/**
+ * Tracing object for collecting test traces that can be opened using Playwright CLI.
+ */
+export interface Tracing {
+  /**
+   * Export trace into the file with the given name. Should be called after the tracing has stopped.
+   * @param path File to save the trace into.
+   */
+  export(path: string): Promise<void>;
+
+  /**
+   * Start tracing.
+   *
+   * ```js
+   * await context.tracing.start({ name: 'trace', screenshots: true, snapshots: true });
+   * const page = await context.newPage();
+   * await page.goto('https://playwright.dev');
+   * await context.tracing.stop();
+   * await context.tracing.export('trace.zip');
+   * ```
+   *
+   * @param options
+   */
+  start(options?: {
+    /**
+     * If specified, the trace is going to be saved into the file with the given name.
+     */
+    name?: string;
+
+    /**
+     * Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview.
+     */
+    screenshots?: boolean;
+
+    /**
+     * Whether to capture DOM snapshot on every action.
+     */
+    snapshots?: boolean;
+  }): Promise<void>;
+
+  /**
+   * Stop tracing.
+   */
+  stop(): Promise<void>;
 }
 
 /**

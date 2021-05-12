@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
+import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import { Artifact } from './artifact';
 import { BrowserContext } from './browserContext';
 
-export class Tracing {
+export class Tracing implements api.Tracing {
   private _context: BrowserContext;
 
   constructor(channel: BrowserContext) {
     this._context = channel;
   }
 
-  async start(options: { snapshots?: boolean, screenshots?: boolean } = {}) {
+  async start(options: { name?: string, snapshots?: boolean, screenshots?: boolean } = {}) {
     await this._context._wrapApiCall('tracing.start', async (channel: channels.BrowserContextChannel) => {
       return await channel.tracingStart(options);
     });
