@@ -1,4 +1,4 @@
-name: primary tests
+name: "tests 1"
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
       - master
       - release-*
   pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
     branches:
       - master
       - release-*
