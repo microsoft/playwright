@@ -536,6 +536,12 @@ only the first option matching one of the passed options is selected. Optional.
 
 Receives the event data and resolves to truthy value when the waiting should resolve.
 
+## csharp-wait-for-event-predicate
+* langs: csharp
+- `predicate` <[Func<T, bool>]>
+
+Receives the event data and resolves to truthy value when the waiting should resolve.
+
 ## wait-for-event-timeout
 * langs: csharp, java, python
 - `timeout` <[float]>
