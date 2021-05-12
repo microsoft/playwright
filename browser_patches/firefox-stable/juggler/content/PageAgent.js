@@ -150,7 +150,6 @@ class PageAgent {
         insertText: this._insertText.bind(this),
         navigate: this._navigate.bind(this),
         reload: this._reload.bind(this),
-        removeScriptToEvaluateOnNewDocument: ({scriptId}) => this._frameTree.removeScriptToEvaluateOnNewDocument(scriptId),
         screenshot: this._screenshot.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setCacheDisabled: this._setCacheDisabled.bind(this),
@@ -251,8 +250,8 @@ class PageAgent {
       return;
     const frame = this._findFrameForNode(inputElement);
     this._browserPage.emit('pageFileChooserOpened', {
-      executionContextId: frame.executionContext().id(),
-      element: frame.executionContext().rawValueToRemoteObject(inputElement)
+      executionContextId: frame.mainExecutionContext().id(),
+      element: frame.mainExecutionContext().rawValueToRemoteObject(inputElement)
     });
   }
 
