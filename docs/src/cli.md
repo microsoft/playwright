@@ -388,5 +388,19 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="inst
 playwright install-deps
 ```
 
+You can also install the dependencies for a single browser only by passing it as an argument:
+
+```sh js
+npx playwright install-deps chromium
+```
+
+```sh java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps chromium"
+```
+
+```sh python
+playwright install-deps chromium
+```
+
 ## Known limitations
 Opening WebKit Web Inspector will disconnect Playwright from the browser. In such cases, code generation will stop.
