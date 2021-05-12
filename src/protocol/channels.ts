@@ -179,7 +179,19 @@ export type PlaywrightInitializer = {
   preLaunchedBrowser?: BrowserChannel,
 };
 export interface PlaywrightChannel extends Channel {
+  on(event: 'tcpPortForwardingSocket', callback: (params: PlaywrightTcpPortForwardingSocketEvent) => void): this;
+  enablePortForwarding(params: PlaywrightEnablePortForwardingParams, metadata?: Metadata): Promise<PlaywrightEnablePortForwardingResult>;
 }
+export type PlaywrightTcpPortForwardingSocketEvent = {
+  socket: TCPSocketChannel,
+};
+export type PlaywrightEnablePortForwardingParams = {
+  ports: number[],
+};
+export type PlaywrightEnablePortForwardingOptions = {
+
+};
+export type PlaywrightEnablePortForwardingResult = void;
 
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
@@ -424,19 +436,14 @@ export type BrowserInitializer = {
 };
 export interface BrowserChannel extends Channel {
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
-  on(event: 'tcpPortForwardingSocket', callback: (params: BrowserTcpPortForwardingSocketEvent) => void): this;
   close(params?: BrowserCloseParams, metadata?: Metadata): Promise<BrowserCloseResult>;
   killForTests(params?: BrowserKillForTestsParams, metadata?: Metadata): Promise<BrowserKillForTestsResult>;
   newContext(params: BrowserNewContextParams, metadata?: Metadata): Promise<BrowserNewContextResult>;
   newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: Metadata): Promise<BrowserNewBrowserCDPSessionResult>;
   startTracing(params: BrowserStartTracingParams, metadata?: Metadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: Metadata): Promise<BrowserStopTracingResult>;
-  enablePortForwarding(params: BrowserEnablePortForwardingParams, metadata?: Metadata): Promise<BrowserEnablePortForwardingResult>;
 }
 export type BrowserCloseEvent = {};
-export type BrowserTcpPortForwardingSocketEvent = {
-  socket: TCPSocketChannel,
-};
 export type BrowserCloseParams = {};
 export type BrowserCloseOptions = {};
 export type BrowserCloseResult = void;
@@ -582,13 +589,6 @@ export type BrowserStopTracingOptions = {};
 export type BrowserStopTracingResult = {
   binary: Binary,
 };
-export type BrowserEnablePortForwardingParams = {
-  ports: number[],
-};
-export type BrowserEnablePortForwardingOptions = {
-
-};
-export type BrowserEnablePortForwardingResult = void;
 
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {

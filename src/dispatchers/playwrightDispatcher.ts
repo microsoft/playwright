@@ -39,4 +39,8 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       preLaunchedBrowser,
     }, false);
   }
+
+  async enablePortForwarding(params: channels.PlaywrightEnablePortForwardingParams): Promise<void> {
+    this._object.enablePortForwarding(params.ports);
+  }
 }

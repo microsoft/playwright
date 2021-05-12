@@ -147,6 +147,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
+  scheme.PlaywrightEnablePortForwardingParams = tObject({
+    ports: tArray(tNumber),
+  });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
     source: tString,
@@ -321,9 +324,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     categories: tOptional(tArray(tString)),
   });
   scheme.BrowserStopTracingParams = tOptional(tObject({}));
-  scheme.BrowserEnablePortForwardingParams = tObject({
-    ports: tArray(tNumber),
-  });
   scheme.BrowserContextAddCookiesParams = tObject({
     cookies: tArray(tType('SetNetworkCookie')),
   });

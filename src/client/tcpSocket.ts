@@ -17,34 +17,29 @@
 import net from 'net';
 
 import * as channels from '../protocol/channels';
-import { isLocalIpAdress } from '../utils/network';
-import { assert, isUnderTest } from '../utils/utils';
+import { assert, isLocalIpAddress, isUnderTest } from '../utils/utils';
 import { Browser } from './browser';
 import { ChannelOwner } from './channelOwner';
+import { Playwright } from './playwright';
 
 export class TCPSocket extends ChannelOwner<channels.TCPSocketChannel, channels.TCPSocketInitializer>  {
   private _socket: net.Socket;
-  private _browser: Browser;
   static from(socket: channels.TCPSocketChannel): TCPSocket {
     return (socket as any)._object;
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.TCPSocketInitializer) {
     super(parent, type, guid, initializer);
-    assert(parent instanceof Browser);
-    this._browser = parent;
-    this._browser.on('disconnected', () => this._socket.end());
+    this._connection.on('disconnect', () => this._socket.end());
 
     if (isUnderTest() && process.env.PW_TEST_PROXY_TARGET)
       this._initializer.dstPort = Number(process.env.PW_TEST_PROXY_TARGET);
-    assert(isLocalIpAdress(this._initializer.dstAddr));
+    assert(isLocalIpAddress(this._initializer.dstAddr));
 
     this._socket = net.createConnection(this._initializer.dstPort, this._initializer.dstAddr);
     this._socket.on('error', () => this.end().catch(() => {}));
     this._socket.on('data', data => this.write(data).catch(() => {}));
     this._socket.on('close', () => {
-      if (!this._browser.isConnected())
-        return;
       this.end().catch(() => {});
     });
 

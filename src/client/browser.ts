@@ -23,7 +23,6 @@ import { BrowserContextOptions } from './types';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
-import { TCPSocket } from './tcpSocket';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
@@ -44,7 +43,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     super(parent, type, guid, initializer);
     this._name = initializer.name;
     this._channel.on('close', () => this._didClose());
-    this._channel.on('tcpPortForwardingSocket', ({socket}) => TCPSocket.from(socket));
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 

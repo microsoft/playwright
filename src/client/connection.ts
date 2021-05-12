@@ -39,6 +39,7 @@ import { Android, AndroidSocket, AndroidDevice } from './android';
 import { TCPSocket } from './tcpSocket';
 import { captureStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
+import { EventEmitter } from 'events';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -46,7 +47,7 @@ class Root extends ChannelOwner<channels.Channel, {}> {
   }
 }
 
-export class Connection {
+export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   private _waitingForObject = new Map<string, any>();
   onmessage = (message: object): void => {};
@@ -57,6 +58,7 @@ export class Connection {
   private _onClose?: () => void;
 
   constructor(onClose?: () => void) {
+    super();
     this._rootObject = new Root(this);
     this._onClose = onClose;
   }
@@ -136,6 +138,7 @@ export class Connection {
     for (const callback of this._callbacks.values())
       callback.reject(new Error(errorMessage));
     this._callbacks.clear();
+    this.emit('disconnect');
   }
 
   isDisconnected() {

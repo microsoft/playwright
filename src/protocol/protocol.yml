@@ -372,6 +372,20 @@ Playwright:
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
 
+  commands:
+
+    enablePortForwarding:
+      parameters:
+        ports:
+          type: array
+          items: number
+
+  events:
+
+    tcpPortForwardingSocket:
+      parameters:
+        socket: TCPSocket
+
 
 Selectors:
   type: interface
@@ -476,19 +490,11 @@ Browser:
       returns:
         binary: binary
 
-    enablePortForwarding:
-      parameters:
-        ports:
-          type: array
-          items: number
-
   events:
 
     close:
 
-    tcpPortForwardingSocket:
-      parameters:
-        socket: TCPSocket
+
 
 BrowserContext:
   type: interface

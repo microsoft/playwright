@@ -19,7 +19,7 @@ import http from 'http';
 import { contextTest as it, expect } from './config/browserTest';
 import type { LaunchOptions, ConnectOptions } from '../index';
 
-it.describe('forwarding proxy', () => {
+it.describe.only('forwarding proxy', () => {
   it.skip(({ mode}) => mode !== 'default');
 
   let targetTestServer: http.Server;

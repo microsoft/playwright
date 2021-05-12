@@ -34,6 +34,10 @@ import { CallMetadata } from '../instrumentation';
 import { findChromiumChannel } from './findChromiumChannel';
 import http from 'http';
 
+type LaunchServerOptions = {
+  _acceptForwardedPorts?: boolean,
+};
+
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
 
@@ -119,7 +123,7 @@ export class Chromium extends BrowserType {
     transport.send(message);
   }
 
-  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: types.LaunchOptions & LaunchServerOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
@@ -155,10 +159,14 @@ export class Chromium extends BrowserType {
         chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
       }
       chromeArguments.push(`--proxy-server=${proxy.server}`);
-      if (proxy.bypass) {
-        const patterns = proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t);
-        chromeArguments.push(`--proxy-bypass-list=${patterns.join(';')}`);
-      }
+      const proxyBypassRules = [];
+      // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
+      if (options._acceptForwardedPorts)
+        proxyBypassRules.push('<-loopback>');
+      if (proxy.bypass)
+        proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
+      if (proxyBypassRules.length > 0)
+        chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
     }
     chromeArguments.push(...args);
     if (isPersistent)

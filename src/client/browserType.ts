@@ -186,7 +186,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           });
           if (params._forwardPorts) {
             try {
-              await browser._channel.enablePortForwarding({
+              await playwright._channel.enablePortForwarding({
                 ports: params._forwardPorts,
               });
             } catch (err) {

@@ -16,50 +16,72 @@
 
 import net from 'net';
 
+import getPort from 'get-port';
+
 import { SdkObject } from './instrumentation';
-import { Browser } from './browser';
 import { debugLogger } from '../utils/debugLogger';
-import { assert } from '../utils/utils';
-import { isLocalIpAdress } from '../utils/network';
+import { isLocalIpAddress } from '../utils/utils';
+import { SocksProxyServer, SocksConnectionInfo } from '../socksServer';
+import { LaunchOptions } from './types';
+import { Playwright } from './playwright';
 
 export class TCPPortForwardingServer {
-  private _servers: net.Server[] = [];
   private _forwardPorts: number[] = [];
   private _enabled: boolean;
-  browser!: Browser;
-  constructor(browser: Browser, enabled: boolean = false) {
-    debugLogger.log('proxy', `initializing server (enabled: ${enabled})`);
+  _playwright!: Playwright;
+  private _server: SocksProxyServer;
+  private _port: number;
+  constructor(playwright: Playwright, enabled: boolean, port: number) {
+    this._playwright = playwright;
     this._enabled = enabled;
-
-    this.browser = browser;
-    browser._forwardingProxy = this;
+    this._port = port;
+    this._server = new SocksProxyServer(this._handler);
   }
 
-  private _handler = (socket: net.Socket) => {
-    const dstAddr = socket.localAddress;
-    const dstPort = socket.localPort;
-    const shouldProxyRequestToClient = isLocalIpAdress(dstAddr) && this._forwardPorts.includes(dstPort);
-    debugLogger.log('proxy', `incoming connection from ${dstAddr}:${dstPort} shouldProxyRequestToClient=${shouldProxyRequestToClient}`);
+  static async create(playwright: Playwright, enabled: boolean = false): Promise<TCPPortForwardingServer> {
+    debugLogger.log('proxy', `initializing server (enabled: ${enabled})`);
+
+    const port = await getPort();
+    const server = new TCPPortForwardingServer(playwright, enabled, port);
+    playwright._forwardingProxy = server;
+    server._listen();
+    return server;
+  }
+  private _listen() {
+    this._server.listen(this._port);
+  }
+
+  public browserLaunchOptions(): LaunchOptions | undefined {
+    if (!this._enabled)
+      return;
+    return {
+      proxy: {
+        server: `socks5://127.0.0.1:${this._port}`
+      }
+    };
+  }
+
+  private _handler = (info: SocksConnectionInfo, forward: () => void, intercept: () => net.Socket): void => {
+    const shouldProxyRequestToClient = isLocalIpAddress(info.dstAddr) && this._forwardPorts.includes(info.dstPort);
+    debugLogger.log('proxy', `incoming connection from ${info.dstAddr}:${info.dstPort} shouldProxyRequestToClient=${shouldProxyRequestToClient}`);
     if (!shouldProxyRequestToClient) {
-      socket.end();
+      forward();
       return;
     }
-    this.browser.emit('tcpPortForwardingSocket', new TCPSocket(this.browser, socket, dstAddr, dstPort));
+    const socket = intercept();
+    this._playwright.emit('tcpPortForwardingSocket', new TCPSocket(this._playwright, socket, info.dstAddr, info.dstPort));
   }
 
   public enablePortForwarding(ports: number[]): void {
     debugLogger.log('proxy', `enable port forwarding on ports: ${ports}`);
     this._forwardPorts = ports;
-    assert(this._servers.length === 0);
-    this._servers = ports.map(port => net.createServer(this._handler).listen(port));
   }
 
   public stop(): void {
     if (!this._enabled)
       return;
     debugLogger.log('proxy', 'stopping server');
-    while (this._servers.length > 0)
-      this._servers.shift()!.close();
+    this._server.close();
   }
 }
 
@@ -67,8 +89,8 @@ export class TCPSocket extends SdkObject {
   _socket: net.Socket
   _dstAddr: string
   _dstPort: number
-  constructor(browser: Browser, socket: net.Socket, dstAddr: string, dstPort: number) {
-    super(browser, 'TCPSocket');
+  constructor(playwright: Playwright, socket: net.Socket, dstAddr: string, dstPort: number) {
+    super(playwright, 'TCPSocket');
     this._socket = socket;
     this._dstAddr = dstAddr;
     this._dstPort = dstPort;
