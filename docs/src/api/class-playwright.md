@@ -129,6 +129,12 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+## property: Playwright.devices
+* langs: csharp
+- type: <[IReadOnlyDictionary<string, BrowserContextOptions>]>
+
+Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].
+
 ## property: Playwright.errors
 * langs: js
 - type: <[Object]>
