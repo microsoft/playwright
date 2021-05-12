@@ -2,9 +2,9 @@ FROM ubuntu:bionic
 
 # === INSTALL Node.js ===
 
-# Install node14
+# Install node16
 RUN apt-get update && apt-get install -y curl && \
-    curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
+    curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get install -y nodejs
 
 # Feature-parity with node.js base images.
@@ -40,4 +40,3 @@ RUN mkdir /ms-playwright && \
     DEBIAN_FRONTEND=noninteractive npx playwright install-deps && \
     rm -rf /tmp/pw && rm /tmp/playwright.tar.gz && \
     chmod -R 777 /ms-playwright
-
