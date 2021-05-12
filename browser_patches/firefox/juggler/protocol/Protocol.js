@@ -768,15 +768,7 @@ const Page = {
       params: {
         script: t.String,
         worldName: t.Optional(t.String),
-      },
-      returns: {
-        scriptId: t.String,
       }
-    },
-    'removeScriptToEvaluateOnNewDocument': {
-      params: {
-        scriptId: t.String,
-      },
     },
     'navigate': {
       params: {

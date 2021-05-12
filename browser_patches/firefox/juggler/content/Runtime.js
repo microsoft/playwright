@@ -217,9 +217,9 @@ class Runtime {
     if (obj.promiseState === 'fulfilled')
       return {success: true, obj: obj.promiseValue};
     if (obj.promiseState === 'rejected') {
-      const global = executionContext._global;
-      exceptionDetails.text = global.executeInGlobalWithBindings('e.message', {e: obj.promiseReason}).return;
-      exceptionDetails.stack = global.executeInGlobalWithBindings('e.stack', {e: obj.promiseReason}).return;
+      const debuggee = executionContext._debuggee;
+      exceptionDetails.text = debuggee.executeInGlobalWithBindings('e.message', {e: obj.promiseReason}).return;
+      exceptionDetails.stack = debuggee.executeInGlobalWithBindings('e.stack', {e: obj.promiseReason}).return;
       return {success: false, obj: null};
     }
     let resolve, reject;
@@ -245,15 +245,15 @@ class Runtime {
       pendingPromise.resolve({success: true, obj: obj.promiseValue});
       return;
     };
-    const global = pendingPromise.executionContext._global;
-    pendingPromise.exceptionDetails.text = global.executeInGlobalWithBindings('e.message', {e: obj.promiseReason}).return;
-    pendingPromise.exceptionDetails.stack = global.executeInGlobalWithBindings('e.stack', {e: obj.promiseReason}).return;
+    const debuggee = pendingPromise.executionContext._debuggee;
+    pendingPromise.exceptionDetails.text = debuggee.executeInGlobalWithBindings('e.message', {e: obj.promiseReason}).return;
+    pendingPromise.exceptionDetails.stack = debuggee.executeInGlobalWithBindings('e.stack', {e: obj.promiseReason}).return;
     pendingPromise.resolve({success: false, obj: null});
   }
 
   createExecutionContext(domWindow, contextGlobal, auxData) {
     // Note: domWindow is null for workers.
-    const context = new ExecutionContext(this, domWindow, contextGlobal, this._debugger.addDebuggee(contextGlobal), auxData);
+    const context = new ExecutionContext(this, domWindow, contextGlobal, auxData);
     this._executionContexts.set(context._id, context);
     if (domWindow)
       this._windowToExecutionContext.set(domWindow, context);
@@ -286,15 +286,15 @@ class Runtime {
 }
 
 class ExecutionContext {
-  constructor(runtime, domWindow, contextGlobal, global, auxData) {
+  constructor(runtime, domWindow, contextGlobal, auxData) {
     this._runtime = runtime;
     this._domWindow = domWindow;
     this._contextGlobal = contextGlobal;
-    this._global = global;
+    this._debuggee = runtime._debugger.addDebuggee(contextGlobal);
     this._remoteObjects = new Map();
     this._id = generateId();
     this._auxData = auxData;
-    this._jsonStringifyObject = this._global.executeInGlobal(`((stringify, dateProto, object) => {
+    this._jsonStringifyObject = this._debuggee.executeInGlobal(`((stringify, dateProto, object) => {
       const oldToJson = dateProto.toJSON;
       dateProto.toJSON = undefined;
       let hasSymbol = false;
@@ -325,7 +325,7 @@ class ExecutionContext {
     if (this._domWindow && this._domWindow.document)
       this._domWindow.document.notifyUserGestureActivation();
 
-    let {success, obj} = this._getResult(this._global.executeInGlobal(script), exceptionDetails);
+    let {success, obj} = this._getResult(this._debuggee.executeInGlobal(script), exceptionDetails);
     userInputHelper && userInputHelper.destruct();
     if (!success)
       return null;
@@ -338,8 +338,16 @@ class ExecutionContext {
     return this._createRemoteObject(obj);
   }
 
+  evaluateScriptSafely(script) {
+    try {
+      this._debuggee.executeInGlobal(script);
+    } catch (e) {
+      dump(`ERROR: ${e.message}\n${e.stack}\n`);
+    }
+  }
+
   async evaluateFunction(functionText, args, exceptionDetails = {}) {
-    const funEvaluation = this._getResult(this._global.executeInGlobal('(' + functionText + ')'), exceptionDetails);
+    const funEvaluation = this._getResult(this._debuggee.executeInGlobal('(' + functionText + ')'), exceptionDetails);
     if (!funEvaluation.success)
       return null;
     if (!funEvaluation.obj.callable)
@@ -384,11 +392,7 @@ class ExecutionContext {
     }, this._contextGlobal, {
       defineAs: name,
     });
-    try {
-      this._global.executeInGlobal(script);
-    } catch (e) {
-      dump(`ERROR: ${e.message}\n${e.stack}\n`);
-    }
+    this.evaluateScriptSafely(script);
   }
 
   unsafeObject(objectId) {
@@ -398,14 +402,14 @@ class ExecutionContext {
   }
 
   rawValueToRemoteObject(rawValue) {
-    const debuggerObj = this._global.makeDebuggeeValue(rawValue);
+    const debuggerObj = this._debuggee.makeDebuggeeValue(rawValue);
     return this._createRemoteObject(debuggerObj);
   }
 
   _instanceOf(debuggerObj, rawObj, className) {
     if (this._domWindow)
       return rawObj instanceof this._domWindow[className];
-    return this._global.executeInGlobalWithBindings('o instanceof this[className]', {o: debuggerObj, className: this._global.makeDebuggeeValue(className)}).return;
+    return this._debuggee.executeInGlobalWithBindings('o instanceof this[className]', {o: debuggerObj, className: this._debuggee.makeDebuggeeValue(className)}).return;
   }
 
   _createRemoteObject(debuggerObj) {
@@ -489,13 +493,13 @@ class ExecutionContext {
       };
     }
     const baseObject = Array.isArray(obj) ? '([])' : '({})';
-    const debuggerObj = this._global.executeInGlobal(baseObject).return;
+    const debuggerObj = this._debuggee.executeInGlobal(baseObject).return;
     debuggerObj.defineProperties(properties);
     return debuggerObj;
   }
 
   _serialize(obj) {
-    const result = this._global.executeInGlobalWithBindings('stringify(e)', {e: obj, stringify: this._jsonStringifyObject});
+    const result = this._debuggee.executeInGlobalWithBindings('stringify(e)', {e: obj, stringify: this._jsonStringifyObject});
     if (result.throw)
       throw new Error('Object is not serializable');
     return result.return === undefined ? undefined : JSON.parse(result.return);
@@ -530,9 +534,9 @@ class ExecutionContext {
       return {success: false, obj: null};
     }
     if (completionValue.throw) {
-      if (this._global.executeInGlobalWithBindings('e instanceof Error', {e: completionValue.throw}).return) {
-        exceptionDetails.text = this._global.executeInGlobalWithBindings('e.message', {e: completionValue.throw}).return;
-        exceptionDetails.stack = this._global.executeInGlobalWithBindings('e.stack', {e: completionValue.throw}).return;
+      if (this._debuggee.executeInGlobalWithBindings('e instanceof Error', {e: completionValue.throw}).return) {
+        exceptionDetails.text = this._debuggee.executeInGlobalWithBindings('e.message', {e: completionValue.throw}).return;
+        exceptionDetails.stack = this._debuggee.executeInGlobalWithBindings('e.stack', {e: completionValue.throw}).return;
       } else {
         exceptionDetails.value = this._serialize(completionValue.throw);
       }
