@@ -175,7 +175,6 @@ program
       console.log('');
       console.log('Examples:');
       console.log('');
-      console.log('  $ show-trace --resources=resources trace/file.trace');
       console.log('  $ show-trace trace/directory');
     });
 

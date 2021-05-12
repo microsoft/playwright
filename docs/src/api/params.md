@@ -599,3 +599,116 @@ is considered matching if all specified properties match.
 - %%-context-option-recordvideo-%%
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
+
+## browser-option-args
+- `args` <[Array]<[string]>>
+
+Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+[here](http://peter.sh/experiments/chromium-command-line-switches/).
+
+## browser-option-channel
+- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable">>
+
+Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
+
+## browser-option-chromiumsandbox
+- `chromiumSandbox` <[boolean]>
+
+Enable Chromium sandboxing. Defaults to `true`.
+
+
+## browser-option-downloadspath
+- `downloadsPath` <[path]>
+
+If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
+deleted when browser is closed.
+
+## browser-option-executablepath
+- `executablePath` <[path]>
+
+Path to a browser executable to run instead of the bundled one. If [`option: executablePath`] is a relative path, then
+it is resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium,
+Firefox or WebKit, use at your own risk.
+
+## browser-option-handlesigint
+- `handleSIGINT` <[boolean]>
+
+Close the browser process on Ctrl-C. Defaults to `true`.
+
+## browser-option-handlesigterm
+- `handleSIGTERM` <[boolean]>
+
+Close the browser process on SIGTERM. Defaults to `true`.
+
+## browser-option-handlesighup
+- `handleSIGHUP` <[boolean]>
+
+Close the browser process on SIGHUP. Defaults to `true`.
+
+## browser-option-headless
+- `headless` <[boolean]>
+
+Whether to run browser in headless mode. More details for
+[Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+[`option: devtools`] option is `true`.
+
+## js-python-browser-option-firefoxuserprefs
+* langs: js, python
+- `firefoxUserPrefs` <[Object]<[string], [string]|[float]|[boolean]>>
+
+Firefox user preferences. Learn more about the Firefox user preferences at
+[`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+
+## csharp-java-browser-option-firefoxuserprefs
+* langs: csharp, java
+- `firefoxUserPrefs` <[Object]<[string], [any]>>
+
+Firefox user preferences. Learn more about the Firefox user preferences at
+[`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+
+## browser-option-logger
+* langs: js
+- `logger` <[Logger]>
+
+Logger sink for Playwright logging.
+
+## browser-option-timeout
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
+disable timeout.
+
+## browser-option-tracedir
+- `traceDir` <[path]>
+
+If specified, traces are saved into this directory.
+
+## browser-option-devtools
+- `devtools` <[boolean]>
+
+**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+[`option: headless`] option will be set `false`.
+
+## browser-option-slowmo
+- `slowMo` <[float]>
+
+Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+
+## shared-browser-options-list
+- %%-browser-option-args-%%
+- %%-browser-option-channel-%%
+- %%-browser-option-chromiumsandbox-%%
+- %%-browser-option-devtools-%%
+- %%-browser-option-downloadspath-%%
+- %%-csharp-java-browser-option-env-%%
+- %%-js-python-browser-option-env-%%
+- %%-browser-option-executablepath-%%
+- %%-browser-option-handlesigint-%%
+- %%-browser-option-handlesigterm-%%
+- %%-browser-option-handlesighup-%%
+- %%-browser-option-headless-%%
+- %%-browser-option-ignoredefaultargs-%%
+- %%-browser-option-proxy-%%
+- %%-browser-option-timeout-%%
+- %%-browser-option-tracedir-%%

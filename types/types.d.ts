@@ -6832,8 +6832,8 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is
-     * resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the bundled
-     * Chromium, Firefox or WebKit, use at your own risk.
+     * resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium, Firefox
+     * or WebKit, use at your own risk.
      */
     executablePath?: string;
 
@@ -7032,7 +7032,6 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-     * Defaults to 0.
      */
     slowMo?: number;
 
@@ -7048,6 +7047,11 @@ export interface BrowserType<Unused = {}> {
      * for a list of supported timezone IDs.
      */
     timezoneId?: string;
+
+    /**
+     * If specified, traces are saved into this directory.
+     */
+    traceDir?: string;
 
     /**
      * Specific user agent to use in this context.
@@ -7150,8 +7154,8 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is
-     * resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the bundled
-     * Chromium, Firefox or WebKit, use at your own risk.
+     * resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium, Firefox
+     * or WebKit, use at your own risk.
      */
     executablePath?: string;
 
@@ -7231,6 +7235,11 @@ export interface BrowserType<Unused = {}> {
      * disable timeout.
      */
     timeout?: number;
+
+    /**
+     * If specified, traces are saved into this directory.
+     */
+    traceDir?: string;
   }): Promise<BrowserServer>;
 
   /**
@@ -10267,7 +10276,21 @@ export interface Touchscreen {
 }
 
 /**
- * Tracing object for collecting test traces that can be opened using Playwright CLI.
+ * API for collecting and saving Playwright traces. Playwright traces can be opened using the [CLI]('./cli.md') after
+ * Playwright script runs.
+ *
+ * Start with specifying the folder traces will be stored in:
+ *
+ * ```js
+ * const browser = await chromium.launch({ traceDir: 'traces' });
+ * const context = await browser.newContext();
+ * await context.tracing.start({ name: 'trace', screenshots: true, snapshots: true });
+ * const page = await context.newPage();
+ * await page.goto('https://playwright.dev');
+ * await context.tracing.stop();
+ * await context.tracing.export('trace.zip');
+ * ```
+ *
  */
 export interface Tracing {
   /**
@@ -10291,7 +10314,8 @@ export interface Tracing {
    */
   start(options?: {
     /**
-     * If specified, the trace is going to be saved into the file with the given name.
+     * If specified, the trace is going to be saved into the file with the given name inside the `traceDir` folder specified in
+     * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browsertypelaunchoptions).
      */
     name?: string;
 
@@ -10882,7 +10906,7 @@ export interface LaunchOptions {
   channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable";
 
   /**
-   * Enable Chromium sandboxing. Defaults to `false`.
+   * Enable Chromium sandboxing. Defaults to `true`.
    */
   chromiumSandbox?: boolean;
 
@@ -10986,6 +11010,11 @@ export interface LaunchOptions {
    * disable timeout.
    */
   timeout?: number;
+
+  /**
+   * If specified, traces are saved into this directory.
+   */
+  traceDir?: string;
 }
 
 export interface ConnectOverCDPOptions {
