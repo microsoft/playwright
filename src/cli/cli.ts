@@ -159,21 +159,25 @@ commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
   console.log('  $ pdf https://example.com example.pdf');
 });
 
-if (process.env.PWTRACE) {
-  program
-      .command('show-trace [trace]')
-      .option('--resources <dir>', 'load resources from shared folder')
-      .description('Show trace viewer')
-      .action(function(trace, command) {
-        showTraceViewer(trace, command.resources).catch(logErrorAndExit);
-      }).on('--help', function() {
-        console.log('');
-        console.log('Examples:');
-        console.log('');
-        console.log('  $ show-trace --resources=resources trace/file.trace');
-        console.log('  $ show-trace trace/directory');
-      });
-}
+program
+    .command('show-trace [trace]')
+    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+    .description('Show trace viewer')
+    .action(function(trace, command) {
+      if (command.browser === 'cr')
+        command.browser = 'chromium';
+      if (command.browser === 'ff')
+        command.browser = 'firefox';
+      if (command.browser === 'wk')
+        command.browser = 'webkit';
+      showTraceViewer(trace, command.browser).catch(logErrorAndExit);
+    }).on('--help', function() {
+      console.log('');
+      console.log('Examples:');
+      console.log('');
+      console.log('  $ show-trace --resources=resources trace/file.trace');
+      console.log('  $ show-trace trace/directory');
+    });
 
 if (process.argv[2] === 'run-driver')
   runDriver();

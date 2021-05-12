@@ -41,7 +41,7 @@ class PageEnv {
   async beforeAll(args: AllOptions & CommonArgs, workerInfo: folio.WorkerInfo) {
     this._browser = await args.playwright[args.browserName].launch({
       ...args.launchOptions,
-      _traceDir: args.traceDir,
+      traceDir: args.traceDir,
       channel: args.browserChannel,
       headless: !args.headful,
       handleSIGINT: false,

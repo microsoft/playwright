@@ -272,7 +272,7 @@ type LaunchOptionsBase = {
   chromiumSandbox?: boolean,
   slowMo?: number,
   useWebSocket?: boolean,
-  _traceDir?: string,
+  traceDir?: string,
 };
 export type LaunchOptions = LaunchOptionsBase & {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },

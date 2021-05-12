@@ -243,24 +243,11 @@ function rootScript() {
   pointElement.style.margin = '-10px 0 0 -10px';
   pointElement.style.zIndex = '2147483647';
 
-  let current = document.createElement('iframe');
-  document.body.appendChild(current);
-  let next = document.createElement('iframe');
-  document.body.appendChild(next);
-  next.style.visibility = 'hidden';
-  const onload = () => {
-    const temp = current;
-    current = next;
-    next = temp;
-    current.style.visibility = 'visible';
-    next.style.visibility = 'hidden';
-  };
-  current.onload = onload;
-  next.onload = onload;
-
+  const iframe = document.createElement('iframe');
+  document.body.appendChild(iframe);
   (window as any).showSnapshot = async (url: string, options: { point?: Point } = {}) => {
     await showPromise;
-    next.src = url;
+    iframe.src = url;
     if (options.point) {
       pointElement.style.left = options.point.x + 'px';
       pointElement.style.top = options.point.y + 'px';
