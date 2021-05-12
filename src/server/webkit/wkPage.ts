@@ -845,13 +845,13 @@ export class WKPage implements PageDelegate {
   }
 
   private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
+    this._pageProxySession.send('Screencast.screencastFrameAck', { generation: this._screencastGeneration }).catch(e => debugLogger.log('error', e));
     const buffer = Buffer.from(event.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
       width: event.deviceWidth,
       height: event.deviceHeight,
     });
-    this._pageProxySession.send('Screencast.screencastFrameAck', { generation: this._screencastGeneration }).catch(e => debugLogger.log('error', e));
   }
 
   rafCountForStablePosition(): number {
