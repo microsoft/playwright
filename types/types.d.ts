@@ -167,7 +167,8 @@ export interface Page {
 
   /**
    * The method finds an element matching the specified selector within the page. If no elements match the selector, the
-   * return value resolves to `null`.
+   * return value resolves to `null`. To wait for an element on the page, use
+   * [page.waitForSelector(selector[, options])](https://playwright.dev/docs/api/class-page#pagewaitforselectorselector-options).
    *
    * Shortcut for main frame's [frame.$(selector)](https://playwright.dev/docs/api/class-frame#frameselector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.

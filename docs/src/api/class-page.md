@@ -2046,7 +2046,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector within the page. If no elements match the selector, the
-return value resolves to `null`.
+return value resolves to `null`. To wait for an element on the page, use [`method: Page.waitForSelector`].
 
 Shortcut for main frame's [`method: Frame.querySelector`].
 
