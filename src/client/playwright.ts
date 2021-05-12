@@ -61,7 +61,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this._selectorsOwner = SelectorsOwner.from(initializer.selectors);
     this.selectors._addChannel(this._selectorsOwner);
 
-    this._channel.on('tcpPortForwardingSocket', ({socket}) => TCPSocket.from(socket));
+    this._channel.on('incomingTCPSocket', ({socket}) => TCPSocket.from(socket));
   }
 
   _cleanup() {

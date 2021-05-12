@@ -15,48 +15,35 @@
  */
 
 import net from 'net';
-
-import getPort from 'get-port';
+import { EventEmitter } from 'events';
 
 import { SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
 import { isLocalIpAddress } from '../utils/utils';
-import { SocksProxyServer, SocksConnectionInfo } from '../socksServer';
+import { SocksProxyServer, SocksConnectionInfo } from './socksServer';
 import { LaunchOptions } from './types';
-import { Playwright } from './playwright';
 
-export class TCPPortForwardingServer {
+export class BrowserServerPortForwardingServer extends EventEmitter {
   private _forwardPorts: number[] = [];
   private _enabled: boolean;
-  _playwright!: Playwright;
+  _parent: SdkObject;
   private _server: SocksProxyServer;
-  private _port: number;
-  constructor(playwright: Playwright, enabled: boolean, port: number) {
-    this._playwright = playwright;
-    this._enabled = enabled;
-    this._port = port;
-    this._server = new SocksProxyServer(this._handler);
-  }
-
-  static async create(playwright: Playwright, enabled: boolean = false): Promise<TCPPortForwardingServer> {
+  constructor(parent: SdkObject, enabled: boolean = false) {
+    super();
     debugLogger.log('proxy', `initializing server (enabled: ${enabled})`);
-
-    const port = await getPort();
-    const server = new TCPPortForwardingServer(playwright, enabled, port);
-    playwright._forwardingProxy = server;
-    server._listen();
-    return server;
-  }
-  private _listen() {
-    this._server.listen(this._port);
+    this._parent = parent;
+    this._enabled = enabled;
+    this._server = new SocksProxyServer(this._handler);
+    this._server.listen(0);
   }
 
   public browserLaunchOptions(): LaunchOptions | undefined {
     if (!this._enabled)
       return;
+    const port = (this._server.server.address() as net.AddressInfo).port;
     return {
       proxy: {
-        server: `socks5://127.0.0.1:${this._port}`
+        server: `socks5://127.0.0.1:${port}`
       }
     };
   }
@@ -69,7 +56,7 @@ export class TCPPortForwardingServer {
       return;
     }
     const socket = intercept();
-    this._playwright.emit('tcpPortForwardingSocket', new TCPSocket(this._playwright, socket, info.dstAddr, info.dstPort));
+    this.emit('incomingTCPSocket', new TCPSocket(this._parent, socket, info.dstAddr, info.dstPort));
   }
 
   public enablePortForwarding(ports: number[]): void {
@@ -89,8 +76,8 @@ export class TCPSocket extends SdkObject {
   _socket: net.Socket
   _dstAddr: string
   _dstPort: number
-  constructor(playwright: Playwright, socket: net.Socket, dstAddr: string, dstPort: number) {
-    super(playwright, 'TCPSocket');
+  constructor(parent: SdkObject, socket: net.Socket, dstAddr: string, dstPort: number) {
+    super(parent, 'TCPSocket');
     this._socket = socket;
     this._dstAddr = dstAddr;
     this._dstPort = dstPort;

@@ -179,10 +179,10 @@ export type PlaywrightInitializer = {
   preLaunchedBrowser?: BrowserChannel,
 };
 export interface PlaywrightChannel extends Channel {
-  on(event: 'tcpPortForwardingSocket', callback: (params: PlaywrightTcpPortForwardingSocketEvent) => void): this;
+  on(event: 'incomingTCPSocket', callback: (params: PlaywrightIncomingTCPSocketEvent) => void): this;
   enablePortForwarding(params: PlaywrightEnablePortForwardingParams, metadata?: Metadata): Promise<PlaywrightEnablePortForwardingResult>;
 }
-export type PlaywrightTcpPortForwardingSocketEvent = {
+export type PlaywrightIncomingTCPSocketEvent = {
   socket: TCPSocketChannel,
 };
 export type PlaywrightEnablePortForwardingParams = {

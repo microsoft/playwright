@@ -26,8 +26,6 @@ export class TCPSocketDispatcher extends Dispatcher<TCPSocket, channels.TCPSocke
     }, true);
     socket.on('data', (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));
     socket.on('close', () => {
-      if (this._disposed)
-        return;
       this._dispatchEvent('close');
       this._dispose();
     });

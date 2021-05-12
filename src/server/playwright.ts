@@ -26,7 +26,6 @@ import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
-import { TCPPortForwardingServer } from './tcpSocket';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -36,7 +35,6 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
-  _forwardingProxy!: TCPPortForwardingServer;
 
   constructor(isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
@@ -55,10 +53,6 @@ export class Playwright extends SdkObject {
     this.electron = new Electron(this.options);
     this.android = new Android(new AdbBackend(), this.options);
     this.selectors = serverSelectors;
-  }
-
-  enablePortForwarding(ports: number[]) {
-    this._forwardingProxy.enablePortForwarding(ports);
   }
 }
 

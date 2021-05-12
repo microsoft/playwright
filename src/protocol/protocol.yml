@@ -382,7 +382,7 @@ Playwright:
 
   events:
 
-    tcpPortForwardingSocket:
+    incomingTCPSocket:
       parameters:
         socket: TCPSocket
 

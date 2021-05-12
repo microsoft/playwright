@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 import net from 'net';
-import { Address4, Address6 } from 'ip-address';
 
-import { assert } from './utils/utils';
+import { assert } from '../utils/utils';
 
 export type SocksConnectionInfo = {
   srcAddr: string,
@@ -230,13 +229,13 @@ class SocksV5ServerParser {
         dstSocket.setKeepAlive(false);
         dstSocket.on('error', handleProxyError);
         dstSocket.on('connect', () => {
-          const localbytes = ipbytes(dstSocket.localAddress);
+          const localbytes = [127, 0, 0, 1];
           const bufrep = Buffer.alloc(6 + localbytes.length);
           let p = 4;
           bufrep[0] = 0x05;
           bufrep[1] = SOCKS_REP.SUCCESS;
           bufrep[2] = 0x00;
-          bufrep[3] = (localbytes.length === 4 ? SOCKS_ATYP.IPv4 : SOCKS_ATYP.IPv6);
+          bufrep[3] = SOCKS_ATYP.IPv4;
           for (let i = 0; i < localbytes.length; ++i, ++p)
             bufrep[p] = localbytes[i];
           bufrep.writeUInt16BE(dstSocket.localPort, p, true);
@@ -282,13 +281,13 @@ function handleProxyError(socket: net.Socket, err: NodeJS.ErrnoException): void 
 type IncomingProxyRequestHandler = (info: SocksConnectionInfo, forward: () => void, intercept: () => net.Socket) => void
 
 export class SocksProxyServer {
-  private _server: net.Server;
+  public server: net.Server;
   constructor(incomingMessageHandler: IncomingProxyRequestHandler) {
-    this._server = net.createServer(this._handleConnection.bind(this, incomingMessageHandler));
+    this.server = net.createServer(this._handleConnection.bind(this, incomingMessageHandler));
   }
 
   public listen(port: number, host?: string) {
-    this._server.listen(port, host);
+    this.server.listen(port, host);
   }
 
   _handleConnection = async (incomingMessageHandler: IncomingProxyRequestHandler, socket: net.Socket) => {
@@ -298,53 +297,6 @@ export class SocksProxyServer {
   }
 
   public close() {
-    this._server.close();
+    this.server.close();
   }
-}
-
-/**
-
-
-const server = new SocksProxyServer((info: SocksConnectionInfo, forward: () => void, intercept: () => net.Socket) => {
-  if (info.dstAddr === '127.0.0.1') {
-    const socket = intercept();
-    const body = 'Hello ' + info.srcAddr + '!\n\nToday is: ' + (new Date());
-    socket.end([
-      'HTTP/1.1 200 OK',
-      'Connection: close',
-      'Content-Type: text/plain',
-      'Content-Length: ' + Buffer.byteLength(body),
-      '',
-      body
-    ].join('\r\n'));
-    return;
-  }
-  forward();
-});
-server.listen(1080, 'localhost');
-*/
-
-function ipbytes(str: string): number[] {
-  const type = net.isIP(str);
-
-  if (type === 4) {
-    const addr = new Address4(str);
-    return addr.parsedAddress.map(octet => Number(octet));
-  }
-
-  if (type === 6) {
-    const addr = new Address6(str);
-    let b = 0,
-      group;
-    const nums = addr.parsedAddress;
-    const bytes = new Array(16);
-    for (let i = 0; i < 8; ++i, b += 2) {
-      group = parseInt(nums[i], 16);
-      bytes[b] = group >>> 8;
-      bytes[b + 1] = group & 0xFF;
-    }
-    return bytes;
-  }
-
-  throw new Error(`Unexpected IP type: ${type}`);
 }

@@ -19,8 +19,8 @@ import http from 'http';
 import { contextTest as it, expect } from './config/browserTest';
 import type { LaunchOptions, ConnectOptions } from '../index';
 
-it.describe.only('forwarding proxy', () => {
-  it.skip(({ mode}) => mode !== 'default');
+it.describe('forwarding proxy', () => {
+  it.skip(({ mode }) => mode !== 'default');
 
   let targetTestServer: http.Server;
   let port!: number;
@@ -39,7 +39,30 @@ it.describe.only('forwarding proxy', () => {
     targetTestServer.close();
   });
 
-  it('should proxy local requests', async ({browserType, browserOptions, server}, workerInfo) => {
+  it('should forward non-forwarded requests', async ({ browserType, browserOptions, server }, workerInfo) => {
+    process.env.PW_TEST_PROXY_TARGET = port.toString();
+    let reachedOriginalTarget = false;
+    server.setRoute('/foo.html', async (req, res) => {
+      reachedOriginalTarget = true;
+      res.end('<html><body>original-target</body></html>');
+    });
+    const examplePort = 20_000 + workerInfo.workerIndex * 3;
+    const browserServer = await browserType.launchServer({
+      ...browserOptions,
+      _acceptForwardedPorts: true
+    } as LaunchOptions);
+    const browser = await browserType.connect({
+      wsEndpoint: browserServer.wsEndpoint(),
+      _forwardPorts: [examplePort]
+    } as ConnectOptions);
+    const page = await browser.newPage();
+    await page.goto(server.PREFIX + '/foo.html');
+    expect(await page.content()).toContain('original-target');
+    expect(reachedOriginalTarget).toBe(true);
+    await browserServer.close();
+  });
+
+  it('should proxy local requests', async ({ browserType, browserOptions, server }, workerInfo) => {
     process.env.PW_TEST_PROXY_TARGET = port.toString();
     let reachedOriginalTarget = false;
     server.setRoute('/foo.html', async (req, res) => {
@@ -62,7 +85,7 @@ it.describe.only('forwarding proxy', () => {
     await browserServer.close();
   });
 
-  it('should lead to a request failure if the proxied target will timeout', async ({browserType, browserOptions}, workerInfo) => {
+  it('should lead to a request failure if the proxied target will timeout', async ({ browserType, browserOptions }, workerInfo) => {
     process.env.PW_TEST_PROXY_TARGET = '50001';
     const browserServer = await browserType.launchServer({
       ...browserOptions,
@@ -82,7 +105,7 @@ it.describe.only('forwarding proxy', () => {
     await browserServer.close();
   });
 
-  it('should not allow connecting a second client when _acceptForwardedPorts is used', async ({browserType, browserOptions}, workerInfo) => {
+  it('should not allow connecting a second client when _acceptForwardedPorts is used', async ({ browserType, browserOptions }, workerInfo) => {
     const browserServer = await browserType.launchServer({
       ...browserOptions,
       _acceptForwardedPorts: true

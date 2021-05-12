@@ -18,9 +18,7 @@ import net from 'net';
 
 import * as channels from '../protocol/channels';
 import { assert, isLocalIpAddress, isUnderTest } from '../utils/utils';
-import { Browser } from './browser';
 import { ChannelOwner } from './channelOwner';
-import { Playwright } from './playwright';
 
 export class TCPSocket extends ChannelOwner<channels.TCPSocketChannel, channels.TCPSocketInitializer>  {
   private _socket: net.Socket;

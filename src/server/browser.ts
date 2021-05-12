@@ -25,7 +25,6 @@ import * as registry from '../utils/registry';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 import { kBrowserClosedError } from '../utils/errors';
-import { assert } from '../utils/utils';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
