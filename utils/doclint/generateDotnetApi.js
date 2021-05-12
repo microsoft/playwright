@@ -465,7 +465,7 @@ function renderMethod(member, parent, output, name) {
     name = name.substring(3); // remove the 'Set'
     if (member.spec)
       output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-    output(`${translateType(member.argsArray[0].type, parent)} ${name} { get; set; }`);
+    output(`${translateType(member.argsArray[0].type, parent)} ${name} { set; }`);
     return;
   }
 
