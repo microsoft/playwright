@@ -201,6 +201,7 @@ export class Snapshotter {
       frameId: response.frame().guid,
       resourceId: 'resource@' + createGuid(),
       url,
+      type: response.request().resourceType(),
       contentType,
       responseHeaders: response.headers(),
       requestHeaders,
