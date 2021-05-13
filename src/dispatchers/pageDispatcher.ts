@@ -81,6 +81,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
       this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(page._video) });
   }
 
+  page(): Page {
+    return this._page;
+  }
+
   async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams, metadata: CallMetadata): Promise<void> {
     this._page.setDefaultNavigationTimeout(params.timeout);
   }

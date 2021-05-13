@@ -89,10 +89,10 @@ function initialize() {
     if (value !== undefined)
       applySetting[name](value);
   }
+  for (const { worldName, name, script } of bindings)
+    frameTree.addBinding(worldName, name, script);
   for (const script of scriptsToEvaluateOnNewDocument)
     frameTree.addScriptToEvaluateOnNewDocument(script);
-  for (const { name, script } of bindings)
-    frameTree.addBinding(name, script);
 
   pageAgent = new PageAgent(messageManager, channel, frameTree);
 
@@ -101,8 +101,8 @@ function initialize() {
       frameTree.addScriptToEvaluateOnNewDocument(script);
     },
 
-    addBinding({name, script}) {
-      frameTree.addBinding(name, script);
+    addBinding({worldName, name, script}) {
+      frameTree.addBinding(worldName, name, script);
     },
 
     applyContextSetting({name, value}) {

@@ -31,8 +31,9 @@ import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
+import { debugLogger } from '../../utils/debugLogger';
 
-const UTILITY_WORLD_NAME = '__playwright_utility_world__';
+export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class FFPage implements PageDelegate {
   readonly cspErrorsAsynchronousForInlineScipts = true;
@@ -51,6 +52,7 @@ export class FFPage implements PageDelegate {
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
+  private _screencastId: string | undefined;
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
@@ -84,12 +86,14 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.workerDestroyed', this._onWorkerDestroyed.bind(this)),
       helper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
       helper.addEventListener(this._session, 'Page.crashed', this._onCrashed.bind(this)),
-      helper.addEventListener(this._session, 'Page.screencastStarted', this._onScreencastStarted.bind(this)),
+      helper.addEventListener(this._session, 'Page.videoRecordingStarted', this._onVideoRecordingStarted.bind(this)),
 
       helper.addEventListener(this._session, 'Page.webSocketCreated', this._onWebSocketCreated.bind(this)),
       helper.addEventListener(this._session, 'Page.webSocketClosed', this._onWebSocketClosed.bind(this)),
       helper.addEventListener(this._session, 'Page.webSocketFrameReceived', this._onWebSocketFrameReceived.bind(this)),
       helper.addEventListener(this._session, 'Page.webSocketFrameSent', this._onWebSocketFrameSent.bind(this)),
+      helper.addEventListener(this._session, 'Page.screencastFrame', this._onScreencastFrame.bind(this)),
+
     ];
     this._pagePromise = new Promise(f => this._pageCallback = f);
     session.once(FFSessionEvents.Disconnected, () => {
@@ -147,7 +151,7 @@ export class FFPage implements PageDelegate {
 
   _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
     const {executionContextId, auxData} = payload;
-    const frame = this._page._frameManager.frame(auxData ? auxData.frameId : null);
+    const frame = this._page._frameManager.frame(auxData.frameId!);
     if (!frame)
       return;
     const delegate = new FFExecutionContext(this._session, executionContextId);
@@ -308,14 +312,13 @@ export class FFPage implements PageDelegate {
     this._page._didCrash();
   }
 
-  _onScreencastStarted(event: Protocol.Page.screencastStartedPayload) {
+  _onVideoRecordingStarted(event: Protocol.Page.videoRecordingStartedPayload) {
     this._browserContext._browser._videoStarted(this._browserContext, event.screencastId, event.file, this.pageOrError());
   }
 
   async exposeBinding(binding: PageBinding) {
-    if (binding.world !== 'main')
-      throw new Error('Only main context bindings are supported in Firefox.');
-    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
+    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : '';
+    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source, worldName });
   }
 
   didClose() {
@@ -475,8 +478,26 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async setScreencastEnabled(enabled: boolean): Promise<void> {
-    throw new Error('Not implemented');
+  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
+    if (options) {
+      const { screencastId } = await this._session.send('Page.startScreencast', options);
+      this._screencastId = screencastId;
+    } else {
+      await this._session.send('Page.stopScreencast');
+    }
+  }
+
+  private _onScreencastFrame(event: Protocol.Page.screencastFramePayload) {
+    if (!this._screencastId)
+      return;
+    this._session.send('Page.screencastFrameAck', { screencastId: this._screencastId }).catch(e => debugLogger.log('error', e));
+
+    const buffer = Buffer.from(event.data, 'base64');
+    this._page.emit(Page.Events.ScreencastFrame, {
+      buffer,
+      width: event.deviceWidth,
+      height: event.deviceHeight,
+    });
   }
 
   rafCountForStablePosition(): number {
@@ -520,7 +541,7 @@ export class FFPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const handles = await this._page.selectors._queryAll(parent, 'iframe', undefined);
+    const handles = await this._page.selectors._queryAll(parent, 'frame,iframe', undefined);
     const items = await Promise.all(handles.map(async handle => {
       const frame = await handle.contentFrame().catch(e => null);
       return { handle, frame };

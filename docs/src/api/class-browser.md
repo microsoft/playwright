@@ -61,6 +61,24 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class BrowserExamples
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var firefox = playwright.Firefox;
+        var browser = await firefox.LaunchAsync(headless: false);
+        var page = await browser.NewPageAsync();
+        await page.GoToAsync("https://www.bing.com");
+        await browser.CloseAsync();
+    }
+}
+```
+
 ## event: Browser.disconnected
 - argument: <[Browser]>
 
@@ -110,6 +128,14 @@ browser = pw.webkit.launch()
 print(len(browser.contexts())) # prints `0`
 context = browser.new_context()
 print(len(browser.contexts())) # prints `1`
+```
+
+```csharp
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Webkit.LaunchAsync();
+System.Console.WriteLine(browser.Contexts.Count); // prints "0"
+var context = await browser.NewContextAsync();
+System.Console.WriteLine(browser.Contexts.Count); // prints "1"
 ```
 
 ## method: Browser.isConnected
@@ -170,6 +196,16 @@ page = context.new_page()
 page.goto("https://example.com")
 ```
 
+```csharp
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Firefox.LaunchAsync();
+// Create a new incognito browser context.
+var context = await browser.NewContextAsync();
+// Create a new page in a pristine context.
+var page = await context.NewPageAsync(); ;
+await page.GoToAsync("https://www.bing.com");
+```
+
 ### option: Browser.newContext.-inline- = %%-shared-context-params-list-%%
 
 ### option: Browser.newContext.proxy = %%-context-option-proxy-%%
@@ -200,7 +236,7 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 
 ## async method: Browser.startTracing
-* langs: js, python
+* langs: java, js, python
 
 :::note
 Tracing is only supported on Chromium-based browsers.
@@ -213,6 +249,13 @@ be opened in Chrome DevTools performance panel.
 await browser.startTracing(page, {path: 'trace.json'});
 await page.goto('https://www.google.com');
 await browser.stopTracing();
+```
+
+```java
+browser.startTracing(page, new Browser.StartTracingOptions()
+  .setPath(Paths.get("trace.json")));
+page.goto('https://www.google.com');
+browser.stopTracing();
 ```
 
 ```python async
@@ -248,7 +291,7 @@ captures screenshots in the trace.
 specify custom categories to use instead of default.
 
 ## async method: Browser.stopTracing
-* langs: js, python
+* langs: java, js, python
 - returns: <[Buffer]>
 
 :::note

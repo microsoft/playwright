@@ -20,14 +20,13 @@ import { generateSelector, querySelector } from './selectorGenerator';
 import type { Point } from '../../../common/types';
 import type { UIState } from '../recorder/recorderTypes';
 
-declare global {
-  interface Window {
-    _playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
-    _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
-    _playwrightRecorderState: () => Promise<UIState>;
-    _playwrightRecorderSetSelector: (selector: string) => Promise<void>;
-    _playwrightRefreshOverlay: () => void;
-  }
+
+declare module globalThis {
+  let _playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
+  let _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
+  let _playwrightRecorderState: () => Promise<UIState>;
+  let _playwrightRecorderSetSelector: (selector: string) => Promise<void>;
+  let _playwrightRefreshOverlay: () => void;
 }
 
 const scriptSymbol = Symbol('scriptSymbol');
@@ -125,15 +124,15 @@ export class Recorder {
     this._refreshListenersIfNeeded();
     setInterval(() => {
       this._refreshListenersIfNeeded();
-      if ((window as any)._recorderScriptReadyForTest) {
-        (window as any)._recorderScriptReadyForTest();
-        delete (window as any)._recorderScriptReadyForTest;
+      if (params.isUnderTest && !(this as any)._reportedReadyForTest) {
+        (this as any)._reportedReadyForTest = true;
+        console.error('Recorder script ready for test');
       }
     }, 500);
-    window._playwrightRefreshOverlay = () => {
+    globalThis._playwrightRefreshOverlay = () => {
       this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
     };
-    window._playwrightRefreshOverlay();
+    globalThis._playwrightRefreshOverlay();
   }
 
   private _refreshListenersIfNeeded() {
@@ -186,7 +185,7 @@ export class Recorder {
     const pollPeriod = 1000;
     if (this._pollRecorderModeTimer)
       clearTimeout(this._pollRecorderModeTimer);
-    const state = await window._playwrightRecorderState().catch(e => null);
+    const state = await globalThis._playwrightRecorderState().catch(e => null);
     if (!state) {
       this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
       return;
@@ -267,7 +266,7 @@ export class Recorder {
 
   private _onClick(event: MouseEvent) {
     if (this._mode === 'inspecting')
-      window._playwrightRecorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
+      globalThis._playwrightRecorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -349,8 +348,8 @@ export class Recorder {
     const activeElement = this._deepActiveElement(document);
     const result = activeElement ? generateSelector(this._injectedScript, activeElement) : null;
     this._activeModel = result && result.selector ? result : null;
-    if ((window as any)._highlightUpdatedForTest)
-      (window as any)._highlightUpdatedForTest(result ? result.selector : null);
+    if (this._params.isUnderTest)
+      console.error('Highlight updated for test: ' + (result ? result.selector : null));
   }
 
   private _updateModelForHoveredElement() {
@@ -365,8 +364,8 @@ export class Recorder {
       return;
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
-    if ((window as any)._highlightUpdatedForTest)
-      (window as any)._highlightUpdatedForTest(selector);
+    if (this._params.isUnderTest)
+      console.error('Highlight updated for test: ' + selector);
   }
 
   private _updateHighlight() {
@@ -455,7 +454,7 @@ export class Recorder {
       }
 
       if (elementType === 'file') {
-        window._playwrightRecorderRecordAction({
+        globalThis._playwrightRecorderRecordAction({
           name: 'setInputFiles',
           selector: this._activeModel!.selector,
           signals: [],
@@ -467,7 +466,7 @@ export class Recorder {
       // Non-navigating actions are simply recorded by Playwright.
       if (this._consumedDueWrongTarget(event))
         return;
-      window._playwrightRecorderRecordAction({
+      globalThis._playwrightRecorderRecordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
@@ -564,7 +563,7 @@ export class Recorder {
 
   private async _performAction(action: actions.Action) {
     this._performingAction = true;
-    await window._playwrightRecorderPerformAction(action).catch(() => {});
+    await globalThis._playwrightRecorderPerformAction(action).catch(() => {});
     this._performingAction = false;
 
     // Action could have changed DOM, update hovered model selectors.
@@ -572,11 +571,13 @@ export class Recorder {
     // If that was a keyboard action, it similarly requires new selectors for active model.
     this._onFocus();
 
-    if ((window as any)._actionPerformedForTest) {
-      (window as any)._actionPerformedForTest({
+    if (this._params.isUnderTest) {
+      // Serialize all to string as we cannot attribute console message to isolated world
+      // in Firefox.
+      console.error('Action performed for test: ' + JSON.stringify({
         hovered: this._hoveredModel ? this._hoveredModel.selector : null,
         active: this._activeModel ? this._activeModel.selector : null,
-      });
+      }));
     }
   }
 

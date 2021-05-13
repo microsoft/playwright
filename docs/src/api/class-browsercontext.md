@@ -1010,6 +1010,9 @@ The file path to save the storage state to. If [`option: path`] is a relative pa
 current working directory. If no path is provided, storage
 state is still returned, but won't be saved to the disk.
 
+## property: BrowserContext.tracing
+- type: <[Tracing]>
+
 ## async method: BrowserContext.unroute
 
 Removes a route created with [`method: BrowserContext.route`]. When [`param: handler`] is not specified, removes all

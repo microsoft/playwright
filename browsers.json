@@ -3,22 +3,22 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "869727",
+      "revision": "878941",
       "installByDefault": true
     },
     {
       "name": "firefox",
-      "revision": "1245",
+      "revision": "1259",
       "installByDefault": true
     },
     {
       "name": "firefox-stable",
-      "revision": "1244",
+      "revision": "1248",
       "installByDefault": false
     },
     {
       "name": "webkit",
-      "revision": "1468",
+      "revision": "1476",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1443"

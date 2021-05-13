@@ -23,7 +23,7 @@ import { Page, PageBinding, PageDelegate } from '../page';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
-import { FFPage } from './ffPage';
+import { FFPage, UTILITY_WORLD_NAME } from './ffPage';
 import { Protocol } from './protocol';
 
 export class FFBrowser extends Browser {
@@ -61,7 +61,7 @@ export class FFBrowser extends Browser {
     this._connection.on('Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this._connection.on('Browser.downloadCreated', this._onDownloadCreated.bind(this));
     this._connection.on('Browser.downloadFinished', this._onDownloadFinished.bind(this));
-    this._connection.on('Browser.screencastFinished', this._onScreencastFinished.bind(this));
+    this._connection.on('Browser.videoRecordingFinished', this._onVideoRecordingFinished.bind(this));
   }
 
   async _initVersion() {
@@ -133,7 +133,7 @@ export class FFBrowser extends Browser {
     this._downloadFinished(payload.uuid, error);
   }
 
-  _onScreencastFinished(payload: Protocol.Browser.screencastFinishedPayload) {
+  _onVideoRecordingFinished(payload: Protocol.Browser.videoRecordingFinishedPayload) {
     this._takeVideo(payload.screencastId)?.reportFinished();
   }
 }
@@ -194,7 +194,7 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
-        return this._browser._connection.send('Browser.setScreencastOptions', {
+        return this._browser._connection.send('Browser.setVideoRecordingOptions', {
           // validateBrowserContextOptions ensures correct video size.
           ...this._options.recordVideo!.size!,
           dir: this._options.recordVideo!.dir,
@@ -303,9 +303,8 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async _doExposeBinding(binding: PageBinding) {
-    if (binding.world !== 'main')
-      throw new Error('Only main context bindings are supported in Firefox.');
-    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId, name: binding.name, script: binding.source });
+    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : '';
+    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId, worldName, name: binding.name, script: binding.source });
   }
 
   async _doUpdateRequestInterception(): Promise<void> {

@@ -10,6 +10,7 @@
 #include "media/base/videosinkinterface.h"
 #include "modules/video_capture/video_capture.h"
 #include "rtc_base/criticalsection.h"
+#include "video_engine/desktop_capture_impl.h"
 
 class nsIWidget;
 
@@ -19,15 +20,18 @@ namespace widget {
 class HeadlessWidget;
 }
 
-class HeadlessWindowCapturer : public webrtc::VideoCaptureModule {
+class HeadlessWindowCapturer : public webrtc::VideoCaptureModuleEx {
  public:
-  static rtc::scoped_refptr<webrtc::VideoCaptureModule> Create(mozilla::widget::HeadlessWidget*);
+  static rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> Create(mozilla::widget::HeadlessWidget*);
 
   void RegisterCaptureDataCallback(
       rtc::VideoSinkInterface<webrtc::VideoFrame>* dataCallback) override;
   void DeRegisterCaptureDataCallback(
       rtc::VideoSinkInterface<webrtc::VideoFrame>* dataCallback) override;
   int32_t StopCaptureIfAllClientsClose() override;
+
+  void RegisterRawFrameCallback(webrtc::RawFrameCallback* rawFrameCallback) override;
+  void DeRegisterRawFrameCallback(webrtc::RawFrameCallback* rawFrameCallback) override;
 
   int32_t SetCaptureRotation(webrtc::VideoRotation) override { return -1; }
   bool SetApplyRotation(bool) override { return false; }
@@ -54,6 +58,7 @@ class HeadlessWindowCapturer : public webrtc::VideoCaptureModule {
   mozilla::widget::HeadlessWidget* mWindow = nullptr;
   rtc::CriticalSection _callBackCs;
   std::set<rtc::VideoSinkInterface<webrtc::VideoFrame>*> _dataCallBacks;
+  std::set<webrtc::RawFrameCallback*> _rawFrameCallbacks;
 };
 
 }  // namespace mozilla

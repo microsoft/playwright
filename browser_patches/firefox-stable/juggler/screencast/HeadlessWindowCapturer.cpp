@@ -17,7 +17,7 @@ using namespace webrtc;
 
 namespace mozilla {
 
-rtc::scoped_refptr<webrtc::VideoCaptureModule> HeadlessWindowCapturer::Create(HeadlessWidget* headlessWindow) {
+rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> HeadlessWindowCapturer::Create(HeadlessWidget* headlessWindow) {
   return new rtc::RefCountedObject<HeadlessWindowCapturer>(headlessWindow);
 }
 
@@ -38,6 +38,19 @@ void HeadlessWindowCapturer::DeRegisterCaptureDataCallback(rtc::VideoSinkInterfa
   auto it = _dataCallBacks.find(dataCallback);
   if (it != _dataCallBacks.end()) {
     _dataCallBacks.erase(it);
+  }
+}
+
+void HeadlessWindowCapturer::RegisterRawFrameCallback(webrtc::RawFrameCallback* rawFrameCallback) {
+  rtc::CritScope lock2(&_callBackCs);
+  _rawFrameCallbacks.insert(rawFrameCallback);
+}
+
+void HeadlessWindowCapturer::DeRegisterRawFrameCallback(webrtc::RawFrameCallback* rawFrameCallback) {
+  rtc::CritScope lock2(&_callBackCs);
+  auto it = _rawFrameCallbacks.find(rawFrameCallback);
+  if (it != _rawFrameCallbacks.end()) {
+    _rawFrameCallbacks.erase(it);
   }
 }
 
@@ -63,8 +76,26 @@ int32_t HeadlessWindowCapturer::StartCapture(const VideoCaptureCapability& capab
     }
 
     if (dataSurface->GetFormat() != gfx::SurfaceFormat::B8G8R8A8) {
-      fprintf(stderr, "Uexpected snapshot surface format: %hhd\n", dataSurface->GetFormat());
+      fprintf(stderr, "Unexpected snapshot surface format: %hhd\n", dataSurface->GetFormat());
       return;
+    }
+
+    webrtc::VideoCaptureCapability frameInfo;
+    frameInfo.width = dataSurface->GetSize().width;
+    frameInfo.height = dataSurface->GetSize().height;
+#if MOZ_LITTLE_ENDIAN()
+    frameInfo.videoType = VideoType::kARGB;
+#else
+    frameInfo.videoType = VideoType::kBGRA;
+#endif
+
+    {
+      rtc::CritScope lock2(&_callBackCs);
+      for (auto rawFrameCallback : _rawFrameCallbacks) {
+        rawFrameCallback->OnRawFrame(dataSurface->GetData(), dataSurface->Stride(), frameInfo);
+      }
+      if (!_dataCallBacks.size())
+        return;
     }
 
     int width = dataSurface->GetSize().width;
@@ -87,7 +118,6 @@ int32_t HeadlessWindowCapturer::StartCapture(const VideoCaptureCapability& capab
         buffer->MutableDataU(), buffer->StrideU(),
         buffer->MutableDataV(), buffer->StrideV(),
         width, height);
-
     if (conversionResult != 0) {
       fprintf(stderr, "Failed to convert capture frame to I420: %d\n", conversionResult);
       return;

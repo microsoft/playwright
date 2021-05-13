@@ -115,7 +115,7 @@ export abstract class BrowserType extends SdkObject {
       protocolLogger,
       browserLogsCollector,
       wsEndpoint: options.useWebSocket ? (transport as WebSocketTransport).wsEndpoint : undefined,
-      traceDir: options._traceDir,
+      traceDir: options.traceDir,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
@@ -186,7 +186,8 @@ export abstract class BrowserType extends SdkObject {
       await validateHostRequirements(this._registry, options.channel as registry.BrowserName);
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
-    const wsEndpoint = options.useWebSocket ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
+    const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));
+    const waitForWSEndpoint = shouldWaitForWSListening ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
@@ -242,8 +243,11 @@ export abstract class BrowserType extends SdkObject {
       kill
     };
     progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
+    let wsEndpoint: string | undefined;
+    if (shouldWaitForWSListening)
+      wsEndpoint = await waitForWSEndpoint;
     if (options.useWebSocket) {
-      transport = await WebSocketTransport.connect(progress, await wsEndpoint!);
+      transport = await WebSocketTransport.connect(progress, wsEndpoint!);
     } else {
       const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
       transport = new PipeTransport(stdio[3], stdio[4]);
@@ -271,8 +275,10 @@ function copyTestHooks(from: object, to: object) {
 
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
   const { devtools = false } = options;
-  let { headless = !devtools } = options;
+  let { headless = !devtools, downloadsPath } = options;
   if (debugMode())
     headless = false;
-  return { ...options, devtools, headless };
+  if (downloadsPath && !path.isAbsolute(downloadsPath))
+    downloadsPath = path.join(process.cwd(), downloadsPath);
+  return { ...options, devtools, headless, downloadsPath };
 }

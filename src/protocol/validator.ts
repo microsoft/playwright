@@ -172,7 +172,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
-    _traceDir: tOptional(tString),
+    traceDir: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
     firefoxUserPrefs: tOptional(tAny),
     slowMo: tOptional(tNumber),
@@ -197,7 +197,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
-    _traceDir: tOptional(tString),
+    traceDir: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
     sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
@@ -973,6 +973,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     cwd: tOptional(tString),
     env: tOptional(tArray(tType('NameValue'))),
     timeout: tOptional(tNumber),
+  });
+  scheme.ElectronApplicationBrowserWindowParams = tObject({
+    page: tChannel('Page'),
   });
   scheme.ElectronApplicationEvaluateExpressionParams = tObject({
     expression: tString,

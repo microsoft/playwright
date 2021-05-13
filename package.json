@@ -1,17 +1,17 @@
 {
   "name": "playwright-internal",
   "private": true,
-  "version": "1.11.0-next",
+  "version": "1.12.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=10.17.0"
+    "node": ">=12"
   },
   "scripts": {
-    "ctest": "folio --config=tests/config/default.config.ts --tag=chromium",
-    "ftest": "folio --config=tests/config/default.config.ts --tag=firefox",
-    "wtest": "folio --config=tests/config/default.config.ts --tag=webkit",
+    "ctest": "folio --config=tests/config/default.config.ts --project=chromium",
+    "ftest": "folio --config=tests/config/default.config.ts --project=firefox",
+    "wtest": "folio --config=tests/config/default.config.ts --project=webkit",
     "atest": "folio --config=tests/config/android.config.ts",
     "etest": "folio --config=tests/config/electron.config.ts",
     "test": "folio --config=tests/config/default.config.ts",
@@ -27,9 +27,7 @@
     "test-types": "node utils/generate_types/ && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && tsc -p ./tests/",
     "roll": "node utils/roll_browser.js",
     "check-deps": "node utils/check_deps.js",
-    "build-android-driver": "./utils/build_android_driver.sh",
-    "storybook": "start-storybook -p 6006 -s public",
-    "build-storybook": "build-storybook -s public"
+    "build-android-driver": "./utils/build_android_driver.sh"
   },
   "author": {
     "name": "Microsoft Corporation"
@@ -55,11 +53,6 @@
     "yazl": "^2.5.1"
   },
   "devDependencies": {
-    "@storybook/addon-actions": "^6.1.20",
-    "@storybook/addon-essentials": "^6.1.20",
-    "@storybook/addon-links": "^6.1.20",
-    "@storybook/node-logger": "^6.1.20",
-    "@storybook/react": "^6.1.20",
     "@types/debug": "^4.1.5",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.3",
@@ -87,7 +80,7 @@
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react-hooks": "^4.2.0",
     "file-loader": "^6.1.0",
-    "folio": "=0.4.0-alpha4",
+    "folio": "=0.4.0-alpha11",
     "formidable": "^1.2.2",
     "html-webpack-plugin": "^4.4.1",
     "ncp": "^2.0.0",

@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { slowPlaywrightTest as test, expect } from './config/browserTest';
+import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
+
+test.slow('All connect tests are slow');
 
 test('should be able to reconnect to a browser', async ({browserType, startRemoteServer, server}) => {
   const remoteServer = await startRemoteServer();
@@ -79,7 +81,10 @@ test('disconnected event should be emitted when browser is closed or server is c
   const remoteServer = await startRemoteServer();
 
   const browser1 = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  await browser1.newPage();
+
   const browser2 = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  await browser2.newPage();
 
   let disconnected1 = 0;
   let disconnected2 = 0;
@@ -141,6 +146,19 @@ test('should throw when used after isConnected returns false', async ({browserTy
   expect(error.message).toContain('has been closed');
 });
 
+test('should throw when calling waitForNavigation after disconnect', async ({browserType, startRemoteServer}) => {
+  const remoteServer = await startRemoteServer();
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  await Promise.all([
+    remoteServer.close(),
+    new Promise(f => browser.once('disconnected', f)),
+  ]);
+  expect(browser.isConnected()).toBe(false);
+  const error = await page.waitForNavigation().catch(e => e);
+  expect(error.message).toContain('Navigation failed because page was closed');
+});
+
 test('should reject navigation when browser closes', async ({browserType, startRemoteServer, server}) => {
   const remoteServer = await startRemoteServer();
   server.setRoute('/one-style.css', () => {});
@@ -150,7 +168,7 @@ test('should reject navigation when browser closes', async ({browserType, startR
   await server.waitForRequest('/one-style.css');
   await browser.close();
   const error = await navigationPromise;
-  expect(error.message).toContain('Navigation failed because page was closed!');
+  expect(error.message).toContain('has been closed');
 });
 
 test('should reject waitForSelector when browser closes', async ({browserType, startRemoteServer, server}) => {
@@ -165,7 +183,7 @@ test('should reject waitForSelector when browser closes', async ({browserType, s
 
   await browser.close();
   const error = await watchdog;
-  expect(error.message).toContain('Protocol error');
+  expect(error.message).toContain('has been closed');
 });
 
 test('should emit close events on pages and contexts', async ({browserType, startRemoteServer}) => {
@@ -359,4 +377,46 @@ test('should work with cluster', async ({browserType, startRemoteServer}) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
   expect(await page.evaluate('1 + 2')).toBe(3);
+});
+
+test('should properly disconnect when connection closes from the client side', async ({browserType, startRemoteServer, server}) => {
+  server.setRoute('/one-style.css', () => {});
+  const remoteServer = await startRemoteServer();
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
+  const waitForNavigationPromise = page.waitForNavigation().catch(e => e);
+
+  const disconnectedPromise = new Promise(f => browser.once('disconnected', f));
+  // This closes the websocket.
+  (browser as any)._connection.close();
+  await disconnectedPromise;
+  expect(browser.isConnected()).toBe(false);
+
+  expect((await navigationPromise).message).toContain('has been closed');
+  expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
+  expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
+  expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
+});
+
+test('should properly disconnect when connection closes from the server side', async ({browserType, startRemoteServer, server, platform}) => {
+  test.skip(platform === 'win32', 'Cannot send signals');
+
+  server.setRoute('/one-style.css', () => {});
+  const remoteServer = await startRemoteServer({ disconnectOnSIGHUP: true });
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
+  const waitForNavigationPromise = page.waitForNavigation().catch(e => e);
+
+  const disconnectedPromise = new Promise(f => browser.once('disconnected', f));
+  // This closes the websocket server.
+  process.kill(remoteServer.child().pid, 'SIGHUP');
+  await disconnectedPromise;
+  expect(browser.isConnected()).toBe(false);
+
+  expect((await navigationPromise).message).toContain('has been closed');
+  expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
+  expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
+  expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
 });

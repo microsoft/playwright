@@ -16,21 +16,21 @@ configurations for common CI providers.
    in Linux agents. Windows and macOS agents do not require any additional dependencies.
 1. **Install Playwright**:
    ```sh js
-   $ npm ci
+   npm ci
    # or
-   $ npm install
+   npm install
    ```
    ```sh python
-   $ pip install playwright
-   $ playwright install
+   pip install playwright
+   playwright install
    ```
 
 1. **Run your tests**:
    ```sh js
-   $ npm test
+   npm test
    ```
    ```sh python
-   $ pytest
+   pytest
    ```
 
 ## CI configurations

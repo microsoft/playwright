@@ -16,6 +16,7 @@
 
 import { playwrightTest as it, expect } from './config/browserTest';
 import fs from 'fs';
+import path from 'path';
 
 it.describe('downloads path', () => {
   it.beforeEach(async ({server}) => {
@@ -67,6 +68,20 @@ it.describe('downloads path', () => {
     ]);
     const path = await download.path();
     expect(path.startsWith(testInfo.outputPath(''))).toBeTruthy();
+    await page.close();
+    await downloadsBrowser.close();
+  });
+
+  it('should report downloads in downloadsPath folder with a relative path', async ({browserType, browserOptions, server}, testInfo) => {
+    const downloadsBrowser = await browserType.launch({ ...browserOptions, downloadsPath: path.relative(process.cwd(), testInfo.outputPath('')) });
+    const page = await downloadsBrowser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const downloadPath = await download.path();
+    expect(downloadPath.startsWith(testInfo.outputPath(''))).toBeTruthy();
     await page.close();
     await downloadsBrowser.close();
   });

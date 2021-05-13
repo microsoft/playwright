@@ -141,6 +141,9 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     bin: {
       playwright: './lib/cli/cli.js',
     },
+    engines: {
+      node: '>=12',
+    },
     exports: {
       // Root import: we have a wrapper ES Module to support the following syntax.
       // const { chromium } = require('playwright');

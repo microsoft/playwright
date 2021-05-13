@@ -106,6 +106,8 @@ export interface ChromiumCoverage extends Coverage { }
 `;
   for (const [key, value] of Object.entries(exported))
     output = output.replace(new RegExp('\\b' + key + '\\b', 'g'), value);
+  // remove trailing whitespace
+  output = output.replace(/( +)\n/g, '\n');
   writeFile(path.join(typesDir, 'types.d.ts'), output);
   process.exit(hadChanges && process.argv.includes('--check-clean') ? 1 : 0);
 })().catch(e => {

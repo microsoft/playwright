@@ -25,7 +25,7 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - uses: actions/setup-node@v2
       with:
-        node-version: 10.15
+        node-version: 12
     - run: npm ci
     - run: npm run build
     - run: ./utils/docker/build.sh bionic playwright:localbuild-bionic

@@ -5,6 +5,8 @@
 ## method: ConsoleMessage.args
 - returns: <[Array]<[JSHandle]>>
 
+List of arguments passed to a `console` function call. See also [`event: Page.console`].
+
 ## method: ConsoleMessage.location
 * langs: js, python
 - returns: <[Object]>
@@ -20,6 +22,8 @@ URL of the resource followed by 0-based line and column numbers in the resource 
 
 ## method: ConsoleMessage.text
 - returns: <[string]>
+
+The text of the console message.
 
 ## method: ConsoleMessage.type
 - returns: <[string]>

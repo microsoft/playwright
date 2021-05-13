@@ -104,7 +104,6 @@ class PageAgent {
       helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
       helper.addEventListener(this._messageManager, 'error', this._onError.bind(this)),
       helper.on(this._frameTree, 'load', this._onLoad.bind(this)),
-      helper.on(this._frameTree, 'bindingcalled', this._onBindingCalled.bind(this)),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
       helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
       helper.on(this._frameTree, 'navigationstarted', this._onNavigationStarted.bind(this)),
@@ -133,8 +132,9 @@ class PageAgent {
       this._runtime.events.onConsoleMessage(msg => this._browserPage.emit('runtimeConsole', msg)),
       this._runtime.events.onExecutionContextCreated(this._onExecutionContextCreated.bind(this)),
       this._runtime.events.onExecutionContextDestroyed(this._onExecutionContextDestroyed.bind(this)),
+      this._runtime.events.onBindingCalled(this._onBindingCalled.bind(this)),
       browserChannel.register('page', {
-        addBinding: ({ name, script }) => this._frameTree.addBinding(name, script),
+        addBinding: ({ worldName, name, script }) => this._frameTree.addBinding(worldName, name, script),
         addScriptToEvaluateOnNewDocument: ({script, worldName}) => this._frameTree.addScriptToEvaluateOnNewDocument(script, worldName),
         adoptNode: this._adoptNode.bind(this),
         crash: this._crash.bind(this),
@@ -150,7 +150,6 @@ class PageAgent {
         insertText: this._insertText.bind(this),
         navigate: this._navigate.bind(this),
         reload: this._reload.bind(this),
-        removeScriptToEvaluateOnNewDocument: ({scriptId}) => this._frameTree.removeScriptToEvaluateOnNewDocument(scriptId),
         screenshot: this._screenshot.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setCacheDisabled: this._setCacheDisabled.bind(this),
@@ -251,8 +250,8 @@ class PageAgent {
       return;
     const frame = this._findFrameForNode(inputElement);
     this._browserPage.emit('pageFileChooserOpened', {
-      executionContextId: frame.executionContext().id(),
-      element: frame.executionContext().rawValueToRemoteObject(inputElement)
+      executionContextId: frame.mainExecutionContext().id(),
+      element: frame.mainExecutionContext().rawValueToRemoteObject(inputElement)
     });
   }
 
@@ -355,9 +354,9 @@ class PageAgent {
     });
   }
 
-  _onBindingCalled({frame, name, payload}) {
+  _onBindingCalled({executionContextId, name, payload}) {
     this._browserPage.emit('pageBindingCalled', {
-      executionContextId: frame.executionContext().id(),
+      executionContextId,
       name,
       payload
     });

@@ -17,8 +17,6 @@
 import { playwrightTest as it, expect } from '../config/browserTest';
 
 it('should pass firefox user preferences', async ({browserType, browserOptions, browserName}) => {
-  it.skip(browserName !== 'firefox');
-
   const browser = await browserType.launch({
     ...browserOptions,
     firefoxUserPrefs: {

@@ -28,7 +28,7 @@ export async function installDeps(browserTypes: string[]) {
   browserTypes.push('tools');
 
   const ubuntuVersion = await getUbuntuVersion();
-  if (ubuntuVersion !== '18.04' && ubuntuVersion !== '20.04') {
+  if (ubuntuVersion !== '18.04' && ubuntuVersion !== '20.04' && ubuntuVersion !== '21.04') {
     console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console
     return;
   }
@@ -39,6 +39,8 @@ export async function installDeps(browserTypes: string[]) {
       libraries.push(...deps['bionic'][browserType]);
     else if (ubuntuVersion === '20.04')
       libraries.push(...deps['focal'][browserType]);
+    else if (ubuntuVersion === '21.04')
+      libraries.push(...deps['hirsute'][browserType]);
   }
   const uniqueLibraries = Array.from(new Set(libraries));
   console.log('Installing Ubuntu dependencies...');  // eslint-disable-line no-console

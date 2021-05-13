@@ -57,15 +57,9 @@ function copy_test_scripts {
 function run_tests {
   test_screencast
   test_typescript_types
-  test_skip_browser_download
-  test_skip_browser_download_inspect_with_custom_executable
   test_playwright_global_installation_subsequent_installs
-  test_playwright_should_work
   test_playwright_should_work_with_relative_home_path
   test_playwright_should_work_with_relative_browsers_path
-  test_playwright_chromium_should_work
-  test_playwright_webkit_should_work
-  test_playwright_firefox_should_work
   test_playwright_validate_dependencies
   test_playwright_validate_dependencies_skip_executable_path
   test_playwright_global_installation
@@ -77,6 +71,17 @@ function run_tests {
   test_playwright_cli_install_should_work
   test_playwright_cli_codegen_should_work
   test_playwright_driver_should_work
+  # npm v7 that comes with Node v16 swallows output from install scripts,
+  # so the following tests won't work.
+  # See discussion at https://github.com/npm/cli/issues/1651
+  if [[ "${NODE_VERSION}" != *"v16."* ]]; then
+    test_skip_browser_download
+    test_skip_browser_download_inspect_with_custom_executable
+    test_playwright_should_work
+    test_playwright_chromium_should_work
+    test_playwright_webkit_should_work
+    test_playwright_firefox_should_work
+  fi
 }
 
 function test_screencast {

@@ -226,7 +226,7 @@ const Browser = {
       canceled: t.Optional(t.Boolean),
       error: t.Optional(t.String),
     },
-    'screencastFinished': {
+    'videoRecordingFinished': {
       screencastId: t.String,
     },
   },
@@ -373,6 +373,7 @@ const Browser = {
     'addBinding': {
       params: {
         browserContextId: t.Optional(t.String),
+        worldName: t.Optional(t.String),
         name: t.String,
         script: t.String,
       },
@@ -420,13 +421,12 @@ const Browser = {
         colorScheme: t.Nullable(t.Enum(['dark', 'light', 'no-preference'])),
       },
     },
-    'setScreencastOptions': {
+    'setVideoRecordingOptions': {
       params: {
         browserContextId: t.Optional(t.String),
         dir: t.String,
         width: t.Number,
         height: t.Number,
-        scale: t.Optional(t.Number),
       },
     },
   },
@@ -524,7 +524,10 @@ const Runtime = {
   events: {
     'executionContextCreated': {
       executionContextId: t.String,
-      auxData: t.Any,
+      auxData: {
+        frameId: t.Optional(t.String),
+        name: t.Optional(t.String),
+      },
     },
     'executionContextDestroyed': {
       executionContextId: t.String,
@@ -665,7 +668,7 @@ const Page = {
       workerId: t.String,
       message: t.String,
     },
-    'screencastStarted': {
+    'videoRecordingStarted': {
       screencastId: t.String,
       file: t.String,
     },
@@ -697,6 +700,11 @@ const Page = {
       opcode: t.Number,
       data: t.String,
     },
+    'screencastFrame': {
+      data: t.String,
+      deviceWidth: t.Number,
+      deviceHeight: t.Number,
+    },
   },
 
   methods: {
@@ -714,6 +722,7 @@ const Page = {
     },
     'addBinding': {
       params: {
+        worldName: t.Optional(t.String),
         name: t.String,
         script: t.String,
       },
@@ -759,15 +768,7 @@ const Page = {
       params: {
         script: t.String,
         worldName: t.Optional(t.String),
-      },
-      returns: {
-        scriptId: t.String,
       }
-    },
-    'removeScriptToEvaluateOnNewDocument': {
-      params: {
-        scriptId: t.String,
-      },
     },
     'navigate': {
       params: {
@@ -896,15 +897,22 @@ const Page = {
         message: t.String,
       },
     },
-    'startVideoRecording': {
+    'startScreencast': {
       params: {
-        file: t.String,
         width: t.Number,
         height: t.Number,
-        scale: t.Optional(t.Number),
+        quality: t.Number,
+      },
+      returns: {
+        screencastId: t.String,
       },
     },
-    'stopVideoRecording': {
+    'screencastFrameAck': {
+      params: {
+        screencastId: t.String,
+      },
+    },
+    'stopScreencast': {
     },
   },
 };

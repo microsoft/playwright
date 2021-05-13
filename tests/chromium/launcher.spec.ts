@@ -16,10 +16,6 @@
 
 import { playwrightTest as it, expect } from '../config/browserTest';
 
-it.beforeEach(async ({ browserName }) => {
-  it.skip(browserName !== 'chromium');
-});
-
 it('should throw with remote-debugging-pipe argument', async ({browserType, browserOptions, mode}) => {
   it.skip(mode !== 'default');
 
@@ -56,7 +52,8 @@ it('should open devtools when "devtools: true" option is given', async ({browser
   await browser.close();
 });
 
-it('should return background pages', async ({browserType, browserOptions, createUserDataDir, asset}) => {
+it('should return background pages', async ({browserType, browserOptions, createUserDataDir, asset, browserChannel}) => {
+  it.fixme(browserChannel);
   const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
   const extensionOptions = {...browserOptions,
@@ -75,6 +72,8 @@ it('should return background pages', async ({browserType, browserOptions, create
   expect(context.backgroundPages()).toContain(backgroundPage);
   expect(context.pages()).not.toContain(backgroundPage);
   await context.close();
+  expect(context.backgroundPages().length).toBe(0);
+  expect(context.pages().length).toBe(0);
 });
 
 it('should return background pages when recording video', async ({browserType, browserOptions, createUserDataDir, asset}, testInfo) => {

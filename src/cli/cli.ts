@@ -18,12 +18,14 @@
 
 /* eslint-disable no-console */
 
-import path from 'path';
-import program from 'commander';
-import os from 'os';
+import extract from 'extract-zip';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import rimraf from 'rimraf';
+import program from 'commander';
 import { runDriver, runServer, printApiJson, launchBrowserServer, installBrowsers } from './driver';
-import { showTraceViewer } from '../server/trace/viewer/traceViewer';
+import { TraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
 import { Browser } from '../client/browser';
@@ -159,21 +161,24 @@ commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
   console.log('  $ pdf https://example.com example.pdf');
 });
 
-if (process.env.PWTRACE) {
-  program
-      .command('show-trace [trace]')
-      .option('--resources <dir>', 'load resources from shared folder')
-      .description('Show trace viewer')
-      .action(function(trace, command) {
-        showTraceViewer(trace, command.resources).catch(logErrorAndExit);
-      }).on('--help', function() {
-        console.log('');
-        console.log('Examples:');
-        console.log('');
-        console.log('  $ show-trace --resources=resources trace/file.trace');
-        console.log('  $ show-trace trace/directory');
-      });
-}
+program
+    .command('show-trace [trace]')
+    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+    .description('Show trace viewer')
+    .action(function(trace, command) {
+      if (command.browser === 'cr')
+        command.browser = 'chromium';
+      if (command.browser === 'ff')
+        command.browser = 'firefox';
+      if (command.browser === 'wk')
+        command.browser = 'webkit';
+      showTraceViewer(trace, command.browser).catch(logErrorAndExit);
+    }).on('--help', function() {
+      console.log('');
+      console.log('Examples:');
+      console.log('');
+      console.log('  $ show-trace trace/directory');
+    });
 
 if (process.argv[2] === 'run-driver')
   runDriver();
@@ -209,10 +214,10 @@ type CaptureOptions = {
   fullPage: boolean;
 };
 
-async function launchContext(options: Options, headless: boolean): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext }> {
+async function launchContext(options: Options, headless: boolean, executablePath?: string): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext }> {
   validateOptions(options);
   const browserType = lookupBrowserType(options);
-  const launchOptions: LaunchOptions = { headless };
+  const launchOptions: LaunchOptions = { headless, executablePath };
   if (options.channel)
     launchOptions.channel = options.channel as any;
 
@@ -347,7 +352,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 }
 
 async function open(options: Options, url: string | undefined, language: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS);
+  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
   await context._enableRecorder({
     language,
     launchOptions,
@@ -361,7 +366,7 @@ async function open(options: Options, url: string | undefined, language: string)
 }
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
-  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS);
+  const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
   await context._enableRecorder({
     language,
     launchOptions,
@@ -471,4 +476,32 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
+}
+
+export async function showTraceViewer(tracePath: string, browserName: string) {
+  let stat;
+  try {
+    stat = fs.statSync(tracePath);
+  } catch (e) {
+    console.log(`No such file or directory: ${tracePath}`);
+    return;
+  }
+
+  if (stat.isDirectory()) {
+    const traceViewer = new TraceViewer(tracePath, browserName);
+    await traceViewer.show();
+    return;
+  }
+
+  const zipFile = tracePath;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
+  process.on('exit', () => rimraf.sync(dir));
+  try {
+    await extract(zipFile, { dir: dir });
+  } catch (e) {
+    console.log(`Invalid trace file: ${zipFile}`);
+    return;
+  }
+  const traceViewer = new TraceViewer(dir, browserName);
+  await traceViewer.show();
 }

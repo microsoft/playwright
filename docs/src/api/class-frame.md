@@ -169,11 +169,11 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: Frame.check.selector = %%-input-selector-%%
 
+### option: Frame.check.position = %%-input-position-%%
+
 ### option: Frame.check.force = %%-input-force-%%
 
 ### option: Frame.check.noWaitAfter = %%-input-no-wait-after-%%
-
-### option: Frame.check.position = %%-input-position-%%
 
 ### option: Frame.check.timeout = %%-input-timeout-%%
 
@@ -609,10 +609,9 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.fill
 
-This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
-If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead.
-If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
-Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
 To send fine-grained keyboard events, use [`method: Frame.type`].
 
@@ -687,7 +686,6 @@ Attribute name to get the value for.
 ## async method: Frame.goto
 * langs:
   - alias-java: navigate
-  - alias-csharp: GoToAsync
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -920,12 +918,13 @@ returns empty array.
 ## async method: Frame.selectOption
 - returns: <[Array]<[string]>>
 
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+
+If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+
 Returns the array of option values that have been successfully selected.
 
-Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-matching [`param: selector`], the method throws an error.
-
-Will wait until all specified options are present in the `<select>` element.
+Triggers a `change` and `input` event once all the provided options have been selected.
 
 ```js
 // single selection matching the value
@@ -1110,11 +1109,11 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: Frame.uncheck.selector = %%-input-selector-%%
 
+### option: Frame.uncheck.position = %%-input-position-%%
+
 ### option: Frame.uncheck.force = %%-input-force-%%
 
 ### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
-
-### option: Frame.uncheck.position = %%-input-position-%%
 
 ### option: Frame.uncheck.timeout = %%-input-timeout-%%
 

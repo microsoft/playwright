@@ -43,7 +43,6 @@ export type ScreencastFrameTraceEvent = {
   timestamp: number,
   type: 'screencast-frame',
   pageId: string,
-  pageTimestamp: number,
   sha1: string,
   width: number,
   height: number,

@@ -740,10 +740,16 @@ function getSecurityDetails(httpChannel) {
 function readRequestPostData(httpChannel) {
   if (!(httpChannel instanceof Ci.nsIUploadChannel))
     return undefined;
-  const iStream = httpChannel.uploadStream;
+  let iStream = httpChannel.uploadStream;
   if (!iStream)
     return undefined;
   const isSeekableStream = iStream instanceof Ci.nsISeekableStream;
+
+  // For some reason, we cannot rewind back big streams,
+  // so instead we should clone them.
+  const isCloneable = iStream instanceof Ci.nsICloneableInputStream;
+  if (isCloneable)
+    iStream = iStream.clone();
 
   let prevOffset;
   if (isSeekableStream) {
@@ -767,7 +773,7 @@ function readRequestPostData(httpChannel) {
   // Seek locks the file, so seek to the beginning only if necko hasn't
   // read it yet, since necko doesn't seek to 0 before reading (at lest
   // not till 459384 is fixed).
-  if (isSeekableStream && prevOffset == 0)
+  if (isSeekableStream && prevOffset == 0 && !isCloneable)
     iStream.seek(Ci.nsISeekableStream.NS_SEEK_SET, 0);
   return result;
 }

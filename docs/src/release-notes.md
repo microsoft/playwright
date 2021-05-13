@@ -5,6 +5,32 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.11
+
+🎥  New video: [Playwright: A New Test Automation Framework for the Modern Web](https://youtu.be/_Jla6DyuEu4) ([slides](https://docs.google.com/presentation/d/1xFhZIJrdHkVe2CuMKOrni92HoG2SWslo0DhJJQMR1DI/edit?usp=sharing))
+- We talked about Playwright
+- Showed engineering work behind the scenes
+- Did live demos with new features ✨
+- **Special thanks** to [applitools](http://applitools.com/) for hosting the event and inviting us!
+
+#### Browser Versions
+
+- Chromium 92.0.4498.0
+- Mozilla Firefox 89.0b6
+- WebKit 14.2
+
+#### New APIs
+
+- support for **async predicates** across the API in methods such as [`method: Page.waitForRequest`] and others
+- new **emulation devices**: Galaxy S8, Galaxy S9+, Galaxy Tab S4, Pixel 3, Pixel 4
+- new methods:
+    * [`method: Page.waitForURL`] to await navigations to URL
+    * [`method: Video.delete`] and [`method: Video.saveAs`] to manage screen recording
+- new options:
+    * `screen` option in the [`method: Browser.newContext`] method to emulate `window.screen` dimensions
+    * `position` option in [`method: Page.check`] and [`method: Page.uncheck`] methods
+    * `trial` option to dry-run actions in [`method: Page.check`], [`method: Page.uncheck`], [`method: Page.click`], [`method: Page.dblclick`], [`method: Page.hover`] and [`method: Page.tap`]
+
 ## Version 1.10
 
 - [Playwright for Java v1.10](https://github.com/microsoft/playwright-java) is **now stable**!
@@ -35,7 +61,7 @@ This version of Playwright was also tested against the following stable channels
   - **Generate element selectors** for your script by hovering over elements.
   - Set the `PWDEBUG=1` environment variable to launch the Inspector
 
-- **Pause script execution** with [`method: Page.pause`]. in headed mode. Pausing the page launches [Playwright Inspector](./inspector.md) for debugging.
+- **Pause script execution** with [`method: Page.pause`] in headed mode. Pausing the page launches [Playwright Inspector](./inspector.md) for debugging.
 
 - **New has-text pseudo-class** for CSS selectors. `:has-text("example")` matches any element containing `"example"` somewhere inside, possibly in a child or a descendant element. See [more examples](./selectors.md#text-selector).
 
@@ -58,10 +84,10 @@ This version of Playwright was also tested against the following stable channels
 - [Selecting elements based on layout](./selectors.md#selecting-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
 - Playwright now includes [command line interface](./cli.md), former playwright-cli.
   ```sh js
-  $ npx playwright --help
+  npx playwright --help
   ```
   ```sh python
-  $ playwright --help
+  playwright --help
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.
 - New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].

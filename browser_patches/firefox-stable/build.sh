@@ -18,7 +18,7 @@ if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
   cd "${FF_CHECKOUT_PATH}"
   echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
 else
-  cd "checkout"
+  cd "../firefox/checkout"
 fi
 
 rm -rf .mozconfig

@@ -21,7 +21,6 @@ import { ChannelOwner } from './channelOwner';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 import WebSocket from 'ws';
 import { Connection } from './connection';
-import { serializeError } from '../protocol/serializers';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { ChildProcess } from 'child_process';
@@ -111,32 +110,32 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   async connect(params: ConnectOptions): Promise<Browser> {
     const logger = params.logger;
     return this._wrapApiCall('browserType.connect', async () => {
-      const connection = new Connection();
-
       const ws = new WebSocket(params.wsEndpoint, [], {
         perMessageDeflate: false,
         maxPayload: 256 * 1024 * 1024, // 256Mb,
         handshakeTimeout: this._timeoutSettings.timeout(params),
         headers: params.headers,
       });
+      const connection = new Connection(() => ws.close());
 
       // The 'ws' module in node sometimes sends us multiple messages in a single task.
       const waitForNextTask = params.slowMo
         ? (cb: () => any) => setTimeout(cb, params.slowMo)
         : makeWaitForNextTask();
       connection.onmessage = message => {
-        if (ws.readyState !== WebSocket.OPEN) {
-          setTimeout(() => {
-            connection.dispatch({ id: (message as any).id, error: serializeError(new Error(kBrowserClosedError)) });
-          }, 0);
+        // Connection should handle all outgoing message in disconnected().
+        if (ws.readyState !== WebSocket.OPEN)
           return;
-        }
         ws.send(JSON.stringify(message));
       };
       ws.addEventListener('message', event => {
         waitForNextTask(() => {
           try {
-            connection.dispatch(JSON.parse(event.data));
+            // Since we may slow down the messages, but disconnect
+            // synchronously, we might come here with a message
+            // after disconnect.
+            if (!connection.isDisconnected())
+              connection.dispatch(JSON.parse(event.data));
           } catch (e) {
             ws.close();
           }
@@ -165,7 +164,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
 
           const browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
           browser._logger = logger;
-          browser._isRemote = true;
+          browser._remoteType = 'owns-connection';
           const closeListener = () => {
             // Emulate all pages, contexts and the browser closing upon disconnect.
             for (const context of browser.contexts()) {
@@ -174,6 +173,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
               context._onClose();
             }
             browser._didClose();
+            connection.didDisconnect(kBrowserClosedError);
           };
           ws.removeEventListener('close', prematureCloseListener);
           ws.addEventListener('close', closeListener);
@@ -210,7 +210,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       const browser = Browser.from(result.browser);
       if (result.defaultContext)
         browser._contexts.add(BrowserContext.from(result.defaultContext));
-      browser._isRemote = true;
+      browser._remoteType = 'uses-connection';
       browser._logger = logger;
       return browser;
     }, logger);

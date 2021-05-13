@@ -260,7 +260,7 @@ LaunchOptions:
         username: string?
         password: string?
     downloadsPath: string?
-    _traceDir: string?
+    traceDir: string?
     chromiumSandbox: boolean?
 
 
@@ -2101,7 +2101,16 @@ Electron:
 ElectronApplication:
   type: interface
 
+  initializer:
+    context: BrowserContext
+
   commands:
+
+    browserWindow:
+      parameters:
+        page: Page
+      returns:
+        handle: JSHandle
 
     evaluateExpression:
       parameters:
@@ -2122,19 +2131,7 @@ ElectronApplication:
     close:
 
   events:
-
-    # This event happens once immediately after creation.
-    context:
-      parameters:
-        context: BrowserContext
-
     close:
-
-    window:
-      parameters:
-        page: Page
-        browserWindow: JSHandle
-
 
 
 Android:

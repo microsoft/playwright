@@ -26,14 +26,14 @@ As of May 20, 2020, [`//packages/build_package.js`](./build_package.js) does the
 To build `playwright` package and save result as `./playwright.tgz` file:
 
 ```sh
-$ ./packages/build_package.js playwright ./playwright.tgz
+./packages/build_package.js playwright ./playwright.tgz
 ```
 
 To debug what files are put into the folder, use `--no-cleanup` flag and inspect the package folder:
 
 ```sh
-$ ./packages/build_package.js playwright ./playwright.tgz --no-cleanup
-$ ls ./packages/playwright # inspect the folder
+./packages/build_package.js playwright ./playwright.tgz --no-cleanup
+ls ./packages/playwright # inspect the folder
 ```
 
 

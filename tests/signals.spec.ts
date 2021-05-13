@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { slowPlaywrightTest as test, expect } from './config/browserTest';
+import { playwrightTest as test, expect } from './config/browserTest';
 import { execSync } from 'child_process';
+
+test.slow('All signal tests are slow');
 
 test('should close the browser when the node process closes', async ({startRemoteServer, isWindows, server}) => {
   const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
@@ -30,9 +32,7 @@ test('should close the browser when the node process closes', async ({startRemot
 });
 
 test.describe('signals', () => {
-  test.beforeEach(async ({platform, headful}) => {
-    test.skip(platform === 'win32' || headful);
-  });
+  test.skip(({platform, headful}) => platform === 'win32' || headful);
 
   test('should report browser close signal', async ({startRemoteServer, server}) => {
     const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });

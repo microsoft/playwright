@@ -15,12 +15,8 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './config/pageTest';
+import { contextTest as it, expect } from './config/browserTest';
 import { Server as WebSocketServer } from 'ws';
-
-it.beforeEach(async ({ isAndroid }) => {
-  it.skip(isAndroid);
-});
 
 it('should work', async ({ page, server }) => {
   const value = await page.evaluate(port => {

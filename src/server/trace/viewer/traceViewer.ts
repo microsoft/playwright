@@ -29,12 +29,13 @@ import { ProgressController } from '../../progress';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
-class TraceViewer {
+export class TraceViewer {
   private _server: HttpServer;
+  private _browserName: string;
 
-  constructor(traceDir: string, resourcesDir?: string) {
-    if (!resourcesDir)
-      resourcesDir = path.join(traceDir, 'resources');
+  constructor(traceDir: string, browserName: string) {
+    this._browserName = browserName;
+    const resourcesDir = path.join(traceDir, 'resources');
 
     // Served by TraceServer
     // - "/tracemodel" - json with trace model.
@@ -124,7 +125,7 @@ class TraceViewer {
     ];
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
-    const context = await traceViewerPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
+    const context = await traceViewerPlaywright[this._browserName as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
       sdkLanguage: 'javascript',
       args,
@@ -142,9 +143,4 @@ class TraceViewer {
     page.on('close', () => process.exit(0));
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
   }
-}
-
-export async function showTraceViewer(traceDir: string, resourcesDir?: string) {
-  const traceViewer = new TraceViewer(traceDir, resourcesDir);
-  await traceViewer.show();
 }
