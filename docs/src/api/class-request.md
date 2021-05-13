@@ -117,7 +117,7 @@ print(response.request.redirected_from.url) # "http://example.com"
 ```
 
 ```csharp
-var response = await page.GoToAsync("http://www.microsoft.com");
+var response = await page.GotoAsync("http://www.microsoft.com");
 Console.WriteLine(response.Request.RedirectedFrom?.Url); // http://www.microsoft.com
 ```
 
@@ -144,7 +144,7 @@ print(response.request.redirected_from) # None
 ```
 
 ```csharp
-var response = await page.GoToAsync("https://www.google.com");
+var response = await page.GotoAsync("https://www.google.com");
 Console.WriteLine(response.Request.RedirectedFrom?.Url); // null
 ```
 
@@ -240,7 +240,7 @@ print(request.timing)
 
 ```csharp
 var requestFinishedTask = page.WaitForEventAsync(PageEvent.RequestFinished);
-await Task.WhenAll(requestFinishedTask, page.GoToAsync("https://www.microsoft.com"));
+await Task.WhenAll(requestFinishedTask, page.GotoAsync("https://www.microsoft.com"));
 Console.WriteLine(requestFinishedTask.Result.Timing.ResponseEnd);
 ```
 

@@ -73,7 +73,7 @@ class BrowserExamples
         var firefox = playwright.Firefox;
         var browser = await firefox.LaunchAsync(headless: false);
         var page = await browser.NewPageAsync();
-        await page.GoToAsync("https://www.bing.com");
+        await page.GotoAsync("https://www.bing.com");
         await browser.CloseAsync();
     }
 }
@@ -203,7 +203,7 @@ var browser = await playwright.Firefox.LaunchAsync();
 var context = await browser.NewContextAsync();
 // Create a new page in a pristine context.
 var page = await context.NewPageAsync(); ;
-await page.GoToAsync("https://www.bing.com");
+await page.GotoAsync("https://www.bing.com");
 ```
 
 ### option: Browser.newContext.-inline- = %%-shared-context-params-list-%%

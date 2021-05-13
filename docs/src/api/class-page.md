@@ -84,7 +84,7 @@ class PageExamples
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Webkit.LaunchAsync();
         var page = await browser.NewPageAsync();
-        await page.GoToAsync("https://www.theverge.com");
+        await page.GotoAsync("https://www.theverge.com");
         await page.ScreenshotAsync("theverge.png");
     }
 }
@@ -2266,7 +2266,7 @@ browser.close()
 ```csharp
 await using var browser = await playwright.Webkit.LaunchAsync(headless: false);
 var page = await browser.NewPageAsync();
-await page.GoToAsync("https://keycode.info");
+await page.GotoAsync("https://keycode.info");
 await page.PressAsync("body", "A");
 await page.ScreenshotAsync("A.png");
 await page.PressAsync("body", "ArrowLeft");
@@ -2371,7 +2371,7 @@ browser.close()
 await using var browser = await playwright.Webkit.LaunchAsync();
 var page = await browser.NewPageAsync();
 await page.RouteAsync("**/*.{png,jpg,jpeg}", async r => await r.AbortAsync());
-await page.GoToAsync("https://www.microsoft.com");
+await page.GotoAsync("https://www.microsoft.com");
 ```
 
 or the same snippet using a regex pattern instead:
@@ -2408,7 +2408,7 @@ browser.close()
 await using var browser = await playwright.Webkit.LaunchAsync();
 var page = await browser.NewPageAsync();
 await page.RouteAsync(new Regex("(\\.png$)|(\\.jpg$)"), async r => await r.AbortAsync());
-await page.GoToAsync("https://www.microsoft.com");
+await page.GotoAsync("https://www.microsoft.com");
 ```
 
 It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:
@@ -2708,7 +2708,7 @@ page.goto("https://example.com")
 ```csharp
 var page = await browser.NewPageAsync();
 await page.SetViewportSizeAsync(640, 480);
-await page.GoToAsync("https://www.microsoft.com");
+await page.GotoAsync("https://www.microsoft.com");
 ```
 
 ### param: Page.setViewportSize.viewportSize
@@ -3565,7 +3565,7 @@ class FrameExamples
 
       foreach (var currentUrl in new[] { "https://www.google.com", "https://bbc.com" })
       {
-          await page.GoToAsync(currentUrl);
+          await page.GotoAsync(currentUrl);
           var element = await page.WaitForSelectorAsync("img");
           Console.WriteLine($"Loaded image: {await element.GetAttributeAsync("src")}");
       }
