@@ -19,6 +19,7 @@ export type ResourceSnapshot = {
   pageId: string,
   frameId: string,
   url: string,
+  type: string,
   contentType: string,
   responseHeaders: { name: string, value: string }[],
   requestHeaders: { name: string, value: string }[],
