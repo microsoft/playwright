@@ -118,27 +118,20 @@ class ApiParser {
    * @param {MarkdownNode} spec
    */
   parseArgument(spec) {
-    const langMatches =function (memberLangs, argumentLangs) {
-      if(!argumentLangs || !memberLangs || argumentLangs.every(arg => memberLangs.includes(arg)))
-        return true;
-
-      return false;
-    };
-
     const match = spec.text.match(/(param|option): ([^.]+)\.([^.]+)\.(.*)/);
     if(!match)
       throw `Something went wrong with matching ${spec.text}`;
     const clazz = this.classes.get(match[2]);
     if (!clazz)
       throw new Error('Invalid class ' + match[2]);
+    const method = clazz.membersArray.find(m => m.kind === 'method' && m.alias === match[3]);
+    if (!method)
+      throw new Error('Invalid method ' + match[2] + '.' + match[3]);
     const name = match[4];
     if (!name)
       throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
       const arg = this.parseProperty(spec);
-      const method = clazz.membersArray.find(m => m.kind === 'method' && m.alias === match[3] && langMatches(m.langs.only, arg.langs.only));
-      if (!method)
-        throw new Error('Invalid method ' + match[2] + '.' + match[3]);
       arg.name = name;
       const existingArg = method.argsArray.find(m => m.name === arg.name);
       if (existingArg && isTypeOverride(existingArg, arg)) {
@@ -152,9 +145,6 @@ class ApiParser {
         method.argsArray.push(arg);
       }
     } else {
-      const method = clazz.membersArray.find(m => m.kind === 'method' && m.alias === match[3]);
-      if (!method)
-        throw new Error('Invalid method ' + match[2] + '.' + match[3]);
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
         const type = new Documentation.Type('Object', []);
