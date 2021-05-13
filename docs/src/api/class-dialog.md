@@ -89,7 +89,7 @@ class DialogExample
     public static async Task Run()
     {
         using var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Chromium.LaunchAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
         var page = await browser.NewPageAsync();
 
         page.Dialog += async (_, dialog) =>
@@ -99,7 +99,6 @@ class DialogExample
         };
 
         await page.EvaluateAsync("alert('1');");
-        await browser.CloseAsync();
     }
 }
 ```
