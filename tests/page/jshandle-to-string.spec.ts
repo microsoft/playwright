@@ -36,7 +36,7 @@ it('should work for promises', async ({page}) => {
   expect(bHandle.toString()).toBe('JSHandle@promise');
 });
 
-it('should work with different subtypes', async ({page, isWebKit}) => {
+it('should work with different subtypes', async ({page, browserName}) => {
   expect((await page.evaluateHandle('(function(){})')).toString()).toBe('JSHandle@function');
   expect((await page.evaluateHandle('12')).toString()).toBe('JSHandle@12');
   expect((await page.evaluateHandle('true')).toString()).toBe('JSHandle@true');
@@ -54,6 +54,6 @@ it('should work with different subtypes', async ({page, isWebKit}) => {
   expect((await page.evaluateHandle('new WeakSet()')).toString()).toBe('JSHandle@weakset');
   expect((await page.evaluateHandle('new Error()')).toString()).toBe('JSHandle@error');
   // TODO(yurys): change subtype from array to typedarray in WebKit.
-  expect((await page.evaluateHandle('new Int32Array()')).toString()).toBe(isWebKit ? 'JSHandle@array' : 'JSHandle@typedarray');
+  expect((await page.evaluateHandle('new Int32Array()')).toString()).toBe(browserName === 'webkit' ? 'JSHandle@array' : 'JSHandle@typedarray');
   expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe('JSHandle@proxy');
 });

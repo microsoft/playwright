@@ -206,8 +206,8 @@ it('should isolate proxy credentials between contexts', async ({contextFactory, 
   }
 });
 
-it('should exclude patterns', async ({contextFactory, server, browserName, headful}) => {
-  it.fixme(browserName === 'chromium' && headful, 'Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
+it('should exclude patterns', async ({contextFactory, server, browserName, headless}) => {
+  it.fixme(browserName === 'chromium' && !headless, 'Chromium headed crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
 
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');

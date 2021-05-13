@@ -18,7 +18,7 @@ import { test, expect } from './inspectorTest';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
-  test.fixme(({ browserName, headful }) => browserName === 'firefox' && headful, 'Focus is off');
+  test.fixme(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Focus is off');
 
   test('should click', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
@@ -469,8 +469,8 @@ await page.SelectOptionAsync(\"select\", \"2\");`);
     expect(message.text()).toBe('2');
   });
 
-  test('should await popup', async ({ page, openRecorder, browserName, headful }) => {
-    test.fixme(browserName === 'webkit' && headful, 'Middle click does not open a popup in our webkit embedder');
+  test('should await popup', async ({ page, openRecorder, browserName, headless }) => {
+    test.fixme(browserName === 'webkit' && !headless, 'Middle click does not open a popup in our webkit embedder');
 
     const recorder = await openRecorder();
     await recorder.setContentAndWait('<a target=_blank rel=noopener href="about:blank">link</a>');
@@ -609,8 +609,8 @@ await Task.WhenAll(
     expect(page.url()).toContain('about:blank#foo');
   });
 
-  test('should ignore AltGraph', async ({ openRecorder, isFirefox }, testInfo) => {
-    testInfo.skip(isFirefox, 'The TextInputProcessor in Firefox does not work with AltGraph.');
+  test('should ignore AltGraph', async ({ openRecorder, browserName }) => {
+    test.skip(browserName === 'firefox', 'The TextInputProcessor in Firefox does not work with AltGraph.');
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input></input>`);
 

@@ -152,7 +152,7 @@ it('should scope browser handles', async ({browserType, browserOptions}) => {
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should work with the domain module', async ({ browserType, browserOptions, server, isFirefox }) => {
+it('should work with the domain module', async ({ browserType, browserOptions, server, browserName }) => {
   const local = domain.create();
   local.run(() => { });
   let err;
@@ -172,7 +172,7 @@ it('should work with the domain module', async ({ browserType, browserOptions, s
     new WebSocket('ws://localhost:' + port + '/bogus-ws');
   }, server.PORT);
   const message = await result;
-  if (isFirefox)
+  if (browserName === 'firefox')
     expect(message).toBe('CLOSE_ABNORMAL');
   else
     expect(message).toContain(': 400');

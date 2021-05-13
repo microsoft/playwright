@@ -79,7 +79,7 @@ it('should click the button with deviceScaleFactor set', async ({browser, server
   await context.close();
 });
 
-it('should click the button with offset with page scale', async ({browser, server, isWebKit, isChromium, headful, browserName, browserVersion}) => {
+it('should click the button with offset with page scale', async ({browser, server, headless, browserName, browserVersion}) => {
   it.skip(browserName === 'firefox');
 
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
@@ -93,13 +93,13 @@ it('should click the button with offset with page scale', async ({browser, serve
   expect(await page.evaluate('result')).toBe('Clicked');
   const round = x => Math.round(x + 0.01);
   let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
-  if (isWebKit) {
+  if (browserName === 'webkit') {
     // WebKit rounds up during css -> dip -> css conversion.
     expected = { x: 29, y: 19 };
-  } else if (isChromium && !headful) {
+  } else if (browserName === 'chromium' && headless) {
     // Headless Chromium rounds down during css -> dip -> css conversion.
     expected = { x: 27, y: 18 };
-  } else if (isChromium && headful && !chromiumVersionLessThan(browserVersion, '92.0.4498.0')) {
+  } else if (browserName === 'chromium' && !headless && !chromiumVersionLessThan(browserVersion, '92.0.4498.0')) {
     // New headed Chromium rounds down during css -> dip -> css conversion as well.
     expected = { x: 27, y: 18 };
   }

@@ -464,9 +464,9 @@ await page1.GoToAsync("about:blank?foo");`);
     expect(models.hovered).toBe('input[name="updated"]');
   });
 
-  test('should update active model on action', async ({ page, openRecorder, browserName, headful }) => {
-    test.fixme(browserName === 'webkit' && !headful);
-    test.fixme(browserName === 'firefox' && !headful);
+  test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
+    test.fixme(browserName === 'webkit' && headless);
+    test.fixme(browserName === 'firefox' && headless);
 
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);

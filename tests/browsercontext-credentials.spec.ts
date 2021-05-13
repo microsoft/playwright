@@ -17,8 +17,8 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should fail without credentials', async ({browser, server, browserName, headful}) => {
-  it.fail(browserName === 'chromium' && headful);
+it('should fail without credentials', async ({browser, server, browserName, headless}) => {
+  it.fail(browserName === 'chromium' && !headless);
 
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
@@ -28,8 +28,8 @@ it('should fail without credentials', async ({browser, server, browserName, head
   await context.close();
 });
 
-it('should work with setHTTPCredentials', async ({browser, server, browserName, headful}) => {
-  it.fail(browserName === 'chromium' && headful);
+it('should work with setHTTPCredentials', async ({browser, server, browserName, headless}) => {
+  it.fail(browserName === 'chromium' && !headless);
 
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();

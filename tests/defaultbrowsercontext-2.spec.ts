@@ -106,8 +106,8 @@ it('should restore state from userDataDir', async ({browserType, browserOptions,
   await browserContext3.close();
 });
 
-it('should restore cookies from userDataDir', async ({browserType, browserOptions,  server, createUserDataDir, platform, browserChannel}) => {
-  it.fixme(platform === 'win32' && browserChannel === 'chrome');
+it('should restore cookies from userDataDir', async ({browserType, browserOptions,  server, createUserDataDir, platform, channel}) => {
+  it.fixme(platform === 'win32' && channel === 'chrome');
   it.slow();
 
   const userDataDir = await createUserDataDir();
@@ -149,14 +149,14 @@ it('should throw if page argument is passed', async ({browserType, browserOption
   expect(error.message).toContain('can not specify page');
 });
 
-it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, browserOptions, server, createUserDataDir, toImpl, mode, isFirefox}) => {
+it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, browserOptions, server, createUserDataDir, toImpl, mode, browserName}) => {
   it.skip(mode !== 'default');
 
   const userDataDir = await createUserDataDir();
   const args = toImpl(browserType)._defaultArgs(browserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
   const options = {
     ...browserOptions,
-    args: isFirefox ? [...args, '-new-tab', server.EMPTY_PAGE] : [...args, server.EMPTY_PAGE],
+    args: browserName === 'firefox' ? [...args, '-new-tab', server.EMPTY_PAGE] : [...args, server.EMPTY_PAGE],
     ignoreDefaultArgs: true,
   };
   const browserContext = await browserType.launchPersistentContext(userDataDir, options);

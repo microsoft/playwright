@@ -23,7 +23,7 @@ const launchOptions = (channel: string) => {
   return channel ? `.setHeadless(false)\n        .setChannel("${channel}")` : '.setHeadless(false)';
 };
 
-test('should print the correct imports and context options', async ({ runCLI, browserChannel, browserName }) => {
+test('should print the correct imports and context options', async ({ runCLI, channel, browserName }) => {
   const cli = runCLI(['--target=java', emptyHTML]);
   const expectedResult = `import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.*;
@@ -32,7 +32,7 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       Browser browser = playwright.${browserName}().launch(new BrowserType.LaunchOptions()
-        ${launchOptions(browserChannel)});
+        ${launchOptions(channel)});
       BrowserContext context = browser.newContext();`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);

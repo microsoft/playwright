@@ -38,9 +38,9 @@ test('should throw upon second create new page', async function({browser}) {
   expect(error.message).toContain('Please use browser.newContext()');
 });
 
-test('version should work', async function({browser, isChromium}) {
+test('version should work', async function({browser, browserName}) {
   const version = browser.version();
-  if (isChromium)
+  if (browserName === 'chromium')
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();
   else
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();

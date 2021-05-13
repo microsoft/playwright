@@ -66,6 +66,7 @@ config.projects.push({
   name: 'android',
   options: {
     loopback: '10.0.2.2',
+    browserName: 'chromium',
   },
   testDir: path.join(testDir, 'android'),
 });
@@ -74,6 +75,7 @@ config.projects.push({
   name: 'android',
   options: {
     loopback: '10.0.2.2',
+    browserName: 'chromium',
   },
   testDir: path.join(testDir, 'page'),
   define: { test: pageTest, env: new AndroidPageEnv() },

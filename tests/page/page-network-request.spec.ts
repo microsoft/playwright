@@ -71,13 +71,13 @@ it('should not work for a redirect and interception', async ({page, server}) => 
   expect(requests[0].url()).toBe(server.PREFIX + '/foo.html');
 });
 
-it('should return headers', async ({page, server, isChromium, isFirefox, isWebKit}) => {
+it('should return headers', async ({page, server, browserName}) => {
   const response = await page.goto(server.EMPTY_PAGE);
-  if (isChromium)
+  if (browserName === 'chromium')
     expect(response.request().headers()['user-agent']).toContain('Chrome');
-  else if (isFirefox)
+  else if (browserName === 'firefox')
     expect(response.request().headers()['user-agent']).toContain('Firefox');
-  else if (isWebKit)
+  else if (browserName === 'webkit')
     expect(response.request().headers()['user-agent']).toContain('WebKit');
 });
 

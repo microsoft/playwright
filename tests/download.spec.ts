@@ -274,10 +274,10 @@ it.describe('download event', () => {
     await page.close();
   });
 
-  it('should report new window downloads', async ({browser, server, browserName, headful}) => {
-    it.fixme(browserName === 'chromium' && headful);
+  it('should report new window downloads', async ({browser, server, browserName, headless}) => {
+    it.fixme(browserName === 'chromium' && !headless);
 
-    // TODO: - the test fails in headful Chromium as the popup page gets closed along
+    // TODO: - the test fails in headed Chromium as the popup page gets closed along
     // with the session before download completed event arrives.
     // - WebKit doesn't close the popup page
     const page = await browser.newPage({ acceptDownloads: true });

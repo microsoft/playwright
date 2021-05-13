@@ -101,10 +101,9 @@ it('should change document.activeElement', async ({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it('should not affect screenshots', async ({page, server, browserName, headful}) => {
-  it.skip(browserName === 'firefox' && headful);
+it('should not affect screenshots', async ({page, server, browserName, headless}) => {
+  it.skip(browserName === 'firefox' && !headless, 'Firefox headede produces a different image');
 
-  // Firefox headful produces a different image.
   const page2 = await page.context().newPage();
   await Promise.all([
     page.setViewportSize({width: 500, height: 500}),

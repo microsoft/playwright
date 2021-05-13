@@ -52,8 +52,8 @@ it('should open devtools when "devtools: true" option is given', async ({browser
   await browser.close();
 });
 
-it('should return background pages', async ({browserType, browserOptions, createUserDataDir, asset, browserChannel}) => {
-  it.fixme(browserChannel);
+it('should return background pages', async ({browserType, browserOptions, createUserDataDir, asset, channel}) => {
+  it.fixme(channel);
   const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
   const extensionOptions = {...browserOptions,

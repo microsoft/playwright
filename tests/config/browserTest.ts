@@ -57,8 +57,8 @@ class PlaywrightEnv {
     this._browserType = args.playwright[args.browserName];
     this._browserOptions = {
       traceDir: args.traceDir,
-      channel: args.browserChannel,
-      headless: !args.headful,
+      channel: args.channel,
+      headless: args.headless,
       handleSIGINT: false,
       ...args.launchOptions,
     } as any;
