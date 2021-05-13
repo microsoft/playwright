@@ -67,7 +67,7 @@ export class Snapshotter {
     // Replay resources loaded in all pages.
     for (const page of this._context.pages()) {
       for (const response of page._frameManager._responses)
-        this._saveResource(page, response).catch(e => debugLogger.log('error', e));
+        this._saveResource(response).catch(e => debugLogger.log('error', e));
     }
   }
 
@@ -80,6 +80,9 @@ export class Snapshotter {
       this._onPage(page);
     this._eventListeners = [
       helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
+      helper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => {
+        this._saveResource(response).catch(e => debugLogger.log('error', e));
+      }),
     ];
 
     const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}")`;
@@ -149,13 +152,9 @@ export class Snapshotter {
     for (const frame of page.frames())
       this._annotateFrameHierarchy(frame);
     this._eventListeners.push(helper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
-
-    this._eventListeners.push(helper.addEventListener(page, Page.Events.Response, (response: network.Response) => {
-      this._saveResource(page, response).catch(e => debugLogger.log('error', e));
-    }));
   }
 
-  private async _saveResource(page: Page, response: network.Response) {
+  private async _saveResource(response: network.Response) {
     if (!this._started)
       return;
     const isRedirect = response.status() >= 300 && response.status() <= 399;
@@ -198,7 +197,7 @@ export class Snapshotter {
     }
 
     const resource: ResourceSnapshot = {
-      pageId: page.guid,
+      pageId: response.frame()._page.guid,
       frameId: response.frame().guid,
       resourceId: 'resource@' + createGuid(),
       url,

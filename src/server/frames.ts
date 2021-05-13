@@ -271,7 +271,6 @@ export class FrameManager {
     if (response.request()._isFavicon)
       return;
     this._responses.push(response);
-    this._page.emit(Page.Events.Response, response);
     this._page._browserContext.emit(BrowserContext.Events.Response, response);
   }
 
@@ -280,7 +279,6 @@ export class FrameManager {
     if (request._isFavicon)
       return;
     this._page._browserContext.emit(BrowserContext.Events.RequestFinished, request);
-    this._page.emit(Page.Events.RequestFinished, request);
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
@@ -295,7 +293,6 @@ export class FrameManager {
     if (request._isFavicon)
       return;
     this._page._browserContext.emit(BrowserContext.Events.RequestFailed, request);
-    this._page.emit(Page.Events.RequestFailed, request);
   }
 
   removeChildFramesRecursively(frame: Frame) {

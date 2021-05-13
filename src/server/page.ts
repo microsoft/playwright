@@ -104,10 +104,6 @@ export class Page extends SdkObject {
     // Can't use just 'error' due to node.js special treatment of error events.
     // @see https://nodejs.org/api/events.html#events_error_events
     PageError: 'pageerror',
-    Request: 'request',
-    Response: 'response',
-    RequestFailed: 'requestfailed',
-    RequestFinished: 'requestfinished',
     FrameAttached: 'frameattached',
     FrameDetached: 'framedetached',
     InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
@@ -411,7 +407,6 @@ export class Page extends SdkObject {
   }
 
   _requestStarted(request: network.Request) {
-    this.emit(Page.Events.Request, request);
     const route = request._route();
     if (!route)
       return;
