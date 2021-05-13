@@ -24,7 +24,9 @@ const readFileAsync = util.promisify(fs.readFile.bind(fs));
 export async function getUbuntuVersion(): Promise<string> {
   if (os.platform() !== 'linux')
     return '';
-  const osReleaseText = await readFileAsync('/etc/os-release', 'utf8').catch(e => '');
+  let osReleaseText = await readFileAsync('/etc/upstream-release/lsb-release', 'utf8').catch(e => '');
+  if (!osReleaseText)
+    osReleaseText = await readFileAsync('/etc/os-release', 'utf8').catch(e => '');
   if (!osReleaseText)
     return '';
   return getUbuntuVersionInternal(osReleaseText);
@@ -34,7 +36,11 @@ export function getUbuntuVersionSync(): string {
   if (os.platform() !== 'linux')
     return '';
   try {
-    const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
+    let osReleaseText: string;
+    if (fs.existsSync('/etc/upstream-release/lsb-release'))
+      osReleaseText = fs.readFileSync('/etc/upstream-release/lsb-release', 'utf8');
+    else
+      osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
     if (!osReleaseText)
       return '';
     return getUbuntuVersionInternal(osReleaseText);
@@ -55,6 +61,10 @@ function getUbuntuVersionInternal(osReleaseText: string): string {
       continue;
     fields.set(name.toLowerCase(), value);
   }
+  // For Linux mint
+  if (fields.get('distrib_id') && fields.get('distrib_id').toLowerCase() === 'ubuntu')
+    return fields.get('distrib_release') || '';
+
   if (!fields.get('name') || fields.get('name').toLowerCase() !== 'ubuntu')
     return '';
   return fields.get('version_id') || '';
