@@ -44,7 +44,7 @@ export const Timeline: React.FunctionComponent<{
   onHighlighted: (action: ActionEntry | undefined) => void,
 }> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
-  const [previewX, setPreviewX] = React.useState<number | undefined>();
+  const [previewPoint, setPreviewPoint] = React.useState<{ x: number, clientY: number } | undefined>();
   const [hoveredBarIndex, setHoveredBarIndex] = React.useState<number | undefined>();
 
   const offsets = React.useMemo(() => {
@@ -144,22 +144,23 @@ export const Timeline: React.FunctionComponent<{
   const onMouseMove = (event: React.MouseEvent) => {
     if (!ref.current)
       return;
-    const x = event.clientX - ref.current.getBoundingClientRect().left;
+    const bounds = ref.current.getBoundingClientRect();
+    const x = event.clientX - bounds.left;
     const index = findHoveredBarIndex(x);
-    setPreviewX(x);
+    setPreviewPoint({ x, clientY: event.clientY });
     setHoveredBarIndex(index);
     if (typeof index === 'number')
       onHighlighted(bars[index].entry);
   };
 
   const onMouseLeave = () => {
-    setPreviewX(undefined);
+    setPreviewPoint(undefined);
     setHoveredBarIndex(undefined);
     onHighlighted(undefined);
   };
 
   const onClick = (event: React.MouseEvent) => {
-    setPreviewX(undefined);
+    setPreviewPoint(undefined);
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
@@ -203,10 +204,10 @@ export const Timeline: React.FunctionComponent<{
         ></div>;
       })
     }</div>
-    <FilmStrip context={context} boundaries={boundaries} previewX={previewX} />
+    <FilmStrip context={context} boundaries={boundaries} previewPoint={previewPoint} />
     <div className='timeline-marker timeline-marker-hover' style={{
-      display: (previewX !== undefined) ? 'block' : 'none',
-      left: (previewX || 0) + 'px',
+      display: (previewPoint !== undefined) ? 'block' : 'none',
+      left: (previewPoint?.x || 0) + 'px',
     }}></div>
   </div>;
 };

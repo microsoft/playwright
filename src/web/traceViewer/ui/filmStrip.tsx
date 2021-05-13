@@ -21,18 +21,26 @@ import { useMeasure } from './helpers';
 import { upperBound } from '../../uiUtils';
 import { ContextEntry, PageEntry } from '../../../server/trace/viewer/traceModel';
 
+const tileSize = { width: 200, height: 45 };
+
 export const FilmStrip: React.FunctionComponent<{
   context: ContextEntry,
   boundaries: Boundaries,
-  previewX?: number,
-}> = ({ context, boundaries, previewX }) => {
+  previewPoint?: { x: number, clientY: number },
+}> = ({ context, boundaries, previewPoint }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
 
-  const screencastFrames = context.pages[0]?.screencastFrames;
+  let pageIndex = 0;
+  if (ref.current && previewPoint) {
+    const bounds = ref.current.getBoundingClientRect();
+    pageIndex = ((previewPoint.clientY - bounds.top) / tileSize.height) | 0;
+  }
+
+  const screencastFrames = context.pages[pageIndex]?.screencastFrames;
   // TODO: pick file from the Y position.
   let previewImage = undefined;
-  if (previewX !== undefined && context.pages.length) {
-    const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewX / measure.width;
+  if (previewPoint !== undefined && screencastFrames) {
+    const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
     previewImage = screencastFrames[upperBound(screencastFrames, previewTime, timeComparator) - 1];
   }
   const previewSize = inscribe(context.created.viewportSize!, { width: 600, height: 600 });
@@ -45,12 +53,12 @@ export const FilmStrip: React.FunctionComponent<{
       key={index}
     />)
   }
-  {previewImage && previewX !== undefined &&
+  {previewImage && previewPoint?.x !== undefined &&
     <div className='film-strip-hover' style={{
       width: previewSize.width,
       height: previewSize.height,
       top: measure.bottom + 5,
-      left: Math.min(previewX, measure.width - previewSize.width - 10),
+      left: Math.min(previewPoint!.x, measure.width - previewSize.width - 10),
     }}>
       <img src={`/sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
     </div>
@@ -69,7 +77,7 @@ const FilmStripLane: React.FunctionComponent<{
     viewportSize.width = Math.max(viewportSize.width, frame.width);
     viewportSize.height = Math.max(viewportSize.height, frame.height);
   }
-  const frameSize = inscribe(viewportSize!, { width: 200, height: 45 });
+  const frameSize = inscribe(viewportSize!, tileSize);
   const frameMargin = 2.5;
   const startTime = screencastFrames[0].timestamp;
   const endTime = screencastFrames[screencastFrames.length - 1].timestamp;
