@@ -1,4 +1,5 @@
 # class: Tracing
+* langs: js, python, java
 
 API for collecting and saving Playwright traces. Playwright traces can be opened using the Playwright CLI after
 Playwright script runs.
