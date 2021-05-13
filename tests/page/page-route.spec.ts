@@ -162,8 +162,8 @@ it('should work with redirect inside sync XHR', async ({page, server}) => {
   expect(status).toBe(200);
 });
 
-it('should pause intercepted XHR until continue', async ({page, server, isWebKit}) => {
-  it.fixme(isWebKit, 'Redirected request is not paused in WebKit');
+it('should pause intercepted XHR until continue', async ({page, server, browserName}) => {
+  it.fixme(browserName === 'webkit', 'Redirected request is not paused in WebKit');
 
   await page.goto(server.EMPTY_PAGE);
   let resolveRoute;
@@ -237,15 +237,15 @@ it('should be abortable', async ({page, server}) => {
   expect(failed).toBe(true);
 });
 
-it('should be abortable with custom error codes', async ({page, server, isWebKit, isFirefox}) => {
+it('should be abortable with custom error codes', async ({page, server, browserName}) => {
   await page.route('**/*', route => route.abort('internetdisconnected'));
   let failedRequest = null;
   page.on('requestfailed', request => failedRequest = request);
   await page.goto(server.EMPTY_PAGE).catch(e => {});
   expect(failedRequest).toBeTruthy();
-  if (isWebKit)
+  if (browserName === 'webkit')
     expect(failedRequest.failure().errorText).toBe('Request intercepted');
-  else if (isFirefox)
+  else if (browserName === 'firefox')
     expect(failedRequest.failure().errorText).toBe('NS_ERROR_OFFLINE');
   else
     expect(failedRequest.failure().errorText).toBe('net::ERR_INTERNET_DISCONNECTED');
@@ -263,14 +263,14 @@ it('should send referer', async ({page, server}) => {
   expect(request.headers['referer']).toBe('http://google.com/');
 });
 
-it('should fail navigation when aborting main resource', async ({page, server, isWebKit, isFirefox}) => {
+it('should fail navigation when aborting main resource', async ({page, server, browserName}) => {
   await page.route('**/*', route => route.abort());
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).toBeTruthy();
-  if (isWebKit)
+  if (browserName === 'webkit')
     expect(error.message).toContain('Request intercepted');
-  else if (isFirefox)
+  else if (browserName === 'firefox')
     expect(error.message).toContain('NS_ERROR_FAILURE');
   else
     expect(error.message).toContain('net::ERR_FAILED');
@@ -449,8 +449,8 @@ it('should intercept main resource during cross-process navigation', async ({pag
   expect(intercepted).toBe(true);
 });
 
-it('should fulfill with redirect status', async ({page, server, isWebKit}) => {
-  it.fixme(isWebKit, 'in WebKit the redirects are handled by the network stack and we intercept before');
+it('should fulfill with redirect status', async ({page, server, browserName}) => {
+  it.fixme(browserName === 'webkit', 'in WebKit the redirects are handled by the network stack and we intercept before');
 
   await page.goto(server.PREFIX + '/title.html');
   server.setRoute('/final', (req, res) => res.end('foo'));
@@ -472,8 +472,8 @@ it('should fulfill with redirect status', async ({page, server, isWebKit}) => {
   expect(text).toBe('foo');
 });
 
-it('should not fulfill with redirect status', async ({page, server, isWebKit}) => {
-  it.skip(!isWebKit, 'we should support fulfill with redirect in webkit and delete this test');
+it('should not fulfill with redirect status', async ({page, server, browserName}) => {
+  it.skip(browserName !== 'webkit', 'we should support fulfill with redirect in webkit and delete this test');
 
   await page.goto(server.PREFIX + '/empty.html');
 

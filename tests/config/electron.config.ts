@@ -59,7 +59,8 @@ const config: folio.Config<AllOptions> = {
 config.projects.push({
   name: 'electron',
   options: {
-    coverageName: 'electron'
+    browserName: 'chromium',
+    coverageName: 'electron',
   },
   testDir: path.join(testDir, 'electron'),
 });
@@ -67,7 +68,8 @@ config.projects.push({
 config.projects.push({
   name: 'electron',
   options: {
-    coverageName: 'electron'
+    browserName: 'chromium',
+    coverageName: 'electron',
   },
   testDir: path.join(testDir, 'page'),
   define: { test: pageTest, env: new ElectronPageEnv() },

@@ -69,7 +69,7 @@ it('should work with pages that have loaded before being connected to', async ({
   expect(popup.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should wait for load state of empty url popup', async ({page, isFirefox}) => {
+it('should wait for load state of empty url popup', async ({page, browserName}) => {
   const [popup, readyState] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -78,8 +78,8 @@ it('should wait for load state of empty url popup', async ({page, isFirefox}) =>
     }),
   ]);
   await popup.waitForLoadState();
-  expect(readyState).toBe(isFirefox ? 'uninitialized' : 'complete');
-  expect(await popup.evaluate(() => document.readyState)).toBe(isFirefox ? 'uninitialized' : 'complete');
+  expect(readyState).toBe(browserName === 'firefox' ? 'uninitialized' : 'complete');
+  expect(await popup.evaluate(() => document.readyState)).toBe(browserName === 'firefox' ? 'uninitialized' : 'complete');
 });
 
 it('should wait for load state of about:blank popup ', async ({page}) => {

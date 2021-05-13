@@ -79,7 +79,7 @@ it('context.clearCookies() should work', async ({server, launchPersistent}) => {
   expect(await page.evaluate('document.cookie')).toBe('');
 });
 
-it('should(not) block third party cookies', async ({server, launchPersistent, isChromium, isFirefox}) => {
+it('should(not) block third party cookies', async ({server, launchPersistent, browserName}) => {
   const {page, context} = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
@@ -96,7 +96,7 @@ it('should(not) block third party cookies', async ({server, launchPersistent, is
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = isChromium || isFirefox;
+  const allowsThirdParty = browserName === 'chromium' || browserName === 'firefox';
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -146,12 +146,12 @@ it('should support bypassCSP option', async ({server, launchPersistent}) => {
   expect(await page.evaluate('__injected')).toBe(42);
 });
 
-it('should support javascriptEnabled option', async ({launchPersistent, isWebKit}) => {
+it('should support javascriptEnabled option', async ({launchPersistent, browserName}) => {
   const {page} = await launchPersistent({javaScriptEnabled: false});
   await page.goto('data:text/html, <script>var something = "forbidden"</script>');
   let error = null;
   await page.evaluate('something').catch(e => error = e);
-  if (isWebKit)
+  if (browserName === 'webkit')
     expect(error.message).toContain('Can\'t find variable: something');
   else
     expect(error.message).toContain('something is not defined');

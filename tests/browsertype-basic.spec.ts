@@ -18,8 +18,8 @@
 import fs from 'fs';
 import { playwrightTest as test, expect } from './config/browserTest';
 
-test('browserType.executablePath should work', async ({ browserType, browserChannel, browserOptions }) => {
-  test.skip(!!browserChannel, 'We skip browser download when testing a channel');
+test('browserType.executablePath should work', async ({ browserType, channel, browserOptions }) => {
+  test.skip(!!channel, 'We skip browser download when testing a channel');
   test.skip(!!browserOptions.executablePath, 'Skip with custom executable path');
 
   const executablePath = browserType.executablePath();

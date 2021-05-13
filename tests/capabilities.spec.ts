@@ -51,7 +51,7 @@ it('should respect CSP', async ({page, server}) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video', async ({page, asset, isWebKit, browserName, platform}) => {
+it('should play video', async ({page, asset, browserName, platform}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
@@ -59,7 +59,7 @@ it('should play video', async ({page, asset, isWebKit, browserName, platform}) =
   it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) >= 20, 'Does not work on BigSur');
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
-  const fileName = isWebKit ? 'video_mp4.html' : 'video.html';
+  const fileName = browserName === 'webkit' ? 'video_mp4.html' : 'video.html';
   const absolutePath = asset(fileName);
   // Our test server doesn't support range requests required to play on Mac,
   // so we load the page using a file url.
@@ -68,8 +68,8 @@ it('should play video', async ({page, asset, isWebKit, browserName, platform}) =
   await page.$eval('video', v => v.pause());
 });
 
-it('should support webgl', async ({page, browserName, headful}) => {
-  it.fixme(browserName === 'firefox' && !headful);
+it('should support webgl', async ({page, browserName, headless}) => {
+  it.fixme(browserName === 'firefox' && headless);
 
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
@@ -78,10 +78,10 @@ it('should support webgl', async ({page, browserName, headful}) => {
   expect(hasWebGL).toBe(true);
 });
 
-it('should support webgl 2', async ({page, browserName, headful}) => {
+it('should support webgl 2', async ({page, browserName, headless}) => {
   it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
-  it.fixme(browserName === 'firefox' && !headful);
-  it.fixme(browserName === 'chromium' && headful, 'chromium doesn\'t like webgl2 when running under xvfb');
+  it.fixme(browserName === 'firefox' && headless);
+  it.fixme(browserName === 'chromium' && !headless, 'chromium doesn\'t like webgl2 when running under xvfb');
 
   const hasWebGL2 = await page.evaluate(() => {
     const canvas = document.createElement('canvas');

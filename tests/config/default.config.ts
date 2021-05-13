@@ -42,8 +42,8 @@ class PageEnv {
     this._browser = await args.playwright[args.browserName].launch({
       ...args.launchOptions,
       traceDir: args.traceDir,
-      channel: args.browserChannel,
-      headless: !args.headful,
+      channel: args.channel,
+      headless: args.headless,
       handleSIGINT: false,
     } as any);
     this._browserVersion = this._browser.version();
@@ -79,7 +79,7 @@ class PageEnv {
 }
 
 const mode = folio.registerCLIOption('mode', 'Transport mode: default, driver or service').value as ('default' | 'driver' | 'service' | undefined);
-const headful = folio.registerCLIOption('headed', 'Run tests in headed mode (default: headless)', { type: 'boolean' }).value || !!process.env.HEADFUL;
+const headed = folio.registerCLIOption('headed', 'Run tests in headed mode (default: headless)', { type: 'boolean' }).value || !!process.env.HEADFUL;
 const channel = folio.registerCLIOption('channel', 'Browser channel (default: no channel)').value;
 const video = !!folio.registerCLIOption('video', 'Record videos for all tests', { type: 'boolean' }).value;
 
@@ -115,7 +115,7 @@ for (const browserName of browserNames) {
     options: {
       mode,
       browserName,
-      headful,
+      headless: !headed,
       channel,
       video,
       traceDir: process.env.PWTRACE ? path.join(outputDir, 'trace') : undefined,

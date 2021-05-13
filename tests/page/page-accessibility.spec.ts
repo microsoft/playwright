@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({ page, isFirefox, isChromium }) => {
+it('should work', async ({ page, browserName }) => {
   await page.setContent(`
   <head>
     <title>Accessibility Test</title>
@@ -36,7 +36,7 @@ it('should work', async ({ page, isFirefox, isChromium }) => {
   // autofocus happens after a delay in chrome these days
   await page.waitForFunction(() => document.activeElement.hasAttribute('autofocus'));
 
-  const golden = isFirefox ? {
+  const golden = (browserName === 'firefox') ? {
     role: 'document',
     name: 'Accessibility Test',
     children: [
@@ -49,7 +49,7 @@ it('should work', async ({ page, isFirefox, isChromium }) => {
       {role: 'textbox', name: '', value: 'and a value'}, // firefox doesn't use aria-placeholder for the name
       {role: 'textbox', name: '', value: 'and a value', description: 'This is a description!'}, // and here
     ]
-  } : isChromium ? {
+  } : (browserName === 'chromium') ? {
     role: 'WebArea',
     name: 'Accessibility Test',
     children: [
@@ -79,11 +79,11 @@ it('should work', async ({ page, isFirefox, isChromium }) => {
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('should work with regular text', async ({page, isFirefox}) => {
+it('should work with regular text', async ({page, browserName}) => {
   await page.setContent(`<div>Hello World</div>`);
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0]).toEqual({
-    role: isFirefox ? 'text leaf' : 'text',
+    role: browserName === 'firefox' ? 'text leaf' : 'text',
     name: 'Hello World',
   });
 });
@@ -118,14 +118,14 @@ it('keyshortcuts', async ({page}) => {
   expect(snapshot.children[0].keyshortcuts).toEqual('foo');
 });
 
-it('should not report text nodes inside controls', async function({page, isFirefox}) {
+it('should not report text nodes inside controls', async function({page, browserName}) {
   await page.setContent(`
   <div role="tablist">
     <div role="tab" aria-selected="true"><b>Tab1</b></div>
     <div role="tab">Tab2</div>
   </div>`);
   const golden = {
-    role: isFirefox ? 'document' : 'WebArea',
+    role: browserName === 'firefox' ? 'document' : 'WebArea',
     name: '',
     children: [{
       role: 'tab',
@@ -139,14 +139,14 @@ it('should not report text nodes inside controls', async function({page, isFiref
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('rich text editable fields should have children', async function({page, isFirefox, browserName}) {
+it('rich text editable fields should have children', async function({page, browserName}) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 
   await page.setContent(`
   <div contenteditable="true">
     Edit this image: <img src="fakeimage.png" alt="my fake image">
   </div>`);
-  const golden = isFirefox ? {
+  const golden = browserName === 'firefox' ? {
     role: 'section',
     name: '',
     children: [{
@@ -172,14 +172,14 @@ it('rich text editable fields should have children', async function({page, isFir
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', async function({page, isFirefox, isWebKit, isChromium, browserMajorVersion}) {
-  it.skip(isWebKit, 'WebKit rich text accessibility is iffy');
+it('rich text editable fields with role should have children', async function({page, browserName, browserMajorVersion}) {
+  it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 
   await page.setContent(`
   <div contenteditable="true" role='textbox'>
     Edit this image: <img src="fakeimage.png" alt="my fake image">
   </div>`);
-  const golden = isFirefox ? {
+  const golden = browserName === 'firefox' ? {
     role: 'textbox',
     name: '',
     value: 'Edit this image: my fake image',
@@ -190,7 +190,7 @@ it('rich text editable fields with role should have children', async function({p
   } : {
     role: 'textbox',
     name: '',
-    multiline: (isChromium && browserMajorVersion >= 92) ? true : undefined,
+    multiline: (browserName === 'chromium' && browserMajorVersion >= 92) ? true : undefined,
     value: 'Edit this image: ',
     children: [{
       role: 'text',
@@ -204,17 +204,17 @@ it('rich text editable fields with role should have children', async function({p
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('non editable textbox with role and tabIndex and label should not have children', async function({page, isChromium, isFirefox}) {
+it('non editable textbox with role and tabIndex and label should not have children', async function({page, browserName}) {
   await page.setContent(`
   <div role="textbox" tabIndex=0 aria-checked="true" aria-label="my favorite textbox">
     this is the inner content
     <img alt="yo" src="fakeimg.png">
   </div>`);
-  const golden = isFirefox ? {
+  const golden = (browserName === 'firefox') ? {
     role: 'textbox',
     name: 'my favorite textbox',
     value: 'this is the inner content yo'
-  } : isChromium ? {
+  } : (browserName === 'chromium') ? {
     role: 'textbox',
     name: 'my favorite textbox',
     value: 'this is the inner content '
@@ -242,13 +242,13 @@ it('checkbox with and tabIndex and label should not have children', async functi
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('checkbox without label should not have children', async ({page, isFirefox}) => {
+it('checkbox without label should not have children', async ({page, browserName}) => {
   await page.setContent(`
   <div role="checkbox" aria-checked="true">
     this is the inner content
     <img alt="yo" src="fakeimg.png">
   </div>`);
-  const golden = isFirefox ? {
+  const golden = browserName === 'firefox' ? {
     role: 'checkbox',
     name: 'this is the inner content yo',
     checked: true
@@ -282,7 +282,7 @@ it('should work an input', async ({page}) => {
   });
 });
 
-it('should work on a menu', async ({page, isWebKit}) => {
+it('should work on a menu', async ({page, browserName}) => {
   await page.setContent(`
     <div role="menu" title="My Menu">
       <div role="menuitem">First Item</div>
@@ -299,7 +299,7 @@ it('should work on a menu', async ({page, isWebKit}) => {
     [ { role: 'menuitem', name: 'First Item' },
       { role: 'menuitem', name: 'Second Item' },
       { role: 'menuitem', name: 'Third Item' } ],
-    orientation: isWebKit ? 'vertical' : undefined
+    orientation: browserName === 'webkit' ? 'vertical' : undefined
   });
 });
 

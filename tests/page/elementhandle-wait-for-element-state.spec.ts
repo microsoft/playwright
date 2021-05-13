@@ -114,8 +114,8 @@ it('should wait for disabled button', async ({page}) => {
   await promise;
 });
 
-it('should wait for stable position', async ({page, server, isFirefox, platform}) => {
-  it.fixme(isFirefox && platform === 'linux');
+it('should wait for stable position', async ({page, server, browserName, platform}) => {
+  it.fixme(browserName === 'firefox' && platform === 'linux');
 
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');

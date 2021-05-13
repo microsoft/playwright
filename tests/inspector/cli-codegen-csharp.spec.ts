@@ -27,19 +27,19 @@ function capitalize(browserName: string): string {
   return browserName[0].toUpperCase() + browserName.slice(1);
 }
 
-test('should print the correct imports and context options', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct imports and context options', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI(['--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
 );
 var context = await browser.NewContextAsync();`;
   await cli.waitFor(expectedResult).catch(e => e);
   expect(cli.text()).toContain(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI([
     '--color-scheme=dark',
     '--geolocation=37.819722,-122.478611',
@@ -53,7 +53,7 @@ test('should print the correct context options for custom settings', async ({ br
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
-    ${launchOptions(browserChannel)},
+    ${launchOptions(channel)},
     proxy: new ProxySettings
     {
         Server = "http://myproxy:3128",
@@ -79,21 +79,21 @@ var context = await browser.NewContextAsync(
   expect(cli.text()).toContain(expectedResult);
 });
 
-test('should print the correct context options when using a device', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Chromium.LaunchAsync(
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
 );
 var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
   test.skip(browserName !== 'webkit');
 
   const cli = runCLI([
@@ -110,7 +110,7 @@ test('should print the correct context options when using a device and additiona
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Webkit.LaunchAsync(
-    ${launchOptions(browserChannel)},
+    ${launchOptions(channel)},
     proxy: new ProxySettings
     {
         Server = "http://myproxy:3128",
@@ -139,7 +139,7 @@ var context = await browser.NewContextAsync(new BrowserContextOptions(playwright
   expect(cli.text()).toContain(expectedResult);
 });
 
-test('should print load/save storageState', async ({ browserName, browserChannel, runCLI }, testInfo) => {
+test('should print load/save storageState', async ({ browserName, channel, runCLI }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
@@ -147,7 +147,7 @@ test('should print load/save storageState', async ({ browserName, browserChannel
   const expectedResult1 = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
 );
 var context = await browser.NewContextAsync(
     storageState: "${loadFileName}");`;

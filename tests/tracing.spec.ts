@@ -23,8 +23,8 @@ import jpeg from 'jpeg-js';
 const traceDir = path.join(__dirname, '..', 'test-results', 'trace-' + process.env.FOLIO_WORKER_INDEX);
 test.useOptions({ traceDir });
 
-test.beforeEach(async ({ browserName, headful }) => {
-  test.fixme(browserName === 'chromium' && headful, 'Chromium screencast on headful has a min width issue');
+test.beforeEach(async ({ browserName, headless }) => {
+  test.fixme(browserName === 'chromium' && !headless, 'Chromium screencast on headed has a min width issue');
   await new Promise(f => removeFolder(traceDir, f));
 });
 

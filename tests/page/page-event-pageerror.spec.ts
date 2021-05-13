@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fire', async ({page, server, isWebKit}) => {
+it('should fire', async ({page, server, browserName}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),
@@ -26,13 +26,13 @@ it('should fire', async ({page, server, isWebKit}) => {
   expect(error.message).toBe('Fancy error!');
   let stack = await page.evaluate(() => window['e'].stack);
   // Note that WebKit reports the stack of the 'throw' statement instead of the Error constructor call.
-  if (isWebKit)
+  if (browserName === 'webkit')
     stack = stack.replace('14:25', '15:19');
   expect(error.stack).toBe(stack);
 });
 
-it('should contain sourceURL', async ({page, server, isWebKit}) => {
-  it.fail(isWebKit);
+it('should contain sourceURL', async ({page, server, browserName}) => {
+  it.fail(browserName === 'webkit');
 
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -87,19 +87,19 @@ it('should handle odd values', async ({page}) => {
   }
 });
 
-it('should handle object', async ({page, isChromium}) => {
+it('should handle object', async ({page, browserName}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw {}; }, 0)),
   ]);
-  expect(error.message).toBe(isChromium ? 'Object' : '[object Object]');
+  expect(error.message).toBe(browserName === 'chromium' ? 'Object' : '[object Object]');
 });
 
-it('should handle window', async ({page, isChromium, isFirefox, isElectron}) => {
+it('should handle window', async ({page, browserName, isElectron}) => {
   it.skip(isElectron);
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw window; }, 0)),
   ]);
-  expect(error.message).toBe(isChromium ? 'Window' : '[object Window]');
+  expect(error.message).toBe(browserName === 'chromium' ? 'Window' : '[object Window]');
 });

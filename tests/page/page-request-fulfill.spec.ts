@@ -48,8 +48,8 @@ it('should work with status code 422', async ({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should allow mocking binary responses', async ({page, server, browserName, headful, asset, isAndroid}) => {
-  it.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
+it('should allow mocking binary responses', async ({page, server, browserName, headless, asset, isAndroid}) => {
+  it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
   await page.route('**/*', route => {
@@ -69,11 +69,10 @@ it('should allow mocking binary responses', async ({page, server, browserName, h
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should allow mocking svg with charset', async ({page, server, browserName, headful, isAndroid}) => {
-  it.skip(browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
+it('should allow mocking svg with charset', async ({page, server, browserName, headless, isAndroid}) => {
+  it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
-  // Firefox headful produces a different image.
   await page.route('**/*', route => {
     route.fulfill({
       contentType: 'image/svg+xml ; charset=utf-8',

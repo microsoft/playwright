@@ -67,7 +67,7 @@ it('should close browser after context menu was triggered', async ({browserType,
   await browser.close();
 });
 
-it('should(not) block third party cookies', async ({browserType, browserOptions, server, isChromium, isFirefox}) => {
+it('should(not) block third party cookies', async ({browserType, browserOptions, server, browserName}) => {
   const browser = await browserType.launch({...browserOptions, headless: false });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -85,7 +85,7 @@ it('should(not) block third party cookies', async ({browserType, browserOptions,
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = isChromium || isFirefox;
+  const allowsThirdParty = browserName === 'chromium' || browserName === 'firefox';
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -147,13 +147,13 @@ it('Page.bringToFront should work', async ({browserType, browserOptions}) => {
   await browser.close();
 });
 
-it('focused input should produce the same screenshot', async ({browserType, browserOptions, browserName, platform, browserChannel}, testInfo) => {
+it('focused input should produce the same screenshot', async ({browserType, browserOptions, browserName, platform, channel}, testInfo) => {
   it.fail(browserName === 'firefox' && platform === 'darwin', 'headless has thinner outline');
   it.fail(browserName === 'firefox' && platform === 'linux', 'headless has no outline');
   it.fail(browserName === 'firefox' && platform === 'win32', 'headless has outline since new version');
   it.skip(browserName === 'webkit' && platform === 'linux', 'gtk vs wpe');
   it.skip(!!process.env.CRPATH);
-  it.skip(!!browserChannel, 'Uncomment on roll');
+  it.skip(!!channel, 'Uncomment on roll');
 
   testInfo.snapshotPathSegment = browserName + '-' + platform;
 

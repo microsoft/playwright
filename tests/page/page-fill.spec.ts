@@ -90,8 +90,8 @@ it('should fill date input after clicking', async ({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02');
 });
 
-it('should throw on incorrect date', async ({page, isWebKit}) => {
-  it.skip(isWebKit, 'WebKit does not support date inputs');
+it('should throw on incorrect date', async ({page, browserName}) => {
+  it.skip(browserName === 'webkit', 'WebKit does not support date inputs');
 
   await page.setContent('<input type=date>');
   const error = await page.fill('input', '2020-13-05').catch(e => e);
@@ -110,8 +110,8 @@ it('should fill month input', async ({page}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-07');
 });
 
-it('should throw on incorrect month', async ({page, isChromium}) => {
-  it.skip(!isChromium, 'Only Chromium supports month inputs');
+it('should throw on incorrect month', async ({page, browserName}) => {
+  it.skip(browserName !== 'chromium', 'Only Chromium supports month inputs');
 
   await page.setContent('<input type=month>');
   const error = await page.fill('input', '2020-13').catch(e => e);
@@ -124,16 +124,16 @@ it('should fill week input', async ({page}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-W50');
 });
 
-it('should throw on incorrect week', async ({page, isChromium}) => {
-  it.skip(!isChromium, 'Only Chromium supports week inputs');
+it('should throw on incorrect week', async ({page, browserName}) => {
+  it.skip(browserName !== 'chromium', 'Only Chromium supports week inputs');
 
   await page.setContent('<input type=week>');
   const error = await page.fill('input', '2020-123').catch(e => e);
   expect(error.message).toContain('Malformed value');
 });
 
-it('should throw on incorrect time', async ({page, isWebKit}) => {
-  it.skip(isWebKit, 'WebKit does not support time inputs');
+it('should throw on incorrect time', async ({page, browserName}) => {
+  it.skip(browserName === 'webkit', 'WebKit does not support time inputs');
 
   await page.setContent('<input type=time>');
   const error = await page.fill('input', '25:05').catch(e => e);
@@ -146,8 +146,8 @@ it('should fill datetime-local input', async ({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
 });
 
-it('should throw on incorrect datetime-local', async ({page, server, isChromium}) => {
-  it.skip(!isChromium, 'Only Chromium supports datetime-local inputs');
+it('should throw on incorrect datetime-local', async ({page, server, browserName}) => {
+  it.skip(browserName !== 'chromium', 'Only Chromium supports datetime-local inputs');
 
   await page.setContent('<input type=datetime-local>');
   const error = await page.fill('input', 'abc').catch(e => e);

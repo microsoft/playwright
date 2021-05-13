@@ -36,31 +36,31 @@ it('should have correct execution contexts', async ({ page, server }) => {
   expect(await page.frames()[1].evaluate(() => document.body.textContent.trim())).toBe(`Hi, I'm frame`);
 });
 
-function expectContexts(pageImpl, count, isChromium) {
-  if (isChromium)
+function expectContexts(pageImpl, count, browserName) {
+  if (browserName === 'chromium')
     expect(pageImpl._delegate._mainFrameSession._contextIdToContext.size).toBe(count);
   else
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
 }
 
-it('should dispose context on navigation', async ({ page, server, toImpl, isChromium, mode }) => {
+it('should dispose context on navigation', async ({ page, server, toImpl, browserName, mode }) => {
   it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
-  expectContexts(toImpl(page), 4, isChromium);
+  expectContexts(toImpl(page), 4, browserName);
   await page.goto(server.EMPTY_PAGE);
-  expectContexts(toImpl(page), 2, isChromium);
+  expectContexts(toImpl(page), 2, browserName);
 });
 
-it('should dispose context on cross-origin navigation', async ({ page, server, toImpl, isChromium, mode }) => {
+it('should dispose context on cross-origin navigation', async ({ page, server, toImpl, browserName, mode }) => {
   it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
-  expectContexts(toImpl(page), 4, isChromium);
+  expectContexts(toImpl(page), 4, browserName);
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-  expectContexts(toImpl(page), 2, isChromium);
+  expectContexts(toImpl(page), 2, browserName);
 });
 
 it('should execute after cross-site navigation', async ({ page, server }) => {

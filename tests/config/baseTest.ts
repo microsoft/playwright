@@ -29,17 +29,14 @@ type Mode = 'default' | 'driver' | 'service';
 type BaseWorkerArgs = {
   mode: Mode;
   platform: 'win32' | 'darwin' | 'linux';
-  video: boolean;
-  headful: boolean;
+  video: boolean | undefined;
+  headless: boolean | undefined;
 
   playwright: typeof import('../../index');
   toImpl: (rpcObject: any) => any;
   browserName: BrowserName;
-  browserChannel: string | undefined;
+  channel: string | undefined;
 
-  isChromium: boolean;
-  isFirefox: boolean;
-  isWebKit: boolean;
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
@@ -108,7 +105,7 @@ type BaseOptions = {
   browserName?: BrowserName;
   channel?: string;
   video?: boolean;
-  headful?: boolean;
+  headless?: boolean;
 };
 
 class BaseEnv {
@@ -118,7 +115,7 @@ class BaseEnv {
   private _playwright: typeof import('../../index');
 
   hasBeforeAllOptions(options: BaseOptions) {
-    return 'mode' in options || 'browserName' in options || 'channel' in options || 'video' in options || 'headful' in options;
+    return 'mode' in options || 'browserName' in options || 'channel' in options || 'video' in options || 'headless' in options;
   }
 
   async beforeAll(options: BaseOptions, workerInfo: folio.WorkerInfo): Promise<BaseWorkerArgs> {
@@ -134,15 +131,12 @@ class BaseEnv {
     return {
       playwright: this._playwright,
       browserName: this._browserName,
-      browserChannel: this._options.channel,
-      isChromium: this._browserName === 'chromium',
-      isFirefox: this._browserName === 'firefox',
-      isWebKit: this._browserName === 'webkit',
+      channel: this._options.channel,
       isWindows: process.platform === 'win32',
       isMac: process.platform === 'darwin',
       isLinux: process.platform === 'linux',
-      headful: !!this._options.headful,
-      video: !!this._options.video,
+      headless: this._options.headless,
+      video: this._options.video,
       mode: this._options.mode || 'default',
       platform: process.platform as ('win32' | 'darwin' | 'linux'),
       toImpl: (this._playwright as any)._toImpl,
@@ -152,7 +146,7 @@ class BaseEnv {
   async beforeEach({}, testInfo: folio.TestInfo) {
     testInfo.snapshotPathSegment = this._browserName;
     testInfo.data = { browserName: this._browserName };
-    if (this._options.headful)
+    if (!this._options.headless)
       testInfo.data.headful = true;
     if ((this._options.mode || 'default') !== 'default')
       testInfo.data.mode = this._options.mode || 'default';

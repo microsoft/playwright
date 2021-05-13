@@ -60,8 +60,8 @@ it.describe('launch server', () => {
     await browserServer.close();
   });
 
-  it('should fire close event', async ({browserType, browserOptions, browserChannel}) => {
-    it.fixme(!!browserChannel, 'Uncomment on roll');
+  it('should fire close event', async ({browserType, browserOptions, channel}) => {
+    it.fixme(!!channel, 'Uncomment on roll');
 
     const browserServer = await browserType.launchServer(browserOptions);
     const [result] = await Promise.all([

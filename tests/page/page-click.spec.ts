@@ -306,8 +306,8 @@ it('should click the button inside an iframe', async ({page, server}) => {
   expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should click the button with fixed position inside an iframe', async ({page, server, isChromium, isWebKit}) => {
-  it.fixme(isChromium || isWebKit);
+it('should click the button with fixed position inside an iframe', async ({page, server, browserName}) => {
+  it.fixme(browserName === 'chromium' || browserName === 'webkit');
 
   // @see https://github.com/GoogleChrome/puppeteer/issues/4110
   // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390
@@ -359,28 +359,28 @@ it('should click the button behind sticky header', async ({page}) => {
   expect(await page.evaluate(() => window['__clicked'])).toBe(true);
 });
 
-it('should click the button with px border with offset', async ({page, server, isWebKit}) => {
+it('should click the button with px border with offset', async ({page, server, browserName}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
   await page.click('button', { position: { x: 20, y: 10 } });
   expect(await page.evaluate('result')).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(isWebKit ? 20 + 8 : 20);
-  expect(await page.evaluate('offsetY')).toBe(isWebKit ? 10 + 8 : 10);
+  expect(await page.evaluate('offsetX')).toBe(browserName === 'webkit' ? 20 + 8 : 20);
+  expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 10 + 8 : 10);
 });
 
-it('should click the button with em border with offset', async ({page, server, isWebKit}) => {
+it('should click the button with em border with offset', async ({page, server, browserName}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '2em');
   await page.$eval('button', button => button.style.fontSize = '12px');
   await page.click('button', { position: { x: 20, y: 10 } });
   expect(await page.evaluate('result')).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(isWebKit ? 12 * 2 + 20 : 20);
-  expect(await page.evaluate('offsetY')).toBe(isWebKit ? 12 * 2 + 10 : 10);
+  expect(await page.evaluate('offsetX')).toBe(browserName === 'webkit' ? 12 * 2 + 20 : 20);
+  expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 12 * 2 + 10 : 10);
 });
 
-it('should click a very large button with offset', async ({page, server, isWebKit, isAndroid}) => {
+it('should click a very large button with offset', async ({page, server, browserName, isAndroid}) => {
   it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/input/button.html');
@@ -389,11 +389,11 @@ it('should click a very large button with offset', async ({page, server, isWebKi
   await page.click('button', { position: { x: 1900, y: 1910 } });
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(isWebKit ? 1900 + 8 : 1900);
-  expect(await page.evaluate('offsetY')).toBe(isWebKit ? 1910 + 8 : 1910);
+  expect(await page.evaluate('offsetX')).toBe(browserName === 'webkit' ? 1900 + 8 : 1900);
+  expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 1910 + 8 : 1910);
 });
 
-it('should click a button in scrolling container with offset', async ({page, server, isWebKit, isAndroid}) => {
+it('should click a button in scrolling container with offset', async ({page, server, browserName, isAndroid}) => {
   it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/input/button.html');
@@ -411,8 +411,8 @@ it('should click a button in scrolling container with offset', async ({page, ser
   await page.click('button', { position: { x: 1900, y: 1910 } });
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(isWebKit ? 1900 + 8 : 1900);
-  expect(await page.evaluate('offsetY')).toBe(isWebKit ? 1910 + 8 : 1910);
+  expect(await page.evaluate('offsetX')).toBe(browserName === 'webkit' ? 1900 + 8 : 1900);
+  expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 1910 + 8 : 1910);
 });
 
 it('should wait for stable position', async ({page, server}) => {
