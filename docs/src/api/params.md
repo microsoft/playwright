@@ -680,6 +680,7 @@ Maximum time in milliseconds to wait for the browser instance to start. Defaults
 disable timeout.
 
 ## browser-option-tracedir
+* langs: js, python, java
 - `traceDir` <[path]>
 
 If specified, traces are saved into this directory.
