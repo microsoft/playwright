@@ -18,12 +18,14 @@
 
 /* eslint-disable no-console */
 
-import path from 'path';
-import program from 'commander';
-import os from 'os';
+import extract from 'extract-zip';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import rimraf from 'rimraf';
+import program from 'commander';
 import { runDriver, runServer, printApiJson, launchBrowserServer, installBrowsers } from './driver';
-import { showTraceViewer } from '../server/trace/viewer/traceViewer';
+import { TraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
 import { Browser } from '../client/browser';
@@ -474,4 +476,32 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
+}
+
+export async function showTraceViewer(tracePath: string, browserName: string) {
+  let stat;
+  try {
+    stat = fs.statSync(tracePath);
+  } catch (e) {
+    console.log(`No such file or directory: ${tracePath}`);
+    return;
+  }
+
+  if (stat.isDirectory()) {
+    const traceViewer = new TraceViewer(tracePath, browserName);
+    await traceViewer.show();
+    return;
+  }
+
+  const zipFile = tracePath;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
+  process.on('exit', () => rimraf.sync(dir));
+  try {
+    await extract(zipFile, { dir: dir });
+  } catch (e) {
+    console.log(`Invalid trace file: ${zipFile}`);
+    return;
+  }
+  const traceViewer = new TraceViewer(dir, browserName);
+  await traceViewer.show();
 }

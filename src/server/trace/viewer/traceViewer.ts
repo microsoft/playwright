@@ -29,7 +29,7 @@ import { ProgressController } from '../../progress';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
-class TraceViewer {
+export class TraceViewer {
   private _server: HttpServer;
   private _browserName: string;
 
@@ -143,9 +143,4 @@ class TraceViewer {
     page.on('close', () => process.exit(0));
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
   }
-}
-
-export async function showTraceViewer(traceDir: string, browserName: string) {
-  const traceViewer = new TraceViewer(traceDir, browserName);
-  await traceViewer.show();
 }
