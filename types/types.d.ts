@@ -10498,7 +10498,7 @@ export interface Touchscreen {
 }
 
 /**
- * API for collecting and saving Playwright traces. Playwright traces can be opened using the [CLI]('./cli.md') after
+ * API for collecting and saving Playwright traces. Playwright traces can be opened using the Playwright CLI after
  * Playwright script runs.
  *
  * Start with specifying the folder traces will be stored in:
