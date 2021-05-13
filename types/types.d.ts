@@ -4839,6 +4839,43 @@ export interface BrowserContext {
   on(event: 'page', listener: (page: Page) => void): this;
 
   /**
+   * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
+   * listen for requests from a particular page, use
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
+   *
+   * In order to intercept and mutate requests, see
+   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
+   * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
+   */
+  on(event: 'request', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
+   * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   *
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
+   * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
+   * event and not with
+   * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfailed).
+   */
+  on(event: 'requestfailed', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`. To listen for successful requests from a particular
+   * page, use [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished).
+   */
+  on(event: 'requestfinished', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+   * is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
+   * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
+   */
+  on(event: 'response', listener: (response: Response) => void): this;
+
+  /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
    *
    * Emitted when new service worker is created in the context.
@@ -4887,6 +4924,43 @@ export interface BrowserContext {
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   once(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
+   * listen for requests from a particular page, use
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
+   *
+   * In order to intercept and mutate requests, see
+   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
+   * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
+   */
+  once(event: 'request', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
+   * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   *
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
+   * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
+   * event and not with
+   * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfailed).
+   */
+  once(event: 'requestfailed', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`. To listen for successful requests from a particular
+   * page, use [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished).
+   */
+  once(event: 'requestfinished', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+   * is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
+   * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
+   */
+  once(event: 'response', listener: (response: Response) => void): this;
 
   /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
@@ -4939,6 +5013,43 @@ export interface BrowserContext {
   addListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
+   * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
+   * listen for requests from a particular page, use
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
+   *
+   * In order to intercept and mutate requests, see
+   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
+   * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
+   */
+  addListener(event: 'request', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
+   * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   *
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
+   * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
+   * event and not with
+   * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfailed).
+   */
+  addListener(event: 'requestfailed', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`. To listen for successful requests from a particular
+   * page, use [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished).
+   */
+  addListener(event: 'requestfinished', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+   * is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
+   * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
+   */
+  addListener(event: 'response', listener: (response: Response) => void): this;
+
+  /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
    *
    * Emitted when new service worker is created in the context.
@@ -4989,6 +5100,43 @@ export interface BrowserContext {
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
+   * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
+   * listen for requests from a particular page, use
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
+   *
+   * In order to intercept and mutate requests, see
+   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
+   * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
+   */
+  removeListener(event: 'request', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
+   * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   *
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
+   * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
+   * event and not with
+   * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfailed).
+   */
+  removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`. To listen for successful requests from a particular
+   * page, use [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished).
+   */
+  removeListener(event: 'requestfinished', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+   * is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
+   * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
+   */
+  removeListener(event: 'response', listener: (response: Response) => void): this;
+
+  /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
    *
    * Emitted when new service worker is created in the context.
@@ -5037,6 +5185,43 @@ export interface BrowserContext {
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   off(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
+   * listen for requests from a particular page, use
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
+   *
+   * In order to intercept and mutate requests, see
+   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
+   * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
+   */
+  off(event: 'request', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
+   * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   *
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
+   * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
+   * event and not with
+   * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfailed).
+   */
+  off(event: 'requestfailed', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`. To listen for successful requests from a particular
+   * page, use [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished).
+   */
+  off(event: 'requestfinished', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+   * is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
+   * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
+   */
+  off(event: 'response', listener: (response: Response) => void): this;
 
   /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
@@ -5508,6 +5693,43 @@ export interface BrowserContext {
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
+
+  /**
+   * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
+   * listen for requests from a particular page, use
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
+   *
+   * In order to intercept and mutate requests, see
+   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
+   * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
+   */
+  waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
+
+  /**
+   * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
+   * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   *
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
+   * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
+   * event and not with
+   * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfailed).
+   */
+  waitForEvent(event: 'requestfailed', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`. To listen for successful requests from a particular
+   * page, use [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished).
+   */
+  waitForEvent(event: 'requestfinished', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+   * is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
+   * [page.on('response')](https://playwright.dev/docs/api/class-page#pageonresponse).
+   */
+  waitForEvent(event: 'response', optionsOrPredicate?: { predicate?: (response: Response) => boolean | Promise<boolean>, timeout?: number } | ((response: Response) => boolean | Promise<boolean>)): Promise<Response>;
 
   /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.

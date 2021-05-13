@@ -18,13 +18,14 @@ import { BrowserContext } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import * as channels from '../protocol/channels';
-import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
+import { RouteDispatcher, RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
 import { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
+import { Request, Response } from '../server/network';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -63,6 +64,27 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
       context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
+    context.on(BrowserContext.Events.Request, (request: Request) =>  {
+      return this._dispatchEvent('request', {
+        request: RequestDispatcher.from(this._scope, request),
+        page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined())
+      });
+    });
+    context.on(BrowserContext.Events.Response, (response: Response) => this._dispatchEvent('response', {
+      response: ResponseDispatcher.from(this._scope, response),
+      page: PageDispatcher.fromNullable(this._scope, response.frame()._page.initializedOrUndefined())
+    }));
+    context.on(BrowserContext.Events.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
+      request: RequestDispatcher.from(this._scope, request),
+      failureText: request._failureText,
+      responseEndTiming: request._responseEndTiming,
+      page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined())
+    }));
+    context.on(BrowserContext.Events.RequestFinished, (request: Request) => this._dispatchEvent('requestFinished', {
+      request: RequestDispatcher.from(scope, request),
+      responseEndTiming: request._responseEndTiming,
+      page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined())
+    }));
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {
