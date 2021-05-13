@@ -1,13 +1,17 @@
-## method: Request.getPayloadAsJson
+## method: Request.PostDataJSON
 * langs: csharp
 - returns: <[JsonDocument]>
 
-Returns a [JsonDocument] representation of [`method: Request.postDataBuffer`].
+Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
 
-### option: Request.getPayloadAsJson.serializerOptions
+When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+Otherwise it will be parsed as JSON.
+
+### param: Request.PostDataJSON.serializerOptions
+* langs: csharp
 - `documentOptions` <[null]|[JsonDocumentOptions]>
 
-The options that control custom behaviour when parsing the JSON.
+Optional Json options that control custom behaviour when parsing the JSON.
 
 ## method: Response.statusCode
 * langs: csharp
