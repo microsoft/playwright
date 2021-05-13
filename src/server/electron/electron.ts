@@ -63,6 +63,8 @@ export class ElectronApplication extends SdkObject {
       // Emit application closed after context closed.
       Promise.resolve().then(() => this.emit(ElectronApplication.Events.Close));
     });
+    for (const page of this._browserContext.pages())
+      this._onPage(page);
     this._browserContext.on(BrowserContext.Events.Page, event => this._onPage(event));
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
@@ -77,7 +79,7 @@ export class ElectronApplication extends SdkObject {
     this._nodeSession.send('Runtime.enable', {}).catch(e => {});
   }
 
-  private async _onPage(page: Page) {
+  private _onPage(page: Page) {
     // Needs to be sync.
     const windowId = ++this._lastWindowId;
     (page as any)._browserWindowId = windowId;

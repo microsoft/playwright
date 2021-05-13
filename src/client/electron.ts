@@ -67,12 +67,16 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ElectronApplicationInitializer) {
     super(parent, type, guid, initializer);
     this._context = BrowserContext.from(initializer.context);
-    this._context.on(Events.BrowserContext.Page, page => {
-      this._windows.add(page);
-      this.emit(Events.ElectronApplication.Window, page);
-      page.once(Events.Page.Close, () => this._windows.delete(page));
-    });
+    for (const page of this._context._pages)
+      this._onPage(page);
+    this._context.on(Events.BrowserContext.Page, page => this._onPage(page));
     this._channel.on('close', () => this.emit(Events.ElectronApplication.Close));
+  }
+
+  _onPage(page: Page) {
+    this._windows.add(page);
+    this.emit(Events.ElectronApplication.Window, page);
+    page.once(Events.Page.Close, () => this._windows.delete(page));
   }
 
   windows(): Page[] {
