@@ -4842,7 +4842,7 @@ export interface BrowserContext {
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
-   * 
+   *
    * In order to intercept and mutate requests, see
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
    * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
@@ -4852,7 +4852,7 @@ export interface BrowserContext {
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
    * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
-   * 
+   *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with
    * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
@@ -4929,7 +4929,7 @@ export interface BrowserContext {
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
-   * 
+   *
    * In order to intercept and mutate requests, see
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
    * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
@@ -4939,7 +4939,7 @@ export interface BrowserContext {
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
    * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
-   * 
+   *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with
    * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
@@ -5016,7 +5016,7 @@ export interface BrowserContext {
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
-   * 
+   *
    * In order to intercept and mutate requests, see
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
    * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
@@ -5026,7 +5026,7 @@ export interface BrowserContext {
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
    * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
-   * 
+   *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with
    * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
@@ -5103,7 +5103,7 @@ export interface BrowserContext {
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
-   * 
+   *
    * In order to intercept and mutate requests, see
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
    * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
@@ -5113,7 +5113,7 @@ export interface BrowserContext {
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
    * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
-   * 
+   *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with
    * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
@@ -5190,7 +5190,7 @@ export interface BrowserContext {
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
-   * 
+   *
    * In order to intercept and mutate requests, see
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
    * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
@@ -5200,7 +5200,7 @@ export interface BrowserContext {
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
    * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
-   * 
+   *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with
    * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
@@ -5698,7 +5698,7 @@ export interface BrowserContext {
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
    * listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#pageonrequest).
-   * 
+   *
    * In order to intercept and mutate requests, see
    * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browsercontextrouteurl-handler)
    * or [page.route(url, handler)](https://playwright.dev/docs/api/class-page#pagerouteurl-handler).
@@ -5708,7 +5708,7 @@ export interface BrowserContext {
   /**
    * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
    * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
-   * 
+   *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with
    * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browsercontextonrequestfinished)
