@@ -1184,9 +1184,7 @@ page = event_info.value
 
 ```csharp
 var t = page.WaitForEventAsync("page");
-await Task.WhenAll(t, page.ClickAsync("button"))
-    .WithTimeout(1000) // make sure to add Microsoft.Playwright.Helpers
-    .ConfigureAwait(false);
+await Task.WhenAll(t, page.ClickAsync("button"));
 ```
 
 ### param: BrowserContext.waitForEvent.event
