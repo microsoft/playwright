@@ -60,12 +60,9 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should scroll twice when emulated', async ({server, contextFactory, playwright, contextOptions}) => {
+  it('should scroll twice when emulated', async ({server, contextFactory, playwright}) => {
     const device = playwright.devices['iPhone 6'];
-    const context = await contextFactory({
-      ...contextOptions,
-      ...device,
-    });
+    const context = await contextFactory(device);
     const page = await context.newPage();
     await page.setContent(`
           <meta name="viewport" content="width=device-width, user-scalable=no" />
@@ -81,14 +78,11 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should reset scroll top after a navigation', async ({server, contextFactory, playwright, contextOptions, browserName}) => {
+  it('should reset scroll top after a navigation', async ({server, contextFactory, playwright, browserName}) => {
     it.skip(browserName === 'webkit');
 
     const device = playwright.devices['iPhone 6'];
-    const context = await contextFactory({
-      ...contextOptions,
-      ...device,
-    });
+    const context = await contextFactory(device);
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/input/scrollable.html');
     await page.evaluate(() => window.scroll(0, 100));
@@ -98,14 +92,11 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should scroll to a precise position with mobile scale', async ({server, contextFactory, playwright, contextOptions, browserName}) => {
+  it('should scroll to a precise position with mobile scale', async ({server, contextFactory, playwright, browserName}) => {
     it.skip(browserName === 'webkit');
 
     const device = playwright.devices['iPhone 6'];
-    const context = await contextFactory({
-      ...contextOptions,
-      ...device,
-    });
+    const context = await contextFactory(device);
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/input/scrollable.html');
     expect(await page.evaluate(() => document.body.scrollHeight)).toBeGreaterThan(1000);
@@ -114,12 +105,9 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should emulate viewport and screen size', async ({server, contextFactory, playwright, contextOptions}) => {
+  it('should emulate viewport and screen size', async ({server, contextFactory, playwright}) => {
     const device = playwright.devices['iPhone 12'];
-    const context = await contextFactory({
-      ...contextOptions,
-      ...device,
-    });
+    const context = await contextFactory(device);
     const page = await context.newPage();
     await page.setContent(`<meta name="viewport" content="width=device-width, user-scalable=no" />`);
 
@@ -136,12 +124,9 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should emulate viewport without screen size', async ({server, contextFactory, playwright, contextOptions}) => {
+  it('should emulate viewport without screen size', async ({server, contextFactory, playwright}) => {
     const device = playwright.devices['iPhone 6'];
-    const context = await contextFactory({
-      ...contextOptions,
-      ...device,
-    });
+    const context = await contextFactory(device);
     const page = await context.newPage();
     await page.setContent(`<meta name="viewport" content="width=device-width, user-scalable=no" />`);
 

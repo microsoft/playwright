@@ -42,11 +42,9 @@ class AndroidPageEnv extends AndroidEnv {
   }
 }
 
-type AllOptions = PlaywrightEnvOptions & CommonOptions;
-
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: folio.Config<AllOptions> = {
+const config: folio.Config<PlaywrightEnvOptions & CommonOptions> = {
   testDir,
   snapshotDir: '__snapshots__',
   outputDir,
@@ -66,6 +64,7 @@ config.projects.push({
   name: 'android',
   options: {
     loopback: '10.0.2.2',
+    mode: 'default',
     browserName: 'chromium',
   },
   testDir: path.join(testDir, 'android'),
@@ -75,6 +74,7 @@ config.projects.push({
   name: 'android',
   options: {
     loopback: '10.0.2.2',
+    mode: 'default',
     browserName: 'chromium',
   },
   testDir: path.join(testDir, 'page'),

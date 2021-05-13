@@ -30,21 +30,16 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-type AllOptions = PlaywrightEnvOptions & CommonOptions;
-
 class PageEnv {
   private _browser: Browser
   private _browserVersion: string;
   private _browserMajorVersion: number;
   private _context: BrowserContext | undefined;
 
-  async beforeAll(args: AllOptions & CommonArgs, workerInfo: folio.WorkerInfo) {
+  async beforeAll(args: PlaywrightEnvOptions & CommonArgs, workerInfo: folio.WorkerInfo) {
     this._browser = await args.playwright[args.browserName].launch({
-      ...args.launchOptions,
-      traceDir: args.traceDir,
-      channel: args.channel,
-      headless: args.headless,
       handleSIGINT: false,
+      ...args,
     } as any);
     this._browserVersion = this._browser.version();
     this._browserMajorVersion = Number(this._browserVersion.split('.')[0]);
@@ -55,6 +50,7 @@ class PageEnv {
     testInfo.data.browserVersion = this._browserVersion;
     this._context = await this._browser.newContext({
       recordVideo: args.video ? { dir: testInfo.outputPath('') } : undefined,
+      ...args,
     });
     const page = await this._context.newPage();
     return {
@@ -78,14 +74,14 @@ class PageEnv {
   }
 }
 
-const mode = folio.registerCLIOption('mode', 'Transport mode: default, driver or service').value as ('default' | 'driver' | 'service' | undefined);
+const mode = (folio.registerCLIOption('mode', 'Transport mode: default, driver or service').value || 'default') as ('default' | 'driver' | 'service');
 const headed = folio.registerCLIOption('headed', 'Run tests in headed mode (default: headless)', { type: 'boolean' }).value || !!process.env.HEADFUL;
 const channel = folio.registerCLIOption('channel', 'Browser channel (default: no channel)').value;
 const video = !!folio.registerCLIOption('video', 'Record videos for all tests', { type: 'boolean' }).value;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: folio.Config<AllOptions> = {
+const config: folio.Config<CommonOptions & PlaywrightEnvOptions> = {
   testDir,
   snapshotDir: '__snapshots__',
   outputDir,
@@ -118,10 +114,8 @@ for (const browserName of browserNames) {
       headless: !headed,
       channel,
       video,
+      executablePath,
       traceDir: process.env.PWTRACE ? path.join(outputDir, 'trace') : undefined,
-      launchOptions: {
-        executablePath,
-      },
       coverageName: browserName,
     },
     define: { test: pageTest, env: new PageEnv() },

@@ -36,11 +36,9 @@ class ElectronPageEnv extends ElectronEnv {
   }
 }
 
-type AllOptions = PlaywrightEnvOptions & CommonOptions;
-
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: folio.Config<AllOptions> = {
+const config: folio.Config<PlaywrightEnvOptions & CommonOptions> = {
   testDir,
   snapshotDir: '__snapshots__',
   outputDir,
@@ -59,6 +57,7 @@ const config: folio.Config<AllOptions> = {
 config.projects.push({
   name: 'electron',
   options: {
+    mode: 'default',
     browserName: 'chromium',
     coverageName: 'electron',
   },
@@ -68,6 +67,7 @@ config.projects.push({
 config.projects.push({
   name: 'electron',
   options: {
+    mode: 'default',
     browserName: 'chromium',
     coverageName: 'electron',
   },

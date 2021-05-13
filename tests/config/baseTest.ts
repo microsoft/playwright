@@ -26,17 +26,17 @@ import { PlaywrightClient } from '../../lib/remote/playwrightClient';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type Mode = 'default' | 'driver' | 'service';
-type BaseWorkerArgs = {
+type BaseOptions = {
   mode: Mode;
+  browserName: BrowserName;
+  channel?: string;
+  video?: boolean;
+  headless?: boolean;
+};
+type BaseWorkerArgs = {
   platform: 'win32' | 'darwin' | 'linux';
-  video: boolean | undefined;
-  headless: boolean | undefined;
-
   playwright: typeof import('../../index');
   toImpl: (rpcObject: any) => any;
-  browserName: BrowserName;
-  channel: string | undefined;
-
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
@@ -100,17 +100,8 @@ class DefaultMode {
   }
 }
 
-type BaseOptions = {
-  mode?: Mode;
-  browserName?: BrowserName;
-  channel?: string;
-  video?: boolean;
-  headless?: boolean;
-};
-
 class BaseEnv {
   private _mode: DriverMode | ServiceMode | DefaultMode;
-  private _browserName: BrowserName;
   private _options: BaseOptions;
   private _playwright: typeof import('../../index');
 
@@ -120,36 +111,30 @@ class BaseEnv {
 
   async beforeAll(options: BaseOptions, workerInfo: folio.WorkerInfo): Promise<BaseWorkerArgs> {
     this._options = options;
-    this._browserName = options.browserName || 'chromium';
     this._mode = {
       default: new DefaultMode(),
       service: new ServiceMode(),
       driver: new DriverMode(),
-    }[this._options.mode || 'default'];
+    }[this._options.mode];
     require('../../lib/utils/utils').setUnderTest();
     this._playwright = await this._mode.setup(workerInfo);
     return {
       playwright: this._playwright,
-      browserName: this._browserName,
-      channel: this._options.channel,
       isWindows: process.platform === 'win32',
       isMac: process.platform === 'darwin',
       isLinux: process.platform === 'linux',
-      headless: this._options.headless,
-      video: this._options.video,
-      mode: this._options.mode || 'default',
       platform: process.platform as ('win32' | 'darwin' | 'linux'),
       toImpl: (this._playwright as any)._toImpl,
     };
   }
 
   async beforeEach({}, testInfo: folio.TestInfo) {
-    testInfo.snapshotPathSegment = this._browserName;
-    testInfo.data = { browserName: this._browserName };
+    testInfo.snapshotPathSegment = this._options.browserName;
+    testInfo.data = { browserName: this._options.browserName };
     if (!this._options.headless)
       testInfo.data.headful = true;
-    if ((this._options.mode || 'default') !== 'default')
-      testInfo.data.mode = this._options.mode || 'default';
+    if (this._options.mode !== 'default')
+      testInfo.data.mode = this._options.mode;
     if (this._options.video)
       testInfo.data.video = true;
     return {};
@@ -265,6 +250,6 @@ class CoverageEnv {
 }
 
 export type CommonOptions = BaseOptions & ServerOptions & CoverageOptions;
-export type CommonArgs = BaseWorkerArgs & ServerWorkerArgs;
+export type CommonArgs = CommonOptions & BaseWorkerArgs & ServerWorkerArgs;
 
 export const baseTest = folio.test.extend(new CoverageEnv()).extend(new ServerEnv()).extend(new BaseEnv());

@@ -16,7 +16,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it.useOptions({ launchOptions: { proxy: { server: 'per-context' } } });
+it.useOptions({ proxy: { server: 'per-context' } });
 
 it('should throw for missing global proxy on Chromium Windows', async ({ browserName, platform, browserType, browserOptions, server }) => {
   it.skip(browserName !== 'chromium' || platform !== 'win32');
