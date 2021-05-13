@@ -65,6 +65,25 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class BrowserTypeExamples
+{
+    public static async Task Run()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var chromium = playwright.Chromium;
+        var browser = await chromium.LaunchAsync();
+        var page = await browser.NewPageAsync();
+        await page.GoToAsync("https://www.bing.com");
+        // other actions
+        await browser.CloseAsync();
+    }
+}
+```
+
 ## async method: BrowserType.connect
 * langs: js, java, python
 - returns: <[Browser]>
@@ -191,6 +210,10 @@ browser = await playwright.chromium.launch( # or "firefox" or "webkit".
 browser = playwright.chromium.launch( # or "firefox" or "webkit".
     ignore_default_args=["--mute-audio"]
 )
+```
+
+```csharp
+var browser = await playwright.Chromium.LaunchAsync(ignoreDefaultArgs: new[] { "--mute-audio" })
 ```
 
 > **Chromium-only** Playwright can also be used to control the Google Chrome or Microsoft Edge browsers, but it works best with the version of
