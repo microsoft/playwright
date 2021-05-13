@@ -274,7 +274,7 @@ browser.close()
 ```
 
 ```csharp
-await page.GoToAsync("https://keycode.info");
+await page.GotoAsync("https://keycode.info");
 await page.Keyboard.PressAsync("A");
 await page.ScreenshotAsync("A.png");
 await page.Keyboard.PressAsync("ArrowLeft");

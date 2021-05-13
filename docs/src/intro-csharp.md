@@ -20,7 +20,7 @@ dotnet add package PlaywrightSharp
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Chromium.LaunchAsync();
 var page = await browser.NewPageAsync();
-await page.GoToAsync("http://www.bing.com");
+await page.GotoAsync("http://www.bing.com");
 await page.ScreenshotAsync(path: outputFile);
 ```
 

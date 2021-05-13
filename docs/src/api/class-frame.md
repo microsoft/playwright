@@ -110,7 +110,7 @@ class FrameExamples
         await using var browser = await playwright.Firefox.LaunchAsync();
         var page = await browser.NewPageAsync();
 
-        await page.GoToAsync("https://www.bing.com");
+        await page.GotoAsync("https://www.bing.com");
         DumpFrameTree(page.MainFrame, string.Empty);
     }
 
@@ -1540,7 +1540,7 @@ class FrameExamples
 
     foreach (var currentUrl in new[] { "https://www.google.com", "https://bbc.com" })
     {
-      await page.GoToAsync(currentUrl);
+      await page.GotoAsync(currentUrl);
       element = await page.MainFrame.WaitForSelectorAsync("img");
       Console.WriteLine($"Loaded image: {await element.GetAttributeAsync("src")}");
     }

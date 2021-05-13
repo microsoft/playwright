@@ -80,7 +80,7 @@ class HandleExamples
         using var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(headless: false);
         var page = await browser.NewPageAsync();
-        await page.GoToAsync("https://www.bing.com");
+        await page.GotoAsync("https://www.bing.com");
         var handle = await page.QuerySelectorAsync("a");
         await handle.ClickAsync();
     }

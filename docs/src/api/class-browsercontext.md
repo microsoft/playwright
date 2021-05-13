@@ -56,7 +56,7 @@ var browser = await playwright.Firefox.LaunchAsync(headless: false);
 var context = await browser.NewContextAsync();
 // Create a new page inside context.
 var page = await context.NewPageAsync();
-await page.GoToAsync("https://bing.com");
+await page.GotoAsync("https://bing.com");
 // Dispose context once it"s no longer needed.
 await context.CloseAsync();
 ```
@@ -895,7 +895,7 @@ browser.close()
 var context = await browser.NewContextAsync();
 var page = await context.NewPageAsync();
 await context.RouteAsync("**/*.{png,jpg,jpeg}", r => r.AbortAsync());
-await page.GoToAsync("https://theverge.com");
+await page.GotoAsync("https://theverge.com");
 await browser.CloseAsync();
 ```
 
@@ -940,7 +940,7 @@ browser.close()
 var context = await browser.NewContextAsync();
 var page = await context.NewPageAsync();
 await context.RouteAsync(new Regex("(\\.png$)|(\\.jpg$)"), r => r.AbortAsync());
-await page.GoToAsync("https://theverge.com");
+await page.GotoAsync("https://theverge.com");
 await browser.CloseAsync();
 ```
 

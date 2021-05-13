@@ -77,7 +77,7 @@ class PlaywrightExample
         await using var browser = await playwright.Chromium.LaunchAsync();
         var page = await browser.NewPageAsync();
 
-        await page.GoToAsync("https://www.microsoft.com");
+        await page.GotoAsync("https://www.microsoft.com");
         // other actions...
     }
 }
@@ -166,7 +166,7 @@ class PlaywrightExample
         await using var context = await browser.NewContextAsync(Playwright.Devices["iPhone 6"]);
 
         var page = await context.NewPageAsync();
-        await page.GoToAsync("https://www.theverge.com");
+        await page.GotoAsync("https://www.theverge.com");
         // other actions...
     }
 }
