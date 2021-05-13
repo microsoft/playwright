@@ -261,6 +261,32 @@ it('should detect mime type', async ({page, server, asset, isAndroid}) => {
       fs.readFileSync(asset('pptr.png')).toString());
 });
 
+// @see https://github.com/microsoft/playwright/issues/4704
+it('should not trim big uploaded files', async ({page, server, asset, isAndroid}) => {
+  it.fixme(isAndroid);
+
+  let files;
+  server.setRoute('/upload', async (req, res) => {
+    const form = new formidable.IncomingForm();
+    form.parse(req, function(err, fields, f) {
+      files = f;
+      res.end();
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+
+  const DATA_SIZE = Math.pow(2, 20);
+  await Promise.all([
+    page.evaluate(async size => {
+      const body = new FormData();
+      body.set('file', new Blob([new Uint8Array(size)]));
+      await fetch('/upload', { method: 'POST', body });
+    }, DATA_SIZE),
+    server.waitForRequest('/upload'),
+  ]);
+  expect(files.file.size).toBe(DATA_SIZE);
+});
+
 it('should be able to read selected file', async ({page, asset}) => {
   await page.setContent(`<input type=file>`);
   const [, content] = await Promise.all([
