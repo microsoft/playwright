@@ -458,15 +458,6 @@ function renderMethod(member, parent, output, name) {
       output(`${type} ${name} { get; }`);
       return;
     }
-  } else if (member.args.size == 1
-    && type === 'void'
-    && name.startsWith('Set')
-    && !member.async) {
-    name = name.substring(3); // remove the 'Set'
-    if (member.spec)
-      output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-    output(`${translateType(member.argsArray[0].type, parent)} ${name} { set; }`);
-    return;
   }
 
   // HACK: special case for generics handling!
