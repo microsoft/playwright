@@ -48,6 +48,12 @@ download = download_info.value
 path = download.path()
 ```
 
+```csharp
+var downloadTask = page.WaitForDownloadAsync();
+await Task.WhenAll(downloadTask, page.ClickAsync("#downloadButton"));
+Console.WriteLine(await downloadTask.Result.PathAsync());
+```
+
 :::note
 Browser context **must** be created with the [`option: acceptDownloads`] set to `true` when user needs access to the
 downloaded content. If [`option: acceptDownloads`] is not set, download events are emitted, but the actual download is

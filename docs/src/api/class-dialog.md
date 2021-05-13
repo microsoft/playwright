@@ -80,6 +80,29 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class DialogExample
+{
+    public static async Task Run()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        var page = await browser.NewPageAsync();
+
+        page.Dialog += async (_, dialog) =>
+        {
+            System.Console.WriteLine(dialog.Message);
+            await dialog.DismissAsync();
+        };
+
+        await page.EvaluateAsync("alert('1');");
+    }
+}
+```
+
 :::note
 Dialogs are dismissed automatically, unless there is a [`event: Page.dialog`] listener.
 When listener is present, it **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and actions like click will never finish.

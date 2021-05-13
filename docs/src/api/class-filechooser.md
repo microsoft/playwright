@@ -29,6 +29,12 @@ file_chooser = fc_info.value
 file_chooser.set_files("myfile.pdf")
 ```
 
+```csharp
+var fileChooserTask = page.WaitForFileChooserAsync();
+await Task.WhenAll(fileChooserTask, page.ClickAsync("upload"));
+await fileChooserTask.Result.SetFilesAsync("temp.txt");
+```
+
 ## method: FileChooser.element
 - returns: <[ElementHandle]>
 
