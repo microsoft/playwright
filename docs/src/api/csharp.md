@@ -1,4 +1,4 @@
-## method: Request.PostDataJsonAsync
+## method: Request.postDataJSON
 * langs: csharp
 - returns: <[JsonDocument]>
 
@@ -7,10 +7,11 @@ Returns parsed request's body for `form-urlencoded` and JSON as a fallback if an
 When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
 Otherwise it will be parsed as JSON.
 
-### option: Request.PostDataJsonAsync.serializerOptions
+### param: Request.postDataJSON.serializerOptions
+* langs: csharp
 - `documentOptions` <[null]|[JsonDocumentOptions]>
 
-The options that control custom behaviour when parsing the JSON.
+Optional Json options that control custom behaviour when parsing the JSON.
 
 ## method: Response.statusCode
 * langs: csharp
