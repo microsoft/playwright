@@ -464,7 +464,7 @@ divs_counts = frame.eval_on_selector_all("div", "(divs, min) => divs.length >= m
 ```
 
 ```csharp
-var divsCount = await page.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => divs.length >= min", 10);
+var divsCount = await frame.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => divs.length >= min", 10);
 ```
 
 ### param: Frame.evalOnSelectorAll.selector = %%-query-selector-%%
