@@ -904,7 +904,7 @@ browser.close()
 ```csharp
 var context = await browser.NewContextAsync();
 var page = await context.NewPageAsync();
-await context.RouteAsync(new System.Text.RegularExpressions.Regex("(\\.png$)|(\\.jpg$)"), r => r.AbortAsync());
+await context.RouteAsync(new Regex("(\\.png$)|(\\.jpg$)"), r => r.AbortAsync());
 await page.GoToAsync("https://theverge.com");
 await browser.CloseAsync();
 ```
