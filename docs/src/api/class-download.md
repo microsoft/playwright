@@ -51,7 +51,7 @@ path = download.path()
 ```csharp
 var downloadTask = page.WaitForDownloadAsync();
 await Task.WhenAll(downloadTask, page.ClickAsync("#downloadButton"));
-System.Console.WriteLine(await downloadTask.Result.PathAsync());
+Console.WriteLine(await downloadTask.Result.PathAsync());
 ```
 
 :::note
