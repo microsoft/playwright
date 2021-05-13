@@ -125,7 +125,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
       const artifactObject = Artifact.from(artifact);
       artifactObject._isRemote = !!this._browserContext._browser && !!this._browserContext._browser._remoteType;
-      this.emit(Events.Page.Download, new Download(url, suggestedFilename, artifactObject));
+      this.emit(Events.Page.Download, new Download(this, url, suggestedFilename, artifactObject));
     });
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));

@@ -43,6 +43,7 @@ it.describe('download event', () => {
       page.click('a')
     ]);
     let error;
+    expect(download.page()).toBe(page);
     expect(download.url()).toBe(`${server.PREFIX}/downloadWithFilename`);
     expect(download.suggestedFilename()).toBe(`file.txt`);
     await download.path().catch(e => error = e);
