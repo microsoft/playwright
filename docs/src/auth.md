@@ -338,7 +338,7 @@ class Guides
   {
       using var playwright = await Playwright.CreateAsync();
       var chromium = playwright.Chromium;
-      var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\director\", headless: false);
+      var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", headless: false);
   }
 }
 ```
