@@ -43,7 +43,7 @@ it('should pass page to close event', async ({page, isAndroid}) => {
 });
 
 it('should terminate network waiters', async ({page, server, isAndroid}) => {
-  it.fail(isAndroid);
+  it.fixme(isAndroid);
   const results = await Promise.all([
     page.waitForRequest(server.EMPTY_PAGE).catch(e => e),
     page.waitForResponse(server.EMPTY_PAGE).catch(e => e),
