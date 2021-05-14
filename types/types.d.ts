@@ -2418,7 +2418,7 @@ export interface Page {
    * Returns the buffer with the captured screenshot.
    * @param options
    */
-  screenshot(options?: ScreenshotOptions): Promise<Buffer>;
+  screenshot(options?: PageScreenshotOptions): Promise<Buffer>;
 
   /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, waits until
@@ -11319,7 +11319,7 @@ interface PageWaitForFunctionOptions {
   timeout?: number;
 }
 
-export interface ScreenshotOptions {
+export interface PageScreenshotOptions {
   /**
    * An object which specifies clipping of the resulting image. Should have the following fields:
    */
