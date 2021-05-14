@@ -607,7 +607,7 @@ Additional arguments to pass to the browser instance. The list of Chromium flags
 [here](http://peter.sh/experiments/chromium-command-line-switches/).
 
 ## browser-option-channel
-- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary"|"firefox-stable">>
+- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
 
 Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 
