@@ -56,13 +56,11 @@ export class Dialog extends SdkObject {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
     await this._onHandle(true, promptText);
-    this._page.emit(Page.Events.InternalDialogClosed, this);
   }
 
   async dismiss() {
     assert(!this._handled, 'Cannot dismiss dialog which is already handled!');
     this._handled = true;
     await this._onHandle(false);
-    this._page.emit(Page.Events.InternalDialogClosed, this);
   }
 }
