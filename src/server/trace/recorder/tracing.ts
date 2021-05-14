@@ -21,9 +21,7 @@ import yazl from 'yazl';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
-import { Dialog } from '../../dialog';
 import { ElementHandle } from '../../dom';
-import { Frame, NavigationEvent } from '../../frames';
 import { helper, RegisteredListener } from '../../helper';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
@@ -188,51 +186,6 @@ export class Tracing implements InstrumentationListener {
       page.setScreencastOptions({ width: 800, height: 600, quality: 90 });
 
     this._eventListeners.push(
-        helper.addEventListener(page, Page.Events.Dialog, (dialog: Dialog) => {
-          const event: trace.DialogOpenedEvent = {
-            timestamp: monotonicTime(),
-            type: 'dialog-opened',
-            pageId,
-            dialogType: dialog.type(),
-            message: dialog.message(),
-          };
-          this._appendTraceEvent(event);
-        }),
-
-        helper.addEventListener(page, Page.Events.InternalDialogClosed, (dialog: Dialog) => {
-          const event: trace.DialogClosedEvent = {
-            timestamp: monotonicTime(),
-            type: 'dialog-closed',
-            pageId,
-            dialogType: dialog.type(),
-          };
-          this._appendTraceEvent(event);
-        }),
-
-        helper.addEventListener(page.mainFrame(), Frame.Events.Navigation, (navigationEvent: NavigationEvent) => {
-          if (page.mainFrame().url() === 'about:blank')
-            return;
-          const event: trace.NavigationEvent = {
-            timestamp: monotonicTime(),
-            type: 'navigation',
-            pageId,
-            url: navigationEvent.url,
-            sameDocument: !navigationEvent.newDocument,
-          };
-          this._appendTraceEvent(event);
-        }),
-
-        helper.addEventListener(page, Page.Events.Load, () => {
-          if (page.mainFrame().url() === 'about:blank')
-            return;
-          const event: trace.LoadEvent = {
-            timestamp: monotonicTime(),
-            type: 'load',
-            pageId,
-          };
-          this._appendTraceEvent(event);
-        }),
-
         helper.addEventListener(page, Page.Events.ScreencastFrame, params => {
           const sha1 = calculateSha1(createGuid()); // no need to compute sha1 for screenshots
           const event: trace.ScreencastFrameTraceEvent = {
@@ -248,7 +201,6 @@ export class Tracing implements InstrumentationListener {
             await fsWriteFileAsync(path.join(this._resourcesDir!, sha1), params.buffer).catch(() => {});
           });
         }),
-
         helper.addEventListener(page, Page.Events.Close, () => {
           const event: trace.PageDestroyedTraceEvent = {
             timestamp: monotonicTime(),

@@ -66,35 +66,6 @@ export type FrameSnapshotTraceEvent = {
   snapshot: FrameSnapshot,
 };
 
-export type DialogOpenedEvent = {
-  timestamp: number,
-  type: 'dialog-opened',
-  pageId: string,
-  dialogType: string,
-  message?: string,
-};
-
-export type DialogClosedEvent = {
-  timestamp: number,
-  type: 'dialog-closed',
-  pageId: string,
-  dialogType: string,
-};
-
-export type NavigationEvent = {
-  timestamp: number,
-  type: 'navigation',
-  pageId: string,
-  url: string,
-  sameDocument: boolean,
-};
-
-export type LoadEvent = {
-  timestamp: number,
-  type: 'load',
-  pageId: string,
-};
-
 export type TraceEvent =
     ContextCreatedTraceEvent |
     PageCreatedTraceEvent |
@@ -102,8 +73,4 @@ export type TraceEvent =
     ScreencastFrameTraceEvent |
     ActionTraceEvent |
     ResourceSnapshotTraceEvent |
-    FrameSnapshotTraceEvent |
-    DialogOpenedEvent |
-    DialogClosedEvent |
-    NavigationEvent |
-    LoadEvent;
+    FrameSnapshotTraceEvent;

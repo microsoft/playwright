@@ -97,7 +97,6 @@ export class Page extends SdkObject {
     Crash: 'crash',
     Console: 'console',
     Dialog: 'dialog',
-    InternalDialogClosed: 'internaldialogclosed',
     Download: 'download',
     FileChooser: 'filechooser',
     DOMContentLoaded: 'domcontentloaded',

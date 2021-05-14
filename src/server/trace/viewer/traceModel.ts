@@ -34,18 +34,10 @@ export class TraceModel {
   appendEvents(events: trace.TraceEvent[], snapshotStorage: SnapshotStorage) {
     for (const event of events)
       this.appendEvent(event);
-    const actions: ActionEntry[] = [];
+    const actions: trace.ActionTraceEvent[] = [];
     for (const page of this.contextEntry!.pages)
       actions.push(...page.actions);
-
-    const resources = snapshotStorage.resources().reverse();
-    actions.reverse();
-
-    for (const action of actions) {
-      while (resources.length && resources[0].timestamp > action.timestamp)
-        action.resources.push(resources.shift()!);
-      action.resources.reverse();
-    }
+    this.contextEntry!.resources = snapshotStorage.resources();
   }
 
   appendEvent(event: trace.TraceEvent) {
@@ -56,6 +48,7 @@ export class TraceModel {
           endTime: Number.MIN_VALUE,
           created: event,
           pages: [],
+          resources: []
         };
         break;
       }
@@ -64,7 +57,7 @@ export class TraceModel {
           created: event,
           destroyed: undefined as any,
           actions: [],
-          interestingEvents: [],
+          events: [],
           screencastFrames: [],
         };
         this.pageEntries.set(event.pageId, pageEntry);
@@ -82,20 +75,14 @@ export class TraceModel {
       case 'action': {
         const metadata = event.metadata;
         const pageEntry = this.pageEntries.get(metadata.pageId!)!;
-        const action: ActionEntry = {
-          actionId: metadata.id,
-          resources: [],
-          ...event,
-        };
-        pageEntry.actions.push(action);
+        pageEntry.actions.push(event);
         break;
       }
-      case 'dialog-opened':
-      case 'dialog-closed':
-      case 'navigation':
-      case 'load': {
-        const pageEntry = this.pageEntries.get(event.pageId)!;
-        pageEntry.interestingEvents.push(event);
+      case 'event': {
+        const metadata = event.metadata;
+        const pageEntry = this.pageEntries.get(metadata.pageId!);
+        if (pageEntry)
+          pageEntry.events.push(event);
         break;
       }
       case 'resource-snapshot':
@@ -105,8 +92,10 @@ export class TraceModel {
         this._snapshotStorage.addFrameSnapshot(event.snapshot);
         break;
     }
-    this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.timestamp);
-    this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.timestamp);
+    if (event.type === 'action' || event.type === 'event') {
+      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.metadata.startTime);
+      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.metadata.endTime);
+    }
   }
 }
 
@@ -115,15 +104,14 @@ export type ContextEntry = {
   endTime: number;
   created: trace.ContextCreatedTraceEvent;
   pages: PageEntry[];
+  resources: ResourceSnapshot[];
 }
-
-export type InterestingPageEvent = trace.DialogOpenedEvent | trace.DialogClosedEvent | trace.NavigationEvent | trace.LoadEvent;
 
 export type PageEntry = {
   created: trace.PageCreatedTraceEvent;
   destroyed: trace.PageDestroyedTraceEvent;
-  actions: ActionEntry[];
-  interestingEvents: InterestingPageEvent[];
+  actions: trace.ActionTraceEvent[];
+  events: trace.ActionTraceEvent[];
   screencastFrames: {
     sha1: string,
     timestamp: number,
@@ -131,11 +119,6 @@ export type PageEntry = {
     height: number,
   }[]
 }
-
-export type ActionEntry = trace.ActionTraceEvent & {
-  actionId: string;
-  resources: ResourceSnapshot[]
-};
 
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
   private _resourcesDir: string;
