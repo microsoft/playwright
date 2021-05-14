@@ -469,4 +469,19 @@ it.describe('download event', () => {
     expect(data.equals(content)).toBe(true);
     await page.close();
   });
+
+  it('should report downloads with interception', async ({browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.route(/.*/, r => r.continue());
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    await page.close();
+  });
+
 });
