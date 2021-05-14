@@ -30,6 +30,11 @@ content = page.text_content("nav:first-child")
 assert content == "home"
 ```
 
+```csharp
+var content = await page.TextContentAsync("nav:first-child");
+Assert.Equals("home", content);
+```
+
 ### API reference
 - [`method: Page.textContent`]
 - [`method: ElementHandle.textContent`]
@@ -54,6 +59,11 @@ assert text == "value"
 ```python sync
 text = page.inner_text(".selected")
 assert text == "value"
+```
+
+```csharp
+var content = await page.InnerTextAsync(".selected");
+Assert.Equals("value", content);
 ```
 
 ### API reference
@@ -82,6 +92,11 @@ checked = page.get_attribute("input", "alt")
 assert alt == "Text"
 ```
 
+```csharp
+var value = await page.GetAttributeAsync("input", "alt");
+Assert.Equals("Text", value);
+```
+
 ## Checkbox state
 
 ```js
@@ -102,6 +117,11 @@ assert checked
 ```python sync
 checked = page.is_checked("input")
 assert checked
+```
+
+```csharp
+var checked = await page.IsCheckedAsync("input");
+Assert.True(checked);
 ```
 
 ### API reference
@@ -130,6 +150,11 @@ content = page.eval_on_selector("nav:first-child", "e => e.textContent")
 assert content == "home"
 ```
 
+```csharp
+var content = await page.EvalOnSelectorAsync("nav:first-child", "e => e.textContent");
+Assert.Equals("home", content);
+```
+
 ### API reference
 - [`method: Page.evalOnSelector`]
 - [`method: JSHandle.evaluate`]
@@ -154,6 +179,11 @@ assert html == "<p>Result</p>"
 ```python sync
 html = page.inner_html("div.result")
 assert html == "<p>Result</p>"
+```
+
+```csharp
+var html = await page.InnerHTMLAsync("div.result");
+Assert.Equals(html, "<p>Result</p>");
 ```
 
 ### API reference
@@ -182,6 +212,11 @@ visible = page.is_visible("input")
 assert visible
 ```
 
+```csharp
+var visibility = await page.IsVisibleAsync("input");
+Assert.True(visibility);
+```
+
 ### API reference
 - [`method: Page.isVisible`]
 - [`method: ElementHandle.isVisible`]
@@ -206,6 +241,11 @@ assert enabled
 ```python sync
 enabled = page.is_enabled("input")
 assert enabled
+```
+
+```csharp
+var enabled = await page.IsEnabledAsync("input");
+Assert.True(enabled);
 ```
 
 ### API reference
@@ -292,6 +332,25 @@ assert font_size == '16px'
 # Assert list length
 length = page.eval_on_selector_all('li.selected', '(items) => items.length')
 assert length == 3
+```
+
+```csharp
+// Assert local storage value
+var userId = await page.EvaluateAsync<string>("() => window.localStorage.getItem('userId')");
+Assert.NotNull(userId);
+
+// Assert value for input element
+await page.WaitForSelectorAsync("#search");
+var value = await page.EvalOnSelectorAsync("#search", "el => el.value");
+Assert.Equals("query", value);
+
+// Assert computed style
+var fontSize = await page.EvalOnSelectorAsync<string>("div", "el => window.getComputedStyle(el).fontSize");
+Assert.Equals("16px", fontSize);
+
+// Assert list length
+var length = await page.EvalOnSelectorAllAsync<int>("li.selected", "items => items.length");
+Assert.Equals(3, length);
 ```
 
 ### API reference
