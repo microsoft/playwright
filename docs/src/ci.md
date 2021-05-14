@@ -100,6 +100,10 @@ Suggested configuration
    })
    ```
 
+   ```csharp
+   await playwright.Chromium.LaunchAsync(args: new[] { "--disable-dev-shm-usage" });
+   ```
+
    This will write shared memory files into `/tmp` instead of `/dev/shm`. See
    [crbug.com/736452](https://bugs.chromium.org/p/chromium/issues/detail?id=736452) for more details.
 1. Using `--ipc=host` is also recommended when using Chromium—without it Chromium can run out of memory
@@ -259,6 +263,20 @@ browser = await playwright.chromium.launch(chromiumSandbox=False)
 browser = playwright.chromium.launch(chromiumSandbox=False)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Guides
+{
+    public async void Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await playwright.Chromium.LaunchAsync(chromiumSandbox: false);
+    }
+}
+```
+
 ### GitLab CI
 
 To run Playwright tests on GitLab, use our public Docker image ([see Dockerfile](./docker.md)).
@@ -369,6 +387,20 @@ from playwright.sync_api import sync_playwright
 with sync_playwright() as p:
    # Works across chromium, firefox and webkit
    browser = p.chromium.launch(headless=False)
+```
+
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Guides
+{
+    public async void Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await playwright.Chromium.LaunchAsync(headless: false);
+    }
+}
 ```
 
 On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the Node.js command.
