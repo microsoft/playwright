@@ -451,7 +451,8 @@ function renderMethod(member, parent, output, name) {
   // set-only methods to settable properties
   if (member.args.size == 0
     && type !== 'void'
-    && !name.startsWith('Get')) {
+    && !name.startsWith('Get')
+    && !name.startsWith('As')) {
     if (!member.async) {
       if (member.spec)
         output(XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
