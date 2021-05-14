@@ -95,10 +95,15 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const playwrightDispatcher = new PlaywrightDispatcher(scope, this._playwright, selectorsDispatcher, browserDispatcher, (ports: number[]) => {
       portForwardingServer.enablePortForwarding(ports);
     });
-    portForwardingServer.on('incomingTCPSocket', (socket: TCPSocket) => {
+    const incomingTCPSocketHandler = (socket: TCPSocket) => {
       playwrightDispatcher._dispatchEvent('incomingTCPSocket', { socket: new TCPSocketDispatcher(playwrightDispatcher._scope, socket) });
-    });
+    };
+    if (portForwardingServer.enabled)
+      portForwardingServer.on('incomingTCPSocket', incomingTCPSocketHandler);
+
     return () => {
+      if (portForwardingServer.enabled)
+        portForwardingServer.off('incomingTCPSocket', incomingTCPSocketHandler);
       // Cleanup contexts upon disconnect.
       browserDispatcher.cleanupContexts().catch(e => {});
     };

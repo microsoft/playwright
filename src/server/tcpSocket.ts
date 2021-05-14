@@ -24,33 +24,39 @@ import { SocksProxyServer, SocksConnectionInfo } from './socksServer';
 import { LaunchOptions } from './types';
 
 export class BrowserServerPortForwardingServer extends EventEmitter {
+  enabled: boolean;
   private _forwardPorts: number[] = [];
-  private _enabled: boolean;
-  _parent: SdkObject;
+  private _parent: SdkObject;
   private _server: SocksProxyServer;
   constructor(parent: SdkObject, enabled: boolean = false) {
     super();
-    debugLogger.log('proxy', `initializing server (enabled: ${enabled})`);
+    this.enabled = enabled;
     this._parent = parent;
-    this._enabled = enabled;
     this._server = new SocksProxyServer(this._handler);
-    this._server.listen(0);
+    if (enabled)
+      this._server.listen(0);
+    debugLogger.log('proxy', `initialized server on port ${this._port()} (enabled: ${enabled})`);
+  }
+
+  private _port(): number {
+    if (!this.enabled)
+      return 0;
+    return (this._server.server.address() as net.AddressInfo).port;
   }
 
   public browserLaunchOptions(): LaunchOptions | undefined {
-    if (!this._enabled)
+    if (!this.enabled)
       return;
-    const port = (this._server.server.address() as net.AddressInfo).port;
     return {
       proxy: {
-        server: `socks5://127.0.0.1:${port}`
+        server: `socks5://127.0.0.1:${this._port()}`
       }
     };
   }
 
   private _handler = (info: SocksConnectionInfo, forward: () => void, intercept: () => net.Socket): void => {
     const shouldProxyRequestToClient = isLocalIpAddress(info.dstAddr) && this._forwardPorts.includes(info.dstPort);
-    debugLogger.log('proxy', `incoming connection from ${info.dstAddr}:${info.dstPort} shouldProxyRequestToClient=${shouldProxyRequestToClient}`);
+    debugLogger.log('proxy', `incoming connection from ${info.srcAddr}:${info.srcPort} to ${info.dstAddr}:${info.dstPort} shouldProxyRequestToClient=${shouldProxyRequestToClient}`);
     if (!shouldProxyRequestToClient) {
       forward();
       return;
@@ -65,7 +71,7 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
   }
 
   public stop(): void {
-    if (!this._enabled)
+    if (!this.enabled)
       return;
     debugLogger.log('proxy', 'stopping server');
     this._server.close();

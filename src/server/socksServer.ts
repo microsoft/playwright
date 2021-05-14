@@ -34,6 +34,7 @@ enum ConnectionPhases {
   REQ_DSTADDR,
   REQ_DSTADDR_VARLEN,
   REQ_DSTPORT,
+  DONE,
 }
 
 enum SOCKS_AUTH_METHOD {
@@ -94,11 +95,13 @@ class SocksV5ServerParser {
     this._socket = socket;
     this._info = { srcAddr: socket.remoteAddress!, srcPort: socket.remotePort!, dstAddr: '', dstPort: 0 };
     this._ready = new Promise(resolve => this._readyResolve = resolve);
-    socket.on('data', this._onData.bind(this, socket));
+    socket.on('data', this._onData);
+    socket.on('error', () => {});
   }
-  private _onData = (socket: net.Socket, chunk: Buffer) => {
+  private _onData = (chunk: Buffer) => {
+    const socket = this._socket;
     let i = 0;
-    while (i < chunk.length) {
+    while (i < chunk.length && this._phase !== ConnectionPhases.DONE) {
       switch (this._phase) {
         case ConnectionPhases.VERSION:
           assert(chunk[i] === 5);
@@ -127,9 +130,13 @@ class SocksV5ServerParser {
           chunk.copy(this._authMethods, this._methodsp, i, i + minLen);
           this._methodsp += minLen;
           i += minLen;
-          assert(this._methodsp === this._authMethods.length);
-
-          this._authWithoutPassword(socket);
+          if (this._methodsp === this._authMethods.length) {
+            this._phase = ConnectionPhases.VERSION;
+            if (i < chunk.length)
+              this._socket.unshift(chunk.slice(i));
+            this._authWithoutPassword(socket);
+            return;
+          }
           break;
         }
 
@@ -186,7 +193,7 @@ class SocksV5ServerParser {
             this._dstPort += chunk[i];
             i++;
 
-            this._socket.pause();
+            this._socket.removeListener('data', this._onData);
             if (i < chunk.length)
               this._socket.unshift(chunk.slice(i));
 
@@ -204,8 +211,9 @@ class SocksV5ServerParser {
             } else {
               this._info.dstAddr = this._dstAddr.toString();
             }
-            this._readyResolve();
             this._info.dstPort = this._dstPort;
+            this._phase++;
+            this._readyResolve();
             return;
           }
           i++;
@@ -226,8 +234,10 @@ class SocksV5ServerParser {
       info: this._info,
       forward: () => {
         const dstSocket = new net.Socket();
+        this._socket.on('close', () => dstSocket.end());
+        this._socket.on('end', () => dstSocket.end());
         dstSocket.setKeepAlive(false);
-        dstSocket.on('error', handleProxyError);
+        dstSocket.on('error', (err: NodeJS.ErrnoException) => handleProxyError(this._socket, err));
         dstSocket.on('connect', () => {
           const localbytes = [127, 0, 0, 1];
           const bufrep = Buffer.alloc(6 + localbytes.length);
