@@ -13,12 +13,6 @@ Otherwise it will be parsed as JSON.
 
 Optional Json options that control custom behaviour when parsing the JSON.
 
-## method: Response.statusCode
-* langs: csharp
-- returns: <[System.Net.HttpStatusCode]>
-
-Gets the [System.Net.HttpStatusCode] code of the response.
-
 ### param: ElementHandle.selectOption.values = %%-csharp-select-options-values-%%
 ### param: ElementHandle.setInputFiles.files = %%-csharp-input-files-%%
 
