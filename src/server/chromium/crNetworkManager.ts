@@ -165,6 +165,22 @@ export class CRNetworkManager {
       });
     }
     if (!event.networkId) {
+      // Some downloads come in as document requests without a network id.
+      // Forge a requestWillBeSent event for them so that users can handle them.
+      if (event.resourceType === 'Document') {
+        this._onRequest(workerFrame, {
+          documentURL: event.request.url,
+          initiator: {type: 'other'},
+          loaderId: '',
+          timestamp: 0,
+          wallTime: 0,
+          request: event.request,
+          requestId: event.requestId,
+          frameId: event.frameId,
+          type: event.resourceType
+        }, event);
+        return;
+      }
       // Fetch without networkId means that request was not recongnized by inspector, and
       // it will never receive Network.requestWillBeSent. Most likely, this is an internal request
       // that we can safely fail.
