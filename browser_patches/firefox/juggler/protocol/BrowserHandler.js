@@ -233,6 +233,10 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setDefaultViewport(nullToUndefined(viewport));
   }
 
+  async ['Browser.setScrollbarsHidden']({browserContextId, hidden}) {
+    await this._targetRegistry.browserContextForId(browserContextId).applySetting('scrollbarsHidden', nullToUndefined(hidden));
+  }
+
   async ['Browser.addScriptToEvaluateOnNewDocument']({browserContextId, script}) {
     await this._targetRegistry.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
   }

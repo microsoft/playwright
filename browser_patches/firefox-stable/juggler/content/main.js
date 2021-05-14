@@ -62,6 +62,10 @@ const applySetting = {
     docShell.allowJavascript = !javaScriptDisabled;
   },
 
+  scrollbarsHidden: (hidden) => {
+    frameTree.setScrollbarsHidden(hidden);
+  },
+
   colorScheme: (colorScheme) => {
     frameTree.setColorScheme(colorScheme);
   },

@@ -364,6 +364,12 @@ const Browser = {
         viewport: t.Nullable(pageTypes.Viewport),
       }
     },
+    'setScrollbarsHidden': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        hidden: t.Boolean,
+      }
+    },
     'addScriptToEvaluateOnNewDocument': {
       params: {
         browserContextId: t.Optional(t.String),
