@@ -72,6 +72,19 @@ Using `firefox-stable` is a 2-steps process:
     browser = playwright.firefox.launch(channel="firefox-stable")
     ```
 
+    ```csharp
+    using Microsoft.Playwright;
+
+    class Guides
+    {
+      public async void Main()
+      {
+        using var playwright = await Playwright.CreateAsync();
+        var browser = playwright.Firefox.LaunchAsync(channel: BrowserChannel.FirefoxStable);
+      }
+    }
+    ```
+
 ## WebKit
 
 Playwright's WebKit version matches the recent WebKit trunk build, before it is used in Apple Safari and
@@ -115,6 +128,18 @@ browser = await playwright.chromium.launch(channel="chrome")
 browser = playwright.chromium.launch(channel="chrome")
 ```
 
+```csharp
+using Microsoft.Playwright;
+
+class Guides
+{
+  public async void Main()
+  {
+      using var playwright = await Playwright.CreateAsync();
+      var browser = await playwright.Chromium.LaunchAsync(channel: BrowserChannel.Chrome)
+  }
+}
+```
 :::note
 Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be installed manually before use.
 :::
