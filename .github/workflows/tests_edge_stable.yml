@@ -1,0 +1,46 @@
+name: "test Edge Stable"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+    types: [ labeled ]
+    branches:
+      - master
+      - release-*
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+  FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
+
+jobs:
+  edge_stable_win:
+    name: "Windows"
+    runs-on: windows-latest
+    steps:
+    - name: Install Media Pack
+      shell: powershell
+      run: Install-WindowsFeature Server-Media-Foundation
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    # This only created problems, should we move ffmpeg back into npm?
+    - run: node lib/cli/cli install ffmpeg
+    - run: npm run ctest -- --channel=msedge
+      shell: bash
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: edge-stable-win-test-results
+        path: test-results
+
