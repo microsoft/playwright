@@ -84,6 +84,15 @@ def handle(route, request):
 page.route("**/*", handle)
 ```
 
+```csharp
+await page.RouteAsync("**/*", route =>
+{
+    var headers = new Dictionary<string, string>(route.Request.Headers) { { "foo", "bar" } };
+    headers.Remove("origin");
+    route.ResumeAsync(headers);
+});
+```
+
 ### option: Route.continue.url
 - `url` <[string]>
 
@@ -143,6 +152,13 @@ page.route("**/*", lambda route: route.fulfill(
     body="not found!"))
 ```
 
+```csharp
+await page.RouteAsync("**/*", route => route.FulfillAsync(
+    status: 404,
+    contentType: "text/plain", 
+    body: "Not Found!"));
+```
+
 An example of serving static file:
 
 ```js
@@ -160,6 +176,10 @@ await page.route("**/xhr_endpoint", lambda route: route.fulfill(path="mock_data.
 
 ```python sync
 page.route("**/xhr_endpoint", lambda route: route.fulfill(path="mock_data.json"))
+```
+
+```csharp
+await page.RouteAsync("**/xhr_endpoint", route => route.FulfillAsync(path: "mock_data.json"));
 ```
 
 ### option: Route.fulfill.status
