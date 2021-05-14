@@ -18,6 +18,10 @@ print(await page.video.path())
 print(page.video.path())
 ```
 
+```csharp
+Console.WriteLine(await page.Video.GetPathAsync());
+```
+
 ## async method: Video.delete
 
 Deletes the video file. Will wait for the video to finish if necessary.
