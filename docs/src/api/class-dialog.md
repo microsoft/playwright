@@ -91,13 +91,7 @@ class DialogExample
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync();
         var page = await browser.NewPageAsync();
-
-        page.Dialog += async (_, dialog) =>
-        {
-            System.Console.WriteLine(dialog.Message);
-            await dialog.DismissAsync();
-        };
-
+        page.Dialog += (p, dialog) => dialog.DismissAsync();
         await page.EvaluateAsync("alert('1');");
     }
 }
