@@ -1,0 +1,110 @@
+name: "test Firefox"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+    types: [ labeled ]
+    branches:
+      - master
+      - release-*
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+  FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
+
+jobs:
+  test_linux:
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'CQ-firefox' || github.event.label.name == 'CQ1' }}
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox]
+        os: [ubuntu-18.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm ci
+    - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
+    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
+    # Wrap `npm run` in a subshell to redirect STDERR to file.
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
+    - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
+        path: test-results
+
+  test_mac:
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'CQ-firefox' || github.event.label.name == 'CQ1' }}
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, macos-11.0]
+        browser: [firefox]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm ci
+      env:
+        DEBUG: extract-zip
+    - run: npm run build
+    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
+    - run: npm run test -- --project=${{ matrix.browser }}
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
+        path: test-results
+
+  test_win:
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'CQ-firefox' || github.event.label.name == 'CQ1' }}
+    name: "Windows"
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox]
+    runs-on: windows-latest
+    steps:
+    - name: Install Media Pack
+      shell: powershell
+      run: Install-WindowsFeature Server-Media-Foundation
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm ci
+      env:
+        DEBUG: extract-zip
+    - run: npm run build
+    - run: node lib/cli/cli install-deps
+    - run: npm run test -- --project=${{ matrix.browser }}
+      shell: bash
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-win-test-results
+        path: test-results
+

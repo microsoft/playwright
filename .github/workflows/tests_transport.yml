@@ -1,4 +1,4 @@
-name: "smoke tests"
+name: "test transport"
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
   pull_request:
     paths-ignore:
       - 'browser_patches/**'
+    types: [ labeled ]
     branches:
       - master
       - release-*
@@ -18,14 +19,14 @@ env:
   FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
 
 jobs:
-  test_linux:
-    name: ${{ matrix.os }} (${{ matrix.browser }})
+  transport_linux:
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'CQ-transport' || github.event.label.name == 'CQ1' }}
+    name: "Chromium Linux"
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
-        os: [ubuntu-20.04]
-    runs-on: ${{ matrix.os }}
+        mode: [driver, service]
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -33,16 +34,15 @@ jobs:
         node-version: 12
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
+    - run: node lib/cli/cli install-deps chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
-    - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest -- --mode=${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
-      if: always()
+      if: ${{ always() }}
       with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
+        name: mode-${{ matrix.mode }}-linux-test-results
         path: test-results
 
