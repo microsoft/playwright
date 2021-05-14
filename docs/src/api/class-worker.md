@@ -38,14 +38,14 @@ for worker in page.workers:
 ```
 
 ```csharp
-Page.Worker += (_, worker) =>
+page.Worker += (_, worker) =>
 {
     Console.WriteLine($"Worker created: {worker.Url}");
     worker.Close += (_, _) => Console.WriteLine($"Worker closed {worker.Url}");
 };
 
 Console.WriteLine("Current Workers:");
-foreach(var pageWorker in Page.Workers)
+foreach(var pageWorker in page.Workers)
 {
     Console.WriteLine($"\tWorker: {pageWorker.Url}");
 }
