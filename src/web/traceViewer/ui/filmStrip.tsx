@@ -43,7 +43,7 @@ export const FilmStrip: React.FunctionComponent<{
     const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
     previewImage = screencastFrames[upperBound(screencastFrames, previewTime, timeComparator) - 1];
   }
-  const previewSize = inscribe(context.created.viewportSize!, { width: 600, height: 600 });
+  const previewSize = inscribe(context.options.viewport!, { width: 600, height: 600 });
 
   return <div className='film-strip' ref={ref}>{
     context.pages.filter(p => p.screencastFrames.length).map((page, index) => <FilmStripLane

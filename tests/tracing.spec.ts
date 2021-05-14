@@ -38,8 +38,7 @@ test('should collect trace', async ({ context, page, server, browserName }, test
   await (context as any).tracing.export(testInfo.outputPath('trace.zip'));
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
-  expect(events[0].type).toBe('context-metadata');
-  expect(events[1].type).toBe('page-created');
+  expect(events[0].type).toBe('context-options');
   expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
@@ -80,8 +79,7 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
 
   {
     const { events } = await parseTrace(testInfo.outputPath('trace1.zip'));
-    expect(events[0].type).toBe('context-metadata');
-    expect(events[1].type).toBe('page-created');
+    expect(events[0].type).toBe('context-options');
     expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeTruthy();
     expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
     expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
@@ -91,8 +89,7 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
 
   {
     const { events } = await parseTrace(testInfo.outputPath('trace2.zip'));
-    expect(events[0].type).toBe('context-metadata');
-    expect(events[1].type).toBe('page-created');
+    expect(events[0].type).toBe('context-options');
     expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
     expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeFalsy();
     expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeFalsy();

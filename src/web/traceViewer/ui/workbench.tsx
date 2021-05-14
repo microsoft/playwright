@@ -45,12 +45,11 @@ export const Workbench: React.FunctionComponent<{
     const actions: ActionTraceEvent[] = [];
     for (const page of context.pages)
       actions.push(...page.actions);
-    actions.sort((a, b) => a.timestamp - b.timestamp);
     const nextAction = selectedAction ? actions[actions.indexOf(selectedAction) + 1] : undefined;
     return { actions, nextAction };
   }, [context, selectedAction]);
 
-  const snapshotSize = context.created.viewportSize || { width: 1280, height: 720 };
+  const snapshotSize = context.options.viewport || { width: 1280, height: 720 };
   const boundaries = { minimum: context.startTime, maximum: context.endTime };
 
   return <div className='vbox workbench'>
@@ -103,14 +102,13 @@ const now = performance.now();
 const emptyContext: ContextEntry = {
   startTime: now,
   endTime: now,
-  created: {
-    timestamp: now,
-    type: 'context-metadata',
-    browserName: '',
+  browserName: '',
+  options: {
+    sdkLanguage: '',
     deviceScaleFactor: 1,
     isMobile: false,
-    viewportSize: { width: 1280, height: 800 },
-    debugName: '<empty>',
+    viewport: { width: 1280, height: 800 },
+    _debugName: '<empty>',
   },
   pages: [],
   resources: []

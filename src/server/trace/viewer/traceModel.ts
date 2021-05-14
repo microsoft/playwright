@@ -19,16 +19,25 @@ import path from 'path';
 import * as trace from '../common/traceEvents';
 import { ContextResources, ResourceSnapshot } from '../../snapshot/snapshotTypes';
 import { BaseSnapshotStorage, SnapshotStorage } from '../../snapshot/snapshotStorage';
+import { BrowserContextOptions } from '../../types';
 export * as trace from '../common/traceEvents';
 
 export class TraceModel {
-  contextEntry: ContextEntry | undefined;
+  contextEntry: ContextEntry;
   pageEntries = new Map<string, PageEntry>();
   contextResources = new Map<string, ContextResources>();
   private _snapshotStorage: PersistentSnapshotStorage;
 
   constructor(snapshotStorage: PersistentSnapshotStorage) {
     this._snapshotStorage = snapshotStorage;
+    this.contextEntry = {
+      startTime: Number.MAX_VALUE,
+      endTime: Number.MIN_VALUE,
+      browserName: '',
+      options: { sdkLanguage: '' },
+      pages: [],
+      resources: []
+    };
   }
 
   appendEvents(events: trace.TraceEvent[], snapshotStorage: SnapshotStorage) {
@@ -40,49 +49,41 @@ export class TraceModel {
     this.contextEntry!.resources = snapshotStorage.resources();
   }
 
+  private _pageEntry(pageId: string): PageEntry {
+    let pageEntry = this.pageEntries.get(pageId);
+    if (!pageEntry) {
+      pageEntry = {
+        actions: [],
+        events: [],
+        screencastFrames: [],
+      };
+      this.pageEntries.set(pageId, pageEntry);
+      this.contextEntry.pages.push(pageEntry);
+    }
+    return pageEntry;
+  }
+
   appendEvent(event: trace.TraceEvent) {
     switch (event.type) {
-      case 'context-metadata': {
-        this.contextEntry = {
-          startTime: Number.MAX_VALUE,
-          endTime: Number.MIN_VALUE,
-          created: event,
-          pages: [],
-          resources: []
-        };
-        break;
-      }
-      case 'page-created': {
-        const pageEntry: PageEntry = {
-          created: event,
-          destroyed: undefined as any,
-          actions: [],
-          events: [],
-          screencastFrames: [],
-        };
-        this.pageEntries.set(event.pageId, pageEntry);
-        this.contextEntry!.pages.push(pageEntry);
-        break;
-      }
-      case 'page-destroyed': {
-        this.pageEntries.get(event.pageId)!.destroyed = event;
+      case 'context-options': {
+        this.contextEntry.browserName = event.browserName;
+        this.contextEntry.options = event.options;
         break;
       }
       case 'screencast-frame': {
-        this.pageEntries.get(event.pageId)!.screencastFrames.push(event);
+        this._pageEntry(event.pageId).screencastFrames.push(event);
         break;
       }
       case 'action': {
         const metadata = event.metadata;
-        const pageEntry = this.pageEntries.get(metadata.pageId!)!;
-        pageEntry.actions.push(event);
+        if (metadata.pageId)
+          this._pageEntry(metadata.pageId).actions.push(event);
         break;
       }
       case 'event': {
         const metadata = event.metadata;
-        const pageEntry = this.pageEntries.get(metadata.pageId!);
-        if (pageEntry)
-          pageEntry.events.push(event);
+        if (metadata.pageId)
+          this._pageEntry(metadata.pageId).events.push(event);
         break;
       }
       case 'resource-snapshot':
@@ -102,14 +103,13 @@ export class TraceModel {
 export type ContextEntry = {
   startTime: number;
   endTime: number;
-  created: trace.ContextCreatedTraceEvent;
+  browserName: string;
+  options: BrowserContextOptions;
   pages: PageEntry[];
   resources: ResourceSnapshot[];
 }
 
 export type PageEntry = {
-  created: trace.PageCreatedTraceEvent;
-  destroyed: trace.PageDestroyedTraceEvent;
   actions: trace.ActionTraceEvent[];
   events: trace.ActionTraceEvent[];
   screencastFrames: {
