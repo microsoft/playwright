@@ -210,11 +210,9 @@ print(new_page.title())
 ```csharp
 // Get page after a specific action (e.g. clicking a link)
 var waitForPageTask = context.WaitForPageAsync();
-await Task.WhenAll(
-    waitForPageTask,
-    page.ClickAsync("a[target='_blank']")
-);
-await waitForPageTask.Result.WaitForLoadStateAsync();
+await page.ClickAsync("a[target='_blank']");
+var newPage = await waitForPageTask;
+await page.WaitForLoadStateAsync();
 Console.WriteLine(await newPage.TitleAsync());
 ```
 
@@ -312,10 +310,9 @@ print(popup.title())
 
 ```csharp
 // Get popup after a specific action (e.g., click)
-var newPage = await Task.WhenAll(
-    page.WaitForPopupAsync(),
-    page.ClickAsync("#open")
-);
+var waitForPopupTask = page.WaitForPopupAsync();
+await page.ClickAsync("#open");
+var newPage = await waitForPopupTask;
 await newPage.WaitForLoadStateAsync();
 Console.WriteLine(await newPage.TitleAsync());
 ```

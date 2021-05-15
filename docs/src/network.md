@@ -282,11 +282,8 @@ response = response_info.value
 ```csharp
 // Use a glob URL pattern
 var waitForResponseTask = page.WaitForResponseAsync("**/api/fetch_data");
-await Task.WhenAll(
-    waitForResponseTask,
-    page.ClickAsync("button#update")
-);
-var response = waitForResponseTask.Result;
+await page.ClickAsync("button#update");
+var response = await waitForResponseTask;
 ```
 
 #### Variations
@@ -344,19 +341,13 @@ response = response_info.value
 ```csharp
 // Use a regular expression
 var waitForResponseTask = page.WaitForResponseAsync(new Regex("\\.jpeg$"));
-await Task.WhenAll(
-    waitForResponseTask,
-    page.ClickAsync("button#update")
-);
-var response = waitForResponseTask.Result;
+await page.ClickAsync("button#update");
+var response = await waitForResponseTask;
 
 // Use a predicate taking a Response object
 var waitForResponseTask = page.WaitForResponseAsync(r => r.Url.Contains(token));
-await Task.WhenAll(
-    waitForResponseTask,
-    page.ClickAsync("button#update")
-);
-var response = waitForResponseTask.Result;
+await page.ClickAsync("button#update");
+var response = await waitForResponseTask;
 ```
 
 ### API reference

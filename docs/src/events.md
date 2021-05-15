@@ -50,8 +50,6 @@ print(first.value.url)
 ```
 
 ```csharp
-// The callback lambda defines scope of the code that is expected to
-// trigger request.
 var waitForRequestTask = page.WaitForRequestAsync("**/*logo*.png");
 await page.GotoAsync("https://wikipedia.org");
 var request = await waitForRequestTask;
@@ -94,8 +92,6 @@ popup.value.goto("https://wikipedia.org")
 ```
 
 ```csharp
-// The callback lambda defines scope of the code that is expected to
-// create popup window.
 var waitForPopupTask = page.WaitForPopupAsync();
 await page.EvaluateAsync("window.open()");
 var popup = await waitForPopupTask;
@@ -160,18 +156,20 @@ page.goto("https://www.openstreetmap.org/")
 
 ```csharp
 page.Request += (_, request) => Console.WriteLine("Request sent: " + request.Url);
-EventHandler<IRequest> listener = (_, request) => {
-  Console.WriteLine("Request finished: " + request.Url);
+void listener(object sender, IRequest request)
+{
+    Console.WriteLine("Request finished: " + request.Url);
 };
 page.RequestFinished += listener;
 await page.GotoAsync("https://wikipedia.org");
 
-// Remove previously added listener, each on* method has corresponding off*
+// Remove previously added listener.
 page.RequestFinished -= listener;
 await page.GotoAsync("https://www.openstreetmap.org/");
 ```
 
 ## Adding one-off listeners
+* langs: js, python, java
 
 If certain event needs to be handled once, there is a convenience API for that:
 
@@ -193,11 +191,6 @@ await page.evaluate("prompt('Enter a number:')")
 ```python sync
 page.once("dialog", lambda dialog: dialog.accept("2021"))
 page.evaluate("prompt('Enter a number:')")
-```
-
-```csharp
-page.Dialog += (_, dialog) => dialog.AcceptAsync("2021");
-await page.EvaluateAsync("prompt('Enter a number:')");
 ```
 
 ### API reference

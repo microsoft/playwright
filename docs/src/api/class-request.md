@@ -239,9 +239,10 @@ print(request.timing)
 ```
 
 ```csharp
-var requestFinishedTask = page.WaitForEventAsync(PageEvent.RequestFinished);
-await Task.WhenAll(requestFinishedTask, page.GotoAsync("https://www.microsoft.com"));
-Console.WriteLine(requestFinishedTask.Result.Timing.ResponseEnd);
+var waitForEventTask = page.WaitForEventAsync(PageEvent.RequestFinished);
+await page.GotoAsync("https://www.microsoft.com");
+var request = await waitForEventTask;
+Console.WriteLine(request.Timing.ResponseEnd);
 ```
 
 ## method: Request.url

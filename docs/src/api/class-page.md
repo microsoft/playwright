@@ -397,9 +397,10 @@ print(popup.evaluate("location.href"))
 ```
 
 ```csharp
-var popupTask = page.WaitForPopupAsync();
-await Task.WhenAll(popupTask, page.EvaluateAsync("() => window.open('https://microsoft.com')"));
-Console.WriteLine(await popupTask.Result.EvaluateAsync<string>("location.href"));
+var waitForPopupTask = page.WaitForPopupAsync();
+await page.EvaluateAsync("() => window.open('https://microsoft.com')");
+var popup = await waitForPopupTask;
+Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
 
 :::note
@@ -2965,8 +2966,8 @@ frame = event_info.value
 
 ```csharp
 var waitTask = page.WaitForEventAsync(PageEvent.FrameNavigated);
-await Task.WhenAll(waitTask, page.ClickAsync("button"));
-var frame = waitTask.Result;
+await page.ClickAsync("button");
+var frame = await waitTask;
 ```
 
 ### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
@@ -3194,9 +3195,10 @@ print(popup.title()) # popup is ready to use.
 
 ```csharp
 var popupTask = page.WaitForPopupAsync();
-await Task.WhenAll(popupTask, page.ClickAsync("button")); // click triggers the popup/
-await popupTask.Result.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-Console.WriteLine(await popupTask.Result.TitleAsync()); // popup is ready to use.
+await page.ClickAsync("button"); // click triggers the popup/
+var popup = await popupTask;
+await popup.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.
 ```
 
 Shortcut for main frame's [`method: Frame.waitForLoadState`].

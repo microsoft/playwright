@@ -103,14 +103,11 @@ page.Console += (_, msg) =>
 
 // Get the next System.out.println
 var waitForMessageTask = page.WaitForConsoleMessageAsync();
-await Task.WhenAll(
-    waitForMessageTask,
-    page.EvaluateAsync("console.log('hello', 42, { foo: 'bar' });")
-);
-
+await page.EvaluateAsync("console.log('hello', 42, { foo: 'bar' });");
+var message = await waitForMessageTask;
 // Deconstruct console.log arguments
-await waitForMessageTask.Result.Args.ElementAt(0).JsonValueAsync<string>(); // hello
-await waitForMessageTask.Result.Args.ElementAt(1).JsonValueAsync<int>(); // 42
+await message.Args.ElementAt(0).JsonValueAsync<string>(); // hello
+await message.Args.ElementAt(1).JsonValueAsync<int>(); // 42
 ```
 
 ### API reference
@@ -248,8 +245,8 @@ popup = popup_info.value
 
 ```csharp
 var waitForPopupTask = page.WaitForPopupAsync();
-await Task.WhenAll(waitForPopupTask, page.ClickAsync("#open"));
-var popup = waitForPopupTask.Result;
+await page.ClickAsync("#open");
+var popup = await waitForPopupTask;
 ```
 
 ### API reference
