@@ -32,10 +32,8 @@ type PlaywrightTestArgs = {
   startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;
 };
 
-export type PlaywrightEnvOptions = {
-  launchOptions?: LaunchOptions;
-  traceDir?: string;
-};
+export type PlaywrightEnvOptions = LaunchOptions;
+const kLaunchOptionNames = ['args', 'channel', 'chromiumSandbox', 'devtools', 'downloadsPath', 'env', 'executablePath', 'firefoxUserPrefs', 'handleSIGHUP', 'handleSIGINT', 'handleSIGTERM', 'headless', 'ignoreDefaultArgs', 'logger', 'proxy', 'slowMo', 'timeout', 'traceDir'];
 
 type PlaywrightWorkerArgs = {
   browserType: BrowserType;
@@ -50,18 +48,15 @@ class PlaywrightEnv {
   private _remoteServer: RemoteServer | undefined;
 
   hasBeforeAllOptions(options: PlaywrightEnvOptions) {
-    return 'launchOptions' in options || 'traceDir' in options;
+    return kLaunchOptionNames.some(key => key in options);
   }
 
   async beforeAll(args: CommonArgs & PlaywrightEnvOptions, workerInfo: folio.WorkerInfo): Promise<PlaywrightWorkerArgs> {
     this._browserType = args.playwright[args.browserName];
     this._browserOptions = {
-      traceDir: args.traceDir,
-      channel: args.channel,
-      headless: args.headless,
       handleSIGINT: false,
-      ...args.launchOptions,
-    } as any;
+      ...args,
+    };
     return {
       browserType: this._browserType,
       browserOptions: this._browserOptions,
@@ -126,9 +121,7 @@ type BrowserTestArgs = {
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 
-type BrowserTestOptions = {
-  contextOptions?: BrowserContextOptions;
-};
+type BrowserTestOptions = BrowserContextOptions;
 
 class BrowserEnv {
   private _browser: Browser | undefined;
@@ -149,7 +142,7 @@ class BrowserEnv {
     const contextOptions = {
       recordVideo: options.video ? { dir: testInfo.outputPath('') } : undefined,
       _debugName: debugName,
-      ...options.contextOptions,
+      ...options,
     } as BrowserContextOptions;
 
     testInfo.data.browserVersion = this._browserVersion;
@@ -163,8 +156,8 @@ class BrowserEnv {
     return {
       browser: this._browser,
       browserVersion: this._browserVersion,
-      contextOptions,
       contextFactory,
+      contextOptions,
     };
   }
 

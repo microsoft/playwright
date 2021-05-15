@@ -44,8 +44,13 @@ export class RemoteServer {
     this._didExit = false;
 
     this._browserType = browserType;
-    const launchOptions = {
-      ...browserOptions,
+    // Copy options to prevent a large JSON string when launching subprocess.
+    // Otherwise, we get `Error: spawn ENAMETOOLONG` on Windows.
+    const launchOptions: LaunchOptions = {
+      args: browserOptions.args,
+      headless: browserOptions.headless,
+      channel: browserOptions.channel,
+      traceDir: browserOptions.traceDir,
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,

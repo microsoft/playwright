@@ -27,7 +27,6 @@ type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   openRecorder: () => Promise<Recorder>;
   runCLI: (args: string[]) => CLIMock;
-  executablePath: string | undefined;
 };
 
 export const test = contextTest.extend({
@@ -35,7 +34,7 @@ export const test = contextTest.extend({
     process.env.PWTEST_RECORDER_PORT = String(10907 + workerInfo.workerIndex);
   },
 
-  async beforeEach({ page, context, toImpl, browserName, channel, headless, mode, launchOptions: { executablePath } }, testInfo: folio.TestInfo): Promise<CLITestArgs> {
+  async beforeEach({ page, context, toImpl, browserName, channel, headless, mode, executablePath }, testInfo: folio.TestInfo): Promise<CLITestArgs> {
     testInfo.skip(mode === 'service');
     const recorderPageGetter = async () => {
       while (!toImpl(context).recorderAppForTest)
@@ -55,7 +54,6 @@ export const test = contextTest.extend({
         return new Recorder(page, await recorderPageGetter());
       },
       recorderPageGetter,
-      executablePath
     };
   },
 
@@ -180,7 +178,7 @@ class CLIMock {
   private waitForCallback: () => void;
   exited: Promise<void>;
 
-  constructor(browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath?: string) {
+  constructor(browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined) {
     this.data = '';
     const nodeArgs = [
       path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),

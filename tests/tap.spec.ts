@@ -18,7 +18,7 @@ import { contextTest as it, expect } from './config/browserTest';
 import { ElementHandle } from '../index';
 import type { ServerResponse } from 'http';
 
-it.useOptions({ contextOptions: { hasTouch: true } });
+it.useOptions({ hasTouch: true });
 
 it('should send all of the correct events', async ({ page }) => {
   await page.setContent(`
