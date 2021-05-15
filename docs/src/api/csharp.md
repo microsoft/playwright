@@ -21,9 +21,3 @@ Optional Json options that control custom behaviour when parsing the JSON.
 
 ### param: Page.selectOption.values = %%-csharp-select-options-values-%%
 ### param: Page.setInputFiles.files = %%-csharp-input-files-%%
-
-## method: Page.opener
-* langs: csharp
-- returns: <[null]|[Page]>
-
-Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
