@@ -42,7 +42,8 @@ it('should pass page to close event', async ({page, isAndroid}) => {
   expect(closedPage).toBe(page);
 });
 
-it('should terminate network waiters', async ({page, server}) => {
+it('should terminate network waiters', async ({page, server, isAndroid}) => {
+  it.fixme(isAndroid);
   const results = await Promise.all([
     page.waitForRequest(server.EMPTY_PAGE).catch(e => e),
     page.waitForResponse(server.EMPTY_PAGE).catch(e => e),
