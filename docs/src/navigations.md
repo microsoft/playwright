@@ -344,7 +344,7 @@ with page.expect_navigation():
 ```csharp
 // Using waitForNavigation with a callback prevents a race condition
 // between clicking and waiting for a navigation.
-await TaskUtils.WhenAll(
+await Task.WhenAll(
     page.WaitForNavigationAsync(), // Waits for the next navigation
     page.ClickAsync("div.delayed-navigation"); // Triggers a navigation after a timeout
 );
@@ -393,7 +393,7 @@ with page.expect_navigation(url="**/login"):
 ```csharp
 // Running action in the callback of waitForNavigation prevents a race
 // condition between clicking and waiting for a navigation.
-await TaskUtils.WhenAll(
+await Task.WhenAll(
     page.WaitForNavigationAsync("**/login"), // Waits for the next navigation
     page.ClickAsync("a") // Triggers a navigation with a script redirect
 );
@@ -434,7 +434,7 @@ popup.wait_for_load_state("load")
 ```
 
 ```csharp
-var popup = await TaskUtils.WhenAll(
+var popup = await Task.WhenAll(
     page.WaitForPopupAsync(),
     page.ClickAsync("a[target='_blank']") // Opens popup
 );

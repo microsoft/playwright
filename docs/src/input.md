@@ -77,6 +77,23 @@ page.fill('#local', '2020-03-02T05:15')
 page.fill('text=First Name', 'Peter')
 ```
 
+```csharp
+// Text input
+await page.FillAsync("#name", "Peter");
+
+// Date input
+await page.FillAsync("#date", "2020-02-02");
+
+// Time input
+await page.FillAsync("#time", "13-15");
+
+// Local datetime input
+await page.FillAsync("#local", "2020-03-02T05:15");
+
+// Input through label
+await page.FillAsync("text=First Name", "Peter");
+```
+
 ### API reference
 
 - [`method: Page.fill`]
@@ -143,6 +160,20 @@ page.uncheck('#subscribe-label')
 
 # Select the radio button
 page.check('text=XL')
+```
+
+```csharp
+// Check the checkbox
+await page.CheckAsync("#agree");
+
+// Assert the checked state
+Assert.True(await page.IsCheckedAsync("#agree"));
+
+// Uncheck by input <label>.
+await page.UncheckAsync("#subscribe-label");
+
+// Select the radio button
+await page.CheckAsync("text=XL");
 ```
 
 ### API reference
@@ -219,6 +250,21 @@ page.select_option('select#colors', ['red', 'green', 'blue'])
 # Select the option via element handle
 option = page.query_selector('#best-option')
 page.select_option('select#colors', option)
+```
+
+```csharp
+// Single selection matching the value
+await page.SelectOptionAsync("select#colors", "blue");
+
+// Single selection matching the label
+await page.SelectOptionAsync("select#colors", new SelectOptionValue { Label = "blue" }));
+
+// Multiple selected items
+await page.SelectOptionAsync("select#colors", new[] { "blue", "green", "red" });
+
+// Select the option via element handle
+var option = await page.QuerySelectorAsync("#best-option");
+await page.SelectOptionAsync("select#colors", option);
 ```
 
 ### API reference
@@ -313,6 +359,26 @@ page.hover('#item')
 page.click('#item', position={ 'x': 0, 'y': 0})
 ```
 
+```csharp
+// Generic click
+await page.ClickAsync("button#submit");
+
+// Double click
+await page.DblClickAsync("#item");
+
+// Right click
+await page.ClickAsync("#item", button: MouseButton.Right);
+
+// Shift + click
+await page.ClickAsync("#item", modifiers: new[] { KeyboardModifier.Shift });
+
+// Hover over element
+await page.HoverAsync("#item");
+
+// Click the top left corner
+await page.ClickAsync("#item", position: new Position { X = 0, Y = 0 });
+```
+
 Under the hood, this and other pointer-related methods:
 
 - wait for element with given selector to be in DOM
@@ -342,6 +408,10 @@ await page.click('button#submit', force=True)
 page.click('button#submit', force=True)
 ```
 
+```csharp
+await page.ClickAsync("button#submit", force: true);
+```
+
 #### Programmatic click
 
 If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element:
@@ -360,6 +430,10 @@ await page.dispatch_event('button#submit', 'click')
 
 ```python sync
 page.dispatch_event('button#submit', 'click')
+```
+
+```csharp
+await page.DispatchEventAsync("button#submit", "click");
 ```
 
 ### API reference
@@ -401,6 +475,11 @@ await page.type('#area', 'Hello World!')
 ```python sync
 # Type character by character
 page.type('#area', 'Hello World!')
+```
+
+```csharp
+// Type character by character
+await page.TypeAsync("#area", "Hello World!");
 ```
 
 This method will emit all the necessary keyboard events, with all the `keydown`, `keyup`, `keypress` events in place. You can even specify the optional `delay` between the key presses to simulate real user behavior.
@@ -464,6 +543,17 @@ page.press('#name', 'Control+ArrowRight')
 page.press('#value', '$')
 ```
 
+```csharp
+// Hit Enter
+await page.PressAsync("#submit", "Enter");
+
+// Dispatch Control+Right
+await page.PressAsync("#name", "Control+ArrowRight");
+
+// Press $ sign on keyboard
+await page.PressAsync("#value", "$");
+```
+
 This method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
 
 ```
@@ -509,6 +599,14 @@ page.press('#name', 'Shift+A')
 
 # <input id=name>
 page.press('#name', 'Shift+ArrowLeft')
+```
+
+```csharp
+// <input id=name>
+await page.PressAsync("#name", "Shift+A");
+
+// <input id=name>
+await page.PressAsync("#name", "Shift+ArrowLeft");
 ```
 
 Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. When specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
@@ -600,6 +698,25 @@ page.set_input_files(
 )
 ```
 
+```csharp
+// Select one file
+await page.SetInputFilesAsync("input#upload", "myfile.pdf");
+
+// Select multiple files
+await page.SetInputFilesAsync("input#upload", new[] { "file1.txt", "file12.txt" });
+
+// Remove all the selected files
+await page.SetInputFilesAsync("input#upload", new[] {});
+
+// Upload buffer from memory
+await page.SetInputFilesAsync("input#upload", new FilePayload
+{
+    Name = "file.txt",
+    MimeType = "text/plain",
+    Buffer = "this is a test".getBytes(StandardCharsets.UTF_8),
+});
+```
+
 If you don't have input element in hand (it is created dynamically), you can handle the [`event: Page.fileChooser`] event
 or use a corresponding waiting method upon your action:
 
@@ -632,6 +749,14 @@ file_chooser = fc_info.value
 file_chooser.set_files("myfile.pdf")
 ```
 
+```csharp
+var fileChooser = await Task.WhenAll(
+    page.WaitForFileChooserAsync(),
+    page.ClickAsync("upload")
+);
+await fileChooser.SetFilesAsync("myfile.pdf");
+```
+
 ### API reference
 - [FileChooser]
 - [`method: Page.setInputFiles`]
@@ -658,6 +783,10 @@ await page.focus('input#name')
 
 ```python sync
 page.focus('input#name')
+```
+
+```csharp
+await page.FocusAsync("input#name");
 ```
 
 ### API reference
