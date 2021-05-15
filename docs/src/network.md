@@ -281,8 +281,7 @@ response = response_info.value
 
 ```csharp
 // Use a glob URL pattern
-var waitForResponseTask = page.WaitForResponseAsync(
-    "**/api/fetch_data");
+var waitForResponseTask = page.WaitForResponseAsync("**/api/fetch_data");
 await Task.WhenAll(
     waitForResponseTask,
     page.ClickAsync("button#update")
@@ -344,8 +343,7 @@ response = response_info.value
 
 ```csharp
 // Use a regular expression
-var waitForResponseTask = page.WaitForResponseAsync(
-    new Regex("\\.jpeg$"));
+var waitForResponseTask = page.WaitForResponseAsync(new Regex("\\.jpeg$"));
 await Task.WhenAll(
     waitForResponseTask,
     page.ClickAsync("button#update")
@@ -353,8 +351,7 @@ await Task.WhenAll(
 var response = waitForResponseTask.Result;
 
 // Use a predicate taking a Response object
-var waitForResponseTask = page.WaitForResponseAsync(
-    r => r.Url.Contains(token));
+var waitForResponseTask = page.WaitForResponseAsync(r => r.Url.Contains(token));
 await Task.WhenAll(
     waitForResponseTask,
     page.ClickAsync("button#update")
@@ -615,7 +612,8 @@ page.on("websocket", on_web_socket)
 ```
 
 ```csharp
-page.WebSocket += (_, ws) => {
+page.WebSocket += (_, ws) =>
+{
     Console.WriteLine("WebSocket opened: " + ws.Url);
     ws.FrameSent += (_, f) => Console.WriteLine(f.Text);
     ws.FrameReceived += (_, f) => Console.WriteLine(f.Text);
