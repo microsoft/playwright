@@ -8,20 +8,27 @@ title: "Getting Started"
 
 ## Installation
 
-Install PlaywrightSharp package from NuGet in Visual Studio or from the CLI in your project root directory:
+Install Microsoft.Playwright package from NuGet in Visual Studio or from the CLI in your project root directory:
 
 ```sh
-dotnet add package PlaywrightSharp
+dotnet add package Microsoft.Playwright
 ```
 
 ## Usage
 
 ```csharp
-using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync();
-var page = await browser.NewPageAsync();
-await page.GotoAsync("http://www.bing.com");
-await page.ScreenshotAsync(path: outputFile);
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Example
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        // Create pages, interact with UI elements, assert values
+    }
+}
 ```
 
 ## First script
@@ -29,13 +36,26 @@ await page.ScreenshotAsync(path: outputFile);
 In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
 
 ```csharp
-// FIXME:
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Example
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        var page = await browser.NewPageAsync();
+        await page.GotoAsync("whatsmyuseragent.org");
+        await page.ScreenshotAsync(path: "screenshot.png");
+    }
+}
 ```
 
-By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless=False` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
+By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless: false` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```csharp
-// FIXME:
+await playwright.Firefox.LaunchAsync(headless: false, slowMo: 50);
 ```
 
 ## Record scripts
