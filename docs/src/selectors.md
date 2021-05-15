@@ -24,6 +24,9 @@ methods accept [`param: selector`] as their first argument.
   ```python sync
   page.click("text=Log in")
   ```
+  ```csharp
+  await page.ClickAsync("text=Log in");
+  ```
   Learn more about [text selector][text].
 - CSS selector
   ```js
@@ -41,6 +44,10 @@ methods accept [`param: selector`] as their first argument.
   ```python sync
   page.click("button")
   page.click("#nav-bar .contact-us-item")
+  ```
+  ```csharp
+  await page.ClickAsync("button");
+  await page.ClickAsync("#nav-bar .contact-us-item");
   ```
   Learn more about [css selector][css].
 - Select by attribute, with css selector
@@ -60,6 +67,10 @@ methods accept [`param: selector`] as their first argument.
   page.click("[data-test=login-button]")
   page.click("[aria-label='Sign in']")
   ```
+  ```csharp
+  await page.ClickAsync("[data-test=login-button]");
+  await page.ClickAsync("[aria-label='Sign in']");
+  ```
   Learn more about [css selector][css].
 - Combine css and text selectors
   ```js
@@ -78,6 +89,10 @@ methods accept [`param: selector`] as their first argument.
   page.click("article:has-text('Playwright')")
   page.click("#nav-bar :text('Contact us')")
   ```
+  ```csharp
+  await page.ClickAsync("article:has-text(\"Playwright\")");
+  await page.ClickAsync("#nav-bar :text(\"Contact us\")");
+  ```
   Learn more about [`:has-text()` and `:text()` pseudo classes][text].
 - Element that contains another, with css selector
   ```js
@@ -91,6 +106,9 @@ methods accept [`param: selector`] as their first argument.
   ```
   ```python sync
   page.click(".item-description:has(.item-promo-banner)")
+  ```
+  ```csharp
+  await page.ClickAsync(".item-description:has(.item-promo-banner)");
   ```
   Learn more about [`:has()` pseudo class](#selecting-elements-that-contain-other-elements).
 - Selecting based on layout, with css selector
@@ -106,6 +124,9 @@ methods accept [`param: selector`] as their first argument.
   ```python sync
   page.click("input:right-of(:text('Username'))")
   ```
+  ```csharp
+  await page.ClickAsync("input:right-of(:text(\"Username\"))");
+  ```
   Learn more about [layout selectors](#selecting-elements-based-on-layout).
 - Only visible elements, with css selector
   ```js
@@ -119,6 +140,9 @@ methods accept [`param: selector`] as their first argument.
   ```
   ```python sync
   page.click(".login-button:visible")
+  ```
+  ```csharp
+  await page.ClickAsync(".login-button:visible");
   ```
   Learn more about [`:visible` pseudo-class](#selecting-visible-elements).
 - Pick n-th match
@@ -134,6 +158,9 @@ methods accept [`param: selector`] as their first argument.
   ```python sync
   page.click(":nth-match(:text('Buy'), 3)"
   ```
+  ```csharp
+  await page.ClickAsync(":nth-match(:text('Buy'), 3)");
+  ```
   Learn more about [`:nth-match()` pseudo-class](#pick-n-th-match-from-the-query-result).
 - XPath selector
   ```js
@@ -147,6 +174,9 @@ methods accept [`param: selector`] as their first argument.
   ```
   ```python sync
   page.click("xpath=//button")
+  ```
+  ```csharp
+  await page.ClickAsync("xpath=//button");
   ```
   Learn more about [XPath selector][xpath].
 
@@ -166,6 +196,9 @@ await page.click("text=Log in")
 ```python sync
 page.click("text=Log in")
 ```
+```csharp
+await page.ClickAsync("text=Log in");
+```
 
 Text selector has a few variations:
 
@@ -182,6 +215,9 @@ Text selector has a few variations:
   ```
   ```python sync
   page.click("text=Log in")
+  ```
+  ```csharp
+  await page.ClickAsync("text=Log in");
   ```
 
 - `text="Log in"` - text body can be escaped with single or double quotes to search for a text node with exact content. For example, `text="Log"` does not match `<button>Log in</button>` because `<button>` contains a single text node `"Log in"` that is not equal to `"Log"`. However, `text="Log"` matches `<button>Log<span>in</span></button>`, because `<button>` contains a text node `"Log"`.
@@ -200,6 +236,9 @@ Text selector has a few variations:
   ```python sync
   page.click("text='Log in'")
   ```
+  ```csharp
+  await page.ClickAsync("text='Log in'");
+  ```
 
 - `"Log in"` - selector starting and ending with a quote (either `"` or `'`) is assumed to be a text selector. For example, `"Log in"` is converted to `text="Log in"` internally.
 
@@ -215,6 +254,9 @@ Text selector has a few variations:
   ```python sync
   page.click("'Log in'")
   ```
+  ```csharp
+  await page.ClickAsync("'Log in'");
+  ```
 
 - `/Log\s*in/i` - body can be a [JavaScript-like regex](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) wrapped in `/` symbols. For example, `text=/Log\s*in/i` matches `<button>Login</button>` and `<button>log IN</button>`.
 
@@ -229,6 +271,9 @@ Text selector has a few variations:
   ```
   ```python sync
   page.click("text=/Log\s*in/i")
+  ```
+  ```csharp
+  await page.ClickAsync("text=/Log\\s*in/i");
   ```
 
 - `article:has-text("Playwright")` - the `:has-text()` pseudo-class can be used inside a [css] selector. It matches any element containing specified text somewhere inside, possibly in a child or a descendant element. For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
@@ -261,6 +306,13 @@ Text selector has a few variations:
   page.click('article:has-text("All products")')
   ```
 
+  ```csharp
+  // Wrong, will match many elements including <body>
+  await page.ClickAsync(":has-text(\"Playwright\")");
+  // Correct, only matches the <article> element
+  await page.ClickAsync("article:has-text(\"Playwright\")");
+  ```
+
 - `#nav-bar :text("Home")` - the `:text()` pseudo-class can be used inside a [css] selector. It matches the smallest element containing specified text. This example is equivalent to `text=Home`, but inside the `#nav-bar` element.
 
   ```js
@@ -274,6 +326,9 @@ Text selector has a few variations:
   ```
   ```python sync
   page.click("#nav-bar :text('Home')")
+  ```
+  ```csharp
+  await page.ClickAsync("#nav-bar :text('Home')");
   ```
 
 - `#nav-bar :text-is("Home")` - the `:text-is()` pseudo-class can be used inside a [css] selector, for strict text node match. This example is equivalent to `text="Home"` (note quotes), but inside the `#nav-bar` element.
@@ -308,6 +363,10 @@ await page.click("button")
 
 ```python sync
 page.click("button")
+```
+
+```csharp
+await page.ClickAsync("button");
 ```
 
 ## Selecting visible elements
@@ -347,6 +406,10 @@ Consider a page with two buttons, first invisible and second visible.
   page.click("button")
   ```
 
+  ```csharp
+  await page.ClickAsync("button");
+  ```
+
 * This will find a second button, because it is visible, and then click it.
 
   ```js
@@ -360,6 +423,9 @@ Consider a page with two buttons, first invisible and second visible.
   ```
   ```python sync
   page.click("button:visible")
+  ```
+  ```csharp
+  await page.ClickAsync("button:visible");
   ```
 
 Use `:visible` with caution, because it has two major drawbacks:
@@ -389,6 +455,10 @@ await page.textContent("article:has(div.promo)")
 page.textContent("article:has(div.promo)")
 ```
 
+```csharp
+await page.TextContentAsync("article:has(div.promo)");
+```
+
 ## Selecting elements matching one of the conditions
 
 The `:is()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is).
@@ -414,6 +484,11 @@ await page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))')
 ```python sync
 # Clicks a <button> that has either a "Log in" or "Sign in" text.
 page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))')
+```
+
+```csharp
+// Clicks a <button> that has either a "Log in" or "Sign in" text.
+await page.ClickAsync(":is(button:has-text(\"Log in\"), button:has-text(\"Sign in\"))");
 ```
 
 ## Selecting elements in Shadow DOM
@@ -443,6 +518,10 @@ await page.click(":light(.article > .header)")
 
 ```python sync
 page.click(":light(.article > .header)")
+```
+
+```csharp
+await page.ClickAsync(":light(.article > .header)");
 ```
 
 More advanced Shadow DOM use cases:
@@ -523,6 +602,14 @@ page.fill('input:right-of(:text("Username"))', 'value')
 page.click('button:near(.promo-card)')
 ```
 
+```csharp
+// Fill an input to the right of "Username".
+await page.FillAsync("input:right-of(:text(\"Username\"))", "value");
+
+// Click a button near the promo card.
+await page.ClickAsync("button:near(.promo-card)");
+```
+
 All layout selectors support optional maximum pixel distance as the last argument. For example
 `button:near(:text("Username"), 120)` matches a button that is at most 120 pixels away from the element with the text "Username".
 
@@ -580,6 +667,14 @@ page.fill('id=username', 'value')
 page.click('data-test-id=submit')
 ```
 
+```csharp
+// Fill an input with the id "username"
+await page.FillAsync("id=username", "value");
+
+// Click an element with data-test-id "submit"
+await page.ClickAsync("data-test-id=submit");
+```
+
 :::note
 Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.click('data-test-id:light=submit')
 :::
@@ -617,6 +712,11 @@ await page.click(":nth-match(:text('Buy'), 3)"
 page.click(":nth-match(:text('Buy'), 3)"
 ```
 
+```csharp
+// Click the third "Buy" button
+await page.ClickAsync(":nth-match(:text('Buy'), 3)");
+```
+
 `:nth-match()` is also useful to wait until a specified number of elements appear, using [`method: Page.waitForSelector`].
 
 ```js
@@ -637,6 +737,11 @@ await page.wait_for_selector(":nth-match(:text('Buy'), 3)")
 ```python sync
 # Wait until all three buttons are visible
 page.wait_for_selector(":nth-match(:text('Buy'), 3)")
+```
+
+```csharp
+// Wait until all three buttons are visible
+await page.WaitForSelectorAsync(":nth-match(:text('Buy'), 3)");
 ```
 
 :::note
@@ -749,6 +854,23 @@ page.click('[aria-label="Close"]') # short-form
 page.click('css=nav >> text=Login')
 ```
 
+```csharp
+// queries "Login" text selector
+await page.ClickAsync("text=\"Login\"");
+await page.ClickAsync("\"Login\""); // short-form
+
+// queries "Search GitHub" placeholder attribute
+await page.FillAsync("css=[placeholder='Search GitHub']", "query");
+await page.FillAsync("[placeholder='Search GitHub']", "query"); // short-form
+
+// queries "Close" accessibility label
+await page.ClickAsync("css=[aria-label='Close']");
+await page.ClickAsync("[aria-label='Close']"); // short-form
+
+// combine role and text queries
+await page.ClickAsync("css=nav >> text=Login");
+```
+
 ### Define explicit contract
 
 When user-facing attributes change frequently, it is recommended to use explicit test ids, like `data-test-id`. These `data-*` attributes are supported by the [css] and [id selectors][id].
@@ -793,6 +915,15 @@ page.click('[data-test-id=directions]') # short-form
 page.click('data-test-id=directions')
 ```
 
+```csharp
+// queries data-test-id attribute with css
+await page.ClickAsync("css=[data-test-id=directions]");
+await page.ClickAsync("[data-test-id=directions]"); // short-form
+
+// queries data-test-id with id
+await page.ClickAsync("data-test-id=directions");
+```
+
 ### Avoid selectors tied to implementation
 
 [xpath] and [css] can be tied to the DOM structure or implementation. These selectors can break when
@@ -820,6 +951,12 @@ await page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
 # avoid long css or xpath chains
 page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input')
 page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
+```
+
+```csharp
+// avoid long css or xpath chains
+await page.ClickAsync("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input");
+await page.ClickAsync("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input");
 ```
 
 [text]: #text-selector
