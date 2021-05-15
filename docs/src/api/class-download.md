@@ -49,9 +49,10 @@ path = download.path()
 ```
 
 ```csharp
-var downloadTask = page.WaitForDownloadAsync();
-await Task.WhenAll(downloadTask, page.ClickAsync("#downloadButton"));
-Console.WriteLine(await downloadTask.Result.PathAsync());
+var waitForDownloadTask = page.WaitForDownloadAsync();
+await page.ClickAsync("#downloadButton");
+var download = await waitForDownloadTask;
+Console.WriteLine(await download.PathAsync());
 ```
 
 :::note

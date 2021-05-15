@@ -435,11 +435,9 @@ popup.wait_for_load_state("load")
 
 ```csharp
 var waitForPopupTask = page.WaitForPopupAsync();
-await Task.WhenAll(
-    waitForPopupTask,
-    page.ClickAsync("a[target='_blank']") // Opens popup
-);
-await waitForPopupTask.Result.WaitForLoadStateAsync(LoadState.Load);
+await page.ClickAsync("a[target='_blank']"); // Opens popup
+var popup = await waitForPopupTask;
+popup.WaitForLoadStateAsync(LoadState.Load);
 ```
 
 ### API reference

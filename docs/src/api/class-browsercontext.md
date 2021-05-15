@@ -25,7 +25,7 @@ BrowserContext context = browser.newContext();
 // Create a new page inside context.
 Page page = context.newPage();
 page.navigate("https://example.com");
-// Dispose context once it"s no longer needed.
+// Dispose context once it is no longer needed.
 context.close();
 ```
 
@@ -35,7 +35,7 @@ context = await browser.new_context()
 # create a new page inside context.
 page = await context.new_page()
 await page.goto("https://example.com")
-# dispose context once it"s no longer needed.
+# dispose context once it is no longer needed.
 await context.close()
 ```
 
@@ -45,7 +45,7 @@ context = browser.new_context()
 # create a new page inside context.
 page = context.new_page()
 page.goto("https://example.com")
-# dispose context once it"s no longer needed.
+# dispose context once it is no longer needed.
 context.close()
 ```
 
@@ -57,7 +57,7 @@ var context = await browser.NewContextAsync();
 // Create a new page inside context.
 var page = await context.NewPageAsync();
 await page.GotoAsync("https://bing.com");
-// Dispose context once it"s no longer needed.
+// Dispose context once it is no longer needed.
 await context.CloseAsync();
 ```
 
@@ -133,9 +133,9 @@ print(page.evaluate("location.href"))
 
 ```csharp
 var popupTask = context.WaitForPageAsync();
-await Task.WhenAll(popupTask, page.ClickAsync("a"));
-
-Console.WriteLine(popupTask.Result.EvaluateAsync<string>("location.href"));
+await page.ClickAsync("a");
+var popup = await popupTask;
+Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
 
 :::note
@@ -1226,8 +1226,9 @@ page = event_info.value
 ```
 
 ```csharp
-var t = page.WaitForEventAsync("page");
-await Task.WhenAll(t, page.ClickAsync("button"));
+var waitForPageEvent = context.WaitForPageAsync();
+await page.ClickAsync("button");
+var page = await waitForPageEvent;
 ```
 
 ### param: BrowserContext.waitForEvent.event

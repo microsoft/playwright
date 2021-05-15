@@ -193,7 +193,7 @@ arg.put("myArray", myArrayHandle);
 arg.put("newElement", 2);
 page.evaluate("arg => arg.myArray.add(arg.newElement)", arg);
 
-// Release the object when it"s no longer needed.
+// Release the object when it is no longer needed.
 myArrayHandle.dispose();
 ```
 
@@ -239,10 +239,10 @@ my_array_handle.dispose()
 
 ```csharp
 // Create new array in page.
-var myArrayHandle = await page.EvaluateHandleAsync("() => {\n" +
-  "  window.myArray = [1];\n" +
-  "  return myArray;\n" +
-  "}");
+var myArrayHandle = await page.EvaluateHandleAsync(@"() => {
+    window.myArray = [1];
+    return myArray;
+}");
 
 // Get the length of the array.
 var length = await page.EvaluateAsync<int>("a => a.length", myArrayHandle);
@@ -251,7 +251,7 @@ var length = await page.EvaluateAsync<int>("a => a.length", myArrayHandle);
 await page.EvaluateAsync("arg => arg.myArray.add(arg.newElement)",
     new { myArray = myArrayHandle, newElement = 2 });
 
-// Release the object when it"s no longer needed.
+// Release the object when it is no longer needed.
 await myArrayHandle.DisposeAsync();
 ```
 
