@@ -750,11 +750,12 @@ file_chooser.set_files("myfile.pdf")
 ```
 
 ```csharp
-var fileChooser = await Task.WhenAll(
-    page.WaitForFileChooserAsync(),
+var waitForChooserTask = page.WaitForFileChooserAsync();
+await Task.WhenAll(
+    waitForChooserTask,
     page.ClickAsync("upload")
 );
-await fileChooser.SetFilesAsync("myfile.pdf");
+await waitForChooserTask.Result.SetFilesAsync("myfile.pdf");
 ```
 
 ### API reference

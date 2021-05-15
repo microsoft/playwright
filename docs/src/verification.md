@@ -90,6 +90,28 @@ msg.args[0].json_value() # hello
 msg.args[1].json_value() # 42
 ```
 
+```csharp
+// Listen for all System.out.printlns
+page.Console += (_, msg) => Console.WriteLine(msg.Text);
+
+// Listen for all console events and handle errors
+page.Console += (_, msg) => {
+    if ("error".Equals(msg.Type))
+        Console.WriteLine("Error text: " + msg.Text);
+};
+
+// Get the next System.out.println
+var waitForMessageTask = page.WaitForConsoleMessageAsync();
+await Task.WhenAll(
+    waitForMessageTask,
+    page.EvaluateAsync("console.log('hello', 42, { foo: 'bar' });")
+);
+
+// Deconstruct console.log arguments
+await waitForMessageTask.Result.Args.ElementAt(0).JsonValueAsync<string>(); // hello
+await waitForMessageTask.Result.Args.ElementAt(1).JsonValueAsync<int>(); // 42
+```
+
 ### API reference
 - [ConsoleMessage]
 - [Page]
@@ -137,6 +159,13 @@ page.on("pageerror", lambda exc: print(f"uncaught exception: {exc}"))
 page.goto("data:text/html,<script>throw new Error('test')</script>")
 ```
 
+```csharp
+// Log all uncaught errors to the terminal
+page.PageError += (_, exception) => {
+  Console.WriteLine("Uncaught exception: " + exception);
+};
+```
+
 ### API reference
 - [Page]
 - [`event: Page.pageError`]
@@ -181,6 +210,12 @@ page.onDialog(dialog -> {
 page.on("dialog", lambda dialog: dialog.accept())
 ```
 
+```csharp
+page.RequestFailed += (_, request) => {
+  Console.WriteLine(request.Url + " " + request.Failure);
+};
+```
+
 #### `"popup"` - handle popup windows
 
 ```js
@@ -206,6 +241,12 @@ popup = await popup_info.value
 with page.expect_popup() as popup_info:
     page.click("#open")
 popup = popup_info.value
+```
+
+```csharp
+var waitForPopupTask = page.WaitForPopupAsync();
+await Task.WhenAll(waitForPopupTask, page.ClickAsync("#open"));
+var popup = waitForPopupTask.Result;
 ```
 
 ### API reference

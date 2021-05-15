@@ -209,11 +209,12 @@ print(new_page.title())
 
 ```csharp
 // Get page after a specific action (e.g. clicking a link)
-var newPage = await Task.WhenAll(
-    context.WaitForPageAsync(),
+var waitForPageTask = context.WaitForPageAsync();
+await Task.WhenAll(
+    waitForPageTask,
     page.ClickAsync("a[target='_blank']")
 );
-await newPage.WaitForLoadStateAsync();
+await waitForPageTask.Result.WaitForLoadStateAsync();
 Console.WriteLine(await newPage.TitleAsync());
 ```
 
