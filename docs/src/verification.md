@@ -95,7 +95,8 @@ msg.args[1].json_value() # 42
 page.Console += (_, msg) => Console.WriteLine(msg.Text);
 
 // Listen for all console events and handle errors
-page.Console += (_, msg) => {
+page.Console += (_, msg) =>
+{
     if ("error".Equals(msg.Type))
         Console.WriteLine("Error text: " + msg.Text);
 };
@@ -161,7 +162,8 @@ page.goto("data:text/html,<script>throw new Error('test')</script>")
 
 ```csharp
 // Log all uncaught errors to the terminal
-page.PageError += (_, exception) => {
+page.PageError += (_, exception) =>
+{
   Console.WriteLine("Uncaught exception: " + exception);
 };
 ```
@@ -211,8 +213,9 @@ page.on("dialog", lambda dialog: dialog.accept())
 ```
 
 ```csharp
-page.RequestFailed += (_, request) => {
-  Console.WriteLine(request.Url + " " + request.Failure);
+page.RequestFailed += (_, request) =>
+{
+    Console.WriteLine(request.Url + " " + request.Failure);
 };
 ```
 

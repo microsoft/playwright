@@ -49,6 +49,15 @@ with page.expect_request("**/*logo*.png") as first:
 print(first.value.url)
 ```
 
+```csharp
+// The callback lambda defines scope of the code that is expected to
+// trigger request.
+var waitForRequestTask = page.WaitForRequestAsync("**/*logo*.png");
+await page.GotoAsync("https://wikipedia.org");
+var request = await waitForRequestTask;
+Console.WriteLine(request.Url);
+```
+
 Wait for popup window:
 
 ```js
@@ -82,6 +91,15 @@ await child_page.goto("https://wikipedia.org")
 with page.expect_popup() as popup:
   page.evaluate("window.open()")
 popup.value.goto("https://wikipedia.org")
+```
+
+```csharp
+// The callback lambda defines scope of the code that is expected to
+// create popup window.
+var waitForPopupTask = page.WaitForPopupAsync();
+await page.EvaluateAsync("window.open()");
+var popup = await waitForPopupTask;
+await popup.GotoAsync("https://wikipedia.org");
 ```
 
 ## Adding/removing event listener
@@ -140,6 +158,19 @@ page.remove_listener("requestfinished", print_request_finished)
 page.goto("https://www.openstreetmap.org/")
 ```
 
+```csharp
+page.Request += (_, request) => Console.WriteLine("Request sent: " + request.Url);
+EventHandler<IRequest> listener = (_, request) => {
+  Console.WriteLine("Request finished: " + request.Url);
+};
+page.RequestFinished += listener;
+await page.GotoAsync("https://wikipedia.org");
+
+// Remove previously added listener, each on* method has corresponding off*
+page.RequestFinished -= listener;
+await page.GotoAsync("https://www.openstreetmap.org/");
+```
+
 ## Adding one-off listeners
 
 If certain event needs to be handled once, there is a convenience API for that:
@@ -162,6 +193,11 @@ await page.evaluate("prompt('Enter a number:')")
 ```python sync
 page.once("dialog", lambda dialog: dialog.accept("2021"))
 page.evaluate("prompt('Enter a number:')")
+```
+
+```csharp
+page.Dialog += (_, dialog) => dialog.AcceptAsync("2021");
+await page.EvaluateAsync("prompt('Enter a number:')");
 ```
 
 ### API reference

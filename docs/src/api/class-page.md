@@ -109,7 +109,7 @@ page.once("load", lambda: print("page loaded!"))
 ```
 
 ```csharp
-page.Load += (_, _) => { Console.WriteLine("Page loaded!"); };
+page.Load += (_, _) => Console.WriteLine("Page loaded!");
 ```
 
 To unsubscribe from events use the `removeListener` method:
