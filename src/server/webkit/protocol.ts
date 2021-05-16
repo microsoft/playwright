@@ -6532,6 +6532,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * If `source` is provided (and not empty), it will be injected into all future global objects as soon as they're created. Omitting `source` will stop this from happening.
        */
       source?: string;
+      /**
+       * Isolated world name to evaluate the script in. If not specified main world will be used.
+       */
+      worldName?: string;
     }
     export type setBootstrapScriptReturnValue = {
     }
