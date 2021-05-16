@@ -66,8 +66,6 @@ it.describe('download event', () => {
   });
 
   it('should report proper download url when download is from download attribute', async ({browser, server, browserName}) => {
-    it.fixme(browserName === 'webkit', '@see https://github.com/microsoft/playwright/issues/5537');
-
     const page = await browser.newPage({ acceptDownloads: true });
     await page.goto(server.PREFIX + '/empty.html');
     await page.setContent(`<a href="${server.PREFIX}/chromium-linux.zip" download="foo.zip">download</a>`);
