@@ -31,6 +31,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   static Events = {
     PausedStateChanged: 'pausedstatechanged'
   };
+  private _muted = false;
 
   constructor(context: BrowserContext) {
     super();
@@ -47,21 +48,33 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     return (context as any)[symbol] as Debugger | undefined;
   }
 
+  async setMuted(muted: boolean) {
+    this._muted = muted;
+  }
+
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseOnStep(sdkObject, metadata)))
+    if (this._muted)
+      return;
+    if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseOnNonInputStep(sdkObject, metadata)))
       await this.pause(sdkObject, metadata);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (this._muted)
+      return;
     if (this._enabled && this._pauseOnNextStatement)
       await this.pause(sdkObject, metadata);
   }
 
   async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (this._muted)
+      return;
     debugLogger.log(logName as any, message);
   }
 
   async pause(sdkObject: SdkObject, metadata: CallMetadata) {
+    if (this._muted)
+      return;
     this._enabled = true;
     metadata.pauseStartTime = monotonicTime();
     const result = new Promise<void>(resolve => {
@@ -106,6 +119,8 @@ function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolea
   return metadata.method === 'pause';
 }
 
-function shouldPauseOnStep(sdkObject: SdkObject, metadata: CallMetadata): boolean {
-  return metadata.method === 'goto' || metadata.method === 'close';
+const nonInputActionsToStep = new Set(['close', 'evaluate', 'evaluateHandle', 'goto', 'setContent']);
+
+function shouldPauseOnNonInputStep(sdkObject: SdkObject, metadata: CallMetadata): boolean {
+  return nonInputActionsToStep.has(metadata.method);
 }
