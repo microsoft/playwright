@@ -16,29 +16,14 @@
 
 import * as folio from 'folio';
 import * as path from 'path';
-import { ElectronEnv } from '../electron/electronTest';
+import { electronFixtures } from '../electron/electronTest';
 import { test as pageTest } from '../page/pageTest';
-import { PlaywrightEnvOptions } from './browserTest';
+import { PlaywrightOptions } from './browserTest';
 import { CommonOptions } from './baseTest';
-
-class ElectronPageEnv extends ElectronEnv {
-  async beforeEach(args: any, testInfo: folio.TestInfo) {
-    const result = await super.beforeEach(args, testInfo);
-    const page = await result.newWindow();
-    return {
-      ...result,
-      browserVersion: this._browserVersion,
-      browserMajorVersion: this._browserMajorVersion,
-      page,
-      isAndroid: false,
-      isElectron: true,
-    };
-  }
-}
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: folio.Config<PlaywrightEnvOptions & CommonOptions> = {
+const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   testDir,
   snapshotDir: '__snapshots__',
   outputDir,
@@ -56,7 +41,7 @@ const config: folio.Config<PlaywrightEnvOptions & CommonOptions> = {
 
 config.projects.push({
   name: 'electron',
-  options: {
+  use: {
     mode: 'default',
     browserName: 'chromium',
     coverageName: 'electron',
@@ -66,13 +51,13 @@ config.projects.push({
 
 config.projects.push({
   name: 'electron',
-  options: {
+  use: {
     mode: 'default',
     browserName: 'chromium',
     coverageName: 'electron',
   },
   testDir: path.join(testDir, 'page'),
-  define: { test: pageTest, env: new ElectronPageEnv() },
+  define: { test: pageTest, fixtures: electronFixtures },
 });
 
 export default config;

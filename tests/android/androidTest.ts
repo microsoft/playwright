@@ -14,48 +14,60 @@
  * limitations under the License.
  */
 
-import type { AndroidDevice } from '../../index';
-import { CommonArgs, baseTest } from '../config/baseTest';
+import type { AndroidDevice, BrowserContext } from '../../index';
+import { CommonWorkerFixtures, baseTest } from '../config/baseTest';
 import * as folio from 'folio';
+import { PageTestFixtures } from '../page/pageTest';
 export { expect } from 'folio';
 
-type AndroidTestArgs = {
+type AndroidWorkerFixtures = {
   androidDevice: AndroidDevice;
 };
 
-export class AndroidEnv {
-  protected _device?: AndroidDevice;
-  protected _browserVersion: string;
-  protected _browserMajorVersion: number;
+export const androidFixtures: folio.Fixtures<PageTestFixtures & { __androidSetup: void }, AndroidWorkerFixtures & { androidContext: BrowserContext }, {}, CommonWorkerFixtures> = {
+  androidDevice: [ async ({ playwright }, run) => {
+    const device = (await playwright._android.devices())[0];
+    await device.shell('am force-stop org.chromium.webview_shell');
+    await device.shell('am force-stop com.android.chrome');
+    device.setDefaultTimeout(90000);
+    await run(device);
+    await device.close();
+  }, { scope: 'worker' } ],
 
-  async beforeAll(args: CommonArgs, workerInfo: folio.WorkerInfo) {
-    this._device = (await args.playwright._android.devices())[0];
-    await this._device.shell('am force-stop org.chromium.webview_shell');
-    await this._device.shell('am force-stop com.android.chrome');
-    this._browserVersion = (await this._device.shell('dumpsys package com.android.chrome'))
+  browserVersion: async ({ androidDevice }, run) => {
+    const browserVersion = (await androidDevice.shell('dumpsys package com.android.chrome'))
         .toString('utf8')
         .split('\n')
         .find(line => line.includes('versionName='))
         .trim()
         .split('=')[1];
-    this._browserMajorVersion = Number(this._browserVersion.split('.')[0]);
-    this._device.setDefaultTimeout(90000);
-  }
+    await run(browserVersion);
+  },
 
-  async beforeEach({}, testInfo: folio.TestInfo): Promise<AndroidTestArgs> {
+  browserMajorVersion: async ({ browserVersion }, run) => {
+    await run(Number(browserVersion.split('.')[0]));
+  },
+
+  isAndroid: true,
+  isElectron: false,
+
+  __androidSetup: [ async ({ browserVersion }, run, testInfo) => {
     testInfo.data.platform = 'Android';
     testInfo.data.headful = true;
-    testInfo.data.browserVersion = this._browserVersion;
-    return {
-      androidDevice: this._device!,
-    };
-  }
+    testInfo.data.browserVersion = browserVersion;
+    await run();
+  }, { auto: true } ],
 
-  async afterAll({}, workerInfo: folio.WorkerInfo) {
-    if (this._device)
-      await this._device.close();
-    this._device = undefined;
-  }
-}
+  androidContext: [ async ({ androidDevice }, run) => {
+    await run(await androidDevice.launchBrowser());
+  }, { scope: 'worker' } ],
 
-export const androidTest = baseTest.extend(new AndroidEnv());
+  page: async ({ androidContext }, run) => {
+    const page = await androidContext.newPage();
+    await run(page);
+    for (const page of androidContext.pages())
+      await page.close();
+  },
+};
+
+export const androidTest = baseTest.extend<PageTestFixtures, AndroidWorkerFixtures>(androidFixtures as any);

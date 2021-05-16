@@ -22,168 +22,145 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as util from 'util';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
-import { CommonArgs, baseTest } from './baseTest';
+import { baseTest, CommonWorkerFixtures } from './baseTest';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
-type PlaywrightTestArgs = {
+type PlaywrightWorkerOptions = {
+  traceDir: LaunchOptions['traceDir'];
+  executablePath: LaunchOptions['executablePath'];
+  proxy: LaunchOptions['proxy'];
+  args: LaunchOptions['args'];
+};
+export type PlaywrightWorkerFixtures = {
+  browserType: BrowserType;
+  browserOptions: LaunchOptions;
+  browser: Browser;
+  browserVersion: string;
+};
+type PlaywrightTestOptions = {
+  hasTouch: BrowserContextOptions['hasTouch'];
+};
+type PlaywrightTestFixtures = {
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
   startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;
+  contextOptions: BrowserContextOptions;
+  contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
+  context: BrowserContext;
+  page: Page;
 };
+export type PlaywrightOptions = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
-export type PlaywrightEnvOptions = LaunchOptions;
-const kLaunchOptionNames = ['args', 'channel', 'chromiumSandbox', 'devtools', 'downloadsPath', 'env', 'executablePath', 'firefoxUserPrefs', 'handleSIGHUP', 'handleSIGINT', 'handleSIGTERM', 'headless', 'ignoreDefaultArgs', 'logger', 'proxy', 'slowMo', 'timeout', 'traceDir'];
+export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, {}, CommonWorkerFixtures> = {
+  traceDir: [ undefined, { scope: 'worker' } ],
+  executablePath: [ undefined, { scope: 'worker' } ],
+  proxy: [ undefined, { scope: 'worker' } ],
+  args: [ undefined, { scope: 'worker' } ],
+  hasTouch: undefined,
 
-type PlaywrightWorkerArgs = {
-  browserType: BrowserType;
-  browserOptions: LaunchOptions;
-};
+  browserType: [async ({ playwright, browserName }, run) => {
+    await run(playwright[browserName]);
+  }, { scope: 'worker' } ],
 
-class PlaywrightEnv {
-  protected _browserOptions: LaunchOptions;
-  protected _browserType: BrowserType;
-  private _userDataDirs: string[] = [];
-  private _persistentContext: BrowserContext | undefined;
-  private _remoteServer: RemoteServer | undefined;
-
-  hasBeforeAllOptions(options: PlaywrightEnvOptions) {
-    return kLaunchOptionNames.some(key => key in options);
-  }
-
-  async beforeAll(args: CommonArgs & PlaywrightEnvOptions, workerInfo: folio.WorkerInfo): Promise<PlaywrightWorkerArgs> {
-    this._browserType = args.playwright[args.browserName];
-    this._browserOptions = {
+  browserOptions: [async ({ headless, channel, executablePath, traceDir, proxy, args }, run) => {
+    await run({
+      headless,
+      channel,
+      executablePath,
+      traceDir,
+      proxy,
+      args,
       handleSIGINT: false,
-      ...args,
-    };
-    return {
-      browserType: this._browserType,
-      browserOptions: this._browserOptions,
-    };
-  }
+    });
+  }, { scope: 'worker' } ],
 
-  private async _createUserDataDir() {
+  browser: [async ({ browserType, browserOptions }, run) => {
+    const browser = await browserType.launch(browserOptions);
+    await run(browser);
+    await browser.close();
+  }, { scope: 'worker' } ],
+
+  browserVersion: [async ({ browser }, run) => {
+    await run(browser.version());
+  }, { scope: 'worker' } ],
+
+  createUserDataDir: async ({}, run) => {
+    const dirs: string[] = [];
     // We do not put user data dir in testOutputPath,
     // because we do not want to upload them as test result artifacts.
     //
     // Additionally, it is impossible to upload user data dir after test run:
     // - Firefox removes lock file later, presumably from another watchdog process?
     // - WebKit has circular symlinks that makes CI go crazy.
-    const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-    this._userDataDirs.push(dir);
-    return dir;
-  }
+    await run(async () => {
+      const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+      dirs.push(dir);
+      return dir;
+    });
+    await removeFolders(dirs);
+  },
 
-  private async _launchPersistent(options?: Parameters<BrowserType['launchPersistentContext']>[1]) {
-    if (this._persistentContext)
-      throw new Error('can only launch one persitent context');
-    const userDataDir = await this._createUserDataDir();
-    this._persistentContext = await this._browserType.launchPersistentContext(userDataDir, { ...this._browserOptions, ...options });
-    const page = this._persistentContext.pages()[0];
-    return { context: this._persistentContext, page };
-  }
+  launchPersistent: async ({ createUserDataDir, browserType, browserOptions }, run) => {
+    let persistentContext: BrowserContext | undefined;
+    await run(async options => {
+      if (persistentContext)
+        throw new Error('can only launch one persitent context');
+      const userDataDir = await createUserDataDir();
+      persistentContext = await browserType.launchPersistentContext(userDataDir, { ...browserOptions, ...options });
+      const page = persistentContext.pages()[0];
+      return { context: persistentContext, page };
+    });
+    if (persistentContext)
+      await persistentContext.close();
+  },
 
-  private async _startRemoteServer(options?: RemoteServerOptions): Promise<RemoteServer> {
-    if (this._remoteServer)
-      throw new Error('can only start one remote server');
-    this._remoteServer = new RemoteServer();
-    await this._remoteServer._start(this._browserType, this._browserOptions, options);
-    return this._remoteServer;
-  }
+  startRemoteServer: async ({ browserType, browserOptions }, run) => {
+    let remoteServer: RemoteServer | undefined;
+    await run(async options => {
+      if (remoteServer)
+        throw new Error('can only start one remote server');
+      remoteServer = new RemoteServer();
+      await remoteServer._start(browserType, browserOptions, options);
+      return remoteServer;
+    });
+    if (remoteServer)
+      await remoteServer.close();
+  },
 
-  async beforeEach({}, testInfo: folio.TestInfo): Promise<PlaywrightTestArgs> {
-    return {
-      createUserDataDir: this._createUserDataDir.bind(this),
-      launchPersistent: this._launchPersistent.bind(this),
-      startRemoteServer: this._startRemoteServer.bind(this),
-    };
-  }
-
-  async afterEach({}, testInfo: folio.TestInfo) {
-    if (this._persistentContext) {
-      await this._persistentContext.close();
-      this._persistentContext = undefined;
-    }
-    if (this._remoteServer) {
-      await this._remoteServer.close();
-      this._remoteServer = undefined;
-    }
-    await removeFolders(this._userDataDirs);
-    this._userDataDirs = [];
-  }
-}
-
-type BrowserTestArgs = {
-  browser: Browser;
-  browserVersion: string;
-  contextOptions: BrowserContextOptions;
-  contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
-};
-
-type BrowserTestOptions = BrowserContextOptions;
-
-class BrowserEnv {
-  private _browser: Browser | undefined;
-  private _contexts: BrowserContext[] = [];
-  protected _browserVersion: string;
-
-  hasBeforeAllOptions(options: BrowserTestOptions) {
-    return false;
-  }
-
-  async beforeAll(args: PlaywrightWorkerArgs, workerInfo: folio.WorkerInfo) {
-    this._browser = await args.browserType.launch(args.browserOptions);
-    this._browserVersion = this._browser.version();
-  }
-
-  async beforeEach(options: CommonArgs & BrowserTestOptions, testInfo: folio.TestInfo): Promise<BrowserTestArgs> {
+  contextOptions: async ({ video, hasTouch, browserVersion }, run, testInfo) => {
+    testInfo.data.browserVersion = browserVersion;
     const debugName = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
     const contextOptions = {
-      recordVideo: options.video ? { dir: testInfo.outputPath('') } : undefined,
+      recordVideo: video ? { dir: testInfo.outputPath('') } : undefined,
       _debugName: debugName,
-      ...options,
+      hasTouch,
     } as BrowserContextOptions;
+    await run(contextOptions);
+  },
 
-    testInfo.data.browserVersion = this._browserVersion;
-
-    const contextFactory = async (options: BrowserContextOptions = {}) => {
-      const context = await this._browser.newContext({ ...contextOptions, ...options });
-      this._contexts.push(context);
+  contextFactory: async ({ browser, contextOptions }, run) => {
+    const contexts: BrowserContext[] = [];
+    await run(async options => {
+      const context = await browser.newContext({ ...contextOptions, ...options });
+      contexts.push(context);
       return context;
-    };
+    });
+    await Promise.all(contexts.map(context => context.close()));
+  },
 
-    return {
-      browser: this._browser,
-      browserVersion: this._browserVersion,
-      contextFactory,
-      contextOptions,
-    };
-  }
+  context: async ({ contextFactory }, run) => {
+    await run(await contextFactory());
+  },
 
-  async afterEach({}, testInfo: folio.TestInfo) {
-    for (const context of this._contexts)
-      await context.close();
-    this._contexts = [];
-  }
+  page: async ({ context }, run) => {
+    await run(await context.newPage());
+  },
+};
 
-  async afterAll({}, workerInfo: folio.WorkerInfo) {
-    if (this._browser)
-      await this._browser.close();
-    this._browser = undefined;
-  }
-}
-
-class ContextEnv {
-  async beforeEach(args: BrowserTestArgs, testInfo: folio.TestInfo) {
-    const context = await args.contextFactory();
-    const page = await context.newPage();
-    return { context, page };
-  }
-}
-
-export const playwrightTest = baseTest.extend(new PlaywrightEnv());
-export const browserTest = playwrightTest.extend(new BrowserEnv());
-export const contextTest = browserTest.extend(new ContextEnv());
+const test = baseTest.extend<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures>(playwrightFixtures);
+export const playwrightTest = test;
+export const browserTest = test;
+export const contextTest = test;
 
 export { expect } from 'folio';

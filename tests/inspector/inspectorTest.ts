@@ -20,7 +20,6 @@ import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
 import { ChildProcess, spawn } from 'child_process';
 import { chromium } from '../../index';
-import * as folio from 'folio';
 export { expect } from 'folio';
 
 type CLITestArgs = {
@@ -29,39 +28,40 @@ type CLITestArgs = {
   runCLI: (args: string[]) => CLIMock;
 };
 
-export const test = contextTest.extend({
-  async beforeAll({}, workerInfo: folio.WorkerInfo) {
-    process.env.PWTEST_RECORDER_PORT = String(10907 + workerInfo.workerIndex);
-  },
-
-  async beforeEach({ page, context, toImpl, browserName, channel, headless, mode, executablePath }, testInfo: folio.TestInfo): Promise<CLITestArgs> {
-    testInfo.skip(mode === 'service');
-    const recorderPageGetter = async () => {
+export const test = contextTest.extend<CLITestArgs>({
+  recorderPageGetter: async ({ page, context, toImpl, browserName, channel, headless, mode, executablePath }, run, testInfo) => {
+    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
+    if (mode === 'service')
+      testInfo.skip();
+    await run(async () => {
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
       const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
       const browser = await chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
-    };
-    return {
-      runCLI: (cliArgs: string[]) => {
-        this._cli = new CLIMock(browserName, channel, headless, cliArgs, executablePath);
-        return this._cli;
-      },
-      openRecorder: async () => {
-        await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
-        return new Recorder(page, await recorderPageGetter());
-      },
-      recorderPageGetter,
-    };
+    });
   },
 
-  async afterEach({}, testInfo: folio.TestInfo) {
-    if (this._cli) {
-      await this._cli.exited;
-      this._cli = undefined;
-    }
+  runCLI: async ({ browserName, channel, headless, mode, executablePath }, run, testInfo) => {
+    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
+    if (mode === 'service')
+      testInfo.skip();
+
+    let cli: CLIMock | undefined;
+    await run(cliArgs => {
+      cli = new CLIMock(browserName, channel, headless, cliArgs, executablePath);
+      return cli;
+    });
+    if (cli)
+      await cli.exited;
+  },
+
+  openRecorder: async ({ page, recorderPageGetter }, run) => {
+    await run(async () => {
+      await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
+      return new Recorder(page, await recorderPageGetter());
+    });
   },
 });
 
