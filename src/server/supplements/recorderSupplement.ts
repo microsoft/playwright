@@ -46,6 +46,7 @@ export class RecorderSupplement implements InstrumentationListener {
   private _pageAliases = new Map<Page, string>();
   private _lastPopupOrdinal = 0;
   private _lastDialogOrdinal = 0;
+  private _lastDownloadOrdinal = 0;
   private _timers = new Set<NodeJS.Timeout>();
   private _context: BrowserContext;
   private _mode: Mode;
@@ -381,7 +382,7 @@ export class RecorderSupplement implements InstrumentationListener {
   }
   private _onDownload(page: Page) {
     const pageAlias = this._pageAliases.get(page)!;
-    this._generator.signal(pageAlias, page.mainFrame(), { name: 'download' });
+    this._generator.signal(pageAlias, page.mainFrame(), { name: 'download', downloadAlias: String(++this._lastDownloadOrdinal) });
   }
 
   private _onDialog(page: Page) {

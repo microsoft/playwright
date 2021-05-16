@@ -108,6 +108,7 @@ export type PopupSignal = BaseSignal & {
 
 export type DownloadSignal = BaseSignal & {
   name: 'download',
+  downloadAlias: string,
 };
 
 export type DialogSignal = BaseSignal & {
