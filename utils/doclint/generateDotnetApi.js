@@ -573,10 +573,16 @@ function renderMethod(member, parent, output, name) {
     .sort((a, b) => b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
     .forEach(parseArg);
 
+  if (name.includes('WaitFor') && !['WaitForTimeoutAsync', 'WaitForFunctionAsync', 'WaitForLoadStateAsync', 'WaitForURLAsync', 'WaitForSelectorAsync', 'WaitForElementStateAsync'].includes(name)) {
+    args.push('Func<Task> action = default');
+    argTypeMap.set('Func<Task> action = default', 'action');
+    addParamsDoc('action', ['Action to perform while waiting']);
+  }
+
   let printArgDoc = function (val, ind) {
-    if (val && val.length === 1)
+    if (val && val.length === 1) {
       output(`/// <param name="${ind}">${val}</param>`);
-    else {
+    } else {
       output(`/// <param name="${ind}">`);
       output(val.map(l => `/// ${l}`));
       output(`/// </param>`);
