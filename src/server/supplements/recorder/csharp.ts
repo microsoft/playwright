@@ -28,7 +28,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 
   generateAction(actionInContext: ActionInContext): string {
     const { action, pageAlias } = actionInContext;
-    const formatter = new CSharpFormatter(0);
+    const formatter = new CSharpFormatter(8);
     formatter.newLine();
     formatter.add('// ' + actionTitle(action));
 
@@ -132,17 +132,27 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new CSharpFormatter(0);
     formatter.add(`
-      await Playwright.InstallAsync();
-      using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatArgs(options.launchOptions)}
-      );
-      var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
+      using System;
+      using System.IO;
+      using System.Threading.Tasks;
+      using Microsoft.Playwright;
+
+      class Example
+      {
+          static async Task Main(string[] args)
+          {
+              using var playwright = await Playwright.CreateAsync();
+              await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatArgs(options.launchOptions)}
+              );
+              var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
     return formatter.format();
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\nawait context.StorageStateAsync(path: "${saveStorage}");` : '';
-    return `\n// ---------------------${storageStateLine}`;
+    const storageStateLine = saveStorage ? `\n        await context.StorageStateAsync(path: "${saveStorage}");` : '';
+    return `${storageStateLine}
+    }
+}`;
   }
 }
 

@@ -29,12 +29,11 @@ function capitalize(browserName: string): string {
 
 test('should print the correct imports and context options', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI(['--target=csharp', emptyHTML]);
-  const expectedResult = `await Playwright.InstallAsync();
-using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
-    ${launchOptions(channel)}
-);
-var context = await browser.NewContextAsync();`;
+  const expectedResult = `        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
+            ${launchOptions(channel)}
+        );
+        var context = await browser.NewContextAsync();`;
   await cli.waitFor(expectedResult).catch(e => e);
   expect(cli.text()).toContain(expectedResult);
 });
@@ -50,31 +49,31 @@ test('should print the correct context options for custom settings', async ({ br
     '--viewport-size=1280,720',
     '--target=csharp',
     emptyHTML]);
-  const expectedResult = `await Playwright.InstallAsync();
-using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
-    ${launchOptions(channel)},
-    proxy: new ProxySettings
-    {
-        Server = "http://myproxy:3128",
-    }
-);
-var context = await browser.NewContextAsync(
-    viewport: new ViewportSize
-    {
-        Width = 1280,
-        Height = 720,
-    },
-    geolocation: new Geolocation
-    {
-        Latitude = 37.819722m,
-        Longitude = -122.478611m,
-    },
-    permissions: new[] { ContextPermission.Geolocation },
-    userAgent: "hardkodemium",
-    locale: "es",
-    colorScheme: ColorScheme.Dark,
-    timezoneId: "Europe/Rome");`;
+  const expectedResult = `
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
+            ${launchOptions(channel)},
+            proxy: new ProxySettings
+            {
+                Server = "http://myproxy:3128",
+            }
+        );
+        var context = await browser.NewContextAsync(
+            viewport: new ViewportSize
+            {
+                Width = 1280,
+                Height = 720,
+            },
+            geolocation: new Geolocation
+            {
+                Latitude = 37.819722m,
+                Longitude = -122.478611m,
+            },
+            permissions: new[] { ContextPermission.Geolocation },
+            userAgent: "hardkodemium",
+            locale: "es",
+            colorScheme: ColorScheme.Dark,
+            timezoneId: "Europe/Rome");`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
@@ -83,12 +82,12 @@ test('should print the correct context options when using a device', async ({ br
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=csharp', emptyHTML]);
-  const expectedResult = `await Playwright.InstallAsync();
-using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync(
-    ${launchOptions(channel)}
-);
-var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
+  const expectedResult = `
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(
+            ${launchOptions(channel)}
+        );
+        var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
@@ -107,33 +106,33 @@ test('should print the correct context options when using a device and additiona
     '--viewport-size=1280,720',
     '--target=csharp',
     emptyHTML]);
-  const expectedResult = `await Playwright.InstallAsync();
-using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Webkit.LaunchAsync(
-    ${launchOptions(channel)},
-    proxy: new ProxySettings
-    {
-        Server = "http://myproxy:3128",
-    }
-);
-var context = await browser.NewContextAsync(new BrowserContextOptions(playwright.Devices["iPhone 11"])
-{
-    UserAgent = "hardkodemium",
-    Viewport = new ViewportSize
-    {
-        Width = 1280,
-        Height = 720,
-    },
-    Geolocation = new Geolocation
-    {
-        Latitude = 37.819722m,
-        Longitude = -122.478611m,
-    },
-    Permissions = new[] { ContextPermission.Geolocation },
-    Locale = "es",
-    ColorScheme = ColorScheme.Dark,
-    TimezoneId = "Europe/Rome",
-});`;
+  const expectedResult = `
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Webkit.LaunchAsync(
+            ${launchOptions(channel)},
+            proxy: new ProxySettings
+            {
+                Server = "http://myproxy:3128",
+            }
+        );
+        var context = await browser.NewContextAsync(new BrowserContextOptions(playwright.Devices["iPhone 11"])
+        {
+            UserAgent = "hardkodemium",
+            Viewport = new ViewportSize
+            {
+                Width = 1280,
+                Height = 720,
+            },
+            Geolocation = new Geolocation
+            {
+                Latitude = 37.819722m,
+                Longitude = -122.478611m,
+            },
+            Permissions = new[] { ContextPermission.Geolocation },
+            Locale = "es",
+            ColorScheme = ColorScheme.Dark,
+            TimezoneId = "Europe/Rome",
+        });`;
 
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
@@ -144,18 +143,16 @@ test('should print load/save storageState', async ({ browserName, channel, runCL
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=csharp', emptyHTML]);
-  const expectedResult1 = `await Playwright.InstallAsync();
-using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
-    ${launchOptions(channel)}
-);
-var context = await browser.NewContextAsync(
-    storageState: "${loadFileName}");`;
+  const expectedResult1 = `
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(
+            ${launchOptions(channel)}
+        );
+        var context = await browser.NewContextAsync(
+            storageState: "${loadFileName}");`;
   await cli.waitFor(expectedResult1);
-
   const expectedResult2 = `
-// ---------------------
-await context.StorageStateAsync(path: "${saveFileName}");
+        await context.StorageStateAsync(path: "${saveFileName}");
 `;
   await cli.waitFor(expectedResult2);
 });
