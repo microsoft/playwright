@@ -233,6 +233,8 @@ describes some differences for Linux users.
 ### option: BrowserType.launch.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
 ### option: BrowserType.launch.logger = %%-browser-option-logger-%%
 ### option: BrowserType.launch.slowMo = %%-browser-option-slowmo-%%
+### option: BrowserType.launch.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
+### option: BrowserType.launch.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
 
 
 ## async method: BrowserType.launchPersistentContext
@@ -252,8 +254,10 @@ Path to a User Data Directory, which stores browser session data like cookies an
 Note that Chromium's user data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`.
 
 ### option: BrowserType.launchPersistentContext.-inline- = %%-shared-browser-options-list-%%
-### option: BrowserType.launchPersistentContext.-inline- = %%-shared-context-params-list-%%
 ### option: BrowserType.launchPersistentContext.slowMo = %%-browser-option-slowmo-%%
+### option: BrowserType.launchPersistentContext.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
+### option: BrowserType.launchPersistentContext.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
+### option: BrowserType.launchPersistentContext.-inline- = %%-shared-context-params-list-%%
 
 ## async method: BrowserType.launchServer
 * langs: js

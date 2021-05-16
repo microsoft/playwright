@@ -87,8 +87,3 @@ playwright.close();
 ### param: WebSocket.waitForFrameSent.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
-
-### option: BrowserType.launch.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
-### option: BrowserType.launchPersistentContext.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
-### option: BrowserType.launch.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
-### option: BrowserType.launchPersistentContext.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
