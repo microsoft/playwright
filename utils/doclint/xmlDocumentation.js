@@ -77,7 +77,7 @@ function _wrapCode(lines) {
   let i = 0;
   let out = [];
   for (let line of lines) {
-    line = line.replace('<', '&lt;').replace('>', '&gt;');
+    line = line.replace(/[&]/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     if (i < lines.length - 1)
       line = line + "<br/>";
     out.push(line);

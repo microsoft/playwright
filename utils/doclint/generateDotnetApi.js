@@ -204,6 +204,15 @@ const customTypeNames = new Map([
   if (process.argv[3] !== "--skip-format") {
     // run the formatting tool for .net, to ensure the files are prepped
     execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
+    if (process.platform !== 'win32') {
+      for (const folder of [typesDir, path.join(typesDir, 'Models'), path.join(typesDir, 'Enums'), path.join(typesDir, 'Extensions'), path.join(typesDir, 'Constants')])
+      for (const name of fs.readdirSync(folder)) {
+        if (!name.includes('\.cs'))
+          continue;
+        const content = fs.readFileSync(path.join(folder, name), 'utf-8');
+        fs.writeFileSync(path.join(folder, name), content.split('\r\n').join('\n'));
+      }
+    }
   }
 }
 
