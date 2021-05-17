@@ -63,6 +63,20 @@ with sync_playwright() as p:
     browser.close()
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class BrowserExamples
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var firefox = playwright.Firefox.LaunchAsync(headless: false);
+    }
+}
+```
+
 Launching a browser instance can be expensive, and Playwright is designed to
 maximize what a single instance can do through multiple browser contexts.
 
@@ -96,6 +110,11 @@ context = await browser.new_context()
 ```python sync
 browser = playwright.chromium.launch()
 context = browser.new_context()
+```
+
+```csharp
+await using var browser  = playwright.Chromium.LaunchAsync();
+var context = await browser.NewContextAsync();
 ```
 
 Browser contexts can also be used to emulate multi-page scenarios involving
