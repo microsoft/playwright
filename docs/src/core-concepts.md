@@ -192,6 +192,30 @@ with sync_playwright() as p:
     browser.close()
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class PlaywrightExample
+{
+  public static async Task Main()
+  {
+      using var playwright = await Playwright.CreateAsync();
+      await using var browser = await playwright.Webkit.LaunchAsync();
+      var options = new BrowserContextOptions(Playwright.Devices["iPhone 11 Pro"])
+      {
+          Geolocation = new Geolocation() { Longitude = 12.492507f, Latitude = 41.889938f },
+          Permissions = new[] { "geolocation" },
+          Locale = "de-DE"
+      };
+
+      await using var context = await browser.NewContextAsync(options);
+      // do work
+
+  }
+}
+```
+
 ### API reference
 
 - [BrowserContext]
@@ -274,6 +298,24 @@ print(page.url)
 # window.location.href = 'https://example.com'
 ```
 
+```csharp
+// Create a page.
+var page = await context.NewPageAsync();
+
+// Navigate explicitly, similar to entering a URL in the browser.
+await page.GotoAsync("http://example.com");
+// Fill an input.
+await page.FillAsync("#search", "query");
+
+// Navigate implicitly by clicking a link.
+await page.ClickAsync("#submit");
+// Expect a new url.
+Console.WriteLine(page.Url);
+
+// Page can navigate from the script - this will be picked up by Playwright.
+// window.location.href = "https://example.com";
+```
+
 > Read more on [page navigation and loading](./navigations.md).
 
 A page can have one or more [Frame] objects attached to
@@ -343,6 +385,24 @@ frame = frame_element_handle.content_frame()
 frame.fill('#username-input', 'John')
 ```
 
+```csharp
+// Create a page.
+var page = await context.NewPageAsync();
+
+// Get frame using the frame's name attribute
+var frame = page.Frame("frame-login");
+
+// Get frame using frame's URL
+var frame = page.FrameByUrl("*domain.");
+
+// Get frame using any other selector
+var frameElementHandle = await page.QuerySelectorAsync(".frame-class");
+var frame = await frameElementHandle.ContentFrameAsync();
+
+// Interact with the frame
+await frame.FillAsync("#username-input", "John");
+```
+
 ### API reference
 
 - [Page]
@@ -383,6 +443,11 @@ await page.click('data-test-id=foo')
 page.click('data-test-id=foo')
 ```
 
+```csharp
+// Using data-test-id= selector engine
+await page.ClickAsync("data-test-id=foo");
+```
+
 ```js
 // CSS and XPath selector engines are automatically detected
 await page.click('div');
@@ -407,6 +472,12 @@ page.click('div')
 page.click('//html/body/div')
 ```
 
+```csharp
+// CSS and XPath selector engines are automatically detected
+await page.ClickAsync("div");
+await page.ClickAsync("//html/body/div");
+```
+
 ```js
 // Find node by text substring
 await page.click('text=Hello w');
@@ -425,6 +496,11 @@ await page.click('text=Hello w')
 ```python sync
 # Find node by text substring
 page.click('text=Hello w')
+```
+
+```csharp
+// Find node by text substring
+await page.ClickAsync("text=Hello w");
 ```
 
 ```js
@@ -451,6 +527,12 @@ page.click('css=div')
 page.click('xpath=//html/body/div')
 ```
 
+```csharp
+// Explicit CSS and XPath notation
+await page.ClickAsync("css=div");
+await page.ClickAsync("xpath=//html/body/div");
+```
+
 ```js
 // Only search light DOM, outside WebComponent shadow DOM:
 await page.click('css:light=div');
@@ -469,6 +551,11 @@ await page.click('css:light=div')
 ```python sync
 # Only search light DOM, outside WebComponent shadow DOM:
 page.click('css:light=div')
+```
+
+```csharp
+// Only search light DOM, outside WebComponent shadow DOM:
+await page.ClickAsync("css:light=div");
 ```
 
 Selectors using the same or different engines can be combined using the `>>` separator. For example,
@@ -493,6 +580,11 @@ await page.click('#free-month-promo >> text=Sign Up')
 page.click('#free-month-promo >> text=Sign Up')
 ```
 
+```csharp
+// Click an element with text "Sign Up" inside of a #free-month-promo.
+await page.Click("#free-month-promo >> text=Sign Up");
+```
+
 ```js
 // Capture textContent of a section that contains an element with text 'Selectors'.
 const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.textContent);
@@ -511,6 +603,11 @@ section_text = await page.eval_on_selector('*css=section >> text=Selectors', 'e 
 ```python sync
 # Capture textContent of a section that contains an element with text 'Selectors'.
 section_text = page.eval_on_selector('*css=section >> text=Selectors', 'e => e.textContent')
+```
+
+```csharp
+// Capture textContent of a section that contains an element with text "Selectors".
+var sectionText = await page.EvalOnSelectorAsync<string>("*css=section >> text=Selectors", "e => e.textContent");
 ```
 
 <br/>
@@ -547,6 +644,11 @@ await page.fill('#search', 'query')
 page.fill('#search', 'query')
 ```
 
+```csharp
+// Playwright waits for #search element to be in the DOM
+await page.FillAsync("#search", "query");
+```
+
 ```js
 // Playwright waits for element to stop animating
 // and accept clicks.
@@ -569,6 +671,12 @@ await page.click('#search')
 # Playwright waits for element to stop animating
 # and accept clicks.
 page.click('#search')
+```
+
+```csharp
+// Playwright waits for element to stop animating
+// and accept clicks.
+await page.ClickAsync("#search");
 ```
 
 You can explicitly wait for an element to appear in the DOM or to become visible:
@@ -600,6 +708,13 @@ await page.wait_for_selector('#promo')
 page.wait_for_selector('#search', state='attached')
 # Wait for #promo to become visible, for example with `visibility:visible`.
 page.wait_for_selector('#promo')
+```
+
+```csharp
+// Wait for #search to appear in the DOM.
+await page.WaitForSelectorAsync("#search", WaitForSelectorState.Attached);
+// Wait for #promo to become visible, for example with `visibility:visible`.
+await page.WaitForSelectorAsync("#promo");
 ```
 
 ... or to become hidden or detached
@@ -634,6 +749,13 @@ page.wait_for_selector('#details', state='hidden')
 page.wait_for_selector('#promo', state='detached')
 ```
 
+```csharp
+// Wait for #details to become hidden, for example with "display:none".
+await page.WaitForSelectorAsync("#details", WaitForSelectorState.Hidden);
+// Wait for #promo to be removed from the DOM.
+await page.WaitForSelectorAsync("#promo", WaitForSelectorState.Detached);
+```
+
 ### API reference
 
 - [`method: Page.click`]
@@ -666,6 +788,10 @@ href = await page.evaluate('() => document.location.href')
 href = page.evaluate('() => document.location.href')
 ```
 
+```csharp
+var href = await page.EvaluateAsync<string>("document.location.href");
+```
+
 If the result is a Promise or if the function is asynchronous evaluate will automatically wait until it's resolved:
 
 ```js
@@ -694,6 +820,13 @@ status = page.evaluate("""async () => {
   response = fetch(location.href)
   return response.status
 }""")
+```
+
+```csharp
+int status = await page.EvaluateAsync<int>(@"async () => {
+  const response = await fetch(location.href);
+  return response.status;
+}");
 ```
 
 ## Evaluation Argument
@@ -879,6 +1012,41 @@ page.evaluate("""
     { 'button1': button1, 'list': [button2], 'foo': None })
 ```
 
+```csharp
+// A primitive value.
+await page.EvaluateAsync<int>("num => num", 42);
+
+// An array.
+await page.EvaluateAsync<int[]>("array => array.length", new[] { 1, 2, 3 });
+
+// An object.
+await page.EvaluateAsync<object>("object => object.foo", new { foo = "bar" });
+
+// A single handle.
+var button = await page.QuerySelectorAsync("button");
+await page.EvaluateAsync<IJSHandle>("button => button.textContent", button);
+
+// Alternative notation using elementHandle.EvaluateAsync.
+await button.EvaluateAsync<string>("(button, from) => button.textContent.substring(from)", 5);
+
+// Object with multiple handles.
+var button1 = await page.QuerySelectorAsync(".button1");
+var button2 = await page.QuerySelectorAsync(".button2");
+await page.EvaluateAsync("o => o.button1.textContent + o.button2.textContent", new { button1, button2 });
+
+// Object destructuring works. Note that property names must match
+// between the destructured object and the argument.
+// Also note the required parenthesis.
+await page.EvaluateAsync("({ button1, button2 }) => button1.textContent + button2.textContent", new { button1, button2 });
+
+// Array works as well. Arbitrary names can be used for destructuring.
+// Note the required parenthesis.
+await page.EvaluateAsync("([b1, b2]) => b1.textContent + b2.textContent", new[] { button1, button2 });
+
+// Any non-cyclic mix of serializables and handles works.
+await page.EvaluateAsync("x => x.button1.textContent + x.list[0].textContent + String(x.foo)", new { button1, list = new[] { button2 }, foo = null as object });
+```
+
 Right:
 
 ```js
@@ -915,6 +1083,12 @@ result = page.evaluate("""data => {
 }""", data)
 ```
 
+```csharp
+var data = new { text = "some data", value = 1};
+// Pass data as a parameter
+var result = await page.EvaluateAsync("data => { window.myApp.use(data); }", data);
+```
+
 Wrong:
 
 ```js
@@ -949,6 +1123,15 @@ result = page.evaluate("""() => {
   # There is no |data| in the web page.
   window.myApp.use(data)
 }""")
+```
+
+```csharp
+var data = new { text = "some data", value = 1};
+// Pass data as a parameter
+var result = await page.EvaluateAsync(@"data => {
+  // There is no |data| in the web page.
+  window.myApp.use(data); 
+}");
 ```
 
 ### API reference
