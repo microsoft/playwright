@@ -2533,6 +2533,17 @@ TCPSocket:
       parameters:
         data: binary
 
+    error:
+      parameters:
+        code:
+          type: enum?
+          literals:
+            - connectionRefused
+            - networkUnreachable
+            - hostUnreachable
+
+    connected:
+
     end:
 
   events:

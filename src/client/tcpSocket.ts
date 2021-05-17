@@ -35,8 +35,11 @@ export class TCPSocket extends ChannelOwner<channels.TCPSocketChannel, channels.
     assert(isLocalIpAddress(this._initializer.dstAddr));
 
     this._socket = net.createConnection(this._initializer.dstPort, this._initializer.dstAddr);
-    this._socket.on('error', () => this.end().catch(() => {}));
-    this._socket.on('data', data => this.write(data).catch(() => {}));
+    this._socket.on('error', (err: NodeJS.ErrnoException) => this._handleError(err));
+    this._socket.on('connect', () => {
+      this.connected().catch(() => {});
+      this._socket.on('data', data => this.write(data).catch(() => {}));
+    });
     this._socket.on('close', () => {
       this.end().catch(() => {});
     });
@@ -55,5 +58,28 @@ export class TCPSocket extends ChannelOwner<channels.TCPSocketChannel, channels.
 
   async end(): Promise<void> {
     await this._channel.end();
+  }
+
+  _handleError(err: NodeJS.ErrnoException) {
+    let code: undefined | 'hostUnreachable' | 'networkUnreachable' | 'connectionRefused';
+    switch (err.code) {
+      case 'ENOENT':
+      case 'ENOTFOUND':
+      case 'ETIMEDOUT':
+      case 'EHOSTUNREACH':
+        code = 'hostUnreachable';
+        break;
+      case 'ENETUNREACH':
+        code = 'networkUnreachable';
+        break;
+      case 'ECONNREFUSED':
+        code = 'connectionRefused';
+        break;
+    }
+    this._channel.error({code});
+  }
+
+  async connected(): Promise<void> {
+    await this._channel.connected();
   }
 }

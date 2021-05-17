@@ -1223,6 +1223,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.TCPSocketWriteParams = tObject({
     data: tBinary,
   });
+  scheme.TCPSocketErrorParams = tObject({
+    code: tOptional(tEnum(['connectionRefused', 'networkUnreachable', 'hostUnreachable'])),
+  });
+  scheme.TCPSocketConnectedParams = tOptional(tObject({}));
   scheme.TCPSocketEndParams = tOptional(tObject({}));
 
   return scheme;

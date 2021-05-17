@@ -30,12 +30,18 @@ export class TCPSocketDispatcher extends Dispatcher<TCPSocket, channels.TCPSocke
       this._dispose();
     });
   }
+  async connected(): Promise<void> {
+    this._object._socketHandler.connected();
+  }
+  async error(params: channels.TCPSocketErrorOptions): Promise<void> {
+    this._object._socketHandler.error(params.code);
+  }
 
   async write(params: channels.AndroidSocketWriteParams): Promise<void> {
-    this._object._socket.write(Buffer.from(params.data, 'base64'));
+    this._object._socketHandler.write(Buffer.from(params.data, 'base64'));
   }
 
   async end(): Promise<void> {
-    this._object._socket.end();
+    this._object._socketHandler.end();
   }
 }

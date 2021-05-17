@@ -20,7 +20,7 @@ import { EventEmitter } from 'events';
 import { SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
 import { isLocalIpAddress } from '../utils/utils';
-import { SocksProxyServer, SocksConnectionInfo } from './socksServer';
+import { SocksProxyServer, SocksConnectionInfo, SocksInterceptedHandler, SOCKS_SOCKET_ERRORS } from './socksServer';
 import { LaunchOptions } from './types';
 
 export class BrowserServerPortForwardingServer extends EventEmitter {
@@ -54,7 +54,7 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
     };
   }
 
-  private _handler = (info: SocksConnectionInfo, forward: () => void, intercept: () => net.Socket): void => {
+  private _handler = (info: SocksConnectionInfo, forward: () => void, intercept: () => SocksInterceptedHandler): void => {
     const shouldProxyRequestToClient = isLocalIpAddress(info.dstAddr) && this._forwardPorts.includes(info.dstPort);
     debugLogger.log('proxy', `incoming connection from ${info.srcAddr}:${info.srcPort} to ${info.dstAddr}:${info.dstPort} shouldProxyRequestToClient=${shouldProxyRequestToClient}`);
     if (!shouldProxyRequestToClient) {
@@ -79,15 +79,21 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
 }
 
 export class TCPSocket extends SdkObject {
-  _socket: net.Socket
+  _socketHandler: SocksInterceptedHandler
   _dstAddr: string
   _dstPort: number
-  constructor(parent: SdkObject, socket: net.Socket, dstAddr: string, dstPort: number) {
+  constructor(parent: SdkObject, handler: SocksInterceptedHandler, dstAddr: string, dstPort: number) {
     super(parent, 'TCPSocket');
-    this._socket = socket;
+    this._socketHandler = handler;
     this._dstAddr = dstAddr;
     this._dstPort = dstPort;
-    socket.on('data', data => this.emit('data', data));
-    socket.on('close', data => this.emit('close', data));
+    handler.socket.on('data', data => this.emit('data', data));
+    handler.socket.on('close', data => this.emit('close', data));
+  }
+  connected() {
+    this._socketHandler.connected();
+  }
+  error(error: SOCKS_SOCKET_ERRORS) {
+    this._socketHandler.error(error);
   }
 }

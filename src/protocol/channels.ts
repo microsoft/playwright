@@ -3127,6 +3127,8 @@ export interface TCPSocketChannel extends Channel {
   on(event: 'data', callback: (params: TCPSocketDataEvent) => void): this;
   on(event: 'close', callback: (params: TCPSocketCloseEvent) => void): this;
   write(params: TCPSocketWriteParams, metadata?: Metadata): Promise<TCPSocketWriteResult>;
+  error(params: TCPSocketErrorParams, metadata?: Metadata): Promise<TCPSocketErrorResult>;
+  connected(params?: TCPSocketConnectedParams, metadata?: Metadata): Promise<TCPSocketConnectedResult>;
   end(params?: TCPSocketEndParams, metadata?: Metadata): Promise<TCPSocketEndResult>;
 }
 export type TCPSocketDataEvent = {
@@ -3140,6 +3142,16 @@ export type TCPSocketWriteOptions = {
 
 };
 export type TCPSocketWriteResult = void;
+export type TCPSocketErrorParams = {
+  code?: 'connectionRefused' | 'networkUnreachable' | 'hostUnreachable',
+};
+export type TCPSocketErrorOptions = {
+  code?: 'connectionRefused' | 'networkUnreachable' | 'hostUnreachable',
+};
+export type TCPSocketErrorResult = void;
+export type TCPSocketConnectedParams = {};
+export type TCPSocketConnectedOptions = {};
+export type TCPSocketConnectedResult = void;
 export type TCPSocketEndParams = {};
 export type TCPSocketEndOptions = {};
 export type TCPSocketEndResult = void;
