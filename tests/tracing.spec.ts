@@ -118,6 +118,7 @@ for (const params of [
   browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform }, testInfo) => {
     browserTest.fixme(browserName === 'chromium' && video, 'Same screencast resolution conflicts');
     browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');
+    browserTest.fixme(params.id === 'fit' && browserName === 'webkit' && platform === 'linux', 'Image size is flaky');
 
     const scale = Math.min(800 / params.width, 600 / params.height, 1);
     const previewWidth = params.width * scale;
