@@ -21,7 +21,7 @@ import removeFolder from 'rimraf';
 import jpeg from 'jpeg-js';
 
 const traceDir = path.join(__dirname, '..', 'test-results', 'trace-' + process.env.FOLIO_WORKER_INDEX);
-test.useOptions({ traceDir });
+test.use({ traceDir });
 
 test.beforeEach(async ({ browserName, headless }) => {
   test.fixme(browserName === 'chromium' && !headless, 'Chromium screencast on headed has a min width issue');
@@ -29,13 +29,13 @@ test.beforeEach(async ({ browserName, headless }) => {
 });
 
 test('should collect trace', async ({ context, page, server, browserName }, testInfo) => {
-  await (context as any).tracing.start({ name: 'test', screenshots: true, snapshots: true });
+  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.close();
-  await (context as any).tracing.stop();
-  await (context as any).tracing.export(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop();
+  await context.tracing.export(testInfo.outputPath('trace.zip'));
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
@@ -50,13 +50,13 @@ test('should collect trace', async ({ context, page, server, browserName }, test
 });
 
 test('should collect trace', async ({ context, page, server }, testInfo) => {
-  await (context as any).tracing.start({ name: 'test' });
+  await context.tracing.start({ name: 'test' });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.close();
-  await (context as any).tracing.stop();
-  await (context as any).tracing.export(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop();
+  await context.tracing.export(testInfo.outputPath('trace.zip'));
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
@@ -64,18 +64,18 @@ test('should collect trace', async ({ context, page, server }, testInfo) => {
 });
 
 test('should collect two traces', async ({ context, page, server }, testInfo) => {
-  await (context as any).tracing.start({ name: 'test1', screenshots: true, snapshots: true });
+  await context.tracing.start({ name: 'test1', screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
-  await (context as any).tracing.stop();
-  await (context as any).tracing.export(testInfo.outputPath('trace1.zip'));
+  await context.tracing.stop();
+  await context.tracing.export(testInfo.outputPath('trace1.zip'));
 
-  await (context as any).tracing.start({ name: 'test2', screenshots: true, snapshots: true });
+  await context.tracing.start({ name: 'test2', screenshots: true, snapshots: true });
   await page.dblclick('"Click"');
   await page.close();
-  await (context as any).tracing.stop();
-  await (context as any).tracing.export(testInfo.outputPath('trace2.zip'));
+  await context.tracing.stop();
+  await context.tracing.export(testInfo.outputPath('trace2.zip'));
 
   {
     const { events } = await parseTrace(testInfo.outputPath('trace1.zip'));
@@ -124,15 +124,15 @@ for (const params of [
     const previewHeight = params.height * scale;
 
     const context = await contextFactory({ viewport: { width: params.width, height: params.height }});
-    await (context as any).tracing.start({ name: 'test', screenshots: true, snapshots: true });
+    await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
     const page = await context.newPage();
     // Make sure we have a chance to paint.
     for (let i = 0; i < 10; ++i) {
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
       await page.evaluate(() => new Promise(requestAnimationFrame));
     }
-    await (context as any).tracing.stop();
-    await (context as any).tracing.export(testInfo.outputPath('trace.zip'));
+    await context.tracing.stop();
+    await context.tracing.export(testInfo.outputPath('trace.zip'));
 
     const { events, resources } = await parseTrace(testInfo.outputPath('trace.zip'));
     const frames = events.filter(e => e.type === 'screencast-frame');

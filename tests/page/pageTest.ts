@@ -19,7 +19,7 @@ import type { Page } from '../../index';
 export { expect } from 'folio';
 
 // Page test does not guarantee an isolated context, just a new page (because Android).
-export type PageTestArgs = {
+export type PageTestFixtures = {
   browserVersion: string;
   browserMajorVersion: number;
   page: Page;
@@ -27,4 +27,4 @@ export type PageTestArgs = {
   isElectron: boolean;
 };
 
-export const test = baseTest.declare<PageTestArgs>();
+export const test = baseTest.declare<PageTestFixtures>();

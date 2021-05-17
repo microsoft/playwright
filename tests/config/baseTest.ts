@@ -23,17 +23,18 @@ import { installCoverageHooks } from './coverage';
 import * as childProcess from 'child_process';
 import { start } from '../../lib/outofprocess';
 import { PlaywrightClient } from '../../lib/remote/playwrightClient';
+import type { LaunchOptions } from '../../index';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type Mode = 'default' | 'driver' | 'service';
 type BaseOptions = {
   mode: Mode;
   browserName: BrowserName;
-  channel?: string;
-  video?: boolean;
-  headless?: boolean;
+  channel: LaunchOptions['channel'];
+  video: boolean | undefined;
+  headless: boolean | undefined;
 };
-type BaseWorkerArgs = {
+type BaseFixtures = {
   platform: 'win32' | 'darwin' | 'linux';
   playwright: typeof import('../../index');
   toImpl: (rpcObject: any) => any;
@@ -45,7 +46,7 @@ type BaseWorkerArgs = {
 class DriverMode {
   private _playwrightObject: any;
 
-  async setup(workerInfo: folio.WorkerInfo) {
+  async setup(workerIndex: number) {
     this._playwrightObject = await start();
     return this._playwrightObject;
   }
@@ -60,8 +61,8 @@ class ServiceMode {
   private _client: any;
   private _serviceProcess: childProcess.ChildProcess;
 
-  async setup(workerInfo: folio.WorkerInfo) {
-    const port = 10507 + workerInfo.workerIndex;
+  async setup(workerIndex: number) {
+    const port = 10507 + workerIndex;
     this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), ['run-server', String(port)], {
       stdio: 'pipe'
     });
@@ -92,7 +93,7 @@ class ServiceMode {
 }
 
 class DefaultMode {
-  async setup(workerInfo: folio.WorkerInfo) {
+  async setup(workerIndex: number) {
     return require('../../index');
   }
 
@@ -100,85 +101,67 @@ class DefaultMode {
   }
 }
 
-class BaseEnv {
-  private _mode: DriverMode | ServiceMode | DefaultMode;
-  private _options: BaseOptions;
-  private _playwright: typeof import('../../index');
-
-  hasBeforeAllOptions(options: BaseOptions) {
-    return 'mode' in options || 'browserName' in options || 'channel' in options || 'video' in options || 'headless' in options;
-  }
-
-  async beforeAll(options: BaseOptions, workerInfo: folio.WorkerInfo): Promise<BaseWorkerArgs> {
-    this._options = options;
-    this._mode = {
+const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixtures> = {
+  mode: [ 'default', { scope: 'worker' } ],
+  browserName: [ 'chromium' , { scope: 'worker' } ],
+  channel: [ undefined, { scope: 'worker' } ],
+  video: [ undefined, { scope: 'worker' } ],
+  headless: [ undefined, { scope: 'worker' } ],
+  platform: [ process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' } ],
+  playwright: [ async ({ mode }, run, workerInfo) => {
+    const modeImpl = {
       default: new DefaultMode(),
       service: new ServiceMode(),
       driver: new DriverMode(),
-    }[this._options.mode];
+    }[mode];
     require('../../lib/utils/utils').setUnderTest();
-    this._playwright = await this._mode.setup(workerInfo);
-    return {
-      playwright: this._playwright,
-      isWindows: process.platform === 'win32',
-      isMac: process.platform === 'darwin',
-      isLinux: process.platform === 'linux',
-      platform: process.platform as ('win32' | 'darwin' | 'linux'),
-      toImpl: (this._playwright as any)._toImpl,
-    };
-  }
-
-  async beforeEach({}, testInfo: folio.TestInfo) {
-    testInfo.snapshotPathSegment = this._options.browserName;
-    testInfo.data = { browserName: this._options.browserName };
-    if (!this._options.headless)
+    const playwright = await modeImpl.setup(workerInfo.workerIndex);
+    await run(playwright);
+    await modeImpl.teardown();
+  }, { scope: 'worker' } ],
+  toImpl: [ async ({ playwright }, run) => run((playwright as any)._toImpl), { scope: 'worker' } ],
+  isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
+  isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
+  isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
+  __baseSetup: [ async ({ browserName, headless, mode, video }, run, testInfo) => {
+    testInfo.snapshotPathSegment = browserName;
+    testInfo.data = { browserName };
+    if (!headless)
       testInfo.data.headful = true;
-    if (this._options.mode !== 'default')
-      testInfo.data.mode = this._options.mode;
-    if (this._options.video)
+    if (mode !== 'default')
+      testInfo.data.mode = mode;
+    if (video)
       testInfo.data.video = true;
-    return {};
-  }
-
-  async afterAll({}, workerInfo: folio.WorkerInfo) {
-    await this._mode.teardown();
-  }
-}
-
-type ServerWorkerArgs = {
-  asset: (path: string) => string;
-  socksPort: number;
-  server: TestServer;
-  httpsServer: TestServer;
+    await run();
+  }, { auto: true } ],
 };
 
 type ServerOptions = {
   loopback?: string;
 };
+type ServerFixtures = {
+  server: TestServer;
+  httpsServer: TestServer;
+  socksPort: number;
+  asset: (p: string) => string;
+};
 
-class ServerEnv {
-  private _server: TestServer;
-  private _httpsServer: TestServer;
-  private _socksServer: any;
-  private _socksPort: number;
-
-  hasBeforeAllOptions(options: ServerOptions) {
-    return 'loopback' in options;
-  }
-
-  async beforeAll(options: ServerOptions, workerInfo: folio.WorkerInfo) {
+type ServersInternal = ServerFixtures & { socksServer: any };
+const serverFixtures: folio.Fixtures<ServerFixtures, ServerOptions & { __servers: ServersInternal }> = {
+  loopback: [ undefined, { scope: 'worker' } ],
+  __servers: [ async ({ loopback }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
     const port = 8907 + workerInfo.workerIndex * 3;
-    this._server = await TestServer.create(assetsPath, port, options.loopback);
-    this._server.enableHTTPCache(cachedPath);
+    const server = await TestServer.create(assetsPath, port, loopback);
+    server.enableHTTPCache(cachedPath);
 
     const httpsPort = port + 1;
-    this._httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, options.loopback);
-    this._httpsServer.enableHTTPCache(cachedPath);
+    const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, loopback);
+    httpsServer.enableHTTPCache(cachedPath);
 
-    this._socksServer = socks.createServer((info, accept, deny) => {
+    const socksServer = socks.createServer((info, accept, deny) => {
       let socket;
       if ((socket = accept(true))) {
         // Catch and ignore ECONNRESET errors.
@@ -194,62 +177,68 @@ class ServerEnv {
         ].join('\r\n'));
       }
     });
-    this._socksPort = port + 2;
-    this._socksServer.listen(this._socksPort, 'localhost');
-    this._socksServer.useAuth(socks.auth.None());
-    return {
+    const socksPort = port + 2;
+    socksServer.listen(socksPort, 'localhost');
+    socksServer.useAuth(socks.auth.None());
+
+    await run({
       asset: (p: string) => path.join(__dirname, '..', 'assets', ...p.split('/')),
-      server: this._server,
-      httpsServer: this._httpsServer,
-      socksPort: this._socksPort,
-    };
-  }
+      server,
+      httpsServer,
+      socksPort,
+      socksServer,
+    });
 
-  async beforeEach({}, testInfo: folio.TestInfo) {
-    this._server.reset();
-    this._httpsServer.reset();
-    return {};
-  }
-
-  async afterAll({}, workerInfo: folio.WorkerInfo) {
     await Promise.all([
-      this._server.stop(),
-      this._httpsServer.stop(),
-      this._socksServer.close(),
+      server.stop(),
+      httpsServer.stop(),
+      socksServer.close(),
     ]);
-  }
-}
+  }, { scope: 'worker' } ],
+
+  server: async ({ __servers }, run) => {
+    __servers.server.reset();
+    await run(__servers.server);
+  },
+
+  httpsServer: async ({ __servers }, run) => {
+    __servers.httpsServer.reset();
+    await run(__servers.httpsServer);
+  },
+
+  socksPort: async ({ __servers }, run) => {
+    await run(__servers.socksPort);
+  },
+
+  asset: async ({ __servers }, run) => {
+    await run(__servers.asset);
+  },
+};
 
 type CoverageOptions = {
   coverageName?: string;
 };
 
-class CoverageEnv {
-  private _coverage: ReturnType<typeof installCoverageHooks> | undefined;
+const coverageFixtures: folio.Fixtures<{}, CoverageOptions & { __collectCoverage: void }> = {
+  coverageName: [ undefined, { scope: 'worker' } ],
 
-  hasBeforeAllOptions(options: CoverageOptions) {
-    return 'coverageName' in options;
-  }
-
-  async beforeAll(options: CoverageOptions, workerInfo: folio.WorkerInfo) {
-    if (options.coverageName)
-      this._coverage = installCoverageHooks(options.coverageName);
-    return {};
-  }
-
-  async afterAll({}, workerInfo: folio.WorkerInfo) {
-    if (!this._coverage)
+  __collectCoverage: [ async ({ coverageName }, run, workerInfo) => {
+    if (!coverageName) {
+      await run();
       return;
-    const { coverage, uninstall } = this._coverage;
+    }
+
+    const { coverage, uninstall } = installCoverageHooks(coverageName);
+    await run();
     uninstall();
     const coveragePath = path.join(__dirname, '..', 'coverage-report', workerInfo.workerIndex + '.json');
     const coverageJSON = Array.from(coverage.keys()).filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
-  }
-}
+  }, { scope: 'worker', auto: true } ],
+};
 
 export type CommonOptions = BaseOptions & ServerOptions & CoverageOptions;
-export type CommonArgs = CommonOptions & BaseWorkerArgs & ServerWorkerArgs;
+export type CommonWorkerFixtures = CommonOptions & BaseFixtures;
 
-export const baseTest = folio.test.extend(new CoverageEnv()).extend(new ServerEnv()).extend(new BaseEnv());
+export const baseTest = folio.test.extend<{}, CoverageOptions>(coverageFixtures).extend<ServerFixtures>(serverFixtures).extend<{}, BaseOptions & BaseFixtures>(baseFixtures);

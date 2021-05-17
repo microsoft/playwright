@@ -16,10 +16,9 @@
 
 import * as folio from 'folio';
 import * as path from 'path';
-import { PlaywrightEnvOptions } from './browserTest';
+import { PlaywrightOptions, playwrightFixtures } from './browserTest';
 import { test as pageTest } from '../page/pageTest';
-import { BrowserName, CommonArgs, CommonOptions } from './baseTest';
-import type { Browser, BrowserContext } from '../../index';
+import { BrowserName, CommonOptions } from './baseTest';
 
 const getExecutablePath = (browserName: BrowserName) => {
   if (browserName === 'chromium' && process.env.CRPATH)
@@ -30,58 +29,23 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-class PageEnv {
-  private _browser: Browser
-  private _browserVersion: string;
-  private _browserMajorVersion: number;
-  private _context: BrowserContext | undefined;
-
-  async beforeAll(args: PlaywrightEnvOptions & CommonArgs, workerInfo: folio.WorkerInfo) {
-    this._browser = await args.playwright[args.browserName].launch({
-      handleSIGINT: false,
-      ...args,
-    } as any);
-    this._browserVersion = this._browser.version();
-    this._browserMajorVersion = Number(this._browserVersion.split('.')[0]);
-    return {};
-  }
-
-  async beforeEach(args: CommonArgs, testInfo: folio.TestInfo) {
-    testInfo.data.browserVersion = this._browserVersion;
-    this._context = await this._browser.newContext({
-      recordVideo: args.video ? { dir: testInfo.outputPath('') } : undefined,
-      ...args,
-    });
-    const page = await this._context.newPage();
-    return {
-      context: this._context,
-      page,
-      browserVersion: this._browserVersion,
-      browserMajorVersion: this._browserMajorVersion,
-      isAndroid: false,
-      isElectron: false,
-    };
-  }
-
-  async afterEach({}) {
-    if (this._context)
-      await this._context.close();
-    this._context = undefined;
-  }
-
-  async afterAll({}, workerInfo: folio.WorkerInfo) {
-    await this._browser.close();
-  }
-}
+const pageFixtures = {
+  ...playwrightFixtures,
+  browserMajorVersion: async ({  browserVersion }, run) => {
+    await run(Number(browserVersion.split('.')[0]));
+  },
+  isAndroid: false,
+  isElectron: false,
+};
 
 const mode = (folio.registerCLIOption('mode', 'Transport mode: default, driver or service').value || 'default') as ('default' | 'driver' | 'service');
 const headed = folio.registerCLIOption('headed', 'Run tests in headed mode (default: headless)', { type: 'boolean' }).value || !!process.env.HEADFUL;
-const channel = folio.registerCLIOption('channel', 'Browser channel (default: no channel)').value;
+const channel = folio.registerCLIOption('channel', 'Browser channel (default: no channel)').value as any;
 const video = !!folio.registerCLIOption('video', 'Record videos for all tests', { type: 'boolean' }).value;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: folio.Config<CommonOptions & PlaywrightEnvOptions> = {
+const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   testDir,
   snapshotDir: '__snapshots__',
   outputDir,
@@ -108,7 +72,7 @@ for (const browserName of browserNames) {
     name: browserName,
     testDir,
     testIgnore,
-    options: {
+    use: {
       mode,
       browserName,
       headless: !headed,
@@ -118,7 +82,7 @@ for (const browserName of browserNames) {
       traceDir: process.env.PWTRACE ? path.join(outputDir, 'trace') : undefined,
       coverageName: browserName,
     },
-    define: { test: pageTest, env: new PageEnv() },
+    define: { test: pageTest, fixtures: pageFixtures },
   });
 }
 
