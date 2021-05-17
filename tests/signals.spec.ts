@@ -54,9 +54,7 @@ test.describe('signals', () => {
     await remoteServer.childExitCode();
   });
 
-  test('should close the browser on SIGINT', async ({startRemoteServer, server, channel}) => {
-    test.fixme(!!channel, 'Uncomment on roll');
-
+  test('should close the browser on SIGINT', async ({startRemoteServer, server}) => {
     const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGINT');
     expect(await remoteServer.out('exitCode')).toBe('0');
@@ -64,9 +62,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(130);
   });
 
-  test('should close the browser on SIGTERM', async ({startRemoteServer, server, channel}) => {
-    test.fixme(!!channel, 'Uncomment on roll');
-
+  test('should close the browser on SIGTERM', async ({startRemoteServer, server}) => {
     const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGTERM');
     expect(await remoteServer.out('exitCode')).toBe('0');
@@ -74,9 +70,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(0);
   });
 
-  test('should close the browser on SIGHUP', async ({startRemoteServer, server, channel}) => {
-    test.fixme(!!channel, 'Uncomment on roll');
-
+  test('should close the browser on SIGHUP', async ({startRemoteServer, server}) => {
     const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGHUP');
     expect(await remoteServer.out('exitCode')).toBe('0');
