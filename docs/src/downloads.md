@@ -50,6 +50,16 @@ download = download_info.value
 path = download.path()
 ```
 
+```csharp
+// Start the task of waiting for the download
+var waitForDownloadTask = page.WaitForDownloadAsync();
+// Perform the action that initiates download
+await page.ClickAsync("#downloadButton");
+// Wait for the download process to complete
+var download = await waitForDownloadTask;
+Console.WriteLine(await download.PathAsync());
+```
+
 #### Variations
 
 If you have no idea what initiates the download, you can still handle the event:
@@ -70,6 +80,10 @@ page.on("download", handle_download)
 
 ```python sync
 page.on("download", lambda download: print(download.path()))
+```
+
+```csharp
+page.Download += (sender, download) => Console.WriteLine(download.Url);
 ```
 
 Note that handling the event forks the control flow and makes script harder to follow. Your scenario might end while you
