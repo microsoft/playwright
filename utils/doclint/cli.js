@@ -43,8 +43,8 @@ async function run() {
   documentation.filterForLanguage('js');
 
   // Patch README.md
+  const versions = await getBrowserVersions();
   {
-    const versions = await getBrowserVersions();
     const params = new Map();
     const { chromium, firefox, webkit } = versions;
     params.set('chromium-version', chromium);
@@ -63,6 +63,20 @@ async function run() {
       return `<!-- GEN:${p1} -->${params.get(p1)}<!-- GEN:stop -->`;
     });
     writeAssumeNoop(path.join(PROJECT_DIR, 'README.md'), content, dirtyFiles);
+  }
+
+  // Update device descriptors
+  {
+    const devicesDescriptorsSourceFile = path.join(PROJECT_DIR, 'src', 'server', 'deviceDescriptorsSource.json')
+    const devicesDescriptors = require(devicesDescriptorsSourceFile)
+    for (const deviceName of Object.keys(devicesDescriptors))
+      if (devicesDescriptors[deviceName].defaultBrowserType === 'chromium') {
+        devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
+          /(.*Chrome\/)(.*?)( .*)/,
+          `$1${versions.chromium}$3`
+        )
+      }
+    writeAssumeNoop(devicesDescriptorsSourceFile, JSON.stringify(devicesDescriptors, null, 2), dirtyFiles);
   }
 
   // Validate links
