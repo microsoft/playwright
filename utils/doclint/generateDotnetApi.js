@@ -574,7 +574,8 @@ function renderMethod(member, parent, output, name) {
     .forEach(parseArg);
 
   if (name.includes('WaitFor') && !['WaitForTimeoutAsync', 'WaitForFunctionAsync', 'WaitForLoadStateAsync', 'WaitForURLAsync', 'WaitForSelectorAsync', 'WaitForElementStateAsync'].includes(name)) {
-    args.push('Func<Task> action = default');
+    const firstOptional = args.find(a => a.includes('='));
+    args.splice(args.indexOf(firstOptional), 0, 'Func<Task> action = default');
     argTypeMap.set('Func<Task> action = default', 'action');
     addParamsDoc('action', ['Action to perform while waiting']);
   }
