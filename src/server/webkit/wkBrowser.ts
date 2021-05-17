@@ -304,7 +304,7 @@ export class WKBrowserContext extends BrowserContext {
   async _doAddInitScript(source: string) {
     this._evaluateOnNewDocumentSources.push(source);
     for (const page of this.pages())
-      await (page._delegate as WKPage)._updateBootstrapScript();
+      await (page._delegate as WKPage)._updateBootstrapScript('main');
   }
 
   async _doExposeBinding(binding: PageBinding) {
