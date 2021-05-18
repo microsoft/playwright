@@ -279,8 +279,9 @@ class PageHandler {
     return await this._contentPage.send('setFileInputFiles', options);
   }
 
-  async ['Page.setEmulatedMedia']({colorScheme, type}) {
+  async ['Page.setEmulatedMedia']({colorScheme, type, reducedMotion}) {
     this._pageTarget.setColorScheme(colorScheme || null);
+    this._pageTarget.setReducedMotion(reducedMotion || null);
     this._pageTarget.setEmulatedMedia(type);
   }
 
