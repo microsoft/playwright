@@ -50,14 +50,14 @@ test('should print the correct context options when using a device', async ({ br
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=java', emptyHTML]);
+  await cli.waitFor(`setHasTouch(true));`);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-        .setUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Mobile Safari/537.36")
+        .setUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/XXXX Mobile Safari/537.36")
         .setViewportSize(411, 731)
         .setDeviceScaleFactor(2.625)
         .setIsMobile(true)
         .setHasTouch(true));`;
-  await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
+  expect(cli.text().replace(/(.*Chrome\/)(.*?)( .*)/m, '$1XXXX$3')).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device and additional options', async ({ browserName, runCLI }) => {

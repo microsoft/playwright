@@ -12,8 +12,9 @@
     "declaration": false,
     "jsx": "react",
     "downlevelIteration": true,
+    "resolveJsonModule": true,
   },
   "compileOnSave": true,
-  "include": ["src/**/*.ts", "src/**/*.js"],
+  "include": ["src/**/*.ts", "src/**/*.js", "src/server/deviceDescriptorsSource.json"],
   "exclude": ["node_modules", "src/.eslintrc.js", "src/web/**", "src/**/*webpack.config.js"]
 }
