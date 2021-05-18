@@ -682,9 +682,6 @@ Only available for Chromium atm.
 Browser-specific Coverage implementation. See [Coverage](#class-coverage) for more details.
 
 ## async method: Page.dblclick
-* langs:
-  - alias-csharp: DblClickAsync
-
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
@@ -2456,7 +2453,7 @@ await page.RouteAsync("/api/**", async r =>
   if (r.Request.PostData.Contains("my-string"))
       await r.FulfillAsync(body: "mocked-data");
   else
-      await r.ResumeAsync();
+      await r.ContinueAsync();
 });
 ```
 

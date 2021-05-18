@@ -30,7 +30,6 @@ Optional error code. Defaults to `failed`, could be one of the following:
 
 ## async method: Route.continue
 * langs:
-  - alias-csharp: ResumeAsync
   - alias-java: resume
   - alias-python: continue_
 
@@ -89,7 +88,7 @@ await page.RouteAsync("**/*", route =>
 {
     var headers = new Dictionary<string, string>(route.Request.Headers) { { "foo", "bar" } };
     headers.Remove("origin");
-    route.ResumeAsync(headers);
+    route.ContinueAsync(headers);
 });
 ```
 

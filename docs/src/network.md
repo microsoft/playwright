@@ -502,11 +502,11 @@ page.route("**/*", lambda route: route.continue_(method="POST"))
 await page.RouteAsync("**/*", async route => {
     var headers = new Dictionary<string, string>(route.Request.Headers.ToDictionary(x => x.Key, x => x.Value));
     headers.Remove("X-Secret");
-    await route.ResumeAsync(headers: headers);
+    await route.ContinueAsync(headers: headers);
 });
 
 // Continue requests as POST.
-await page.RouteAsync("**/*", async route => await route.ResumeAsync(method: "POST"));
+await page.RouteAsync("**/*", async route => await route.ContinueAsync(method: "POST"));
 ```
 
 You can continue requests with modifications. Example above removes an HTTP header from the outgoing requests.
@@ -557,7 +557,7 @@ await page.RouteAsync("**/*", async route => {
 if ("image".Equals(route.Request.ResourceType))
     await route.AbortAsync();
 else
-    await route.ResumeAsync();
+    await route.ContinueAsync();
 });
 ```
 
