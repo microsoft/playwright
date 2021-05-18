@@ -201,6 +201,10 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setColorScheme(nullToUndefined(colorScheme));
   }
 
+  async ['Browser.setReducedMotion']({browserContextId, reducedMotion}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setReducedMotion(nullToUndefined(reducedMotion));
+  }
+
   async ['Browser.setVideoRecordingOptions']({browserContextId, dir, width, height, scale}) {
     await this._targetRegistry.browserContextForId(browserContextId).setVideoRecordingOptions({dir, width, height, scale});
   }
