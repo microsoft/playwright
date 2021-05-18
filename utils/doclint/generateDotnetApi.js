@@ -606,12 +606,11 @@ function renderMethod(member, parent, name, out) {
  *
  *  @param {Documentation.Type} type
  *  @param {Documentation.Class|Documentation.Type} parent
- *  @param {generateNameCallback} generateNameCallback
- *  @callback generateNameCallback
- *  @param {Documentation.Type} t
+ *  @param {function(Documentation.Type): string} generateNameCallback
+ *  @param {boolean=} optional
  *  @returns {string}
-*/
-function translateType(type, parent, generateNameCallback = t => t.name) {
+ */
+function translateType(type, parent, generateNameCallback = t => t.name, optional = false) {
   // a few special cases we can fix automatically
   if (type.expression === '[null]|[Error]')
     return 'void';
@@ -620,7 +619,7 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
 
   if (type.union) {
     if (type.union[0].name === 'null' && type.union.length === 2)
-      return translateType(type.union[1], parent, generateNameCallback);
+      return translateType(type.union[1], parent, generateNameCallback, true);
 
     if (type.expression === '[string]|[Buffer]')
       return `byte[]`; // TODO: make sure we implement extension methods for this!
@@ -636,7 +635,7 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
     // Regular primitive enums are named in the markdown.
     if (type.name) {
       enumTypes.set(type.name, type.union.map(t => t.name));
-      return type.name;
+      return optional ? type.name + '?' : type.name;
     }
     return null;
   }
