@@ -973,6 +973,34 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     cwd: tOptional(tString),
     env: tOptional(tArray(tType('NameValue'))),
     timeout: tOptional(tNumber),
+    acceptDownloads: tOptional(tBoolean),
+    bypassCSP: tOptional(tBoolean),
+    colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
+    extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
+    geolocation: tOptional(tObject({
+      longitude: tNumber,
+      latitude: tNumber,
+      accuracy: tOptional(tNumber),
+    })),
+    httpCredentials: tOptional(tObject({
+      username: tString,
+      password: tString,
+    })),
+    ignoreHTTPSErrors: tOptional(tBoolean),
+    locale: tOptional(tString),
+    offline: tOptional(tBoolean),
+    recordHar: tOptional(tObject({
+      omitContent: tOptional(tBoolean),
+      path: tString,
+    })),
+    recordVideo: tOptional(tObject({
+      dir: tString,
+      size: tOptional(tObject({
+        width: tNumber,
+        height: tNumber,
+      })),
+    })),
+    timezoneId: tOptional(tString),
   });
   scheme.ElectronApplicationBrowserWindowParams = tObject({
     page: tChannel('Page'),

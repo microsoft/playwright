@@ -9618,9 +9618,26 @@ export interface Electron {
    */
   launch(options?: {
     /**
+     * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
+     */
+    acceptDownloads?: boolean;
+
+    /**
      * Additional arguments to pass to the application when launching. You typically pass the main script name here.
      */
     args?: Array<string>;
+
+    /**
+     * Toggles bypassing page's Content-Security-Policy.
+     */
+    bypassCSP?: boolean;
+
+    /**
+     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+     * Defaults to `'light'`.
+     */
+    colorScheme?: "light"|"dark"|"no-preference";
 
     /**
      * Current working directory to launch application from.
@@ -9637,6 +9654,107 @@ export interface Electron {
      * package, located at `node_modules/.bin/electron`.
      */
     executablePath?: string;
+
+    /**
+     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     */
+    extraHTTPHeaders?: { [key: string]: string; };
+
+    geolocation?: {
+      /**
+       * Latitude between -90 and 90.
+       */
+      latitude: number;
+
+      /**
+       * Longitude between -180 and 180.
+       */
+      longitude: number;
+
+      /**
+       * Non-negative accuracy value. Defaults to `0`.
+       */
+      accuracy?: number;
+    };
+
+    /**
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     */
+    httpCredentials?: {
+      username: string;
+
+      password: string;
+    };
+
+    /**
+     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language`
+     * request header value as well as number and date formatting rules.
+     */
+    locale?: string;
+
+    /**
+     * Whether to emulate network being offline. Defaults to `false`.
+     */
+    offline?: boolean;
+
+    /**
+     * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
+     * specified, the HAR is not recorded. Make sure to await
+     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browsercontextclose) for the HAR to be
+     * saved.
+     */
+    recordHar?: {
+      /**
+       * Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
+       */
+      omitContent?: boolean;
+
+      /**
+       * Path on the filesystem to write the HAR file to.
+       */
+      path: string;
+    };
+
+    /**
+     * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
+     * sure to await [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browsercontextclose) for
+     * videos to be saved.
+     */
+    recordVideo?: {
+      /**
+       * Path to the directory to put videos into.
+       */
+      dir: string;
+
+      /**
+       * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit
+       * into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page
+       * will be scaled down if necessary to fit the specified size.
+       */
+      size?: {
+        /**
+         * Video frame width.
+         */
+        width: number;
+
+        /**
+         * Video frame height.
+         */
+        height: number;
+      };
+    };
+
+    /**
+     * Changes the timezone of the context. See
+     * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+     * for a list of supported timezone IDs.
+     */
+    timezoneId?: string;
   }): Promise<ElectronApplication>;
 }
 

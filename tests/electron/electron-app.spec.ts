@@ -107,3 +107,22 @@ test('should return browser window', async ({ playwright }) => {
   expect(await bwHandle.evaluate((bw: BrowserWindow) => bw.title)).toBe('Electron');
   await electronApp.close();
 });
+
+test('should bypass csp', async ({playwright, server}) => {
+  const app = await playwright._electron.launch({
+    args: [require('path').join(__dirname, 'electron-app.js')],
+    bypassCSP: true,
+  });
+  await app.evaluate(electron => {
+    const window = new electron.BrowserWindow({
+      width: 800,
+      height: 600,
+    });
+    window.loadURL('about:blank');
+  });
+  const page = await app.firstWindow();
+  await page.goto(server.PREFIX + '/csp.html');
+  await page.addScriptTag({content: 'window["__injected"] = 42;'});
+  expect(await page.evaluate('window["__injected"]')).toBe(42);
+  await app.close();
+});

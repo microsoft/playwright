@@ -76,3 +76,20 @@ Specifies environment variables that will be visible to Electron. Defaults to `p
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the application to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+
+### option: Electron.launch.acceptdownloads = %%-context-option-acceptdownloads-%%
+### option: Electron.launch.bypassCSP = %%-context-option-bypasscsp-%%
+### option: Electron.launch.colorScheme = %%-context-option-colorscheme-%%
+### option: Electron.launch.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
+### option: Electron.launch.geolocation = %%-context-option-geolocation-%%
+### option: Electron.launch.httpcredentials = %%-context-option-httpcredentials-%%
+### option: Electron.launch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### option: Electron.launch.locale = %%-context-option-locale-%%
+### option: Electron.launch.offline = %%-context-option-offline-%%
+### option: Electron.launch.recordhar = %%-context-option-recordhar-%%
+### option: Electron.launch.recordhar.path = %%-context-option-recordhar-path-%%
+### option: Electron.launch.recordhar.recordHarOmitContent = %%-context-option-recordhar-omit-content-%%
+### option: Electron.launch.recordvideo = %%-context-option-recordvideo-%%
+### option: Electron.launch.recordvideo.dir = %%-context-option-recordvideo-dir-%%
+### option: Electron.launch.recordvideo.size = %%-context-option-recordvideo-size-%%
+### option: Electron.launch.timezoneId = %%-context-option-timezoneid-%%
