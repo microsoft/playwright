@@ -470,7 +470,7 @@ function renderMethod(member, parent, name, out) {
    * @param {boolean} isExploded
    */
   function pushArg(innerArgType, innerArgName, argument, isExploded = false) {
-    let isNullable = nullableTypes.includes(innerArgType);
+    const isNullable = nullableTypes.includes(innerArgType);
     const requiredPrefix = (argument.required || isExploded) ? "" : isNullable ? "?" : "";
     const requiredSuffix = (argument.required || isExploded) ? "" : " = default";
     var push = `${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`;
@@ -618,69 +618,26 @@ function translateType(type, parent, generateNameCallback = t => t.name) {
   else if (type.expression === '[boolean]|"mixed"')
     return 'MixedState';
 
-  let isNullableEnum = false;
   if (type.union) {
-    if (type.union[0].name === 'null') {
-      // for dotnet, this is a nullable type
-      // if the other side is a primitive type
-      if (type.union.length > 2) {
-        if (type.union.filter(x => x.name.startsWith('"')).length == type.union.length - 1)
-          isNullableEnum = true;
-        else
-          throw new Error(`Union (${parent.name}) with null is too long.`);
-      } else {
-        const innerTypeName = translateType(type.union[1], parent, generateNameCallback);
-        // if type is primitive, or an enum, then it's nullable
-        if (innerTypeName === 'bool'
-          || innerTypeName === 'int'
-          || enumTypes.has(innerTypeName)) {
-          return `${innerTypeName}?`;
-        }
-
-        // if it's not a value type, it'll be nullable by default, so we can ignore it
-        return `${innerTypeName}`;
-      }
-    }
-
-    if (type.union.filter(u => u.name.startsWith(`"`)).length == type.union.length
-      || isNullableEnum) {
-      // this is an enum
-      let enumName = type.name;
-      if (!enumName)
-        throw new Error(`This was supposed to be an enum, but it failed generating a name, ${type.name} ${parent ? parent.name : ""}.`);
-
-      // make sure we map the enum, or invalidate the name, in case it doesn't match well
-      const potentialEnum = enumTypes.get(enumName);
-      let enumValues = type.union.filter(x => x.name !== 'null').map(x => x.name);
-      if (potentialEnum) {
-        // compare values
-        if (potentialEnum.join(',') !== enumValues.join(',')) {
-          // for now, we'll merge the two enums, if they have the same name, and we'll go from there
-          potentialEnum.concat(enumValues.filter(x => !potentialEnum.includes(x))); // merge & de-dupe
-          // TODO: think about doing global type annotation, where we can add comments, such as this?
-          enumTypes.set(enumName, potentialEnum);
-        }
-      } else {
-        enumTypes.set(enumName, enumValues);
-      }
-      if (isNullableEnum)
-        return `${enumName}?`;
-      return enumName;
-    }
+    if (type.union[0].name === 'null' && type.union.length === 2)
+      return translateType(type.union[1], parent, generateNameCallback);
 
     if (type.expression === '[string]|[Buffer]')
       return `byte[]`; // TODO: make sure we implement extension methods for this!
-    else if (type.expression === '[string]|[float]'
-      || type.expression === '[string]|[float]|[boolean]') {
+    if (type.expression === '[string]|[float]' || type.expression === '[string]|[float]|[boolean]') {
       console.warn(`${type.name} should be a 'string', but was a ${type.expression}`);
       return `string`;
-    } else if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
+    }
+    if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
       return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
-    else if (type.union[0].name === 'path')
-      return null;
-    else if (type.expression === '[float]|"raf"')
+    if (type.expression === '[float]|"raf"')
       return `Polling`; // hardcoded because there's no other way to denote this
 
+    // Regular primitive enums are named in the markdown.
+    if (type.name) {
+      enumTypes.set(type.name, type.union.map(t => t.name));
+      return type.name;
+    }
     return null;
   }
 
