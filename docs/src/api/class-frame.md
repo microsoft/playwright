@@ -248,9 +248,6 @@ When all steps combined have not finished during the specified [`option: timeout
 Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
-* langs:
-  - alias-csharp: DblClickAsync
-
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.

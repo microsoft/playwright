@@ -238,6 +238,8 @@ function toMemberName(member, options) {
  * @returns {string}
  */
 function toTitleCase(name) {
+  if (name === 'dblclick')
+    return 'DblClick';
   name = name.replace(/(HTTP[S]?)/g, (m, g) => {
     return g[0].toUpperCase() + g.substring(1).toLowerCase();
   });
