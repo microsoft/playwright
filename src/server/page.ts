@@ -97,17 +97,12 @@ export class Page extends SdkObject {
     Crash: 'crash',
     Console: 'console',
     Dialog: 'dialog',
-    InternalDialogClosed: 'internaldialogclosed',
     Download: 'download',
     FileChooser: 'filechooser',
     DOMContentLoaded: 'domcontentloaded',
     // Can't use just 'error' due to node.js special treatment of error events.
     // @see https://nodejs.org/api/events.html#events_error_events
     PageError: 'pageerror',
-    Request: 'request',
-    Response: 'response',
-    RequestFailed: 'requestfailed',
-    RequestFinished: 'requestfinished',
     FrameAttached: 'frameattached',
     FrameDetached: 'framedetached',
     InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
@@ -122,6 +117,7 @@ export class Page extends SdkObject {
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
   private _disconnected = false;
+  private _initialized = false;
   private _disconnectedCallback: (e: Error) => void;
   readonly _disconnectedPromise: Promise<Error>;
   private _crashedCallback: (e: Error) => void;
@@ -195,12 +191,17 @@ export class Page extends SdkObject {
         return;
       this._setIsError(error);
     }
+    this._initialized = true;
     this._browserContext.emit(BrowserContext.Events.Page, this);
     // I may happen that page iniatialization finishes after Close event has already been sent,
     // in that case we fire another Close event to ensure that each reported Page will have
     // corresponding Close event after it is reported on the context.
     if (this.isClosed())
       this.emit(Page.Events.Close);
+  }
+
+  initializedOrUndefined() {
+    return this._initialized ? this : undefined;
   }
 
   async _doSlowMo() {
@@ -405,7 +406,6 @@ export class Page extends SdkObject {
   }
 
   _requestStarted(request: network.Request) {
-    this.emit(Page.Events.Request, request);
     const route = request._route();
     if (!route)
       return;
@@ -581,36 +581,36 @@ export class PageBinding {
     }
 
     function takeHandle(arg: { name: string, seq: number }) {
-      const handle = (window as any)[arg.name]['handles'].get(arg.seq);
-      (window as any)[arg.name]['handles'].delete(arg.seq);
+      const handle = (globalThis as any)[arg.name]['handles'].get(arg.seq);
+      (globalThis as any)[arg.name]['handles'].delete(arg.seq);
       return handle;
     }
 
     function deliverResult(arg: { name: string, seq: number, result: any }) {
-      (window as any)[arg.name]['callbacks'].get(arg.seq).resolve(arg.result);
-      (window as any)[arg.name]['callbacks'].delete(arg.seq);
+      (globalThis as any)[arg.name]['callbacks'].get(arg.seq).resolve(arg.result);
+      (globalThis as any)[arg.name]['callbacks'].delete(arg.seq);
     }
 
     function deliverError(arg: { name: string, seq: number, message: string, stack: string | undefined }) {
       const error = new Error(arg.message);
       error.stack = arg.stack;
-      (window as any)[arg.name]['callbacks'].get(arg.seq).reject(error);
-      (window as any)[arg.name]['callbacks'].delete(arg.seq);
+      (globalThis as any)[arg.name]['callbacks'].get(arg.seq).reject(error);
+      (globalThis as any)[arg.name]['callbacks'].delete(arg.seq);
     }
 
     function deliverErrorValue(arg: { name: string, seq: number, error: any }) {
-      (window as any)[arg.name]['callbacks'].get(arg.seq).reject(arg.error);
-      (window as any)[arg.name]['callbacks'].delete(arg.seq);
+      (globalThis as any)[arg.name]['callbacks'].get(arg.seq).reject(arg.error);
+      (globalThis as any)[arg.name]['callbacks'].delete(arg.seq);
     }
   }
 }
 
 function addPageBinding(bindingName: string, needsHandle: boolean) {
-  const binding = (window as any)[bindingName];
+  const binding = (globalThis as any)[bindingName];
   if (binding.__installed)
     return;
-  (window as any)[bindingName] = (...args: any[]) => {
-    const me = (window as any)[bindingName];
+  (globalThis as any)[bindingName] = (...args: any[]) => {
+    const me = (globalThis as any)[bindingName];
     if (needsHandle && args.slice(1).some(arg => arg !== undefined))
       throw new Error(`exposeBindingHandle supports a single argument, ${args.length} received`);
     let callbacks = me['callbacks'];
@@ -634,5 +634,5 @@ function addPageBinding(bindingName: string, needsHandle: boolean) {
     }
     return promise;
   };
-  (window as any)[bindingName].__installed = true;
+  (globalThis as any)[bindingName].__installed = true;
 }

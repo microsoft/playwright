@@ -65,6 +65,24 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class PlaywrightExample
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        var page = await browser.NewPageAsync();
+
+        await page.GotoAsync("https://www.microsoft.com");
+        // other actions...
+    }
+}
+```
+
 ## property: Playwright.chromium
 - type: <[BrowserType]>
 
@@ -127,6 +145,31 @@ def run(playwright):
 
 with sync_playwright() as playwright:
     run(playwright)
+```
+
+## property: Playwright.devices
+* langs: csharp
+- type: <[IReadOnlyDictionary<string, BrowserContextOptions>]>
+
+Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].
+
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class PlaywrightExample
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Webkit.LaunchAsync();
+        await using var context = await browser.NewContextAsync(Playwright.Devices["iPhone 6"]);
+
+        var page = await context.NewPageAsync();
+        await page.GotoAsync("https://www.theverge.com");
+        // other actions...
+    }
+}
 ```
 
 ## property: Playwright.errors

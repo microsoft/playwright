@@ -31,7 +31,7 @@ it.describe('Drag and drop', () => {
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
   });
 
-  it('should send the right events', async ({server, page, isFirefox}) => {
+  it('should send the right events', async ({server, page, browserName}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     const events = await trackEvents(await page.$('body'));
     await page.hover('#source');
@@ -41,8 +41,8 @@ it.describe('Drag and drop', () => {
     expect(await events.jsonValue()).toEqual([
       'mousemove',
       'mousedown',
-      isFirefox ? 'dragstart' : 'mousemove',
-      isFirefox ? 'mousemove' : 'dragstart',
+      browserName === 'firefox' ? 'dragstart' : 'mousemove',
+      browserName === 'firefox' ? 'mousemove' : 'dragstart',
       'dragenter',
       'dragover',
       'drop',
@@ -50,7 +50,7 @@ it.describe('Drag and drop', () => {
     ]);
   });
 
-  it('should cancel on escape', async ({server, page, isFirefox}) => {
+  it('should cancel on escape', async ({server, page, browserName}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     const events = await trackEvents(await page.$('body'));
     await page.hover('#source');
@@ -62,8 +62,8 @@ it.describe('Drag and drop', () => {
     expect(await events.jsonValue()).toEqual([
       'mousemove',
       'mousedown',
-      isFirefox ? 'dragstart' : 'mousemove',
-      isFirefox ? 'mousemove' : 'dragstart',
+      browserName === 'firefox' ? 'dragstart' : 'mousemove',
+      browserName === 'firefox' ? 'mousemove' : 'dragstart',
       'dragenter',
       'dragover',
       'dragend',
@@ -74,7 +74,7 @@ it.describe('Drag and drop', () => {
   it.describe('iframe', () => {
     it.fixme('implement dragging with iframes');
 
-    it('should drag into an iframe', async ({server, page, isFirefox}) => {
+    it('should drag into an iframe', async ({server, page, browserName}) => {
       await page.goto(server.PREFIX + '/drag-n-drop.html');
       const frame = await attachFrame(page, 'oopif',server.PREFIX + '/drag-n-drop.html');
       const pageEvents = await trackEvents(await page.$('body'));
@@ -88,8 +88,8 @@ it.describe('Drag and drop', () => {
       expect(await pageEvents.jsonValue()).toEqual([
         'mousemove',
         'mousedown',
-        isFirefox ? 'dragstart' : 'mousemove',
-        isFirefox ? 'mousemove' : 'dragstart',
+        browserName === 'firefox' ? 'dragstart' : 'mousemove',
+        browserName === 'firefox' ? 'mousemove' : 'dragstart',
       ]);
       expect(await frameEvents.jsonValue()).toEqual([
         'dragenter',

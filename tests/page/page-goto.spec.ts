@@ -137,7 +137,7 @@ it('should work with subframes return 204 with domcontentloaded', async ({page, 
   await page.goto(server.PREFIX + '/frames/one-frame.html', { waitUntil: 'domcontentloaded' });
 });
 
-it('should fail when server returns 204', async ({page, server, isChromium, isWebKit}) => {
+it('should fail when server returns 204', async ({page, server, browserName}) => {
   // WebKit just loads an empty page.
   server.setRoute('/empty.html', (req, res) => {
     res.statusCode = 204;
@@ -146,9 +146,9 @@ it('should fail when server returns 204', async ({page, server, isChromium, isWe
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).not.toBe(null);
-  if (isChromium)
+  if (browserName === 'chromium')
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (isWebKit)
+  else if (browserName === 'webkit')
     expect(error.message).toContain('Aborted: 204 No Content');
   else
     expect(error.message).toContain('NS_BINDING_ABORTED');
@@ -168,10 +168,10 @@ it('should work when page calls history API in beforeunload', async ({page, serv
   expect(response.status()).toBe(200);
 });
 
-it('should fail when navigating to bad url', async ({page, isChromium, isWebKit}) => {
+it('should fail when navigating to bad url', async ({page, browserName}) => {
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
-  if (isChromium || isWebKit)
+  if (browserName === 'chromium' || browserName === 'webkit')
     expect(error.message).toContain('Cannot navigate to invalid URL');
   else
     expect(error.message).toContain('Invalid url');
@@ -213,14 +213,14 @@ it('should throw if networkidle2 is passed as an option', async ({page, server})
   expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle)`);
 });
 
-it('should fail when main resources failed to load', async ({page, isChromium, isWebKit, isWindows}) => {
+it('should fail when main resources failed to load', async ({page, browserName, isWindows}) => {
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
-  if (isChromium)
+  if (browserName === 'chromium')
     expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
-  else if (isWebKit && isWindows)
+  else if (browserName === 'webkit' && isWindows)
     expect(error.message).toContain(`Couldn\'t connect to server`);
-  else if (isWebKit)
+  else if (browserName === 'webkit')
     expect(error.message).toContain('Could not connect');
   else
     expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
@@ -311,7 +311,7 @@ it('should disable timeout when its set to 0', async ({page, server}) => {
   expect(loaded).toBe(true);
 });
 
-it('should fail when replaced by another navigation', async ({page, server, isChromium, isWebKit}) => {
+it('should fail when replaced by another navigation', async ({page, server, browserName}) => {
   let anotherPromise;
   server.setRoute('/empty.html', (req, res) => {
     anotherPromise = page.goto(server.PREFIX + '/one-style.html');
@@ -319,9 +319,9 @@ it('should fail when replaced by another navigation', async ({page, server, isCh
   });
   const error = await page.goto(server.PREFIX + '/empty.html').catch(e => e);
   await anotherPromise;
-  if (isChromium)
+  if (browserName === 'chromium')
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (isWebKit)
+  else if (browserName === 'webkit')
     expect(error.message).toContain('cancelled');
   else
     expect(error.message).toContain('NS_BINDING_ABORTED');

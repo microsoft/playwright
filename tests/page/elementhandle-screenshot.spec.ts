@@ -21,7 +21,7 @@ import path from 'path';
 import fs from 'fs';
 
 it.describe('element screenshot', () => {
-  it.skip(({ browserName, headful }) => browserName === 'firefox' && headful);
+  it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless);
   it.skip(({ isAndroid }) => isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');
 
   it('should work', async ({page, server}) => {

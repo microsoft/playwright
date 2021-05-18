@@ -47,6 +47,19 @@ page = context.new_page()
 page.goto("https://example.com")
 ```
 
+```csharp
+using var context = await Browser.NewContextAsync(new BrowserContextOptions
+{
+    HttpCredentials = new HttpCredentials
+    {
+        Username = "bill",
+        Password = "pa55w0rd"
+    },
+});
+var page = await context.NewPageAsync();
+await page.GotoAsync("https://example.com");
+```
+
 ### API reference
 - [`method: Browser.newContext`]
 
@@ -93,6 +106,16 @@ browser = chromium.launch(proxy={
 })
 ```
 
+```csharp
+var proxy = new Proxy
+{
+    Server = "http://myproxy.com:3128",
+    Username = "user",
+    Password = "pwd"
+};
+await using var browser = await BrowserType.LaunchAsync(proxy: proxy);
+```
+
 When specifying proxy for each context individually, you need to give Playwright
 a hint that proxy will be set. This is done via passing a non-empty proxy server
 to the browser itself. Here is an example of a context-specific proxy:
@@ -122,6 +145,13 @@ context = await browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 browser = chromium.launch(proxy={"server": "per-context"})
 context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 ```
+
+```csharp
+var proxy = new Proxy { Server = "per-context" };
+await using var browser = await BrowserType.LaunchAsync(proxy: proxy);
+using var context = await Browser.NewContextAsync(proxy: new Proxy { Server = "http://myproxy.com:3128" });
+```
+
 
 ## Network events
 
@@ -200,6 +230,24 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System;
+
+class Example
+{
+  public async void Main()
+  {
+    using var playwright = await Playwright.CreateAsync();
+    await using var browser = await playwright.Chromium.LaunchAsync();
+    var page = await browser.NewPageAsync();
+    page.Request += (_, request) => Console.WriteLine(">> " + request.Method + " " + request.Url);
+    page.Response += (_, response) => Console.WriteLine("<<" + response.Status + " " + response.Url);
+    await page.GotoAsync("https://example.com");
+  }
+}
+```
+
 Or wait for a network response after the button click:
 
 ```js
@@ -229,6 +277,13 @@ response = await response_info.value
 with page.expect_response("**/api/fetch_data") as response_info:
     page.click("button#update")
 response = response_info.value
+```
+
+```csharp
+// Use a glob URL pattern
+var waitForResponseTask = page.WaitForResponseAsync("**/api/fetch_data");
+await page.ClickAsync("button#update");
+var response = await waitForResponseTask;
 ```
 
 #### Variations
@@ -281,6 +336,18 @@ response = response_info.value
 with page.expect_response(lambda response: token in response.url) as response_info:
     page.click("button#update")
 response = response_info.value
+```
+
+```csharp
+// Use a regular expression
+var waitForResponseTask = page.WaitForResponseAsync(new Regex("\\.jpeg$"));
+await page.ClickAsync("button#update");
+var response = await waitForResponseTask;
+
+// Use a predicate taking a Response object
+var waitForResponseTask = page.WaitForResponseAsync(r => r.Url.Contains(token));
+await page.ClickAsync("button#update");
+var response = await waitForResponseTask;
 ```
 
 ### API reference
@@ -364,6 +431,13 @@ context.route(
 page.goto("https://example.com")
 ```
 
+```csharp
+await page.RouteAsync("**/api/fetch_data", async route => {
+  await route.FulfillAsync(status: 200, body: testData);
+});
+await page.GotoAsync("https://example.com");
+```
+
 ### API reference
 - [`method: BrowserContext.route`]
 - [`method: BrowserContext.unroute`]
@@ -423,6 +497,18 @@ page.route("**/*", handle_route)
 page.route("**/*", lambda route: route.continue_(method="POST"))
 ```
 
+```csharp
+// Delete header
+await page.RouteAsync("**/*", async route => {
+    var headers = new Dictionary<string, string>(route.Request.Headers.ToDictionary(x => x.Key, x => x.Value));
+    headers.Remove("X-Secret");
+    await route.ContinueAsync(headers: headers);
+});
+
+// Continue requests as POST.
+await page.RouteAsync("**/*", async route => await route.ContinueAsync(method: "POST"));
+```
+
 You can continue requests with modifications. Example above removes an HTTP header from the outgoing requests.
 
 ## Abort requests
@@ -461,6 +547,18 @@ page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
 
 # Abort based on the request type
 page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image"  else route.continue_())
+```
+
+```csharp
+await page.RouteAsync("**/*.{png,jpg,jpeg}", route => route.AbortAsync());
+
+// Abort based on the request type
+await page.RouteAsync("**/*", async route => {
+if ("image".Equals(route.Request.ResourceType))
+    await route.AbortAsync();
+else
+    await route.ContinueAsync();
+});
 ```
 
 ### API reference
@@ -502,6 +600,16 @@ def on_web_socket(ws):
     ws.on("close", lambda payload: print("WebSocket closed"))
 
 page.on("websocket", on_web_socket)
+```
+
+```csharp
+page.WebSocket += (_, ws) =>
+{
+    Console.WriteLine("WebSocket opened: " + ws.Url);
+    ws.FrameSent += (_, f) => Console.WriteLine(f.Text);
+    ws.FrameReceived += (_, f) => Console.WriteLine(f.Text);
+    ws.Close += (_, ws1) => Console.WriteLine("WebSocket closed");
+};
 ```
 
 ### API reference

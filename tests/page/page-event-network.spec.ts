@@ -41,7 +41,7 @@ it('Page.Events.Response', async ({page, server}) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-it('Page.Events.RequestFailed', async ({page, server, isChromium, isWebKit, isMac, isWindows}) => {
+it('Page.Events.RequestFailed', async ({page, server, browserName, isMac, isWindows}) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -53,9 +53,9 @@ it('Page.Events.RequestFailed', async ({page, server, isChromium, isWebKit, isMa
   expect(failedRequests[0].url()).toContain('one-style.css');
   expect(await failedRequests[0].response()).toBe(null);
   expect(failedRequests[0].resourceType()).toBe('stylesheet');
-  if (isChromium) {
+  if (browserName === 'chromium') {
     expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
-  } else if (isWebKit) {
+  } else if (browserName === 'webkit') {
     if (isMac)
       expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
     else if (isWindows)

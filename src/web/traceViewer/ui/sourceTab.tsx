@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { ActionEntry } from '../../../server/trace/viewer/traceModel';
 import * as React from 'react';
 import { useAsyncMemo } from './helpers';
 import './sourceTab.css';
@@ -23,6 +22,7 @@ import { StackFrame } from '../../../common/types';
 import { Source as SourceView } from '../../components/source';
 import { StackTraceView } from './stackTrace';
 import { SplitView } from '../../components/splitView';
+import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 type StackInfo = string | {
   frames: StackFrame[];
@@ -30,22 +30,22 @@ type StackInfo = string | {
 };
 
 export const SourceTab: React.FunctionComponent<{
-  actionEntry: ActionEntry | undefined,
-}> = ({ actionEntry }) => {
-  const [lastAction, setLastAction] = React.useState<ActionEntry | undefined>();
+  action: ActionTraceEvent | undefined,
+}> = ({ action }) => {
+  const [lastAction, setLastAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
   const [needReveal, setNeedReveal] = React.useState<boolean>(false);
 
-  if (lastAction !== actionEntry) {
-    setLastAction(actionEntry);
+  if (lastAction !== action) {
+    setLastAction(action);
     setSelectedFrame(0);
     setNeedReveal(true);
   }
 
   const stackInfo = React.useMemo<StackInfo>(() => {
-    if (!actionEntry)
+    if (!action)
       return '';
-    const { metadata } = actionEntry;
+    const { metadata } = action;
     if (!metadata.stack)
       return '';
     const frames = metadata.stack;
@@ -53,7 +53,7 @@ export const SourceTab: React.FunctionComponent<{
       frames,
       fileContent: new Map(),
     };
-  }, [actionEntry]);
+  }, [action]);
 
   const content = useAsyncMemo<string>(async () => {
     let value: string;
@@ -80,6 +80,6 @@ export const SourceTab: React.FunctionComponent<{
 
   return <SplitView sidebarSize={100} orientation='vertical'>
     <SourceView text={content} language='javascript' highlight={[{ line: targetLine, type: 'running' }]} revealLine={targetLine}></SourceView>
-    <StackTraceView actionEntry={actionEntry} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}></StackTraceView>
+    <StackTraceView action={action} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}></StackTraceView>
   </SplitView>;
 };

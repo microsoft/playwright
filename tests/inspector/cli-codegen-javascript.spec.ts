@@ -24,26 +24,26 @@ const launchOptions = (channel: string) => {
   return channel ? `headless: false,\n    channel: '${channel}'` : 'headless: false';
 };
 
-test('should print the correct imports and context options', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct imports and context options', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI([emptyHTML]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
 (async () => {
   const browser = await ${browserName}.launch({
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
   });
   const context = await browser.newContext();`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI(['--color-scheme=light', emptyHTML]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
 (async () => {
   const browser = await ${browserName}.launch({
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
   });
   const context = await browser.newContext({
     colorScheme: 'light'
@@ -53,7 +53,7 @@ test('should print the correct context options for custom settings', async ({ br
 });
 
 
-test('should print the correct context options when using a device', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', emptyHTML]);
@@ -61,7 +61,7 @@ test('should print the correct context options when using a device', async ({ br
 
 (async () => {
   const browser = await chromium.launch({
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
   });
   const context = await browser.newContext({
     ...devices['Pixel 2'],
@@ -70,7 +70,7 @@ test('should print the correct context options when using a device', async ({ br
   expect(cli.text()).toContain(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, browserChannel, runCLI }) => {
+test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
   test.skip(browserName !== 'webkit');
 
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', emptyHTML]);
@@ -78,7 +78,7 @@ test('should print the correct context options when using a device and additiona
 
 (async () => {
   const browser = await webkit.launch({
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
   });
   const context = await browser.newContext({
     ...devices['iPhone 11'],
@@ -88,7 +88,7 @@ test('should print the correct context options when using a device and additiona
   expect(cli.text()).toContain(expectedResult);
 });
 
-test('should save the codegen output to a file if specified', async ({ browserName, browserChannel, runCLI }, testInfo) => {
+test('should save the codegen output to a file if specified', async ({ browserName, channel, runCLI }, testInfo) => {
   const tmpFile = testInfo.outputPath('script.js');
   const cli = runCLI(['--output', tmpFile, emptyHTML]);
   await cli.exited;
@@ -97,7 +97,7 @@ test('should save the codegen output to a file if specified', async ({ browserNa
 
 (async () => {
   const browser = await ${browserName}.launch({
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
   });
   const context = await browser.newContext();
 
@@ -116,7 +116,7 @@ test('should save the codegen output to a file if specified', async ({ browserNa
 })();`);
 });
 
-test('should print load/save storageState', async ({ browserName, browserChannel, runCLI }, testInfo) => {
+test('should print load/save storageState', async ({ browserName, channel, runCLI }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
@@ -125,7 +125,7 @@ test('should print load/save storageState', async ({ browserName, browserChannel
 
 (async () => {
   const browser = await ${browserName}.launch({
-    ${launchOptions(browserChannel)}
+    ${launchOptions(channel)}
   });
   const context = await browser.newContext({
     storageState: '${loadFileName}'

@@ -130,6 +130,11 @@ runtimeTypes.CallFunctionArgument = {
   value: t.Any,
 };
 
+runtimeTypes.AuxData = {
+  frameId: t.Optional(t.String),
+  name: t.Optional(t.String),
+};
+
 const axTypes = {};
 axTypes.AXTree = {
   role: t.String,
@@ -364,6 +369,12 @@ const Browser = {
         viewport: t.Nullable(pageTypes.Viewport),
       }
     },
+    'setScrollbarsHidden': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        hidden: t.Boolean,
+      }
+    },
     'addScriptToEvaluateOnNewDocument': {
       params: {
         browserContextId: t.Optional(t.String),
@@ -524,10 +535,7 @@ const Runtime = {
   events: {
     'executionContextCreated': {
       executionContextId: t.String,
-      auxData: {
-        frameId: t.Optional(t.String),
-        name: t.Optional(t.String),
-      },
+      auxData: runtimeTypes.AuxData,
     },
     'executionContextDestroyed': {
       executionContextId: t.String,
@@ -768,15 +776,7 @@ const Page = {
       params: {
         script: t.String,
         worldName: t.Optional(t.String),
-      },
-      returns: {
-        scriptId: t.String,
       }
-    },
-    'removeScriptToEvaluateOnNewDocument': {
-      params: {
-        scriptId: t.String,
-      },
     },
     'navigate': {
       params: {

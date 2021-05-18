@@ -25,7 +25,7 @@ BrowserContext context = browser.newContext();
 // Create a new page inside context.
 Page page = context.newPage();
 page.navigate("https://example.com");
-// Dispose context once it"s no longer needed.
+// Dispose context once it is no longer needed.
 context.close();
 ```
 
@@ -35,7 +35,7 @@ context = await browser.new_context()
 # create a new page inside context.
 page = await context.new_page()
 await page.goto("https://example.com")
-# dispose context once it"s no longer needed.
+# dispose context once it is no longer needed.
 await context.close()
 ```
 
@@ -45,8 +45,20 @@ context = browser.new_context()
 # create a new page inside context.
 page = context.new_page()
 page.goto("https://example.com")
-# dispose context once it"s no longer needed.
+# dispose context once it is no longer needed.
 context.close()
+```
+
+```csharp
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Firefox.LaunchAsync(headless: false);
+// Create a new incognito browser context
+var context = await browser.NewContextAsync();
+// Create a new page inside context.
+var page = await context.NewPageAsync();
+await page.GotoAsync("https://bing.com");
+// Dispose context once it is no longer needed.
+await context.CloseAsync();
 ```
 
 ## event: BrowserContext.backgroundPage
@@ -119,10 +131,56 @@ page = page_info.value
 print(page.evaluate("location.href"))
 ```
 
+```csharp
+var popupTask = context.WaitForPageAsync();
+await page.ClickAsync("a");
+var popup = await popupTask;
+Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
+```
+
 :::note
 Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not need it in most
 cases).
 :::
+
+## event: BrowserContext.request
+* langs: js, python, java
+- argument: <[Request]>
+
+Emitted when a request is issued from any pages created through this context.
+The [request] object is read-only. To only listen for requests from a particular
+page, use [`event: Page.request`].
+
+In order to intercept and mutate requests, see [`method: BrowserContext.route`]
+or [`method: Page.route`].
+
+## event: BrowserContext.requestFailed
+* langs: js, python, java
+- argument: <[Request]>
+
+Emitted when a request fails, for example by timing out. To only listen for
+failed requests from a particular page, use [`event: Page.requestFailed`].
+
+:::note
+HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete
+with [`event: BrowserContext.requestFinished`] event and not with [`event: BrowserContext.requestFailed`].
+:::
+
+## event: BrowserContext.requestFinished
+* langs: js, python, java
+- argument: <[Request]>
+
+Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+sequence of events is `request`, `response` and `requestfinished`. To listen for
+successful requests from a particular page, use [`event: Page.requestFinished`].
+
+## event: BrowserContext.response
+* langs: js, python, java
+- argument: <[Response]>
+
+Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+is `request`, `response` and `requestfinished`. To listen for response events
+from a particular page, use [`event: Page.response`].
 
 ## event: BrowserContext.serviceWorker
 * langs: js, python
@@ -153,6 +211,10 @@ await browser_context.add_cookies([cookie_object1, cookie_object2])
 
 ```python sync
 browser_context.add_cookies([cookie_object1, cookie_object2])
+```
+
+```csharp
+await context.AddCookiesAsync(new[] { cookie1, cookie2 });
 ```
 
 ### param: BrowserContext.addCookies.cookies
@@ -204,6 +266,10 @@ await browser_context.add_init_script(path="preload.js")
 ```python sync
 # in your playwright script, assuming the preload.js file is in same directory.
 browser_context.add_init_script(path="preload.js")
+```
+
+```csharp
+await context.AddInitScriptAsync(scriptPath: "preload.js");
 ```
 
 :::note
@@ -283,6 +349,15 @@ context.grant_permissions(["clipboard-read"])
 context.clear_permissions()
 ```
 
+```csharp
+var context = await browser.NewContextAsync();
+await context.GrantPermissionsAsync(new[] { "clipboard-read" });
+// Alternatively, you can use the helper class ContextPermissions 
+//  to specify the permissions...
+// do stuff ...
+await context.ClearPermissionsAsync();
+```
+
 ## async method: BrowserContext.close
 
 Closes the browser context. All the pages that belong to the browser context will be closed.
@@ -292,8 +367,6 @@ The default browser context cannot be closed.
 :::
 
 ## async method: BrowserContext.cookies
-* langs:
-  - alias-csharp: GetCookiesAsync
 - returns: <[Array]<[Object]>>
   - `name` <[string]>
   - `value` <[string]>
@@ -421,6 +494,32 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Program
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var browser = await playwright.Webkit.LaunchAsync(headless: false);
+        var context = await browser.NewContextAsync();
+
+        await context.ExposeBindingAsync("pageURL", source => source.Page.Url);
+        var page = await context.NewPageAsync();
+        await page.SetContentAsync("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.pageURL();\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>");
+        await page.ClickAsync("button");
+    }
+}
+```
+
 An example of passing an element handle:
 
 ```js
@@ -476,6 +575,26 @@ page.set_content("""
   <div>Click me</div>
   <div>Or click me</div>
 """)
+```
+
+```csharp
+var result = new TaskCompletionSource<string>();
+var page = await Context.NewPageAsync();
+await Context.ExposeBindingAsync("clicked", async (BindingSource _, IJSHandle t) =>
+{
+    return result.TrySetResult(await t.AsElement.TextContentAsync());
+});
+
+await page.SetContentAsync("<script>\n" +
+  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
+  "</script>\n" +
+  "<div>Click me</div>\n" +
+  "<div>Or click me</div>\n");
+
+await page.ClickAsync("div");
+// Note: it makes sense to await the result here, because otherwise, the context 
+//  gets closed and the binding function will throw an exception.
+Assert.Equal("Click me", await result.Task);
 ```
 
 ### param: BrowserContext.exposeBinding.name
@@ -632,6 +751,43 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+
+class BrowserContextExamples
+{
+    public static async Task AddMd5FunctionToAllPagesInContext()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var browser = await playwright.Webkit.LaunchAsync(headless: false);
+        var context = await browser.NewContextAsync();
+
+        // NOTE: md5 is inherently insecure, and we strongly discourage using
+        // this in production in any shape or form
+        await context.ExposeFunctionAsync("sha1", (string input) =>
+        {
+            return Convert.ToBase64String(
+                MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
+        });
+
+        var page = await context.NewPageAsync();
+        await page.SetContentAsync("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>");
+
+        await page.ClickAsync("button");
+        Console.WriteLine(await page.TextContentAsync("div"));
+    }
+}
+```
+
 ### param: BrowserContext.exposeFunction.name
 - `name` <[string]>
 
@@ -737,6 +893,14 @@ page.goto("https://example.com")
 browser.close()
 ```
 
+```csharp
+var context = await browser.NewContextAsync();
+var page = await context.NewPageAsync();
+await context.RouteAsync("**/*.{png,jpg,jpeg}", r => r.AbortAsync());
+await page.GotoAsync("https://theverge.com");
+await browser.CloseAsync();
+```
+
 or the same snippet using a regex pattern instead:
 
 ```js
@@ -772,6 +936,14 @@ page = await context.new_page()
 page = context.new_page()
 page.goto("https://example.com")
 browser.close()
+```
+
+```csharp
+var context = await browser.NewContextAsync();
+var page = await context.NewPageAsync();
+await context.RouteAsync(new Regex("(\\.png$)|(\\.jpg$)"), r => r.AbortAsync());
+await page.GotoAsync("https://theverge.com");
+await browser.CloseAsync();
 ```
 
 It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:
@@ -810,6 +982,16 @@ def handle_route(route):
   else
     route.continue_()
 context.route("/api/**", handle_route)
+```
+
+```csharp
+await page.RouteAsync("/api/**", async r =>
+{
+    if (r.Request.PostData.Contains("my-string"))
+        await r.FulfillAsync(body: "mocked-data");
+    else
+        await r.ContinueAsync();
+});
 ```
 
 Page routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both
@@ -917,6 +1099,14 @@ await browser_context.set_geolocation({"latitude": 59.95, "longitude": 30.31667}
 browser_context.set_geolocation({"latitude": 59.95, "longitude": 30.31667})
 ```
 
+```csharp
+await context.SetGeolocationAsync(new Geolocation()
+{
+    Latitude = 59.95f,
+    Longitude = 30.31667f
+});
+```
+
 :::note
 Consider using [`method: BrowserContext.grantPermissions`] to grant permissions for the browser context pages to read
 its geolocation.
@@ -975,6 +1165,10 @@ The file path to save the storage state to. If [`option: path`] is a relative pa
 current working directory. If no path is provided, storage
 state is still returned, but won't be saved to the disk.
 
+## property: BrowserContext.tracing
+* langs: js, python, java
+- type: <[Tracing]>
+
 ## async method: BrowserContext.unroute
 
 Removes a route created with [`method: BrowserContext.route`]. When [`param: handler`] is not specified, removes all
@@ -1027,6 +1221,12 @@ page = await event_info.value
 with context.expect_event("page") as event_info:
     page.click("button")
 page = event_info.value
+```
+
+```csharp
+var waitForPageEvent = context.WaitForPageAsync();
+await page.ClickAsync("button");
+var page = await waitForPageEvent;
 ```
 
 ### param: BrowserContext.waitForEvent.event

@@ -16,8 +16,8 @@
 
 import { test as it } from './pageTest';
 
-it('should not hit scroll bar', async ({page, isAndroid, isWebKit, platform}) => {
-  it.fixme(isWebKit && platform === 'darwin');
+it('should not hit scroll bar', async ({page, isAndroid, browserName, platform}) => {
+  it.fixme(browserName === 'webkit' && platform === 'darwin');
   it.skip(isAndroid);
 
   await page.setContent(`

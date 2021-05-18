@@ -31,6 +31,11 @@ page.on("dialog", lambda dialog: dialog.accept())
 page.click("button")
 ```
 
+```csharp
+page.Dialog += (_, dialog) => dialog.AcceptAsync();
+await page.ClickAsync("button");
+```
+
 :::note
 [`event: Page.dialog`] listener **must handle** the dialog. Otherwise your action will stall, be it [`method: Page.click`], [`method: Page.evaluate`] or any other. That's because dialogs in Web are modal and block further page execution until they are handled.
 :::
@@ -59,6 +64,11 @@ await page.click("button") # Will hang here
 ```python sync
 page.on("dialog", lambda dialog: print(dialog.message))
 page.click("button") # Will hang here
+```
+
+```csharp
+page.Dialog += (_, dialog) => Console.WriteLine(dialog.Message);
+await page.ClickAsync("button"); // Will hang here
 ```
 
 :::note
@@ -109,4 +119,13 @@ def handle_dialog(dialog):
 
 page.on('dialog', lambda: handle_dialog)
 page.close(run_before_unload=True)
+```
+
+```csharp
+page.Dialog += (_, dialog) =>
+{
+    Assert.Equal("beforeunload", dialog.Type);
+    dialog.DismissAsync();
+};
+await page.CloseAsync(runBeforeUnload: true);
 ```

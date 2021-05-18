@@ -205,6 +205,7 @@ export module Protocol {
     export type addScriptToEvaluateOnNewDocumentReturnValue = void;
     export type addBindingParameters = {
       browserContextId?: string;
+      worldName?: string;
       name: string;
       script: string;
     };
@@ -456,6 +457,7 @@ export module Protocol {
     };
     export type setFileInputFilesReturnValue = void;
     export type addBindingParameters = {
+      worldName?: string;
       name: string;
       script: string;
     };
@@ -502,13 +504,7 @@ export module Protocol {
       script: string;
       worldName?: string;
     };
-    export type addScriptToEvaluateOnNewDocumentReturnValue = {
-      scriptId: string;
-    };
-    export type removeScriptToEvaluateOnNewDocumentParameters = {
-      scriptId: string;
-    };
-    export type removeScriptToEvaluateOnNewDocumentReturnValue = void;
+    export type addScriptToEvaluateOnNewDocumentReturnValue = void;
     export type navigateParameters = {
       frameId: string;
       url: string;
@@ -699,7 +695,10 @@ export module Protocol {
     };
     export type executionContextCreatedPayload = {
       executionContextId: string;
-      auxData: any;
+      auxData: {
+        frameId?: string;
+        name?: string;
+      };
     }
     export type executionContextDestroyedPayload = {
       executionContextId: string;
@@ -1061,7 +1060,6 @@ export module Protocol {
     "Page.describeNode": Page.describeNodeParameters;
     "Page.scrollIntoViewIfNeeded": Page.scrollIntoViewIfNeededParameters;
     "Page.addScriptToEvaluateOnNewDocument": Page.addScriptToEvaluateOnNewDocumentParameters;
-    "Page.removeScriptToEvaluateOnNewDocument": Page.removeScriptToEvaluateOnNewDocumentParameters;
     "Page.navigate": Page.navigateParameters;
     "Page.goBack": Page.goBackParameters;
     "Page.goForward": Page.goForwardParameters;
@@ -1135,7 +1133,6 @@ export module Protocol {
     "Page.describeNode": Page.describeNodeReturnValue;
     "Page.scrollIntoViewIfNeeded": Page.scrollIntoViewIfNeededReturnValue;
     "Page.addScriptToEvaluateOnNewDocument": Page.addScriptToEvaluateOnNewDocumentReturnValue;
-    "Page.removeScriptToEvaluateOnNewDocument": Page.removeScriptToEvaluateOnNewDocumentReturnValue;
     "Page.navigate": Page.navigateReturnValue;
     "Page.goBack": Page.goBackReturnValue;
     "Page.goForward": Page.goForwardReturnValue;

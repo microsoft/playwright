@@ -71,6 +71,9 @@ it('should return background pages', async ({browserType, browserOptions, create
   expect(context.backgroundPages()).toContain(backgroundPage);
   expect(context.pages()).not.toContain(backgroundPage);
   await context.close();
+  expect(context.pages().length).toBe(0);
+  // TODO: the following line is flaky, uncomment once fixed.
+  // expect(context.backgroundPages().length).toBe(0);
 });
 
 it('should return background pages when recording video', async ({browserType, browserOptions, createUserDataDir, asset}, testInfo) => {

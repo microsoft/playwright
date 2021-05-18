@@ -62,6 +62,10 @@ const applySetting = {
     docShell.allowJavascript = !javaScriptDisabled;
   },
 
+  scrollbarsHidden: (hidden) => {
+    frameTree.setScrollbarsHidden(hidden);
+  },
+
   colorScheme: (colorScheme) => {
     frameTree.setColorScheme(colorScheme);
   },
@@ -89,10 +93,10 @@ function initialize() {
     if (value !== undefined)
       applySetting[name](value);
   }
-  for (const script of scriptsToEvaluateOnNewDocument)
-    frameTree.addScriptToEvaluateOnNewDocument(script);
   for (const { worldName, name, script } of bindings)
     frameTree.addBinding(worldName, name, script);
+  for (const script of scriptsToEvaluateOnNewDocument)
+    frameTree.addScriptToEvaluateOnNewDocument(script);
 
   pageAgent = new PageAgent(messageManager, channel, frameTree);
 

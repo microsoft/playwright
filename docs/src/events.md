@@ -49,6 +49,13 @@ with page.expect_request("**/*logo*.png") as first:
 print(first.value.url)
 ```
 
+```csharp
+var waitForRequestTask = page.WaitForRequestAsync("**/*logo*.png");
+await page.GotoAsync("https://wikipedia.org");
+var request = await waitForRequestTask;
+Console.WriteLine(request.Url);
+```
+
 Wait for popup window:
 
 ```js
@@ -82,6 +89,13 @@ await child_page.goto("https://wikipedia.org")
 with page.expect_popup() as popup:
   page.evaluate("window.open()")
 popup.value.goto("https://wikipedia.org")
+```
+
+```csharp
+var waitForPopupTask = page.WaitForPopupAsync();
+await page.EvaluateAsync("window.open()");
+var popup = await waitForPopupTask;
+await popup.GotoAsync("https://wikipedia.org");
 ```
 
 ## Adding/removing event listener
@@ -140,7 +154,22 @@ page.remove_listener("requestfinished", print_request_finished)
 page.goto("https://www.openstreetmap.org/")
 ```
 
+```csharp
+page.Request += (_, request) => Console.WriteLine("Request sent: " + request.Url);
+void listener(object sender, IRequest request)
+{
+    Console.WriteLine("Request finished: " + request.Url);
+};
+page.RequestFinished += listener;
+await page.GotoAsync("https://wikipedia.org");
+
+// Remove previously added listener.
+page.RequestFinished -= listener;
+await page.GotoAsync("https://www.openstreetmap.org/");
+```
+
 ## Adding one-off listeners
+* langs: js, python, java
 
 If certain event needs to be handled once, there is a convenience API for that:
 

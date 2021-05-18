@@ -35,6 +35,7 @@ export { JSHandle } from './jsHandle';
 export { Request, Response, Route, WebSocket } from './network';
 export { Page } from './page';
 export { Selectors } from './selectors';
+export { Tracing } from './tracing';
 export { Video } from './video';
 export { Worker } from './worker';
 export { CDPSession } from './cdpSession';

@@ -15,7 +15,8 @@
   limitations under the License.
 */
 
-import { ContextEntry, InterestingPageEvent, ActionEntry, trace } from '../../../server/trace/viewer/traceModel';
+import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
+import { ContextEntry } from '../../../server/trace/viewer/traceModel';
 import './timeline.css';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
@@ -24,27 +25,27 @@ import { msToString } from '../../uiUtils';
 import { FilmStrip } from './filmStrip';
 
 type TimelineBar = {
-  entry?: ActionEntry;
-  event?: InterestingPageEvent;
+  action?: ActionTraceEvent;
+  event?: ActionTraceEvent;
   leftPosition: number;
   rightPosition: number;
   leftTime: number;
   rightTime: number;
   type: string;
   label: string;
-  priority: number;
+  className: string;
 };
 
 export const Timeline: React.FunctionComponent<{
   context: ContextEntry,
   boundaries: Boundaries,
-  selectedAction: ActionEntry | undefined,
-  highlightedAction: ActionEntry | undefined,
-  onSelected: (action: ActionEntry) => void,
-  onHighlighted: (action: ActionEntry | undefined) => void,
+  selectedAction: ActionTraceEvent | undefined,
+  highlightedAction: ActionTraceEvent | undefined,
+  onSelected: (action: ActionTraceEvent) => void,
+  onHighlighted: (action: ActionTraceEvent | undefined) => void,
 }> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
-  const [previewX, setPreviewX] = React.useState<number | undefined>();
+  const [previewPoint, setPreviewPoint] = React.useState<{ x: number, clientY: number } | undefined>();
   const [hoveredBarIndex, setHoveredBarIndex] = React.useState<number | undefined>();
 
   const offsets = React.useMemo(() => {
@@ -61,64 +62,36 @@ export const Timeline: React.FunctionComponent<{
         if (entry.metadata.method === 'goto')
           detail = entry.metadata.params.url || '';
         bars.push({
-          entry,
+          action: entry,
           leftTime: entry.metadata.startTime,
           rightTime: entry.metadata.endTime,
           leftPosition: timeToPosition(measure.width, boundaries, entry.metadata.startTime),
           rightPosition: timeToPosition(measure.width, boundaries, entry.metadata.endTime),
           label: entry.metadata.apiName + ' ' + detail,
-          type: entry.metadata.method,
-          priority: 0,
+          type: entry.metadata.type + '.' + entry.metadata.method,
+          className: `${entry.metadata.type}_${entry.metadata.method}`.toLowerCase()
         });
       }
-      let lastDialogOpened: trace.DialogOpenedEvent | undefined;
-      for (const event of page.interestingEvents) {
-        if (event.type === 'dialog-opened') {
-          lastDialogOpened = event;
-          continue;
-        }
-        if (event.type === 'dialog-closed' && lastDialogOpened) {
-          bars.push({
-            event,
-            leftTime: lastDialogOpened.timestamp,
-            rightTime: event.timestamp,
-            leftPosition: timeToPosition(measure.width, boundaries, lastDialogOpened.timestamp),
-            rightPosition: timeToPosition(measure.width, boundaries, event.timestamp),
-            label: lastDialogOpened.message ? `${event.dialogType} "${lastDialogOpened.message}"` : event.dialogType,
-            type: 'dialog',
-            priority: -1,
-          });
-        } else if (event.type === 'navigation') {
-          bars.push({
-            event,
-            leftTime: event.timestamp,
-            rightTime: event.timestamp,
-            leftPosition: timeToPosition(measure.width, boundaries, event.timestamp),
-            rightPosition: timeToPosition(measure.width, boundaries, event.timestamp),
-            label: `navigated to ${event.url}`,
-            type: event.type,
-            priority: 1,
-          });
-        } else if (event.type === 'load') {
-          bars.push({
-            event,
-            leftTime: event.timestamp,
-            rightTime: event.timestamp,
-            leftPosition: timeToPosition(measure.width, boundaries, event.timestamp),
-            rightPosition: timeToPosition(measure.width, boundaries, event.timestamp),
-            label: `load`,
-            type: event.type,
-            priority: 1,
-          });
-        }
+
+      for (const event of page.events) {
+        const startTime = event.metadata.startTime;
+        bars.push({
+          event,
+          leftTime: startTime,
+          rightTime: startTime,
+          leftPosition: timeToPosition(measure.width, boundaries, startTime),
+          rightPosition: timeToPosition(measure.width, boundaries, startTime),
+          label: event.metadata.method,
+          type: event.metadata.type + '.' + event.metadata.method,
+          className: `${event.metadata.type}_${event.metadata.method}`.toLowerCase()
+        });
       }
     }
-    bars.sort((a, b) => a.priority - b.priority);
     return bars;
   }, [context, boundaries, measure.width]);
 
   const hoveredBar = hoveredBarIndex !== undefined ? bars[hoveredBarIndex] : undefined;
-  let targetBar: TimelineBar | undefined = bars.find(bar => bar.entry === (highlightedAction || selectedAction));
+  let targetBar: TimelineBar | undefined = bars.find(bar => bar.action === (highlightedAction || selectedAction));
   targetBar = hoveredBar || targetBar;
 
   const findHoveredBarIndex = (x: number) => {
@@ -144,29 +117,30 @@ export const Timeline: React.FunctionComponent<{
   const onMouseMove = (event: React.MouseEvent) => {
     if (!ref.current)
       return;
-    const x = event.clientX - ref.current.getBoundingClientRect().left;
+    const bounds = ref.current.getBoundingClientRect();
+    const x = event.clientX - bounds.left;
     const index = findHoveredBarIndex(x);
-    setPreviewX(x);
+    setPreviewPoint({ x, clientY: event.clientY });
     setHoveredBarIndex(index);
     if (typeof index === 'number')
-      onHighlighted(bars[index].entry);
+      onHighlighted(bars[index].action);
   };
 
   const onMouseLeave = () => {
-    setPreviewX(undefined);
+    setPreviewPoint(undefined);
     setHoveredBarIndex(undefined);
     onHighlighted(undefined);
   };
 
   const onClick = (event: React.MouseEvent) => {
-    setPreviewX(undefined);
+    setPreviewPoint(undefined);
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
     const index = findHoveredBarIndex(x);
     if (index === undefined)
       return;
-    const entry = bars[index].entry;
+    const entry = bars[index].action;
     if (entry)
       onSelected(entry);
   };
@@ -182,7 +156,7 @@ export const Timeline: React.FunctionComponent<{
     <div className='timeline-lane timeline-labels'>{
       bars.map((bar, index) => {
         return <div key={index}
-          className={'timeline-label ' + bar.type + (targetBar === bar ? ' selected' : '')}
+          className={'timeline-label ' + bar.className + (targetBar === bar ? ' selected' : '')}
           style={{
             left: bar.leftPosition + 'px',
             width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
@@ -195,7 +169,7 @@ export const Timeline: React.FunctionComponent<{
     <div className='timeline-lane timeline-bars'>{
       bars.map((bar, index) => {
         return <div key={index}
-          className={'timeline-bar ' + bar.type + (targetBar === bar ? ' selected' : '')}
+          className={'timeline-bar ' + (bar.action ? 'action ' : '') + (bar.event ? 'event ' : '') + bar.className + (targetBar === bar ? ' selected' : '')}
           style={{
             left: bar.leftPosition + 'px',
             width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
@@ -203,10 +177,10 @@ export const Timeline: React.FunctionComponent<{
         ></div>;
       })
     }</div>
-    <FilmStrip context={context} boundaries={boundaries} previewX={previewX} />
+    <FilmStrip context={context} boundaries={boundaries} previewPoint={previewPoint} />
     <div className='timeline-marker timeline-marker-hover' style={{
-      display: (previewX !== undefined) ? 'block' : 'none',
-      left: (previewX || 0) + 'px',
+      display: (previewPoint !== undefined) ? 'block' : 'none',
+      left: (previewPoint?.x || 0) + 'px',
     }}></div>
   </div>;
 };

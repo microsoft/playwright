@@ -415,8 +415,8 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
   expect(result).toEqual([42]);
 });
 
-it('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server, isWebKit }) => {
-  it.fixme(isWebKit);
+it('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'webkit');
 
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {

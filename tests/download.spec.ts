@@ -51,6 +51,7 @@ it.describe('download event', () => {
       page.click('a')
     ]);
     let error;
+    expect(download.page()).toBe(page);
     expect(download.url()).toBe(`${server.PREFIX}/downloadWithFilename`);
     expect(download.suggestedFilename()).toBe(`file.txt`);
     await download.path().catch(e => error = e);
@@ -73,8 +74,6 @@ it.describe('download event', () => {
   });
 
   it('should report proper download url when download is from download attribute', async ({browser, server, browserName}) => {
-    it.fixme(browserName === 'webkit', '@see https://github.com/microsoft/playwright/issues/5537');
-
     const page = await browser.newPage({ acceptDownloads: true });
     await page.goto(server.PREFIX + '/empty.html');
     await page.setContent(`<a href="${server.PREFIX}/chromium-linux.zip" download="foo.zip">download</a>`);
@@ -282,10 +281,10 @@ it.describe('download event', () => {
     await page.close();
   });
 
-  it('should report new window downloads', async ({browser, server, browserName, headful}) => {
-    it.fixme(browserName === 'chromium' && headful);
+  it('should report new window downloads', async ({browser, server, browserName, headless}) => {
+    it.fixme(browserName === 'chromium' && !headless);
 
-    // TODO: - the test fails in headful Chromium as the popup page gets closed along
+    // TODO: - the test fails in headed Chromium as the popup page gets closed along
     // with the session before download completed event arrives.
     // - WebKit doesn't close the popup page
     const page = await browser.newPage({ acceptDownloads: true });
@@ -498,6 +497,20 @@ it.describe('download event', () => {
     it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
     it.fixme(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
     const page = await browser.newPage({ acceptDownloads: true });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    await page.close();
+  });
+
+  it('should report downloads with interception', async ({browser, server}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    await page.route(/.*/, r => r.continue());
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),

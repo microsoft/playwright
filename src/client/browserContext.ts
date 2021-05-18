@@ -50,7 +50,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     sdkLanguage: 'javascript'
   };
 
-  readonly _tracing: Tracing;
+  readonly tracing: Tracing;
 
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
@@ -69,7 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     if (parent instanceof Browser)
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
-    this._tracing = new Tracing(this);
+    this.tracing = new Tracing(this);
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -86,6 +86,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       this._serviceWorkers.add(serviceWorker);
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
+    this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
+    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
+    this._channel.on('requestFinished', ({ request, responseEndTiming, page }) => this._onRequestFinished(network.Request.from(request), responseEndTiming, Page.fromNullable(page)));
+    this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -94,6 +98,35 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this.emit(Events.BrowserContext.Page, page);
     if (page._opener && !page._opener.isClosed())
       page._opener.emit(Events.Page.Popup, page);
+  }
+
+  private _onRequest(request: network.Request, page: Page | null) {
+    this.emit(Events.BrowserContext.Request, request);
+    if (page)
+      page.emit(Events.Page.Request, request);
+  }
+
+  private _onResponse(response: network.Response, page: Page | null) {
+    this.emit(Events.BrowserContext.Response, response);
+    if (page)
+      page.emit(Events.Page.Response, response);
+  }
+
+  private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined, page: Page | null) {
+    request._failureText = failureText || null;
+    if (request._timing)
+      request._timing.responseEnd = responseEndTiming;
+    this.emit(Events.BrowserContext.RequestFailed, request);
+    if (page)
+      page.emit(Events.Page.RequestFailed, request);
+  }
+
+  private _onRequestFinished(request: network.Request, responseEndTiming: number, page: Page | null) {
+    if (request._timing)
+      request._timing.responseEnd = responseEndTiming;
+    this.emit(Events.BrowserContext.RequestFinished, request);
+    if (page)
+      page.emit(Events.Page.RequestFinished, request);
   }
 
   _onRoute(route: network.Route, request: network.Request) {

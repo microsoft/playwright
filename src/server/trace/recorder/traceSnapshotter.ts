@@ -24,7 +24,6 @@ import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
 import { ElementHandle } from '../../dom';
 import { TraceEvent } from '../common/traceEvents';
-import { monotonicTime } from '../../../utils/utils';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
@@ -66,18 +65,10 @@ export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegat
   }
 
   onResourceSnapshot(snapshot: ResourceSnapshot): void {
-    this._appendTraceEvent({
-      timestamp: monotonicTime(),
-      type: 'resource-snapshot',
-      snapshot,
-    });
+    this._appendTraceEvent({ type: 'resource-snapshot', snapshot });
   }
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
-    this._appendTraceEvent({
-      timestamp: monotonicTime(),
-      type: 'frame-snapshot',
-      snapshot,
-    });
+    this._appendTraceEvent({ type: 'frame-snapshot', snapshot });
   }
 }

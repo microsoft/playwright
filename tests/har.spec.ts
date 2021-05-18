@@ -258,3 +258,26 @@ it('should calculate time', async ({ contextFactory, server }, testInfo) => {
   const log = await getLog();
   expect(log.entries[0].time).toBeGreaterThan(0);
 });
+
+it('should have popup requests', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.click('a'),
+  ]);
+  await popup.waitForLoadState();
+  const log = await getLog();
+
+  expect(log.pages.length).toBe(2);
+  expect(log.pages[0].id).toBe('page_0');
+  expect(log.pages[1].id).toBe('page_1');
+
+  const entries = log.entries.filter(entry => entry.pageref === 'page_1');
+  expect(entries.length).toBe(2);
+  expect(entries[0].request.url).toBe(server.PREFIX + '/one-style.html');
+  expect(entries[0].response.status).toBe(200);
+  expect(entries[1].request.url).toBe(server.PREFIX + '/one-style.css');
+  expect(entries[1].response.status).toBe(200);
+});

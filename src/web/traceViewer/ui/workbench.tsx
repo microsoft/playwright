@@ -14,7 +14,8 @@
   limitations under the License.
 */
 
-import { ActionEntry, ContextEntry } from '../../../server/trace/viewer/traceModel';
+import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
+import { ContextEntry } from '../../../server/trace/viewer/traceModel';
 import { ActionList } from './actionList';
 import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';
@@ -33,22 +34,22 @@ export const Workbench: React.FunctionComponent<{
   debugNames: string[],
 }> = ({ debugNames }) => {
   const [debugName, setDebugName] = React.useState(debugNames[0]);
-  const [selectedAction, setSelectedAction] = React.useState<ActionEntry | undefined>();
-  const [highlightedAction, setHighlightedAction] = React.useState<ActionEntry | undefined>();
+  const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
+  const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
 
   let context = useAsyncMemo(async () => {
     return (await fetch(`/context/${debugName}`).then(response => response.json())) as ContextEntry;
   }, [debugName], emptyContext);
 
-  const actions = React.useMemo(() => {
-    const actions: ActionEntry[] = [];
+  const { actions, nextAction } = React.useMemo(() => {
+    const actions: ActionTraceEvent[] = [];
     for (const page of context.pages)
       actions.push(...page.actions);
-    actions.sort((a, b) => a.timestamp - b.timestamp);
-    return actions;
-  }, [context]);
+    const nextAction = selectedAction ? actions[actions.indexOf(selectedAction) + 1] : undefined;
+    return { actions, nextAction };
+  }, [context, selectedAction]);
 
-  const snapshotSize = context.created.viewportSize || { width: 1280, height: 720 };
+  const snapshotSize = context.options.viewport || { width: 1280, height: 720 };
   const boundaries = { minimum: context.startTime, maximum: context.endTime };
 
   return <div className='vbox workbench'>
@@ -77,11 +78,11 @@ export const Workbench: React.FunctionComponent<{
     </div>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation='horizontal'>
-        <SnapshotTab actionEntry={selectedAction} snapshotSize={snapshotSize} />
+        <SnapshotTab action={selectedAction} snapshotSize={snapshotSize} />
         <TabbedPane tabs={[
-          { id: 'logs', title: 'Log', render: () => <LogsTab actionEntry={selectedAction} /> },
-          { id: 'source', title: 'Source', render: () => <SourceTab actionEntry={selectedAction} /> },
-          { id: 'network', title: 'Network', render: () => <NetworkTab actionEntry={selectedAction} /> },
+          { id: 'logs', title: 'Log', render: () => <LogsTab action={selectedAction} /> },
+          { id: 'source', title: 'Source', render: () => <SourceTab action={selectedAction} /> },
+          { id: 'network', title: 'Network', render: () => <NetworkTab context={context} action={selectedAction} nextAction={nextAction}/> },
         ]}/>
       </SplitView>
       <ActionList
@@ -101,14 +102,14 @@ const now = performance.now();
 const emptyContext: ContextEntry = {
   startTime: now,
   endTime: now,
-  created: {
-    timestamp: now,
-    type: 'context-metadata',
-    browserName: '',
+  browserName: '',
+  options: {
+    sdkLanguage: '',
     deviceScaleFactor: 1,
     isMobile: false,
-    viewportSize: { width: 1280, height: 800 },
-    debugName: '<empty>',
+    viewport: { width: 1280, height: 800 },
+    _debugName: '<empty>',
   },
-  pages: []
+  pages: [],
+  resources: []
 };

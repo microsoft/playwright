@@ -73,6 +73,23 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class PageExamples
+{
+    public static async Task Run()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Webkit.LaunchAsync();
+        var page = await browser.NewPageAsync();
+        await page.GotoAsync("https://www.theverge.com");
+        await page.ScreenshotAsync("theverge.png");
+    }
+}
+```
+
 The Page class emits various events (described below) which can be handled using any of Node's native
 [`EventEmitter`](https://nodejs.org/api/events.html#events_class_eventemitter) methods, such as `on`, `once` or
 `removeListener`.
@@ -89,6 +106,10 @@ page.onLoad(p -> System.out.println("Page loaded!"));
 
 ```py
 page.once("load", lambda: print("page loaded!"))
+```
+
+```csharp
+page.Load += (_, _) => Console.WriteLine("Page loaded!");
 ```
 
 To unsubscribe from events use the `removeListener` method:
@@ -117,6 +138,16 @@ def log_request(intercepted_request):
 page.on("request", log_request)
 # sometime later...
 page.remove_listener("request", log_request)
+```
+
+```csharp
+void PageLoadHandler(object _, IPage p) {
+    Console.WriteLine("Page loaded!");
+};
+
+page.Load += PageLoadHandler;
+// Do some work...
+page.Load -= PageLoadHandler;
 ```
 
 ## event: Page.close
@@ -170,6 +201,16 @@ page.on("console", print_args)
 page.evaluate("console.log('hello', 5, {foo: 'bar'})")
 ```
 
+```csharp
+page.Console += async (_, msg) =>
+{
+    foreach (var arg in msg.Args)
+        Console.WriteLine(await arg.JsonValueAsync<object>());
+};
+
+await page.EvaluateAsync("console.log('hello', 5, { foo: 'bar' })");
+```
+
 ## event: Page.crash
 - argument: <[Page]>
 
@@ -220,6 +261,17 @@ except Error as e:
     # when the page crashes, exception message contains "crash".
 ```
 
+```csharp
+try {
+  // Crash might happen during a click.
+  await page.ClickAsync("button");
+  // Or while waiting for an event.
+  await page.WaitForPopupAsync(() -> {});
+} catch (PlaywrightException e) {
+  // When the page crashes, exception message contains "crash".
+}
+```
+
 ## event: Page.dialog
 - argument: <[Dialog]>
 
@@ -267,6 +319,13 @@ page.onFileChooser(fileChooser -> {
 
 ```py
 page.on("filechooser", lambda file_chooser: file_chooser.set_files("/tmp/myfile.pdf"))
+```
+
+```csharp
+page.FileChooser += (_, fileChooser) =>
+{
+    fileChooser.SetFilesAsync(@"C:\temp\myfile.pdf");
+};
 ```
 
 ## event: Page.frameAttached
@@ -335,6 +394,13 @@ with page.expect_event("popup") as page_info:
     page.evaluate("window.open('https://example.com')")
 popup = page_info.value
 print(popup.evaluate("location.href"))
+```
+
+```csharp
+var waitForPopupTask = page.WaitForPopupAsync();
+await page.EvaluateAsync("() => window.open('https://microsoft.com')");
+var popup = await waitForPopupTask;
+Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
 
 :::note
@@ -420,6 +486,10 @@ await page.add_init_script(path="./preload.js")
 ```python sync
 # in your playwright script, assuming the preload.js file is in same directory
 page.add_init_script(path="./preload.js")
+```
+
+```csharp
+await page.AddInitScriptAsync(scriptPath: "./preload.js");
 ```
 
 :::note
@@ -612,9 +682,6 @@ Only available for Chromium atm.
 Browser-specific Coverage implementation. See [Coverage](#class-coverage) for more details.
 
 ## async method: Page.dblclick
-* langs:
-  - alias-csharp: DblClickAsync
-
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
@@ -674,6 +741,10 @@ await page.dispatch_event("button#submit", "click")
 page.dispatch_event("button#submit", "click")
 ```
 
+```csharp
+await page.DispatchEventAsync("button#submit", "click");
+```
+
 Under the hood, it creates an instance of an event based on the given [`param: type`], initializes it with
 [`param: eventInit`] properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by
 default.
@@ -714,6 +785,11 @@ await page.dispatch_event("#source", "dragstart", { "dataTransfer": data_transfe
 # note you can only create data_transfer in chromium and firefox
 data_transfer = page.evaluate_handle("new DataTransfer()")
 page.dispatch_event("#source", "dragstart", { "dataTransfer": data_transfer })
+```
+
+```csharp
+var dataTransfer = await page.EvaluateHandleAsync("() => new DataTransfer()");
+await page.DispatchEventAsync("#source", "dragstart", new { dataTransfer });
 ```
 
 ### param: Page.dispatchEvent.selector = %%-input-selector-%%
@@ -810,6 +886,25 @@ page.evaluate("matchMedia('print').matches")
 # → False
 ```
 
+```csharp
+await page.EvaluateAsync("() => matchMedia('screen').matches");
+// → true
+await page.EvaluateAsync("() => matchMedia('print').matches");
+// → false
+
+await page.EmulateMediaAsync(Media.Print);
+await page.EvaluateAsync("() => matchMedia('screen').matches");
+// → false
+await page.EvaluateAsync("() => matchMedia('print').matches");
+// → true
+
+await page.EmulateMediaAsync(Media.Screen);
+await page.EvaluateAsync("() => matchMedia('screen').matches");
+// → true
+await page.EvaluateAsync("() => matchMedia('print').matches");
+// → false
+```
+
 ```js
 await page.emulateMedia({ colorScheme: 'dark' });
 await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
@@ -847,6 +942,16 @@ page.evaluate("matchMedia('(prefers-color-scheme: dark)').matches")
 page.evaluate("matchMedia('(prefers-color-scheme: light)').matches")
 # → False
 page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
+```
+
+```csharp
+await page.EmulateMediaAsync(colorScheme: ColorScheme.Dark);
+await page.EvaluateAsync("matchMedia('(prefers-color-scheme: dark)').matches");
+// → true
+await page.EvaluateAsync("matchMedia('(prefers-color-scheme: light)').matches");
+// → false
+await page.EvaluateAsync("matchMedia('(prefers-color-scheme: no-preference)').matches");
+// → false
 ```
 
 ### option: Page.emulateMedia.media
@@ -900,6 +1005,12 @@ preload_href = page.eval_on_selector("link[rel=preload]", "el => el.href")
 html = page.eval_on_selector(".main-container", "(e, suffix) => e.outer_html + suffix", "hello")
 ```
 
+```csharp
+var searchValue = await page.EvalOnSelectorAsync<string>("#search", "el => el.value");
+var preloadHref = await page.EvalOnSelectorAsync<string>("link[rel=preload]", "el => el.href");
+var html = await page.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.outerHTML + suffix", "hello");
+```
+
 Shortcut for main frame's [`method: Frame.evalOnSelector`].
 
 ### param: Page.evalOnSelector.selector = %%-query-selector-%%
@@ -939,6 +1050,10 @@ div_counts = await page.eval_on_selector_all("div", "(divs, min) => divs.length 
 
 ```python sync
 div_counts = page.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
+```
+
+```csharp
+var divsCount = await page.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => divs.length >= min", 10);
 ```
 
 ### param: Page.evalOnSelectorAll.selector = %%-query-selector-%%
@@ -988,6 +1103,11 @@ result = page.evaluate("([x, y]) => Promise.resolve(x * y)", [7, 8])
 print(result) # prints "56"
 ```
 
+```csharp
+var result = await page.EvaluateAsync<int>("([x, y]) => Promise.resolve(x * y)", new[] { 7, 8 });
+Console.WriteLine(result);
+```
+
 A string can also be passed in instead of a function:
 
 ```js
@@ -1010,6 +1130,10 @@ print(await page.evaluate(f"1 + {x}")) # prints "11"
 print(page.evaluate("1 + 2")) # prints "3"
 x = 10
 print(page.evaluate(f"1 + {x}")) # prints "11"
+```
+
+```csharp
+Console.WriteLine(await page.EvaluateAsync<int>("1 + 2")); // prints "3"
 ```
 
 [ElementHandle] instances can be passed as an argument to the [`method: Page.evaluate`]:
@@ -1036,6 +1160,12 @@ await body_handle.dispose()
 body_handle = page.query_selector("body")
 html = page.evaluate("([body, suffix]) => body.innerHTML + suffix", [body_handle, "hello"])
 body_handle.dispose()
+```
+
+```csharp
+var bodyHandle = await page.QuerySelectorAsync("body");
+var html = await page.EvaluateAsync<string>("([body, suffix]) => body.innerHTML + suffix", new object [] { bodyHandle, "hello" });
+await bodyHandle.DisposeAsync();
 ```
 
 Shortcut for main frame's [`method: Frame.evaluate`].
@@ -1077,6 +1207,11 @@ a_window_handle = page.evaluate_handle("Promise.resolve(window)")
 a_window_handle # handle for the window object.
 ```
 
+```csharp
+// Handle for the window object.
+var aWindowHandle = await page.EvaluateHandleAsync("() => Promise.resolve(window)");
+```
+
 A string can also be passed in instead of a function:
 
 ```js
@@ -1093,6 +1228,10 @@ a_handle = await page.evaluate_handle("document") # handle for the "document"
 
 ```python sync
 a_handle = page.evaluate_handle("document") # handle for the "document"
+```
+
+```csharp
+var docHandle = await page.EvalueHandleAsync("document"); // Handle for the `document`
 ```
 
 [JSHandle] instances can be passed as an argument to the [`method: Page.evaluateHandle`]:
@@ -1123,6 +1262,13 @@ a_handle = page.evaluate_handle("document.body")
 result_handle = page.evaluate_handle("body => body.innerHTML", a_handle)
 print(result_handle.json_value())
 result_handle.dispose()
+```
+
+```csharp
+var handle = await page.EvaluateHandleAsync("() => document.body");
+var resultHandle = await page.EvaluateHandleAsync("([body, suffix]) => body.innerHTML + suffix", new object[] { handle, "hello" });
+Console.WriteLine(await resultHandle.JsonValueAsync<string>());
+await resultHandle.DisposeAsync();
 ```
 
 ### param: Page.evaluateHandle.expression = %%-evaluate-expression-%%
@@ -1245,6 +1391,32 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class PageExamples
+{
+  public static async Task Main()
+  {
+      using var playwright = await Playwright.CreateAsync();
+      await using var browser = await playwright.Webkit.LaunchAsync(headless: false);
+      var page = await browser.NewPageAsync();
+
+      await page.ExposeBindingAsync("pageUrl", (source) => source.Page.Url);
+      await page.SetContentAsync("<script>\n" +
+      "  async function onClick() {\n" +
+      "    document.querySelector('div').textContent = await window.pageURL();\n" +
+      "  }\n" +
+      "</script>\n" +
+      "<button onclick=\"onClick()\">Click me</button>\n" +
+      "<div></div>");
+
+      await page.ClickAsync("button");
+  }
+}
+```
+
 An example of passing an element handle:
 
 ```js
@@ -1300,6 +1472,23 @@ page.set_content("""
   <div>Click me</div>
   <div>Or click me</div>
 """)
+```
+
+```csharp
+var result = new TaskCompletionSource<string>();
+await page.ExposeBindingAsync("clicked", async (BindingSource _, IJSHandle t) =>
+{
+    return result.TrySetResult(await t.AsElement.TextContentAsync());
+});
+
+await page.SetContentAsync("<script>\n" +
+  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
+  "</script>\n" +
+  "<div>Click me</div>\n" +
+  "<div>Or click me</div>\n");
+
+await page.ClickAsync("div");
+Console.WriteLine(await result.Task);
 ```
 
 ### param: Page.exposeBinding.name
@@ -1455,6 +1644,42 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+
+class PageExamples
+{
+  public static async Task Main()
+  {
+      using var playwright = await Playwright.CreateAsync();
+      await using var browser = await playwright.Webkit.LaunchAsync(headless: false); 
+      var page = await browser.NewPageAsync();
+
+      // NOTE: md5 is inherently insecure, and we strongly discourage using
+      // this in production in any shape or form
+      await page.ExposeFunctionAsync("sha1", (string input) =>
+      {
+          return Convert.ToBase64String(
+              MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
+      });
+
+      await page.SetContentAsync("<script>\n" +
+      "  async function onClick() {\n" +
+      "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+      "  }\n" +
+      "</script>\n" +
+      "<button onclick=\"onClick()\">Click me</button>\n" +
+      "<div></div>");
+
+      await page.ClickAsync("button");
+      Console.WriteLine(await page.TextContentAsync("div"));
+  }
+}
+```
+
 ### param: Page.exposeFunction.name
 - `name` <[string]>
 
@@ -1514,6 +1739,10 @@ Frame frame = page.frame("frame-name");
 frame = page.frame(name="frame-name")
 ```
 
+```csharp
+var frame = page.Frame("frame-name");
+```
+
 ```js
 const frame = page.frame({ url: /.*domain.*/ });
 ```
@@ -1524,6 +1753,10 @@ Frame frame = page.frameByUrl(Pattern.compile(".*domain.*");
 
 ```py
 frame = page.frame(url=r".*domain.*")
+```
+
+```csharp
+var frame = page.FrameByUrl(".*domain.*");
 ```
 
 ### param: Page.frame.frameSelector
@@ -1599,7 +1832,6 @@ Navigate to the next page in history.
 ## async method: Page.goto
 * langs:
   - alias-java: navigate
-  - alias-csharp: GoToAsync
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -1819,6 +2051,12 @@ page.emulate_media(media="screen")
 page.pdf(path="page.pdf")
 ```
 
+```csharp
+// Generates a PDF with 'screen' media type
+await page.EmulateMediaAsync(Media.Screen);
+await page.PdfAsync("page.pdf");
+```
+
 The [`option: width`], [`option: height`], and [`option: margin`] options accept values labeled with units. Unlabeled
 values are treated as pixels.
 
@@ -2023,6 +2261,18 @@ page.screenshot(path="o.png")
 browser.close()
 ```
 
+```csharp
+await using var browser = await playwright.Webkit.LaunchAsync(headless: false);
+var page = await browser.NewPageAsync();
+await page.GotoAsync("https://keycode.info");
+await page.PressAsync("body", "A");
+await page.ScreenshotAsync("A.png");
+await page.PressAsync("body", "ArrowLeft");
+await page.ScreenshotAsync("ArrowLeft.png");
+await page.PressAsync("body", "Shift+O");
+await page.ScreenshotAsync("O.png");
+```
+
 ### param: Page.press.selector = %%-input-selector-%%
 
 ### param: Page.press.key
@@ -2046,7 +2296,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector within the page. If no elements match the selector, the
-return value resolves to `null`.
+return value resolves to `null`. To wait for an element on the page, use [`method: Page.waitForSelector`].
 
 Shortcut for main frame's [`method: Frame.querySelector`].
 
@@ -2115,6 +2365,13 @@ page.goto("https://example.com")
 browser.close()
 ```
 
+```csharp
+await using var browser = await playwright.Webkit.LaunchAsync();
+var page = await browser.NewPageAsync();
+await page.RouteAsync("**/*.{png,jpg,jpeg}", async r => await r.AbortAsync());
+await page.GotoAsync("https://www.microsoft.com");
+```
+
 or the same snippet using a regex pattern instead:
 
 ```js
@@ -2143,6 +2400,13 @@ page = browser.new_page()
 page.route(re.compile(r"(\.png$)|(\.jpg$)"), lambda route: route.abort())
 page.goto("https://example.com")
 browser.close()
+```
+
+```csharp
+await using var browser = await playwright.Webkit.LaunchAsync();
+var page = await browser.NewPageAsync();
+await page.RouteAsync(new Regex("(\\.png$)|(\\.jpg$)"), async r => await r.AbortAsync());
+await page.GotoAsync("https://www.microsoft.com");
 ```
 
 It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:
@@ -2181,6 +2445,16 @@ def handle_route(route):
   else
     route.continue_()
 page.route("/api/**", handle_route)
+```
+
+```csharp
+await page.RouteAsync("/api/**", async r =>
+{
+  if (r.Request.PostData.Contains("my-string"))
+      await r.FulfillAsync(body: "mocked-data");
+  else
+      await r.ContinueAsync();
+});
 ```
 
 Page routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request
@@ -2299,6 +2573,15 @@ page.select_option("select#colors", "blue")
 page.select_option("select#colors", label="blue")
 # multiple selection
 page.select_option("select#colors", value=["red", "green", "blue"])
+```
+
+```csharp
+// single selection matching the value
+await page.SelectOptionAsync("select#colors", new[] { "blue" });
+// single selection matching both the value and the label
+await page.SelectOptionAsync("select#colors", new[] { new SelectOptionValue() { Label = "blue" } });
+// multiple 
+await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ```
 
 Shortcut for main frame's [`method: Frame.selectOption`].
@@ -2420,6 +2703,12 @@ page.set_viewport_size({"width": 640, "height": 480})
 page.goto("https://example.com")
 ```
 
+```csharp
+var page = await browser.NewPageAsync();
+await page.SetViewportSizeAsync(640, 480);
+await page.GotoAsync("https://www.microsoft.com");
+```
+
 ### param: Page.setViewportSize.viewportSize
 * langs: js, python
 - `viewportSize` <[Object]>
@@ -2512,6 +2801,11 @@ await page.type("#mytextarea", "world", delay=100) # types slower, like a user
 ```python sync
 page.type("#mytextarea", "hello") # types instantly
 page.type("#mytextarea", "world", delay=100) # types slower, like a user
+```
+
+```csharp
+await page.TypeAsync("#mytextarea", "hello"); // types instantly
+await page.TypeAsync("#mytextarea", "world"); // types slower, like a user
 ```
 
 Shortcut for main frame's [`method: Frame.type`].
@@ -2667,6 +2961,12 @@ with page.expect_event("framenavigated") as event_info:
 frame = event_info.value
 ```
 
+```csharp
+var waitTask = page.WaitForEventAsync(PageEvent.FrameNavigated);
+await page.ClickAsync("button");
+var frame = await waitTask;
+```
+
 ### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
 
 ### param: Page.waitForEvent.optionsOrPredicate
@@ -2764,6 +3064,23 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class FrameExamples
+{
+  public static async Task WaitForFunction()
+  {
+    using var playwright = await Playwright.CreateAsync();
+    await using var browser = await playwright.Webkit.LaunchAsync();
+    var page = await browser.NewPageAsync();
+    await page.SetViewportSizeAsync(50, 50);
+    await page.MainFrame.WaitForFunctionAsync("window.innerWidth < 100");
+  }
+}
+```
+
 To pass an argument to the predicate of [`method: Page.waitForFunction`] function:
 
 ```js
@@ -2784,6 +3101,11 @@ await page.wait_for_function("selector => !!document.querySelector(selector)", s
 ```python sync
 selector = ".foo"
 page.wait_for_function("selector => !!document.querySelector(selector)", selector)
+```
+
+```csharp
+var selector = ".foo";
+await page.WaitForFunctionAsync("selector => !!document.querySelector(selector)", selector);
 ```
 
 Shortcut for main frame's [`method: Frame.waitForFunction`].
@@ -2828,6 +3150,11 @@ page.click("button") # click triggers navigation.
 page.wait_for_load_state() # the promise resolves after "load" event.
 ```
 
+```csharp
+await page.ClickAsync("button"); // Click triggers navigation.
+await page.WaitForLoadStateAsync(); // The promise resolves after 'load' event.
+```
+
 ```js
 const [popup] = await Promise.all([
   page.waitForEvent('popup'),
@@ -2861,6 +3188,14 @@ popup = page_info.value
  # Following resolves after "domcontentloaded" event.
 popup.wait_for_load_state("domcontentloaded")
 print(popup.title()) # popup is ready to use.
+```
+
+```csharp
+var popupTask = page.WaitForPopupAsync();
+await page.ClickAsync("button"); // click triggers the popup/
+var popup = await popupTask;
+await popup.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.
 ```
 
 Shortcut for main frame's [`method: Frame.waitForLoadState`].
@@ -2906,6 +3241,12 @@ async with page.expect_navigation():
 with page.expect_navigation():
     page.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
 # Resolves after navigation has finished
+```
+
+```csharp
+await Task.WhenAll(page.WaitForNavigationAsync(),
+    frame.ClickAsync("a.delayed-navigation")); // clicking the link will indirectly cause a navigation
+// The method continues after navigation has finished
 ```
 
 :::note
@@ -2999,6 +3340,16 @@ with page.expect_request(lambda request: request.url == "http://example.com" and
 second_request = second.value
 ```
 
+```csharp
+// Waits for the next response with the specified url
+await Task.WhenAll(page.WaitForRequestAsync("https://example.com/resource"),
+    page.ClickAsync("button.triggers-request"));
+
+// Waits for the next request matching some conditions
+await Task.WhenAll(page.WaitForRequestAsync(r => "https://example.com".Equals(r.Url) && "GET" == r.Method),
+    page.ClickAsync("button.triggers-request"));
+```
+
 ```js
 await page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');
 ```
@@ -3084,6 +3435,16 @@ with page.expect_response(lambda response: response.url == "https://example.com"
     page.click("input")
 response = response_info.value
 return response.ok
+```
+
+```csharp
+// Waits for the next response with the specified url
+await Task.WhenAll(page.WaitForResponseAsync("https://example.com/resource"),
+    page.ClickAsync("button.triggers-response"));
+
+// Waits for the next response matching some conditions
+await Task.WhenAll(page.WaitForResponseAsync(r => "https://example.com".Equals(r.Url) && r.Status == 200),
+    page.ClickAsync("button.triggers-response"));
 ```
 
 ### param: Page.waitForResponse.urlOrPredicate
@@ -3188,6 +3549,31 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System;
+using System.Threading.Tasks;
+
+class FrameExamples
+{
+  public static async Task Images()
+  {
+      using var playwright = await Playwright.CreateAsync();
+      await using var browser = await playwright.Chromium.LaunchAsync();
+      var page = await browser.NewPageAsync();
+
+      foreach (var currentUrl in new[] { "https://www.google.com", "https://bbc.com" })
+      {
+          await page.GotoAsync(currentUrl);
+          var element = await page.WaitForSelectorAsync("img");
+          Console.WriteLine($"Loaded image: {await element.GetAttributeAsync("src")}");
+      }
+
+      await browser.CloseAsync();
+  }
+}
+```
+
 ### param: Page.waitForSelector.selector = %%-query-selector-%%
 
 ### option: Page.waitForSelector.state = %%-wait-for-selector-state-%%
@@ -3221,6 +3607,11 @@ await page.wait_for_timeout(1000)
 page.wait_for_timeout(1000)
 ```
 
+```csharp
+// Wait for 1 second
+await page.WaitForTimeoutAsync(1000);
+```
+
 Shortcut for main frame's [`method: Frame.waitForTimeout`].
 
 ### param: Page.waitForTimeout.timeout
@@ -3250,6 +3641,11 @@ await page.wait_for_url("**/target.html")
 ```python sync
 page.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
 page.wait_for_url("**/target.html")
+```
+
+```csharp
+await page.ClickAsync("a.delayed-navigation"); // clicking the link will indirectly cause a navigation
+await page.WaitForURLAsync("**/target.html");
 ```
 
 Shortcut for main frame's [`method: Frame.waitForURL`].

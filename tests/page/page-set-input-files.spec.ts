@@ -118,8 +118,8 @@ it('should work when file input is not attached to DOM', async ({page, asset}) =
   expect(content).toBe('contents of the file');
 });
 
-it('should not throw when filechooser belongs to iframe', async ({page, server, isFirefox}) => {
-  it.skip(isFirefox, 'Firefox ignores filechooser from child frame');
+it('should not throw when filechooser belongs to iframe', async ({page, server, browserName}) => {
+  it.skip(browserName === 'firefox', 'Firefox ignores filechooser from child frame');
 
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
@@ -259,6 +259,32 @@ it('should detect mime type', async ({page, server, asset, isAndroid}) => {
   expect(file2.type).toBe('image/png');
   expect(fs.readFileSync(file2.path).toString()).toBe(
       fs.readFileSync(asset('pptr.png')).toString());
+});
+
+// @see https://github.com/microsoft/playwright/issues/4704
+it('should not trim big uploaded files', async ({page, server, asset, isAndroid}) => {
+  it.fixme(isAndroid);
+
+  let files;
+  server.setRoute('/upload', async (req, res) => {
+    const form = new formidable.IncomingForm();
+    form.parse(req, function(err, fields, f) {
+      files = f;
+      res.end();
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+
+  const DATA_SIZE = Math.pow(2, 20);
+  await Promise.all([
+    page.evaluate(async size => {
+      const body = new FormData();
+      body.set('file', new Blob([new Uint8Array(size)]));
+      await fetch('/upload', { method: 'POST', body });
+    }, DATA_SIZE),
+    server.waitForRequest('/upload'),
+  ]);
+  expect(files.file.size).toBe(DATA_SIZE);
 });
 
 it('should be able to read selected file', async ({page, asset}) => {

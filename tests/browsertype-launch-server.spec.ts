@@ -60,9 +60,7 @@ it.describe('launch server', () => {
     await browserServer.close();
   });
 
-  it('should fire close event', async ({browserType, browserOptions, browserChannel}) => {
-    it.fixme(!!browserChannel, 'Uncomment on roll');
-
+  it('should fire close event', async ({browserType, browserOptions}) => {
     const browserServer = await browserType.launchServer(browserOptions);
     const [result] = await Promise.all([
       // @ts-expect-error The signal parameter is not documented.

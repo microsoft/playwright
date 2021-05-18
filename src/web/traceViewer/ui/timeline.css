@@ -71,10 +71,9 @@
   position: absolute;
   height: 9px;
   top: 11px;
-  background-color: red;
   border-radius: 2px;
   min-width: 3px;
-  --action-color: 'transparent';
+  --action-color: gray;
   background-color: var(--action-color);
 }
 
@@ -83,46 +82,54 @@
   box-shadow: 0 0 0 1px var(--action-color);
 }
 
-.timeline-bar.click,
-.timeline-bar.dblclick,
-.timeline-bar.hover,
-.timeline-bar.check,
-.timeline-bar.uncheck,
-.timeline-bar.tap {
+.timeline-bar.frame_click,
+.timeline-bar.frame_dblclick,
+.timeline-bar.frame_hover,
+.timeline-bar.frame_check,
+.timeline-bar.frame_uncheck,
+.timeline-bar.frame_tap {
   --action-color: var(--green);
 }
 
-.timeline-bar.fill,
-.timeline-bar.press,
-.timeline-bar.type,
-.timeline-bar.selectOption,
-.timeline-bar.setInputFiles {
+.timeline-bar.page_load,
+.timeline-bar.page_domcontentloaded,
+.timeline-bar.frame_fill,
+.timeline-bar.frame_press,
+.timeline-bar.frame_type,
+.timeline-bar.frame_selectoption,
+.timeline-bar.frame_setinputfiles {
   --action-color: var(--orange);
 }
 
-.timeline-bar.goto,
-.timeline-bar.setContent,
-.timeline-bar.goBack,
-.timeline-bar.goForward,
+.timeline-bar.frame_loadstate {
+  display: none;
+}
+
+.timeline-bar.frame_goto,
+.timeline-bar.frame_setcontent,
+.timeline-bar.frame_goback,
+.timeline-bar.frame_goforward,
 .timeline-bar.reload {
   --action-color: var(--blue);
 }
 
-.timeline-bar.evaluateExpression {
+.timeline-bar.frame_evaluateexpression {
   --action-color: var(--yellow);
 }
 
-.timeline-bar.dialog {
-  top: 22px;
+.timeline-bar.frame_dialog {
   --action-color: var(--transparent-blue);
 }
 
-.timeline-bar.navigation {
-  top: 22px;
+.timeline-bar.frame_navigated {
   --action-color: var(--blue);
 }
 
-.timeline-bar.waitForEventInfo {
+.timeline-bar.event {
+  top: 22px;
+}
+
+.timeline-bar.frame_waitforeventinfo {
   bottom: inherit;
   top: 0;
   --action-color: var(--gray);

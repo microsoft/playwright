@@ -19,25 +19,22 @@ import { InMemorySnapshotter } from '../lib/server/snapshot/inMemorySnapshotter'
 import { HttpServer } from '../lib/utils/httpServer';
 import { SnapshotServer } from '../lib/server/snapshot/snapshotServer';
 
-const it = contextTest.extend({
-  async beforeEach({ context, toImpl, mode }, testInfo) {
-    testInfo.skip(mode !== 'default');
-    const snapshotter = new InMemorySnapshotter(toImpl(context));
-    await snapshotter.initialize();
-    this.httpServer = new HttpServer();
-    new SnapshotServer(this.httpServer, snapshotter);
-    const snapshotPort = 11000 + testInfo.workerIndex;
-    await this.httpServer.start(snapshotPort);
-    this.snapshotter = snapshotter;
-    return {
-      snapshotter,
-      snapshotPort,
-    };
+const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnapshotter }>({
+  snapshotPort: async ({}, run, testInfo) => {
+    await run(11000 + testInfo.workerIndex);
   },
 
-  async afterEach() {
-    await this.snapshotter.dispose();
-    await this.httpServer.stop();
+  snapshotter: async ({ mode, toImpl, context, snapshotPort }, run, testInfo) => {
+    if (mode !== 'default')
+      testInfo.skip();
+    const snapshotter = new InMemorySnapshotter(toImpl(context));
+    await snapshotter.initialize();
+    const httpServer = new HttpServer();
+    new SnapshotServer(httpServer, snapshotter);
+    await httpServer.start(snapshotPort);
+    await run(snapshotter);
+    await snapshotter.dispose();
+    await httpServer.stop();
   },
 });
 
@@ -132,9 +129,9 @@ it.describe('snapshots', () => {
     await previewPage.evaluate(snapshotId => {
       (window as any).showSnapshot(snapshotId);
     }, `${snapshot.snapshot().pageId}?name=snapshot${counter}`);
-    while (previewPage.frames().length < 4)
+    while (previewPage.frames().length < 3)
       await new Promise(f => previewPage.once('frameattached', f));
-    const button = await previewPage.frames()[3].waitForSelector('button');
+    const button = await previewPage.frames()[2].waitForSelector('button');
     expect(await button.textContent()).toBe('Hello iframe');
   });
 

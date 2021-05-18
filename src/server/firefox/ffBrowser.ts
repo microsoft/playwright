@@ -23,7 +23,7 @@ import { Page, PageBinding, PageDelegate } from '../page';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
-import { FFPage } from './ffPage';
+import { FFPage, UTILITY_WORLD_NAME } from './ffPage';
 import { Protocol } from './protocol';
 
 export class FFBrowser extends Browser {
@@ -303,9 +303,8 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async _doExposeBinding(binding: PageBinding) {
-    if (binding.world !== 'main')
-      throw new Error('Only main context bindings are supported in Firefox.');
-    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId, name: binding.name, script: binding.source });
+    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : '';
+    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId, worldName, name: binding.name, script: binding.source });
   }
 
   async _doUpdateRequestInterception(): Promise<void> {

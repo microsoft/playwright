@@ -17,36 +17,13 @@
 import * as folio from 'folio';
 import * as path from 'path';
 import { test as pageTest } from '../page/pageTest';
-import { AndroidEnv } from '../android/androidTest';
-import type { BrowserContext } from '../../index';
-import { PlaywrightEnvOptions } from './browserTest';
+import { androidFixtures } from '../android/androidTest';
+import { PlaywrightOptions } from './browserTest';
 import { CommonOptions } from './baseTest';
-
-class AndroidPageEnv extends AndroidEnv {
-  private _context?: BrowserContext;
-
-  async beforeAll(args: any, workerInfo: folio.WorkerInfo) {
-    await super.beforeAll(args, workerInfo);
-    this._context = await this._device!.launchBrowser();
-  }
-
-  async beforeEach(args: any, testInfo: folio.TestInfo) {
-    const result = await super.beforeEach(args, testInfo);
-    const page = await this._context!.newPage();
-    return { ...result, browserVersion: this._browserVersion, browserMajorVersion: this._browserMajorVersion, page, isAndroid: true, isElectron: false };
-  }
-
-  async afterEach({}, testInfo: folio.TestInfo) {
-    for (const page of this._context!.pages())
-      await page.close();
-  }
-}
-
-type AllOptions = PlaywrightEnvOptions & CommonOptions;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: folio.Config<AllOptions> = {
+const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   testDir,
   snapshotDir: '__snapshots__',
   outputDir,
@@ -64,19 +41,23 @@ const config: folio.Config<AllOptions> = {
 
 config.projects.push({
   name: 'android',
-  options: {
+  use: {
     loopback: '10.0.2.2',
+    mode: 'default',
+    browserName: 'chromium',
   },
   testDir: path.join(testDir, 'android'),
 });
 
 config.projects.push({
   name: 'android',
-  options: {
+  use: {
     loopback: '10.0.2.2',
+    mode: 'default',
+    browserName: 'chromium',
   },
   testDir: path.join(testDir, 'page'),
-  define: { test: pageTest, env: new AndroidPageEnv() },
+  define: { test: pageTest, fixtures: androidFixtures },
 });
 
 export default config;

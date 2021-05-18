@@ -39,6 +39,10 @@ export abstract class BrowserContext extends SdkObject {
   static Events = {
     Close: 'close',
     Page: 'page',
+    Request: 'request',
+    Response: 'response',
+    RequestFailed: 'requestfailed',
+    RequestFinished: 'requestfinished',
     BeforeClose: 'beforeclose',
     VideoStarted: 'videostarted',
   };

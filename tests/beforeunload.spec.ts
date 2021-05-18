@@ -44,7 +44,7 @@ it('should close page with beforeunload listener', async ({context, server}) => 
   await newPage.close();
 });
 
-it('should run beforeunload if asked for', async ({context, server, isChromium, isWebKit}) => {
+it('should run beforeunload if asked for', async ({context, server, browserName}) => {
   const newPage = await context.newPage();
   await newPage.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
@@ -56,9 +56,9 @@ it('should run beforeunload if asked for', async ({context, server, isChromium, 
   ]);
   expect(dialog.type()).toBe('beforeunload');
   expect(dialog.defaultValue()).toBe('');
-  if (isChromium)
+  if (browserName === 'chromium')
     expect(dialog.message()).toBe('');
-  else if (isWebKit)
+  else if (browserName === 'webkit')
     expect(dialog.message()).toBe('Leave?');
   else
     expect(dialog.message()).toContain('This page is asking you to confirm that you want to leave');

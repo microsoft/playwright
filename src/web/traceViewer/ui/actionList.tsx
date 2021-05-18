@@ -14,17 +14,17 @@
   limitations under the License.
 */
 
-import { ActionEntry } from '../../../server/trace/viewer/traceModel';
 import './actionList.css';
 import './tabbedPane.css';
 import * as React from 'react';
+import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export interface ActionListProps {
-  actions: ActionEntry[],
-  selectedAction: ActionEntry | undefined,
-  highlightedAction: ActionEntry | undefined,
-  onSelected: (action: ActionEntry) => void,
-  onHighlighted: (action: ActionEntry | undefined) => void,
+  actions: ActionTraceEvent[],
+  selectedAction: ActionTraceEvent | undefined,
+  highlightedAction: ActionTraceEvent | undefined,
+  onSelected: (action: ActionTraceEvent) => void,
+  onHighlighted: (action: ActionTraceEvent | undefined) => void,
 }
 
 export const ActionList: React.FC<ActionListProps> = ({
@@ -68,16 +68,16 @@ export const ActionList: React.FC<ActionListProps> = ({
       }}
       ref={actionListRef}
     >
-      {actions.map(actionEntry => {
-        const { metadata, actionId } = actionEntry;
-        const selectedSuffix = actionEntry === selectedAction ? ' selected' : '';
-        const highlightedSuffix = actionEntry === highlightedAction ? ' highlighted' : '';
+      {actions.map(action => {
+        const { metadata } = action;
+        const selectedSuffix = action === selectedAction ? ' selected' : '';
+        const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
         return <div
           className={'action-entry' + selectedSuffix + highlightedSuffix}
-          key={actionId}
-          onClick={() => onSelected(actionEntry)}
-          onMouseEnter={() => onHighlighted(actionEntry)}
-          onMouseLeave={() => (highlightedAction === actionEntry) && onHighlighted(undefined)}
+          key={metadata.id}
+          onClick={() => onSelected(action)}
+          onMouseEnter={() => onHighlighted(action)}
+          onMouseLeave={() => (highlightedAction === action) && onHighlighted(undefined)}
         >
           <div className={'action-error codicon codicon-issues'} hidden={!metadata.error} />
           <div className='action-title'>{metadata.apiName || metadata.method}</div>

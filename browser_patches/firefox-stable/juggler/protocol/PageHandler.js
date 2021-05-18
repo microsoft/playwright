@@ -336,10 +336,6 @@ class PageHandler {
     return await this._contentPage.send('addScriptToEvaluateOnNewDocument', options);
   }
 
-  async ['Page.removeScriptToEvaluateOnNewDocument'](options) {
-    return await this._contentPage.send('removeScriptToEvaluateOnNewDocument', options);
-  }
-
   async ['Page.dispatchKeyEvent'](options) {
     return await this._contentPage.send('dispatchKeyEvent', options);
   }

@@ -115,7 +115,7 @@ export abstract class BrowserType extends SdkObject {
       protocolLogger,
       browserLogsCollector,
       wsEndpoint: options.useWebSocket ? (transport as WebSocketTransport).wsEndpoint : undefined,
-      traceDir: options._traceDir,
+      traceDir: options.traceDir,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);

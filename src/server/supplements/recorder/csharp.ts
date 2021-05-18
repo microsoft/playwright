@@ -35,7 +35,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (action.name === 'openPage') {
       formatter.add(`var ${pageAlias} = await context.NewPageAsync();`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        formatter.add(`await ${pageAlias}.GoToAsync(${quote(action.url)});`);
+        formatter.add(`await ${pageAlias}.GotoAsync(${quote(action.url)});`);
       return formatter.format();
     }
 
@@ -123,7 +123,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         return `PressAsync(${quote(action.selector)}, ${quote(shortcut)})`;
       }
       case 'navigate':
-        return `GoToAsync(${quote(action.url)})`;
+        return `GotoAsync(${quote(action.url)})`;
       case 'select':
         return `SelectOptionAsync(${quote(action.selector)}, ${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
     }

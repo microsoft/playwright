@@ -100,9 +100,9 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should trigger permission onchange', async ({page, context, server, browserName, headful}) => {
+  it('should trigger permission onchange', async ({page, context, server, browserName, headless}) => {
     it.fail(browserName === 'webkit');
-    it.fail(browserName === 'chromium' && headful);
+    it.fail(browserName === 'chromium' && !headless);
 
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
@@ -145,10 +145,10 @@ it.describe('permissions', () => {
     await context.close();
   });
 
-  it('should support clipboard read', async ({page, context, server, browserName, headful}) => {
+  it('should support clipboard read', async ({page, context, server, browserName, headless}) => {
     it.fail(browserName === 'webkit');
     it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
-    it.fixme(browserName === 'chromium' && headful);
+    it.fixme(browserName === 'chromium' && !headless);
 
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');

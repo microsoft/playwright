@@ -111,7 +111,7 @@ it('should emit binary frame events', async ({ page, server }) => {
     expect(sent[1][i]).toBe(i);
 });
 
-it('should emit error', async ({page, server, isFirefox}) => {
+it('should emit error', async ({page, server, browserName}) => {
   let callback;
   const result = new Promise(f => callback = f);
   page.on('websocket', ws => ws.on('socketerror', callback));
@@ -119,7 +119,7 @@ it('should emit error', async ({page, server, isFirefox}) => {
     new WebSocket('ws://localhost:' + port + '/bogus-ws');
   }, server.PORT);
   const message = await result;
-  if (isFirefox)
+  if (browserName === 'firefox')
     expect(message).toBe('CLOSE_ABNORMAL');
   else
     expect(message).toContain(': 400');

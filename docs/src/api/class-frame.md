@@ -97,6 +97,32 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System;
+using System.Threading.Tasks;
+
+class FrameExamples
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Firefox.LaunchAsync();
+        var page = await browser.NewPageAsync();
+
+        await page.GotoAsync("https://www.bing.com");
+        DumpFrameTree(page.MainFrame, string.Empty);
+    }
+
+    private static void DumpFrameTree(IFrame frame, string indent)
+    {
+        Console.WriteLine($"{indent}{frame.Url}");
+        foreach (var child in frame.ChildFrames)
+            DumpFrameTree(child, indent + " ");
+    }
+}
+```
+
 ## async method: Frame.addScriptTag
 - returns: <[ElementHandle]>
 
@@ -222,9 +248,6 @@ When all steps combined have not finished during the specified [`option: timeout
 Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
-* langs:
-  - alias-csharp: DblClickAsync
-
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
@@ -282,6 +305,10 @@ await frame.dispatch_event("button#submit", "click")
 frame.dispatch_event("button#submit", "click")
 ```
 
+```csharp
+await frame.DispatchEventAsync("button#submit", "click");
+```
+
 Under the hood, it creates an instance of an event based on the given [`param: type`], initializes it with
 [`param: eventInit`] properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by
 default.
@@ -322,6 +349,12 @@ await frame.dispatch_event("#source", "dragstart", { "dataTransfer": data_transf
 # note you can only create data_transfer in chromium and firefox
 data_transfer = frame.evaluate_handle("new DataTransfer()")
 frame.dispatch_event("#source", "dragstart", { "dataTransfer": data_transfer })
+```
+
+```csharp
+// Note you can only create DataTransfer in Chromium and Firefox
+var dataTransfer = await frame.EvaluateHandleAsync("() => new DataTransfer()");
+await frame.DispatchEventAsync("#source", "dragstart", new { dataTransfer });
 ```
 
 ### param: Frame.dispatchEvent.selector = %%-input-selector-%%
@@ -379,6 +412,12 @@ preload_href = frame.eval_on_selector("link[rel=preload]", "el => el.href")
 html = frame.eval_on_selector(".main-container", "(e, suffix) => e.outerHTML + suffix", "hello")
 ```
 
+```csharp
+var searchValue = await frame.EvalOnSelectorAsync<string>("#search", "el => el.value");
+var preloadHref = await frame.EvalOnSelectorAsync<string>("link[rel=preload]", "el => el.href");
+var html = await frame.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.outerHTML + suffix", "hello");
+```
+
 ### param: Frame.evalOnSelector.selector = %%-query-selector-%%
 
 ### param: Frame.evalOnSelector.expression = %%-evaluate-expression-%%
@@ -419,6 +458,10 @@ divs_counts = await frame.eval_on_selector_all("div", "(divs, min) => divs.lengt
 
 ```python sync
 divs_counts = frame.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
+```
+
+```csharp
+var divsCount = await frame.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => divs.length >= min", 10);
 ```
 
 ### param: Frame.evalOnSelectorAll.selector = %%-query-selector-%%
@@ -466,6 +509,11 @@ result = frame.evaluate("([x, y]) => Promise.resolve(x * y)", [7, 8])
 print(result) # prints "56"
 ```
 
+```csharp
+var result = await frame.EvaluateAsync<int>("([x, y]) => Promise.resolve(x * y)", new[] { 7, 8 });
+Console.WriteLine(result);
+```
+
 A string can also be passed in instead of a function.
 
 ```js
@@ -486,6 +534,10 @@ print(await frame.evaluate(f"1 + {x}")) # prints "11"
 print(frame.evaluate("1 + 2")) # prints "3"
 x = 10
 print(frame.evaluate(f"1 + {x}")) # prints "11"
+```
+
+```csharp
+Console.WriteLine(await frame.EvaluateAsync<int>("1 + 2")); // prints "3"
 ```
 
 [ElementHandle] instances can be passed as an argument to the [`method: Frame.evaluate`]:
@@ -512,6 +564,12 @@ await body_handle.dispose()
 body_handle = frame.query_selector("body")
 html = frame.evaluate("([body, suffix]) => body.innerHTML + suffix", [body_handle, "hello"])
 body_handle.dispose()
+```
+
+```csharp
+var bodyHandle = await frame.QuerySelectorAsync("body");
+var html = await frame.EvaluateAsync<string>("([body, suffix]) => body.innerHTML + suffix", new object [] { bodyHandle, "hello" });
+await bodyHandle.DisposeAsync();
 ```
 
 ### param: Frame.evaluate.expression = %%-evaluate-expression-%%
@@ -552,6 +610,11 @@ a_window_handle = frame.evaluate_handle("Promise.resolve(window)")
 a_window_handle # handle for the window object.
 ```
 
+```csharp
+// Handle for the window object.
+var aWindowHandle = await frame.EvaluateHandleAsync("() => Promise.resolve(window)");
+```
+
 A string can also be passed in instead of a function.
 
 ```js
@@ -568,6 +631,10 @@ a_handle = await page.evaluate_handle("document") # handle for the "document"
 
 ```python sync
 a_handle = page.evaluate_handle("document") # handle for the "document"
+```
+
+```csharp
+var docHandle = await frame.EvalueHandleAsync("document"); // Handle for the `document`
 ```
 
 [JSHandle] instances can be passed as an argument to the [`method: Frame.evaluateHandle`]:
@@ -598,6 +665,13 @@ a_handle = page.evaluate_handle("document.body")
 result_handle = page.evaluate_handle("body => body.innerHTML", a_handle)
 print(result_handle.json_value())
 result_handle.dispose()
+```
+
+```csharp
+var handle = await frame.EvaluateHandleAsync("() => document.body");
+var resultHandle = await frame.EvaluateHandleAsync("([body, suffix]) => body.innerHTML + suffix", new object[] { handle, "hello" });
+Console.WriteLine(await resultHandle.JsonValueAsync<string>());
+await resultHandle.DisposeAsync();
 ```
 
 ### param: Frame.evaluateHandle.expression = %%-evaluate-expression-%%
@@ -669,6 +743,12 @@ content_frame = frame_element.content_frame()
 assert frame == content_frame
 ```
 
+```csharp
+var frameElement = await frame.FrameElementAsync();
+var contentFrame = await frameElement.ContentFrameAsync();
+Console.WriteLine(frame == contentFrame); // -> True
+```
+
 ## async method: Frame.getAttribute
 - returns: <[null]|[string]>
 
@@ -686,7 +766,6 @@ Attribute name to get the value for.
 ## async method: Frame.goto
 * langs:
   - alias-java: navigate
-  - alias-csharp: GoToAsync
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -965,6 +1044,15 @@ frame.select_option("select#colors", label="blue")
 frame.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
+```csharp
+// single selection matching the value
+await frame.SelectOptionAsync("select#colors", new[] { "blue" });
+// single selection matching both the value and the label
+await frame.SelectOptionAsync("select#colors", new[] { new SelectOptionValue() { Label = "blue" } });
+// multiple selection
+await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
+```
+
 ### param: Frame.selectOption.selector = %%-query-selector-%%
 
 ### param: Frame.selectOption.values = %%-select-options-values-%%
@@ -1073,6 +1161,11 @@ await frame.type("#mytextarea", "world", delay=100) # types slower, like a user
 ```python sync
 frame.type("#mytextarea", "hello") # types instantly
 frame.type("#mytextarea", "world", delay=100) # types slower, like a user
+```
+
+```csharp
+await frame.TypeAsync("#mytextarea", "hello"); // types instantly
+await frame.TypeAsync("#mytextarea", "world", delay: 100); // types slower, like a user
 ```
 
 ### param: Frame.type.selector = %%-input-selector-%%
@@ -1195,6 +1288,23 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class FrameExamples
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Firefox.LaunchAsync();
+        var page = await browser.NewPageAsync();
+        await page.SetViewportSizeAsync(50, 50);
+        await page.MainFrame.WaitForFunctionAsync("window.innerWidth < 100");
+    }
+}
+```
+
 To pass an argument to the predicate of `frame.waitForFunction` function:
 
 ```js
@@ -1215,6 +1325,11 @@ await frame.wait_for_function("selector => !!document.querySelector(selector)", 
 ```python sync
 selector = ".foo"
 frame.wait_for_function("selector => !!document.querySelector(selector)", selector)
+```
+
+```csharp
+var selector = ".foo";
+await page.MainFrame.WaitForFunctionAsync("selector => !!document.querySelector(selector)", selector);
 ```
 
 ### param: Frame.waitForFunction.expression = %%-evaluate-expression-%%
@@ -1255,6 +1370,11 @@ await frame.wait_for_load_state() # the promise resolves after "load" event.
 ```python sync
 frame.click("button") # click triggers navigation.
 frame.wait_for_load_state() # the promise resolves after "load" event.
+```
+
+```csharp
+await frame.ClickAsync("button");
+await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 ```
 
 ### param: Frame.waitForLoadState.state = %%-wait-for-load-state-state-%%
@@ -1298,6 +1418,14 @@ async with frame.expect_navigation():
 with frame.expect_navigation():
     frame.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
 # Resolves after navigation has finished
+```
+
+```csharp
+await Task.WhenAll(
+    frame.WaitForNavigationAsync(),
+    // clicking the link will indirectly cause a navigation
+    frame.ClickAsync("a.delayed-navigation"));
+// Resolves after navigation has finished
 ```
 
 :::note
@@ -1396,6 +1524,29 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System;
+using System.Threading.Tasks;
+
+class FrameExamples
+{
+  public static async Task Main()
+  {
+    using var playwright = await Playwright.CreateAsync();
+    await using var browser = await playwright.Chromium.LaunchAsync();
+    var page = await browser.NewPageAsync();
+
+    foreach (var currentUrl in new[] { "https://www.google.com", "https://bbc.com" })
+    {
+      await page.GotoAsync(currentUrl);
+      element = await page.MainFrame.WaitForSelectorAsync("img");
+      Console.WriteLine($"Loaded image: {await element.GetAttributeAsync("src")}");
+    }
+  }
+}
+```
+
 ### param: Frame.waitForSelector.selector = %%-query-selector-%%
 
 ### option: Frame.waitForSelector.state = %%-wait-for-selector-state-%%
@@ -1436,6 +1587,11 @@ await frame.wait_for_url("**/target.html")
 ```python sync
 frame.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
 frame.wait_for_url("**/target.html")
+```
+
+```csharp
+await frame.ClickAsync("a.delayed-navigation"); // clicking the link will indirectly cause a navigation
+await frame.WaitForURLAsync("**/target.html");
 ```
 
 ### param: Frame.waitForURL.url = %%-wait-for-navigation-url-%%

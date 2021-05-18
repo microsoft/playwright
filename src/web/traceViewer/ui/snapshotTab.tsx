@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-import { ActionEntry } from '../../../server/trace/viewer/traceModel';
 import { Size } from '../geometry';
 import './snapshotTab.css';
 import './tabbedPane.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import type { Point } from '../../../common/types';
+import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export const SnapshotTab: React.FunctionComponent<{
-  actionEntry: ActionEntry | undefined,
+  action: ActionTraceEvent | undefined,
   snapshotSize: Size,
-}> = ({ actionEntry, snapshotSize }) => {
+}> = ({ action, snapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   let [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
   const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
-  for (const snapshot of actionEntry?.metadata.snapshots || [])
+  for (const snapshot of action?.metadata.snapshots || [])
     snapshotMap.set(snapshot.title, snapshot);
   const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
@@ -44,12 +44,12 @@ export const SnapshotTab: React.FunctionComponent<{
       return;
     let snapshotUri = undefined;
     let point: Point | undefined = undefined;
-    if (actionEntry) {
+    if (action) {
       const snapshot = snapshots[snapshotIndex];
       if (snapshot && snapshot.snapshotName) {
-        snapshotUri = `${actionEntry.metadata.pageId}?name=${snapshot.snapshotName}`;
+        snapshotUri = `${action.metadata.pageId}?name=${snapshot.snapshotName}`;
         if (snapshot.snapshotName.includes('action'))
-          point = actionEntry.metadata.point;
+          point = action.metadata.point;
       }
     }
     const snapshotUrl = snapshotUri ? `${window.location.origin}/snapshot/${snapshotUri}` : 'data:text/html,<body style="background: #ddd"></body>';
@@ -57,7 +57,7 @@ export const SnapshotTab: React.FunctionComponent<{
       (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
     } catch (e) {
     }
-  }, [actionEntry, snapshotIndex]);
+  }, [action, snapshotIndex]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   const scaledSize = {

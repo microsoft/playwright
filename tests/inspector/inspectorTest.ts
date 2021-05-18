@@ -20,7 +20,6 @@ import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
 import { ChildProcess, spawn } from 'child_process';
 import { chromium } from '../../index';
-import * as folio from 'folio';
 export { expect } from 'folio';
 
 type CLITestArgs = {
@@ -29,39 +28,40 @@ type CLITestArgs = {
   runCLI: (args: string[]) => CLIMock;
 };
 
-export const test = contextTest.extend({
-  async beforeAll({}, workerInfo: folio.WorkerInfo) {
-    process.env.PWTEST_RECORDER_PORT = String(10907 + workerInfo.workerIndex);
-  },
-
-  async beforeEach({ page, context, toImpl, browserName, browserChannel, headful, mode }, testInfo: folio.TestInfo): Promise<CLITestArgs> {
-    testInfo.skip(mode === 'service');
-    const recorderPageGetter = async () => {
+export const test = contextTest.extend<CLITestArgs>({
+  recorderPageGetter: async ({ page, context, toImpl, browserName, channel, headless, mode, executablePath }, run, testInfo) => {
+    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
+    if (mode === 'service')
+      testInfo.skip();
+    await run(async () => {
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
       const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
       const browser = await chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
-    };
-    return {
-      runCLI: (cliArgs: string[]) => {
-        this._cli = new CLIMock(browserName, browserChannel, !headful, cliArgs);
-        return this._cli;
-      },
-      openRecorder: async () => {
-        await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
-        return new Recorder(page, await recorderPageGetter());
-      },
-      recorderPageGetter,
-    };
+    });
   },
 
-  async afterEach({}, testInfo: folio.TestInfo) {
-    if (this._cli) {
-      await this._cli.exited;
-      this._cli = undefined;
-    }
+  runCLI: async ({ browserName, channel, headless, mode, executablePath }, run, testInfo) => {
+    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
+    if (mode === 'service')
+      testInfo.skip();
+
+    let cli: CLIMock | undefined;
+    await run(cliArgs => {
+      cli = new CLIMock(browserName, channel, headless, cliArgs, executablePath);
+      return cli;
+    });
+    if (cli)
+      await cli.exited;
+  },
+
+  openRecorder: async ({ page, recorderPageGetter }, run) => {
+    await run(async () => {
+      await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
+      return new Recorder(page, await recorderPageGetter());
+    });
   },
 });
 
@@ -91,12 +91,17 @@ class Recorder {
     let callback;
     const result = new Promise(f => callback = f);
     await page.goto(url);
-    const frames = new Set<any>();
-    await page.exposeBinding('_recorderScriptReadyForTest', (source, arg) => {
-      frames.add(source.frame);
-      if (frames.size === frameCount)
-        callback(arg);
-    });
+    let msgCount = 0;
+    const listener = msg => {
+      if (msg.text() === 'Recorder script ready for test') {
+        ++msgCount;
+        if (msgCount === frameCount) {
+          page.off('console', listener);
+          callback();
+        }
+      }
+    };
+    page.on('console', listener);
     await Promise.all([
       result,
       page.setContent(content)
@@ -126,23 +131,35 @@ class Recorder {
   }
 
   async waitForHighlight(action: () => Promise<void>): Promise<string> {
-    if (!this._highlightInstalled) {
-      this._highlightInstalled = true;
-      await this.page.exposeBinding('_highlightUpdatedForTest', (source, arg) => this._highlightCallback(arg));
-    }
+    let callback;
+    const result = new Promise<string>(f => callback = f);
+    const listener = async msg => {
+      const prefix = 'Highlight updated for test: ';
+      if (msg.text().startsWith(prefix)) {
+        this.page.off('console', listener);
+        callback(msg.text().substr(prefix.length));
+      }
+    };
+    this.page.on('console', listener);
     const [ generatedSelector ] = await Promise.all([
-      new Promise<string>(f => this._highlightCallback = f),
+      result,
       action()
     ]);
     return generatedSelector;
   }
 
   async waitForActionPerformed(): Promise<{ hovered: string | null, active: string | null }> {
-    if (!this._actionReporterInstalled) {
-      this._actionReporterInstalled = true;
-      await this.page.exposeBinding('_actionPerformedForTest', (source, arg) => this._actionPerformedCallback(arg));
-    }
-    return await new Promise(f => this._actionPerformedCallback = f);
+    let callback;
+    const listener = async msg => {
+      const prefix = 'Action performed for test: ';
+      if (msg.text().startsWith(prefix)) {
+        this.page.off('console', listener);
+        const arg = JSON.parse(msg.text().substr(prefix.length));
+        callback(arg);
+      }
+    };
+    this.page.on('console', listener);
+    return new Promise(f => callback = f);
   }
 
   async hoverOverElement(selector: string): Promise<string> {
@@ -161,7 +178,7 @@ class CLIMock {
   private waitForCallback: () => void;
   exited: Promise<void>;
 
-  constructor(browserName: string, browserChannel: string, headless: boolean, args: string[]) {
+  constructor(browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined) {
     this.data = '';
     const nodeArgs = [
       path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
@@ -169,13 +186,14 @@ class CLIMock {
       ...args,
       `--browser=${browserName}`,
     ];
-    if (browserChannel)
-      nodeArgs.push(`--channel=${browserChannel}`);
+    if (channel)
+      nodeArgs.push(`--channel=${channel}`);
     this.process = spawn('node', nodeArgs, {
       env: {
         ...process.env,
         PWTEST_CLI_EXIT: '1',
         PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
+        PWTEST_CLI_EXECUTABLE_PATH: executablePath,
       },
       stdio: 'pipe'
     });
@@ -186,9 +204,15 @@ class CLIMock {
     });
     this.exited = new Promise((f, r) => {
       this.process.stderr.on('data', data => {
-        r(new Error(data));
+        console.error(data.toString());
       });
-      this.process.on('exit', f);
+      this.process.on('exit', (exitCode, signal) => {
+        if (exitCode)
+          r(new Error(`Process failed with exit code ${exitCode}`));
+        if (signal)
+          r(new Error(`Process recieved signal: ${signal}`));
+        f();
+      });
     });
   }
 

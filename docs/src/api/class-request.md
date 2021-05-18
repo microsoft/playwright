@@ -39,6 +39,13 @@ page.onRequestFailed(request -> {
 page.on("requestfailed", lambda request: print(request.url + " " + request.failure))
 ```
 
+```csharp
+page.RequestFailed += (_, request) =>
+{
+    Console.WriteLine(request.Failure);
+};
+```
+
 ## method: Request.frame
 - returns: <[Frame]>
 
@@ -109,6 +116,11 @@ response = page.goto("http://example.com")
 print(response.request.redirected_from.url) # "http://example.com"
 ```
 
+```csharp
+var response = await page.GotoAsync("http://www.microsoft.com");
+Console.WriteLine(response.Request.RedirectedFrom?.Url); // http://www.microsoft.com
+```
+
 If the website `https://google.com` has no redirects:
 
 ```js
@@ -131,6 +143,11 @@ response = page.goto("https://google.com")
 print(response.request.redirected_from) # None
 ```
 
+```csharp
+var response = await page.GotoAsync("https://www.google.com");
+Console.WriteLine(response.Request.RedirectedFrom?.Url); // null
+```
+
 ## method: Request.redirectedTo
 - returns: <[null]|[Request]>
 
@@ -148,6 +165,10 @@ System.out.println(request.redirectedFrom().redirectedTo() == request); // true
 
 ```py
 assert request.redirected_from.redirected_to == request
+```
+
+```csharp
+Console.WriteLine(request.RedirectedFrom?.RedirectedTo == request); // True
 ```
 
 ## method: Request.resourceType
@@ -215,6 +236,13 @@ with page.expect_event("requestfinished") as request_info:
     page.goto("http://example.com")
 request = request_info.value
 print(request.timing)
+```
+
+```csharp
+var waitForEventTask = page.WaitForEventAsync(PageEvent.RequestFinished);
+await page.GotoAsync("https://www.microsoft.com");
+var request = await waitForEventTask;
+Console.WriteLine(request.Timing.ResponseEnd);
 ```
 
 ## method: Request.url

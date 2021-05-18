@@ -36,11 +36,13 @@ The Playwright API is available in multiple languages.
 
 ## C#
 
-Playwright for C# is available in preview.
+[Playwright for .NET](https://playwright.dev/dotnet/docs/intro/) is available.
 
-```
-dotnet add package PlaywrightSharp
-```
-
-* [Playwright on NuGet](https://www.nuget.org/packages/PlaywrightSharp/)
+* [Documentation](https://playwright.dev/dotnet/docs/intro/)
+* [API](https://playwright.dev/dotnet/docs/api/class-playwright)
 * [GitHub repo](https://github.com/microsoft/playwright-sharp)
+* [Playwright on NuGet](https://www.nuget.org/packages/Microsoft.Playwright)
+
+```
+dotnet add package Microsoft.Playwright
+```

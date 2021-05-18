@@ -77,7 +77,7 @@ function _wrapCode(lines) {
   let i = 0;
   let out = [];
   for (let line of lines) {
-    line = line.replace('<', '&lt;').replace('>', '&gt;');
+    line = line.replace(/[&]/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     if (i < lines.length - 1)
       line = line + "<br/>";
     out.push(line);
@@ -118,7 +118,7 @@ function _wrapAndEscape(node, maxColumns = 0) {
 
 
   let text = node.text;
-  text = text.replace(/\[(.*?)\]\((.*?)\)/g, (match, linkName, linkUrl) => {
+  text = text.replace(/\[([^\]]*)\]\((.*?)\)/g, (match, linkName, linkUrl) => {
     return `<a href="${linkUrl}">${linkName}</a>`;
   });
   text = text.replace(/(?<!`)\[(.*?)\]/g, (match, link) => `<see cref="${link}"/>`);

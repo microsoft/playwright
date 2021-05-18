@@ -33,7 +33,7 @@ import { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
 
-const UTILITY_WORLD_NAME = '__playwright_utility_world__';
+export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class FFPage implements PageDelegate {
   readonly cspErrorsAsynchronousForInlineScipts = true;
@@ -151,7 +151,7 @@ export class FFPage implements PageDelegate {
 
   _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
     const {executionContextId, auxData} = payload;
-    const frame = this._page._frameManager.frame(auxData ? auxData.frameId : null);
+    const frame = this._page._frameManager.frame(auxData.frameId!);
     if (!frame)
       return;
     const delegate = new FFExecutionContext(this._session, executionContextId);
@@ -317,9 +317,8 @@ export class FFPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding) {
-    if (binding.world !== 'main')
-      throw new Error('Only main context bindings are supported in Firefox.');
-    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
+    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : '';
+    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source, worldName });
   }
 
   didClose() {
@@ -491,13 +490,14 @@ export class FFPage implements PageDelegate {
   private _onScreencastFrame(event: Protocol.Page.screencastFramePayload) {
     if (!this._screencastId)
       return;
+    this._session.send('Page.screencastFrameAck', { screencastId: this._screencastId }).catch(e => debugLogger.log('error', e));
+
     const buffer = Buffer.from(event.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
       width: event.deviceWidth,
       height: event.deviceHeight,
     });
-    this._session.send('Page.screencastFrameAck', { screencastId: this._screencastId }).catch(e => debugLogger.log('error', e));
   }
 
   rafCountForStablePosition(): number {

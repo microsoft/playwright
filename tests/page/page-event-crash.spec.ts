@@ -32,51 +32,46 @@ function crash({ page, toImpl, browserName, platform, mode }: any) {
 }
 
 it.describe('', () => {
-  it('should emit crash event when page crashes', async args => {
-    const { page } = args;
+  it('should emit crash event when page crashes', async ({ page, toImpl, browserName, platform, mode }) => {
     await page.setContent(`<div>This page should crash</div>`);
-    crash(args);
+    crash({ page, toImpl, browserName, platform, mode });
     const crashedPage = await new Promise(f => page.on('crash', f));
     expect(crashedPage).toBe(page);
   });
 
-  it('should throw on any action after page crashes', async args => {
-    const { page } = args;
+  it('should throw on any action after page crashes', async ({ page, toImpl, browserName, platform, mode }) => {
     await page.setContent(`<div>This page should crash</div>`);
-    crash(args);
+    crash({ page, toImpl, browserName, platform, mode });
     await page.waitForEvent('crash');
     const err = await page.evaluate(() => {}).then(() => null, e => e);
     expect(err).toBeTruthy();
     expect(err.message).toContain('crash');
   });
 
-  it('should cancel waitForEvent when page crashes', async args => {
-    const { page } = args;
+  it('should cancel waitForEvent when page crashes', async ({ page, toImpl, browserName, platform, mode }) => {
     await page.setContent(`<div>This page should crash</div>`);
     const promise = page.waitForEvent('response').catch(e => e);
-    crash(args);
+    crash({ page, toImpl, browserName, platform, mode });
     const error = await promise;
     expect(error.message).toContain('Page crashed');
   });
 
-  it('should cancel navigation when page crashes', async args => {
-    const { page, server } = args;
+  it('should cancel navigation when page crashes', async ({ server, page, toImpl, browserName, platform, mode }) => {
     await page.setContent(`<div>This page should crash</div>`);
     server.setRoute('/one-style.css', () => {});
     const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
     await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-    crash(args);
+    crash({ page, toImpl, browserName, platform, mode });
     const error = await promise;
     expect(error.message).toContain('Navigation failed because page crashed');
   });
 
-  it('should be able to close context when page crashes', async args => {
-    it.skip(args.isAndroid);
-    it.skip(args.isElectron);
+  it('should be able to close context when page crashes', async ({ isAndroid, isElectron, page, toImpl, browserName, platform, mode }) => {
+    it.skip(isAndroid);
+    it.skip(isElectron);
 
-    const { page } = args;
     await page.setContent(`<div>This page should crash</div>`);
-    crash(args);
+    crash({ page, toImpl, browserName, platform, mode });
     await page.waitForEvent('crash');
     await page.context().close();
   });

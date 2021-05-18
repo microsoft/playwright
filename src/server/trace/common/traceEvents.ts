@@ -16,94 +16,41 @@
 
 import { CallMetadata } from '../../instrumentation';
 import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
+import { BrowserContextOptions } from '../../types';
 
 export type ContextCreatedTraceEvent = {
-  timestamp: number,
-  type: 'context-metadata',
+  type: 'context-options',
   browserName: string,
-  deviceScaleFactor: number,
-  isMobile: boolean,
-  viewportSize?: { width: number, height: number },
-  debugName?: string,
-};
-
-export type PageCreatedTraceEvent = {
-  timestamp: number,
-  type: 'page-created',
-  pageId: string,
-};
-
-export type PageDestroyedTraceEvent = {
-  timestamp: number,
-  type: 'page-destroyed',
-  pageId: string,
+  options: BrowserContextOptions
 };
 
 export type ScreencastFrameTraceEvent = {
-  timestamp: number,
   type: 'screencast-frame',
   pageId: string,
   sha1: string,
   width: number,
   height: number,
+  timestamp: number,
 };
 
 export type ActionTraceEvent = {
-  timestamp: number,
   type: 'action' | 'event',
   metadata: CallMetadata,
 };
 
 export type ResourceSnapshotTraceEvent = {
-  timestamp: number,
   type: 'resource-snapshot',
   snapshot: ResourceSnapshot,
 };
 
 export type FrameSnapshotTraceEvent = {
-  timestamp: number,
   type: 'frame-snapshot',
   snapshot: FrameSnapshot,
 };
 
-export type DialogOpenedEvent = {
-  timestamp: number,
-  type: 'dialog-opened',
-  pageId: string,
-  dialogType: string,
-  message?: string,
-};
-
-export type DialogClosedEvent = {
-  timestamp: number,
-  type: 'dialog-closed',
-  pageId: string,
-  dialogType: string,
-};
-
-export type NavigationEvent = {
-  timestamp: number,
-  type: 'navigation',
-  pageId: string,
-  url: string,
-  sameDocument: boolean,
-};
-
-export type LoadEvent = {
-  timestamp: number,
-  type: 'load',
-  pageId: string,
-};
-
 export type TraceEvent =
     ContextCreatedTraceEvent |
-    PageCreatedTraceEvent |
-    PageDestroyedTraceEvent |
     ScreencastFrameTraceEvent |
     ActionTraceEvent |
     ResourceSnapshotTraceEvent |
-    FrameSnapshotTraceEvent |
-    DialogOpenedEvent |
-    DialogClosedEvent |
-    NavigationEvent |
-    LoadEvent;
+    FrameSnapshotTraceEvent;

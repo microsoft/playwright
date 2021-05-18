@@ -20,7 +20,7 @@ import { PNG } from 'pngjs';
 import { verifyViewport } from './config/utils';
 
 browserTest.describe('page screenshot', () => {
-  browserTest.skip(({ browserName, headful }) => browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
+  browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
 
   browserTest('should run in parallel in multiple pages', async ({server, contextFactory}) => {
     const context = await contextFactory();
@@ -83,8 +83,8 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with large size', async ({ browserName, headful, platform, contextFactory }) => {
-    browserTest.fixme(browserName === 'chromium' && headful === true && platform === 'linux', 'Chromium has gpu problems on linux with large screnshots');
+  browserTest('should work with large size', async ({ browserName, headless, platform, contextFactory }) => {
+    browserTest.fixme(browserName === 'chromium' && !headless && platform === 'linux', 'Chromium has gpu problems on linux with large screnshots');
     browserTest.slow('Large screenshot is slow');
 
     const context = await contextFactory();
@@ -120,7 +120,7 @@ browserTest.describe('page screenshot', () => {
 });
 
 browserTest.describe('element sceenshot', () => {
-  browserTest.skip(({ browserName, headful }) => browserName === 'firefox' && headful);
+  browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless);
 
   browserTest('element screenshot should work with a mobile viewport', async ({browser, server, browserName}) => {
     browserTest.skip(browserName === 'firefox');

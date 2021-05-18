@@ -21,7 +21,7 @@ import path from 'path';
 import fs from 'fs';
 
 it.describe('page screenshot', () => {
-  it.skip(({ browserName, headful }) => browserName === 'firefox' && headful, 'Firefox headful produces a different image.');
+  it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(({ isAndroid }) => isAndroid, 'Different viewport');
 
   it('should work', async ({page, server}) => {

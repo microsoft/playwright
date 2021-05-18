@@ -69,6 +69,24 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class HandleExamples
+{
+    public static async Task Run()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var browser = await playwright.Chromium.LaunchAsync(headless: false);
+        var page = await browser.NewPageAsync();
+        await page.GotoAsync("https://www.bing.com");
+        var handle = await page.QuerySelectorAsync("a");
+        await handle.ClickAsync();
+    }
+}
+```
+
 ElementHandle prevents DOM element from garbage collection unless the handle is disposed with
 [`method: JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame gets navigated.
 
@@ -112,6 +130,11 @@ await page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
 ```python sync
 box = element_handle.bounding_box()
 page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+```
+
+```csharp
+var box = await elementHandle.BoundingBoxAsync();
+await page.Mouse.ClickAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
 ```
 
 ## async method: ElementHandle.check
@@ -177,9 +200,6 @@ When all steps combined have not finished during the specified [`option: timeout
 Returns the content frame for element handles referencing iframe nodes, or `null` otherwise
 
 ## async method: ElementHandle.dblclick
-* langs:
-  - alias-csharp: DblClickAsync
-
 This method double clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
@@ -234,6 +254,10 @@ await element_handle.dispatch_event("click")
 element_handle.dispatch_event("click")
 ```
 
+```csharp
+await elementHandle.DispatchEventAsync("click");
+```
+
 Under the hood, it creates an instance of an event based on the given [`param: type`], initializes it with
 [`param: eventInit`] properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by
 default.
@@ -274,6 +298,14 @@ await element_handle.dispatch_event("#source", "dragstart", {"dataTransfer": dat
 # note you can only create data_transfer in chromium and firefox
 data_transfer = page.evaluate_handle("new DataTransfer()")
 element_handle.dispatch_event("#source", "dragstart", {"dataTransfer": data_transfer})
+```
+
+```csharp
+var handle = await page.EvaluateHandleAsync("() => new DataTransfer()");
+await handle.AsElement.DispatchEventAsync("dragstart", new Dictionary<string, object>
+{
+    { "dataTransfer", dataTransfer }
+});
 ```
 
 ### param: ElementHandle.dispatchEvent.type
@@ -327,6 +359,12 @@ assert tweet_handle.eval_on_selector(".like", "node => node.innerText") == "100"
 assert tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "10"
 ```
 
+```csharp
+var tweetHandle = await page.QuerySelectorAsync(".tweet");
+Assert.Equals("100", await tweetHandle.EvalOnSelectorAsync(".like", "node => node.innerText"));
+Assert.Equals("10", await tweetHandle.EvalOnSelectorAsync(".retweets", "node => node.innerText"));
+```
+
 ### param: ElementHandle.evalOnSelector.selector = %%-query-selector-%%
 
 ### param: ElementHandle.evalOnSelector.expression = %%-evaluate-expression-%%
@@ -378,6 +416,11 @@ assert await feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n =>
 ```python sync
 feed_handle = page.query_selector(".feed")
 assert feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.innerText)") == ["hello!", "hi!"]
+```
+
+```csharp
+var feedHandle = await page.QuerySelectorAsync(".feed");
+Assert.Equals(new [] { "Hello!", "Hi!" }, await feedHandle.EvalOnSelectorAllAsync<string[]>(".tweet", "nodes => nodes.map(n => n.innerText)"));
 ```
 
 ### param: ElementHandle.evalOnSelectorAll.selector = %%-query-selector-%%
@@ -649,6 +692,20 @@ handle.select_option("red", "green", "blue")
 handle.select_option(value="blue", { index: 2 }, "red")
 ```
 
+```csharp
+// single selection matching the value
+await handle.SelectOptionAsync(new[] { "blue" });
+// single selection matching the label
+await handle.SelectOptionAsync(new[] { new SelectOptionValue() { Label = "blue" } });
+// multiple selection
+await handle.SelectOptionAsync(new[] { "red", "green", "blue" });
+// multiple selection for blue, red and second option
+await handle.SelectOptionAsync(new[] {
+    new SelectOptionValue() { Label = "blue" },
+    new SelectOptionValue() { Index = 2 },
+    new SelectOptionValue() { Value = "red" }});
+```
+
 ### param: ElementHandle.selectOption.values = %%-select-options-values-%%
 
 ### option: ElementHandle.selectOption.noWaitAfter = %%-input-no-wait-after-%%
@@ -736,6 +793,11 @@ element_handle.type("hello") # types instantly
 element_handle.type("world", delay=100) # types slower, like a user
 ```
 
+```csharp
+await elementHandle.TypeAsync("Hello"); // Types instantly
+await elementHandle.TypeAsync("World", delay: 100); // Types slower, like a user
+```
+
 An example of typing into a text field and then submitting the form:
 
 ```js
@@ -760,6 +822,12 @@ await element_handle.press("Enter")
 element_handle = page.query_selector("input")
 element_handle.type("some text")
 element_handle.press("Enter")
+```
+
+```csharp
+var elementHandle = await page.QuerySelectorAsync("input");
+await elementHandle.TypeAsync("some text");
+await elementHandle.PressAsync("Enter");
 ```
 
 ### param: ElementHandle.type.text
@@ -864,6 +932,13 @@ page.set_content("<div><span></span></div>")
 div = page.query_selector("div")
 # waiting for the "span" selector relative to the div.
 span = div.wait_for_selector("span", state="attached")
+```
+
+```csharp
+await page.SetContentAsync("<div><span></span></div>");
+var div = await page.QuerySelectorAsync("div");
+// Waiting for the "span" selector relative to the div.
+var span = await page.WaitForSelectorAsync("span", WaitForSelectorState.Attached);
 ```
 
 :::note

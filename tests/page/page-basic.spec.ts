@@ -42,7 +42,8 @@ it('should pass page to close event', async ({page, isAndroid}) => {
   expect(closedPage).toBe(page);
 });
 
-it('should terminate network waiters', async ({page, server}) => {
+it('should terminate network waiters', async ({page, server, isAndroid}) => {
+  it.fixme(isAndroid);
   const results = await Promise.all([
     page.waitForRequest(server.EMPTY_PAGE).catch(e => e),
     page.waitForResponse(server.EMPTY_PAGE).catch(e => e),
@@ -182,7 +183,7 @@ it('page.frame should respect url', async function({page, server}) {
   expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should have sane user agent', async ({page, isChromium, isFirefox, isElectron, isAndroid}) => {
+it('should have sane user agent', async ({page, browserName, isElectron, isAndroid}) => {
   it.skip(isAndroid);
   it.skip(isElectron);
 
@@ -199,7 +200,7 @@ it('should have sane user agent', async ({page, isChromium, isFirefox, isElectro
   // Second part in parenthesis is platform - ignore it.
 
   // Third part for Firefox is the last one and encodes engine and browser versions.
-  if (isFirefox) {
+  if (browserName === 'firefox') {
     const [engine, browser] = part3.split(' ');
     expect(engine.startsWith('Gecko')).toBe(true);
     expect(browser.startsWith('Firefox')).toBe(true);
@@ -213,7 +214,7 @@ it('should have sane user agent', async ({page, isChromium, isFirefox, isElectro
   // 5th part encodes real browser name and engine version.
   const [engine, browser] = part5.split(' ');
   expect(browser.startsWith('Safari/')).toBe(true);
-  if (isChromium)
+  if (browserName === 'chromium')
     expect(engine.includes('Chrome/')).toBe(true);
   else
     expect(engine.startsWith('Version/')).toBe(true);

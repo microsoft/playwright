@@ -61,7 +61,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
     this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
-    this._interceptedPromise = new Promise(f => this._interceptedCallback = f);
+    this._interceptedPromise = new Promise<void>(f => this._interceptedCallback = f);
   }
 
   async abort(errorCode: string) {

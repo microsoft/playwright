@@ -48,6 +48,13 @@ download = download_info.value
 path = download.path()
 ```
 
+```csharp
+var waitForDownloadTask = page.WaitForDownloadAsync();
+await page.ClickAsync("#downloadButton");
+var download = await waitForDownloadTask;
+Console.WriteLine(await download.PathAsync());
+```
+
 :::note
 Browser context **must** be created with the [`option: acceptDownloads`] set to `true` when user needs access to the
 downloaded content. If [`option: acceptDownloads`] is not set, download events are emitted, but the actual download is
@@ -76,6 +83,12 @@ Deletes the downloaded file. Will wait for the download to finish if necessary.
 - returns: <[null]|[string]>
 
 Returns download error if any. Will wait for the download to finish if necessary.
+
+## method: Download.page
+* langs: js, java, python
+- returns: <[Page]>
+
+Get the page that the download belongs to.
 
 ## async method: Download.path
 - returns: <[null]|[path]>

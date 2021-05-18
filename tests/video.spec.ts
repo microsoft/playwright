@@ -159,7 +159,7 @@ it.describe('screencast', () => {
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should work with old options', async ({browser, isFirefox, isWindows}, testInfo) => {
+  it('should work with old options', async ({browser}, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -182,7 +182,7 @@ it.describe('screencast', () => {
     expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
   });
 
-  it('should capture static page', async ({browser, isFirefox, isWindows}, testInfo) => {
+  it('should capture static page', async ({browser}, testInfo) => {
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
       recordVideo: {
@@ -359,9 +359,9 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should capture css transformation', async ({browser, server, headful, browserName, platform}, testInfo) => {
-    it.fixme(headful, 'Fails on headful');
-    it.fixme(browserName === 'webkit' && platform === 'win32', 'Fails on headful');
+  it('should capture css transformation', async ({browser, server, headless, browserName, platform}, testInfo) => {
+    it.fixme(!headless, 'Fails on headed');
+    it.fixme(browserName === 'webkit' && platform === 'win32');
 
     const size = { width: 320, height: 240 };
     // Set viewport equal to screencast frame size to avoid scaling.
@@ -419,8 +419,8 @@ it.describe('screencast', () => {
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should scale frames down to the requested size ', async ({browser, server, headful}, testInfo) => {
-    it.fixme(headful, 'Fails on headful');
+  it('should scale frames down to the requested size ', async ({browser, server, headless}, testInfo) => {
+    it.fixme(!headless, 'Fails on headed');
 
     const context = await browser.newContext({
       recordVideo: {
@@ -503,8 +503,8 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(450);
   });
 
-  it('should be 800x600 with null viewport', async ({ browser, headful, browserName }, testInfo) => {
-    it.fixme(browserName === 'firefox' && !headful, 'Fails in headless on bots');
+  it('should be 800x600 with null viewport', async ({ browser, headless, browserName }, testInfo) => {
+    it.fixme(browserName === 'firefox' && headless, 'Fails in headless on bots');
 
     const context = await browser.newContext({
       recordVideo: {

@@ -19,8 +19,8 @@ import { test as it, expect } from './pageTest';
 
 it.skip(({ isAndroid }) => isAndroid);
 
-it('should work', async ({ page, server, browserName, headful }) => {
-  it.fail(browserName === 'firefox' && headful);
+it('should work', async ({ page, server, browserName, headless }) => {
+  it.fail(browserName === 'firefox' && !headless);
 
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');

@@ -125,17 +125,13 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
       const artifactObject = Artifact.from(artifact);
       artifactObject._isRemote = !!this._browserContext._browser && !!this._browserContext._browser._remoteType;
-      this.emit(Events.Page.Download, new Download(url, suggestedFilename, artifactObject));
+      this.emit(Events.Page.Download, new Download(this, url, suggestedFilename, artifactObject));
     });
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('load', () => this.emit(Events.Page.Load, this));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
-    this._channel.on('request', ({ request }) => this.emit(Events.Page.Request, Request.from(request)));
-    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming }) => this._onRequestFailed(Request.from(request), responseEndTiming, failureText));
-    this._channel.on('requestFinished', ({ request, responseEndTiming }) => this._onRequestFinished(Request.from(request), responseEndTiming));
-    this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
     this._channel.on('video', ({ artifact }) => {
       const artifactObject = Artifact.from(artifact);
@@ -150,19 +146,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
       new Promise<void>(f => this.once(Events.Page.Close, f)),
       new Promise<void>(f => this.once(Events.Page.Crash, f)),
     ]);
-  }
-
-  private _onRequestFailed(request: Request, responseEndTiming: number, failureText: string | undefined) {
-    request._failureText = failureText || null;
-    if (request._timing)
-      request._timing.responseEnd = responseEndTiming;
-    this.emit(Events.Page.RequestFailed,  request);
-  }
-
-  private _onRequestFinished(request: Request, responseEndTiming: number) {
-    if (request._timing)
-      request._timing.responseEnd = responseEndTiming;
-    this.emit(Events.Page.RequestFinished, request);
   }
 
   private _onFrameAttached(frame: Frame) {
@@ -209,6 +192,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   _onClose() {
     this._closed = true;
     this._browserContext._pages.delete(this);
+    this._browserContext._backgroundPages.delete(this);
     this.emit(Events.Page.Close, this);
   }
 

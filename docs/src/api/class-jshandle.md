@@ -23,6 +23,10 @@ window_handle = page.evaluate_handle("window")
 # ...
 ```
 
+```csharp
+var windowHandle = await page.EvaluateHandleAsync("() => window");
+```
+
 JSHandle prevents the referenced JavaScript object being garbage collected unless the handle is exposed with
 [`method: JSHandle.dispose`]. JSHandles are auto-disposed when their origin frame gets navigated or the parent context
 gets destroyed.
@@ -69,6 +73,11 @@ assert await tweet_handle.evaluate("node => node.innerText") == "10 retweets"
 ```python sync
 tweet_handle = page.query_selector(".tweet .retweets")
 assert tweet_handle.evaluate("node => node.innerText") == "10 retweets"
+```
+
+```csharp
+var tweetHandle = await page.QuerySelectorAsync(".tweet .retweets");
+Assert.Equals("10 retweets", await tweetHandle.EvaluateAsync("node => node.innerText"));
 ```
 
 ### param: JSHandle.evaluate.expression = %%-evaluate-expression-%%
@@ -134,6 +143,14 @@ properties = handle.get_properties()
 window_handle = properties.get("window")
 document_handle = properties.get("document")
 handle.dispose()
+```
+
+```csharp
+var handle = await page.EvaluateHandleAsync("() => ({window, document}");
+var properties = await handle.GetPropertiesAsync();
+var windowHandle = properties["window"];
+var documentHandle = properties["document"];
+await handle.DisposeAsync();
 ```
 
 ## async method: JSHandle.getProperty

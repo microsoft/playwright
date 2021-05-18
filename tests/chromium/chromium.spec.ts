@@ -240,7 +240,6 @@ playwrightTest('should send extra headers with connect request', async ({browser
 });
 
 playwrightTest('should report all pages in an existing browser', async ({ browserType, browserOptions }, testInfo) => {
-  playwrightTest.fail();
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     ...browserOptions,

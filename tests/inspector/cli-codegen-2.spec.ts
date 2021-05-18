@@ -377,7 +377,7 @@ await page.ClickAsync(\"text=click me\");`);
       expect(sources.get('<csharp>').text).toContain(`
 // Open new page
 var page1 = await context.NewPageAsync();
-await page1.GoToAsync("about:blank?foo");`);
+await page1.GotoAsync("about:blank?foo");`);
     } else if (browserName === 'firefox') {
       expect(sources.get('<javascript>').text).toContain(`
   // Click text=link
@@ -442,7 +442,10 @@ await page1.GoToAsync("about:blank?foo");`);
     `);
 
     const messages: any[] = [];
-    page.on('console', message => messages.push(message.text()));
+    page.on('console', message => {
+      if (message.type() !== 'error')
+        messages.push(message.text());
+    });
     await Promise.all([
       page.click('button'),
       recorder.waitForOutput('<javascript>', 'page.click')
@@ -461,9 +464,9 @@ await page1.GoToAsync("about:blank?foo");`);
     expect(models.hovered).toBe('input[name="updated"]');
   });
 
-  test('should update active model on action', async ({ page, openRecorder, browserName, headful }) => {
-    test.fixme(browserName === 'webkit' && !headful);
-    test.fixme(browserName === 'firefox' && !headful);
+  test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
+    test.fixme(browserName === 'webkit' && headless);
+    test.fixme(browserName === 'firefox' && headless);
 
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);

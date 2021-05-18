@@ -18,7 +18,7 @@
   white-space: nowrap;
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 3px;
   background: #fdfcfc;
   width: 100%;
   flex: none;
@@ -41,7 +41,8 @@
   flex: 1;
 }
 
-.network-request-title-status {
+.network-request-title-status,
+.network-request-title-method {
   padding-right: 5px;
 }
 
@@ -62,6 +63,7 @@
 
 .network-request-details {
   width: 100%;
+  user-select: text;
 }
 
 .network-request-details-url {
@@ -88,4 +90,9 @@
   background-color: var(--network-content-bg);
   border: black 1px solid;
   max-height: 500px;
+}
+
+.network-request-details-header {
+  margin: 3px 0;
+  font-weight: bold;
 }

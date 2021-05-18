@@ -56,6 +56,12 @@ await page.goto("https://example.com")
 page.goto("https://example.com")
 ```
 
+```csharp
+// Navigate the page
+await page.GotoAsync("https://example.com");
+```
+
+
 ### Custom wait
 
 Override the default behavior to wait until a specific event, like `networkidle`.
@@ -79,6 +85,11 @@ await page.goto("https://example.com", wait_until="networkidle")
 ```python sync
 # Navigate and wait until network is idle
 page.goto("https://example.com", wait_until="networkidle")
+```
+
+```csharp
+// Navigate and wait until network is idle
+await page.GotoAsync("https://example.com", waitUntil: WaitUntilState.NetworkIdle);
 ```
 
 ### Wait for element
@@ -130,6 +141,17 @@ page.goto("https://example.com")
 page.click("text=example domain")
 ```
 
+```csharp
+// Navigate and wait for element
+await page.GotoAsync("https://example.com");
+await page.WaitForSelectorAsync("text=Example Domain");
+
+// Navigate and click element
+// Click will auto-wait for the element
+await page.GotoAsync("https://example.com");
+await page.ClickAsync("text=Example Domain");
+```
+
 ### API reference
 - [`method: Page.goto`]
 - [`method: Page.reload`]
@@ -177,6 +199,14 @@ page.click("text=Login")
 page.fill("#username", "John Doe")
 ```
 
+```csharp
+// Click will auto-wait for navigation to complete
+await page.ClickAsync("text=Login");
+
+// Fill will auto-wait for element on navigated page
+await page.FillAsync("#username", "John Doe");
+```
+
 ### Custom wait
 
 `page.click` can be combined with [`method: Page.waitForLoadState`] to wait for a loading event.
@@ -199,6 +229,11 @@ await page.wait_for_load_state("networkidle"); # This waits for the "networkidle
 ```python sync
 page.click("button"); # Click triggers navigation
 page.wait_for_load_state("networkidle"); # This waits for the "networkidle"
+```
+
+```csharp
+await page.ClickAsync("button"); // Click triggers navigation
+await page.WaitForLoadStateAsync(LoadState.NetworkIdle); // This resolves after "networkidle"
 ```
 
 ### Wait for element
@@ -254,6 +289,18 @@ page.click("text=Login")
 page.fill("#username", "John Doe")
 ```
 
+```csharp
+// Click will auto-wait for the element and trigger navigation
+await page.ClickAsync("text=Login");
+// Wait for the element
+await page.WaitForSelectorAsync("#username");
+
+// Click triggers navigation
+await page.ClickAsync("text=Login");
+// Fill will auto-wait for element
+await page.FillAsync("#username", "John Doe");
+```
+
 ### Asynchronous navigation
 
 Clicking an element could trigger asynchronous processing before initiating the navigation. In these cases, it is
@@ -292,6 +339,15 @@ async with page.expect_navigation():
 with page.expect_navigation():
     # Triggers a navigation after a timeout
     page.click("a")
+```
+
+```csharp
+// Using waitForNavigation with a callback prevents a race condition
+// between clicking and waiting for a navigation.
+await Task.WhenAll(
+    page.WaitForNavigationAsync(), // Waits for the next navigation
+    page.ClickAsync("div.delayed-navigation"); // Triggers a navigation after a timeout
+);
 ```
 
 ### Multiple navigations
@@ -334,6 +390,15 @@ with page.expect_navigation(url="**/login"):
     page.click("a")
 ```
 
+```csharp
+// Running action in the callback of waitForNavigation prevents a race
+// condition between clicking and waiting for a navigation.
+await Task.WhenAll(
+    page.WaitForNavigationAsync("**/login"), // Waits for the next navigation
+    page.ClickAsync("a") // Triggers a navigation with a script redirect
+);
+```
+
 ### Loading a popup
 
 When popup is opened, explicitly calling [`method: Page.waitForLoadState`] ensures that popup is loaded to the desired
@@ -366,6 +431,13 @@ with page.expect_popup() as popup_info:
     page.click('a[target="_blank"]') # Opens popup
 popup = popup_info.value
 popup.wait_for_load_state("load")
+```
+
+```csharp
+var waitForPopupTask = page.WaitForPopupAsync();
+await page.ClickAsync("a[target='_blank']"); // Opens popup
+var popup = await waitForPopupTask;
+popup.WaitForLoadStateAsync(LoadState.Load);
 ```
 
 ### API reference
@@ -406,6 +478,13 @@ page.goto("http://example.com")
 page.wait_for_function("() => window.amILoadedYet()")
 # Ready to take a screenshot, according to the page itself.
 page.screenshot()
+```
+
+```csharp
+await page.GotoAsync("http://example.com");
+await page.WaitForFunctionAsync("() => window.amILoadedYet()");
+// Ready to take a screenshot, according to the page itself.
+await page.ScreenshotAsync();
 ```
 
 ### API reference

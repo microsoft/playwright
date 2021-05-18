@@ -52,48 +52,58 @@ export class HarTracer {
       pages: [],
       entries: []
     };
-    context.on(BrowserContext.Events.Page, page => this._onPage(page));
+    context.on(BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page));
+    context.on(BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request));
+    context.on(BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response));
   }
 
-  private _onPage(page: Page) {
-    const pageEntry: har.Page = {
-      startedDateTime: new Date(),
-      id: `page_${this._lastPage++}`,
-      title: '',
-      pageTimings: {
-        onContentLoad: -1,
-        onLoad: -1,
-      },
-    };
-    this._pageEntries.set(page, pageEntry);
-    this._log.pages.push(pageEntry);
-    page.on(Page.Events.Request, (request: network.Request) => this._onRequest(page, request));
-    page.on(Page.Events.Response, (response: network.Response) => this._onResponse(page, response));
+  private _ensurePageEntry(page: Page) {
+    let pageEntry = this._pageEntries.get(page);
+    if (!pageEntry) {
+      page.on(Page.Events.DOMContentLoaded, () => this._onDOMContentLoaded(page));
+      page.on(Page.Events.Load, () => this._onLoad(page));
 
-    page.on(Page.Events.DOMContentLoaded, () => {
-      const promise = page.mainFrame().evaluateExpression(String(() => {
-        return {
-          title: document.title,
-          domContentLoaded: performance.timing.domContentLoadedEventStart,
-        };
-      }), true, undefined, 'utility').then(result => {
-        pageEntry.title = result.title;
-        pageEntry.pageTimings.onContentLoad = result.domContentLoaded;
-      }).catch(() => {});
-      this._addBarrier(page, promise);
-    });
-    page.on(Page.Events.Load, () => {
-      const promise = page.mainFrame().evaluateExpression(String(() => {
-        return {
-          title: document.title,
-          loaded: performance.timing.loadEventStart,
-        };
-      }), true, undefined, 'utility').then(result => {
-        pageEntry.title = result.title;
-        pageEntry.pageTimings.onLoad = result.loaded;
-      }).catch(() => {});
-      this._addBarrier(page, promise);
-    });
+      pageEntry = {
+        startedDateTime: new Date(),
+        id: `page_${this._lastPage++}`,
+        title: '',
+        pageTimings: {
+          onContentLoad: -1,
+          onLoad: -1,
+        },
+      };
+      this._pageEntries.set(page, pageEntry);
+      this._log.pages.push(pageEntry);
+    }
+    return pageEntry;
+  }
+
+  private _onDOMContentLoaded(page: Page) {
+    const pageEntry = this._ensurePageEntry(page);
+    const promise = page.mainFrame().evaluateExpression(String(() => {
+      return {
+        title: document.title,
+        domContentLoaded: performance.timing.domContentLoadedEventStart,
+      };
+    }), true, undefined, 'utility').then(result => {
+      pageEntry.title = result.title;
+      pageEntry.pageTimings.onContentLoad = result.domContentLoaded;
+    }).catch(() => {});
+    this._addBarrier(page, promise);
+  }
+
+  private _onLoad(page: Page) {
+    const pageEntry = this._ensurePageEntry(page);
+    const promise = page.mainFrame().evaluateExpression(String(() => {
+      return {
+        title: document.title,
+        loaded: performance.timing.loadEventStart,
+      };
+    }), true, undefined, 'utility').then(result => {
+      pageEntry.title = result.title;
+      pageEntry.pageTimings.onLoad = result.loaded;
+    }).catch(() => {});
+    this._addBarrier(page, promise);
   }
 
   private _addBarrier(page: Page, promise: Promise<void>) {
@@ -107,12 +117,13 @@ export class HarTracer {
     this._barrierPromises.add(race);
   }
 
-  private _onRequest(page: Page, request: network.Request) {
-    const pageEntry = this._pageEntries.get(page)!;
+  private _onRequest(request: network.Request) {
+    const page = request.frame()._page;
     const url = network.parsedURL(request.url());
     if (!url)
       return;
 
+    const pageEntry = this._ensurePageEntry(page);
     const harEntry: har.Entry = {
       pageref: pageEntry.id,
       startedDateTime: new Date(),
@@ -160,8 +171,9 @@ export class HarTracer {
     this._entries.set(request, harEntry);
   }
 
-  private _onResponse(page: Page, response: network.Response) {
-    const pageEntry = this._pageEntries.get(page)!;
+  private _onResponse(response: network.Response) {
+    const page = response.frame()._page;
+    const pageEntry = this._ensurePageEntry(page);
     const harEntry = this._entries.get(response.request())!;
     // Rewrite provisional headers with actual
     const request = response.request();

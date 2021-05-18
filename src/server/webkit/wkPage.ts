@@ -182,9 +182,12 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
       promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
-    const bootstrapScript = this._calculateBootstrapScript();
-    promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
-    this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript, false, undefined, 'main').catch(e => {}));
+    for (const world of ['main', 'utility'] as const) {
+      const bootstrapScript = this._calculateBootstrapScript(world);
+      if (bootstrapScript.length)
+        promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript, worldName: webkitWorldName(world) }));
+      this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript, false, undefined, world).catch(e => {}));
+    }
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.emulatedSize) {
@@ -689,38 +692,38 @@ export class WKPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding): Promise<void> {
-    if (binding.world !== 'main')
-      throw new Error('Only main context bindings are supported in WebKit.');
-    await this._updateBootstrapScript();
+    await this._updateBootstrapScript(binding.world);
     await this._evaluateBindingScript(binding);
   }
 
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
-    if (binding.world !== 'main')
-      throw new Error('Only main context bindings are supported in WebKit.');
     const script = this._bindingToScript(binding);
-    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}, binding.world).catch(e => {})));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
-    await this._updateBootstrapScript();
+    await this._updateBootstrapScript('main');
   }
 
   private _bindingToScript(binding: PageBinding): string {
     return `self.${binding.name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${binding.source}`;
   }
 
-  private _calculateBootstrapScript(): string {
+  private _calculateBootstrapScript(world: types.World): string {
     const scripts: string[] = [];
-    for (const binding of this._page.allBindings())
-      scripts.push(this._bindingToScript(binding));
-    scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
-    scripts.push(...this._page._evaluateOnNewDocumentSources);
+    for (const binding of this._page.allBindings()) {
+      if (binding.world === world)
+        scripts.push(this._bindingToScript(binding));
+    }
+    if (world === 'main') {
+      scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
+      scripts.push(...this._page._evaluateOnNewDocumentSources);
+    }
     return scripts.join(';');
   }
 
-  async _updateBootstrapScript(): Promise<void> {
-    await this._updateState('Page.setBootstrapScript', { source: this._calculateBootstrapScript() });
+  async _updateBootstrapScript(world: types.World): Promise<void> {
+    await this._updateState('Page.setBootstrapScript', { source: this._calculateBootstrapScript(world), worldName: webkitWorldName(world) });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -845,13 +848,13 @@ export class WKPage implements PageDelegate {
   }
 
   private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
+    this._pageProxySession.send('Screencast.screencastFrameAck', { generation: this._screencastGeneration }).catch(e => debugLogger.log('error', e));
     const buffer = Buffer.from(event.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
       width: event.deviceWidth,
       height: event.deviceHeight,
     });
-    this._pageProxySession.send('Screencast.screencastFrameAck', { generation: this._screencastGeneration }).catch(e => debugLogger.log('error', e));
   }
 
   rafCountForStablePosition(): number {
@@ -1030,5 +1033,12 @@ export class WKPage implements PageDelegate {
 
   async _clearPermissions() {
     await this._pageProxySession.send('Emulation.resetPermissions', {});
+  }
+}
+
+function webkitWorldName(world: types.World) {
+  switch (world) {
+    case 'main': return undefined;
+    case 'utility': return UTILITY_WORLD_NAME;
   }
 }

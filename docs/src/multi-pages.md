@@ -23,13 +23,10 @@ const browser = await chromium.launch();
 const userContext = await browser.newContext();
 const adminContext = await browser.newContext();
 
-// Load user and admin cookies
-await userContext.addCookies(userCookies);
-await adminContext.addCookies(adminCookies);
+// Create pages and interact with contexts independently
 ```
 
 ```java
-// FIXME
 import com.microsoft.playwright.*;
 
 public class Example {
@@ -41,9 +38,7 @@ public class Example {
       // Create two isolated browser contexts
       BrowserContext userContext = browser.newContext();
       BrowserContext adminContext = browser.newContext();
-      // Load user and admin cookies
-      userContext.addCookies(userCookies);
-      adminContext.addCookies(adminCookies);
+      // Create pages and interact with contexts independently
     }
   }
 }
@@ -62,9 +57,7 @@ async def run(playwright):
     user_context = await browser.new_context()
     admin_context = await browser.new_context()
 
-    # load user and admin cookies
-    await user_context.add_cookies(user_cookies)
-    await admin_context.add_cookies(admin_cookies)
+    # create pages and interact with contexts independently
 
 async def main():
     async with async_playwright() as playwright:
@@ -84,12 +77,28 @@ def run(playwright):
     user_context = browser.new_context()
     admin_context = browser.new_context()
 
-    # load user and admin cookies
-    user_context.add_cookies(user_cookies)
-    admin_context.add_cookies(admin_cookies)
+    # create pages and interact with contexts independently
 
 with sync_playwright() as playwright:
     run(playwright)
+```
+
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Example
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        // Create a Chromium browser instance
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        await using var userContext = await browser.NewContextAsync();
+        await using var adminContext = await browser.NewContextAsync();
+        // Create pages and interact with contexts independently.
+    }
+}
 ```
 
 ### API reference
@@ -138,6 +147,15 @@ page_two = context.new_page()
 
 # get pages of a brower context
 all_pages = context.pages()
+```
+
+```csharp
+// Create two pages
+var pageOne = await context.NewPageAsync();
+var pageTwo = await context.NewPageAsync();
+
+// Get pages of a brower context
+var allPages = context.Pages;
 ```
 
 ### API reference
@@ -189,6 +207,15 @@ new_page.wait_for_load_state()
 print(new_page.title())
 ```
 
+```csharp
+// Get page after a specific action (e.g. clicking a link)
+var waitForPageTask = context.WaitForPageAsync();
+await page.ClickAsync("a[target='_blank']");
+var newPage = await waitForPageTask;
+await page.WaitForLoadStateAsync();
+Console.WriteLine(await newPage.TitleAsync());
+```
+
 If the action that triggers the new page is unknown, the following pattern can be used.
 
 ```js
@@ -223,6 +250,14 @@ def handle_page(page):
     print(page.title())
 
 context.on("page", handle_page)
+```
+
+```csharp
+// Get all new pages (including popups) in the context
+context.Page += async  (_, page) => {
+    await page.WaitForLoadStateAsync();
+    Console.WriteLine(await page.TitleAsync());
+};
 ```
 
 ### API reference
@@ -273,6 +308,15 @@ popup.wait_for_load_state()
 print(popup.title())
 ```
 
+```csharp
+// Get popup after a specific action (e.g., click)
+var waitForPopupTask = page.WaitForPopupAsync();
+await page.ClickAsync("#open");
+var newPage = await waitForPopupTask;
+await newPage.WaitForLoadStateAsync();
+Console.WriteLine(await newPage.TitleAsync());
+```
+
 If the action that triggers the popup is unknown, the following pattern can be used.
 
 ```js
@@ -307,6 +351,14 @@ def handle_popup(popup):
     print(popup.title())
 
 page.on("popup", handle_popup)
+```
+
+```csharp
+// Get all popups when they open
+page.Popup += async  (_, popup) => {
+    await popup.WaitForLoadStateAsync();
+    Console.WriteLine(await page.TitleAsync());
+};
 ```
 
 ### API reference

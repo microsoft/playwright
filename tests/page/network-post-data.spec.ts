@@ -88,8 +88,8 @@ it('should return post data for PUT requests', async ({page, server}) => {
   expect(request.postDataJSON()).toEqual({ value: 42 });
 });
 
-it('should get post data for file/blob', async ({page, server, isWebKit, isChromium}) => {
-  it.fail(isWebKit || isChromium);
+it('should get post data for file/blob', async ({page, server, browserName}) => {
+  it.fail(browserName === 'webkit' || browserName === 'chromium');
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     page.waitForRequest('**/*'),
