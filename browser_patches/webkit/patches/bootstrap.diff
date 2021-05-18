@@ -727,10 +727,20 @@ index 0000000000000000000000000000000000000000..587287d52fde2735cbae34a27a0f673b
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Network.json b/Source/JavaScriptCore/inspector/protocol/Network.json
-index 65ab2092b0ffd0ead3da1ddccd398d4f4179f51a..2d9ef40a20df819193c9a5867fbf6f8f8bf46b48 100644
+index 65ab2092b0ffd0ead3da1ddccd398d4f4179f51a..84762978c93fbe18c104f8c626672588ee053e36 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Network.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Network.json
-@@ -321,6 +321,13 @@
+@@ -77,7 +77,8 @@
+                 { "name": "source", "type": "string", "enum": ["unknown", "network", "memory-cache", "disk-cache", "service-worker", "inspector-override"], "description": "Specifies where the response came from." },
+                 { "name": "requestHeaders", "$ref": "Headers", "optional": true, "description": "Refined HTTP request headers that were actually transmitted over the network." },
+                 { "name": "timing", "$ref": "ResourceTiming", "optional": true, "description": "Timing information for the given request." },
+-                { "name": "security", "$ref": "Security.Security", "optional": true, "description": "The security information for the given request." }
++                { "name": "security", "$ref": "Security.Security", "optional": true, "description": "The security information for the given request." },
++                { "name": "address", "type": "string", "optional": true, "description": "Remote IP address and port." }
+             ]
+         },
+         {
+@@ -321,6 +322,13 @@
                  { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request to fail." },
                  { "name": "errorType", "$ref": "ResourceErrorType", "description": "Deliver error reason for the request failure." }
              ]
@@ -3150,7 +3160,7 @@ index 3386cb879f1178c1b9635775c9a0e864f5b94c52..d2350182f5f061855e8ca172779ad60e
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 67831035d9d3dd86807802e89455e9a0776c36ea..c3cb206baa21ccb1cdf4b9f0e69d54647707dcb0 100644
+index 67831035d9d3dd86807802e89455e9a0776c36ea..b88ec3e020681b5251a4bb0a986d8793b3c301ef 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -3189,7 +3199,17 @@ index 67831035d9d3dd86807802e89455e9a0776c36ea..c3cb206baa21ccb1cdf4b9f0e69d5464
      if (resourceLoader)
          responseObject->setTiming(buildObjectForTiming(response.deprecatedNetworkLoadMetricsOrNull(), *resourceLoader));
  
-@@ -488,8 +492,14 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
+@@ -386,6 +390,9 @@ RefPtr<Protocol::Network::Response> InspectorNetworkAgent::buildObjectForResourc
+ 
+             securityPayload->setCertificate(WTFMove(certificatePayload));
+         }
++        
++        if (auto networkLoadMetrics = response.deprecatedNetworkLoadMetricsOrNull())
++            responseObject->setAddress(networkLoadMetrics->remoteAddress);
+ 
+         responseObject->setSecurity(WTFMove(securityPayload));
+     }
+@@ -488,8 +495,14 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
  
  void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse)
  {
@@ -3206,7 +3226,7 @@ index 67831035d9d3dd86807802e89455e9a0776c36ea..c3cb206baa21ccb1cdf4b9f0e69d5464
  }
  
  void InspectorNetworkAgent::willSendRequestOfType(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
-@@ -1103,8 +1113,7 @@ bool InspectorNetworkAgent::willIntercept(const ResourceRequest& request)
+@@ -1103,8 +1116,7 @@ bool InspectorNetworkAgent::willIntercept(const ResourceRequest& request)
      if (!m_interceptionEnabled)
          return false;
  
@@ -3216,7 +3236,7 @@ index 67831035d9d3dd86807802e89455e9a0776c36ea..c3cb206baa21ccb1cdf4b9f0e69d5464
  }
  
  bool InspectorNetworkAgent::shouldInterceptRequest(const ResourceRequest& request)
-@@ -1187,6 +1196,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
+@@ -1187,6 +1199,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
          return makeUnexpected("Missing pending intercept request for given requestId"_s);
  
      auto& loader = *pendingRequest->m_loader;
@@ -3226,7 +3246,7 @@ index 67831035d9d3dd86807802e89455e9a0776c36ea..c3cb206baa21ccb1cdf4b9f0e69d5464
      ResourceRequest request = loader.request();
      if (!!url)
          request.setURL(URL({ }, url));
-@@ -1282,14 +1294,24 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+@@ -1282,14 +1297,24 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
      response.setHTTPStatusCode(status);
      response.setHTTPStatusText(statusText);
      HTTPHeaderMap explicitHeaders;
@@ -3251,7 +3271,7 @@ index 67831035d9d3dd86807802e89455e9a0776c36ea..c3cb206baa21ccb1cdf4b9f0e69d5464
          if (buffer->size())
              loader->didReceiveBuffer(WTFMove(buffer), buffer->size(), DataPayloadWholeResource);
          loader->didFinishLoading(NetworkLoadMetrics());
-@@ -1330,6 +1352,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
+@@ -1330,6 +1355,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
      return { };
  }
  
@@ -3264,7 +3284,7 @@ index 67831035d9d3dd86807802e89455e9a0776c36ea..c3cb206baa21ccb1cdf4b9f0e69d5464
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1371,6 +1399,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
+@@ -1371,6 +1402,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
      return WTF::nullopt;
  }
  
