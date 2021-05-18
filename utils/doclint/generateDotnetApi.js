@@ -468,6 +468,7 @@ function renderMethod(member, parent, name, out) {
   if (member.args.size == 0
     && type !== 'void'
     && !name.startsWith('Get')
+    && !name.startsWith('PostDataJSON')
     && !name.startsWith('As')) {
     if (!member.async) {
       if (member.spec)
