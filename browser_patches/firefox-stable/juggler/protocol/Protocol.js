@@ -130,6 +130,11 @@ runtimeTypes.CallFunctionArgument = {
   value: t.Any,
 };
 
+runtimeTypes.AuxData = {
+  frameId: t.Optional(t.String),
+  name: t.Optional(t.String),
+};
+
 const axTypes = {};
 axTypes.AXTree = {
   role: t.String,
@@ -530,10 +535,7 @@ const Runtime = {
   events: {
     'executionContextCreated': {
       executionContextId: t.String,
-      auxData: {
-        frameId: t.Optional(t.String),
-        name: t.Optional(t.String),
-      },
+      auxData: runtimeTypes.AuxData,
     },
     'executionContextDestroyed': {
       executionContextId: t.String,
