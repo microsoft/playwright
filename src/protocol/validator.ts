@@ -687,7 +687,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     files: tArray(tObject({
       name: tString,
-      mimeType: tString,
+      mimeType: tOptional(tString),
       buffer: tBinary,
     })),
     timeout: tOptional(tNumber),
@@ -874,7 +874,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElementHandleSetInputFilesParams = tObject({
     files: tArray(tObject({
       name: tString,
-      mimeType: tString,
+      mimeType: tOptional(tString),
       buffer: tBinary,
     })),
     timeout: tOptional(tNumber),
