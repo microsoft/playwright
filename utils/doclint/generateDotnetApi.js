@@ -35,6 +35,8 @@ const modelTypes = new Map(); // this will hold types that we discover, because 
 const documentedResults = new Map(); // will hold documentation for new types
 /** @type {Map<string, string[]>} */
 const enumTypes = new Map();
+/** @type {Map<string, Documentation.Type>} */
+const optionTypes = new Map();
 const nullableTypes = ['int', 'bool', 'decimal', 'float'];
 const customTypeNames = new Map([
   ['domcontentloaded', 'DOMContentLoaded'],
@@ -43,10 +45,11 @@ const customTypeNames = new Map([
 ]);
 
 const typesDir = process.argv[2] || path.join(__dirname, 'generate_types', 'csharp');
-const modelsDir = path.join(typesDir, "models");
-const enumsDir = path.join(typesDir, "enums");
+const modelsDir = path.join(typesDir, 'Models');
+const enumsDir = path.join(typesDir, 'Enums');
+const optionsDir = path.join(typesDir, 'Options');
 
-for (const dir of [typesDir, modelsDir, enumsDir])
+for (const dir of [typesDir, modelsDir, enumsDir, optionsDir])
   fs.mkdirSync(dir, { recursive: true });
 
 const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
@@ -114,6 +117,9 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
 
   if (extendsName === 'IEventEmitter')
     extendsName = null;
+
+  if (body[0] === '')
+    body = body.slice(1);
 
   out.push(`public ${kind} ${name}${extendsName ? ` : ${extendsName}` : ''}`);
   out.push('{');
@@ -189,6 +195,17 @@ function renderEnum(name, literals) {
   writeFile('enum', name, null, body, enumsDir);
 }
 
+/**
+ * @param {string} name
+ * @param {Documentation.Type} type
+ */
+function renderOptionType(name, type) {
+  const body = [];
+  for (const member of type.properties)
+    renderMember(member, type, body);
+  writeFile('class', name, null, body, optionsDir);
+}
+
 for (const element of documentation.classesArray)
   renderClass(element);
 
@@ -197,6 +214,9 @@ for (let [name, type] of modelTypes)
 
 for (let [name, literals] of enumTypes)
   renderEnum(name, literals);
+
+for (let [name, type] of optionTypes)
+  renderOptionType(name, type);
 
 if (process.argv[3] !== "--skip-format") {
   // run the formatting tool for .net, to ensure the files are prepped
@@ -253,42 +273,57 @@ function toTitleCase(name) {
  * @param {string[]} out
  */
 function renderMember(member, parent, out) {
+  out.push('');
   let name = toMemberName(member);
   if (member.kind === 'method') {
     renderMethod(member, parent, name, out);
-  } else {
-    /** @type string */
-    let type = translateType(member.type, parent, t => generateNameDefault(member, name, t, parent));
-    if (member.kind === 'event') {
-      if (!member.type)
-        throw new Error(`No Event Type for ${name} in ${parent.name}`);
-      if (member.spec)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-      out.push(`event EventHandler<${type}> ${name};`);
-    } else if (member.kind === 'property') {
-      if (member.spec)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-      let propertyOrigin = member.name;
-      if (member.type.expression === '[string]|[float]')
-        propertyOrigin = `${member.name}String`;
-      if (!member.clazz)
-        out.push(`[JsonPropertyName("${propertyOrigin}")]`)
-      if (parent && member && member.name === 'children') {  // this is a special hack for Accessibility
-        console.warn(`children property found in ${parent.name}, assuming array.`);
-        type = `IEnumerable<${parent.name}>`;
-      }
+    return;
+  }
 
+  /** @type string */
+  let type = translateType(member.type, parent, t => generateNameDefault(member, name, t, parent));
+  if (member.kind === 'event') {
+    if (!member.type)
+      throw new Error(`No Event Type for ${name} in ${parent.name}`);
+    if (member.spec)
+      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+    out.push(`event EventHandler<${type}> ${name};`);
+    return;
+  }
+
+  if (member.kind === 'property') {
+    if (parent && member && member.name === 'children') {  // this is a special hack for Accessibility
+      console.warn(`children property found in ${parent.name}, assuming array.`);
+      type = `IEnumerable<${parent.name}>`;
+    }
+    const overloads = [];
+    if (type) {
+      let jsonName = member.name;
+      if (member.type.expression === '[string]|[float]')
+        jsonName = `${member.name}String`;
+      overloads.push({ type, name, jsonName });
+    } else {
+      for (const overload of member.type.union) {
+        const t = translateType(overload, parent, t => generateNameDefault(member, name, t, parent));
+        const suffix = toTitleCase(t.replace(/[<].*[>]/, '').replace(/[^a-zA-Z]/g, ''));
+        overloads.push({ type: t, name: name + suffix, jsonName: member.name + suffix });
+      }
+    }
+    for (let { type, name, jsonName } of overloads) {
+      if (member.spec)
+        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      if (!member.clazz)
+        out.push(`[JsonPropertyName("${jsonName}")]`)
       if (!type.endsWith('?') && !member.required && nullableTypes.includes(type))
-        type = `${type}?`;
+      type = `${type}?`;
       if (member.clazz)
         out.push(`public ${type} ${name} { get; }`);
       else
         out.push(`public ${type} ${name} { get; set; }`);
-    } else {
-      throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
+      return;
     }
   }
-  out.push('');
+  throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
 }
 
 /**
@@ -485,8 +520,16 @@ function renderMethod(member, parent, name, out) {
    * @param {Documentation.Member} arg
    */
   function processArg(arg) {
-    if (arg.name === "options") {
-      arg.type.properties.forEach(processArg);
+    if (arg.name === 'options') {
+      if (process.env.OPTIONS) {
+        const optionsType = member.clazz.name + toTitleCase(member.name) + 'Options';
+        optionTypes.set(optionsType, arg.type);
+        args.push(`${optionsType} options = default`);
+        argTypeMap.set(`${optionsType} options = default`, 'options');
+        addParamsDoc('options', ['Call options']);
+      } else {
+        arg.type.properties.forEach(processArg);
+      }
       return;
     }
 
@@ -527,7 +570,7 @@ function renderMethod(member, parent, name, out) {
       let argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
         let nonGenericType = newArg.replace(/\IEnumerable<(.*)\>/g, (m, v) => 'Enumerable' + v[0].toUpperCase() + v.substring(1))
-        const sanitizedArgName = nonGenericType.match(/(?<=^[\s"']*)(\w+)/g, '')[0] || nonGenericType;
+        const sanitizedArgName = nonGenericType.match(/(?<=^[\s"']*)(\w+)/g)[0] || nonGenericType;
         const newArgName = `${argName}${sanitizedArgName[0].toUpperCase() + sanitizedArgName.substring(1)}`;
         pushArg(newArg, newArgName, arg, true); // push the exploded arg
         addParamsDoc(newArgName, argDocumentation);
