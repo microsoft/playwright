@@ -317,6 +317,8 @@ export class WKBrowserContext extends BrowserContext {
       await (page._delegate as WKPage).updateRequestInterception();
   }
 
+  async _onClosePersistent() {}
+
   async _doClose() {
     assert(this._browserContextId);
     await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
