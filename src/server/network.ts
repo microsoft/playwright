@@ -263,6 +263,19 @@ export type ResourceTiming = {
   responseStart: number;
 };
 
+export type RemoteAddr = {
+  ipAddress: string;
+  port: number;
+}
+
+export type SecurityDetails = {
+    protocol?: string;
+    subjectName?: string;
+    issuer?: string;
+    validFrom?: number;
+    validTo?: number;
+};
+
 export class Response extends SdkObject {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
@@ -275,6 +288,10 @@ export class Response extends SdkObject {
   private _headersMap = new Map<string, string>();
   private _getResponseBodyCallback: GetResponseBodyCallback;
   private _timing: ResourceTiming;
+  private _serverAddrPromise: Promise<RemoteAddr|undefined>;
+  private _serverAddrPromiseCallback: (arg?: RemoteAddr) => void = () => {};
+  private _securityDetailsPromise: Promise<SecurityDetails|undefined>;
+  private _securityDetailsPromiseCallback: (arg?: SecurityDetails) => void = () => {};
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback) {
     super(request.frame(), 'response');
@@ -287,10 +304,24 @@ export class Response extends SdkObject {
     for (const { name, value } of this._headers)
       this._headersMap.set(name.toLowerCase(), value);
     this._getResponseBodyCallback = getResponseBodyCallback;
+    this._serverAddrPromise = new Promise(f => {
+      this._serverAddrPromiseCallback = f;
+    });
+    this._securityDetailsPromise = new Promise(f => {
+      this._securityDetailsPromiseCallback = f;
+    });
     this._finishedPromise = new Promise(f => {
       this._finishedPromiseCallback = f;
     });
     this._request._setResponse(this);
+  }
+
+  _serverAddrFinished(addr?: RemoteAddr) {
+    this._serverAddrPromiseCallback(addr);
+  }
+
+  _securityDetailsFinished(securityDetails?: SecurityDetails) {
+    this._securityDetailsPromiseCallback(securityDetails);
   }
 
   _requestFinished(responseEndTiming: number, error?: string) {
@@ -324,6 +355,14 @@ export class Response extends SdkObject {
 
   timing(): ResourceTiming {
     return this._timing;
+  }
+
+  async serverAddr(): Promise<RemoteAddr|null> {
+    return await this._serverAddrPromise || null;
+  }
+
+  async securityDetails(): Promise<SecurityDetails|null> {
+    return await this._securityDetailsPromise || null;
   }
 
   body(): Promise<Buffer> {

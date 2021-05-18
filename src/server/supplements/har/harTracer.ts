@@ -209,6 +209,18 @@ export class HarTracer {
       receive,
     };
     harEntry.time = [dns, connect, ssl, wait, receive].reduce((pre, cur) => cur > 0 ? cur + pre : pre, 0);
+
+    this._addBarrier(page, response.serverAddr().then(server => {
+      if (server?.ipAddress)
+        harEntry.serverIPAddress = server.ipAddress;
+      if (server?.port)
+        harEntry._serverPort = server.port;
+    }));
+    this._addBarrier(page, response.securityDetails().then(details => {
+      if (details)
+        harEntry._securityDetails = details;
+    }));
+
     if (!this._options.omitContent && response.status() === 200) {
       const promise = response.body().then(buffer => {
         harEntry.response.content.text = buffer.toString('base64');
