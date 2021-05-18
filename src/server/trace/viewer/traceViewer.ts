@@ -138,7 +138,7 @@ export class TraceViewer {
     await controller.run(async progress => {
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });
-    await context.extendInjectedScript(consoleApiSource.source);
+    await context.extendInjectedScript('main', consoleApiSource.source);
     const [page] = context.pages();
     page.on('close', () => process.exit(0));
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
