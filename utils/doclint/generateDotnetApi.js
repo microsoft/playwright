@@ -546,6 +546,8 @@ function renderMethod(member, parent, name, options, out) {
    * @param {boolean} isExploded
    */
   function pushArg(innerArgType, innerArgName, argument, isExploded = false) {
+    if (innerArgType === 'null')
+      return;
     const isNullable = nullableTypes.includes(innerArgType);
     const requiredPrefix = (argument.required || isExploded) ? "" : isNullable ? "?" : "";
     const requiredSuffix = (argument.required || isExploded) ? "" : " = default";
