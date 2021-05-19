@@ -745,7 +745,7 @@ index 65ab2092b0ffd0ead3da1ddccd398d4f4179f51a..2d9ef40a20df819193c9a5867fbf6f8f
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7501a62eb 100644
+index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..4a0a5819fafd109af8d828af0df092b34750c1af 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -27,7 +27,7 @@
@@ -814,7 +814,17 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          {
              "name": "navigate",
              "description": "Navigates current page to the given URL.",
-@@ -270,6 +313,20 @@
+@@ -204,7 +247,8 @@
+             "name": "setBootstrapScript",
+             "targetTypes": ["page"],
+             "parameters": [
+-                { "name": "source", "type": "string", "optional": true, "description": "If `source` is provided (and not empty), it will be injected into all future global objects as soon as they're created. Omitting `source` will stop this from happening." }
++                { "name": "source", "type": "string", "optional": true, "description": "If `source` is provided (and not empty), it will be injected into all future global objects as soon as they're created. Omitting `source` will stop this from happening." },
++                { "name": "worldName", "type": "string", "optional": true, "description": "Isolated world name to evaluate the script in. If not specified main world will be used." }
+             ]
+         },
+         {
+@@ -270,6 +314,20 @@
                  { "name": "appearance", "$ref": "Appearance", "optional": true }
              ]
          },
@@ -835,7 +845,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -308,12 +365,67 @@
+@@ -308,12 +366,67 @@
          {
              "name": "setScreenSizeOverride",
              "description": "Overrides screen size exposed to DOM and used in media queries for testing with provided values.",
@@ -904,7 +914,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          }
      ],
      "events": [
-@@ -321,14 +433,16 @@
+@@ -321,14 +434,16 @@
              "name": "domContentEventFired",
              "targetTypes": ["page"],
              "parameters": [
@@ -923,7 +933,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
              ]
          },
          {
-@@ -338,6 +452,14 @@
+@@ -338,6 +453,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -938,7 +948,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -377,6 +499,22 @@
+@@ -377,6 +500,22 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -961,7 +971,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..b77bec0ab30e8562ef16fa0b01a68ef7
          {
              "name": "defaultAppearanceDidChange",
              "description": "Fired when page's default appearance changes, even if there is a forced appearance.",
-@@ -385,6 +523,28 @@
+@@ -385,6 +524,28 @@
              "parameters": [
                  { "name": "appearance", "$ref": "Appearance", "description": "Name of the appearance that is active (not considering any forced appearance.)" }
              ]
@@ -3175,7 +3185,7 @@ index 933601761667417ebe5de301586869ccc64fc3da..f63a95c3c45980d5606971b83881e824
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1ddeec40bc 100644
+index af0a051bdae52b2daf70b1fee76eee0866b7b046..b46f7b5f1d60bc21b7d966b244753ba956ff6708 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,19 +32,25 @@
@@ -3311,7 +3321,23 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  Protocol::ErrorStringOr<void> InspectorPageAgent::navigate(const String& url)
  {
      UserGestureIndicator indicator { ProcessingUserGesture };
-@@ -801,15 +847,16 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setShowPaintRects(bool show)
+@@ -696,9 +742,13 @@ Protocol::ErrorStringOr<std::tuple<String, bool /* base64Encoded */>> InspectorP
+     return { { content, base64Encoded } };
+ }
+ 
+-Protocol::ErrorStringOr<void> InspectorPageAgent::setBootstrapScript(const String& source)
++Protocol::ErrorStringOr<void> InspectorPageAgent::setBootstrapScript(const String& source, const String& worldName)
+ {
+-    m_bootstrapScript = source;
++    String key = worldName.isNull() ? emptyString() : worldName;
++    if (source.isEmpty())
++        m_worldNameToBootstrapScript.remove(key);
++    else
++        m_worldNameToBootstrapScript.set(key, source);
+ 
+     return { };
+ }
+@@ -801,15 +851,16 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setShowPaintRects(bool show)
      return { };
  }
  
@@ -3333,7 +3359,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -817,13 +864,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -817,13 +868,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -3360,7 +3386,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  }
  
  Frame* InspectorPageAgent::frameForId(const Protocol::Network::FrameId& frameId)
-@@ -835,20 +892,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -835,20 +896,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -3387,7 +3413,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  }
  
  Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const Protocol::Network::FrameId& frameId)
-@@ -859,11 +914,6 @@ Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const
+@@ -859,11 +918,6 @@ Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const
      return frame;
  }
  
@@ -3399,7 +3425,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -884,6 +934,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -884,6 +938,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -3412,7 +3438,33 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
-@@ -943,6 +999,52 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -893,13 +953,22 @@ void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
+ 
+ void InspectorPageAgent::didClearWindowObjectInWorld(Frame& frame, DOMWrapperWorld& world)
+ {
+-    if (&world != &mainThreadNormalWorld())
++    if (m_worldNameToBootstrapScript.isEmpty())
+         return;
+ 
+-    if (m_bootstrapScript.isEmpty())
++    if (world.name().isEmpty() && &world != &mainThreadNormalWorld())
++       return;
++
++    String worldName = world.name();
++    // Null string cannot be used as a key.
++    if (worldName.isNull())
++        worldName = emptyString();
++
++    if (!m_worldNameToBootstrapScript.contains(worldName))
+         return;
+ 
+-    frame.script().evaluateIgnoringException(ScriptSourceCode(m_bootstrapScript, URL { URL(), "web-inspector://bootstrap.js"_s }));
++    String bootstrapScript = m_worldNameToBootstrapScript.get(worldName);
++    frame.script().evaluateInWorldIgnoringException(ScriptSourceCode(bootstrapScript, URL { URL(), "web-inspector://bootstrap.js"_s }), world);
+ }
+ 
+ void InspectorPageAgent::didPaint(RenderObject& renderer, const LayoutRect& rect)
+@@ -943,6 +1012,52 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -3465,7 +3517,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  Ref<Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1094,6 +1196,27 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
+@@ -1094,6 +1209,27 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
      return snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -3493,7 +3545,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  {
-@@ -1106,7 +1229,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
+@@ -1106,7 +1242,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  }
  #endif
  
@@ -3501,7 +3553,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional<int>&& width, Optional<int>&& height)
  {
      if (width.hasValue() != height.hasValue())
-@@ -1121,6 +1243,533 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional
+@@ -1121,6 +1256,533 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.valueOr(0), height.valueOr(0)));
      return { };
  }
@@ -4036,7 +4088,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..b8a55168af379e51a62ffd8181b70f1d
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 78a98224ab5450e0729751571fe1bb957d303301..a4f46cc377bde6a787f3e67ca4869bfc25461127 100644
+index 78a98224ab5450e0729751571fe1bb957d303301..cec612f2d12b68930d681ead74064169db6eb5ec 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -4087,6 +4139,15 @@ index 78a98224ab5450e0729751571fe1bb957d303301..a4f46cc377bde6a787f3e67ca4869bfc
      Inspector::Protocol::ErrorStringOr<void> navigate(const String& url);
      Inspector::Protocol::ErrorStringOr<void> overrideUserAgent(const String&);
      Inspector::Protocol::ErrorStringOr<void> overrideSetting(Inspector::Protocol::Page::Setting, Optional<bool>&& value);
+@@ -103,7 +113,7 @@ public:
+     Inspector::Protocol::ErrorStringOr<void> deleteCookie(const String& cookieName, const String& url);
+     Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Page::FrameResourceTree>> getResourceTree();
+     Inspector::Protocol::ErrorStringOr<std::tuple<String, bool /* base64Encoded */>> getResourceContent(const Inspector::Protocol::Network::FrameId&, const String& url);
+-    Inspector::Protocol::ErrorStringOr<void> setBootstrapScript(const String& source);
++    Inspector::Protocol::ErrorStringOr<void> setBootstrapScript(const String& source, const String& worldName);
+     Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>> searchInResource(const Inspector::Protocol::Network::FrameId&, const String& url, const String& query, Optional<bool>&& caseSensitive, Optional<bool>&& isRegex, const Inspector::Protocol::Network::RequestId&);
+     Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>> searchInResources(const String&, Optional<bool>&& caseSensitive, Optional<bool>&& isRegex);
+ #if !PLATFORM(IOS_FAMILY)
 @@ -114,25 +124,35 @@ public:
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      Inspector::Protocol::ErrorStringOr<void> setForcedAppearance(Optional<Inspector::Protocol::Page::Appearance>&&);
@@ -4161,9 +4222,10 @@ index 78a98224ab5450e0729751571fe1bb957d303301..a4f46cc377bde6a787f3e67ca4869bfc
 -    HashMap<Frame*, String> m_frameToIdentifier;
      HashMap<String, WeakPtr<Frame>> m_identifierToFrame;
 -    HashMap<DocumentLoader*, String> m_loaderToIdentifier;
++    HashMap<String, String> m_worldNameToBootstrapScript;
      String m_userAgentOverride;
      String m_emulatedMedia;
-     String m_bootstrapScript;
+-    String m_bootstrapScript;
      bool m_isFirstLayoutAfterOnLoad { false };
      bool m_showPaintRects { false };
 +    bool m_interceptFileChooserDialog { false };
