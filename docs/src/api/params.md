@@ -614,7 +614,7 @@ Browser distribution channel. Read more about using [Google Chrome and Microsoft
 ## browser-option-chromiumsandbox
 - `chromiumSandbox` <[boolean]>
 
-Enable Chromium sandboxing. Defaults to `true`.
+Enable Chromium sandboxing. Defaults to `false`.
 
 
 ## browser-option-downloadspath
