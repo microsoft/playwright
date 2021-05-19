@@ -7019,7 +7019,7 @@ export interface BrowserType<Unused = {}> {
     channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
 
     /**
-     * Enable Chromium sandboxing. Defaults to `true`.
+     * Enable Chromium sandboxing. Defaults to `false`.
      */
     chromiumSandbox?: boolean;
 
@@ -7353,7 +7353,7 @@ export interface BrowserType<Unused = {}> {
     channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
 
     /**
-     * Enable Chromium sandboxing. Defaults to `true`.
+     * Enable Chromium sandboxing. Defaults to `false`.
      */
     chromiumSandbox?: boolean;
 
@@ -11133,7 +11133,7 @@ export interface LaunchOptions {
   channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
 
   /**
-   * Enable Chromium sandboxing. Defaults to `true`.
+   * Enable Chromium sandboxing. Defaults to `false`.
    */
   chromiumSandbox?: boolean;
 
