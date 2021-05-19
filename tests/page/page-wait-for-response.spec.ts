@@ -91,10 +91,10 @@ it('sync predicate should be only called once', async ({page, server}) => {
       ++counter;
       return response.url() === server.PREFIX + '/digits/1.png';
     }),
-    page.evaluate(() => {
-      fetch('/digits/1.png');
-      fetch('/digits/2.png');
-      fetch('/digits/3.png');
+    page.evaluate(async () => {
+      await fetch('/digits/1.png');
+      await fetch('/digits/2.png');
+      await fetch('/digits/3.png');
     })
   ]);
   expect(response.url()).toBe(server.PREFIX + '/digits/1.png');
