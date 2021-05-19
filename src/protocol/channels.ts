@@ -1676,7 +1676,7 @@ export type FrameSetInputFilesParams = {
   selector: string,
   files: {
     name: string,
-    mimeType: string,
+    mimeType?: string,
     buffer: Binary,
   }[],
   timeout?: number,
@@ -2181,7 +2181,7 @@ export type ElementHandleSelectTextResult = void;
 export type ElementHandleSetInputFilesParams = {
   files: {
     name: string,
-    mimeType: string,
+    mimeType?: string,
     buffer: Binary,
   }[],
   timeout?: number,

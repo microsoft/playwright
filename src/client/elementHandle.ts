@@ -302,7 +302,6 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     if (typeof item === 'string') {
       return {
         name: path.basename(item),
-        mimeType: mime.getType(item) || 'application/octet-stream',
         buffer: (await util.promisify(fs.readFile)(item)).toString('base64')
       };
     } else {
