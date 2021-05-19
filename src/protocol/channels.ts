@@ -2555,6 +2555,34 @@ export type ElectronLaunchParams = {
   cwd?: string,
   env?: NameValue[],
   timeout?: number,
+  acceptDownloads?: boolean,
+  bypassCSP?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference',
+  extraHTTPHeaders?: NameValue[],
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  ignoreHTTPSErrors?: boolean,
+  locale?: string,
+  offline?: boolean,
+  recordHar?: {
+    omitContent?: boolean,
+    path: string,
+  },
+  recordVideo?: {
+    dir: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+  },
+  timezoneId?: string,
 };
 export type ElectronLaunchOptions = {
   executablePath?: string,
@@ -2562,6 +2590,34 @@ export type ElectronLaunchOptions = {
   cwd?: string,
   env?: NameValue[],
   timeout?: number,
+  acceptDownloads?: boolean,
+  bypassCSP?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference',
+  extraHTTPHeaders?: NameValue[],
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  ignoreHTTPSErrors?: boolean,
+  locale?: string,
+  offline?: boolean,
+  recordHar?: {
+    omitContent?: boolean,
+    path: string,
+  },
+  recordVideo?: {
+    dir: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+  },
+  timezoneId?: string,
 };
 export type ElectronLaunchResult = {
   electronApplication: ElectronApplicationChannel,

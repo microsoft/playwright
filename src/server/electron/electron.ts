@@ -22,7 +22,6 @@ import * as js from '../javascript';
 import { Page } from '../page';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { WebSocketTransport } from '../transport';
-import * as types from '../types';
 import { launchProcess, envArrayToObject } from '../processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
@@ -33,15 +32,7 @@ import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { internalCallMetadata, SdkObject } from '../instrumentation';
-
-export type ElectronLaunchOptionsBase = {
-  sdkLanguage: string,
-  executablePath?: string,
-  args?: string[],
-  cwd?: string,
-  env?: types.EnvArray,
-  timeout?: number,
-};
+import * as channels from '../../protocol/channels';
 
 export class ElectronApplication extends SdkObject {
   static Events = {
@@ -112,7 +103,7 @@ export class Electron extends SdkObject {
     this._playwrightOptions = playwrightOptions;
   }
 
-  async launch(options: ElectronLaunchOptionsBase): Promise<ElectronApplication> {
+  async launch(options: channels.ElectronLaunchParams): Promise<ElectronApplication> {
     const {
       args = [],
     } = options;
@@ -164,7 +155,22 @@ export class Electron extends SdkObject {
         name: 'electron',
         isChromium: true,
         headful: true,
-        persistent: { sdkLanguage: options.sdkLanguage, noDefaultViewport: true },
+        persistent: {
+          sdkLanguage: options.sdkLanguage,
+          noDefaultViewport: true,
+          acceptDownloads: options.acceptDownloads,
+          bypassCSP: options.bypassCSP,
+          colorScheme: options.colorScheme,
+          extraHTTPHeaders: options.extraHTTPHeaders,
+          geolocation: options.geolocation,
+          httpCredentials: options.httpCredentials,
+          ignoreHTTPSErrors: options.ignoreHTTPSErrors,
+          locale: options.locale,
+          offline: options.offline,
+          recordHar: options.recordHar,
+          recordVideo: options.recordVideo,
+          timezoneId: options.timezoneId,
+        },
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,
