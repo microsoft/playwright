@@ -24,6 +24,7 @@ import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';
 import { BrowserName, Registry, hostPlatform } from '../utils/registry';
+import { debugLogger } from '../utils/debugLogger';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -45,6 +46,7 @@ export async function downloadBrowserWithProgressBar(registry: Registry, browser
   const progressBarName = `${browserName} v${registry.revision(browserName)}`;
   if (await existsAsync(browserDirectory)) {
     // Already downloaded.
+    debugLogger.log('install', `browser ${browserName} is already downloaded.`);
     return false;
   }
 
@@ -69,21 +71,32 @@ export async function downloadBrowserWithProgressBar(registry: Registry, browser
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browserName}-${hostPlatform}-${registry.revision(browserName)}.zip`);
   try {
     for (let attempt = 1, N = 3; attempt <= N; ++attempt) {
+      debugLogger.log('install', `downloading ${progressBarName} - attempt #${attempt}`);
       const {error} = await downloadFile(url, zipPath, progress);
-      if (!error)
+      if (!error) {
+        debugLogger.log('install', `SUCCESS downloading ${progressBarName}`);
         break;
+      }
       const errorMessage = typeof error === 'object' && typeof error.message === 'string' ? error.message : '';
+      debugLogger.log('install', `attempt #${attempt} - ERROR: ${errorMessage}`);
       if (attempt < N && (errorMessage.includes('ECONNRESET') || errorMessage.includes('ETIMEDOUT'))) {
         // Maximum delay is 3rd retry: 1337.5ms
         const millis = (Math.random() * 200) + (250 * Math.pow(1.5, attempt));
+        debugLogger.log('install', `sleeping ${millis}ms before retry...`);
         await new Promise(c => setTimeout(c, millis));
       } else {
         throw error;
       }
     }
+    debugLogger.log('install', `extracting archive`);
+    debugLogger.log('install', `-- zip: ${zipPath}`);
+    debugLogger.log('install', `-- location: ${browserDirectory}`);
     await extract(zipPath, { dir: browserDirectory});
-    await chmodAsync(registry.executablePath(browserName)!, 0o755);
+    const executablePath = registry.executablePath(browserName)!;
+    debugLogger.log('install', `fixing permissions at ${executablePath}`);
+    await chmodAsync(executablePath, 0o755);
   } catch (e) {
+    debugLogger.log('install', `FAILED installation ${progressBarName} with error: ${e}`);
     process.exitCode = 1;
     throw e;
   } finally {
@@ -100,6 +113,9 @@ function toMegabytes(bytes: number) {
 }
 
 function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | undefined): Promise<{error: any}> {
+  debugLogger.log('install', `running download:`);
+  debugLogger.log('install', `-- from url: ${url}`);
+  debugLogger.log('install', `-- to location: ${destinationPath}`);
   let fulfill: ({error}: {error: any}) => void = ({error}) => {};
   let downloadedBytes = 0;
   let totalBytes = 0;
@@ -119,6 +135,7 @@ function downloadFile(url: string, destinationPath: string, progressCallback: On
     file.on('error', error => fulfill({error}));
     response.pipe(file);
     totalBytes = parseInt(response.headers['content-length'], 10);
+    debugLogger.log('install', `-- total bytes: ${totalBytes}`);
     if (progressCallback)
       response.on('data', onData);
   });

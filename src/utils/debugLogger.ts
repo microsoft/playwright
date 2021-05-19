@@ -20,6 +20,7 @@ import fs from 'fs';
 const debugLoggerColorMap = {
   'api': 45, // cyan
   'protocol': 34, // green
+  'install': 34, // green
   'browser': 0, // reset
   'error': 160, // red,
   'channel:command': 33, // blue
