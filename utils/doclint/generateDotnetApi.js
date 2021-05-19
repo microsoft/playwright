@@ -289,8 +289,6 @@ function toMemberName(member, options) {
  * @returns {string}
  */
 function toTitleCase(name) {
-  if (name === 'dblclick')
-    return 'DblClick';
   return name.charAt(0).toUpperCase() + name.substring(1);
 }
 
