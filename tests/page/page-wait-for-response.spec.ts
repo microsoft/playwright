@@ -113,3 +113,13 @@ it('should work with no timeout', async ({page, server}) => {
   ]);
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
 });
+
+it('should resolve response.finished() 404 page', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'chromium');
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse('**/404'),
+    page.evaluate(() => fetch('./404'))
+  ]);
+  await response.finished();
+});
