@@ -120,9 +120,6 @@ export abstract class Browser extends SdkObject {
       context._browserClosed();
     if (this._defaultContext)
       this._defaultContext._browserClosed();
-    for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(kBrowserClosedError);
-    this._idToVideo.clear();
     this.emit(Browser.Events.Disconnected);
   }
 
