@@ -76,7 +76,8 @@ maximize what a single instance can do through multiple browser contexts.
 
 A [BrowserContext] is an isolated incognito-alike
 session within a browser instance. Browser contexts are fast and cheap to create.
-Browser contexts can be used to parallelize isolated test executions.
+We recommend running each test scenario in its own new Browser context, so that
+the browser state is isolated between the tests.
 
 ```js
 const browser = await chromium.launch();
