@@ -129,7 +129,6 @@ export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & Playwrig
   },
 
   contextOptions: async ({ video, hasTouch, browserVersion }, run, testInfo) => {
-    testInfo.data.browserVersion = browserVersion;
     const debugName = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
     const contextOptions = {
       recordVideo: video ? { dir: testInfo.outputPath('') } : undefined,

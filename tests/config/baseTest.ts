@@ -123,15 +123,8 @@ const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixt
   isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
   isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
   isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
-  __baseSetup: [ async ({ browserName, headless, mode, video }, run, testInfo) => {
+  __baseSetup: [ async ({ browserName }, run, testInfo) => {
     testInfo.snapshotPathSegment = browserName;
-    testInfo.data = { browserName };
-    if (!headless)
-      testInfo.data.headful = true;
-    if (mode !== 'default')
-      testInfo.data.mode = mode;
-    if (video)
-      testInfo.data.video = true;
     await run();
   }, { auto: true } ],
 };

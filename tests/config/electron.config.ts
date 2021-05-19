@@ -39,6 +39,15 @@ const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   projects: [],
 };
 
+const metadata = {
+  platform: process.platform,
+  headful: true,
+  browserName: 'electron',
+  channel: undefined,
+  mode: 'default',
+  video: false,
+};
+
 config.projects.push({
   name: 'electron',
   use: {
@@ -47,6 +56,7 @@ config.projects.push({
     coverageName: 'electron',
   },
   testDir: path.join(testDir, 'electron'),
+  metadata,
 });
 
 config.projects.push({
@@ -58,6 +68,7 @@ config.projects.push({
   },
   testDir: path.join(testDir, 'page'),
   define: { test: pageTest, fixtures: electronFixtures },
+  metadata,
 });
 
 export default config;

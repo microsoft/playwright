@@ -51,9 +51,9 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with a mobile viewport and clip', async ({browser, server, browserName}) => {
+  browserTest('should work with a mobile viewport and clip', async ({browser, server, browserName, channel}) => {
     browserTest.skip(browserName === 'firefox');
-    browserTest.skip(process.env.CRPATH); // Does not work in stable Chrome.
+    browserTest.skip(!!channel, 'Different result in stable/beta');
 
     const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
     const page = await context.newPage();
@@ -85,7 +85,7 @@ browserTest.describe('page screenshot', () => {
 
   browserTest('should work with large size', async ({ browserName, headless, platform, contextFactory }) => {
     browserTest.fixme(browserName === 'chromium' && !headless && platform === 'linux', 'Chromium has gpu problems on linux with large screnshots');
-    browserTest.slow('Large screenshot is slow');
+    browserTest.slow(true, 'Large screenshot is slow');
 
     const context = await contextFactory();
     const page = await context.newPage();
