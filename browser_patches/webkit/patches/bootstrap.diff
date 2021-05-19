@@ -745,7 +745,7 @@ index 65ab2092b0ffd0ead3da1ddccd398d4f4179f51a..2d9ef40a20df819193c9a5867fbf6f8f
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e7454c2268f3 100644
+index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..5f7add78fefc2bf8718ff8af7c49c169038e8226 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -27,7 +27,7 @@
@@ -757,7 +757,20 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
              "description": "Resource type as it was perceived by the rendering engine."
          },
          {
-@@ -112,6 +112,51 @@
+@@ -49,6 +49,12 @@
+             "enum": ["Light", "Dark"],
+             "description": "Page appearance name."
+         },
++        {
++            "id": "ReducedMotion",
++            "type": "string",
++            "enum": ["Reduce", "NoPreference"],
++            "description": "Page reduced-motion media query override."
++        },
+         {
+             "id": "Frame",
+             "type": "object",
+@@ -112,6 +118,51 @@
                  { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
                  { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
              ]
@@ -809,7 +822,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
          }
      ],
      "commands": [
-@@ -131,6 +176,14 @@
+@@ -131,6 +182,14 @@
                  { "name": "revalidateAllResources", "type": "boolean", "optional": true, "description": "If true, all cached subresources will be revalidated when the main resource loads. Otherwise, only expired cached subresources will be revalidated (the default behavior for most WebKit clients)." }
              ]
          },
@@ -824,7 +837,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
          {
              "name": "navigate",
              "description": "Navigates current page to the given URL.",
-@@ -204,7 +257,8 @@
+@@ -204,7 +263,8 @@
              "name": "setBootstrapScript",
              "targetTypes": ["page"],
              "parameters": [
@@ -834,10 +847,18 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
              ]
          },
          {
-@@ -270,6 +324,20 @@
+@@ -270,6 +330,28 @@
                  { "name": "appearance", "$ref": "Appearance", "optional": true }
              ]
          },
++        {
++            "name": "setForcedReducedMotion",
++            "description": "Forces the reduced-motion media query for the page.",
++            "targetTypes": ["page"],
++            "parameters": [
++                { "name": "reducedMotion", "$ref": "ReducedMotion", "optional": true }
++            ]
++        },
 +        {
 +            "name": "setTimeZone",
 +            "description": "Enables time zone emulation.",
@@ -855,7 +876,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -290,7 +358,8 @@
+@@ -290,7 +372,8 @@
                  { "name": "y", "type": "integer", "description": "Y coordinate" },
                  { "name": "width", "type": "integer", "description": "Rectangle width" },
                  { "name": "height", "type": "integer", "description": "Rectangle height" },
@@ -865,7 +886,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
              ],
              "returns": [
                  { "name": "dataURL", "type": "string", "description": "Base64-encoded image data (PNG)." }
-@@ -308,12 +377,77 @@
+@@ -308,12 +391,77 @@
          {
              "name": "setScreenSizeOverride",
              "description": "Overrides screen size exposed to DOM and used in media queries for testing with provided values.",
@@ -944,7 +965,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
          }
      ],
      "events": [
-@@ -321,14 +455,16 @@
+@@ -321,14 +469,16 @@
              "name": "domContentEventFired",
              "targetTypes": ["page"],
              "parameters": [
@@ -963,7 +984,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
              ]
          },
          {
-@@ -338,6 +474,14 @@
+@@ -338,6 +488,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -978,7 +999,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -377,6 +521,22 @@
+@@ -377,6 +535,22 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1001,7 +1022,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..fcb70d73c8a8cb2c543936ac7fe1e745
          {
              "name": "defaultAppearanceDidChange",
              "description": "Fired when page's default appearance changes, even if there is a forced appearance.",
-@@ -385,6 +545,28 @@
+@@ -385,6 +559,28 @@
              "parameters": [
                  { "name": "appearance", "$ref": "Appearance", "description": "Name of the appearance that is active (not considering any forced appearance.)" }
              ]
@@ -2213,6 +2234,31 @@ index 5439529aa796093989ebd43adaeef88c4ddffb27..4d00bd1d5e35a845f28e697adc7cb3c4
  bool AccessibilityObject::accessibilityIsIgnored() const
  {
      AXComputedObjectAttributeCache* attributeCache = nullptr;
+diff --git a/Source/WebCore/css/MediaQueryEvaluator.cpp b/Source/WebCore/css/MediaQueryEvaluator.cpp
+index 11619a9688856b4488d059273359757da3978a89..700f403a063fdfd33f8d924d4caff470c0bea8d5 100644
+--- a/Source/WebCore/css/MediaQueryEvaluator.cpp
++++ b/Source/WebCore/css/MediaQueryEvaluator.cpp
+@@ -844,7 +844,11 @@ static bool prefersContrastEvaluate(CSSValue* value, const CSSToLengthConversion
+ static bool prefersReducedMotionEvaluate(CSSValue* value, const CSSToLengthConversionData&, Frame& frame, MediaFeaturePrefix)
+ {
+     bool userPrefersReducedMotion = false;
+-
++    
++    Optional<bool> reducedMotionOverride = frame.page()->useReducedMotionOverride();
++    if (reducedMotionOverride)
++        userPrefersReducedMotion = reducedMotionOverride.value();
++    else {
+     switch (frame.settings().forcedPrefersReducedMotionAccessibilityValue()) {
+     case ForcedAccessibilityValue::On:
+         userPrefersReducedMotion = true;
+@@ -857,6 +861,7 @@ static bool prefersReducedMotionEvaluate(CSSValue* value, const CSSToLengthConve
+ #endif
+         break;
+     }
++    }
+ 
+     if (!value)
+         return userPrefersReducedMotion;
 diff --git a/Source/WebCore/dom/DataTransfer.cpp b/Source/WebCore/dom/DataTransfer.cpp
 index 1deac4f41cf49f1f882dccefd48cf6a9732f3ed9..c691eeccd75fc76f5df367b9fb5b95435e92ab79 100644
 --- a/Source/WebCore/dom/DataTransfer.cpp
@@ -3298,7 +3344,7 @@ index 933601761667417ebe5de301586869ccc64fc3da..f63a95c3c45980d5606971b83881e824
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index af0a051bdae52b2daf70b1fee76eee0866b7b046..875becfd5de4581fe40394d98601cb7206af5be6 100644
+index af0a051bdae52b2daf70b1fee76eee0866b7b046..8883274866a9ee4f5a1bf342178e6642c66a590a 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,19 +32,25 @@
@@ -3645,10 +3691,30 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..875becfd5de4581fe40394d98601cb72
  
      IntRect rectangle(x, y, width, height);
      auto snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, options);
-@@ -1094,6 +1211,27 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
+@@ -1094,6 +1211,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
      return snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
++Protocol::ErrorStringOr<void> InspectorPageAgent::setForcedReducedMotion(Optional<Protocol::Page::ReducedMotion>&& reducedMotion)
++{
++    if (!reducedMotion) {
++        m_inspectedPage.setUseReducedMotionOverride(WTF::nullopt);
++        return { };
++    }
++
++    switch (*reducedMotion) {
++        case Protocol::Page::ReducedMotion::Reduce:
++            m_inspectedPage.setUseReducedMotionOverride(true);
++            return { };
++        case Protocol::Page::ReducedMotion::NoPreference:
++            m_inspectedPage.setUseReducedMotionOverride(false);
++            return { };
++    }
++
++    ASSERT_NOT_REACHED();
++    return { };
++}
++
 +Protocol::ErrorStringOr<void> InspectorPageAgent::setTimeZone(const String& timeZone)
 +{
 +    bool success = WTF::setTimeZoneForAutomation(timeZone);
@@ -3673,7 +3739,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..875becfd5de4581fe40394d98601cb72
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  {
-@@ -1106,7 +1244,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
+@@ -1106,7 +1264,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  }
  #endif
  
@@ -3681,7 +3747,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..875becfd5de4581fe40394d98601cb72
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional<int>&& width, Optional<int>&& height)
  {
      if (width.hasValue() != height.hasValue())
-@@ -1121,6 +1258,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional
+@@ -1121,6 +1278,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(Optional
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.valueOr(0), height.valueOr(0)));
      return { };
  }
@@ -4278,7 +4344,7 @@ index af0a051bdae52b2daf70b1fee76eee0866b7b046..875becfd5de4581fe40394d98601cb72
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 78a98224ab5450e0729751571fe1bb957d303301..b60b69f2467526b73aad323c531055b4fec173eb 100644
+index 78a98224ab5450e0729751571fe1bb957d303301..51dc095e26f97f1543ffdee6dd6893e36f10a60e 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -4338,10 +4404,11 @@ index 78a98224ab5450e0729751571fe1bb957d303301..b60b69f2467526b73aad323c531055b4
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>> searchInResource(const Inspector::Protocol::Network::FrameId&, const String& url, const String& query, Optional<bool>&& caseSensitive, Optional<bool>&& isRegex, const Inspector::Protocol::Network::RequestId&);
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>> searchInResources(const String&, Optional<bool>&& caseSensitive, Optional<bool>&& isRegex);
  #if !PLATFORM(IOS_FAMILY)
-@@ -114,25 +124,35 @@ public:
+@@ -114,25 +124,36 @@ public:
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      Inspector::Protocol::ErrorStringOr<void> setForcedAppearance(Optional<Inspector::Protocol::Page::Appearance>&&);
  #endif
++    Inspector::Protocol::ErrorStringOr<void> setForcedReducedMotion(Optional<Inspector::Protocol::Page::ReducedMotion>&&);
 +    Inspector::Protocol::ErrorStringOr<void> setTimeZone(const String&);
 +    Inspector::Protocol::ErrorStringOr<void> setTouchEmulationEnabled(bool);
      Inspector::Protocol::ErrorStringOr<String> snapshotNode(Inspector::Protocol::DOM::NodeId);
@@ -4380,7 +4447,7 @@ index 78a98224ab5450e0729751571fe1bb957d303301..b60b69f2467526b73aad323c531055b4
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      void defaultAppearanceDidChange(bool useDarkAppearance);
  #endif
-@@ -143,6 +163,12 @@ public:
+@@ -143,6 +164,12 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -4393,7 +4460,7 @@ index 78a98224ab5450e0729751571fe1bb957d303301..b60b69f2467526b73aad323c531055b4
  
      Frame* frameForId(const Inspector::Protocol::Network::FrameId&);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -151,6 +177,7 @@ public:
+@@ -151,6 +178,7 @@ public:
  
  private:
      double timestamp();
@@ -4401,7 +4468,7 @@ index 78a98224ab5450e0729751571fe1bb957d303301..b60b69f2467526b73aad323c531055b4
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -162,18 +189,19 @@ private:
+@@ -162,18 +190,19 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -5561,7 +5628,7 @@ index 38fd7b29b53eab484e30963b51c8ae525c5d7a38..3c2f2104e3f364d3d6201e3009a448b4
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
 diff --git a/Source/WebCore/page/Page.cpp b/Source/WebCore/page/Page.cpp
-index 1b8425e6f0961347638d7efc3daec6dadaa58472..d5259c32f79a9d08de6e01cd668e3586850e1af4 100644
+index 1b8425e6f0961347638d7efc3daec6dadaa58472..a1ec9ba2996aa3a165b8ebe08adcbc22a8bbb2dc 100644
 --- a/Source/WebCore/page/Page.cpp
 +++ b/Source/WebCore/page/Page.cpp
 @@ -446,6 +446,37 @@ void Page::setOverrideViewportArguments(const Optional<ViewportArguments>& viewp
@@ -5614,8 +5681,25 @@ index 1b8425e6f0961347638d7efc3daec6dadaa58472..d5259c32f79a9d08de6e01cd668e3586
      resetSeenPlugins();
      resetSeenMediaEngines();
  }
+@@ -3245,6 +3271,16 @@ void Page::setUseDarkAppearanceOverride(Optional<bool> valueOverride)
+ #endif
+ }
+ 
++void Page::setUseReducedMotionOverride(Optional<bool> valueOverride)
++{
++    if (valueOverride == m_useReducedMotionOverride)
++        return;
++
++    m_useReducedMotionOverride = valueOverride;
++
++    appearanceDidChange();
++}
++
+ void Page::setFullscreenInsets(const FloatBoxExtent& insets)
+ {
+     if (insets == m_fullscreenInsets)
 diff --git a/Source/WebCore/page/Page.h b/Source/WebCore/page/Page.h
-index 917a1ad769d94cb0ec35169c1df090d76954a392..9465da6ee79b59729169f7f66dd009ef8e03cbc6 100644
+index 917a1ad769d94cb0ec35169c1df090d76954a392..69a714415033fa3f113445f9fe3446d6c365b698 100644
 --- a/Source/WebCore/page/Page.h
 +++ b/Source/WebCore/page/Page.h
 @@ -253,6 +253,9 @@ public:
@@ -5639,7 +5723,16 @@ index 917a1ad769d94cb0ec35169c1df090d76954a392..9465da6ee79b59729169f7f66dd009ef
  #endif
      FocusController& focusController() const { return *m_focusController; }
  #if ENABLE(CONTEXT_MENUS)
-@@ -834,6 +841,11 @@ public:
+@@ -457,6 +464,8 @@ public:
+     WEBCORE_EXPORT void effectiveAppearanceDidChange(bool useDarkAppearance, bool useElevatedUserInterfaceLevel);
+     bool defaultUseDarkAppearance() const { return m_useDarkAppearance; }
+     void setUseDarkAppearanceOverride(Optional<bool>);
++    Optional<bool> useReducedMotionOverride() const { return m_useReducedMotionOverride; }
++    void setUseReducedMotionOverride(Optional<bool>);
+ 
+ #if ENABLE(TEXT_AUTOSIZING)
+     float textAutosizingWidth() const { return m_textAutosizingWidth; }
+@@ -834,6 +843,11 @@ public:
  
      WEBCORE_EXPORT Vector<Ref<Element>> editableElementsInRect(const FloatRect&) const;
  
@@ -5651,7 +5744,7 @@ index 917a1ad769d94cb0ec35169c1df090d76954a392..9465da6ee79b59729169f7f66dd009ef
  #if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
      DeviceOrientationUpdateProvider* deviceOrientationUpdateProvider() const { return m_deviceOrientationUpdateProvider.get(); }
  #endif
-@@ -909,6 +921,9 @@ private:
+@@ -909,6 +923,9 @@ private:
  
  #if ENABLE(DRAG_SUPPORT)
      const std::unique_ptr<DragController> m_dragController;
@@ -5661,7 +5754,15 @@ index 917a1ad769d94cb0ec35169c1df090d76954a392..9465da6ee79b59729169f7f66dd009ef
  #endif
      const std::unique_ptr<FocusController> m_focusController;
  #if ENABLE(CONTEXT_MENUS)
-@@ -1148,6 +1163,11 @@ private:
+@@ -988,6 +1005,7 @@ private:
+     bool m_useElevatedUserInterfaceLevel { false };
+     bool m_useDarkAppearance { false };
+     Optional<bool> m_useDarkAppearanceOverride;
++    Optional<bool> m_useReducedMotionOverride;
+ 
+ #if ENABLE(TEXT_AUTOSIZING)
+     float m_textAutosizingWidth { 0 };
+@@ -1148,6 +1166,11 @@ private:
  #endif
  
      Optional<ViewportArguments> m_overrideViewportArguments;
