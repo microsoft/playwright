@@ -117,8 +117,20 @@ contain `[a-zA-Z0-9_]` characters.
 Script that evaluates to a selector engine instance.
 
 ### param: Selectors.register.script
-* langs: csharp, java
+* langs: java
 - `script` <[string]|[path]>
+
+Script that evaluates to a selector engine instance.
+
+### option: Selectors.register.script
+* langs: csharp
+- `script` <[string]>
+
+Script that evaluates to a selector engine instance.
+
+### option: Selectors.register.path
+* langs: csharp
+- `path` <[path]>
 
 Script that evaluates to a selector engine instance.
 
