@@ -1328,7 +1328,7 @@ Frame:
             type: object
             properties:
               name: string
-              mimeType: string
+              mimeType: string?
               buffer: binary
         timeout: number?
         noWaitAfter: boolean?
@@ -1747,7 +1747,7 @@ ElementHandle:
             type: object
             properties:
               name: string
-              mimeType: string
+              mimeType: string?
               buffer: binary
         timeout: number?
         noWaitAfter: boolean?
@@ -2096,6 +2096,47 @@ Electron:
           type: array?
           items: NameValue
         timeout: number?
+        acceptDownloads: boolean?
+        bypassCSP: boolean?
+        colorScheme:
+          type: enum?
+          literals:
+          - dark
+          - light
+          - no-preference
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        geolocation:
+          type: object?
+          properties:
+            longitude: number
+            latitude: number
+            accuracy: number?
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+        ignoreHTTPSErrors: boolean?
+        locale: string?
+        offline: boolean?
+        recordHar:
+          type: object?
+          properties:
+            omitContent: boolean?
+            path: string
+        recordVideo:
+          type: object?
+          properties:
+            dir: string
+            size:
+              type: object?
+              properties:
+                width: number
+                height: number
+        timezoneId: string?
+
       returns:
         electronApplication: ElectronApplication
 

@@ -159,6 +159,7 @@ class TargetRegistry {
       target.updateUserAgent();
       target.updateTouchOverride();
       target.updateColorSchemeOverride();
+      target.updateReducedMotionOverride();
       if (!hasExplicitSize)
         target.updateViewportSize();
       if (browserContext.videoRecordingOptions)
@@ -437,6 +438,14 @@ class PageTarget {
     this._linkedBrowser.browsingContext.prefersColorSchemeOverride = this.colorScheme || this._browserContext.colorScheme || 'none';
   }
 
+  setReducedMotion(reducedMotion) {
+    this.reducedMotion = fromProtocolReducedMotion(reducedMotion);
+    this.updateReducedMotionOverride();
+  }
+
+  updateReducedMotionOverride() {
+    this._linkedBrowser.browsingContext.prefersReducedMotionOverride = this.reducedMotion || this._browserContext.reducedMotion || 'none';
+  }
 
   async setViewportSize(viewportSize) {
     this._viewportSize = viewportSize;
@@ -612,6 +621,14 @@ function fromProtocolColorScheme(colorScheme) {
   throw new Error('Unknown color scheme: ' + colorScheme);
 }
 
+function fromProtocolReducedMotion(reducedMotion) {
+  if (reducedMotion === 'reduce')
+    return reducedMotion;
+  if (reducedMotion === null || reducedMotion === 'no-preference')
+    return undefined;
+  throw new Error('Unknown reduced motion: ' + reducedMotion);
+}
+
 class BrowserContext {
   constructor(registry, browserContextId, removeOnDetach) {
     this._registry = registry;
@@ -639,6 +656,7 @@ class BrowserContext {
     this.defaultUserAgent = null;
     this.touchOverride = false;
     this.colorScheme = 'none';
+    this.reducedMotion = 'none';
     this.videoRecordingOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
     this.bindings = [];
@@ -650,6 +668,12 @@ class BrowserContext {
     this.colorScheme = fromProtocolColorScheme(colorScheme);
     for (const page of this.pages)
       page.updateColorSchemeOverride();
+  }
+
+  setReducedMotion(reducedMotion) {
+    this.reducedMotion = fromProtocolReducedMotion(reducedMotion);
+    for (const page of this.pages)
+      page.updateReducedMotionOverride();
   }
 
   async destroy() {

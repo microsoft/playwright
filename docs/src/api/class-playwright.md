@@ -149,7 +149,7 @@ with sync_playwright() as playwright:
 
 ## property: Playwright.devices
 * langs: csharp
-- type: <[IReadOnlyDictionary<string, BrowserContextOptions>]>
+- type: <[IReadOnlyDictionary<string, BrowserNewContextOptions>]>
 
 Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].
 

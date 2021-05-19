@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import * as channels from '../protocol/channels';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { helper, RegisteredListener } from './helper';
@@ -1060,7 +1061,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(metadata: CallMetadata, selector: string, files: types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
+  async setInputFiles(metadata: CallMetadata, selector: string, files: channels.ElementHandleSetInputFilesParams['files'], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setInputFiles(progress, files, options)));
@@ -1219,9 +1220,9 @@ export class Frame extends SdkObject {
     this._networkIdleTimer = undefined;
   }
 
-  async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
-    const mainContext = await this._mainContext();
-    const injectedScriptHandle = await mainContext.injectedScript();
+  async extendInjectedScript(world: types.World, source: string, arg?: any): Promise<js.JSHandle> {
+    const context = await this._context(world);
+    const injectedScriptHandle = await context.injectedScript();
     return injectedScriptHandle.evaluateHandle((injectedScript, {source, arg}) => {
       return injectedScript.extend(source, arg);
     }, { source, arg });

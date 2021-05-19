@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
+import * as channels from '../protocol/channels';
 import * as frames from './frames';
 import { assert } from '../utils/utils';
 import type { ElementStateWithoutStable, InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as js from './javascript';
+import * as mime from 'mime';
 import { Page } from './page';
 import { SelectorInfo } from './selectors';
 import * as types from './types';
 import { Progress, ProgressController } from './progress';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 import { CallMetadata } from './instrumentation';
+
+type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -528,7 +532,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(metadata: CallMetadata, files: types.FilePayload[], options: types.NavigatingActionWaitOptions) {
+  async setInputFiles(metadata: CallMetadata, files: SetInputFilesFiles, options: types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._setInputFiles(progress, files, options);
@@ -536,7 +540,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _setInputFiles(progress: Progress, files: types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+  async _setInputFiles(progress: Progress, files: SetInputFilesFiles, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    for (const payload of files) {
+      if (!payload.mimeType)
+        payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
+    }
     const multiple = throwFatalDOMError(await this.evaluateInUtility(([injected, node]): 'error:notinput' | 'error:notconnected' | boolean => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         return 'error:notinput';
@@ -549,7 +557,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, files);
+      await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, files as types.FilePayload[]);
     });
     await this._page._doSlowMo();
     return 'done';

@@ -171,8 +171,88 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
  
    const transportProvider = {
      setListener(upgradeListener) {
+diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
+index 24daf0c64b332823df7f5da698e35bab8edb72d5..6293aabbad9cb179ebbe8063e03496ca96d8577b 100644
+--- a/docshell/base/BrowsingContext.cpp
++++ b/docshell/base/BrowsingContext.cpp
+@@ -103,6 +103,13 @@ struct ParamTraits<mozilla::dom::PrefersColorSchemeOverride>
+           mozilla::dom::PrefersColorSchemeOverride::None,
+           mozilla::dom::PrefersColorSchemeOverride::EndGuard_> {};
+ 
++template <>
++struct ParamTraits<mozilla::dom::PrefersReducedMotionOverride>
++    : public ContiguousEnumSerializer<
++          mozilla::dom::PrefersReducedMotionOverride,
++          mozilla::dom::PrefersReducedMotionOverride::None,
++          mozilla::dom::PrefersReducedMotionOverride::EndGuard_> {};
++
+ template <>
+ struct ParamTraits<mozilla::dom::ExplicitActiveStatus>
+     : public ContiguousEnumSerializer<
+@@ -2537,6 +2544,23 @@ void BrowsingContext::DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
+   });
+ }
+ 
++void BrowsingContext::DidSet(FieldIndex<IDX_PrefersReducedMotionOverride>,
++                             dom::PrefersReducedMotionOverride aOldValue) {
++  MOZ_ASSERT(IsTop());
++  if (PrefersReducedMotionOverride() == aOldValue) {
++    return;
++  }
++  PreOrderWalk([&](BrowsingContext* aContext) {
++    if (nsIDocShell* shell = aContext->GetDocShell()) {
++      if (nsPresContext* pc = shell->GetPresContext()) {
++        pc->MediaFeatureValuesChanged(
++            {MediaFeatureChangeReason::SystemMetricsChange},
++            MediaFeatureChangePropagation::JustThisDocument);
++      }
++    }
++  });
++}
++
+ void BrowsingContext::DidSet(FieldIndex<IDX_MediumOverride>,
+                              nsString&& aOldValue) {
+   MOZ_ASSERT(IsTop());
+diff --git a/docshell/base/BrowsingContext.h b/docshell/base/BrowsingContext.h
+index fdd1fd88d2bb838ed88a8d49d1c923a7002893ee..6cd085d20da5692435cf7d9faaeeeec3b480ed83 100644
+--- a/docshell/base/BrowsingContext.h
++++ b/docshell/base/BrowsingContext.h
+@@ -191,6 +191,7 @@ enum class ExplicitActiveStatus : uint8_t {
+   FIELD(ServiceWorkersTestingEnabled, bool)                                   \
+   FIELD(MediumOverride, nsString)                                             \
+   FIELD(PrefersColorSchemeOverride, mozilla::dom::PrefersColorSchemeOverride) \
++  FIELD(PrefersReducedMotionOverride, mozilla::dom::PrefersReducedMotionOverride) \
+   FIELD(DisplayMode, mozilla::dom::DisplayMode)                               \
+   /* True if the top level browsing context owns a main media controller */   \
+   FIELD(HasMainMediaController, bool)                                         \
+@@ -810,6 +811,10 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+     return GetPrefersColorSchemeOverride();
+   }
+ 
++  dom::PrefersReducedMotionOverride PrefersReducedMotionOverride() const {
++    return GetPrefersReducedMotionOverride();
++  }
++
+  protected:
+   virtual ~BrowsingContext();
+   BrowsingContext(WindowContext* aParentWindow, BrowsingContextGroup* aGroup,
+@@ -917,6 +922,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+   void DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
+               dom::PrefersColorSchemeOverride aOldValue);
+ 
++  bool CanSet(FieldIndex<IDX_PrefersReducedMotionOverride>,
++              dom::PrefersReducedMotionOverride, ContentParent*) {
++    return IsTop();
++  }
++
++  void DidSet(FieldIndex<IDX_PrefersReducedMotionOverride>,
++              dom::PrefersReducedMotionOverride aOldValue);
++
+   void DidSet(FieldIndex<IDX_MediumOverride>, nsString&& aOldValue);
+ 
+   bool CanSet(FieldIndex<IDX_SuspendMediaWhenInactive>, bool, ContentParent*) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..de8cbb9884553088354b4f58c77ac5a0c33c37b9 100644
+index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..d4b3ef30d2a36f74fb17015b53b3a4d918e43160 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -220,7 +300,7 @@ index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..de8cbb9884553088354b4f58c77ac5a0
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -396,6 +406,12 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -396,6 +406,13 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mAllowDNSPrefetch(true),
        mAllowWindowControl(true),
        mCSSErrorReportingEnabled(false),
@@ -230,10 +310,11 @@ index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..de8cbb9884553088354b4f58c77ac5a0
 +      mForceActiveState(false),
 +      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
 +      mColorSchemeOverride(COLOR_SCHEME_OVERRIDE_NONE),
++      mReducedMotionOverride(REDUCED_MOTION_OVERRIDE_NONE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mDisableMetaRefreshWhenInactive(false),
-@@ -3345,6 +3361,203 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3345,6 +3362,221 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -432,12 +513,30 @@ index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..de8cbb9884553088354b4f58c77ac5a0
 +  return NS_OK;
 +}
 +
++NS_IMETHODIMP
++nsDocShell::GetReducedMotionOverride(ReducedMotionOverride* aReducedMotionOverride) {
++  *aReducedMotionOverride = GetRootDocShell()->mReducedMotionOverride;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetReducedMotionOverride(ReducedMotionOverride aReducedMotionOverride) {
++  mReducedMotionOverride = aReducedMotionOverride;
++  RefPtr<nsPresContext> presContext = GetPresContext();
++  if (presContext) {
++    presContext->MediaFeatureValuesChanged(
++        {MediaFeatureChangeReason::SystemMetricsChange},
++        MediaFeatureChangePropagation::JustThisDocument);
++  }
++  return NS_OK;
++}
++
 +// =============== Juggler End =======================
 +
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -4969,7 +5182,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
+@@ -4969,7 +5201,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
  }
  
  void nsDocShell::ActivenessMaybeChanged() {
@@ -446,7 +545,7 @@ index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..de8cbb9884553088354b4f58c77ac5a0
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->SetIsActive(isActive);
    }
-@@ -8708,6 +8921,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8708,6 +8940,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -459,7 +558,7 @@ index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..de8cbb9884553088354b4f58c77ac5a0
        return rv;
      }
  
-@@ -12707,6 +12926,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12707,6 +12945,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -469,7 +568,7 @@ index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..de8cbb9884553088354b4f58c77ac5a0
      return NS_OK;
    }
  
-@@ -12793,6 +13015,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12793,6 +13034,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -479,7 +578,7 @@ index dffed2bfcca2ef93c0ee97129baa30743bf15b9f..de8cbb9884553088354b4f58c77ac5a0
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index c29b1e05f3620a017156fd93d0928eca5e956859..4d89e1d5d2ebd3115fc06cfb1c7b6c08ea454d6d 100644
+index c29b1e05f3620a017156fd93d0928eca5e956859..7ca313920eb5693574de598f7de06fba796d2c77 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -14,6 +14,7 @@
@@ -523,7 +622,7 @@ index c29b1e05f3620a017156fd93d0928eca5e956859..4d89e1d5d2ebd3115fc06cfb1c7b6c08
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1236,6 +1249,15 @@ class nsDocShell final : public nsDocLoader,
+@@ -1236,6 +1249,16 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowDNSPrefetch : 1;
    bool mAllowWindowControl : 1;
    bool mCSSErrorReportingEnabled : 1;
@@ -535,12 +634,13 @@ index c29b1e05f3620a017156fd93d0928eca5e956859..4d89e1d5d2ebd3115fc06cfb1c7b6c08
 +  RefPtr<nsGeolocationService> mGeolocationServiceOverride;
 +  OnlineOverride mOnlineOverride;
 +  ColorSchemeOverride mColorSchemeOverride;
++  ReducedMotionOverride mReducedMotionOverride;
 +
    bool mAllowAuth : 1;
    bool mAllowKeywordFixup : 1;
    bool mDisableMetaRefreshWhenInactive : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index d326491a03b83c4015f7bc3c779b0c5909e2db43..21f343bda776cd71212fc728d634dabcbe2d97da 100644
+index d326491a03b83c4015f7bc3c779b0c5909e2db43..828271c52ecdcecfc6c06fa9d85ffc19a9dcf28e 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -551,7 +651,7 @@ index d326491a03b83c4015f7bc3c779b0c5909e2db43..21f343bda776cd71212fc728d634dabc
  interface nsIEditor;
  interface nsIEditingSession;
  interface nsIInputStream;
-@@ -880,6 +881,35 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -880,6 +881,42 @@ interface nsIDocShell : nsIDocShellTreeItem
     */
    void synchronizeLayoutHistoryState();
  
@@ -582,13 +682,20 @@ index d326491a03b83c4015f7bc3c779b0c5909e2db43..21f343bda776cd71212fc728d634dabc
 +  };
 +  [infallible] attribute nsIDocShell_ColorSchemeOverride colorSchemeOverride;
 +
++  cenum ReducedMotionOverride : 8 {
++    REDUCED_MOTION_OVERRIDE_REDUCE,
++    REDUCED_MOTION_OVERRIDE_NO_PREFERENCE,
++    REDUCED_MOTION_OVERRIDE_NONE, /* This clears the override. */
++  };
++  [infallible] attribute nsIDocShell_ReducedMotionOverride reducedMotionOverride;
++
 +  void setGeolocationOverride(in nsIDOMGeoPosition position);
 +
    /**
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 93baac5ba84922575d8d334533f553f3ad69cfa0..eb4ae377a31301b2df1d06ed63b331b7ba849c9c 100644
+index 93baac5ba84922575d8d334533f553f3ad69cfa0..248207e95ab683af1e4f1fd2d53b7eb7d9a49c69 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3496,6 +3496,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -644,6 +751,59 @@ index 93baac5ba84922575d8d334533f553f3ad69cfa0..eb4ae377a31301b2df1d06ed63b331b7
    if (aIgnoreRFP == IgnoreRFP::No &&
        nsContentUtils::ShouldResistFingerprinting(this)) {
      return StylePrefersColorScheme::Light;
+@@ -17012,6 +17037,39 @@ StylePrefersColorScheme Document::PrefersColorScheme(
+   return dark ? StylePrefersColorScheme::Dark : StylePrefersColorScheme::Light;
+ }
+ 
++bool Document::PrefersReducedMotion() const {
++  auto* docShell = static_cast<nsDocShell*>(GetDocShell());
++  nsIDocShell::ReducedMotionOverride reducedMotion;
++  if (docShell && docShell->GetReducedMotionOverride(&reducedMotion) == NS_OK &&
++      reducedMotion != nsIDocShell::REDUCED_MOTION_OVERRIDE_NONE) {
++    switch (reducedMotion) {
++      case nsIDocShell::REDUCED_MOTION_OVERRIDE_REDUCE:
++        return true;
++      case nsIDocShell::REDUCED_MOTION_OVERRIDE_NO_PREFERENCE:
++        return false;
++      case nsIDocShell::REDUCED_MOTION_OVERRIDE_NONE:
++        break;
++    };
++  }
++
++  if (auto* bc = GetBrowsingContext()) {
++    switch (bc->Top()->PrefersReducedMotionOverride()) {
++      case dom::PrefersReducedMotionOverride::Reduce:
++        return true;
++      case dom::PrefersReducedMotionOverride::No_preference:
++        return false;
++      case dom::PrefersReducedMotionOverride::None:
++      case dom::PrefersReducedMotionOverride::EndGuard_:
++        break;
++    }
++  }
++
++  if (nsContentUtils::ShouldResistFingerprinting(this)) {
++    return false;
++  }
++  return LookAndFeel::GetInt(LookAndFeel::IntID::PrefersReducedMotion, 0) == 1;
++}
++
+ // static
+ bool Document::UseOverlayScrollbars(const Document* aDocument) {
+   BrowsingContext* bc = aDocument ? aDocument->GetBrowsingContext() : nullptr;
+diff --git a/dom/base/Document.h b/dom/base/Document.h
+index 87807e615c6897d92f3f8a7d7409e690c039f72d..54882eb8b82a9727022ca39371a9cc27d2c5ef75 100644
+--- a/dom/base/Document.h
++++ b/dom/base/Document.h
+@@ -4013,6 +4013,8 @@ class Document : public nsINode,
+   enum class IgnoreRFP { No, Yes };
+   StylePrefersColorScheme PrefersColorScheme(IgnoreRFP = IgnoreRFP::No) const;
+ 
++  bool PrefersReducedMotion() const;
++
+   // Returns true if we use overlay scrollbars on the system wide or on the
+   // given document.
+   static bool UseOverlayScrollbars(const Document* aDocument);
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
 index 407eecefd4e1cdf58f63714783ecf18cc6e28dce..a479467953fdfb54fb5183ce86794339aa36ca9a 100644
 --- a/dom/base/Navigator.cpp
@@ -996,6 +1156,36 @@ index b53d2f740b5901e4422fa3af84198dc687c535d9..052d15cccb021540cc9c7dfe5a9337d9
    static void ResetTimeZone();
  
    static bool DumpEnabled();
+diff --git a/dom/chrome-webidl/BrowsingContext.webidl b/dom/chrome-webidl/BrowsingContext.webidl
+index dfdfe724ccc52dd3a95997383a67b296822af2fb..82c1e391ae05d84286723710f4915e435ea6bb38 100644
+--- a/dom/chrome-webidl/BrowsingContext.webidl
++++ b/dom/chrome-webidl/BrowsingContext.webidl
+@@ -51,6 +51,15 @@ enum PrefersColorSchemeOverride {
+   "dark",
+ };
+ 
++/**
++ * CSS prefers-reduced-motion values.
++ */
++enum PrefersReducedMotionOverride {
++  "none",
++  "reduce",
++  "no-preference",
++};
++
+ /**
+  * Allowed overrides of platform/pref default behaviour for touch events.
+  */
+@@ -173,6 +182,9 @@ interface BrowsingContext {
+   // Color-scheme simulation, for DevTools.
+   [SetterThrows] attribute PrefersColorSchemeOverride prefersColorSchemeOverride;
+ 
++  // Reduced-Motion simulation, for DevTools.
++  [SetterThrows] attribute PrefersReducedMotionOverride prefersReducedMotionOverride;
++
+   /**
+    * A unique identifier for the browser element that is hosting this
+    * BrowsingContext tree. Every BrowsingContext in the element's tree will
 diff --git a/dom/geolocation/Geolocation.cpp b/dom/geolocation/Geolocation.cpp
 index 763192a50cf8dce36eaf1fd2b470c631eecfe65c..436f01a2ca6166f1a97139f1cda7e1832b9df36c 100644
 --- a/dom/geolocation/Geolocation.cpp
@@ -1667,6 +1857,22 @@ index 77b4c4ea3581e3b66b0b40dae33c807b2d5aefd8..84af4461b9e946122527ac974dc30da5
    void updateTimeZone();
  
    void internalResyncICUDefaultTimeZone();
+diff --git a/layout/style/nsMediaFeatures.cpp b/layout/style/nsMediaFeatures.cpp
+index 445a031b11c6e3c65ed859a03a83a21da88f1472..87e14f7208b5b9348c13dcb07b43e2dff25e4fd9 100644
+--- a/layout/style/nsMediaFeatures.cpp
++++ b/layout/style/nsMediaFeatures.cpp
+@@ -261,10 +261,7 @@ nsAtom* Gecko_MediaFeatures_GetOperatingSystemVersion(
+ }
+ 
+ bool Gecko_MediaFeatures_PrefersReducedMotion(const Document* aDocument) {
+-  if (nsContentUtils::ShouldResistFingerprinting(aDocument)) {
+-    return false;
+-  }
+-  return LookAndFeel::GetInt(LookAndFeel::IntID::PrefersReducedMotion, 0) == 1;
++  return aDocument->PrefersReducedMotion();
+ }
+ 
+ StylePrefersColorScheme Gecko_MediaFeatures_PrefersColorScheme(
 diff --git a/media/libjpeg/jconfig.h b/media/libjpeg/jconfig.h
 index f2723e654098ff27542e1eb16a536c11ad0af617..b0b480551ff7d895dfdeb5a9800874858929c8ba 100644
 --- a/media/libjpeg/jconfig.h

@@ -108,7 +108,7 @@ export abstract class BrowserContext extends SdkObject {
     });
 
     if (debugMode() === 'console')
-      await this.extendInjectedScript(consoleApiSource.source);
+      await this.extendInjectedScript('main', consoleApiSource.source);
   }
 
   async _ensureVideosPath() {
@@ -151,6 +151,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract _doExposeBinding(binding: PageBinding): Promise<void>;
   abstract _doUpdateRequestInterception(): Promise<void>;
   abstract _doClose(): Promise<void>;
+  abstract _onClosePersistent(): Promise<void>;
   abstract _doCancelDownload(uuid: string): Promise<void>;
 
   async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
@@ -163,15 +164,15 @@ export abstract class BrowserContext extends SdkObject {
     return this._doSetHTTPCredentials(httpCredentials);
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
-    const identifier = PageBinding.identifier(name, 'main');
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, world: types.World): Promise<void> {
+    const identifier = PageBinding.identifier(name, world);
     if (this._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
-      if (page.getBinding(name, 'main'))
+      if (page.getBinding(name, world))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
-    const binding = new PageBinding(name, playwrightBinding, needsHandle, 'main');
+    const binding = new PageBinding(name, playwrightBinding, needsHandle, world);
     this._pageBindings.set(identifier, binding);
     await this._doExposeBinding(binding);
   }
@@ -284,6 +285,7 @@ export abstract class BrowserContext extends SdkObject {
         // Close all the pages instead of the context,
         // because we cannot close the default context.
         await Promise.all(this.pages().map(page => page.close(metadata)));
+        await this._onClosePersistent();
       } else {
         // Close the context.
         await this._doClose();
@@ -368,8 +370,8 @@ export abstract class BrowserContext extends SdkObject {
     }
   }
 
-  async extendInjectedScript(source: string, arg?: any) {
-    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(() => {});
+  async extendInjectedScript(world: types.World, source: string, arg?: any) {
+    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(world, source, arg).catch(() => {});
     const installInPage = (page: Page) => {
       page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));

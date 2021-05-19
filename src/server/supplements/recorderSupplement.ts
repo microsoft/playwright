@@ -194,11 +194,11 @@ export class RecorderSupplement implements InstrumentationListener {
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
     await this._context.exposeBinding('_playwrightRecorderPerformAction', false,
-        (source: BindingSource, action: actions.Action) => this._performAction(source.frame, action));
+        (source: BindingSource, action: actions.Action) => this._performAction(source.frame, action), 'utility');
 
     // Other non-essential actions are simply being recorded.
     await this._context.exposeBinding('_playwrightRecorderRecordAction', false,
-        (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
+        (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action), 'utility');
 
     await this._context.exposeBinding('_playwrightRecorderState', false, source => {
       let snapshotUrl: string | undefined;
@@ -223,21 +223,21 @@ export class RecorderSupplement implements InstrumentationListener {
         snapshotUrl,
       };
       return uiState;
-    });
+    }, 'utility');
 
     await this._context.exposeBinding('_playwrightRecorderSetSelector', false, async (_, selector: string) => {
       this._setMode('none');
       await this._recorderApp?.setSelector(selector, true);
       await this._recorderApp?.bringToFront();
-    });
+    }, 'utility');
 
     await this._context.exposeBinding('_playwrightResume', false, () => {
       this._debugger.resume(false);
-    });
+    }, 'main');
 
     const snapshotBaseUrl = await this._snapshotter.initialize() + '/snapshot/';
-    await this._context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest(), snapshotBaseUrl });
-    await this._context.extendInjectedScript(consoleApiSource.source);
+    await this._context.extendInjectedScript('utility', recorderSource.source, { isUnderTest: isUnderTest(), snapshotBaseUrl });
+    await this._context.extendInjectedScript('main', consoleApiSource.source);
 
     if (this._debugger.isPaused())
       this._pausedStateChanged();

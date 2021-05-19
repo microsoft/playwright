@@ -437,6 +437,15 @@ export class CRBrowserContext extends BrowserContext {
     }
   }
 
+  async _onClosePersistent() {
+    for (const [targetId, backgroundPage] of this._browser._backgroundPages.entries()) {
+      if (backgroundPage._browserContext === this && backgroundPage._initializedPage) {
+        backgroundPage.didClose();
+        this._browser._backgroundPages.delete(targetId);
+      }
+    }
+  }
+
   async _doCancelDownload(guid: string) {
     // The upstream CDP method is implemented in a way that no explicit error would be given
     // regarding the requested `guid`, even if the download is in a state not suitable for

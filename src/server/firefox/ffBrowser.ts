@@ -311,6 +311,8 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor });
   }
 
+  async _onClosePersistent() {}
+
   async _doClose() {
     assert(this._browserContextId);
     await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });

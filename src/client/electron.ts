@@ -19,17 +19,19 @@ import * as structs from '../../types/structs';
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
+import { headersObjectToArray } from '../utils/utils';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { Page } from './page';
-import { Env, WaitForEventOptions } from './types';
+import { Env, WaitForEventOptions, Headers } from './types';
 import { Waiter } from './waiter';
 
-type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'> & {
+type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'> & {
   env?: Env,
+  extraHTTPHeaders?: Headers,
 };
 
 type ElectronAppType = typeof import('electron');
@@ -48,6 +50,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel, channels.El
       const params: channels.ElectronLaunchParams = {
         sdkLanguage: 'javascript',
         ...options,
+        extraHTTPHeaders: options.extraHTTPHeaders && headersObjectToArray(options.extraHTTPHeaders),
         env: envObjectToArray(options.env ? options.env : process.env),
       };
       return ElectronApplication.from((await channel.launch(params)).electronApplication);

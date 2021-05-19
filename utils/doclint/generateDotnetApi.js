@@ -48,8 +48,9 @@ const typesDir = process.argv[2] || path.join(__dirname, 'generate_types', 'csha
 const modelsDir = path.join(typesDir, 'Models');
 const enumsDir = path.join(typesDir, 'Enums');
 const optionsDir = path.join(typesDir, 'Options');
+const baseDir = path.join(typesDir, 'Base');
 
-for (const dir of [typesDir, modelsDir, enumsDir, optionsDir])
+for (const dir of [typesDir, modelsDir, enumsDir, optionsDir, baseDir])
   fs.mkdirSync(dir, { recursive: true });
 
 const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
@@ -102,7 +103,7 @@ classNameMap.set('Readable', 'Stream');
  */
 function writeFile(kind, name, spec, body, folder, extendsName = null) {
   const out = [];
-  console.log(`Generating ${name}`);
+  // console.log(`Generating ${name}`);
 
   if (spec)
     out.push(...XmlDoc.renderXmlDoc(spec, maxDocumentationColumnWidth));
@@ -121,7 +122,7 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
   if (body[0] === '')
     body = body.slice(1);
 
-  out.push(`public ${kind} ${name}${extendsName ? ` : ${extendsName}` : ''}`);
+  out.push(`${kind} ${name}${extendsName ? ` : ${extendsName}` : ''}`);
   out.push('{');
   out.push(...body);
   out.push('}');
@@ -130,6 +131,9 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
   fs.writeFileSync(path.join(folder, name + '.generated.cs'), content);
 }
 
+/**
+ * @param {Documentation.Class} clazz 
+ */
 function renderClass(clazz) {
   const name = classNameMap.get(clazz.name);
   if (name === 'TimeoutException')
@@ -137,15 +141,47 @@ function renderClass(clazz) {
 
   const body = [];
   for (const member of clazz.membersArray)
-    renderMember(member, clazz, body);
+    renderMember(member, clazz, {}, body);
 
   writeFile(
-      'partial interface',
+      'public partial interface',
       name,
       clazz.spec,
       body,
       typesDir,
       clazz.extends ? `I${toTitleCase(clazz.extends)}` : null);
+}
+
+/**
+ * @param {Documentation.Class} clazz 
+ */
+function renderBaseClass(clazz) {
+  const name = clazz.name;
+  if (name === 'TimeoutException')
+    return;
+
+  const methodsWithOptions = [];
+  for (const member of clazz.membersArray) {
+    if (member.kind !== 'method')
+      continue;
+    if (member.argsArray.find(a => a.name === 'options'))
+      methodsWithOptions.push(member);
+  }
+
+  if (!methodsWithOptions.length)
+    return;
+
+  const body = [];
+  for (const member of methodsWithOptions)
+    renderMethod(member, clazz, toMemberName(member), { mode: 'base', nodocs: true, public: true }, body);
+
+  writeFile(
+      'internal partial class',
+      name,
+      [],
+      body,
+      baseDir,
+      null);
 }
 
 /**
@@ -166,13 +202,13 @@ function renderModelType(name, type) {
   } else if (type.properties) {
     for (const member of type.properties) {
       let fakeType = new Type(name, null);
-      renderMember(member, fakeType, body);
+      renderMember(member, fakeType, {}, body);
     }
   } else {
     console.log(type);
     throw new Error(`Not sure what to do in this case.`);
   }
-  writeFile('partial class', name, null, body, modelsDir);
+  writeFile('public partial class', name, null, body, modelsDir);
 }
 
 /**
@@ -192,7 +228,7 @@ function renderEnum(name, literals) {
     body.push(`[EnumMember(Value = "${literal}")]`);
     body.push(`${escapedName},`);
   }
-  writeFile('enum', name, null, body, enumsDir);
+  writeFile('public enum', name, null, body, enumsDir);
 }
 
 /**
@@ -202,12 +238,14 @@ function renderEnum(name, literals) {
 function renderOptionType(name, type) {
   const body = [];
   for (const member of type.properties)
-    renderMember(member, type, body);
-  writeFile('class', name, null, body, optionsDir);
+    renderMember(member, type, {}, body);
+  writeFile('public class', name, null, body, optionsDir);
 }
 
-for (const element of documentation.classesArray)
+for (const element of documentation.classesArray) {
   renderClass(element);
+  renderBaseClass(element);
+}
 
 for (let [name, type] of modelTypes)
   renderModelType(name, type);
@@ -260,9 +298,6 @@ function toMemberName(member, options) {
 function toTitleCase(name) {
   if (name === 'dblclick')
     return 'DblClick';
-  name = name.replace(/(HTTP[S]?)/g, (m, g) => {
-    return g[0].toUpperCase() + g.substring(1).toLowerCase();
-  });
   return name.charAt(0).toUpperCase() + name.substring(1);
 }
 
@@ -270,13 +305,13 @@ function toTitleCase(name) {
  *
  * @param {Documentation.Member} member
  * @param {Documentation.Class|Documentation.Type} parent
+ * @param {{nojson?: boolean}} options
  * @param {string[]} out
  */
-function renderMember(member, parent, out) {
-  out.push('');
+function renderMember(member, parent, options, out) {
   let name = toMemberName(member);
   if (member.kind === 'method') {
-    renderMethod(member, parent, name, out);
+    renderMethod(member, parent, name, { mode: 'options' }, out);
     return;
   }
 
@@ -285,6 +320,7 @@ function renderMember(member, parent, out) {
   if (member.kind === 'event') {
     if (!member.type)
       throw new Error(`No Event Type for ${name} in ${parent.name}`);
+    out.push('');
     if (member.spec)
       out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
     out.push(`event EventHandler<${type}> ${name};`);
@@ -305,11 +341,12 @@ function renderMember(member, parent, out) {
     } else {
       for (const overload of member.type.union) {
         const t = translateType(overload, parent, t => generateNameDefault(member, name, t, parent));
-        const suffix = toTitleCase(t.replace(/[<].*[>]/, '').replace(/[^a-zA-Z]/g, ''));
+        const suffix = toOverloadSuffix(t);
         overloads.push({ type: t, name: name + suffix, jsonName: member.name + suffix });
       }
     }
     for (let { type, name, jsonName } of overloads) {
+      out.push('');
       if (member.spec)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       if (!member.clazz)
@@ -320,8 +357,8 @@ function renderMember(member, parent, out) {
         out.push(`public ${type} ${name} { get; }`);
       else
         out.push(`public ${type} ${name} { get; set; }`);
-      return;
     }
+    return;
   }
   throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
 }
@@ -410,10 +447,17 @@ function generateEnumNameIfApplicable(type) {
  * @param {Documentation.Member} member
  * @param {Documentation.Class | Documentation.Type} parent
  * @param {string} name
+ * @param {{
+ *   mode: 'options'|'named'|'base',
+ *   nodocs?: boolean,
+ *   abstract?: boolean,
+ *   public?: boolean,
+ * }} options
  * @param {string[]} out
  */
-function renderMethod(member, parent, name, out) {
- 
+function renderMethod(member, parent, name, options, out) {
+  out.push('');
+
   /**
    * @param {Documentation.Type} type 
    * @returns 
@@ -431,7 +475,7 @@ function renderMethod(member, parent, name, out) {
   const addParamsDoc = (paramName, docs) => {
     if (paramName.startsWith('@'))
       paramName = paramName.substring(1);
-    if (paramDocs.get(paramName))
+    if (paramDocs.get(paramName) && paramDocs.get(paramName) !== docs)
       throw new Error(`Parameter ${paramName} already exists in the docs.`);
     paramDocs.set(paramName, docs);
   };
@@ -468,9 +512,10 @@ function renderMethod(member, parent, name, out) {
   if (member.args.size == 0
     && type !== 'void'
     && !name.startsWith('Get')
+    && !name.startsWith('PostDataJSON')
     && !name.startsWith('As')) {
     if (!member.async) {
-      if (member.spec)
+      if (member.spec && !options.nodocs)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       out.push(`${type} ${name} { get; }`);
       return;
@@ -521,7 +566,7 @@ function renderMethod(member, parent, name, out) {
    */
   function processArg(arg) {
     if (arg.name === 'options') {
-      if (process.env.OPTIONS) {
+      if (options.mode === 'options' || options.mode === 'base') {
         const optionsType = member.clazz.name + toTitleCase(member.name) + 'Options';
         optionTypes.set(optionsType, arg.type);
         args.push(`${optionsType} options = default`);
@@ -569,11 +614,8 @@ function renderMethod(member, parent, name, out) {
 
       let argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
-        let nonGenericType = newArg.replace(/\IEnumerable<(.*)\>/g, (m, v) => 'Enumerable' + v[0].toUpperCase() + v.substring(1))
-        const sanitizedArgName = nonGenericType.match(/(?<=^[\s"']*)(\w+)/g)[0] || nonGenericType;
-        const newArgName = `${argName}${sanitizedArgName[0].toUpperCase() + sanitizedArgName.substring(1)}`;
-        pushArg(newArg, newArgName, arg, true); // push the exploded arg
-        addParamsDoc(newArgName, argDocumentation);
+        pushArg(newArg, argName, arg, true); // push the exploded arg
+        addParamsDoc(argName, argDocumentation);
       }
       args.push(arg.required ? 'EXPLODED_ARG' : 'OPTIONAL_EXPLODED_ARG');
       return;
@@ -593,36 +635,78 @@ function renderMethod(member, parent, name, out) {
     .sort((a, b) => b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
     .forEach(processArg);
 
-  if (name.includes('WaitFor') && !['WaitForTimeoutAsync', 'WaitForFunctionAsync', 'WaitForLoadStateAsync', 'WaitForURLAsync', 'WaitForSelectorAsync', 'WaitForElementStateAsync'].includes(name)) {
-    const firstOptional = args.find(a => a.includes('='));
-    args.splice(args.indexOf(firstOptional), 0, 'Func<Task> action = default');
+  const hasAction = name.includes('WaitFor') && !['WaitForTimeoutAsync', 'WaitForFunctionAsync', 'WaitForLoadStateAsync', 'WaitForURLAsync', 'WaitForSelectorAsync', 'WaitForElementStateAsync'].includes(name);
+  if (hasAction) {
+    args.push('Func<Task> action = default');
     argTypeMap.set('Func<Task> action = default', 'action');
     addParamsDoc('action', ['Action to perform while waiting']);
   }
 
+  let body = ';';
+  if (options.mode === 'base') {
+    // Generate options -> named transition.
+    const tokens = [];
+    for (const arg of member.argsArray) {
+      if (arg.name !== 'options') {
+        tokens.push(toArgumentName(arg.name));
+        continue;
+      }
+      if (hasAction)
+        tokens.push('action');
+      for (const opt of arg.type.properties) {
+        // TODO: use translate type here?
+        if (opt.type.union && !opt.type.union[0].name.startsWith('"') && opt.type.union[0].name !== 'null' && opt.type.expression !== '[string]|[Buffer]') {
+          // Explode overloads.
+          for (const t of opt.type.union) {
+            const suffix = toOverloadSuffix(translateType(t, parent));
+            tokens.push(`${opt.name}${suffix}: options.${toMemberName(opt)}${suffix}`);
+          }
+        } else {
+          tokens.push(`${opt.alias || opt.name}: options.${toMemberName(opt)}`);
+        }
+      }
+    }
+    body = `
+{
+    options ??= new ${member.clazz.name}${toMemberName(member, { omitAsync: true })}Options();
+    return ${name}(${tokens.join(', ')});
+}`;
+  }
+
+  let modifiers = '';
+  if (options.abstract)
+    modifiers = 'protected abstract ';
+  if (options.public)
+    modifiers = 'public ';
+
   if (!explodedArgs.length) {
-    out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-    paramDocs.forEach((value, i) => printArgDoc(i, value, out));
-    out.push(`${type} ${name}(${args.join(', ')});`);
+    if (!options.nodocs) {
+      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      paramDocs.forEach((value, i) => printArgDoc(i, value, out));
+    }
+    out.push(`${modifiers}${type} ${name}(${args.join(', ')})${body}`);
   } else {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
-      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      if (!options.nodocs)
+        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       let overloadedArgs = [];
       for (var i = 0; i < args.length; i++) {
         let arg = args[i];
         if (arg === 'EXPLODED_ARG' || arg === 'OPTIONAL_EXPLODED_ARG') {
           containsOptionalExplodedArgs = arg === 'OPTIONAL_EXPLODED_ARG';
           let argType = argTypeMap.get(explodedArg);
-          printArgDoc(argType, paramDocs.get(argType), out);
+          if (!options.nodocs)
+            printArgDoc(argType, paramDocs.get(argType), out);
           overloadedArgs.push(explodedArg);
         } else {
           let argType = argTypeMap.get(arg);
-          printArgDoc(argType, paramDocs.get(argType), out);
+          if (!options.nodocs)
+            printArgDoc(argType, paramDocs.get(argType), out);
           overloadedArgs.push(arg);
         }
       }
-      out.push(`${type} ${name}(${overloadedArgs.join(', ')});`);
+      out.push(`${modifiers}${type} ${name}(${overloadedArgs.join(', ')})${body}`);
       if (argIndex < explodedArgs.length - 1)
         out.push(''); // output a special blank line
     });
@@ -633,14 +717,16 @@ function renderMethod(member, parent, name, out) {
     // contains all the arguments *except* the exploded ones.
     if (containsOptionalExplodedArgs) {
       var filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
-      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      if (!options.nodocs)
+        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       filteredArgs.forEach((arg) => {
         if (arg === 'EXPLODED_ARG')
           throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);
         let argType = argTypeMap.get(arg);
-        printArgDoc(argType, paramDocs.get(argType), out);
+        if (!options.nodocs)
+          printArgDoc(argType, paramDocs.get(argType), out);
       });
-      out.push(`${type} ${name}(${filteredArgs.join(', ')});`);
+      out.push(`${type} ${name}(${filteredArgs.join(', ')})${body}`);
     }
   }
 }
@@ -775,7 +861,7 @@ function registerModelType(typeName, type) {
 
   let potentialType = modelTypes.get(typeName);
   if (potentialType) {
-    console.log(`Type ${typeName} already exists, so skipping...`);
+    // console.log(`Type ${typeName} already exists, so skipping...`);
     return;
   }
 
@@ -787,7 +873,7 @@ function registerModelType(typeName, type) {
  * @param {string[]} value
  * @param {string[]} out
  */
-  function printArgDoc(name, value, out) {
+function printArgDoc(name, value, out) {
   if (value.length === 1) {
     out.push(`/// <param name="${name}">${value}</param>`);
   } else {
@@ -795,4 +881,12 @@ function registerModelType(typeName, type) {
     out.push(...value.map(l => `/// ${l}`));
     out.push(`/// </param>`);
   }
+}
+
+/**
+ * @param {string} typeName
+ * @return {string}
+ */
+function toOverloadSuffix(typeName) {
+  return toTitleCase(typeName.replace(/[<].*[>]/, '').replace(/[^a-zA-Z]/g, ''));
 }
