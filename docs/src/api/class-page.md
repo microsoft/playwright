@@ -2895,7 +2895,7 @@ Video object associated with this page.
   - `height` <[int]> page height in pixels.
 
 ## async method: Page.waitForClose
-* langs: csharp, java
+* langs: java
 - returns: <[Page]>
 
 Performs action and waits for the Page to close.
@@ -2903,7 +2903,7 @@ Performs action and waits for the Page to close.
 ### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForConsoleMessage
-* langs: csharp, java, python
+* langs: java, python
   - alias-python: expect_console_message
 - returns: <[ConsoleMessage]>
 
@@ -2919,7 +2919,7 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 ### option: Page.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForDownload
-* langs: csharp, java, python
+* langs: java, python
   - alias-python: expect_download
 - returns: <[Download]>
 
@@ -2937,6 +2937,7 @@ Receives the [Download] object and resolves to truthy value when the waiting sho
 ## async method: Page.waitForEvent
 * langs: csharp, js, python
   - alias-python: expect_event
+  - alias-csharp: RunAndWaitForEventAsync
 - returns: <[any]>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
@@ -2979,7 +2980,7 @@ var frame = await waitTask;
 Either a predicate that receives an event or an options object. Optional.
 
 ## async method: Page.waitForFileChooser
-* langs: csharp, java, python
+* langs: java, python
   - alias-python: expect_file_chooser
 - returns: <[FileChooser]>
 
@@ -3263,7 +3264,7 @@ Shortcut for main frame's [`method: Frame.waitForNavigation`].
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.waitForPopup
-* langs: csharp, java, python
+* langs: java, python
   - alias-python: expect_popup
 - returns: <[Page]>
 
@@ -3655,7 +3656,7 @@ Shortcut for main frame's [`method: Frame.waitForURL`].
 ### option: Page.waitForURL.waitUntil = %%-navigation-wait-until-%%
 
 ## async method: Page.waitForWebSocket
-* langs: csharp, java
+* langs: java
 - returns: <[WebSocket]>
 
 Performs action and waits for a new [WebSocket]. If predicate is provided, it passes
@@ -3670,7 +3671,7 @@ Receives the [WebSocket] object and resolves to truthy value when the waiting sh
 ### option: Page.waitForWebSocket.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForWorker
-* langs: csharp, java, python
+* langs: java, python
   - alias-python: expect_worker
 - returns: <[Worker]>
 
@@ -3694,3 +3695,21 @@ associated with the page.
 :::note
 This does not contain ServiceWorkers
 :::
+
+## async method: Page.waitForEvent2
+* langs: python, csharp
+  - alias-python: wait_for_event
+  - alias-csharp: WaitForEventAsync
+- returns: <[any]>
+
+:::note
+In most cases, you should use [`method: Page.waitForEvent`].
+:::
+
+Waits for given `event` to fire. If predicate is provided, it passes
+event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
+Will throw an error if the page is closed before the `event` is fired.
+
+### param: Page.waitForEvent2.event = %%-wait-for-event-event-%%
+### option: Page.waitForEvent2.predicate = %%-wait-for-event-predicate-%%
+### option: Page.waitForEvent2.timeout = %%-wait-for-event-timeout-%%

@@ -480,9 +480,16 @@ is considered matching if all specified properties match.
 A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
 
 ## wait-for-event-event
+* langs: js, java, python
 - `event` <[string]>
 
 Event name, same one typically passed into `*.on(event)`.
+
+## csharp-wait-for-event-event
+* langs: csharp
+- `playwrightEvent` <[PlaywrightEvent<T>]>
+
+Event type, same one typically passed into `WaitForEventAsync`.
 
 ## wait-for-load-state-state
 - `state` <[LoadState]<"load"|"domcontentloaded"|"networkidle">>
@@ -530,8 +537,7 @@ only the first option matching one of the passed options is selected. Optional.
 Options to select by label. If the `<select>` has the `multiple` attribute, all given options are selected, otherwise
 only the first option matching one of the passed options is selected. Optional.
 
-## python-wait-for-event-predicate
-* langs: python
+## wait-for-event-predicate
 - `predicate` <[function]>
 
 Receives the event data and resolves to truthy value when the waiting should resolve.
