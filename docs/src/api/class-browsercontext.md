@@ -1195,6 +1195,7 @@ Optional handler function used to register a routing with [`method: BrowserConte
 ## async method: BrowserContext.waitForEvent
 * langs: csharp, js, python
   - alias-python: expect_event
+  - alias-csharp: RunAndWaitForEventAsync
 - returns: <[any]>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
@@ -1224,9 +1225,10 @@ page = event_info.value
 ```
 
 ```csharp
-var waitForPageEvent = context.WaitForPageAsync();
-await page.ClickAsync("button");
-var page = await waitForPageEvent;
+var page = await context.RunAndWaitForEventAsync(ContextEvent.Page, async () =>
+{
+    await page.ClickAsync("button");
+});
 ```
 
 ### param: BrowserContext.waitForEvent.event
@@ -1244,7 +1246,7 @@ Event name, same one would pass into `browserContext.on(event)`.
 Either a predicate that receives an event or an options object. Optional.
 
 ## async method: BrowserContext.waitForPage
-* langs: csharp, java, python
+* langs: java, python
   - alias-python: expect_page
 - returns: <[Page]>
 
@@ -1259,3 +1261,21 @@ Will throw an error if the context closes before new [Page] is created.
 Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
 ### option: BrowserContext.waitForPage.timeout = %%-wait-for-event-timeout-%%
+
+## async method: BrowserContext.waitForEvent2
+* langs: python, csharp
+  - alias-python: wait_for_event
+  - alias-csharp: WaitForEventAsync
+- returns: <[any]>
+
+:::note
+In most cases, you should use [`method: BrowserContext.waitForEvent`].
+:::
+
+Waits for given `event` to fire. If predicate is provided, it passes
+event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
+Will throw an error if the browser context is closed before the `event` is fired.
+
+### param: BrowserContext.waitForEvent2.event = %%-wait-for-event-event-%%
+### option: BrowserContext.waitForEvent2.predicate = %%-wait-for-event-predicate-%%
+### option: BrowserContext.waitForEvent2.timeout = %%-wait-for-event-timeout-%%

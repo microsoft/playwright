@@ -259,15 +259,6 @@ for (let [name, type] of optionTypes)
 if (process.argv[3] !== "--skip-format") {
   // run the formatting tool for .net, to ensure the files are prepped
   execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
-  if (process.platform !== 'win32') {
-    for (const folder of [typesDir, path.join(typesDir, 'Models'), path.join(typesDir, 'Enums'), path.join(typesDir, 'Extensions'), path.join(typesDir, 'Constants')])
-    for (const name of fs.readdirSync(folder)) {
-      if (!name.includes('\.cs'))
-        continue;
-      const content = fs.readFileSync(path.join(folder, name), 'utf-8');
-      fs.writeFileSync(path.join(folder, name), content.split('\r\n').join('\n'));
-    }
-  }
 }
 
 /**
@@ -288,6 +279,8 @@ function toMemberName(member, options) {
   const omitAsync = options && options.omitAsync;
   if (!omitAsync && member.kind === 'method' && member.async && !assumedName.endsWith('Async'))
     return `${assumedName}Async`;
+  if (omitAsync && assumedName.endsWith('Async'))
+    return assumedName.substring(0, assumedName.length - 'Async'.length);
   return assumedName;
 }
 
@@ -456,6 +449,9 @@ function generateEnumNameIfApplicable(type) {
  * @param {string[]} out
  */
 function renderMethod(member, parent, name, options, out) {
+  // These are hard-coded in C#.
+  if (name.includes('WaitForEventAsync'))
+    return;
   out.push('');
 
   /**
@@ -567,7 +563,7 @@ function renderMethod(member, parent, name, options, out) {
   function processArg(arg) {
     if (arg.name === 'options') {
       if (options.mode === 'options' || options.mode === 'base') {
-        const optionsType = member.clazz.name + toTitleCase(member.name) + 'Options';
+        const optionsType = member.clazz.name + toMemberName(member, { omitAsync: true }) + 'Options';
         optionTypes.set(optionsType, arg.type);
         args.push(`${optionsType} options = default`);
         argTypeMap.set(`${optionsType} options = default`, 'options');
@@ -634,14 +630,7 @@ function renderMethod(member, parent, name, options, out) {
   member.argsArray
     .sort((a, b) => b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
     .forEach(processArg);
-
-  const hasAction = name.includes('WaitFor') && !['WaitForTimeoutAsync', 'WaitForFunctionAsync', 'WaitForLoadStateAsync', 'WaitForURLAsync', 'WaitForSelectorAsync', 'WaitForElementStateAsync'].includes(name);
-  if (hasAction) {
-    args.push('Func<Task> action = default');
-    argTypeMap.set('Func<Task> action = default', 'action');
-    addParamsDoc('action', ['Action to perform while waiting']);
-  }
-
+  
   let body = ';';
   if (options.mode === 'base') {
     // Generate options -> named transition.
@@ -651,8 +640,6 @@ function renderMethod(member, parent, name, options, out) {
         tokens.push(toArgumentName(arg.name));
         continue;
       }
-      if (hasAction)
-        tokens.push('action');
       for (const opt of arg.type.properties) {
         // TODO: use translate type here?
         if (opt.type.union && !opt.type.union[0].name.startsWith('"') && opt.type.union[0].name !== 'null' && opt.type.expression !== '[string]|[Buffer]') {
