@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { kBrowserClosedError } from '../../utils/errors';
 import { assert } from '../../utils/utils';
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
@@ -56,7 +57,7 @@ export class FFBrowser extends Browser {
     this._connection = connection;
     this._ffPages = new Map();
     this._contexts = new Map();
-    this._connection.on(ConnectionEvents.Disconnected, () => this._didClose());
+    this._connection.on(ConnectionEvents.Disconnected, () => this._onDisconnect());
     this._connection.on('Browser.attachedToTarget', this._onAttachedToTarget.bind(this));
     this._connection.on('Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this._connection.on('Browser.downloadCreated', this._onDownloadCreated.bind(this));
@@ -135,6 +136,13 @@ export class FFBrowser extends Browser {
 
   _onVideoRecordingFinished(payload: Protocol.Browser.videoRecordingFinishedPayload) {
     this._takeVideo(payload.screencastId)?.reportFinished();
+  }
+
+  _onDisconnect() {
+    for (const video of this._idToVideo.values())
+      video.artifact.reportFinished(kBrowserClosedError);
+    this._idToVideo.clear();
+    this._didClose();
   }
 }
 
