@@ -72,18 +72,6 @@ Using `firefox-stable` is a 2-steps process:
     browser = playwright.firefox.launch(channel="firefox-stable")
     ```
 
-    ```csharp
-    using Microsoft.Playwright;
-
-    class Guides
-    {
-      public async void Main()
-      {
-        using var playwright = await Playwright.CreateAsync();
-        var browser = playwright.Firefox.LaunchAsync(channel: BrowserChannel.FirefoxStable);
-      }
-    }
-    ```
 
 ## WebKit
 
