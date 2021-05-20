@@ -33,7 +33,10 @@ context.close()
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(recordVideoDir: "videos/");
+var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    RecordVideoDir = "videos/"
+});
 // Make sure to close, so that videos are saved.
 await context.CloseAsync();
 ```
@@ -70,10 +73,11 @@ context = browser.new_context(
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(
-    recordVideoDir: "videos/",
-    recordVideoSize: new RecordVideoSize() { Width = 640, Height = 480 }
-);
+var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    RecordVideoDir = "videos/",
+    RecordVideoSize = new RecordVideoSize() { Width = 640, Height = 480 }
+});
 // Make sure to close, so that videos are saved.
 await context.CloseAsync();
 ```

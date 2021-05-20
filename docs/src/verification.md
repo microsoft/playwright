@@ -244,9 +244,10 @@ popup = popup_info.value
 ```
 
 ```csharp
-var waitForPopupTask = page.WaitForPopupAsync();
-await page.ClickAsync("#open");
-var popup = await waitForPopupTask;
+var popup = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+{
+    await page.ClickAsync("#open");
+});
 ```
 
 ### API reference

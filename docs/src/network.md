@@ -48,7 +48,7 @@ page.goto("https://example.com")
 ```
 
 ```csharp
-using var context = await Browser.NewContextAsync(new BrowserContextOptions
+using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
 {
     HttpCredentials = new HttpCredentials
     {
@@ -113,7 +113,10 @@ var proxy = new Proxy
     Username = "user",
     Password = "pwd"
 };
-await using var browser = await BrowserType.LaunchAsync(proxy: proxy);
+await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions
+{
+    Proxy = proxy
+});
 ```
 
 When specifying proxy for each context individually, you need to give Playwright
@@ -148,8 +151,14 @@ context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 
 ```csharp
 var proxy = new Proxy { Server = "per-context" };
-await using var browser = await BrowserType.LaunchAsync(proxy: proxy);
-using var context = await Browser.NewContextAsync(proxy: new Proxy { Server = "http://myproxy.com:3128" });
+await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions
+{
+    Proxy = proxy
+});
+using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+{
+    Proxy = new Proxy { Server = "http://myproxy.com:3128" })
+});
 ```
 
 
@@ -502,7 +511,7 @@ page.route("**/*", lambda route: route.continue_(method="POST"))
 await page.RouteAsync("**/*", async route => {
     var headers = new Dictionary<string, string>(route.Request.Headers.ToDictionary(x => x.Key, x => x.Value));
     headers.Remove("X-Secret");
-    await route.ContinueAsync(headers: headers);
+    await route.ContinueAsync(new RouteContinueOptions { Headers = headers });
 });
 
 // Continue requests as POST.

@@ -51,7 +51,7 @@ context.close()
 
 ```csharp
 using var playwright = await Playwright.CreateAsync();
-var browser = await playwright.Firefox.LaunchAsync(headless: false);
+var browser = await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
 // Create a new incognito browser context
 var context = await browser.NewContextAsync();
 // Create a new page inside context.
@@ -132,9 +132,10 @@ print(page.evaluate("location.href"))
 ```
 
 ```csharp
-var popupTask = context.WaitForPageAsync();
-await page.ClickAsync("a");
-var popup = await popupTask;
+var popup = await context.RunAndWaitForEventAsync(BrowserContextEvent.Page, async =>
+{
+    await page.ClickAsync("a");
+});
 Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
 
@@ -269,7 +270,7 @@ browser_context.add_init_script(path="preload.js")
 ```
 
 ```csharp
-await context.AddInitScriptAsync(scriptPath: "preload.js");
+await context.AddInitScriptAsync(new BrowserContextAddInitScriptOptions { ScriptPath = "preload.js" });
 ```
 
 :::note
@@ -503,7 +504,7 @@ class Program
     public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Webkit.LaunchAsync(headless: false);
+        var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
         var context = await browser.NewContextAsync();
 
         await context.ExposeBindingAsync("pageURL", source => source.Page.Url);
@@ -762,7 +763,7 @@ class BrowserContextExamples
     public static async Task AddMd5FunctionToAllPagesInContext()
     {
         using var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Webkit.LaunchAsync(headless: false);
+        var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
         var context = await browser.NewContextAsync();
 
         // NOTE: md5 is inherently insecure, and we strongly discourage using
