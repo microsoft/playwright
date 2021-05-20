@@ -18,7 +18,7 @@
     },
     {
       "name": "webkit",
-      "revision": "1481",
+      "revision": "1482",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1443"
