@@ -19,7 +19,7 @@ import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
 
-test.slow('All connect tests are slow');
+test.slow(true, 'All connect tests are slow');
 
 test('should be able to reconnect to a browser', async ({browserType, startRemoteServer, server}) => {
   const remoteServer = await startRemoteServer();

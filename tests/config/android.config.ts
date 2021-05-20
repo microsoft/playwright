@@ -39,6 +39,15 @@ const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   projects: [],
 };
 
+const metadata = {
+  platform: 'Android',
+  headful: false,
+  browserName: 'chromium',
+  channel: undefined,
+  mode: 'default',
+  video: false,
+};
+
 config.projects.push({
   name: 'android',
   use: {
@@ -47,6 +56,7 @@ config.projects.push({
     browserName: 'chromium',
   },
   testDir: path.join(testDir, 'android'),
+  metadata,
 });
 
 config.projects.push({
@@ -58,6 +68,7 @@ config.projects.push({
   },
   testDir: path.join(testDir, 'page'),
   define: { test: pageTest, fixtures: androidFixtures },
+  metadata,
 });
 
 export default config;

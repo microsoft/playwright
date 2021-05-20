@@ -83,6 +83,14 @@ for (const browserName of browserNames) {
       coverageName: browserName,
     },
     define: { test: pageTest, fixtures: pageFixtures },
+    metadata: {
+      platform: process.platform,
+      headful: !!headed,
+      browserName,
+      channel,
+      mode,
+      video: !!video,
+    },
   });
 }
 

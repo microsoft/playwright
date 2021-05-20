@@ -175,7 +175,7 @@ it('does launch without a port', async ({ browserType, browserOptions }) => {
 });
 
 it('should use proxy', async ({ browserType, browserOptions }) => {
-  it.fixme('Non-emulated user agent is used in proxy CONNECT');
+  it.fixme(true, 'Non-emulated user agent is used in proxy CONNECT');
 
   let requestText = '';
   // This is our proxy server

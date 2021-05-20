@@ -132,7 +132,7 @@ it('should return bounding box with page scale', async ({ browser, server, brows
 });
 
 it('should not leak listeners during navigation of 20 pages', async ({contextFactory, server}) => {
-  it.slow('We open 20 pages here!');
+  it.slow(true, 'We open 20 pages here!');
 
   const context = await contextFactory();
   let warning = null;
