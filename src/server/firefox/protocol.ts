@@ -198,6 +198,11 @@ export module Protocol {
       }|null;
     };
     export type setDefaultViewportReturnValue = void;
+    export type setScrollbarsHiddenParameters = {
+      browserContextId?: string;
+      hidden: boolean;
+    };
+    export type setScrollbarsHiddenReturnValue = void;
     export type addScriptToEvaluateOnNewDocumentParameters = {
       browserContextId?: string;
       script: string;
@@ -266,6 +271,11 @@ export module Protocol {
       colorScheme: ("dark"|"light"|"no-preference")|null;
     };
     export type setColorSchemeReturnValue = void;
+    export type setReducedMotionParameters = {
+      browserContextId?: string;
+      reducedMotion: ("reduce"|"no-preference")|null;
+    };
+    export type setReducedMotionReturnValue = void;
     export type setVideoRecordingOptionsParameters = {
       browserContextId?: string;
       dir: string;
@@ -475,6 +485,7 @@ export module Protocol {
     export type setEmulatedMediaParameters = {
       type?: ("screen"|"print"|"");
       colorScheme?: ("dark"|"light"|"no-preference");
+      reducedMotion?: ("reduce"|"no-preference");
     };
     export type setEmulatedMediaReturnValue = void;
     export type setCacheDisabledParameters = {
@@ -692,6 +703,10 @@ export module Protocol {
       objectId?: string;
       unserializableValue?: ("Infinity"|"-Infinity"|"-0"|"NaN");
       value: any;
+    };
+    export type AuxData = {
+      frameId?: string;
+      name?: string;
     };
     export type executionContextCreatedPayload = {
       executionContextId: string;
@@ -1040,6 +1055,7 @@ export module Protocol {
     "Browser.setDownloadOptions": Browser.setDownloadOptionsParameters;
     "Browser.setTouchOverride": Browser.setTouchOverrideParameters;
     "Browser.setDefaultViewport": Browser.setDefaultViewportParameters;
+    "Browser.setScrollbarsHidden": Browser.setScrollbarsHiddenParameters;
     "Browser.addScriptToEvaluateOnNewDocument": Browser.addScriptToEvaluateOnNewDocumentParameters;
     "Browser.addBinding": Browser.addBindingParameters;
     "Browser.grantPermissions": Browser.grantPermissionsParameters;
@@ -1049,6 +1065,7 @@ export module Protocol {
     "Browser.getCookies": Browser.getCookiesParameters;
     "Browser.setOnlineOverride": Browser.setOnlineOverrideParameters;
     "Browser.setColorScheme": Browser.setColorSchemeParameters;
+    "Browser.setReducedMotion": Browser.setReducedMotionParameters;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
     "Page.close": Page.closeParameters;
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
@@ -1113,6 +1130,7 @@ export module Protocol {
     "Browser.setDownloadOptions": Browser.setDownloadOptionsReturnValue;
     "Browser.setTouchOverride": Browser.setTouchOverrideReturnValue;
     "Browser.setDefaultViewport": Browser.setDefaultViewportReturnValue;
+    "Browser.setScrollbarsHidden": Browser.setScrollbarsHiddenReturnValue;
     "Browser.addScriptToEvaluateOnNewDocument": Browser.addScriptToEvaluateOnNewDocumentReturnValue;
     "Browser.addBinding": Browser.addBindingReturnValue;
     "Browser.grantPermissions": Browser.grantPermissionsReturnValue;
@@ -1122,6 +1140,7 @@ export module Protocol {
     "Browser.getCookies": Browser.getCookiesReturnValue;
     "Browser.setOnlineOverride": Browser.setOnlineOverrideReturnValue;
     "Browser.setColorScheme": Browser.setColorSchemeReturnValue;
+    "Browser.setReducedMotion": Browser.setReducedMotionReturnValue;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
     "Page.close": Page.closeReturnValue;
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
