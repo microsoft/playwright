@@ -224,6 +224,23 @@ context.add_init_script(storage => {
 }, session_storage)
 ```
 
+```csharp
+// Get session storage and store as env variable
+var sessionStorage = await page.EvaluateAsync<string>("() => JSON.stringify(sessionStorage");
+Environment.SetEnvironmentVariable("SESSION_STORAGE", sessionStorage);
+
+// Set session storage in a new context
+var loadedSessionStorage = Environment.GetEnvironmentVariable("SESSION_STORAGE");
+await context.AddInitScriptAsync(@"(storage => {
+    if (window.location.hostname === 'example.com') {
+      const entries = JSON.parse(storage);
+      Object.keys(entries).forEach(key => {
+        window.sessionStorage.setItem(key, entries[key]);
+      });
+    }
+  })(" + loadedSessionStorage + ")");
+```
+
 ### API reference
 - [`method: BrowserContext.storageState`]
 - [`method: Browser.newContext`]
@@ -288,6 +305,20 @@ with sync_playwright() as p:
     user_data_dir = '/path/to/directory'
     browser = p.chromium.launch_persistent_context(user_data_dir, headless=False)
     # Execute login steps manually in the browser window
+```
+
+```csharp
+using Microsoft.Playwright;
+
+class Guides
+{
+  public async void Main()
+  {
+      using var playwright = await Playwright.CreateAsync();
+      var chromium = playwright.Chromium;
+      var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", headless: false);
+  }
+}
 ```
 
 ### Lifecycle
