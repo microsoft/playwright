@@ -1485,7 +1485,7 @@ page.set_content("""
 var result = new TaskCompletionSource<string>();
 await page.ExposeBindingAsync("clicked", async (BindingSource _, IJSHandle t) =>
 {
-    return result.TrySetResult(await t.AsElement.TextContentAsync());
+    return result.TrySetResult(await t.AsElement().TextContentAsync());
 });
 
 await page.SetContentAsync("<script>\n" +

@@ -42,6 +42,10 @@ chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
 
 ```
 
+```csharp
+await using var browser = await playwright.Chromium.LaunchAsync(headless: false, slowMo: 100); // or firefox, webkit
+```
+
 ## Browser Developer Tools
 
 You can use browser developer tools in Chromium, Firefox and WebKit while running
@@ -74,6 +78,9 @@ await chromium.launch(devtools=True)
 ```
 ```python sync
 chromium.launch(devtools=True)
+```
+```csharp
+await using var browser = await playwright.Chromium.LaunchAsync(devtools: true);
 ```
 :::
 
@@ -180,4 +187,10 @@ DEBUG=pw:api pytest -s
 # Windows
 set DEBUG=pw:api
 pytest -s
+```
+
+```sh csharp
+# Powershell (Win/macOS)
+$env:DEBUG="pw:api"
+dotnet run
 ```
