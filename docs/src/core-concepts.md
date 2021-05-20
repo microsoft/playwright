@@ -67,12 +67,15 @@ with sync_playwright() as p:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class BrowserExamples
+class Example
 {
     public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        await using var firefox = playwright.Firefox.LaunchAsync(headless: false);
+        await using var firefox = playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless = false
+        });
     }
 }
 ```
@@ -199,21 +202,21 @@ using System.Threading.Tasks;
 
 class PlaywrightExample
 {
-  public static async Task Main()
-  {
-      using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.Webkit.LaunchAsync();
-      var options = new BrowserContextOptions(Playwright.Devices["iPhone 11 Pro"])
-      {
-          Geolocation = new Geolocation() { Longitude = 12.492507f, Latitude = 41.889938f },
-          Permissions = new[] { "geolocation" },
-          Locale = "de-DE"
-      };
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Webkit.LaunchAsync();
+        var options = new BrowserContextNewOptions(Playwright.Devices["iPhone 11 Pro"])
+        {
+            Geolocation = new Geolocation() { Longitude = 12.492507f, Latitude = 41.889938f },
+            Permissions = new[] { "geolocation" },
+            Locale = "de-DE"
+        };
 
-      await using var context = await browser.NewContextAsync(options);
-      // do work
+        await using var context = await browser.NewContextAsync(options);
+        // do work
 
-  }
+    }
 }
 ```
 

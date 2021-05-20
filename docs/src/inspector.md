@@ -69,6 +69,12 @@ configures Playwright for debugging and opens the inspector.
   page.pause()
   ```
 
+  ```csharp
+  // Pause on the following line.
+  await page.PauseAsync();
+  ```
+
+
 - Use `open` or `codegen` commands in the Playwright [CLI](./cli.md):
   ```sh js
   npx playwright codegen wikipedia.org

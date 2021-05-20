@@ -71,6 +71,17 @@ page.click('text=Submit')
 # Verify app is logged in
 ```
 
+```csharp
+var page = await context.NewPageAsync();
+await page.NavigateAsync("https://github.com/login");
+// Interact with login form
+await page.ClickAsync("text=Login");
+await page.FillAsync("input[name='login']", USERNAME);
+await page.FillAsync("input[name='password']", PASSWORD);
+await page.ClickAsync("text=Submit");
+// Verify app is logged in
+```
+
 These steps can be executed for every browser context. However, redoing login
 for every test can slow down test execution. To prevent that, we will reuse
 existing authentication state in new browser contexts.
@@ -131,6 +142,17 @@ os.environ["STORAGE"] = json.dumps(storage)
 # Create a new context with the saved storage state
 storage_state = json.loads(os.environ["STORAGE"])
 context = browser.new_context(storage_state=storage_state)
+```
+
+```csharp
+// Save storage state and store as an env variable
+var storage = await context.StorageStateAsync();
+
+// Create a new context with the saved storage state
+var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    StorageState = storage
+});
 ```
 
 Logging in via the UI and then reusing authentication state can be combined to
@@ -310,13 +332,16 @@ with sync_playwright() as p:
 ```csharp
 using Microsoft.Playwright;
 
-class Guides
+class Example
 {
   public async void Main()
   {
       using var playwright = await Playwright.CreateAsync();
       var chromium = playwright.Chromium;
-      var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", headless: false);
+      var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", new BrowserTypeLaunchPersistentContextOptions
+      {
+          Headless = false
+      });
   }
 }
 ```
