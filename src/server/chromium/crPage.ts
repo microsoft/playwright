@@ -900,9 +900,11 @@ class FrameSession {
     this._screencastId = null;
     const recorder = this._videoRecorder!;
     this._videoRecorder = null;
-    const video = this._crPage._browserContext._browser._takeVideo(screencastId);
     await this._stopScreencast(recorder);
     await recorder.stop().catch(() => {});
+    // Keep the video artifact in the map utntil encoding is fully finished, if the context
+    // starts closing before the video is fully written to disk it will wait for it.
+    const video = this._crPage._browserContext._browser._takeVideo(screencastId);
     video?.reportFinished();
   }
 

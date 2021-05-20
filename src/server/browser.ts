@@ -24,7 +24,6 @@ import { RecentLogsCollector } from '../utils/debugLogger';
 import * as registry from '../utils/registry';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import { kBrowserClosedError } from '../utils/errors';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -120,9 +119,6 @@ export abstract class Browser extends SdkObject {
       context._browserClosed();
     if (this._defaultContext)
       this._defaultContext._browserClosed();
-    for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(kBrowserClosedError);
-    this._idToVideo.clear();
     this.emit(Browser.Events.Disconnected);
   }
 
