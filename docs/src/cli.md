@@ -113,7 +113,6 @@ const { chromium } = require('playwright');
 ```
 
 ```java
-// FIXME
 import com.microsoft.playwright.*;
 
 public class Example {
@@ -167,6 +166,30 @@ with sync_playwright() as p:
     # Pause the page, and start recording manually.
     page = context.new_page()
     page.pause()
+```
+
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Example
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var chromium = playwright.Chromium;
+        // Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+        var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
+
+        // Setup context however you like.
+        var context = await browser.NewContextAsync(); // Pass any options
+        await context.RouteAsync('**/*', route => route.ContinueAsync());
+
+        // Pause the page, and start recording manually.
+        var page = await context.NewPageAsync();
+        await page.PauseAsync();
+    }
+}
 ```
 
 ## Open pages

@@ -69,6 +69,11 @@ screenshot_bytes = page.screenshot()
 image = Image.open(io.BytesIO(screenshot_bytes))
 ```
 
+```csharp
+var bytes = await page.ScreenshotAsync();
+```
+
+
 ## Element screenshot
 
 Sometimes it is useful to take a screenshot of a single element.
@@ -91,6 +96,11 @@ await element_handle.screenshot(path="screenshot.png")
 ```python sync
 element_handle = page.query_selector(".header")
 element_handle.screenshot(path="screenshot.png")
+```
+
+```csharp
+var elementHandle = await page.QuerySelectorAsync(".header")
+await elementHandle.ScreenshotAsync(new ElementHandleScreenshotOptions { Path = "screenshot.png" });
 ```
 
 ### API reference

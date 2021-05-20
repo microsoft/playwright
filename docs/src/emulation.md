@@ -67,13 +67,15 @@ with sync_playwright() as playwright:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Guides
+class Example
 {
   public async void Main()
   {
       using var playwright = await Playwright.CreateAsync();
-
-      await using var browser = await playwright.Chromium.LaunchAsync(devtools: true);
+      await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+      {
+          Headless: False
+      });
       var pixel2 = playwright.Devices["Pixel 2"];
       await using var context = await browser.NewContextAsync(pixel2);
   }
@@ -116,7 +118,7 @@ context = browser.new_context(
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(userAgent: "My User Agent");
+var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserAgent = "My User Agent" });
 ```
 
 ### API reference
@@ -191,16 +193,20 @@ context = browser.new_context(
 
 ```csharp
 // Create context with given viewport
-await using var context = await browser.NewContextAsync(
-  viewportSize: new ViewportSize() { Width = 1280, Height = 1024 });
+await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    ViewportSize = new ViewportSize() { Width = 1280, Height = 1024 }
+});
 
 // Resize viewport for individual page
 await page.SetViewportSizeAsync(1600, 1200);
 
 // Emulate high-DPI
-await using var context = await browser.NewContextAsync(
-  viewportSize: new ViewportSize() { Width = 2560, Height = 1440 },
-  deviceScaleFactor: 2);
+await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    ViewportSize = new ViewportSize() { Width = 2560, Height = 1440 },
+    DeviceScaleFactor = 2
+});
 ```
 
 ### API reference
@@ -243,7 +249,11 @@ context = browser.new_context(
 ```
 
 ```csharp
-await using var context = await browser.NewContextAsync(locale: "de-DE", timezoneId: "Europe/Berlin");
+await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    Locale = "de-DE",
+    TimezoneId = "Europe/Berlin"
+});
 ```
 
 ### API reference
@@ -384,10 +394,11 @@ context = browser.new_context(
 ```
 
 ```csharp
-await using var context = await browser.NewContextAsync(
-            permissions: new[] { "geolocation" },
-            geolocation: new Geolocation() { Longitude = 48.858455f, Latitude = 2.294474f }
-            );
+await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    Permissions = new[] { "geolocation" },
+    Geolocation = new Geolocation() { Longitude = 48.858455f, Latitude = 2.294474f }
+});
 ```
 
 Change the location later:
@@ -496,16 +507,28 @@ page.emulate_media(media='print')
 
 ```csharp
 // Create context with dark mode
-await using var context = await browser.NewContextAsync(colorScheme: ColorScheme.Dark);
+await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    ColorScheme = ColorScheme.Dark
+});
 
 // Create page with dark mode
-var page = await browser.NewPageAsync(colorScheme: ColorScheme.Dark);
+var page = await browser.NewPageAsync(new BrowserNewPageOptions
+{
+    ColorScheme = ColorScheme.Dark
+});
 
 // Change color scheme for the page
-await page.EmulateMediaAsync(ColorScheme.Dark);
+await page.EmulateMediaAsync(new PageEmulateMediaOptions
+{
+    ColorScheme = ColorScheme.Dark
+});
 
 // Change media for page
-await page.EmulateMediaAsync(Media.Print);
+await page.EmulateMediaAsync(new PageEmulateMediaOptions
+{
+    Media = Media.Print
+});
 ```
 
 ### API reference

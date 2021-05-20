@@ -101,7 +101,10 @@ Suggested configuration
    ```
 
    ```csharp
-   await playwright.Chromium.LaunchAsync(args: new[] { "--disable-dev-shm-usage" });
+   await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+   {
+        Args = new[] { "--disable-dev-shm-usage" }
+   });
    ```
 
    This will write shared memory files into `/tmp` instead of `/dev/shm`. See
@@ -267,12 +270,15 @@ browser = playwright.chromium.launch(chromiumSandbox=False)
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Guides
+class Example
 {
     public async void Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        await playwright.Chromium.LaunchAsync(chromiumSandbox: false);
+        await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            ChromiumSandbox = false
+        });
     }
 }
 ```
@@ -393,12 +399,15 @@ with sync_playwright() as p:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Guides
+class Example
 {
     public async void Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        await playwright.Chromium.LaunchAsync(headless: false);
+        await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless = false
+        });
     }
 }
 ```

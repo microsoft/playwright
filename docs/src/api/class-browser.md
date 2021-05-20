@@ -65,7 +65,7 @@ with sync_playwright() as playwright:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class BrowserExamples
+class Example
 {
     public static async Task Main()
     {

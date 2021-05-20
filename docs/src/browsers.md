@@ -67,6 +67,22 @@ browser = await playwright.chromium.launch(channel="chrome")
 browser = playwright.chromium.launch(channel="chrome")
 ```
 
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class Example
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var chromium = playwright.Chromium;
+        // Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+        var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "chrome" });
+    }
+}
+```
+
 :::note
 Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be installed manually before use.
 :::
