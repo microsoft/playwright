@@ -622,9 +622,9 @@ function fromProtocolColorScheme(colorScheme) {
 }
 
 function fromProtocolReducedMotion(reducedMotion) {
-  if (reducedMotion === 'reduce')
+  if (reducedMotion === 'reduce' || reducedMotion === 'no-preference')
     return reducedMotion;
-  if (reducedMotion === null || reducedMotion === 'no-preference')
+  if (reducedMotion === null)
     return undefined;
   throw new Error('Unknown reduced motion: ' + reducedMotion);
 }
