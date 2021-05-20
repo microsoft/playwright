@@ -71,18 +71,6 @@ page.click('text=Submit')
 # Verify app is logged in
 ```
 
-```csharp
-var page = await browser.NewPageAsync();
-await page.GoToAsync("https://github.com/login");
-
-// Interact with the Login form
-await page.ClickAsync("text=Login");
-await page.FillAsync("input[name='login']", username);
-await page.FillAsync("input[name='password']", password);
-await page.ClickAsync("text=Submit");
-// Verify the app is logged in
-```
-
 These steps can be executed for every browser context. However, redoing login
 for every test can slow down test execution. To prevent that, we will reuse
 existing authentication state in new browser contexts.
