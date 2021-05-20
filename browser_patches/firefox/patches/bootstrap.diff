@@ -92,7 +92,7 @@ index 4fa1d742bd5e0c03b1c93b8bf7cca2fcc8cbded1..1af645fdb86c4a803e1a5f0be08c1d09
    DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
  
 diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
-index b4b279cf69968e79b8612b5875961511b4aa2e99..45cc1d3200e975b14d74e2b1b245732e55ea89a8 100644
+index 64ab6ca6f2dc5c6e83e0bbbc168f173826e0a43c..95f63c914adcebff0b4ab4ada60750549b57d76b 100644
 --- a/browser/installer/allowed-dupes.mn
 +++ b/browser/installer/allowed-dupes.mn
 @@ -65,6 +65,12 @@ browser/defaults/settings/main/example.json
