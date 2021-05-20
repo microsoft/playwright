@@ -237,8 +237,11 @@ function renderEnum(name, literals) {
  */
 function renderOptionType(name, type) {
   const body = [];
+
+  renderConstructors(name, type, body);
+
   for (const member of type.properties)
-    renderMember(member, type, {}, body);
+    renderMember(member, member.type, {}, body);
   writeFile('public class', name, null, body, optionsDir);
 }
 
@@ -294,6 +297,28 @@ function toTitleCase(name) {
 
 /**
  *
+ * @param {string} name
+ * @param {Documentation.Type} type
+ * @param {string[]} out
+ */
+function renderConstructors(name, type, out) {
+  out.push(`public ${name}(){}`);
+  out.push('');
+  out.push(`public ${name}(${name} clone) {`);
+  out.push(`if(clone == null) return;`);
+
+  type.properties.forEach(p => {
+    let propType = translateType(p.type, type, t => generateNameDefault(p, name, t, type));
+    let propName = toMemberName(p);
+    const overloads = getPropertyOverloads(propType, p, propName, p.type);
+    for (let { name } of overloads)
+      out.push(`${name} = clone.${name};`);
+  });
+  out.push(`}`);
+}
+
+/**
+ *
  * @param {Documentation.Member} member
  * @param {Documentation.Class|Documentation.Type} parent
  * @param {{nojson?: boolean}} options
@@ -323,19 +348,7 @@ function renderMember(member, parent, options, out) {
       console.warn(`children property found in ${parent.name}, assuming array.`);
       type = `IEnumerable<${parent.name}>`;
     }
-    const overloads = [];
-    if (type) {
-      let jsonName = member.name;
-      if (member.type.expression === '[string]|[float]')
-        jsonName = `${member.name}String`;
-      overloads.push({ type, name, jsonName });
-    } else {
-      for (const overload of member.type.union) {
-        const t = translateType(overload, parent, t => generateNameDefault(member, name, t, parent));
-        const suffix = toOverloadSuffix(t);
-        overloads.push({ type: t, name: name + suffix, jsonName: member.name + suffix });
-      }
-    }
+    const overloads = getPropertyOverloads(type, member, name, parent);
     for (let { type, name, jsonName } of overloads) {
       out.push('');
       if (member.spec)
@@ -343,7 +356,7 @@ function renderMember(member, parent, options, out) {
       if (!member.clazz)
         out.push(`[JsonPropertyName("${jsonName}")]`)
       if (!type.endsWith('?') && !member.required && nullableTypes.includes(type))
-      type = `${type}?`;
+        type = `${type}?`;
       if (member.clazz)
         out.push(`public ${type} ${name} { get; }`);
       else
@@ -352,6 +365,31 @@ function renderMember(member, parent, options, out) {
     return;
   }
   throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
+}
+
+/**
+ *
+ * @param {string} type
+ * @param {Documentation.Member} member
+ * @param {string} name
+ * @param {Documentation.Class|Documentation.Type} parent
+ * @returns [{ type: string; name: string; jsonName: string; }]
+ */
+function getPropertyOverloads(type, member, name, parent) {
+  const overloads = [];
+  if (type) {
+    let jsonName = member.name;
+    if (member.type.expression === '[string]|[float]')
+      jsonName = `${member.name}String`;
+    overloads.push({ type, name, jsonName });
+  } else {
+    for (const overload of member.type.union) {
+      const t = translateType(overload, parent, t => generateNameDefault(member, name, t, parent));
+      const suffix = toOverloadSuffix(t);
+      overloads.push({ type: t, name: name + suffix, jsonName: member.name + suffix });
+    }
+  }
+  return overloads;
 }
 
 /**
