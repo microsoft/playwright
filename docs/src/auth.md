@@ -133,16 +133,6 @@ storage_state = json.loads(os.environ["STORAGE"])
 context = browser.new_context(storage_state=storage_state)
 ```
 
-```csharp
-// Save the storage state and store as env variable
-var storageState = await context.StorageStateAsync();
-Environment.SetEnvironmentVariable("STORAGE", storageState);
-
-// Create a new context with the saved storage state
-var loadedStorageState = Environment.GetEnvironmentVariable("STORAGE");
-var loadedContext = await browser.NewContextAsync(storageState: loadedStorageState);
-```
-
 Logging in via the UI and then reusing authentication state can be combined to
 implement **login once and run multiple scenarios**. The lifecycle looks like:
 
