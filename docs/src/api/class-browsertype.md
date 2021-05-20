@@ -213,7 +213,9 @@ browser = playwright.chromium.launch( # or "firefox" or "webkit".
 ```
 
 ```csharp
-var browser = await playwright.Chromium.LaunchAsync(ignoreDefaultArgs: new[] { "--mute-audio" })
+var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions {
+    IgnoreDefaultArgs = new[] { "--mute-audio" }
+})
 ```
 
 > **Chromium-only** Playwright can also be used to control the Google Chrome or Microsoft Edge browsers, but it works best with the version of

@@ -47,7 +47,7 @@ class Example
         await using var browser = await playwright.Chromium.LaunchAsync();
         var page = await browser.NewPageAsync();
         await page.GotoAsync("whatsmyuseragent.org");
-        await page.ScreenshotAsync(path: "screenshot.png");
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = "screenshot.png" });
     }
 }
 ```
@@ -55,7 +55,7 @@ class Example
 By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless: false` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```csharp
-await playwright.Firefox.LaunchAsync(headless: false, slowMo: 50);
+await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false, SlowMo = 50 });
 ```
 
 ## Record scripts

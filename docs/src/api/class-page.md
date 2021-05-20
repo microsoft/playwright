@@ -266,7 +266,7 @@ try {
   // Crash might happen during a click.
   await page.ClickAsync("button");
   // Or while waiting for an event.
-  await page.WaitForPopupAsync(() -> {});
+  await page.WaitForEventAsync(PageEvent.Popup);
 } catch (PlaywrightException e) {
   // When the page crashes, exception message contains "crash".
 }
@@ -397,9 +397,10 @@ print(popup.evaluate("location.href"))
 ```
 
 ```csharp
-var waitForPopupTask = page.WaitForPopupAsync();
-await page.EvaluateAsync("() => window.open('https://microsoft.com')");
-var popup = await waitForPopupTask;
+var popup = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+{
+    await page.EvaluateAsync("() => window.open('https://microsoft.com')");
+});
 Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
 
@@ -489,7 +490,7 @@ page.add_init_script(path="./preload.js")
 ```
 
 ```csharp
-await page.AddInitScriptAsync(scriptPath: "./preload.js");
+await page.AddInitScriptAsync(new PageAddInitScriptOption { ScriptPath = "./preload.js" });
 ```
 
 :::note
@@ -895,13 +896,13 @@ await page.EvaluateAsync("() => matchMedia('screen').matches");
 await page.EvaluateAsync("() => matchMedia('print').matches");
 // → false
 
-await page.EmulateMediaAsync(Media.Print);
+await page.EmulateMediaAsync(new PageEmulateMediaOptions { Media = Media.Print });
 await page.EvaluateAsync("() => matchMedia('screen').matches");
 // → false
 await page.EvaluateAsync("() => matchMedia('print').matches");
 // → true
 
-await page.EmulateMediaAsync(Media.Screen);
+await page.EmulateMediaAsync(new PageEmulateMediaOptions { Media = Media.Screen });
 await page.EvaluateAsync("() => matchMedia('screen').matches");
 // → true
 await page.EvaluateAsync("() => matchMedia('print').matches");
@@ -948,7 +949,7 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
 ```csharp
-await page.EmulateMediaAsync(colorScheme: ColorScheme.Dark);
+await page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Dark });
 await page.EvaluateAsync("matchMedia('(prefers-color-scheme: dark)').matches");
 // → true
 await page.EvaluateAsync("matchMedia('(prefers-color-scheme: light)').matches");
@@ -1403,7 +1404,10 @@ class PageExamples
   public static async Task Main()
   {
       using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.Webkit.LaunchAsync(headless: false);
+      await using var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions
+      {
+          Headless: false
+      });
       var page = await browser.NewPageAsync();
 
       await page.ExposeBindingAsync("pageUrl", (source) => source.Page.Url);
@@ -1658,7 +1662,10 @@ class PageExamples
   public static async Task Main()
   {
       using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.Webkit.LaunchAsync(headless: false); 
+      await using var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions
+      {
+          Headless: false
+      }); 
       var page = await browser.NewPageAsync();
 
       // NOTE: md5 is inherently insecure, and we strongly discourage using
@@ -2056,8 +2063,8 @@ page.pdf(path="page.pdf")
 
 ```csharp
 // Generates a PDF with 'screen' media type
-await page.EmulateMediaAsync(Media.Screen);
-await page.PdfAsync("page.pdf");
+await page.EmulateMediaAsync(new PageEmulateMediaOptions { Media = Media.Screen });
+await page.PdfAsync(new PagePdfOptions { Path = "page.pdf" });
 ```
 
 The [`option: width`], [`option: height`], and [`option: margin`] options accept values labeled with units. Unlabeled
@@ -2265,7 +2272,6 @@ browser.close()
 ```
 
 ```csharp
-await using var browser = await playwright.Webkit.LaunchAsync(headless: false);
 var page = await browser.NewPageAsync();
 await page.GotoAsync("https://keycode.info");
 await page.PressAsync("body", "A");
@@ -2369,7 +2375,6 @@ browser.close()
 ```
 
 ```csharp
-await using var browser = await playwright.Webkit.LaunchAsync();
 var page = await browser.NewPageAsync();
 await page.RouteAsync("**/*.{png,jpg,jpeg}", async r => await r.AbortAsync());
 await page.GotoAsync("https://www.microsoft.com");
@@ -2406,7 +2411,6 @@ browser.close()
 ```
 
 ```csharp
-await using var browser = await playwright.Webkit.LaunchAsync();
 var page = await browser.NewPageAsync();
 await page.RouteAsync(new Regex("(\\.png$)|(\\.jpg$)"), async r => await r.AbortAsync());
 await page.GotoAsync("https://www.microsoft.com");
@@ -2454,7 +2458,7 @@ page.route("/api/**", handle_route)
 await page.RouteAsync("/api/**", async r =>
 {
   if (r.Request.PostData.Contains("my-string"))
-      await r.FulfillAsync(body: "mocked-data");
+      await r.FulfillAsync(new RouteFulfillOptions { Body = "mocked-data" });
   else
       await r.ContinueAsync();
 });
@@ -2966,9 +2970,10 @@ frame = event_info.value
 ```
 
 ```csharp
-var waitTask = page.WaitForEventAsync(PageEvent.FrameNavigated);
-await page.ClickAsync("button");
-var frame = await waitTask;
+var frame = await page.RunAndWaitForEventAsync(PageEvent.FrameNavigated, async () =>
+{
+    await page.ClickAsync("button");
+}
 ```
 
 ### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
@@ -3195,9 +3200,10 @@ print(popup.title()) # popup is ready to use.
 ```
 
 ```csharp
-var popupTask = page.WaitForPopupAsync();
-await page.ClickAsync("button"); // click triggers the popup/
-var popup = await popupTask;
+var popup = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+{
+    await page.ClickAsync("button"); // click triggers the popup/
+});
 await popup.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.
 ```
