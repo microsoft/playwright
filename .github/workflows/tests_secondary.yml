@@ -33,6 +33,8 @@ jobs:
       with:
         node-version: 12
     - run: npm ci
+      env:
+        DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
@@ -140,6 +142,8 @@ jobs:
       with:
         node-version: 12
     - run: npm ci
+      env:
+        DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
@@ -167,6 +171,8 @@ jobs:
       with:
         node-version: 12
     - run: npm ci
+      env:
+        DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
@@ -193,6 +199,8 @@ jobs:
       with:
         node-version: 12
     - run: npm ci
+      env:
+        DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
@@ -219,6 +227,8 @@ jobs:
       with:
         node-version: 14
     - run: npm ci
+      env:
+        DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps
     - name: Create Android Emulator
