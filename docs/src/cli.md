@@ -178,7 +178,7 @@ class Example
     {
         using var playwright = await Playwright.CreateAsync();
         var chromium = playwright.Chromium;
-        // Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+        // Make sure to run headed.
         var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
 
         // Setup context however you like.
