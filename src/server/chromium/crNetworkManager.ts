@@ -136,7 +136,7 @@ export class CRNetworkManager {
   _onRequestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (request) {
-      request.request.updateWithRawHeaders(headersObjectToArray(event.headers));
+      request._didReceiveExtraInfo(event);
       this._requestIdToExtraInfo.delete(event.requestId);
     } else {
       this._requestIdToExtraInfo.set(event.requestId, event);
@@ -300,6 +300,11 @@ export class CRNetworkManager {
   }
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
+    if (request._shouldWaitForExtraInfo(responsePayload)) {
+      request._runWhenReceivedExtraInfo(() => this._handleRequestRedirect(request, responsePayload, timestamp));
+      return;
+    }
+
     const response = this._createResponse(request, responsePayload);
     response._requestFinished((timestamp - request._timestamp) * 1000, 'Response body is unavailable for redirect responses');
     this._requestIdToRequest.delete(request._requestId);
@@ -314,6 +319,12 @@ export class CRNetworkManager {
     // FileUpload sends a response without a matching request.
     if (!request)
       return;
+
+    if (request._shouldWaitForExtraInfo(event.response)) {
+      request._runWhenReceivedExtraInfo(() => this._onResponseReceived(event));
+      return;
+    }
+
     const response = this._createResponse(request, event.response);
     this._page._frameManager.requestReceivedResponse(response);
   }
@@ -326,6 +337,11 @@ export class CRNetworkManager {
     // @see https://crbug.com/750469
     if (!request)
       return;
+
+    if (request._waitingForExtraInfo()) {
+      request._runWhenReceivedExtraInfo(() => this._onLoadingFinished(event));
+      return;
+    }
 
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
@@ -346,6 +362,12 @@ export class CRNetworkManager {
     // @see https://crbug.com/750469
     if (!request)
       return;
+
+    if (request._waitingForExtraInfo()) {
+      request._runWhenReceivedExtraInfo(() => this._onLoadingFailed(event));
+      return;
+    }
+
     const response = request.request._existingResponse();
     if (response)
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
@@ -382,6 +404,8 @@ class InterceptableRequest implements network.RouteDelegate {
   private _client: CRSession;
   _timestamp: number;
   _wallTime: number;
+  private _extraInfoCallbacks: (() => void)[] = [];
+  private _extraInfoReceived: boolean = false;
 
   constructor(options: {
     client: CRSession;
@@ -449,6 +473,32 @@ class InterceptableRequest implements network.RouteDelegate {
       requestId: this._interceptionId!,
       errorReason
     });
+  }
+
+  _shouldWaitForExtraInfo(responsePayload: Protocol.Network.Response) {
+    // All requests with non-zero connectionId come from network service (not cache etc.) and
+    // must have corresponding Network.requestWillBeSentExtraInfo event.
+    return responsePayload.connectionId && !this._extraInfoReceived;
+  }
+
+  _waitingForExtraInfo() {
+    return this._extraInfoCallbacks.length > 0;
+  }
+
+  _runWhenReceivedExtraInfo(update: () => void) {
+    assert(!this._extraInfoReceived);
+    this._extraInfoCallbacks.push(update);
+  }
+
+  _didReceiveExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
+    this._extraInfoReceived = true;
+    this.request.updateWithRawHeaders(headersObjectToArray(event.headers));
+    if (!this._extraInfoCallbacks.length)
+      return;
+    const updates = this._extraInfoCallbacks;
+    this._extraInfoCallbacks = [];
+    for (const update of updates)
+      update();
   }
 }
 
