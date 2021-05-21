@@ -27,6 +27,7 @@ test('should print the correct imports and context options', async ({ runCLI, ch
   const cli = runCLI(['--target=java', emptyHTML]);
   const expectedResult = `import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.*;
+import java.util.*;
 
 public class Example {
   public static void main(String[] args) {
@@ -50,13 +51,13 @@ test('should print the correct context options when using a device', async ({ br
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=java', emptyHTML]);
-  await cli.waitFor(`setHasTouch(true));`);
+  await cli.waitFor(`.setViewportSize(411, 731));`);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-        .setUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/XXXX Mobile Safari/537.36")
-        .setViewportSize(411, 731)
         .setDeviceScaleFactor(2.625)
+        .setHasTouch(true)
         .setIsMobile(true)
-        .setHasTouch(true));`;
+        .setUserAgent("Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/XXXX Mobile Safari/537.36")
+        .setViewportSize(411, 731));`;
   expect(cli.text().replace(/(.*Chrome\/)(.*?)( .*)/m, '$1XXXX$3')).toContain(expectedResult);
 });
 
@@ -66,11 +67,11 @@ test('should print the correct context options when using a device and additiona
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=java', emptyHTML]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT)
-        .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
-        .setViewportSize(414, 715)
         .setDeviceScaleFactor(2)
+        .setHasTouch(true)
         .setIsMobile(true)
-        .setHasTouch(true));`;
+        .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
+        .setViewportSize(414, 715));`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
@@ -85,7 +86,6 @@ test('should print load/save storage_state', async ({ runCLI, browserName }, tes
   await cli.waitFor(expectedResult1);
 
   const expectedResult2 = `
-      // ---------------------
       context.storageState(new BrowserContext.StorageStateOptions().setPath("${saveFileName}"))`;
   await cli.waitFor(expectedResult2);
 });

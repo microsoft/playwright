@@ -261,9 +261,9 @@ test.describe('cli codegen', () => {
     page.click('text=Download')
   ]);`);
 
-    // TODO: fix generated options in java.
     expect(sources.get('<java>').text).toContain(`
-      BrowserContext context = browser.newContext(new Browser.NewContextOptions());`);
+      BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+        .setAcceptDownloads(true));`);
     expect(sources.get('<java>').text).toContain(`
       // Click text=Download
       Download download = page.waitForDownload(() -> {
