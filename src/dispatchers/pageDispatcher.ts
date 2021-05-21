@@ -121,6 +121,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     await this._page.emulateMedia({
       media: params.media === 'null' ? null : params.media,
       colorScheme: params.colorScheme === 'null' ? null : params.colorScheme,
+      reducedMotion: params.reducedMotion === 'null' ? null : params.reducedMotion,
     });
   }
 

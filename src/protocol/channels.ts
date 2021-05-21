@@ -313,6 +313,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
+  reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -382,6 +383,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
+  reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -471,6 +473,7 @@ export type BrowserNewContextParams = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
+  reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -527,6 +530,7 @@ export type BrowserNewContextOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
+  reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -973,10 +977,12 @@ export type PageCloseResult = void;
 export type PageEmulateMediaParams = {
   media?: 'screen' | 'print' | 'null',
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
+  reducedMotion?: 'reduce' | 'no-preference' | 'null',
 };
 export type PageEmulateMediaOptions = {
   media?: 'screen' | 'print' | 'null',
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
+  reducedMotion?: 'reduce' | 'no-preference' | 'null',
 };
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
@@ -2934,6 +2940,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
+  reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -2978,6 +2985,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
+  reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
