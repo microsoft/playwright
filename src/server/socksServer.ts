@@ -55,14 +55,6 @@ enum SOCKS_ATYP {
 
 enum SOCKS_REPLY {
   SUCCESS = 0x00,
-  GENFAIL = 0x01,
-  DISALLOW = 0x02,
-  NETUNREACH = 0x03,
-  HOSTUNREACH = 0x04,
-  CONNREFUSED = 0x05,
-  TTLEXPIRED = 0x06,
-  CMDUNSUPP = 0x07,
-  ATYPUNSUPP = 0x08
 }
 
 const BUF_REP_INTR_SUCCESS = Buffer.from([
@@ -87,7 +79,7 @@ class SocksV5ServerParser {
   private _info: SocksConnectionInfo;
   private _phase: ConnectionPhases = ConnectionPhases.VERSION;
   private _authMethods?: Buffer;
-  private authed = false
+  private _authenticated = false
   private _dstAddr?: Buffer;
   private _addressType: any;
   private _methodsp: number = 0;
@@ -106,7 +98,7 @@ class SocksV5ServerParser {
         case ConnectionPhases.VERSION:
           assert(chunk[i] === 5);
           i++;
-          if (this.authed)
+          if (this._authenticated)
             this._phase = ConnectionPhases.REQ_CMD;
           else
             this._phase++;
@@ -122,7 +114,7 @@ class SocksV5ServerParser {
           assert(this._authMethods);
           chunk.copy(this._authMethods, 0, i, i + chunk.length);
           assert(chunk.includes(SOCKS_AUTH_METHOD.NO_AUTH));
-          this.authed = true;
+          this._authenticated = true;
           this._phase = ConnectionPhases.VERSION;
           const left = this._authMethods.length - this._methodsp;
           const chunkLeft = chunk.length - i;
@@ -237,23 +229,11 @@ class SocksV5ServerParser {
         this._socket.on('close', () => dstSocket.end());
         this._socket.on('end', () => dstSocket.end());
         dstSocket.setKeepAlive(false);
-        dstSocket.on('error', (err: NodeJS.ErrnoException) => handleProxyError(this._socket, err.code));
+        dstSocket.on('error', (err: NodeJS.ErrnoException) => writeSocksSocketError(this._socket, String(err)));
         dstSocket.on('connect', () => {
-          const localbytes = [127, 0, 0, 1];
-          const bufrep = Buffer.alloc(6 + localbytes.length);
-          let p = 4;
-          bufrep[0] = 0x05;
-          bufrep[1] = SOCKS_REPLY.SUCCESS;
-          bufrep[2] = 0x00;
-          bufrep[3] = SOCKS_ATYP.IPv4;
-          for (let i = 0; i < localbytes.length; ++i, ++p)
-            bufrep[p] = localbytes[i];
-          bufrep.writeUInt16BE(dstSocket.localPort, p, true);
-
-          this._socket.write(bufrep);
+          this._socket.write(BUF_REP_INTR_SUCCESS);
           this._socket.pipe(dstSocket).pipe(this._socket);
           this._socket.resume();
-
         }).connect(this._info.dstPort, this._info.dstAddr);
       },
       intercept: (): SocksInterceptedHandler => {
@@ -262,14 +242,6 @@ class SocksV5ServerParser {
     };
   }
 }
-
-export type SOCKS_SOCKET_ERRORS = 'connectionRefused' | 'networkUnreachable' | 'hostUnreachable'
-
-const ERROR_2_SOCKS_REPLY = new Map<SOCKS_SOCKET_ERRORS, SOCKS_REPLY>([
-  ['connectionRefused', SOCKS_REPLY.CONNREFUSED],
-  ['networkUnreachable', SOCKS_REPLY.CONNREFUSED],
-  ['hostUnreachable', SOCKS_REPLY.CONNREFUSED],
-]);
 
 export class SocksInterceptedHandler {
   socket: net.Socket;
@@ -280,11 +252,9 @@ export class SocksInterceptedHandler {
     this.socket.write(BUF_REP_INTR_SUCCESS);
     this.socket.resume();
   }
-  error(status?: SOCKS_SOCKET_ERRORS) {
-    let reply = SOCKS_REPLY.GENFAIL;
-    if (status && ERROR_2_SOCKS_REPLY.has(status))
-      reply = ERROR_2_SOCKS_REPLY.get(status)!;
-    this.socket.end(Buffer.from([0x05, reply]));
+  error(error: string) {
+    this.socket.resume();
+    writeSocksSocketError(this.socket, error);
   }
   write(data: Buffer) {
     this.socket.write(data);
@@ -294,27 +264,20 @@ export class SocksInterceptedHandler {
   }
 }
 
-function handleProxyError(socket: net.Socket, errCode?: string): void {
-  if (socket.writable) {
-    const errbuf = Buffer.from([0x05, SOCKS_REPLY.GENFAIL]);
-    if (errCode) {
-      switch (errCode) {
-        case 'ENOENT':
-        case 'ENOTFOUND':
-        case 'ETIMEDOUT':
-        case 'EHOSTUNREACH':
-          errbuf[1] = SOCKS_REPLY.HOSTUNREACH;
-          break;
-        case 'ENETUNREACH':
-          errbuf[1] = SOCKS_REPLY.NETUNREACH;
-          break;
-        case 'ECONNREFUSED':
-          errbuf[1] = SOCKS_REPLY.CONNREFUSED;
-          break;
-      }
-    }
-    socket.end(errbuf);
-  }
+function writeSocksSocketError(socket: net.Socket, error: string) {
+  if (!socket.writable)
+    return;
+  socket.write(BUF_REP_INTR_SUCCESS);
+
+  const body = `Could not connect: ${error}`;
+  socket.end([
+    'HTTP/1.1 502 OK',
+    'Connection: close',
+    'Content-Type: text/plain',
+    'Content-Length: ' + Buffer.byteLength(body),
+    '',
+    body
+  ].join('\r\n'));
 }
 
 type IncomingProxyRequestHandler = (info: SocksConnectionInfo, forward: () => void, intercept: () => SocksInterceptedHandler) => void
@@ -339,25 +302,3 @@ export class SocksProxyServer {
     this.server.close();
   }
 }
-
-
-/** s
- * const server = new SocksProxyServer((info: SocksConnectionInfo, forward: () => void, intercept: () => net.Socket) => {
-  console.log(info)
-  if (info.dstAddr === '1s27.0.0.1') {
-    const socket = intercept();
-    const body = 'Hello ' + info.srcAddr + '!\n\nToday is: ' + (new Date());
-    socket.end([
-      'HTTP/1.1 200 OK',
-      'Connection: close',
-      'Content-Type: text/plain',
-      'Content-Length: ' + Buffer.byteLength(body),
-      '',
-      body
-    ].join('\r\n'));
-    return;
-  }
-  forward();
-});
-server.listen(1080, 'localhost');
- */

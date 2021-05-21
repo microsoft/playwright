@@ -35,8 +35,8 @@ import { BrowserContext } from './server/browserContext';
 import { CRBrowser } from './server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './dispatchers/cdpSessionDispatcher';
 import { PageDispatcher } from './dispatchers/pageDispatcher';
-import { BrowserServerPortForwardingServer, TCPSocket } from './server/tcpSocket';
-import { TCPSocketDispatcher } from './dispatchers/tcpSocketDispatcher';
+import { BrowserServerPortForwardingServer, SocksSocket } from './server/socksSocket';
+import { SocksSocketDispatcher } from './dispatchers/socksSocketDispatcher';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _playwright: Playwright;
@@ -95,15 +95,15 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const playwrightDispatcher = new PlaywrightDispatcher(scope, this._playwright, selectorsDispatcher, browserDispatcher, (ports: number[]) => {
       portForwardingServer.enablePortForwarding(ports);
     });
-    const incomingTCPSocketHandler = (socket: TCPSocket) => {
-      playwrightDispatcher._dispatchEvent('incomingTCPSocket', { socket: new TCPSocketDispatcher(playwrightDispatcher._scope, socket) });
+    const incomingSocksSocketHandler = (socket: SocksSocket) => {
+      playwrightDispatcher._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(playwrightDispatcher._scope, socket) });
     };
     if (portForwardingServer.enabled)
-      portForwardingServer.on('incomingTCPSocket', incomingTCPSocketHandler);
+      portForwardingServer.on('incomingSocksSocket', incomingSocksSocketHandler);
 
     return () => {
       if (portForwardingServer.enabled)
-        portForwardingServer.off('incomingTCPSocket', incomingTCPSocketHandler);
+        portForwardingServer.off('incomingSocksSocket', incomingSocksSocketHandler);
       // Cleanup contexts upon disconnect.
       browserDispatcher.cleanupContexts().catch(e => {});
     };

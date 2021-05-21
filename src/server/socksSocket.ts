@@ -20,7 +20,7 @@ import { EventEmitter } from 'events';
 import { SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
 import { isLocalIpAddress } from '../utils/utils';
-import { SocksProxyServer, SocksConnectionInfo, SocksInterceptedHandler, SOCKS_SOCKET_ERRORS } from './socksServer';
+import { SocksProxyServer, SocksConnectionInfo, SocksInterceptedHandler } from './socksServer';
 import { LaunchOptions } from './types';
 
 export class BrowserServerPortForwardingServer extends EventEmitter {
@@ -62,7 +62,7 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
       return;
     }
     const socket = intercept();
-    this.emit('incomingTCPSocket', new TCPSocket(this._parent, socket, info.dstAddr, info.dstPort));
+    this.emit('incomingSocksSocket', new SocksSocket(this._parent, socket, info.dstAddr, info.dstPort));
   }
 
   public enablePortForwarding(ports: number[]): void {
@@ -78,12 +78,12 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
   }
 }
 
-export class TCPSocket extends SdkObject {
+export class SocksSocket extends SdkObject {
   _socketHandler: SocksInterceptedHandler
   _dstAddr: string
   _dstPort: number
   constructor(parent: SdkObject, handler: SocksInterceptedHandler, dstAddr: string, dstPort: number) {
-    super(parent, 'TCPSocket');
+    super(parent, 'SocksSocket');
     this._socketHandler = handler;
     this._dstAddr = dstAddr;
     this._dstPort = dstPort;
@@ -93,7 +93,7 @@ export class TCPSocket extends SdkObject {
   connected() {
     this._socketHandler.connected();
   }
-  error(error: SOCKS_SOCKET_ERRORS) {
+  error(error: string) {
     this._socketHandler.error(error);
   }
 }

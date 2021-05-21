@@ -179,11 +179,11 @@ export type PlaywrightInitializer = {
   preLaunchedBrowser?: BrowserChannel,
 };
 export interface PlaywrightChannel extends Channel {
-  on(event: 'incomingTCPSocket', callback: (params: PlaywrightIncomingTCPSocketEvent) => void): this;
+  on(event: 'incomingSocksSocket', callback: (params: PlaywrightIncomingSocksSocketEvent) => void): this;
   enablePortForwarding(params: PlaywrightEnablePortForwardingParams, metadata?: Metadata): Promise<PlaywrightEnablePortForwardingResult>;
 }
-export type PlaywrightIncomingTCPSocketEvent = {
-  socket: TCPSocketChannel,
+export type PlaywrightIncomingSocksSocketEvent = {
+  socket: SocksSocketChannel,
 };
 export type PlaywrightEnablePortForwardingParams = {
   ports: number[],
@@ -3118,40 +3118,40 @@ export type AndroidElementInfo = {
   selected: boolean,
 };
 
-// ----------- TCPSocket -----------
-export type TCPSocketInitializer = {
+// ----------- SocksSocket -----------
+export type SocksSocketInitializer = {
   dstAddr: string,
   dstPort: number,
 };
-export interface TCPSocketChannel extends Channel {
-  on(event: 'data', callback: (params: TCPSocketDataEvent) => void): this;
-  on(event: 'close', callback: (params: TCPSocketCloseEvent) => void): this;
-  write(params: TCPSocketWriteParams, metadata?: Metadata): Promise<TCPSocketWriteResult>;
-  error(params: TCPSocketErrorParams, metadata?: Metadata): Promise<TCPSocketErrorResult>;
-  connected(params?: TCPSocketConnectedParams, metadata?: Metadata): Promise<TCPSocketConnectedResult>;
-  end(params?: TCPSocketEndParams, metadata?: Metadata): Promise<TCPSocketEndResult>;
+export interface SocksSocketChannel extends Channel {
+  on(event: 'data', callback: (params: SocksSocketDataEvent) => void): this;
+  on(event: 'close', callback: (params: SocksSocketCloseEvent) => void): this;
+  write(params: SocksSocketWriteParams, metadata?: Metadata): Promise<SocksSocketWriteResult>;
+  error(params: SocksSocketErrorParams, metadata?: Metadata): Promise<SocksSocketErrorResult>;
+  connected(params?: SocksSocketConnectedParams, metadata?: Metadata): Promise<SocksSocketConnectedResult>;
+  end(params?: SocksSocketEndParams, metadata?: Metadata): Promise<SocksSocketEndResult>;
 }
-export type TCPSocketDataEvent = {
+export type SocksSocketDataEvent = {
   data: Binary,
 };
-export type TCPSocketCloseEvent = {};
-export type TCPSocketWriteParams = {
+export type SocksSocketCloseEvent = {};
+export type SocksSocketWriteParams = {
   data: Binary,
 };
-export type TCPSocketWriteOptions = {
+export type SocksSocketWriteOptions = {
 
 };
-export type TCPSocketWriteResult = void;
-export type TCPSocketErrorParams = {
-  code?: 'connectionRefused' | 'networkUnreachable' | 'hostUnreachable',
+export type SocksSocketWriteResult = void;
+export type SocksSocketErrorParams = {
+  error: string,
 };
-export type TCPSocketErrorOptions = {
-  code?: 'connectionRefused' | 'networkUnreachable' | 'hostUnreachable',
+export type SocksSocketErrorOptions = {
+
 };
-export type TCPSocketErrorResult = void;
-export type TCPSocketConnectedParams = {};
-export type TCPSocketConnectedOptions = {};
-export type TCPSocketConnectedResult = void;
-export type TCPSocketEndParams = {};
-export type TCPSocketEndOptions = {};
-export type TCPSocketEndResult = void;
+export type SocksSocketErrorResult = void;
+export type SocksSocketConnectedParams = {};
+export type SocksSocketConnectedOptions = {};
+export type SocksSocketConnectedResult = void;
+export type SocksSocketEndParams = {};
+export type SocksSocketEndOptions = {};
+export type SocksSocketEndResult = void;

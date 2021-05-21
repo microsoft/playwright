@@ -382,9 +382,9 @@ Playwright:
 
   events:
 
-    incomingTCPSocket:
+    incomingSocksSocket:
       parameters:
-        socket: TCPSocket
+        socket: SocksSocket
 
 
 Selectors:
@@ -2521,7 +2521,7 @@ AndroidElementInfo:
     scrollable: boolean
     selected: boolean
 
-TCPSocket:
+SocksSocket:
   type: interface
 
   initializer:
@@ -2535,12 +2535,7 @@ TCPSocket:
 
     error:
       parameters:
-        code:
-          type: enum?
-          literals:
-            - connectionRefused
-            - networkUnreachable
-            - hostUnreachable
+        error: string
 
     connected:
 

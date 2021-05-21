@@ -22,7 +22,7 @@ import { Electron } from './electron';
 import { TimeoutError } from '../utils/errors';
 import { Size } from './types';
 import { Android } from './android';
-import { TCPSocket } from './tcpSocket';
+import { SocksSocket } from './socksSocket';
 
 type DeviceDescriptor = {
   userAgent: string,
@@ -61,7 +61,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this._selectorsOwner = SelectorsOwner.from(initializer.selectors);
     this.selectors._addChannel(this._selectorsOwner);
 
-    this._channel.on('incomingTCPSocket', ({socket}) => TCPSocket.from(socket));
+    this._channel.on('incomingSocksSocket', ({socket}) => SocksSocket.from(socket));
   }
 
   _cleanup() {

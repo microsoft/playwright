@@ -1220,14 +1220,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     scrollable: tBoolean,
     selected: tBoolean,
   });
-  scheme.TCPSocketWriteParams = tObject({
+  scheme.SocksSocketWriteParams = tObject({
     data: tBinary,
   });
-  scheme.TCPSocketErrorParams = tObject({
-    code: tOptional(tEnum(['connectionRefused', 'networkUnreachable', 'hostUnreachable'])),
+  scheme.SocksSocketErrorParams = tObject({
+    error: tString,
   });
-  scheme.TCPSocketConnectedParams = tOptional(tObject({}));
-  scheme.TCPSocketEndParams = tOptional(tObject({}));
+  scheme.SocksSocketConnectedParams = tOptional(tObject({}));
+  scheme.SocksSocketEndParams = tOptional(tObject({}));
 
   return scheme;
 }

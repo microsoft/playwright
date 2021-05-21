@@ -46,14 +46,13 @@ it.describe('forwarding proxy', () => {
       reachedOriginalTarget = true;
       res.end('<html><body>original-target</body></html>');
     });
-    const examplePort = 20_000 + workerInfo.workerIndex * 3;
     const browserServer = await browserType.launchServer({
       ...browserOptions,
       _acceptForwardedPorts: true
     } as LaunchOptions);
     const browser = await browserType.connect({
       wsEndpoint: browserServer.wsEndpoint(),
-      _forwardPorts: [examplePort]
+      _forwardPorts: []
     } as ConnectOptions);
     const page = await browser.newPage();
     await page.goto(server.PREFIX + '/foo.html');
@@ -85,7 +84,7 @@ it.describe('forwarding proxy', () => {
     await browserServer.close();
   });
 
-  it('should lead to a connection refused error for forwarded requests', async ({ browserType, browserOptions, browserName, isWindows}, workerInfo) => {
+  it('should lead to the error page for forwarded requests when the connection is refused', async ({ browserType, browserOptions, browserName, isWindows}, workerInfo) => {
     const examplePort = 20_000 + workerInfo.workerIndex * 3;
     const browserServer = await browserType.launchServer({
       ...browserOptions,
@@ -96,45 +95,27 @@ it.describe('forwarding proxy', () => {
       _forwardPorts: [examplePort]
     } as ConnectOptions);
     const page = await browser.newPage();
-    let error: Error;
-    await page.goto(`http://localhost:${examplePort}`).catch(e => error = e);
-
-    if (browserName === 'chromium')
-      expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED');
-    else if (browserName === 'webkit' && isWindows)
-      expect(error.message).toContain(`Couldn\'t connect to server`);
-    else if (browserName === 'webkit')
-      expect(error.message).toContain('Could not connect');
-    else
-      expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
+    const response = await page.goto(`http://localhost:${examplePort}`);
+    expect(response.status()).toBe(502);
+    await page.waitForSelector('text=Could not connect');
     await browserServer.close();
   });
 
-  it('should lead to a request failure if the proxied target will timeout', async ({ browserName, browserType, browserOptions, isWindows}, workerInfo) => {
-    if (browserName === 'webkit')
-      it.fixme(); // https://github.com/microsoft/playwright/issues/6613
+  it('should lead to the error page for non-forwarded requests when the connection is refused', async ({ browserName, browserType, browserOptions, isWindows}, workerInfo) => {
     process.env.PW_TEST_PROXY_TARGET = '50001';
     const browserServer = await browserType.launchServer({
       ...browserOptions,
       _acceptForwardedPorts: true
     } as LaunchOptions);
-    const examplePort = 20_000 + workerInfo.workerIndex * 3;
     const browser = await browserType.connect({
       wsEndpoint: browserServer.wsEndpoint(),
-      _forwardPorts: [examplePort]
+      _forwardPorts: []
     } as ConnectOptions);
     const page = await browser.newPage();
-    let error: Error;
-    await page.goto(`http://localhost:44123/non-existing-url`).catch(e => error = e);
+    const response = await page.goto(`http://localhost:44123/non-existing-url`);
+    expect(response.status()).toBe(502);
+    await page.waitForSelector('text=Could not connect');
 
-    if (browserName === 'chromium')
-      expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED');
-    else if (browserName === 'webkit' && isWindows)
-      expect(error.message).toContain(`Couldn\'t connect to server`);
-    else if (browserName === 'webkit')
-      expect(error.message).toContain('Could not connect');
-    else
-      expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
     await browserServer.close();
   });
 

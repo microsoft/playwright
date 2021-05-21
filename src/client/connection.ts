@@ -36,7 +36,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
 import { Android, AndroidSocket, AndroidDevice } from './android';
-import { TCPSocket } from './tcpSocket';
+import { SocksSocket } from './socksSocket';
 import { captureStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
@@ -243,8 +243,8 @@ export class Connection extends EventEmitter {
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);
         break;
-      case 'TCPSocket':
-        result = new TCPSocket(parent, type, guid, initializer);
+      case 'SocksSocket':
+        result = new SocksSocket(parent, type, guid, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);

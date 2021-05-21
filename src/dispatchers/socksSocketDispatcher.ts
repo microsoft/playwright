@@ -15,12 +15,12 @@
  */
 
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { TCPSocket } from '../server/tcpSocket';
+import { SocksSocket } from '../server/socksSocket';
 import * as channels from '../protocol/channels';
 
-export class TCPSocketDispatcher extends Dispatcher<TCPSocket, channels.TCPSocketInitializer> implements channels.TCPSocketChannel {
-  constructor(scope: DispatcherScope, socket: TCPSocket) {
-    super(scope, socket, 'TCPSocket', {
+export class SocksSocketDispatcher extends Dispatcher<SocksSocket, channels.SocksSocketInitializer> implements channels.SocksSocketChannel {
+  constructor(scope: DispatcherScope, socket: SocksSocket) {
+    super(scope, socket, 'SocksSocket', {
       dstAddr: socket._dstAddr,
       dstPort: socket._dstPort
     }, true);
@@ -33,8 +33,8 @@ export class TCPSocketDispatcher extends Dispatcher<TCPSocket, channels.TCPSocke
   async connected(): Promise<void> {
     this._object._socketHandler.connected();
   }
-  async error(params: channels.TCPSocketErrorOptions): Promise<void> {
-    this._object._socketHandler.error(params.code);
+  async error(params: channels.SocksSocketErrorParams): Promise<void> {
+    this._object._socketHandler.error(params.error);
   }
 
   async write(params: channels.AndroidSocketWriteParams): Promise<void> {
