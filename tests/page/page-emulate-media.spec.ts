@@ -116,6 +116,7 @@ it('should change the actual colors in css', async ({page}) => {
 });
 
 it('should emulate reduced motion', async ({page}) => {
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(true);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(false);

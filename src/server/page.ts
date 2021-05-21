@@ -160,7 +160,7 @@ export class Page extends SdkObject {
     this._state = {
       emulatedSize: browserContext._options.viewport ? { viewport: browserContext._options.viewport, screen: browserContext._options.screen || browserContext._options.viewport } : null,
       mediaType: null,
-      colorScheme: null,
+      colorScheme: browserContext._options.colorScheme !== undefined  ? browserContext._options.colorScheme : 'light',
       reducedMotion: browserContext._options.reducedMotion !== undefined  ? browserContext._options.reducedMotion : 'no-preference',
       extraHTTPHeaders: null,
     };
@@ -362,12 +362,6 @@ export class Page extends SdkObject {
   }
 
   async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null, reducedMotion?: types.ReducedMotion | null }) {
-    if (options.media !== undefined)
-      assert(options.media === null || types.mediaTypes.has(options.media), 'media: expected one of (screen|print|null)');
-    if (options.colorScheme !== undefined)
-      assert(options.colorScheme === null || types.colorSchemes.has(options.colorScheme), 'colorScheme: expected one of (dark|light|no-preference|null)');
-    if (options.reducedMotion !== undefined)
-      assert(options.reducedMotion === null || types.reducedMotions.has(options.reducedMotion), 'reducedMotion: expected one of (reduce|no-preference|null)');
     if (options.media !== undefined)
       this._state.mediaType = options.media;
     if (options.colorScheme !== undefined)

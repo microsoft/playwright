@@ -583,19 +583,16 @@ export class WKPage implements PageDelegate {
   private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null, reducedMotion: types.ReducedMotion | null): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
-    if (colorScheme !== null) {
-      let appearance: any = '';
-      switch (colorScheme) {
-        case 'light': appearance = 'Light'; break;
-        case 'dark': appearance = 'Dark'; break;
-      }
-      promises.push(session.send('Page.setForcedAppearance', { appearance }));
+    let appearance: any = undefined;
+    switch (colorScheme) {
+      case 'light': appearance = 'Light'; break;
+      case 'dark': appearance = 'Dark'; break;
     }
-    let reducedMotionWk: any = '';
+    promises.push(session.send('Page.setForcedAppearance', { appearance }));
+    let reducedMotionWk: any = undefined;
     switch (reducedMotion) {
       case 'reduce': reducedMotionWk = 'Reduce'; break;
       case 'no-preference': reducedMotionWk = 'NoPreference'; break;
-      case null: reducedMotionWk = undefined; break;
     }
     promises.push(session.send('Page.setForcedReducedMotion', { reducedMotion: reducedMotionWk }));
     await Promise.all(promises);
@@ -616,7 +613,7 @@ export class WKPage implements PageDelegate {
   }
 
   async updateEmulateMedia(): Promise<void> {
-    const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
+    const colorScheme = this._page._state.colorScheme;
     const reducedMotion = this._page._state.reducedMotion;
     await this._forAllSessions(session => WKPage._setEmulateMedia(session, this._page._state.mediaType, colorScheme, reducedMotion));
   }
