@@ -854,6 +854,7 @@ CORS RFC1918 enforcement.
       corsErrorStatus: Network.CorsErrorStatus;
       isWarning: boolean;
       request: AffectedRequest;
+      location?: SourceCodeLocation;
       initiatorOrigin?: string;
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
@@ -871,11 +872,30 @@ Explainer: https://github.com/WICG/conversion-measurement-api
       invalidParameter?: string;
     }
     /**
+     * Details for issues about documents in Quirks Mode
+or Limited Quirks Mode that affects page layouting.
+     */
+    export interface QuirksModeIssueDetails {
+      /**
+       * If false, it means the document's mode is "quirks"
+instead of "limited-quirks".
+       */
+      isLimitedQuirksMode: boolean;
+      documentNodeId: DOM.BackendNodeId;
+      url: string;
+      frameId: Page.FrameId;
+      loaderId: Network.LoaderId;
+    }
+    export interface NavigatorUserAgentIssueDetails {
+      url: string;
+      location?: SourceCodeLocation;
+    }
+    /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -892,6 +912,8 @@ add a new optional field to this type.
       lowTextContrastIssueDetails?: LowTextContrastIssueDetails;
       corsIssueDetails?: CorsIssueDetails;
       attributionReportingIssueDetails?: AttributionReportingIssueDetails;
+      quirksModeIssueDetails?: QuirksModeIssueDetails;
+      navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -2689,6 +2711,10 @@ front-end.
      */
     export type ShadowRootType = "user-agent"|"open"|"closed";
     /**
+     * Document compatibility mode.
+     */
+    export type CompatibilityMode = "QuirksMode"|"LimitedQuirksMode"|"NoQuirksMode";
+    /**
      * DOM interaction is implemented in terms of mirror objects that represent the actual DOM nodes.
 DOMNode is a base node mirror type.
      */
@@ -2809,6 +2835,7 @@ The property is always undefined now.
        * Whether the node is SVG.
        */
       isSVG?: boolean;
+      compatibilityMode?: CompatibilityMode;
     }
     /**
      * A structure holding an RGBA color.
@@ -7124,7 +7151,7 @@ passed by the developer (e.g. via "fetch") as understood by the backend.
     /**
      * The reason why request was blocked.
      */
-    export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork";
+    export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork"|"NoCorsRedirectModeNotFollow";
     export interface CorsErrorStatus {
       corsError: CorsError;
       failedParameter: string;
@@ -9585,9 +9612,9 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     export type GatedAPIFeatures = "SharedArrayBuffers"|"SharedArrayBuffersTransferAllowed"|"PerformanceMeasureMemory"|"PerformanceProfile";
     /**
      * All Permissions Policy features. This enum should match the one defined
-in renderer/core/feature_policy/feature_policy_features.json5.
+in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"conversion-measurement"|"cross-origin-isolated"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -9600,6 +9627,38 @@ in renderer/core/feature_policy/feature_policy_features.json5.
       feature: PermissionsPolicyFeature;
       allowed: boolean;
       locator?: PermissionsPolicyBlockLocator;
+    }
+    /**
+     * Origin Trial(https://www.chromium.org/blink/origin-trials) support.
+Status for an Origin Trial token.
+     */
+    export type OriginTrialTokenStatus = "Success"|"NotSupported"|"Insecure"|"Expired"|"WrongOrigin"|"InvalidSignature"|"Malformed"|"WrongVersion"|"FeatureDisabled"|"TokenDisabled"|"FeatureDisabledForUser";
+    /**
+     * Status for an Origin Trial.
+     */
+    export type OriginTrialStatus = "Enabled"|"ValidTokenNotProvided"|"OSNotSupported"|"TrialNotAllowed";
+    export type OriginTrialUsageRestriction = "None"|"Subset";
+    export interface OriginTrialToken {
+      origin: string;
+      matchSubDomains: boolean;
+      trialName: string;
+      expiryTime: Network.TimeSinceEpoch;
+      isThirdParty: boolean;
+      usageRestriction: OriginTrialUsageRestriction;
+    }
+    export interface OriginTrialTokenWithStatus {
+      rawTokenText: string;
+      /**
+       * `parsedToken` is present only when the token is extractable and
+parsable.
+       */
+      parsedToken?: OriginTrialToken;
+      status: OriginTrialTokenStatus;
+    }
+    export interface OriginTrial {
+      trialName: string;
+      status: OriginTrialStatus;
+      tokensWithStatus: OriginTrialTokenWithStatus[];
     }
     /**
      * Information about the Frame on the page.
@@ -9664,6 +9723,10 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Indicated which gated APIs / features are available.
        */
       gatedAPIFeatures: GatedAPIFeatures[];
+      /**
+       * Frame document's origin trials with at least one token present.
+       */
+      originTrials?: OriginTrial[];
     }
     /**
      * Information about the Resource on the page.
@@ -12921,7 +12984,7 @@ are ignored.
     /**
      * Stages of the request to handle. Request will intercept before the request is
 sent. Response will intercept after the response is received (but before response
-body is received.
+body is received).
      */
     export type RequestStage = "Request"|"Response";
     export interface RequestPattern {
