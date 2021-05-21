@@ -251,12 +251,19 @@ test.describe('cli codegen', () => {
     const sources = await recorder.waitForOutput('<javascript>', 'waitForEvent');
 
     expect(sources.get('<javascript>').text).toContain(`
+  const context = await browser.newContext({
+    acceptDownloads: true
+  });`);
+    expect(sources.get('<javascript>').text).toContain(`
   // Click text=Download
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.click('text=Download')
   ]);`);
 
+    // TODO: fix generated options in java.
+    expect(sources.get('<java>').text).toContain(`
+      BrowserContext context = browser.newContext(new Browser.NewContextOptions());`);
     expect(sources.get('<java>').text).toContain(`
       // Click text=Download
       Download download = page.waitForDownload(() -> {
@@ -264,17 +271,26 @@ test.describe('cli codegen', () => {
       });`);
 
     expect(sources.get('<python>').text).toContain(`
+    context = browser.new_context(accept_downloads=True)`);
+    expect(sources.get('<python>').text).toContain(`
     # Click text=Download
     with page.expect_download() as download_info:
         page.click(\"text=Download\")
     download = download_info.value`);
 
     expect(sources.get('<async python>').text).toContain(`
+    context = await browser.new_context(accept_downloads=True)`);
+    expect(sources.get('<async python>').text).toContain(`
     # Click text=Download
     async with page.expect_download() as download_info:
         await page.click(\"text=Download\")
     download = await download_info.value`);
 
+    expect(sources.get('<csharp>').text).toContain(`
+        var context = await browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            AcceptDownloads = true,
+        });`);
     expect(sources.get('<csharp>').text).toContain(`
         // Click text=Download
         var download1 = await page.RunAndWaitForEventAsync(PageEvent.Download, async () =>
