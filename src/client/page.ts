@@ -423,11 +423,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null } = {}) {
+  async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null, reducedMotion?: 'reduce' | 'no-preference' | null } = {}) {
     return this._wrapApiCall('page.emulateMedia', async (channel: channels.PageChannel) => {
       await channel.emulateMedia({
         media: options.media === null ? 'null' : options.media,
         colorScheme: options.colorScheme === null ? 'null' : options.colorScheme,
+        reducedMotion: options.reducedMotion === null ? 'null' : options.reducedMotion,
       });
     });
   }

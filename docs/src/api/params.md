@@ -366,6 +366,12 @@ Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/W
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
 [`method: Page.emulateMedia`] for more details. Defaults to `'light'`.
 
+## context-option-reducedMotion
+- `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference">>
+
+Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Defaults
+to `'no-preference'`.
+
 ## context-option-logger
 * langs: js
 - `logger` <[Logger]>
@@ -578,6 +584,7 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 - %%-context-option-offline-%%
 - %%-context-option-httpcredentials-%%
 - %%-context-option-colorscheme-%%
+- %%-context-option-reducedMotion-%%
 - %%-context-option-logger-%%
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%

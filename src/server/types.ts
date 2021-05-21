@@ -84,6 +84,9 @@ export const mediaTypes: Set<MediaType> = new Set(['screen', 'print']);
 export type ColorScheme = 'dark' | 'light' | 'no-preference';
 export const colorSchemes: Set<ColorScheme> = new Set(['dark', 'light', 'no-preference']);
 
+export type ReducedMotion = 'no-preference' | 'reduce';
+export const reducedMotions: Set<ReducedMotion> = new Set(['no-preference', 'reduce']);
+
 export type DeviceDescriptor = {
   userAgent: string,
   viewport: Size,
@@ -237,6 +240,7 @@ export type BrowserContextOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: ColorScheme,
+  reducedMotion?: ReducedMotion,
   acceptDownloads?: boolean,
   recordVideo?: {
     dir: string,

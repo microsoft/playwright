@@ -970,6 +970,11 @@ Passing `null` disables CSS media emulation.
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
 `null` disables color scheme emulation.
 
+### option: Page.emulateMedia.reducedMotion
+- `reducedMotion` <null|[ReducedMotion]<"reduce"|"no-preference">>
+
+Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
+
 ## async method: Page.evalOnSelector
 * langs:
   - alias-python: eval_on_selector

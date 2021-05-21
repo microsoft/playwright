@@ -353,10 +353,12 @@ export class FFPage implements PageDelegate {
 
   async updateEmulateMedia(): Promise<void> {
     const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
+    const reducedMotion = this._page._state.reducedMotion || this._browserContext._options.reducedMotion || 'no-preference';
     await this._session.send('Page.setEmulatedMedia', {
       // Empty string means reset.
       type: this._page._state.mediaType === null ? '' : this._page._state.mediaType,
-      colorScheme
+      colorScheme,
+      reducedMotion,
     });
   }
 

@@ -114,3 +114,15 @@ it('should change the actual colors in css', async ({page}) => {
   await page.emulateMedia({ colorScheme: 'light' });
   expect(await getBackgroundColor()).toBe('rgb(255, 255, 255)');
 });
+
+it('should emulate reduced motion', async ({page}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(false);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(false);
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(true);
+  await page.emulateMedia({ reducedMotion: null });
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(false);
+});

@@ -1007,7 +1007,11 @@ class FrameSession {
     if (this._crPage._browserContext._browser.isClank())
       return;
     const colorScheme = this._page._state.colorScheme || this._crPage._browserContext._options.colorScheme || 'light';
-    const features = colorScheme ? [{ name: 'prefers-color-scheme', value: colorScheme }] : [];
+    const reducedMotion = this._page._state.reducedMotion || this._crPage._browserContext._options.reducedMotion || 'no-preference';
+    const features = [
+      { name: 'prefers-color-scheme', value: colorScheme },
+      { name: 'prefers-reduced-motion', value: reducedMotion },
+    ];
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
   }
 

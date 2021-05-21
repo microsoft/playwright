@@ -180,8 +180,8 @@ export class WKPage implements PageDelegate {
     const contextOptions = this._browserContext._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
-    if (this._page._state.mediaType || this._page._state.colorScheme)
-      promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
+    if (this._page._state.mediaType || this._page._state.colorScheme || this._page._state.reducedMotion)
+      promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme, this._page._state.reducedMotion));
     for (const world of ['main', 'utility'] as const) {
       const bootstrapScript = this._calculateBootstrapScript(world);
       if (bootstrapScript.length)
@@ -580,7 +580,7 @@ export class WKPage implements PageDelegate {
     await this._page._onFileChooserOpened(handle);
   }
 
-  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null, reducedMotion: types.ReducedMotion | null): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
     if (colorScheme !== null) {
@@ -590,6 +590,14 @@ export class WKPage implements PageDelegate {
         case 'dark': appearance = 'Dark'; break;
       }
       promises.push(session.send('Page.setForcedAppearance', { appearance }));
+    }
+    if (reducedMotion !== null) {
+      let reducedMotionWk: any = '';
+      switch (reducedMotion) {
+        case 'reduce': reducedMotionWk = 'Reduce'; break;
+        case 'no-preference': reducedMotionWk = 'NoPreference'; break;
+      }
+      promises.push(session.send('Page.setForcedReducedMotion', { reducedMotion: reducedMotionWk }));
     }
     await Promise.all(promises);
   }
@@ -610,7 +618,8 @@ export class WKPage implements PageDelegate {
 
   async updateEmulateMedia(): Promise<void> {
     const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
-    await this._forAllSessions(session => WKPage._setEmulateMedia(session, this._page._state.mediaType, colorScheme));
+    const reducedMotion = this._page._state.reducedMotion || this._browserContext._options.reducedMotion || 'no-preference';
+    await this._forAllSessions(session => WKPage._setEmulateMedia(session, this._page._state.mediaType, colorScheme, reducedMotion));
   }
 
   async setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void> {

@@ -312,6 +312,11 @@ ContextOptions:
       - dark
       - light
       - no-preference
+    reducedMotion:
+      type: enum?
+      literals:
+      - reduce
+      - no-preference
     acceptDownloads: boolean?
     _debugName: string?
     recordVideo:
@@ -714,6 +719,13 @@ Page:
           literals:
           - dark
           - light
+          - no-preference
+          # Reset emulated value to the system default.
+          - null
+        reducedMotion:
+          type: enum?
+          literals:
+          - reduce
           - no-preference
           # Reset emulated value to the system default.
           - null
@@ -2373,6 +2385,11 @@ AndroidDevice:
           literals:
           - dark
           - light
+          - no-preference
+        reducedMotion:
+          type: enum?
+          literals:
+          - reduce
           - no-preference
         acceptDownloads: boolean?
         _debugName: string?

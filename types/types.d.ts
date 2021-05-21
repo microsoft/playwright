@@ -1679,6 +1679,12 @@ export interface Page {
      * disables CSS media emulation.
      */
     media?: null|"screen"|"print";
+
+    /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null`
+     * disables reduced motion emulation.
+     */
+    reducedMotion?: null|"reduce"|"no-preference";
   }): Promise<void>;
 
   /**
@@ -7175,6 +7181,13 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+     * Defaults to `'no-preference'`.
+     */
+    reducedMotion?: "reduce"|"no-preference";
+
+    /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
      * is set.
      */
@@ -8198,6 +8211,13 @@ export interface AndroidDevice {
     };
 
     /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+     * Defaults to `'no-preference'`.
+     */
+    reducedMotion?: "reduce"|"no-preference";
+
+    /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
      * is set.
      */
@@ -8973,6 +8993,13 @@ export interface Browser extends EventEmitter {
         height: number;
       };
     };
+
+    /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+     * Defaults to `'no-preference'`.
+     */
+    reducedMotion?: "reduce"|"no-preference";
 
     /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
@@ -11018,6 +11045,13 @@ export interface BrowserContextOptions {
       height: number;
     };
   };
+
+  /**
+   * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+   * Defaults to `'no-preference'`.
+   */
+  reducedMotion?: "reduce"|"no-preference";
 
   /**
    * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
