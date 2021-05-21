@@ -647,9 +647,9 @@ test.describe('cli codegen', () => {
     expect(sources.get('<async python>').text).toContain(`
     await page.click("text=Click me", button="middle")`);
 
-    // TODO: fix this for java
-    // expect(sources.get('<java>').text).toContain(`
-    //   page.click("text=Click me", foo);`);
+    expect(sources.get('<java>').text).toContain(`
+      page.click("text=Click me", new Page.ClickOptions()
+        .setButton(MouseButton.MIDDLE));`);
 
     expect(sources.get('<csharp>').text).toContain(`
         await page.ClickAsync("text=Click me", new PageClickOptions

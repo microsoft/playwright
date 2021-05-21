@@ -18,7 +18,7 @@ import type { BrowserContextOptions } from '../../../..';
 import { LanguageGenerator, LanguageGeneratorOptions, toSignalMap } from './language';
 import { ActionInContext } from './codeGenerator';
 import { Action, actionTitle } from './recorderActions';
-import { toModifiers } from './utils';
+import { MouseClickOptions, toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
 
@@ -54,7 +54,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`);
     }
 
-    const actionCall = this._generateActionCall(action);
+    const actionCall = this._generateActionCall(action, actionInContext.isMainFrame);
     let code = `${subject}.${actionCall};`;
 
     if (signals.popup) {
@@ -84,7 +84,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(action: Action): string {
+  private _generateActionCall(action: Action, isPage: boolean): string {
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -94,7 +94,16 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         let method = 'click';
         if (action.clickCount === 2)
           method = 'dblclick';
-        return `${method}(${quote(action.selector)})`;
+        const modifiers = toModifiers(action.modifiers);
+        const options: MouseClickOptions = {};
+        if (action.button !== 'left')
+          options.button = action.button;
+        if (modifiers.length)
+          options.modifiers = modifiers;
+        if (action.clickCount > 2)
+          options.clickCount = action.clickCount;
+        const optionsText = formatClickOptions(options, isPage);
+        return `${method}(${quote(action.selector)}${optionsText ? ', ' : ''}${optionsText})`;
       }
       case 'check':
         return `check(${quote(action.selector)})`;
@@ -121,6 +130,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     formatter.add(`
     import com.microsoft.playwright.*;
     import com.microsoft.playwright.options.*;
+    import java.util.*;
 
     public class Example {
       public static void main(String[] args) {
@@ -131,9 +141,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n      context.storageState(new BrowserContext.StorageStateOptions().setPath(${quote(saveStorage)}));` : '';
-    return `\n      // ---------------------${storageStateLine}
-    }
+    const storageStateLine = saveStorage ? `\n      context.storageState(new BrowserContext.StorageStateOptions().setPath(${quote(saveStorage)}));\n` : '';
+    return `${storageStateLine}    }
   }
 }`;
   }
@@ -176,29 +185,46 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
   const device = deviceName ? deviceDescriptors[deviceName] : {};
   const options: BrowserContextOptions = { ...device, ...contextOptions };
   lines.push('new Browser.NewContextOptions()');
+  if (options.acceptDownloads)
+    lines.push(`  .setAcceptDownloads(true)`);
+  if (options.bypassCSP)
+    lines.push(`  .setBypassCSP(true)`);
   if (options.colorScheme)
     lines.push(`  .setColorScheme(ColorScheme.${options.colorScheme.toUpperCase()})`);
+  if (options.deviceScaleFactor)
+    lines.push(`  .setDeviceScaleFactor(${options.deviceScaleFactor})`);
   if (options.geolocation)
     lines.push(`  .setGeolocation(${options.geolocation.latitude}, ${options.geolocation.longitude})`);
+  if (options.hasTouch)
+    lines.push(`  .setHasTouch(${options.hasTouch})`);
+  if (options.isMobile)
+    lines.push(`  .setIsMobile(${options.isMobile})`);
   if (options.locale)
     lines.push(`  .setLocale("${options.locale}")`);
   if (options.proxy)
     lines.push(`  .setProxy(new Proxy("${options.proxy.server}"))`);
+  if (options.storageState)
+    lines.push(`  .setStorageStatePath(Paths.get(${quote(options.storageState as string)}))`);
   if (options.timezoneId)
     lines.push(`  .setTimezoneId("${options.timezoneId}")`);
   if (options.userAgent)
     lines.push(`  .setUserAgent("${options.userAgent}")`);
   if (options.viewport)
     lines.push(`  .setViewportSize(${options.viewport.width}, ${options.viewport.height})`);
-  if (options.deviceScaleFactor)
-    lines.push(`  .setDeviceScaleFactor(${options.deviceScaleFactor})`);
-  if (options.isMobile)
-    lines.push(`  .setIsMobile(${options.isMobile})`);
-  if (options.hasTouch)
-    lines.push(`  .setHasTouch(${options.hasTouch})`);
-  if (options.storageState)
-    lines.push(`  .setStorageStatePath(Paths.get(${quote(options.storageState as string)}))`);
+  return lines.join('\n');
+}
 
+function formatClickOptions(options: MouseClickOptions, isPage: boolean) {
+  const lines = [];
+  if (options.button)
+    lines.push(`  .setButton(MouseButton.${options.button.toUpperCase()})`);
+  if (options.modifiers)
+    lines.push(`  .setModifiers(Arrays.asList(${options.modifiers.map(m => `KeyboardModifier.${m.toUpperCase()}`).join(', ')}))`);
+  if (options.clickCount)
+    lines.push(`  .setClickCount(${options.clickCount})`);
+  if (!lines.length)
+    return '';
+  lines.unshift(`new ${isPage ? 'Page' : 'Frame'}.ClickOptions()`);
   return lines.join('\n');
 }
 
