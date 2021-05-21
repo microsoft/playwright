@@ -1007,11 +1007,12 @@ class FrameSession {
     if (this._crPage._browserContext._browser.isClank())
       return;
     const colorScheme = this._page._state.colorScheme || this._crPage._browserContext._options.colorScheme || 'light';
-    const reducedMotion = this._page._state.reducedMotion || this._crPage._browserContext._options.reducedMotion || 'no-preference';
+    const reducedMotion = this._page._state.reducedMotion === null ? '' : this._page._state.reducedMotion;
     const features = [
       { name: 'prefers-color-scheme', value: colorScheme },
       { name: 'prefers-reduced-motion', value: reducedMotion },
     ];
+    // Empty string disables the override.
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
   }
 
