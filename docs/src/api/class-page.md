@@ -1406,26 +1406,26 @@ using System.Threading.Tasks;
 
 class PageExamples
 {
-  public static async Task Main()
-  {
-      using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions
-      {
-          Headless: false
-      });
-      var page = await browser.NewPageAsync();
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless: false
+        });
+        var page = await browser.NewPageAsync();
 
-      await page.ExposeBindingAsync("pageUrl", (source) => source.Page.Url);
-      await page.SetContentAsync("<script>\n" +
-      "  async function onClick() {\n" +
-      "    document.querySelector('div').textContent = await window.pageURL();\n" +
-      "  }\n" +
-      "</script>\n" +
-      "<button onclick=\"onClick()\">Click me</button>\n" +
-      "<div></div>");
+        await page.ExposeBindingAsync("pageUrl", (source) => source.Page.Url);
+        await page.SetContentAsync("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.pageURL();\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>");
 
-      await page.ClickAsync("button");
-  }
+        await page.ClickAsync("button");
+    }
 }
 ```
 
@@ -1664,34 +1664,34 @@ using System.Threading.Tasks;
 
 class PageExamples
 {
-  public static async Task Main()
-  {
-      using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions
-      {
-          Headless: false
-      }); 
-      var page = await browser.NewPageAsync();
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless: false
+        });
+        var page = await browser.NewPageAsync();
 
-      // NOTE: md5 is inherently insecure, and we strongly discourage using
-      // this in production in any shape or form
-      await page.ExposeFunctionAsync("sha1", (string input) =>
-      {
-          return Convert.ToBase64String(
-              MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
-      });
+        // NOTE: md5 is inherently insecure, and we strongly discourage using
+        // this in production in any shape or form
+        await page.ExposeFunctionAsync("sha1", (string input) =>
+        {
+            return Convert.ToBase64String(
+                MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
+        });
 
-      await page.SetContentAsync("<script>\n" +
-      "  async function onClick() {\n" +
-      "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
-      "  }\n" +
-      "</script>\n" +
-      "<button onclick=\"onClick()\">Click me</button>\n" +
-      "<div></div>");
+        await page.SetContentAsync("<script>\n" +
+        "  async function onClick() {\n" +
+        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "  }\n" +
+        "</script>\n" +
+        "<button onclick=\"onClick()\">Click me</button>\n" +
+        "<div></div>");
 
-      await page.ClickAsync("button");
-      Console.WriteLine(await page.TextContentAsync("div"));
-  }
+        await page.ClickAsync("button");
+        Console.WriteLine(await page.TextContentAsync("div"));
+    }
 }
 ```
 

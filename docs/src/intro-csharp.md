@@ -20,7 +20,7 @@ dotnet add package Microsoft.Playwright
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Example
+class Program
 {
     public static async Task Main()
     {
@@ -33,26 +33,41 @@ class Example
 
 ## First script
 
-In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
+Create a console project and add the Playwright dependency.
+
+```sh
+dotnet new console -n pw_demo
+cd pw_demo
+dotnet add package Microsoft.Playwright --prerelease
+```
+
+Create a Program.cs that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.
 
 ```csharp
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Example
+class Program
 {
     public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync();
         var page = await browser.NewPageAsync();
-        await page.GotoAsync("whatsmyuseragent.org");
+        await page.GotoAsync("https://playwright.dev/dotnet");
         await page.ScreenshotAsync(new PageScreenshotOptions { Path = "screenshot.png" });
     }
 }
 ```
 
-By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless: false` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
+Now build it and run it.
+
+```ssh
+dotnet build
+dotnet run
+```
+
+By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `Headless = false` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```csharp
 await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false, SlowMo = 50 });

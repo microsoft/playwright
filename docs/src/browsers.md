@@ -71,7 +71,7 @@ browser = playwright.chromium.launch(channel="chrome")
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Example
+class Program
 {
     public static async Task Main()
     {
