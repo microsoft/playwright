@@ -250,14 +250,14 @@ for (const element of documentation.classesArray) {
   renderBaseClass(element);
 }
 
+for (let [name, type] of optionTypes)
+  renderOptionType(name, type);
+
 for (let [name, type] of modelTypes)
   renderModelType(name, type);
 
 for (let [name, literals] of enumTypes)
   renderEnum(name, literals);
-
-for (let [name, type] of optionTypes)
-  renderOptionType(name, type);
 
 if (process.argv[3] !== "--skip-format") {
   // run the formatting tool for .net, to ensure the files are prepped
@@ -438,7 +438,7 @@ function generateNameDefault(member, name, t, parent) {
           attemptedName = `${names.pop()}${attemptedName}`;
           continue;
         } else {
-          modelTypes.set(attemptedName, t);
+          registerModelType(attemptedName, t);
         }
         break;
       }
@@ -882,6 +882,8 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
  */
 function registerModelType(typeName, type) {
   if (['object', 'string', 'int'].includes(typeName))
+    return;
+  if (typeName.endsWith('Option'))
     return;
 
   let potentialType = modelTypes.get(typeName);
