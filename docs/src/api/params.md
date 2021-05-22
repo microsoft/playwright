@@ -367,6 +367,7 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 [`method: Page.emulateMedia`] for more details. Defaults to `'light'`.
 
 ## context-option-reducedMotion
+* langs: js, python, java
 - `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Defaults
@@ -486,7 +487,7 @@ is considered matching if all specified properties match.
 A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
 
 ## wait-for-event-event
-* langs: js, java, python
+* langs: js, python, java
 - `event` <[string]>
 
 Event name, same one typically passed into `*.on(event)`.
