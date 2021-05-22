@@ -44,13 +44,14 @@ const customTypeNames = new Map([
   ['File', 'FilePayload'],
 ]);
 
-const typesDir = process.argv[2] || path.join(__dirname, 'generate_types', 'csharp');
-const modelsDir = path.join(typesDir, 'Models');
-const enumsDir = path.join(typesDir, 'Enums');
-const optionsDir = path.join(typesDir, 'Options');
-const baseDir = path.join(typesDir, 'Base');
+const outputDir = process.argv[2] || path.join(__dirname, 'generate_types', 'csharp');
+const apiDir = path.join(outputDir, 'API', 'Generated');
+const optionsDir = path.join(outputDir, 'API', 'Generated', 'Options');
+const enumsDir = path.join(outputDir, 'API', 'Generated', 'Enums');
+const typesDir = path.join(outputDir, 'API', 'Generated', 'Types');
+const adaptersDir = path.join(outputDir, 'Generated', 'Adapters');
 
-for (const dir of [typesDir, modelsDir, enumsDir, optionsDir, baseDir])
+for (const dir of [apiDir, optionsDir, enumsDir, typesDir, adaptersDir])
   fs.mkdirSync(dir, { recursive: true });
 
 const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
@@ -70,8 +71,7 @@ documentation.setLinkRenderer(item => {
 });
 
 // get the template for a class
-const template = fs.readFileSync(path.join(__dirname, 'templates', 'interface.cs'), 'utf-8')
-  .replace('[PW_TOOL_VERSION]', `${__filename.substring(path.join(__dirname, '..', '..').length).split(path.sep).join(path.posix.sep)}`);
+const template = fs.readFileSync(path.join(__dirname, 'templates', 'interface.cs'), 'utf-8');
 
 // we have some "predefined" types, like the mixed state enum, that we can map in advance
 enumTypes.set("MixedState", ["On", "Off", "Mixed"]);
@@ -128,7 +128,7 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
   out.push('}');
 
   let content = template.replace('[CONTENT]', out.join(EOL));
-  fs.writeFileSync(path.join(folder, name + '.generated.cs'), content);
+  fs.writeFileSync(path.join(folder, name + '.cs'), content);
 }
 
 /**
@@ -148,7 +148,7 @@ function renderClass(clazz) {
       name,
       clazz.spec,
       body,
-      typesDir,
+      apiDir,
       clazz.extends ? `I${toTitleCase(clazz.extends)}` : null);
 }
 
@@ -180,7 +180,7 @@ function renderBaseClass(clazz) {
       name,
       [],
       body,
-      baseDir,
+      adaptersDir,
       null);
 }
 
@@ -208,7 +208,7 @@ function renderModelType(name, type) {
     console.log(type);
     throw new Error(`Not sure what to do in this case.`);
   }
-  writeFile('public partial class', name, null, body, modelsDir);
+  writeFile('public partial class', name, null, body, typesDir);
 }
 
 /**
@@ -261,7 +261,7 @@ for (let [name, literals] of enumTypes)
 
 if (process.argv[3] !== "--skip-format") {
   // run the formatting tool for .net, to ensure the files are prepped
-  execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
+  execSync(`dotnet format -f "${outputDir}" --include-generated --fix-whitespace`);
 }
 
 /**
