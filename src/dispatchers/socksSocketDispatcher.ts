@@ -15,14 +15,14 @@
  */
 
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { SocksSocket } from '../server/socksSocket';
 import * as channels from '../protocol/channels';
+import { SocksInterceptedSocketHandler } from '../server/socksServer';
 
-export class SocksSocketDispatcher extends Dispatcher<SocksSocket, channels.SocksSocketInitializer> implements channels.SocksSocketChannel {
-  constructor(scope: DispatcherScope, socket: SocksSocket) {
+export class SocksSocketDispatcher extends Dispatcher<SocksInterceptedSocketHandler, channels.SocksSocketInitializer> implements channels.SocksSocketChannel {
+  constructor(scope: DispatcherScope, socket: SocksInterceptedSocketHandler) {
     super(scope, socket, 'SocksSocket', {
-      dstAddr: socket._dstAddr,
-      dstPort: socket._dstPort
+      dstAddr: socket.dstAddr,
+      dstPort: socket.dstPort
     }, true);
     socket.on('data', (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));
     socket.on('close', () => {
@@ -31,17 +31,17 @@ export class SocksSocketDispatcher extends Dispatcher<SocksSocket, channels.Sock
     });
   }
   async connected(): Promise<void> {
-    this._object._socketHandler.connected();
+    this._object.connected();
   }
   async error(params: channels.SocksSocketErrorParams): Promise<void> {
-    this._object._socketHandler.error(params.error);
+    this._object.error(params.error);
   }
 
   async write(params: channels.AndroidSocketWriteParams): Promise<void> {
-    this._object._socketHandler.write(Buffer.from(params.data, 'base64'));
+    this._object.write(Buffer.from(params.data, 'base64'));
   }
 
   async end(): Promise<void> {
-    this._object._socketHandler.end();
+    this._object.end();
   }
 }

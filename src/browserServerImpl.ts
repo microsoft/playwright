@@ -35,8 +35,9 @@ import { BrowserContext } from './server/browserContext';
 import { CRBrowser } from './server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './dispatchers/cdpSessionDispatcher';
 import { PageDispatcher } from './dispatchers/pageDispatcher';
-import { BrowserServerPortForwardingServer, SocksSocket } from './server/socksSocket';
+import { BrowserServerPortForwardingServer } from './server/socksSocket';
 import { SocksSocketDispatcher } from './dispatchers/socksSocketDispatcher';
+import { SocksInterceptedSocketHandler } from './server/socksServer';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _playwright: Playwright;
@@ -95,7 +96,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const playwrightDispatcher = new PlaywrightDispatcher(scope, this._playwright, selectorsDispatcher, browserDispatcher, (ports: number[]) => {
       portForwardingServer.enablePortForwarding(ports);
     });
-    const incomingSocksSocketHandler = (socket: SocksSocket) => {
+    const incomingSocksSocketHandler = (socket: SocksInterceptedSocketHandler) => {
       playwrightDispatcher._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(playwrightDispatcher._scope, socket) });
     };
     if (portForwardingServer.enabled)

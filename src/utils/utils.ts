@@ -178,4 +178,6 @@ export function canAccessFile(file: string) {
   }
 }
 
-export const isLocalIpAddress = (ipAdress: string): boolean => ['localhost', '127.0.0.1', '::ffff:127.0.0.1', '::1'].includes(ipAdress);
+export function isLocalIpAddress(ipAdress: string): boolean {
+  return ['localhost', '127.0.0.1', '::ffff:127.0.0.1', '::1'].includes(ipAdress);
+}

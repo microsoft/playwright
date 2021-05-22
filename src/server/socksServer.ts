@@ -16,6 +16,7 @@
 import net from 'net';
 
 import { assert } from '../utils/utils';
+import { SdkObject } from './instrumentation';
 
 export type SocksConnectionInfo = {
   srcAddr: string,
@@ -87,10 +88,10 @@ class SocksV5ServerParser {
     this._socket = socket;
     this._info = { srcAddr: socket.remoteAddress!, srcPort: socket.remotePort!, dstAddr: '', dstPort: 0 };
     this._ready = new Promise(resolve => this._readyResolve = resolve);
-    socket.on('data', this._onData);
+    socket.on('data', this._onData.bind(this));
     socket.on('error', () => {});
   }
-  private _onData = (chunk: Buffer) => {
+  private _onData(chunk: Buffer) {
     const socket = this._socket;
     let i = 0;
     while (i < chunk.length && this._phase !== ConnectionPhases.DONE) {
@@ -220,7 +221,7 @@ class SocksV5ServerParser {
     socket.write(Buffer.from([0x05, 0x00]));
   }
 
-  async ready(): Promise<{ info: SocksConnectionInfo, forward: () => void, intercept: () => SocksInterceptedHandler }> {
+  async ready(): Promise<{ info: SocksConnectionInfo, forward: () => void, intercept: (parent: SdkObject) => SocksInterceptedSocketHandler }> {
     await this._ready;
     return {
       info: this._info,
@@ -236,17 +237,24 @@ class SocksV5ServerParser {
           this._socket.resume();
         }).connect(this._info.dstPort, this._info.dstAddr);
       },
-      intercept: (): SocksInterceptedHandler => {
-        return new SocksInterceptedHandler(this._socket);
+      intercept: (parent: SdkObject): SocksInterceptedSocketHandler => {
+        return new SocksInterceptedSocketHandler(parent, this._socket, this._info.dstAddr, this._info.dstPort);
       },
     };
   }
 }
 
-export class SocksInterceptedHandler {
+export class SocksInterceptedSocketHandler extends SdkObject {
   socket: net.Socket;
-  constructor(socket: net.Socket) {
+  dstAddr: string;
+  dstPort: number;
+  constructor(parent: SdkObject, socket: net.Socket, dstAddr: string, dstPort: number) {
+    super(parent, 'SocksSocket');
     this.socket = socket;
+    this.dstAddr = dstAddr;
+    this.dstPort = dstPort;
+    socket.on('data', data => this.emit('data', data));
+    socket.on('close', data => this.emit('close', data));
   }
   connected() {
     this.socket.write(BUF_REP_INTR_SUCCESS);
@@ -269,7 +277,7 @@ function writeSocksSocketError(socket: net.Socket, error: string) {
     return;
   socket.write(BUF_REP_INTR_SUCCESS);
 
-  const body = `Could not connect: ${error}`;
+  const body = `Connection error: ${error}`;
   socket.end([
     'HTTP/1.1 502 OK',
     'Connection: close',
@@ -280,7 +288,7 @@ function writeSocksSocketError(socket: net.Socket, error: string) {
   ].join('\r\n'));
 }
 
-type IncomingProxyRequestHandler = (info: SocksConnectionInfo, forward: () => void, intercept: () => SocksInterceptedHandler) => void
+type IncomingProxyRequestHandler = (info: SocksConnectionInfo, forward: () => void, intercept: (parent: SdkObject) => SocksInterceptedSocketHandler) => void;
 
 export class SocksProxyServer {
   public server: net.Server;
@@ -292,7 +300,7 @@ export class SocksProxyServer {
     this.server.listen(port, host);
   }
 
-  _handleConnection = async (incomingMessageHandler: IncomingProxyRequestHandler, socket: net.Socket) => {
+  async _handleConnection(incomingMessageHandler: IncomingProxyRequestHandler, socket: net.Socket) {
     const parser = new SocksV5ServerParser(socket);
     const { info, forward, intercept } = await parser.ready();
     incomingMessageHandler(info, forward, intercept);
