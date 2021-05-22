@@ -195,7 +195,7 @@ export class CRNetworkManager {
       const request = this._requestIdToRequest.get(requestWillBeSentEvent.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
-        await this._handleRequestRedirect(request, requestWillBeSentEvent.redirectResponse, requestWillBeSentEvent.timestamp);
+        this._handleRequestRedirect(request, requestWillBeSentEvent.redirectResponse, requestWillBeSentEvent.timestamp);
         redirectedFrom = request.request;
       }
     }
@@ -300,14 +300,17 @@ export class CRNetworkManager {
   }
 
   async _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
+    // Update the map synchronously for the next request in the chaing will have same id
+    // and dispatch Response later when all metadata is available.
+    this._requestIdToRequest.delete(request._requestId);
+    if (request._interceptionId)
+      this._attemptedAuthentications.delete(request._interceptionId);
+
     request._determineIfExtraInfoIsExpected(responsePayload);
     await request._ensureExtraInfo();
 
     const response = this._createResponse(request, responsePayload);
     response._requestFinished((timestamp - request._timestamp) * 1000, 'Response body is unavailable for redirect responses');
-    this._requestIdToRequest.delete(request._requestId);
-    if (request._interceptionId)
-      this._attemptedAuthentications.delete(request._interceptionId);
     this._page._frameManager.requestReceivedResponse(response);
     this._page._frameManager.requestFinished(request.request);
   }
