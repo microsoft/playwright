@@ -971,6 +971,7 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 `null` disables color scheme emulation.
 
 ### option: Page.emulateMedia.reducedMotion
+* langs: js, python, java
 - `reducedMotion` <null|[ReducedMotion]<"reduce"|"no-preference">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
