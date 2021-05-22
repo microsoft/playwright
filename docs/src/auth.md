@@ -332,17 +332,17 @@ with sync_playwright() as p:
 ```csharp
 using Microsoft.Playwright;
 
-class Example
+class Program
 {
-  public async void Main()
-  {
-      using var playwright = await Playwright.CreateAsync();
-      var chromium = playwright.Chromium;
-      var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", new BrowserTypeLaunchPersistentContextOptions
-      {
-          Headless = false
-      });
-  }
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        var chromium = playwright.Chromium;
+        var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", new BrowserTypeLaunchPersistentContextOptions
+        {
+            Headless = false
+        });
+    }
 }
 ```
 

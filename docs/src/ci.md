@@ -270,9 +270,9 @@ browser = playwright.chromium.launch(chromiumSandbox=False)
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Example
+class Program
 {
-    public async void Main()
+    public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
         await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
@@ -399,9 +399,9 @@ with sync_playwright() as p:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Example
+class Program
 {
-    public async void Main()
+    public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
         await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions

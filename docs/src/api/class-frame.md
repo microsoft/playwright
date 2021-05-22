@@ -1534,19 +1534,19 @@ using System.Threading.Tasks;
 
 class FrameExamples
 {
-  public static async Task Main()
-  {
-    using var playwright = await Playwright.CreateAsync();
-    await using var browser = await playwright.Chromium.LaunchAsync();
-    var page = await browser.NewPageAsync();
-
-    foreach (var currentUrl in new[] { "https://www.google.com", "https://bbc.com" })
+    public static async Task Main()
     {
-      await page.GotoAsync(currentUrl);
-      element = await page.MainFrame.WaitForSelectorAsync("img");
-      Console.WriteLine($"Loaded image: {await element.GetAttributeAsync("src")}");
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        var page = await browser.NewPageAsync();
+
+        foreach (var currentUrl in new[] { "https://www.google.com", "https://bbc.com" })
+        {
+            await page.GotoAsync(currentUrl);
+            element = await page.MainFrame.WaitForSelectorAsync("img");
+            Console.WriteLine($"Loaded image: {await element.GetAttributeAsync("src")}");
+        }
     }
-  }
 }
 ```
 

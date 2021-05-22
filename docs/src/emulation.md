@@ -67,18 +67,18 @@ with sync_playwright() as playwright:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Example
+class Program
 {
-  public async void Main()
-  {
-      using var playwright = await Playwright.CreateAsync();
-      await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-      {
-          Headless: False
-      });
-      var pixel2 = playwright.Devices["Pixel 2"];
-      await using var context = await browser.NewContextAsync(pixel2);
-  }
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless: False
+        });
+        var pixel2 = playwright.Devices["Pixel 2"];
+        await using var context = await browser.NewContextAsync(pixel2);
+    }
 }
 ```
 

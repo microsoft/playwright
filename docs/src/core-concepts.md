@@ -67,7 +67,7 @@ with sync_playwright() as p:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Example
+class Program
 {
     public static async Task Main()
     {
