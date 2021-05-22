@@ -41,7 +41,7 @@ cd pw_demo
 dotnet add package Microsoft.Playwright --prerelease
 ```
 
-Create a Program.cs that will navigate to `https://playwright.dev/dotnet` and take a screenshot in WebKit.
+Create a Program.cs that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.
 
 ```csharp
 using Microsoft.Playwright;
