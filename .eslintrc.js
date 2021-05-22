@@ -28,8 +28,9 @@ module.exports = {
             "avoidEscape": true,
             "allowTemplateLiterals": true
         }],
-        "semi": 2,
+        "semi": 0,
         "no-extra-semi": 2,
+        "@typescript-eslint/semi": [2],
         "comma-style": [2, "last"],
         "wrap-iife": [2, "inside"],
         "spaced-comment": [2, "always", {

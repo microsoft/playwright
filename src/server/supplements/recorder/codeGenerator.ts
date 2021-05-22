@@ -28,7 +28,7 @@ export type ActionInContext = {
   isMainFrame: boolean;
   action: Action;
   committed?: boolean;
-}
+};
 
 export class CodeGenerator extends EventEmitter {
   private _currentAction: ActionInContext | null = null;

@@ -110,7 +110,7 @@ export type PDFOptions = {
   height?: string,
   preferCSSPageSize?: boolean,
   margin?: {top?: string, bottom?: string, left?: string, right?: string},
-}
+};
 
 export type CSSCoverageOptions = {
   resetOnNavigation?: boolean,
@@ -346,9 +346,9 @@ export type OriginStorage = {
 export type StorageState = {
   cookies: NetworkCookie[],
   origins: OriginStorage[]
-}
+};
 
 export type SetStorageState = {
   cookies?: SetNetworkCookieParam[],
   origins?: OriginStorage[]
-}
+};

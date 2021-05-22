@@ -23,7 +23,7 @@ export type KeyDefinition = {
   shiftKeyCode?: number;
   text?: string;
   location?: number;
-}
+};
 
 export type KeyboardLayout = { [s: string]: KeyDefinition; };
 
