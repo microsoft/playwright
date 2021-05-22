@@ -54,6 +54,8 @@ export async function downloadBrowserWithProgressBar(registry: Registry, browser
   let lastDownloadedBytes = 0;
 
   function progress(downloadedBytes: number, totalBytes: number) {
+    if (!process.stderr.isTTY)
+      return;
     if (!progressBar) {
       progressBar = new ProgressBar(`Downloading ${progressBarName} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
         complete: '=',
