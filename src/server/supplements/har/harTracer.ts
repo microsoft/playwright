@@ -211,8 +211,10 @@ export class HarTracer {
     };
     if (!this._options.omitContent && response.status() === 200) {
       const promise = response.body().then(buffer => {
-        harEntry.response.content.text = buffer.toString('base64');
-        harEntry.response.content.encoding = 'base64';
+        if (buffer && buffer.length > 0) {
+          harEntry.response.content.text = buffer.toString('base64');
+          harEntry.response.content.encoding = 'base64';
+        }
         harEntry.response.content.size = buffer.length;
         harEntry.response.content.compression = buffer.length - harEntry.response.bodySize;
       }).catch(() => {});
