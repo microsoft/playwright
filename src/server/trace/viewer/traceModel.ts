@@ -107,7 +107,7 @@ export type ContextEntry = {
   options: BrowserContextOptions;
   pages: PageEntry[];
   resources: ResourceSnapshot[];
-}
+};
 
 export type PageEntry = {
   actions: trace.ActionTraceEvent[];
@@ -118,7 +118,7 @@ export type PageEntry = {
     width: number,
     height: number,
   }[]
-}
+};
 
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
   private _resourcesDir: string;

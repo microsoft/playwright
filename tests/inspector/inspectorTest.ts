@@ -67,10 +67,10 @@ export const test = contextTest.extend<CLITestArgs>({
 
 class Recorder {
   page: Page;
-  _highlightCallback: Function
-  _highlightInstalled: boolean
-  _actionReporterInstalled: boolean
-  _actionPerformedCallback: Function
+  _highlightCallback: Function;
+  _highlightInstalled: boolean;
+  _actionReporterInstalled: boolean;
+  _actionPerformedCallback: Function;
   recorderPage: Page;
   private _sources = new Map<string, Source>();
 
