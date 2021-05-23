@@ -160,6 +160,10 @@ if node:
 * langs: java
 - returns: <[null]|[string]>
 
+## async method: Accessibility.snapshot
+* langs: csharp
+- returns: <[JsonElement?]>
+
 ### option: Accessibility.snapshot.interestingOnly
 - `interestingOnly` <[boolean]>
 
