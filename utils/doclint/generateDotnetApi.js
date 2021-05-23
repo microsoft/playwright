@@ -809,6 +809,8 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
       // get the inner types of both templates, and if they're strings, it's a keyvaluepair string, string,
       let keyType = translateType(type.templates[0], parent, generateNameCallback);
       let valueType = translateType(type.templates[1], parent, generateNameCallback);
+      if (parent.name === 'Request' || parent.name === 'Response')
+        return `Dictionary<${keyType}, ${valueType}>`;
       return `IEnumerable<KeyValuePair<${keyType}, ${valueType}>>`;
     }
 
