@@ -138,7 +138,7 @@ export class HarTracer {
         headers: [],
         content: {
           size: -1,
-          mimeType: request.headerValue('content-type') || 'application/octet-stream',
+          mimeType: request.headerValue('content-type') || 'x-unknown',
         },
         headersSize: -1,
         bodySize: -1,
