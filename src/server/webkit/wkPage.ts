@@ -966,8 +966,11 @@ export class WKPage implements PageDelegate {
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
-    if (response)
+    if (response) {
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
+      if (event.metrics?.responseHeaderBytesReceived && event.metrics?.responseBodyBytesReceived)
+        response.setEncodedDataLength(event.metrics.responseBodyBytesReceived  + event.metrics.responseHeaderBytesReceived);
+    }
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestFinished(request.request);
   }
