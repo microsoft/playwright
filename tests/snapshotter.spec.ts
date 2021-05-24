@@ -24,8 +24,7 @@ const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnaps
     await run(11000 + testInfo.workerIndex);
   },
 
-  snapshotter: async ({ mode, toImpl, context, snapshotPort }, run, testInfo) => {
-    testInfo.skip(mode !== 'default');
+  snapshotter: async ({ toImpl, context, snapshotPort }, run, testInfo) => {
     const snapshotter = new InMemorySnapshotter(toImpl(context));
     await snapshotter.initialize();
     const httpServer = new HttpServer();

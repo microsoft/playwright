@@ -155,9 +155,7 @@ it('should throw if page argument is passed', async ({browserType, browserOption
   expect(error.message).toContain('can not specify page');
 });
 
-it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, browserOptions, server, createUserDataDir, toImpl, mode, browserName}) => {
-  it.skip(mode !== 'default');
-
+it('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, browserOptions, server, createUserDataDir, toImpl, browserName}) => {
   const userDataDir = await createUserDataDir();
   const args = toImpl(browserType)._defaultArgs(browserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
   const options = {

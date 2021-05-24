@@ -17,8 +17,6 @@
 import { test, expect } from './pageTest';
 
 test.describe('non-stalling evaluate', () => {
-  test.skip(({mode}) => mode !== 'default');
-
   test('should work', async ({page, server, toImpl}) => {
     await page.goto(server.EMPTY_PAGE);
     const result = await toImpl(page.mainFrame()).nonStallingRawEvaluateInExistingMainContext('2+2');

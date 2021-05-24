@@ -18,8 +18,6 @@ import { Page } from '../../index';
 import { test as it, expect } from './inspectorTest';
 
 it.describe('pause', () => {
-  it.skip(({ mode }) => mode !== 'default');
-
   it.afterEach(async ({ recorderPageGetter }) => {
     try {
       const recorderPage = await recorderPageGetter();
@@ -38,10 +36,11 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should resume from console', async ({page}) => {
+  it('should resume from console', async ({page, recorderPageGetter}) => {
     const scriptPromise = (async () => {
       await page.pause();
     })();
+    await recorderPageGetter();
     await Promise.all([
       page.waitForFunction(() => (window as any).playwright && (window as any).playwright.resume).then(() => {
         return page.evaluate('window.playwright.resume()');

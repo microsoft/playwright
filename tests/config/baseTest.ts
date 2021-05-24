@@ -34,10 +34,12 @@ type BaseOptions = {
   video: boolean | undefined;
   headless: boolean | undefined;
 };
-type BaseFixtures = {
+type BaseTestFixtures = {
+  toImpl: (rpcObject: any) => any;
+};
+type BaseWorkerFixtures = {
   platform: 'win32' | 'darwin' | 'linux';
   playwright: typeof import('../../index');
-  toImpl: (rpcObject: any) => any;
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
@@ -101,7 +103,7 @@ class DefaultMode {
   }
 }
 
-const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixtures> = {
+const baseFixtures: folio.Fixtures<BaseTestFixtures & { __baseSetup: void }, BaseOptions & BaseWorkerFixtures> = {
   mode: [ 'default', { scope: 'worker' } ],
   browserName: [ 'chromium' , { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
@@ -119,7 +121,10 @@ const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixt
     await run(playwright);
     await modeImpl.teardown();
   }, { scope: 'worker' } ],
-  toImpl: [ async ({ playwright }, run) => run((playwright as any)._toImpl), { scope: 'worker' } ],
+  toImpl: async ({ playwright, mode }, use, testInfo) => {
+    testInfo.skip(mode !== 'default');
+    await use((playwright as any)._toImpl);
+  },
   isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
   isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
   isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
@@ -232,6 +237,6 @@ const coverageFixtures: folio.Fixtures<{}, CoverageOptions & { __collectCoverage
 };
 
 export type CommonOptions = BaseOptions & ServerOptions & CoverageOptions;
-export type CommonWorkerFixtures = CommonOptions & BaseFixtures;
+export type CommonWorkerFixtures = CommonOptions & BaseWorkerFixtures;
 
-export const baseTest = folio.test.extend<{}, CoverageOptions>(coverageFixtures).extend<ServerFixtures>(serverFixtures).extend<{}, BaseOptions & BaseFixtures>(baseFixtures);
+export const baseTest = folio.test.extend<{}, CoverageOptions>(coverageFixtures).extend<ServerFixtures>(serverFixtures).extend<BaseTestFixtures, BaseOptions & BaseWorkerFixtures>(baseFixtures as any);

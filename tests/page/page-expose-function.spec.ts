@@ -238,8 +238,7 @@ it('should not result in unhandled rejection', async ({page, isAndroid}) => {
   expect(await page.evaluate('1 + 1').catch(e => e)).toBeInstanceOf(Error);
 });
 
-it('should work with internal bindings', async ({page, toImpl, server, mode, browserName, isElectron, isAndroid}) => {
-  it.skip(mode !== 'default');
+it('should work with internal bindings', async ({page, toImpl, server, browserName, isElectron, isAndroid}) => {
   it.skip(browserName !== 'chromium');
   it.skip(isAndroid);
   it.skip(isElectron);

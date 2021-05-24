@@ -18,8 +18,6 @@ import { test, expect } from './inspectorTest';
 import * as url from 'url';
 
 test.describe('cli codegen', () => {
-  test.skip(({ mode }) => mode !== 'default');
-
   test('should contain open page', async ({ openRecorder }) => {
     const recorder = await openRecorder();
 
