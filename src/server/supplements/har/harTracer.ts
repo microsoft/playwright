@@ -185,7 +185,7 @@ export class HarTracer {
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {
         size: -1,
-        mimeType: response.headerValue('content-type') || 'application/octet-stream',
+        mimeType: response.headerValue('content-type') || 'x-unknown',
       },
       headersSize: headersSize || -1,
       bodySize: bodySize || -1,
