@@ -11965,10 +11965,10 @@ index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a
 +cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..911f4f8f3eb0aa66fe6d11bb46a5f836febc5c60
+index 0000000000000000000000000000000000000000..b30668cc6dfc1d090600980d9ff1da5ed52902aa
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,272 @@
+@@ -0,0 +1,271 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -12219,10 +12219,9 @@ index 0000000000000000000000000000000000000000..911f4f8f3eb0aa66fe6d11bb46a5f836
 +        }
 +        auto cfData = adoptCF(CFDataCreateMutable(kCFAllocatorDefault, 0));
 +        WebCore::encodeImage(imagePtr, CFSTR("public.jpeg"), m_screencastQuality * 0.1, cfData.get());
-+        Vector<char> base64Data;
-+        base64Encode(CFDataGetBytePtr(cfData.get()), CFDataGetLength(cfData.get()), base64Data);
++        String base64Data = base64EncodeToString(CFDataGetBytePtr(cfData.get()), CFDataGetLength(cfData.get()));
 +        ++m_screencastFramesInFlight;
-+        m_frontendDispatcher->screencastFrame(String(base64Data.data(), base64Data.size()), displaySize.width(), displaySize.height());
++        m_frontendDispatcher->screencastFrame(base64Data, displaySize.width(), displaySize.height());
 +    }
 +    if (m_encoder)
 +        m_encoder->encodeFrame(WTFMove(imageRef));

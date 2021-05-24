@@ -16,10 +16,11 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
-it('should work', async function({page, server}) {
+it.only('should work', async function({page, server}) {
   await page.coverage.startJSCoverage();
-  await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
+  await page.goto(server.PREFIX + '/jscoverag e/simple.html', { waitUntil: 'load' });
   const coverage = await page.coverage.stopJSCoverage();
+  console.log(JSON.stringify(coverage, null, 2));
   expect(coverage.length).toBe(1);
   expect(coverage[0].url).toContain('/jscoverage/simple.html');
   expect(coverage[0].functions.find(f => f.functionName === 'foo').ranges[0].count).toEqual(1);
