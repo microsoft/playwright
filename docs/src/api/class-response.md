@@ -23,8 +23,16 @@ Returns the [Frame] that initiated this response.
 Returns the object with HTTP headers associated with the response. All header names are lower-case.
 
 ## async method: Response.json
-* langs: csharp, js, python
+* langs: js, python
 - returns: <[Serializable]>
+
+Returns the JSON representation of response body.
+
+This method will throw if the response body is not parsable via `JSON.parse`.
+
+## async method: Response.json
+* langs: csharp
+- returns: <[JsonDocument]>
 
 Returns the JSON representation of response body.
 
