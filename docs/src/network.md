@@ -77,7 +77,7 @@ Here is an example of a global proxy:
 const browser = await chromium.launch({
   proxy: {
     server: 'http://myproxy.com:3128',
-    user: 'usr',
+    username: 'usr',
     password: 'pwd'
   }
 });
@@ -93,7 +93,7 @@ Browser browser = chromium.launch(new BrowserType.LaunchOptions()
 ```python async
 browser = await chromium.launch(proxy={
   "server": "http://myproxy.com:3128",
-  "user": "usr",
+  "username": "usr",
   "password": "pwd"
 })
 ```
@@ -101,7 +101,7 @@ browser = await chromium.launch(proxy={
 ```python sync
 browser = chromium.launch(proxy={
   "server": "http://myproxy.com:3128",
-  "user": "usr",
+  "username": "usr",
   "password": "pwd"
 })
 ```
