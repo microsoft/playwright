@@ -19,8 +19,12 @@ configures Playwright for debugging and opens the inspector.
   # Linux/macOS
   PWDEBUG=1 npm run test
 
-  # Windows
+  # Windows with cmd.exe
   set PWDEBUG=1
+  npm run test
+
+  # Windows with PowerShell
+  $env:PWDEBUG=1
   npm run test
   ```
 
@@ -28,9 +32,14 @@ configures Playwright for debugging and opens the inspector.
   # Linux/macOS
   PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java src root> mvn test
 
-  # Windows
+  # Windows with cmd.exe
   set PLAYWRIGHT_JAVA_SRC=<java src root>
   set PWDEBUG=1
+  mvn test
+
+  # Windows with PowerShell
+  $env:PLAYWRIGHT_JAVA_SRC="<java src root>"
+  $env:PWDEBUG=1
   mvn test
   ```
 
@@ -38,8 +47,12 @@ configures Playwright for debugging and opens the inspector.
   # Linux/macOS
   PWDEBUG=1 pytest -s
 
-  # Windows
+  # Windows with cmd.exe
   set PWDEBUG=1
+  pytest -s
+
+  # Windows with PowerShell
+  $env:PWDEBUG=1
   pytest -s
   ```
 
