@@ -16,7 +16,7 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
-it.only('should work', async function({page, server}) {
+it('should work', async function({page, server}) {
   await page.coverage.startJSCoverage();
   await page.goto(server.PREFIX + '/jscoverag e/simple.html', { waitUntil: 'load' });
   const coverage = await page.coverage.stopJSCoverage();
