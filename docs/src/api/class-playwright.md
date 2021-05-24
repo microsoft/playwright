@@ -221,6 +221,8 @@ Selectors can be used to install custom selector engines. See
 [Working with selectors](./selectors.md) for more information.
 
 ## property: Playwright.webkit
+* langs:
+  - alias-csharp: WebKit
 - type: <[BrowserType]>
 
 This object can be used to launch or connect to WebKit, returning instances of [Browser].
