@@ -24,7 +24,7 @@ import * as har from './har';
 import * as types from '../../types';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
+const FALLBACK_HTTP_VERSION = 'http/1.1';
 
 type HarOptions = {
   path: string;
@@ -171,7 +171,7 @@ export class HarTracer {
 
     if (!response) return;
 
-    const httpVersion = response.protocol() ? response.protocol().toUpperCase() : FALLBACK_HTTP_VERSION;
+    const httpVersion = response.protocol() ? response.protocol() : FALLBACK_HTTP_VERSION;
     const transferSize = response.encodedDataLength();
     const headersSize = calcResponseHeadersSize(httpVersion, response.status(), response.statusText(), response.headers());
     const bodySize = transferSize - headersSize;
