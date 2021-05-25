@@ -6699,17 +6699,22 @@ index d79728555b7db9b59cb615c55a7a7a6851cb57c8..61d3cc4b488e35ef9e1afa1ce3ac5f5d
      if (!image || !encodeImage(image, mimeType, &encodedImage))
          return { };
 diff --git a/Source/WebCore/platform/graphics/cg/ImageBufferUtilitiesCG.h b/Source/WebCore/platform/graphics/cg/ImageBufferUtilitiesCG.h
-index 998311795537117f8c476adb3e2e0f007c69b609..315ea8866421ae0707fb54c504756a52a1665bfc 100644
+index 998311795537117f8c476adb3e2e0f007c69b609..ccfdafa2974601c9d3b1fa5ec1b15354e5f37576 100644
 --- a/Source/WebCore/platform/graphics/cg/ImageBufferUtilitiesCG.h
 +++ b/Source/WebCore/platform/graphics/cg/ImageBufferUtilitiesCG.h
-@@ -40,6 +40,7 @@ RetainPtr<CFStringRef> utiFromImageBufferMIMEType(const String&);
+@@ -35,10 +35,10 @@ class PixelBuffer;
  
- Vector<uint8_t> data(CGImageRef, CFStringRef destinationUTI, Optional<double> quality);
+ WEBCORE_EXPORT uint8_t verifyImageBufferIsBigEnough(const void* buffer, size_t bufferSize);
+ 
+-CFStringRef jpegUTI();
++WEBCORE_EXPORT CFStringRef jpegUTI();
+ RetainPtr<CFStringRef> utiFromImageBufferMIMEType(const String&);
+ 
+-Vector<uint8_t> data(CGImageRef, CFStringRef destinationUTI, Optional<double> quality);
++WEBCORE_EXPORT Vector<uint8_t> data(CGImageRef, CFStringRef destinationUTI, Optional<double> quality);
  Vector<uint8_t> data(const PixelBuffer&, const String& mimeType, Optional<double> quality);
-+WEBCORE_EXPORT bool encodeImage(CGImageRef, CFStringRef uti, Optional<double> quality, CFMutableDataRef);
  
  String dataURL(CGImageRef, CFStringRef destinationUTI, const String& mimeType, Optional<double> quality);
- String dataURL(const PixelBuffer&, const String& mimeType, Optional<double> quality);
 diff --git a/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp b/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
 index ce4c0fb9a237ac8c72a0c23f79f0c023530d90ab..789e3814ad16fa10a353ea3ef645c6961a040601 100644
 --- a/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
@@ -11965,10 +11970,10 @@ index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a
 +cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..b30668cc6dfc1d090600980d9ff1da5ed52902aa
+index 0000000000000000000000000000000000000000..5fdc4b3f236ab8d0351d5dee468e262267532804
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,271 @@
+@@ -0,0 +1,269 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -12217,9 +12222,7 @@ index 0000000000000000000000000000000000000000..b30668cc6dfc1d090600980d9ff1da5e
 +            scaledImageRef = adoptCF(CGBitmapContextCreateImage(context.get()));
 +            imagePtr = scaledImageRef.get();
 +        }
-+        auto cfData = adoptCF(CFDataCreateMutable(kCFAllocatorDefault, 0));
-+        WebCore::encodeImage(imagePtr, CFSTR("public.jpeg"), m_screencastQuality * 0.1, cfData.get());
-+        String base64Data = base64EncodeToString(CFDataGetBytePtr(cfData.get()), CFDataGetLength(cfData.get()));
++        String base64Data = base64EncodeToString(WebCore::data(imagePtr, WebCore::jpegUTI(), m_screencastQuality * 0.1));
 +        ++m_screencastFramesInFlight;
 +        m_frontendDispatcher->screencastFrame(base64Data, displaySize.width(), displaySize.height());
 +    }
