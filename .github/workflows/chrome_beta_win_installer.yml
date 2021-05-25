@@ -24,8 +24,7 @@ jobs:
       shell: powershell
       run: Install-WindowsFeature Server-Media-Foundation
     - name: Install Chrome Beta
-      shell: powershell
-      run: .\utils\install-chrome-beta\reinstall_win.ps1
+      run: powershell .\utils\install-chrome-beta\reinstall_win.ps1
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
