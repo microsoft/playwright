@@ -37,8 +37,12 @@ You can override default behavior using environment variables. When installing P
 # Linux/macOS
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i -D playwright
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+npm i -D playwright
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 npm i -D playwright
 ```
 
@@ -47,8 +51,13 @@ npm i -D playwright
 pip install playwright
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python -m playwright install
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 pip install playwright
 playwright install
 ```
@@ -64,8 +73,12 @@ When running Playwright scripts, ask it to search for browsers in a shared locat
 # Linux/macOS
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers node playwright-script.js
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+node playwright-script.js
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 node playwright-script.js
 ```
 
@@ -73,14 +86,22 @@ node playwright-script.js
 # Linux/macOS
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python playwright_script.js
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+python playwright_script.py
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 python playwright_script.py
 ```
 
 ```sh java
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+mvn test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 mvn test
 ```
 
@@ -91,9 +112,14 @@ Or you can opt into the hermetic install and place binaries in the local folder:
 # Places binaries to node_modules/playwright
 PLAYWRIGHT_BROWSERS_PATH=0 npm i -D playwright
 
-# Windows
+# Windows with cmd.exe
 # Places binaries to node_modules\playwright
 set PLAYWRIGHT_BROWSERS_PATH=0
+npm i -D playwright
+
+# Windows with PowerShell
+# Places binaries to node_modules\playwright
+$env:PLAYWRIGHT_BROWSERS_PATH=0
 npm i -D playwright
 ```
 
@@ -102,8 +128,13 @@ npm i -D playwright
 pip install playwright
 PLAYWRIGHT_BROWSERS_PATH=0 playwright install
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_BROWSERS_PATH=0
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH=0
 pip install playwright
 playwright install
 ```
@@ -125,8 +156,12 @@ resources. In this case, Playwright can be configured to download browsers via a
 # Linux/macOS
 HTTPS_PROXY=https://192.168.1.78 npm i -D playwright
 
-# Windows
+# Windows with cmd.exe
 set HTTPS_PROXY=https://192.168.1.78
+npm i -D playwright
+
+# Windows with PowerShell
+$env:HTTPS_PROXY="https://192.168.1.78"
 npm i -D playwright
 ```
 
@@ -135,8 +170,13 @@ npm i -D playwright
 pip install playwright
 HTTPS_PROXY=https://192.168.1.78 playwright install
 
-# Windows
+# Windows with cmd.exe
 set HTTPS_PROXY=https://192.168.1.78
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:HTTPS_PROXY="https://192.168.1.78"
 pip install playwright
 playwright install
 ```
@@ -145,8 +185,12 @@ playwright install
 # Linux/macOS
 HTTPS_PROXY=https://192.168.1.78 mvn test
 
-# Windows
+# Windows with cmd.exe
 set HTTPS_PROXY=https://192.168.1.78
+mvn test
+
+# Windows with PowerShell
+$env:HTTPS_PROXY="https://192.168.1.78"
 mvn test
 ```
 
@@ -162,8 +206,12 @@ location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 # Linux/macOS
 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+npm i -D playwright
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.168.1.78"
 npm i -D playwright
 ```
 
@@ -172,8 +220,13 @@ npm i -D playwright
 pip install playwright
 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 playwright install
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.168.1.78"
 pip install playwright
 playwright install
 ```
@@ -182,8 +235,12 @@ playwright install
 # Linux/macOS
 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+mvn test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.168.1.78"
 mvn test
 ```
 
@@ -219,8 +276,12 @@ This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before i
 # Linux/macOS
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+npm i -D playwright
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 npm i -D playwright
 ```
 
@@ -229,8 +290,13 @@ npm i -D playwright
 pip install playwright
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 pip install playwright
 playwright install
 ```
@@ -239,8 +305,12 @@ playwright install
 # Linux/macOS
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 mvn test
 
-# Windows
+# Windows with cmd.exe
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+mvn test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 mvn test
 ```
 

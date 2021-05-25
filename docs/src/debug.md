@@ -109,8 +109,12 @@ composite selectors.
 # Linux/macOS
 PWDEBUG=console npm run test
 
-# Windows
+# Windows with cmd.exe
 set PWDEBUG=console
+npm run test
+
+# Windows with PowerShell
+$env:PWDEBUG="console"
 npm run test
 ```
 
@@ -118,8 +122,12 @@ npm run test
 # Linux/macOS
 PWDEBUG=console mvn test
 
-# Windows
+# Windows with cmd.exe
 set PWDEBUG=console
+mvn test
+
+# Windows with PowerShell
+$env:PWDEBUG="console"
 mvn test
 ```
 
@@ -127,8 +135,12 @@ mvn test
 # Linux/macOS
 PWDEBUG=console pytest -s
 
-# Windows
+# Windows with cmd.exe
 set PWDEBUG=console
+pytest -s
+
+# Windows with PowerShell
+$env:PWDEBUG="console"
 pytest -s
 ```
 
@@ -176,8 +188,12 @@ Playwright supports verbose logging with the `DEBUG` environment variable.
 # Linux/macOS
 DEBUG=pw:api npm run test
 
-# Windows
+# Windows with cmd.exe
 set DEBUG=pw:api
+npm run test
+
+# Windows with PowerShell
+$env:DEBUG="pw:api"
 npm run test
 ```
 
@@ -185,8 +201,12 @@ npm run test
 # Linux/macOS
 DEBUG=pw:api mvn test
 
-# Windows
+# Windows with cmd.exe
 set DEBUG=pw:api
+mvn test
+
+# Windows with PowerShell
+$env:DEBUG="pw:api"
 mvn test
 ```
 
@@ -194,13 +214,24 @@ mvn test
 # Linux/macOS
 DEBUG=pw:api pytest -s
 
-# Windows
+# Windows with cmd.exe
 set DEBUG=pw:api
+pytest -s
+
+# Windows with PowerShell
+$env:DEBUG="pw:api"
 pytest -s
 ```
 
 ```sh csharp
-# Powershell (Win/macOS)
+# Linux/macOS
+DEBUG=pw:api dotnet run
+
+# Windows with cmd.exe
+set DEBUG=pw:api
+dotnet run
+
+# Windows with PowerShell
 $env:DEBUG="pw:api"
 dotnet run
 ```
