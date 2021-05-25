@@ -179,7 +179,19 @@ export type PlaywrightInitializer = {
   preLaunchedBrowser?: BrowserChannel,
 };
 export interface PlaywrightChannel extends Channel {
+  on(event: 'incomingSocksSocket', callback: (params: PlaywrightIncomingSocksSocketEvent) => void): this;
+  enablePortForwarding(params: PlaywrightEnablePortForwardingParams, metadata?: Metadata): Promise<PlaywrightEnablePortForwardingResult>;
 }
+export type PlaywrightIncomingSocksSocketEvent = {
+  socket: SocksSocketChannel,
+};
+export type PlaywrightEnablePortForwardingParams = {
+  ports: number[],
+};
+export type PlaywrightEnablePortForwardingOptions = {
+
+};
+export type PlaywrightEnablePortForwardingResult = void;
 
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
@@ -3113,3 +3125,41 @@ export type AndroidElementInfo = {
   scrollable: boolean,
   selected: boolean,
 };
+
+// ----------- SocksSocket -----------
+export type SocksSocketInitializer = {
+  dstAddr: string,
+  dstPort: number,
+};
+export interface SocksSocketChannel extends Channel {
+  on(event: 'data', callback: (params: SocksSocketDataEvent) => void): this;
+  on(event: 'close', callback: (params: SocksSocketCloseEvent) => void): this;
+  write(params: SocksSocketWriteParams, metadata?: Metadata): Promise<SocksSocketWriteResult>;
+  error(params: SocksSocketErrorParams, metadata?: Metadata): Promise<SocksSocketErrorResult>;
+  connected(params?: SocksSocketConnectedParams, metadata?: Metadata): Promise<SocksSocketConnectedResult>;
+  end(params?: SocksSocketEndParams, metadata?: Metadata): Promise<SocksSocketEndResult>;
+}
+export type SocksSocketDataEvent = {
+  data: Binary,
+};
+export type SocksSocketCloseEvent = {};
+export type SocksSocketWriteParams = {
+  data: Binary,
+};
+export type SocksSocketWriteOptions = {
+
+};
+export type SocksSocketWriteResult = void;
+export type SocksSocketErrorParams = {
+  error: string,
+};
+export type SocksSocketErrorOptions = {
+
+};
+export type SocksSocketErrorResult = void;
+export type SocksSocketConnectedParams = {};
+export type SocksSocketConnectedOptions = {};
+export type SocksSocketConnectedResult = void;
+export type SocksSocketEndParams = {};
+export type SocksSocketEndOptions = {};
+export type SocksSocketEndResult = void;

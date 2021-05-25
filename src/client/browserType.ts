@@ -137,6 +137,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             if (!connection.isDisconnected())
               connection.dispatch(JSON.parse(event.data));
           } catch (e) {
+            console.error(`Playwright: Connection dispatch error`);
+            console.error(e);
             ws.close();
           }
         });
@@ -150,8 +152,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           }
         }
         ws.addEventListener('open', async () => {
-          const prematureCloseListener = (event: { reason: string }) => {
-            reject(new Error('Server disconnected: ' + event.reason));
+          const prematureCloseListener = (event: { code: number, reason: string }) => {
+            reject(new Error(`WebSocket server disconnected (${event.code}) ${event.reason}`));
           };
           ws.addEventListener('close', prematureCloseListener);
           const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
@@ -182,6 +184,16 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             ws.removeEventListener('close', closeListener);
             ws.close();
           });
+          if (params._forwardPorts) {
+            try {
+              await playwright._channel.enablePortForwarding({
+                ports: params._forwardPorts,
+              });
+            } catch (err) {
+              reject(err);
+              return;
+            }
+          }
           fulfill(browser);
         });
         ws.addEventListener('error', event => {

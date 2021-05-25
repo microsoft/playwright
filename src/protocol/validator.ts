@@ -147,6 +147,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
+  scheme.PlaywrightEnablePortForwardingParams = tObject({
+    ports: tArray(tNumber),
+  });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
     source: tString,
@@ -1221,6 +1224,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     scrollable: tBoolean,
     selected: tBoolean,
   });
+  scheme.SocksSocketWriteParams = tObject({
+    data: tBinary,
+  });
+  scheme.SocksSocketErrorParams = tObject({
+    error: tString,
+  });
+  scheme.SocksSocketConnectedParams = tOptional(tObject({}));
+  scheme.SocksSocketEndParams = tOptional(tObject({}));
 
   return scheme;
 }

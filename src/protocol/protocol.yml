@@ -377,6 +377,20 @@ Playwright:
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
 
+  commands:
+
+    enablePortForwarding:
+      parameters:
+        ports:
+          type: array
+          items: number
+
+  events:
+
+    incomingSocksSocket:
+      parameters:
+        socket: SocksSocket
+
 
 Selectors:
   type: interface
@@ -2523,3 +2537,29 @@ AndroidElementInfo:
     longClickable: boolean
     scrollable: boolean
     selected: boolean
+
+SocksSocket:
+  type: interface
+
+  initializer:
+    dstAddr: string
+    dstPort: number
+
+  commands:
+    write:
+      parameters:
+        data: binary
+
+    error:
+      parameters:
+        error: string
+
+    connected:
+
+    end:
+
+  events:
+    data:
+      parameters:
+        data: binary
+    close:
