@@ -643,4 +643,37 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(240);
   });
 
+  it('should not create video for internal pages', async ({browserType, browserName, browserOptions, contextOptions, server}, testInfo) => {
+    it.fixme(browserName !== 'chromium');
+    server.setRoute('/empty.html', (req, res) => {
+      res.setHeader('Set-Cookie', 'name=value');
+      res.end();
+    });
+
+    const size = { width: 320, height: 240 };
+    const browser = await browserType.launch(browserOptions);
+
+    const videoDir = testInfo.outputPath('');
+    const context = await browser.newContext({
+      ...contextOptions,
+      recordVideo: {
+        dir: videoDir,
+        size,
+      },
+      viewport: size,
+    });
+
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await new Promise(r => setTimeout(r, 1000));
+
+    const cookies = await context.cookies();
+    expect(cookies.length).toBe(1);
+    await context.storageState();
+    await context.close();
+
+    const files = fs.readdirSync(videoDir);
+    expect(files.length).toBe(1);
+  });
+
 });

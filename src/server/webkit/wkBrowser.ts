@@ -243,7 +243,7 @@ export class WKBrowserContext extends BrowserContext {
     return this._wkPages().map(wkPage => wkPage._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
-  async newPageDelegate(): Promise<PageDelegate> {
+  async newPageDelegate(isInternal: boolean): Promise<PageDelegate> {
     assertBrowserContextIsNotOwned(this);
     const { pageProxyId } = await this._browser._browserSession.send('Playwright.createPage', { browserContextId: this._browserContextId });
     return this._browser._wkPages.get(pageProxyId)!;

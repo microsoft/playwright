@@ -127,6 +127,8 @@ export class Tracing implements InstrumentationListener {
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
     if (!sdkObject.attribution.page)
       return;
+    if (sdkObject.attribution.page._isInternalPage)
+      return;
     if (!this._snapshotter.started())
       return;
     const snapshotName = `${name}@${metadata.id}`;
@@ -149,6 +151,8 @@ export class Tracing implements InstrumentationListener {
     this._pendingCalls.delete(metadata.id);
     if (!sdkObject.attribution.page)
       return;
+    if (sdkObject.attribution.page._isInternalPage)
+      return;
     await this._captureSnapshot('after', sdkObject, metadata);
     const event: trace.ActionTraceEvent = { type: 'action', metadata };
     this._appendTraceEvent(event);
@@ -157,11 +161,15 @@ export class Tracing implements InstrumentationListener {
   onEvent(sdkObject: SdkObject, metadata: CallMetadata) {
     if (!sdkObject.attribution.page)
       return;
+    if (sdkObject.attribution.page._isInternalPage)
+      return;
     const event: trace.ActionTraceEvent = { type: 'event', metadata };
     this._appendTraceEvent(event);
   }
 
   private _onPage(screenshots: boolean | undefined, page: Page) {
+    if (page._isInternalPage)
+      return;
     if (screenshots)
       page.setScreencastOptions({ width: 800, height: 600, quality: 90 });
 

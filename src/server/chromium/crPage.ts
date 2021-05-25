@@ -58,7 +58,7 @@ export class CRPage implements PageDelegate {
   readonly _browserContext: CRBrowserContext;
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
-  private _isBackgroundPage: boolean;
+  private readonly _isBackgroundPage: boolean;
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -72,7 +72,7 @@ export class CRPage implements PageDelegate {
     return crPage._mainFrameSession;
   }
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean, isBackgroundPage: boolean) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean, isBackgroundPage: boolean, isInternalPage: boolean) {
     this._targetId = targetId;
     this._opener = opener;
     this._isBackgroundPage = isBackgroundPage;
@@ -82,7 +82,7 @@ export class CRPage implements PageDelegate {
     this._pdf = new CRPDF(client);
     this._coverage = new CRCoverage(client);
     this._browserContext = browserContext;
-    this._page = new Page(this, browserContext);
+    this._page = new Page(this, browserContext, isInternalPage);
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
     client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
@@ -527,7 +527,7 @@ class FrameSession {
       promises.push(this._evaluateOnNewDocument(source, 'main'));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source, 'main'));
-    if (screencastOptions)
+    if (screencastOptions && !this._crPage._page._isInternalPage)
       promises.push(this._startVideoRecording(screencastOptions));
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);

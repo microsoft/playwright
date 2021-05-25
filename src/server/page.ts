@@ -145,9 +145,11 @@ export class Page extends SdkObject {
   _pageIsError: Error | undefined;
   _video: Artifact | null = null;
   _opener: Page | undefined;
+  readonly _isInternalPage: boolean;
 
-  constructor(delegate: PageDelegate, browserContext: BrowserContext) {
+  constructor(delegate: PageDelegate, browserContext: BrowserContext, isInternalPage: boolean) {
     super(browserContext, 'page');
+    this._isInternalPage = isInternalPage;
     this.attribution.page = this;
     this._delegate = delegate;
     this._closedCallback = () => {};

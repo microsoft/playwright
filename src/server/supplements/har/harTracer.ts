@@ -52,9 +52,15 @@ export class HarTracer {
       pages: [],
       entries: []
     };
-    context.on(BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page));
+    context.on(BrowserContext.Events.Page, (page: Page) => this._onPage(page));
     context.on(BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request));
     context.on(BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response));
+  }
+
+  private _onPage(page: Page) {
+    if (page._isInternalPage)
+      return;
+    this._ensurePageEntry(page);
   }
 
   private _ensurePageEntry(page: Page) {
@@ -119,6 +125,8 @@ export class HarTracer {
 
   private _onRequest(request: network.Request) {
     const page = request.frame()._page;
+    if (page._isInternalPage)
+      return;
     const url = network.parsedURL(request.url());
     if (!url)
       return;
@@ -173,6 +181,8 @@ export class HarTracer {
 
   private _onResponse(response: network.Response) {
     const page = response.frame()._page;
+    if (page._isInternalPage)
+      return;
     const pageEntry = this._ensurePageEntry(page);
     const harEntry = this._entries.get(response.request())!;
     // Rewrite provisional headers with actual

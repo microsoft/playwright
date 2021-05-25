@@ -82,7 +82,7 @@ export class WKPage implements PageDelegate {
     this.rawMouse = new RawMouseImpl(pageProxySession);
     this.rawTouchscreen = new RawTouchscreenImpl(pageProxySession);
     this._contextIdToContext = new Map();
-    this._page = new Page(this, browserContext);
+    this._page = new Page(this, browserContext, false);
     this._workers = new WKWorkers(this._page);
     this._session = undefined as any as WKSession;
     this._browserContext = browserContext;

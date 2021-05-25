@@ -104,7 +104,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
-    return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage(metadata)) };
+    return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage(metadata, false)) };
   }
 
   async cookies(params: channels.BrowserContextCookiesParams): Promise<channels.BrowserContextCookiesResult> {

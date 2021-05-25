@@ -34,6 +34,7 @@ export class CRBrowser extends Browser {
   _session: CRSession;
   private _clientRootSessionPromise: Promise<CRSession> | null = null;
   readonly _contexts = new Map<string, CRBrowserContext>();
+  private readonly _deferredPageTargetIds = new Set<string>();
   _crPages = new Map<string, CRPage>();
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
@@ -144,15 +145,21 @@ export class CRBrowser extends Browser {
     assert(!this._serviceWorkers.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
 
     if (targetInfo.type === 'background_page') {
-      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false, true);
+      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false, true, false);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       return;
     }
 
     if (targetInfo.type === 'page') {
-      const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, true, false);
-      this._crPages.set(targetInfo.targetId, crPage);
+      this._deferredPageTargetIds.add(targetInfo.targetId);
+      context.runAfterAllActiveNewPageCalls(() => {
+        const isInternalPage = context!._internalPageTargetIds.delete(targetInfo.targetId);
+        if (!this._deferredPageTargetIds.delete(targetInfo.targetId))
+          return;
+        const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
+        const crPage = new CRPage(session, targetInfo.targetId, context!, opener, true, false, isInternalPage);
+        this._crPages.set(targetInfo.targetId, crPage);
+      });
       return;
     }
 
@@ -168,6 +175,7 @@ export class CRBrowser extends Browser {
 
   _onDetachedFromTarget(payload: Protocol.Target.detachFromTargetParameters) {
     const targetId = payload.targetId!;
+    this._deferredPageTargetIds.delete(targetId);
     const crPage = this._crPages.get(targetId);
     if (crPage) {
       this._crPages.delete(targetId);
@@ -268,6 +276,9 @@ export class CRBrowserContext extends BrowserContext {
 
   readonly _browser: CRBrowser;
   readonly _evaluateOnNewDocumentSources: string[];
+  private _inflightNewPageCount: number = 0;
+  private _newPageResponseListener = new Set<() => boolean>();
+  _internalPageTargetIds = new Set<string>();
 
   constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -300,12 +311,48 @@ export class CRBrowserContext extends BrowserContext {
     return result;
   }
 
-  async newPageDelegate(): Promise<PageDelegate> {
+  runAfterAllActiveNewPageCalls(callback: () => void) {
+    let count = this._inflightNewPageCount;
+    if (!count) {
+      callback();
+      return;
+    }
+
+    this._newPageResponseListener.add(() => {
+      --count;
+      try {
+        callback();
+      } finally {
+        return !count;
+      }
+    });
+  }
+
+  private _didReceiveNewPageResponse() {
+    const finishedListeners = [];
+    for (const listener of this._newPageResponseListener) {
+      if (listener())
+        finishedListeners.push(listener);
+    }
+    for (const listener of finishedListeners)
+      this._newPageResponseListener.delete(listener);
+  }
+
+  async newPageDelegate(isInternal: boolean): Promise<PageDelegate> {
     assertBrowserContextIsNotOwned(this);
 
     const oldKeys = this._browser.isClank() ? new Set(this._browser._crPages.keys()) : undefined;
 
-    let { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
+    let targetId;
+    try {
+      ++this._inflightNewPageCount;
+      ({ targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId }));
+      if (isInternal)
+        this._internalPageTargetIds.add(targetId);
+    } finally {
+      --this._inflightNewPageCount;
+      this._didReceiveNewPageResponse();
+    }
 
     if (oldKeys) {
       // Chrome for Android returns tab ids (1, 2, 3, 4, 5) instead of content target ids here, work around it via the

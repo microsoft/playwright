@@ -137,7 +137,7 @@ export abstract class BrowserContext extends SdkObject {
 
   // BrowserContext methods.
   abstract pages(): Page[];
-  abstract newPageDelegate(): Promise<PageDelegate>;
+  abstract newPageDelegate(isInternal: boolean): Promise<PageDelegate>;
   abstract _doCookies(urls: string[]): Promise<types.NetworkCookie[]>;
   abstract addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
   abstract clearCookies(): Promise<void>;
@@ -224,7 +224,7 @@ export abstract class BrowserContext extends SdkObject {
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
       const oldPage = pages[0];
-      await this.newPage(progress.metadata);
+      await this.newPage(progress.metadata, false);
       await oldPage.close(progress.metadata);
     }
   }
@@ -305,8 +305,8 @@ export abstract class BrowserContext extends SdkObject {
     await this._closePromise;
   }
 
-  async newPage(metadata: CallMetadata): Promise<Page> {
-    const pageDelegate = await this.newPageDelegate();
+  async newPage(metadata: CallMetadata, isInternal: boolean): Promise<Page> {
+    const pageDelegate = await this.newPageDelegate(isInternal);
     const pageOrError = await pageDelegate.pageOrError();
     if (pageOrError instanceof Page) {
       if (pageOrError.isClosed())
@@ -327,7 +327,7 @@ export abstract class BrowserContext extends SdkObject {
     };
     if (this._origins.size)  {
       const internalMetadata = internalCallMetadata();
-      const page = await this.newPage(internalMetadata);
+      const page = await this.newPage(internalMetadata, true);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });
@@ -352,7 +352,7 @@ export abstract class BrowserContext extends SdkObject {
       await this.addCookies(state.cookies);
     if (state.origins && state.origins.length)  {
       const internalMetadata = internalCallMetadata();
-      const page = await this.newPage(internalMetadata);
+      const page = await this.newPage(internalMetadata, true);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });

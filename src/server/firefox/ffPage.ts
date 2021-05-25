@@ -62,7 +62,7 @@ export class FFPage implements PageDelegate {
     this.rawTouchscreen = new RawTouchscreenImpl(session);
     this._contextIdToContext = new Map();
     this._browserContext = browserContext;
-    this._page = new Page(this, browserContext);
+    this._page = new Page(this, browserContext, false);
     this._networkManager = new FFNetworkManager(session, this._page);
     this._page.on(Page.Events.FrameDetached, frame => this._removeContextsForFrame(frame));
     // TODO: remove Page.willOpenNewWindowAsynchronously from the protocol.
