@@ -25,7 +25,6 @@ import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
 import { isUnderTest } from '../../../utils/utils';
-import * as types from '../../types';
 
 const readFileAsync = util.promisify(fs.readFile);
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
@@ -102,7 +101,7 @@ export class RecorderApp extends EventEmitter {
     ];
     if (process.env.PWTEST_RECORDER_PORT)
       args.push(`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`);
-    let channel: types.BrowserChannel | undefined;
+    let channel: string | undefined;
     let executablePath: string | undefined;
     if (inspectedContext._browser.options.isChromium) {
       channel = inspectedContext._browser.options.channel;

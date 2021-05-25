@@ -32,7 +32,7 @@ export class Firefox extends BrowserType {
     super('firefox', playwrightOptions);
   }
 
-  executablePath(channel?: types.BrowserChannel): string {
+  executablePath(channel?: string): string {
     if (channel) {
       let executablePath = undefined;
       if ((channel as any) === 'firefox-stable')

@@ -51,7 +51,7 @@ export abstract class BrowserType extends SdkObject {
     this._registry = playwrightOptions.registry;
   }
 
-  executablePath(channel?: types.BrowserChannel): string {
+  executablePath(channel?: string): string {
     return this._registry.executablePath(this._name) || '';
   }
 

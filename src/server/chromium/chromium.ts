@@ -44,7 +44,7 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  executablePath(channel?: types.BrowserChannel): string {
+  executablePath(channel?: string): string {
     if (channel)
       return findChromiumChannel(channel);
     return super.executablePath(channel);

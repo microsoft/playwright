@@ -223,18 +223,7 @@ SerializedError:
 LaunchOptions:
   type: mixin
   properties:
-    channel:
-      type: enum?
-      literals:
-      - chrome
-      - chrome-beta
-      - chrome-dev
-      - chrome-canary
-      - msedge
-      - msedge-beta
-      - msedge-dev
-      - msedge-canary
-      - firefox-stable
+    channel: string?
     executablePath: string?
     args:
       type: array?
