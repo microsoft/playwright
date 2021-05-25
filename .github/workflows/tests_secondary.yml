@@ -476,13 +476,12 @@ jobs:
     name: "Chrome Beta (Win)"
     runs-on: windows-latest
     steps:
+    - uses: actions/checkout@v2
+    - name: Install Chrome Beta
+      run: pwsh -command ".\$GITHUB_WORKSPACE\utils\install-chrome-beta\reinstall_win.ps1"
     - name: Install Media Pack
       shell: powershell
       run: Install-WindowsFeature Server-Media-Foundation
-    - name: Install Chrome Beta
-      shell: powershell
-      run: ./utils/install-chrome-beta/reinstall_win.ps1
-    - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
         node-version: 12
