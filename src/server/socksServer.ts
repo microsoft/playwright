@@ -23,7 +23,7 @@ export type SocksConnectionInfo = {
   srcPort: number,
   dstAddr: string;
   dstPort: number;
-}
+};
 
 enum ConnectionPhases {
   VERSION = 0,
@@ -82,7 +82,6 @@ class SocksV5ServerParser {
   private _info: SocksConnectionInfo;
   private _phase: ConnectionPhases = ConnectionPhases.VERSION;
   private _authMethods?: Buffer;
-  private _authenticated = false
   private _dstAddr?: Buffer;
   private _addressType: any;
   private _methodsp: number = 0;
@@ -113,7 +112,6 @@ class SocksV5ServerParser {
           assert(this._authMethods);
           chunk.copy(this._authMethods, 0, i, i + chunk.length);
           assert(this._authMethods.includes(SOCKS_AUTH_METHOD.NO_AUTH));
-          this._authenticated = true;
           const left = this._authMethods.length - this._methodsp;
           const chunkLeft = chunk.length - i;
           const minLen = (left < chunkLeft ? left : chunkLeft);
