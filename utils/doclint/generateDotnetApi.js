@@ -217,7 +217,6 @@ function renderModelType(name, type) {
  */
 function renderEnum(name, literals) {
   const body = [];
-  body.push('Undefined = 0,');
   for (let literal of literals) {
     // strip out the quotes
     literal = literal.replace(/[\"]/g, ``)
@@ -789,6 +788,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
     // Regular primitive enums are named in the markdown.
     if (type.name) {
       enumTypes.set(type.name, type.union.map(t => t.name));
+      nullableTypes.push(type.name);
       return optional ? type.name + '?' : type.name;
     }
     return null;

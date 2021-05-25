@@ -40,7 +40,7 @@ export type PlaywrightOptions = {
 export type BrowserOptions = PlaywrightOptions & {
   name: string,
   isChromium: boolean,
-  channel?: types.BrowserChannel,
+  channel?: string,
   downloadsPath?: string,
   traceDir?: string,
   headful?: boolean,

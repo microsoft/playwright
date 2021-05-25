@@ -960,16 +960,32 @@ await page.EvaluateAsync("matchMedia('(prefers-color-scheme: no-preference)').ma
 ```
 
 ### option: Page.emulateMedia.media
+* langs: js, python, java
 - `media` <null|[Media]<"screen"|"print">>
 
 Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
 Passing `null` disables CSS media emulation.
 
+### option: Page.emulateMedia.media
+* langs: csharp
+- `media` <[Media]<"screen"|"print"|"null">>
+
+Changes the CSS media type of the page. The only allowed values are `'Screen'`, `'Print'` and `'Null'`.
+Passing `'Null'` disables CSS media emulation.
+
 ### option: Page.emulateMedia.colorScheme
+* langs: js, python, java
 - `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
 `null` disables color scheme emulation.
+
+### option: Page.emulateMedia.colorScheme
+* langs: csharp
+- `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
+
+Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
+`'Null'` disables color scheme emulation.
 
 ### option: Page.emulateMedia.reducedMotion
 * langs: js, python, java

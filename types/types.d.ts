@@ -6969,10 +6969,13 @@ export interface BrowserType<Unused = {}> {
     bypassCSP?: boolean;
 
     /**
+     * Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev",
+     * "msedge-canary".
+     *
      * Browser distribution channel. Read more about using
      * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
-    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+    channel?: string;
 
     /**
      * Enable Chromium sandboxing. Defaults to `false`.
@@ -7310,10 +7313,13 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
+     * Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev",
+     * "msedge-canary".
+     *
      * Browser distribution channel. Read more about using
      * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
-    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+    channel?: string;
 
     /**
      * Enable Chromium sandboxing. Defaults to `false`.
@@ -11229,10 +11235,13 @@ export interface LaunchOptions {
   args?: Array<string>;
 
   /**
+   * Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev",
+   * "msedge-canary".
+   *
    * Browser distribution channel. Read more about using
    * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
    */
-  channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+  channel?: string;
 
   /**
    * Enable Chromium sandboxing. Defaults to `false`.

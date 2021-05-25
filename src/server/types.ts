@@ -256,10 +256,8 @@ export type BrowserContextOptions = {
 
 export type EnvArray = { name: string, value: string }[];
 
-export type BrowserChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable';
-
 type LaunchOptionsBase = {
-  channel?: BrowserChannel,
+  channel?: string,
   executablePath?: string,
   args?: string[],
   ignoreDefaultArgs?: string[],
