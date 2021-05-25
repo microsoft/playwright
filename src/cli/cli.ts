@@ -38,7 +38,7 @@ import { allBrowserNames } from '../utils/registry';
 
 program
     .version('Version ' + require('../../package.json').version)
-    .name('npx playwright');
+    .name(process.env.PW_CLI_NAME || 'npx playwright');
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, command) {
