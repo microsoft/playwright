@@ -2,8 +2,6 @@ $url = 'https://dl.google.com/tag/s/dl/chrome/install/beta/googlechromebetastand
 
 if ([Environment]::Is64BitProcess) {
     $url = 'https://dl.google.com/tag/s/dl/chrome/install/beta/googlechromebetastandaloneenterprise64.msi'
-} else {
-    $url = 'https://dl.google.com/tag/s/dl/chrome/install/beta/googlechromebetastandaloneenterprise.msi'
 }
 
 $app = Get-WmiObject -Class Win32_Product | Where-Object { 
