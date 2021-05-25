@@ -514,7 +514,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   on(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -688,7 +690,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   once(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -862,7 +866,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   addListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -1036,7 +1042,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -1210,7 +1218,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   off(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -3022,7 +3032,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   waitForEvent(event: 'requestfailed', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 

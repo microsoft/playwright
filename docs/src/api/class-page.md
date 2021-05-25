@@ -422,7 +422,8 @@ Emitted when a request fails, for example by timing out.
 
 :::note
 HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete
-with [`event: Page.requestFinished`] event and not with [`event: Page.requestFailed`].
+with [`event: Page.requestFinished`] event and not with [`event: Page.requestFailed`]. A request will only be considered
+failed when the client cannot get an HTTP response from the server, e.g. due to network error net::ERR_FAILED.
 :::
 
 ## event: Page.requestFinished
