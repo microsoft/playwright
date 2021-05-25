@@ -29,7 +29,15 @@ function capitalize(browserName: string): string {
 
 test('should print the correct imports and context options', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI(['--target=csharp', emptyHTML]);
-  const expectedResult = `        using var playwright = await Playwright.CreateAsync();
+  const expectedResult = `using Microsoft.Playwright;
+using System;
+using System.Threading.Tasks;
+
+class Program
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.${capitalize(browserName)}.LaunchAsync(new BrowserTypeLaunchOptions
         {
             ${launchOptions(channel)}

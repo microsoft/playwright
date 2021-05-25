@@ -133,13 +133,13 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new CSharpFormatter(0);
     formatter.add(`
+      using Microsoft.Playwright;
       using System;
       using System.Threading.Tasks;
-      using Microsoft.Playwright;
 
-      class Example
+      class Program
       {
-          static async Task Main(string[] args)
+          public static async Task Main()
           {
               using var playwright = await Playwright.CreateAsync();
               await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatObject(options.launchOptions, '    ', 'BrowserTypeLaunchOptions')});
@@ -150,7 +150,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   generateFooter(saveStorage: string | undefined): string {
     const storageStateLine = saveStorage ? `\n        await context.StorageStateAsync(new BrowserContextStorageStateOptions\n        {\n            Path = ${quote(saveStorage)}\n        });\n` : '';
     return `${storageStateLine}    }
-}`;
+}\n`;
   }
 }
 
