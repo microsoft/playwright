@@ -28,14 +28,16 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
   private _forwardPorts: number[] = [];
   private _parent: SdkObject;
   private _server: SocksProxyServer;
-  constructor(parent: SdkObject, enabled: boolean = false) {
+  constructor(parent: SdkObject, enabled: boolean) {
     super();
+    this.setMaxListeners(0);
     this.enabled = enabled;
     this._parent = parent;
     this._server = new SocksProxyServer(this._handler.bind(this));
-    if (enabled)
+    if (enabled) {
       this._server.listen(0);
-    debugLogger.log('proxy', `initialized server on port ${this._port()} (enabled: ${enabled})`);
+      debugLogger.log('proxy', `initialized server on port ${this._port()})`);
+    }
   }
 
   private _port(): number {

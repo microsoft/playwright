@@ -37,7 +37,7 @@ export class SocksSocketDispatcher extends Dispatcher<SocksInterceptedSocketHand
     this._object.error(params.error);
   }
 
-  async write(params: channels.AndroidSocketWriteParams): Promise<void> {
+  async write(params: channels.SocksSocketWriteParams): Promise<void> {
     this._object.write(Buffer.from(params.data, 'base64'));
   }
 

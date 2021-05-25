@@ -49,7 +49,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const portForwardingServer = new BrowserServerPortForwardingServer(this._playwright, options._acceptForwardedPorts);
+    const portForwardingServer = new BrowserServerPortForwardingServer(this._playwright, !!options._acceptForwardedPorts);
     // 1. Pre-launch the browser
     const browser = await this._browserType.launch(internalCallMetadata(), {
       ...options,
@@ -99,12 +99,10 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const incomingSocksSocketHandler = (socket: SocksInterceptedSocketHandler) => {
       playwrightDispatcher._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(playwrightDispatcher._scope, socket) });
     };
-    if (portForwardingServer.enabled)
-      portForwardingServer.on('incomingSocksSocket', incomingSocksSocketHandler);
+    portForwardingServer.on('incomingSocksSocket', incomingSocksSocketHandler);
 
     return () => {
-      if (portForwardingServer.enabled)
-        portForwardingServer.off('incomingSocksSocket', incomingSocksSocketHandler);
+      portForwardingServer.off('incomingSocksSocket', incomingSocksSocketHandler);
       // Cleanup contexts upon disconnect.
       browserDispatcher.cleanupContexts().catch(e => {});
     };

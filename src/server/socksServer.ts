@@ -58,6 +58,8 @@ enum SOCKS_REPLY {
   SUCCESS = 0x00,
 }
 
+const SOCKS_VERSION = 0x5;
+
 const BUF_REP_INTR_SUCCESS = Buffer.from([
   0x05,
   SOCKS_REPLY.SUCCESS,
@@ -94,60 +96,53 @@ class SocksV5ServerParser {
   private _onData(chunk: Buffer) {
     const socket = this._socket;
     let i = 0;
+    const readByte = () => chunk[i++];
     while (i < chunk.length && this._phase !== ConnectionPhases.DONE) {
       switch (this._phase) {
         case ConnectionPhases.VERSION:
-          assert(chunk[i] === 5);
-          i++;
-          if (this._authenticated)
-            this._phase = ConnectionPhases.REQ_CMD;
-          else
-            this._phase++;
+          assert(readByte() === SOCKS_VERSION);
+          this._phase = ConnectionPhases.NMETHODS;
           break;
 
         case ConnectionPhases.NMETHODS:
-          this._authMethods = Buffer.alloc(chunk[i]);
-          i++;
-          this._phase++;
+          this._authMethods = Buffer.alloc(readByte());
+          this._phase = ConnectionPhases.METHODS;
           break;
 
         case ConnectionPhases.METHODS: {
           assert(this._authMethods);
           chunk.copy(this._authMethods, 0, i, i + chunk.length);
-          assert(chunk.includes(SOCKS_AUTH_METHOD.NO_AUTH));
+          assert(this._authMethods.includes(SOCKS_AUTH_METHOD.NO_AUTH));
           this._authenticated = true;
-          this._phase = ConnectionPhases.VERSION;
           const left = this._authMethods.length - this._methodsp;
           const chunkLeft = chunk.length - i;
           const minLen = (left < chunkLeft ? left : chunkLeft);
           chunk.copy(this._authMethods, this._methodsp, i, i + minLen);
           this._methodsp += minLen;
           i += minLen;
-          if (this._methodsp === this._authMethods.length) {
-            this._phase = ConnectionPhases.VERSION;
-            if (i < chunk.length)
-              this._socket.unshift(chunk.slice(i));
-            this._authWithoutPassword(socket);
-            return;
-          }
+          assert(this._methodsp === this._authMethods.length);
+          if (i < chunk.length)
+            this._socket.unshift(chunk.slice(i));
+          this._authWithoutPassword(socket);
+          this._phase = ConnectionPhases.REQ_CMD;
           break;
         }
 
         case ConnectionPhases.REQ_CMD:
-          const cmd: SOCKS_CMD = chunk[i];
+          assert(readByte() === SOCKS_VERSION);
+          const cmd: SOCKS_CMD = readByte();
           assert(cmd === SOCKS_CMD.CONNECT);
-          i++;
-          this._phase++;
+          this._phase = ConnectionPhases.REQ_RSV;
           break;
 
         case ConnectionPhases.REQ_RSV:
-          i++;
-          this._phase++;
+          readByte();
+          this._phase = ConnectionPhases.REQ_ATYP;
           break;
 
         case ConnectionPhases.REQ_ATYP:
           this._phase = ConnectionPhases.REQ_DSTADDR;
-          this._addressType = chunk[i];
+          this._addressType = readByte();
           assert(this._addressType in SOCKS_ATYP);
           if (this._addressType === SOCKS_ATYP.IPv4)
             this._dstAddr = Buffer.alloc(4);
@@ -155,7 +150,6 @@ class SocksV5ServerParser {
             this._dstAddr = Buffer.alloc(16);
           else if (this._addressType === SOCKS_ATYP.NAME)
             this._phase = ConnectionPhases.REQ_DSTADDR_VARLEN;
-          i++;
           break;
 
         case ConnectionPhases.REQ_DSTADDR: {
@@ -172,45 +166,41 @@ class SocksV5ServerParser {
         }
 
         case ConnectionPhases.REQ_DSTADDR_VARLEN:
-          this._dstAddr = Buffer.alloc(chunk[i]);
+          this._dstAddr = Buffer.alloc(readByte());
           this._phase = ConnectionPhases.REQ_DSTADDR;
-          i++;
           break;
 
         case ConnectionPhases.REQ_DSTPORT:
           assert(this._dstAddr);
           if (this._dstPort === undefined) {
-            this._dstPort = chunk[i];
-          } else {
-            this._dstPort <<= 8;
-            this._dstPort += chunk[i];
-            i++;
-
-            this._socket.removeListener('data', this._onData);
-            if (i < chunk.length)
-              this._socket.unshift(chunk.slice(i));
-
-            if (this._addressType === SOCKS_ATYP.IPv4) {
-              this._info.dstAddr = [...this._dstAddr].join('.');
-            } else if (this._addressType === SOCKS_ATYP.IPv6) {
-              let ipv6str = '';
-              const addr = this._dstAddr;
-              for (let b = 0; b < 16; ++b) {
-                if (b % 2 === 0 && b > 0)
-                  ipv6str += ':';
-                ipv6str += (addr[b] < 16 ? '0' : '') + addr[b].toString(16);
-              }
-              this._info.dstAddr = ipv6str;
-            } else {
-              this._info.dstAddr = this._dstAddr.toString();
-            }
-            this._info.dstPort = this._dstPort;
-            this._phase++;
-            this._readyResolve();
-            return;
+            this._dstPort = readByte();
+            break;
           }
-          i++;
-          break;
+          this._dstPort <<= 8;
+          this._dstPort += readByte();
+
+          this._socket.removeListener('data', this._onData);
+          if (i < chunk.length)
+            this._socket.unshift(chunk.slice(i));
+
+          if (this._addressType === SOCKS_ATYP.IPv4) {
+            this._info.dstAddr = [...this._dstAddr].join('.');
+          } else if (this._addressType === SOCKS_ATYP.IPv6) {
+            let ipv6str = '';
+            const addr = this._dstAddr;
+            for (let b = 0; b < 16; ++b) {
+              if (b % 2 === 0 && b > 0)
+                ipv6str += ':';
+              ipv6str += (addr[b] < 16 ? '0' : '') + addr[b].toString(16);
+            }
+            this._info.dstAddr = ipv6str;
+          } else {
+            this._info.dstAddr = this._dstAddr.toString();
+          }
+          this._info.dstPort = this._dstPort;
+          this._phase = ConnectionPhases.DONE;
+          this._readyResolve();
+          return;
         default:
           assert(false);
       }
