@@ -73,9 +73,6 @@ documentation.setLinkRenderer(item => {
 // get the template for a class
 const template = fs.readFileSync(path.join(__dirname, 'templates', 'interface.cs'), 'utf-8');
 
-// we have some "predefined" types, like the mixed state enum, that we can map in advance
-enumTypes.set("MixedState", ["On", "Off", "Mixed"]);
-
 // map the name to a C# friendly one (we prepend an I to denote an interface)
 const classNameMap = new Map(documentation.classesArray.map(x => [x.name, `I${toTitleCase(x.name)}`]));
 
@@ -532,7 +529,7 @@ function renderMethod(member, parent, name, options, out) {
       if (!type)
         type = resolveType(innerType);
       if (isArray)
-        type = `IReadOnlyCollection<${type}>`;
+        type = `IReadOnlyList<${type}>`;
     }
   }
 
@@ -767,8 +764,6 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   // a few special cases we can fix automatically
   if (type.expression === '[null]|[Error]')
     return 'void';
-  else if (type.expression === '[boolean]|"mixed"')
-    return 'MixedState';
 
   if (type.union) {
     if (type.union[0].name === 'null' && type.union.length === 2)
