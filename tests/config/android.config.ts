@@ -43,7 +43,7 @@ const metadata = {
   platform: 'Android',
   headful: false,
   browserName: 'chromium',
-  channel: undefined,
+  channel: 'chrome',
   mode: 'default',
   video: false,
 };
