@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 if [[ ! -d ./electron-build-tools ]]; then
-  git clone --single-branch --branch msft-goma  https://github.com/electron/build-tools/ electron-build-tools
+  git clone --single-branch --branch master https://github.com/electron/build-tools/ electron-build-tools
   cd electron-build-tools
   npm install
   mkdir -p third_party
