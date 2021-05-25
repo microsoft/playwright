@@ -21,7 +21,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Install Chrome Beta
-      run: powershell.exe utils\install-chrome-beta\reinstall_win.ps1
+      run: pwsh -command ".\$GITHUB_WORKSPACE\utils\install-chrome-beta\reinstall-win.ps1"
     - name: Install Media Pack
       shell: powershell
       run: Install-WindowsFeature Server-Media-Foundation
