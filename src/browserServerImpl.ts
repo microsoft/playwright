@@ -85,7 +85,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     return browserServer;
   }
 
-  private _onConnect(browser: Browser, portForwardingServer: BrowserServerPortForwardingServer, scope: DispatcherScope, forceDisconnect: () => void) {
+  private _onConnect(browser: Browser, portForwardingServer: BrowserServerPortForwardingServer, scope: DispatcherScope, forceDisconnect: () => void): () => void {
     const selectors = new Selectors();
     const selectorsDispatcher = new SelectorsDispatcher(scope, selectors);
     const browserDispatcher = new ConnectedBrowserDispatcher(scope, browser, selectors);
@@ -163,7 +163,7 @@ class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserIni
     return { binary: buffer.toString('base64') };
   }
 
-  async cleanupContexts() {
+  async cleanupContexts(): Promise<void> {
     await Promise.all(Array.from(this._contexts).map(context => context.close(internalCallMetadata())));
   }
 }
