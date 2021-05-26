@@ -344,10 +344,11 @@ with page.expect_navigation():
 ```csharp
 // Using waitForNavigation with a callback prevents a race condition
 // between clicking and waiting for a navigation.
-await Task.WhenAll(
-    page.WaitForNavigationAsync(), // Waits for the next navigation
-    page.ClickAsync("div.delayed-navigation"); // Triggers a navigation after a timeout
-);
+await page.RunAndWaitForNavigationAsync(async () =>
+{
+    // Triggers a navigation after a timeout
+    await page.ClickAsync("div.delayed-navigation");
+});
 ```
 
 ### Multiple navigations
@@ -393,10 +394,14 @@ with page.expect_navigation(url="**/login"):
 ```csharp
 // Running action in the callback of waitForNavigation prevents a race
 // condition between clicking and waiting for a navigation.
-await Task.WhenAll(
-    page.WaitForNavigationAsync(new PageWaitForNavigationOptions { UrlString = "**/login" }), // Waits for the next navigation
-    page.ClickAsync("a") // Triggers a navigation with a script redirect
-);
+await page.RunAndWaitForNavigationAsync(async () =>
+{
+    // Triggers a navigation with a script redirect.
+    await page.ClickAsync("a");
+}, new PageWaitForNavigationOptions
+{
+    UrlString = "**/login"
+});
 ```
 
 ### Loading a popup

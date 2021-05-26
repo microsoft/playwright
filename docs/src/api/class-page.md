@@ -3273,8 +3273,12 @@ with page.expect_navigation():
 ```
 
 ```csharp
-await Task.WhenAll(page.WaitForNavigationAsync(),
-    frame.ClickAsync("a.delayed-navigation")); // clicking the link will indirectly cause a navigation
+await page.RunAndWaitForNavigationAsync(async () =>
+{
+    // Clicking the link will indirectly cause a navigation.
+    await page.ClickAsync("a.delayed-navigation"));
+});
+
 // The method continues after navigation has finished
 ```
 
@@ -3336,7 +3340,7 @@ const [request] = await Promise.all([
 ```
 
 ```java
-// Waits for the next response with the specified url
+// Waits for the next request with the specified url
 Request request = page.waitForRequest("https://example.com/resource", () -> {
   // Triggers the request
   page.click("button.triggers-request");
@@ -3372,17 +3376,17 @@ second_request = second.value
 ```
 
 ```csharp
-// Waits for the next response with the specified url
-await Task.WhenAll(page.WaitForRequestAsync("https://example.com/resource"),
-    page.ClickAsync("button.triggers-request"));
+// Waits for the next request with the specified url.
+await page.RunAndWaitForRequestAsync(async () =>
+{
+    await page.ClickAsync("button");
+}, "http://example.com/resource");
 
-// Waits for the next request matching some conditions
-await Task.WhenAll(page.WaitForRequestAsync(r => "https://example.com".Equals(r.Url) && "GET" == r.Method),
-    page.ClickAsync("button.triggers-request"));
-```
-
-```js
-await page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');
+// Alternative way with a predicate.
+await page.RunAndWaitForRequestAsync(async () =>
+{
+    await page.ClickAsync("button");
+}, request => request.Url == "https://example.com" && request.Method == "GET");
 ```
 
 ### param: Page.waitForRequest.action = %%-csharp-wait-for-event-action-%%
@@ -3491,13 +3495,17 @@ return response.ok
 ```
 
 ```csharp
-// Waits for the next response with the specified url
-await Task.WhenAll(page.WaitForResponseAsync("https://example.com/resource"),
-    page.ClickAsync("button.triggers-response"));
+// Waits for the next response with the specified url.
+await page.RunAndWaitForResponseAsync(async () =>
+{
+    await page.ClickAsync("button.triggers-response");
+}, "http://example.com/resource");
 
-// Waits for the next response matching some conditions
-await Task.WhenAll(page.WaitForResponseAsync(r => "https://example.com".Equals(r.Url) && r.Status == 200),
-    page.ClickAsync("button.triggers-response"));
+// Alternative way with a predicate.
+await page.RunAndWaitForResponseAsync(async () =>
+{
+    await page.ClickAsync("button");
+}, response => response.Url == "https://example.com" && response.Status == 200);
 ```
 
 ### param: Page.waitForResponse.action = %%-csharp-wait-for-event-action-%%

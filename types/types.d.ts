@@ -3173,10 +3173,6 @@ export interface Page {
    * ]);
    * ```
    *
-   * ```js
-   * await page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');
-   * ```
-   *
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Request] object.
    * @param options
    */

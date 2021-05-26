@@ -96,7 +96,6 @@ Receives the [WebSocketFrame] object and resolves to truthy value when the waiti
 ## async method: WebSocket.waitForEvent2
 * langs: python
   - alias-python: wait_for_event
-  - alias-csharp: WaitForEventAsync
 - returns: <[any]>
 
 :::note
