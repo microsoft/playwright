@@ -20,7 +20,7 @@ import { Playwright } from './client/playwright';
 import * as childProcess from 'child_process';
 import * as path from 'path';
 
-export async function start() {
+export async function start(): Promise<Playwright> {
   const client = new PlaywrightClient();
   const playwright = await client._playwright;
   (playwright as any).stop = () => client.stop();
@@ -55,7 +55,7 @@ class PlaywrightClient {
     this._playwright = connection.waitForObjectWithKnownName('Playwright');
   }
 
-  async stop() {
+  async stop(): Promise<void> {
     this._driverProcess.removeListener('exit', this._onExit);
     this._driverProcess.stdin.destroy();
     this._driverProcess.stdout.destroy();
