@@ -59,23 +59,24 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     const lines: string[] = [];
     const actionCall = this._generateActionCall(action, actionInContext.isMainFrame);
     if (signals.waitForNavigation) {
-      lines.push(`await Task.WhenAll(`);
-      lines.push(`${pageAlias}.WaitForNavigationAsync(/* new ${actionInContext.isMainFrame ? 'Page' : 'Frame'}WaitForNavigationOptions`);
+      lines.push(`await ${pageAlias}.RunAndWaitForNavigationAsync(async () =>`);
+      lines.push(`{`);
+      lines.push(`    await ${subject}.${actionCall};`);
+      lines.push(`}/*, new ${actionInContext.isMainFrame ? 'Page' : 'Frame'}WaitForNavigationOptions`);
       lines.push(`{`);
       lines.push(`    UrlString = ${quote(signals.waitForNavigation.url)}`);
-      lines.push(`} */),`);
-      lines.push(`${subject}.${actionCall});`);
+      lines.push(`}*/);`);
     } else {
       lines.push(`await ${subject}.${actionCall};`);
     }
 
     if (signals.download) {
-      lines.unshift(`var download${signals.download.downloadAlias} = await ${pageAlias}.RunAndWaitForEventAsync(PageEvent.Download, async () =>\n{`);
+      lines.unshift(`var download${signals.download.downloadAlias} = await ${pageAlias}.RunAndWaitForDownloadAsync(async () =>\n{`);
       lines.push(`});`);
     }
 
     if (signals.popup) {
-      lines.unshift(`var ${signals.popup.popupAlias} = await ${pageAlias}.RunAndWaitForEventAsync(PageEvent.Popup, async () =>\n{`);
+      lines.unshift(`var ${signals.popup.popupAlias} = await ${pageAlias}.RunAndWaitForPopupAsync(async () =>\n{`);
       lines.push(`});`);
     }
 

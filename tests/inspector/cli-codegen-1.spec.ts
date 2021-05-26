@@ -510,7 +510,7 @@ test.describe('cli codegen', () => {
     page1 = await popup_info.value`);
 
     expect(sources.get('<csharp>').text).toContain(`
-        var page1 = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+        var page1 = await page.RunAndWaitForPopupAsync(async () =>
         {
             await page.ClickAsync(\"text=link\");
         });`);
@@ -602,12 +602,13 @@ test.describe('cli codegen', () => {
 
     expect(sources.get('<csharp>').text).toContain(`
         // Click text=link
-        await Task.WhenAll(
-            page.WaitForNavigationAsync(/* new PageWaitForNavigationOptions
-            {
-                UrlString = \"about:blank#foo\"
-            } */),
-            page.ClickAsync(\"text=link\"));`);
+        await page.RunAndWaitForNavigationAsync(async () =>
+        {
+            await page.ClickAsync(\"text=link\");
+        }/*, new PageWaitForNavigationOptions
+        {
+            UrlString = \"about:blank#foo\"
+        }*/);`);
 
     expect(page.url()).toContain('about:blank#foo');
   });
