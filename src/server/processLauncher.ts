@@ -84,7 +84,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       if (errors[i])
         options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${options.tempDirectories[i]}: ${errors[i]}`);
     }
-  }
+  };
 
   // Prevent Unhandled 'error' event.
   spawnedProcess.on('error', () => {});
