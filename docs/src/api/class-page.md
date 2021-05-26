@@ -2993,13 +2993,6 @@ with page.expect_event("framenavigated") as event_info:
 frame = event_info.value
 ```
 
-```csharp
-var frame = await page.RunAndWaitForFrameNavigatedAsync(async () =>
-{
-    await page.ClickAsync("button");
-}
-```
-
 ### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
 
 ### param: Page.waitForEvent.optionsOrPredicate
