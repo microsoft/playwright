@@ -3276,7 +3276,7 @@ with page.expect_navigation():
 await page.RunAndWaitForNavigationAsync(async () =>
 {
     // Clicking the link will indirectly cause a navigation.
-    await page.ClickAsync("a.delayed-navigation"));
+    await page.ClickAsync("a.delayed-navigation");
 });
 
 // The method continues after navigation has finished
