@@ -98,27 +98,8 @@ function findFocusedNode(node) {
 ```
 
 ```csharp
-static AccessibilitySnapshotResult findFocusedNode(AccessibilitySnapshotResult root)
-{
-    var nodes = new Stack<AccessibilitySnapshotResult>(new[] { root });
-    while (nodes.Count > 0)
-    {
-        var node = nodes.Pop();
-        if (node.Focused) return node;
-        foreach (var innerNode in node.Children)
-        {
-            nodes.Push(innerNode);
-        }
-    }
-
-    return null;
-}
-
 var accessibilitySnapshot = await page.Accessibility.SnapshotAsync();
 Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(accessibilitySnapshot));
-var focusedNode = findFocusedNode(accessibilitySnapshot);
-if (focusedNode != null)
-    Console.WriteLine(focusedNode.Name);
 ```
 
 ```java
