@@ -434,7 +434,7 @@ popup.wait_for_load_state("load")
 ```
 
 ```csharp
-var popup = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
     await page.ClickAsync("a[target='_blank']"); // Opens popup
 });

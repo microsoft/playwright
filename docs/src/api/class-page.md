@@ -266,7 +266,7 @@ try {
   // Crash might happen during a click.
   await page.ClickAsync("button");
   // Or while waiting for an event.
-  await page.WaitForEventAsync(PageEvent.Popup);
+  await page.WaitForPopup();
 } catch (PlaywrightException e) {
   // When the page crashes, exception message contains "crash".
 }
@@ -397,7 +397,7 @@ print(popup.evaluate("location.href"))
 ```
 
 ```csharp
-var popup = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
     await page.EvaluateAsync("() => window.open('https://microsoft.com')");
 });
@@ -2933,13 +2933,14 @@ Performs action and waits for the Page to close.
 ### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForConsoleMessage
-* langs: java, python
+* langs: java, python, csharp
   - alias-python: expect_console_message
+  - alias-csharp: RunAndWaitForConsoleMessage
 - returns: <[ConsoleMessage]>
 
 Performs action and waits for a [ConsoleMessage] to be logged by in the page. If predicate is provided, it passes
 [ConsoleMessage] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
-Will throw an error if the page is closed before the console event is fired.
+Will throw an error if the page is closed before the [`event: Page.console`] event is fired.
 
 ### option: Page.waitForConsoleMessage.predicate =
 - `predicate` <[function]\([ConsoleMessage]\):[boolean]>
@@ -2949,8 +2950,9 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 ### option: Page.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForDownload
-* langs: java, python
+* langs: java, python, csharp
   - alias-python: expect_download
+  - alias-csharp: RunAndWaitForDownload
 - returns: <[Download]>
 
 Performs action and waits for a new [Download]. If predicate is provided, it passes
@@ -2965,9 +2967,8 @@ Receives the [Download] object and resolves to truthy value when the waiting sho
 ### option: Page.waitForDownload.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForEvent
-* langs: csharp, js, python
+* langs: js, python
   - alias-python: expect_event
-  - alias-csharp: RunAndWaitForEventAsync
 - returns: <[any]>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
@@ -2992,13 +2993,6 @@ with page.expect_event("framenavigated") as event_info:
 frame = event_info.value
 ```
 
-```csharp
-var frame = await page.RunAndWaitForEventAsync(PageEvent.FrameNavigated, async () =>
-{
-    await page.ClickAsync("button");
-}
-```
-
 ### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
 
 ### param: Page.waitForEvent.optionsOrPredicate
@@ -3011,8 +3005,9 @@ var frame = await page.RunAndWaitForEventAsync(PageEvent.FrameNavigated, async (
 Either a predicate that receives an event or an options object. Optional.
 
 ## async method: Page.waitForFileChooser
-* langs: java, python
+* langs: java, python, csharp
   - alias-python: expect_file_chooser
+  - alias-csharp: RunAndWaitForFileChooser
 - returns: <[FileChooser]>
 
 Performs action and waits for a new [FileChooser] to be created. If predicate is provided, it passes
@@ -3223,7 +3218,7 @@ print(popup.title()) # popup is ready to use.
 ```
 
 ```csharp
-var popup = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
     await page.ClickAsync("button"); // click triggers the popup/
 });
@@ -3240,6 +3235,7 @@ Shortcut for main frame's [`method: Frame.waitForLoadState`].
 ## async method: Page.waitForNavigation
 * langs:
   * alias-python: expect_navigation
+  * alias-csharp: RunAndWaitForNavigation
 - returns: <[null]|[Response]>
 
 Waits for the main frame navigation and returns the main resource response. In case of multiple redirects, the navigation
@@ -3296,8 +3292,9 @@ Shortcut for main frame's [`method: Frame.waitForNavigation`].
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.waitForPopup
-* langs: java, python
+* langs: java, python, csharp
   - alias-python: expect_popup
+  - alias-csharp: RunAndWaitForPopup
 - returns: <[Page]>
 
 Performs action and waits for a popup [Page]. If predicate is provided, it passes
@@ -3314,6 +3311,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 ## async method: Page.waitForRequest
 * langs:
   * alias-python: expect_request
+  * alias-csharp: RunAndWaitForRequest
 - returns: <[Request]>
 
 Waits for the matching request and returns it.  See [waiting for event](./events.md#waiting-for-event) for more details about events.
@@ -3387,6 +3385,8 @@ await Task.WhenAll(page.WaitForRequestAsync(r => "https://example.com".Equals(r.
 await page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');
 ```
 
+### param: Page.waitForRequest.action = %%-csharp-wait-for-event-action-%%
+
 ### param: Page.waitForRequest.urlOrPredicate
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
 
@@ -3404,9 +3404,29 @@ Request URL string, regex or predicate receiving [Request] object.
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: Page.setDefaultTimeout`] method.
 
+
+## async method: Page.waitForRequestFinished
+* langs: java, python, csharp
+  - alias-python: expect_request_finished
+  - alias-csharp: RunAndWaitForRequestFinished
+- returns: <[Request]>
+
+Performs action and waits for a [Request] to finish loading. If predicate is provided, it passes
+[Request] value into the `predicate` function and waits for `predicate(request)` to return a truthy value.
+Will throw an error if the page is closed before the [`event: Page.requestFinished`] event is fired.
+
+### option: Page.waitForRequestFinished.predicate =
+- `predicate` <[function]\([Request]\):[boolean]>
+
+Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
+
+### option: Page.waitForRequestFinished.timeout = %%-wait-for-event-timeout-%%
+
+
 ## async method: Page.waitForResponse
 * langs:
   * alias-python: expect_response
+  * alias-csharp: RunAndWaitForResponse
 - returns: <[Response]>
 
 Returns the matched response. See [waiting for event](./events.md#waiting-for-event) for more details about events.
@@ -3479,6 +3499,8 @@ await Task.WhenAll(page.WaitForResponseAsync("https://example.com/resource"),
 await Task.WhenAll(page.WaitForResponseAsync(r => "https://example.com".Equals(r.Url) && r.Status == 200),
     page.ClickAsync("button.triggers-response"));
 ```
+
+### param: Page.waitForResponse.action = %%-csharp-wait-for-event-action-%%
 
 ### param: Page.waitForResponse.urlOrPredicate
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
@@ -3688,7 +3710,9 @@ Shortcut for main frame's [`method: Frame.waitForURL`].
 ### option: Page.waitForURL.waitUntil = %%-navigation-wait-until-%%
 
 ## async method: Page.waitForWebSocket
-* langs: java
+* langs: java, python, csharp
+  - alias-python: expect_websocket
+  - alias-csharp: RunAndWaitForWebSocket
 - returns: <[WebSocket]>
 
 Performs action and waits for a new [WebSocket]. If predicate is provided, it passes
@@ -3703,8 +3727,9 @@ Receives the [WebSocket] object and resolves to truthy value when the waiting sh
 ### option: Page.waitForWebSocket.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: Page.waitForWorker
-* langs: java, python
+* langs: java, python, csharp
   - alias-python: expect_worker
+  - alias-csharp: RunAndWaitForWorker
 - returns: <[Worker]>
 
 Performs action and waits for a new [Worker]. If predicate is provided, it passes
@@ -3729,9 +3754,8 @@ This does not contain ServiceWorkers
 :::
 
 ## async method: Page.waitForEvent2
-* langs: python, csharp
+* langs: python
   - alias-python: wait_for_event
-  - alias-csharp: WaitForEventAsync
 - returns: <[any]>
 
 :::note
