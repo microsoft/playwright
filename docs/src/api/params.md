@@ -492,12 +492,6 @@ A glob pattern, regex pattern or predicate receiving [URL] to match while waitin
 
 Event name, same one typically passed into `*.on(event)`.
 
-## csharp-wait-for-event-event
-* langs: csharp
-- `playwrightEvent` <[PlaywrightEvent<T>]>
-
-Event type, same one typically passed into `WaitForEventAsync`.
-
 ## wait-for-load-state-state
 - `state` <[LoadState]<"load"|"domcontentloaded"|"networkidle">>
 

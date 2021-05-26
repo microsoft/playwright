@@ -1425,10 +1425,12 @@ with frame.expect_navigation():
 ```
 
 ```csharp
-await Task.WhenAll(
-    frame.WaitForNavigationAsync(),
-    // clicking the link will indirectly cause a navigation
-    frame.ClickAsync("a.delayed-navigation"));
+await frame.RunAndWaitForNavigationAsync(async () =>
+{
+    // Clicking the link will indirectly cause a navigation.
+    await frame.ClickAsync("a.delayed-navigation"));
+});
+
 // Resolves after navigation has finished
 ```
 
