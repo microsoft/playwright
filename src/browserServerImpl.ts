@@ -97,7 +97,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       portForwardingServer.enablePortForwarding(ports);
     });
     const incomingSocksSocketHandler = (socket: SocksInterceptedSocketHandler) => {
-      playwrightDispatcher._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(playwrightDispatcher._scope, socket) });
+      playwrightDispatcher._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(playwrightDispatcher, socket) });
     };
     portForwardingServer.on('incomingSocksSocket', incomingSocksSocketHandler);
 
