@@ -20,7 +20,7 @@ import { contextTest as it, expect } from './config/browserTest';
 import type { LaunchOptions, ConnectOptions } from '../index';
 
 it.skip(({ mode }) => mode !== 'default');
-it.fixme(({platform}) => platform === 'darwin');
+it.fixme(({platform, browserName}) => platform === 'darwin' && browserName === 'webkit');
 
 let targetTestServer: http.Server;
 let port!: number;
