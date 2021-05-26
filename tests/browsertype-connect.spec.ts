@@ -62,6 +62,14 @@ test('should be able to connect two browsers at the same time', async ({browserT
   await browser2.close();
 });
 
+test('should timeout while connecting', async ({browserType, startRemoteServer, server}) => {
+  const e = await browserType.connect({
+    wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+    timeout: 100,
+  }).catch(e => e);
+  expect(e.message).toContain('browserType.connect: Timeout 100ms exceeded.');
+});
+
 test('should send extra headers with connect request', async ({browserType, startRemoteServer, server}) => {
   const [request] = await Promise.all([
     server.waitForWebSocketConnectionRequest(),
@@ -70,7 +78,8 @@ test('should send extra headers with connect request', async ({browserType, star
       headers: {
         'User-Agent': 'Playwright',
         'foo': 'bar',
-      }
+      },
+      timeout: 100,
     }).catch(() => {})
   ]);
   expect(request.headers['user-agent']).toBe('Playwright');

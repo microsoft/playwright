@@ -71,7 +71,10 @@ class TestServer {
       this._server = http.createServer(this._onRequest.bind(this));
     this._server.on('connection', socket => this._onSocket(socket));
     this._wsServer = new WebSocketServer({server: this._server, path: '/ws'});
-    this._wsServer.on('connection', this._onWebSocketConnection.bind(this));
+    this._wsServer.on('connection', ws => {
+      if (this._onWebSocketConnectionData !== undefined)
+        ws.send(this._onWebSocketConnectionData);
+    });
     this._server.listen(port);
     this._dirPath = dirPath;
     this.debugServer = require('debug')('pw:server');
@@ -91,6 +94,8 @@ class TestServer {
     this._gzipRoutes = new Set();
     /** @type {!Map<string, !Promise>} */
     this._requestSubscribers = new Map();
+    /** @type {string|undefined} */
+    this._onWebSocketConnectionData = undefined;
 
     const cross_origin = loopback || '127.0.0.1';
     const same_origin = loopback || 'localhost';
@@ -299,8 +304,8 @@ class TestServer {
     });
   }
 
-  _onWebSocketConnection(ws) {
-    ws.send('incoming');
+  sendOnWebSocketConnection(data) {
+    this._onWebSocketConnectionData = data;
   }
 }
 

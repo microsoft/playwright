@@ -63,6 +63,7 @@ it('should work with mixed content', async ({browser, server, httpsServer}) => {
 });
 
 it('should work with WebSocket', async ({browser, httpsServer}) => {
+  httpsServer.sendOnWebSocketConnection('incoming');
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   const value = await page.evaluate(endpoint => {

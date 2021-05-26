@@ -19,6 +19,7 @@ import { contextTest as it, expect } from './config/browserTest';
 import { Server as WebSocketServer } from 'ws';
 
 it('should work', async ({ page, server }) => {
+  server.sendOnWebSocketConnection('incoming');
   const value = await page.evaluate(port => {
     let cb;
     const result = new Promise(f => cb = f);
@@ -49,6 +50,7 @@ it('should emit close events', async ({ page, server }) => {
 });
 
 it('should emit frame events', async ({ page, server }) => {
+  server.sendOnWebSocketConnection('incoming');
   let socketClosed;
   const socketClosePromise = new Promise(f => socketClosed = f);
   const log = [];
@@ -126,6 +128,7 @@ it('should emit error', async ({page, server, browserName}) => {
 });
 
 it('should not have stray error events', async ({page, server}) => {
+  server.sendOnWebSocketConnection('incoming');
   let error;
   page.on('websocket', ws => ws.on('socketerror', e => error = e));
   await Promise.all([
@@ -142,6 +145,7 @@ it('should not have stray error events', async ({page, server}) => {
 });
 
 it('should reject waitForEvent on socket close', async ({page, server}) => {
+  server.sendOnWebSocketConnection('incoming');
   const [ws] = await Promise.all([
     page.waitForEvent('websocket').then(async ws => {
       await ws.waitForEvent('framereceived');
@@ -157,6 +161,7 @@ it('should reject waitForEvent on socket close', async ({page, server}) => {
 });
 
 it('should reject waitForEvent on page close', async ({page, server}) => {
+  server.sendOnWebSocketConnection('incoming');
   const [ws] = await Promise.all([
     page.waitForEvent('websocket').then(async ws => {
       await ws.waitForEvent('framereceived');

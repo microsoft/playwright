@@ -143,7 +143,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           }
         });
       });
-      return await new Promise<Browser>(async (fulfill, reject) => {
+
+      let timeoutCallback = (e: Error) => {};
+      const timeoutPromise = new Promise<Browser>((f, r) => timeoutCallback = r);
+      const timer = params.timeout ? setTimeout(() => timeoutCallback(new Error(`Timeout ${params.timeout}ms exceeded.`)), params.timeout) : undefined;
+
+      const successPromise = new Promise<Browser>(async (fulfill, reject) => {
         if ((params as any).__testHookBeforeCreateBrowser) {
           try {
             await (params as any).__testHookBeforeCreateBrowser();
@@ -202,6 +207,13 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           reject(new Error(event.message + '. Most likely ws endpoint is incorrect'));
         });
       });
+
+      try {
+        return await Promise.race([successPromise, timeoutPromise]);
+      } finally {
+        if (timer)
+          clearTimeout(timer);
+      }
     }, logger);
   }
 
