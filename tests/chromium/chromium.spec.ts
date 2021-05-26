@@ -217,7 +217,8 @@ playwrightTest('should send extra headers with connect request', async ({browser
         headers: {
           'User-Agent': 'Playwright',
           'foo': 'bar',
-        }
+        },
+        timeout: 100,
       }).catch(() => {})
     ]);
     expect(request.headers['user-agent']).toBe('Playwright');
@@ -231,7 +232,8 @@ playwrightTest('should send extra headers with connect request', async ({browser
         headers: {
           'User-Agent': 'Playwright',
           'foo': 'bar',
-        }
+        },
+        timeout: 100,
       }).catch(() => {})
     ]);
     expect(request.headers['user-agent']).toBe('Playwright');
