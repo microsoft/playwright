@@ -44,6 +44,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
   readonly selectors: Selectors;
   readonly errors: { TimeoutError: typeof TimeoutError };
   private _selectorsOwner: SelectorsOwner;
+  _forwardPorts: number[] = [];
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);

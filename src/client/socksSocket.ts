@@ -17,6 +17,7 @@
 import net from 'net';
 
 import * as channels from '../protocol/channels';
+import { Playwright } from './playwright';
 import { assert, isLocalIpAddress, isUnderTest } from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
 
@@ -28,11 +29,13 @@ export class SocksSocket extends ChannelOwner<channels.SocksSocketChannel, chann
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.SocksSocketInitializer) {
     super(parent, type, guid, initializer);
-    this._connection.on('disconnect', () => this._socket.end());
+    assert(parent instanceof Playwright);
+
+    assert(parent._forwardPorts.includes(this._initializer.dstPort));
+    assert(isLocalIpAddress(this._initializer.dstAddr));
 
     if (isUnderTest() && process.env.PW_TEST_PROXY_TARGET)
       this._initializer.dstPort = Number(process.env.PW_TEST_PROXY_TARGET);
-    assert(isLocalIpAddress(this._initializer.dstAddr));
 
     this._socket = net.createConnection(this._initializer.dstPort, this._initializer.dstAddr);
     this._socket.on('error', (err: Error) => this._channel.error({error: String(err)}));
@@ -50,6 +53,8 @@ export class SocksSocket extends ChannelOwner<channels.SocksSocketChannel, chann
       this._socket.write(Buffer.from(data, 'base64'));
     });
     this._channel.on('close', () => this._socket.end());
+
+    this._connection.on('disconnect', () => this._socket.end());
   }
 
   async write(data: Buffer): Promise<void> {
