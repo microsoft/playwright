@@ -67,8 +67,6 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   }
 
   async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (this._muted)
-      return;
     debugLogger.log(logName as any, message);
   }
 
