@@ -293,7 +293,7 @@ test.describe('cli codegen', () => {
         });`);
     expect(sources.get('<csharp>').text).toContain(`
         // Click text=Download
-        var download1 = await page.RunAndWaitForEventAsync(PageEvent.Download, async () =>
+        var download1 = await page.RunAndWaitForDownloadAsync(async () =>
         {
             await page.ClickAsync(\"text=Download\");
         });`);
