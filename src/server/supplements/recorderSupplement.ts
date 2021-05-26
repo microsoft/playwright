@@ -262,6 +262,7 @@ export class RecorderSupplement implements InstrumentationListener {
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
     this._generator.setEnabled(this._mode === 'recording');
+    Debugger.lookup(this._context)!.setMuted(this._mode === 'recording');
     if (this._mode !== 'none')
       this._context.pages()[0].bringToFront().catch(() => {});
   }
