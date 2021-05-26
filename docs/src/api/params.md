@@ -518,6 +518,12 @@ Specify screenshot type, defaults to `png`.
 
 Callback that performs the action triggering the event.
 
+## csharp-wait-for-event-action
+* langs: csharp
+- `action` <[Func<Task>]>
+
+Action that triggers the event.
+
 ## python-select-options-element
 * langs: python
 - `element` <[ElementHandle]|[Array]<[ElementHandle]>>

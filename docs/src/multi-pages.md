@@ -209,7 +209,7 @@ print(new_page.title())
 
 ```csharp
 // Get page after a specific action (e.g. clicking a link)
-var newPage = await context.RunAndWaitForEventAsync(BrowserContextEvent.Page, async () =>
+var newPage = await context.RunAndWaitForPageAsync(async () =>
 {
     await page.ClickAsync("a[target='_blank']");
 });
@@ -311,7 +311,7 @@ print(popup.title())
 
 ```csharp
 // Get popup after a specific action (e.g., click)
-var newPage = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+var newPage = await page.RunAndWaitForPopupAsync(async () =>
 {
     await page.ClickAsync("#open");
 });

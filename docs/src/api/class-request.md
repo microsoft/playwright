@@ -239,7 +239,7 @@ print(request.timing)
 ```
 
 ```csharp
-var request = await page.RunAndWaitForEventAsync(PageEvent.RequestFinished, async () =>
+var request = await page.RunAndWaitForRequestFinishedAsync(async () =>
 {
     await page.GotoAsync("https://www.microsoft.com");
 });

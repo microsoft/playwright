@@ -1387,6 +1387,7 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 ## async method: Frame.waitForNavigation
 * langs:
   * alias-python: expect_navigation
+  * alias-csharp: RunAndWaitForNavigation
 - returns: <[null]|[Response]>
 
 Waits for the frame navigation and returns the main resource response. In case of multiple redirects, the navigation

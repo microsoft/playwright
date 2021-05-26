@@ -132,7 +132,7 @@ print(page.evaluate("location.href"))
 ```
 
 ```csharp
-var popup = await context.RunAndWaitForEventAsync(BrowserContextEvent.Page, async =>
+var popup = await context.RunAndWaitForPageAsync(async =>
 {
     await page.ClickAsync("a");
 });
@@ -1194,9 +1194,8 @@ Optional handler function used to register a routing with [`method: BrowserConte
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
 ## async method: BrowserContext.waitForEvent
-* langs: csharp, js, python
+* langs: js, python
   - alias-python: expect_event
-  - alias-csharp: RunAndWaitForEventAsync
 - returns: <[any]>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
@@ -1226,7 +1225,7 @@ page = event_info.value
 ```
 
 ```csharp
-var page = await context.RunAndWaitForEventAsync(ContextEvent.Page, async () =>
+var page = await context.RunAndWaitForPageAsync(async () =>
 {
     await page.ClickAsync("button");
 });
@@ -1247,8 +1246,9 @@ Event name, same one would pass into `browserContext.on(event)`.
 Either a predicate that receives an event or an options object. Optional.
 
 ## async method: BrowserContext.waitForPage
-* langs: java, python
+* langs: java, python, csharp
   - alias-python: expect_page
+  - alias-csharp: RunAndWaitForPage
 - returns: <[Page]>
 
 Performs action and waits for a new [Page] to be created in the context. If predicate is provided, it passes
@@ -1264,9 +1264,8 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 ### option: BrowserContext.waitForPage.timeout = %%-wait-for-event-timeout-%%
 
 ## async method: BrowserContext.waitForEvent2
-* langs: python, csharp
+* langs: python
   - alias-python: wait_for_event
-  - alias-csharp: WaitForEventAsync
 - returns: <[any]>
 
 :::note

@@ -750,7 +750,7 @@ file_chooser.set_files("myfile.pdf")
 ```
 
 ```csharp
-var fileChooser = page.RunAndWaitForAsync(PageEvent.FileChooser, async () =>
+var fileChooser = page.RunAndWaitForFileChooserAsync(async () =>
 {
     await page.ClickAsync("upload");
 });

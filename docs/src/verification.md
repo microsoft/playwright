@@ -244,7 +244,7 @@ popup = popup_info.value
 ```
 
 ```csharp
-var popup = await page.RunAndWaitForEventAsync(PageEvent.Popup, async () =>
+var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
     await page.ClickAsync("#open");
 });
