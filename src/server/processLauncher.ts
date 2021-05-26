@@ -61,8 +61,6 @@ if (maxListeners !== 0)
   process.setMaxListeners(Math.max(maxListeners || 0, 100));
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
-  const cleanup = () => removeFolders(options.tempDirectories);
-
   const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
   options.log(`<launching> ${options.executablePath} ${options.args.join(' ')}`);
   const spawnedProcess = childProcess.spawn(
@@ -78,6 +76,16 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         stdio,
       }
   );
+
+  const cleanup = async () => {
+    options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
+    const errors = await removeFolders(options.tempDirectories);
+    for (let i = 0; i < options.tempDirectories.length; ++i) {
+      if (errors[i])
+        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${options.tempDirectories[i]}: ${errors[i]}`);
+    }
+    options.log(`[pid=${spawnedProcess.pid || 'N/A'}] finished temporary directories cleanup`);
+  };
 
   // Prevent Unhandled 'error' event.
   spawnedProcess.on('error', () => {});

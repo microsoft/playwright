@@ -154,13 +154,11 @@ export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
 }
 
-export async function removeFolders(dirs: string[]) {
-  await Promise.all(dirs.map((dir: string) => {
-    return new Promise<void>(fulfill => {
+export async function removeFolders(dirs: string[]): Promise<Array<Error|undefined>> {
+  return await Promise.all(dirs.map((dir: string) => {
+    return new Promise<Error|undefined>(fulfill => {
       removeFolder(dir, { maxBusyTries: 10 }, error => {
-        if (error)
-          console.error(error);  // eslint-disable no-console
-        fulfill();
+        fulfill(error);
       });
     });
   }));
