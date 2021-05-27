@@ -11384,10 +11384,22 @@ index bd8d82c4157311464f4ec55d0e149dfe89870ba1..81117d5d6551ed5db3a2c59226a52ba4
      void saveBackForwardSnapshotForCurrentItem();
      void saveBackForwardSnapshotForItem(WebBackForwardListItem&);
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebViewImpl.mm b/Source/WebKit/UIProcess/Cocoa/WebViewImpl.mm
-index dee0c3792c13aefc0a4ad7ef8539eeaed91de312..376ad2a6a7b92005f38843c4a4925905c5509667 100644
+index dee0c3792c13aefc0a4ad7ef8539eeaed91de312..6c19d686bfe553eb5de68edaf50e0b6e84874a9c 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebViewImpl.mm
 +++ b/Source/WebKit/UIProcess/Cocoa/WebViewImpl.mm
-@@ -4587,6 +4587,18 @@ static RetainPtr<CGImageRef> takeWindowSnapshot(CGSWindowID windowID, bool captu
+@@ -2510,6 +2510,11 @@ WebCore::DestinationColorSpace WebViewImpl::colorSpace()
+         else
+             m_colorSpace = [NSScreen mainScreen].colorSpace;
+     }
++    // Playwright begin
++    // window.colorSpace is sometimes null on popup windows in headless mode
++    if (!m_colorSpace)
++        return DestinationColorSpace::SRGB();
++    // Playwright end
+ 
+     return WebCore::DestinationColorSpace { [m_colorSpace CGColorSpace] };
+ }
+@@ -4587,6 +4592,18 @@ static RetainPtr<CGImageRef> takeWindowSnapshot(CGSWindowID windowID, bool captu
      return adoptCF(CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, windowID, imageOptions));
  }
  
