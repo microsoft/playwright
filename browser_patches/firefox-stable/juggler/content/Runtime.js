@@ -294,18 +294,24 @@ class ExecutionContext {
     this._remoteObjects = new Map();
     this._id = generateId();
     this._auxData = auxData;
-    this._jsonStringifyObject = this._debuggee.executeInGlobal(`((stringify, dateProto, object) => {
-      const oldToJson = dateProto.toJSON;
-      dateProto.toJSON = undefined;
+    this._jsonStringifyObject = this._debuggee.executeInGlobal(`((stringify, object) => {
+      const oldToJson = Date.prototype.toJSON;
+      Date.prototype.toJSON = undefined;
+      const oldArrayToJson = Array.prototype.toJSON;
+      Array.prototype.toJSON = undefined;
+
       let hasSymbol = false;
       const result = stringify(object, (key, value) => {
         if (typeof value === 'symbol')
           hasSymbol = true;
         return value;
       });
-      dateProto.toJSON = oldToJson;
+
+      Date.prototype.toJSON = oldToJson;
+      Array.prototype.toJSON = oldArrayToJson;
+
       return hasSymbol ? undefined : result;
-    }).bind(null, JSON.stringify.bind(JSON), Date.prototype)`).return;
+    }).bind(null, JSON.stringify.bind(JSON))`).return;
   }
 
   id() {
