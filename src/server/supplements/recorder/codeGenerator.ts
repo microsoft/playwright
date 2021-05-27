@@ -174,4 +174,8 @@ export class CodeGenerator extends EventEmitter {
       text.push(languageGenerator.generateFooter(this._options.saveStorage));
     return text.join('\n');
   }
+
+  hasDefaultPage() {
+    return !this._options.generateHeaders;
+  }
 }

@@ -294,11 +294,15 @@ export class RecorderSupplement implements InstrumentationListener {
     const pageAlias = 'page' + suffix;
     this._pageAliases.set(page, pageAlias);
 
+    this._signalPage(page);
+  }
+
+  private _signalPage(page: Page) {
     if (page.opener()) {
       this._onPopup(page.opener()!, page);
     } else {
       this._generator.addAction({
-        pageAlias,
+        pageAlias: this._pageAliases.get(page)!,
         ...describeFrame(page.mainFrame()),
         committed: true,
         action: {
@@ -313,8 +317,12 @@ export class RecorderSupplement implements InstrumentationListener {
   private _clearScript(): void {
     this._generator.restart();
     if (!!this._params.startRecording) {
-      for (const page of this._context.pages())
-        this._onFrameNavigated(page.mainFrame(), page);
+      for (const page of this._context.pages()) {
+        if (this._generator.hasDefaultPage() && this._pageAliases.get(page) === 'page')
+          this._onFrameNavigated(page.mainFrame(), page);
+        else
+          this._signalPage(page);
+      }
     }
   }
 
