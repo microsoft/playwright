@@ -15,7 +15,7 @@ There are many more exciting features, so read on!
 
 <!-- TOC -->
 
-Note that you can still wire Playwright to your existing JavaScript [test runner]('./test-runners-other-js.md).
+Note that you can still wire Playwright to your existing JavaScript [test runner]('./test-runners-other.md).
 
 ## Installation
 
@@ -163,19 +163,19 @@ Tests can be run in single or multiple browsers, in parallel or sequentially.
 
 ```sh
 # Run all tests across Chromium, Firefox and WebKit
-$ npx folio --config=config.ts
+npx folio --config=config.ts
 
 # Run tests on a single browser
-$ npx folio --config=config.ts --project=chromium
+npx folio --config=config.ts --project=chromium
 
 # Run tests sequentially
-$ npx folio --config=config.ts --workers=1
+npx folio --config=config.ts --workers=1
 
 # Retry failing tests
-$ npx folio --config=config.ts --retries=2
+npx folio --config=config.ts --retries=2
 
 # See all options
-$ npx folio --help
+npx folio --help
 ```
 
 Refer to the [command line documentation][folio-cli] for all options.
