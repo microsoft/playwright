@@ -62,7 +62,7 @@ class Program
 
 Now build it and run it.
 
-```ssh
+```sh
 dotnet build
 dotnet run
 ```
