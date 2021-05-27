@@ -1,11 +1,15 @@
 ---
 id: test-runners
-title: "Test Runners"
+title: "Third party runners"
 ---
 
-With a few lines of code, you can hook up Playwright to your favorite JavaScript test runner.
+With a few lines of code, you can hook up Playwright to your existing JavaScript test runner.
 
 <!-- TOC -->
+
+## @playwright/test
+
+[@playwright/test](./test-runner-intro.md) is our first-party recommended test runner to be used with Playwright. Learn more about it [here](./test-runner-intro.md).
 
 ## Jest / Jasmine
 
