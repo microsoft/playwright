@@ -643,7 +643,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(240);
   });
 
-  it.only('should not create video for internal pages', async ({browser, browserName, contextOptions, server}, testInfo) => {
+  it('should not create video for internal pages', async ({browser, browserName, contextOptions, server}, testInfo) => {
     it.fixme(browserName !== 'chromium');
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value');

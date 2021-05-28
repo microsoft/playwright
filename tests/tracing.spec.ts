@@ -63,7 +63,7 @@ test('should collect trace', async ({ context, page, server }, testInfo) => {
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
-test.only('should exclude internal pages', async ({ browserName, context, page, server }, testInfo) => {
+test('should exclude internal pages', async ({ browserName, context, page, server }, testInfo) => {
   test.fixme(browserName !== 'chromium');
   await page.goto(server.EMPTY_PAGE);
 
