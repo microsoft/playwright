@@ -283,7 +283,7 @@ it('should have popup requests', async ({ contextFactory, server }, testInfo) =>
   expect(entries[1].response.status).toBe(200);
 });
 
-it('should not contain internal pages', async ({ browserName, contextFactory, server }, testInfo) => {
+it.only('should not contain internal pages', async ({ browserName, contextFactory, server }, testInfo) => {
   it.fixme(browserName !== 'chromium');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value');

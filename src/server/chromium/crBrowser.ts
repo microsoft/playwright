@@ -152,7 +152,7 @@ export class CRBrowser extends Browser {
 
     if (targetInfo.type === 'page') {
       this._deferredPageTargetIds.add(targetInfo.targetId);
-      context.runAfterAllActiveNewPageCalls(() => {
+      context.awaitActiveNewPageCalls().then(() => {
         const isInternalPage = context!._internalPageTargetIds.delete(targetInfo.targetId);
         if (!this._deferredPageTargetIds.delete(targetInfo.targetId))
           return;
@@ -276,9 +276,9 @@ export class CRBrowserContext extends BrowserContext {
 
   readonly _browser: CRBrowser;
   readonly _evaluateOnNewDocumentSources: string[];
-  private _inflightNewPageCount: number = 0;
-  private _newPageResponseListener = new Set<() => boolean>();
   _internalPageTargetIds = new Set<string>();
+  private _pendingCreateTargetPromises = new Set<Promise<Protocol.Target.createTargetReturnValue>>();
+  readonly _pendingCRPageCallbacks = new Map<string, () => void>();
 
   constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -311,31 +311,8 @@ export class CRBrowserContext extends BrowserContext {
     return result;
   }
 
-  runAfterAllActiveNewPageCalls(callback: () => void) {
-    let count = this._inflightNewPageCount;
-    if (!count) {
-      callback();
-      return;
-    }
-
-    this._newPageResponseListener.add(() => {
-      --count;
-      try {
-        callback();
-      } finally {
-        return !count;
-      }
-    });
-  }
-
-  private _didReceiveNewPageResponse() {
-    const finishedListeners = [];
-    for (const listener of this._newPageResponseListener) {
-      if (listener())
-        finishedListeners.push(listener);
-    }
-    for (const listener of finishedListeners)
-      this._newPageResponseListener.delete(listener);
+  async awaitActiveNewPageCalls(): Promise<void> {
+    await Promise.all(Array.from(this._pendingCreateTargetPromises).map(p => p.catch(e => {})));
   }
 
   async newPageDelegate(isInternal: boolean): Promise<PageDelegate> {
@@ -343,16 +320,21 @@ export class CRBrowserContext extends BrowserContext {
 
     const oldKeys = this._browser.isClank() ? new Set(this._browser._crPages.keys()) : undefined;
 
+    let createTargetPromise;
     let targetId;
     try {
-      ++this._inflightNewPageCount;
-      ({ targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId }));
+      createTargetPromise = this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
+      this._pendingCreateTargetPromises.add(createTargetPromise);
+      ({ targetId } = await createTargetPromise);
       if (isInternal)
         this._internalPageTargetIds.add(targetId);
     } finally {
-      --this._inflightNewPageCount;
-      this._didReceiveNewPageResponse();
+      if (createTargetPromise)
+        this._pendingCreateTargetPromises.delete(createTargetPromise);
     }
+
+    // This fails.
+    assert(this._browser._crPages.has(targetId));
 
     if (oldKeys) {
       // Chrome for Android returns tab ids (1, 2, 3, 4, 5) instead of content target ids here, work around it via the
@@ -370,6 +352,7 @@ export class CRBrowserContext extends BrowserContext {
       assert(newKeys.size === 1);
       [ targetId ] = [...newKeys];
     }
+    console.log(`this._browser._crPages.get(targetId) = ${this._browser._crPages.get(targetId)}`);
     return this._browser._crPages.get(targetId)!;
   }
 
