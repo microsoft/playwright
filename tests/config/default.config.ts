@@ -38,16 +38,15 @@ const pageFixtures = {
   isElectron: false,
 };
 
-const mode = (folio.registerCLIOption('mode', 'Transport mode: default, driver or service').value || 'default') as ('default' | 'driver' | 'service');
-const headed = folio.registerCLIOption('headed', 'Run tests in headed mode (default: headless)', { type: 'boolean' }).value || !!process.env.HEADFUL;
-const channel = folio.registerCLIOption('channel', 'Browser channel (default: no channel)').value as any;
-const video = !!folio.registerCLIOption('video', 'Record videos for all tests', { type: 'boolean' }).value;
+const mode = (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service');
+const headed = !!process.env.HEADFUL;
+const channel = process.env.PWTEST_CHANNEL as any;
+const video = !!process.env.PWTEST_VIDEO;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   testDir,
-  snapshotDir: '__snapshots__',
   outputDir,
   timeout: video || process.env.PWTRACE ? 60000 : 30000,
   globalTimeout: 5400000,

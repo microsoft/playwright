@@ -124,7 +124,7 @@ const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixt
   isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
   isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
   __baseSetup: [ async ({ browserName }, run, testInfo) => {
-    testInfo.snapshotPathSegment = browserName;
+    testInfo.snapshotSuffix = browserName;
     await run();
   }, { auto: true } ],
 };

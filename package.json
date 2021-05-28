@@ -80,7 +80,7 @@
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react-hooks": "^4.2.0",
     "file-loader": "^6.1.0",
-    "folio": "=0.4.0-alpha19",
+    "folio": "file:folio-0.4.0.tgz",
     "formidable": "^1.2.2",
     "html-webpack-plugin": "^4.4.1",
     "ncp": "^2.0.0",
