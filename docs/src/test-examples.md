@@ -1,16 +1,18 @@
 ---
-id: test-runner-examples
+id: test-examples
 title: "Examples"
 ---
 
 <!-- TOC -->
+
+<br/>
 
 ## Multiple pages
 
 The default `context` argument is a [BrowserContext][browser-context]. Browser contexts are isolated execution environments that can host multiple pages. See [multi-page scenarios](./multi-pages.md) for more examples.
 
 ```js
-import { test } from "@playwright/test";
+import { test } from "playwright/test";
 
 test("tests on multiple web pages", async ({ context }) => {
   const pageFoo = await context.newPage();
@@ -25,7 +27,7 @@ test("tests on multiple web pages", async ({ context }) => {
 
 ```js
 // config.ts
-import { PlaywrightTestConfig } from "@playwright/test";
+import { PlaywrightTestConfig } from "playwright/test";
 import { devices } from "playwright";
 
 const config: PlaywrightTestConfig = {
@@ -50,7 +52,7 @@ Define a custom route that mocks network calls for a browser context.
 
 ```js
 // In foo.spec.ts
-import { test, expect } from "@playwright/test";
+import { test, expect } from "playwright/test";
 
 test.beforeEach(async ({ context }) => {
   // Block any css requests for each test in this file.
@@ -71,7 +73,7 @@ test("loads page without css", async ({ page }) => {
 The `expect` API supports visual comparisons with `toMatchSnapshot`. This uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library, and you can pass `threshold` as an option.
 
 ```js
-import { test, expect } from "@playwright/test";
+import { test, expect } from "playwright/test";
 
 test("compares page screenshot", async ({ page }) => {
   await page.goto("https://stackoverflow.com");
@@ -84,7 +86,7 @@ On first execution, this will generate golden snapshots. Subsequent runs will co
 
 ```sh
 # Update golden snapshots when they differ from actual
-npx folio --update-snapshots
+npx playwright test --update-snapshots
 ```
 
 ### Page object model
@@ -118,7 +120,7 @@ export class LoginPage {
 Use the `LoginPage` class in the tests.
 ```js
 // my.spec.ts
-import { test, expect } from "@playwright/test";
+import { test, expect } from "playwright/test";
 import { LoginPage } from "./login-page";
 
 test('login works', async ({ page }) => {
