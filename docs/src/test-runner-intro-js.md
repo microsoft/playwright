@@ -15,8 +15,6 @@ There are many more exciting features, so read on!
 
 <!-- TOC -->
 
-Note that you can still wire Playwright to your existing JavaScript [test runner]('./test-runners-other.md).
-
 ## Installation
 
 ```sh
