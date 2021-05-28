@@ -25,7 +25,7 @@ import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { installBrowsersWithProgressBar } from '../install/installer';
 import { Transport } from '../protocol/transport';
-import { PlaywrightServer } from '../remote/playwrightServer';
+import { PlaywrightServer, PlaywrightServerOptions } from '../remote/playwrightServer';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
 import { BrowserName } from '../utils/registry';
@@ -57,8 +57,11 @@ export function runDriver() {
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
 
-export async function runServer(port: number | undefined) {
-  const wsEndpoint = await PlaywrightServer.startDefault(port);
+export async function runServer(configFile?: string) {
+  let config: PlaywrightServerOptions = {};
+  if (configFile)
+    config = JSON.parse((await fs.promises.readFile(configFile)).toString());
+  const wsEndpoint = await PlaywrightServer.startDefault(config);
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
 }
 

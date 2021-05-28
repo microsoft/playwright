@@ -32,12 +32,17 @@ export interface PlaywrightServerDelegate {
   onClose: () => any;
 }
 
+export type PlaywrightServerOptions = {
+  port?: number;
+  acceptForwardedPorts?: boolean
+};
+
 export class PlaywrightServer {
   private _wsServer: ws.Server | undefined;
   private _clientsCount = 0;
   private _delegate: PlaywrightServerDelegate;
 
-  static async startDefault(port: number = 0): Promise<string> {
+  static async startDefault({port = 0, acceptForwardedPorts }: PlaywrightServerOptions): Promise<string> {
     const cleanup = async () => {
       await gracefullyCloseAll().catch(e => {});
       serverSelectors.unregisterAll();
@@ -47,8 +52,14 @@ export class PlaywrightServer {
       allowMultipleClients: false,
       onClose: cleanup,
       onConnect: (rootScope: DispatcherScope) => {
-        new PlaywrightDispatcher(rootScope, createPlaywright());
-        return cleanup;
+        const playwright = createPlaywright();
+        if (acceptForwardedPorts)
+          playwright._enablePortForwarding();
+        new PlaywrightDispatcher(rootScope, playwright);
+        return () => {
+          cleanup();
+          playwright._disablePortForwarding();
+        };
       },
     };
     const server = new PlaywrightServer(delegate);
@@ -66,12 +77,12 @@ export class PlaywrightServer {
     server.on('error', error => debugLog(error));
 
     const path = this._delegate.path;
-    const wsEndpoint = await new Promise<string>(resolve => {
+    const wsEndpoint = await new Promise<string>((resolve, reject) => {
       server.listen(port, () => {
         const address = server.address();
         const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://127.0.0.1:${address.port}${path}`;
         resolve(wsEndpoint);
-      });
+      }).on('error', reject);
     });
 
     debugLog('Listening at ' + wsEndpoint);

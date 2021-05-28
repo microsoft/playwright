@@ -26,6 +26,7 @@ import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
+import { BrowserServerPortForwardingServer } from './socksSocket';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -35,6 +36,7 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
+  _portForwardingServer!: BrowserServerPortForwardingServer;
 
   constructor(isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
@@ -43,9 +45,11 @@ export class Playwright extends SdkObject {
         debugLogger.log(logName as any, message);
       }
     });
+    this._portForwardingServer = new BrowserServerPortForwardingServer(this);
     this.options = {
       registry: new Registry(path.join(__dirname, '..', '..')),
       rootSdkObject: this,
+      portForwardingServer: this._portForwardingServer,
     };
     this.chromium = new Chromium(this.options);
     this.firefox = new Firefox(this.options);
@@ -53,6 +57,18 @@ export class Playwright extends SdkObject {
     this.electron = new Electron(this.options);
     this.android = new Android(new AdbBackend(), this.options);
     this.selectors = serverSelectors;
+  }
+
+  _enablePortForwarding() {
+    this._portForwardingServer.start();
+  }
+
+  _disablePortForwarding() {
+    this._portForwardingServer.stop();
+  }
+
+  _setForwardedPorts(ports: number[]) {
+    this._portForwardingServer.setForwardedPorts(ports);
   }
 }
 

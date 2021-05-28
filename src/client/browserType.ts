@@ -161,7 +161,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             reject(new Error(`WebSocket server disconnected (${event.code}) ${event.reason}`));
           };
           ws.addEventListener('close', prematureCloseListener);
-          const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
+          const playwright = await connection.waitForObjectWithKnownName<Playwright>('Playwright');
 
           if (!playwright._initializer.preLaunchedBrowser) {
             reject(new Error('Malformed endpoint. Did you use launchServer method?'));
@@ -191,10 +191,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           });
           if (params._forwardPorts) {
             try {
-              await playwright._channel.enablePortForwarding({
-                ports: params._forwardPorts,
-              });
-              playwright._forwardPorts = params._forwardPorts;
+              await playwright._enablePortForwarding(params._forwardPorts);
             } catch (err) {
               reject(err);
               return;

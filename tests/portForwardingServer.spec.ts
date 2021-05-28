@@ -15,32 +15,29 @@
  */
 
 import http from 'http';
+import net from 'net';
 
 import { contextTest as it, expect } from './config/browserTest';
 import type { LaunchOptions, ConnectOptions } from '../index';
 
-it.skip(({ mode }) => mode !== 'default');
 it.fixme(({platform, browserName}) => platform === 'darwin' && browserName === 'webkit');
-
-let targetTestServer: http.Server;
-let port!: number;
-it.beforeAll(async ({}, test) => {
-  port = 30_000 + test.workerIndex * 4;
-  targetTestServer = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
-    res.end('<html><body>from-retargeted-server</body></html>');
-  }).listen(port);
-});
 
 it.beforeEach(() => {
   delete process.env.PW_TEST_PROXY_TARGET;
 });
 
-it.afterAll(() => {
-  targetTestServer.close();
-});
+function startTestServer() {
+  const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+    res.end('<html><body>from-retargeted-server</body></html>');
+  }).listen(0);
+  return {
+    testServerPort: (server.address() as net.AddressInfo).port,
+    stopTestServer: () => server.close()
+  };
+}
 
-it('should forward non-forwarded requests', async ({ browserType, browserOptions, server }, workerInfo) => {
-  process.env.PW_TEST_PROXY_TARGET = port.toString();
+it('should forward non-forwarded requests', async ({ mode, browserType, browserOptions, server }, workerInfo) => {
+  it.skip(mode !== 'default');
   let reachedOriginalTarget = false;
   server.setRoute('/foo.html', async (req, res) => {
     reachedOriginalTarget = true;
@@ -61,8 +58,10 @@ it('should forward non-forwarded requests', async ({ browserType, browserOptions
   await browserServer.close();
 });
 
-it('should proxy local requests', async ({ browserType, browserOptions, server }, workerInfo) => {
-  process.env.PW_TEST_PROXY_TARGET = port.toString();
+it('should proxy local requests', async ({ mode, browserType, browserOptions, server }, workerInfo) => {
+  it.skip(mode !== 'default');
+  const {testServerPort, stopTestServer} = startTestServer();
+  process.env.PW_TEST_PROXY_TARGET = testServerPort.toString();
   let reachedOriginalTarget = false;
   server.setRoute('/foo.html', async (req, res) => {
     reachedOriginalTarget = true;
@@ -82,9 +81,11 @@ it('should proxy local requests', async ({ browserType, browserOptions, server }
   expect(await page.content()).toContain('from-retargeted-server');
   expect(reachedOriginalTarget).toBe(false);
   await browserServer.close();
+  stopTestServer();
 });
 
-it('should lead to the error page for forwarded requests when the connection is refused', async ({ browserType, browserOptions, browserName, isWindows}, workerInfo) => {
+it('should lead to the error page for forwarded requests when the connection is refused', async ({ mode, browserType, browserOptions, browserName, isWindows}, workerInfo) => {
+  it.skip(mode !== 'default');
   const examplePort = 20_000 + workerInfo.workerIndex * 3;
   const browserServer = await browserType.launchServer({
     ...browserOptions,
@@ -101,7 +102,8 @@ it('should lead to the error page for forwarded requests when the connection is 
   await browserServer.close();
 });
 
-it('should lead to the error page for non-forwarded requests when the connection is refused', async ({ browserName, browserType, browserOptions, isWindows}, workerInfo) => {
+it('should lead to the error page for non-forwarded requests when the connection is refused', async ({ mode, browserName, browserType, browserOptions, isWindows}, workerInfo) => {
+  it.skip(mode !== 'default');
   process.env.PW_TEST_PROXY_TARGET = '50001';
   const browserServer = await browserType.launchServer({
     ...browserOptions,
@@ -119,7 +121,8 @@ it('should lead to the error page for non-forwarded requests when the connection
   await browserServer.close();
 });
 
-it('should not allow connecting a second client when _acceptForwardedPorts is used', async ({ browserType, browserOptions }, workerInfo) => {
+it('should not allow connecting a second client when _acceptForwardedPorts is used', async ({ mode, browserType, browserOptions }, workerInfo) => {
+  it.skip(mode !== 'default');
   const browserServer = await browserType.launchServer({
     ...browserOptions,
     _acceptForwardedPorts: true
@@ -144,7 +147,8 @@ it('should not allow connecting a second client when _acceptForwardedPorts is us
   await browserServer.close();
 });
 
-it('should should not allow to connect when the server does not allow port-forwarding', async ({ browserType, browserOptions }, workerInfo) => {
+it('should should not allow to connect when the server does not allow port-forwarding', async ({ mode, browserType, browserOptions }, workerInfo) => {
+  it.skip(mode !== 'default');
   const browserServer = await browserType.launchServer({
     ...browserOptions,
     _acceptForwardedPorts: false
@@ -160,4 +164,27 @@ it('should should not allow to connect when the server does not allow port-forwa
   } as ConnectOptions)).rejects.toThrowError('browserType.connect: Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.');
 
   await browserServer.close();
+});
+
+it('should proxy local requests', async ({ getPlaywright, mode, browserName, server, browserOptions }, workerInfo) => {
+  it.skip(mode !== 'service');
+  let reachedOriginalTarget = false;
+  server.setRoute('/foo.html', async (req, res) => {
+    reachedOriginalTarget = true;
+    res.end('<html><body></body></html>');
+  });
+  const {testServerPort, stopTestServer} = startTestServer();
+  process.env.PW_TEST_PROXY_TARGET = testServerPort.toString();
+  const examplePort = 20_000 + workerInfo.workerIndex * 3;
+  const playwright = await getPlaywright({
+    acceptForwardedPorts: true,
+    forwardPorts: [examplePort],
+  });
+  const browser = await playwright[browserName].launch(browserOptions);
+  const page = await browser.newPage();
+  await page.goto(`http://127.0.0.1:${examplePort}/foo.html`);
+  expect(await page.content()).toContain('from-retargeted-server');
+  expect(reachedOriginalTarget).toBe(false);
+  await browser.close();
+  stopTestServer();
 });

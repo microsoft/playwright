@@ -21,23 +21,25 @@ import { SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
 import { isLocalIpAddress } from '../utils/utils';
 import { SocksProxyServer, SocksConnectionInfo, SocksInterceptedSocketHandler } from './socksServer';
-import { LaunchOptions } from './types';
 
 export class BrowserServerPortForwardingServer extends EventEmitter {
-  enabled: boolean;
+  enabled: boolean = false;
   private _forwardPorts: number[] = [];
   private _parent: SdkObject;
-  private _server: SocksProxyServer;
-  constructor(parent: SdkObject, enabled: boolean) {
+  private _server!: SocksProxyServer;
+  constructor(parent: SdkObject) {
     super();
     this.setMaxListeners(0);
-    this.enabled = enabled;
     this._parent = parent;
+  }
+
+  start() {
+    if (this.enabled)
+      return;
+    this.enabled = true;
     this._server = new SocksProxyServer(this._handler.bind(this));
-    if (enabled) {
-      this._server.listen(0);
-      debugLogger.log('proxy', `initialized server on port ${this._port()})`);
-    }
+    this._server.listen(0);
+    debugLogger.log('proxy', `starting server on port ${this._port()})`);
   }
 
   private _port(): number {
@@ -46,14 +48,10 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
     return (this._server.server.address() as net.AddressInfo).port;
   }
 
-  public browserLaunchOptions(): LaunchOptions | undefined {
+  public proxyServer() {
     if (!this.enabled)
       return;
-    return {
-      proxy: {
-        server: `socks5://127.0.0.1:${this._port()}`
-      }
-    };
+    return `socks5://127.0.0.1:${this._port()}`;
   }
 
   private _handler(info: SocksConnectionInfo, forward: () => void, intercept: (parent: SdkObject) => SocksInterceptedSocketHandler): void {
@@ -67,7 +65,7 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
     this.emit('incomingSocksSocket', socket);
   }
 
-  public enablePortForwarding(ports: number[]): void {
+  public setForwardedPorts(ports: number[]): void {
     if (!this.enabled)
       throw new Error(`Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.`);
     debugLogger.log('proxy', `enable port forwarding on ports: ${ports}`);
@@ -79,5 +77,6 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
       return;
     debugLogger.log('proxy', 'stopping server');
     this._server.close();
+    this.enabled = false;
   }
 }
