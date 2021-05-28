@@ -35,6 +35,7 @@ import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { installDeps } from '../install/installDeps';
 import { allBrowserNames, BrowserName } from '../utils/registry';
+import { addTestCommand } from './testRunner';
 import * as utils from '../utils/utils';
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
@@ -224,6 +225,9 @@ program
       console.log('');
       console.log('  $ show-trace trace/directory');
     });
+
+if (!process.env.PW_CLI_TARGET_LANG)
+  addTestCommand(program);
 
 if (process.argv[2] === 'run-driver')
   runDriver();

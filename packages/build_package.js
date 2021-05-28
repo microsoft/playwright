@@ -42,6 +42,12 @@ const PACKAGES = {
     browsers: [],
     files: PLAYWRIGHT_CORE_FILES,
   },
+  'playwright-test': {
+    description: 'Playwright Test Runner',
+    browsers: ['chromium', 'firefox', 'webkit', 'ffmpeg'],
+    files: PLAYWRIGHT_CORE_FILES,
+    name: '@playwright/test',
+  },
   'playwright-webkit': {
     description: 'A high-level API to automate WebKit',
     browsers: ['webkit'],
@@ -115,9 +121,12 @@ if (!args.some(arg => arg === '--no-cleanup')) {
 
   // 4. Generate package.json
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
+  const dependencies = { ...pwInternalJSON.dependencies };
+  if (packageName === 'playwright-test')
+    dependencies.folio = pwInternalJSON.devDependencies.folio;
   await writeToPackage('package.json', JSON.stringify({
-    name: packageName,
-    version: package.version || pwInternalJSON.version,
+    name: package.name || packageName,
+    version: pwInternalJSON.version,
     description: package.description,
     repository: pwInternalJSON.repository,
     engines: pwInternalJSON.engines,
@@ -125,9 +134,6 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     main: 'index.js',
     bin: {
       playwright: './lib/cli/cli.js',
-    },
-    engines: {
-      node: '>=12',
     },
     exports: {
       // Root import: we have a wrapper ES Module to support the following syntax.
@@ -145,7 +151,7 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     },
     author: pwInternalJSON.author,
     license: pwInternalJSON.license,
-    dependencies: pwInternalJSON.dependencies
+    dependencies,
   }, null, 2));
 
   // 5. Generate browsers.json
