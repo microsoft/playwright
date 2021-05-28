@@ -17,7 +17,7 @@ See the full list of launch options in [`browserType.launch()`](https://playwrig
 
 See the full list of context options in [`browser.newContext()`](https://playwright.dev/docs/api/class-browser#browsernewcontextoptions) documentation.
 
-```ts
+```js
 // pwtest.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 

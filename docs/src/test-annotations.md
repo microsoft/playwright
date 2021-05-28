@@ -5,7 +5,7 @@ title: "Annotations"
 
 Sadly, tests do not always pass. Playwright Test supports test annotations to deal with failures, flakiness and tests that are not yet ready.
 
-```ts
+```js
 // example.spec.ts
 import { test } from 'playwright/test';
 
