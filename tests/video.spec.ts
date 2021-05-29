@@ -643,4 +643,32 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(240);
   });
 
+  it('should not create video for internal pages', async ({browser, browserName, contextOptions, server}, testInfo) => {
+    it.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
+    server.setRoute('/empty.html', (req, res) => {
+      res.setHeader('Set-Cookie', 'name=value');
+      res.end();
+    });
+
+    const videoDir = testInfo.outputPath('');
+    const context = await browser.newContext({
+      ...contextOptions,
+      recordVideo: {
+        dir: videoDir
+      }
+    });
+
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await new Promise(r => setTimeout(r, 1000));
+
+    const cookies = await context.cookies();
+    expect(cookies.length).toBe(1);
+    await context.storageState();
+    await context.close();
+
+    const files = fs.readdirSync(videoDir);
+    expect(files.length).toBe(1);
+  });
+
 });
