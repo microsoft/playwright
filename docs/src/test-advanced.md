@@ -13,7 +13,7 @@ Playwright Test supports running multiple test projects at the same time. This i
 
 To make use of this feature, we will declare an "option fixture" for the database version, and use it in the tests.
 
-```ts
+```js
 // my-test.ts
 import { test as base } from 'playwright/test';
 
@@ -31,7 +31,7 @@ const test = base.extend<{ version: string, database: Database }>({
 ```
 
 We can use our fixtures in the test.
-```ts
+```js
 // example.spec.ts
 import test from './my-test';
 
@@ -46,7 +46,7 @@ test('test 2', async ({ version, database }) => {
 ```
 
 Now, we can run test in multiple configurations by using projects.
-```ts
+```js
 // pwtest.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -89,7 +89,7 @@ Worker-scoped fixtures and `beforeAll` and `afterAll` hooks receive `workerInfo`
 
 Consider an example where we run a new http server per worker process, and use `workerIndex` to produce a unique port number:
 
-```ts
+```js
 // my-test.ts
 import { test as base } from 'playwright/test';
 import * as http from 'http';
@@ -141,7 +141,7 @@ The following information is accessible after the test body has finished, in fix
 - `stderr: (string | Buffer)[]` - array of stderr chunks collected during the test run.
 
 Here is an example test that saves some information:
-```ts
+```js
 // example.spec.ts
 import { test } from 'playwright/test';
 
@@ -154,7 +154,7 @@ test('my test needs a file', async ({ table }, testInfo) => {
 ```
 
 Here is an example fixture that automatically saves debug logs when the test fails:
-```ts
+```js
 // my-test.ts
 import * as debug from 'debug';
 import * as fs from 'fs';
@@ -179,7 +179,7 @@ export default test;
 
 To set something up once before running all tests, use `globalSetup` option in the [configuration file](#writing-a-configuration-file). Similarly, use `globalTeardown` to run something once after all the tests.
 
-```ts
+```js
 // global-setup.ts
 import * as http from 'http';
 
@@ -191,14 +191,14 @@ module.exports = async () => {
 };
 ```
 
-```ts
+```js
 // global-teardown.ts
 module.exports = async () => {
   await new Promise(done => global.__server.close(done));
 };
 ```
 
-```ts
+```js
 // pwtest.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -214,7 +214,7 @@ export default config;
 It is common for the [fixtures](#fixtures) to be configurable, based on various test needs.
 Playwright Test allows creating "options" fixture for this purpose.
 
-```ts
+```js
 // my-test.ts
 import { test as base } from 'playwright/test';
 
@@ -242,7 +242,7 @@ export default test;
 
 We can now pass the option value with `test.use()`.
 
-```ts
+```js
 // example.spec.ts
 import test from './my-test';
 
@@ -256,7 +256,7 @@ test('my test title', async ({ dirs }) => {
 ```
 
 In addition to `test.use()`, we can also specify options in the configuration file.
-```ts
+```js
 // pwtest.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -271,7 +271,7 @@ export default config;
 
 Playwright Test uses [expect](https://jestjs.io/docs/expect) under the hood which has the functionality to extend it with [custom matchers](https://jestjs.io/docs/expect#expectextendmatchers). See the following example where a custom `toBeWithinRange` function gets added.
 
-```ts
+```js
 // pwtest.config.ts
 import * as pwtest from 'playwright/test';
 
@@ -296,7 +296,7 @@ const config = {};
 export default config;
 ```
 
-```ts
+```js
 // example.spec.ts
 import { test } from 'playwright/test';
 
@@ -306,7 +306,7 @@ test('numeric ranges', () => {
 });
 ```
 
-```ts
+```js
 // global.d.ts
 declare namespace folio {
   interface Matchers<R> {
@@ -317,7 +317,7 @@ declare namespace folio {
 
 To import expect matching libraries like [jest-extended](https://github.com/jest-community/jest-extended#installation) you can import it from your `globals.d.ts`:
 
-```ts
+```js
 // global.d.ts
 import 'jest-extended';
 ```

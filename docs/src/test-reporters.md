@@ -18,7 +18,7 @@ npx playwright test --reporter=line
 
 For more control, you can specify reporters programmatically in the [configuration file](#writing-a-configuration-file).
 
-```ts
+```js
 // pwtest.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -47,7 +47,7 @@ All built-in reporters show detailed information about failures, and mostly diff
 
 List reporter is default. It prints a line for each test being run. Use it with `--reporter=list` or `reporter: 'list'`.
 
-```ts
+```js
 // pwtest.config.ts
 const config = {
   reporter: 'list',
@@ -76,7 +76,7 @@ Running 124 tests using 6 workers
 
 Line reporter is more concise than the list reporter. It uses a single line to report last finished test, and prints failures when they occur. Line reporter is useful for large test suites where it shows the progress but does not spam the output by listing all the tests. Use it with `--reporter=line` or `reporter: 'line'`.
 
-```ts
+```js
 // pwtest.config.ts
 const config = {
   reporter: 'line',
@@ -102,7 +102,7 @@ Running 124 tests using 6 workers
 
 Dot reporter is very concise - it only produces a single character per successful test run. It is useful on CI where you don't want a lot of output. Use it with `--reporter=dot` or `reporter: 'dot'`.
 
-```ts
+```js
 // pwtest.config.ts
 const config = {
   reporter: 'dot',
@@ -127,7 +127,7 @@ FOLIO_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
 ```
 
 In configuration file, pass options directly:
-```ts
+```js
 // pwtest.config.ts
 const config = {
   reporter: { name: 'json', outputFile: 'results.json' },
@@ -145,7 +145,7 @@ FOLIO_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,line
 ```
 
 In configuration file, pass options directly:
-```ts
+```js
 // pwtest.config.ts
 const config = {
   reporter: { name: 'junit', outputFile: 'results.xml' },

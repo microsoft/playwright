@@ -1,6 +1,6 @@
 ---
 id: test-intro
-title: "Playwright Tests"
+title: "Introduction"
 ---
 
 Playwright Test Runner was created specifically to accommodate the needs of the end-to-end testing. It does everything you would expect from the regular test runner, and more. Playwright test allows to:
@@ -27,9 +27,19 @@ npm i -D playwright
 
 ## First test
 
-Create `tests/foo.spec.ts` to define your test.
+Create `tests/foo.spec.js` (or `tests/foo.spec.ts` for TypeScript) to define your test.
 
 ```js
+const { test, expect } = require('playwright/test');
+
+test('is a basic test with the page', async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+  const name = await page.innerText('.navbar__title');
+  expect(name).toBe('Playwright');
+});
+```
+
+```ts
 import { test, expect } from 'playwright/test';
 
 test('is a basic test with the page', async ({ page }) => {
@@ -43,28 +53,28 @@ Now run your tests:
 
 ```sh
 # Assuming that test files are in the tests directory.
-npx pwtest -c tests
+npx playwright test -c tests
 ```
 
 Playwright Test just ran a test using Chromium browser, in a headless manner. Let's tell it to use headed browser:
 
 ```sh
 # Assuming that test files are in the tests directory.
-npx pwtest -c tests --headed
+npx playwright test -c tests --headed
 ```
 
 What about other browsers? Let's run the same test using Firefox:
 
 ```sh
 # Assuming that test files are in the tests directory.
-npx pwtest -c tests --browser=firefox
+npx playwright test -c tests --browser=firefox
 ```
 
 And finally, on all three browsers:
 
 ```sh
 # Assuming that test files are in the tests directory.
-npx pwtest -c tests --browser=all
+npx playwright test -c tests --browser=all
 ```
 
 Refer to [configuration](./test-configuration.md) section for configuring test runs in different modes with different browsers.
@@ -74,6 +84,11 @@ Refer to [configuration](./test-configuration.md) section for configuring test r
 You noticed an argument `{ page }` that the test above has access to:
 
 ```js
+test('basic test', async ({ page }) => {
+  ...
+```
+
+```ts
 test('basic test', async ({ page }) => {
   ...
 ```
@@ -103,6 +118,12 @@ test.only('focus this test', async ({ page }) => {
 });
 ```
 
+```ts
+test.only('focus this test', async ({ page }) => {
+  // Run only focused tests in the entire project.
+});
+```
+
 ### Skip a test
 
 You can skip certain test based on the condition.
@@ -113,18 +134,38 @@ test('skip this test', async ({ page, browserName }) => {
 });
 ```
 
+```ts
+test('skip this test', async ({ page, browserName }) => {
+  test.skip(browserName === 'firefox', 'Still working on it');
+});
+```
+
 ### Group tests
 
 You can group tests to give them a logical name or to scope before/after hooks to the group.
 ```js
-import { test, expect } from 'playwright/test';
+const { test, expect } = require('playwright/test');
 
 test.describe('two tests', () => {
-  test.only('one', async ({ page }) => {
+  test('one', async ({ page }) => {
     // ...
   });
 
-  test.skip('two', async ({ page }) => {
+  test('two', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+```ts
+import { test, expect } from 'playwright/test';
+
+test.describe('two tests', () => {
+  test('one', async ({ page }) => {
+    // ...
+  });
+
+  test('two', async ({ page }) => {
     // ...
   });
 });
@@ -136,17 +177,33 @@ You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down r
 And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
 
 ```js
+const { test, expect } = require('playwright/test');
+
+test.describe('feature foo', () => {
+  test.beforeEach(async ({ page }) => {
+    // Go to the starting url before each test.
+    await page.goto('https://my.start.url/');
+  });
+
+  test('my test', async ({ page }) => {
+    // Assertions use the expect API.
+    expect(page.url()).toBe('https://my.start.url/');
+  });
+});
+```
+
+```ts
 import { test, expect } from 'playwright/test';
 
 test.describe('feature foo', () => {
   test.beforeEach(async ({ page }) => {
     // Go to the starting url before each test.
-    await page.goto('https://my.start.url');
+    await page.goto('https://my.start.url/');
   });
 
   test('my test', async ({ page }) => {
     // Assertions use the expect API.
-    expect(page.url()).toBe('https://my.start.url');
+    expect(page.url()).toBe('https://my.start.url/');
   });
 });
 ```
@@ -155,9 +212,45 @@ test.describe('feature foo', () => {
 
 So far, we've looked at the zero-config operation of Playwright Test. For a real world application, it is likely that you would want to use a config.
 
-Create `pwtest.config.ts` to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit.
+Create `playwright.config.js` (or `playwright.config.ts`) to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit.
 
 ```js
+module.exports = {
+  timeout: 30000,  // Each test is given 30 seconds.
+
+  // A project per browser, each running all the tests.
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        browserName: 'chromium',
+        headless: true,
+        viewport: { width: 1280, height: 720 },
+      },
+    },
+
+    {
+      name: 'webkit',
+      use: {
+        browserName: 'webkit',
+        headless: true,
+        viewport: { width: 1280, height: 720 },
+      },
+    },
+
+    {
+      name: 'firefox',
+      use: {
+        browserName: 'firefox',
+        headless: true,
+        viewport: { width: 1280, height: 720 },
+      },
+    }
+  ],
+};
+```
+
+```ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
 const config: PlaywrightTestConfig = {
@@ -196,12 +289,22 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-Configure NPM script to use config.
+Configure NPM script to run tests. Test runner will automatically pick up `playwright.config.js` or `playwright.config.ts`.
 
 ```json
 {
   "scripts": {
-    "test": "npx pwtest -c config.ts"
+    "test": "npx playwright test"
+  }
+}
+```
+
+If you put your configuration file in a different place, pass it with `--config` option.
+
+```json
+{
+  "scripts": {
+    "test": "npx playwright test --config=tests/example.config.js"
   }
 }
 ```

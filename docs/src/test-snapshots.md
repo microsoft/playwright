@@ -5,7 +5,7 @@ title: "Snapshots"
 
 Playwright Test includes the ability to produce and compare snapshots. For that, use `expect(value).toMatchSnapshot()`. Test runner auto-detects the content type, and includes built-in matchers for text, png and jpeg images, and arbitrary binary data.
 
-```ts
+```js
 // example.spec.ts
 import { test } from 'playwright/test';
 

@@ -1,6 +1,6 @@
 ---
 id: test-fixtures
-title: "Test fixtures"
+title: "Fixtures"
 ---
 
 <!-- TOC -->
@@ -18,7 +18,7 @@ Here is how typical test environment setup differs between traditional test styl
 
 ### Without fixtures
 
-```ts
+```js
 // example.spec.ts
 
 describe('database', () => {
@@ -53,7 +53,7 @@ describe('database', () => {
 
 ### With fixtures
 
-```ts
+```js
 // example.spec.ts
 import { test as base } from 'playwright/test';
 
@@ -92,7 +92,7 @@ There are two types of fixtures: `test` and `worker`. Test fixtures are set up f
 
 Test fixtures are set up for each test. Consider the following test file:
 
-```ts
+```js
 // hello.spec.ts
 import test from './hello';
 
@@ -109,7 +109,7 @@ It uses fixtures `hello` and `helloWorld` that are set up by the framework for e
 
 Here is how test fixtures are declared and defined. Fixtures can use other fixtures - note how `helloWorld` uses `hello`.
 
-```ts
+```js
 // hello.ts
 import { test as base } from 'playwright/test';
 
@@ -147,7 +147,7 @@ With fixtures, test organization becomes flexible - you can put tests that make 
 Playwright Test uses worker processes to run test files. You can specify the maximum number of workers using `--workers` command line option. Similarly to how test fixtures are set up for individual test runs, worker fixtures are set up for each worker process. That's where you can set up services, run servers, etc. Playwright Test will reuse the worker process for as many test files as it can, provided their worker fixtures match and hence environments are identical.
 
 Here is how the test looks:
-```ts
+```js
 // express.spec.ts
 import test from './express-test';
 import fetch from 'node-fetch';
@@ -164,7 +164,7 @@ test('fetch 2', async ({ port }) => {
 ```
 
 And here is how fixtures are declared and defined:
-```ts
+```js
 // express-test.ts
 import { test as base } from 'playwright/test';
 import express from 'express';
