@@ -9,12 +9,24 @@ title: "Examples"
 
 ## Multiple pages
 
-The default `context` argument is a [BrowserContext][browser-context]. Browser contexts are isolated execution environments that can host multiple pages. See [multi-page scenarios](./multi-pages.md) for more examples.
+The default `context` argument is a [BrowserContext]. Browser contexts are isolated execution environments that can host multiple pages. See [multi-page scenarios](./multi-pages.md) for more examples.
 
 ```js
-import { test } from "playwright/test";
+// example.spec.js
+const { test } = require('playwright/test');
 
-test("tests on multiple web pages", async ({ context }) => {
+test('tests on multiple web pages', async ({ context }) => {
+  const pageFoo = await context.newPage();
+  const pageBar = await context.newPage();
+  // Test function
+});
+```
+
+```ts
+// example.spec.ts
+import { test } from 'playwright/test';
+
+test('tests on multiple web pages', async ({ context }) => {
   const pageFoo = await context.newPage();
   const pageBar = await context.newPage();
   // Test function
