@@ -63,6 +63,26 @@ test('should collect trace', async ({ context, page, server }, testInfo) => {
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
+test('should exclude internal pages', async ({ browserName, context, page, server }, testInfo) => {
+  test.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
+  await page.goto(server.EMPTY_PAGE);
+
+  await context.tracing.start({ name: 'test' });
+  await context.storageState();
+  await page.close();
+  await context.tracing.stop();
+  await context.tracing.export(testInfo.outputPath('trace.zip'));
+
+  const trace = await parseTrace(testInfo.outputPath('trace.zip'));
+  const pageIds = new Set();
+  trace.events.forEach(e => {
+    const pageId = e.metadata?.pageId;
+    if (pageId)
+      pageIds.add(pageId);
+  });
+  expect(pageIds.size).toBe(1);
+});
+
 test('should collect two traces', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ name: 'test1', screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
