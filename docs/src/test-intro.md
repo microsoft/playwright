@@ -100,8 +100,8 @@ Here is a list of the pre-defined fixtures that you are likely to use most of th
 |Fixture    |Type             |Description                      |
 |:----------|:----------------|:--------------------------------|
 |page       |[Page]           |Isolated page for this test run. |
-|context    |[BrowserContext] |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](#modify-options) below. |
-|browser    |[Browser]        |Browsers are shared across tests to optimize resources. Learn how to [configure browser](#modify-options) below. |
+|context    |[BrowserContext] |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](./test-configuration.md). |
+|browser    |[Browser]        |Browsers are shared across tests to optimize resources. Learn how to [configure browser](./test-configuration.md). |
 |browserName|[string]         |The name of the browser currently running the test. Either `chromium`, `firefox` or `webkit`.|
 
 ## Test and assertion features

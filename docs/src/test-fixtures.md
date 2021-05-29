@@ -19,7 +19,7 @@ Here is how typical test environment setup differs between traditional test styl
 ### Without fixtures
 
 ```js
-// example.spec.ts
+// example.spec.js
 
 describe('database', () => {
   let table;
@@ -54,6 +54,37 @@ describe('database', () => {
 ### With fixtures
 
 ```js
+// example.spec.js
+const base = require('playwright/test');
+
+// Extend basic test by providing a "table" fixture.
+const test = base.test.extend({
+  table: async ({}, use) => {
+    const table = await createTable();
+    await use(table);
+    await dropTable(table);
+  },
+});
+
+test('create user', ({ table }) => {
+  table.insert();
+  // ...
+});
+
+test('update user', ({ table }) => {
+  table.insert();
+  table.update();
+  // ...
+});
+
+test('delete user', ({ table }) => {
+  table.insert();
+  table.delete();
+  // ...
+});
+```
+
+```ts
 // example.spec.ts
 import { test as base } from 'playwright/test';
 
@@ -93,6 +124,19 @@ There are two types of fixtures: `test` and `worker`. Test fixtures are set up f
 Test fixtures are set up for each test. Consider the following test file:
 
 ```js
+// hello.spec.js
+const test = require('./hello');
+
+test('hello', ({ hello }) => {
+  test.expect(hello).toBe('Hello');
+});
+
+test('hello world', ({ helloWorld }) => {
+  test.expect(helloWorld).toBe('Hello, world!');
+});
+```
+
+```ts
 // hello.spec.ts
 import test from './hello';
 
@@ -110,8 +154,31 @@ It uses fixtures `hello` and `helloWorld` that are set up by the framework for e
 Here is how test fixtures are declared and defined. Fixtures can use other fixtures - note how `helloWorld` uses `hello`.
 
 ```js
+// hello.js
+const base = require('playwright/test');
+
+// Extend base test with fixtures "hello" and "helloWorld".
+// This new "test" can be used in multiple test files, and each of them will get the fixtures.
+module.exports = base.test.extend({
+  // This fixture is a constant, so we can just provide the value.
+  hello: 'Hello',
+
+  // This fixture has some complex logic and is defined with a function.
+  helloWorld: async ({ hello }, use) => {
+    // Set up the fixture.
+    const value = hello + ', world!';
+
+    // Use the fixture value in the test.
+    await use(value);
+
+    // Clean up the fixture. Nothing to cleanup in this example.
+  },
+});
+```
+
+```ts
 // hello.ts
-import { test as base } from 'playwright/test';
+import base from 'playwright/test';
 
 // Define test fixtures "hello" and "helloWorld".
 type TestFixtures = {
@@ -148,6 +215,22 @@ Playwright Test uses worker processes to run test files. You can specify the max
 
 Here is how the test looks:
 ```js
+// express.spec.js
+const test = require('./express-test');
+const fetch = require('node-fetch');
+
+test('fetch 1', async ({ port }) => {
+  const result = await fetch(`http://localhost:${port}/1`);
+  test.expect(await result.text()).toBe('Hello World 1!');
+});
+
+test('fetch 2', async ({ port }) => {
+  const result = await fetch(`http://localhost:${port}/2`);
+  test.expect(await result.text()).toBe('Hello World 2!');
+});
+```
+
+```ts
 // express.spec.ts
 import test from './express-test';
 import fetch from 'node-fetch';
@@ -165,6 +248,51 @@ test('fetch 2', async ({ port }) => {
 
 And here is how fixtures are declared and defined:
 ```js
+// express-test.js
+const base = require('playwright/test');
+const express = require('express');
+
+// Define "port" and "express" worker fixtures.
+module.exports = base.test.extend({
+
+  // We pass a tuple to specify fixtures options.
+  // In this case, we mark this fixture as worker-scoped.
+  port: [ async ({}, use, workerInfo) => {
+    // "port" fixture uses a unique value of the worker process index.
+    await use(3000 + workerInfo.workerIndex);
+  }, { scope: 'worker' } ],
+
+  // "express" fixture starts automatically for every worker - we pass "auto" for that.
+  express: [ async ({ port }, use) => {
+    // Setup express app.
+    const app = express();
+    app.get('/1', (req, res) => {
+      res.send('Hello World 1!')
+    });
+    app.get('/2', (req, res) => {
+      res.send('Hello World 2!')
+    });
+
+    // Start the server.
+    let server;
+    console.log('Starting server...');
+    await new Promise(f => {
+      server = app.listen(port, f);
+    });
+    console.log('Server ready');
+
+    // Use the server in the tests.
+    await use(server);
+
+    // Cleanup.
+    console.log('Stopping server...');
+    await new Promise(f => server.close(f));
+    console.log('Server stopped');
+  }, { scope: 'worker', auto: true } ],
+});
+```
+
+```ts
 // express-test.ts
 import { test as base } from 'playwright/test';
 import express from 'express';
@@ -179,7 +307,7 @@ type ExpressWorkerFixtures = {
 // Note that we did not provide an test-scoped fixtures, so we pass {}.
 const test = base.extend<{}, ExpressWorkerFixtures>({
 
-  // We pass a tuple to with the fixture function and options.
+  // We pass a tuple to specify fixtures options.
   // In this case, we mark this fixture as worker-scoped.
   port: [ async ({}, use, workerInfo) => {
     // "port" fixture uses a unique value of the worker process index.
