@@ -34,8 +34,7 @@ test('should collect trace', async ({ context, page, server, browserName }, test
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.close();
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
@@ -50,13 +49,12 @@ test('should collect trace', async ({ context, page, server, browserName }, test
 });
 
 test('should collect trace', async ({ context, page, server }, testInfo) => {
-  await context.tracing.start({ name: 'test' });
+  await context.tracing.start();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.close();
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
@@ -67,11 +65,10 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
   test.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
   await page.goto(server.EMPTY_PAGE);
 
-  await context.tracing.start({ name: 'test' });
+  await context.tracing.start();
   await context.storageState();
   await page.close();
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
   const trace = await parseTrace(testInfo.outputPath('trace.zip'));
   const pageIds = new Set();
@@ -84,18 +81,16 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
 });
 
 test('should collect two traces', async ({ context, page, server }, testInfo) => {
-  await context.tracing.start({ name: 'test1', screenshots: true, snapshots: true });
+  await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace1.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
 
-  await context.tracing.start({ name: 'test2', screenshots: true, snapshots: true });
+  await context.tracing.start({ screenshots: true, snapshots: true });
   await page.dblclick('"Click"');
   await page.close();
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace2.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
 
   {
     const { events } = await parseTrace(testInfo.outputPath('trace1.zip'));
@@ -145,15 +140,14 @@ for (const params of [
     const previewHeight = params.height * scale;
 
     const context = await contextFactory({ viewport: { width: params.width, height: params.height }});
-    await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
+    await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
     // Make sure we have a chance to paint.
     for (let i = 0; i < 10; ++i) {
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
       await page.evaluate(() => new Promise(requestAnimationFrame));
     }
-    await context.tracing.stop();
-    await context.tracing.export(testInfo.outputPath('trace.zip'));
+    await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
     const { events, resources } = await parseTrace(testInfo.outputPath('trace.zip'));
     const frames = events.filter(e => e.type === 'screencast-frame');
