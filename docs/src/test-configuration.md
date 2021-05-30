@@ -5,9 +5,7 @@ title: "Configuration"
 
 <!-- TOC -->
 
-<br/>
-
-## Configure [Browser], [BrowserContext], videos and screenshots
+## Configure browser, context, videos and screenshots
 
 Playwright Tests supports browser and context options that you typically pass to [`method: BrowserType.launch`] and [`method: Browser.newContext`] methods, for example `headless`, `viewport` or `ignoreHTTPSErrors`. It also provides options to record video for the test or capture screenshot at the end.
 
@@ -16,19 +14,19 @@ You can specify any options either locally in a test file, or globally in the co
 - Browser options match [`method: BrowserType.launch`] method.
 - Context options match [`method: Browser.newContext`] method.
 - `screenshot` option - whether to capture a screenshot after each test, off by default. Screenshot will appear in the test output directory, typically `test-results`.
-  - `off` - Do not capture screenshots.
-  - `on` - Capture screenshot after each test.
-  - `only-on-failure` - Capture screenshot after each test failure.
-- `video` options - whether to record video for each test, off by default. Video will appear in the test output directory, typically `test-results`.
-  - `off` - Do not record video.
-  - `on` - Record video for each test.
-  - `retain-on-failure`  - Record video for each test, but remove all videos from successful test runs.
-  - `retry-with-video` - Record video only when retrying a test.
+  - `'off'` - Do not capture screenshots.
+  - `'on'` - Capture screenshot after each test.
+  - `'only-on-failure'` - Capture screenshot after each test failure.
+- `video` option - whether to record video for each test, off by default. Video will appear in the test output directory, typically `test-results`.
+  - `'off'` - Do not record video.
+  - `'on'` - Record video for each test.
+  - `'retain-on-failure'` - Record video for each test, but remove all videos from successful test runs.
+  - `'retry-with-video'` - Record video only when retrying a test.
 
 
 ### Global configuration
 
-Create `playwright.config.js` (or `playwright.config.ts`) to configure your tests, and specify options in the `use` section. Playwright Test will automatically pick it up.
+Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the `use` section.
 
 ```js
 module.exports = {
@@ -40,6 +38,10 @@ module.exports = {
     // Context options
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
+
+    // Artifacts
+    screenshot: 'only-on-failure',
+    video: 'retry-with-video',
   },
 };
 ```
@@ -55,9 +57,19 @@ const config: PlaywrightTestConfig = {
     // Context options
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
+
+    // Artifacts
+    screenshot: 'only-on-failure',
+    video: 'retry-with-video',
   },
 };
 export default config;
+```
+
+Now run tests as usual, Playwright Test will pick up the configuration file automatically.
+
+```sh
+npx playwright test --browser=firefox
 ```
 
 If you put your configuration file in a different place, pass it with `--config` option.
@@ -68,7 +80,7 @@ npx playwright test --config=tests/my.config.js
 
 ### Local configuration
 
-With `test.use()` you can override some options for a file or a `describe` block.
+With `test.use()` you can override some options for a file or a `test.describe` block.
 
 ```js
 // example.spec.js
@@ -79,16 +91,6 @@ test.use({ viewport: { width: 600, height: 900 } });
 
 test('my portrait test', async ({ page }) => {
   // ...
-});
-
-
-test.describe('headed block', () => {
-  // Run tests in this describe block in headed mode.
-  test.use({ headless: false });
-
-  test('my headed portrait test', async ({ page }) => {
-    // ...
-  });
 });
 ```
 
@@ -102,13 +104,31 @@ test.use({ viewport: { width: 600, height: 900 } });
 test('my portrait test', async ({ page }) => {
   // ...
 });
+```
 
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
 
 test.describe('headed block', () => {
   // Run tests in this describe block in headed mode.
   test.use({ headless: false });
 
-  test('my headed portrait test', async ({ page }) => {
+  test('my headed test', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test.describe('headed block', () => {
+  // Run tests in this describe block in headed mode.
+  test.use({ headless: false });
+
+  test('my headed test', async ({ page }) => {
     // ...
   });
 });
@@ -116,7 +136,7 @@ test.describe('headed block', () => {
 
 ## Testing options
 
-In addition to configuring [Browser] or [BrowserContext], videos or screenshots, Playwright Test has many options configuring how your tests are run. Below are the most common ones, see [advanced configuration](./test-advanced.md) for the full list.
+In addition to configuring [Browser] or [BrowserContext], videos or screenshots, Playwright Test has many options to configure how your tests are run. Below are the most common ones, see [advanced configuration](./test-advanced.md) for the full list.
 
 - `forbidOnly`: Whether to exit with an error if any tests are marked as `test.only`. Useful on CI.
 - `globalSetup`: Path to the global setup file. This file will be required and run before all the tests. It must export a single function.
@@ -254,7 +274,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-Playwright Test will run all projects by default, but you can use `--project` command line option to run a single one.
+Playwright Test will run all projects by default.
 
 ```sh
 $ npx playwright test
@@ -266,6 +286,8 @@ Running 3 tests using 3 workers
   ✓ example.spec.ts:3:1 › [WebKit] should work (2s)
 ```
 
+Use `--project` command line option to run a single project.
+
 ```sh
 $ npx playwright test --project=webkit
 
@@ -276,9 +298,9 @@ Running 1 test using 1 worker
 
 There are many more things you can do with projects:
 - Run a subset of test by specifying different `testDir` for each project.
-- Run the same test in multiple configurations, for example with desktop Chromium and emulating Chrome for Android.
-- Running "core" tests without retries to ensure stability of the core functionality, and use `retries` for other tests.
-- And much more!
+- Run tests in multiple configurations, for example with desktop Chromium and emulating Chrome for Android.
+- Run "core" tests without retries to ensure stability of the core functionality, and use `retries` for other tests.
+- And much more! See [advanced configuration](./test-advanced.md) for more details.
 
 :::note
 `--browser` command line option is not compatible with projects. Specify `browserName` in each project instead.

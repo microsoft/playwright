@@ -7,15 +7,50 @@ Playwright Test runs tests in parallel by default, using multiple worker process
 
 <!-- TOC -->
 
-<br/>
-
 ## Workers
 
-Each worker process creates a new environment to run tests. Different projects always run in different workers. By default, runner reuses the worker as much as it can to make testing faster, but it will create a new worker when retrying tests, after any test failure, to initialize a new environment, or just to speed up test execution if the worker limit is not reached.
+Each worker process creates a new environment to run tests. By default, Playwright Test reuses the worker as much as it can to make testing faster.
 
-The maximum number of worker processes is controlled via [command line](#command-line) or [configuration object](#configuration-object).
+However, test runner will create a new worker when retrying tests, after any test failure, to initialize a new environment, or just to speed up test execution if the worker limit is not reached.
 
-Each worker process is assigned a unique sequential index that is accessible through [`workerInfo`](#workerinfo) object.
+You can control the maximum number of worker processes via [command line](./test-cli.md) or in the [configuration file](./test-configuration.md).
+
+- Run in parallel by default
+  ```sh
+  npx playwright test
+  ```
+
+- Disable parallelization
+  ```sh
+  npx playwright test --worker 1
+  ```
+
+- Control the number of workers
+  ```sh
+  npx playwright test --worker 4
+  ```
+
+- In the configuration file
+  ```js
+  // playwright.config.js
+  module.exports = {
+    // Limit the number of workers on CI, use default locally
+    workers: process.env.CI ? 2 : undefined,
+  };
+  ```
+
+  ```ts
+  // playwright.config.ts
+  import { PlaywrightTestConfig } from 'playwright/test';
+
+  const config: PlaywrightTestConfig = {
+    // Limit the number of workers on CI, use default locally
+    workers: process.env.CI ? 2 : undefined,
+  };
+  export default config;
+  ```
+
+Each worker process is assigned a unique sequential index that is accessible through the [`workerInfo`](./test-advanced.md#workerinfo) object.
 
 ## Shards
 
