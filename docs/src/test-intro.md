@@ -212,41 +212,20 @@ test.describe('feature foo', () => {
 
 So far, we've looked at the zero-config operation of Playwright Test. For a real world application, it is likely that you would want to use a config.
 
-Create `playwright.config.js` (or `playwright.config.ts`) to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit.
+Create `playwright.config.js` (or `playwright.config.ts`) to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit. Look for more options in the [configuration section](./test-configuration.md).
 
 ```js
 module.exports = {
-  timeout: 30000,  // Each test is given 30 seconds.
+  // Each test is given 30 seconds.
+  timeout: 30000,
 
-  // A project per browser, each running all the tests.
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        browserName: 'chromium',
-        headless: true,
-        viewport: { width: 1280, height: 720 },
-      },
-    },
+  use: {
+    // Run browsers in the headless mode.
+    headless: true,
 
-    {
-      name: 'webkit',
-      use: {
-        browserName: 'webkit',
-        headless: true,
-        viewport: { width: 1280, height: 720 },
-      },
-    },
-
-    {
-      name: 'firefox',
-      use: {
-        browserName: 'firefox',
-        headless: true,
-        viewport: { width: 1280, height: 720 },
-      },
-    }
-  ],
+    // Specify the viewport size.
+    viewport: { width: 1280, height: 720 },
+  },
 };
 ```
 
@@ -254,37 +233,16 @@ module.exports = {
 import { PlaywrightTestConfig } from 'playwright/test';
 
 const config: PlaywrightTestConfig = {
-  timeout: 30000,  // Each test is given 30 seconds.
+  // Each test is given 30 seconds.
+  timeout: 30000,
 
-  // A project per browser, each running all the tests.
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        browserName: 'chromium',
-        headless: true,
-        viewport: { width: 1280, height: 720 },
-      },
-    },
+  use: {
+    // Run browsers in the headless mode.
+    headless: true,
 
-    {
-      name: 'webkit',
-      use: {
-        browserName: 'webkit',
-        headless: true,
-        viewport: { width: 1280, height: 720 },
-      },
-    },
-
-    {
-      name: 'firefox',
-      use: {
-        browserName: 'firefox',
-        headless: true,
-        viewport: { width: 1280, height: 720 },
-      },
-    }
-  ],
+    // Specify the viewport size.
+    viewport: { width: 1280, height: 720 },
+  },
 };
 export default config;
 ```

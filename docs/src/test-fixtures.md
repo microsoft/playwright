@@ -14,38 +14,36 @@ Playwright Test is based on the concept of the test fixtures. Test fixtures are 
 - Playwright Test can efficiently retry the flaky failures, instead of re-running the whole suite.
 - You can group tests based on their meaning, instead of their common setup.
 
-Here is how typical test environment setup differs between traditional test style and the fixture-based one:
+Here is how typical test environment setup differs between traditional test style and the fixture-based one. We assume a `TodoPage` class that helps interacting with a "todo list" page of the web app.
 
 ### Without fixtures
 
 ```js
-// example.spec.js
+// todo.spec.js
+const { test } = require('playwright/test');
+const { TodoPage } = require('./todo-page');
 
-describe('database', () => {
-  let table;
+describe('todo tests', () => {
+  let todoPage;
 
-  beforeEach(async ()=> {
-    table = await createTable();
+  beforeEach(async ({ page }) => {
+    todoPage = new TodoPage(page);
+    await todoPage.goto();
+    await todoPage.addToDo('item1');
+    await todoPage.addToDo('item2');
   });
 
   afterEach(async () => {
-    await dropTable(table);
+    await todoPage.removeAll();
   });
 
-  test('create user', () => {
-    table.insert();
+  test('should add an item', async () => {
+    await todoPage.addToDo('my item');
     // ...
   });
 
-  test('update user', () => {
-    table.insert();
-    table.update();
-    // ...
-  });
-
-  test('delete user', () => {
-    table.insert();
-    table.delete();
+  test('should remove an item', async () => {
+    await todoPage.remove('item1');
     // ...
   });
 });
@@ -54,32 +52,29 @@ describe('database', () => {
 ### With fixtures
 
 ```js
-// example.spec.js
+// todo.spec.js
 const base = require('playwright/test');
+const { TodoPage } = require('./todo-page');
 
-// Extend basic test by providing a "table" fixture.
+// Extend basic test by providing a "todoPage" fixture.
 const test = base.test.extend({
-  table: async ({}, use) => {
-    const table = await createTable();
-    await use(table);
-    await dropTable(table);
+  todoPage: async ({ page }, use) => {
+    const todoPage = new TodoPage(page);
+    await todoPage.goto();
+    await todoPage.addToDo('item1');
+    await todoPage.addToDo('item2');
+    await use(todoPage);
+    await todoPage.removeAll();
   },
 });
 
-test('create user', ({ table }) => {
-  table.insert();
+test('should add an item', async ({ todoPage }) => {
+  await todoPage.addToDo('my item');
   // ...
 });
 
-test('update user', ({ table }) => {
-  table.insert();
-  table.update();
-  // ...
-});
-
-test('delete user', ({ table }) => {
-  table.insert();
-  table.delete();
+test('should remove an item', async ({ todoPage }) => {
+  await todoPage.remove('item1');
   // ...
 });
 ```
@@ -87,30 +82,27 @@ test('delete user', ({ table }) => {
 ```ts
 // example.spec.ts
 import { test as base } from 'playwright/test';
+import { TodoPage } from './todo-page';
 
 // Extend basic test by providing a "table" fixture.
-const test = base.extend<{ table: Table }>({
-  table: async ({}, use) => {
-    const table = await createTable();
-    await use(table);
-    await dropTable(table);
+const test = base.extend<{ todoPage: TodoPage }>({
+  todoPage: async ({ page }, use) => {
+    const todoPage = new TodoPage(page);
+    await todoPage.goto();
+    await todoPage.addToDo('item1');
+    await todoPage.addToDo('item2');
+    await use(todoPage);
+    await todoPage.removeAll();
   },
 });
 
-test('create user', ({ table }) => {
-  table.insert();
+test('should add an item', async ({ todoPage }) => {
+  await todoPage.addToDo('my item');
   // ...
 });
 
-test('update user', ({ table }) => {
-  table.insert();
-  table.update();
-  // ...
-});
-
-test('delete user', ({ table }) => {
-  table.insert();
-  table.delete();
+test('should remove an item', async ({ todoPage }) => {
+  await todoPage.remove('item1');
   // ...
 });
 ```
