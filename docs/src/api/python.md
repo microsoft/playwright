@@ -107,6 +107,10 @@ Raw script content.
 * langs: python
 - returns: <[EventContextManager]<[Page]>>
 
+## async method: Page.waitForWebSocket
+* langs: python
+- returns: <[EventContextManager]<[WebSocket]>>
+
 ## async method: Page.waitForWorker
 * langs: python
 - returns: <[EventContextManager]<[Worker]>>
@@ -132,6 +136,10 @@ Raw script content.
 - returns: <[EventContextManager]<[Response]>>
 
 ## async method: Page.waitForRequest
+* langs: python
+- returns: <[EventContextManager]<[Request]>>
+
+## async method: Page.waitForRequestFinished
 * langs: python
 - returns: <[EventContextManager]<[Request]>>
 
