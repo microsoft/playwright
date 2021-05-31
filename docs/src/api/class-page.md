@@ -3422,7 +3422,7 @@ Will throw an error if the page is closed before the [`event: Page.requestFinish
 ### option: Page.waitForRequestFinished.predicate =
 - `predicate` <[function]\([Request]\):[boolean]>
 
-Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
+Receives the [Request] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForRequestFinished.timeout = %%-wait-for-event-timeout-%%
 
