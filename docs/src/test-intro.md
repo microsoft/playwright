@@ -32,7 +32,7 @@ Create `tests/foo.spec.js` (or `tests/foo.spec.ts` for TypeScript) to define you
 ```js
 const { test, expect } = require('playwright/test');
 
-test('is a basic test with the page', async ({ page }) => {
+test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
   const name = await page.innerText('.navbar__title');
   expect(name).toBe('Playwright');
@@ -42,38 +42,34 @@ test('is a basic test with the page', async ({ page }) => {
 ```ts
 import { test, expect } from 'playwright/test';
 
-test('is a basic test with the page', async ({ page }) => {
+test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
   const name = await page.innerText('.navbar__title');
   expect(name).toBe('Playwright');
 });
 ```
 
-Now run your tests:
+Now run your tests, assuming that test files are in the `tests` directory.
 
 ```sh
-# Assuming that test files are in the tests directory.
 npx playwright test -c tests
 ```
 
 Playwright Test just ran a test using Chromium browser, in a headless manner. Let's tell it to use headed browser:
 
 ```sh
-# Assuming that test files are in the tests directory.
 npx playwright test -c tests --headed
 ```
 
 What about other browsers? Let's run the same test using Firefox:
 
 ```sh
-# Assuming that test files are in the tests directory.
 npx playwright test -c tests --browser=firefox
 ```
 
 And finally, on all three browsers:
 
 ```sh
-# Assuming that test files are in the tests directory.
 npx playwright test -c tests --browser=all
 ```
 
@@ -177,6 +173,7 @@ You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down r
 And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
 
 ```js
+// example.spec.js
 const { test, expect } = require('playwright/test');
 
 test.describe('feature foo', () => {
@@ -193,6 +190,7 @@ test.describe('feature foo', () => {
 ```
 
 ```ts
+// example.spec.ts
 import { test, expect } from 'playwright/test';
 
 test.describe('feature foo', () => {
@@ -208,7 +206,111 @@ test.describe('feature foo', () => {
 });
 ```
 
-## Write a configuration file
+### Write assertions
+
+Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. It provides a lot of matchers like `toEqual`, `toContain`, `toMatch` and many more.
+
+Combine `expect` with various Playwright methods to create expectations for your test:
+- [`method: Page.isVisible`]
+- [`method: Page.waitForSelector`]
+- [`method: Page.textContent`]
+- [`method: Page.getAttribute`]
+- Find out more in the [assertions](./assertions.md) guide
+
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
+
+test('my test', async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+
+  // Expect a title "to contain" a substring.
+  expect(await page.title()).toContain('Playwright');
+
+  // Expect an attribute "to be strictly equal" to the value.
+  expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
+
+  // Expect an element "to be visible".
+  expect(await page.isVisible('[aria-label="GitHub repository"]')).toBe(true);
+
+  await page.click('text=Get Started');
+  // Expect some text to be visible on the page.
+  expect(await page.waitForSelector('text=Getting Started')).toBeTruthy();
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test('my test', async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+
+  // Expect a title "to contain" a substring.
+  expect(await page.title()).toContain('Playwright');
+
+  // Expect an attribute "to be strictly equal" to the value.
+  expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
+
+  // Expect an element "to be visible".
+  expect(await page.isVisible('[aria-label="GitHub repository"]')).toBe(true);
+
+  await page.click('text=Get Started');
+  // Expect some text to be visible on the page.
+  expect(await page.waitForSelector('text=Getting Started')).toBeTruthy();
+});
+```
+
+## Learn the command line
+
+Here are the most common options available in the [command line](./test-cli.md).
+
+- Run tests in headed browsers
+  ```sh
+  npx playwright test --headed
+  ```
+
+- Run tests in a particular browser
+  ```sh
+  npx playwright test --browser=webkit
+  ```
+
+- Run tests in all browsers
+  ```sh
+  npx playwright test --browser=all
+  ```
+
+- Run a single test file
+  ```sh
+  npx playwright test tests/todo-page.spec.ts
+  ```
+
+- Run a set of test files
+  ```sh
+  npx playwright test tests/todo-page/ tests/landing-page/
+  ```
+
+- Run a test with specific title
+  ```sh
+  npx playwright test -g "add a todo item"
+  ```
+
+- Run tests [in parallel](./test-parallel.md) - that's the default
+  ```sh
+  npx playwright test
+  ```
+
+- Disable [parallelization](./test-parallel.md)
+  ```sh
+  npx playwright test --workers=1
+  ```
+
+- Choose a [reporter](./test-reporters.md)
+  ```sh
+  npx playwright test --reporter=dot
+  ```
+
+## Create a configuration file
 
 So far, we've looked at the zero-config operation of Playwright Test. For a real world application, it is likely that you would want to use a config.
 

@@ -1,11 +1,9 @@
 ---
 id: test-fixtures
-title: "Fixtures"
+title: "Advanced Fixtures"
 ---
 
 <!-- TOC -->
-
-<br/>
 
 ## Introduction to fixtures
 

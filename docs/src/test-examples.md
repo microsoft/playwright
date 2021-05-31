@@ -5,8 +5,6 @@ title: "Examples"
 
 <!-- TOC -->
 
-<br/>
-
 ## Multiple pages
 
 The default `context` argument is a [BrowserContext]. Browser contexts are isolated execution environments that can host multiple pages. See [multi-page scenarios](./multi-pages.md) for more examples.
