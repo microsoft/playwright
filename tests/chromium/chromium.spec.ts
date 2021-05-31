@@ -215,13 +215,13 @@ playwrightTest('should send extra headers with connect request', async ({browser
       browserType.connectOverCDP({
         wsEndpoint: `ws://localhost:${server.PORT}/ws`,
         headers: {
-          'User-Agent': 'Playwright',
+          'framework': 'Playwright',
           'foo': 'bar',
         },
         timeout: 100,
       }).catch(() => {})
     ]);
-    expect(request.headers['user-agent']).toBe('Playwright');
+    expect(request.headers['framework']).toBe('Playwright');
     expect(request.headers['foo']).toBe('bar');
   }
   {
@@ -230,13 +230,13 @@ playwrightTest('should send extra headers with connect request', async ({browser
       browserType.connectOverCDP({
         endpointURL: `ws://localhost:${server.PORT}/ws`,
         headers: {
-          'User-Agent': 'Playwright',
+          'framework': 'Playwright',
           'foo': 'bar',
         },
         timeout: 100,
       }).catch(() => {})
     ]);
-    expect(request.headers['user-agent']).toBe('Playwright');
+    expect(request.headers['framework']).toBe('Playwright');
     expect(request.headers['foo']).toBe('bar');
   }
 });
