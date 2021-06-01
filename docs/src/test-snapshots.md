@@ -1,18 +1,80 @@
 ---
 id: test-snapshots
-title: "Snapshots"
+title: "Visual comparisons"
 ---
 
-Playwright Test includes the ability to produce and compare snapshots. For that, use `expect(value).toMatchSnapshot()`. Test runner auto-detects the content type, and includes built-in matchers for text, png and jpeg images, and arbitrary binary data.
+Playwright Test includes the ability to produce and visually compare screenshots using `expect(value).toMatchSnapshot()`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
 
-```ts
-// example.spec.ts
-import { test } from 'playwright/test';
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
 
-test('my test', async () => {
-  const image = await produceSomePNG();
-  test.expect(image).toMatchSnapshot('optional-snapshot-name.png');
+test('example test', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  expect(await page.screenshot()).toMatchSnapshot('optional-snapshot-name.png');
 });
 ```
 
-Snapshots are stored under `__snapshots__` directory by default, and can be specified in the [configuration object](#configuration-object).
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test('example test', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  expect(await page.screenshot()).toMatchSnapshot('optional-snapshot-name.png');
+});
+```
+
+Sometimes you need to update the reference screenshot, for example when the page has changed. Do this with the  `--update-snapshots` flag.
+
+```sh
+npx playwright test --update-snapshots
+```
+
+Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can pass comparison `threshold` as an option.
+
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
+
+test('example test', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  expect(await page.screenshot()).toMatchSnapshot({ threshold: 0.2 });
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test('example test', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  expect(await page.screenshot()).toMatchSnapshot({ threshold: 0.2 });
+});
+```
+
+Apart from screenshots, `expect(value).toMatchSnapshot()` can also be used to compare text, png and jpeg images, or arbitrary binary data. Playwright Test auto-detects the content type and uses the appropriate comparison algorithm.
+
+Here we compare text content against the reference.
+
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
+
+test('example test', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  expect(await page.textContent('.hero__title')).toMatchSnapshot();
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test('example test', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  expect(await page.textContent('.hero__title')).toMatchSnapshot();
+});
+```
+
+Snapshots are stored next to the test file, in a separate directory. For example, `my.spec.js` file will produce and store snapshots in the `my.spec.js-snapshots` directory. You should commit this directory to your version control (e.g. `git`), and review any changes to it.

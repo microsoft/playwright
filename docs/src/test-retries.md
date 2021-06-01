@@ -9,7 +9,24 @@ Playwright Test will retry tests if they failed. Pass the maximum number of retr
 npx playwright test --retries=3
 ```
 
-Failing tests will be retried multiple times until they pass, or until the maximum number of retries is reached. Playwright Test will report all tests that failed at least once:
+```js
+// playwright.config.js
+module.exports = {
+  retries: 3,
+};
+```
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+
+const config: PlaywrightTestConfig = {
+  retries: 3,
+};
+export default config;
+```
+
+Failing tests will be retried multiple times until they pass, or until the maximum number of retries is reached. Playwright Test will report all tests that failed at least once.
 
 ```sh
 Running 1 test using 1 worker

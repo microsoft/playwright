@@ -181,30 +181,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async _evaluateHandleInUtility<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>>;
-  async _evaluateHandleInUtility<R>(pageFunction: structs.PageFunction<void, R>, arg?: any): Promise<structs.SmartHandle<R>>;
-  async _evaluateHandleInUtility<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
-    assertMaxArguments(arguments.length, 2);
-    return this._wrapApiCall(this._apiName('_evaluateHandleInUtility'), async (channel: channels.FrameChannel) => {
-      const result = await channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), world: 'utility' });
-      return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
-    });
-  }
-
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return this._wrapApiCall(this._apiName('evaluate'), async (channel: channels.FrameChannel) => {
       const result = await channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-      return parseResult(result.value);
-    });
-  }
-
-  async _evaluateInUtility<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg: Arg): Promise<R>;
-  async _evaluateInUtility<R>(pageFunction: structs.PageFunction<void, R>, arg?: any): Promise<R>;
-  async _evaluateInUtility<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 2);
-    return this._wrapApiCall(this._apiName('evaluate'), async (channel: channels.FrameChannel) => {
-      const result = await channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), world: 'utility' });
       return parseResult(result.value);
     });
   }

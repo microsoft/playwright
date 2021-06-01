@@ -551,7 +551,6 @@ it('should not use toJSON when evaluating', async ({ page }) => {
 });
 
 it('should not use Array.prototype.toJSON when evaluating', async ({ page, browserName }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/6750');
   const result = await page.evaluate(() => {
     (Array.prototype as any).toJSON = () => 'busted';
     return [1, 2, 3];

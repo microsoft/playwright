@@ -49,7 +49,7 @@
     "proxy-from-env": "^1.1.0",
     "rimraf": "^3.0.2",
     "stack-utils": "^2.0.3",
-    "ws": "^7.3.1",
+    "ws": "^7.4.6",
     "yazl": "^2.5.1"
   },
   "devDependencies": {
@@ -80,7 +80,7 @@
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react-hooks": "^4.2.0",
     "file-loader": "^6.1.0",
-    "folio": "=0.4.0-alpha19",
+    "folio": "=0.4.0-alpha21",
     "formidable": "^1.2.2",
     "html-webpack-plugin": "^4.4.1",
     "ncp": "^2.0.0",

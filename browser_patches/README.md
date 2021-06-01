@@ -79,7 +79,11 @@ $ node utils/roll_browser.js chromium 123456
 
 # Cheatsheet
 
-## FireFox
+## See browser stdout/stderr
+
+Set the `DEBUG=pw:browser` environment variable to see it.
+
+## Firefox
 
 #### Stack trace
 
@@ -111,7 +115,17 @@ Module name is a string passed to the `mozilla::LazyLogModule` of the correspond
 LazyLogModule gHttpLog("nsHttp");
 ```
 
+Inside Juggler, you can use `dump('foo\n')`.
+
 ## WebKit
+
+#### Logging
+
+Inside Objective-C you can use [NSLog](https://developer.apple.com/documentation/foundation/1395275-nslog).
+
+```
+NSLog(@"Foobar value: %@", value);
+```
 
 #### Debugging windows
 

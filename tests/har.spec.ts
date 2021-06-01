@@ -25,6 +25,7 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
   const page = await context.newPage();
   return {
     page,
+    context,
     getLog: async () => {
       await context.close();
       return JSON.parse(fs.readFileSync(harPath).toString())['log'];
@@ -280,4 +281,23 @@ it('should have popup requests', async ({ contextFactory, server }, testInfo) =>
   expect(entries[0].response.status).toBe(200);
   expect(entries[1].request.url).toBe(server.PREFIX + '/one-style.css');
   expect(entries[1].response.status).toBe(200);
+});
+
+it('should not contain internal pages', async ({ browserName, contextFactory, server }, testInfo) => {
+  it.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', 'name=value');
+    res.end();
+  });
+
+  const { page, context, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+
+  const cookies = await context.cookies();
+  expect(cookies.length).toBe(1);
+  // Get storage state, this create internal page.
+  await context.storageState();
+
+  const log = await getLog();
+  expect(log.pages.length).toBe(1);
 });

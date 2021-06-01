@@ -1,5 +1,5 @@
 diff --git a/Source/JavaScriptCore/CMakeLists.txt b/Source/JavaScriptCore/CMakeLists.txt
-index 9516cd28f69f165e430e21a1bb432564477cebea..42f6f8330a6107fbedea41b00d7f2ff285d37d11 100644
+index 5df693efd7d701a404b2579b65c89af84840d252..b93a33920eb7fd5ee170bb29c5d81e1ea120092d 100644
 --- a/Source/JavaScriptCore/CMakeLists.txt
 +++ b/Source/JavaScriptCore/CMakeLists.txt
 @@ -1241,22 +1241,27 @@ set(JavaScriptCore_INSPECTOR_DOMAINS
@@ -1441,10 +1441,10 @@ index 638612413466efc87b737e8a81042ed07ca12703..6f9e518ff0bfa2a6228675d25b6b785f
          },
          {
 diff --git a/Source/JavaScriptCore/runtime/DateConversion.cpp b/Source/JavaScriptCore/runtime/DateConversion.cpp
-index 955756ba405f400970610f9a68c7ed42a67cb015..1520c0a1475a90de2795e4ccd8919c1bb1384066 100644
+index 2decf8a83c80e80ca8677f4c787bf79c6c2995fa..ff28030fe3227af688d9cc0e405d12a4a387e107 100644
 --- a/Source/JavaScriptCore/runtime/DateConversion.cpp
 +++ b/Source/JavaScriptCore/runtime/DateConversion.cpp
-@@ -100,17 +100,23 @@ String formatDateTime(const GregorianDateTime& t, DateTimeFormat format, bool as
+@@ -97,18 +97,24 @@ String formatDateTime(const GregorianDateTime& t, DateTimeFormat format, bool as
              appendNumber<2>(builder, offset / 60);
              appendNumber<2>(builder, offset % 60);
  
@@ -1471,14 +1471,16 @@ index 955756ba405f400970610f9a68c7ed42a67cb015..1520c0a1475a90de2795e4ccd8919c1b
 +                strftime(tzName, sizeof(tzName), "%Z", &gtm);
 +                timeZoneName = String(tzName);
  #endif
--            if (timeZoneName[0]) {
+-            if (timeZoneName[0])
+-                builder.append(" (", timeZoneName, ')');
++                if (!timeZoneName.isEmpty())
++                    builder.append(" (", timeZoneName, ')');
 +            }
-+            if (!timeZoneName.isEmpty()) {
-                 builder.appendLiteral(" (");
-                 builder.append(timeZoneName);
-                 builder.append(')');
+         }
+     }
+ 
 diff --git a/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp b/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
-index f89806c56b260522fc7c7b98af852cf733f8985f..0ae692ba821d4a6c5210fe12ce77b84a7b052c62 100644
+index 28bbf6f3eeb31236b783d46a518b93d700a86cb5..b119332071a733b55a004574dafb33934b587c49 100644
 --- a/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
 +++ b/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
 @@ -36,6 +36,7 @@
@@ -1892,10 +1894,10 @@ index fa6958fbd30fabfd1d237aaf1a89f6eb5fa3b366..c0d6541242d79dc6d615a43710343b89
  
  if (Systemd_FOUND)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
-index 02a07f13e0df8106b560bd14f03e582fe2de22bd..86c45a25cc69d0af8378815a05812c801dfd10a0 100644
+index eabd349ed66c709e4cc14b99ab566f77e98b5e0d..5a11102d61ea00478260396c04624e92ccee940b 100644
 --- a/Source/WTF/wtf/PlatformHave.h
 +++ b/Source/WTF/wtf/PlatformHave.h
-@@ -364,7 +364,7 @@
+@@ -384,7 +384,7 @@
  #define HAVE_NSHTTPCOOKIESTORAGE__INITWITHIDENTIFIER_WITH_INACCURATE_NULLABILITY 1
  #endif
  
@@ -1917,10 +1919,10 @@ index 46148f8b54b062bd7f8d6c3fd76c18983d6be28f..c35180cd3327e9331c4ebc097acb318d
  
  if (Systemd_FOUND)
 diff --git a/Source/WebCore/DerivedSources.make b/Source/WebCore/DerivedSources.make
-index 4c0a85a6040e47f2f2f572f63e37ac318584d832..38eb69b21d5c871953c536f08ab4607decc141dd 100644
+index bf89cae2cd1be60572395c162f92fa170988e7fc..8908069e4371fb3ff8a03a2001709b833728bd3c 100644
 --- a/Source/WebCore/DerivedSources.make
 +++ b/Source/WebCore/DerivedSources.make
-@@ -775,6 +775,10 @@ JS_BINDING_IDLS := \
+@@ -774,6 +774,10 @@ JS_BINDING_IDLS := \
      $(WebCore)/dom/Slotable.idl \
      $(WebCore)/dom/StaticRange.idl \
      $(WebCore)/dom/StringCallback.idl \
@@ -1931,7 +1933,7 @@ index 4c0a85a6040e47f2f2f572f63e37ac318584d832..38eb69b21d5c871953c536f08ab4607d
      $(WebCore)/dom/Text.idl \
      $(WebCore)/dom/TextDecoder.idl \
      $(WebCore)/dom/TextDecoderStream.idl \
-@@ -1304,9 +1308,6 @@ JS_BINDING_IDLS := \
+@@ -1303,9 +1307,6 @@ JS_BINDING_IDLS := \
  ADDITIONAL_BINDING_IDLS = \
      DocumentTouch.idl \
      GestureEvent.idl \
@@ -2027,10 +2029,10 @@ index 9d4f3bd1ade02a378340961d617aae1c5e0776a3..17b2b6cfb52d94d8104b68b9250883c4
  
  list(APPEND WebCore_USER_AGENT_STYLE_SHEETS
 diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
-index ad98218af8ff3ff70dca88c05c258f3bdae4e034..f775299ce4be8a01ec398134006abde4f5587b9d 100644
+index 7bcd8d1d4ee09ac6ec205a709485491c878a2370..073b7c3514ffc5538a7dd0a4005e0c3c33f2bcf0 100644
 --- a/Source/WebCore/SourcesCocoa.txt
 +++ b/Source/WebCore/SourcesCocoa.txt
-@@ -615,3 +615,9 @@ platform/graphics/angle/TemporaryANGLESetting.cpp @no-unify
+@@ -616,3 +616,9 @@ platform/graphics/angle/TemporaryANGLESetting.cpp @no-unify
  // Derived Sources
  
  WHLSLStandardLibraryFunctionMap.cpp
@@ -2079,10 +2081,10 @@ index ef168b76819216d984b7a2d0f760005fb9d24de8..2d6cf51f3b45191ad84106429d4f108f
  __ZN7WebCore14DocumentLoaderD2Ev
  __ZN7WebCore14DocumentLoader17clearMainResourceEv
 diff --git a/Source/WebCore/WebCore.xcodeproj/project.pbxproj b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
-index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50ed03e8a9 100644
+index 502d09b642b512c337950bbc24c03b8958e0d9c5..cd2eb06700cbc42d6ce94576c83aa1e67150e954 100644
 --- a/Source/WebCore/WebCore.xcodeproj/project.pbxproj
 +++ b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
-@@ -5320,6 +5320,14 @@
+@@ -5321,6 +5321,14 @@
  		EDE3A5000C7A430600956A37 /* ColorMac.h in Headers */ = {isa = PBXBuildFile; fileRef = EDE3A4FF0C7A430600956A37 /* ColorMac.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		EDEC98030AED7E170059137F /* WebCorePrefix.h in Headers */ = {isa = PBXBuildFile; fileRef = EDEC98020AED7E170059137F /* WebCorePrefix.h */; };
  		EFCC6C8F20FE914400A2321B /* CanvasActivityRecord.h in Headers */ = {isa = PBXBuildFile; fileRef = EFCC6C8D20FE914000A2321B /* CanvasActivityRecord.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -2097,7 +2099,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  		F12171F616A8CF0B000053CA /* WebVTTElement.h in Headers */ = {isa = PBXBuildFile; fileRef = F12171F416A8BC63000053CA /* WebVTTElement.h */; };
  		F32BDCD92363AACA0073B6AE /* UserGestureEmulationScope.h in Headers */ = {isa = PBXBuildFile; fileRef = F32BDCD72363AACA0073B6AE /* UserGestureEmulationScope.h */; };
  		F344C7141125B82C00F26EEE /* InspectorFrontendClient.h in Headers */ = {isa = PBXBuildFile; fileRef = F344C7121125B82C00F26EEE /* InspectorFrontendClient.h */; settings = {ATTRIBUTES = (Private, ); }; };
-@@ -16773,6 +16781,14 @@
+@@ -16775,6 +16783,14 @@
  		EDEC98020AED7E170059137F /* WebCorePrefix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = WebCorePrefix.h; sourceTree = "<group>"; tabWidth = 4; usesTabs = 0; };
  		EFB7287B2124C73D005C2558 /* CanvasActivityRecord.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CanvasActivityRecord.cpp; sourceTree = "<group>"; };
  		EFCC6C8D20FE914000A2321B /* CanvasActivityRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CanvasActivityRecord.h; sourceTree = "<group>"; };
@@ -2112,7 +2114,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  		F12171F316A8BC63000053CA /* WebVTTElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebVTTElement.cpp; sourceTree = "<group>"; };
  		F12171F416A8BC63000053CA /* WebVTTElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebVTTElement.h; sourceTree = "<group>"; };
  		F32BDCD52363AAC90073B6AE /* UserGestureEmulationScope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UserGestureEmulationScope.cpp; sourceTree = "<group>"; };
-@@ -22368,7 +22384,12 @@
+@@ -22373,7 +22389,12 @@
  				93D6B7A62551D3ED0058DD3A /* DummySpeechRecognitionProvider.h */,
  				1AF326770D78B9440068F0C4 /* EditorClient.h */,
  				93C09A800B064F00005ABD4D /* EventHandler.cpp */,
@@ -2125,7 +2127,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				E0FEF371B27C53EAC1C1FBEE /* EventSource.cpp */,
  				E0FEF371B17C53EAC1C1FBEE /* EventSource.h */,
  				E0FEF371B07C53EAC1C1FBEE /* EventSource.idl */,
-@@ -27902,7 +27923,9 @@
+@@ -27909,7 +27930,9 @@
  				B2C3D9EC0D006C1D00EF6F26 /* text */,
  				E1EE8B6B2412B2A700E794D6 /* xr */,
  				DFDB912CF8E88A6DA1AD264F /* AbortableTaskQueue.h */,
@@ -2135,7 +2137,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				49AE2D95134EE5F90072920A /* CalculationValue.h */,
  				C330A22113EC196B0000B45B /* ColorChooser.h */,
  				C37CDEBC149EF2030042090D /* ColorChooserClient.h */,
-@@ -30462,6 +30485,7 @@
+@@ -30469,6 +30492,7 @@
  				BCCFBAE70B5152ED0001F1D7 /* DocumentParser.h */,
  				AD6E71AA1668899D00320C13 /* DocumentSharedObjectPool.cpp */,
  				AD6E71AB1668899D00320C13 /* DocumentSharedObjectPool.h */,
@@ -2143,7 +2145,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				6BDB5DC1227BD3B800919770 /* DocumentStorageAccess.cpp */,
  				6BDB5DC0227BD3B800919770 /* DocumentStorageAccess.h */,
  				86D982F6125C154000AD9E3D /* DocumentTiming.h */,
-@@ -31476,6 +31500,7 @@
+@@ -31483,6 +31507,7 @@
  				93C4F6EB1108F9A50099D0DB /* AccessibilityScrollbar.h in Headers */,
  				29489FC712C00F0300D83F0F /* AccessibilityScrollView.h in Headers */,
  				0709FC4E1025DEE30059CDBA /* AccessibilitySlider.h in Headers */,
@@ -2151,7 +2153,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				29D7BCFA1444AF7D0070619C /* AccessibilitySpinButton.h in Headers */,
  				69A6CBAD1C6BE42C00B836E9 /* AccessibilitySVGElement.h in Headers */,
  				AAC08CF315F941FD00F1E188 /* AccessibilitySVGRoot.h in Headers */,
-@@ -33492,6 +33517,7 @@
+@@ -33499,6 +33524,7 @@
  				6E4ABCD5138EA0B70071D291 /* JSHTMLUnknownElement.h in Headers */,
  				E44614170CD6826900FADA75 /* JSHTMLVideoElement.h in Headers */,
  				81BE20D311F4BC3200915DFA /* JSIDBCursor.h in Headers */,
@@ -2159,7 +2161,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				7C3D8EF01E0B21430023B084 /* JSIDBCursorDirection.h in Headers */,
  				C585A68311D4FB08004C3E4B /* JSIDBDatabase.h in Headers */,
  				C585A69711D4FB13004C3E4B /* JSIDBFactory.h in Headers */,
-@@ -35546,9 +35572,11 @@
+@@ -35556,9 +35582,11 @@
  				B2C3DA3A0D006C1D00EF6F26 /* TextCodec.h in Headers */,
  				26E98A10130A9FCA008EB7B2 /* TextCodecASCIIFastPath.h in Headers */,
  				DF95B14A24FDAFD300B1F4D7 /* TextCodecCJK.h in Headers */,
@@ -2171,7 +2173,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				B2C3DA400D006C1D00EF6F26 /* TextCodecUserDefined.h in Headers */,
  				B2C3DA420D006C1D00EF6F26 /* TextCodecUTF16.h in Headers */,
  				9343CB8212F25E510033C5EE /* TextCodecUTF8.h in Headers */,
-@@ -36509,6 +36537,7 @@
+@@ -36519,6 +36547,7 @@
  				1ABA76CA11D20E50004C201C /* CSSPropertyNames.cpp in Sources */,
  				2D22830323A8470700364B7E /* CursorMac.mm in Sources */,
  				5CBD59592280E926002B22AA /* CustomHeaderFields.cpp in Sources */,
@@ -2179,7 +2181,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				6E72F54C229DCD0C00B3E151 /* ExtensionsGLANGLE.cpp in Sources */,
  				7CE6CBFD187F394900D46BF5 /* FormatConverter.cpp in Sources */,
  				5130F2F624AEA60A00E1D0A0 /* GameControllerSoftLink.mm in Sources */,
-@@ -36595,6 +36624,7 @@
+@@ -36605,6 +36634,7 @@
  				6E72F54F229DCD1300B3E151 /* TemporaryANGLESetting.cpp in Sources */,
  				CE88EE262414467B007F29C2 /* TextAlternativeWithRange.mm in Sources */,
  				51DF6D800B92A18E00C2DC85 /* ThreadCheck.mm in Sources */,
@@ -2187,7 +2189,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				538EC8031F96AF81004D22A8 /* UnifiedSource1-mm.mm in Sources */,
  				538EC8021F96AF81004D22A8 /* UnifiedSource1.cpp in Sources */,
  				538EC8051F96AF81004D22A8 /* UnifiedSource2-mm.mm in Sources */,
-@@ -36643,6 +36673,7 @@
+@@ -36653,6 +36683,7 @@
  				538EC8881F993F9C004D22A8 /* UnifiedSource23.cpp in Sources */,
  				DE5F85801FA1ABF4006DB63A /* UnifiedSource24-mm.mm in Sources */,
  				538EC8891F993F9D004D22A8 /* UnifiedSource24.cpp in Sources */,
@@ -2195,7 +2197,7 @@ index 7f0fdf42928754a9f4f27ab73e8caacbd5838efd..b20ae000f83c4b99ceb21155ebb6fa50
  				DE5F85811FA1ABF4006DB63A /* UnifiedSource25-mm.mm in Sources */,
  				538EC88A1F993F9D004D22A8 /* UnifiedSource25.cpp in Sources */,
  				DE5F85821FA1ABF4006DB63A /* UnifiedSource26-mm.mm in Sources */,
-@@ -37175,6 +37206,7 @@
+@@ -37185,6 +37216,7 @@
  				2D8B92F1203D13E1009C868F /* UnifiedSource516.cpp in Sources */,
  				2D8B92F2203D13E1009C868F /* UnifiedSource517.cpp in Sources */,
  				2D8B92F3203D13E1009C868F /* UnifiedSource518.cpp in Sources */,
@@ -4546,7 +4548,7 @@ index 746da1a4d3e03a871b7880a3e52856b0ed2835cd..6d06ed07527541b8339236eefa51f15e
  
  void PageDebuggerAgent::debuggerDidEvaluate(JSC::Debugger&, const JSC::Breakpoint::Action& action)
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
-index 00e69f1aa2e3f8ea2f445e8dd446dd16ea6363df..92d45059ca6d87ddf7b6cc12033267a4c108a73c 100644
+index 00e69f1aa2e3f8ea2f445e8dd446dd16ea6363df..889a14de887a5ce5726c9e4640000611145c78c2 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 @@ -35,12 +35,14 @@
@@ -4586,7 +4588,7 @@ index 00e69f1aa2e3f8ea2f445e8dd446dd16ea6363df..92d45059ca6d87ddf7b6cc12033267a4
  {
 -    UserGestureEmulationScope userGestureScope(m_inspectedPage, emulateUserGesture && *emulateUserGesture);
 +    String errorString;
-+    InjectedScript injectedScript = injectedScriptForEval(errorString, Optional(executionContextId));
++    InjectedScript injectedScript = injectedScriptForEval(errorString, Optional<Protocol::Runtime::ExecutionContextId>(executionContextId));
 +    if (!errorString.isEmpty())
 +        return makeUnexpected(errorString);
 +
@@ -4661,6 +4663,19 @@ index 16edb3bc689b8e2dde17597b642b706c1343e1f5..f363b2ca2410f22cff8d6ad908a88527
      ~UserGestureEmulationScope();
  
  private:
+diff --git a/Source/WebCore/layout/integration/LayoutIntegrationLineLayout.cpp b/Source/WebCore/layout/integration/LayoutIntegrationLineLayout.cpp
+index 6820b0faaa69d454d992bd9d0fbb07aa1c2e547f..89caf34c9b4b85aec8fb7e7889338de566650fd9 100644
+--- a/Source/WebCore/layout/integration/LayoutIntegrationLineLayout.cpp
++++ b/Source/WebCore/layout/integration/LayoutIntegrationLineLayout.cpp
+@@ -251,7 +251,7 @@ void LineLayout::prepareLayoutState()
+ 
+     auto& rootGeometry = m_layoutState.ensureGeometryForBox(rootLayoutBox());
+     rootGeometry.setContentBoxWidth(flow().contentSize().width());
+-    rootGeometry.setPadding({ { } });
++    rootGeometry.setPadding(Layout::Edges{});
+     rootGeometry.setBorder({ });
+     rootGeometry.setHorizontalMargin({ });
+     rootGeometry.setVerticalMargin({ });
 diff --git a/Source/WebCore/loader/CookieJar.h b/Source/WebCore/loader/CookieJar.h
 index 07b4ede9fb784ffe1b8030929217e10415e7ff82..9bce3c64607dd621c21117211af660c69d2ae3b2 100644
 --- a/Source/WebCore/loader/CookieJar.h
@@ -4684,10 +4699,10 @@ index 07b4ede9fb784ffe1b8030929217e10415e7ff82..9bce3c64607dd621c21117211af660c6
  protected:
      static SameSiteInfo sameSiteInfo(const Document&, IsForDOMCookieAccess = IsForDOMCookieAccess::No);
 diff --git a/Source/WebCore/loader/DocumentLoader.cpp b/Source/WebCore/loader/DocumentLoader.cpp
-index 4c67b63823ff6a497a612d6d63ae45a6d8db0a05..fc951e1bcdd27ee4fd897370a0ad4905e9b34337 100644
+index 905d92fb98d87c43a0c55a3c7881430b63567f27..45e172b7820e49dff838e07cc9a57476763ac920 100644
 --- a/Source/WebCore/loader/DocumentLoader.cpp
 +++ b/Source/WebCore/loader/DocumentLoader.cpp
-@@ -1405,8 +1405,6 @@ void DocumentLoader::detachFromFrame()
+@@ -1408,8 +1408,6 @@ void DocumentLoader::detachFromFrame()
      if (!m_frame)
          return;
  
@@ -4715,10 +4730,10 @@ index 7b2a0ec585a19ebde96eea7775330817535f7455..ef604a838ff27f76e3bb4d46aa4afcc1
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index e937cfe9176662eddcfc38f2a1c066e088c954e1..7dc24ee4b10b76c09a80b26c087cd102fc69f1a6 100644
+index 82d16d6952fd79ef577209b615af1f3dfc9c09da..400ac32eecd19ed12ed8f54b291f1f077c97ad29 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
-@@ -1152,6 +1152,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
+@@ -1153,6 +1153,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
      }
  
      m_client->dispatchDidNavigateWithinPage();
@@ -4726,7 +4741,7 @@ index e937cfe9176662eddcfc38f2a1c066e088c954e1..7dc24ee4b10b76c09a80b26c087cd102
  
      m_frame.document()->statePopped(stateObject ? Ref<SerializedScriptValue> { *stateObject } : SerializedScriptValue::nullValue());
      m_client->dispatchDidPopStateWithinPage();
-@@ -1470,6 +1471,7 @@ void FrameLoader::load(FrameLoadRequest&& request)
+@@ -1471,6 +1472,7 @@ void FrameLoader::load(FrameLoadRequest&& request)
  
  void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, NavigationAction&& action, FrameLoadType type, RefPtr<FormState>&& formState, AllowNavigationToInvalidURL allowNavigationToInvalidURL, CompletionHandler<void()>&& completionHandler)
  {
@@ -4734,7 +4749,7 @@ index e937cfe9176662eddcfc38f2a1c066e088c954e1..7dc24ee4b10b76c09a80b26c087cd102
      FRAMELOADER_RELEASE_LOG_IF_ALLOWED(ResourceLoading, "loadWithNavigationAction: frame load started");
  
      Ref<DocumentLoader> loader = m_client->createDocumentLoader(request, defaultSubstituteDataForURL(request.url()));
-@@ -1573,6 +1575,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
+@@ -1574,6 +1576,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
      const String& httpMethod = loader->request().httpMethod();
  
      if (shouldPerformFragmentNavigation(isFormSubmission, httpMethod, policyChecker().loadType(), newURL)) {
@@ -4743,7 +4758,7 @@ index e937cfe9176662eddcfc38f2a1c066e088c954e1..7dc24ee4b10b76c09a80b26c087cd102
          RefPtr<DocumentLoader> oldDocumentLoader = m_documentLoader;
          NavigationAction action { *m_frame.document(), loader->request(), InitiatedByMainFrame::Unknown, policyChecker().loadType(), isFormSubmission };
  
-@@ -3166,6 +3170,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
+@@ -3168,6 +3172,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
      checkCompleted();
      if (m_frame.page())
          checkLoadComplete();
@@ -4752,7 +4767,7 @@ index e937cfe9176662eddcfc38f2a1c066e088c954e1..7dc24ee4b10b76c09a80b26c087cd102
  }
  
  void FrameLoader::continueFragmentScrollAfterNavigationPolicy(const ResourceRequest& request, bool shouldContinue)
-@@ -3928,9 +3934,6 @@ String FrameLoader::referrer() const
+@@ -3930,9 +3936,6 @@ String FrameLoader::referrer() const
  
  void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  {
@@ -4762,7 +4777,7 @@ index e937cfe9176662eddcfc38f2a1c066e088c954e1..7dc24ee4b10b76c09a80b26c087cd102
      Vector<Ref<DOMWrapperWorld>> worlds;
      ScriptController::getAllWorlds(worlds);
      for (auto& world : worlds)
-@@ -3939,13 +3942,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+@@ -3941,13 +3944,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  
  void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
  {
@@ -5089,7 +5104,7 @@ index dbf637cfb2980661aa6770a78a447afed0359a87..c4e166225fabe8a4f85cf0d3a663541e
      request.setHTTPHeaderField(HTTPHeaderName::Accept, "text/event-stream");
      request.setHTTPHeaderField(HTTPHeaderName::CacheControl, "no-cache");
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
-index 3ca867a62fb9c41ac610e66c378652c96206ff9d..3c3bb5ba0dab5f0788b8f4021885ad97d1e25fbe 100644
+index c81e5e2611d76d5bc7c4dec991ec7cb47b953fab..5b8fca555fb4e737c9c1718c808396d3e1af80d5 100644
 --- a/Source/WebCore/page/Frame.cpp
 +++ b/Source/WebCore/page/Frame.cpp
 @@ -39,6 +39,7 @@
@@ -5108,7 +5123,7 @@ index 3ca867a62fb9c41ac610e66c378652c96206ff9d..3c3bb5ba0dab5f0788b8f4021885ad97
  #include "NodeTraversal.h"
  #include "Page.h"
  #include "ProcessWarming.h"
-@@ -179,6 +181,7 @@ Frame::Frame(Page& page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoa
+@@ -183,6 +185,7 @@ Frame::Frame(Page& page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoa
  void Frame::init()
  {
      m_loader->init();
@@ -5116,7 +5131,7 @@ index 3ca867a62fb9c41ac610e66c378652c96206ff9d..3c3bb5ba0dab5f0788b8f4021885ad97
  }
  
  Ref<Frame> Frame::create(Page* page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoaderClient>&& client)
-@@ -364,7 +367,7 @@ void Frame::orientationChanged()
+@@ -368,7 +371,7 @@ void Frame::orientationChanged()
  int Frame::orientation() const
  {
      if (m_page)
@@ -5125,9 +5140,9 @@ index 3ca867a62fb9c41ac610e66c378652c96206ff9d..3c3bb5ba0dab5f0788b8f4021885ad97
      return 0;
  }
  #endif // ENABLE(ORIENTATION_EVENTS)
-@@ -1138,6 +1141,358 @@ bool Frame::arePluginsEnabled()
-     return settings().arePluginsEnabled();
- }
+@@ -1144,6 +1147,358 @@ DataDetectionResultsStorage& Frame::dataDetectionResults()
+ 
+ #endif
  
 +void Frame::betterApproximateNode(const IntPoint& testPoint, const NodeQualifier& nodeQualifierFunction, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect)
 +{
@@ -5485,10 +5500,10 @@ index 3ca867a62fb9c41ac610e66c378652c96206ff9d..3c3bb5ba0dab5f0788b8f4021885ad97
  
  #undef RELEASE_LOG_ERROR_IF_ALLOWED
 diff --git a/Source/WebCore/page/Frame.h b/Source/WebCore/page/Frame.h
-index 8c44746f6195c98b7667a3bbf264ef24f2f7b0b8..5cb83a22196a37c756baf096c56e6ba451c4fae4 100644
+index 6f9f2ed9422bb39c44fa3397ce88644e8f712d0c..7fc6272dcb781ccf38285f634542243567079a7c 100644
 --- a/Source/WebCore/page/Frame.h
 +++ b/Source/WebCore/page/Frame.h
-@@ -109,8 +109,8 @@ enum {
+@@ -110,8 +110,8 @@ enum {
  };
  
  enum OverflowScrollAction { DoNotPerformOverflowScroll, PerformOverflowScroll };
@@ -5498,8 +5513,8 @@ index 8c44746f6195c98b7667a3bbf264ef24f2f7b0b8..5cb83a22196a37c756baf096c56e6ba4
  
  enum {
      LayerTreeFlagsIncludeDebugInfo              = 1 << 0,
-@@ -228,10 +228,6 @@ public:
-     NSArray *dataDetectionResults() const { return m_dataDetectionResults.get(); }
+@@ -229,10 +229,6 @@ public:
+     WEBCORE_EXPORT DataDetectionResultsStorage& dataDetectionResults();
  #endif
  
 -#if PLATFORM(IOS_FAMILY)
@@ -5509,7 +5524,7 @@ index 8c44746f6195c98b7667a3bbf264ef24f2f7b0b8..5cb83a22196a37c756baf096c56e6ba4
      WEBCORE_EXPORT Node* deepestNodeAtLocation(const FloatPoint& viewportLocation);
      WEBCORE_EXPORT Node* nodeRespondingToClickEvents(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, SecurityOrigin* = nullptr);
      WEBCORE_EXPORT Node* nodeRespondingToDoubleClickEvent(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation);
-@@ -239,6 +235,10 @@ public:
+@@ -240,6 +236,10 @@ public:
      WEBCORE_EXPORT Node* nodeRespondingToScrollWheelEvents(const FloatPoint& viewportLocation);
      WEBCORE_EXPORT Node* approximateNodeAtViewportLocationLegacy(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation);
  
@@ -5520,7 +5535,7 @@ index 8c44746f6195c98b7667a3bbf264ef24f2f7b0b8..5cb83a22196a37c756baf096c56e6ba4
      WEBCORE_EXPORT NSArray *wordsInCurrentParagraph() const;
      WEBCORE_EXPORT CGRect renderRectForPoint(CGPoint, bool* isReplaced, float* fontSize) const;
  
-@@ -312,6 +312,7 @@ public:
+@@ -313,6 +313,7 @@ public:
  
      WEBCORE_EXPORT FloatSize screenSize() const;
      void setOverrideScreenSize(FloatSize&&);
@@ -5528,15 +5543,15 @@ index 8c44746f6195c98b7667a3bbf264ef24f2f7b0b8..5cb83a22196a37c756baf096c56e6ba4
  
      void selfOnlyRef();
      void selfOnlyDeref();
-@@ -350,7 +351,6 @@ private:
+@@ -351,7 +352,6 @@ private:
  #if ENABLE(DATA_DETECTION)
-     RetainPtr<NSArray> m_dataDetectionResults;
+     std::unique_ptr<DataDetectionResultsStorage> m_dataDetectionResults;
  #endif
 -#if PLATFORM(IOS_FAMILY)
      void betterApproximateNode(const IntPoint& testPoint, const NodeQualifier&, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect);
      bool hitTestResultAtViewportLocation(const FloatPoint& viewportLocation, HitTestResult&, IntPoint& center);
      
-@@ -358,6 +358,7 @@ private:
+@@ -359,6 +359,7 @@ private:
      enum class ShouldFindRootEditableElement : bool { No, Yes };
      Node* qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier&, ShouldApproximate, ShouldFindRootEditableElement = ShouldFindRootEditableElement::Yes);
  
@@ -5595,10 +5610,10 @@ index 1023738af87f73d4313ab17f793e67e9663a36f9..0ed28b16672709db2933391dd2ea12e4
  typedef unsigned SnapshotOptions;
  
 diff --git a/Source/WebCore/page/FrameView.cpp b/Source/WebCore/page/FrameView.cpp
-index 6583c369fda1c06d94375ccdc23fc8b72230bf5a..e73a0b260274fa1422ceda557193f93c2676b1ac 100644
+index 85760843cae332f9598dec5054fdc9496bdc55dc..191cc51fe7c12fa8b5803ab712ddf32bfb064bb1 100644
 --- a/Source/WebCore/page/FrameView.cpp
 +++ b/Source/WebCore/page/FrameView.cpp
-@@ -3036,7 +3036,7 @@ void FrameView::setBaseBackgroundColor(const Color& backgroundColor)
+@@ -3034,7 +3034,7 @@ void FrameView::setBaseBackgroundColor(const Color& backgroundColor)
  
  void FrameView::updateBackgroundRecursively(const Optional<Color>& backgroundColor)
  {
@@ -5901,10 +5916,10 @@ index 3bec0aef174336939838fb1069fffbcb9f3d5604..566ef3806be3c5ccf1bb951251c2a90d
  
  RefPtr<ThreadableWebSocketChannel> SocketProvider::createWebSocketChannel(Document&, WebSocketChannelClient&)
 diff --git a/Source/WebCore/page/csp/ContentSecurityPolicy.cpp b/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
-index cf0ba801ff25e23c78ce1c00187193ff09cdaab2..76e0a1ec272522f9c01b30cc1135bfe80ca4ee95 100644
+index 0176b4d35830139d8049f4a30108daae319dd58a..27c443db7cb01fd8a4f9ad42eaf2373fe72ac0a8 100644
 --- a/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
 +++ b/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
-@@ -304,6 +304,8 @@ bool ContentSecurityPolicy::protocolMatchesSelf(const URL& url) const
+@@ -281,6 +281,8 @@ bool ContentSecurityPolicy::protocolMatchesSelf(const URL& url) const
  template<typename Predicate, typename... Args>
  typename std::enable_if<!std::is_convertible<Predicate, ContentSecurityPolicy::ViolatedDirectiveCallback>::value, bool>::type ContentSecurityPolicy::allPoliciesWithDispositionAllow(Disposition disposition, Predicate&& predicate, Args&&... args) const
  {
@@ -5913,7 +5928,7 @@ index cf0ba801ff25e23c78ce1c00187193ff09cdaab2..76e0a1ec272522f9c01b30cc1135bfe8
      bool isReportOnly = disposition == ContentSecurityPolicy::Disposition::ReportOnly;
      for (auto& policy : m_policies) {
          if (policy->isReportOnly() != isReportOnly)
-@@ -317,6 +319,8 @@ typename std::enable_if<!std::is_convertible<Predicate, ContentSecurityPolicy::V
+@@ -294,6 +296,8 @@ typename std::enable_if<!std::is_convertible<Predicate, ContentSecurityPolicy::V
  template<typename Predicate, typename... Args>
  bool ContentSecurityPolicy::allPoliciesWithDispositionAllow(Disposition disposition, ViolatedDirectiveCallback&& callback, Predicate&& predicate, Args&&... args) const
  {
@@ -5922,7 +5937,7 @@ index cf0ba801ff25e23c78ce1c00187193ff09cdaab2..76e0a1ec272522f9c01b30cc1135bfe8
      bool isReportOnly = disposition == ContentSecurityPolicy::Disposition::ReportOnly;
      bool isAllowed = true;
      for (auto& policy : m_policies) {
-@@ -333,6 +337,8 @@ bool ContentSecurityPolicy::allPoliciesWithDispositionAllow(Disposition disposit
+@@ -310,6 +314,8 @@ bool ContentSecurityPolicy::allPoliciesWithDispositionAllow(Disposition disposit
  template<typename Predicate, typename... Args>
  bool ContentSecurityPolicy::allPoliciesAllow(ViolatedDirectiveCallback&& callback, Predicate&& predicate, Args&&... args) const
  {
@@ -6376,7 +6391,7 @@ index 0000000000000000000000000000000000000000..e86e4295101a0a3e9be64681a84eb16b
 +
 +}
 diff --git a/Source/WebCore/platform/Cairo.cmake b/Source/WebCore/platform/Cairo.cmake
-index c1b53605713774dc006d028eda7c6a8213d6cca1..9135e67fa835ab3462b8898a9a75c9f5359eab92 100644
+index 237ebfbb80338d313d2a51a77e28309d705fbf69..134b26cecc94e6989126a9f40d1d42a49815d0d4 100644
 --- a/Source/WebCore/platform/Cairo.cmake
 +++ b/Source/WebCore/platform/Cairo.cmake
 @@ -16,6 +16,7 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
@@ -6604,7 +6619,7 @@ index 1ef9e76ff16d408f57788ffbcfd86d57555abe2d..b7d97dcb6d33a38756fef930b8a2f1aa
  #else
          return false;
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
-index d79728555b7db9b59cb615c55a7a7a6851cb57c8..61d3cc4b488e35ef9e1afa1ce3ac5f5d60ebe9a7 100644
+index 5a4d3a50859a5e844c7f424130691714802b01c7..c6559fcacd76e3d8bde538ea6becd84abc3a8f42 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 +++ b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 @@ -48,6 +48,13 @@
@@ -7724,7 +7739,7 @@ index 3ecf866005da6da9cec7c7930e6a4f93cb39d6e0..d81dc9ac0c433e00ab4ad73e20685609
          RELEASE_ASSERT_NOT_REACHED();
      }
 diff --git a/Source/WebCore/platform/win/ClipboardUtilitiesWin.cpp b/Source/WebCore/platform/win/ClipboardUtilitiesWin.cpp
-index 8789f11c3643999c30dfdb1c9b939ae45bb0a51f..422961d2b43e6da9e36df4cdeb06fe91ac57a644 100644
+index 3e97e804e115e0e37814ddf670e9e3ba4b3bbc73..86a1b22913c9ed6563f0d56c7ebd74c16dc829b9 100644
 --- a/Source/WebCore/platform/win/ClipboardUtilitiesWin.cpp
 +++ b/Source/WebCore/platform/win/ClipboardUtilitiesWin.cpp
 @@ -38,6 +38,7 @@
@@ -8262,10 +8277,10 @@ index 0000000000000000000000000000000000000000..cf2b51f6f02837a1106f4d999f2f130e
 +
 +} // namespace WebCore
 diff --git a/Source/WebCore/rendering/RenderLayer.cpp b/Source/WebCore/rendering/RenderLayer.cpp
-index 17b2c834d0ecea2dc2225200980ca04b79a08af0..d42f9cf2d54e5702681baa94fce08e5b995ce48f 100644
+index e80d5e7032ccae2ff240a4d1b1963d4e57a3e456..d4b0ab32766b8cbbb582e43dae5670c9cf5f7f0f 100644
 --- a/Source/WebCore/rendering/RenderLayer.cpp
 +++ b/Source/WebCore/rendering/RenderLayer.cpp
-@@ -2564,7 +2564,7 @@ LayoutRect RenderLayer::getRectToExpose(const LayoutRect& visibleRect, const Lay
+@@ -2560,7 +2560,7 @@ LayoutRect RenderLayer::getRectToExpose(const LayoutRect& visibleRect, const Lay
      ScrollAlignment::Behavior scrollX;
      LayoutRect exposeRectX(exposeRect.x(), visibleRect.y(), exposeRect.width(), visibleRect.height());
      LayoutUnit intersectWidth = intersection(visibleRect, exposeRectX).width();
@@ -8379,7 +8394,7 @@ index c63a6ba71fae430b9d2a326ecfb86a14ddd31993..739672cfcd5d7d803b5fa32466e66481
      RemoveStorageAccessForFrame(WebCore::FrameIdentifier frameID, WebCore::PageIdentifier pageID);
      LogUserInteraction(WebCore::RegistrableDomain domain)
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
-index c2c53abf5eeb0b74a1e1536578c077c2b3f1599c..7769592fd839dd6cf42da4f76d39425d9537b72c 100644
+index 364c23618b3ce25e0c43b54bf538582adab83192..450d6c435cd14caf0302384a945204ff2b891bdc 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 @@ -26,7 +26,6 @@
@@ -8390,7 +8405,7 @@ index c2c53abf5eeb0b74a1e1536578c077c2b3f1599c..7769592fd839dd6cf42da4f76d39425d
  #include "ArgumentCoders.h"
  #include "Attachment.h"
  #include "AuthenticationManager.h"
-@@ -559,6 +558,41 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
+@@ -555,6 +554,41 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
      m_storageManagerSet->remove(sessionID);
  }
  
@@ -8433,7 +8448,7 @@ index c2c53abf5eeb0b74a1e1536578c077c2b3f1599c..7769592fd839dd6cf42da4f76d39425d
  void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
  {
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.h b/Source/WebKit/NetworkProcess/NetworkProcess.h
-index b4fe2c8e3f664216f1a756dce57feed8cdf414f8..f05a5ac7dae3d0a72ca7cf5b1f1cc5c7313cd130 100644
+index 083382c99a07b26fd58921c5c87e2a61b210761c..0ed80000724204f2fef7dbd3137726c40eaf5a33 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.h
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.h
 @@ -79,6 +79,7 @@ class SessionID;
@@ -9115,7 +9130,7 @@ index 9b8dd42b2e3cc2e6f6c24b2104c682cb8f98ea73..730cb3f64418d2909c78d0074ee81d40
      NSEvent* nativeEvent() const { return m_nativeEvent.get(); }
  #elif PLATFORM(GTK)
 diff --git a/Source/WebKit/Shared/WebCoreArgumentCoders.cpp b/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
-index 02234f1277199b3e22dbd32a4025bfa3b7bc4236..f7fe186a30192106833eebf8a919da3eeff9e72f 100644
+index 35c2cd33df3d3731620374681a131ae52e099e1b..f7b7192323b34d2228b4ff33e76e3d98e203cce5 100644
 --- a/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
 +++ b/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
 @@ -120,6 +120,10 @@
@@ -10634,7 +10649,7 @@ index 78d1578f94793e9e59a3d4d2b33e79ea8530fa04..493cdadac3873508b3efa3048638e73a
  #endif
 +int webkitWebContextExistingCount();
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
-index 7b29d7dbcb9abe2beba06f242ffdd1b2c74a50e1..9491e64ac6c43228ae88220f223a5687ddd6d78b 100644
+index 76ee6d279b7a72655696b1f81048a5aa91497df2..82b1ba8545a700394370c48974897d1c909c7f72 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 @@ -32,6 +32,7 @@
@@ -11267,7 +11282,7 @@ index d57ccaa7596ad7c6e54bdaa6ea499d534479f86e..921adab8ee6e12f2bc065f27b43d8132
  {
      if (!m_uiDelegate)
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm b/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
-index c387c864c6f5c843904d53e65e648a935b6a632c..cb2602a5c393b5b04b877be12c0c660bd47a115c 100644
+index 2d103f0ed0a7d26141ec2f33b2bf6650bc8c5e2f..2a0f9f887bdc2a173bef2f42161479d83427f255 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
 +++ b/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
 @@ -34,6 +34,7 @@
@@ -11384,12 +11399,12 @@ index bd8d82c4157311464f4ec55d0e149dfe89870ba1..81117d5d6551ed5db3a2c59226a52ba4
      void saveBackForwardSnapshotForCurrentItem();
      void saveBackForwardSnapshotForItem(WebBackForwardListItem&);
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebViewImpl.mm b/Source/WebKit/UIProcess/Cocoa/WebViewImpl.mm
-index dee0c3792c13aefc0a4ad7ef8539eeaed91de312..6c19d686bfe553eb5de68edaf50e0b6e84874a9c 100644
+index 88882157c0b176c65a16f68a589d70bdcaf4da12..717871eb8f1c0890927ac7dbcc85c85f9e09d196 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebViewImpl.mm
 +++ b/Source/WebKit/UIProcess/Cocoa/WebViewImpl.mm
-@@ -2510,6 +2510,11 @@ WebCore::DestinationColorSpace WebViewImpl::colorSpace()
-         else
-             m_colorSpace = [NSScreen mainScreen].colorSpace;
+@@ -2519,6 +2519,11 @@ WebCore::DestinationColorSpace WebViewImpl::colorSpace()
+         if (!m_colorSpace)
+             m_colorSpace = [NSColorSpace sRGBColorSpace];
      }
 +    // Playwright begin
 +    // window.colorSpace is sometimes null on popup windows in headless mode
@@ -11397,9 +11412,9 @@ index dee0c3792c13aefc0a4ad7ef8539eeaed91de312..6c19d686bfe553eb5de68edaf50e0b6e
 +        return DestinationColorSpace::SRGB();
 +    // Playwright end
  
+     ASSERT(m_colorSpace);
      return WebCore::DestinationColorSpace { [m_colorSpace CGColorSpace] };
- }
-@@ -4587,6 +4592,18 @@ static RetainPtr<CGImageRef> takeWindowSnapshot(CGSWindowID windowID, bool captu
+@@ -4597,6 +4602,18 @@ static RetainPtr<CGImageRef> takeWindowSnapshot(CGSWindowID windowID, bool captu
      return adoptCF(CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, windowID, imageOptions));
  }
  
@@ -16585,7 +16600,7 @@ index 6795451214dae0e59d440f4ae9b5efc1fef26b3d..443c8413427950dca21dce23d9fa56c1
      DidPerformDragOperation(bool handled)
  #endif
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
-index 90cffa5ccb600a1789215d9412bbd3aaa6a6eea4..bf0728220ce345d930c6ccde297a9e7b5154e18b 100644
+index ba930fa4e7673b5d52e2f4d5ac39a5cc4fc3c316..f162e1dfb7d4efb15f0244ba3f0daf626d2aac79 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
 +++ b/Source/WebKit/UIProcess/WebProcessPool.cpp
 @@ -571,6 +571,14 @@ void WebProcessPool::establishWorkerContextConnectionToNetworkProcess(NetworkPro
@@ -16750,7 +16765,7 @@ index 034bca542991557fd760aba2052c867825ae6f5d..f4f0970a53ee55d9634d0838995b7383
      UniqueRef<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
  #endif
 diff --git a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
-index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..a4e90dc22fb278864c49c0636964e82f3d0d7193 100644
+index 4f78b5eb5cdb51f2ebfcaff64ecd19b1e630ad9f..a2dc89ddf668e1be7b8f343a5df542b3141216cc 100644
 --- a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 +++ b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 @@ -27,9 +27,11 @@
@@ -16764,7 +16779,7 @@ index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..a4e90dc22fb278864c49c0636964e82f
 +#include "WebPageInspectorController.h"
  #include <WebCore/BackingStoreBackendCairoImpl.h>
  #include <WebCore/CairoUtilities.h>
- #include <WebCore/GraphicsContextImplCairo.h>
+ #include <WebCore/GraphicsContextCairo.h>
 @@ -62,6 +64,13 @@ std::unique_ptr<BackingStoreBackendCairo> BackingStore::createBackend()
      return makeUnique<BackingStoreBackendCairoImpl>(m_size, m_deviceScaleFactor);
  }
@@ -17565,7 +17580,7 @@ index 634d713dd1fcb078dd9d685849e5a2a79fa08a1a..ae1a0e24744aced37c802b7430e735d0
      void navigationGestureWillEnd(bool willNavigate, WebBackForwardListItem&) override;
      void navigationGestureDidEnd(bool willNavigate, WebBackForwardListItem&) override;
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-index 3703513582c771b90b88dd8c169286303cbd0db6..96388af2b397abc62f7c9a63963322db157d8363 100644
+index 3de60170f605345f82f7e44e223f231b139c0f48..fb3a635069e55b1dc0ce2624f8e6ec55bbff8ea2 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 @@ -81,6 +81,7 @@
@@ -17630,7 +17645,7 @@ index 3703513582c771b90b88dd8c169286303cbd0db6..96388af2b397abc62f7c9a63963322db
  }
  
  void PageClientImpl::toolTipChanged(const String& oldToolTip, const String& newToolTip)
-@@ -479,6 +497,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
+@@ -475,6 +493,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
  
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool eventWasHandled)
  {
@@ -17639,7 +17654,7 @@ index 3703513582c771b90b88dd8c169286303cbd0db6..96388af2b397abc62f7c9a63963322db
      m_impl->doneWithKeyEvent(event.nativeEvent(), eventWasHandled);
  }
  
-@@ -498,6 +518,8 @@ void PageClientImpl::computeCanRevealImage(const URL& imageURL, ShareableBitmap&
+@@ -494,6 +514,8 @@ void PageClientImpl::computeCanRevealImage(const URL& imageURL, ShareableBitmap&
  
  RefPtr<WebPopupMenuProxy> PageClientImpl::createPopupMenuProxy(WebPageProxy& page)
  {
@@ -17648,7 +17663,7 @@ index 3703513582c771b90b88dd8c169286303cbd0db6..96388af2b397abc62f7c9a63963322db
      return WebPopupMenuProxyMac::create(m_view, page);
  }
  
-@@ -629,6 +651,12 @@ CALayer *PageClientImpl::acceleratedCompositingRootLayer() const
+@@ -625,6 +647,12 @@ CALayer *PageClientImpl::acceleratedCompositingRootLayer() const
      return m_impl->acceleratedCompositingRootLayer();
  }
  
@@ -17661,7 +17676,7 @@ index 3703513582c771b90b88dd8c169286303cbd0db6..96388af2b397abc62f7c9a63963322db
  RefPtr<ViewSnapshot> PageClientImpl::takeViewSnapshot(Optional<WebCore::IntRect>&&)
  {
      return m_impl->takeViewSnapshot();
-@@ -807,6 +835,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
+@@ -803,6 +831,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
  
  #endif // ENABLE(FULLSCREEN_API)
  
@@ -17675,7 +17690,7 @@ index 3703513582c771b90b88dd8c169286303cbd0db6..96388af2b397abc62f7c9a63963322db
  void PageClientImpl::navigationGestureDidBegin()
  {
      m_impl->dismissContentRelativeChildWindowsWithAnimation(true);
-@@ -978,6 +1013,9 @@ void PageClientImpl::didRestoreScrollPosition()
+@@ -974,6 +1009,9 @@ void PageClientImpl::didRestoreScrollPosition()
  
  bool PageClientImpl::windowIsFrontWindowUnderMouse(const NativeWebMouseEvent& event)
  {
@@ -19021,7 +19036,7 @@ index 0000000000000000000000000000000000000000..9b413bb8150a1633d29b6e2606127c9c
 +
 +#endif // ENABLE(DRAG_SUPPORT)
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index 8716df49bd192d0105116b6bdb0ab69631877bb8..c9fb9090912558d7093f2158c85cad9a62536a7b 100644
+index e99457c742321b53e1f6ea5dc90ddea86523eb84..9315093f451ffc9afd3f680e37d35d4f7a95fbd2 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 @@ -36,7 +36,9 @@
@@ -19279,10 +19294,10 @@ index f127d64d005ab7b93875591b94a5899205e91579..df0de26e4dc449a0fbf93e7037444df4
      uint64_t m_navigationID;
  };
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.cpp b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
-index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc3fcd5c59 100644
+index 55acd257c15b70d573e3c5bb770754d21c6cd875..f5b6e5add2ed0008a149e523ecfe1d1130cbd282 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
-@@ -868,6 +868,9 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
+@@ -874,6 +874,9 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
  
      m_page->setCanUseCredentialStorage(parameters.canUseCredentialStorage);
  
@@ -19292,7 +19307,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
      updateThrottleState();
  }
  
-@@ -1653,6 +1656,22 @@ void WebPage::platformDidReceiveLoadParameters(const LoadParameters& loadParamet
+@@ -1659,6 +1662,22 @@ void WebPage::platformDidReceiveLoadParameters(const LoadParameters& loadParamet
  }
  #endif
  
@@ -19315,7 +19330,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  void WebPage::loadRequest(LoadParameters&& loadParameters)
  {
      setLastNavigationWasAppBound(loadParameters.request.isAppBound());
-@@ -1913,17 +1932,13 @@ void WebPage::setSize(const WebCore::IntSize& viewSize)
+@@ -1919,17 +1938,13 @@ void WebPage::setSize(const WebCore::IntSize& viewSize)
      view->resize(viewSize);
      m_drawingArea->setNeedsDisplay();
  
@@ -19334,7 +19349,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  
      // Viewport properties have no impact on zero sized fixed viewports.
      if (m_viewSize.isEmpty())
-@@ -1940,20 +1955,18 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
+@@ -1946,20 +1961,18 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
  
      ViewportAttributes attr = computeViewportAttributes(viewportArguments, minimumLayoutFallbackWidth, deviceWidth, deviceHeight, 1, m_viewSize);
  
@@ -19362,7 +19377,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  
  #if USE(COORDINATED_GRAPHICS)
      m_drawingArea->didChangeViewportAttributes(WTFMove(attr));
-@@ -1961,7 +1974,6 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
+@@ -1967,7 +1980,6 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
      send(Messages::WebPageProxy::DidChangeViewportProperties(attr));
  #endif
  }
@@ -19370,7 +19385,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  
  void WebPage::scrollMainFrameIfNotAtMaxScrollPosition(const IntSize& scrollOffset)
  {
-@@ -2260,6 +2272,7 @@ void WebPage::scaleView(double scale)
+@@ -2262,6 +2274,7 @@ void WebPage::scaleView(double scale)
      }
  
      m_page->setViewScaleFactor(scale);
@@ -19378,7 +19393,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
      scalePage(pageScale, scrollPositionAtNewScale);
  }
  
-@@ -2364,17 +2377,13 @@ void WebPage::viewportPropertiesDidChange(const ViewportArguments& viewportArgum
+@@ -2366,17 +2379,13 @@ void WebPage::viewportPropertiesDidChange(const ViewportArguments& viewportArgum
          viewportConfigurationChanged();
  #endif
  
@@ -19397,7 +19412,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  }
  
  void WebPage::listenForLayoutMilestones(OptionSet<WebCore::LayoutMilestone> milestones)
-@@ -3241,6 +3250,104 @@ void WebPage::touchEvent(const WebTouchEvent& touchEvent)
+@@ -3243,6 +3252,104 @@ void WebPage::touchEvent(const WebTouchEvent& touchEvent)
  
      send(Messages::WebPageProxy::DidReceiveEvent(static_cast<uint32_t>(touchEvent.type()), handled));
  }
@@ -19502,7 +19517,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  #endif
  
  void WebPage::cancelPointer(WebCore::PointerID pointerId, const WebCore::IntPoint& documentPoint)
-@@ -3317,6 +3424,11 @@ void WebPage::sendMessageToTargetBackend(const String& targetId, const String& m
+@@ -3319,6 +3426,11 @@ void WebPage::sendMessageToTargetBackend(const String& targetId, const String& m
      m_inspectorTargetController->sendMessageToTargetBackend(targetId, message);
  }
  
@@ -19514,7 +19529,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  void WebPage::insertNewlineInQuotedContent()
  {
      Frame& frame = m_page->focusController().focusedOrMainFrame();
-@@ -3554,6 +3666,7 @@ void WebPage::didCompletePageTransition()
+@@ -3556,6 +3668,7 @@ void WebPage::didCompletePageTransition()
  void WebPage::show()
  {
      send(Messages::WebPageProxy::ShowPage());
@@ -19522,7 +19537,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  }
  
  void WebPage::setIsTakingSnapshotsForApplicationSuspension(bool isTakingSnapshotsForApplicationSuspension)
-@@ -4270,7 +4383,7 @@ NotificationPermissionRequestManager* WebPage::notificationPermissionRequestMana
+@@ -4279,7 +4392,7 @@ NotificationPermissionRequestManager* WebPage::notificationPermissionRequestMana
  
  #if ENABLE(DRAG_SUPPORT)
  
@@ -19531,7 +19546,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  void WebPage::performDragControllerAction(DragControllerAction action, const IntPoint& clientPosition, const IntPoint& globalPosition, OptionSet<DragOperation> draggingSourceOperationMask, SelectionData&& selectionData, OptionSet<DragApplicationFlags> flags)
  {
      if (!m_page) {
-@@ -6598,6 +6711,9 @@ Ref<DocumentLoader> WebPage::createDocumentLoader(Frame& frame, const ResourceRe
+@@ -6607,6 +6720,9 @@ Ref<DocumentLoader> WebPage::createDocumentLoader(Frame& frame, const ResourceRe
              WebsitePoliciesData::applyToDocumentLoader(WTFMove(*m_pendingWebsitePolicies), documentLoader);
              m_pendingWebsitePolicies = WTF::nullopt;
          }
@@ -19542,7 +19557,7 @@ index c3cb8b7845680d16df1a6718e66f478e9e988b56..da877139a0c54023a3f1f617deb95dbc
  
      return documentLoader;
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.h b/Source/WebKit/WebProcess/WebPage/WebPage.h
-index 3cb97e3cc3cfcf0d9331c342775f9ec387dbb9d0..5cf422f81d51a4e34708992ff55e41963ebf7851 100644
+index 1c6fb88173a975d4615f76be0a4953cb2a63f080..e8ad3ad449108e19e880fbeda95cf3799eae9c5b 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.h
 +++ b/Source/WebKit/WebProcess/WebPage/WebPage.h
 @@ -111,6 +111,10 @@ typedef struct _AtkObject AtkObject;
@@ -19869,7 +19884,7 @@ index 0000000000000000000000000000000000000000..dd6a53e2d57318489b7e49dd7373706d
 +    LIBVPX_LIBRARIES
 +)
 diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
-index a5ba8ed0ba86ac04ca11fe0ebb10def76c72d0f0..cec849c12da1ae1cf1c4abbecd20df452ec71272 100644
+index 9e3aa5fb15ba025fcee7d1de37d2798dbbd8d641..698807c5d4ff54d5e031d092b1ea30e95daf19e7 100644
 --- a/Source/cmake/OptionsGTK.cmake
 +++ b/Source/cmake/OptionsGTK.cmake
 @@ -5,6 +5,8 @@ WEBKIT_OPTION_BEGIN()
@@ -19933,17 +19948,17 @@ index a5ba8ed0ba86ac04ca11fe0ebb10def76c72d0f0..cec849c12da1ae1cf1c4abbecd20df45
  
  # Finalize the value for all options. Do not attempt to use an option before
 diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
-index 34c1b5b592d15424e8e18e0b95acdee63fc6e3ed..9baf9f829dc1efead2aba0ea14d15ee12ef5b6eb 100644
+index 0f6d48ab443d9c27bdd4c2b199f1f97fb081690b..cdfb28302a9d717000402abb3ca40c5e6b2e0c0b 100644
 --- a/Source/cmake/OptionsWPE.cmake
 +++ b/Source/cmake/OptionsWPE.cmake
-@@ -2,6 +2,7 @@ include(GNUInstallDirs)
- include(VersioningUtils)
+@@ -3,6 +3,7 @@ include(VersioningUtils)
  
- SET_PROJECT_VERSION(2 31 1)
+ SET_PROJECT_VERSION(2 33 1)
+ 
 +set(ENABLE_WEBKIT_LEGACY OFF)
- 
  set(USER_AGENT_BRANDING "" CACHE STRING "Branding to add to user agent string")
  
+ find_package(Cairo 1.14.0 REQUIRED)
 @@ -68,15 +69,23 @@ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEBGL2 PRIVATE OFF)
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEB_RTC PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEBXR PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})

@@ -5,64 +5,362 @@ title: "Configuration"
 
 <!-- TOC -->
 
-<br/>
+## Configure browser, context, videos and screenshots
 
-## Configuration object
+Playwright Tests supports browser and context options that you typically pass to [`method: BrowserType.launch`] and [`method: Browser.newContext`] methods, for example `headless`, `viewport` or `ignoreHTTPSErrors`. It also provides options to record video for the test or capture screenshot at the end.
 
-Configuration file exports a single configuration object.
+You can specify any options either locally in a test file, or globally in the configuration file.
 
-You can modify browser launch options, context creation options and testing options either globally in the configuration file, or locally in the test file.
+- Browser options match [`method: BrowserType.launch`] method.
+- Context options match [`method: Browser.newContext`] method.
+- `screenshot` option - whether to capture a screenshot after each test, off by default. Screenshot will appear in the test output directory, typically `test-results`.
+  - `'off'` - Do not capture screenshots.
+  - `'on'` - Capture screenshot after each test.
+  - `'only-on-failure'` - Capture screenshot after each test failure.
+- `video` option - whether to record video for each test, off by default. Video will appear in the test output directory, typically `test-results`.
+  - `'off'` - Do not record video.
+  - `'on'` - Record video for each test.
+  - `'retain-on-failure'` - Record video for each test, but remove all videos from successful test runs.
+  - `'retry-with-video'` - Record video only when retrying a test.
 
-See the full list of launch options in [`browserType.launch()`](https://playwright.dev/docs/api/class-browsertype#browsertypelaunchoptions) documentation.
 
-See the full list of context options in [`browser.newContext()`](https://playwright.dev/docs/api/class-browser#browsernewcontextoptions) documentation.
+### Global configuration
+
+Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the `use` section.
+
+```js
+module.exports = {
+  use: {
+    // Browser options
+    headless: false,
+    slowMo: 50,
+
+    // Context options
+    viewport: { width: 1280, height: 720 },
+    ignoreHTTPSErrors: true,
+
+    // Artifacts
+    screenshot: 'only-on-failure',
+    video: 'retry-with-video',
+  },
+};
+```
 
 ```ts
-// pwtest.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
-
 const config: PlaywrightTestConfig = {
-  // 20 seconds per test.
-  timeout: 20000,
+  use: {
+    // Browser options
+    headless: false,
+    slowMo: 50,
 
-  // Forbid test.only on CI.
-  forbidOnly: !!process.env.CI,
+    // Context options
+    viewport: { width: 1280, height: 720 },
+    ignoreHTTPSErrors: true,
 
-  // Two retries for each test.
-  retries: 2,
-});
+    // Artifacts
+    screenshot: 'only-on-failure',
+    video: 'retry-with-video',
+  },
+};
 export default config;
 ```
 
-## Global configuration
+Now run tests as usual, Playwright Test will pick up the configuration file automatically.
 
-You can specify different options for each browser using projects in the configuration file. Below is an example that changes some global testing options, and Chromium browser configuration.
+```sh
+npx playwright test --browser=firefox
+```
+
+If you put your configuration file in a different place, pass it with `--config` option.
+
+```sh
+npx playwright test --config=tests/my.config.js
+```
+
+### Local configuration
+
+With `test.use()` you can override some options for a file or a `test.describe` block.
 
 ```js
-// config.ts
-import { PlaywrightTestConfig } from "playwright/test";
+// example.spec.js
+const { test, expect } = require('playwright/test');
+
+// Run tests in this file with portrait-like viewport.
+test.use({ viewport: { width: 600, height: 900 } });
+
+test('my portrait test', async ({ page }) => {
+  // ...
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+// Run tests in this file with portrait-like viewport.
+test.use({ viewport: { width: 600, height: 900 } });
+
+test('my portrait test', async ({ page }) => {
+  // ...
+});
+```
+
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
+
+test.describe('headed block', () => {
+  // Run tests in this describe block in headed mode.
+  test.use({ headless: false });
+
+  test('my headed test', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test.describe('headed block', () => {
+  // Run tests in this describe block in headed mode.
+  test.use({ headless: false });
+
+  test('my headed test', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+## Testing options
+
+In addition to configuring [Browser] or [BrowserContext], videos or screenshots, Playwright Test has many options to configure how your tests are run. Below are the most common ones, see [advanced configuration](./test-advanced.md) for the full list.
+
+- `forbidOnly`: Whether to exit with an error if any tests are marked as `test.only`. Useful on CI.
+- `globalSetup`: Path to the global setup file. This file will be required and run before all the tests. It must export a single function.
+- `globalTeardown`: Path to the global teardown file. This file will be required and run after all the tests. It must export a single function.
+- `retries`: The maximum number of retry attempts per test.
+- `testDir`: Directory with the test files.
+- `testIgnore`: Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'**/test-assets'`.
+- `testMatch`: Glob patterns or regular expressions that match test files. For example, `'**/todo-tests/*.spec.ts'`. By default, Playwright Test runs `.*(test|spec)\.(js|ts|mjs)` files.
+- `timeout`: Time in milliseconds given to each test.
+- `workers`: The maximum number of concurrent worker processes to use for parallelizing tests.
+
+You can specify these options in the configuration file.
+
+```js
+// playwright.config.js
+module.exports = {
+  // Look for test files in the "tests" directory, relative to this configuration file
+  testDir: 'tests',
+
+  // Each test is given 30 seconds
+  timeout: 30000,
+
+  // Forbid test.only on CI
+  forbidOnly: !!process.env.CI,
+
+  // Two retries for each test
+  retries: 2,
+
+  // Limit the number of workers on CI, use default locally
+  workers: process.env.CI ? 2 : undefined,
+
+  use: {
+    // Configure browser and context here
+  },
+};
+```
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
 
 const config: PlaywrightTestConfig = {
-  // Each test is given 90 seconds.
-  timeout: 90000,
-  // Failing tests will be retried at most two times.
+  // Look for test files in the "tests" directory, relative to this configuration file
+  testDir: 'tests',
+
+  // Each test is given 30 seconds
+  timeout: 30000,
+
+  // Forbid test.only on CI
+  forbidOnly: !!process.env.CI,
+
+  // Two retries for each test
   retries: 2,
+
+  // Limit the number of workers on CI, use default locally
+  workers: process.env.CI ? 2 : undefined,
+
+  use: {
+    // Configure browser and context here
+  },
+};
+export default config;
+```
+
+## Different options for each browser
+
+To specify different options per browser, for example command line arguments for Chromium, create multiple projects in your configuration file. Below is an example that runs all tests in three browsers, with different options.
+
+```js
+// playwright.config.js
+module.exports = {
+  // Put any shared options on the top level.
+  use: {
+    headless: true,
+  },
+
   projects: [
     {
-      name: 'chromium',
+      name: 'Chromium',
       use: {
+        // Configure the browser to use.
         browserName: 'chromium',
 
-        // Launch options
-        headless: false,
-        slowMo: 50,
+        // Any Chromium-specific options.
+        viewport: { width: 600, height: 800 },
+      },
+    },
 
-        // Context options
-        viewport: { width: 800, height: 600 },
-        ignoreHTTPSErrors: true,
+    {
+      name: 'Firefox',
+      use: { browserName: 'firefox' },
+    },
 
-        // Testing options
-        video: 'retain-on-failure',
+    {
+      name: 'WebKit',
+      use: { browserName: 'webkit' },
+    },
+  ],
+};
+```
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+
+const config: PlaywrightTestConfig = {
+  // Put any shared options on the top level.
+  use: {
+    headless: true,
+  },
+
+  projects: [
+    {
+      name: 'Chromium',
+      use: {
+        // Configure the browser to use.
+        browserName: 'chromium',
+
+        // Any Chromium-specific options.
+        viewport: { width: 600, height: 800 },
+      },
+    },
+
+    {
+      name: 'Firefox',
+      use: { browserName: 'firefox' },
+    },
+
+    {
+      name: 'WebKit',
+      use: { browserName: 'webkit' },
+    },
+  ],
+};
+export default config;
+```
+
+Playwright Test will run all projects by default.
+
+```sh
+$ npx playwright test
+
+Running 3 tests using 3 workers
+
+  ✓ example.spec.ts:3:1 › [Chromium] should work (2s)
+  ✓ example.spec.ts:3:1 › [Firefox] should work (2s)
+  ✓ example.spec.ts:3:1 › [WebKit] should work (2s)
+```
+
+Use `--project` command line option to run a single project.
+
+```sh
+$ npx playwright test --project=webkit
+
+Running 1 test using 1 worker
+
+  ✓ example.spec.ts:3:1 › [WebKit] should work (2s)
+```
+
+There are many more things you can do with projects:
+- Run a subset of test by specifying different `testDir` for each project.
+- Run tests in multiple configurations, for example with desktop Chromium and emulating Chrome for Android.
+- Run "core" tests without retries to ensure stability of the core functionality, and use `retries` for other tests.
+- And much more! See [advanced configuration](./test-advanced.md) for more details.
+
+:::note
+`--browser` command line option is not compatible with projects. Specify `browserName` in each project instead.
+:::
+
+## Mobile emulation
+
+You can use configuration file to make default `context` emulate a mobile device.
+
+Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" emulation modes. Note that it uses the [projects](./test-advanced.md#projects) feature to run the same set of tests in multiple configurations.
+
+```js
+// playwright.config.js
+const { devices } = require('playwright');
+
+module.exports = {
+  projects: [
+    // "Pixel 4" tests use Chromium browser.
+    {
+      name: 'Pixel 4',
+      use: {
+        browserName: 'chromium',
+        ...devices['Pixel 4'],
+      },
+    },
+
+    // "iPhone 11" tests use WebKit browser.
+    {
+      name: 'iPhone 11',
+      use: {
+        browserName: 'webkit',
+        ...devices['iPhone 11'],
+      },
+    },
+  ],
+};
+```
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+import { devices } from 'playwright';
+
+const config: PlaywrightTestConfig = {
+  projects: [
+    // "Pixel 4" tests use Chromium browser.
+    {
+      name: 'Pixel 4',
+      use: {
+        browserName: 'chromium',
+        ...devices['Pixel 4'],
+      },
+    },
+
+    // "iPhone 11" tests use WebKit browser.
+    {
+      name: 'iPhone 11',
+      use: {
+        browserName: 'webkit',
+        ...devices['iPhone 11'],
       },
     },
   ],
@@ -70,61 +368,64 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-## Local configuration
+## Network mocking
 
-With `test.use()` you can override some options for a file, or a `describe` block.
+You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context.
 
 ```js
-// my.spec.ts
-import { test, expect } from "playwright/test";
+// example.spec.js
+const { test, expect } = require('playwright/test');
 
-// Run tests in this file with portrait-like viewport.
-test.use({ viewport: { width: 600, height: 900 } });
+test.beforeEach(async ({ context }) => {
+  // Block any css requests for each test in this file.
+  await context.route(/.css/, route => route.abort());
+});
 
-test('my test', async ({ page }) => {
-  // Test code goes here.
+test('loads page without css', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  // ... test goes here
 });
 ```
 
-## Test Options
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
 
-- `metadata: any` - Any JSON-serializable metadata that will be put directly to the test report.
-- `name: string` - Project name, useful when defining multiple [test projects](#projects).
-- `outputDir: string` - Output directory for files created during the test run.
-- `repeatEach: number` - The number of times to repeat each test, useful for debugging flaky tests. Overridden by `--repeat-each` command line option.
-- `retries: number` - The maximum number of retry attempts given to failed tests. Overridden by `--retries` command line option.
-- `screenshot: 'off' | 'on' | 'only-on-failure'` - Whether to capture a screenshot after each test, off by default.
-  - `off` - Do not capture screenshots.
-  - `on` - Capture screenshot after each test.
-  - `only-on-failure` - Capture screenshot after each test failure.
-- `snapshotDir: string` - [Snapshots](#snapshots) directory. Overridden by `--snapshot-dir` command line option.
-- `testDir: string` - Directory that will be recursively scanned for test files.
-- `testIgnore: string | RegExp | (string | RegExp)[]` - Files matching one of these patterns are not considered test files.
-- `testMatch: string | RegExp | (string | RegExp)[]` - Only the files matching one of these patterns are considered test files.
-- `timeout: number` - Timeout for each test in milliseconds. Overridden by `--timeout` command line option.
-- `video: 'off' | 'on' | 'retain-on-failure' | 'retry-with-video'` - Whether to record video for each test, off by default.
-  - `off` - Do not record video.
-  - `on` - Record video for each test.
-  - `retain-on-failure`  - Record video for each test, but remove all videos from successful test runs.
-  - `retry-with-video` - Record video only when retrying a test.
+test.beforeEach(async ({ context }) => {
+  // Block any css requests for each test in this file.
+  await context.route(/.css/, route => route.abort());
+});
 
-## Test run options
+test('loads page without css', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
 
-These options would be typically different between local development and CI operation:
+Alternatively, you can use [`method: Page.route`] to mock network in a single test.
 
-- `forbidOnly: boolean` - Whether to exit with an error if any tests are marked as `test.only`. Useful on CI. Overridden by `--forbid-only` command line option.
-- `globalSetup: string` - Path to the global setup file. This file will be required and run before all the tests. It must export a single function.
-- `globalTeardown: string` - Path to the global teardown file. This file will be required and run after all the tests. It must export a single function.
-- `globalTimeout: number` - Total timeout in milliseconds for the whole test run. Overridden by `--global-timeout` command line option.
-- `grep: RegExp | RegExp[]` - Patterns to filter tests based on their title. Overridden by `--grep` command line option.
-- `maxFailures: number` - The maximum number of test failures for this test run. After reaching this number, testing will stop and exit with an error. Setting to zero (default) disables this behavior. Overridden by `--max-failures` and `-x` command line options.
-- `preserveOutput: 'always' | 'never' | 'failures-only'` - Whether to preserve test output in the `outputDir`:
-  - `'always'` - preserve output for all tests;
-  - `'never'` - do not preserve output for any tests;
-  - `'failures-only'` - only preserve output for failed tests.
-- `projects: Project[]` - Multiple [projects](#projects) configuration.
-- `reporter: 'list' | 'line' | 'dot' | 'json' | 'junit'` - The reporter to use. See [reporters](#reporters) for details.
-- `quiet: boolean` - Whether to suppress stdout and stderr from the tests. Overridden by `--quiet` command line option.
-- `shard: { total: number, current: number } | null` - [Shard](#shards) information. Overridden by `--shard` command line option.
-- `updateSnapshots: boolean` - Whether to update expected snapshots with the actual results produced by the test run. Overridden by `--update-snapshots` command line option.
-- `workers: number` - The maximum number of concurrent worker processes to use for parallelizing tests. Overridden by `--workers` command line option.
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
+
+test('loads page without images', async ({ page }) => {
+  // Block png and jpeg images.
+  await page.route(/(png|jpeg)$/, route => route.abort());
+
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test('loads page without images', async ({ page }) => {
+  // Block png and jpeg images.
+  await page.route(/(png|jpeg)$/, route => route.abort());
+
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```

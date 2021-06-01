@@ -92,8 +92,6 @@ function archive_compiled_chromium() {
 
   if [[ $1 == "--compile-win"* ]]; then
     $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/"*.manifest "output/${CHROMIUM_FOLDER_NAME}/"
-    # See https://github.com/microsoft/playwright/issues/6390
-    node "${SCRIPT_PATH}/fix_windows_swiftshader.js" "output/${CHROMIUM_FOLDER_NAME}/vk_swiftshader_icd.json"
   fi
 
   cd output
