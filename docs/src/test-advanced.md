@@ -1,6 +1,6 @@
 ---
 id: test-advanced
-title: "Advanced Configuration"
+title: "Advanced: Configuration"
 ---
 
 <!-- TOC -->
