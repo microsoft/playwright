@@ -24,6 +24,7 @@ import { SelectorsDispatcher } from './selectorsDispatcher';
 import * as types from '../server/types';
 import { SocksSocketDispatcher } from './socksSocketDispatcher';
 import { SocksInterceptedSocketHandler } from '../server/socksServer';
+import { assert } from '../utils/utils';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright, customSelectors?: channels.SelectorsChannel, preLaunchedBrowser?: channels.BrowserChannel) {
@@ -44,6 +45,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
 
   async enablePortForwarding(params: channels.PlaywrightEnablePortForwardingParams): Promise<void> {
     this._object._setForwardedPorts(params.ports);
+    assert(this._object._portForwardingServer);
     this._object._portForwardingServer.on('incomingSocksSocket', (socket: SocksInterceptedSocketHandler) => {
       this._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(this, socket) });
     });
