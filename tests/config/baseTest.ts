@@ -29,7 +29,7 @@ import type { PlaywrightServerOptions } from '../../src/remote/playwrightServer'
 import type { LaunchOptions } from '../../index';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type Mode = 'default' | 'driver' | 'service';
+export type Mode = 'default' | 'driver' | 'service';
 type PlaywrightModeSetupOptions = Partial<PlaywrightClientConnectOptions & PlaywrightServerOptions>;
 type BaseOptions = {
   mode: Mode;

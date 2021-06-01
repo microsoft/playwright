@@ -17,10 +17,45 @@
 import http from 'http';
 import net from 'net';
 
-import { contextTest as it, expect } from './config/browserTest';
+import { contextTest, expect } from './config/browserTest';
 import type { LaunchOptions, ConnectOptions } from '../index';
+import { Page, Browser, BrowserServer } from '..';
 
-it.fixme(({platform, browserName}) => platform === 'darwin' && browserName === 'webkit');
+type PageFactoryOptions = {
+  acceptForwardedPorts: boolean
+  forwardPorts: number[]
+};
+
+const it = contextTest.extend<{ pageFactory: (options?: PageFactoryOptions) => Promise<Page> }>({
+  pageFactory: async ({ mode, getPlaywright, browserType, browserOptions }, run) => {
+    let browser: Browser;
+    let browserServer: BrowserServer;
+    await run(async (options?: PageFactoryOptions): Promise<Page> => {
+      const { acceptForwardedPorts, forwardPorts } = options;
+      if (mode === 'default') {
+        browserServer = await browserType.launchServer({
+          ...browserOptions,
+          _acceptForwardedPorts: acceptForwardedPorts
+        } as LaunchOptions);
+        browser = await browserType.connect({
+          wsEndpoint: browserServer.wsEndpoint(),
+          _forwardPorts: forwardPorts
+        } as ConnectOptions);
+        return await browser.newPage();
+      }
+      const playwright = await getPlaywright({
+        acceptForwardedPorts,
+        forwardPorts,
+      });
+      browser = await playwright['chromium'].launch(browserOptions);
+      return await browser.newPage();
+    });
+    await browser?.close();
+    await browserServer?.close();
+  },
+});
+
+it.fixme(({ platform, browserName }) => platform === 'darwin' && browserName === 'webkit');
 
 it.beforeEach(() => {
   delete process.env.PW_TEST_PROXY_TARGET;
@@ -36,31 +71,20 @@ function startTestServer() {
   };
 }
 
-it('should forward non-forwarded requests', async ({ mode, browserType, browserOptions, server }, workerInfo) => {
-  it.skip(mode !== 'default');
+it('should forward non-forwarded requests', async ({ pageFactory, server }, workerInfo) => {
   let reachedOriginalTarget = false;
   server.setRoute('/foo.html', async (req, res) => {
     reachedOriginalTarget = true;
     res.end('<html><body>original-target</body></html>');
   });
-  const browserServer = await browserType.launchServer({
-    ...browserOptions,
-    _acceptForwardedPorts: true
-  } as LaunchOptions);
-  const browser = await browserType.connect({
-    wsEndpoint: browserServer.wsEndpoint(),
-    _forwardPorts: []
-  } as ConnectOptions);
-  const page = await browser.newPage();
+  const page = await pageFactory({ acceptForwardedPorts: true, forwardPorts: [] });
   await page.goto(server.PREFIX + '/foo.html');
   expect(await page.content()).toContain('original-target');
   expect(reachedOriginalTarget).toBe(true);
-  await browserServer.close();
 });
 
-it('should proxy local requests', async ({ mode, browserType, browserOptions, server }, workerInfo) => {
-  it.skip(mode !== 'default');
-  const {testServerPort, stopTestServer} = startTestServer();
+it('should proxy local requests', async ({ pageFactory, server }, workerInfo) => {
+  const { testServerPort, stopTestServer } = startTestServer();
   process.env.PW_TEST_PROXY_TARGET = testServerPort.toString();
   let reachedOriginalTarget = false;
   server.setRoute('/foo.html', async (req, res) => {
@@ -68,61 +92,31 @@ it('should proxy local requests', async ({ mode, browserType, browserOptions, se
     res.end('<html><body></body></html>');
   });
   const examplePort = 20_000 + workerInfo.workerIndex * 3;
-  const browserServer = await browserType.launchServer({
-    ...browserOptions,
-    _acceptForwardedPorts: true
-  } as LaunchOptions);
-  const browser = await browserType.connect({
-    wsEndpoint: browserServer.wsEndpoint(),
-    _forwardPorts: [examplePort]
-  } as ConnectOptions);
-  const page = await browser.newPage();
+  const page = await pageFactory({ acceptForwardedPorts: true, forwardPorts: [examplePort] });
   await page.goto(`http://localhost:${examplePort}/foo.html`);
   expect(await page.content()).toContain('from-retargeted-server');
   expect(reachedOriginalTarget).toBe(false);
-  await browserServer.close();
   stopTestServer();
 });
 
-it('should lead to the error page for forwarded requests when the connection is refused', async ({ mode, browserType, browserOptions, browserName, isWindows}, workerInfo) => {
-  it.skip(mode !== 'default');
+it('should lead to the error page for forwarded requests when the connection is refused', async ({ pageFactory }, workerInfo) => {
   const examplePort = 20_000 + workerInfo.workerIndex * 3;
-  const browserServer = await browserType.launchServer({
-    ...browserOptions,
-    _acceptForwardedPorts: true
-  } as LaunchOptions);
-  const browser = await browserType.connect({
-    wsEndpoint: browserServer.wsEndpoint(),
-    _forwardPorts: [examplePort]
-  } as ConnectOptions);
-  const page = await browser.newPage();
+  const page = await pageFactory({ acceptForwardedPorts: true, forwardPorts: [examplePort] });
   const response = await page.goto(`http://localhost:${examplePort}`);
   expect(response.status()).toBe(502);
   await page.waitForSelector('text=Connection error');
-  await browserServer.close();
 });
 
-it('should lead to the error page for non-forwarded requests when the connection is refused', async ({ mode, browserName, browserType, browserOptions, isWindows}, workerInfo) => {
-  it.skip(mode !== 'default');
+it('should lead to the error page for non-forwarded requests when the connection is refused', async ({ pageFactory }, workerInfo) => {
   process.env.PW_TEST_PROXY_TARGET = '50001';
-  const browserServer = await browserType.launchServer({
-    ...browserOptions,
-    _acceptForwardedPorts: true
-  } as LaunchOptions);
-  const browser = await browserType.connect({
-    wsEndpoint: browserServer.wsEndpoint(),
-    _forwardPorts: []
-  } as ConnectOptions);
-  const page = await browser.newPage();
+  const page = await pageFactory({ acceptForwardedPorts: true, forwardPorts: [] });
   const response = await page.goto(`http://localhost:44123/non-existing-url`);
   expect(response.status()).toBe(502);
   await page.waitForSelector('text=Connection error');
-
-  await browserServer.close();
 });
 
 it('should not allow connecting a second client when _acceptForwardedPorts is used', async ({ mode, browserType, browserOptions }, workerInfo) => {
-  it.skip(mode !== 'default');
+  it.skip();
   const browserServer = await browserType.launchServer({
     ...browserOptions,
     _acceptForwardedPorts: true
@@ -164,27 +158,4 @@ it('should should not allow to connect when the server does not allow port-forwa
   } as ConnectOptions)).rejects.toThrowError('browserType.connect: Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.');
 
   await browserServer.close();
-});
-
-it('should proxy local requests', async ({ getPlaywright, mode, browserName, server, browserOptions }, workerInfo) => {
-  it.skip(mode !== 'service');
-  let reachedOriginalTarget = false;
-  server.setRoute('/foo.html', async (req, res) => {
-    reachedOriginalTarget = true;
-    res.end('<html><body></body></html>');
-  });
-  const {testServerPort, stopTestServer} = startTestServer();
-  process.env.PW_TEST_PROXY_TARGET = testServerPort.toString();
-  const examplePort = 20_000 + workerInfo.workerIndex * 3;
-  const playwright = await getPlaywright({
-    acceptForwardedPorts: true,
-    forwardPorts: [examplePort],
-  });
-  const browser = await playwright[browserName].launch(browserOptions);
-  const page = await browser.newPage();
-  await page.goto(`http://127.0.0.1:${examplePort}/foo.html`);
-  expect(await page.content()).toContain('from-retargeted-server');
-  expect(reachedOriginalTarget).toBe(false);
-  await browser.close();
-  stopTestServer();
 });
