@@ -1012,6 +1012,8 @@ Examples:
 const searchValue = await page.$eval('#search', el => el.value);
 const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
 const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
+// In TypeScript, this example requires an explicit type annotation (HTMLLinkElement) on el:
+const preloadHrefTS = await page.$eval('link[rel=preload]', (el: HTMLLinkElement) => el.href);
 ```
 
 ```java
