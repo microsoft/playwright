@@ -19,8 +19,24 @@ import fs from 'fs';
 import removeFolder from 'rimraf';
 import * as util from 'util';
 import * as crypto from 'crypto';
+import { spawn } from 'child_process';
 
 const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
+
+export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
+  const process = spawn(cmd, args, options);
+
+  return new Promise(resolve => {
+    let stdout = '';
+    let stderr = '';
+    if (stdout)
+      process.stdout.on('data', data => stdout += data);
+    if (stderr)
+      process.stderr.on('data', data => stderr += data);
+    process.on('close', code => resolve({stdout, stderr, code}));
+    process.on('error', error => resolve({stdout, stderr, code: 0, error}));
+  });
+}
 
 // See https://joel.tools/microtasks/
 export function makeWaitForNextTask() {

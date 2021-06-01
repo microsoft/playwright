@@ -28,7 +28,7 @@ const cpAsync = util.promisify(ncp);
 const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
-const PLAYWRIGHT_CORE_FILES = ['bin/PrintDeps.exe', 'lib', 'types', 'NOTICE', 'LICENSE', 'bin/android-driver.apk', 'bin/android-driver-target.apk'];
+const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE', ];
 
 const PACKAGES = {
   'playwright': {
