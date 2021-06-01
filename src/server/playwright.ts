@@ -36,7 +36,7 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
-  _portForwardingServer!: PortForwardingServer;
+  _portForwardingServer: PortForwardingServer | undefined;
 
   constructor(isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
@@ -59,12 +59,13 @@ export class Playwright extends SdkObject {
 
   async _enablePortForwarding() {
     this._portForwardingServer = await PortForwardingServer.create(this);
-    this.options.loopbackProxyOverride = () => this._portForwardingServer.proxyServer();
+    this.options.loopbackProxyOverride = () => this._portForwardingServer!.proxyServer();
   }
 
   _disablePortForwarding() {
-    if (this._portForwardingServer)
-      this._portForwardingServer.stop();
+    if (!this._portForwardingServer)
+      return;
+    this._portForwardingServer.stop();
   }
 
   _setForwardedPorts(ports: number[]) {

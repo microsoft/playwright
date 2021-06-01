@@ -65,7 +65,7 @@ export class Connection extends EventEmitter {
 
   async waitForObjectWithKnownName(guid: string): Promise<any> {
     if (this._objects.has(guid))
-      return this._objects.get(guid);
+      return this._objects.get(guid)!;
     return new Promise(f => this._waitingForObject.set(guid, f));
   }
 

@@ -19,7 +19,7 @@ import net from 'net';
 
 import { contextTest, expect } from './config/browserTest';
 import type { LaunchOptions, ConnectOptions } from '../index';
-import { Page, Browser, BrowserServer } from '..';
+import { Page, BrowserServer } from '..';
 
 type PageFactoryOptions = {
   acceptForwardedPorts: boolean
@@ -28,8 +28,7 @@ type PageFactoryOptions = {
 
 const it = contextTest.extend<{ pageFactory: (options?: PageFactoryOptions) => Promise<Page> }>({
   pageFactory: async ({ mode, getPlaywright, browserType, browserOptions }, run) => {
-    let browser: Browser;
-    let browserServer: BrowserServer;
+    const browserServers: BrowserServer[] = [];
     await run(async (options?: PageFactoryOptions): Promise<Page> => {
       const { acceptForwardedPorts, forwardPorts } = options;
       if (mode === 'service') {
@@ -37,21 +36,22 @@ const it = contextTest.extend<{ pageFactory: (options?: PageFactoryOptions) => P
           acceptForwardedPorts,
           forwardPorts,
         });
-        browser = await playwright['chromium'].launch(browserOptions);
+        const browser = await playwright['chromium'].launch(browserOptions);
         return await browser.newPage();
       }
-      browserServer = await browserType.launchServer({
+      const browserServer = await browserType.launchServer({
         ...browserOptions,
         _acceptForwardedPorts: acceptForwardedPorts
       } as LaunchOptions);
-      browser = await browserType.connect({
+      browserServers.push(browserServer);
+      const browser = await browserType.connect({
         wsEndpoint: browserServer.wsEndpoint(),
         _forwardPorts: forwardPorts
       } as ConnectOptions);
       return await browser.newPage();
     });
-    await browser?.close();
-    await browserServer?.close();
+    for (const browserServer of browserServers)
+      await browserServer.close?.();
   },
 });
 
