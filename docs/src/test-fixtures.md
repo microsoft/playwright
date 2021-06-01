@@ -1,6 +1,6 @@
 ---
 id: test-fixtures
-title: "Advanced: Fixtures"
+title: "Advanced: fixtures"
 ---
 
 <!-- TOC -->

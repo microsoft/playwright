@@ -194,7 +194,7 @@ module.exports = {
 };
 ```
 
-```js
+```ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -221,7 +221,7 @@ module.exports = {
 };
 ```
 
-```js
+```ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
