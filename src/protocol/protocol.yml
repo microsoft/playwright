@@ -1148,11 +1148,6 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
-        world:
-          type: enum?
-          literals:
-          - main
-          - utility
       returns:
         value: SerializedValue
 
@@ -1161,11 +1156,6 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
-        world:
-          type: enum?
-          literals:
-          - main
-          - utility
       returns:
         handle: JSHandle
 
