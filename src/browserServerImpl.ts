@@ -15,7 +15,6 @@
  */
 
 import { LaunchServerOptions, Logger } from './client/types';
-import { BrowserType } from './server/browserType';
 import { Browser } from './server/browser';
 import { EventEmitter } from 'ws';
 import { Dispatcher, DispatcherScope } from './dispatchers/dispatcher';
@@ -28,7 +27,7 @@ import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
 import { ProtocolLogger } from './server/types';
 import { CallMetadata, internalCallMetadata } from './server/instrumentation';
-import { Playwright } from './server/playwright';
+import { createPlaywright, Playwright } from './server/playwright';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { PlaywrightServer, PlaywrightServerDelegate } from './remote/playwrightServer';
 import { BrowserContext } from './server/browserContext';
@@ -40,18 +39,17 @@ import { SocksSocketDispatcher } from './dispatchers/socksSocketDispatcher';
 import { SocksInterceptedSocketHandler } from './server/socksServer';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
-  private _playwright: Playwright;
-  private _browserType: BrowserType;
+  private _browserName: 'chromium' | 'firefox' | 'webkit';
 
-  constructor(playwright: Playwright, browserType: BrowserType) {
-    this._playwright = playwright;
-    this._browserType = browserType;
+  constructor(browserName: 'chromium' | 'firefox' | 'webkit') {
+    this._browserName = browserName;
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const portForwardingServer = new BrowserServerPortForwardingServer(this._playwright, !!options._acceptForwardedPorts);
+    const playwright = createPlaywright();
+    const portForwardingServer = new BrowserServerPortForwardingServer(playwright, !!options._acceptForwardedPorts);
     // 1. Pre-launch the browser
-    const browser = await this._browserType.launch(internalCallMetadata(), {
+    const browser = await playwright[this._browserName].launch(internalCallMetadata(), {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
@@ -66,7 +64,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       onClose: () => {
         portForwardingServer.stop();
       },
-      onConnect: this._onConnect.bind(this, browser, portForwardingServer),
+      onConnect: this._onConnect.bind(this, playwright, browser, portForwardingServer),
     };
     const server = new PlaywrightServer(delegate);
     const wsEndpoint = await server.listen(options.port);
@@ -85,7 +83,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     return browserServer;
   }
 
-  private _onConnect(browser: Browser, portForwardingServer: BrowserServerPortForwardingServer, scope: DispatcherScope, forceDisconnect: () => void) {
+  private _onConnect(playwright: Playwright, browser: Browser, portForwardingServer: BrowserServerPortForwardingServer, scope: DispatcherScope, forceDisconnect: () => void) {
     const selectors = new Selectors();
     const selectorsDispatcher = new SelectorsDispatcher(scope, selectors);
     const browserDispatcher = new ConnectedBrowserDispatcher(scope, browser, selectors);
@@ -93,7 +91,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       // Underlying browser did close for some reason - force disconnect the client.
       forceDisconnect();
     });
-    const playwrightDispatcher = new PlaywrightDispatcher(scope, this._playwright, selectorsDispatcher, browserDispatcher, (ports: number[]) => {
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, selectorsDispatcher, browserDispatcher, (ports: number[]) => {
       portForwardingServer.enablePortForwarding(ports);
     });
     const incomingSocksSocketHandler = (socket: SocksInterceptedSocketHandler) => {
