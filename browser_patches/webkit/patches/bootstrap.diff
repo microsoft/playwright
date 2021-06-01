@@ -4796,14 +4796,20 @@ index 00e69f1aa2e3f8ea2f445e8dd446dd16ea6363df..78dda16d71cc379f07803ca313b47b55
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
-index 298465c52b42464c2733659e07f3f760174a95eb..ad8a6be61c27bdcbbe3b104b669d682d82c16adf 100644
+index 298465c52b42464c2733659e07f3f760174a95eb..5af56f4aa2d2de51153b1ae2c5e17274d88713d0 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
-@@ -57,11 +57,12 @@ public:
-     Inspector::Protocol::ErrorStringOr<void> enable();
-     Inspector::Protocol::ErrorStringOr<void> disable();
-     Inspector::Protocol::ErrorStringOr<std::tuple<Ref<Inspector::Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */, Optional<int> /* savedResultIndex */>> evaluate(const String& expression, const String& objectGroup, Optional<bool>&& includeCommandLineAPI, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& saveResult, Optional<bool>&& emulateUserGesture);
+@@ -54,25 +54,25 @@ public:
+     ~PageRuntimeAgent();
+ 
+     // RuntimeBackendDispatcherHandler
+-    Inspector::Protocol::ErrorStringOr<void> enable();
+-    Inspector::Protocol::ErrorStringOr<void> disable();
+-    Inspector::Protocol::ErrorStringOr<std::tuple<Ref<Inspector::Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */, Optional<int> /* savedResultIndex */>> evaluate(const String& expression, const String& objectGroup, Optional<bool>&& includeCommandLineAPI, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& saveResult, Optional<bool>&& emulateUserGesture);
 -    Inspector::Protocol::ErrorStringOr<std::tuple<Ref<Inspector::Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */>> callFunctionOn(const Inspector::Protocol::Runtime::RemoteObjectId&, const String& expression, RefPtr<JSON::Array>&& arguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture);
++    Inspector::Protocol::ErrorStringOr<void> enable() override;
++    Inspector::Protocol::ErrorStringOr<void> disable() override;
++    Inspector::Protocol::ErrorStringOr<std::tuple<Ref<Inspector::Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */, Optional<int> /* savedResultIndex */>> evaluate(const String& expression, const String& objectGroup, Optional<bool>&& includeCommandLineAPI, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& saveResult, Optional<bool>&& emulateUserGesture) override;
 +    void callFunctionOn(const Inspector::Protocol::Runtime::RemoteObjectId&, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture, Optional<bool>&& awaitPromise, Ref<CallFunctionOnCallback>&&) override;
  
      // InspectorInstrumentation
@@ -4812,8 +4818,14 @@ index 298465c52b42464c2733659e07f3f760174a95eb..ad8a6be61c27bdcbbe3b104b669d682d
 +    void didReceiveMainResourceError(Frame&);
  
  private:
-     Inspector::InjectedScript injectedScriptForEval(Inspector::Protocol::ErrorString&, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&);
-@@ -72,7 +73,6 @@ private:
+-    Inspector::InjectedScript injectedScriptForEval(Inspector::Protocol::ErrorString&, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&);
+-    void muteConsole();
+-    void unmuteConsole();
++    Inspector::InjectedScript injectedScriptForEval(Inspector::Protocol::ErrorString&, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&) override;
++    void muteConsole() override;
++    void unmuteConsole() override;
+     void reportExecutionContextCreation();
+     void notifyContextCreated(const Inspector::Protocol::Network::FrameId&, JSC::JSGlobalObject*, const DOMWrapperWorld&, SecurityOrigin* = nullptr);
  
      std::unique_ptr<Inspector::RuntimeFrontendDispatcher> m_frontendDispatcher;
      RefPtr<Inspector::RuntimeBackendDispatcher> m_backendDispatcher;
