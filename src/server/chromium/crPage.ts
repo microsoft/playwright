@@ -821,7 +821,7 @@ class FrameSession {
   }
 
   _willBeginDownload() {
-    let originPage = this._crPage._initializedPage;
+    const originPage = this._crPage._initializedPage;
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right

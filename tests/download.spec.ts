@@ -19,7 +19,6 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import crypto from 'crypto';
-import { chromiumVersionLessThan } from './config/utils';
 
 it.describe('download event', () => {
   it.beforeEach(async ({server}) => {
