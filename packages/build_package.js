@@ -57,18 +57,6 @@ const PACKAGES = {
     browsers: ['chromium', 'ffmpeg'],
     files: [...PLAYWRIGHT_CORE_FILES],
   },
-  'playwright-electron': {
-    version: '0.4.0', // Manually manage playwright-electron version.
-    description: 'A high-level API to automate Electron',
-    browsers: ['ffmpeg'],
-    files: [...PLAYWRIGHT_CORE_FILES],
-  },
-  'playwright-android': {
-    version: '0.0.8', // Manually manage playwright-android version.
-    description: 'A high-level API to automate Chrome for Android',
-    browsers: ['ffmpeg'],
-    files: [...PLAYWRIGHT_CORE_FILES],
-  },
 };
 
 // 1. Parse CLI arguments
