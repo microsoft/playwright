@@ -1,6 +1,6 @@
 ---
 id: test-cli
-title: "Advanced: Command Line"
+title: "Advanced: command line"
 ---
 
 ```sh

@@ -305,3 +305,127 @@ There are many more things you can do with projects:
 :::note
 `--browser` command line option is not compatible with projects. Specify `browserName` in each project instead.
 :::
+
+## Mobile emulation
+
+You can use configuration file to make default `context` emulate a mobile device.
+
+Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" emulation modes. Note that it uses the [projects](./test-advanced.md#projects) feature to run the same set of tests in multiple configurations.
+
+```js
+// playwright.config.js
+const { devices } = require('playwright');
+
+module.exports = {
+  projects: [
+    // "Pixel 4" tests use Chromium browser.
+    {
+      name: 'Pixel 4',
+      use: {
+        browserName: 'chromium',
+        ...devices['Pixel 4'],
+      },
+    },
+
+    // "iPhone 11" tests use WebKit browser.
+    {
+      name: 'iPhone 11',
+      use: {
+        browserName: 'webkit',
+        ...devices['iPhone 11'],
+      },
+    },
+  ],
+};
+```
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+import { devices } from 'playwright';
+
+const config: PlaywrightTestConfig = {
+  projects: [
+    // "Pixel 4" tests use Chromium browser.
+    {
+      name: 'Pixel 4',
+      use: {
+        browserName: 'chromium',
+        ...devices['Pixel 4'],
+      },
+    },
+
+    // "iPhone 11" tests use WebKit browser.
+    {
+      name: 'iPhone 11',
+      use: {
+        browserName: 'webkit',
+        ...devices['iPhone 11'],
+      },
+    },
+  ],
+};
+export default config;
+```
+
+## Network mocking
+
+You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context.
+
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
+
+test.beforeEach(async ({ context }) => {
+  // Block any css requests for each test in this file.
+  await context.route(/.css/, route => route.abort());
+});
+
+test('loads page without css', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test.beforeEach(async ({ context }) => {
+  // Block any css requests for each test in this file.
+  await context.route(/.css/, route => route.abort());
+});
+
+test('loads page without css', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+Alternatively, you can use [`method: Page.route`] to mock network in a single test.
+
+```js
+// example.spec.js
+const { test, expect } = require('playwright/test');
+
+test('loads page without images', async ({ page }) => {
+  // Block png and jpeg images.
+  await page.route(/(png|jpeg)$/, route => route.abort());
+
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+```ts
+// example.spec.ts
+import { test, expect } from 'playwright/test';
+
+test('loads page without images', async ({ page }) => {
+  // Block png and jpeg images.
+  await page.route(/(png|jpeg)$/, route => route.abort());
+
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
