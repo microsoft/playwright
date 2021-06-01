@@ -77,8 +77,9 @@ class SocksV5ServerParser {
   private _dstAddrp: number = 0;
   private _dstPort?: number;
   private _socket: net.Socket;
-  private _readyResolve!: (value?: unknown) => void;
-  private _ready: Promise<unknown>;
+  private _parsingFinishedResolve!: (value?: unknown) => void;
+  private _parsingFinishedReject!: (value: Error) => void;
+  private _parsingFinished: Promise<unknown>;
   private _info: SocksConnectionInfo;
   private _phase: ConnectionPhases = ConnectionPhases.VERSION;
   private _authMethods?: Buffer;
@@ -88,7 +89,10 @@ class SocksV5ServerParser {
   constructor(socket: net.Socket) {
     this._socket = socket;
     this._info = { srcAddr: socket.remoteAddress!, srcPort: socket.remotePort!, dstAddr: '', dstPort: 0 };
-    this._ready = new Promise(resolve => this._readyResolve = resolve);
+    this._parsingFinished = new Promise((resolve, reject) => {
+      this._parsingFinishedResolve = resolve;
+      this._parsingFinishedReject = reject;
+    });
     socket.on('data', this._onData.bind(this));
     socket.on('error', () => {});
   }
@@ -98,7 +102,7 @@ class SocksV5ServerParser {
     const readByte = () => chunk[i++];
     const closeSocketOnError = () => {
       socket.end();
-      debugLogger.log('proxy', `Closed Socket due error: ${new Error().stack}`);
+      this._parsingFinishedReject(new Error('Parsing aborted'));
     };
     while (i < chunk.length && this._phase !== ConnectionPhases.DONE) {
       switch (this._phase) {
@@ -210,7 +214,7 @@ class SocksV5ServerParser {
           }
           this._info.dstPort = this._dstPort;
           this._phase = ConnectionPhases.DONE;
-          this._readyResolve();
+          this._parsingFinishedResolve();
           return;
         default:
           return closeSocketOnError();
@@ -223,7 +227,7 @@ class SocksV5ServerParser {
   }
 
   async ready(): Promise<{ info: SocksConnectionInfo, forward: () => void, intercept: (parent: SdkObject) => SocksInterceptedSocketHandler }> {
-    await this._ready;
+    await this._parsingFinished;
     return {
       info: this._info,
       forward: () => {
@@ -303,8 +307,14 @@ export class SocksProxyServer {
 
   async _handleConnection(incomingMessageHandler: IncomingProxyRequestHandler, socket: net.Socket) {
     const parser = new SocksV5ServerParser(socket);
-    const { info, forward, intercept } = await parser.ready();
-    incomingMessageHandler(info, forward, intercept);
+    let parsedSocket;
+    try {
+      parsedSocket = await parser.ready();
+    } catch (error) {
+      debugLogger.log('proxy', `Could not parse: ${error} ${error?.stack}`);
+      return;
+    }
+    incomingMessageHandler(parsedSocket.info, parsedSocket.forward, parsedSocket.intercept);
   }
 
   public close() {
