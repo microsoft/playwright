@@ -208,13 +208,14 @@ test.describe('feature foo', () => {
 
 ### Write assertions
 
-Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. It provides a lot of matchers like `toEqual`, `toContain`, `toMatch` and many more.
+Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. It provides a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more.
 
 Combine `expect` with various Playwright methods to create expectations for your test:
 - [`method: Page.isVisible`]
 - [`method: Page.waitForSelector`]
 - [`method: Page.textContent`]
 - [`method: Page.getAttribute`]
+- [`method: Page.screenshot`]
 - Find out more in the [assertions](./assertions.md) guide
 
 ```js
@@ -236,6 +237,9 @@ test('my test', async ({ page }) => {
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
   expect(await page.waitForSelector('text=Getting Started')).toBeTruthy();
+
+  // Compare screenshot with a stored reference.
+  expect(await page.screenshot()).toMatchSnapshot('get-started.png');
 });
 ```
 
@@ -258,6 +262,9 @@ test('my test', async ({ page }) => {
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
   expect(await page.waitForSelector('text=Getting Started')).toBeTruthy();
+
+  // Compare screenshot with a stored reference.
+  expect(await page.screenshot()).toMatchSnapshot('get-started.png');
 });
 ```
 

@@ -14,26 +14,49 @@ Playwright Test comes with a few built-in reporters for different needs and abil
 npx playwright test --reporter=line
 ```
 
-For more control, you can specify reporters programmatically in the [configuration file](#writing-a-configuration-file).
+For more control, you can specify reporters programmatically in the [configuration file](./test-configuration.md).
 
 ```js
-// pwtest.config.ts
+// playwright.config.js
+module.exports = {
+  reporter: 'line',
+};
+```
+
+```ts
+// playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: 'dot',
+  reporter: 'line',
 };
+export default config;
+```
 
-// More complex example:
-const config2: PlaywrightTestConfig = {
+You can use different reporters locally and on CI.
+
+```js
+// playwright.config.js
+module.exports = {
   reporter: !process.env.CI
-    // A long list of tests for the terminal.
+    // A list of tests for the terminal
     ? 'list'
-    // Entirely different config on CI.
-    // Use very concise "dot" reporter plus a comprehensive json report.
+    // Very concise "dot" reporter and a comprehensive json report for CI
     : ['dot', { name: 'json', outputFile: 'test-results.json' }],
 };
+```
 
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+
+const config: PlaywrightTestConfig = {
+  reporter: !process.env.CI
+    // A list of tests for the terminal
+    ? 'list'
+    // Very concise "dot" reporter and a comprehensive json report for CI
+    : ['dot', { name: 'json', outputFile: 'test-results.json' }],
+};
 export default config;
 ```
 
@@ -43,11 +66,24 @@ All built-in reporters show detailed information about failures, and mostly diff
 
 ### List reporter
 
-List reporter is default. It prints a line for each test being run. Use it with `--reporter=list` or `reporter: 'list'`.
+List reporter is default. It prints a line for each test being run.
+
+```sh
+npx playwright test --reporter=list
+```
 
 ```js
-// pwtest.config.ts
-const config = {
+// playwright.config.js
+module.exports = {
+  reporter: 'list',
+};
+```
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+
+const config: PlaywrightTestConfig = {
   reporter: 'list',
 };
 export default config;
@@ -72,11 +108,24 @@ Running 124 tests using 6 workers
 
 ### Line reporter
 
-Line reporter is more concise than the list reporter. It uses a single line to report last finished test, and prints failures when they occur. Line reporter is useful for large test suites where it shows the progress but does not spam the output by listing all the tests. Use it with `--reporter=line` or `reporter: 'line'`.
+Line reporter is more concise than the list reporter. It uses a single line to report last finished test, and prints failures when they occur. Line reporter is useful for large test suites where it shows the progress but does not spam the output by listing all the tests.
+
+```sh
+npx playwright test --reporter=line
+```
 
 ```js
-// pwtest.config.ts
-const config = {
+// playwright.config.js
+module.exports = {
+  reporter: 'line',
+};
+```
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+
+const config: PlaywrightTestConfig = {
   reporter: 'line',
 };
 export default config;
@@ -98,11 +147,24 @@ Running 124 tests using 6 workers
 
 ### Dot reporter
 
-Dot reporter is very concise - it only produces a single character per successful test run. It is useful on CI where you don't want a lot of output. Use it with `--reporter=dot` or `reporter: 'dot'`.
+Dot reporter is very concise - it only produces a single character per successful test run. It is useful on CI where you don't want a lot of output.
+
+```sh
+npx playwright test --reporter=dot
+```
 
 ```js
-// pwtest.config.ts
-const config = {
+// playwright.config.js
+module.exports = {
+  reporter: 'dot',
+};
+```
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+
+const config: PlaywrightTestConfig = {
   reporter: 'dot',
 };
 export default config;
@@ -119,15 +181,24 @@ Running 124 tests using 6 workers
 
 JSON reporter produces an object with all information about the test run. It is usually used together with some terminal reporter like `dot` or `line`.
 
-Most likely you want to write the JSON to a file. When running with `--reporter=json`, use `FOLIO_JSON_OUTPUT_NAME` environment variable:
+Most likely you want to write the JSON to a file. When running with `--reporter=json`, use `PLAYWRIGHT_JSON_OUTPUT_NAME` environment variable:
 ```sh
-FOLIO_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
+PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
 ```
 
 In configuration file, pass options directly:
 ```js
-// pwtest.config.ts
-const config = {
+// playwright.config.js
+module.exports = {
+  reporter: { name: 'json', outputFile: 'results.json' },
+};
+```
+
+```js
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+
+const config: PlaywrightTestConfig = {
   reporter: { name: 'json', outputFile: 'results.json' },
 };
 export default config;
@@ -137,15 +208,24 @@ export default config;
 
 JUnit reporter produces a JUnit-style xml report. It is usually used together with some terminal reporter like `dot` or `line`.
 
-Most likely you want to write the report to an xml file. When running with `--reporter=junit`, use `FOLIO_JUNIT_OUTPUT_NAME` environment variable:
+Most likely you want to write the report to an xml file. When running with `--reporter=junit`, use `PLAYWRIGHT_JUNIT_OUTPUT_NAME` environment variable:
 ```sh
-FOLIO_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,line
+PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,line
 ```
 
 In configuration file, pass options directly:
 ```js
-// pwtest.config.ts
-const config = {
+// playwright.config.js
+module.exports = {
+  reporter: { name: 'junit', outputFile: 'results.xml' },
+};
+```
+
+```js
+// playwright.config.ts
+import { PlaywrightTestConfig } from 'playwright/test';
+
+const config: PlaywrightTestConfig = {
   reporter: { name: 'junit', outputFile: 'results.xml' },
 };
 export default config;
