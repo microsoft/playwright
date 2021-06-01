@@ -52,6 +52,13 @@ export interface ExecutionContextDelegate {
   releaseHandle(objectId: ObjectId): Promise<void>;
 }
 
+export type EvalOptions = {
+  arg?: any;
+  args?: any[];
+  returnHandle?: boolean;
+  isFunction?: boolean;
+  waitForSignals?: boolean;
+}
 export class ExecutionContext extends SdkObject {
   readonly _delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
@@ -95,7 +102,7 @@ export class ExecutionContext extends SdkObject {
     returnHandle = false,
     isFunction = typeof pageFunction === 'function',
     waitForSignals = false
-  }: { arg?: any, args?: any[], returnHandle?: boolean, isFunction?: boolean, waitForSignals?: boolean }): Promise<any> {
+  }: EvalOptions): Promise<any> {
     const action = () => evaluateExpression(this, !returnHandle, String(pageFunction), isFunction, ...args);
     if (waitForSignals)
       return this.waitForSignalsCreatedBy(action);

@@ -636,7 +636,7 @@ export class Frame extends SdkObject {
     return this._context('utility');
   }
 
-  async eval(pageFunction: string|Function, options: Parameters<js.ExecutionContext['eval']>[1] & {world?: types.World} = {}) {
+  async eval(pageFunction: string|Function, options: js.EvalOptions & {world?: types.World} = {}) {
     const {world = 'main'} = options;
     const context = await this._context(world);
     const value = await context.eval(pageFunction, options);
