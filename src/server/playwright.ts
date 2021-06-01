@@ -26,7 +26,7 @@ import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
-import { BrowserServerPortForwardingServer } from './socksSocket';
+import { PortForwardingServer } from './socksSocket';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -36,7 +36,7 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
-  _portForwardingServer!: BrowserServerPortForwardingServer;
+  _portForwardingServer!: PortForwardingServer;
 
   constructor(isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
@@ -45,11 +45,9 @@ export class Playwright extends SdkObject {
         debugLogger.log(logName as any, message);
       }
     });
-    this._portForwardingServer = new BrowserServerPortForwardingServer(this);
     this.options = {
       registry: new Registry(path.join(__dirname, '..', '..')),
       rootSdkObject: this,
-      portForwardingServer: this._portForwardingServer,
     };
     this.chromium = new Chromium(this.options);
     this.firefox = new Firefox(this.options);
@@ -59,15 +57,19 @@ export class Playwright extends SdkObject {
     this.selectors = serverSelectors;
   }
 
-  _enablePortForwarding() {
-    this._portForwardingServer.start();
+  async _enablePortForwarding() {
+    this._portForwardingServer = await PortForwardingServer.create(this);
+    this.options.loopbackProxyOverride = () => this._portForwardingServer.proxyServer();
   }
 
   _disablePortForwarding() {
-    this._portForwardingServer.stop();
+    if (this._portForwardingServer)
+      this._portForwardingServer.stop();
   }
 
   _setForwardedPorts(ports: number[]) {
+    if (!this._portForwardingServer)
+      throw new Error(`Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.`);
     this._portForwardingServer.setForwardedPorts(ports);
   }
 }

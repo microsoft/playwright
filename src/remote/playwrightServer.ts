@@ -28,7 +28,7 @@ const debugLog = debug('pw:server');
 export interface PlaywrightServerDelegate {
   path: string;
   allowMultipleClients: boolean;
-  onConnect(rootScope: DispatcherScope, forceDisconnect: () => void): () => any;
+  onConnect(rootScope: DispatcherScope, forceDisconnect: () => void): Promise<() => any>;
   onClose: () => any;
 }
 
@@ -51,10 +51,10 @@ export class PlaywrightServer {
       path: '/ws',
       allowMultipleClients: false,
       onClose: cleanup,
-      onConnect: (rootScope: DispatcherScope) => {
+      onConnect: async (rootScope: DispatcherScope) => {
         const playwright = createPlaywright();
         if (acceptForwardedPorts)
-          playwright._enablePortForwarding();
+          await playwright._enablePortForwarding();
         new PlaywrightDispatcher(rootScope, playwright);
         return () => {
           cleanup();
@@ -107,7 +107,7 @@ export class PlaywrightServer {
 
       const forceDisconnect = () => socket.close();
       const scope = connection.rootDispatcher();
-      const onDisconnect = this._delegate.onConnect(scope, forceDisconnect);
+      const onDisconnect = await this._delegate.onConnect(scope, forceDisconnect);
       const disconnected = () => {
         this._clientsCount--;
         // Avoid sending any more messages over closed socket.

@@ -47,7 +47,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     if (options._acceptForwardedPorts)
-      this._playwright._enablePortForwarding();
+      await this._playwright._enablePortForwarding();
     // 1. Pre-launch the browser
     const browser = await this._browserType.launch(internalCallMetadata(), {
       ...options,
@@ -82,7 +82,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     return browserServer;
   }
 
-  private _onConnect(browser: Browser, scope: DispatcherScope, forceDisconnect: () => void) {
+  private async _onConnect(browser: Browser, scope: DispatcherScope, forceDisconnect: () => void) {
     const selectors = new Selectors();
     const selectorsDispatcher = new SelectorsDispatcher(scope, selectors);
     const browserDispatcher = new ConnectedBrowserDispatcher(scope, browser, selectors);

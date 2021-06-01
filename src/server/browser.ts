@@ -24,7 +24,6 @@ import { RecentLogsCollector } from '../utils/debugLogger';
 import * as registry from '../utils/registry';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import { BrowserServerPortForwardingServer } from './socksSocket';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -36,7 +35,7 @@ export interface BrowserProcess {
 export type PlaywrightOptions = {
   registry: registry.Registry,
   rootSdkObject: SdkObject,
-  portForwardingServer: BrowserServerPortForwardingServer,
+  loopbackProxyOverride?: () => string,
 };
 
 export type BrowserOptions = PlaywrightOptions & {

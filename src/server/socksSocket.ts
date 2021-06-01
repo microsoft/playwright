@@ -22,35 +22,29 @@ import { debugLogger } from '../utils/debugLogger';
 import { isLocalIpAddress } from '../utils/utils';
 import { SocksProxyServer, SocksConnectionInfo, SocksInterceptedSocketHandler } from './socksServer';
 
-export class BrowserServerPortForwardingServer extends EventEmitter {
-  enabled: boolean = false;
+export class PortForwardingServer extends EventEmitter {
   private _forwardPorts: number[] = [];
   private _parent: SdkObject;
-  private _server!: SocksProxyServer;
+  private _server: SocksProxyServer;
   constructor(parent: SdkObject) {
     super();
     this.setMaxListeners(0);
     this._parent = parent;
+    this._server = new SocksProxyServer(this._handler.bind(this));
   }
 
-  start() {
-    if (this.enabled)
-      return;
-    this.enabled = true;
-    this._server = new SocksProxyServer(this._handler.bind(this));
-    this._server.listen(0);
-    debugLogger.log('proxy', `starting server on port ${this._port()})`);
+  static async create(parent: SdkObject) {
+    const server = new PortForwardingServer(parent);
+    await server._server.listen(0);
+    debugLogger.log('proxy', `starting server on port ${server._port()})`);
+    return server;
   }
 
   private _port(): number {
-    if (!this.enabled)
-      return 0;
     return (this._server.server.address() as net.AddressInfo).port;
   }
 
   public proxyServer() {
-    if (!this.enabled)
-      return;
     return `socks5://127.0.0.1:${this._port()}`;
   }
 
@@ -66,17 +60,12 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
   }
 
   public setForwardedPorts(ports: number[]): void {
-    if (!this.enabled)
-      throw new Error(`Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.`);
     debugLogger.log('proxy', `enable port forwarding on ports: ${ports}`);
     this._forwardPorts = ports;
   }
 
   public stop(): void {
-    if (!this.enabled)
-      return;
     debugLogger.log('proxy', 'stopping server');
     this._server.close();
-    this.enabled = false;
   }
 }

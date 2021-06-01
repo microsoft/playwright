@@ -32,22 +32,22 @@ const it = contextTest.extend<{ pageFactory: (options?: PageFactoryOptions) => P
     let browserServer: BrowserServer;
     await run(async (options?: PageFactoryOptions): Promise<Page> => {
       const { acceptForwardedPorts, forwardPorts } = options;
-      if (mode === 'default') {
-        browserServer = await browserType.launchServer({
-          ...browserOptions,
-          _acceptForwardedPorts: acceptForwardedPorts
-        } as LaunchOptions);
-        browser = await browserType.connect({
-          wsEndpoint: browserServer.wsEndpoint(),
-          _forwardPorts: forwardPorts
-        } as ConnectOptions);
+      if (mode === 'service') {
+        const playwright = await getPlaywright({
+          acceptForwardedPorts,
+          forwardPorts,
+        });
+        browser = await playwright['chromium'].launch(browserOptions);
         return await browser.newPage();
       }
-      const playwright = await getPlaywright({
-        acceptForwardedPorts,
-        forwardPorts,
-      });
-      browser = await playwright['chromium'].launch(browserOptions);
+      browserServer = await browserType.launchServer({
+        ...browserOptions,
+        _acceptForwardedPorts: acceptForwardedPorts
+      } as LaunchOptions);
+      browser = await browserType.connect({
+        wsEndpoint: browserServer.wsEndpoint(),
+        _forwardPorts: forwardPorts
+      } as ConnectOptions);
       return await browser.newPage();
     });
     await browser?.close();
@@ -56,6 +56,7 @@ const it = contextTest.extend<{ pageFactory: (options?: PageFactoryOptions) => P
 });
 
 it.fixme(({ platform, browserName }) => platform === 'darwin' && browserName === 'webkit');
+it.skip(({ mode }) => mode === 'driver');
 
 it.beforeEach(() => {
   delete process.env.PW_TEST_PROXY_TARGET;
@@ -116,7 +117,7 @@ it('should lead to the error page for non-forwarded requests when the connection
 });
 
 it('should not allow connecting a second client when _acceptForwardedPorts is used', async ({ mode, browserType, browserOptions }, workerInfo) => {
-  it.skip();
+  it.skip(mode !== 'default');
   const browserServer = await browserType.launchServer({
     ...browserOptions,
     _acceptForwardedPorts: true
@@ -141,21 +142,7 @@ it('should not allow connecting a second client when _acceptForwardedPorts is us
   await browserServer.close();
 });
 
-it('should should not allow to connect when the server does not allow port-forwarding', async ({ mode, browserType, browserOptions }, workerInfo) => {
-  it.skip(mode !== 'default');
-  const browserServer = await browserType.launchServer({
-    ...browserOptions,
-    _acceptForwardedPorts: false
-  } as LaunchOptions);
-
-  await expect(browserType.connect({
-    wsEndpoint: browserServer.wsEndpoint(),
-    _forwardPorts: []
-  } as ConnectOptions)).rejects.toThrowError('browserType.connect: Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.');
-  await expect(browserType.connect({
-    wsEndpoint: browserServer.wsEndpoint(),
-    _forwardPorts: [1234]
-  } as ConnectOptions)).rejects.toThrowError('browserType.connect: Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.');
-
-  await browserServer.close();
+it('should should not allow to connect when the server does not allow port-forwarding', async ({ pageFactory }, workerInfo) => {
+  await expect(pageFactory({ acceptForwardedPorts: false, forwardPorts: []})).rejects.toThrowError('Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.');
+  await expect(pageFactory({ acceptForwardedPorts: false, forwardPorts: [1234]})).rejects.toThrowError('Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.');
 });
