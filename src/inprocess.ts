@@ -34,9 +34,9 @@ function setupInProcess(): PlaywrightAPI {
   // Initialize Playwright channel.
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
   const playwrightAPI = clientConnection.getObjectWithKnownName('Playwright') as PlaywrightAPI;
-  playwrightAPI.chromium._serverLauncher = new BrowserServerLauncherImpl(playwright, playwright.chromium);
-  playwrightAPI.firefox._serverLauncher = new BrowserServerLauncherImpl(playwright, playwright.firefox);
-  playwrightAPI.webkit._serverLauncher = new BrowserServerLauncherImpl(playwright, playwright.webkit);
+  playwrightAPI.chromium._serverLauncher = new BrowserServerLauncherImpl('chromium');
+  playwrightAPI.firefox._serverLauncher = new BrowserServerLauncherImpl('firefox');
+  playwrightAPI.webkit._serverLauncher = new BrowserServerLauncherImpl('webkit');
 
   // Switch to async dispatch after we got Playwright object.
   dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
