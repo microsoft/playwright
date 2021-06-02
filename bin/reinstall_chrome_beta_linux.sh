@@ -3,7 +3,7 @@ set -e
 set -x
 
 # 1. make sure to remove old beta if any.
-if sudo dpkg -S google-chrome-beta &>/dev/null; then
+if dpkg --get-selections | grep -q "^google-chrome-beta[[:space:]]*install$" >/dev/null; then
   sudo apt-get remove -y google-chrome-beta
 fi
 
