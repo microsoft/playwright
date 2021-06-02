@@ -85,9 +85,6 @@ jobs:
         browser: [chromium, firefox, webkit]
     runs-on: windows-latest
     steps:
-    - name: Install Media Pack
-      shell: powershell
-      run: Install-WindowsFeature Server-Media-Foundation
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
@@ -286,9 +283,6 @@ jobs:
     name: "Chrome Stable (Win)"
     runs-on: windows-latest
     steps:
-    - name: Install Media Pack
-      shell: powershell
-      run: Install-WindowsFeature Server-Media-Foundation
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
@@ -368,9 +362,6 @@ jobs:
     name: "Firefox Stable (Win)"
     runs-on: windows-latest
     steps:
-    - name: Install Media Pack
-      shell: powershell
-      run: Install-WindowsFeature Server-Media-Foundation
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
@@ -379,6 +370,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
+    - run: node lib/cli/cli install-deps chromium
     - run: node lib/cli/cli install ffmpeg firefox-stable chromium
     - run: npm run ftest
       shell: bash
@@ -421,9 +413,6 @@ jobs:
     name: "Edge Stable (Win)"
     runs-on: windows-latest
     steps:
-    - name: Install Media Pack
-      shell: powershell
-      run: Install-WindowsFeature Server-Media-Foundation
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
@@ -499,9 +488,6 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install Media Pack
-      shell: powershell
-      run: Install-WindowsFeature Server-Media-Foundation
     - uses: actions/setup-node@v2
       with:
         node-version: 12
