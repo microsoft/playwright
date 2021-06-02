@@ -260,15 +260,12 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - name: Install Chrome Stable
-      run: sudo apt install google-chrome-stable
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
-    # This only created problems, should we move ffmpeg back into npm?
-    - run: node lib/cli/cli install ffmpeg
+    - run: node lib/cli/cli install chrome
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
@@ -297,8 +294,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # This only created problems, should we move ffmpeg back into npm?
-    - run: node lib/cli/cli install ffmpeg
+    - run: node lib/cli/cli install chrome
     - run: npm run ctest
       shell: bash
       env:
@@ -324,8 +320,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # This only created problems, should we move ffmpeg back into npm?
-    - run: node lib/cli/cli install ffmpeg
+    - run: node lib/cli/cli install chrome
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome
@@ -350,7 +345,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install-deps firefox
-    - run: node lib/cli/cli install ffmpeg firefox-stable chromium
+    - run: node lib/cli/cli install firefox-stable chromium
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ftest"
@@ -379,7 +374,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install ffmpeg firefox-stable chromium
+    - run: node lib/cli/cli install firefox-stable chromium
     - run: npm run ftest
       shell: bash
       env:
@@ -405,7 +400,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install ffmpeg firefox-stable chromium
+    - run: node lib/cli/cli install firefox-stable chromium
     - run: npm run ftest
       env:
         PWTEST_CHANNEL: firefox-stable
@@ -432,7 +427,6 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # This only created problems, should we move ffmpeg back into npm?
     - run: node lib/cli/cli install ffmpeg
     - run: npm run ctest
       shell: bash
