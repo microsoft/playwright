@@ -1216,10 +1216,10 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..5f7add78fefc2bf8718ff8af7c49c169
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936afe5dd4ebf
+index 0000000000000000000000000000000000000000..2946ae9cf1ce56078cbbed524f8345275f2adca1
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,273 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1270,6 +1270,24 @@ index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936af
 +                { "name": "secure", "type": "boolean", "optional": true, "description": "True if cookie is secure." },
 +                { "name": "session", "type": "boolean", "optional": true, "description": "True if cookie is session cookie." },
 +                { "name": "sameSite", "$ref": "CookieSameSitePolicy", "optional": true, "description": "Cookie Same-Site policy." }
++            ]
++        },
++        {
++            "id": "NameValue",
++            "type": "object",
++            "description": "Name-value pair",
++            "properties": [
++                { "name": "name", "type": "string" },
++                { "name": "value", "type": "string" }
++            ]
++        },
++        {
++            "id": "OriginStorage",
++            "type": "object",
++            "description": "Origin object",
++            "properties": [
++                { "name": "origin", "type": "string", "description": "Origin." },
++                { "name": "items", "type": "array", "items": { "$ref": "NameValue" }, "description": "Storage entries." }
 +            ]
 +        },
 +        {
@@ -1372,6 +1390,17 @@ index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936af
 +            "async": true,
 +            "parameters": [
 +                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ]
++        },
++        {
++            "name": "getLocalStorageData",
++            "description": "Returns all local storage data in the given browser context.",
++            "async": true,
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ],
++            "returns": [
++                { "name": "origins", "type": "array", "items": { "$ref": "OriginStorage" }, "description": "Local storage data." }
 +            ]
 +        },
 +        {
@@ -8599,7 +8628,7 @@ index c63a6ba71fae430b9d2a326ecfb86a14ddd31993..739672cfcd5d7d803b5fa32466e66481
      RemoveStorageAccessForFrame(WebCore::FrameIdentifier frameID, WebCore::PageIdentifier pageID);
      LogUserInteraction(WebCore::RegistrableDomain domain)
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
-index 364c23618b3ce25e0c43b54bf538582adab83192..450d6c435cd14caf0302384a945204ff2b891bdc 100644
+index 364c23618b3ce25e0c43b54bf538582adab83192..cdf9a6f823865608b10c3e65f13d32f5082f05a8 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 @@ -26,7 +26,6 @@
@@ -8610,7 +8639,7 @@ index 364c23618b3ce25e0c43b54bf538582adab83192..450d6c435cd14caf0302384a945204ff
  #include "ArgumentCoders.h"
  #include "Attachment.h"
  #include "AuthenticationManager.h"
-@@ -555,6 +554,41 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
+@@ -555,6 +554,50 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
      m_storageManagerSet->remove(sessionID);
  }
  
@@ -8643,6 +8672,15 @@ index 364c23618b3ce25e0c43b54bf538582adab83192..450d6c435cd14caf0302384a945204ff
 +    completionHandler(false);
 +}
 +
++void NetworkProcess::getLocalStorageData(PAL::SessionID sessionID, CompletionHandler<void(Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>>&&)>&& completionHandler)
++{
++    if (m_storageManagerSet->contains(sessionID)) {
++        m_storageManagerSet->getLocalStorageData(sessionID, WTFMove(completionHandler));
++        return;
++    }
++    completionHandler(Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>>());
++}
++
 +void NetworkProcess::setIgnoreCertificateErrors(PAL::SessionID sessionID, bool ignore)
 +{
 +    if (auto* networkSession = this->networkSession(sessionID))
@@ -8653,7 +8691,7 @@ index 364c23618b3ce25e0c43b54bf538582adab83192..450d6c435cd14caf0302384a945204ff
  void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
  {
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.h b/Source/WebKit/NetworkProcess/NetworkProcess.h
-index 083382c99a07b26fd58921c5c87e2a61b210761c..0ed80000724204f2fef7dbd3137726c40eaf5a33 100644
+index 083382c99a07b26fd58921c5c87e2a61b210761c..af15a73973ed9207fa65765982813a975d17194d 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.h
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.h
 @@ -79,6 +79,7 @@ class SessionID;
@@ -8664,7 +8702,7 @@ index 083382c99a07b26fd58921c5c87e2a61b210761c..0ed80000724204f2fef7dbd3137726c4
  class CurlProxySettings;
  class ProtectionSpace;
  class StorageQuotaManager;
-@@ -207,6 +208,11 @@ public:
+@@ -207,6 +208,13 @@ public:
  
      void addWebsiteDataStore(WebsiteDataStoreParameters&&);
  
@@ -8673,14 +8711,16 @@ index 083382c99a07b26fd58921c5c87e2a61b210761c..0ed80000724204f2fef7dbd3137726c4
 +    void deleteAllCookies(PAL::SessionID, CompletionHandler<void(bool)>&&);
 +    void setIgnoreCertificateErrors(PAL::SessionID, bool);
 +
++    void getLocalStorageData(PAL::SessionID sessionID, CompletionHandler<void(Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>>&&)>&&);
++
  #if ENABLE(RESOURCE_LOAD_STATISTICS)
      void clearPrevalentResource(PAL::SessionID, const RegistrableDomain&, CompletionHandler<void()>&&);
      void clearUserInteraction(PAL::SessionID, const RegistrableDomain&, CompletionHandler<void()>&&);
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-index 40ea12a0d44aeda21492e852479d6a8dc22d83c8..2147d9ef376525346db7cdbe303a0d8fd8fa5174 100644
+index 40ea12a0d44aeda21492e852479d6a8dc22d83c8..e74c749360b916d61c02816c6960f777ede7ada9 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-@@ -79,6 +79,11 @@ messages -> NetworkProcess LegacyReceiver {
+@@ -79,6 +79,13 @@ messages -> NetworkProcess LegacyReceiver {
  
      PreconnectTo(PAL::SessionID sessionID, WebKit::WebPageProxyIdentifier webPageProxyID, WebCore::PageIdentifier webPageID, URL url, String userAgent, enum:uint8_t WebCore::StoredCredentialsPolicy storedCredentialsPolicy, enum:bool Optional<WebKit::NavigatingToAppBoundDomain> isNavigatingToAppBoundDomain, enum:bool WebKit::LastNavigationWasAppBound lastNavigationWasAppBound);
  
@@ -8688,6 +8728,8 @@ index 40ea12a0d44aeda21492e852479d6a8dc22d83c8..2147d9ef376525346db7cdbe303a0d8f
 +    SetCookies(PAL::SessionID sessionID, Vector<WebCore::Cookie> cookies) -> (bool success) Async
 +    DeleteAllCookies(PAL::SessionID sessionID) -> (bool success) Async
 +    SetIgnoreCertificateErrors(PAL::SessionID sessionID, bool ignoreTLSErrors)
++
++    GetLocalStorageData(PAL::SessionID sessionID) -> (Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>> origins) Async
 +
  #if ENABLE(RESOURCE_LOAD_STATISTICS)
      ClearPrevalentResource(PAL::SessionID sessionID, WebCore::RegistrableDomain resourceDomain) -> () Async
@@ -8727,6 +8769,134 @@ index 48c883bfc0fc7d501c8a4a4e7684ccc33e38c14d..20dedbbaf4b1a713c8be41e21425c307
      , m_delayFailTimer(*this, &NetworkSocketStream::sendDelayedFailMessage)
  {
  }
+diff --git a/Source/WebKit/NetworkProcess/WebStorage/LocalStorageNamespace.cpp b/Source/WebKit/NetworkProcess/WebStorage/LocalStorageNamespace.cpp
+index 60153bf7d6b07f58e0ea1595a14fc8c81353c149..5c0907b31551b576aeed1e9d26f4f5bcce055ec2 100644
+--- a/Source/WebKit/NetworkProcess/WebStorage/LocalStorageNamespace.cpp
++++ b/Source/WebKit/NetworkProcess/WebStorage/LocalStorageNamespace.cpp
+@@ -29,6 +29,7 @@
+ #include "StorageArea.h"
+ #include "StorageManager.h"
+ #include <WebCore/SecurityOriginData.h>
++#include <wtf/Forward.h>
+ 
+ namespace WebKit {
+ 
+@@ -103,4 +104,11 @@ Vector<StorageAreaIdentifier> LocalStorageNamespace::storageAreaIdentifiers() co
+     return identifiers;
+ }
+ 
++void LocalStorageNamespace::forEachStorageArea(Function<void(const StorageArea&)> callback) const
++{
++    ASSERT(!RunLoop::isMain());
++    for (auto& storageArea : m_storageAreaMap.values())
++        callback(*storageArea);
++}
++
+ } // namespace WebKit
+diff --git a/Source/WebKit/NetworkProcess/WebStorage/LocalStorageNamespace.h b/Source/WebKit/NetworkProcess/WebStorage/LocalStorageNamespace.h
+index adca9f4a255f58e2106dd6a4eceaddfff2451ac3..81f6c0bde82ea58ed5abc5e3653bb64a3377f531 100644
+--- a/Source/WebKit/NetworkProcess/WebStorage/LocalStorageNamespace.h
++++ b/Source/WebKit/NetworkProcess/WebStorage/LocalStorageNamespace.h
+@@ -28,7 +28,7 @@
+ #include "StorageAreaIdentifier.h"
+ #include "StorageNamespaceIdentifier.h"
+ #include <WebCore/SecurityOriginData.h>
+-#include <wtf/Forward.h>
++#include <wtf/Function.h>
+ #include <wtf/HashMap.h>
+ #include <wtf/WeakPtr.h>
+ #include <wtf/WorkQueue.h>
+@@ -59,6 +59,8 @@ public:
+ 
+     Vector<StorageAreaIdentifier> storageAreaIdentifiers() const;
+ 
++    void forEachStorageArea(Function<void(const StorageArea&)>) const;
++
+ private:
+     StorageManager& m_storageManager;
+     unsigned m_quotaInBytes { 0 };
+diff --git a/Source/WebKit/NetworkProcess/WebStorage/StorageManager.cpp b/Source/WebKit/NetworkProcess/WebStorage/StorageManager.cpp
+index 5bcca299ba415e39c02845997e5806b2846da93c..a7526a2adbd93ecb3e16a9b8b8f754152c79f2d4 100644
+--- a/Source/WebKit/NetworkProcess/WebStorage/StorageManager.cpp
++++ b/Source/WebKit/NetworkProcess/WebStorage/StorageManager.cpp
+@@ -147,6 +147,19 @@ HashSet<SecurityOriginData> StorageManager::getLocalStorageOriginsCrossThreadCop
+     return origins;
+ }
+ 
++Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>> StorageManager::getLocalStorageDataCrossThreadCopy() const
++{
++    ASSERT(!RunLoop::isMain());
++
++    Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>> result;
++    for (const auto& localStorageNameSpace : m_localStorageNamespaces.values()) {
++        localStorageNameSpace->forEachStorageArea([&] (const StorageArea& area) {
++            result.append({ area.securityOrigin().isolatedCopy(), area.items() });
++        });
++    }
++    return result;
++}
++
+ Vector<LocalStorageDatabaseTracker::OriginDetails> StorageManager::getLocalStorageOriginDetailsCrossThreadCopy() const
+ {
+     ASSERT(!RunLoop::isMain());
+diff --git a/Source/WebKit/NetworkProcess/WebStorage/StorageManager.h b/Source/WebKit/NetworkProcess/WebStorage/StorageManager.h
+index 0d6e7aedff68227bf7dc8ab7184abc6fd3321c54..67b616d818aa42f8cae33f0535c888cd4c5ec07e 100644
+--- a/Source/WebKit/NetworkProcess/WebStorage/StorageManager.h
++++ b/Source/WebKit/NetworkProcess/WebStorage/StorageManager.h
+@@ -66,6 +66,7 @@ public:
+     void deleteSessionStorageEntriesForOrigins(const Vector<WebCore::SecurityOriginData>&);
+ 
+     HashSet<WebCore::SecurityOriginData> getLocalStorageOriginsCrossThreadCopy() const;
++    Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>> getLocalStorageDataCrossThreadCopy() const;
+     void deleteLocalStorageOriginsModifiedSince(WallTime);
+     void deleteLocalStorageEntriesForOrigins(const Vector<WebCore::SecurityOriginData>&);
+     Vector<LocalStorageDatabaseTracker::OriginDetails> getLocalStorageOriginDetailsCrossThreadCopy() const;
+diff --git a/Source/WebKit/NetworkProcess/WebStorage/StorageManagerSet.cpp b/Source/WebKit/NetworkProcess/WebStorage/StorageManagerSet.cpp
+index f9e843de37319dd6c5c1063a3cdcf5c1d4bba195..f1ad21127d562ab469443cafa332abec6d9840c5 100644
+--- a/Source/WebKit/NetworkProcess/WebStorage/StorageManagerSet.cpp
++++ b/Source/WebKit/NetworkProcess/WebStorage/StorageManagerSet.cpp
+@@ -253,6 +253,21 @@ void StorageManagerSet::getLocalStorageOrigins(PAL::SessionID sessionID, GetOrig
+     });
+ }
+ 
++void StorageManagerSet::getLocalStorageData(PAL::SessionID sessionID, GetLocalStorageDataCallback&& completionHandler)
++{
++    ASSERT(RunLoop::isMain());
++
++    m_queue->dispatch([this, protectedThis = makeRef(*this), sessionID, completionHandler = WTFMove(completionHandler)]() mutable {
++        auto* storageManager = m_storageManagers.get(sessionID);
++        ASSERT(storageManager);
++
++        auto origins = storageManager->getLocalStorageDataCrossThreadCopy();
++        RunLoop::main().dispatch([completionHandler = WTFMove(completionHandler), origins = WTFMove(origins)]() mutable {
++            completionHandler(WTFMove(origins));
++        });
++    });
++}
++
+ void StorageManagerSet::deleteLocalStorageModifiedSince(PAL::SessionID sessionID, WallTime time, DeleteCallback&& completionHandler)
+ {
+     ASSERT(RunLoop::isMain());
+diff --git a/Source/WebKit/NetworkProcess/WebStorage/StorageManagerSet.h b/Source/WebKit/NetworkProcess/WebStorage/StorageManagerSet.h
+index 70a65a4ba68f7725b90f52f4d7a9c55fd96bcfed..81dd1d49f98ecefcb2e63670aa08eac617e48bcf 100644
+--- a/Source/WebKit/NetworkProcess/WebStorage/StorageManagerSet.h
++++ b/Source/WebKit/NetworkProcess/WebStorage/StorageManagerSet.h
+@@ -45,6 +45,7 @@ using ConnectToStorageAreaCallback = CompletionHandler<void(const Optional<Stora
+ using GetValuesCallback = CompletionHandler<void(const HashMap<String, String>&)>;
+ using GetOriginsCallback = CompletionHandler<void(HashSet<WebCore::SecurityOriginData>&&)>;
+ using GetOriginDetailsCallback = CompletionHandler<void(Vector<LocalStorageDatabaseTracker::OriginDetails>&&)>;
++using GetLocalStorageDataCallback = CompletionHandler<void(Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>>&&)>;
+ using DeleteCallback = CompletionHandler<void()>;
+ 
+ class StorageManagerSet : public IPC::Connection::WorkQueueMessageReceiver {
+@@ -72,6 +73,7 @@ public:
+     void deleteLocalStorageModifiedSince(PAL::SessionID, WallTime, DeleteCallback&&);
+     void deleteLocalStorageForOrigins(PAL::SessionID, const Vector<WebCore::SecurityOriginData>&, DeleteCallback&&);
+     void getLocalStorageOriginDetails(PAL::SessionID, GetOriginDetailsCallback&&);
++    void getLocalStorageData(PAL::SessionID, GetLocalStorageDataCallback&&);
+     void renameOrigin(PAL::SessionID, const URL&, const URL&, CompletionHandler<void()>&&);
+ 
+     void didReceiveMessage(IPC::Connection&, IPC::Decoder&);
 diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h
 index d91819fc14c3d65f993917a4a3e88bd36b09c6c1..dccc51729796babfcc3c6e81251404f61b3e40e1 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h
@@ -13990,10 +14160,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f55fb6443a7478fb8532c73e3ec7ae8f0f3e8380
+index 0000000000000000000000000000000000000000..6e510ec9b7625a3298e71ad24a33ad018cc55eb0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,888 @@
+@@ -0,0 +1,921 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14040,6 +14210,7 @@ index 0000000000000000000000000000000000000000..f55fb6443a7478fb8532c73e3ec7ae8f
 +#include "WebPageProxy.h"
 +#include "WebProcessPool.h"
 +#include "WebProcessProxy.h"
++#include "WebsiteDataRecord.h"
 +#include <WebCore/FrameIdentifier.h>
 +#include <WebCore/GeolocationPositionData.h>
 +#include <WebCore/InspectorPageAgent.h>
@@ -14553,6 +14724,38 @@ index 0000000000000000000000000000000000000000..f55fb6443a7478fb8532c73e3ec7ae8f
 +    m_client->deleteBrowserContext(errorString, sessionID);
 +}
 +
++void InspectorPlaywrightAgent::getLocalStorageData(const String& browserContextID, Ref<GetLocalStorageDataCallback>&& callback)
++{
++    String errorString;
++    BrowserContext* browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!lookupBrowserContext(errorString, browserContextID)) {
++        callback->sendFailure(errorString);
++        return;
++    }
++    PAL::SessionID sessionID = browserContext->dataStore->sessionID();
++    NetworkProcessProxy& networkProcess = browserContext->dataStore->networkProcess();
++    networkProcess.sendWithAsyncReply(Messages::NetworkProcess::GetLocalStorageData(sessionID),
++        [callback = WTFMove(callback)](Vector<std::pair<WebCore::SecurityOriginData, HashMap<String, String>>>&& data) {
++            if (!callback->isActive())
++                return;
++            auto origins = JSON::ArrayOf<Inspector::Protocol::Playwright::OriginStorage>::create();
++            for (const auto& originData : data) {
++                auto items = JSON::ArrayOf<Protocol::Playwright::NameValue>::create();
++                for (const auto& entry : originData.second) {
++                    items->addItem(Protocol::Playwright::NameValue::create()
++                        .setName(entry.key)
++                        .setValue(entry.value)
++                        .release());
++                }
++                origins->addItem(Protocol::Playwright::OriginStorage::create()
++                    .setOrigin(originData.first.toString())
++                    .setItems(WTFMove(items))
++                    .release());
++            }
++            callback->sendSuccess(WTFMove(origins));
++        }, 0);
++}
++
 +Inspector::Protocol::ErrorStringOr<String /* pageProxyID */> InspectorPlaywrightAgent::createPage(const String& browserContextID)
 +{
 +    String errorString;
@@ -14884,10 +15087,10 @@ index 0000000000000000000000000000000000000000..f55fb6443a7478fb8532c73e3ec7ae8f
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..f5eecb22827ecd3b002cb1dd9e9938a1db0cb36e
+index 0000000000000000000000000000000000000000..bbd82de8a82efc37c2d63beb58b6e2c443224698
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,125 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14980,6 +15183,8 @@ index 0000000000000000000000000000000000000000..f5eecb22827ecd3b002cb1dd9e9938a1
 +    void getAllCookies(const String& browserContextID, Ref<GetAllCookiesCallback>&&) override;
 +    void setCookies(const String& browserContextID, Ref<JSON::Array>&& in_cookies, Ref<SetCookiesCallback>&&) override;
 +    void deleteAllCookies(const String& browserContextID, Ref<DeleteAllCookiesCallback>&&) override;
++
++    void getLocalStorageData(const String& browserContextID, Ref<GetLocalStorageDataCallback>&&) override;
 +
 +    Inspector::Protocol::ErrorStringOr<void> setGeolocationOverride(const String& browserContextID, RefPtr<JSON::Object>&& geolocation) override;
 +    Inspector::Protocol::ErrorStringOr<void> setLanguages(Ref<JSON::Array>&& languages, const String& browserContextID) override;
