@@ -41,13 +41,12 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       selectors: customSelectors || new SelectorsDispatcher(scope, playwright.selectors),
       preLaunchedBrowser,
     }, false);
+    this._object.on('incomingSocksSocket', (socket: SocksInterceptedSocketHandler) => {
+      this._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(this, socket) });
+    });
   }
 
   async enablePortForwarding(params: channels.PlaywrightEnablePortForwardingParams): Promise<void> {
     this._object._setForwardedPorts(params.ports);
-    assert(this._object._portForwardingServer);
-    this._object._portForwardingServer.on('incomingSocksSocket', (socket: SocksInterceptedSocketHandler) => {
-      this._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(this, socket) });
-    });
   }
 }

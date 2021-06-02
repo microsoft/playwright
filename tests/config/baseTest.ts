@@ -68,11 +68,11 @@ class ServiceMode {
   private _tmpConfigFile?: string;
 
   async setup(workerIndex: number, options?: PlaywrightModeSetupOptions) {
-    if (options?.acceptForwardedPorts) {
-      this._tmpConfigFile = path.join(os.tmpdir(), `pw-server-config-${workerIndex}.json`);
-      const config = {acceptForwardedPorts: options.acceptForwardedPorts};
-      await fs.promises.writeFile(this._tmpConfigFile, JSON.stringify(config));
-    }
+    const config: any = {port: 10507 + workerIndex};
+    if (options?.acceptForwardedPorts)
+      config.acceptForwardedPorts = options.acceptForwardedPorts;
+    this._tmpConfigFile = path.join(os.tmpdir(), `pw-server-config-${workerIndex}.json`);
+    await fs.promises.writeFile(this._tmpConfigFile, JSON.stringify(config));
     this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), [
       'run-server',
       ...(this._tmpConfigFile ? [this._tmpConfigFile] : [])

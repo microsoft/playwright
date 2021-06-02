@@ -107,6 +107,7 @@ export class PlaywrightServer {
 
       const forceDisconnect = () => socket.close();
       const scope = connection.rootDispatcher();
+      let onDisconnect = () => {};
       const disconnected = () => {
         this._clientsCount--;
         // Avoid sending any more messages over closed socket.
@@ -121,7 +122,7 @@ export class PlaywrightServer {
         debugLog('Client error ' + error);
         disconnected();
       });
-      const onDisconnect = await this._delegate.onConnect(scope, forceDisconnect);
+      onDisconnect = await this._delegate.onConnect(scope, forceDisconnect);
     });
 
     return wsEndpoint;
