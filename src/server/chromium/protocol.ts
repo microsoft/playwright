@@ -701,7 +701,7 @@ associated with some application cache.
     export interface AffectedFrame {
       frameId: Page.FrameId;
     }
-    export type SameSiteCookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict";
+    export type SameSiteCookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty";
     export type SameSiteCookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax";
     export type SameSiteCookieOperation = "SetCookie"|"ReadCookie";
     /**
@@ -710,7 +710,14 @@ time finding a specific cookie. With this, we can convey specific error
 information without the cookie.
      */
     export interface SameSiteCookieIssueDetails {
-      cookie: AffectedCookie;
+      /**
+       * If AffectedCookie is not set then rawCookieLine contains the raw
+Set-Cookie header string. This hints at a problem where the
+cookie line is syntactically or semantically malformed in a way
+that no valid cookie could be created.
+       */
+      cookie?: AffectedCookie;
+      rawCookieLine?: string;
       cookieWarningReasons: SameSiteCookieWarningReason[];
       cookieExclusionReasons: SameSiteCookieExclusionReason[];
       /**
@@ -921,6 +928,11 @@ add a new optional field to this type.
     export interface InspectorIssue {
       code: InspectorIssueCode;
       details: InspectorIssueDetails;
+      /**
+       * A unique id for this issue. May be omitted if no other entity (e.g.
+exception, CDP message, etc.) is referencing this issue.
+       */
+      issueId?: string;
     }
     
     export type issueAddedPayload = {
@@ -7742,7 +7754,7 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
       reportingEndpoint?: string;
       reportOnlyReportingEndpoint?: string;
     }
-    export type CrossOriginEmbedderPolicyValue = "None"|"CorsOrCredentialless"|"RequireCorp";
+    export type CrossOriginEmbedderPolicyValue = "None"|"Credentialless"|"RequireCorp";
     export interface CrossOriginEmbedderPolicyStatus {
       value: CrossOriginEmbedderPolicyValue;
       reportOnlyValue: CrossOriginEmbedderPolicyValue;
@@ -8310,6 +8322,76 @@ preemptively (e.g. a cache hit).
        * The number of obtained Trust Tokens on a successful "Issuance" operation.
        */
       issuedTokenCount?: number;
+    }
+    /**
+     * Fired once when parsing the .wbn file has succeeded.
+The event contains the information about the web bundle contents.
+     */
+    export type subresourceWebBundleMetadataReceivedPayload = {
+      /**
+       * Request identifier. Used to match this information to another event.
+       */
+      requestId: RequestId;
+      /**
+       * A list of URLs of resources in the subresource Web Bundle.
+       */
+      urls: string[];
+    }
+    /**
+     * Fired once when parsing the .wbn file has failed.
+     */
+    export type subresourceWebBundleMetadataErrorPayload = {
+      /**
+       * Request identifier. Used to match this information to another event.
+       */
+      requestId: RequestId;
+      /**
+       * Error message
+       */
+      errorMessage: string;
+    }
+    /**
+     * Fired when handling requests for resources within a .wbn file.
+Note: this will only be fired for resources that are requested by the webpage.
+     */
+    export type subresourceWebBundleInnerResponseParsedPayload = {
+      /**
+       * Request identifier of the subresource request
+       */
+      innerRequestId: RequestId;
+      /**
+       * URL of the subresource resource.
+       */
+      innerRequestURL: string;
+      /**
+       * Bundle request identifier. Used to match this information to another event.
+This made be absent in case when the instrumentation was enabled only
+after webbundle was parsed.
+       */
+      bundleRequestId?: RequestId;
+    }
+    /**
+     * Fired when request for resources within a .wbn file failed.
+     */
+    export type subresourceWebBundleInnerResponseErrorPayload = {
+      /**
+       * Request identifier of the subresource request
+       */
+      innerRequestId: RequestId;
+      /**
+       * URL of the subresource resource.
+       */
+      innerRequestURL: string;
+      /**
+       * Error message
+       */
+      errorMessage: string;
+      /**
+       * Bundle request identifier. Used to match this information to another event.
+This made be absent in case when the instrumentation was enabled only
+after webbundle was parsed.
+       */
+      bundleRequestId?: RequestId;
     }
     
     /**
@@ -14265,7 +14347,7 @@ enabled until the result for this command is received.
     export type enableParameters = {
       /**
        * The maximum size in bytes of collected scripts (not referenced by other heap objects)
-the debugger can hold. Puts no limit if paramter is omitted.
+the debugger can hold. Puts no limit if parameter is omitted.
        */
       maxScriptsCacheSize?: number;
     }
@@ -14957,7 +15039,7 @@ when the tracking is stopped.
        */
       reportProgress?: boolean;
       /**
-       * If true, a raw snapshot without artifical roots will be generated
+       * If true, a raw snapshot without artificial roots will be generated
        */
       treatGlobalObjectsAsRoots?: boolean;
       /**
@@ -15190,7 +15272,7 @@ profile startTime.
      * Reports coverage delta since the last poll (either from an event like this, or from
 `takePreciseCoverage` for the current isolate. May only be sent if precise code
 coverage has been started. This event can be trigged by the embedder to, for example,
-trigger collection of coverage data immediatelly at a certain point in time.
+trigger collection of coverage data immediately at a certain point in time.
      */
     export type preciseCoverageDeltaUpdatePayload = {
       /**
@@ -15200,7 +15282,7 @@ trigger collection of coverage data immediatelly at a certain point in time.
       /**
        * Identifier for distinguishing coverage events.
        */
-      occassion: string;
+      occasion: string;
       /**
        * Coverage data for the current isolate.
        */
@@ -15637,7 +15719,7 @@ script evaluation should be performed.
        */
       name: string;
       /**
-       * A system-unique execution context identifier. Unlike the id, this is unique accross
+       * A system-unique execution context identifier. Unlike the id, this is unique across
 multiple processes, so can be reliably used to identify specific context while backend
 performs a cross-process navigation.
        */
@@ -16073,9 +16155,9 @@ evaluation and allows unsafe-eval. Defaults to true.
       allowUnsafeEvalBlockedByCSP?: boolean;
       /**
        * An alternative way to specify the execution context to evaluate in.
-Compared to contextId that may be reused accross processes, this is guaranteed to be
+Compared to contextId that may be reused across processes, this is guaranteed to be
 system-unique, so it can be used to prevent accidental evaluation of the expression
-in context different than intended (e.g. as a result of navigation accross process
+in context different than intended (e.g. as a result of navigation across process
 boundaries).
 This is mutually exclusive with `contextId`.
        */
@@ -16440,6 +16522,10 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.requestWillBeSentExtraInfo": Network.requestWillBeSentExtraInfoPayload;
     "Network.responseReceivedExtraInfo": Network.responseReceivedExtraInfoPayload;
     "Network.trustTokenOperationDone": Network.trustTokenOperationDonePayload;
+    "Network.subresourceWebBundleMetadataReceived": Network.subresourceWebBundleMetadataReceivedPayload;
+    "Network.subresourceWebBundleMetadataError": Network.subresourceWebBundleMetadataErrorPayload;
+    "Network.subresourceWebBundleInnerResponseParsed": Network.subresourceWebBundleInnerResponseParsedPayload;
+    "Network.subresourceWebBundleInnerResponseError": Network.subresourceWebBundleInnerResponseErrorPayload;
     "Overlay.inspectNodeRequested": Overlay.inspectNodeRequestedPayload;
     "Overlay.nodeHighlightRequested": Overlay.nodeHighlightRequestedPayload;
     "Overlay.screenshotRequested": Overlay.screenshotRequestedPayload;
