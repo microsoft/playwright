@@ -8,3 +8,5 @@ curl -o ./googlechromebeta.dmg -k https://dl.google.com/chrome/mac/beta/googlech
 hdiutil attach -nobrowse -quiet -noautofsck -noautoopen -mountpoint /Volumes/googlechromebeta.dmg ./googlechromebeta.dmg
 cp -rf "/Volumes/googlechromebeta.dmg/Google Chrome Beta.app" /Applications
 hdiutil detach /Volumes/googlechromebeta.dmg
+
+/Applications/Google\ Chrome\ Beta.app/Contents/MacOS/Google\ Chrome\ Beta --version
