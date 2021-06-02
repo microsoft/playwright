@@ -10,7 +10,7 @@ title: "Reporters"
 Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./cli.md).
 
 
-```sh
+```bash
 npx playwright test --reporter=line
 ```
 
@@ -68,7 +68,7 @@ All built-in reporters show detailed information about failures, and mostly diff
 
 List reporter is default. It prints a line for each test being run.
 
-```sh
+```bash
 npx playwright test --reporter=list
 ```
 
@@ -90,7 +90,7 @@ export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures will be listed at the end.
-```sh
+```bash
 npx playwright test --reporter=list
 Running 124 tests using 6 workers
 
@@ -110,7 +110,7 @@ Running 124 tests using 6 workers
 
 Line reporter is more concise than the list reporter. It uses a single line to report last finished test, and prints failures when they occur. Line reporter is useful for large test suites where it shows the progress but does not spam the output by listing all the tests.
 
-```sh
+```bash
 npx playwright test --reporter=line
 ```
 
@@ -132,7 +132,7 @@ export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures are reported inline.
-```sh
+```bash
 npx playwright test --reporter=line
 Running 124 tests using 6 workers
   1) dot-reporter.spec.ts:20:1 › render expected ===================================================
@@ -149,7 +149,7 @@ Running 124 tests using 6 workers
 
 Dot reporter is very concise - it only produces a single character per successful test run. It is useful on CI where you don't want a lot of output.
 
-```sh
+```bash
 npx playwright test --reporter=dot
 ```
 
@@ -171,7 +171,7 @@ export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures will be listed at the end.
-```sh
+```bash
 npx playwright test --reporter=dot
 Running 124 tests using 6 workers
 ······F·············································
@@ -182,7 +182,7 @@ Running 124 tests using 6 workers
 JSON reporter produces an object with all information about the test run. It is usually used together with some terminal reporter like `dot` or `line`.
 
 Most likely you want to write the JSON to a file. When running with `--reporter=json`, use `PLAYWRIGHT_JSON_OUTPUT_NAME` environment variable:
-```sh
+```bash
 PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
 ```
 
@@ -209,7 +209,7 @@ export default config;
 JUnit reporter produces a JUnit-style xml report. It is usually used together with some terminal reporter like `dot` or `line`.
 
 Most likely you want to write the report to an xml file. When running with `--reporter=junit`, use `PLAYWRIGHT_JUNIT_OUTPUT_NAME` environment variable:
-```sh
+```bash
 PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,line
 ```
 

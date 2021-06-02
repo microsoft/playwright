@@ -13,21 +13,21 @@ This image is published on [Docker Hub].
 
 ### Pull the image
 
-```sh js python csharp
+```bash js python csharp
 docker pull mcr.microsoft.com/playwright:focal
 ```
 
-```sh java
+```bash java
 docker pull mcr.microsoft.com/playwright/java:focal
 ```
 
 or pinned to a specific Playwright version (recommended). Replace 1.10.0 with your Playwright version:
 
-```sh js python csharp
+```bash js python csharp
 docker pull mcr.microsoft.com/playwright:v1.10.0-focal
 ```
 
-```sh java
+```bash java
 docker pull mcr.microsoft.com/playwright/java:v1.10.0-focal
 ```
 
@@ -39,11 +39,11 @@ By default, the Docker image will use the `root` user to run the browsers. This 
 
 On trusted websites, you can avoid creating a separate user and use root for it since you trust the code which will run on the browsers.
 
-```sh js python csharp
+```bash js python csharp
 docker run -it --rm --ipc=host mcr.microsoft.com/playwright:focal /bin/bash
 ```
 
-```sh java
+```bash java
 docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:focal /bin/bash
 ```
 
@@ -51,11 +51,11 @@ docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:focal /bin/bash
 
 On untrusted websites, it's recommended to use a separate user for launching the browsers in combination with the seccomp profile. Inside the container or if you are using the Docker image as a base image you have to use `adduser` for it.
 
-```sh js python csharp
+```bash js python csharp
 docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:focal /bin/bash
 ```
 
-```sh java
+```bash java
 docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/java:focal /bin/bash
 ```
 

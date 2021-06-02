@@ -15,21 +15,21 @@ configurations for common CI providers.
 1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
    in Linux agents. Windows and macOS agents do not require any additional dependencies.
 1. **Install Playwright**:
-   ```sh js
+   ```bash js
    npm ci
    # or
    npm install
    ```
-   ```sh python
+   ```bash python
    pip install playwright
    playwright install
    ```
 
 1. **Run your tests**:
-   ```sh js
+   ```bash js
    npm test
    ```
-   ```sh python
+   ```bash python
    pytest
    ```
 
@@ -344,10 +344,10 @@ configuration, against a hash of the Playwright version.
 
 Playwright supports the `DEBUG` environment variable to output debug logs during execution. Setting it to `pw:browser*` is helpful while debugging `Error: Failed to launch browser` errors.
 
-```sh js
+```bash js
 DEBUG=pw:browser* npm run test
 ```
-```sh python
+```bash python
 DEBUG=pw:browser* pytest
 ```
 
@@ -414,9 +414,9 @@ class Program
 
 On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the Node.js command.
 
-```sh js
+```bash js
 xvfb-run node index.js
 ```
-```sh python
+```bash python
 xvfb-run python test.py
 ```

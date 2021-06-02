@@ -10,7 +10,7 @@ title: "Getting Started"
 
 Use npm or Yarn to install Playwright in your Node.js project. See [system requirements](#system-requirements).
 
-```sh
+```bash
 npm i -D playwright
 ```
 
@@ -65,7 +65,7 @@ firefox.launch({ headless: false, slowMo: 50 });
 
 Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate JavaScript code.
 
-```sh
+```bash
 npx playwright codegen wikipedia.org
 ```
 

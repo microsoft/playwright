@@ -27,7 +27,7 @@ test('example test', async ({ page }) => {
 
 Sometimes you need to update the reference screenshot, for example when the page has changed. Do this with the  `--update-snapshots` flag.
 
-```sh
+```bash
 npx playwright test --update-snapshots
 ```
 

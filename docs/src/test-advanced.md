@@ -111,7 +111,7 @@ Each project can be configured separately, and run different set of tests with d
 Supported options are `name`, `outputDir`, `repeatEach`, `retries`, `snapshotDir`, `testDir`, `testIgnore`, `testMatch` and `timeout`. See [configuration object](#configuration-object) for detailed description.
 
 You can run all projects or just a single one:
-```sh
+```bash
 # Run both projects - each test will be run twice
 npx playwright test
 

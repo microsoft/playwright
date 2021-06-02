@@ -10,7 +10,7 @@ title: "Getting Started"
 
 Install Microsoft.Playwright package from NuGet in Visual Studio or from the CLI in your project root directory:
 
-```sh
+```bash
 dotnet add package Microsoft.Playwright
 ```
 
@@ -35,7 +35,7 @@ class Program
 
 Create a console project and add the Playwright dependency.
 
-```sh
+```bash
 dotnet new console -n pw_demo
 cd pw_demo
 dotnet add package Microsoft.Playwright --prerelease
@@ -62,7 +62,7 @@ class Program
 
 Now build it and run it.
 
-```sh
+```bash
 dotnet build
 dotnet run
 ```
@@ -77,7 +77,7 @@ await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = f
 
 Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate C# code.
 
-```sh
+```bash
 # FIXME:
 ```
 

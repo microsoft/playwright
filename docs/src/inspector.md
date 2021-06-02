@@ -15,7 +15,7 @@ There are several ways of opening Playwright Inspector:
 
 - Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
 configures Playwright for debugging and opens the inspector.
-  ```sh js
+  ```bash js
   # Linux/macOS
   PWDEBUG=1 npm run test
 
@@ -28,7 +28,7 @@ configures Playwright for debugging and opens the inspector.
   npm run test
   ```
 
-  ```sh java
+  ```bash java
   # Linux/macOS
   PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java src root> mvn test
 
@@ -43,7 +43,7 @@ configures Playwright for debugging and opens the inspector.
   mvn test
   ```
 
-  ```sh python
+  ```bash python
   # Linux/macOS
   PWDEBUG=1 pytest -s
 
@@ -89,15 +89,15 @@ configures Playwright for debugging and opens the inspector.
 
 
 - Use `open` or `codegen` commands in the Playwright [CLI](./cli.md):
-  ```sh js
+  ```bash js
   npx playwright codegen wikipedia.org
   ```
 
-  ```sh java
+  ```bash java
   mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
   ```
 
-  ```sh python
+  ```bash python
   playwright codegen wikipedia.org
   ```
 

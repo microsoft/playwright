@@ -83,7 +83,7 @@ public class Example {
 
 With the Example.java and pom.xml above, compile and execute your new program as follows:
 
-```sh
+```bash
 mvn compile exec:java -Dexec.mainClass="org.example.Example"
 ```
 
@@ -119,7 +119,7 @@ playwright.firefox().launch(new BrowserType.LaunchOptions().setHeadless(false).s
 
 Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate Java code.
 
-```sh
+```bash
 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
 ```
 
