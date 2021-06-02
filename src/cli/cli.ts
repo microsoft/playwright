@@ -34,7 +34,13 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { installDeps } from '../install/installDeps';
-import { allBrowserNames } from '../utils/registry';
+import { allBrowserNames, BrowserName } from '../utils/registry';
+import * as utils from '../utils/utils';
+
+const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
+
+type BrowserChannel = 'chrome-beta';
+const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta']);
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -86,23 +92,55 @@ program
 program
     .command('install [browserType...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(browserTypes) {
+    .action(async function(args) {
       try {
-        const allBrowsers = new Set(allBrowserNames);
-        for (const browserType of browserTypes) {
-          if (!allBrowsers.has(browserType)) {
-            console.log(`Invalid browser name: '${browserType}'. Expecting one of: ${allBrowserNames.map(name => `'${name}'`).join(', ')}`);
-            process.exit(1);
-          }
+        // Install default browsers when invoked without arguments.
+        if (!args.length) {
+          await installBrowsers();
+          return;
         }
-        if (browserTypes.length && browserTypes.includes('chromium'))
-          browserTypes = browserTypes.concat('ffmpeg');
-        await installBrowsers(browserTypes.length ? browserTypes : undefined);
+        const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
+        const browserChannels: Set<BrowserChannel> = new Set(args.filter((browser: any) => allBrowserChannels.has(browser)));
+        const faultyArguments: string[] = args.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
+        if (faultyArguments.length) {
+          console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}`);
+          process.exit(1);
+        }
+        if (browserNames.has('chromium') || browserChannels.has('chrome-beta'))
+          browserNames.add('ffmpeg');
+        if (browserNames.size)
+          await installBrowsers([...browserNames]);
+        for (const browserChannel of browserChannels) {
+          if (browserChannel === 'chrome-beta')
+            await installChromeBeta();
+          else
+            throw new Error(`ERROR: no installation instructions for '${browserChannel}' channel.`);
+        }
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
       }
     });
+
+async function installChromeBeta() {
+  const platform: string = os.platform();
+  const shell: (string|undefined) = {
+    'linux': 'bash',
+    'darwin': 'bash',
+    'win32': 'powershell.exe',
+  }[platform];
+  const scriptName: (string|undefined) = {
+    'linux': 'reinstall_chrome_beta_linux.sh',
+    'darwin': 'reinstall_chrome_beta_mac.sh',
+    'win32': 'reinstall_chrome_beta_win.ps1',
+  }[platform];
+  if (!shell || !scriptName)
+    throw new Error(`Cannot install chrome-beta on ${platform}`);
+
+  const {code} = await utils.spawnAsync(shell, [path.join(SCRIPTS_DIRECTORY, scriptName)], { cwd: SCRIPTS_DIRECTORY, stdio: 'inherit' });
+  if (code !== 0)
+    throw new Error('Failed to install chrome-beta');
+}
 
 program
     .command('install-deps [browserType...]')

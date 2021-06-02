@@ -472,7 +472,6 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
-    - run: ./utils/install-chrome-beta/reinstall_linux.sh
     - uses: actions/setup-node@v2
       with:
         node-version: 12
@@ -481,7 +480,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
-    - run: node lib/cli/cli install ffmpeg
+    - run: node lib/cli/cli install chrome-beta
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
@@ -500,8 +499,6 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install Chrome Beta
-      run: pwsh -command ".\$GITHUB_WORKSPACE\utils\install-chrome-beta\reinstall_win.ps1"
     - name: Install Media Pack
       shell: powershell
       run: Install-WindowsFeature Server-Media-Foundation
@@ -512,7 +509,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install ffmpeg
+    - run: node lib/cli/cli install chrome-beta
     - run: npm run ctest
       shell: bash
       env:
@@ -531,7 +528,6 @@ jobs:
     runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
-    - run: ./utils/install-chrome-beta/reinstall_mac.sh
     - uses: actions/setup-node@v2
       with:
         node-version: 12
@@ -539,7 +535,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install ffmpeg
+    - run: node lib/cli/cli install chrome-beta
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
