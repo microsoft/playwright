@@ -92,16 +92,16 @@ program
 program
     .command('install [browserType...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(browsers) {
+    .action(async function(args) {
       try {
         // Install default browsers when invoked without arguments.
-        if (!browsers) {
+        if (!args.length) {
           await installBrowsers();
           return;
         }
-        const browserNames: Set<BrowserName> = new Set(browsers.filter((browser: any) => allBrowserNames.has(browser)));
-        const browserChannels: Set<BrowserChannel> = new Set(browsers.filter((browser: any) => allBrowserChannels.has(browser)));
-        const faultyArguments: string[] = browsers.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
+        const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
+        const browserChannels: Set<BrowserChannel> = new Set(args.filter((browser: any) => allBrowserChannels.has(browser)));
+        const faultyArguments: string[] = args.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
         if (faultyArguments.length) {
           console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}`);
           process.exit(1);
