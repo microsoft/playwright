@@ -183,7 +183,7 @@ program
 if (process.argv[2] === 'run-driver')
   runDriver();
 else if (process.argv[2] === 'run-server')
-  runServer(process.argv[3]);
+  runServer(process.argv[3] ? +process.argv[3] : undefined);
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')

@@ -67,7 +67,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
 
   async _enablePortForwarding(ports: number[]) {
     this._forwardPorts = ports;
-    await this._channel.enablePortForwarding({ports});
+    await this._channel.setForwardedPorts({ports});
   }
 
   _cleanup() {

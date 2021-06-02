@@ -147,7 +147,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
-  scheme.PlaywrightEnablePortForwardingParams = tObject({
+  scheme.PlaywrightSetForwardedPortsParams = tObject({
     ports: tArray(tNumber),
   });
   scheme.SelectorsRegisterParams = tObject({

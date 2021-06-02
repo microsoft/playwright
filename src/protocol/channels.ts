@@ -180,18 +180,18 @@ export type PlaywrightInitializer = {
 };
 export interface PlaywrightChannel extends Channel {
   on(event: 'incomingSocksSocket', callback: (params: PlaywrightIncomingSocksSocketEvent) => void): this;
-  enablePortForwarding(params: PlaywrightEnablePortForwardingParams, metadata?: Metadata): Promise<PlaywrightEnablePortForwardingResult>;
+  setForwardedPorts(params: PlaywrightSetForwardedPortsParams, metadata?: Metadata): Promise<PlaywrightSetForwardedPortsResult>;
 }
 export type PlaywrightIncomingSocksSocketEvent = {
   socket: SocksSocketChannel,
 };
-export type PlaywrightEnablePortForwardingParams = {
+export type PlaywrightSetForwardedPortsParams = {
   ports: number[],
 };
-export type PlaywrightEnablePortForwardingOptions = {
+export type PlaywrightSetForwardedPortsOptions = {
 
 };
-export type PlaywrightEnablePortForwardingResult = void;
+export type PlaywrightSetForwardedPortsResult = void;
 
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};

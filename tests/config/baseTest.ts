@@ -17,20 +17,16 @@
 import { TestServer } from '../../utils/testserver';
 import * as folio from 'folio';
 import * as path from 'path';
-import * as os from 'os';
 import * as fs from 'fs';
 import socks from 'socksv5';
 import { installCoverageHooks } from './coverage';
 import * as childProcess from 'child_process';
 import { start } from '../../lib/outofprocess';
 import { PlaywrightClient } from '../../lib/remote/playwrightClient';
-import type { PlaywrightClientConnectOptions } from '../../src/remote/playwrightClient';
-import type { PlaywrightServerOptions } from '../../src/remote/playwrightServer';
 import type { LaunchOptions } from '../../index';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-export type Mode = 'default' | 'driver' | 'service';
-type PlaywrightModeSetupOptions = Partial<PlaywrightClientConnectOptions & PlaywrightServerOptions>;
+type Mode = 'default' | 'driver' | 'service';
 type BaseOptions = {
   mode: Mode;
   browserName: BrowserName;
@@ -40,7 +36,6 @@ type BaseOptions = {
 };
 type BaseFixtures = {
   platform: 'win32' | 'darwin' | 'linux';
-  getPlaywright: (options?: PlaywrightModeSetupOptions) => Promise<typeof import('../../index')>;
   playwright: typeof import('../../index');
   toImpl: (rpcObject: any) => any;
   isWindows: boolean;
@@ -62,39 +57,26 @@ class DriverMode {
 }
 
 class ServiceMode {
-  private _playwrightObject: any;
+  private _playwrightObejct: any;
   private _client: any;
   private _serviceProcess: childProcess.ChildProcess;
-  private _tmpConfigFile?: string;
 
-  async setup(workerIndex: number, options?: PlaywrightModeSetupOptions) {
-    const config: any = {port: 10507 + workerIndex};
-    if (options?.acceptForwardedPorts)
-      config.acceptForwardedPorts = options.acceptForwardedPorts;
-    this._tmpConfigFile = path.join(os.tmpdir(), `pw-server-config-${workerIndex}.json`);
-    await fs.promises.writeFile(this._tmpConfigFile, JSON.stringify(config));
-    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), [
-      'run-server',
-      ...(this._tmpConfigFile ? [this._tmpConfigFile] : [])
-    ], {
-      stdio: 'pipe',
+  async setup(workerIndex: number) {
+    const port = 10507 + workerIndex;
+    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), ['run-server', String(port)], {
+      stdio: 'pipe'
     });
     this._serviceProcess.stderr.pipe(process.stderr);
-    const wsEndpoint = await new Promise<string>(f => {
-      this._serviceProcess.stdout.on('data', (data: Buffer) => {
-        const prefix = 'Listening on ';
-        const line = data.toString();
-        if (line.startsWith(prefix))
-          f(line.substring(prefix.length).trim());
+    await new Promise<void>(f => {
+      this._serviceProcess.stdout.on('data', data => {
+        if (data.toString().includes('Listening on'))
+          f();
       });
     });
     this._serviceProcess.on('exit', this._onExit);
-    this._client = await PlaywrightClient.connect({
-      wsEndpoint,
-      forwardPorts: options?.forwardPorts
-    });
-    this._playwrightObject = this._client.playwright();
-    return this._playwrightObject;
+    this._client = await PlaywrightClient.connect(`ws://localhost:${port}/ws`);
+    this._playwrightObejct = this._client.playwright();
+    return this._playwrightObejct;
   }
 
   async teardown() {
@@ -102,8 +84,6 @@ class ServiceMode {
     this._serviceProcess.removeListener('exit', this._onExit);
     const processExited = new Promise(f => this._serviceProcess.on('exit', f));
     this._serviceProcess.kill();
-    if (this._tmpConfigFile)
-      await fs.promises.unlink(this._tmpConfigFile);
     await processExited;
   }
 
@@ -128,22 +108,16 @@ const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixt
   video: [ undefined, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   platform: [ process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' } ],
-  getPlaywright: [ async ({ mode }, run, workerInfo) => {
+  playwright: [ async ({ mode }, run, workerInfo) => {
     const modeImpl = {
       default: new DefaultMode(),
       service: new ServiceMode(),
       driver: new DriverMode(),
     }[mode];
     require('../../lib/utils/utils').setUnderTest();
-    await run(async (options: PlaywrightModeSetupOptions) => {
-      const playwright = await modeImpl.setup(workerInfo.workerIndex, options);
-      return playwright;
-    });
-    await modeImpl.teardown();
-  }, { scope: 'worker' } ],
-  playwright: [ async ({ getPlaywright }, run) => {
-    const playwright = await getPlaywright();
+    const playwright = await modeImpl.setup(workerInfo.workerIndex);
     await run(playwright);
+    await modeImpl.teardown();
   }, { scope: 'worker' } ],
   toImpl: [ async ({ playwright }, run) => run((playwright as any)._toImpl), { scope: 'worker' } ],
   isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
