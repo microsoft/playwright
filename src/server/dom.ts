@@ -104,11 +104,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  private async _evaluateInMainAndWaitForSignals<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
-    const main = await this._context.frame._mainContext();
-    return main.eval(pageFunction, {arg: [await main.injectedScript(), this, arg], waitForSignals: true});
-  }
-
   async evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
     const utility = await this._context.frame._utilityContext();
     return utility.evaluate(pageFunction, [await utility.injectedScript(), this, arg]);
@@ -175,9 +170,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
-    await this._evaluateInMainAndWaitForSignals(([injected, node, { type, eventInit }]) =>
-      injected.dispatchEvent(node, type, eventInit), { type, eventInit });
-    await this._page._doSlowMo();
+    const main = await this._context.frame._mainContext();
+    return main.eval(([injected, node, { type, eventInit }]) => injected.dispatchEvent(node, type, eventInit), {
+      arg: [await main.injectedScript(), this, { type, eventInit }] as const,
+      waitForSignals: true,
+      doSlowMo: true,
+    });
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -646,14 +644,26 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const handle = await this._page.selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+    const result = await handle._context.eval(expression, {
+      isFunction,
+      args: [handle, arg],
+      doSlowMo: true,
+      returnHandle: false,
+      waitForSignals: true,
+    });
     handle.dispose();
     return result;
   }
 
   async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this._context.frame, selector, this);
-    const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+    const result = await arrayHandle._context.eval(expression, {
+      isFunction,
+      args: [arrayHandle, arg],
+      doSlowMo: true,
+      returnHandle: false,
+      waitForSignals: true,
+    });
     arrayHandle.dispose();
     return result;
   }

@@ -66,6 +66,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
       isFunction: params.isFunction,
       waitForSignals: true,
       world: 'main',
+      doSlowMo: true,
     }))};
   }
 
@@ -76,6 +77,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
       returnHandle: true,
       waitForSignals: true,
       world: 'main',
+      doSlowMo: true,
     }))};
   }
 

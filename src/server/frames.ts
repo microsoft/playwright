@@ -639,9 +639,7 @@ export class Frame extends SdkObject {
   async eval(pageFunction: string|Function, options: js.EvalOptions & {world?: types.World} = {}) {
     const {world = 'main'} = options;
     const context = await this._context(world);
-    const value = await context.eval(pageFunction, options);
-    if (world === 'main')
-      await this._page._doSlowMo();
+    const value = await context.eval(pageFunction as string, options);
     return value;
   }
 
@@ -688,14 +686,26 @@ export class Frame extends SdkObject {
     const handle = await this.$(selector);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+    const result = await handle._context.eval(expression, {
+      isFunction,
+      args: [handle, arg],
+      doSlowMo: true,
+      returnHandle: false,
+      waitForSignals: true,
+    });
     handle.dispose();
     return result;
   }
 
   async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this, selector);
-    const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+    const result = await arrayHandle._context.eval(expression, {
+      isFunction,
+      args: [arrayHandle, arg],
+      doSlowMo: true,
+      returnHandle: false,
+      waitForSignals: true,
+    });
     arrayHandle.dispose();
     return result;
   }
