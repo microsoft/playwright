@@ -31,7 +31,7 @@ You can control the maximum number of worker processes via [command line](./test
   ```
 
 - In the configuration file
-  ```js
+  ```js js-flavor=js
   // playwright.config.js
   module.exports = {
     // Limit the number of workers on CI, use default locally
@@ -39,7 +39,7 @@ You can control the maximum number of worker processes via [command line](./test
   };
   ```
 
-  ```ts
+  ```js js-flavor=ts
   // playwright.config.ts
   import { PlaywrightTestConfig } from 'playwright/test';
 

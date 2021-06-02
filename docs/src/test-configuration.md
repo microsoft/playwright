@@ -28,7 +28,7 @@ You can specify any options either locally in a test file, or globally in the co
 
 Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the `use` section.
 
-```js
+```js js-flavor=js
 module.exports = {
   use: {
     // Browser options
@@ -46,7 +46,7 @@ module.exports = {
 };
 ```
 
-```ts
+```js js-flavor=ts
 import { PlaywrightTestConfig } from 'playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
@@ -82,7 +82,7 @@ npx playwright test --config=tests/my.config.js
 
 With `test.use()` you can override some options for a file or a `test.describe` block.
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -94,7 +94,7 @@ test('my portrait test', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 
@@ -106,7 +106,9 @@ test('my portrait test', async ({ page }) => {
 });
 ```
 
-```js
+The same works inside describe.
+
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -120,7 +122,7 @@ test.describe('headed block', () => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 
@@ -150,7 +152,7 @@ In addition to configuring [Browser] or [BrowserContext], videos or screenshots,
 
 You can specify these options in the configuration file.
 
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   // Look for test files in the "tests" directory, relative to this configuration file
@@ -174,7 +176,7 @@ module.exports = {
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -205,7 +207,7 @@ export default config;
 
 To specify different options per browser, for example command line arguments for Chromium, create multiple projects in your configuration file. Below is an example that runs all tests in three browsers, with different options.
 
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   // Put any shared options on the top level.
@@ -238,7 +240,7 @@ module.exports = {
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -312,7 +314,7 @@ You can use configuration file to make default `context` emulate a mobile device
 
 Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" emulation modes. Note that it uses the [projects](./test-advanced.md#projects) feature to run the same set of tests in multiple configurations.
 
-```js
+```js js-flavor=js
 // playwright.config.js
 const { devices } = require('playwright');
 
@@ -339,7 +341,7 @@ module.exports = {
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 import { devices } from 'playwright';
@@ -372,7 +374,7 @@ export default config;
 
 You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context.
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -387,7 +389,7 @@ test('loads page without css', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 
@@ -404,7 +406,7 @@ test('loads page without css', async ({ page }) => {
 
 Alternatively, you can use [`method: Page.route`] to mock network in a single test.
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -417,7 +419,7 @@ test('loads page without images', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 

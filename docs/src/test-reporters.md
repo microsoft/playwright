@@ -16,14 +16,14 @@ npx playwright test --reporter=line
 
 For more control, you can specify reporters programmatically in the [configuration file](./test-configuration.md).
 
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   reporter: 'line',
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -35,7 +35,7 @@ export default config;
 
 You can use different reporters locally and on CI.
 
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   reporter: !process.env.CI
@@ -46,7 +46,7 @@ module.exports = {
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -72,14 +72,14 @@ List reporter is default. It prints a line for each test being run.
 npx playwright test --reporter=list
 ```
 
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   reporter: 'list',
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -114,14 +114,14 @@ Line reporter is more concise than the list reporter. It uses a single line to r
 npx playwright test --reporter=line
 ```
 
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   reporter: 'line',
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -153,14 +153,14 @@ Dot reporter is very concise - it only produces a single character per successfu
 npx playwright test --reporter=dot
 ```
 
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   reporter: 'dot',
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -187,14 +187,14 @@ PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
 ```
 
 In configuration file, pass options directly:
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   reporter: { name: 'json', outputFile: 'results.json' },
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
@@ -214,14 +214,14 @@ PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,li
 ```
 
 In configuration file, pass options directly:
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   reporter: { name: 'junit', outputFile: 'results.xml' },
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 

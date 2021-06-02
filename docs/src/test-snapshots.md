@@ -5,7 +5,7 @@ title: "Visual comparisons"
 
 Playwright Test includes the ability to produce and visually compare screenshots using `expect(value).toMatchSnapshot()`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -15,7 +15,7 @@ test('example test', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 
@@ -33,7 +33,7 @@ npx playwright test --update-snapshots
 
 Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can pass comparison `threshold` as an option.
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -43,7 +43,7 @@ test('example test', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 
@@ -57,7 +57,7 @@ Apart from screenshots, `expect(value).toMatchSnapshot()` can also be used to co
 
 Here we compare text content against the reference.
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -67,7 +67,7 @@ test('example test', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 

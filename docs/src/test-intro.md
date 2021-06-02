@@ -29,7 +29,7 @@ npm i -D playwright
 
 Create `tests/foo.spec.js` (or `tests/foo.spec.ts` for TypeScript) to define your test.
 
-```js
+```js js-flavor=js
 const { test, expect } = require('playwright/test');
 
 test('basic test', async ({ page }) => {
@@ -39,7 +39,7 @@ test('basic test', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 import { test, expect } from 'playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -79,12 +79,12 @@ Refer to [configuration](./test-configuration.md) section for configuring test r
 
 You noticed an argument `{ page }` that the test above has access to:
 
-```js
+```js js-flavor=js
 test('basic test', async ({ page }) => {
   ...
 ```
 
-```ts
+```js js-flavor=ts
 test('basic test', async ({ page }) => {
   ...
 ```
@@ -108,13 +108,13 @@ If you are familiar with test runners like Jest, Mocha and Ava, you will find th
 
 You can focus some tests. When there are focused tests, only they run.
 
-```js
+```js js-flavor=js
 test.only('focus this test', async ({ page }) => {
   // Run only focused tests in the entire project.
 });
 ```
 
-```ts
+```js js-flavor=ts
 test.only('focus this test', async ({ page }) => {
   // Run only focused tests in the entire project.
 });
@@ -124,13 +124,13 @@ test.only('focus this test', async ({ page }) => {
 
 You can skip certain test based on the condition.
 
-```js
+```js js-flavor=js
 test('skip this test', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Still working on it');
 });
 ```
 
-```ts
+```js js-flavor=ts
 test('skip this test', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Still working on it');
 });
@@ -139,7 +139,7 @@ test('skip this test', async ({ page, browserName }) => {
 ### Group tests
 
 You can group tests to give them a logical name or to scope before/after hooks to the group.
-```js
+```js js-flavor=js
 const { test, expect } = require('playwright/test');
 
 test.describe('two tests', () => {
@@ -153,7 +153,7 @@ test.describe('two tests', () => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 import { test, expect } from 'playwright/test';
 
 test.describe('two tests', () => {
@@ -172,7 +172,7 @@ test.describe('two tests', () => {
 You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down resources shared between tests.
 And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -189,7 +189,7 @@ test.describe('feature foo', () => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 
@@ -218,7 +218,7 @@ Combine `expect` with various Playwright methods to create expectations for your
 - [`method: Page.screenshot`]
 - Find out more in the [assertions](./assertions.md) guide
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -243,7 +243,7 @@ test('my test', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 
@@ -323,7 +323,7 @@ So far, we've looked at the zero-config operation of Playwright Test. For a real
 
 Create `playwright.config.js` (or `playwright.config.ts`) to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit. Look for more options in the [configuration section](./test-configuration.md).
 
-```js
+```js js-flavor=js
 module.exports = {
   // Each test is given 30 seconds.
   timeout: 30000,
@@ -338,7 +338,7 @@ module.exports = {
 };
 ```
 
-```ts
+```js js-flavor=ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
 const config: PlaywrightTestConfig = {
