@@ -15,6 +15,15 @@ pip install playwright
 playwright install
 ```
 
+Use conda to install Playwright in your Python project. See [system requirements](#system-requirements).
+
+```sh
+conda config --add channels conda-forge
+conda config --add channels microsoft
+conda install playwright
+playwright install
+```
+
 These commands download the Playwright package and install browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./installation.md).
 
 ## Usage
