@@ -1012,6 +1012,8 @@ Examples:
 const searchValue = await page.$eval('#search', el => el.value);
 const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
 const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
+// In TypeScript, this example requires an explicit type annotation (HTMLLinkElement) on el:
+const preloadHrefTS = await page.$eval('link[rel=preload]', (el: HTMLLinkElement) => el.href);
 ```
 
 ```java
@@ -1550,7 +1552,7 @@ See [`method: BrowserContext.exposeFunction`] for context-wide exposed function.
 Functions installed via [`method: Page.exposeFunction`] survive navigations.
 :::
 
-An example of adding an `sha1` function to the page:
+An example of adding a `sha256` function to the page:
 
 ```js
 const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -1559,11 +1561,11 @@ const crypto = require('crypto');
 (async () => {
   const browser = await webkit.launch({ headless: false });
   const page = await browser.newPage();
-  await page.exposeFunction('sha1', text => crypto.createHash('sha1').update(text).digest('hex'));
+  await page.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
   await page.setContent(`
     <script>
       async function onClick() {
-        document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+        document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
       }
     </script>
     <button onclick="onClick()">Click me</button>
@@ -1587,11 +1589,11 @@ public class Example {
       BrowserType webkit = playwright.webkit();
       Browser browser = webkit.launch({ headless: false });
       Page page = browser.newPage();
-      page.exposeFunction("sha1", args -> {
+      page.exposeFunction("sha256", args -> {
         String text = (String) args[0];
         MessageDigest crypto;
         try {
-          crypto = MessageDigest.getInstance("SHA-1");
+          crypto = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
           return null;
         }
@@ -1600,7 +1602,7 @@ public class Example {
       });
       page.setContent("<script>\n" +
         "  async function onClick() {\n" +
-        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "    document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');\n" +
         "  }\n" +
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
@@ -1616,8 +1618,8 @@ import asyncio
 import hashlib
 from playwright.async_api import async_playwright
 
-async def sha1(text):
-    m = hashlib.sha1()
+def sha256(text):
+    m = hashlib.sha256()
     m.update(bytes(text, "utf8"))
     return m.hexdigest()
 
@@ -1626,11 +1628,11 @@ async def run(playwright):
     webkit = playwright.webkit
     browser = await webkit.launch(headless=False)
     page = await browser.new_page()
-    await page.expose_function("sha1", sha1)
+    await page.expose_function("sha256", sha256)
     await page.set_content("""
         <script>
           async function onClick() {
-            document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+            document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
           }
         </script>
         <button onclick="onClick()">Click me</button>
@@ -1648,8 +1650,8 @@ asyncio.run(main())
 import hashlib
 from playwright.sync_api import sync_playwright
 
-def sha1(text):
-    m = hashlib.sha1()
+def sha256(text):
+    m = hashlib.sha256()
     m.update(bytes(text, "utf8"))
     return m.hexdigest()
 
@@ -1658,11 +1660,11 @@ def run(playwright):
     webkit = playwright.webkit
     browser = webkit.launch(headless=False)
     page = browser.new_page()
-    page.expose_function("sha1", sha1)
+    page.expose_function("sha256", sha256)
     page.set_content("""
         <script>
           async function onClick() {
-            document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+            document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
           }
         </script>
         <button onclick="onClick()">Click me</button>
@@ -1691,17 +1693,15 @@ class PageExamples
         });
         var page = await browser.NewPageAsync();
 
-        // NOTE: md5 is inherently insecure, and we strongly discourage using
-        // this in production in any shape or form
-        await page.ExposeFunctionAsync("sha1", (string input) =>
+        await page.ExposeFunctionAsync("sha256", (string input) =>
         {
             return Convert.ToBase64String(
-                MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
+                SHA256.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
         });
 
         await page.SetContentAsync("<script>\n" +
         "  async function onClick() {\n" +
-        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "    document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');\n" +
         "  }\n" +
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
@@ -3422,7 +3422,7 @@ Will throw an error if the page is closed before the [`event: Page.requestFinish
 ### option: Page.waitForRequestFinished.predicate =
 - `predicate` <[function]\([Request]\):[boolean]>
 
-Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
+Receives the [Request] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForRequestFinished.timeout = %%-wait-for-event-timeout-%%
 

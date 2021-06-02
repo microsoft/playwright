@@ -27,10 +27,6 @@ PLAYWRIGHT_WEBKIT_TGZ="$(node ${PACKAGE_BUILDER} playwright-webkit ./playwright-
 echo "playwright-webkit built"
 PLAYWRIGHT_FIREFOX_TGZ="$(node ${PACKAGE_BUILDER} playwright-firefox ./playwright-firefox.tgz)"
 echo "playwright-firefox built"
-PLAYWRIGHT_ELECTRON_TGZ="$(node ${PACKAGE_BUILDER} playwright-electron ./playwright-electron.tgz)"
-echo "playwright-electron built"
-PLAYWRIGHT_ANDROID_TGZ="$(node ${PACKAGE_BUILDER} playwright-android ./playwright-android.tgz)"
-echo "playwright-android built"
 
 SCRIPTS_PATH="$(pwd -P)/.."
 TEST_ROOT="/tmp/playwright-installation-tests"
@@ -401,7 +397,7 @@ function test_playwright_validate_dependencies_skip_executable_path {
 function test_playwright_electron_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_ELECTRON_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   npm install electron@9.0
   copy_test_scripts
 
@@ -413,11 +409,11 @@ function test_playwright_electron_should_work {
 
 function test_electron_types {
   initialize_test "${FUNCNAME[0]}"
-  npm install ${PLAYWRIGHT_ELECTRON_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   npm install electron@9.0
   npm install -D typescript@3.8
   npm install -D @types/node@10.17
-  echo "import { Page, electron, ElectronApplication, Electron } from 'playwright-electron';" > "test.ts"
+  echo "import { Page, _electron, ElectronApplication, Electron } from 'playwright';" > "test.ts"
 
   echo "Running tsc"
   npx -p typescript@3.7.5 tsc "test.ts"
@@ -428,10 +424,10 @@ function test_electron_types {
 function test_android_types {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_ANDROID_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   npm install -D typescript@3.8
   npm install -D @types/node@10.17
-  echo "import { AndroidDevice, android, AndroidWebView, Page } from 'playwright-android';" > "test.ts"
+  echo "import { AndroidDevice, _android, AndroidWebView, Page } from 'playwright';" > "test.ts"
 
   echo "Running tsc"
   npx -p typescript@3.7.5 tsc "test.ts"

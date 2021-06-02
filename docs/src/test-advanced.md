@@ -1,11 +1,9 @@
 ---
 id: test-advanced
-title: "Advanced Configuration"
+title: "Advanced: configuration"
 ---
 
 <!-- TOC -->
-
-<br/>
 
 ## Project configuration
 

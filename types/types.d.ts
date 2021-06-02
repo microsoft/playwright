@@ -200,6 +200,8 @@ export interface Page {
    * const searchValue = await page.$eval('#search', el => el.value);
    * const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
    * const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
+   * // In TypeScript, this example requires an explicit type annotation (HTMLLinkElement) on el:
+   * const preloadHrefTS = await page.$eval('link[rel=preload]', (el: HTMLLinkElement) => el.href);
    * ```
    *
    * Shortcut for main frame's
@@ -1711,7 +1713,7 @@ export interface Page {
    * [page.exposeFunction(name, callback)](https://playwright.dev/docs/api/class-page#pageexposefunctionname-callback)
    * survive navigations.
    *
-   * An example of adding an `sha1` function to the page:
+   * An example of adding a `sha256` function to the page:
    *
    * ```js
    * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -1720,11 +1722,11 @@ export interface Page {
    * (async () => {
    *   const browser = await webkit.launch({ headless: false });
    *   const page = await browser.newPage();
-   *   await page.exposeFunction('sha1', text => crypto.createHash('sha1').update(text).digest('hex'));
+   *   await page.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
    *   await page.setContent(`
    *     <script>
    *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+   *         document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
    *       }
    *     </script>
    *     <button onclick="onClick()">Click me</button>
@@ -5330,7 +5332,7 @@ export interface BrowserContext {
    * See [page.exposeFunction(name, callback)](https://playwright.dev/docs/api/class-page#pageexposefunctionname-callback)
    * for page-only version.
    *
-   * An example of adding an `md5` function to all pages in the context:
+   * An example of adding a `sha256` function to all pages in the context:
    *
    * ```js
    * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -5339,12 +5341,12 @@ export interface BrowserContext {
    * (async () => {
    *   const browser = await webkit.launch({ headless: false });
    *   const context = await browser.newContext();
-   *   await context.exposeFunction('md5', text => crypto.createHash('md5').update(text).digest('hex'));
+   *   await context.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
    *   const page = await context.newPage();
    *   await page.setContent(`
    *     <script>
    *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.md5('PLAYWRIGHT');
+   *         document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
    *       }
    *     </script>
    *     <button onclick="onClick()">Click me</button>

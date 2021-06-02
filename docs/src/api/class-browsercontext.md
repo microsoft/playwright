@@ -624,7 +624,7 @@ If the [`param: callback`] returns a [Promise], it will be awaited.
 
 See [`method: Page.exposeFunction`] for page-only version.
 
-An example of adding an `md5` function to all pages in the context:
+An example of adding a `sha256` function to all pages in the context:
 
 ```js
 const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -633,12 +633,12 @@ const crypto = require('crypto');
 (async () => {
   const browser = await webkit.launch({ headless: false });
   const context = await browser.newContext();
-  await context.exposeFunction('md5', text => crypto.createHash('md5').update(text).digest('hex'));
+  await context.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
   const page = await context.newPage();
   await page.setContent(`
     <script>
       async function onClick() {
-        document.querySelector('div').textContent = await window.md5('PLAYWRIGHT');
+        document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
       }
     </script>
     <button onclick="onClick()">Click me</button>
@@ -661,11 +661,11 @@ public class Example {
     try (Playwright playwright = Playwright.create()) {
       BrowserType webkit = playwright.webkit()
       Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
-      context.exposeFunction("sha1", args -> {
+      context.exposeFunction("sha256", args -> {
         String text = (String) args[0];
         MessageDigest crypto;
         try {
-          crypto = MessageDigest.getInstance("SHA-1");
+          crypto = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
           return null;
         }
@@ -675,7 +675,7 @@ public class Example {
       Page page = context.newPage();
       page.setContent("<script>\n" +
         "  async function onClick() {\n" +
-        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "    document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');\n" +
         "  }\n" +
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
@@ -691,8 +691,8 @@ import asyncio
 import hashlib
 from playwright.async_api import async_playwright
 
-async def sha1(text):
-    m = hashlib.sha1()
+def sha256(text):
+    m = hashlib.sha256()
     m.update(bytes(text, "utf8"))
     return m.hexdigest()
 
@@ -701,12 +701,12 @@ async def run(playwright):
     webkit = playwright.webkit
     browser = await webkit.launch(headless=False)
     context = await browser.new_context()
-    await context.expose_function("sha1", sha1)
+    await context.expose_function("sha256", sha256)
     page = await context.new_page()
     await page.set_content("""
         <script>
           async function onClick() {
-            document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+            document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
           }
         </script>
         <button onclick="onClick()">Click me</button>
@@ -724,8 +724,8 @@ asyncio.run(main())
 import hashlib
 from playwright.sync_api import sync_playwright
 
-def sha1(text):
-    m = hashlib.sha1()
+def sha256(text):
+    m = hashlib.sha256()
     m.update(bytes(text, "utf8"))
     return m.hexdigest()
 
@@ -734,13 +734,12 @@ def run(playwright):
     webkit = playwright.webkit
     browser = webkit.launch(headless=False)
     context = browser.new_context()
-    context.expose_function("sha1", sha1)
+    context.expose_function("sha256", sha256)
     page = context.new_page()
-    page.expose_function("sha1", sha1)
     page.set_content("""
         <script>
           async function onClick() {
-            document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+            document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
           }
         </script>
         <button onclick="onClick()">Click me</button>
@@ -760,24 +759,22 @@ using System.Threading.Tasks;
 
 class BrowserContextExamples
 {
-    public static async Task AddMd5FunctionToAllPagesInContext()
+    public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
         var context = await browser.NewContextAsync();
 
-        // NOTE: md5 is inherently insecure, and we strongly discourage using
-        // this in production in any shape or form
-        await context.ExposeFunctionAsync("sha1", (string input) =>
+        await context.ExposeFunctionAsync("sha256", (string input) =>
         {
             return Convert.ToBase64String(
-                MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
+                SHA256.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
         });
 
         var page = await context.NewPageAsync();
         await page.SetContentAsync("<script>\n" +
         "  async function onClick() {\n" +
-        "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +
+        "    document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');\n" +
         "  }\n" +
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +

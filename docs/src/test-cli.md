@@ -1,6 +1,6 @@
 ---
 id: test-cli
-title: "Advanced Command Line"
+title: "Advanced: command line"
 ---
 
 ```sh
@@ -10,7 +10,7 @@ npx playwright test --help
 
 Arguments passed to `npx playwright test` are treated as a filter for test files. For example, `npx playwright test my-spec` will only run tests from files with `my-spec` in the name.
 
-All the options are available in the [configuration file](./test-configuration.md). However, selected options can be passed to a command line and take a priority over the configuration file.
+All the options are available in the [configuration file](./test-advanced.md). However, selected options can be passed to a command line and take a priority over the configuration file.
 
 - `--headed`: Run tests in headed browsers. Useful for debugging.
 
@@ -44,7 +44,7 @@ All the options are available in the [configuration file](./test-configuration.m
 
 - `--shard <shard>`: [Shard](./test-parallel.md#shards) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.
 
-- `--timeout <number>`: Maximum timeout in milliseconds for each test, defaults to 10 seconds.
+- `--timeout <number>`: Maximum timeout in milliseconds for each test, defaults to 30 seconds.
 
 - `--update-snapshots` or `-u`: Whether to update [snapshots](./test-snapshots.md) with actual results instead of comparing them. Use this when snapshot expectations have changed.
 

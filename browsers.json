@@ -3,7 +3,7 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "884693",
+      "revision": "888113",
       "installByDefault": true
     },
     {
@@ -18,7 +18,7 @@
     },
     {
       "name": "webkit",
-      "revision": "1486",
+      "revision": "1488",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1444"

@@ -23,7 +23,7 @@ import { getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV } from './utils';
 
 export type BrowserName = 'chromium'|'webkit'|'firefox'|'firefox-stable'|'ffmpeg'|'webkit-technology-preview';
-export const allBrowserNames: BrowserName[] = ['chromium', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview', 'firefox-stable'];
+export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview', 'firefox-stable']);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 

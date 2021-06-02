@@ -118,10 +118,32 @@ index eb25aedee4cd9ebe007e06c2515b37ee095b06f4..badf6559595c8377db1089ca3c25008e
      static String requestId(unsigned long identifier);
  };
 diff --git a/Source/JavaScriptCore/inspector/InjectedScript.cpp b/Source/JavaScriptCore/inspector/InjectedScript.cpp
-index 65f8d6bf17af27b559d5bef3089757ffa85c54de..d624b031ac0564a2525b923acfb69cee9afbcbfb 100644
+index 65f8d6bf17af27b559d5bef3089757ffa85c54de..f431ca3f55536b8419e007a612fd56120d4702dd 100644
 --- a/Source/JavaScriptCore/inspector/InjectedScript.cpp
 +++ b/Source/JavaScriptCore/inspector/InjectedScript.cpp
-@@ -289,6 +289,10 @@ RefPtr<Protocol::Runtime::RemoteObject> InjectedScript::wrapObject(JSC::JSValue
+@@ -91,7 +91,7 @@ void InjectedScript::awaitPromise(const String& promiseObjectId, bool returnByVa
+     makeAsyncCall(function, WTFMove(callback));
+ }
+ 
+-void InjectedScript::callFunctionOn(Protocol::ErrorString& errorString, const String& objectId, const String& expression, const String& arguments, bool returnByValue, bool generatePreview, RefPtr<Protocol::Runtime::RemoteObject>& result, Optional<bool>& wasThrown)
++void InjectedScript::callFunctionOn(const String& objectId, const String& expression, const String& arguments, bool returnByValue, bool generatePreview, bool awaitPromise, AsyncCallCallback&& callback)
+ {
+     Deprecated::ScriptFunctionCall function(injectedScriptObject(), "callFunctionOn"_s, inspectorEnvironment()->functionCallHandler());
+     function.appendArgument(objectId);
+@@ -99,10 +99,8 @@ void InjectedScript::callFunctionOn(Protocol::ErrorString& errorString, const St
+     function.appendArgument(arguments);
+     function.appendArgument(returnByValue);
+     function.appendArgument(generatePreview);
+-
+-    Optional<int> savedResultIndex;
+-    makeEvalCall(errorString, function, result, wasThrown, savedResultIndex);
+-    ASSERT(!savedResultIndex);
++    function.appendArgument(awaitPromise);
++    makeAsyncCall(function, WTFMove(callback));
+ }
+ 
+ void InjectedScript::evaluateOnCallFrame(Protocol::ErrorString& errorString, JSC::JSValue callFrames, const String& callFrameId, const String& expression, const String& objectGroup, bool includeCommandLineAPI, bool returnByValue, bool generatePreview, bool saveResult, RefPtr<Protocol::Runtime::RemoteObject>& result, Optional<bool>& wasThrown, Optional<int>& savedResultIndex)
+@@ -289,6 +287,10 @@ RefPtr<Protocol::Runtime::RemoteObject> InjectedScript::wrapObject(JSC::JSValue
      auto callResult = callFunctionWithEvalEnabled(wrapFunction);
      if (!callResult)
          return nullptr;
@@ -132,8 +154,21 @@ index 65f8d6bf17af27b559d5bef3089757ffa85c54de..d624b031ac0564a2525b923acfb69cee
  
      auto resultValue = toInspectorValue(globalObject(), callResult.value());
      if (!resultValue)
+diff --git a/Source/JavaScriptCore/inspector/InjectedScript.h b/Source/JavaScriptCore/inspector/InjectedScript.h
+index 59c07a341eaa2788f3189fb6c39e2f6b633859c4..89b0d84b85929ebf160b72ecd43cdb13e5a84d28 100644
+--- a/Source/JavaScriptCore/inspector/InjectedScript.h
++++ b/Source/JavaScriptCore/inspector/InjectedScript.h
+@@ -64,7 +64,7 @@ public:
+     void evaluate(Protocol::ErrorString&, const String& expression, const String& objectGroup, bool includeCommandLineAPI, bool returnByValue, bool generatePreview, bool saveResult, RefPtr<Protocol::Runtime::RemoteObject>& result, Optional<bool>& wasThrown, Optional<int>& savedResultIndex);
+     void awaitPromise(const String& promiseObjectId, bool returnByValue, bool generatePreview, bool saveResult, AsyncCallCallback&&);
+     void evaluateOnCallFrame(Protocol::ErrorString&, JSC::JSValue callFrames, const String& callFrameId, const String& expression, const String& objectGroup, bool includeCommandLineAPI, bool returnByValue, bool generatePreview, bool saveResult, RefPtr<Protocol::Runtime::RemoteObject>& result, Optional<bool>& wasThrown, Optional<int>& savedResultIndex);
+-    void callFunctionOn(Protocol::ErrorString&, const String& objectId, const String& expression, const String& arguments, bool returnByValue, bool generatePreview, RefPtr<Protocol::Runtime::RemoteObject>& result, Optional<bool>& wasThrown);
++    void callFunctionOn(const String& objectId, const String& expression, const String& arguments, bool returnByValue, bool generatePreview, bool awaitPromise, AsyncCallCallback&&);
+     void getFunctionDetails(Protocol::ErrorString&, const String& functionId, RefPtr<Protocol::Debugger::FunctionDetails>& result);
+     void functionDetails(Protocol::ErrorString&, JSC::JSValue, RefPtr<Protocol::Debugger::FunctionDetails>& result);
+     void getPreview(Protocol::ErrorString&, const String& objectId, RefPtr<Protocol::Runtime::ObjectPreview>& result);
 diff --git a/Source/JavaScriptCore/inspector/InjectedScriptSource.js b/Source/JavaScriptCore/inspector/InjectedScriptSource.js
-index 48baed6a1b7ffad453379a2f1eb71b8c4925f6c4..aadd4ae30513a87f36355fa4ffcb6ba7b15dd4fc 100644
+index 48baed6a1b7ffad453379a2f1eb71b8c4925f6c4..40d36f784f46e44dbad908402a71e6b02f499629 100644
 --- a/Source/JavaScriptCore/inspector/InjectedScriptSource.js
 +++ b/Source/JavaScriptCore/inspector/InjectedScriptSource.js
 @@ -136,7 +136,7 @@ let InjectedScript = class InjectedScript
@@ -145,6 +180,73 @@ index 48baed6a1b7ffad453379a2f1eb71b8c4925f6c4..aadd4ae30513a87f36355fa4ffcb6ba7
              callback("Object with given id is not a Promise");
              return;
          }
+@@ -171,14 +171,16 @@ let InjectedScript = class InjectedScript
+         return this._evaluateAndWrap(callFrame.evaluateWithScopeExtension, callFrame, expression, objectGroup, isEvalOnCallFrame, includeCommandLineAPI, returnByValue, generatePreview, saveResult);
+     }
+ 
+-    callFunctionOn(objectId, expression, args, returnByValue, generatePreview)
++    callFunctionOn(objectId, expression, args, returnByValue, generatePreview, awaitPromise, callback)
+     {
+         let parsedObjectId = this._parseObjectId(objectId);
+         let object = this._objectForId(parsedObjectId);
+         let objectGroupName = this._idToObjectGroupName[parsedObjectId.id];
+ 
+-        if (!isDefined(object))
+-            return "Could not find object with given id";
++        if (!isDefined(object)) {
++            callback(this._createThrownValue("Could not find object with given id", objectGroupName));
++            return ;
++        }
+ 
+         let resolvedArgs = [];
+         if (args) {
+@@ -187,22 +189,37 @@ let InjectedScript = class InjectedScript
+                 try {
+                     resolvedArgs[i] = this._resolveCallArgument(callArgs[i]);
+                 } catch (e) {
+-                    return String(e);
++                    callback(this._createThrownValue(e, objectGroupName));
++                    return;
+                 }
+             }
+         }
+ 
+         try {
+             let func = InjectedScriptHost.evaluate("(" + expression + ")");
+-            if (typeof func !== "function")
+-                return "Given expression does not evaluate to a function";
+-
+-            return {
+-                wasThrown: false,
+-                result: RemoteObject.create(func.apply(object, resolvedArgs), objectGroupName, returnByValue, generatePreview)
+-            };
++            if (typeof func !== "function") {
++                callback(this._createThrownValue("Given expression does not evaluate to a function", objectGroupName));
++                return;
++            }
++            let result = func.apply(object, resolvedArgs);
++            if (awaitPromise && isDefined(result) && (InjectedScriptHost.internalConstructorName(result) === 'Promise')) {
++                result.then(value => {
++                    callback({
++                        wasThrown: false,
++                        result: RemoteObject.create(value, objectGroupName, returnByValue, generatePreview),
++                    });
++                }, reason => {
++                    callback(this._createThrownValue(reason, objectGroupName));
++                });
++            } else {
++                callback({
++                    wasThrown: false,
++                    result: RemoteObject.create(result, objectGroupName, returnByValue, generatePreview)
++                });
++            }
+         } catch (e) {
+-            return this._createThrownValue(e, objectGroupName);
++            callback(this._createThrownValue(e, objectGroupName));
++            return;
+         }
+     }
+ 
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 index 033a1b4713352777ee0de5ed53e64f8391f9d74f..fc356dec4b1518547a4217def6a7b5f1d97330fb 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
@@ -235,6 +337,67 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..966a5927702b65edb343369decafda7f
      WTF::Function<void()> m_resumeCallback;
      bool m_isPaused { false };
  };
+diff --git a/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.cpp
+index 40437211f132ea95748086b5ea3ed2868341e766..fd49f7509bd07ce773d84af89c4de0f8bb9abca1 100644
+--- a/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.cpp
++++ b/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.cpp
+@@ -168,16 +168,15 @@ void InspectorRuntimeAgent::awaitPromise(const Protocol::Runtime::RemoteObjectId
+     });
+ }
+ 
+-Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */>> InspectorRuntimeAgent::callFunctionOn(const Protocol::Runtime::RemoteObjectId& objectId, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& /* emulateUserGesture */)
++void InspectorRuntimeAgent::callFunctionOn(const Protocol::Runtime::RemoteObjectId& objectId, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& /* emulateUserGesture */, Optional<bool>&& awaitPromise, Ref<CallFunctionOnCallback>&& callback)
+ {
+     Protocol::ErrorString errorString;
+ 
+     InjectedScript injectedScript = m_injectedScriptManager.injectedScriptForObjectId(objectId);
+-    if (injectedScript.hasNoValue())
+-        return makeUnexpected("Missing injected script for given objectId"_s);
+-
+-    RefPtr<Protocol::Runtime::RemoteObject> result;
+-    Optional<bool> wasThrown;
++    if (injectedScript.hasNoValue()) {
++        callback->sendFailure("Missing injected script for given objectId"_s);
++        return;
++    }
+ 
+     JSC::Debugger::TemporarilyDisableExceptionBreakpoints temporarilyDisableExceptionBreakpoints(m_debugger);
+ 
+@@ -187,15 +186,15 @@ Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, Optiona
+         muteConsole();
+     }
+ 
+-    injectedScript.callFunctionOn(errorString, objectId, functionDeclaration, arguments ? arguments->toJSONString() : nullString(), returnByValue.valueOr(false), generatePreview.valueOr(false), result, wasThrown);
++    injectedScript.callFunctionOn(objectId, functionDeclaration, arguments ? arguments->toJSONString() : nullString(), returnByValue.valueOr(false), generatePreview.valueOr(false), awaitPromise.valueOr(false), [callback=WTFMove(callback)] (Protocol::ErrorString& errorString, RefPtr<Protocol::Runtime::RemoteObject>&& result, Optional<bool>&& wasThrown, Optional<int>&&) {
++        if (!result)
++            callback->sendFailure(errorString);
++        else
++            callback->sendSuccess(result.releaseNonNull(), WTFMove(wasThrown));
++    });
+ 
+     if (pauseAndMute)
+         unmuteConsole();
+-
+-    if (!result)
+-        return makeUnexpected(errorString);
+-
+-    return { { result.releaseNonNull(), WTFMove(wasThrown) } };
+ }
+ 
+ Protocol::ErrorStringOr<Ref<Protocol::Runtime::ObjectPreview>> InspectorRuntimeAgent::getPreview(const Protocol::Runtime::RemoteObjectId& objectId)
+diff --git a/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.h b/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.h
+index f402946ff6daa88c485d097aac61c1d9ebfc09aa..01d88090c966134efd15c530ef7e183a2a01da6e 100644
+--- a/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.h
++++ b/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.h
+@@ -62,7 +62,7 @@ public:
+     Protocol::ErrorStringOr<std::tuple<Protocol::Runtime::SyntaxErrorType, String /* message */, RefPtr<Protocol::Runtime::ErrorRange>>> parse(const String& expression) final;
+     Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */, Optional<int> /* savedResultIndex */>> evaluate(const String& expression, const String& objectGroup, Optional<bool>&& includeCommandLineAPI, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<Protocol::Runtime::ExecutionContextId>&&, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& saveResult, Optional<bool>&& emulateUserGesture) override;
+     void awaitPromise(const Protocol::Runtime::RemoteObjectId&, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& saveResult, Ref<AwaitPromiseCallback>&&) final;
+-    Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */>> callFunctionOn(const Protocol::Runtime::RemoteObjectId&, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture) override;
++    void callFunctionOn(const Protocol::Runtime::RemoteObjectId&, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture, Optional<bool>&& awaitPromise, Ref<CallFunctionOnCallback>&&) override;
+     Protocol::ErrorStringOr<void> releaseObject(const Protocol::Runtime::RemoteObjectId&) final;
+     Protocol::ErrorStringOr<Ref<Protocol::Runtime::ObjectPreview>> getPreview(const Protocol::Runtime::RemoteObjectId&) final;
+     Protocol::ErrorStringOr<std::tuple<Ref<JSON::ArrayOf<Protocol::Runtime::PropertyDescriptor>>, RefPtr<JSON::ArrayOf<Protocol::Runtime::InternalPropertyDescriptor>>>> getProperties(const Protocol::Runtime::RemoteObjectId&, Optional<bool>&& ownProperties, Optional<int>&& fetchStart, Optional<int>&& fetchCount, Optional<bool>&& generatePreview) final;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 index 508eb02ec95c52408384a1e2b77648afd426dd9d..05f483dced4b62ffdd60b0a0447504802e1f5711 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
@@ -1301,6 +1464,27 @@ index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936af
 +        }
 +    ]
 +}
+diff --git a/Source/JavaScriptCore/inspector/protocol/Runtime.json b/Source/JavaScriptCore/inspector/protocol/Runtime.json
+index 274b01596d490fb81b48cf89bf668e0634e8b423..d08a9ddd745c748767ba8055907daa7beeffc219 100644
+--- a/Source/JavaScriptCore/inspector/protocol/Runtime.json
++++ b/Source/JavaScriptCore/inspector/protocol/Runtime.json
+@@ -261,12 +261,14 @@
+                 { "name": "doNotPauseOnExceptionsAndMuteConsole", "type": "boolean", "optional": true, "description": "Specifies whether function call should stop on exceptions and mute console. Overrides setPauseOnException state." },
+                 { "name": "returnByValue", "type": "boolean", "optional": true, "description": "Whether the result is expected to be a JSON object which should be sent by value." },
+                 { "name": "generatePreview", "type": "boolean", "optional": true, "description": "Whether preview should be generated for the result." },
+-                { "name": "emulateUserGesture", "type": "boolean", "optional": true, "description": "Whether the expression should be considered to be in a user gesture or not." }
++                { "name": "emulateUserGesture", "type": "boolean", "optional": true, "description": "Whether the expression should be considered to be in a user gesture or not." },
++                { "name": "awaitPromise", "type": "boolean", "optional": true, "description": "Whether to automatically await returned promise." }
+             ],
+             "returns": [
+                 { "name": "result", "$ref": "RemoteObject", "description": "Call result." },
+                 { "name": "wasThrown", "type": "boolean", "optional": true, "description": "True if the result was thrown during the evaluation." }
+-            ]
++            ],
++            "async": true
+         },
+         {
+             "name": "getPreview",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
 index 0000000000000000000000000000000000000000..f6c541d63c0b8251874eaf8818aabe0e0449401d
@@ -4548,7 +4732,7 @@ index 746da1a4d3e03a871b7880a3e52856b0ed2835cd..6d06ed07527541b8339236eefa51f15e
  
  void PageDebuggerAgent::debuggerDidEvaluate(JSC::Debugger&, const JSC::Breakpoint::Action& action)
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
-index 00e69f1aa2e3f8ea2f445e8dd446dd16ea6363df..889a14de887a5ce5726c9e4640000611145c78c2 100644
+index 00e69f1aa2e3f8ea2f445e8dd446dd16ea6363df..78dda16d71cc379f07803ca313b47b55da183ec7 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 @@ -35,12 +35,14 @@
@@ -4582,7 +4766,7 @@ index 00e69f1aa2e3f8ea2f445e8dd446dd16ea6363df..889a14de887a5ce5726c9e4640000611
  InjectedScript PageRuntimeAgent::injectedScriptForEval(Protocol::ErrorString& errorString, Optional<Protocol::Runtime::ExecutionContextId>&& executionContextId)
  {
      if (!executionContextId) {
-@@ -191,13 +202,23 @@ void PageRuntimeAgent::notifyContextCreated(const Protocol::Network::FrameId& fr
+@@ -191,14 +202,24 @@ void PageRuntimeAgent::notifyContextCreated(const Protocol::Network::FrameId& fr
  
  Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */, Optional<int> /* savedResultIndex */>> PageRuntimeAgent::evaluate(const String& expression, const String& objectGroup, Optional<bool>&& includeCommandLineAPI, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<Protocol::Runtime::ExecutionContextId>&& executionContextId, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& saveResult, Optional<bool>&& emulateUserGesture)
  {
@@ -4598,29 +4782,50 @@ index 00e69f1aa2e3f8ea2f445e8dd446dd16ea6363df..889a14de887a5ce5726c9e4640000611
      return InspectorRuntimeAgent::evaluate(expression, objectGroup, WTFMove(includeCommandLineAPI), WTFMove(doNotPauseOnExceptionsAndMuteConsole), WTFMove(executionContextId), WTFMove(returnByValue), WTFMove(generatePreview), WTFMove(saveResult), WTFMove(emulateUserGesture));
  }
  
- Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */>> PageRuntimeAgent::callFunctionOn(const Protocol::Runtime::RemoteObjectId& objectId, const String& expression, RefPtr<JSON::Array>&& optionalArguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture)
+-Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */>> PageRuntimeAgent::callFunctionOn(const Protocol::Runtime::RemoteObjectId& objectId, const String& expression, RefPtr<JSON::Array>&& optionalArguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture)
++void PageRuntimeAgent::callFunctionOn(const Protocol::Runtime::RemoteObjectId& objectId, const String& expression, RefPtr<JSON::Array>&& optionalArguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture, Optional<bool>&& awaitPromise, Ref<CallFunctionOnCallback>&& callback)
  {
 -    UserGestureEmulationScope userGestureScope(m_inspectedPage, emulateUserGesture && *emulateUserGesture);
+-    return InspectorRuntimeAgent::callFunctionOn(objectId, expression, WTFMove(optionalArguments), WTFMove(doNotPauseOnExceptionsAndMuteConsole), WTFMove(returnByValue), WTFMove(generatePreview), WTFMove(emulateUserGesture));
 +    InjectedScript injectedScript = injectedScriptManager().injectedScriptForObjectId(objectId);
 +    JSC::JSGlobalObject* globalObject = injectedScript.globalObject();
 +    Document* document = globalObject ? activeDOMWindow(*globalObject).document() : nullptr;
 +    UserGestureEmulationScope userGestureScope(m_inspectedPage, emulateUserGesture && *emulateUserGesture, document);
-     return InspectorRuntimeAgent::callFunctionOn(objectId, expression, WTFMove(optionalArguments), WTFMove(doNotPauseOnExceptionsAndMuteConsole), WTFMove(returnByValue), WTFMove(generatePreview), WTFMove(emulateUserGesture));
++    return InspectorRuntimeAgent::callFunctionOn(objectId, expression, WTFMove(optionalArguments), WTFMove(doNotPauseOnExceptionsAndMuteConsole), WTFMove(returnByValue), WTFMove(generatePreview), WTFMove(emulateUserGesture), WTFMove(awaitPromise), WTFMove(callback));
  }
  
+ } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
-index 298465c52b42464c2733659e07f3f760174a95eb..3b7ac5a5e6fba11bfbc3d641e5a312db5f1391a8 100644
+index 298465c52b42464c2733659e07f3f760174a95eb..5af56f4aa2d2de51153b1ae2c5e17274d88713d0 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
-@@ -62,6 +62,7 @@ public:
+@@ -54,25 +54,25 @@ public:
+     ~PageRuntimeAgent();
+ 
+     // RuntimeBackendDispatcherHandler
+-    Inspector::Protocol::ErrorStringOr<void> enable();
+-    Inspector::Protocol::ErrorStringOr<void> disable();
+-    Inspector::Protocol::ErrorStringOr<std::tuple<Ref<Inspector::Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */, Optional<int> /* savedResultIndex */>> evaluate(const String& expression, const String& objectGroup, Optional<bool>&& includeCommandLineAPI, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& saveResult, Optional<bool>&& emulateUserGesture);
+-    Inspector::Protocol::ErrorStringOr<std::tuple<Ref<Inspector::Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */>> callFunctionOn(const Inspector::Protocol::Runtime::RemoteObjectId&, const String& expression, RefPtr<JSON::Array>&& arguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture);
++    Inspector::Protocol::ErrorStringOr<void> enable() override;
++    Inspector::Protocol::ErrorStringOr<void> disable() override;
++    Inspector::Protocol::ErrorStringOr<std::tuple<Ref<Inspector::Protocol::Runtime::RemoteObject>, Optional<bool> /* wasThrown */, Optional<int> /* savedResultIndex */>> evaluate(const String& expression, const String& objectGroup, Optional<bool>&& includeCommandLineAPI, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& saveResult, Optional<bool>&& emulateUserGesture) override;
++    void callFunctionOn(const Inspector::Protocol::Runtime::RemoteObjectId&, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, Optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, Optional<bool>&& returnByValue, Optional<bool>&& generatePreview, Optional<bool>&& emulateUserGesture, Optional<bool>&& awaitPromise, Ref<CallFunctionOnCallback>&&) override;
+ 
      // InspectorInstrumentation
      void frameNavigated(Frame&);
      void didClearWindowObjectInWorld(Frame&, DOMWrapperWorld&);
 +    void didReceiveMainResourceError(Frame&);
  
  private:
-     Inspector::InjectedScript injectedScriptForEval(Inspector::Protocol::ErrorString&, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&);
-@@ -72,7 +73,6 @@ private:
+-    Inspector::InjectedScript injectedScriptForEval(Inspector::Protocol::ErrorString&, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&);
+-    void muteConsole();
+-    void unmuteConsole();
++    Inspector::InjectedScript injectedScriptForEval(Inspector::Protocol::ErrorString&, Optional<Inspector::Protocol::Runtime::ExecutionContextId>&&) override;
++    void muteConsole() override;
++    void unmuteConsole() override;
+     void reportExecutionContextCreation();
+     void notifyContextCreated(const Inspector::Protocol::Network::FrameId&, JSC::JSGlobalObject*, const DOMWrapperWorld&, SecurityOrigin* = nullptr);
  
      std::unique_ptr<Inspector::RuntimeFrontendDispatcher> m_frontendDispatcher;
      RefPtr<Inspector::RuntimeBackendDispatcher> m_backendDispatcher;

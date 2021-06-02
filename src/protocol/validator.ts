@@ -590,13 +590,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     expression: tString,
     isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
-    world: tOptional(tEnum(['main', 'utility'])),
   });
   scheme.FrameEvaluateExpressionHandleParams = tObject({
     expression: tString,
     isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
-    world: tOptional(tEnum(['main', 'utility'])),
   });
   scheme.FrameFillParams = tObject({
     selector: tString,
