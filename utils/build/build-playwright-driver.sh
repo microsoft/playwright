@@ -13,6 +13,10 @@ mkdir -p ./output
 echo "Building playwright package"
 ../../packages/build_package.js playwright ./output/playwright.tgz
 
+echo "Building api.json and protocol.yml"
+node ../../utils/doclint/generateApiJson.js > ./output/api.json
+cp ../../src/protocol/protocol.yml ./output/
+
 function build {
   NODE_DIR=$1
   SUFFIX=$2
@@ -45,6 +49,8 @@ function build {
   fi
 
   cp ./output/${NODE_DIR}/LICENSE ./output/playwright-${SUFFIX}/
+  cp ./output/api.json ./output/playwright-${SUFFIX}/package/
+  cp ./output/protocol.yml ./output/playwright-${SUFFIX}/package/
   cd ./output/playwright-${SUFFIX}/package
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 node "../../${NODE_DIR}/${NPM_PATH}" install --production
   rm package-lock.json
