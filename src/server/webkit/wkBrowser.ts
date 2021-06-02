@@ -213,13 +213,11 @@ export class WKBrowserContext extends BrowserContext {
     assert(!this._wkPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [ super._initialize() ];
-    if (this._browser.options.downloadsPath) {
-      promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
-        behavior: this._options.acceptDownloads ? 'allow' : 'deny',
-        downloadPath: this._browser.options.downloadsPath,
-        browserContextId
-      }));
-    }
+    promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
+      behavior: this._options.acceptDownloads ? 'allow' : 'deny',
+      downloadPath: this._browser.options.downloadsPath,
+      browserContextId
+    }));
     if (this._options.ignoreHTTPSErrors)
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)

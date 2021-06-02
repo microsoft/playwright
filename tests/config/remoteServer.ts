@@ -50,7 +50,7 @@ export class RemoteServer {
       args: browserOptions.args,
       headless: browserOptions.headless,
       channel: browserOptions.channel,
-      traceDir: browserOptions.traceDir,
+      tracesDir: browserOptions.tracesDir,
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,

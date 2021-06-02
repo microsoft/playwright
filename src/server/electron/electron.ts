@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-import * as os from 'os';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import util from 'util';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
@@ -33,6 +36,9 @@ import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { internalCallMetadata, SdkObject } from '../instrumentation';
 import * as channels from '../../protocol/channels';
+
+const mkdtempAsync = util.promisify(fs.mkdtemp);
+const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export class ElectronApplication extends SdkObject {
   static Events = {
@@ -119,6 +125,8 @@ export class Electron extends SdkObject {
           electronArguments.push('--no-sandbox');
       }
 
+      const artifactsDir = await mkdtempAsync(ARTIFACTS_FOLDER);
+  
       const browserLogsCollector = new RecentLogsCollector();
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
         executablePath: options.executablePath || require('electron/index.js'),
@@ -130,7 +138,7 @@ export class Electron extends SdkObject {
         },
         stdio: 'pipe',
         cwd: options.cwd,
-        tempDirectories: [],
+        tempDirectories: [ artifactsDir ],
         attemptToGracefullyClose: () => app!.close(),
         handleSIGINT: true,
         handleSIGTERM: true,
@@ -174,6 +182,9 @@ export class Electron extends SdkObject {
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,
+        artifactsDir,
+        downloadsPath: artifactsDir,
+        tracesDir: artifactsDir,
       };
       const browser = await CRBrowser.connect(chromeTransport, browserOptions);
       app = new ElectronApplication(this, browser, nodeConnection);

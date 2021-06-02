@@ -78,7 +78,7 @@ for (const browserName of browserNames) {
       channel,
       video,
       executablePath,
-      traceDir: process.env.PWTRACE ? path.join(outputDir, 'trace') : undefined,
+      tracesDir: process.env.PWTRACE ? path.join(outputDir, 'trace') : undefined,
       coverageName: browserName,
     },
     define: { test: pageTest, fixtures: pageFixtures },

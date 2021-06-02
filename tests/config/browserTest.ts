@@ -27,7 +27,7 @@ import { baseTest, CommonWorkerFixtures } from './baseTest';
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 type PlaywrightWorkerOptions = {
-  traceDir: LaunchOptions['traceDir'];
+  tracesDir: LaunchOptions['tracesDir'];
   executablePath: LaunchOptions['executablePath'];
   proxy: LaunchOptions['proxy'];
   args: LaunchOptions['args'];
@@ -53,7 +53,7 @@ type PlaywrightTestFixtures = {
 export type PlaywrightOptions = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
 export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, {}, CommonWorkerFixtures> = {
-  traceDir: [ undefined, { scope: 'worker' } ],
+  tracesDir: [ undefined, { scope: 'worker' } ],
   executablePath: [ undefined, { scope: 'worker' } ],
   proxy: [ undefined, { scope: 'worker' } ],
   args: [ undefined, { scope: 'worker' } ],
@@ -63,12 +63,12 @@ export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & Playwrig
     await run(playwright[browserName]);
   }, { scope: 'worker' } ],
 
-  browserOptions: [async ({ headless, channel, executablePath, traceDir, proxy, args }, run) => {
+  browserOptions: [async ({ headless, channel, executablePath, tracesDir, proxy, args }, run) => {
     await run({
       headless,
       channel,
       executablePath,
-      traceDir,
+      tracesDir,
       proxy,
       args,
       handleSIGINT: false,
