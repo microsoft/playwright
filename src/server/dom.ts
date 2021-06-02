@@ -1023,3 +1023,5 @@ export function elementStateTask(selector: SelectorInfo, state: ElementStateWith
     });
   }, { parsed: selector.parsed, state });
 }
+
+export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';

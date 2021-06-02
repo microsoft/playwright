@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { WKSession, isSwappedOutError } from './wkConnection';
+import { WKSession } from './wkConnection';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
@@ -171,7 +171,7 @@ function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObj
 }
 
 function rewriteError(error: Error): Error {
-  if (isSwappedOutError(error) || error.message.includes('Missing injected script for given'))
+  if (js.isContextDestroyedError(error))
     return new Error('Execution context was destroyed, most likely because of a navigation.');
   return error;
 }

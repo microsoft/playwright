@@ -528,7 +528,7 @@ export class FFPage implements PageDelegate {
       executionContextId: (to._delegate as FFExecutionContext)._executionContextId
     });
     if (!result.remoteObject)
-      throw new Error('Unable to adopt element handle from a different document');
+      throw new Error(dom.kUnableToAdoptErrorMessage);
     return to.createHandle(result.remoteObject) as dom.ElementHandle<T>;
   }
 

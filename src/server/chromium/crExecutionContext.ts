@@ -109,7 +109,7 @@ function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
   if (error.message.includes('Object couldn\'t be returned by value'))
     return {result: {type: 'undefined'}};
 
-  if (error.message.endsWith('Cannot find context with specified id') || error.message.endsWith('Inspected target navigated or closed') || error.message.endsWith('Execution context was destroyed.'))
+  if (js.isContextDestroyedError(error) || error.message.endsWith('Inspected target navigated or closed'))
     throw new Error('Execution context was destroyed, most likely because of a navigation.');
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
     rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
