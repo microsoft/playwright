@@ -109,8 +109,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
 
   async connect(params: ConnectOptions): Promise<Browser> {
     const logger = params.logger;
-    const paramsHeaders = params.headers ? params.headers : {};
-    paramsHeaders['User-Agent'] = getUserAgent();
+    const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers);
     return this._wrapApiCall('browserType.connect', async () => {
       const ws = new WebSocket(params.wsEndpoint, [], {
         perMessageDeflate: false,
@@ -226,8 +225,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       throw new Error('Connecting over CDP is only supported in Chromium.');
     const logger = params.logger;
     return this._wrapApiCall('browserType.connectOverCDP', async (channel: channels.BrowserTypeChannel) => {
-      const paramsHeaders = params.headers ? params.headers : {};
-      paramsHeaders['User-Agent'] = getUserAgent();
+      const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers);
       const headers = paramsHeaders ? headersObjectToArray(paramsHeaders) : undefined;
       const result = await channel.connectOverCDP({
         sdkLanguage: 'javascript',
