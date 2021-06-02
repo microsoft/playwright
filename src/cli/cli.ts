@@ -39,8 +39,8 @@ import * as utils from '../utils/utils';
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
-type BrowserChannel = 'chrome-beta';
-const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta']);
+type BrowserChannel = 'chrome-beta'|'chrome';
+const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta', 'chrome']);
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -106,13 +106,13 @@ program
           console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}`);
           process.exit(1);
         }
-        if (browserNames.has('chromium') || browserChannels.has('chrome-beta'))
+        if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome'))
           browserNames.add('ffmpeg');
         if (browserNames.size)
           await installBrowsers([...browserNames]);
         for (const browserChannel of browserChannels) {
-          if (browserChannel === 'chrome-beta')
-            await installChromeBeta();
+          if (browserChannel === 'chrome-beta' || browserChannel === 'chrome')
+            await installChromeChannel(browserChannel);
           else
             throw new Error(`ERROR: no installation instructions for '${browserChannel}' channel.`);
         }
@@ -122,18 +122,25 @@ program
       }
     });
 
-async function installChromeBeta() {
+async function installChromeChannel(channel: string) {
   const platform: string = os.platform();
   const shell: (string|undefined) = {
     'linux': 'bash',
     'darwin': 'bash',
     'win32': 'powershell.exe',
   }[platform];
-  const scriptName: (string|undefined) = {
-    'linux': 'reinstall_chrome_beta_linux.sh',
-    'darwin': 'reinstall_chrome_beta_mac.sh',
-    'win32': 'reinstall_chrome_beta_win.ps1',
-  }[platform];
+  const scriptName: (string|undefined) = ({
+    'chrome-beta': {
+      'linux': 'reinstall_chrome_beta_linux.sh',
+      'darwin': 'reinstall_chrome_beta_mac.sh',
+      'win32': 'reinstall_chrome_beta_win.ps1',
+    },
+    'chrome': {
+      'linux': 'reinstall_chrome_stable_linux.sh',
+      'darwin': 'reinstall_chrome_stable_mac.sh',
+      'win32': 'reinstall_chrome_stable_win.ps1',
+    },
+  }[channel] as any)[platform];
   if (!shell || !scriptName)
     throw new Error(`Cannot install chrome-beta on ${platform}`);
 
