@@ -54,7 +54,7 @@ export function runDriver() {
 }
 
 export async function runServer(port: number | undefined) {
-  const wsEndpoint = await PlaywrightServer.startDefault(port);
+  const wsEndpoint = await PlaywrightServer.startDefault({port});
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
 }
 

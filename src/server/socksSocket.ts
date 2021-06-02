@@ -21,39 +21,31 @@ import { SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
 import { isLocalIpAddress } from '../utils/utils';
 import { SocksProxyServer, SocksConnectionInfo, SocksInterceptedSocketHandler } from './socksServer';
-import { LaunchOptions } from './types';
 
-export class BrowserServerPortForwardingServer extends EventEmitter {
-  enabled: boolean;
+export class PortForwardingServer extends EventEmitter {
   private _forwardPorts: number[] = [];
   private _parent: SdkObject;
   private _server: SocksProxyServer;
-  constructor(parent: SdkObject, enabled: boolean) {
+  constructor(parent: SdkObject) {
     super();
     this.setMaxListeners(0);
-    this.enabled = enabled;
     this._parent = parent;
     this._server = new SocksProxyServer(this._handler.bind(this));
-    if (enabled) {
-      this._server.listen(0);
-      debugLogger.log('proxy', `initialized server on port ${this._port()})`);
-    }
+  }
+
+  static async create(parent: SdkObject) {
+    const server = new PortForwardingServer(parent);
+    await server._server.listen(0);
+    debugLogger.log('proxy', `starting server on port ${server._port()})`);
+    return server;
   }
 
   private _port(): number {
-    if (!this.enabled)
-      return 0;
     return (this._server.server.address() as net.AddressInfo).port;
   }
 
-  public browserLaunchOptions(): LaunchOptions | undefined {
-    if (!this.enabled)
-      return;
-    return {
-      proxy: {
-        server: `socks5://127.0.0.1:${this._port()}`
-      }
-    };
+  public proxyServer() {
+    return `socks5://127.0.0.1:${this._port()}`;
   }
 
   private _handler(info: SocksConnectionInfo, forward: () => void, intercept: (parent: SdkObject) => SocksInterceptedSocketHandler): void {
@@ -67,16 +59,12 @@ export class BrowserServerPortForwardingServer extends EventEmitter {
     this.emit('incomingSocksSocket', socket);
   }
 
-  public enablePortForwarding(ports: number[]): void {
-    if (!this.enabled)
-      throw new Error(`Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.`);
+  public setForwardedPorts(ports: number[]): void {
     debugLogger.log('proxy', `enable port forwarding on ports: ${ports}`);
     this._forwardPorts = ports;
   }
 
   public stop(): void {
-    if (!this.enabled)
-      return;
     debugLogger.log('proxy', 'stopping server');
     this._server.close();
   }

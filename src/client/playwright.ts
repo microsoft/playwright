@@ -65,6 +65,11 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this._channel.on('incomingSocksSocket', ({socket}) => SocksSocket.from(socket));
   }
 
+  async _enablePortForwarding(ports: number[]) {
+    this._forwardPorts = ports;
+    await this._channel.setForwardedPorts({ports});
+  }
+
   _cleanup() {
     this.selectors._removeChannel(this._selectorsOwner);
   }

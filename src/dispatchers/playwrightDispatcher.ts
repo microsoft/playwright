@@ -22,11 +22,11 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 import * as types from '../server/types';
-import { assert } from '../utils/utils';
+import { SocksSocketDispatcher } from './socksSocketDispatcher';
+import { SocksInterceptedSocketHandler } from '../server/socksServer';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
-  private _portForwardingCallback: ((ports: number[]) => void) | undefined;
-  constructor(scope: DispatcherScope, playwright: Playwright, customSelectors?: channels.SelectorsChannel, preLaunchedBrowser?: channels.BrowserChannel, portForwardingCallback?: (ports: number[]) => void) {
+  constructor(scope: DispatcherScope, playwright: Playwright, customSelectors?: channels.SelectorsChannel, preLaunchedBrowser?: channels.BrowserChannel) {
     const descriptors = require('../server/deviceDescriptors') as types.Devices;
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
@@ -40,11 +40,12 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       selectors: customSelectors || new SelectorsDispatcher(scope, playwright.selectors),
       preLaunchedBrowser,
     }, false);
-    this._portForwardingCallback = portForwardingCallback;
+    this._object.on('incomingSocksSocket', (socket: SocksInterceptedSocketHandler) => {
+      this._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(this, socket) });
+    });
   }
 
-  async enablePortForwarding(params: channels.PlaywrightEnablePortForwardingParams): Promise<void> {
-    assert(this._portForwardingCallback, 'Port forwarding is only supported when using connect()');
-    this._portForwardingCallback(params.ports);
+  async setForwardedPorts(params: channels.PlaywrightSetForwardedPortsParams): Promise<void> {
+    this._object._setForwardedPorts(params.ports);
   }
 }

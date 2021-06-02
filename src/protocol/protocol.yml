@@ -368,7 +368,7 @@ Playwright:
 
   commands:
 
-    enablePortForwarding:
+    setForwardedPorts:
       parameters:
         ports:
           type: array

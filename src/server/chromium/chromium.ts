@@ -34,10 +34,6 @@ import { CallMetadata } from '../instrumentation';
 import { findChromiumChannel } from './findChromiumChannel';
 import http from 'http';
 
-type LaunchServerOptions = {
-  _acceptForwardedPorts?: boolean,
-};
-
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
 
@@ -123,7 +119,7 @@ export class Chromium extends BrowserType {
     transport.send(message);
   }
 
-  _defaultArgs(options: types.LaunchOptions & LaunchServerOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
@@ -161,7 +157,7 @@ export class Chromium extends BrowserType {
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
       // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (options._acceptForwardedPorts)
+      if (this._playwrightOptions.loopbackProxyOverride)
         proxyBypassRules.push('<-loopback>');
       if (proxy.bypass)
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));

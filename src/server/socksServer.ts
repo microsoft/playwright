@@ -301,8 +301,8 @@ export class SocksProxyServer {
     this.server = net.createServer(this._handleConnection.bind(this, incomingMessageHandler));
   }
 
-  public listen(port: number, host?: string) {
-    this.server.listen(port, host);
+  public async listen(port: number, host?: string) {
+    await new Promise(resolve => this.server.listen(port, host, resolve));
   }
 
   async _handleConnection(incomingMessageHandler: IncomingProxyRequestHandler, socket: net.Socket) {

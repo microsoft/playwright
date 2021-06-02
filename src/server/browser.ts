@@ -35,6 +35,7 @@ export interface BrowserProcess {
 export type PlaywrightOptions = {
   registry: registry.Registry,
   rootSdkObject: SdkObject,
+  loopbackProxyOverride?: () => string,
 };
 
 export type BrowserOptions = PlaywrightOptions & {

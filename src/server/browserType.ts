@@ -60,7 +60,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
-    options = validateLaunchOptions(options);
+    options = validateLaunchOptions(options, this._playwrightOptions.loopbackProxyOverride?.());
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
@@ -70,7 +70,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
-    options = validateLaunchOptions(options);
+    options = validateLaunchOptions(options, this._playwrightOptions.loopbackProxyOverride?.());
     const controller = new ProgressController(metadata, this);
     const persistent: types.BrowserContextOptions = options;
     controller.setLogName('browser');
@@ -273,12 +273,14 @@ function copyTestHooks(from: object, to: object) {
   }
 }
 
-function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
+function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options, proxyOverride?: string): Options {
   const { devtools = false } = options;
-  let { headless = !devtools, downloadsPath } = options;
+  let { headless = !devtools, downloadsPath, proxy } = options;
   if (debugMode())
     headless = false;
   if (downloadsPath && !path.isAbsolute(downloadsPath))
     downloadsPath = path.join(process.cwd(), downloadsPath);
-  return { ...options, devtools, headless, downloadsPath };
+  if (proxyOverride)
+    proxy = { server: proxyOverride };
+  return { ...options, devtools, headless, downloadsPath, proxy };
 }
