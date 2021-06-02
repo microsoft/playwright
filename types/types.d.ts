@@ -10609,18 +10609,11 @@ export interface Touchscreen {
  * await context.tracing.start({ name: 'trace', screenshots: true, snapshots: true });
  * const page = await context.newPage();
  * await page.goto('https://playwright.dev');
- * await context.tracing.stop();
- * await context.tracing.export('trace.zip');
+ * await context.tracing.stop({ path: 'trace.zip' });
  * ```
  *
  */
 export interface Tracing {
-  /**
-   * Export trace into the file with the given name. Should be called after the tracing has stopped.
-   * @param path File to save the trace into.
-   */
-  export(path: string): Promise<void>;
-
   /**
    * Start tracing.
    *
@@ -10654,8 +10647,14 @@ export interface Tracing {
 
   /**
    * Stop tracing.
+   * @param options
    */
-  stop(): Promise<void>;
+  stop(options?: {
+    /**
+     * Export trace into the file with the given name.
+     */
+    path?: string;
+  }): Promise<void>;
 }
 
 /**

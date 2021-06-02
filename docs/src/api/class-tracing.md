@@ -12,8 +12,7 @@ const context = await browser.newContext();
 await context.tracing.start({ name: 'trace', screenshots: true, snapshots: true });
 const page = await context.newPage();
 await page.goto('https://playwright.dev');
-await context.tracing.stop();
-await context.tracing.export('trace.zip');
+await context.tracing.stop({ path: 'trace.zip' });
 ```
 
 ```java
@@ -25,8 +24,8 @@ context.tracing.start(page, new Tracing.StartOptions()
   .setSnapshots(true);
 Page page = context.newPage();
 page.goto("https://playwright.dev");
-context.tracing.stop();
-context.tracing.export(Paths.get("trace.zip")))
+context.tracing.stop(new Tracing.StopOptions()
+  .setSaveAs(Paths.get("trace.zip")));
 ```
 
 ```python async
@@ -34,8 +33,7 @@ browser = await chromium.launch(traceDir='traces')
 context = await browser.new_context()
 await context.tracing.start(name="trace", screenshots=True, snapshots=True)
 await page.goto("https://playwright.dev")
-await context.tracing.stop()
-await context.tracing.export("trace.zip")
+await context.tracing.stop(save_as = "trace.zip")
 ```
 
 ```python sync
@@ -43,19 +41,8 @@ browser = chromium.launch(traceDir='traces')
 context = browser.new_context()
 context.tracing.start(name="trace", screenshots=True, snapshots=True)
 page.goto("https://playwright.dev")
-context.tracing.stop()
-context.tracing.export("trace.zip")
+context.tracing.stop(save_as = "trace.zip")
 ```
-
-## async method: Tracing.export
-
-Export trace into the file with the given name. Should be called after the
-tracing has stopped.
-
-### param: Tracing.export.path
-- `path` <[path]>
-
-File to save the trace into.
 
 ## async method: Tracing.start
 
@@ -114,3 +101,8 @@ Whether to capture DOM snapshot on every action.
 ## async method: Tracing.stop
 
 Stop tracing.
+
+### option: Tracing.stop.path
+- `path` <[path]>
+
+Export trace into the file with the given name.
