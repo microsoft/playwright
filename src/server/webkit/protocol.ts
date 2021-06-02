@@ -7805,6 +7805,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Whether the expression should be considered to be in a user gesture or not.
        */
       emulateUserGesture?: boolean;
+      /**
+       * Whether to automatically await returned promise.
+       */
+      awaitPromise?: boolean;
     }
     export type callFunctionOnReturnValue = {
       /**
