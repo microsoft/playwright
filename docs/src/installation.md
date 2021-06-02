@@ -154,43 +154,43 @@ resources. In this case, Playwright can be configured to download browsers via a
 
 ```sh js
 # Linux/macOS
-HTTPS_PROXY=https://192.168.1.78 npm i -D playwright
+HTTPS_PROXY=https://192.0.2.1 npm i -D playwright
 
 # Windows with cmd.exe
-set HTTPS_PROXY=https://192.168.1.78
+set HTTPS_PROXY=https://192.0.2.1
 npm i -D playwright
 
 # Windows with PowerShell
-$env:HTTPS_PROXY="https://192.168.1.78"
+$env:HTTPS_PROXY="https://192.0.2.1"
 npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
 pip install playwright
-HTTPS_PROXY=https://192.168.1.78 playwright install
+HTTPS_PROXY=https://192.0.2.1 playwright install
 
 # Windows with cmd.exe
-set HTTPS_PROXY=https://192.168.1.78
+set HTTPS_PROXY=https://192.0.2.1
 pip install playwright
 playwright install
 
 # Windows with PowerShell
-$env:HTTPS_PROXY="https://192.168.1.78"
+$env:HTTPS_PROXY="https://192.0.2.1"
 pip install playwright
 playwright install
 ```
 
 ```sh java
 # Linux/macOS
-HTTPS_PROXY=https://192.168.1.78 mvn test
+HTTPS_PROXY=https://192.0.2.1 mvn test
 
 # Windows with cmd.exe
-set HTTPS_PROXY=https://192.168.1.78
+set HTTPS_PROXY=https://192.0.2.1
 mvn test
 
 # Windows with PowerShell
-$env:HTTPS_PROXY="https://192.168.1.78"
+$env:HTTPS_PROXY="https://192.0.2.1"
 mvn test
 ```
 
@@ -204,43 +204,43 @@ location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
 ```sh js
 # Linux/macOS
-PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npm i -D playwright
 
 # Windows with cmd.exe
-set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
 npm i -D playwright
 
 # Windows with PowerShell
-$env:PLAYWRIGHT_DOWNLOAD_HOST="192.168.1.78"
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
 pip install playwright
-PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 playwright install
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
 
 # Windows with cmd.exe
-set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
 pip install playwright
 playwright install
 
 # Windows with PowerShell
-$env:PLAYWRIGHT_DOWNLOAD_HOST="192.168.1.78"
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 pip install playwright
 playwright install
 ```
 
 ```sh java
 # Linux/macOS
-PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
 
 # Windows with cmd.exe
-set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
 mvn test
 
 # Windows with PowerShell
-$env:PLAYWRIGHT_DOWNLOAD_HOST="192.168.1.78"
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 mvn test
 ```
 
@@ -251,18 +251,18 @@ It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMI
 
 ```sh js
 # Linux/macOS
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npm i -D playwright
 ```
 
 ```sh python
 # Linux/macOS
 pip install playwright
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 python -m playwright install
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 python -m playwright install
 ```
 
 ```sh java
 # Linux/macOS
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 mvn test
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
 ```
 
 ## Skip browser downloads

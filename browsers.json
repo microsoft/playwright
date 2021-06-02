@@ -13,12 +13,12 @@
     },
     {
       "name": "firefox-stable",
-      "revision": "1257",
+      "revision": "1259",
       "installByDefault": false
     },
     {
       "name": "webkit",
-      "revision": "1486",
+      "revision": "1488",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1444"
