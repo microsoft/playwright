@@ -7933,7 +7933,7 @@ export {};
  * Note that since you don't need Playwright to install web browsers when testing Android, you can omit browser download
  * via setting the following environment variable when installing Playwright:
  *
- * ```sh js
+ * ```bash js
  * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *
@@ -9583,7 +9583,7 @@ export interface Download {
  * Note that since you don't need Playwright to install web browsers when testing Electron, you can omit browser download
  * via setting the following environment variable when installing Playwright:
  *
- * ```sh js
+ * ```bash js
  * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *

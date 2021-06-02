@@ -16,17 +16,17 @@ However, test runner will create a new worker when retrying tests, after any tes
 You can control the maximum number of worker processes via [command line](./test-cli.md) or in the [configuration file](./test-configuration.md).
 
 - Run in parallel by default
-  ```sh
+  ```bash
   npx playwright test
   ```
 
 - Disable parallelization
-  ```sh
+  ```bash
   npx playwright test --worker 1
   ```
 
 - Control the number of workers
-  ```sh
+  ```bash
   npx playwright test --worker 4
   ```
 
@@ -56,7 +56,7 @@ Each worker process is assigned a unique sequential index that is accessible thr
 
 Playwright Test can shard a test suite, so that it can be executed on multiple machines. For that,  pass `--shard=x/y` to the command line. For example, to split the suite into three shards, each running one third of the tests:
 
-```sh
+```bash
 npx playwright test --shard=1/3
 npx playwright test --shard=2/3
 npx playwright test --shard=3/3

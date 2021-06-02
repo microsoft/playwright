@@ -21,7 +21,7 @@ Playwright Test Runner was created specifically to accommodate the needs of the 
 
 Playwright already includes a test runner for end-to-end tests.
 
-```sh
+```bash
 npm i -D playwright
 ```
 
@@ -51,25 +51,25 @@ test('basic test', async ({ page }) => {
 
 Now run your tests, assuming that test files are in the `tests` directory.
 
-```sh
+```bash
 npx playwright test -c tests
 ```
 
 Playwright Test just ran a test using Chromium browser, in a headless manner. Let's tell it to use headed browser:
 
-```sh
+```bash
 npx playwright test -c tests --headed
 ```
 
 What about other browsers? Let's run the same test using Firefox:
 
-```sh
+```bash
 npx playwright test -c tests --browser=firefox
 ```
 
 And finally, on all three browsers:
 
-```sh
+```bash
 npx playwright test -c tests --browser=all
 ```
 
@@ -273,47 +273,47 @@ test('my test', async ({ page }) => {
 Here are the most common options available in the [command line](./test-cli.md).
 
 - Run tests in headed browsers
-  ```sh
+  ```bash
   npx playwright test --headed
   ```
 
 - Run tests in a particular browser
-  ```sh
+  ```bash
   npx playwright test --browser=webkit
   ```
 
 - Run tests in all browsers
-  ```sh
+  ```bash
   npx playwright test --browser=all
   ```
 
 - Run a single test file
-  ```sh
+  ```bash
   npx playwright test tests/todo-page.spec.ts
   ```
 
 - Run a set of test files
-  ```sh
+  ```bash
   npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
 - Run a test with specific title
-  ```sh
+  ```bash
   npx playwright test -g "add a todo item"
   ```
 
 - Run tests [in parallel](./test-parallel.md) - that's the default
-  ```sh
+  ```bash
   npx playwright test
   ```
 
 - Disable [parallelization](./test-parallel.md)
-  ```sh
+  ```bash
   npx playwright test --workers=1
   ```
 
 - Choose a [reporter](./test-reporters.md)
-  ```sh
+  ```bash
   npx playwright test --reporter=dot
   ```
 

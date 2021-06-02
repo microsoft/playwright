@@ -3,7 +3,7 @@ id: test-cli
 title: "Advanced: command line"
 ---
 
-```sh
+```bash
 # Ask for help!
 npx playwright test --help
 ```

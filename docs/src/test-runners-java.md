@@ -179,7 +179,7 @@ class Test2 extends TestFixtures {
 Configure JUnit to run tests in each class sequentially and run multiple classes on parallel threads (with max
 number of thread equal to 1/2 of the number of CPU cores):
 
-```sh
+```bash
 junit.jupiter.execution.parallel.enabled = true
 junit.jupiter.execution.parallel.mode.default = same_thread
 junit.jupiter.execution.parallel.mode.classes.default = concurrent

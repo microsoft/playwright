@@ -68,13 +68,13 @@ export default config;
 
 Now run tests as usual, Playwright Test will pick up the configuration file automatically.
 
-```sh
+```bash
 npx playwright test --browser=firefox
 ```
 
 If you put your configuration file in a different place, pass it with `--config` option.
 
-```sh
+```bash
 npx playwright test --config=tests/my.config.js
 ```
 
@@ -276,7 +276,7 @@ export default config;
 
 Playwright Test will run all projects by default.
 
-```sh
+```bash
 $ npx playwright test
 
 Running 3 tests using 3 workers
@@ -288,7 +288,7 @@ Running 3 tests using 3 workers
 
 Use `--project` command line option to run a single project.
 
-```sh
+```bash
 $ npx playwright test --project=webkit
 
 Running 1 test using 1 worker

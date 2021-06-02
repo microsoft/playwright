@@ -105,7 +105,7 @@ Using `PWDEBUG=console` will configure the browser for debugging in Developer to
 [Playwright selectors](./selectors.md). This can be used to verify text or
 composite selectors.
 
-```sh js
+```bash js
 # Linux/macOS
 PWDEBUG=console npm run test
 
@@ -118,7 +118,7 @@ $env:PWDEBUG="console"
 npm run test
 ```
 
-```sh java
+```bash java
 # Linux/macOS
 PWDEBUG=console mvn test
 
@@ -131,7 +131,7 @@ $env:PWDEBUG="console"
 mvn test
 ```
 
-```sh python
+```bash python
 # Linux/macOS
 PWDEBUG=console pytest -s
 
@@ -184,7 +184,7 @@ breakpoints.
 
 Playwright supports verbose logging with the `DEBUG` environment variable.
 
-```sh js
+```bash js
 # Linux/macOS
 DEBUG=pw:api npm run test
 
@@ -197,7 +197,7 @@ $env:DEBUG="pw:api"
 npm run test
 ```
 
-```sh java
+```bash java
 # Linux/macOS
 DEBUG=pw:api mvn test
 
@@ -210,7 +210,7 @@ $env:DEBUG="pw:api"
 mvn test
 ```
 
-```sh python
+```bash python
 # Linux/macOS
 DEBUG=pw:api pytest -s
 
@@ -223,7 +223,7 @@ $env:DEBUG="pw:api"
 pytest -s
 ```
 
-```sh csharp
+```bash csharp
 # Linux/macOS
 DEBUG=pw:api dotnet run
 
