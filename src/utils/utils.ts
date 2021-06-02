@@ -19,6 +19,7 @@ import fs from 'fs';
 import removeFolder from 'rimraf';
 import * as util from 'util';
 import * as crypto from 'crypto';
+import os from 'os';
 import { spawn } from 'child_process';
 
 const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
@@ -202,4 +203,9 @@ const localIpAddresses = [
 
 export function isLocalIpAddress(ipAdress: string): boolean {
   return localIpAddresses.includes(ipAdress);
+}
+
+export function getUserAgent() {
+  const packageJson = require('./../../package.json');
+  return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
 }

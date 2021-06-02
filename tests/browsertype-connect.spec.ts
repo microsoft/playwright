@@ -18,6 +18,7 @@
 import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
+import { getUserAgent } from '../lib/utils/utils';
 
 test.slow(true, 'All connect tests are slow');
 
@@ -83,6 +84,21 @@ test('should send extra headers with connect request', async ({browserType, star
     }).catch(() => {})
   ]);
   expect(request.headers['user-agent']).toBe('Playwright');
+  expect(request.headers['foo']).toBe('bar');
+});
+
+test('should send default User-Agent header with connect request', async ({browserType, startRemoteServer, server}) => {
+  const [request] = await Promise.all([
+    server.waitForWebSocketConnectionRequest(),
+    browserType.connect({
+      wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+      headers: {
+        'foo': 'bar',
+      },
+      timeout: 100,
+    }).catch(() => {})
+  ]);
+  expect(request.headers['user-agent']).toBe(getUserAgent());
   expect(request.headers['foo']).toBe('bar');
 });
 

@@ -18,6 +18,7 @@
 import { contextTest as test, expect } from '../config/browserTest';
 import { playwrightTest } from '../config/browserTest';
 import http from 'http';
+import { getUserAgent } from '../../lib/utils/utils';
 
 test('should create a worker from a service worker', async ({page, server}) => {
   const [worker] = await Promise.all([
@@ -237,6 +238,23 @@ playwrightTest('should send extra headers with connect request', async ({browser
       }).catch(() => {})
     ]);
     expect(request.headers['user-agent']).toBe('Playwright');
+    expect(request.headers['foo']).toBe('bar');
+  }
+});
+
+playwrightTest('should send default User-Agent header with connect request', async ({browserType, browserOptions, server}, testInfo) => {
+  {
+    const [request] = await Promise.all([
+      server.waitForWebSocketConnectionRequest(),
+      browserType.connectOverCDP({
+        wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+        headers: {
+          'foo': 'bar',
+        },
+        timeout: 100,
+      }).catch(() => {})
+    ]);
+    expect(request.headers['user-agent']).toBe(getUserAgent());
     expect(request.headers['foo']).toBe('bar');
   }
 });
