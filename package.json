@@ -15,7 +15,7 @@
     "atest": "folio --config=tests/config/android.config.ts",
     "etest": "folio --config=tests/config/electron.config.ts",
     "test": "folio --config=tests/config/default.config.ts",
-    "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts . || eslint --ext js,ts .",
+    "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts . || eslint --ext ts .",
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",
