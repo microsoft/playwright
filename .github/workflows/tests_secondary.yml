@@ -191,67 +191,6 @@ jobs:
         name: mode-${{ matrix.mode }}-linux-test-results
         path: test-results
 
-  video_linux:
-    name: "Video Linux"
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 12
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
-      env:
-        PWTEST_VIDEO: 1
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: video-${{ matrix.browser }}-linux-test-results
-        path: test-results
-
-  test_android:
-    name: Android Emulator (shard ${{ matrix.shard }})
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2]
-    runs-on: macos-10.15
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 14
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: node lib/cli/cli install-deps
-    - name: Create Android Emulator
-      run: utils/avd_recreate.sh
-    - name: Start Android Emulator
-      run: utils/avd_start.sh
-    - name: Run tests
-      run: npm run atest -- --shard=${{ matrix.shard }}/2
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: android-test-results
-        path: test-results
-
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
     runs-on: ubuntu-20.04
@@ -442,29 +381,6 @@ jobs:
       if: ${{ always() }}
       with:
         name: edge-stable-win-test-results
-        path: test-results
-
-  test_electron:
-    name: "Electron Linux"
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 12
-    - run: npm ci
-    - run: npm run build
-    - run: node lib/cli/cli install-deps chromium
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run etest"
-    - run: node tests/config/checkCoverage.js electron
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: electron-linux-test-results
         path: test-results
 
   chrome_beta_linux:
