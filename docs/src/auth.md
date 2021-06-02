@@ -218,14 +218,14 @@ os.environ["SESSION_STORAGE"] = session_storage
 
 # Set session storage in a new context
 session_storage = os.environ["SESSION_STORAGE"]
-await context.add_init_script(storage => {
+await context.add_init_script("""storage => {
   if (window.location.hostname == 'example.com') {
     entries = JSON.parse(storage)
     Object.keys(entries).forEach(key => {
       window.sessionStorage.setItem(key, entries[key])
     })
   }
-}, session_storage)
+}""", session_storage)
 ```
 
 ```python sync
@@ -236,14 +236,14 @@ os.environ["SESSION_STORAGE"] = session_storage
 
 # Set session storage in a new context
 session_storage = os.environ["SESSION_STORAGE"]
-context.add_init_script(storage => {
+context.add_init_script("""storage => {
   if (window.location.hostname == 'example.com') {
     entries = JSON.parse(storage)
     Object.keys(entries).forEach(key => {
       window.sessionStorage.setItem(key, entries[key])
     })
   }
-}, session_storage)
+}""", session_storage)
 ```
 
 ```csharp
@@ -314,7 +314,7 @@ from playwright.async_api import async_playwright
 async def main():
     async with async_playwright() as p:
         user_data_dir = '/path/to/directory'
-        browser = await p.chromium.launch_persistent_context(userDataDir, headless=False)
+        browser = await p.chromium.launch_persistent_context(user_data_dir, headless=False)
         # Execute login steps manually in the browser window
 
 asyncio.run(main())

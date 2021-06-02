@@ -8,16 +8,16 @@ title: "Getting Started"
 
 ## Installation
 
-Use pip to install Playwright in your Python project. See [system requirements](#system-requirements).
+See [system requirements](#system-requirements).
 
+### Pip
 ```bash
 pip install playwright
 playwright install
 ```
 
-Use conda to install Playwright in your Python project. See [system requirements](#system-requirements).
-
-```sh
+### Conda
+```bash
 conda config --add channels conda-forge
 conda config --add channels microsoft
 conda install playwright
