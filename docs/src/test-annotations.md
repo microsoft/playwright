@@ -5,7 +5,7 @@ title: "Annotations"
 
 Sadly, tests do not always pass. Playwright Test supports test annotations to deal with failures, flakiness and tests that are not yet ready.
 
-```js
+```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('playwright/test');
 
@@ -20,7 +20,7 @@ test('another feature', async ({ page }) => {
 });
 ```
 
-```ts
+```js js-flavor=ts
 // example.spec.ts
 import { test, expect } from 'playwright/test';
 

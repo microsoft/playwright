@@ -9,14 +9,14 @@ Playwright Test will retry tests if they failed. Pass the maximum number of retr
 npx playwright test --retries=3
 ```
 
-```js
+```js js-flavor=js
 // playwright.config.js
 module.exports = {
   retries: 3,
 };
 ```
 
-```ts
+```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from 'playwright/test';
 
