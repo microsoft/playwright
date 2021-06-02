@@ -52,12 +52,14 @@ it('should format number', async ({browser, server}) => {
   }
 });
 
-it('should format date', async ({browser, server}) => {
+it('should format date', async ({browser, server, browserName}) => {
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    const formatted = 'Sat Nov 19 2016 10:12:34 GMT-0800 (Pacific Standard Time)';
+    const formatted = browserName === 'webkit' ?
+      'Sat Nov 19 2016 10:12:34 GMT-0800' :
+      'Sat Nov 19 2016 10:12:34 GMT-0800 (Pacific Standard Time)';
     expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(formatted);
     await context.close();
   }
@@ -65,8 +67,10 @@ it('should format date', async ({browser, server}) => {
     const context = await browser.newContext({ locale: 'de-DE', timezoneId: 'Europe/Berlin' });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(
-        'Sat Nov 19 2016 19:12:34 GMT+0100 (Mitteleuropäische Normalzeit)');
+    const formatted = browserName === 'webkit' ?
+      'Sat Nov 19 2016 19:12:34 GMT+0100' :
+      'Sat Nov 19 2016 19:12:34 GMT+0100 (Mitteleuropäische Normalzeit)';
+    expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(formatted);
     await context.close();
   }
 });
