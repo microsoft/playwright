@@ -38,7 +38,7 @@ test('should collect trace', async ({ context, page, server, browserName }, test
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
 });
 
-test('should collect trace', async ({ context, page, server }, testInfo) => {
+test('should not collect snapshots by default', async ({ context, page, server }, testInfo) => {
   await context.tracing.start();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
