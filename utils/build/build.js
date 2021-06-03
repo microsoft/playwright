@@ -107,7 +107,7 @@ onChanges.push({
     'docs/src/api/',
     'utils/generate_types/overrides.d.ts',
     'utils/generate_types/exported.json',
-    'src/server/chromium/protocol.ts',
+    'src/server/chromium/protocol.d.ts',
     'src/trace/traceTypes.ts',
   ],
   script: 'utils/generate_types/index.js',

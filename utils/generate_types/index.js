@@ -36,7 +36,7 @@ let hadChanges = false;
   const typesDir = path.join(PROJECT_DIR, 'types');
   if (!fs.existsSync(typesDir))
     fs.mkdirSync(typesDir)
-  writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.ts'), 'utf8'));
+  writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
   documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   documentation.filterForLanguage('js');
   documentation.copyDocsFromSuperclasses([]);
