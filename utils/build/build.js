@@ -87,7 +87,7 @@ for (const file of webPackFiles) {
 // Run typescript.
 steps.push({
   command: 'npx',
-  args: ['tsc', ...(watchMode ? ['-w', '--preserveWatchOutput'] : []), '-p', filePath('.')],
+  args: ['babel', ...(watchMode ? ['-W'] : []), '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
   shell: true,
 });
 

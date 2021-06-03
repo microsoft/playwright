@@ -18,7 +18,7 @@
     "ttest": "npm run basetest -- --config=tests/playwright-test/playwright-test.config.ts",
     "test": "npm run basetest -- --config=tests/config/default.config.ts",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts . || eslint --ext ts .",
-    "tsc": "tsc -p .",
+    "tsc": "tsc -p . --noEmit",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ --check-clean && npm run test-types",
@@ -40,6 +40,7 @@
   },
   "DEPS-NOTE": "Any non-test dependency must be added to the build_package.js script as well",
   "dependencies": {
+    "@babel/cli": "^7.14.3",
     "@babel/code-frame": "^7.12.13",
     "@babel/core": "^7.14.0",
     "@babel/plugin-proposal-class-properties": "^7.13.0",

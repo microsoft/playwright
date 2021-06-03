@@ -1,0 +1,17 @@
+{
+  "assumptions": {
+    "setPublicClassFields": true
+  },
+  "presets": [
+    "@babel/preset-typescript"
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-export-namespace-from",
+    "@babel/plugin-proposal-class-properties",
+    ["@babel/plugin-transform-modules-commonjs", {"noInterop": false}]
+  ],
+  "ignore": [
+    "**/*.d.ts",
+    "src/injected/**/*"
+  ]
+}
