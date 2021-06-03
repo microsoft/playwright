@@ -145,7 +145,6 @@ cases).
 :::
 
 ## event: BrowserContext.request
-* langs: js, python, java
 - argument: <[Request]>
 
 Emitted when a request is issued from any pages created through this context.
@@ -156,7 +155,6 @@ In order to intercept and mutate requests, see [`method: BrowserContext.route`]
 or [`method: Page.route`].
 
 ## event: BrowserContext.requestFailed
-* langs: js, python, java
 - argument: <[Request]>
 
 Emitted when a request fails, for example by timing out. To only listen for
@@ -168,7 +166,6 @@ with [`event: BrowserContext.requestFinished`] event and not with [`event: Brows
 :::
 
 ## event: BrowserContext.requestFinished
-* langs: js, python, java
 - argument: <[Request]>
 
 Emitted when a request finishes successfully after downloading the response body. For a successful response, the
@@ -176,7 +173,6 @@ sequence of events is `request`, `response` and `requestfinished`. To listen for
 successful requests from a particular page, use [`event: Page.requestFinished`].
 
 ## event: BrowserContext.response
-* langs: js, python, java
 - argument: <[Response]>
 
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
@@ -1164,7 +1160,6 @@ current working directory. If no path is provided, storage
 state is still returned, but won't be saved to the disk.
 
 ## property: BrowserContext.tracing
-* langs: js, python, java
 - type: <[Tracing]>
 
 ## async method: BrowserContext.unroute

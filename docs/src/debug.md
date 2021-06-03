@@ -16,6 +16,12 @@ for browser automation.
 <img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
 
 
+## Playwright Trace Viewer
+
+[Playwright Trace Viewer](./trace-viewer.md) is a GUI tool that helps troubleshooting test runs in a post-mortem manner.
+
+<img width="1212" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/883973/120585896-6a1bca80-c3e7-11eb-951a-bd84002480f5.png"></img>
+
 ## Run in headed mode
 
 Playwright runs browsers in headless mode by default. To change this behavior,

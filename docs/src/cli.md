@@ -3,7 +3,7 @@ id: cli
 title: "Command Line Interface"
 ---
 
-Playwright comes with the command line tools that run via `npx` or as a part of the `npm` scripts.
+Playwright comes with the command line tools.
 
 <!-- TOC -->
 
@@ -18,6 +18,13 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI
 ```
 
 ```bash python
+playwright
+```
+
+```bash csharp
+# Install the CLI once.
+dotnet add package Microsoft.Playwright.CLI
+# Use the tools.
 playwright
 ```
 
@@ -41,6 +48,10 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="code
 ```
 
 ```bash python
+playwright codegen wikipedia.org
+```
+
+```bash csharp
 playwright codegen wikipedia.org
 ```
 
@@ -70,6 +81,12 @@ playwright codegen --save-storage=auth.json
 # auth.json will contain the storage state.
 ```
 
+```bash csharp
+playwright codegen --save-storage=auth.json
+# Perform authentication and exit.
+# auth.json will contain the storage state.
+```
+
 Run with `--load-storage` to consume previously loaded storage. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state.
 
 ```bash js
@@ -86,6 +103,12 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="code
 ```
 
 ```bash python
+playwright open --load-storage=auth.json my.web.app
+playwright codegen --load-storage=auth.json my.web.app
+# Perform actions in authenticated state.
+```
+
+```bash csharp
 playwright open --load-storage=auth.json my.web.app
 playwright codegen --load-storage=auth.json my.web.app
 # Perform actions in authenticated state.
@@ -211,6 +234,11 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open
 playwright open example.com
 ```
 
+```bash csharp
+# Open page in Chromium
+playwright open example.com
+```
+
 ```bash js
 # Open page in WebKit
 npx playwright wk example.com
@@ -222,6 +250,11 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="wk e
 ```
 
 ```bash python
+# Open page in WebKit
+playwright wk example.com
+```
+
+```bash csharp
 # Open page in WebKit
 playwright wk example.com
 ```
@@ -244,32 +277,54 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='open
 playwright open --device="iPhone 11" wikipedia.org
 ```
 
+```bash csharp
+# Emulate iPhone 11.
+playwright open --device="iPhone 11" wikipedia.org
+```
+
 ### Emulate color scheme and viewport size
+
 ```bash js
 # Emulate screen size and color scheme.
 npx playwright open --viewport-size=800,600 --color-scheme=dark twitter.com
 ```
+
 ```bash java
 # Emulate screen size and color scheme.
 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --viewport-size=800,600 --color-scheme=dark twitter.com"
 ```
+
 ```bash python
 # Emulate screen size and color scheme.
 playwright open --viewport-size=800,600 --color-scheme=dark twitter.com
 ```
 
+```bash csharp
+# Emulate screen size and color scheme.
+playwright open --viewport-size=800,600 --color-scheme=dark twitter.com
+```
+
 ### Emulate geolocation, language and timezone
+
 ```bash js
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
 npx playwright open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```
+
 ```bash java
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com'
 ```
+
 ```bash python
+# Emulate timezone, language & location
+# Once page opens, click the "my location" button to see geolocation in action
+playwright open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+```
+
+```bash csharp
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
 playwright open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
@@ -358,6 +413,15 @@ playwright screenshot \
     twitter.com twitter-iphone.png
 ```
 
+```bash csharp
+# Wait 3 seconds before capturing a screenshot after page loads ('load' event fires)
+playwright screenshot \
+    --device="iPhone 11" \
+    --color-scheme=dark \
+    --wait-for-timeout=3000 \
+    twitter.com twitter-iphone.png
+```
+
 ```bash js
 # Capture a full page screenshot
 npx playwright screenshot --full-page en.wikipedia.org wiki-full.png
@@ -369,6 +433,11 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='scre
 ```
 
 ```bash python
+# Capture a full page screenshot
+playwright screenshot --full-page en.wikipedia.org wiki-full.png
+```
+
+```bash csharp
 # Capture a full page screenshot
 playwright screenshot --full-page en.wikipedia.org wiki-full.png
 ```
@@ -392,6 +461,11 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="pdf 
 playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 ```
 
+```bash csharp
+# See command help
+playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
+```
+
 ## Install system dependencies
 
 Ubuntu 18.04 and Ubuntu 20.04 system dependencies can get installed automatically. This is useful for CI environments.
@@ -411,6 +485,11 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="inst
 playwright install-deps
 ```
 
+```bash csharp
+# See command help
+playwright install-deps
+```
+
 You can also install the dependencies for a single browser only by passing it as an argument:
 
 ```bash js
@@ -422,6 +501,10 @@ mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="inst
 ```
 
 ```bash python
+playwright install-deps chromium
+```
+
+```bash csharp
 playwright install-deps chromium
 ```
 
