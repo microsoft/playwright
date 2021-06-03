@@ -74,7 +74,7 @@
     "colors": "^1.4.0",
     "commonmark": "^0.29.1",
     "cross-env": "^7.0.2",
-    "css-loader": "^4.3.0",
+    "css-loader": "^5.2.6",
     "electron": "^11.1.1",
     "eslint": "^7.7.0",
     "eslint-plugin-notice": "^0.9.10",
