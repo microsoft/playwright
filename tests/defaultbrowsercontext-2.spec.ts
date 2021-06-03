@@ -46,9 +46,7 @@ it('should support reducedMotion option', async ({launchPersistent}) => {
 
 it('should support timezoneId option', async ({launchPersistent, browserName}) => {
   const {page} = await launchPersistent({locale: 'en-US', timezoneId: 'America/Jamaica'});
-  expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(browserName === 'webkit' ?
-    'Sat Nov 19 2016 13:12:34 GMT-0500' :
-    'Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
+  expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
 });
 
 it('should support locale option', async ({launchPersistent}) => {
