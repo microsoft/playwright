@@ -48,23 +48,23 @@ export class Tracing implements InstrumentationListener {
   private _resourcesDir: string;
   private _sha1s: string[] = [];
   private _started = false;
-  private _traceDir: string | undefined;
+  private _tracesDir: string | undefined;
 
   constructor(context: BrowserContext) {
     this._context = context;
-    this._traceDir = context._browser.options.traceDir;
-    this._resourcesDir = path.join(this._traceDir || '', 'resources');
+    this._tracesDir = context._browser.options.tracesDir;
+    this._resourcesDir = path.join(this._tracesDir, 'resources');
     this._snapshotter = new TraceSnapshotter(this._context, this._resourcesDir, traceEvent => this._appendTraceEvent(traceEvent));
   }
 
   async start(options: TracerOptions): Promise<void> {
     // context + page must be the first events added, this method can't have awaits before them.
-    if (!this._traceDir)
+    if (!this._tracesDir)
       throw new Error('Tracing directory is not specified when launching the browser');
     if (this._started)
       throw new Error('Tracing has already been started');
     this._started = true;
-    this._traceFile = path.join(this._traceDir, (options.name || createGuid()) + '.trace');
+    this._traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
 
     this._appendEventChain = mkdirIfNeeded(this._traceFile);
     const event: trace.ContextCreatedTraceEvent = {
@@ -91,6 +91,7 @@ export class Tracing implements InstrumentationListener {
     if (!this._started)
       return;
     this._started = false;
+    await this._snapshotter.stop();
     this._context.instrumentation.removeListener(this);
     helper.removeEventListeners(this._eventListeners);
     for (const { sdkObject, metadata } of this._pendingCalls.values())

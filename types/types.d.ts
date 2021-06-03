@@ -7235,7 +7235,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * If specified, traces are saved into this directory.
      */
-    traceDir?: string;
+    tracesDir?: string;
 
     /**
      * Specific user agent to use in this context.
@@ -7424,7 +7424,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * If specified, traces are saved into this directory.
      */
-    traceDir?: string;
+    tracesDir?: string;
   }): Promise<BrowserServer>;
 
   /**
@@ -10604,9 +10604,9 @@ export interface Touchscreen {
  * Start with specifying the folder traces will be stored in:
  *
  * ```js
- * const browser = await chromium.launch({ traceDir: 'traces' });
+ * const browser = await chromium.launch();
  * const context = await browser.newContext();
- * await context.tracing.start({ name: 'trace', screenshots: true, snapshots: true });
+ * await context.tracing.start({ screenshots: true, snapshots: true });
  * const page = await context.newPage();
  * await page.goto('https://playwright.dev');
  * await context.tracing.stop({ path: 'trace.zip' });
@@ -10618,19 +10618,18 @@ export interface Tracing {
    * Start tracing.
    *
    * ```js
-   * await context.tracing.start({ name: 'trace', screenshots: true, snapshots: true });
+   * await context.tracing.start({ screenshots: true, snapshots: true });
    * const page = await context.newPage();
    * await page.goto('https://playwright.dev');
-   * await context.tracing.stop();
-   * await context.tracing.export('trace.zip');
+   * await context.tracing.stop({ path: 'trace.zip' });
    * ```
    *
    * @param options
    */
   start(options?: {
     /**
-     * If specified, the trace is going to be saved into the file with the given name inside the `traceDir` folder specified in
-     * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browsertypelaunchoptions).
+     * If specified, the trace is going to be saved into the file with the given name inside the `tracesDir` folder specified
+     * in [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browsertypelaunchoptions).
      */
     name?: string;
 
@@ -11343,7 +11342,7 @@ export interface LaunchOptions {
   /**
    * If specified, traces are saved into this directory.
    */
-  traceDir?: string;
+  tracesDir?: string;
 }
 
 export interface ConnectOverCDPOptions {

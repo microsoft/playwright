@@ -249,7 +249,7 @@ LaunchOptions:
         username: string?
         password: string?
     downloadsPath: string?
-    traceDir: string?
+    tracesDir: string?
     chromiumSandbox: boolean?
 
 

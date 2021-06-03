@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
+import util from 'util';
 import { CRBrowser } from './crBrowser';
 import { Env } from '../processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
@@ -25,7 +28,7 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { debugMode, headersArrayToObject } from '../../utils/utils';
+import { debugMode, headersArrayToObject, removeFolders } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
@@ -33,6 +36,9 @@ import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
 import { findChromiumChannel } from './findChromiumChannel';
 import http from 'http';
+
+const mkdtempAsync = util.promisify(fs.mkdtemp);
+const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -58,12 +64,17 @@ export class Chromium extends BrowserType {
       let headersMap: { [key: string]: string; } | undefined;
       if (options.headers)
         headersMap = headersArrayToObject(options.headers, false);
+
+      const artifactsDir = await mkdtempAsync(ARTIFACTS_FOLDER);
+  
       const chromeTransport = await WebSocketTransport.connect(progress, await urlToWSEndpoint(endpointURL), headersMap);
       const browserProcess: BrowserProcess = {
         close: async () => {
+          await removeFolders([ artifactsDir ]);
           await chromeTransport.closeAndWait();
         },
         kill: async () => {
+          await removeFolders([ artifactsDir ]);
           await chromeTransport.closeAndWait();
         }
       };
@@ -76,6 +87,9 @@ export class Chromium extends BrowserType {
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,
+        artifactsDir,
+        downloadsPath: artifactsDir,
+        tracesDir: artifactsDir
       };
       return await CRBrowser.connect(chromeTransport, browserOptions);
     }, TimeoutSettings.timeout({timeout}));

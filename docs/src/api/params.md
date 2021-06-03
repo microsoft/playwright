@@ -675,9 +675,9 @@ Logger sink for Playwright logging.
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
-## browser-option-tracedir
+## browser-option-tracesdir
 * langs: js, python, java
-- `traceDir` <[path]>
+- `tracesDir` <[path]>
 
 If specified, traces are saved into this directory.
 
@@ -708,4 +708,4 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 - %%-browser-option-ignoredefaultargs-%%
 - %%-browser-option-proxy-%%
 - %%-browser-option-timeout-%%
-- %%-browser-option-tracedir-%%
+- %%-browser-option-tracesdir-%%

@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
-import removeFolder from 'rimraf';
 import jpeg from 'jpeg-js';
-
-const traceDir = path.join(__dirname, '..', 'test-results', 'trace-' + process.env.FOLIO_WORKER_INDEX);
-test.use({ traceDir });
-
-test.beforeEach(async ({ browserName, headless }) => {
-  test.fixme(browserName === 'chromium' && !headless, 'Chromium screencast on headed has a min width issue');
-  await new Promise(f => removeFolder(traceDir, f));
-});
 
 test('should collect trace', async ({ context, page, server, browserName }, testInfo) => {
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });

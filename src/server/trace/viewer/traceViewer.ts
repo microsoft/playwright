@@ -33,9 +33,9 @@ export class TraceViewer {
   private _server: HttpServer;
   private _browserName: string;
 
-  constructor(traceDir: string, browserName: string) {
+  constructor(tracesDir: string, browserName: string) {
     this._browserName = browserName;
-    const resourcesDir = path.join(traceDir, 'resources');
+    const resourcesDir = path.join(tracesDir, 'resources');
 
     // Served by TraceServer
     // - "/tracemodel" - json with trace model.
@@ -51,9 +51,9 @@ export class TraceViewer {
     // - "/snapshot/pageId/..." - actual snapshot html.
     // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
     //   and translates them into "/resources/<resourceId>".
-    const actionTraces = fs.readdirSync(traceDir).filter(name => name.endsWith('.trace'));
+    const actionTraces = fs.readdirSync(tracesDir).filter(name => name.endsWith('.trace'));
     const debugNames = actionTraces.map(name => {
-      const tracePrefix = path.join(traceDir, name.substring(0, name.indexOf('.trace')));
+      const tracePrefix = path.join(tracesDir, name.substring(0, name.indexOf('.trace')));
       return path.basename(tracePrefix);
     });
 
@@ -71,7 +71,7 @@ export class TraceViewer {
 
     const traceModelHandler: ServerRouteHandler = (request, response) => {
       const debugName = request.url!.substring('/context/'.length);
-      const tracePrefix = path.join(traceDir, debugName);
+      const tracePrefix = path.join(tracesDir, debugName);
       snapshotStorage.clear();
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
