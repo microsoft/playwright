@@ -36,20 +36,22 @@ const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => f
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export abstract class BrowserType extends SdkObject {
-  private _name: registry.BrowserName;
+  private _name: 'chromium'|'firefox'|'webkit';
+  private _binaryName: registry.BrowserName;
   readonly _registry: registry.Registry;
   readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(browserName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
+  constructor(name: 'chromium'|'firefox'|'webkit', binaryName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
     super(playwrightOptions.rootSdkObject, 'browser-type');
     this.attribution.browserType = this;
     this._playwrightOptions = playwrightOptions;
-    this._name = browserName;
+    this._name = name;
+    this._binaryName = binaryName;
     this._registry = playwrightOptions.registry;
   }
 
   executablePath(channel?: string): string {
-    return this._registry.executablePath(this._name) || '';
+    return this._registry.executablePath(this._binaryName) || '';
   }
 
   name(): string {

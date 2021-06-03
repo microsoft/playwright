@@ -28,7 +28,7 @@ import { assert } from '../../utils/utils';
 
 export class WebKit extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
-    super('webkit', playwrightOptions);
+    super('webkit', 'webkit', playwrightOptions);
   }
 
   executablePath(channel?: string): string {
