@@ -29,14 +29,14 @@ import * as types from '../types';
 
 export class Firefox extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
-    super('firefox', playwrightOptions);
+    super('firefox', 'firefox-stable', playwrightOptions);
   }
 
   executablePath(channel?: string): string {
     if (channel) {
       let executablePath = undefined;
-      if ((channel as any) === 'firefox-stable')
-        executablePath = this._registry.executablePath('firefox-stable');
+      if ((channel as any) === 'firefox-beta')
+        executablePath = this._registry.executablePath('firefox');
       assert(executablePath, `unsupported firefox channel "${channel}"`);
       assert(fs.existsSync(executablePath), `"${channel}" channel is not installed. Try running 'npx playwright install ${channel}'`);
       return executablePath;
