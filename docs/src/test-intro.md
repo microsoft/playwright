@@ -317,6 +317,20 @@ Here are the most common options available in the [command line](./test-cli.md).
   npx playwright test --reporter=dot
   ```
 
+- Run in debug mode with [Playwright Inspector](./inspector.md)
+  ```bash
+  # Linux/macOS
+  PWDEBUG=1 npx playwright test
+
+  # Windows with cmd.exe
+  set PWDEBUG=1
+  npx playwright test
+
+  # Windows with PowerShell
+  $env:PWDEBUG=1
+  npx playwright test
+  ```
+
 ## Create a configuration file
 
 So far, we've looked at the zero-config operation of Playwright Test. For a real world application, it is likely that you would want to use a config.
