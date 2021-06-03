@@ -1,0 +1,30 @@
+name: CodeQL Analysis
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        id: checkout_repo
+        uses: actions/checkout@v2
+
+      - name: Initialize CodeQL
+        id: init_codeql
+        uses: github/codeql-action/init@v1
+        with:
+          languages: javascript
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        id: analyze_codeql
+        uses: github/codeql-action/analyze@v1
+
+# Built with ❤ by [Pipeline Foundation](https://pipeline.foundation)
