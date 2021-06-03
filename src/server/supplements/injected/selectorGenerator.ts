@@ -245,7 +245,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
     const parent = element.parentNode as (Element | ShadowRoot);
 
     // Combine class names until unique.
-    const classes = Array.from(element.classList);
+    const classes = [...element.classList];
     for (let i = 0; i < classes.length; ++i) {
       const token = '.' + classes.slice(0, i + 1).join('.');
       const selector = uniqueCSSSelector(token);
@@ -261,7 +261,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
 
     // Ordinal is the weakest signal.
     if (parent) {
-      const siblings = Array.from(parent.children);
+      const siblings = [...parent.children];
       const sameTagSiblings = siblings.filter(sibling => (sibling).nodeName.toLowerCase() === nodeName);
       const token = sameTagSiblings.indexOf(element) === 0 ? nodeName : `${nodeName}:nth-child(${1 + siblings.indexOf(element)})`;
       const selector = uniqueCSSSelector(token);
