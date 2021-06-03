@@ -1654,40 +1654,23 @@ index 638612413466efc87b737e8a81042ed07ca12703..6f9e518ff0bfa2a6228675d25b6b785f
          },
          {
 diff --git a/Source/JavaScriptCore/runtime/DateConversion.cpp b/Source/JavaScriptCore/runtime/DateConversion.cpp
-index 2decf8a83c80e80ca8677f4c787bf79c6c2995fa..ff28030fe3227af688d9cc0e405d12a4a387e107 100644
+index 2decf8a83c80e80ca8677f4c787bf79c6c2995fa..9010384a32f7c2ab69a8fb20eb19cd566fd9f434 100644
 --- a/Source/JavaScriptCore/runtime/DateConversion.cpp
 +++ b/Source/JavaScriptCore/runtime/DateConversion.cpp
-@@ -97,18 +97,24 @@ String formatDateTime(const GregorianDateTime& t, DateTimeFormat format, bool as
+@@ -97,6 +97,9 @@ String formatDateTime(const GregorianDateTime& t, DateTimeFormat format, bool as
              appendNumber<2>(builder, offset / 60);
              appendNumber<2>(builder, offset % 60);
  
--#if OS(WINDOWS)
--            TIME_ZONE_INFORMATION timeZoneInformation;
--            GetTimeZoneInformation(&timeZoneInformation);
--            const WCHAR* winTimeZoneName = t.isDST() ? timeZoneInformation.DaylightName : timeZoneInformation.StandardName;
--            String timeZoneName(winTimeZoneName);
-+            String timeZoneName;
 +            if (!WTF::timeZoneDisplayNameForAutomation().isEmpty()) {
-+                timeZoneName = WTF::timeZoneDisplayNameForAutomation();
++                builder.append(" (", WTF::timeZoneDisplayNameForAutomation(), ')');
 +            } else {
-+ #if OS(WINDOWS)
-+                TIME_ZONE_INFORMATION timeZoneInformation;
-+                GetTimeZoneInformation(&timeZoneInformation);
-+                const WCHAR* winTimeZoneName = t.isDST() ? timeZoneInformation.DaylightName : timeZoneInformation.StandardName;
-+                timeZoneName = String(winTimeZoneName);
- #else
--            struct tm gtm = t;
--            char timeZoneName[70];
--            strftime(timeZoneName, sizeof(timeZoneName), "%Z", &gtm);
-+                struct tm gtm = t;
-+                char tzName[70];
-+                strftime(tzName, sizeof(tzName), "%Z", &gtm);
-+                timeZoneName = String(tzName);
+ #if OS(WINDOWS)
+             TIME_ZONE_INFORMATION timeZoneInformation;
+             GetTimeZoneInformation(&timeZoneInformation);
+@@ -109,6 +112,7 @@ String formatDateTime(const GregorianDateTime& t, DateTimeFormat format, bool as
  #endif
--            if (timeZoneName[0])
--                builder.append(" (", timeZoneName, ')');
-+                if (!timeZoneName.isEmpty())
-+                    builder.append(" (", timeZoneName, ')');
+             if (timeZoneName[0])
+                 builder.append(" (", timeZoneName, ')');
 +            }
          }
      }
@@ -14160,7 +14143,7 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..6e510ec9b7625a3298e71ad24a33ad018cc55eb0
+index 0000000000000000000000000000000000000000..a99ca36604fadf1514e7c5211251e57e525a2eee
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 @@ -0,0 +1,921 @@
@@ -14740,14 +14723,14 @@ index 0000000000000000000000000000000000000000..6e510ec9b7625a3298e71ad24a33ad01
 +                return;
 +            auto origins = JSON::ArrayOf<Inspector::Protocol::Playwright::OriginStorage>::create();
 +            for (const auto& originData : data) {
-+                auto items = JSON::ArrayOf<Protocol::Playwright::NameValue>::create();
++                auto items = JSON::ArrayOf<Inspector::Protocol::Playwright::NameValue>::create();
 +                for (const auto& entry : originData.second) {
-+                    items->addItem(Protocol::Playwright::NameValue::create()
++                    items->addItem(Inspector::Protocol::Playwright::NameValue::create()
 +                        .setName(entry.key)
 +                        .setValue(entry.value)
 +                        .release());
 +                }
-+                origins->addItem(Protocol::Playwright::OriginStorage::create()
++                origins->addItem(Inspector::Protocol::Playwright::OriginStorage::create()
 +                    .setOrigin(originData.first.toString())
 +                    .setItems(WTFMove(items))
 +                    .release());
