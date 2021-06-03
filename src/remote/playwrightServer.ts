@@ -33,7 +33,6 @@ export interface PlaywrightServerDelegate {
 }
 
 export type PlaywrightServerOptions = {
-  port?: number;
   acceptForwardedPorts?: boolean
 };
 
@@ -42,7 +41,7 @@ export class PlaywrightServer {
   private _clientsCount = 0;
   private _delegate: PlaywrightServerDelegate;
 
-  static async startDefault({port = 0, acceptForwardedPorts }: PlaywrightServerOptions): Promise<string> {
+  static async startDefault({ acceptForwardedPorts }: PlaywrightServerOptions = {}): Promise<PlaywrightServer> {
     const cleanup = async () => {
       await gracefullyCloseAll().catch(e => {});
       serverSelectors.unregisterAll();
@@ -62,8 +61,7 @@ export class PlaywrightServer {
         };
       },
     };
-    const server = new PlaywrightServer(delegate);
-    return server.listen(port);
+    return new PlaywrightServer(delegate);
   }
 
   constructor(delegate: PlaywrightServerDelegate) {

@@ -74,7 +74,7 @@ class ServiceMode {
       });
     });
     this._serviceProcess.on('exit', this._onExit);
-    this._client = await PlaywrightClient.connect(`ws://localhost:${port}/ws`);
+    this._client = await PlaywrightClient.connect({wsEndpoint: `ws://localhost:${port}/ws`});
     this._playwrightObejct = this._client.playwright();
     return this._playwrightObejct;
   }
