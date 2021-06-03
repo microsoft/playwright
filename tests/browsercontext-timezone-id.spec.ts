@@ -22,33 +22,25 @@ it('should work', async ({ browser, browserName }) => {
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Jamaica' });
     const page = await context.newPage();
-    expect(await page.evaluate(func)).toBe(browserName === 'webkit' ?
-      'Sat Nov 19 2016 13:12:34 GMT-0500' :
-      'Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
+    expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
     await context.close();
   }
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'Pacific/Honolulu' });
     const page = await context.newPage();
-    expect(await page.evaluate(func)).toBe(browserName === 'webkit' ?
-      'Sat Nov 19 2016 08:12:34 GMT-1000' :
-      'Sat Nov 19 2016 08:12:34 GMT-1000 (Hawaii-Aleutian Standard Time)');
+    expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 08:12:34 GMT-1000 (Hawaii-Aleutian Standard Time)');
     await context.close();
   }
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Buenos_Aires' });
     const page = await context.newPage();
-    expect(await page.evaluate(func)).toBe(browserName === 'webkit' ?
-      'Sat Nov 19 2016 15:12:34 GMT-0300' :
-      'Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
+    expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
     await context.close();
   }
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'Europe/Berlin' });
     const page = await context.newPage();
-    expect(await page.evaluate(func)).toBe(browserName === 'webkit' ?
-      'Sat Nov 19 2016 19:12:34 GMT+0100' :
-      'Sat Nov 19 2016 19:12:34 GMT+0100 (Central European Standard Time)');
+    expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 19:12:34 GMT+0100 (Central European Standard Time)');
     await context.close();
   }
 });
