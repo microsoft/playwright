@@ -111,7 +111,7 @@ function checkException(exceptionDetails?: Protocol.Runtime.ExceptionDetails) {
 function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {
   if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))
     return {result: {type: 'undefined', value: undefined}};
-  if (error.message.includes('Failed to find execution context with id') || error.message.includes('Execution context was destroyed!'))
+  if (js.isContextDestroyedError(error))
     throw new Error('Execution context was destroyed, most likely because of a navigation.');
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
     rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');

@@ -185,7 +185,3 @@ export function createProtocolError(error: Error, method: string, protocolError:
     message += ` ${JSON.stringify(protocolError.data)}`;
   return rewriteErrorMessage(error, message);
 }
-
-export function isSwappedOutError(e: Error) {
-  return e.message.includes('Target was swapped out.');
-}

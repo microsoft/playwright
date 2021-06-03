@@ -1130,7 +1130,7 @@ class FrameSession {
       executionContextId: (to._delegate as CRExecutionContext)._contextId,
     });
     if (!result || result.object.subtype === 'null')
-      throw new Error('Unable to adopt element handle from a different document');
+      throw new Error(dom.kUnableToAdoptErrorMessage);
     return to.createHandle(result.object).asElement()!;
   }
 }

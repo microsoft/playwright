@@ -26,7 +26,7 @@ import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
 import { helper, RegisteredListener } from '../helper';
-import { JSHandle } from '../javascript';
+import { JSHandle, kSwappedOutErrorMessage } from '../javascript';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate } from '../page';
 import { Progress } from '../progress';
@@ -213,7 +213,7 @@ export class WKPage implements PageDelegate {
     assert(this._provisionalPage);
     assert(this._provisionalPage._session.sessionId === newTargetId, 'Unknown new target: ' + newTargetId);
     assert(this._session.sessionId === oldTargetId, 'Unknown old target: ' + oldTargetId);
-    this._session.errorText = 'Target was swapped out.';
+    this._session.errorText = kSwappedOutErrorMessage;
     const newSession = this._provisionalPage._session;
     this._provisionalPage.commit();
     this._provisionalPage.dispose();
@@ -896,7 +896,7 @@ export class WKPage implements PageDelegate {
       executionContextId: (to._delegate as WKExecutionContext)._contextId
     });
     if (!result || result.object.subtype === 'null')
-      throw new Error('Unable to adopt element handle from a different document');
+      throw new Error(dom.kUnableToAdoptErrorMessage);
     return to.createHandle(result.object) as dom.ElementHandle<T>;
   }
 
