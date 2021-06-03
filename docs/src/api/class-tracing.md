@@ -1,5 +1,4 @@
 # class: Tracing
-* langs: js, python, java
 
 API for collecting and saving Playwright traces. Playwright traces can be opened using the Playwright CLI after
 Playwright script runs.
@@ -18,7 +17,7 @@ await context.tracing.stop({ path: 'trace.zip' });
 ```java
 Browser browser = chromium.launch();
 BrowserContext context = browser.newContext();
-context.tracing.start(page, new Tracing.StartOptions()
+context.tracing.start(new Tracing.StartOptions()
   .setScreenshots(true)
   .setSnapshots(true);
 Page page = context.newPage();
@@ -43,6 +42,22 @@ page.goto("https://playwright.dev")
 context.tracing.stop(path = "trace.zip")
 ```
 
+```csharp
+await using var browser = playwright.Chromium.LaunchAsync();
+await using var context = await browser.NewContextAsync();
+await context.Tracing.StartAsync(new TracingStartOptions
+{
+  Screenshots: true,
+  Snapshots: true
+});
+var page = context.NewPageAsync();
+await page.GotoAsync("https://playwright.dev");
+await context.Tracing.StopAsync(new TracingStopOptions
+{
+  Path: "trace.zip"
+});
+```
+
 ## async method: Tracing.start
 
 Start tracing.
@@ -55,7 +70,7 @@ await context.tracing.stop({ path: 'trace.zip' });
 ```
 
 ```java
-context.tracing.start(page, new Tracing.StartOptions()
+context.tracing.start(new Tracing.StartOptions()
   .setScreenshots(true)
   .setSnapshots(true);
 Page page = context.newPage();
@@ -76,6 +91,22 @@ context.tracing.start(name="trace", screenshots=True, snapshots=True)
 page.goto("https://playwright.dev")
 context.tracing.stop()
 context.tracing.stop(path = "trace.zip")
+```
+
+```csharp
+await using var browser = playwright.Chromium.LaunchAsync();
+await using var context = await browser.NewContextAsync();
+await context.Tracing.StartAsync(new TracingStartOptions
+{
+  Screenshots: true,
+  Snapshots: true
+});
+var page = context.NewPageAsync();
+await page.GotoAsync("https://playwright.dev");
+await context.Tracing.StopAsync(new TracingStopOptions
+{
+  Path: "trace.zip"
+});
 ```
 
 ### option: Tracing.start.name

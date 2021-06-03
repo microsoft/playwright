@@ -993,6 +993,12 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
+### option: Page.emulateMedia.reducedMotion
+* langs: csharp
+- `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference"|"null">>
+
+Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
+
 ## async method: Page.evalOnSelector
 * langs:
   - alias-python: eval_on_selector

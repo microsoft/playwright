@@ -367,7 +367,6 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 [`method: Page.emulateMedia`] for more details. Defaults to `'light'`.
 
 ## context-option-reducedMotion
-* langs: js, python, java
 - `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Defaults
@@ -676,7 +675,6 @@ Maximum time in milliseconds to wait for the browser instance to start. Defaults
 disable timeout.
 
 ## browser-option-tracesdir
-* langs: js, python, java
 - `tracesDir` <[path]>
 
 If specified, traces are saved into this directory.

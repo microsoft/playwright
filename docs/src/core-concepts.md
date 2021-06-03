@@ -117,7 +117,7 @@ context = browser.new_context()
 ```
 
 ```csharp
-await using var browser  = playwright.Chromium.LaunchAsync();
+await using var browser = playwright.Chromium.LaunchAsync();
 var context = await browser.NewContextAsync();
 ```
 
