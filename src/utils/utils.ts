@@ -17,12 +17,9 @@
 import path from 'path';
 import fs from 'fs';
 import removeFolder from 'rimraf';
-import * as util from 'util';
 import * as crypto from 'crypto';
 import os from 'os';
 import { spawn } from 'child_process';
-
-const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
 export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
   const process = spawn(cmd, args, options);
@@ -134,7 +131,7 @@ export function getAsBooleanFromENV(name: string): boolean {
 
 export async function mkdirIfNeeded(filePath: string) {
   // This will harmlessly throw on windows if the dirname is the root directory.
-  await mkdirAsync(path.dirname(filePath), {recursive: true}).catch(() => {});
+  await fs.promises.mkdir(path.dirname(filePath), {recursive: true}).catch(() => {});
 }
 
 type HeadersArray = { name: string, value: string }[];

@@ -16,18 +16,12 @@
 
 import fs from 'fs';
 import path from 'path';
-import util from 'util';
 import lockfile from 'proper-lockfile';
 import {Registry, allBrowserNames, isBrowserDirectory, BrowserName, registryDirectory} from '../utils/registry';
 import * as browserFetcher from './browserFetcher';
 import { getAsBooleanFromENV, calculateSha1, removeFolders } from '../utils/utils';
 
-const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
-const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
-const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
-const fsExistsAsync = (filePath: string) => fsReadFileAsync(filePath).then(() => true).catch(e => false);
-const fsUnlinkAsync = util.promisify(fs.unlink.bind(fs));
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
+const fsExistsAsync = (filePath: string) => fs.promises.readFile(filePath).then(() => true).catch(e => false);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
@@ -38,7 +32,7 @@ export async function installBrowsersWithProgressBar(browserNames: BrowserName[]
     return false;
   }
 
-  await fsMkdirAsync(registryDirectory, { recursive: true });
+  await fs.promises.mkdir(registryDirectory, { recursive: true });
   const lockfilePath = path.join(registryDirectory, '__dirlock');
   const releaseLock = await lockfile.lock(registryDirectory, {
     retries: {
@@ -56,8 +50,8 @@ export async function installBrowsersWithProgressBar(browserNames: BrowserName[]
   const linksDir = path.join(registryDirectory, '.links');
 
   try {
-    await fsMkdirAsync(linksDir,  { recursive: true });
-    await fsWriteFileAsync(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
+    await fs.promises.mkdir(linksDir,  { recursive: true });
+    await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
     await validateCache(linksDir, browserNames);
   } finally {
     await releaseLock();
@@ -67,11 +61,11 @@ export async function installBrowsersWithProgressBar(browserNames: BrowserName[]
 async function validateCache(linksDir: string, browserNames: BrowserName[]) {
   // 1. Collect used downloads and package descriptors.
   const usedBrowserPaths: Set<string> = new Set();
-  for (const fileName of await fsReaddirAsync(linksDir)) {
+  for (const fileName of await fs.promises.readdir(linksDir)) {
     const linkPath = path.join(linksDir, fileName);
     let linkTarget = '';
     try {
-      linkTarget = (await fsReadFileAsync(linkPath)).toString();
+      linkTarget = (await fs.promises.readFile(linkPath)).toString();
       const linkRegistry = new Registry(linkTarget);
       for (const browserName of allBrowserNames) {
         if (!linkRegistry.isSupportedBrowser(browserName))
@@ -88,13 +82,13 @@ async function validateCache(linksDir: string, browserNames: BrowserName[]) {
           usedBrowserPaths.add(usedBrowserPath);
       }
     } catch (e) {
-      await fsUnlinkAsync(linkPath).catch(e => {});
+      await fs.promises.unlink(linkPath).catch(e => {});
     }
   }
 
   // 2. Delete all unused browsers.
   if (!getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC')) {
-    let downloadedBrowsers = (await fsReaddirAsync(registryDirectory)).map(file => path.join(registryDirectory, file));
+    let downloadedBrowsers = (await fs.promises.readdir(registryDirectory)).map(file => path.join(registryDirectory, file));
     downloadedBrowsers = downloadedBrowsers.filter(file => isBrowserDirectory(file));
     const directories = new Set<string>(downloadedBrowsers);
     for (const browserDirectory of usedBrowserPaths)
@@ -110,7 +104,7 @@ async function validateCache(linksDir: string, browserNames: BrowserName[]) {
     await browserFetcher.downloadBrowserWithProgressBar(myRegistry, browserName).catch(e => {
       throw new Error(`Failed to download ${browserName}, caused by\n${e.stack}`);
     });
-    await fsWriteFileAsync(markerFilePath(myRegistry.browserDirectory(browserName)), '');
+    await fs.promises.writeFile(markerFilePath(myRegistry.browserDirectory(browserName)), '');
   }
 }
 

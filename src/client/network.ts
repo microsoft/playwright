@@ -21,7 +21,6 @@ import { Frame } from './frame';
 import { Headers, WaitForEventOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
-import * as util from 'util';
 import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';
 import { Events } from './events';
 import { Page } from './page';
@@ -196,7 +195,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
       let isBase64 = false;
       let length = 0;
       if (options.path) {
-        const buffer = await util.promisify(fs.readFile)(options.path);
+        const buffer = await fs.promises.readFile(options.path);
         body = buffer.toString('base64');
         isBase64 = true;
         length = buffer.length;

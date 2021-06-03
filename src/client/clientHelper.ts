@@ -17,7 +17,6 @@
 
 import * as types from './types';
 import fs from 'fs';
-import * as util from 'util';
 import { isString, isRegExp } from '../utils/utils';
 
 const deprecatedHits = new Set();
@@ -50,7 +49,7 @@ export async function evaluationScript(fun: Function | string | { path?: string,
   if (fun.content !== undefined)
     return fun.content;
   if (fun.path !== undefined) {
-    let source = await util.promisify(fs.readFile)(fun.path, 'utf8');
+    let source = await fs.promises.readFile(fun.path, 'utf8');
     if (addSourceUrl)
       source += '//# sourceURL=' + fun.path.replace(/\n/g, '');
     return source;

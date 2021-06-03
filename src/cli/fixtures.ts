@@ -15,7 +15,6 @@
  */
 
 import * as fs from 'fs';
-import * as util from 'util';
 import * as folio from 'folio';
 import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
 import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
@@ -139,7 +138,7 @@ export const test = folio.test.extend<PlaywrightTestArgs & PlaywrightTestOptions
         if (!video)
           return;
         const videoPath = await video.path();
-        await util.promisify(fs.unlink)(videoPath).catch(e => {});
+        await fs.promises.unlink(videoPath).catch(e => {});
       }));
     }
   },

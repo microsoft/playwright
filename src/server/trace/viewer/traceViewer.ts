@@ -17,7 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 import { createPlaywright } from '../../playwright';
-import * as util from 'util';
 import { PersistentSnapshotStorage, TraceModel } from './traceModel';
 import { TraceEvent } from '../common/traceEvents';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
@@ -26,8 +25,6 @@ import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { isUnderTest } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
-
-const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export class TraceViewer {
   private _server: HttpServer;
@@ -76,7 +73,7 @@ export class TraceViewer {
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
       (async () => {
-        const traceContent = await fsReadFileAsync(tracePrefix + '.trace', 'utf8');
+        const traceContent = await fs.promises.readFile(tracePrefix + '.trace', 'utf8');
         const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
         const model = new TraceModel(snapshotStorage);
         model.appendEvents(events, snapshotStorage);

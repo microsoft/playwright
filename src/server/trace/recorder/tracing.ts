@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import util from 'util';
 import yazl from 'yazl';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
@@ -27,10 +26,6 @@ import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrume
 import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
 import { TraceSnapshotter } from './traceSnapshotter';
-
-const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
 export type TracerOptions = {
   name?: string;
@@ -80,7 +75,7 @@ export class Tracing implements InstrumentationListener {
     );
 
     // context + page must be the first events added, no awaits above this line.
-    await fsMkdirAsync(this._resourcesDir, { recursive: true });
+    await fs.promises.mkdir(this._resourcesDir, { recursive: true });
 
     this._context.instrumentation.addListener(this);
     if (options.snapshots)
@@ -179,7 +174,7 @@ export class Tracing implements InstrumentationListener {
           };
           this._appendTraceEvent(event);
           this._appendEventChain = this._appendEventChain.then(async () => {
-            await fsWriteFileAsync(path.join(this._resourcesDir!, sha1), params.buffer).catch(() => {});
+            await fs.promises.writeFile(path.join(this._resourcesDir!, sha1), params.buffer).catch(() => {});
           });
         }),
     );
@@ -207,7 +202,7 @@ export class Tracing implements InstrumentationListener {
 
     // Serialize all writes to the trace file.
     this._appendEventChain = this._appendEventChain.then(async () => {
-      await fsAppendFileAsync(this._traceFile!, JSON.stringify(event) + '\n');
+      await fs.promises.appendFile(this._traceFile!, JSON.stringify(event) + '\n');
     });
   }
 }

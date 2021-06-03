@@ -22,7 +22,6 @@ import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './e
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import fs from 'fs';
 import * as network from './network';
-import * as util from 'util';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
@@ -31,8 +30,6 @@ import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayloa
 import { urlMatches } from './clientHelper';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
-
-const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -275,7 +272,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     return this._wrapApiCall(this._apiName('addScriptTag'), async (channel: channels.FrameChannel) => {
       const copy = { ...options };
       if (copy.path) {
-        copy.content = (await fsReadFileAsync(copy.path)).toString();
+        copy.content = (await fs.promises.readFile(copy.path)).toString();
         copy.content += '//# sourceURL=' + copy.path.replace(/\n/g, '');
       }
       return ElementHandle.from((await channel.addScriptTag({ ...copy })).element);
@@ -286,7 +283,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     return this._wrapApiCall(this._apiName('addStyleTag'), async (channel: channels.FrameChannel) => {
       const copy = { ...options };
       if (copy.path) {
-        copy.content = (await fsReadFileAsync(copy.path)).toString();
+        copy.content = (await fs.promises.readFile(copy.path)).toString();
         copy.content += '/*# sourceURL=' + copy.path.replace(/\n/g, '') + '*/';
       }
       return ElementHandle.from((await channel.addStyleTag({ ...copy })).element);

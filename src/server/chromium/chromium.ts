@@ -18,7 +18,6 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import util from 'util';
 import { CRBrowser } from './crBrowser';
 import { Env } from '../processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
@@ -37,7 +36,6 @@ import { CallMetadata } from '../instrumentation';
 import { findChromiumChannel } from './findChromiumChannel';
 import http from 'http';
 
-const mkdtempAsync = util.promisify(fs.mkdtemp);
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export class Chromium extends BrowserType {
@@ -65,7 +63,7 @@ export class Chromium extends BrowserType {
       if (options.headers)
         headersMap = headersArrayToObject(options.headers, false);
 
-      const artifactsDir = await mkdtempAsync(ARTIFACTS_FOLDER);
+      const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
   
       const chromeTransport = await WebSocketTransport.connect(progress, await urlToWSEndpoint(endpointURL), headersMap);
       const browserProcess: BrowserProcess = {

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import fs from 'fs';
-import * as util from 'util';
 import path from 'path';
 import * as os from 'os';
 import { getUbuntuVersion } from '../utils/ubuntuVersion';
@@ -22,10 +21,7 @@ import * as registry from '../utils/registry';
 import * as utils from '../utils/utils';
 import { printDepsWindowsExecutable } from '../utils/binaryPaths';
 
-const accessAsync = util.promisify(fs.access.bind(fs));
-const checkExecutable = (filePath: string) => accessAsync(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
-const statAsync = util.promisify(fs.stat.bind(fs));
-const readdirAsync = util.promisify(fs.readdir.bind(fs));
+const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
 
 export async function validateHostRequirements(registry: registry.Registry, browserName: registry.BrowserName) {
   if (utils.getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
@@ -195,8 +191,8 @@ function isSharedLib(basename: string) {
 }
 
 async function executablesOrSharedLibraries(directoryPath: string): Promise<string[]> {
-  const allPaths = (await readdirAsync(directoryPath)).map(file => path.resolve(directoryPath, file));
-  const allStats = await Promise.all(allPaths.map(aPath => statAsync(aPath)));
+  const allPaths = (await fs.promises.readdir(directoryPath)).map(file => path.resolve(directoryPath, file));
+  const allStats = await Promise.all(allPaths.map(aPath => fs.promises.stat(aPath)));
   const filePaths = allPaths.filter((aPath, index) => (allStats[index] as any).isFile());
 
   const executablersOrLibraries = (await Promise.all(filePaths.map(async filePath => {
