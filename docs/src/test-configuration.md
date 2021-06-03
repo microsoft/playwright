@@ -47,7 +47,7 @@ module.exports = {
 ```
 
 ```js js-flavor=ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
     // Browser options
@@ -84,7 +84,7 @@ With `test.use()` you can override some options for a file or a `test.describe` 
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 // Run tests in this file with portrait-like viewport.
 test.use({ viewport: { width: 600, height: 900 } });
@@ -96,7 +96,7 @@ test('my portrait test', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 // Run tests in this file with portrait-like viewport.
 test.use({ viewport: { width: 600, height: 900 } });
@@ -110,7 +110,7 @@ The same works inside describe.
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test.describe('headed block', () => {
   // Run tests in this describe block in headed mode.
@@ -124,7 +124,7 @@ test.describe('headed block', () => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('headed block', () => {
   // Run tests in this describe block in headed mode.
@@ -178,7 +178,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   // Look for test files in the "tests" directory, relative to this configuration file
@@ -242,7 +242,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   // Put any shared options on the top level.
@@ -343,7 +343,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from 'playwright';
 
 const config: PlaywrightTestConfig = {
@@ -376,7 +376,7 @@ You don't have to configure anything to mock network requests. Just define a cus
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test.beforeEach(async ({ context }) => {
   // Block any css requests for each test in this file.
@@ -391,7 +391,7 @@ test('loads page without css', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ context }) => {
   // Block any css requests for each test in this file.
@@ -408,7 +408,7 @@ Alternatively, you can use [`method: Page.route`] to mock network in a single te
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test('loads page without images', async ({ page }) => {
   // Block png and jpeg images.
@@ -421,7 +421,7 @@ test('loads page without images', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('loads page without images', async ({ page }) => {
   // Block png and jpeg images.

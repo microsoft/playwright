@@ -25,7 +25,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: 'line',
@@ -48,7 +48,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: !process.env.CI
@@ -81,7 +81,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: 'list',
@@ -123,7 +123,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: 'line',
@@ -162,7 +162,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: 'dot',
@@ -196,7 +196,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: { name: 'json', outputFile: 'results.json' },
@@ -223,7 +223,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: { name: 'junit', outputFile: 'results.xml' },

@@ -30,7 +30,7 @@ npm i -D playwright
 Create `tests/foo.spec.js` (or `tests/foo.spec.ts` for TypeScript) to define your test.
 
 ```js js-flavor=js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
@@ -40,7 +40,7 @@ test('basic test', async ({ page }) => {
 ```
 
 ```js js-flavor=ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
@@ -140,7 +140,7 @@ test('skip this test', async ({ page, browserName }) => {
 
 You can group tests to give them a logical name or to scope before/after hooks to the group.
 ```js js-flavor=js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test.describe('two tests', () => {
   test('one', async ({ page }) => {
@@ -154,7 +154,7 @@ test.describe('two tests', () => {
 ```
 
 ```js js-flavor=ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('two tests', () => {
   test('one', async ({ page }) => {
@@ -174,7 +174,7 @@ And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear 
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test.describe('feature foo', () => {
   test.beforeEach(async ({ page }) => {
@@ -191,7 +191,7 @@ test.describe('feature foo', () => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('feature foo', () => {
   test.beforeEach(async ({ page }) => {
@@ -220,7 +220,7 @@ Combine `expect` with various Playwright methods to create expectations for your
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test('my test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
@@ -245,7 +245,7 @@ test('my test', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('my test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
@@ -353,7 +353,7 @@ module.exports = {
 ```
 
 ```js js-flavor=ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   // Each test is given 30 seconds.

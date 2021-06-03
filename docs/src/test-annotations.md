@@ -7,7 +7,7 @@ Sadly, tests do not always pass. Playwright Test supports test annotations to de
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test('some feature', async ({ page, browserName }) => {
   test.skip(browserName !== 'webkit', 'This feature is iOS-only');
@@ -22,7 +22,7 @@ test('another feature', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('some feature', async ({ page, browserName }) => {
   test.skip(browserName !== 'webkit', 'This feature is iOS-only');

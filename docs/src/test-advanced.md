@@ -58,7 +58,7 @@ Consider an example where we run a new http server per worker process, and use `
 
 ```js js-flavor=js
 // my-test.js
-const base = require('playwright/test');
+const base = require('@playwright/test');
 const http = require('http');
 
 // Note how we mark the fixture as { scope: 'worker' }.
@@ -81,7 +81,7 @@ exports.test = base.test.extend<{}, { server: http.Server }>({
 
 ```js js-flavor=ts
 // my-test.ts
-import { test as base } from 'playwright/test';
+import { test as base } from '@playwright/test';
 import * as http from 'http';
 
 // Note how we mark the fixture as { scope: 'worker' }.
@@ -132,7 +132,7 @@ The following information is accessible after the test body has finished, in fix
 Here is an example test that saves some information:
 ```js js-flavor=js
 // example.spec.js
-const { test } = require('playwright/test');
+const { test } = require('@playwright/test');
 
 test('my test needs a file', async ({ table }, testInfo) => {
   // Do something with the table...
@@ -144,7 +144,7 @@ test('my test needs a file', async ({ table }, testInfo) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test } from 'playwright/test';
+import { test } from '@playwright/test';
 
 test('my test needs a file', async ({ table }, testInfo) => {
   // Do something with the table...
@@ -159,7 +159,7 @@ Here is an example fixture that automatically saves debug logs when the test fai
 // my-test.js
 const debug = require('debug');
 const fs = require('fs');
-const base = require('playwright/test');
+const base = require('@playwright/test');
 
 // Note how we mark the fixture as { auto: true }.
 // This way it is always instantiated, even if the test does not use it explicitly.
@@ -181,7 +181,7 @@ exports.test = base.test.extend<{ saveLogs: void }>({
 // my-test.ts
 import * as debug from 'debug';
 import * as fs from 'fs';
-import { test as base } from 'playwright/test';
+import { test as base } from '@playwright/test';
 
 // Note how we mark the fixture as { auto: true }.
 // This way it is always instantiated, even if the test does not use it explicitly.
@@ -254,7 +254,7 @@ module.export = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   globalSetup: 'global-setup.ts',
@@ -270,7 +270,7 @@ To make use of this feature, we will declare an "option fixture" for the backend
 
 ```js js-flavor=js
 // my-test.js
-const base = require('playwright/test');
+const base = require('@playwright/test');
 const { startBackend } = require('./my-backend');
 
 exports.test = base.test.extend<{ version: string, backendUrl: string }>({
@@ -288,7 +288,7 @@ exports.test = base.test.extend<{ version: string, backendUrl: string }>({
 
 ```js js-flavor=ts
 // my-test.ts
-import { test as base } from 'playwright/test';
+import { test as base } from '@playwright/test';
 import { startBackend } from './my-backend';
 
 export const test = base.extend<{ version: string, backendUrl: string }>({
@@ -359,7 +359,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   timeout: 20000,
@@ -395,7 +395,7 @@ Playwright Test uses [`expect` library](https://jestjs.io/docs/expect) under the
 In this example we add a custom `toBeWithinRange` function in the configuration file.
 ```js js-flavor=js
 // playwright.config.js
-const { expect } = require('playwright/test');
+const { expect } = require('@playwright/test');
 
 expect.extend({
   toBeWithinRange(received: number, floor: number, ceiling: number) {
@@ -419,7 +419,7 @@ module.exports = {};
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { expect, PlaywrightTestConfig } from 'playwright/test';
+import { expect, PlaywrightTestConfig } from '@playwright/test';
 
 expect.extend({
   toBeWithinRange(received: number, floor: number, ceiling: number) {
@@ -445,7 +445,7 @@ export default config;
 Now we can use `toBeWithinRange` in the test.
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test('numeric ranges', () => {
   expect(100).toBeWithinRange(90, 110);
@@ -455,7 +455,7 @@ test('numeric ranges', () => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('numeric ranges', () => {
   expect(100).toBeWithinRange(90, 110);

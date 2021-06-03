@@ -7,7 +7,7 @@ Playwright Test includes the ability to produce and visually compare screenshots
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
@@ -17,7 +17,7 @@ test('example test', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
@@ -35,7 +35,7 @@ Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) libr
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
@@ -45,7 +45,7 @@ test('example test', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
@@ -59,7 +59,7 @@ Here we compare text content against the reference.
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
@@ -69,7 +69,7 @@ test('example test', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
