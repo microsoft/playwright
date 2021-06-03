@@ -124,7 +124,7 @@ export class InjectedScript {
         }
         set = newSet;
       }
-      let result = Array.from(set) as Element[];
+      let result = [...set] as Element[];
       if (partsToCheckOne.length) {
         const partial = { parts: partsToCheckOne };
         result = result.filter(e => !!this._querySelectorRecursively(e, partial, 0));
@@ -448,7 +448,7 @@ export class InjectedScript {
     if (element.nodeName.toLowerCase() !== 'select')
       return 'error:notselect';
     const select = element as HTMLSelectElement;
-    const options = Array.from(select.options);
+    const options = [...select.options];
     const selectedOptions = [];
     let remainingOptionsToSelect = optionsToSelect.slice();
     for (let index = 0; index < options.length; index++) {
