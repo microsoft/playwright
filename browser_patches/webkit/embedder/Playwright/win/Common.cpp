@@ -34,7 +34,6 @@
 #include "PlaywrightReplace.h"
 #include <dbghelp.h>
 #include <shlobj.h>
-#include <wtf/Optional.h>
 #include <wtf/StdLibExtras.h>
 #include <vector>
 
@@ -122,7 +121,7 @@ void createCrashReport(EXCEPTION_POINTERS* exceptionPointers)
     }
 }
 
-Optional<Credential> askCredential(HWND hwnd, const std::wstring& realm)
+std::optional<Credential> askCredential(HWND hwnd, const std::wstring& realm)
 {
     struct AuthDialog : public Dialog {
         std::wstring realm;
@@ -146,7 +145,7 @@ Optional<Credential> askCredential(HWND hwnd, const std::wstring& realm)
 
     if (dialog.run(hInst, hwnd, IDD_AUTH))
         return dialog.credential;
-    return WTF::nullopt;
+    return std::nullopt;
 }
 
 bool askServerTrustEvaluation(HWND hwnd, const std::wstring& text)
