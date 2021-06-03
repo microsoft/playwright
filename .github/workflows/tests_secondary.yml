@@ -38,9 +38,7 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -144,9 +142,7 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run test -- --project=${{ matrix.browser }}"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       if: ${{ always() }}
       env:
         HEADFUL: 1
@@ -175,9 +171,7 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_MODE: ${{ matrix.mode }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -202,9 +196,7 @@ jobs:
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
     - run: node lib/cli/cli install chrome
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -279,9 +271,7 @@ jobs:
     - run: npm run build
     - run: node lib/cli/cli install-deps firefox
     - run: node lib/cli/cli install firefox-stable chromium
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ftest"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
         PWTEST_CHANNEL: firefox-stable
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -380,9 +370,7 @@ jobs:
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
     - run: node lib/cli/cli install chrome-beta
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run ctest"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -454,9 +442,7 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "npm run etest"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run etest
     - run: node tests/config/checkCoverage.js electron
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
