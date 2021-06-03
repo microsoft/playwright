@@ -20,11 +20,8 @@ import { removeFolders } from '../../lib/utils/utils';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import * as util from 'util';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 import { baseTest, CommonWorkerFixtures } from './baseTest';
-
-const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 type PlaywrightWorkerOptions = {
   tracesDir: LaunchOptions['tracesDir'];
@@ -94,7 +91,7 @@ export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & Playwrig
     // - Firefox removes lock file later, presumably from another watchdog process?
     // - WebKit has circular symlinks that makes CI go crazy.
     await run(async () => {
-      const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+      const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-'));
       dirs.push(dir);
       return dir;
     });

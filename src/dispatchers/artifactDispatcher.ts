@@ -18,7 +18,6 @@ import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
 import fs from 'fs';
-import * as util from 'util';
 import { mkdirIfNeeded } from '../utils/utils';
 import { Artifact } from '../server/artifact';
 
@@ -43,7 +42,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactIn
         }
         try {
           await mkdirIfNeeded(params.path);
-          await util.promisify(fs.copyFile)(localPath, params.path);
+          await fs.promises.copyFile(localPath, params.path);
           resolve();
         } catch (e) {
           reject(e);

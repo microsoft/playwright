@@ -40,16 +40,12 @@ import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 import fs from 'fs';
 import path from 'path';
-import * as util from 'util';
 import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';
-
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-const mkdirAsync = util.promisify(fs.mkdir);
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -481,7 +477,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
       const buffer = Buffer.from(result.binary, 'base64');
       if (options.path) {
         await mkdirIfNeeded(options.path);
-        await fsWriteFileAsync(options.path, buffer);
+        await fs.promises.writeFile(options.path, buffer);
       }
       return buffer;
     });
@@ -666,8 +662,8 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
       const result = await channel.pdf(transportOptions);
       const buffer = Buffer.from(result.pdf, 'base64');
       if (options.path) {
-        await mkdirAsync(path.dirname(options.path), { recursive: true });
-        await fsWriteFileAsync(options.path, buffer);
+        await fs.promises.mkdir(path.dirname(options.path), { recursive: true });
+        await fs.promises.writeFile(options.path, buffer);
       }
       return buffer;
     });

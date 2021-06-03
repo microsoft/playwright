@@ -18,7 +18,6 @@
 import { Page, BindingCall } from './page';
 import * as network from './network';
 import * as channels from '../protocol/channels';
-import * as util from 'util';
 import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
 import { deprecate, evaluationScript, urlMatches } from './clientHelper';
@@ -34,9 +33,6 @@ import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
 import { Tracing } from './tracing';
-
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
-const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -289,7 +285,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       const state = await channel.storageState();
       if (options.path) {
         await mkdirIfNeeded(options.path);
-        await fsWriteFileAsync(options.path, JSON.stringify(state, undefined, 2), 'utf8');
+        await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
       }
       return state;
     });
@@ -353,7 +349,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-    storageState: typeof options.storageState === 'string' ? JSON.parse(await fsReadFileAsync(options.storageState, 'utf8')) : options.storageState,
+    storageState: typeof options.storageState === 'string' ? JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) : options.storageState,
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {

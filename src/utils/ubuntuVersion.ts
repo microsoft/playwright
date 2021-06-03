@@ -17,16 +17,13 @@
 
 import fs from 'fs';
 import * as os from 'os';
-import * as util from 'util';
-
-const readFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export async function getUbuntuVersion(): Promise<string> {
   if (os.platform() !== 'linux')
     return '';
-  let osReleaseText = await readFileAsync('/etc/upstream-release/lsb-release', 'utf8').catch(e => '');
+  let osReleaseText = await fs.promises.readFile('/etc/upstream-release/lsb-release', 'utf8').catch(e => '');
   if (!osReleaseText)
-    osReleaseText = await readFileAsync('/etc/os-release', 'utf8').catch(e => '');
+    osReleaseText = await fs.promises.readFile('/etc/os-release', 'utf8').catch(e => '');
   if (!osReleaseText)
     return '';
   return getUbuntuVersionInternal(osReleaseText);

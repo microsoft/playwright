@@ -22,7 +22,6 @@ import path from 'path';
 import ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
-import * as util from 'util';
 import { BrowserName, Registry, hostPlatform } from '../utils/registry';
 import { debugLogger } from '../utils/debugLogger';
 
@@ -35,8 +34,6 @@ import { debugLogger } from '../utils/debugLogger';
 // without types.
 const ProxyAgent = require('https-proxy-agent');
 
-const unlinkAsync = util.promisify(fs.unlink.bind(fs));
-const chmodAsync = util.promisify(fs.chmod.bind(fs));
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
 export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
@@ -96,14 +93,14 @@ export async function downloadBrowserWithProgressBar(registry: Registry, browser
     await extract(zipPath, { dir: browserDirectory});
     const executablePath = registry.executablePath(browserName)!;
     debugLogger.log('install', `fixing permissions at ${executablePath}`);
-    await chmodAsync(executablePath, 0o755);
+    await fs.promises.chmod(executablePath, 0o755);
   } catch (e) {
     debugLogger.log('install', `FAILED installation ${progressBarName} with error: ${e}`);
     process.exitCode = 1;
     throw e;
   } finally {
     if (await existsAsync(zipPath))
-      await unlinkAsync(zipPath);
+      await fs.promises.unlink(zipPath);
   }
   logPolitely(`${progressBarName} downloaded to ${browserDirectory}`);
   return true;

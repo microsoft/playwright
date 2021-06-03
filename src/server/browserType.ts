@@ -17,7 +17,6 @@
 import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
-import * as util from 'util';
 import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import * as registry from '../utils/registry';
 import { ConnectionTransport, WebSocketTransport } from './transport';
@@ -33,8 +32,6 @@ import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
 
-const mkdirAsync = util.promisify(fs.mkdir);
-const mkdtempAsync = util.promisify(fs.mkdtemp);
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -143,15 +140,15 @@ export abstract class BrowserType extends SdkObject {
 
     const tempDirectories = [];
     if (options.downloadsPath)
-      await mkdirAsync(options.downloadsPath, { recursive: true });
+      await fs.promises.mkdir(options.downloadsPath, { recursive: true });
     if (options.tracesDir)
-      await mkdirAsync(options.tracesDir, { recursive: true });
+      await fs.promises.mkdir(options.tracesDir, { recursive: true });
 
-    const artifactsDir = await mkdtempAsync(ARTIFACTS_FOLDER);
+    const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
     tempDirectories.push(artifactsDir);  
 
     if (!userDataDir) {
-      userDataDir = await mkdtempAsync(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
+      userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
       tempDirectories.push(userDataDir);
     }
 

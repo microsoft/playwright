@@ -17,7 +17,6 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import util from 'util';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
@@ -37,7 +36,6 @@ import { RecentLogsCollector } from '../../utils/debugLogger';
 import { internalCallMetadata, SdkObject } from '../instrumentation';
 import * as channels from '../../protocol/channels';
 
-const mkdtempAsync = util.promisify(fs.mkdtemp);
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export class ElectronApplication extends SdkObject {
@@ -125,7 +123,7 @@ export class Electron extends SdkObject {
           electronArguments.push('--no-sandbox');
       }
 
-      const artifactsDir = await mkdtempAsync(ARTIFACTS_FOLDER);
+      const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
   
       const browserLogsCollector = new RecentLogsCollector();
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({

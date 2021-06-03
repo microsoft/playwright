@@ -15,14 +15,11 @@
  */
 
 import fs from 'fs';
-import * as util from 'util';
 import { BrowserContext } from '../../browserContext';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
 import * as har from './har';
-
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 type HarOptions = {
   path: string;
@@ -233,7 +230,7 @@ export class HarTracer {
       else
         pageEntry.pageTimings.onLoad = -1;
     }
-    await fsWriteFileAsync(this._options.path, JSON.stringify({ log: this._log }, undefined, 2));
+    await fs.promises.writeFile(this._options.path, JSON.stringify({ log: this._log }, undefined, 2));
   }
 }
 

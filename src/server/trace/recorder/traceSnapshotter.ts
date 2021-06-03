@@ -17,15 +17,12 @@
 import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
-import util from 'util';
 import { BrowserContext } from '../../browserContext';
 import { Page } from '../../page';
 import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
 import { ElementHandle } from '../../dom';
 import { TraceEvent } from '../common/traceEvents';
-
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegate {
   private _snapshotter: Snapshotter;
@@ -64,7 +61,7 @@ export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegat
 
   onBlob(blob: SnapshotterBlob): void {
     this._writeArtifactChain = this._writeArtifactChain.then(async () => {
-      await fsWriteFileAsync(path.join(this._resourcesDir, blob.sha1), blob.buffer).catch(() => {});
+      await fs.promises.writeFile(path.join(this._resourcesDir, blob.sha1), blob.buffer).catch(() => {});
     });
   }
 

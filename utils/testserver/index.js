@@ -26,7 +26,6 @@ const WebSocketServer = require('ws').Server;
 const fulfillSymbol = Symbol('fullfil callback');
 const rejectSymbol = Symbol('reject callback');
 
-const readFileAsync = util.promisify(fs.readFile.bind(fs));
 const gzipAsync = util.promisify(zlib.gzip.bind(zlib));
 
 class TestServer {
@@ -50,8 +49,8 @@ class TestServer {
    */
   static async createHTTPS(dirPath, port, loopback) {
     const server = new TestServer(dirPath, port, loopback, {
-      key: fs.readFileSync(path.join(__dirname, 'key.pem')),
-      cert: fs.readFileSync(path.join(__dirname, 'cert.pem')),
+      key: await fs.promises.readFile(path.join(__dirname, 'key.pem')),
+      cert: await fs.promises.readFile(path.join(__dirname, 'cert.pem')),
       passphrase: 'aaaa',
     });
     await new Promise(x => server._server.once('listening', x));
@@ -273,7 +272,7 @@ class TestServer {
     if (this._csp.has(pathName))
       response.setHeader('Content-Security-Policy', this._csp.get(pathName));
 
-    const {err, data} = await readFileAsync(filePath).then(data => ({data})).catch(err => ({err}));
+    const {err, data} = await fs.promises.readFile(filePath).then(data => ({data})).catch(err => ({err}));
     // The HTTP transaction might be already terminated after async hop here - do nothing in this case.
     if (response.writableEnded)
       return;
