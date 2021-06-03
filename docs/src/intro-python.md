@@ -11,12 +11,14 @@ title: "Getting Started"
 See [system requirements](#system-requirements).
 
 ### Pip
+
 ```bash
 pip install playwright
 playwright install
 ```
 
 ### Conda
+
 ```bash
 conda config --add channels conda-forge
 conda config --add channels microsoft
