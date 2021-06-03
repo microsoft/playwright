@@ -17,9 +17,11 @@
 const child_process = require('child_process');
 const path = require('path');
 const chokidar = require('chokidar');
+const fs = require('fs');
 
 const steps = [];
 const onChanges = [];
+const copyFiles = [];
 
 const watchMode = process.argv.slice(2).includes('--watch');
 const ROOT = path.join(__dirname, '..', '..');
@@ -47,9 +49,15 @@ function runWatch() {
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
     runOnChanges(onChange.inputs, onChange.script);
+  for (const {files, from, to, ignored} of copyFiles) {
+    const watcher = chokidar.watch([filePath(files)], {ignored});
+    watcher.on('all', file => {
+      copyFile(file, from, to);
+    });
+  }
 }
 
-function runBuild() {
+async function runBuild() {
   function runStep(command, args, shell) {
     const out = child_process.spawnSync(command, args, { stdio: 'inherit', shell });
     if (out.status)
@@ -62,6 +70,22 @@ function runBuild() {
     if (!onChange.committed)
       runStep('node', [filePath(onChange.script)], false);
   }
+  for (const {files, from, to, ignored} of copyFiles) {
+    const watcher = chokidar.watch([filePath(files)], {
+      ignored
+    });
+    watcher.on('add', file => {
+      copyFile(file, from, to);
+    });
+    await new Promise(x => watcher.once('ready', x));
+    watcher.close();
+  }
+}
+
+function copyFile(file, from, to) {
+  const destination = path.resolve(filePath(to), path.relative(filePath(from), file));
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.copyFileSync(file, destination);
 }
 
 // Build injected scripts.
@@ -84,10 +108,10 @@ for (const file of webPackFiles) {
   });
 }
 
-// Run typescript.
+// Run babel.
 steps.push({
   command: 'npx',
-  args: ['babel', ...(watchMode ? ['-W'] : []), '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
+  args: ['babel', ...(watchMode ? ['-w'] : []), '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
   shell: true,
 });
 
@@ -113,11 +137,24 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
-// Copy images.
-steps.push({
-  command: process.platform === 'win32' ? 'copy' : 'cp',
-  args: [filePath('src/web/recorder/*.png'), filePath('lib/web/recorder/')],
-  shell: true,
+copyFiles.push({
+  files: 'src/web/recorder/*.png',
+  from: 'src',
+  to: 'lib',
+});
+
+copyFiles.push({
+  files: 'src/**/*.js',
+  from: 'src',
+  to: 'lib',
+  ignored: ['**/.eslintrc.js', '**/*webpack.config.js', '**/injected/**/*']
+});
+
+copyFiles.push({
+  files: 'src/**/*.json',
+  ignored: ['**/injected/**/*'],
+  from: 'src',
+  to: 'lib',
 });
 
 watchMode ? runWatch() : runBuild();
