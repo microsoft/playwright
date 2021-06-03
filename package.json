@@ -18,7 +18,7 @@
     "ttest": "npm run basetest -- --config=tests/playwright-test/playwright-test.config.ts",
     "test": "npm run basetest -- --config=tests/config/default.config.ts",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts . || eslint --ext ts .",
-    "tsc": "tsc -p . --noEmit",
+    "tsc": "tsc -p .",
     "build-installer": "babel --extensions '.ts' --out-dir lib/install/ src/install",
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ --check-clean && npm run test-types",
