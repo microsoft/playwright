@@ -19,7 +19,10 @@ module.exports = {
     rules: [
       {
         test: /\.(j|t)sx?$/,
-        use: 'ts-loader',
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: true
+        },
         exclude: /node_modules/
       },
       {
