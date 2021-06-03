@@ -171,7 +171,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
     const main = await this._context.frame._mainContext();
-    return main.eval(([injected, node, { type, eventInit }]) => injected.dispatchEvent(node, type, eventInit), {
+    await main.eval(([injected, node, { type, eventInit }]) => injected.dispatchEvent(node, type, eventInit), {
       arg: [await main.injectedScript(), this, { type, eventInit }] as const,
       waitForSignals: true,
       doSlowMo: true,
