@@ -259,11 +259,11 @@ public class Example {
 ```
 
 ```python async
-browser = await playwright.chromium.launch(chromiumSandbox=False)
+browser = await playwright.chromium.launch(chromium_sandbox=False)
 ```
 
 ```python sync
-browser = playwright.chromium.launch(chromiumSandbox=False)
+browser = playwright.chromium.launch(chromium_sandbox=False)
 ```
 
 ```csharp
