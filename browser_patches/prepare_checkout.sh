@@ -108,17 +108,8 @@ elif [[ ("$1" == "firefox-stable") || ("$1" == "ff-stable") ]]; then
     FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
   fi
 elif [[ ("$1" == "deprecated-webkit-mac-10.14") ]]; then
-  FRIENDLY_CHECKOUT_PATH="//browser_patches/deprecated-webkit-mac-10.14/checkout";
-  CHECKOUT_PATH="$PWD/deprecated-webkit-mac-10.14/checkout"
-  PATCHES_PATH="$PWD/deprecated-webkit-mac-10.14/patches"
-  WEBKIT_EXTRA_FOLDER_PATH="$PWD/deprecated-webkit-mac-10.14/embedder/Playwright"
-  BUILD_NUMBER=$(head -1 "$PWD/deprecated-webkit-mac-10.14/BUILD_NUMBER")
-  source "./deprecated-webkit-mac-10.14/UPSTREAM_CONFIG.sh"
-  if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
-    echo "WARNING: using checkout path from WK_CHECKOUT_PATH env: ${WK_CHECKOUT_PATH}"
-    CHECKOUT_PATH="${WK_CHECKOUT_PATH}"
-    FRIENDLY_CHECKOUT_PATH="<WK_CHECKOUT_PATH>"
-  fi
+  echo "FYI: deprecated-webkit-mac-10.14 has no checkout anymore"
+  exit 0
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"
