@@ -120,8 +120,9 @@ for (const params of [
     height: 768,
   }
 ]) {
-  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform }, testInfo) => {
+  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless }, testInfo) => {
     browserTest.fixme(browserName === 'chromium' && video, 'Same screencast resolution conflicts');
+    browserTest.fixme(browserName === 'chromium' && !headless, 'Chromium screencast on headed has a min width issue');
     browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');
     browserTest.fixme(params.id === 'fit' && browserName === 'webkit' && platform === 'linux', 'Image size is flaky');
 
