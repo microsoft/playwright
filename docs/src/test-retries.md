@@ -18,7 +18,7 @@ module.exports = {
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from 'playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   retries: 3,

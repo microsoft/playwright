@@ -73,7 +73,7 @@ Now we can use the `PlaywrightDevPage` class in our tests.
 
 ```js js-flavor=js
 // example.spec.js
-const { test, expect } = require('playwright/test');
+const { test, expect } = require('@playwright/test');
 const { PlaywrightDevPage } = require('./playwright-dev-page');
 
 test('Get Started table of contents', async ({ page }) => {
@@ -109,7 +109,7 @@ test('Core Concepts table of contents', async ({ page }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test, expect } from 'playwright/test';
+import { test, expect } from '@playwright/test';
 import { PlaywrightDevPage } from './playwright-dev-page';
 
 test('Get Started table of contents', async ({ page }) => {

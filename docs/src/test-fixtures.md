@@ -18,7 +18,7 @@ Here is how typical test environment setup differs between traditional test styl
 
 ```js
 // todo.spec.js
-const { test } = require('playwright/test');
+const { test } = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
 describe('todo tests', () => {
@@ -51,7 +51,7 @@ describe('todo tests', () => {
 
 ```js js-flavor=js
 // todo.spec.js
-const base = require('playwright/test');
+const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
 // Extend basic test by providing a "todoPage" fixture.
@@ -79,7 +79,7 @@ test('should remove an item', async ({ todoPage }) => {
 
 ```js js-flavor=ts
 // example.spec.ts
-import { test as base } from 'playwright/test';
+import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
 // Extend basic test by providing a "table" fixture.
@@ -145,7 +145,7 @@ Here is how test fixtures are declared and defined. Fixtures can use other fixtu
 
 ```js js-flavor=js
 // hello.js
-const base = require('playwright/test');
+const base = require('@playwright/test');
 
 // Extend base test with fixtures "hello" and "helloWorld".
 // This new "test" can be used in multiple test files, and each of them will get the fixtures.
@@ -168,7 +168,7 @@ module.exports = base.test.extend({
 
 ```js js-flavor=ts
 // hello.ts
-import base from 'playwright/test';
+import base from '@playwright/test';
 
 // Define test fixtures "hello" and "helloWorld".
 type TestFixtures = {
@@ -239,7 +239,7 @@ test('fetch 2', async ({ port }) => {
 And here is how fixtures are declared and defined:
 ```js js-flavor=js
 // express-test.js
-const base = require('playwright/test');
+const base = require('@playwright/test');
 const express = require('express');
 
 // Define "port" and "express" worker fixtures.
@@ -284,7 +284,7 @@ module.exports = base.test.extend({
 
 ```js js-flavor=ts
 // express-test.ts
-import { test as base } from 'playwright/test';
+import { test as base } from '@playwright/test';
 import express from 'express';
 import type { Express } from 'express';
 
