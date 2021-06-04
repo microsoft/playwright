@@ -11626,6 +11626,18 @@ index ecf7213858b8d7b3eb2a54f3b3a8c12eed4bdd85..7d0fd38d5e29a97945ff248be0540361
  void UIDelegate::UIClient::requestStorageAccessConfirm(WebPageProxy& webPageProxy, WebFrameProxy*, const WebCore::RegistrableDomain& requestingDomain, const WebCore::RegistrableDomain& currentDomain, CompletionHandler<void(bool)>&& completionHandler)
  {
      if (!m_uiDelegate)
+diff --git a/Source/WebKit/UIProcess/Cocoa/WKContactPicker.h b/Source/WebKit/UIProcess/Cocoa/WKContactPicker.h
+index 7a18a6184a04aa37bb6d328a817b0a0a3e03cb50..92bb58f42cf5ff592b6d465f16ffcf283f381462 100644
+--- a/Source/WebKit/UIProcess/Cocoa/WKContactPicker.h
++++ b/Source/WebKit/UIProcess/Cocoa/WKContactPicker.h
+@@ -27,6 +27,7 @@
+ 
+ #if HAVE(CONTACTSUI)
+ 
++#include <optional>
+ #include <wtf/Forward.h>
+ 
+ @class WKWebView;
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm b/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
 index 7f5390365030fbf2b45d21066fe98c8aa38a9fe7..dff5f731e75335b47f114cb4513065126804d222 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
