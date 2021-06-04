@@ -39,10 +39,12 @@ You can use different reporters locally and on CI.
 // playwright.config.js
 module.exports = {
   reporter: !process.env.CI
-    // A list of tests for the terminal
+    // Default 'list' reporter for the terminal
     ? 'list'
-    // Very concise "dot" reporter and a comprehensive json report for CI
-    : ['dot', { name: 'json', outputFile: 'test-results.json' }],
+    // Two reporters for CI:
+    // - concise "dot"
+    // - comprehensive json report
+    : [ ['dot'], [ 'json', {  outputFile: 'test-results.json' }] ],
 };
 ```
 
@@ -51,11 +53,12 @@ module.exports = {
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: !process.env.CI
-    // A list of tests for the terminal
+    // Default 'list' reporter for the terminal
     ? 'list'
-    // Very concise "dot" reporter and a comprehensive json report for CI
-    : ['dot', { name: 'json', outputFile: 'test-results.json' }],
+    // Two reporters for CI:
+    // - concise "dot"
+    // - comprehensive json report
+    : [ ['dot'], [ 'json', {  outputFile: 'test-results.json' }] ],
 };
 export default config;
 ```
@@ -190,7 +193,7 @@ In configuration file, pass options directly:
 ```js js-flavor=js
 // playwright.config.js
 module.exports = {
-  reporter: { name: 'json', outputFile: 'results.json' },
+  reporter: [ ['json', { outputFile: 'results.json' }] ],
 };
 ```
 
@@ -199,7 +202,7 @@ module.exports = {
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: { name: 'json', outputFile: 'results.json' },
+  reporter: [ ['json', { outputFile: 'results.json' }] ],
 };
 export default config;
 ```
@@ -217,7 +220,7 @@ In configuration file, pass options directly:
 ```js js-flavor=js
 // playwright.config.js
 module.exports = {
-  reporter: { name: 'junit', outputFile: 'results.xml' },
+  reporter: [ ['junit', { outputFile: 'results.xml' }] ],
 };
 ```
 
@@ -226,7 +229,7 @@ module.exports = {
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: { name: 'junit', outputFile: 'results.xml' },
+  reporter: [ ['junit', { outputFile: 'results.xml' }] ],
 };
 export default config;
 ```

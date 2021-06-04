@@ -30,7 +30,7 @@ const tsConfig = 'playwright.config.ts';
 const jsConfig = 'playwright.config.js';
 const defaultConfig: Config = {
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
-  reporter: [defaultReporter],
+  reporter: [ [defaultReporter] ],
   timeout: defaultTimeout,
   updateSnapshots: process.env.CI ? 'none' : 'missing',
   workers: Math.ceil(require('os').cpus().length / 2),
@@ -167,9 +167,7 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
     quiet: options.quiet ? options.quiet : undefined,
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
-    reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => {
-      return builtinReporters.includes(r) ? r : { require: r };
-    }) : undefined,
+    reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [r]) : undefined,
     shard: shardPair ? { current: shardPair[0] - 1, total: shardPair[1] } : undefined,
     timeout: isDebuggerAttached ? 0 : (options.timeout ? parseInt(options.timeout, 10) : undefined),
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
