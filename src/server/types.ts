@@ -87,6 +87,9 @@ export const colorSchemes: Set<ColorScheme> = new Set(['dark', 'light', 'no-pref
 export type ReducedMotion = 'no-preference' | 'reduce';
 export const reducedMotions: Set<ReducedMotion> = new Set(['no-preference', 'reduce']);
 
+export type ForcedColors = 'active' | 'none';
+export const forcedColors: Set<ForcedColors> = new Set(['active', 'none']);
+
 export type DeviceDescriptor = {
   userAgent: string,
   viewport: Size,
@@ -241,6 +244,7 @@ export type BrowserContextOptions = {
   hasTouch?: boolean,
   colorScheme?: ColorScheme,
   reducedMotion?: ReducedMotion,
+  forcedColors?: ForcedColors,
   acceptDownloads?: boolean,
   recordVideo?: {
     dir: string,

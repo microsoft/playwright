@@ -40,7 +40,7 @@ it('should throw in case of bad media argument', async ({page}) => {
   expect(error.message).toContain('media: expected one of (screen|print|null)');
 });
 
-it('should emulate scheme work', async ({page}) => {
+it('should emulate colorScheme should work', async ({page}) => {
   await page.emulateMedia({ colorScheme: 'light' });
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
@@ -125,3 +125,16 @@ it('should emulate reduced motion', async ({page}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(true);
   await page.emulateMedia({ reducedMotion: null });
 });
+
+it.only('should emulate forcedColors ', async ({page}) => {
+  expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);
+  await page.emulateMedia({ forcedColors: 'none' });
+  expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(false);
+  await page.emulateMedia({ forcedColors: 'active' });
+  expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(false);
+  expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+  await page.emulateMedia({ forcedColors: null });
+  expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);
+});
+

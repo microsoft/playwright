@@ -999,6 +999,12 @@ Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
+### option: Page.emulateMedia.forcedColors
+* langs: js, python, java
+- `forcedColors` <null|[ForcedColors]<"active"|"none">>
+
+Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced colors emulation.
+
 ## async method: Page.evalOnSelector
 * langs:
   - alias-python: eval_on_selector
