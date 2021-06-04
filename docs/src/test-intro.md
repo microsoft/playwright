@@ -19,10 +19,10 @@ Playwright Test Runner was created specifically to accommodate the needs of the 
 
 ## Installation
 
-Playwright already includes a test runner for end-to-end tests.
+Playwright has its own test runner for end-to-end tests.
 
 ```bash
-npm i -D playwright
+npm i -D @playwright/test
 ```
 
 ## First test
