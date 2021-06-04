@@ -24,12 +24,13 @@ export { expect } from 'folio';
 
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
+  closeRecorder: () => Promise<void>;
   openRecorder: () => Promise<Recorder>;
   runCLI: (args: string[]) => CLIMock;
 };
 
 export const test = contextTest.extend<CLITestArgs>({
-  recorderPageGetter: async ({ page, context, toImpl, browserName, channel, headless, mode, executablePath }, run, testInfo) => {
+  recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode === 'service');
     await run(async () => {
@@ -39,6 +40,12 @@ export const test = contextTest.extend<CLITestArgs>({
       const browser = await chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
+    });
+  },
+
+  closeRecorder: async ({ context, toImpl }, run) => {
+    await run(async () => {
+      await toImpl(context).recorderAppForTest.close();
     });
   },
 

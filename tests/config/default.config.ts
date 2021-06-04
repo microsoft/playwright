@@ -63,7 +63,7 @@ const config: folio.Config<CommonOptions & PlaywrightOptions> = {
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];
 for (const browserName of browserNames) {
   const executablePath = getExecutablePath(browserName);
-  if (executablePath && !process.env.FOLIO_WORKER_INDEX)
+  if (executablePath && !process.env.TEST_WORKER_INDEX)
     console.error(`Using executable at ${executablePath}`);
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
   testIgnore.push(/android/, /electron/);
