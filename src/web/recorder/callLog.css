@@ -48,6 +48,7 @@
 
 .call-log-call .codicon {
   padding: 0 4px;
+  flex: none;
 }
 
 .call-log .codicon-check {
@@ -66,6 +67,12 @@
   color: red;
 }
 
+.call-log-details {
+  flex: 0 1 auto;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}
+
 .call-log-url {
   color: var(--blue);
 }
@@ -75,6 +82,7 @@
 }
 
 .call-log-time {
+  flex: none;
   margin-left: 4px;
   color: var(--gray);
 }

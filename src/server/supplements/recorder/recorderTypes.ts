@@ -19,7 +19,7 @@ import { Point } from '../../../common/types';
 export type Mode = 'inspecting' | 'recording' | 'none';
 
 export type EventData = {
-  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'selectorUpdated' | 'callLogHovered';
+  event: 'clear' | 'resume' | 'step' | 'pause' | 'setMode' | 'selectorUpdated';
   params: any;
 };
 
@@ -27,7 +27,6 @@ export type UIState = {
   mode: Mode;
   actionPoint?: Point;
   actionSelector?: string;
-  snapshotUrl?: string;
 };
 
 export type CallLogStatus = 'in-progress' | 'done' | 'error' | 'paused';
@@ -44,11 +43,6 @@ export type CallLog = {
     url?: string,
     selector?: string,
   };
-  snapshots: {
-    before: boolean,
-    action: boolean,
-    after: boolean,
-  }
 };
 
 export type SourceHighlight = {

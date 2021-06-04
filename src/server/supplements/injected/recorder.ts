@@ -50,11 +50,8 @@ export class Recorder {
   private _actionPoint: Point | undefined;
   private _actionSelector: string | undefined;
   private _params: { isUnderTest: boolean; };
-  private _snapshotIframe: HTMLIFrameElement | undefined;
-  private _snapshotUrl: string | undefined;
-  private _snapshotBaseUrl: string;
 
-  constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean, snapshotBaseUrl: string }) {
+  constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean }) {
     this._params = params;
     this._injectedScript = injectedScript;
     this._outerGlassPaneElement = document.createElement('x-pw-glass');
@@ -66,7 +63,6 @@ export class Recorder {
     this._outerGlassPaneElement.style.zIndex = '2147483647';
     this._outerGlassPaneElement.style.pointerEvents = 'none';
     this._outerGlassPaneElement.style.display = 'flex';
-    this._snapshotBaseUrl = params.snapshotBaseUrl;
 
     this._tooltipElement = document.createElement('x-pw-tooltip');
     this._actionPointElement = document.createElement('x-pw-action-point');
@@ -160,28 +156,6 @@ export class Recorder {
     document.documentElement.appendChild(this._outerGlassPaneElement);
   }
 
-  private _createSnapshotIframeIfNeeded(): HTMLIFrameElement | undefined {
-    if (this._snapshotIframe)
-      return this._snapshotIframe;
-    if (window.top === window) {
-      this._snapshotIframe = document.createElement('iframe');
-      this._snapshotIframe.src = this._snapshotBaseUrl;
-      this._snapshotIframe.style.background = '#ff000060';
-      this._snapshotIframe.style.position = 'fixed';
-      this._snapshotIframe.style.top = '0';
-      this._snapshotIframe.style.right = '0';
-      this._snapshotIframe.style.bottom = '0';
-      this._snapshotIframe.style.left = '0';
-      this._snapshotIframe.style.border = 'none';
-      this._snapshotIframe.style.width = '100%';
-      this._snapshotIframe.style.height = '100%';
-      this._snapshotIframe.style.zIndex = '2147483647';
-      this._snapshotIframe.style.visibility = 'hidden';
-      document.documentElement.appendChild(this._snapshotIframe);
-    }
-    return this._snapshotIframe;
-  }
-
   private async _pollRecorderMode() {
     const pollPeriod = 1000;
     if (this._pollRecorderModeTimer)
@@ -192,7 +166,7 @@ export class Recorder {
       return;
     }
 
-    const { mode, actionPoint, actionSelector, snapshotUrl } = state;
+    const { mode, actionPoint, actionSelector } = state;
     if (mode !== this._mode) {
       this._mode = mode;
       this._clearHighlight();
@@ -220,18 +194,6 @@ export class Recorder {
       this._hoveredModel = actionSelector ? querySelector(this._injectedScript, actionSelector, document) : null;
       this._updateHighlight();
       this._actionSelector = actionSelector;
-    }
-    if (snapshotUrl !== this._snapshotUrl) {
-      this._snapshotUrl = snapshotUrl;
-      const snapshotIframe = this._createSnapshotIframeIfNeeded();
-      if (snapshotIframe) {
-        if (!snapshotUrl) {
-          snapshotIframe.style.visibility = 'hidden';
-        } else {
-          snapshotIframe.style.visibility = 'visible';
-          snapshotIframe.contentWindow?.postMessage({ snapshotUrl }, '*');
-        }
-      }
     }
     this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
