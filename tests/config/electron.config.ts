@@ -32,8 +32,8 @@ const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 3 : 0,
   reporter: process.env.CI ? [
-    'dot',
-    { name: 'json', outputFile: path.join(outputDir, 'report.json') },
+    [ 'dot' ],
+    [ 'json', { outputFile: path.join(outputDir, 'report.json') } ],
   ] : 'line',
   projects: [],
 };
