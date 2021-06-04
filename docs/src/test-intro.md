@@ -232,11 +232,11 @@ test('my test', async ({ page }) => {
   expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
 
   // Expect an element "to be visible".
-  expect(await page.isVisible('[aria-label="GitHub repository"]')).toBe(true);
+  expect(await page.isVisible('text=Learn more')).toBeTruthy();
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
-  expect(await page.waitForSelector('text=Getting Started')).toBeTruthy();
+  expect(await page.waitForSelector('text=System requirements')).toBeTruthy();
 
   // Compare screenshot with a stored reference.
   expect(await page.screenshot()).toMatchSnapshot('get-started.png');
@@ -257,16 +257,38 @@ test('my test', async ({ page }) => {
   expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
 
   // Expect an element "to be visible".
-  expect(await page.isVisible('[aria-label="GitHub repository"]')).toBe(true);
+  expect(await page.isVisible('[aria-label="GitHub repository"]')).toBeTruthy();
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
-  expect(await page.waitForSelector('text=Getting Started')).toBeTruthy();
+  expect(await page.waitForSelector('text=System requirements')).toBeTruthy();
 
   // Compare screenshot with a stored reference.
   expect(await page.screenshot()).toMatchSnapshot('get-started.png');
 });
 ```
+
+Notice how running this test is saying:
+
+```
+Error: example.spec.ts-snapshots/get-started-chromium-darwin.png is missing in snapshots, writing actual.
+```
+
+That's because there was no golden file for your `get-started.png` snapshot. It is now created and is ready to be added to the repository. The name of the folder with the golden expectations starts with the name of your test file:
+
+```bash
+drwxr-xr-x  5 user  group  160 Jun  4 11:46 .
+drwxr-xr-x  6 user  group  192 Jun  4 11:45 ..
+-rw-r--r--  1 user  group  231 Jun  4 11:16 example.spec.ts
+drwxr-xr-x  3 user  group   96 Jun  4 11:46 example.spec.ts-snapshots
+```
+
+To update your golden files, you can use the `--update-snapshots` parameter.
+
+```bash
+npx playwright test -c tests --update-snapshots
+```
+
 
 ## Learn the command line
 
@@ -335,37 +357,87 @@ Here are the most common options available in the [command line](./test-cli.md).
 
 So far, we've looked at the zero-config operation of Playwright Test. For a real world application, it is likely that you would want to use a config.
 
-Create `playwright.config.js` (or `playwright.config.ts`) to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit. Look for more options in the [configuration section](./test-configuration.md).
+Create `playwright.config.ts` (or `playwright.config.js`) to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions. Look for more options in the [configuration section](./test-configuration.md).
 
 ```js js-flavor=js
+// playwright.config.js
+const { devices } = require('@playwright/test');
+
 module.exports = {
-  // Each test is given 30 seconds.
-  timeout: 30000,
-
-  use: {
-    // Run browsers in the headless mode.
-    headless: true,
-
-    // Specify the viewport size.
-    viewport: { width: 1280, height: 720 },
-  },
+  projects: [
+    {
+      name: 'Desktop Chromium',
+      use: {
+        browserName: 'chromium',
+        // Test against Chrome Beta channel.
+        channel: 'chrome-beta',
+      },
+    },
+    {
+      name: 'Desktop Safari',
+      use: {
+        browserName: 'webkit',
+        viewport: { width: 1200, height: 750 },
+      }
+    },
+    // Test against mobile viewports.
+    {
+      name: 'Mobile Chrome',
+      use: devices['Pixel 5'],
+    },
+    {
+      name: 'Mobile Safari',
+      use: devices['iPhone 12'],
+    },
+    {
+      name: 'Desktop Firefox',
+      use: {
+        browserName: 'firefox',
+        viewport: { width: 800, height: 600 },
+      }
+    },
+  ],
 };
 ```
 
 ```js js-flavor=ts
-import { PlaywrightTestConfig } from '@playwright/test';
+// playwright.config.ts
+import { PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  // Each test is given 30 seconds.
-  timeout: 30000,
-
-  use: {
-    // Run browsers in the headless mode.
-    headless: true,
-
-    // Specify the viewport size.
-    viewport: { width: 1280, height: 720 },
-  },
+  projects: [
+    {
+      name: 'Desktop Chromium',
+      use: {
+        browserName: 'chromium',
+        // Test against Chrome Beta channel.
+        channel: 'chrome-beta',
+      },
+    },
+    {
+      name: 'Desktop Safari',
+      use: {
+        browserName: 'webkit',
+        viewport: { width: 1200, height: 750 },
+      }
+    },
+    // Test against mobile viewports.
+    {
+      name: 'Mobile Chrome',
+      use: devices['Pixel 5'],
+    },
+    {
+      name: 'Mobile Safari',
+      use: devices['iPhone 12'],
+    },
+    {
+      name: 'Desktop Firefox',
+      use: {
+        browserName: 'firefox',
+        viewport: { width: 800, height: 600 },
+      }
+    },
+  ],
 };
 export default config;
 ```
