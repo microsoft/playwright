@@ -982,9 +982,11 @@ class FrameSession {
       return;
     const colorScheme = this._page._state.colorScheme === null ? '' : this._page._state.colorScheme;
     const reducedMotion = this._page._state.reducedMotion === null ? '' : this._page._state.reducedMotion;
+    const forcedColors = this._page._state.forcedColors === null ? '' : this._page._state.forcedColors;
     const features = [
       { name: 'prefers-color-scheme', value: colorScheme },
       { name: 'prefers-reduced-motion', value: reducedMotion },
+      { name: 'forced-colors', value: forcedColors },
     ];
     // Empty string disables the override.
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });

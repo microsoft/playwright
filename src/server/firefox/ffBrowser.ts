@@ -209,6 +209,10 @@ export class FFBrowserContext extends BrowserContext {
       browserContextId,
       reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
     }));
+    promises.push(this._browser._connection.send('Browser.setForcedColors', {
+      browserContextId,
+      forcedColors: this._options.forcedColors !== undefined  ? this._options.forcedColors : 'none',
+    }));
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser._connection.send('Browser.setVideoRecordingOptions', {

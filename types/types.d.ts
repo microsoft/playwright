@@ -1933,6 +1933,12 @@ export interface Page {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
+     * Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced
+     * colors emulation.
+     */
+    forcedColors?: null|"active"|"none";
+
+    /**
      * Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null`
      * disables CSS media emulation.
      */
@@ -9725,6 +9731,13 @@ export interface BrowserType<Unused = {}> {
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
+    /**
+     * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
+     * to `'none'`.
+     */
+    forcedColors?: "active"|"none";
+
     geolocation?: {
       /**
        * Latitude between -90 and 90.
@@ -10910,6 +10923,13 @@ export interface AndroidDevice {
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
+    /**
+     * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
+     * to `'none'`.
+     */
+    forcedColors?: "active"|"none";
+
     geolocation?: {
       /**
        * Latitude between -90 and 90.
@@ -11676,6 +11696,13 @@ export interface Browser extends EventEmitter {
      * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
      */
     extraHTTPHeaders?: { [key: string]: string; };
+
+    /**
+     * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
+     * to `'none'`.
+     */
+    forcedColors?: "active"|"none";
 
     geolocation?: {
       /**
@@ -13937,6 +13964,13 @@ export interface BrowserContextOptions {
    * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
    */
   extraHTTPHeaders?: { [key: string]: string; };
+
+  /**
+   * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
+   * to `'none'`.
+   */
+  forcedColors?: "active"|"none";
 
   geolocation?: Geolocation;
 
