@@ -70,7 +70,6 @@
 .timeline-bar {
   position: absolute;
   height: 9px;
-  top: 11px;
   border-radius: 2px;
   min-width: 3px;
   --action-color: gray;
@@ -125,13 +124,8 @@
   --action-color: var(--blue);
 }
 
-.timeline-bar.event {
-  top: 22px;
-}
-
-.timeline-bar.frame_waitforeventinfo {
-  bottom: inherit;
-  top: 0;
+.timeline-bar.frame_waitforeventinfo,
+.timeline-bar.page_waitforeventinfo {
   --action-color: var(--gray);
 }
 
