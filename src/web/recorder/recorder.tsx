@@ -121,9 +121,7 @@ export const Recorder: React.FC<RecorderProps> = ({
             window.dispatch({ event: 'selectorUpdated', params: { selector: event.target.value } });
           }} />
         </Toolbar>
-        <CallLogView log={Array.from(log.values())} onHover={(callLog, phase) => {
-          window.dispatch({ event: 'callLogHovered', params: { callLogId: callLog?.id, phase } });
-        }}/>
+        <CallLogView log={Array.from(log.values())}/>
       </div>
     </SplitView>
   </div>;

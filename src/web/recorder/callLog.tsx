@@ -21,12 +21,10 @@ import { msToString } from '../uiUtils';
 
 export interface CallLogProps {
   log: CallLog[],
-  onHover: (callLog: CallLog | undefined, phase?: 'before' | 'after' | 'action') => void
 }
 
 export const CallLogView: React.FC<CallLogProps> = ({
   log,
-  onHover,
 }) => {
   const messagesEndRef = React.createRef<HTMLDivElement>();
   const [expandOverrides, setExpandOverrides] = React.useState<Map<string, boolean>>(new Map());
@@ -47,14 +45,10 @@ export const CallLogView: React.FC<CallLogProps> = ({
             setExpandOverrides(newOverrides);
           }}></span>
           { callLog.title }
-          { callLog.params.url ? <span>(<span className='call-log-url'>{callLog.params.url}</span>)</span> : undefined }
-          { callLog.params.selector ? <span>(<span className='call-log-selector'>{callLog.params.selector}</span>)</span> : undefined }
+          { callLog.params.url ? <span className='call-log-details'>(<span className='call-log-url' title={callLog.params.url}>{callLog.params.url}</span>)</span> : undefined }
+          { callLog.params.selector ? <span className='call-log-details'>(<span className='call-log-selector' title={callLog.params.selector}>{callLog.params.selector}</span>)</span> : undefined }
           <span className={'codicon ' + iconClass(callLog)}></span>
           { typeof callLog.duration === 'number' ? <span className='call-log-time'>— {msToString(callLog.duration)}</span> : undefined}
-          { <div style={{flex: 'auto'}}></div> }
-          <span className={'codicon codicon-vm-outline preview' + (callLog.snapshots.before ? '' : ' invisible')} onMouseEnter={() => onHover(callLog, 'before')} onMouseLeave={() => onHover(undefined)}></span>
-          <span className={'codicon codicon-vm-running preview' + (callLog.snapshots.action ? '' : ' invisible')} onMouseEnter={() => onHover(callLog, 'action')} onMouseLeave={() => onHover(undefined)}></span>
-          <span className={'codicon codicon-vm-active preview' + (callLog.snapshots.after ? '' : ' invisible')} onMouseEnter={() => onHover(callLog, 'after')} onMouseLeave={() => onHover(undefined)}></span>
         </div>
         { (isExpanded ? callLog.messages : []).map((message, i) => {
           return <div className='call-log-message' key={i}>

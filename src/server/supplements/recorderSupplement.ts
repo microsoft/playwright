@@ -33,7 +33,6 @@ import { CallMetadata, InstrumentationListener, internalCallMetadata, SdkObject 
 import { Point } from '../../common/types';
 import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
 import { isUnderTest } from '../../utils/utils';
-import { InMemorySnapshotter } from '../snapshot/inMemorySnapshotter';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 
@@ -56,9 +55,6 @@ export class RecorderSupplement implements InstrumentationListener {
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _recorderSources: Source[];
   private _userSources = new Map<string, Source>();
-  private _snapshotter: InMemorySnapshotter;
-  private _hoveredSnapshot: { callLogId: string, phase: 'before' | 'after' | 'action' } | undefined;
-  private _snapshots = new Set<string>();
   private _allMetadatas = new Map<string, CallMetadata>();
   private _debugger: Debugger;
 
@@ -129,14 +125,12 @@ export class RecorderSupplement implements InstrumentationListener {
       });
     }
     this._generator = generator;
-    this._snapshotter = new InMemorySnapshotter(context);
   }
 
   async install() {
     const recorderApp = await RecorderApp.open(this._context);
     this._recorderApp = recorderApp;
     recorderApp.once('close', () => {
-      this._snapshotter.dispose().catch(() => {});
       this._recorderApp = null;
     });
     recorderApp.on('event', (data: EventData) => {
@@ -147,13 +141,6 @@ export class RecorderSupplement implements InstrumentationListener {
       }
       if (data.event === 'selectorUpdated') {
         this._highlightedSelector = data.params.selector;
-        this._refreshOverlay();
-        return;
-      }
-      if (data.event === 'callLogHovered') {
-        this._hoveredSnapshot = undefined;
-        if (this._debugger.isPaused() && data.params.callLogId)
-          this._hoveredSnapshot = data.params;
         this._refreshOverlay();
         return;
       }
@@ -202,26 +189,18 @@ export class RecorderSupplement implements InstrumentationListener {
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action), 'utility');
 
     await this._context.exposeBinding('_playwrightRecorderState', false, source => {
-      let snapshotUrl: string | undefined;
       let actionSelector = this._highlightedSelector;
       let actionPoint: Point | undefined;
-      if (this._hoveredSnapshot) {
-        const metadata = this._allMetadatas.get(this._hoveredSnapshot.callLogId)!;
-        snapshotUrl = `${metadata.pageId}?name=${this._hoveredSnapshot.phase}@${this._hoveredSnapshot.callLogId}`;
-        actionPoint = this._hoveredSnapshot.phase === 'action' ? metadata?.point : undefined;
-      } else {
-        for (const [metadata, sdkObject] of this._currentCallsMetadata) {
-          if (source.page === sdkObject.attribution.page) {
-            actionPoint = metadata.point || actionPoint;
-            actionSelector = actionSelector || metadata.params.selector;
-          }
+      for (const [metadata, sdkObject] of this._currentCallsMetadata) {
+        if (source.page === sdkObject.attribution.page) {
+          actionPoint = metadata.point || actionPoint;
+          actionSelector = actionSelector || metadata.params.selector;
         }
       }
       const uiState: UIState = {
         mode: this._mode,
         actionPoint,
         actionSelector,
-        snapshotUrl,
       };
       return uiState;
     }, 'utility');
@@ -236,8 +215,7 @@ export class RecorderSupplement implements InstrumentationListener {
       this._debugger.resume(false);
     }, 'main');
 
-    const snapshotBaseUrl = await this._snapshotter.initialize() + '/snapshot/';
-    await this._context.extendInjectedScript('utility', recorderSource.source, { isUnderTest: isUnderTest(), snapshotBaseUrl });
+    await this._context.extendInjectedScript('utility', recorderSource.source, { isUnderTest: isUnderTest() });
     await this._context.extendInjectedScript('main', consoleApiSource.source);
 
     if (this._debugger.isPaused())
@@ -391,18 +369,9 @@ export class RecorderSupplement implements InstrumentationListener {
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: String(++this._lastDialogOrdinal) });
   }
 
-  _captureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'action') {
-    if (sdkObject.attribution.page) {
-      const snapshotName = `${phase}@${metadata.id}`;
-      this._snapshots.add(snapshotName);
-      this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName);
-    }
-  }
-
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
     if (this._mode === 'recording')
       return;
-    this._captureSnapshot(sdkObject, metadata, 'before');
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._allMetadatas.set(metadata.id, metadata);
     this._updateUserSources();
@@ -416,7 +385,6 @@ export class RecorderSupplement implements InstrumentationListener {
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
     if (this._mode === 'recording')
       return;
-    this._captureSnapshot(sdkObject, metadata, 'after');
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._updateUserSources();
@@ -458,9 +426,6 @@ export class RecorderSupplement implements InstrumentationListener {
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._mode === 'recording')
-      return;
-    this._captureSnapshot(sdkObject, metadata, 'action');
   }
 
   async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -479,7 +444,7 @@ export class RecorderSupplement implements InstrumentationListener {
         status = 'in-progress';
       if (this._debugger.isPaused(metadata))
         status = 'paused';
-      logs.push(metadataToCallLog(metadata, status, this._snapshots));
+      logs.push(metadataToCallLog(metadata, status));
     }
     this._recorderApp?.updateCallLogs(logs);
   }
