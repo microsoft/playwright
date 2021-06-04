@@ -495,6 +495,26 @@ export class Frame extends SdkObject {
     }
   }
 
+  async nonStallingEvaluateInExistingContext(expression: string, isFunction: boolean|undefined, world: types.World): Promise<any> {
+    if (this._pendingDocument)
+      throw new Error('Frame is currently attempting a navigation');
+    const context = this._contextData.get(world)?.context;
+    if (!context)
+      throw new Error('Frame does not yet have the execution context');
+
+    let callback = () => {};
+    const frameInvalidated = new Promise<void>((f, r) => callback = r);
+    this._nonStallingEvaluations.add(callback);
+    try {
+      return await Promise.race([
+        context.evaluateExpression(expression, isFunction),
+        frameInvalidated
+      ]);
+    } finally {
+      this._nonStallingEvaluations.delete(callback);
+    }
+  }
+
   private _recalculateLifecycle() {
     const events = new Set<types.LifecycleEvent>(this._firedLifecycleEvents);
     for (const child of this._childFrames) {
