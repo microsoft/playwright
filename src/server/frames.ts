@@ -677,13 +677,26 @@ export class Frame extends SdkObject {
     const task = dom.waitForSelectorTask(info, state);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
-      const result = await this._scheduleRerunnableHandleTask(progress, info.world, task);
-      if (!result.asElement()) {
-        result.dispose();
-        return null;
+      while (progress.isRunning()) {
+        const result = await this._scheduleRerunnableHandleTask(progress, info.world, task);
+        if (!result.asElement()) {
+          result.dispose();
+          return null;
+        }
+        if ((options as any).__testHookBeforeAdoptNode)
+          await (options as any).__testHookBeforeAdoptNode();
+        try {
+          const handle = result.asElement() as dom.ElementHandle<Element>;
+          const adopted = await handle._adoptTo(await this._mainContext());
+          return adopted;
+        } catch (e) {
+          // Navigated while trying to adopt the node.
+          if (!js.isContextDestroyedError(e) && !e.message.includes(dom.kUnableToAdoptErrorMessage))
+            throw e;
+          result.dispose();
+        }
       }
-      const handle = result.asElement() as dom.ElementHandle<Element>;
-      return handle._adoptTo(await this._mainContext());
+      return null;
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -1263,16 +1276,9 @@ class RerunnableTask {
       this._contextData.rerunnableTasks.delete(this);
       this._resolve(result);
     } catch (e) {
-      // When the page is navigated, the promise is rejected.
       // We will try again in the new execution context.
-      if (e.message.includes('Execution context was destroyed'))
+      if (js.isContextDestroyedError(e))
         return;
-
-      // We could have tried to evaluate in a context which was already
-      // destroyed.
-      if (e.message.includes('Cannot find context with specified id'))
-        return;
-
       this._contextData.rerunnableTasks.delete(this);
       this._reject(e);
     }

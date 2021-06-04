@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
-import removeFolder from 'rimraf';
 import jpeg from 'jpeg-js';
-
-const traceDir = path.join(__dirname, '..', 'test-results', 'trace-' + process.env.FOLIO_WORKER_INDEX);
-test.use({ traceDir });
-
-test.beforeEach(async ({ browserName, headless }) => {
-  test.fixme(browserName === 'chromium' && !headless, 'Chromium screencast on headed has a min width issue');
-  await new Promise(f => removeFolder(traceDir, f));
-});
 
 test('should collect trace', async ({ context, page, server, browserName }, testInfo) => {
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
@@ -34,8 +24,7 @@ test('should collect trace', async ({ context, page, server, browserName }, test
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.close();
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
@@ -50,32 +39,48 @@ test('should collect trace', async ({ context, page, server, browserName }, test
 });
 
 test('should collect trace', async ({ context, page, server }, testInfo) => {
-  await context.tracing.start({ name: 'test' });
+  await context.tracing.start();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.close();
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
+test('should exclude internal pages', async ({ browserName, context, page, server }, testInfo) => {
+  test.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
+  await page.goto(server.EMPTY_PAGE);
+
+  await context.tracing.start();
+  await context.storageState();
+  await page.close();
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const trace = await parseTrace(testInfo.outputPath('trace.zip'));
+  const pageIds = new Set();
+  trace.events.forEach(e => {
+    const pageId = e.metadata?.pageId;
+    if (pageId)
+      pageIds.add(pageId);
+  });
+  expect(pageIds.size).toBe(1);
+});
+
 test('should collect two traces', async ({ context, page, server }, testInfo) => {
-  await context.tracing.start({ name: 'test1', screenshots: true, snapshots: true });
+  await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace1.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
 
-  await context.tracing.start({ name: 'test2', screenshots: true, snapshots: true });
+  await context.tracing.start({ screenshots: true, snapshots: true });
   await page.dblclick('"Click"');
   await page.close();
-  await context.tracing.stop();
-  await context.tracing.export(testInfo.outputPath('trace2.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
 
   {
     const { events } = await parseTrace(testInfo.outputPath('trace1.zip'));
@@ -115,8 +120,9 @@ for (const params of [
     height: 768,
   }
 ]) {
-  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform }, testInfo) => {
+  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless }, testInfo) => {
     browserTest.fixme(browserName === 'chromium' && video, 'Same screencast resolution conflicts');
+    browserTest.fixme(browserName === 'chromium' && !headless, 'Chromium screencast on headed has a min width issue');
     browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');
     browserTest.fixme(params.id === 'fit' && browserName === 'webkit' && platform === 'linux', 'Image size is flaky');
 
@@ -125,15 +131,14 @@ for (const params of [
     const previewHeight = params.height * scale;
 
     const context = await contextFactory({ viewport: { width: params.width, height: params.height }});
-    await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
+    await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
     // Make sure we have a chance to paint.
     for (let i = 0; i < 10; ++i) {
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
       await page.evaluate(() => new Promise(requestAnimationFrame));
     }
-    await context.tracing.stop();
-    await context.tracing.export(testInfo.outputPath('trace.zip'));
+    await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
     const { events, resources } = await parseTrace(testInfo.outputPath('trace.zip'));
     const frames = events.filter(e => e.type === 'screencast-frame');

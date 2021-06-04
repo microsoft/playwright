@@ -416,8 +416,6 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
 });
 
 it('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'webkit');
-
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
@@ -548,6 +546,14 @@ it('should jsonValue() date', async ({ page }) => {
 it('should not use toJSON when evaluating', async ({ page }) => {
   const result = await page.evaluate(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(result).toEqual({ data: 'data', toJSON: {} });
+});
+
+it('should not use Array.prototype.toJSON when evaluating', async ({ page, browserName }) => {
+  const result = await page.evaluate(() => {
+    (Array.prototype as any).toJSON = () => 'busted';
+    return [1, 2, 3];
+  });
+  expect(result).toEqual([1,2,3]);
 });
 
 it('should not use toJSON in jsonValue', async ({ page }) => {

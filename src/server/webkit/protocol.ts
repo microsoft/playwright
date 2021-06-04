@@ -5984,6 +5984,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type Appearance = "Light"|"Dark";
     /**
+     * Page reduced-motion media query override.
+     */
+    export type ReducedMotion = "Reduce"|"NoPreference";
+    /**
      * Information about the Frame on the page.
      */
     export interface Frame {
@@ -6637,6 +6641,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       appearance?: Appearance;
     }
     export type setForcedAppearanceReturnValue = {
+    }
+    /**
+     * Forces the reduced-motion media query for the page.
+     */
+    export type setForcedReducedMotionParameters = {
+      reducedMotion?: ReducedMotion;
+    }
+    export type setForcedReducedMotionReturnValue = {
     }
     /**
      * Enables time zone emulation.
@@ -7793,6 +7805,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Whether the expression should be considered to be in a user gesture or not.
        */
       emulateUserGesture?: boolean;
+      /**
+       * Whether to automatically await returned promise.
+       */
+      awaitPromise?: boolean;
     }
     export type callFunctionOnReturnValue = {
       /**
@@ -8890,6 +8906,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setShowPaintRects": Page.setShowPaintRectsParameters;
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
     "Page.setForcedAppearance": Page.setForcedAppearanceParameters;
+    "Page.setForcedReducedMotion": Page.setForcedReducedMotionParameters;
     "Page.setTimeZone": Page.setTimeZoneParameters;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledParameters;
     "Page.snapshotNode": Page.snapshotNodeParameters;
@@ -9182,6 +9199,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setShowPaintRects": Page.setShowPaintRectsReturnValue;
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
     "Page.setForcedAppearance": Page.setForcedAppearanceReturnValue;
+    "Page.setForcedReducedMotion": Page.setForcedReducedMotionReturnValue;
     "Page.setTimeZone": Page.setTimeZoneReturnValue;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledReturnValue;
     "Page.snapshotNode": Page.snapshotNodeReturnValue;

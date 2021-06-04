@@ -26,7 +26,7 @@ import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
 import { helper, RegisteredListener } from '../helper';
-import { JSHandle } from '../javascript';
+import { JSHandle, kSwappedOutErrorMessage } from '../javascript';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate } from '../page';
 import { Progress } from '../progress';
@@ -180,8 +180,8 @@ export class WKPage implements PageDelegate {
     const contextOptions = this._browserContext._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
-    if (this._page._state.mediaType || this._page._state.colorScheme)
-      promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
+    if (this._page._state.mediaType || this._page._state.colorScheme || this._page._state.reducedMotion)
+      promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme, this._page._state.reducedMotion));
     for (const world of ['main', 'utility'] as const) {
       const bootstrapScript = this._calculateBootstrapScript(world);
       if (bootstrapScript.length)
@@ -213,7 +213,7 @@ export class WKPage implements PageDelegate {
     assert(this._provisionalPage);
     assert(this._provisionalPage._session.sessionId === newTargetId, 'Unknown new target: ' + newTargetId);
     assert(this._session.sessionId === oldTargetId, 'Unknown old target: ' + oldTargetId);
-    this._session.errorText = 'Target was swapped out.';
+    this._session.errorText = kSwappedOutErrorMessage;
     const newSession = this._provisionalPage._session;
     this._provisionalPage.commit();
     this._provisionalPage.dispose();
@@ -580,17 +580,21 @@ export class WKPage implements PageDelegate {
     await this._page._onFileChooserOpened(handle);
   }
 
-  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null, reducedMotion: types.ReducedMotion | null): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
-    if (colorScheme !== null) {
-      let appearance: any = '';
-      switch (colorScheme) {
-        case 'light': appearance = 'Light'; break;
-        case 'dark': appearance = 'Dark'; break;
-      }
-      promises.push(session.send('Page.setForcedAppearance', { appearance }));
+    let appearance: any = undefined;
+    switch (colorScheme) {
+      case 'light': appearance = 'Light'; break;
+      case 'dark': appearance = 'Dark'; break;
     }
+    promises.push(session.send('Page.setForcedAppearance', { appearance }));
+    let reducedMotionWk: any = undefined;
+    switch (reducedMotion) {
+      case 'reduce': reducedMotionWk = 'Reduce'; break;
+      case 'no-preference': reducedMotionWk = 'NoPreference'; break;
+    }
+    promises.push(session.send('Page.setForcedReducedMotion', { reducedMotion: reducedMotionWk }));
     await Promise.all(promises);
   }
 
@@ -609,8 +613,9 @@ export class WKPage implements PageDelegate {
   }
 
   async updateEmulateMedia(): Promise<void> {
-    const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
-    await this._forAllSessions(session => WKPage._setEmulateMedia(session, this._page._state.mediaType, colorScheme));
+    const colorScheme = this._page._state.colorScheme;
+    const reducedMotion = this._page._state.reducedMotion;
+    await this._forAllSessions(session => WKPage._setEmulateMedia(session, this._page._state.mediaType, colorScheme, reducedMotion));
   }
 
   async setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void> {
@@ -891,7 +896,7 @@ export class WKPage implements PageDelegate {
       executionContextId: (to._delegate as WKExecutionContext)._contextId
     });
     if (!result || result.object.subtype === 'null')
-      throw new Error('Unable to adopt element handle from a different document');
+      throw new Error(dom.kUnableToAdoptErrorMessage);
     return to.createHandle(result.object) as dom.ElementHandle<T>;
   }
 

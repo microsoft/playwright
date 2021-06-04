@@ -277,3 +277,27 @@ export function normalizeEvaluationExpression(expression: string, isFunction: bo
     expression = '(' + expression + ')';
   return expression;
 }
+
+export const kSwappedOutErrorMessage = 'Target was swapped out.';
+
+export function isContextDestroyedError(e: any) {
+  if (!e || typeof e !== 'object' || typeof e.message !== 'string')
+    return false;
+
+  // Evaluating in a context which was already destroyed.
+  if (e.message.includes('Cannot find context with specified id')
+      || e.message.includes('Failed to find execution context with id')
+      || e.message.includes('Missing injected script for given')
+      || e.message.includes('Cannot find object with id'))
+    return true;
+
+  // Evaluation promise is rejected when context is gone.
+  if (e.message.includes('Execution context was destroyed'))
+    return true;
+
+  // WebKit target swap.
+  if (e.message.includes(kSwappedOutErrorMessage))
+    return true;
+
+  return false;
+}

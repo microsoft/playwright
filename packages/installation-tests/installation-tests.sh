@@ -27,10 +27,8 @@ PLAYWRIGHT_WEBKIT_TGZ="$(node ${PACKAGE_BUILDER} playwright-webkit ./playwright-
 echo "playwright-webkit built"
 PLAYWRIGHT_FIREFOX_TGZ="$(node ${PACKAGE_BUILDER} playwright-firefox ./playwright-firefox.tgz)"
 echo "playwright-firefox built"
-PLAYWRIGHT_ELECTRON_TGZ="$(node ${PACKAGE_BUILDER} playwright-electron ./playwright-electron.tgz)"
-echo "playwright-electron built"
-PLAYWRIGHT_ANDROID_TGZ="$(node ${PACKAGE_BUILDER} playwright-android ./playwright-android.tgz)"
-echo "playwright-android built"
+PLAYWRIGHT_TEST_TGZ="$(node ${PACKAGE_BUILDER} playwright-test ./playwright-test.tgz)"
+echo "playwright-test built"
 
 SCRIPTS_PATH="$(pwd -P)/.."
 TEST_ROOT="/tmp/playwright-installation-tests"
@@ -49,12 +47,16 @@ function copy_test_scripts {
   cp "${SCRIPTS_PATH}/esm-playwright-chromium.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright-firefox.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright-webkit.mjs" .
+  cp "${SCRIPTS_PATH}/esm-playwright-test.mjs" .
   cp "${SCRIPTS_PATH}/sanity-electron.js" .
   cp "${SCRIPTS_PATH}/electron-app.js" .
   cp "${SCRIPTS_PATH}/driver-client.js" .
+  cp "${SCRIPTS_PATH}/sample.spec.js" .
+  cp "${SCRIPTS_PATH}/read-json-report.js" .
 }
 
 function run_tests {
+  test_playwright_test_should_work
   test_screencast
   test_typescript_types
   test_playwright_global_installation_subsequent_installs
@@ -256,6 +258,12 @@ function test_playwright_should_work {
     node esm-playwright.mjs
   fi
 
+  echo "Running playwright test"
+  if npx playwright test -c .; then
+    echo "ERROR: should not be able to run tests with just playwright package"
+    exit 1
+  fi
+
   echo "${FUNCNAME[0]} success"
 }
 
@@ -401,7 +409,7 @@ function test_playwright_validate_dependencies_skip_executable_path {
 function test_playwright_electron_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_ELECTRON_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   npm install electron@9.0
   copy_test_scripts
 
@@ -413,11 +421,11 @@ function test_playwright_electron_should_work {
 
 function test_electron_types {
   initialize_test "${FUNCNAME[0]}"
-  npm install ${PLAYWRIGHT_ELECTRON_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   npm install electron@9.0
   npm install -D typescript@3.8
   npm install -D @types/node@10.17
-  echo "import { Page, electron, ElectronApplication, Electron } from 'playwright-electron';" > "test.ts"
+  echo "import { Page, _electron, ElectronApplication, Electron } from 'playwright';" > "test.ts"
 
   echo "Running tsc"
   npx -p typescript@3.7.5 tsc "test.ts"
@@ -428,10 +436,10 @@ function test_electron_types {
 function test_android_types {
   initialize_test "${FUNCNAME[0]}"
 
-  npm install ${PLAYWRIGHT_ANDROID_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   npm install -D typescript@3.8
   npm install -D @types/node@10.17
-  echo "import { AndroidDevice, android, AndroidWebView, Page } from 'playwright-android';" > "test.ts"
+  echo "import { AndroidDevice, _android, AndroidWebView, Page } from 'playwright';" > "test.ts"
 
   echo "Running tsc"
   npx -p typescript@3.7.5 tsc "test.ts"
@@ -555,6 +563,37 @@ function test_playwright_driver_should_work {
   copy_test_scripts
   echo "Running driver-client.js"
   PLAYWRIGHT_BROWSERS_PATH="0" node driver-client.js
+
+  echo "${FUNCNAME[0]} success"
+}
+
+function test_playwright_test_should_work {
+  initialize_test "${FUNCNAME[0]}"
+
+  npm install ${PLAYWRIGHT_TEST_TGZ}
+  copy_test_scripts
+
+  echo "Running playwright test without install"
+  if npx playwright test -c .; then
+    echo "ERROR: should not be able to run tests without installing browsers"
+    exit 1
+  fi
+
+  echo "Running playwright install"
+  PLAYWRIGHT_BROWSERS_PATH="0" npx playwright install
+
+  echo "Running playwright test"
+  PLAYWRIGHT_JSON_OUTPUT_NAME=report.json PLAYWRIGHT_BROWSERS_PATH="0" npx playwright test -c . --browser=all --reporter=list,json
+
+  echo "Checking the report"
+  node ./read-json-report.js ./report.json
+
+  echo "Running sanity.js"
+  node sanity.js "@playwright/test"
+  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+    echo "Running esm.js"
+    node esm-playwright-test.mjs
+  fi
 
   echo "${FUNCNAME[0]} success"
 }

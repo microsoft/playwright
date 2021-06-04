@@ -21,13 +21,13 @@ import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 export const LogsTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
 }> = ({ action }) => {
-  let logs: string[] = [];
-  if (action) {
-    logs = action.metadata.log || [];
-    if (action.metadata.error)
-      logs = [action.metadata.error, ...logs];
-  }
+  const logs = action?.metadata.log || [];
+  const error = action?.metadata.error;
   return <div className='logs-tab'>{
+    <div className='logs-error' key='error' hidden={!error}>
+      <div className='codicon codicon-issues'/>
+      {error}
+    </div>}{
     logs.map((logLine, index) => {
       return <div key={index} className='log-line'>
         {logLine}

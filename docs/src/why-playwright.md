@@ -37,10 +37,10 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 ## Integrates with your workflow
 * **One-line installation**. Installing Playwright auto-downloads browser dependencies for your team to be onboarded quickly.
-  ```sh js
+  ```bash js
   npm i playwright
   ```
-  ```sh python
+  ```bash python
   pip install playwright
   playwright install
   ```

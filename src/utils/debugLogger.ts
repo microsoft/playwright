@@ -22,6 +22,7 @@ const debugLoggerColorMap = {
   'protocol': 34, // green
   'install': 34, // green
   'browser': 0, // reset
+  'proxy': 92, // purple
   'error': 160, // red,
   'channel:command': 33, // blue
   'channel:response': 202, // orange

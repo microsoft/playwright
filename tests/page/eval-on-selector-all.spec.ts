@@ -74,3 +74,12 @@ it('should return complex values', async ({page, server}) => {
   const texts = await page.$$eval('css=div', divs => divs.map(div => div.textContent));
   expect(texts).toEqual(['hello', 'beautiful', 'world!']);
 });
+
+it('should work with bogus Array.from', async ({page, server}) => {
+  await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
+  await page.evaluate(() => {
+    Array.from = () => [];
+  });
+  const divsCount = await page.$$eval('css=div', divs => divs.length);
+  expect(divsCount).toBe(3);
+});

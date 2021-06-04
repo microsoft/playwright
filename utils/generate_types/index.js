@@ -283,7 +283,7 @@ function writeComment(comment, indent = '') {
     const match = line.match(/```(\w+)/);
     if (match) {
       const lang = match[1];
-      skipExample = !["html", "yml", "sh", "js"].includes(lang);
+      skipExample = !["html", "yml", "bash", "js"].includes(lang);
     } else if (skipExample && line.trim().startsWith('```')) {
       skipExample = false;
       continue;

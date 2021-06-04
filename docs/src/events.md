@@ -92,9 +92,10 @@ popup.value.goto("https://wikipedia.org")
 ```
 
 ```csharp
-var waitForPopupTask = page.WaitForPopupAsync();
-await page.EvaluateAsync("window.open()");
-var popup = await waitForPopupTask;
+var popup = await page.RunAndWaitForPopupAsync(async =>
+{
+    await page.EvaluateAsync("window.open()");
+});
 await popup.GotoAsync("https://wikipedia.org");
 ```
 

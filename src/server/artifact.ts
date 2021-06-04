@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import * as util from 'util';
 import { assert } from '../utils/utils';
 import { SdkObject } from './instrumentation';
 
@@ -94,7 +93,7 @@ export class Artifact extends SdkObject {
       return;
     this._deleted = true;
     if (fileName)
-      await util.promisify(fs.unlink)(fileName).catch(e => {});
+      await fs.promises.unlink(fileName).catch(e => {});
   }
 
   async deleteOnContextClose(): Promise<void> {
@@ -104,7 +103,7 @@ export class Artifact extends SdkObject {
       return;
     this._deleted = true;
     if (!this._unaccessibleErrorMessage)
-      await util.promisify(fs.unlink)(this._localPath).catch(e => {});
+      await fs.promises.unlink(this._localPath).catch(e => {});
     await this.reportFinished('File deleted upon browser context closure.');
   }
 

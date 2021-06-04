@@ -31,7 +31,7 @@ export class WebKit extends BrowserType {
     super('webkit', playwrightOptions);
   }
 
-  executablePath(channel?: types.BrowserChannel): string {
+  executablePath(channel?: string): string {
     if (channel) {
       let executablePath = undefined;
       if ((channel as any) === 'technology-preview')

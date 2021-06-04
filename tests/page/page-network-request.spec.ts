@@ -83,6 +83,7 @@ it('should return headers', async ({page, server, browserName}) => {
 
 it('should get the same headers as the server', async ({ page, server, browserName, platform }) => {
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
+  it.fixme(browserName === 'chromium', 'Flaky, see https://github.com/microsoft/playwright/issues/6690');
 
   let serverRequest;
   server.setRoute('/empty.html', (request, response) => {

@@ -84,6 +84,9 @@ export const mediaTypes: Set<MediaType> = new Set(['screen', 'print']);
 export type ColorScheme = 'dark' | 'light' | 'no-preference';
 export const colorSchemes: Set<ColorScheme> = new Set(['dark', 'light', 'no-preference']);
 
+export type ReducedMotion = 'no-preference' | 'reduce';
+export const reducedMotions: Set<ReducedMotion> = new Set(['no-preference', 'reduce']);
+
 export type DeviceDescriptor = {
   userAgent: string,
   viewport: Size,
@@ -107,7 +110,7 @@ export type PDFOptions = {
   height?: string,
   preferCSSPageSize?: boolean,
   margin?: {top?: string, bottom?: string, left?: string, right?: string},
-}
+};
 
 export type CSSCoverageOptions = {
   resetOnNavigation?: boolean,
@@ -237,6 +240,7 @@ export type BrowserContextOptions = {
   isMobile?: boolean,
   hasTouch?: boolean,
   colorScheme?: ColorScheme,
+  reducedMotion?: ReducedMotion,
   acceptDownloads?: boolean,
   recordVideo?: {
     dir: string,
@@ -252,10 +256,8 @@ export type BrowserContextOptions = {
 
 export type EnvArray = { name: string, value: string }[];
 
-export type BrowserChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary' | 'firefox-stable';
-
 type LaunchOptionsBase = {
-  channel?: BrowserChannel,
+  channel?: string,
   executablePath?: string,
   args?: string[],
   ignoreDefaultArgs?: string[],
@@ -272,7 +274,7 @@ type LaunchOptionsBase = {
   chromiumSandbox?: boolean,
   slowMo?: number,
   useWebSocket?: boolean,
-  traceDir?: string,
+  tracesDir?: string,
 };
 export type LaunchOptions = LaunchOptionsBase & {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },
@@ -342,9 +344,9 @@ export type OriginStorage = {
 export type StorageState = {
   cookies: NetworkCookie[],
   origins: OriginStorage[]
-}
+};
 
 export type SetStorageState = {
   cookies?: SetNetworkCookieParam[],
   origins?: OriginStorage[]
-}
+};

@@ -142,6 +142,7 @@ export class Recorder {
     removeEventListeners(this._listeners);
     this._listeners = [
       addEventListener(document, 'click', event => this._onClick(event as MouseEvent), true),
+      addEventListener(document, 'auxclick', event => this._onClick(event as MouseEvent), true),
       addEventListener(document, 'input', event => this._onInput(event), true),
       addEventListener(document, 'keydown', event => this._onKeyDown(event as KeyboardEvent), true),
       addEventListener(document, 'keyup', event => this._onKeyUp(event as KeyboardEvent), true),

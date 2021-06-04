@@ -23,6 +23,18 @@
   user-select: text;
 }
 
+.logs-error {
+  border-bottom: 1px solid var(--background);
+  padding: 3px 0 3px 12px;
+}
+
+.logs-error .codicon {
+  color: red;
+  position: relative;
+  top: 2px;
+  margin-right: 2px;
+}
+
 .log-line {
   flex: none;
   padding: 3px 0 3px 12px;

@@ -89,7 +89,7 @@ page.goto("https://example.com", wait_until="networkidle")
 
 ```csharp
 // Navigate and wait until network is idle
-await page.GotoAsync("https://example.com", waitUntil: WaitUntilState.NetworkIdle);
+await page.GotoAsync("https://example.com", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
 ```
 
 ### Wait for element
@@ -344,10 +344,11 @@ with page.expect_navigation():
 ```csharp
 // Using waitForNavigation with a callback prevents a race condition
 // between clicking and waiting for a navigation.
-await Task.WhenAll(
-    page.WaitForNavigationAsync(), // Waits for the next navigation
-    page.ClickAsync("div.delayed-navigation"); // Triggers a navigation after a timeout
-);
+await page.RunAndWaitForNavigationAsync(async () =>
+{
+    // Triggers a navigation after a timeout
+    await page.ClickAsync("div.delayed-navigation");
+});
 ```
 
 ### Multiple navigations
@@ -393,10 +394,14 @@ with page.expect_navigation(url="**/login"):
 ```csharp
 // Running action in the callback of waitForNavigation prevents a race
 // condition between clicking and waiting for a navigation.
-await Task.WhenAll(
-    page.WaitForNavigationAsync("**/login"), // Waits for the next navigation
-    page.ClickAsync("a") // Triggers a navigation with a script redirect
-);
+await page.RunAndWaitForNavigationAsync(async () =>
+{
+    // Triggers a navigation with a script redirect.
+    await page.ClickAsync("a");
+}, new PageWaitForNavigationOptions
+{
+    UrlString = "**/login"
+});
 ```
 
 ### Loading a popup
@@ -434,9 +439,10 @@ popup.wait_for_load_state("load")
 ```
 
 ```csharp
-var waitForPopupTask = page.WaitForPopupAsync();
-await page.ClickAsync("a[target='_blank']"); // Opens popup
-var popup = await waitForPopupTask;
+var popup = await page.RunAndWaitForPopupAsync(async () =>
+{
+    await page.ClickAsync("a[target='_blank']"); // Opens popup
+});
 popup.WaitForLoadStateAsync(LoadState.Load);
 ```
 

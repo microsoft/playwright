@@ -248,6 +248,9 @@ When all steps combined have not finished during the specified [`option: timeout
 Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
+* langs:
+  - alias-csharp: DblClickAsync
+
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
@@ -1384,6 +1387,7 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 ## async method: Frame.waitForNavigation
 * langs:
   * alias-python: expect_navigation
+  * alias-csharp: RunAndWaitForNavigation
 - returns: <[null]|[Response]>
 
 Waits for the frame navigation and returns the main resource response. In case of multiple redirects, the navigation
@@ -1421,10 +1425,12 @@ with frame.expect_navigation():
 ```
 
 ```csharp
-await Task.WhenAll(
-    frame.WaitForNavigationAsync(),
-    // clicking the link will indirectly cause a navigation
-    frame.ClickAsync("a.delayed-navigation"));
+await frame.RunAndWaitForNavigationAsync(async () =>
+{
+    // Clicking the link will indirectly cause a navigation.
+    await frame.ClickAsync("a.delayed-navigation");
+});
+
 // Resolves after navigation has finished
 ```
 
@@ -1531,19 +1537,19 @@ using System.Threading.Tasks;
 
 class FrameExamples
 {
-  public static async Task Main()
-  {
-    using var playwright = await Playwright.CreateAsync();
-    await using var browser = await playwright.Chromium.LaunchAsync();
-    var page = await browser.NewPageAsync();
-
-    foreach (var currentUrl in new[] { "https://www.google.com", "https://bbc.com" })
+    public static async Task Main()
     {
-      await page.GotoAsync(currentUrl);
-      element = await page.MainFrame.WaitForSelectorAsync("img");
-      Console.WriteLine($"Loaded image: {await element.GetAttributeAsync("src")}");
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        var page = await browser.NewPageAsync();
+
+        foreach (var currentUrl in new[] { "https://www.google.com", "https://bbc.com" })
+        {
+            await page.GotoAsync(currentUrl);
+            element = await page.MainFrame.WaitForSelectorAsync("img");
+            Console.WriteLine($"Loaded image: {await element.GetAttributeAsync("src")}");
+        }
     }
-  }
 }
 ```
 

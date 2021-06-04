@@ -366,6 +366,12 @@ Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/W
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
 [`method: Page.emulateMedia`] for more details. Defaults to `'light'`.
 
+## context-option-reducedMotion
+- `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference">>
+
+Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Defaults
+to `'no-preference'`.
+
 ## context-option-logger
 * langs: js
 - `logger` <[Logger]>
@@ -464,7 +470,7 @@ contexts override the proxy, global proxy will be never used and can be any stri
 :::
 
 ## select-options-values
-* langs: java, js
+* langs: java, js, csharp
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
   - `value` <[string]> Matches by `option.value`. Optional.
   - `label` <[string]> Matches by `option.label`. Optional.
@@ -480,6 +486,7 @@ is considered matching if all specified properties match.
 A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
 
 ## wait-for-event-event
+* langs: js, python, java
 - `event` <[string]>
 
 Event name, same one typically passed into `*.on(event)`.
@@ -503,6 +510,12 @@ Specify screenshot type, defaults to `png`.
 - `callback` <[Runnable]>
 
 Callback that performs the action triggering the event.
+
+## csharp-wait-for-event-action
+* langs: csharp
+- `action` <[Func<Task>]>
+
+Action that triggers the event.
 
 ## python-select-options-element
 * langs: python
@@ -530,8 +543,7 @@ only the first option matching one of the passed options is selected. Optional.
 Options to select by label. If the `<select>` has the `multiple` attribute, all given options are selected, otherwise
 only the first option matching one of the passed options is selected. Optional.
 
-## python-wait-for-event-predicate
-* langs: python
+## wait-for-event-predicate
 - `predicate` <[function]>
 
 Receives the event data and resolves to truthy value when the waiting should resolve.
@@ -549,24 +561,6 @@ The default value can be changed by using the [`method: BrowserContext.setDefaul
 
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
 using the [`method: AndroidDevice.setDefaultTimeout`] method.
-
-## csharp-select-options-values
-* langs: csharp
-- `values` <[Array]<[Object]>>
-  - `value` <[string]> Matches by `option.value`. Optional.
-  - `label` <[string]> Matches by `option.label`. Optional.
-  - `index` <[int]> Matches by the index. Optional.
-
-Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
-first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
-is considered matching if all specified properties match.
-
-## csharp-input-files
-* langs: csharp
-- `files` <[Array]<[Object]>>
-  - `name` <[string]> File name
-  - `mimeType` <[string]> File type
-  - `buffer` <[Buffer]> File content
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%
@@ -590,6 +584,7 @@ is considered matching if all specified properties match.
 - %%-context-option-offline-%%
 - %%-context-option-httpcredentials-%%
 - %%-context-option-colorscheme-%%
+- %%-context-option-reducedMotion-%%
 - %%-context-option-logger-%%
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%
@@ -607,14 +602,14 @@ Additional arguments to pass to the browser instance. The list of Chromium flags
 [here](http://peter.sh/experiments/chromium-command-line-switches/).
 
 ## browser-option-channel
-- `channel` <[BrowserChannel]<"chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary">>
+- `channel` <[string]>
 
-Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
+Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 
 ## browser-option-chromiumsandbox
 - `chromiumSandbox` <[boolean]>
 
-Enable Chromium sandboxing. Defaults to `true`.
+Enable Chromium sandboxing. Defaults to `false`.
 
 
 ## browser-option-downloadspath
@@ -679,9 +674,8 @@ Logger sink for Playwright logging.
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
-## browser-option-tracedir
-* langs: js, python, java
-- `traceDir` <[path]>
+## browser-option-tracesdir
+- `tracesDir` <[path]>
 
 If specified, traces are saved into this directory.
 
@@ -712,4 +706,4 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 - %%-browser-option-ignoredefaultargs-%%
 - %%-browser-option-proxy-%%
 - %%-browser-option-timeout-%%
-- %%-browser-option-tracedir-%%
+- %%-browser-option-tracesdir-%%

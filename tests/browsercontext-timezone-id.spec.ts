@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should work', async ({ browser }) => {
+it('should work', async ({ browser, browserName }) => {
   const func = () => new Date(1479579154987).toString();
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Jamaica' });

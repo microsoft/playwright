@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 import fs from 'fs';
-import * as util from 'util';
 import path from 'path';
 import * as os from 'os';
-import { spawn } from 'child_process';
 import { getUbuntuVersion } from '../utils/ubuntuVersion';
 import * as registry from '../utils/registry';
 import * as utils from '../utils/utils';
 import { printDepsWindowsExecutable } from '../utils/binaryPaths';
 
-const accessAsync = util.promisify(fs.access.bind(fs));
-const checkExecutable = (filePath: string) => accessAsync(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
-const statAsync = util.promisify(fs.stat.bind(fs));
-const readdirAsync = util.promisify(fs.readdir.bind(fs));
+const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
 
 export async function validateHostRequirements(registry: registry.Registry, browserName: registry.BrowserName) {
   if (utils.getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
@@ -196,8 +191,8 @@ function isSharedLib(basename: string) {
 }
 
 async function executablesOrSharedLibraries(directoryPath: string): Promise<string[]> {
-  const allPaths = (await readdirAsync(directoryPath)).map(file => path.resolve(directoryPath, file));
-  const allStats = await Promise.all(allPaths.map(aPath => statAsync(aPath)));
+  const allPaths = (await fs.promises.readdir(directoryPath)).map(file => path.resolve(directoryPath, file));
+  const allStats = await Promise.all(allPaths.map(aPath => fs.promises.stat(aPath)));
   const filePaths = allPaths.filter((aPath, index) => (allStats[index] as any).isFile());
 
   const executablersOrLibraries = (await Promise.all(filePaths.map(async filePath => {
@@ -218,7 +213,7 @@ async function missingFileDependenciesWindows(filePath: string): Promise<Array<s
     return [];
 
   const dirname = path.dirname(filePath);
-  const {stdout, code} = await spawnAsync(executable, [filePath], {
+  const {stdout, code} = await utils.spawnAsync(executable, [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
@@ -236,7 +231,7 @@ async function missingFileDependencies(filePath: string, extraLDPaths: string[])
   let LD_LIBRARY_PATH = extraLDPaths.join(':');
   if (process.env.LD_LIBRARY_PATH)
     LD_LIBRARY_PATH = `${process.env.LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}`;
-  const {stdout, code} = await spawnAsync('ldd', [filePath], {
+  const {stdout, code} = await utils.spawnAsync('ldd', [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
@@ -256,24 +251,11 @@ async function missingDLOPENLibraries(browserName: registry.BrowserName): Promis
   // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the
   // default PATH in CRON.
   // @see https://github.com/microsoft/playwright/issues/3397
-  const {stdout, code, error} = await spawnAsync('/sbin/ldconfig', ['-p'], {});
+  const {stdout, code, error} = await utils.spawnAsync('/sbin/ldconfig', ['-p'], {});
   if (code !== 0 || error)
     return [];
   const isLibraryAvailable = (library: string) => stdout.toLowerCase().includes(library.toLowerCase());
   return libraries.filter(library => !isLibraryAvailable(library));
-}
-
-export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
-  const process = spawn(cmd, args, options);
-
-  return new Promise(resolve => {
-    let stdout = '';
-    let stderr = '';
-    process.stdout.on('data', data => stdout += data);
-    process.stderr.on('data', data => stderr += data);
-    process.on('close', code => resolve({stdout, stderr, code}));
-    process.on('error', error => resolve({stdout, stderr, code: 0, error}));
-  });
 }
 
 // This list is generted with the following program:

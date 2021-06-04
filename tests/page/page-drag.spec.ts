@@ -72,7 +72,7 @@ it.describe('Drag and drop', () => {
   });
 
   it.describe('iframe', () => {
-    it.fixme('implement dragging with iframes');
+    it.fixme(true, 'implement dragging with iframes');
 
     it('should drag into an iframe', async ({server, page, browserName}) => {
       await page.goto(server.PREFIX + '/drag-n-drop.html');

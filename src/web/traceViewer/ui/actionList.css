@@ -69,6 +69,7 @@
   color: red;
   position: relative;
   margin-right: 2px;
+  flex: none;
 }
 
 .action-selector {

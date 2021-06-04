@@ -1,17 +1,16 @@
-test/assets/modernizr.js
-lib/
-*.js
+# Ignore everything by default
+**/*
+
+# Check ts files in src/
+!src
+!src/**/*.ts
+src/**/*.d.ts
 src/generated/*
 src/server/chromium/protocol.ts
 src/server/firefox/protocol.ts
 src/server/webkit/protocol.ts
-src/third_party/
-/types/*
-/index.d.ts
-utils/generate_types/overrides.d.ts
-utils/generate_types/test/test.ts
-node_modules/
-browser_patches/*/checkout/
-browser_patches/chromium/output/
-**/*.d.ts
-output/
+
+# Check ts files in tests/
+!tests
+!tests/**/*.ts
+tests/**/*.d.ts

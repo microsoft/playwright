@@ -48,7 +48,7 @@ page.goto("https://example.com")
 ```
 
 ```csharp
-using var context = await Browser.NewContextAsync(new BrowserContextOptions
+using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
 {
     HttpCredentials = new HttpCredentials
     {
@@ -77,7 +77,7 @@ Here is an example of a global proxy:
 const browser = await chromium.launch({
   proxy: {
     server: 'http://myproxy.com:3128',
-    user: 'usr',
+    username: 'usr',
     password: 'pwd'
   }
 });
@@ -93,7 +93,7 @@ Browser browser = chromium.launch(new BrowserType.LaunchOptions()
 ```python async
 browser = await chromium.launch(proxy={
   "server": "http://myproxy.com:3128",
-  "user": "usr",
+  "username": "usr",
   "password": "pwd"
 })
 ```
@@ -101,7 +101,7 @@ browser = await chromium.launch(proxy={
 ```python sync
 browser = chromium.launch(proxy={
   "server": "http://myproxy.com:3128",
-  "user": "usr",
+  "username": "usr",
   "password": "pwd"
 })
 ```
@@ -113,7 +113,10 @@ var proxy = new Proxy
     Username = "user",
     Password = "pwd"
 };
-await using var browser = await BrowserType.LaunchAsync(proxy: proxy);
+await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions
+{
+    Proxy = proxy
+});
 ```
 
 When specifying proxy for each context individually, you need to give Playwright
@@ -148,8 +151,14 @@ context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 
 ```csharp
 var proxy = new Proxy { Server = "per-context" };
-await using var browser = await BrowserType.LaunchAsync(proxy: proxy);
-using var context = await Browser.NewContextAsync(proxy: new Proxy { Server = "http://myproxy.com:3128" });
+await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions
+{
+    Proxy = proxy
+});
+using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+{
+    Proxy = new Proxy { Server = "http://myproxy.com:3128" })
+});
 ```
 
 
@@ -234,17 +243,17 @@ with sync_playwright() as playwright:
 using Microsoft.Playwright;
 using System;
 
-class Example
+class Program
 {
-  public async void Main()
-  {
-    using var playwright = await Playwright.CreateAsync();
-    await using var browser = await playwright.Chromium.LaunchAsync();
-    var page = await browser.NewPageAsync();
-    page.Request += (_, request) => Console.WriteLine(">> " + request.Method + " " + request.Url);
-    page.Response += (_, response) => Console.WriteLine("<<" + response.Status + " " + response.Url);
-    await page.GotoAsync("https://example.com");
-  }
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        var page = await browser.NewPageAsync();
+        page.Request += (_, request) => Console.WriteLine(">> " + request.Method + " " + request.Url);
+        page.Response += (_, response) => Console.WriteLine("<<" + response.Status + " " + response.Url);
+        await page.GotoAsync("https://example.com");
+    }
 }
 ```
 
@@ -502,7 +511,7 @@ page.route("**/*", lambda route: route.continue_(method="POST"))
 await page.RouteAsync("**/*", async route => {
     var headers = new Dictionary<string, string>(route.Request.Headers.ToDictionary(x => x.Key, x => x.Value));
     headers.Remove("X-Secret");
-    await route.ContinueAsync(headers: headers);
+    await route.ContinueAsync(new RouteContinueOptions { Headers = headers });
 });
 
 // Continue requests as POST.

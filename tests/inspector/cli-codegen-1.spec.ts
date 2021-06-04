@@ -51,8 +51,8 @@ test.describe('cli codegen', () => {
       page.click("text=Submit");`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=Submit
-await page.ClickAsync("text=Submit");`);
+        // Click text=Submit
+        await page.ClickAsync("text=Submit");`);
 
     expect(message.text()).toBe('click');
   });
@@ -125,8 +125,8 @@ await page.ClickAsync("text=Submit");`);
       page.click("text=Submit");`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=Submit
-await page.ClickAsync("text=Submit");`);
+        // Click text=Submit
+        await page.ClickAsync("text=Submit");`);
 
     expect(message.text()).toBe('click');
   });
@@ -194,8 +194,8 @@ await page.ClickAsync("text=Submit");`);
     await page.fill(\"input[name=\\\"name\\\"]\", \"John\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Fill input[name="name"]
-await page.FillAsync(\"input[name=\\\"name\\\"]\", \"John\");`);
+        // Fill input[name="name"]
+        await page.FillAsync(\"input[name=\\\"name\\\"]\", \"John\");`);
 
     expect(message.text()).toBe('John');
   });
@@ -251,8 +251,8 @@ await page.FillAsync(\"input[name=\\\"name\\\"]\", \"John\");`);
     await page.press(\"input[name=\\\"name\\\"]\", \"Shift+Enter\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Press Enter with modifiers
-await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
+        // Press Enter with modifiers
+        await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
 
     expect(messages[0].text()).toBe('press');
   });
@@ -369,8 +369,8 @@ await page.PressAsync(\"input[name=\\\"name\\\"]\", \"Shift+Enter\");`);
     await page.check(\"input[name=\\\"accept\\\"]\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Check input[name="accept"]
-await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
+        // Check input[name="accept"]
+        await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
 
     expect(message.text()).toBe('true');
   });
@@ -426,8 +426,8 @@ await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
     await page.uncheck(\"input[name=\\\"accept\\\"]\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Uncheck input[name="accept"]
-await page.UncheckAsync(\"input[name=\\\"accept\\\"]\");`);
+        // Uncheck input[name="accept"]
+        await page.UncheckAsync(\"input[name=\\\"accept\\\"]\");`);
 
     expect(message.text()).toBe('false');
   });
@@ -463,8 +463,8 @@ await page.UncheckAsync(\"input[name=\\\"accept\\\"]\");`);
     await page.select_option(\"select\", \"2\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Select 2
-await page.SelectOptionAsync(\"select\", \"2\");`);
+        // Select 2
+        await page.SelectOptionAsync(\"select\", new[] { \"2\" });`);
 
     expect(message.text()).toBe('2');
   });
@@ -510,10 +510,10 @@ await page.SelectOptionAsync(\"select\", \"2\");`);
     page1 = await popup_info.value`);
 
     expect(sources.get('<csharp>').text).toContain(`
-var page1Task = page.WaitForEventAsync(PageEvent.Popup)
-await Task.WhenAll(
-    page1Task,
-    page.ClickAsync(\"text=link\"));`);
+        var page1 = await page.RunAndWaitForPopupAsync(async () =>
+        {
+            await page.ClickAsync(\"text=link\");
+        });`);
 
     expect(popup.url()).toBe('about:blank');
   });
@@ -552,9 +552,9 @@ await Task.WhenAll(
     # assert page.url == \"about:blank#foo\"`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=link
-await page.ClickAsync(\"text=link\");
-// Assert.Equal(\"about:blank#foo\", page.Url);`);
+        // Click text=link
+        await page.ClickAsync(\"text=link\");
+        // Assert.Equal(\"about:blank#foo\", page.Url);`);
 
     expect(page.url()).toContain('about:blank#foo');
   });
@@ -601,10 +601,14 @@ await page.ClickAsync(\"text=link\");
         await page.click(\"text=link\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=link
-await Task.WhenAll(
-    page.WaitForNavigationAsync(/*\"about:blank#foo\"*/),
-    page.ClickAsync(\"text=link\"));`);
+        // Click text=link
+        await page.RunAndWaitForNavigationAsync(async () =>
+        {
+            await page.ClickAsync(\"text=link\");
+        }/*, new PageWaitForNavigationOptions
+        {
+            UrlString = \"about:blank#foo\"
+        }*/);`);
 
     expect(page.url()).toContain('about:blank#foo');
   });
@@ -621,5 +625,37 @@ await Task.WhenAll(
     await recorder.waitForOutput('<javascript>', 'example.com');
     expect(recorder.sources().get('<javascript>').text).not.toContain(`await page.press('input', 'AltGraph');`);
     expect(recorder.sources().get('<javascript>').text).toContain(`await page.fill('input', 'playwright@example.com');`);
+  });
+
+  test('should middle click', async ({ page, openRecorder, server }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<a href${JSON.stringify(server.EMPTY_PAGE)}>Click me</a>`);
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('<javascript>', 'click'),
+      page.click('a', { button: 'middle' }),
+    ]);
+
+    expect(sources.get('<javascript>').text).toContain(`
+  await page.click('text=Click me', {
+    button: 'middle'
+  });`);
+
+    expect(sources.get('<python>').text).toContain(`
+    page.click("text=Click me", button="middle")`);
+
+    expect(sources.get('<async python>').text).toContain(`
+    await page.click("text=Click me", button="middle")`);
+
+    expect(sources.get('<java>').text).toContain(`
+      page.click("text=Click me", new Page.ClickOptions()
+        .setButton(MouseButton.MIDDLE));`);
+
+    expect(sources.get('<csharp>').text).toContain(`
+        await page.ClickAsync("text=Click me", new PageClickOptions
+        {
+            Button = MouseButton.Middle,
+        });`);
   });
 });

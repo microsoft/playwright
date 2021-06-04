@@ -223,18 +223,7 @@ SerializedError:
 LaunchOptions:
   type: mixin
   properties:
-    channel:
-      type: enum?
-      literals:
-      - chrome
-      - chrome-beta
-      - chrome-dev
-      - chrome-canary
-      - msedge
-      - msedge-beta
-      - msedge-dev
-      - msedge-canary
-      - firefox-stable
+    channel: string?
     executablePath: string?
     args:
       type: array?
@@ -260,7 +249,7 @@ LaunchOptions:
         username: string?
         password: string?
     downloadsPath: string?
-    traceDir: string?
+    tracesDir: string?
     chromiumSandbox: boolean?
 
 
@@ -311,6 +300,11 @@ ContextOptions:
       literals:
       - dark
       - light
+      - no-preference
+    reducedMotion:
+      type: enum?
+      literals:
+      - reduce
       - no-preference
     acceptDownloads: boolean?
     _debugName: string?
@@ -371,6 +365,20 @@ Playwright:
     selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
+
+  commands:
+
+    setForwardedPorts:
+      parameters:
+        ports:
+          type: array
+          items: number
+
+  events:
+
+    incomingSocksSocket:
+      parameters:
+        socket: SocksSocket
 
 
 Selectors:
@@ -714,6 +722,13 @@ Page:
           literals:
           - dark
           - light
+          - no-preference
+          # Reset emulated value to the system default.
+          - null
+        reducedMotion:
+          type: enum?
+          literals:
+          - reduce
           - no-preference
           # Reset emulated value to the system default.
           - null
@@ -1133,11 +1148,6 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
-        world:
-          type: enum?
-          literals:
-          - main
-          - utility
       returns:
         value: SerializedValue
 
@@ -1146,11 +1156,6 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
-        world:
-          type: enum?
-          literals:
-          - main
-          - utility
       returns:
         handle: JSHandle
 
@@ -2376,6 +2381,11 @@ AndroidDevice:
           - dark
           - light
           - no-preference
+        reducedMotion:
+          type: enum?
+          literals:
+          - reduce
+          - no-preference
         acceptDownloads: boolean?
         _debugName: string?
         recordVideo:
@@ -2508,3 +2518,29 @@ AndroidElementInfo:
     longClickable: boolean
     scrollable: boolean
     selected: boolean
+
+SocksSocket:
+  type: interface
+
+  initializer:
+    dstAddr: string
+    dstPort: number
+
+  commands:
+    write:
+      parameters:
+        data: binary
+
+    error:
+      parameters:
+        error: string
+
+    connected:
+
+    end:
+
+  events:
+    data:
+      parameters:
+        data: binary
+    close:

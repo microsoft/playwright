@@ -78,7 +78,7 @@ class HandleExamples
     public static async Task Run()
     {
         using var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Chromium.LaunchAsync(headless: false);
+        var browser = await playwright.Chromium.LaunchAsync();
         var page = await browser.NewPageAsync();
         await page.GotoAsync("https://www.bing.com");
         var handle = await page.QuerySelectorAsync("a");
@@ -200,6 +200,9 @@ When all steps combined have not finished during the specified [`option: timeout
 Returns the content frame for element handles referencing iframe nodes, or `null` otherwise
 
 ## async method: ElementHandle.dblclick
+* langs:
+  - alias-csharp: DblClickAsync
+
 This method double clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
@@ -302,7 +305,7 @@ element_handle.dispatch_event("#source", "dragstart", {"dataTransfer": data_tran
 
 ```csharp
 var handle = await page.EvaluateHandleAsync("() => new DataTransfer()");
-await handle.AsElement.DispatchEventAsync("dragstart", new Dictionary<string, object>
+await handle.AsElement().DispatchEventAsync("dragstart", new Dictionary<string, object>
 {
     { "dataTransfer", dataTransfer }
 });

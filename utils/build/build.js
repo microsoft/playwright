@@ -91,15 +91,6 @@ steps.push({
   shell: true,
 });
 
-// Generate api.json.
-onChanges.push({
-  committed: false,
-  inputs: [
-    'docs/src/api/',
-  ],
-  script: 'utils/doclint/generateApiJson.js',
-});
-
 // Generate channels.
 onChanges.push({
   committed: false,

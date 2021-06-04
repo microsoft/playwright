@@ -87,7 +87,7 @@ with sync_playwright() as playwright:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Example
+class Program
 {
     public static async Task Main()
     {
@@ -209,10 +209,11 @@ print(new_page.title())
 
 ```csharp
 // Get page after a specific action (e.g. clicking a link)
-var waitForPageTask = context.WaitForPageAsync();
-await page.ClickAsync("a[target='_blank']");
-var newPage = await waitForPageTask;
-await page.WaitForLoadStateAsync();
+var newPage = await context.RunAndWaitForPageAsync(async () =>
+{
+    await page.ClickAsync("a[target='_blank']");
+});
+await newPage.WaitForLoadStateAsync();
 Console.WriteLine(await newPage.TitleAsync());
 ```
 
@@ -310,9 +311,10 @@ print(popup.title())
 
 ```csharp
 // Get popup after a specific action (e.g., click)
-var waitForPopupTask = page.WaitForPopupAsync();
-await page.ClickAsync("#open");
-var newPage = await waitForPopupTask;
+var newPage = await page.RunAndWaitForPopupAsync(async () =>
+{
+    await page.ClickAsync("#open");
+});
 await newPage.WaitForLoadStateAsync();
 Console.WriteLine(await newPage.TitleAsync());
 ```

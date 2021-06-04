@@ -147,13 +147,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
+  scheme.PlaywrightSetForwardedPortsParams = tObject({
+    ports: tArray(tNumber),
+  });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
     source: tString,
     contentScript: tOptional(tBoolean),
   });
   scheme.BrowserTypeLaunchParams = tObject({
-    channel: tOptional(tEnum(['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary', 'firefox-stable'])),
+    channel: tOptional(tString),
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
@@ -172,13 +175,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
-    traceDir: tOptional(tString),
+    tracesDir: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
     firefoxUserPrefs: tOptional(tAny),
     slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
-    channel: tOptional(tEnum(['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary', 'firefox-stable'])),
+    channel: tOptional(tString),
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     ignoreAllDefaultArgs: tOptional(tBoolean),
@@ -197,7 +200,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
-    traceDir: tOptional(tString),
+    tracesDir: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
     sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
@@ -231,6 +234,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     isMobile: tOptional(tBoolean),
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
+    reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
@@ -289,6 +293,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     isMobile: tOptional(tBoolean),
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
+    reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
@@ -410,6 +415,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.PageEmulateMediaParams = tObject({
     media: tOptional(tEnum(['screen', 'print', 'null'])),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'null'])),
+    reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'null'])),
   });
   scheme.PageExposeBindingParams = tObject({
     name: tString,
@@ -584,13 +590,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     expression: tString,
     isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
-    world: tOptional(tEnum(['main', 'utility'])),
   });
   scheme.FrameEvaluateExpressionHandleParams = tObject({
     expression: tString,
     isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
-    world: tOptional(tEnum(['main', 'utility'])),
   });
   scheme.FrameFillParams = tObject({
     selector: tString,
@@ -1129,6 +1133,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     isMobile: tOptional(tBoolean),
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
+    reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
@@ -1218,6 +1223,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     scrollable: tBoolean,
     selected: tBoolean,
   });
+  scheme.SocksSocketWriteParams = tObject({
+    data: tBinary,
+  });
+  scheme.SocksSocketErrorParams = tObject({
+    error: tString,
+  });
+  scheme.SocksSocketConnectedParams = tOptional(tObject({}));
+  scheme.SocksSocketEndParams = tOptional(tObject({}));
 
   return scheme;
 }

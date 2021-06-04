@@ -44,23 +44,25 @@ const customTypeNames = new Map([
   ['File', 'FilePayload'],
 ]);
 
-const typesDir = process.argv[2] || path.join(__dirname, 'generate_types', 'csharp');
-const modelsDir = path.join(typesDir, 'Models');
-const enumsDir = path.join(typesDir, 'Enums');
-const optionsDir = path.join(typesDir, 'Options');
-const baseDir = path.join(typesDir, 'Base');
+const outputDir = process.argv[2] || path.join(__dirname, 'generate_types', 'csharp');
+const apiDir = path.join(outputDir, 'API', 'Generated');
+const optionsDir = path.join(outputDir, 'API', 'Generated', 'Options');
+const enumsDir = path.join(outputDir, 'API', 'Generated', 'Enums');
+const typesDir = path.join(outputDir, 'API', 'Generated', 'Types');
+const adaptersDir = path.join(outputDir, 'Generated', 'Adapters');
 
-for (const dir of [typesDir, modelsDir, enumsDir, optionsDir, baseDir])
+for (const dir of [apiDir, optionsDir, enumsDir, typesDir, adaptersDir])
   fs.mkdirSync(dir, { recursive: true });
 
 const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
 documentation.filterForLanguage('csharp');
 
 documentation.setLinkRenderer(item => {
+  const asyncSuffix = item.member && item.member.async ? 'Async' : '';
   if (item.clazz)
     return `<see cref="I${toTitleCase(item.clazz.name)}"/>`;
   else if (item.member)
-    return `<see cref="I${toTitleCase(item.member.clazz.name)}.${toMemberName(item.member)}"/>`;
+    return `<see cref="I${toTitleCase(item.member.clazz.name)}.${toMemberName(item.member)}${asyncSuffix}"/>`;
   else if (item.option)
     return `<paramref name="${item.option}"/>`;
   else if (item.param)
@@ -70,11 +72,7 @@ documentation.setLinkRenderer(item => {
 });
 
 // get the template for a class
-const template = fs.readFileSync(path.join(__dirname, 'templates', 'interface.cs'), 'utf-8')
-  .replace('[PW_TOOL_VERSION]', `${__filename.substring(path.join(__dirname, '..', '..').length).split(path.sep).join(path.posix.sep)}`);
-
-// we have some "predefined" types, like the mixed state enum, that we can map in advance
-enumTypes.set("MixedState", ["On", "Off", "Mixed"]);
+const template = fs.readFileSync(path.join(__dirname, 'templates', 'interface.cs'), 'utf-8');
 
 // map the name to a C# friendly one (we prepend an I to denote an interface)
 const classNameMap = new Map(documentation.classesArray.map(x => [x.name, `I${toTitleCase(x.name)}`]));
@@ -128,7 +126,7 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
   out.push('}');
 
   let content = template.replace('[CONTENT]', out.join(EOL));
-  fs.writeFileSync(path.join(folder, name + '.generated.cs'), content);
+  fs.writeFileSync(path.join(folder, name + '.cs'), content);
 }
 
 /**
@@ -140,15 +138,18 @@ function renderClass(clazz) {
     return;
 
   const body = [];
-  for (const member of clazz.membersArray)
+  for (const member of clazz.membersArray) {
+    if (member.alias.startsWith('RunAnd'))
+      renderMember(member, clazz, { trimRunAndPrefix: true }, body);
     renderMember(member, clazz, {}, body);
+  }
 
   writeFile(
       'public partial interface',
       name,
       clazz.spec,
       body,
-      typesDir,
+      apiDir,
       clazz.extends ? `I${toTitleCase(clazz.extends)}` : null);
 }
 
@@ -172,15 +173,18 @@ function renderBaseClass(clazz) {
     return;
 
   const body = [];
-  for (const member of methodsWithOptions)
+  for (const member of methodsWithOptions) {
+    if (member.alias.startsWith('RunAnd'))
+      renderMethod(member, clazz, toMemberName(member), { mode: 'base', nodocs: true, public: true, trimRunAndPrefix: true }, body);
     renderMethod(member, clazz, toMemberName(member), { mode: 'base', nodocs: true, public: true }, body);
+  }
 
   writeFile(
       'internal partial class',
       name,
       [],
       body,
-      baseDir,
+      adaptersDir,
       null);
 }
 
@@ -208,7 +212,7 @@ function renderModelType(name, type) {
     console.log(type);
     throw new Error(`Not sure what to do in this case.`);
   }
-  writeFile('public partial class', name, null, body, modelsDir);
+  writeFile('public partial class', name, null, body, typesDir);
 }
 
 /**
@@ -217,7 +221,6 @@ function renderModelType(name, type) {
  */
 function renderEnum(name, literals) {
   const body = [];
-  body.push('Undefined = 0,');
   for (let literal of literals) {
     // strip out the quotes
     literal = literal.replace(/[\"]/g, ``)
@@ -237,8 +240,11 @@ function renderEnum(name, literals) {
  */
 function renderOptionType(name, type) {
   const body = [];
+
+  renderConstructors(name, type, body);
+
   for (const member of type.properties)
-    renderMember(member, type, {}, body);
+    renderMember(member, member.type, {}, body);
   writeFile('public class', name, null, body, optionsDir);
 }
 
@@ -247,27 +253,18 @@ for (const element of documentation.classesArray) {
   renderBaseClass(element);
 }
 
+for (let [name, type] of optionTypes)
+  renderOptionType(name, type);
+
 for (let [name, type] of modelTypes)
   renderModelType(name, type);
 
 for (let [name, literals] of enumTypes)
   renderEnum(name, literals);
 
-for (let [name, type] of optionTypes)
-  renderOptionType(name, type);
-
 if (process.argv[3] !== "--skip-format") {
   // run the formatting tool for .net, to ensure the files are prepped
-  execSync(`dotnet format -f "${typesDir}" --include-generated --fix-whitespace`);
-  if (process.platform !== 'win32') {
-    for (const folder of [typesDir, path.join(typesDir, 'Models'), path.join(typesDir, 'Enums'), path.join(typesDir, 'Extensions'), path.join(typesDir, 'Constants')])
-    for (const name of fs.readdirSync(folder)) {
-      if (!name.includes('\.cs'))
-        continue;
-      const content = fs.readFileSync(path.join(folder, name), 'utf-8');
-      fs.writeFileSync(path.join(folder, name), content.split('\r\n').join('\n'));
-    }
-  }
+  execSync(`dotnet format -f "${outputDir}" --include-generated --fix-whitespace`);
 }
 
 /**
@@ -279,15 +276,15 @@ function toArgumentName(name) {
 
  /**
  * @param {Documentation.Member} member
- * @param {{ omitAsync?: boolean; }=} options
  */
-function toMemberName(member, options) {
+function toMemberName(member, makeAsync = false) {
   const assumedName = toTitleCase(member.alias || member.name);
   if (member.kind === 'interface')
     return `I${assumedName}`;
-  const omitAsync = options && options.omitAsync;
-  if (!omitAsync && member.kind === 'method' && member.async && !assumedName.endsWith('Async'))
-    return `${assumedName}Async`;
+  if (makeAsync && member.async)
+    return assumedName + 'Async';
+  if (!makeAsync && assumedName.endsWith('Async'))
+    return assumedName.substring(0, assumedName.length - 'Async'.length);
   return assumedName;
 }
 
@@ -296,22 +293,42 @@ function toMemberName(member, options) {
  * @returns {string}
  */
 function toTitleCase(name) {
-  if (name === 'dblclick')
-    return 'DblClick';
   return name.charAt(0).toUpperCase() + name.substring(1);
+}
+
+/**
+ *
+ * @param {string} name
+ * @param {Documentation.Type} type
+ * @param {string[]} out
+ */
+function renderConstructors(name, type, out) {
+  out.push(`public ${name}(){}`);
+  out.push('');
+  out.push(`public ${name}(${name} clone) {`);
+  out.push(`if(clone == null) return;`);
+
+  type.properties.forEach(p => {
+    let propType = translateType(p.type, type, t => generateNameDefault(p, name, t, type));
+    let propName = toMemberName(p);
+    const overloads = getPropertyOverloads(propType, p, propName, p.type);
+    for (let { name } of overloads)
+      out.push(`${name} = clone.${name};`);
+  });
+  out.push(`}`);
 }
 
 /**
  *
  * @param {Documentation.Member} member
  * @param {Documentation.Class|Documentation.Type} parent
- * @param {{nojson?: boolean}} options
+ * @param {{nojson?: boolean, trimRunAndPrefix?: boolean}} options
  * @param {string[]} out
  */
 function renderMember(member, parent, options, out) {
   let name = toMemberName(member);
   if (member.kind === 'method') {
-    renderMethod(member, parent, name, { mode: 'options' }, out);
+    renderMethod(member, parent, name, { mode: 'options', trimRunAndPrefix: options.trimRunAndPrefix }, out);
     return;
   }
 
@@ -332,19 +349,7 @@ function renderMember(member, parent, options, out) {
       console.warn(`children property found in ${parent.name}, assuming array.`);
       type = `IEnumerable<${parent.name}>`;
     }
-    const overloads = [];
-    if (type) {
-      let jsonName = member.name;
-      if (member.type.expression === '[string]|[float]')
-        jsonName = `${member.name}String`;
-      overloads.push({ type, name, jsonName });
-    } else {
-      for (const overload of member.type.union) {
-        const t = translateType(overload, parent, t => generateNameDefault(member, name, t, parent));
-        const suffix = toOverloadSuffix(t);
-        overloads.push({ type: t, name: name + suffix, jsonName: member.name + suffix });
-      }
-    }
+    const overloads = getPropertyOverloads(type, member, name, parent);
     for (let { type, name, jsonName } of overloads) {
       out.push('');
       if (member.spec)
@@ -352,7 +357,7 @@ function renderMember(member, parent, options, out) {
       if (!member.clazz)
         out.push(`[JsonPropertyName("${jsonName}")]`)
       if (!type.endsWith('?') && !member.required && nullableTypes.includes(type))
-      type = `${type}?`;
+        type = `${type}?`;
       if (member.clazz)
         out.push(`public ${type} ${name} { get; }`);
       else
@@ -361,6 +366,31 @@ function renderMember(member, parent, options, out) {
     return;
   }
   throw new Error(`Problem rendering a member: ${type} - ${name} (${member.kind})`);
+}
+
+/**
+ *
+ * @param {string} type
+ * @param {Documentation.Member} member
+ * @param {string} name
+ * @param {Documentation.Class|Documentation.Type} parent
+ * @returns [{ type: string; name: string; jsonName: string; }]
+ */
+function getPropertyOverloads(type, member, name, parent) {
+  const overloads = [];
+  if (type) {
+    let jsonName = member.name;
+    if (member.type.expression === '[string]|[float]')
+      jsonName = `${member.name}String`;
+    overloads.push({ type, name, jsonName });
+  } else {
+    for (const overload of member.type.union) {
+      const t = translateType(overload, parent, t => generateNameDefault(member, name, t, parent));
+      const suffix = toOverloadSuffix(t);
+      overloads.push({ type: t, name: name + suffix, jsonName: member.name + suffix });
+    }
+  }
+  return overloads;
 }
 
 /**
@@ -409,7 +439,7 @@ function generateNameDefault(member, name, t, parent) {
           attemptedName = `${names.pop()}${attemptedName}`;
           continue;
         } else {
-          modelTypes.set(attemptedName, t);
+          registerModelType(attemptedName, t);
         }
         break;
       }
@@ -452,11 +482,15 @@ function generateEnumNameIfApplicable(type) {
  *   nodocs?: boolean,
  *   abstract?: boolean,
  *   public?: boolean,
+ *   trimRunAndPrefix?: boolean,
  * }} options
  * @param {string[]} out
  */
 function renderMethod(member, parent, name, options, out) {
   out.push('');
+
+  if (options.trimRunAndPrefix)
+    name = name.substring('RunAnd'.length);
 
   /**
    * @param {Documentation.Type} type 
@@ -464,8 +498,8 @@ function renderMethod(member, parent, name, options, out) {
    */
   function resolveType(type) {
     return translateType(type, parent, (t) => {
-      let newName = `${parent.name}${toMemberName(member, { omitAsync: true })}Result`;
-      documentedResults.set(newName, `Result of calling <see cref="I${toTitleCase(parent.name)}.${toMemberName(member)}"/>.`);
+      let newName = `${parent.name}${toMemberName(member)}Result`;
+      documentedResults.set(newName, `Result of calling <see cref="I${toTitleCase(parent.name)}.${toMemberName(member, true)}"/>.`);
       return newName;
     });
   }
@@ -501,7 +535,7 @@ function renderMethod(member, parent, name, options, out) {
       if (!type)
         type = resolveType(innerType);
       if (isArray)
-        type = `IReadOnlyCollection<${type}>`;
+        type = `IReadOnlyList<${type}>`;
     }
   }
 
@@ -550,6 +584,8 @@ function renderMethod(member, parent, name, options, out) {
    * @param {boolean} isExploded
    */
   function pushArg(innerArgType, innerArgName, argument, isExploded = false) {
+    if (innerArgType === 'null')
+      return;
     const isNullable = nullableTypes.includes(innerArgType);
     const requiredPrefix = (argument.required || isExploded) ? "" : isNullable ? "?" : "";
     const requiredSuffix = (argument.required || isExploded) ? "" : " = default";
@@ -565,9 +601,12 @@ function renderMethod(member, parent, name, options, out) {
    * @param {Documentation.Member} arg
    */
   function processArg(arg) {
+    if (options.trimRunAndPrefix && arg.name === 'action')
+      return;
+
     if (arg.name === 'options') {
       if (options.mode === 'options' || options.mode === 'base') {
-        const optionsType = member.clazz.name + toTitleCase(member.name) + 'Options';
+        const optionsType = member.clazz.name + name + 'Options';
         optionTypes.set(optionsType, arg.type);
         args.push(`${optionsType} options = default`);
         argTypeMap.set(`${optionsType} options = default`, 'options');
@@ -631,28 +670,27 @@ function renderMethod(member, parent, name, options, out) {
     pushArg(argType, argName, arg);
   }
 
+  let modifiers = '';
+  if (options.abstract)
+    modifiers = 'protected abstract ';
+  if (options.public)
+    modifiers = 'public ';
+
   member.argsArray
     .sort((a, b) => b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
     .forEach(processArg);
-
-  const hasAction = name.includes('WaitFor') && !['WaitForTimeoutAsync', 'WaitForFunctionAsync', 'WaitForLoadStateAsync', 'WaitForURLAsync', 'WaitForSelectorAsync', 'WaitForElementStateAsync'].includes(name);
-  if (hasAction) {
-    args.push('Func<Task> action = default');
-    argTypeMap.set('Func<Task> action = default', 'action');
-    addParamsDoc('action', ['Action to perform while waiting']);
-  }
-
+  
   let body = ';';
   if (options.mode === 'base') {
     // Generate options -> named transition.
     const tokens = [];
     for (const arg of member.argsArray) {
+      if (arg.name === 'action' && options.trimRunAndPrefix)
+        continue;
       if (arg.name !== 'options') {
         tokens.push(toArgumentName(arg.name));
         continue;
       }
-      if (hasAction)
-        tokens.push('action');
       for (const opt of arg.type.properties) {
         // TODO: use translate type here?
         if (opt.type.union && !opt.type.union[0].name.startsWith('"') && opt.type.union[0].name !== 'null' && opt.type.expression !== '[string]|[Buffer]') {
@@ -668,23 +706,17 @@ function renderMethod(member, parent, name, options, out) {
     }
     body = `
 {
-    options ??= new ${member.clazz.name}${toMemberName(member, { omitAsync: true })}Options();
-    return ${name}(${tokens.join(', ')});
+    options ??= new ${member.clazz.name}${name}Options();
+    return ${toAsync(name, member.async)}(${tokens.join(', ')});
 }`;
   }
-
-  let modifiers = '';
-  if (options.abstract)
-    modifiers = 'protected abstract ';
-  if (options.public)
-    modifiers = 'public ';
 
   if (!explodedArgs.length) {
     if (!options.nodocs) {
       out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       paramDocs.forEach((value, i) => printArgDoc(i, value, out));
     }
-    out.push(`${modifiers}${type} ${name}(${args.join(', ')})${body}`);
+    out.push(`${modifiers}${type} ${toAsync(name, member.async)}(${args.join(', ')})${body}`);
   } else {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
@@ -706,7 +738,7 @@ function renderMethod(member, parent, name, options, out) {
           overloadedArgs.push(arg);
         }
       }
-      out.push(`${modifiers}${type} ${name}(${overloadedArgs.join(', ')})${body}`);
+      out.push(`${modifiers}${type} ${toAsync(name, member.async)}(${overloadedArgs.join(', ')})${body}`);
       if (argIndex < explodedArgs.length - 1)
         out.push(''); // output a special blank line
     });
@@ -743,8 +775,6 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   // a few special cases we can fix automatically
   if (type.expression === '[null]|[Error]')
     return 'void';
-  else if (type.expression === '[boolean]|"mixed"')
-    return 'MixedState';
 
   if (type.union) {
     if (type.union[0].name === 'null' && type.union.length === 2)
@@ -764,6 +794,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
     // Regular primitive enums are named in the markdown.
     if (type.name) {
       enumTypes.set(type.name, type.union.map(t => t.name));
+      nullableTypes.push(type.name);
       return optional ? type.name + '?' : type.name;
     }
     return null;
@@ -784,6 +815,8 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
       // get the inner types of both templates, and if they're strings, it's a keyvaluepair string, string,
       let keyType = translateType(type.templates[0], parent, generateNameCallback);
       let valueType = translateType(type.templates[1], parent, generateNameCallback);
+      if (parent.name === 'Request' || parent.name === 'Response')
+        return `Dictionary<${keyType}, ${valueType}>`;
       return `IEnumerable<KeyValuePair<${keyType}, ${valueType}>>`;
     }
 
@@ -858,6 +891,8 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
 function registerModelType(typeName, type) {
   if (['object', 'string', 'int'].includes(typeName))
     return;
+  if (typeName.endsWith('Option'))
+    return;
 
   let potentialType = modelTypes.get(typeName);
   if (potentialType) {
@@ -889,4 +924,16 @@ function printArgDoc(name, value, out) {
  */
 function toOverloadSuffix(typeName) {
   return toTitleCase(typeName.replace(/[<].*[>]/, '').replace(/[^a-zA-Z]/g, ''));
+}
+
+/**
+ * @param {string} name
+ * @param {boolean} convert
+ */
+function toAsync(name, convert) {
+  if (!convert)
+    return name;
+  if (name.includes('<'))
+    return name.replace('<', 'Async<');
+  return name + 'Async';
 }

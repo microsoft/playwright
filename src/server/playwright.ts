@@ -26,6 +26,9 @@ import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
+import { PortForwardingServer } from './socksSocket';
+import { SocksInterceptedSocketHandler } from './socksServer';
+import { assert } from '../utils/utils';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -35,6 +38,7 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
+  private _portForwardingServer: PortForwardingServer | undefined;
 
   constructor(isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
@@ -53,6 +57,27 @@ export class Playwright extends SdkObject {
     this.electron = new Electron(this.options);
     this.android = new Android(new AdbBackend(), this.options);
     this.selectors = serverSelectors;
+  }
+
+  async _enablePortForwarding() {
+    assert(!this._portForwardingServer);
+    this._portForwardingServer = await PortForwardingServer.create(this);
+    this.options.loopbackProxyOverride = () => this._portForwardingServer!.proxyServer();
+    this._portForwardingServer.on('incomingSocksSocket', (socket: SocksInterceptedSocketHandler) => {
+      this.emit('incomingSocksSocket', socket);
+    });
+  }
+
+  _disablePortForwarding() {
+    if (!this._portForwardingServer)
+      return;
+    this._portForwardingServer.stop();
+  }
+
+  _setForwardedPorts(ports: number[]) {
+    if (!this._portForwardingServer)
+      throw new Error(`Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.`);
+    this._portForwardingServer.setForwardedPorts(ports);
   }
 }
 

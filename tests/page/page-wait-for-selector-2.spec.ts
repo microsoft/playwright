@@ -268,3 +268,23 @@ it('should correctly handle hidden shadow host', async ({page, server}) => {
   expect(await page.textContent('div')).toBe('Find me');
   await page.waitForSelector('div', { state: 'hidden' });
 });
+
+it('should work when navigating before node adoption', async ({page, mode, server}) => {
+  it.skip(mode !== 'default');
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<div>Hello</div>`);
+
+  let navigatedOnce = false;
+  const __testHookBeforeAdoptNode = async () => {
+    if (!navigatedOnce) {
+      navigatedOnce = true;
+      await page.goto(server.PREFIX + '/one-style.html');
+    }
+  };
+
+  const div = await page.waitForSelector('div', { __testHookBeforeAdoptNode } as any);
+
+  // This text is coming from /one-style.html
+  expect(await div.textContent()).toBe('hello, world!');
+});

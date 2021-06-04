@@ -37,7 +37,6 @@ export const FilmStrip: React.FunctionComponent<{
   }
 
   const screencastFrames = context.pages[pageIndex]?.screencastFrames;
-  // TODO: pick file from the Y position.
   let previewImage = undefined;
   if (previewPoint !== undefined && screencastFrames) {
     const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;

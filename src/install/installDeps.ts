@@ -16,15 +16,27 @@
 
 import childProcess from 'child_process';
 import os from 'os';
+import path from 'path';
 import { getUbuntuVersion } from '../utils/ubuntuVersion';
+import * as utils from '../utils/utils';
 
 const { deps } = require('../nativeDeps');
 
+const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
+
 export async function installDeps(browserTypes: string[]) {
-  if (os.platform() !== 'linux')
-    return;
   if (!browserTypes.length)
     browserTypes = ['chromium', 'firefox', 'webkit'];
+  if (os.platform() === 'win32') {
+    if (browserTypes.includes('chromium')) {
+      const {code} = await utils.spawnAsync('powershell.exe', [path.join(SCRIPTS_DIRECTORY, 'install_media_pack.ps1')], { cwd: SCRIPTS_DIRECTORY, stdio: 'inherit' });
+      if (code !== 0)
+        throw new Error('Failed to install windows dependencies!');
+    }
+    return;
+  }
+  if (os.platform() !== 'linux')
+    return;
   browserTypes.push('tools');
 
   const ubuntuVersion = await getUbuntuVersion();

@@ -30,9 +30,10 @@ file_chooser.set_files("myfile.pdf")
 ```
 
 ```csharp
-var waitForFileChooserTask = page.WaitForFileChooserAsync();
-await page.ClickAsync("upload");
-var fileChooser = await waitForFileChooserTask;
+var fileChooser = await page.RunAndWaitForFileChooserAsync(async () =>
+{
+    await page.ClickAsync("upload");
+});
 await fileChooser.SetFilesAsync("temp.txt");
 ```
 

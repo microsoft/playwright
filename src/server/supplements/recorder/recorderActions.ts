@@ -29,7 +29,7 @@ export type ActionName =
 export type ActionBase = {
   name: ActionName,
   signals: Signal[],
-}
+};
 
 export type ClickAction = ActionBase & {
   name: 'click',
@@ -108,6 +108,7 @@ export type PopupSignal = BaseSignal & {
 
 export type DownloadSignal = BaseSignal & {
   name: 'download',
+  downloadAlias: string,
 };
 
 export type DialogSignal = BaseSignal & {

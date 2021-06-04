@@ -239,9 +239,10 @@ print(request.timing)
 ```
 
 ```csharp
-var waitForEventTask = page.WaitForEventAsync(PageEvent.RequestFinished);
-await page.GotoAsync("https://www.microsoft.com");
-var request = await waitForEventTask;
+var request = await page.RunAndWaitForRequestFinishedAsync(async () =>
+{
+    await page.GotoAsync("https://www.microsoft.com");
+});
 Console.WriteLine(request.Timing.ResponseEnd);
 ```
 

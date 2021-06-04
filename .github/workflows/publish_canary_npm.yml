@@ -1,6 +1,7 @@
 name: "devrelease:npm"
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "10 0 * * *"
   push:
@@ -22,9 +23,9 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: node utils/build/update_canary_version.js --today-date
-      if: contains(github.ref, 'master')
+      if: contains(github.ref, 'master') && github.event_name != 'workflow_dispatch'
     - run: node utils/build/update_canary_version.js --commit-timestamp
-      if: contains(github.ref, 'release')
+      if: contains(github.ref, 'release') || github.event_name == 'workflow_dispatch'
     - run: utils/publish_all_packages.sh --tip-of-tree
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

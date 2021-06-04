@@ -45,6 +45,8 @@ export const Timeline: React.FunctionComponent<{
   onHighlighted: (action: ActionTraceEvent | undefined) => void,
 }> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
+  const barsRef = React.useRef<HTMLDivElement | null>(null);
+
   const [previewPoint, setPreviewPoint] = React.useState<{ x: number, clientY: number } | undefined>();
   const [hoveredBarIndex, setHoveredBarIndex] = React.useState<number | undefined>();
 
@@ -58,9 +60,9 @@ export const Timeline: React.FunctionComponent<{
       for (const entry of page.actions) {
         if (!entry.metadata.params)
           console.log(entry);
-        let detail = entry.metadata.params.selector || '';
+        let detail = trimRight(entry.metadata.params.selector || '', 50);
         if (entry.metadata.method === 'goto')
-          detail = entry.metadata.params.url || '';
+          detail = trimRight(entry.metadata.params.url || '', 50);
         bars.push({
           action: entry,
           leftTime: entry.metadata.startTime,
@@ -94,32 +96,41 @@ export const Timeline: React.FunctionComponent<{
   let targetBar: TimelineBar | undefined = bars.find(bar => bar.action === (highlightedAction || selectedAction));
   targetBar = hoveredBar || targetBar;
 
-  const findHoveredBarIndex = (x: number) => {
+  const findHoveredBarIndex = (x: number, y: number) => {
     const time = positionToTime(measure.width, boundaries, x);
     const time1 = positionToTime(measure.width, boundaries, x - 5);
     const time2 = positionToTime(measure.width, boundaries, x + 5);
     let index: number | undefined;
-    let distance: number | undefined;
+    let yDistance: number | undefined;
+    let xDistance: number | undefined;
     for (let i = 0; i < bars.length; i++) {
       const bar = bars[i];
+      const yMiddle = kBarHeight / 2 + barTop(bar);
       const left = Math.max(bar.leftTime, time1);
       const right = Math.min(bar.rightTime, time2);
-      const middle = (bar.leftTime + bar.rightTime) / 2;
-      const d = Math.abs(time - middle);
-      if (left <= right && (index === undefined || d < distance!)) {
+      const xMiddle = (bar.leftTime + bar.rightTime) / 2;
+      const xd = Math.abs(time - xMiddle);
+      const yd = Math.abs(y - yMiddle);
+      if (left > right)
+        continue;
+      // Prefer closest yDistance (the same bar), among those prefer the closest xDistance.
+      if (index === undefined ||
+          (yd < yDistance!) ||
+          (Math.abs(yd - yDistance!) < 1e-2 && xd < xDistance!)) {
         index = i;
-        distance = d;
+        xDistance = xd;
+        yDistance = yd;
       }
     }
     return index;
   };
 
   const onMouseMove = (event: React.MouseEvent) => {
-    if (!ref.current)
+    if (!ref.current || !barsRef.current)
       return;
-    const bounds = ref.current.getBoundingClientRect();
-    const x = event.clientX - bounds.left;
-    const index = findHoveredBarIndex(x);
+    const x = event.clientX - ref.current.getBoundingClientRect().left;
+    const y = event.clientY - barsRef.current.getBoundingClientRect().top;
+    const index = findHoveredBarIndex(x, y);
     setPreviewPoint({ x, clientY: event.clientY });
     setHoveredBarIndex(index);
     if (typeof index === 'number')
@@ -134,10 +145,11 @@ export const Timeline: React.FunctionComponent<{
 
   const onClick = (event: React.MouseEvent) => {
     setPreviewPoint(undefined);
-    if (!ref.current)
+    if (!ref.current || !barsRef.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
-    const index = findHoveredBarIndex(x);
+    const y = event.clientY - barsRef.current.getBoundingClientRect().top;
+    const index = findHoveredBarIndex(x, y);
     if (index === undefined)
       return;
     const entry = bars[index].action;
@@ -166,13 +178,14 @@ export const Timeline: React.FunctionComponent<{
         </div>;
       })
     }</div>
-    <div className='timeline-lane timeline-bars'>{
+    <div className='timeline-lane timeline-bars' ref={barsRef}>{
       bars.map((bar, index) => {
         return <div key={index}
           className={'timeline-bar ' + (bar.action ? 'action ' : '') + (bar.event ? 'event ' : '') + bar.className + (targetBar === bar ? ' selected' : '')}
           style={{
             left: bar.leftPosition + 'px',
             width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
+            top: barTop(bar) + 'px',
           }}
         ></div>;
       })
@@ -221,4 +234,13 @@ function timeToPosition(clientWidth: number, boundaries: Boundaries, time: numbe
 
 function positionToTime(clientWidth: number, boundaries: Boundaries, x: number): number {
   return x / clientWidth * (boundaries.maximum - boundaries.minimum) + boundaries.minimum;
+}
+
+function trimRight(s: string, maxLength: number): string {
+  return s.length <= maxLength ? s : s.substring(0, maxLength - 1) + '\u2026';
+}
+
+const kBarHeight = 11;
+function barTop(bar: TimelineBar): number {
+  return bar.event ? 22 : (bar.action?.metadata.method === 'waitForEventInfo' ? 0 : 11);
 }

@@ -26,6 +26,7 @@ import * as types from '../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
+import { kBrowserClosedError } from '../../utils/errors';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.2 Safari/605.1.15';
 const BROWSER_VERSION = '14.2';
@@ -72,6 +73,9 @@ export class WKBrowser extends Browser {
   _onDisconnect() {
     for (const wkPage of this._wkPages.values())
       wkPage.dispose(true);
+    for (const video of this._idToVideo.values())
+      video.artifact.reportFinished(kBrowserClosedError);
+    this._idToVideo.clear();
     this._didClose();
   }
 
@@ -209,13 +213,11 @@ export class WKBrowserContext extends BrowserContext {
     assert(!this._wkPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [ super._initialize() ];
-    if (this._browser.options.downloadsPath) {
-      promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
-        behavior: this._options.acceptDownloads ? 'allow' : 'deny',
-        downloadPath: this._browser.options.downloadsPath,
-        browserContextId
-      }));
-    }
+    promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
+      behavior: this._options.acceptDownloads ? 'allow' : 'deny',
+      downloadPath: this._browser.options.downloadsPath,
+      browserContextId
+    }));
     if (this._options.ignoreHTTPSErrors)
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)

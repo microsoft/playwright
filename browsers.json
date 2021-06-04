@@ -3,25 +3,25 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "879910",
+      "revision": "888113",
       "installByDefault": true
     },
     {
       "name": "firefox",
-      "revision": "1261",
+      "revision": "1268",
       "installByDefault": true
     },
     {
       "name": "firefox-stable",
-      "revision": "1251",
+      "revision": "1259",
       "installByDefault": false
     },
     {
       "name": "webkit",
-      "revision": "1480",
+      "revision": "1492",
       "installByDefault": true,
       "revisionOverrides": {
-        "mac10.14": "1443"
+        "mac10.14": "1445"
       }
     },
     {

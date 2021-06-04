@@ -25,7 +25,7 @@ and develop from there.
 
 From the `playwright` repo, run the following command:
 
-```sh
+```bash
 $ ./browser_patches/prepare_checkout.sh firefox <path to checkout>
 ```
 (you can optionally pass "webkit" for a webkit checkout)
@@ -45,7 +45,7 @@ You want to create a new branch off the `playwright-build` branch.
 
 Assuming that you're under `./browser_patches/firefox/checkout`:
 
-```sh
+```bash
 $ git checkout -b my-new-feature playwright-build
 $ # develop my feature on the my-new-feature branch ....
 ```
@@ -56,7 +56,7 @@ Once you're happy with the work you did in the browser-land, you want to export 
 
 Assuming that you're in the root of the `playwright` repo and that your browser checkout has your feature branch checked out:
 
-```sh
+```bash
 $ ./browser_patches/export.sh firefox <path to checkout>
 ```
 
@@ -73,13 +73,17 @@ Send a PR to the Playwright repo to be reviewed.
 
 Once the patch has been committed, the build bots will kick in, compile and upload a new browser version to all the platforms. Then you can roll the browser:
 
-```sh
+```bash
 $ node utils/roll_browser.js chromium 123456
 ```
 
 # Cheatsheet
 
-## FireFox
+## See browser stdout/stderr
+
+Set the `DEBUG=pw:browser` environment variable to see it.
+
+## Firefox
 
 #### Stack trace
 
@@ -111,7 +115,17 @@ Module name is a string passed to the `mozilla::LazyLogModule` of the correspond
 LazyLogModule gHttpLog("nsHttp");
 ```
 
+Inside Juggler, you can use `dump('foo\n')`.
+
 ## WebKit
+
+#### Logging
+
+Inside Objective-C you can use [NSLog](https://developer.apple.com/documentation/foundation/1395275-nslog).
+
+```
+NSLog(@"Foobar value: %@", value);
+```
 
 #### Debugging windows
 

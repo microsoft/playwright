@@ -18,8 +18,9 @@
 import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
+import { getUserAgent } from '../lib/utils/utils';
 
-test.slow('All connect tests are slow');
+test.slow(true, 'All connect tests are slow');
 
 test('should be able to reconnect to a browser', async ({browserType, startRemoteServer, server}) => {
   const remoteServer = await startRemoteServer();
@@ -62,6 +63,14 @@ test('should be able to connect two browsers at the same time', async ({browserT
   await browser2.close();
 });
 
+test('should timeout while connecting', async ({browserType, startRemoteServer, server}) => {
+  const e = await browserType.connect({
+    wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+    timeout: 100,
+  }).catch(e => e);
+  expect(e.message).toContain('browserType.connect: Timeout 100ms exceeded.');
+});
+
 test('should send extra headers with connect request', async ({browserType, startRemoteServer, server}) => {
   const [request] = await Promise.all([
     server.waitForWebSocketConnectionRequest(),
@@ -70,10 +79,26 @@ test('should send extra headers with connect request', async ({browserType, star
       headers: {
         'User-Agent': 'Playwright',
         'foo': 'bar',
-      }
+      },
+      timeout: 100,
     }).catch(() => {})
   ]);
   expect(request.headers['user-agent']).toBe('Playwright');
+  expect(request.headers['foo']).toBe('bar');
+});
+
+test('should send default User-Agent header with connect request', async ({browserType, startRemoteServer, server}) => {
+  const [request] = await Promise.all([
+    server.waitForWebSocketConnectionRequest(),
+    browserType.connect({
+      wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+      headers: {
+        'foo': 'bar',
+      },
+      timeout: 100,
+    }).catch(() => {})
+  ]);
+  expect(request.headers['user-agent']).toBe(getUserAgent());
   expect(request.headers['foo']).toBe('bar');
 });
 

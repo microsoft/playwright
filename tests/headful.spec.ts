@@ -150,11 +150,10 @@ it('Page.bringToFront should work', async ({browserType, browserOptions}) => {
 it('focused input should produce the same screenshot', async ({browserType, browserOptions, browserName, platform, channel}, testInfo) => {
   it.fail(browserName === 'firefox' && platform === 'darwin', 'headless has thinner outline');
   it.fail(browserName === 'firefox' && platform === 'linux', 'headless has no outline');
-  it.fail(browserName === 'firefox' && platform === 'win32' && (channel as any !== 'firefox-stable'), 'headless has outline since new version');
   it.skip(browserName === 'webkit' && platform === 'linux', 'gtk vs wpe');
   it.skip(!!process.env.CRPATH);
 
-  testInfo.snapshotPathSegment = browserName + '-' + platform;
+  testInfo.snapshotSuffix = browserName + '-' + platform;
 
   const headful = await browserType.launch({...browserOptions, headless: false });
   const headfulPage = await headful.newPage();

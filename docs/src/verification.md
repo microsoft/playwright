@@ -56,7 +56,7 @@ msg.args().get(1).jsonValue() // 42
 
 ```python async
 # Listen for all console logs
-page.on("console", msg => print(msg.text))
+page.on("console", lambda msg: print(msg.text))
 
 # Listen for all console events and handle errors
 page.on("console", lambda msg: print(f"error: {msg.text}") if msg.type == "error" else None)
@@ -74,7 +74,7 @@ await msg.args[1].json_value() # 42
 
 ```python sync
 # Listen for all console logs
-page.on("console", msg => print(msg.text))
+page.on("console", lambda msg: print(msg.text))
 
 # Listen for all console events and handle errors
 page.on("console", lambda msg: print(f"error: {msg.text}") if msg.type == "error" else None)
@@ -244,9 +244,10 @@ popup = popup_info.value
 ```
 
 ```csharp
-var waitForPopupTask = page.WaitForPopupAsync();
-await page.ClickAsync("#open");
-var popup = await waitForPopupTask;
+var popup = await page.RunAndWaitForPopupAsync(async () =>
+{
+    await page.ClickAsync("#open");
+});
 ```
 
 ### API reference

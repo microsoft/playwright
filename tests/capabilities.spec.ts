@@ -26,6 +26,7 @@ it('Web Assembly should work', async function({page, server, browserName, platfo
 });
 
 it('WebSocket should work', async ({page, server}) => {
+  server.sendOnWebSocketConnection('incoming');
   const value = await page.evaluate(port => {
     let cb;
     const result = new Promise(f => cb = f);

@@ -10,7 +10,7 @@ in Python.
 
 ## Usage
 
-```sh
+```bash
 pip install pytest-playwright
 ```
 
@@ -25,7 +25,7 @@ def test_example_is_working(page):
 
 To run your tests, use pytest CLI.
 
-```sh
+```bash
 # Run tests (Chromium and headless by default)
 pytest
 
@@ -113,7 +113,7 @@ def test_visit_example(page):
 
 Start Pytest with the `base-url` argument.
 
-```sh
+```bash
 pytest --base-url http://localhost:8080
 ```
 

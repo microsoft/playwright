@@ -25,13 +25,13 @@ As of May 20, 2020, [`//packages/build_package.js`](./build_package.js) does the
 
 To build `playwright` package and save result as `./playwright.tgz` file:
 
-```sh
+```bash
 ./packages/build_package.js playwright ./playwright.tgz
 ```
 
 To debug what files are put into the folder, use `--no-cleanup` flag and inspect the package folder:
 
-```sh
+```bash
 ./packages/build_package.js playwright ./playwright.tgz --no-cleanup
 ls ./packages/playwright # inspect the folder
 ```
@@ -45,17 +45,4 @@ To test packages, use [`//packages/installation-tests/installation-tests.sh`](./
 ## Publishing packages
 
  All package publishing happens **exclusively** over CI/CD using the [`//utils/publish_all_packages.sh`](../utils/publish_all_packages.sh) script.
-
-
-# Special handling for `playwright-electron`
-
-- `playwright-electron` version is pre-1.0.0 and thus managed separately. It's specified inside the [`//packages/build_package.js`]('./build_package.js') file.
-- `playwright-electron` is published manually.
-
-To publish a new version of `playwright-electron`:
-
-1. Bump `playwright-electron` version inside [`//packages/build_package.js`]('./build_package.js')
-2. Submit PR with the updated version
-3. Build package with `./build_package.js playwright-electron ./playwright-electron.tgz`
-4. Publish package with `npm publish playwright-electron.tgz`
 

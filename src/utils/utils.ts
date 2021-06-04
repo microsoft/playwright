@@ -17,10 +17,24 @@
 import path from 'path';
 import fs from 'fs';
 import removeFolder from 'rimraf';
-import * as util from 'util';
 import * as crypto from 'crypto';
+import os from 'os';
+import { spawn } from 'child_process';
 
-const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
+export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
+  const process = spawn(cmd, args, options);
+
+  return new Promise(resolve => {
+    let stdout = '';
+    let stderr = '';
+    if (process.stdout)
+      process.stdout.on('data', data => stdout += data);
+    if (process.stderr)
+      process.stderr.on('data', data => stderr += data);
+    process.on('close', code => resolve({stdout, stderr, code}));
+    process.on('error', error => resolve({stdout, stderr, code: 0, error}));
+  });
+}
 
 // See https://joel.tools/microtasks/
 export function makeWaitForNextTask() {
@@ -117,7 +131,7 @@ export function getAsBooleanFromENV(name: string): boolean {
 
 export async function mkdirIfNeeded(filePath: string) {
   // This will harmlessly throw on windows if the dirname is the root directory.
-  await mkdirAsync(path.dirname(filePath), {recursive: true}).catch(() => {});
+  await fs.promises.mkdir(path.dirname(filePath), {recursive: true}).catch(() => {});
 }
 
 type HeadersArray = { name: string, value: string }[];
@@ -154,13 +168,11 @@ export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
 }
 
-export async function removeFolders(dirs: string[]) {
-  await Promise.all(dirs.map((dir: string) => {
-    return new Promise<void>(fulfill => {
+export async function removeFolders(dirs: string[]): Promise<Array<Error|undefined>> {
+  return await Promise.all(dirs.map((dir: string) => {
+    return new Promise<Error|undefined>(fulfill => {
       removeFolder(dir, { maxBusyTries: 10 }, error => {
-        if (error)
-          console.error(error);  // eslint-disable no-console
-        fulfill();
+        fulfill(error);
       });
     });
   }));
@@ -176,4 +188,21 @@ export function canAccessFile(file: string) {
   } catch (e) {
     return false;
   }
+}
+
+const localIpAddresses = [
+  'localhost',
+  '127.0.0.1',
+  '::ffff:127.0.0.1',
+  '::1',
+  '0000:0000:0000:0000:0000:0000:0000:0001', // WebKit (Windows)
+];
+
+export function isLocalIpAddress(ipAdress: string): boolean {
+  return localIpAddresses.includes(ipAdress);
+}
+
+export function getUserAgent() {
+  const packageJson = require('./../../package.json');
+  return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
 }

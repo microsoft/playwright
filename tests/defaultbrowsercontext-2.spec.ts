@@ -38,7 +38,13 @@ it('should support colorScheme option', async ({launchPersistent}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
 });
 
-it('should support timezoneId option', async ({launchPersistent}) => {
+it('should support reducedMotion option', async ({launchPersistent}) => {
+  const {page} = await launchPersistent({reducedMotion: 'reduce'});
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(false);
+});
+
+it('should support timezoneId option', async ({launchPersistent, browserName}) => {
   const {page} = await launchPersistent({locale: 'en-US', timezoneId: 'America/Jamaica'});
   expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
 });

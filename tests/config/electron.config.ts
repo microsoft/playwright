@@ -25,7 +25,6 @@ const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   testDir,
-  snapshotDir: '__snapshots__',
   outputDir,
   timeout: 30000,
   globalTimeout: 5400000,
@@ -33,10 +32,19 @@ const config: folio.Config<CommonOptions & PlaywrightOptions> = {
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 3 : 0,
   reporter: process.env.CI ? [
-    'dot',
-    { name: 'json', outputFile: path.join(outputDir, 'report.json') },
+    [ 'dot' ],
+    [ 'json', { outputFile: path.join(outputDir, 'report.json') } ],
   ] : 'line',
   projects: [],
+};
+
+const metadata = {
+  platform: process.platform,
+  headful: true,
+  browserName: 'electron',
+  channel: undefined,
+  mode: 'default',
+  video: false,
 };
 
 config.projects.push({
@@ -47,6 +55,7 @@ config.projects.push({
     coverageName: 'electron',
   },
   testDir: path.join(testDir, 'electron'),
+  metadata,
 });
 
 config.projects.push({
@@ -58,6 +67,7 @@ config.projects.push({
   },
   testDir: path.join(testDir, 'page'),
   define: { test: pageTest, fixtures: electronFixtures },
+  metadata,
 });
 
 export default config;

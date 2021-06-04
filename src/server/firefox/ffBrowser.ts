@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { kBrowserClosedError } from '../../utils/errors';
 import { assert } from '../../utils/utils';
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
@@ -56,7 +57,7 @@ export class FFBrowser extends Browser {
     this._connection = connection;
     this._ffPages = new Map();
     this._contexts = new Map();
-    this._connection.on(ConnectionEvents.Disconnected, () => this._didClose());
+    this._connection.on(ConnectionEvents.Disconnected, () => this._onDisconnect());
     this._connection.on('Browser.attachedToTarget', this._onAttachedToTarget.bind(this));
     this._connection.on('Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this._connection.on('Browser.downloadCreated', this._onDownloadCreated.bind(this));
@@ -136,6 +137,13 @@ export class FFBrowser extends Browser {
   _onVideoRecordingFinished(payload: Protocol.Browser.videoRecordingFinishedPayload) {
     this._takeVideo(payload.screencastId)?.reportFinished();
   }
+
+  _onDisconnect() {
+    for (const video of this._idToVideo.values())
+      video.artifact.reportFinished(kBrowserClosedError);
+    this._idToVideo.clear();
+    this._didClose();
+  }
 }
 
 export class FFBrowserContext extends BrowserContext {
@@ -150,15 +158,13 @@ export class FFBrowserContext extends BrowserContext {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [ super._initialize() ];
-    if (this._browser.options.downloadsPath) {
-      promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
-        browserContextId,
-        downloadOptions: {
-          behavior: this._options.acceptDownloads ? 'saveToDisk' : 'cancel',
-          downloadsDir: this._browser.options.downloadsPath,
-        },
-      }));
-    }
+    promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
+      browserContextId,
+      downloadOptions: {
+        behavior: this._options.acceptDownloads ? 'saveToDisk' : 'cancel',
+        downloadsDir: this._browser.options.downloadsPath,
+      },
+    }));
     if (this._options.viewport) {
       const viewport = {
         viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
@@ -190,8 +196,14 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
       promises.push(this.setOffline(this._options.offline));
-    if (this._options.colorScheme)
-      promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
+    promises.push(this._browser._connection.send('Browser.setColorScheme', {
+      browserContextId,
+      colorScheme: this._options.colorScheme !== undefined  ? this._options.colorScheme : 'light',
+    }));
+    promises.push(this._browser._connection.send('Browser.setReducedMotion', {
+      browserContextId,
+      reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
+    }));
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser._connection.send('Browser.setVideoRecordingOptions', {

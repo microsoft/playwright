@@ -200,6 +200,8 @@ export interface Page {
    * const searchValue = await page.$eval('#search', el => el.value);
    * const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
    * const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
+   * // In TypeScript, this example requires an explicit type annotation (HTMLLinkElement) on el:
+   * const preloadHrefTS = await page.$eval('link[rel=preload]', (el: HTMLLinkElement) => el.href);
    * ```
    *
    * Shortcut for main frame's
@@ -514,7 +516,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   on(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -688,7 +692,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   once(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -862,7 +868,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   addListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -1036,7 +1044,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -1210,7 +1220,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   off(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -1679,6 +1691,12 @@ export interface Page {
      * disables CSS media emulation.
      */
     media?: null|"screen"|"print";
+
+    /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null`
+     * disables reduced motion emulation.
+     */
+    reducedMotion?: null|"reduce"|"no-preference";
   }): Promise<void>;
 
   /**
@@ -1695,7 +1713,7 @@ export interface Page {
    * [page.exposeFunction(name, callback)](https://playwright.dev/docs/api/class-page#pageexposefunctionname-callback)
    * survive navigations.
    *
-   * An example of adding an `sha1` function to the page:
+   * An example of adding a `sha256` function to the page:
    *
    * ```js
    * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -1704,11 +1722,11 @@ export interface Page {
    * (async () => {
    *   const browser = await webkit.launch({ headless: false });
    *   const page = await browser.newPage();
-   *   await page.exposeFunction('sha1', text => crypto.createHash('sha1').update(text).digest('hex'));
+   *   await page.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
    *   await page.setContent(`
    *     <script>
    *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+   *         document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
    *       }
    *     </script>
    *     <button onclick="onClick()">Click me</button>
@@ -2418,69 +2436,7 @@ export interface Page {
    * Returns the buffer with the captured screenshot.
    * @param options
    */
-  screenshot(options?: {
-    /**
-     * An object which specifies clipping of the resulting image. Should have the following fields:
-     */
-    clip?: {
-      /**
-       * x-coordinate of top-left corner of clip area
-       */
-      x: number;
-
-      /**
-       * y-coordinate of top-left corner of clip area
-       */
-      y: number;
-
-      /**
-       * width of clipping area
-       */
-      width: number;
-
-      /**
-       * height of clipping area
-       */
-      height: number;
-    };
-
-    /**
-     * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
-     * `false`.
-     */
-    fullPage?: boolean;
-
-    /**
-     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-     * Defaults to `false`.
-     */
-    omitBackground?: boolean;
-
-    /**
-     * The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative
-     * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to
-     * the disk.
-     */
-    path?: string;
-
-    /**
-     * The quality of the image, between 0-100. Not applicable to `png` images.
-     */
-    quality?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#pagesetdefaulttimeouttimeout) methods.
-     */
-    timeout?: number;
-
-    /**
-     * Specify screenshot type, defaults to `png`.
-     */
-    type?: "png"|"jpeg";
-  }): Promise<Buffer>;
+  screenshot(options?: PageScreenshotOptions): Promise<Buffer>;
 
   /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, waits until
@@ -3078,7 +3034,9 @@ export interface Page {
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#pageonrequestfinished) event and
-   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed).
+   * not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#pageonrequestfailed). A request will only
+   * be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
    */
   waitForEvent(event: 'requestfailed', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 
@@ -3215,10 +3173,6 @@ export interface Page {
    *   // Triggers the request
    *   page.click('button.triggers-request'),
    * ]);
-   * ```
-   *
-   * ```js
-   * await page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');
    * ```
    *
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Request] object.
@@ -5378,7 +5332,7 @@ export interface BrowserContext {
    * See [page.exposeFunction(name, callback)](https://playwright.dev/docs/api/class-page#pageexposefunctionname-callback)
    * for page-only version.
    *
-   * An example of adding an `md5` function to all pages in the context:
+   * An example of adding a `sha256` function to all pages in the context:
    *
    * ```js
    * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -5387,12 +5341,12 @@ export interface BrowserContext {
    * (async () => {
    *   const browser = await webkit.launch({ headless: false });
    *   const context = await browser.newContext();
-   *   await context.exposeFunction('md5', text => crypto.createHash('md5').update(text).digest('hex'));
+   *   await context.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
    *   const page = await context.newPage();
    *   await page.setContent(`
    *     <script>
    *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.md5('PLAYWRIGHT');
+   *         document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');
    *       }
    *     </script>
    *     <button onclick="onClick()">Click me</button>
@@ -7013,13 +6967,14 @@ export interface BrowserType<Unused = {}> {
     bypassCSP?: boolean;
 
     /**
-     * Browser distribution channel. Read more about using
+     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
+     * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
      * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
-    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+    channel?: string;
 
     /**
-     * Enable Chromium sandboxing. Defaults to `true`.
+     * Enable Chromium sandboxing. Defaults to `false`.
      */
     chromiumSandbox?: boolean;
 
@@ -7237,6 +7192,13 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+     * Defaults to `'no-preference'`.
+     */
+    reducedMotion?: "reduce"|"no-preference";
+
+    /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
      * is set.
      */
@@ -7273,7 +7235,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * If specified, traces are saved into this directory.
      */
-    traceDir?: string;
+    tracesDir?: string;
 
     /**
      * Specific user agent to use in this context.
@@ -7347,13 +7309,14 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
-     * Browser distribution channel. Read more about using
+     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
+     * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
      * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
-    channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+    channel?: string;
 
     /**
-     * Enable Chromium sandboxing. Defaults to `true`.
+     * Enable Chromium sandboxing. Defaults to `false`.
      */
     chromiumSandbox?: boolean;
 
@@ -7461,7 +7424,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * If specified, traces are saved into this directory.
      */
-    traceDir?: string;
+    tracesDir?: string;
   }): Promise<BrowserServer>;
 
   /**
@@ -7970,7 +7933,7 @@ export {};
  * Note that since you don't need Playwright to install web browsers when testing Android, you can omit browser download
  * via setting the following environment variable when installing Playwright:
  *
- * ```sh js
+ * ```bash js
  * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *
@@ -8258,6 +8221,13 @@ export interface AndroidDevice {
         height: number;
       };
     };
+
+    /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+     * Defaults to `'no-preference'`.
+     */
+    reducedMotion?: "reduce"|"no-preference";
 
     /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
@@ -9037,6 +9007,13 @@ export interface Browser extends EventEmitter {
     };
 
     /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+     * Defaults to `'no-preference'`.
+     */
+    reducedMotion?: "reduce"|"no-preference";
+
+    /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
      * is set.
      */
@@ -9614,7 +9591,7 @@ export interface Download {
  * Note that since you don't need Playwright to install web browsers when testing Electron, you can omit browser download
  * via setting the following environment variable when installing Playwright:
  *
- * ```sh js
+ * ```bash js
  * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *
@@ -10635,40 +10612,32 @@ export interface Touchscreen {
  * Start with specifying the folder traces will be stored in:
  *
  * ```js
- * const browser = await chromium.launch({ traceDir: 'traces' });
+ * const browser = await chromium.launch();
  * const context = await browser.newContext();
- * await context.tracing.start({ name: 'trace', screenshots: true, snapshots: true });
+ * await context.tracing.start({ screenshots: true, snapshots: true });
  * const page = await context.newPage();
  * await page.goto('https://playwright.dev');
- * await context.tracing.stop();
- * await context.tracing.export('trace.zip');
+ * await context.tracing.stop({ path: 'trace.zip' });
  * ```
  *
  */
 export interface Tracing {
   /**
-   * Export trace into the file with the given name. Should be called after the tracing has stopped.
-   * @param path File to save the trace into.
-   */
-  export(path: string): Promise<void>;
-
-  /**
    * Start tracing.
    *
    * ```js
-   * await context.tracing.start({ name: 'trace', screenshots: true, snapshots: true });
+   * await context.tracing.start({ screenshots: true, snapshots: true });
    * const page = await context.newPage();
    * await page.goto('https://playwright.dev');
-   * await context.tracing.stop();
-   * await context.tracing.export('trace.zip');
+   * await context.tracing.stop({ path: 'trace.zip' });
    * ```
    *
    * @param options
    */
   start(options?: {
     /**
-     * If specified, the trace is going to be saved into the file with the given name inside the `traceDir` folder specified in
-     * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browsertypelaunchoptions).
+     * If specified, the trace is going to be saved into the file with the given name inside the `tracesDir` folder specified
+     * in [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browsertypelaunchoptions).
      */
     name?: string;
 
@@ -10685,8 +10654,14 @@ export interface Tracing {
 
   /**
    * Stop tracing.
+   * @param options
    */
-  stop(): Promise<void>;
+  stop(options?: {
+    /**
+     * Export trace into the file with the given name.
+     */
+    path?: string;
+  }): Promise<void>;
 }
 
 /**
@@ -11090,6 +11065,13 @@ export interface BrowserContextOptions {
   };
 
   /**
+   * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
+   * Defaults to `'no-preference'`.
+   */
+  reducedMotion?: "reduce"|"no-preference";
+
+  /**
    * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
    * is set.
    */
@@ -11253,13 +11235,14 @@ export interface LaunchOptions {
   args?: Array<string>;
 
   /**
-   * Browser distribution channel. Read more about using
+   * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
+   * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
    * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
    */
-  channel?: "chrome"|"chrome-beta"|"chrome-dev"|"chrome-canary"|"msedge"|"msedge-beta"|"msedge-dev"|"msedge-canary";
+  channel?: string;
 
   /**
-   * Enable Chromium sandboxing. Defaults to `true`.
+   * Enable Chromium sandboxing. Defaults to `false`.
    */
   chromiumSandbox?: boolean;
 
@@ -11367,7 +11350,7 @@ export interface LaunchOptions {
   /**
    * If specified, traces are saved into this directory.
    */
-  traceDir?: string;
+  tracesDir?: string;
 }
 
 export interface ConnectOverCDPOptions {
@@ -11505,6 +11488,70 @@ interface PageWaitForFunctionOptions {
    * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout).
    */
   timeout?: number;
+}
+
+export interface PageScreenshotOptions {
+  /**
+   * An object which specifies clipping of the resulting image. Should have the following fields:
+   */
+  clip?: {
+    /**
+     * x-coordinate of top-left corner of clip area
+     */
+    x: number;
+
+    /**
+     * y-coordinate of top-left corner of clip area
+     */
+    y: number;
+
+    /**
+     * width of clipping area
+     */
+    width: number;
+
+    /**
+     * height of clipping area
+     */
+    height: number;
+  };
+
+  /**
+   * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+   * `false`.
+   */
+  fullPage?: boolean;
+
+  /**
+   * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   */
+  omitBackground?: boolean;
+
+  /**
+   * The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative
+   * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to
+   * the disk.
+   */
+  path?: string;
+
+  /**
+   * The quality of the image, between 0-100. Not applicable to `png` images.
+   */
+  quality?: number;
+
+  /**
+   * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+   * using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#pagesetdefaulttimeouttimeout) methods.
+   */
+  timeout?: number;
+
+  /**
+   * Specify screenshot type, defaults to `png`.
+   */
+  type?: "png"|"jpeg";
 }
 
 type Devices = {

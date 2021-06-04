@@ -20,14 +20,11 @@ import { removeFolders } from '../../lib/utils/utils';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import * as util from 'util';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 import { baseTest, CommonWorkerFixtures } from './baseTest';
 
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-
 type PlaywrightWorkerOptions = {
-  traceDir: LaunchOptions['traceDir'];
+  tracesDir: LaunchOptions['tracesDir'];
   executablePath: LaunchOptions['executablePath'];
   proxy: LaunchOptions['proxy'];
   args: LaunchOptions['args'];
@@ -53,7 +50,7 @@ type PlaywrightTestFixtures = {
 export type PlaywrightOptions = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
 export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, {}, CommonWorkerFixtures> = {
-  traceDir: [ undefined, { scope: 'worker' } ],
+  tracesDir: [ undefined, { scope: 'worker' } ],
   executablePath: [ undefined, { scope: 'worker' } ],
   proxy: [ undefined, { scope: 'worker' } ],
   args: [ undefined, { scope: 'worker' } ],
@@ -63,12 +60,12 @@ export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & Playwrig
     await run(playwright[browserName]);
   }, { scope: 'worker' } ],
 
-  browserOptions: [async ({ headless, channel, executablePath, traceDir, proxy, args }, run) => {
+  browserOptions: [async ({ headless, channel, executablePath, tracesDir, proxy, args }, run) => {
     await run({
       headless,
       channel,
       executablePath,
-      traceDir,
+      tracesDir,
       proxy,
       args,
       handleSIGINT: false,
@@ -94,7 +91,7 @@ export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & Playwrig
     // - Firefox removes lock file later, presumably from another watchdog process?
     // - WebKit has circular symlinks that makes CI go crazy.
     await run(async () => {
-      const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+      const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-'));
       dirs.push(dir);
       return dir;
     });
@@ -129,7 +126,6 @@ export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & Playwrig
   },
 
   contextOptions: async ({ video, hasTouch, browserVersion }, run, testInfo) => {
-    testInfo.data.browserVersion = browserVersion;
     const debugName = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
     const contextOptions = {
       recordVideo: video ? { dir: testInfo.outputPath('') } : undefined,

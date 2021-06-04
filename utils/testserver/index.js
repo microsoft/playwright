@@ -26,7 +26,6 @@ const WebSocketServer = require('ws').Server;
 const fulfillSymbol = Symbol('fullfil callback');
 const rejectSymbol = Symbol('reject callback');
 
-const readFileAsync = util.promisify(fs.readFile.bind(fs));
 const gzipAsync = util.promisify(zlib.gzip.bind(zlib));
 
 class TestServer {
@@ -50,8 +49,8 @@ class TestServer {
    */
   static async createHTTPS(dirPath, port, loopback) {
     const server = new TestServer(dirPath, port, loopback, {
-      key: fs.readFileSync(path.join(__dirname, 'key.pem')),
-      cert: fs.readFileSync(path.join(__dirname, 'cert.pem')),
+      key: await fs.promises.readFile(path.join(__dirname, 'key.pem')),
+      cert: await fs.promises.readFile(path.join(__dirname, 'cert.pem')),
       passphrase: 'aaaa',
     });
     await new Promise(x => server._server.once('listening', x));
@@ -71,7 +70,10 @@ class TestServer {
       this._server = http.createServer(this._onRequest.bind(this));
     this._server.on('connection', socket => this._onSocket(socket));
     this._wsServer = new WebSocketServer({server: this._server, path: '/ws'});
-    this._wsServer.on('connection', this._onWebSocketConnection.bind(this));
+    this._wsServer.on('connection', ws => {
+      if (this._onWebSocketConnectionData !== undefined)
+        ws.send(this._onWebSocketConnectionData);
+    });
     this._server.listen(port);
     this._dirPath = dirPath;
     this.debugServer = require('debug')('pw:server');
@@ -91,6 +93,8 @@ class TestServer {
     this._gzipRoutes = new Set();
     /** @type {!Map<string, !Promise>} */
     this._requestSubscribers = new Map();
+    /** @type {string|undefined} */
+    this._onWebSocketConnectionData = undefined;
 
     const cross_origin = loopback || '127.0.0.1';
     const same_origin = loopback || 'localhost';
@@ -268,7 +272,7 @@ class TestServer {
     if (this._csp.has(pathName))
       response.setHeader('Content-Security-Policy', this._csp.get(pathName));
 
-    const {err, data} = await readFileAsync(filePath).then(data => ({data})).catch(err => ({err}));
+    const {err, data} = await fs.promises.readFile(filePath).then(data => ({data})).catch(err => ({err}));
     // The HTTP transaction might be already terminated after async hop here - do nothing in this case.
     if (response.writableEnded)
       return;
@@ -299,8 +303,8 @@ class TestServer {
     });
   }
 
-  _onWebSocketConnection(ws) {
-    ws.send('incoming');
+  sendOnWebSocketConnection(data) {
+    this._onWebSocketConnectionData = data;
   }
 }
 

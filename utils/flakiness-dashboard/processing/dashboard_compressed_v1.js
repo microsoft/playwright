@@ -33,6 +33,18 @@ module.exports = {processDashboardCompressedV1, compressReports};
 function compressReports(reports) {
   const files = {};
   for (const report of reports) {
+    const projectNameToMetadata = new Map();
+    if (report.config && report.config.projects) {
+      for (const project of report.config.projects) {
+        if (project.metadata.headful === false)
+          delete project.metadata.headful;
+        if (project.metadata.mode === 'default')
+          delete project.metadata.mode;
+        if (project.metadata.platform.toLowerCase() !== 'android')
+          delete project.metadata.platform;
+        projectNameToMetadata.set(project.name, project.metadata);
+      }
+    }
     for (const spec of flattenSpecs(report)) {
       let specs = files[spec.file];
       if (!specs) {
@@ -62,7 +74,9 @@ function compressReports(reports) {
         // Folio currently reports `data` as part of test results.
         // In our case, all data will be identical - so pick
         // from the first result.
-        const testParameters = test.results[0].data;
+        let testParameters = test.results[0].data;
+        if (!testParameters && test.projectName)
+          testParameters = projectNameToMetadata.get(test.projectName);
         // Prefer test platform when it exists, and fallback to
         // the host platform when it doesn't. This way we can attribute
         // android tests to android.

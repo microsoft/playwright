@@ -83,10 +83,10 @@ This version of Playwright was also tested against the following stable channels
 
 - [Selecting elements based on layout](./selectors.md#selecting-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
 - Playwright now includes [command line interface](./cli.md), former playwright-cli.
-  ```sh js
+  ```bash js
   npx playwright --help
   ```
-  ```sh python
+  ```bash python
   playwright --help
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.

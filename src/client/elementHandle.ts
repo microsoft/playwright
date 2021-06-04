@@ -22,12 +22,9 @@ import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
-import * as util from 'util';
 import { assert, isString, mkdirIfNeeded } from '../utils/utils';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
-
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {
   readonly _elementChannel: channels.ElementHandleChannel;
@@ -230,7 +227,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
       const buffer = Buffer.from(result.binary, 'base64');
       if (options.path) {
         await mkdirIfNeeded(options.path);
-        await fsWriteFileAsync(options.path, buffer);
+        await fs.promises.writeFile(options.path, buffer);
       }
       return buffer;
     });
@@ -302,7 +299,7 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     if (typeof item === 'string') {
       return {
         name: path.basename(item),
-        buffer: (await util.promisify(fs.readFile)(item)).toString('base64')
+        buffer: (await fs.promises.readFile(item)).toString('base64')
       };
     } else {
       return {

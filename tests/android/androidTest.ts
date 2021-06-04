@@ -24,7 +24,7 @@ type AndroidWorkerFixtures = {
   androidDevice: AndroidDevice;
 };
 
-export const androidFixtures: folio.Fixtures<PageTestFixtures & { __androidSetup: void }, AndroidWorkerFixtures & { androidContext: BrowserContext }, {}, CommonWorkerFixtures> = {
+export const androidFixtures: folio.Fixtures<PageTestFixtures, AndroidWorkerFixtures & { androidContext: BrowserContext }, {}, CommonWorkerFixtures> = {
   androidDevice: [ async ({ playwright }, run) => {
     const device = (await playwright._android.devices())[0];
     await device.shell('am force-stop org.chromium.webview_shell');
@@ -50,13 +50,6 @@ export const androidFixtures: folio.Fixtures<PageTestFixtures & { __androidSetup
 
   isAndroid: true,
   isElectron: false,
-
-  __androidSetup: [ async ({ browserVersion }, run, testInfo) => {
-    testInfo.data.platform = 'Android';
-    testInfo.data.headful = true;
-    testInfo.data.browserVersion = browserVersion;
-    await run();
-  }, { auto: true } ],
 
   androidContext: [ async ({ androidDevice }, run) => {
     await run(await androidDevice.launchBrowser());

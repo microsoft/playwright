@@ -36,8 +36,10 @@ import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
 import { Android, AndroidSocket, AndroidDevice } from './android';
+import { SocksSocket } from './socksSocket';
 import { captureStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
+import { EventEmitter } from 'events';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -45,7 +47,7 @@ class Root extends ChannelOwner<channels.Channel, {}> {
   }
 }
 
-export class Connection {
+export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   private _waitingForObject = new Map<string, any>();
   onmessage = (message: object): void => {};
@@ -56,6 +58,7 @@ export class Connection {
   private _onClose?: () => void;
 
   constructor(onClose?: () => void) {
+    super();
     this._rootObject = new Root(this);
     this._onClose = onClose;
   }
@@ -135,6 +138,7 @@ export class Connection {
     for (const callback of this._callbacks.values())
       callback.reject(new Error(errorMessage));
     this._callbacks.clear();
+    this.emit('disconnect');
   }
 
   isDisconnected() {
@@ -238,6 +242,9 @@ export class Connection {
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);
+        break;
+      case 'SocksSocket':
+        result = new SocksSocket(parent, type, guid, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);

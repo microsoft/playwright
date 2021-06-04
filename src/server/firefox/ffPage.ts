@@ -352,11 +352,13 @@ export class FFPage implements PageDelegate {
   }
 
   async updateEmulateMedia(): Promise<void> {
-    const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
+    const colorScheme = this._page._state.colorScheme === null ? undefined : this._page._state.colorScheme;
+    const reducedMotion = this._page._state.reducedMotion === null ? undefined : this._page._state.reducedMotion;
     await this._session.send('Page.setEmulatedMedia', {
       // Empty string means reset.
       type: this._page._state.mediaType === null ? '' : this._page._state.mediaType,
-      colorScheme
+      colorScheme,
+      reducedMotion,
     });
   }
 
@@ -526,7 +528,7 @@ export class FFPage implements PageDelegate {
       executionContextId: (to._delegate as FFExecutionContext)._executionContextId
     });
     if (!result.remoteObject)
-      throw new Error('Unable to adopt element handle from a different document');
+      throw new Error(dom.kUnableToAdoptErrorMessage);
     return to.createHandle(result.remoteObject) as dom.ElementHandle<T>;
   }
 

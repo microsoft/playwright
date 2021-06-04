@@ -28,8 +28,8 @@ module.exports = {
             "avoidEscape": true,
             "allowTemplateLiterals": true
         }],
-        "semi": 2,
         "no-extra-semi": 2,
+        "@typescript-eslint/semi": [2],
         "comma-style": [2, "last"],
         "wrap-iife": [2, "inside"],
         "spaced-comment": [2, "always", {
@@ -114,7 +114,7 @@ module.exports = {
         // copyright
         "notice/notice": [2, {
             "mustMatch": "Copyright",
-            "templateFile": "./utils/copyright.js",
+            "templateFile": require("path").join(__dirname, "utils", "copyright.js"),
         }],
     }
 };

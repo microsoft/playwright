@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { CRBrowser } from './crBrowser';
 import { Env } from '../processLauncher';
@@ -25,7 +27,7 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { debugMode, headersArrayToObject } from '../../utils/utils';
+import { debugMode, headersArrayToObject, removeFolders } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
@@ -33,6 +35,8 @@ import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
 import { findChromiumChannel } from './findChromiumChannel';
 import http from 'http';
+
+const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -44,7 +48,7 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  executablePath(channel?: types.BrowserChannel): string {
+  executablePath(channel?: string): string {
     if (channel)
       return findChromiumChannel(channel);
     return super.executablePath(channel);
@@ -58,12 +62,17 @@ export class Chromium extends BrowserType {
       let headersMap: { [key: string]: string; } | undefined;
       if (options.headers)
         headersMap = headersArrayToObject(options.headers, false);
+
+      const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
+  
       const chromeTransport = await WebSocketTransport.connect(progress, await urlToWSEndpoint(endpointURL), headersMap);
       const browserProcess: BrowserProcess = {
         close: async () => {
+          await removeFolders([ artifactsDir ]);
           await chromeTransport.closeAndWait();
         },
         kill: async () => {
+          await removeFolders([ artifactsDir ]);
           await chromeTransport.closeAndWait();
         }
       };
@@ -76,6 +85,9 @@ export class Chromium extends BrowserType {
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,
+        artifactsDir,
+        downloadsPath: artifactsDir,
+        tracesDir: artifactsDir
       };
       return await CRBrowser.connect(chromeTransport, browserOptions);
     }, TimeoutSettings.timeout({timeout}));
@@ -155,10 +167,14 @@ export class Chromium extends BrowserType {
         chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
       }
       chromeArguments.push(`--proxy-server=${proxy.server}`);
-      if (proxy.bypass) {
-        const patterns = proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t);
-        chromeArguments.push(`--proxy-bypass-list=${patterns.join(';')}`);
-      }
+      const proxyBypassRules = [];
+      // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
+      if (this._playwrightOptions.loopbackProxyOverride)
+        proxyBypassRules.push('<-loopback>');
+      if (proxy.bypass)
+        proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
+      if (proxyBypassRules.length > 0)
+        chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
     }
     chromeArguments.push(...args);
     if (isPersistent)
@@ -181,7 +197,7 @@ const DEFAULT_ARGS = [
   '--disable-dev-shm-usage',
   '--disable-extensions',
   // BlinkGenPropertyTrees disabled due to crbug.com/937609
-  '--disable-features=TranslateUI,BlinkGenPropertyTrees,ImprovedCookieControls,SameSiteByDefaultCookies,LazyFrameLoading',
+  '--disable-features=TranslateUI,BlinkGenPropertyTrees,ImprovedCookieControls,SameSiteByDefaultCookies,LazyFrameLoading,GlobalMediaControls',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',

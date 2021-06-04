@@ -74,7 +74,7 @@ class ServiceMode {
       });
     });
     this._serviceProcess.on('exit', this._onExit);
-    this._client = await PlaywrightClient.connect(`ws://localhost:${port}/ws`);
+    this._client = await PlaywrightClient.connect({wsEndpoint: `ws://localhost:${port}/ws`});
     this._playwrightObejct = this._client.playwright();
     return this._playwrightObejct;
   }
@@ -123,15 +123,8 @@ const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixt
   isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
   isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
   isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
-  __baseSetup: [ async ({ browserName, headless, mode, video }, run, testInfo) => {
-    testInfo.snapshotPathSegment = browserName;
-    testInfo.data = { browserName };
-    if (!headless)
-      testInfo.data.headful = true;
-    if (mode !== 'default')
-      testInfo.data.mode = mode;
-    if (video)
-      testInfo.data.video = true;
+  __baseSetup: [ async ({ browserName }, run, testInfo) => {
+    testInfo.snapshotSuffix = browserName;
     await run();
   }, { auto: true } ],
 };

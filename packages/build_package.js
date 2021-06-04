@@ -28,7 +28,7 @@ const cpAsync = util.promisify(ncp);
 const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
-const PLAYWRIGHT_CORE_FILES = ['bin/PrintDeps.exe', 'lib', 'types', 'NOTICE', 'LICENSE', 'bin/android-driver.apk', 'bin/android-driver-target.apk'];
+const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE', ];
 
 const PACKAGES = {
   'playwright': {
@@ -41,6 +41,12 @@ const PACKAGES = {
     description: 'A high-level API to automate web browsers',
     browsers: [],
     files: PLAYWRIGHT_CORE_FILES,
+  },
+  'playwright-test': {
+    description: 'Playwright Test Runner',
+    browsers: ['chromium', 'firefox', 'webkit', 'ffmpeg'],
+    files: PLAYWRIGHT_CORE_FILES,
+    name: '@playwright/test',
   },
   'playwright-webkit': {
     description: 'A high-level API to automate WebKit',
@@ -55,18 +61,6 @@ const PACKAGES = {
   'playwright-chromium': {
     description: 'A high-level API to automate Chromium',
     browsers: ['chromium', 'ffmpeg'],
-    files: [...PLAYWRIGHT_CORE_FILES],
-  },
-  'playwright-electron': {
-    version: '0.4.0', // Manually manage playwright-electron version.
-    description: 'A high-level API to automate Electron',
-    browsers: ['ffmpeg'],
-    files: [...PLAYWRIGHT_CORE_FILES],
-  },
-  'playwright-android': {
-    version: '0.0.8', // Manually manage playwright-android version.
-    description: 'A high-level API to automate Chrome for Android',
-    browsers: ['ffmpeg'],
     files: [...PLAYWRIGHT_CORE_FILES],
   },
 };
@@ -125,14 +119,14 @@ if (!args.some(arg => arg === '--no-cleanup')) {
   for (const file of package.files)
     await copyToPackage(path.join(ROOT_PATH, file), path.join(packagePath, file));
 
-  await copyToPackage(path.join(ROOT_PATH, 'api.json'), path.join(packagePath, 'api.json'));
-  await copyToPackage(path.join(ROOT_PATH, 'src/protocol/protocol.yml'), path.join(packagePath, 'protocol.yml'));
-
   // 4. Generate package.json
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
+  const dependencies = { ...pwInternalJSON.dependencies };
+  if (packageName === 'playwright-test')
+    dependencies.folio = pwInternalJSON.devDependencies.folio;
   await writeToPackage('package.json', JSON.stringify({
-    name: packageName,
-    version: package.version || pwInternalJSON.version,
+    name: package.name || packageName,
+    version: pwInternalJSON.version,
     description: package.description,
     repository: pwInternalJSON.repository,
     engines: pwInternalJSON.engines,
@@ -140,9 +134,6 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     main: 'index.js',
     bin: {
       playwright: './lib/cli/cli.js',
-    },
-    engines: {
-      node: '>=12',
     },
     exports: {
       // Root import: we have a wrapper ES Module to support the following syntax.
@@ -160,7 +151,7 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     },
     author: pwInternalJSON.author,
     license: pwInternalJSON.license,
-    dependencies: pwInternalJSON.dependencies
+    dependencies,
   }, null, 2));
 
   // 5. Generate browsers.json

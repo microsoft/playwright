@@ -17,7 +17,6 @@
 import { browserTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
-import util from 'util';
 import crypto from 'crypto';
 import { chromiumVersionLessThan } from './config/utils';
 
@@ -160,9 +159,9 @@ it.describe('download event', () => {
     const dir = testInfo.outputPath('downloads');
     const userPath = path.join(dir, 'download.txt');
     await download.saveAs(userPath);
-    expect((await util.promisify(fs.readdir)(dir)).length).toBe(1);
+    expect((await fs.promises.readdir(dir)).length).toBe(1);
     await download.saveAs(userPath);
-    expect((await util.promisify(fs.readdir)(dir)).length).toBe(1);
+    expect((await fs.promises.readdir(dir)).length).toBe(1);
     expect(fs.existsSync(userPath)).toBeTruthy();
     expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
     await page.close();

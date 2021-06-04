@@ -43,8 +43,8 @@ test.describe('cli codegen', () => {
     page = await context.new_page()`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Open new page
-var page = await context.NewPageAsync();`);
+        // Open new page
+        var page = await context.NewPageAsync();`);
   });
 
   test('should contain second page', async ({ openRecorder, page }) => {
@@ -71,8 +71,8 @@ var page = await context.NewPageAsync();`);
     page1 = await context.new_page()`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Open new page
-var page1 = await context.NewPageAsync();`);
+        // Open new page
+        var page1 = await context.NewPageAsync();`);
   });
 
   test('should contain close page', async ({ openRecorder, page }) => {
@@ -96,7 +96,7 @@ var page1 = await context.NewPageAsync();`);
     await page.close()`);
 
     expect(sources.get('<csharp>').text).toContain(`
-await page.CloseAsync();`);
+        await page.CloseAsync();`);
   });
 
   test('should not lead to an error if html gets clicked', async ({ page, openRecorder }) => {
@@ -147,9 +147,8 @@ await page.CloseAsync();`);
     await page.set_input_files(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Upload file-to-upload.txt
-await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt\");`);
-
+        // Upload file-to-upload.txt
+        await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-upload.txt\" });`);
   });
 
   test('should upload multiple files', async ({ page, openRecorder, browserName, asset }) => {
@@ -185,8 +184,8 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt
     await page.set_input_files(\"input[type=\\\"file\\\"]\", [\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Upload file-to-upload.txt, file-to-upload-2.txt
-await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
+        // Upload file-to-upload.txt, file-to-upload-2.txt
+        await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
   test('should clear files', async ({ page, openRecorder, browserName, asset }) => {
@@ -222,8 +221,8 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-up
     await page.set_input_files(\"input[type=\\\"file\\\"]\", []`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Clear selected files
-await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
+        // Clear selected files
+        await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
 
   });
 
@@ -252,6 +251,10 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
     const sources = await recorder.waitForOutput('<javascript>', 'waitForEvent');
 
     expect(sources.get('<javascript>').text).toContain(`
+  const context = await browser.newContext({
+    acceptDownloads: true
+  });`);
+    expect(sources.get('<javascript>').text).toContain(`
   // Click text=Download
   const [download] = await Promise.all([
     page.waitForEvent('download'),
@@ -259,11 +262,16 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
   ]);`);
 
     expect(sources.get('<java>').text).toContain(`
+      BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+        .setAcceptDownloads(true));`);
+    expect(sources.get('<java>').text).toContain(`
       // Click text=Download
       Download download = page.waitForDownload(() -> {
         page.click("text=Download");
       });`);
 
+    expect(sources.get('<python>').text).toContain(`
+    context = browser.new_context(accept_downloads=True)`);
     expect(sources.get('<python>').text).toContain(`
     # Click text=Download
     with page.expect_download() as download_info:
@@ -271,17 +279,24 @@ await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
     download = download_info.value`);
 
     expect(sources.get('<async python>').text).toContain(`
+    context = await browser.new_context(accept_downloads=True)`);
+    expect(sources.get('<async python>').text).toContain(`
     # Click text=Download
     async with page.expect_download() as download_info:
         await page.click(\"text=Download\")
     download = await download_info.value`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=Download
-var downloadTask = page.WaitForEventAsync(PageEvent.Download);
-await Task.WhenAll(
-    downloadTask,
-    page.ClickAsync(\"text=Download\"));`);
+        var context = await browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            AcceptDownloads = true,
+        });`);
+    expect(sources.get('<csharp>').text).toContain(`
+        // Click text=Download
+        var download1 = await page.RunAndWaitForDownloadAsync(async () =>
+        {
+            await page.ClickAsync(\"text=Download\");
+        });`);
   });
 
   test('should handle dialogs', async ({ page, openRecorder }) => {
@@ -325,15 +340,15 @@ await Task.WhenAll(
     await page.click(\"text=click me\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=click me
-void page_Dialog1_EventHandler(object sender, DialogEventArgs e)
-{
-    Console.WriteLine($\"Dialog message: {e.Dialog.Message}\");
-    e.Dialog.DismissAsync();
-    page.Dialog -= page_Dialog1_EventHandler;
-}
-page.Dialog += page_Dialog1_EventHandler;
-await page.ClickAsync(\"text=click me\");`);
+        // Click text=click me
+        void page_Dialog1_EventHandler(object sender, IDialog dialog)
+        {
+            Console.WriteLine($\"Dialog message: {dialog.Message}\");
+            dialog.DismissAsync();
+            page.Dialog -= page_Dialog1_EventHandler;
+        }
+        page.Dialog += page_Dialog1_EventHandler;
+        await page.ClickAsync(\"text=click me\");`);
 
   });
 
@@ -375,9 +390,9 @@ await page.ClickAsync(\"text=click me\");`);
     page1 = await context.new_page()
     await page1.goto("about:blank?foo")`);
       expect(sources.get('<csharp>').text).toContain(`
-// Open new page
-var page1 = await context.NewPageAsync();
-await page1.GotoAsync("about:blank?foo");`);
+        // Open new page
+        var page1 = await context.NewPageAsync();
+        await page1.GotoAsync("about:blank?foo");`);
     } else if (browserName === 'firefox') {
       expect(sources.get('<javascript>').text).toContain(`
   // Click text=link
@@ -521,8 +536,8 @@ await page1.GotoAsync("about:blank?foo");`);
     await page.frame(name=\"one\").click(\"text=Hi, I'm frame\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=Hi, I'm frame
-await page.GetFrame(name: \"one\").ClickAsync(\"text=Hi, I'm frame\");`);
+        // Click text=Hi, I'm frame
+        await page.Frame(\"one\").ClickAsync(\"text=Hi, I'm frame\");`);
 
     [sources] = await Promise.all([
       recorder.waitForOutput('<javascript>', 'two'),
@@ -548,8 +563,8 @@ await page.GetFrame(name: \"one\").ClickAsync(\"text=Hi, I'm frame\");`);
     await page.frame(name=\"two\").click(\"text=Hi, I'm frame\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=Hi, I'm frame
-await page.GetFrame(name: \"two\").ClickAsync(\"text=Hi, I'm frame\");`);
+        // Click text=Hi, I'm frame
+        await page.Frame(\"two\").ClickAsync(\"text=Hi, I'm frame\");`);
 
     [sources] = await Promise.all([
       recorder.waitForOutput('<javascript>', 'url: \''),
@@ -575,8 +590,8 @@ await page.GetFrame(name: \"two\").ClickAsync(\"text=Hi, I'm frame\");`);
     await page.frame(url=\"http://localhost:${server.PORT}/frames/frame.html\").click(\"text=Hi, I'm frame\")`);
 
     expect(sources.get('<csharp>').text).toContain(`
-// Click text=Hi, I'm frame
-await page.GetFrame(url: \"http://localhost:${server.PORT}/frames/frame.html\").ClickAsync(\"text=Hi, I'm frame\");`);
+        // Click text=Hi, I'm frame
+        await page.FrameByUrl(\"http://localhost:${server.PORT}/frames/frame.html\").ClickAsync(\"text=Hi, I'm frame\");`);
   });
 
   test('should record navigations after identical pushState', async ({ page, openRecorder, server }) => {

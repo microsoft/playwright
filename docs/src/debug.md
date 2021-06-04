@@ -16,6 +16,12 @@ for browser automation.
 <img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
 
 
+## Playwright Trace Viewer
+
+[Playwright Trace Viewer](./trace-viewer.md) is a GUI tool that helps troubleshooting test runs in a post-mortem manner.
+
+<img width="1212" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/883973/120585896-6a1bca80-c3e7-11eb-951a-bd84002480f5.png"></img>
+
 ## Run in headed mode
 
 Playwright runs browsers in headless mode by default. To change this behavior,
@@ -42,6 +48,15 @@ chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
 
 ```
 
+```csharp
+// Chromium, Firefox, or Webkit
+await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+{
+    Headless = false,
+    SlowMo = 100
+});
+```
+
 ## Browser Developer Tools
 
 You can use browser developer tools in Chromium, Firefox and WebKit while running
@@ -56,25 +71,33 @@ a Playwright script in headed mode. Developer tools help to:
 Using a [`method: Page.pause`] method is an easy way to pause the Playwright script execution
 and inspect the page in Developer tools. It will also open [Playwright Inspector](./inspector.md) to help with debugging.
 
-:::note
-**For WebKit**: launching WebKit Inspector during the execution will
-  prevent the Playwright script from executing any further.
-:::
-
-:::note
 **For Chromium**: you can also open developer tools through a launch option.
 ```js
 await chromium.launch({ devtools: true });
 ```
+
 ```java
 chromium.launch(new BrowserType.LaunchOptions().setDevtools(true));
 ```
+
 ```python async
 await chromium.launch(devtools=True)
 ```
+
 ```python sync
 chromium.launch(devtools=True)
 ```
+
+```csharp
+await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+{
+    Devtools: true
+});
+```
+
+:::note
+**For WebKit**: launching WebKit Inspector during the execution will
+  prevent the Playwright script from executing any further.
 :::
 
 ## Run in Debug Mode
@@ -88,30 +111,42 @@ Using `PWDEBUG=console` will configure the browser for debugging in Developer to
 [Playwright selectors](./selectors.md). This can be used to verify text or
 composite selectors.
 
-```sh js
+```bash js
 # Linux/macOS
 PWDEBUG=console npm run test
 
-# Windows
+# Windows with cmd.exe
 set PWDEBUG=console
+npm run test
+
+# Windows with PowerShell
+$env:PWDEBUG="console"
 npm run test
 ```
 
-```sh java
+```bash java
 # Linux/macOS
 PWDEBUG=console mvn test
 
-# Windows
+# Windows with cmd.exe
 set PWDEBUG=console
+mvn test
+
+# Windows with PowerShell
+$env:PWDEBUG="console"
 mvn test
 ```
 
-```sh python
+```bash python
 # Linux/macOS
 PWDEBUG=console pytest -s
 
-# Windows
+# Windows with cmd.exe
 set PWDEBUG=console
+pytest -s
+
+# Windows with PowerShell
+$env:PWDEBUG="console"
 pytest -s
 ```
 
@@ -155,29 +190,54 @@ breakpoints.
 
 Playwright supports verbose logging with the `DEBUG` environment variable.
 
-```sh js
+```bash js
 # Linux/macOS
 DEBUG=pw:api npm run test
 
-# Windows
+# Windows with cmd.exe
 set DEBUG=pw:api
+npm run test
+
+# Windows with PowerShell
+$env:DEBUG="pw:api"
 npm run test
 ```
 
-```sh java
+```bash java
 # Linux/macOS
 DEBUG=pw:api mvn test
 
-# Windows
+# Windows with cmd.exe
 set DEBUG=pw:api
+mvn test
+
+# Windows with PowerShell
+$env:DEBUG="pw:api"
 mvn test
 ```
 
-```sh python
+```bash python
 # Linux/macOS
 DEBUG=pw:api pytest -s
 
-# Windows
+# Windows with cmd.exe
 set DEBUG=pw:api
 pytest -s
+
+# Windows with PowerShell
+$env:DEBUG="pw:api"
+pytest -s
+```
+
+```bash csharp
+# Linux/macOS
+DEBUG=pw:api dotnet run
+
+# Windows with cmd.exe
+set DEBUG=pw:api
+dotnet run
+
+# Windows with PowerShell
+$env:DEBUG="pw:api"
+dotnet run
 ```

@@ -367,16 +367,16 @@ await page.ClickAsync("button#submit");
 await page.DblClickAsync("#item");
 
 // Right click
-await page.ClickAsync("#item", button: MouseButton.Right);
+await page.ClickAsync("#item", new PageClickOptions { Button = MouseButton.Right });
 
 // Shift + click
-await page.ClickAsync("#item", modifiers: new[] { KeyboardModifier.Shift });
+await page.ClickAsync("#item", new PageClickOptions { Modifiers = new[] { KeyboardModifier.Shift } });
 
 // Hover over element
 await page.HoverAsync("#item");
 
 // Click the top left corner
-await page.ClickAsync("#item", position: new Position { X = 0, Y = 0 });
+await page.ClickAsync("#item", new PageClickOptions { position = new Position { X = 0, Y = 0 } });
 ```
 
 Under the hood, this and other pointer-related methods:
@@ -409,7 +409,7 @@ page.click('button#submit', force=True)
 ```
 
 ```csharp
-await page.ClickAsync("button#submit", force: true);
+await page.ClickAsync("button#submit", new PageClickOptions { Force = true });
 ```
 
 #### Programmatic click
@@ -750,9 +750,10 @@ file_chooser.set_files("myfile.pdf")
 ```
 
 ```csharp
-var waitForChooserTask = page.WaitForFileChooserAsync();
-await page.ClickAsync("upload");
-var fileChooser = await waitForChooserTask;
+var fileChooser = page.RunAndWaitForFileChooserAsync(async () =>
+{
+    await page.ClickAsync("upload");
+});
 await fileChooser.SetFilesAsync("myfile.pdf");
 ```
 
