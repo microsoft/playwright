@@ -6,7 +6,7 @@ title: "Community Showcase"
 ## Users
 
 * [VS Code](https://github.com/microsoft/vscode): Playwright is used to run cross-browser tests on their web builds
-* [TypeScript](https://github.com/microsoft/TypeScript): Playwright is used test typescript.js across browsers
+* [TypeScript](https://github.com/microsoft/TypeScript): Playwright is used to test typescript.js across browsers
 * [Elastic APM JS agent](https://github.com/elastic/apm-agent-rum-js): Playwright is used to run benchmark tests across browsers
 * [Blockstack](https://github.com/blockstack/ux): Playwright is used to run cross-browser UI tests
 * [Instakittens React admin](https://github.com/fredericbonnet/instakittens-react-admin): Playwright is used to run end-to-end test scenarios written with Cucumber
