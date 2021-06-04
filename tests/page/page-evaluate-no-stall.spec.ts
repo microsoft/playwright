@@ -44,8 +44,11 @@ test.describe('non-stalling evaluate', () => {
     });
     await page.setContent('<iframe></iframe>');
     const error = await errorPromise;
+    // bail out if we accidentally succeeded
+    if (error === 4)
+      return;
     // Testing this as a race.
-    const success = error.message === 'Frame does not yet have a main execution context' || 'Frame is currently attempting a navigation';
+    const success = error.message === 'Frame does not yet have a main execution context' || error.message === 'Frame is currently attempting a navigation';
     expect(success).toBeTruthy();
   });
 });
