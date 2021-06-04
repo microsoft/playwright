@@ -48,6 +48,7 @@ export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegat
 
   async stop(): Promise<void> {
     await this._snapshotter.stop();
+    await this._writeArtifactChain;
   }
 
   async dispose() {

@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import yazl from 'yazl';
+import { EventEmitter } from 'events';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
@@ -43,7 +44,7 @@ export class Tracing implements InstrumentationListener {
   private _resourcesDir: string;
   private _sha1s: string[] = [];
   private _started = false;
-  private _tracesDir: string | undefined;
+  private _tracesDir: string;
 
   constructor(context: BrowserContext) {
     this._context = context;
@@ -54,8 +55,6 @@ export class Tracing implements InstrumentationListener {
 
   async start(options: TracerOptions): Promise<void> {
     // context + page must be the first events added, this method can't have awaits before them.
-    if (!this._tracesDir)
-      throw new Error('Tracing directory is not specified when launching the browser');
     if (this._started)
       throw new Error('Tracing has already been started');
     this._started = true;
@@ -86,13 +85,13 @@ export class Tracing implements InstrumentationListener {
     if (!this._started)
       return;
     this._started = false;
-    await this._snapshotter.stop();
     this._context.instrumentation.removeListener(this);
     helper.removeEventListeners(this._eventListeners);
     for (const { sdkObject, metadata } of this._pendingCalls.values())
       await this.onAfterCall(sdkObject, metadata);
     for (const page of this._context.pages())
       page.setScreencastOptions(null);
+    await this._snapshotter.stop();
 
     // Ensure all writes are finished.
     await this._appendEventChain;
@@ -103,21 +102,25 @@ export class Tracing implements InstrumentationListener {
   }
 
   async export(): Promise<Artifact> {
-    if (!this._traceFile)
-      throw new Error('Tracing directory is not specified when launching the browser');
+    if (!this._traceFile || this._started)
+      throw new Error('Must start and stop tracing before exporting');
     const zipFile = new yazl.ZipFile();
-    zipFile.addFile(this._traceFile, 'trace.trace');
-    const zipFileName = this._traceFile + '.zip';
-    this._traceFile = undefined;
-    for (const sha1 of this._sha1s)
-      zipFile.addFile(path.join(this._resourcesDir!, sha1), path.join('resources', sha1));
-    zipFile.end();
-    await new Promise(f => {
-      zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', f);
+    const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
+
+    const succeededPromise = new Promise<Artifact>(async fulfill => {
+      zipFile.addFile(this._traceFile!, 'trace.trace');
+      const zipFileName = this._traceFile! + '.zip';
+      for (const sha1 of this._sha1s)
+        zipFile.addFile(path.join(this._resourcesDir!, sha1), path.join('resources', sha1));
+      zipFile.end();
+      await new Promise(f => {
+        zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', f);
+      });
+      const artifact = new Artifact(this._context, zipFileName);
+      artifact.reportFinished();
+      fulfill(artifact);
     });
-    const artifact = new Artifact(this._context, zipFileName);
-    artifact.reportFinished();
-    return artifact;
+    return Promise.race([failedPromise, succeededPromise]);
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
@@ -181,6 +184,9 @@ export class Tracing implements InstrumentationListener {
   }
 
   private _appendTraceEvent(event: any) {
+    if (!this._started)
+      return;
+
     const visit = (object: any) => {
       if (Array.isArray(object)) {
         object.forEach(visit);
