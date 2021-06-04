@@ -26,6 +26,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include <optional>
 #include <WebKit/WKRetainPtr.h>
 #include <WebKit/WKString.h>
 #include <WebKit/WKURL.h>
