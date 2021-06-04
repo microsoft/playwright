@@ -77,6 +77,10 @@ it('should work with glob', async () => {
   expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.jpeg')).toBeTruthy();
   expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.png')).toBeTruthy();
   expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
+  expect(globToRegex('foo*').test('foo.js')).toBeTruthy();
+  expect(globToRegex('foo*').test('foo/bar.js')).toBeFalsy();
+  expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidc/foo')).toBeFalsy();
+  expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidcnice')).toBeTruthy();
 });
 
 it('should intercept network activity from worker', async function({page, server, isAndroid}) {
