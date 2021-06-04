@@ -74,7 +74,7 @@ playwright.close();
 
 ### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
 
-### param: Page.waitForRequestFinished.action = %%-java-wait-for-event-callback-%%
+### param: Page.waitForRequestFinished.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Page.waitForResponse.callback = %%-java-wait-for-event-callback-%%
 
