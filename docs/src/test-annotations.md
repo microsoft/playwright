@@ -3,7 +3,7 @@ id: test-annotations
 title: "Annotations"
 ---
 
-Sadly, tests do not always pass. Playwright Test supports test annotations to deal with failures, flakiness and tests that are not yet ready.
+Sadly, tests do not always pass. Luckily, Playwright Test supports test annotations to deal with failures, flakiness and tests that are not yet ready.
 
 ```js js-flavor=js
 // example.spec.js
