@@ -24,7 +24,7 @@ const { deps } = require('../nativeDeps');
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
-export async function installDeps(browserTypes: string[]) {
+export async function installDeps(browserTypes: string[], listOnly: boolean) {
   if (!browserTypes.length)
     browserTypes = ['chromium', 'firefox', 'webkit'];
   if (os.platform() === 'win32') {
@@ -55,6 +55,12 @@ export async function installDeps(browserTypes: string[]) {
       libraries.push(...deps['hirsute'][browserType]);
   }
   const uniqueLibraries = Array.from(new Set(libraries));
+
+  if (listOnly) {
+    console.log(uniqueLibraries.join('\n'));
+    return;
+  }
+
   console.log('Installing Ubuntu dependencies...');  // eslint-disable-line no-console
   const commands: string[] = [];
   commands.push('apt-get update');

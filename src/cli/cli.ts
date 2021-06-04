@@ -152,10 +152,11 @@ async function installChromeChannel(channel: string) {
 
 program
     .command('install-deps [browserType...]')
+    .option('--list-only', 'List the dependencies without installing them')
     .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .action(async function(browserType) {
+    .action(async function(browserType, options) {
       try {
-        await installDeps(browserType);
+        await installDeps(browserType, !!options.listOnly);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);
