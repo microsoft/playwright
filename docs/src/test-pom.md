@@ -10,7 +10,8 @@ We will create a `PlaywrightDevPage` helper class to encapsulate common operatio
 ```js js-flavor=js
 // playwright-dev-page.js
 exports.PlaywrightDevPage = class PlaywrightDevPage {
-  constructor(page: Page) {
+  constructor(page) {
+    /** @type {import('playwright').Page} */
     this.page = page;
   }
 
