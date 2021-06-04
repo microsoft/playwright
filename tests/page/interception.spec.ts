@@ -62,7 +62,7 @@ it('should intercept after a service worker', async ({page, server, isAndroid}) 
   expect(nonInterceptedResponse).toBe('FAILURE: Not Found');
 });
 
-it.only('should work with glob', async () => {
+it('should work with glob', async () => {
   expect(globToRegex('**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
   expect(globToRegex('**/*.css').test('https://localhost:8080/foo.js')).toBeFalsy();
   expect(globToRegex('*.js').test('https://localhost:8080/foo.js')).toBeFalsy();
