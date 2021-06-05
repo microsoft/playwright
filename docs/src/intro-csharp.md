@@ -8,30 +8,13 @@ title: "Getting Started"
 
 ## Installation
 
-Install Microsoft.Playwright package from NuGet in Visual Studio or from the CLI in your project root directory:
+Start with installing `playwright` dotnet tool globally. This only needs to be done once. Learn more about [Playwright CLI](./cli.md) tool.
 
 ```bash
-dotnet add package Microsoft.Playwright
+dotnet tool install --global Microsoft.Playwright.CLI
 ```
 
-## Usage
-
-```csharp
-using Microsoft.Playwright;
-using System.Threading.Tasks;
-
-class Program
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync();
-        // Create pages, interact with UI elements, assert values
-    }
-}
-```
-
-## First script
+## First project
 
 Create a console project and add the Playwright dependency.
 
@@ -41,29 +24,45 @@ cd pw_demo
 dotnet add package Microsoft.Playwright --prerelease
 ```
 
-Create a Program.cs that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.
+Ensure browsers necessary for testing are installed.
+
+```bash
+playwright install
+```
+
+Create a `Program.cs` that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.
 
 ```csharp
-using Microsoft.Playwright;
+using System;
 using System.Threading.Tasks;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
-class Program
+namespace PlaywrightTests
 {
-    public static async Task Main()
+    [Parallelizable(ParallelScope.Self)]
+    public class MyTest : PageTest
     {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync();
-        var page = await browser.NewPageAsync();
-        await page.GotoAsync("https://playwright.dev/dotnet");
-        await page.ScreenshotAsync(new PageScreenshotOptions { Path = "screenshot.png" });
+        [Test]
+        public async Task ShouldAdd()
+        {
+            int result = await Page.EvaluateAsync<int>("() => 7 + 3");
+            Assert.AreEqual(10, result);
+        }
+
+        [Test]
+        public async Task ShouldMultiply()
+        {
+            int result = await Page.EvaluateAsync<int>("() => 7 * 3");
+            Assert.AreEqual(21, result);
+        }
     }
 }
 ```
 
-Now build it and run it.
+Now run it.
 
 ```bash
-dotnet build
 dotnet run
 ```
 
@@ -73,12 +72,56 @@ By default, Playwright runs the browsers in headless mode. To see the browser UI
 await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false, SlowMo = 50 });
 ```
 
-## Record scripts
+## First test
 
-Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate C# code.
+You can choose to use NUnit test fixtures that come bundled with Playwright. These fixtures support running tests on multiple browser engines in parallel, out of the box. Learn more about [Playwright with NUnit](./test-runners.md).
 
 ```bash
-# FIXME:
+dotnet new console -n pw_test
+cd pw_test
+dotnet add package Microsoft.Playwright --prerelease
+dotnet add package Microsoft.Playwright.NUnit --prerelease
+```
+
+Ensure browsers necessary for testing are installed.
+
+```bash
+playwright install
+```
+
+Create a PageTests.cs file.
+```csharp
+using System;
+using System.Threading.Tasks;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+namespace ExampleTest
+{
+    [Parallelizable(ParallelScope.Self)]
+    public class PageTests : PageTest
+    {
+        [Test]
+        public async Task ShouldMultiply()
+        {
+            int result = await Page.EvaluateAsync<int>("() => 7 * 3");
+            Assert.AreEqual(21, result);
+        }
+    }
+}
+```
+
+```bash
+dotnet build
+dotnet test -- NUnit.NumberOfTestWorkers=5
+```
+
+## Record scripts
+
+[Command Line Interface](./cli.md) can be used to record user interactions and generate C# code.
+
+```bash
+playwright codegen
 ```
 
 ## System requirements
