@@ -101,7 +101,7 @@ class DefaultMode {
   }
 }
 
-const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixtures> = {
+const baseFixtures: folio.Fixtures<{}, BaseOptions & BaseFixtures> = {
   mode: [ 'default', { scope: 'worker' } ],
   browserName: [ 'chromium' , { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
@@ -123,10 +123,6 @@ const baseFixtures: folio.Fixtures<{ __baseSetup: void }, BaseOptions & BaseFixt
   isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
   isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
   isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
-  __baseSetup: [ async ({ browserName }, run, testInfo) => {
-    testInfo.snapshotSuffix = browserName;
-    await run();
-  }, { auto: true } ],
 };
 
 type ServerOptions = {

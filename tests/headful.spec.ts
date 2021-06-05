@@ -153,7 +153,7 @@ it('focused input should produce the same screenshot', async ({browserType, brow
   it.skip(browserName === 'webkit' && platform === 'linux', 'gtk vs wpe');
   it.skip(!!process.env.CRPATH);
 
-  testInfo.snapshotSuffix = browserName + '-' + platform;
+  testInfo.snapshotSuffix = platform;
 
   const headful = await browserType.launch({...browserOptions, headless: false });
   const headfulPage = await headful.newPage();

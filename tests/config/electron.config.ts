@@ -48,7 +48,7 @@ const metadata = {
 };
 
 config.projects.push({
-  name: 'electron',
+  name: 'chromium',  // We use 'chromium' here to share screenshots with chromium.
   use: {
     mode: 'default',
     browserName: 'chromium',
@@ -59,7 +59,7 @@ config.projects.push({
 });
 
 config.projects.push({
-  name: 'electron',
+  name: 'chromium',  // We use 'chromium' here to share screenshots with chromium.
   use: {
     mode: 'default',
     browserName: 'chromium',
