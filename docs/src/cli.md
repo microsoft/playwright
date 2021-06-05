@@ -23,7 +23,7 @@ playwright
 
 ```bash csharp
 # Install the CLI once.
-dotnet add package Microsoft.Playwright.CLI
+dotnet tool install --global Microsoft.Playwright.CLI
 # Use the tools.
 playwright
 ```
