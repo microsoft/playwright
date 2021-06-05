@@ -19,9 +19,8 @@
 import * as commander from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { Config } from 'folio';
-
-type RunnerType = typeof import('folio/out/runner').Runner;
+import type { Config } from './types';
+import { Runner } from './runner';
 
 const defaultTimeout = 30000;
 const defaultReporter = process.env.CI ? 'dot' : 'list';
@@ -37,14 +36,6 @@ const defaultConfig: Config = {
 };
 
 export function addTestCommand(program: commander.CommanderStatic) {
-  let Runner: RunnerType;
-  try {
-    Runner = require('folio/out/runner').Runner as RunnerType;
-  } catch (e) {
-    addStubTestCommand(program);
-    return;
-  }
-
   const command = program.command('test [test-filter...]');
   command.description('Run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
@@ -68,7 +59,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
     try {
-      await runTests(Runner, args, opts);
+      await runTests(args, opts);
     } catch (e) {
       console.error(e.toString());
       process.exit(1);
@@ -86,7 +77,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
   });
 }
 
-async function runTests(Runner: RunnerType, args: string[], opts: { [key: string]: any }) {
+async function runTests(args: string[], opts: { [key: string]: any }) {
   const browserOpt = opts.browser ? opts.browser.toLowerCase() : 'chromium';
   if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
     throw new Error(`Unsupported browser "${opts.browser}", must be one of "all", "chromium", "firefox" or "webkit"`);
@@ -135,11 +126,6 @@ async function runTests(Runner: RunnerType, args: string[], opts: { [key: string
     throw new Error(`Configuration file not found. Run "npx playwright test --help" for more information.`);
   }
 
-  process.env.FOLIO_JUNIT_OUTPUT_NAME = process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME;
-  process.env.FOLIO_JUNIT_SUITE_ID = process.env.PLAYWRIGHT_JUNIT_SUITE_ID;
-  process.env.FOLIO_JUNIT_SUITE_NAME = process.env.PLAYWRIGHT_JUNIT_SUITE_NAME;
-  process.env.FOLIO_JSON_OUTPUT_NAME = process.env.PLAYWRIGHT_JSON_OUTPUT_NAME;
-
   const result = await runner.run(!!opts.list, args.map(forceRegExp), opts.project || undefined);
   if (result === 'sigint')
     process.exit(130);
@@ -171,14 +157,4 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers ? parseInt(options.workers, 10) : undefined,
   };
-}
-
-function addStubTestCommand(program: commander.CommanderStatic) {
-  const command = program.command('test');
-  command.description('Run tests with Playwright Test. Available in @playwright/test package.');
-  command.action(async (args, opts) => {
-    console.error('Please install @playwright/test package to use Playwright Test.');
-    console.error('  npm install -D @playwright/test');
-    process.exit(1);
-  });
 }

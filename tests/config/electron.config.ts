@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as folio from 'folio';
+import type { Config } from './test-runner';
 import * as path from 'path';
 import { electronFixtures } from '../electron/electronTest';
 import { test as pageTest } from '../page/pageTest';
@@ -23,7 +23,7 @@ import { CommonOptions } from './baseTest';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: folio.Config<CommonOptions & PlaywrightOptions> = {
+const config: Config<CommonOptions & PlaywrightOptions> = {
   testDir,
   outputDir,
   timeout: 30000,

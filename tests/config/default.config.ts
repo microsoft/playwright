@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as folio from 'folio';
+import type { Config } from './test-runner';
 import * as path from 'path';
 import { PlaywrightOptions, playwrightFixtures } from './browserTest';
 import { test as pageTest } from '../page/pageTest';
@@ -45,7 +45,7 @@ const video = !!process.env.PWTEST_VIDEO;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: folio.Config<CommonOptions & PlaywrightOptions> = {
+const config: Config<CommonOptions & PlaywrightOptions> = {
   testDir,
   outputDir,
   timeout: video || process.env.PWTRACE ? 60000 : 30000,
@@ -66,7 +66,7 @@ for (const browserName of browserNames) {
   if (executablePath && !process.env.TEST_WORKER_INDEX)
     console.error(`Using executable at ${executablePath}`);
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
-  testIgnore.push(/android/, /electron/);
+  testIgnore.push(/android/, /electron/, /playwrigh-test/);
   config.projects.push({
     name: browserName,
     testDir,

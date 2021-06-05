@@ -18,6 +18,17 @@
 // This file is only run when someone installs via the github repo
 
 const {execSync} = require('child_process');
+const path = require('path');
+
+console.log(`Updating test runner...`);
+try {
+  execSync('npm ci --save=false --fund=false --audit=false', {
+    stdio: ['inherit', 'inherit', 'inherit'],
+    cwd: path.join(__dirname, 'tests', 'config', 'test-runner'),
+  });
+} catch (e) {
+  process.exit(1);
+}
 
 console.log(`Rebuilding installer...`);
 try {

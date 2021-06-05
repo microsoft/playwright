@@ -15,7 +15,7 @@
  */
 
 import { TestServer } from '../../utils/testserver';
-import * as folio from 'folio';
+import { Fixtures, TestType } from './test-runner';
 import * as path from 'path';
 import * as fs from 'fs';
 import socks from 'socksv5';
@@ -101,7 +101,7 @@ class DefaultMode {
   }
 }
 
-const baseFixtures: folio.Fixtures<{}, BaseOptions & BaseFixtures> = {
+const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
   mode: [ 'default', { scope: 'worker' } ],
   browserName: [ 'chromium' , { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
@@ -136,7 +136,7 @@ type ServerFixtures = {
 };
 
 type ServersInternal = ServerFixtures & { socksServer: any };
-const serverFixtures: folio.Fixtures<ServerFixtures, ServerOptions & { __servers: ServersInternal }> = {
+const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: ServersInternal }> = {
   loopback: [ undefined, { scope: 'worker' } ],
   __servers: [ async ({ loopback }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
@@ -208,7 +208,7 @@ type CoverageOptions = {
   coverageName?: string;
 };
 
-const coverageFixtures: folio.Fixtures<{}, CoverageOptions & { __collectCoverage: void }> = {
+const coverageFixtures: Fixtures<{}, CoverageOptions & { __collectCoverage: void }> = {
   coverageName: [ undefined, { scope: 'worker' } ],
 
   __collectCoverage: [ async ({ coverageName }, run, workerInfo) => {
@@ -230,4 +230,5 @@ const coverageFixtures: folio.Fixtures<{}, CoverageOptions & { __collectCoverage
 export type CommonOptions = BaseOptions & ServerOptions & CoverageOptions;
 export type CommonWorkerFixtures = CommonOptions & BaseFixtures;
 
-export const baseTest = folio.test.extend<{}, CoverageOptions>(coverageFixtures).extend<ServerFixtures>(serverFixtures).extend<{}, BaseOptions & BaseFixtures>(baseFixtures);
+const __baseTest = require('./test-runner').__baseTest as TestType<{}, {}>;
+export const baseTest = __baseTest.extend<{}, CoverageOptions>(coverageFixtures).extend<ServerFixtures>(serverFixtures).extend<{}, BaseOptions & BaseFixtures>(baseFixtures);

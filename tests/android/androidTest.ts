@@ -16,15 +16,15 @@
 
 import type { AndroidDevice, BrowserContext } from '../../index';
 import { CommonWorkerFixtures, baseTest } from '../config/baseTest';
-import * as folio from 'folio';
+import type { Fixtures } from '../config/test-runner';
 import { PageTestFixtures } from '../page/pageTest';
-export { expect } from 'folio';
+export { expect } from '../config/test-runner';
 
 type AndroidWorkerFixtures = {
   androidDevice: AndroidDevice;
 };
 
-export const androidFixtures: folio.Fixtures<PageTestFixtures, AndroidWorkerFixtures & { androidContext: BrowserContext }, {}, CommonWorkerFixtures> = {
+export const androidFixtures: Fixtures<PageTestFixtures, AndroidWorkerFixtures & { androidContext: BrowserContext }, {}, CommonWorkerFixtures> = {
   androidDevice: [ async ({ playwright }, run) => {
     const device = (await playwright._android.devices())[0];
     await device.shell('am force-stop org.chromium.webview_shell');
