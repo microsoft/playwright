@@ -59,7 +59,6 @@ namespace PlaywrightTests
 Run your tests against Chromium
 
 ```bash
-dotnet build
 dotnet test
 ```
 
