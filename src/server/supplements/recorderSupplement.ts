@@ -131,6 +131,7 @@ export class RecorderSupplement implements InstrumentationListener {
     const recorderApp = await RecorderApp.open(this._context);
     this._recorderApp = recorderApp;
     recorderApp.once('close', () => {
+      this._debugger.resume(false);
       this._recorderApp = null;
     });
     recorderApp.on('event', (data: EventData) => {
@@ -231,7 +232,7 @@ export class RecorderSupplement implements InstrumentationListener {
       if (!this._currentCallsMetadata.has(metadata))
         this.onBeforeCall(sdkObject, metadata);
     }
-    this._recorderApp!.setPaused(this._debugger.isPaused());
+    this._recorderApp?.setPaused(this._debugger.isPaused());
     this._updateUserSources();
     this.updateCallLog([...this._currentCallsMetadata.keys()]);
   }
