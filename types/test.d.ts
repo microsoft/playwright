@@ -72,6 +72,7 @@ export type PlaywrightWorkerOptions = {
    * Name of the browser (`chromium`, `firefox`, `webkit`) that runs tests.
    */
   browserName: BrowserName;
+  defaultBrowserType: BrowserName;
 
   /**
    * Whether to run browser in headless mode. Takes priority over `launchOptions`.

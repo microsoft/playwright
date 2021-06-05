@@ -21,7 +21,8 @@ import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, P
 
 export * from 'folio';
 export const test = folio.test.extend<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>({
-  browserName: [ 'chromium', { scope: 'worker' } ],
+  defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
+  browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
   playwright: [ require('../inprocess'), { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
@@ -66,8 +67,8 @@ export const test = folio.test.extend<PlaywrightTestArgs & PlaywrightTestOptions
   viewport: undefined,
   contextOptions: {},
 
-  context: async ({ browserName, browser, screenshot, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
-    testInfo.snapshotSuffix = browserName + '-' + process.platform;
+  context: async ({ browser, screenshot, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
+    testInfo.snapshotSuffix = process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
 
@@ -148,3 +149,5 @@ export const test = folio.test.extend<PlaywrightTestArgs & PlaywrightTestOptions
   },
 });
 export default test;
+
+export const __baseTest = folio.test;
