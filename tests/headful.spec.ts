@@ -148,6 +148,7 @@ it('Page.bringToFront should work', async ({browserType, browserOptions}) => {
 });
 
 it('focused input should produce the same screenshot', async ({browserType, browserOptions, browserName, platform, channel}, testInfo) => {
+  it.fail(channel === 'msedge', 'focus ring is black on MSEdge');
   it.fail(browserName === 'firefox' && platform === 'darwin', 'headless has thinner outline');
   it.fail(browserName === 'firefox' && platform === 'linux', 'headless has no outline');
   it.skip(browserName === 'webkit' && platform === 'linux', 'gtk vs wpe');
