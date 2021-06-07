@@ -12,7 +12,7 @@ import type { ExpectedAssertionsErrors } from 'expect/build/types';
 export declare type AsymmetricMatcher = Record<string, any>;
 
 export declare type Expect = {
-  <T = unknown>(actual: T): folio.Matchers<T>;
+  <T = unknown>(actual: T): PlaywrightTest.Matchers<T>;
 
   // Sourced from node_modules/expect/build/types.d.ts
   assertions(arg0: number): void;
@@ -30,27 +30,22 @@ export declare type Expect = {
 };
 
 declare global {
-  export namespace jest {
+  export namespace PlaywrightTest {
     export interface Matchers<R> extends expect.Matchers<R> {
-
-    }
-  }
-  export namespace folio {
-    export interface Matchers<R> extends jest.Matchers<R> {
       /**
        * If you know how to test something, `.not` lets you test its opposite.
        */
-      not: folio.Matchers<R>;
+      not: PlaywrightTest.Matchers<R>;
       /**
        * Use resolves to unwrap the value of a fulfilled promise so any other
        * matcher can be chained. If the promise is rejected the assertion fails.
        */
-      resolves: folio.Matchers<Promise<R>>;
+      resolves: PlaywrightTest.Matchers<Promise<R>>;
       /**
       * Unwraps the reason of a rejected promise so any other matcher can be chained.
       * If the promise is fulfilled the assertion fails.
       */
-      rejects: folio.Matchers<Promise<R>>;
+      rejects: PlaywrightTest.Matchers<Promise<R>>;
       /**
        * Match snapshot
        */

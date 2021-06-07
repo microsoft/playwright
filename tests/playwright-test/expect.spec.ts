@@ -16,7 +16,7 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should be able to extend the expect matchers with test.extend in the folio config', async ({ runInlineTest }) => {
+test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
       pwt.expect.extend({
@@ -73,36 +73,12 @@ test('should work with default expect matchers', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should work with jest-community/jest-extended', async ({runTSC}) => {
+test('should work with custom PlaywrightTest namespace', async ({runTSC}) => {
   const result = await runTSC({
     'global.d.ts': `
       // Extracted example from their typings.
       // Reference: https://github.com/jest-community/jest-extended/blob/master/types/index.d.ts
-      declare namespace jest {
-        interface Matchers<R> {
-          toBeEmpty(): R;
-        }
-      }
-    `,
-    'a.spec.ts': `
-      const { test } = pwt;
-      test.expect('').toBeEmpty();
-      test.expect('hello').not.toBeEmpty();
-      test.expect([]).toBeEmpty();
-      test.expect(['hello']).not.toBeEmpty();
-      test.expect({}).toBeEmpty();
-      test.expect({ hello: 'world' }).not.toBeEmpty();
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should work with custom folio namespace', async ({runTSC}) => {
-  const result = await runTSC({
-    'global.d.ts': `
-      // Extracted example from their typings.
-      // Reference: https://github.com/jest-community/jest-extended/blob/master/types/index.d.ts
-      declare namespace folio {
+      declare namespace PlaywrightTest {
         interface Matchers<R> {
           toBeEmpty(): R;
         }
