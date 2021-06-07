@@ -256,9 +256,6 @@ test('my test', async ({ page }) => {
   // Expect an attribute "to be strictly equal" to the value.
   expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
 
-  // Expect an element "to be visible".
-  expect(await page.isVisible('[aria-label="GitHub repository"]')).toBeTruthy();
-
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
   expect(await page.waitForSelector('text=System requirements')).toBeTruthy();
@@ -296,61 +293,61 @@ Here are the most common options available in the [command line](./test-cli.md).
 
 - Run tests in headed browsers
   ```bash
-  npx playwright test --headed
+  npx playwright test -c tests --headed
   ```
 
 - Run tests in a particular browser
   ```bash
-  npx playwright test --browser=webkit
+  npx playwright test -c tests --browser=webkit
   ```
 
 - Run tests in all browsers
   ```bash
-  npx playwright test --browser=all
+  npx playwright test -c tests --browser=all
   ```
 
 - Run a single test file
   ```bash
-  npx playwright test tests/todo-page.spec.ts
+  npx playwright test -c tests tests/todo-page.spec.ts
   ```
 
 - Run a set of test files
   ```bash
-  npx playwright test tests/todo-page/ tests/landing-page/
+  npx playwright test -c tests tests/todo-page/ tests/landing-page/
   ```
 
 - Run a test with specific title
   ```bash
-  npx playwright test -g "add a todo item"
+  npx playwright test -c tests -g "add a todo item"
   ```
 
 - Run tests [in parallel](./test-parallel.md) - that's the default
   ```bash
-  npx playwright test
+  npx playwright test -c tests
   ```
 
 - Disable [parallelization](./test-parallel.md)
   ```bash
-  npx playwright test --workers=1
+  npx playwright test -c tests --workers=1
   ```
 
 - Choose a [reporter](./test-reporters.md)
   ```bash
-  npx playwright test --reporter=dot
+  npx playwright test -c tests --reporter=dot
   ```
 
 - Run in debug mode with [Playwright Inspector](./inspector.md)
   ```bash
   # Linux/macOS
-  PWDEBUG=1 npx playwright test
+  PWDEBUG=1 npx playwright test -c tests
 
   # Windows with cmd.exe
   set PWDEBUG=1
-  npx playwright test
+  npx playwright test -c tests
 
   # Windows with PowerShell
   $env:PWDEBUG=1
-  npx playwright test
+  npx playwright test -c tests
   ```
 
 ## Create a configuration file
@@ -407,11 +404,11 @@ import { PlaywrightTestConfig, devices } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   projects: [
     {
-      name: 'Desktop Chromium',
+      name: 'Chrome Stable',
       use: {
         browserName: 'chromium',
-        // Test against Chrome Beta channel.
-        channel: 'chrome-beta',
+        // Test against Chrome Stable channel.
+        channel: 'chrome',
       },
     },
     {

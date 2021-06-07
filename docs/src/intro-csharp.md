@@ -20,16 +20,13 @@ Create a console project and add the Playwright dependency.
 
 ```bash
 # Create project
-dotnet new console -n pw_demo
-cd pw_demo
+dotnet new console -n PlaywrightDemo
+cd PlaywrightDemo
 
-# Install dependencies
-dotnet add package Microsoft.Playwright --prerelease
-
-# Install local Playwright tool and use it to install browsers.
-dotnet new tool-manifest
-dotnet tool install Microsoft.Playwright.CLI --version 1.0.0-alpha-1
-dotnet playwright install
+# Install dependencies, build project and download necessary browsers.
+dotnet add package Microsoft.Playwright
+dotnet build
+playwright install
 ```
 
 Create a `Program.cs` that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.
@@ -70,16 +67,15 @@ You can choose to use NUnit test fixtures that come bundled with Playwright. The
 ```bash
 # Create new project.
 dotnet new nunit -n PlaywrightTests
-cd pw_test
+cd PlaywrightTests
+```
 
-# Install dependencies
-dotnet add package Microsoft.Playwright --prerelease
-dotnet add package Microsoft.Playwright.NUnit --prerelease
+Install dependencies, build project and download necessary browsers. This is only done once per project.
 
-# Install local Playwright tool and use it to install browsers.
-dotnet new tool-manifest
-dotnet tool install Microsoft.Playwright.CLI --version 1.0.0-alpha-1
-dotnet playwright install
+```bash
+dotnet add package Microsoft.Playwright
+dotnet build
+playwright install
 ```
 
 Edit UnitTest1.cs file.
