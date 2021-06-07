@@ -42,7 +42,7 @@ export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
 
   constructor(playwrightOptions: PlaywrightOptions) {
-    super('chromium', playwrightOptions);
+    super('chromium', 'chromium', playwrightOptions);
 
     if (debugMode())
       this._devtools = this._createDevTools();

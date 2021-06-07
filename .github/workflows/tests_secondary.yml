@@ -257,8 +257,8 @@ jobs:
         name: chrome-stable-mac-test-results
         path: test-results
 
-  firefox_stable_linux:
-    name: "Firefox Stable (Linux)"
+  firefox_beta_linux:
+    name: "Firefox Beta (Linux)"
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
@@ -270,20 +270,20 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install-deps firefox
-    - run: node lib/cli/cli install firefox-stable chromium
+    - run: node lib/cli/cli install firefox chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
-        PWTEST_CHANNEL: firefox-stable
+        PWTEST_CHANNEL: firefox-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: firefox-stable-linux-test-results
+        name: firefox-beta-linux-test-results
         path: test-results
 
-  firefox_stable_win:
-    name: "Firefox Stable (Win)"
+  firefox_beta_win:
+    name: "Firefox Beta (Win)"
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
@@ -295,22 +295,22 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: node lib/cli/cli install-deps chromium
-    - run: node lib/cli/cli install firefox-stable chromium
+    - run: node lib/cli/cli install firefox chromium
     - run: npm run ftest
       shell: bash
       env:
-        PWTEST_CHANNEL: firefox-stable
+        PWTEST_CHANNEL: firefox-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: firefox-stable-win-test-results
+        name: firefox-beta-win-test-results
         path: test-results
 
-  firefox_stable_mac:
-    name: "Firefox Stable (Mac)"
+  firefox_beta_mac:
+    name: "Firefox Beta (Mac)"
     runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
@@ -321,16 +321,16 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install firefox-stable chromium
+    - run: node lib/cli/cli install firefox chromium
     - run: npm run ftest
       env:
-        PWTEST_CHANNEL: firefox-stable
+        PWTEST_CHANNEL: firefox-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: firefox-stable-mac-test-results
+        name: firefox-beta-mac-test-results
         path: test-results
 
   edge_stable_mac:

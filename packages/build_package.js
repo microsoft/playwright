@@ -33,7 +33,7 @@ const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE', ];
 const PACKAGES = {
   'playwright': {
     description: 'A high-level API to automate web browsers',
-    browsers: ['chromium', 'firefox', 'webkit', 'ffmpeg'],
+    browsers: ['chromium', 'firefox-stable', 'webkit', 'ffmpeg'],
     // We copy README.md additionally for Playwright so that it looks nice on NPM.
     files: [...PLAYWRIGHT_CORE_FILES, 'README.md'],
   },
@@ -44,7 +44,7 @@ const PACKAGES = {
   },
   'playwright-test': {
     description: 'Playwright Test Runner',
-    browsers: ['chromium', 'firefox', 'webkit', 'ffmpeg'],
+    browsers: ['chromium', 'firefox-stable', 'webkit', 'ffmpeg'],
     files: PLAYWRIGHT_CORE_FILES,
     name: '@playwright/test',
   },
@@ -55,7 +55,7 @@ const PACKAGES = {
   },
   'playwright-firefox': {
     description: 'A high-level API to automate Firefox',
-    browsers: ['firefox'],
+    browsers: ['firefox-stable'],
     files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-chromium': {
