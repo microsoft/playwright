@@ -467,16 +467,9 @@ For TypeScript, also add the following to `global.d.ts`. You don't need it for J
 
 ```js
 // global.d.ts
-declare namespace folio {
+declare namespace PlaywrightTest {
   interface Matchers<R> {
     toBeWithinRange(a: number, b: number): R;
   }
 }
-```
-
-To import expect matching libraries like [jest-extended](https://github.com/jest-community/jest-extended#installation) you can import it from your `global.d.ts`:
-
-```js
-// global.d.ts
-import 'jest-extended';
 ```
