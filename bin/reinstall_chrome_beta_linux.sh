@@ -13,3 +13,4 @@ wget https://dl.google.com/linux/direct/google-chrome-beta_current_amd64.deb
 sudo apt-get install -y ./google-chrome-beta_current_amd64.deb
 rm -rf ./google-chrome-beta_current_amd64.deb
 cd -
+google-chrome-beta --version

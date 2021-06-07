@@ -27,12 +27,11 @@ import { Progress, ProgressController } from './progress';
 import * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
-import { debugMode } from '../utils/utils';
+import { debugMode, existsAsync } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
 
-const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export abstract class BrowserType extends SdkObject {

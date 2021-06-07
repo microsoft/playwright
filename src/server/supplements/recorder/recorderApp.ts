@@ -23,9 +23,7 @@ import { EventEmitter } from 'events';
 import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
-import { isUnderTest } from '../../../utils/utils';
-
-const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
+import { existsAsync, isUnderTest } from '../../../utils/utils';
 
 declare global {
   interface Window {
