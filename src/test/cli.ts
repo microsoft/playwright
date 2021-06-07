@@ -61,7 +61,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
     try {
       await runTests(args, opts);
     } catch (e) {
-      console.error(e.toString());
+      console.error(e && typeof e === 'object' && e.stack ? e.stack : String(e));
       process.exit(1);
     }
   });

@@ -16,7 +16,7 @@
 
 import { installTransform } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
-import { errorWithCallLocation, isRegExp, mergeObjects, prependErrorMessage } from './util';
+import { errorWithCallLocation, isRegExp, mergeObjects } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
@@ -61,9 +61,6 @@ export class Loader {
       this._processConfigObject(path.dirname(file));
       this._configFile = file;
       return rawConfig;
-    } catch (e) {
-      prependErrorMessage(e, `Error while reading ${file}:\n`);
-      throw e;
     } finally {
       revertBabelRequire();
     }
@@ -114,9 +111,6 @@ export class Loader {
       require(file);
       this._fileSuites.set(file, suite);
       return suite;
-    } catch (e) {
-      prependErrorMessage(e, `Error while reading ${file}:\n`);
-      throw e;
     } finally {
       revertBabelRequire();
       setCurrentlyLoadingFileSuite(undefined);
@@ -132,9 +126,6 @@ export class Loader {
       if (typeof hook !== 'function')
         throw errorWithCallLocation(`${name} file must export a single function.`);
       return hook;
-    } catch (e) {
-      prependErrorMessage(e, `Error while reading ${file}:\n`);
-      throw e;
     } finally {
       revertBabelRequire();
     }
@@ -149,9 +140,6 @@ export class Loader {
       if (typeof func !== 'function')
         throw errorWithCallLocation(`Reporter file "${file}" must export a single class.`);
       return func;
-    } catch (e) {
-      prependErrorMessage(e, `Error while reading ${file}:\n`);
-      throw e;
     } finally {
       revertBabelRequire();
     }
