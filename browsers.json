@@ -9,12 +9,12 @@
     {
       "name": "firefox",
       "revision": "1268",
-      "installByDefault": false
+      "installByDefault": true
     },
     {
       "name": "firefox-stable",
       "revision": "1259",
-      "installByDefault": true
+      "installByDefault": false
     },
     {
       "name": "webkit",
