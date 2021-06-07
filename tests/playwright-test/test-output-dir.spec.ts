@@ -21,7 +21,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should work and remove non-failures on CI', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'dir/my-test.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('test 1', async ({}, testInfo) => {
         if (testInfo.retry) {
           expect(testInfo.outputDir).toContain('dir-my-test-test-1-retry' + testInfo.retry);
@@ -63,7 +63,7 @@ test('should work and remove non-failures on CI', async ({ runInlineTest }, test
 test('should include repeat token', async ({runInlineTest}) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('test', ({}, testInfo) => {
         if (testInfo.repeatEachIndex)
           expect(testInfo.outputPath('')).toContain('repeat' + testInfo.repeatEachIndex);
@@ -79,12 +79,12 @@ test('should include repeat token', async ({runInlineTest}) => {
 test('should include the project name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         auto: [ async ({}, run, testInfo) => {
           await run();
         }, { auto: true } ]
       });
-      export const test2 = folio.test.extend({
+      export const test2 = pwt.test.extend({
         auto: [ async ({}, run, testInfo) => {
           testInfo.snapshotSuffix = 'suffix';
           await run();
@@ -179,7 +179,7 @@ test('should remove output dirs for projects run', async ({runInlineTest}, testI
       ] };
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('my test', ({}, testInfo) => {});
     `
   }, { output: '' });
@@ -197,7 +197,7 @@ test('should remove folders with preserveOutput=never', async ({ runInlineTest }
       export default { preserveOutput: 'never' };
     `,
     'dir/my-test.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('test 1', async ({}, testInfo) => {
         require('fs').writeFileSync(testInfo.outputPath('file.txt'), 'content', 'utf-8');
         if (testInfo.retry < 2)
@@ -216,7 +216,7 @@ test('should remove folders with preserveOutput=never', async ({ runInlineTest }
 test('should not remove folders on non-CI', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'dir/my-test.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('test 1', async ({}, testInfo) => {
         require('fs').writeFileSync(testInfo.outputPath('file.txt'), 'content', 'utf-8');
         if (testInfo.retry < 2)

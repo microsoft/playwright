@@ -19,15 +19,15 @@ import * as path from 'path';
 
 const tests = {
   'a.test.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     test('pass', ({}) => {});
   `,
   'b.test.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     test('pass', ({}) => {});
   `,
   'c.test.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     test('pass', ({}) => {});
   `
 };
@@ -55,19 +55,19 @@ test('should ignore a folder', async ({ runInlineTest }) => {
       module.exports = { testIgnore: 'folder/**' };
     `,
     'a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'folder/a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'folder/b.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'folder/c.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   });
@@ -78,19 +78,19 @@ test('should ignore a folder', async ({ runInlineTest }) => {
 test('should ignore a node_modules', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'node_modules/a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'node_modules/b.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'folder/c.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   });
@@ -126,15 +126,15 @@ test('should use an array for testMatch', async ({ runInlineTest }) => {
       module.exports = { testMatch: ['b.test.ts', /\\${path.sep}a.[tes]{4}.TS$/i] };
     `,
     'dir/a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'b.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'c.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   });
@@ -150,15 +150,15 @@ test('should match absolute path', async ({ runInlineTest }) => {
       module.exports = { testDir: path.join(__dirname, 'dir'), testMatch: /dir\\${path.sep}a/ };
     `,
     'dir/a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'dir/b.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   });
@@ -174,15 +174,15 @@ test('should match cli string argument', async ({ runInlineTest }) => {
       module.exports = { testDir: path.join(__dirname, 'dir') };
     `,
     'dir/a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'dir/b.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   }, { args: [`dir\\${path.sep}a`] });
@@ -194,15 +194,15 @@ test('should match cli string argument', async ({ runInlineTest }) => {
 test('should match regex string argument', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'dir/filea.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'dir/fileb.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'filea.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   }, { args: ['/filea.*ts/'] });
@@ -214,19 +214,19 @@ test('should match regex string argument', async ({ runInlineTest }) => {
 test('should match by directory', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'dir-a/file.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'dir-b/file1.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'dir-b/file2.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'file.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   }, { args: ['dir-b'] });
@@ -241,19 +241,19 @@ test('should ignore node_modules even with custom testIgnore', async ({ runInlin
       module.exports = { testIgnore: 'a.test.ts' };
     `,
     'a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'node_modules/a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'node_modules/b.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'folder/c.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   });

@@ -20,11 +20,11 @@ test('should respect .gitignore', async ({runInlineTest}) => {
   const result = await runInlineTest({
     '.gitignore': `a.spec.js`,
     'a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'b.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   });
@@ -36,11 +36,11 @@ test('should respect nested .gitignore', async ({runInlineTest}) => {
   const result = await runInlineTest({
     'a/.gitignore': `a.spec.js`,
     'a/a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'a/b.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   });
@@ -52,11 +52,11 @@ test('should respect enclosing .gitignore', async ({runInlineTest}) => {
   const result = await runInlineTest({
     '.gitignore': `a/a.spec.js`,
     'a/a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `,
     'a/b.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => {});
     `
   });
@@ -74,30 +74,30 @@ test('should respect negations and comments in .gitignore', async ({runInlineTes
       !dir1/foo/a.spec.js
     `,
     'a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => console.log('\\n%%a.spec.js'));
     `,
     'dir1/a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => console.log('\\n%%dir1/a.spec.js'));
     `,
     'dir1/foo/a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => console.log('\\n%%dir1/foo/a.spec.js'));
     `,
     'dir2/a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => console.log('\\n%%dir2/a.spec.js'));
     `,
     'dir3/.gitignore': `
       b.*.js
     `,
     'dir3/a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => console.log('\\n%%dir3/a.spec.js'));
     `,
     'dir3/b.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('pass', ({}) => console.log('\\n%%dir3/b.spec.js'));
     `,
   }, { workers: 1 });

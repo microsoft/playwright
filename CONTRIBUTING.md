@@ -130,7 +130,7 @@ A barrier for introducing new installation dependencies is especially high:
 - Tests should be *hermetic*. Tests should not depend on external services.
 - Tests should work on all three platforms: Mac, Linux and Win. This is especially important for screenshot tests.
 
-Playwright tests are located in [`tests`](https://github.com/microsoft/playwright/blob/master/tests) and use [Folio](https://github.com/microsoft/folio) test runner.
+Playwright tests are located in [`tests`](https://github.com/microsoft/playwright/blob/master/tests) and use `@playwright/test` test runner.
 These are integration tests, making sure public API methods and events work as expected.
 
 - To run all tests:

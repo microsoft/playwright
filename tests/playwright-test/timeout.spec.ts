@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should run fixture teardown on timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         foo: async ({}, run, testInfo) => {
           await run();
           console.log('STATUS:' + testInfo.status);
@@ -41,7 +41,7 @@ test('should run fixture teardown on timeout', async ({ runInlineTest }) => {
 test('should respect test.setTimeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('fails', async ({}) => {
         await new Promise(f => setTimeout(f, 1500));
       });
@@ -71,7 +71,7 @@ test('should respect test.setTimeout', async ({ runInlineTest }) => {
 test('should timeout when calling test.setTimeout too late', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('fails', async ({}) => {
         await new Promise(f => setTimeout(f, 500));
         test.setTimeout(100);
@@ -88,7 +88,7 @@ test('should timeout when calling test.setTimeout too late', async ({ runInlineT
 test('should respect test.slow', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('fails', async ({}) => {
         await new Promise(f => setTimeout(f, 1500));
       });

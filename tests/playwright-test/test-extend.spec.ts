@@ -39,7 +39,7 @@ test('test.extend should work', async ({ runInlineTest }) => {
         };
       }
 
-      export const base = folio.test.declare();
+      export const base = pwt.test.declare();
       export const test1 = base.extend(createDerivedFixtures('e1'));
       export const test2 = base.extend(createDerivedFixtures('e2'));
     `,
@@ -129,7 +129,7 @@ test('test.extend should work', async ({ runInlineTest }) => {
 test('test.declare should be inserted at the right place', async ({ runInlineTest }) => {
   const { output, passed } = await runInlineTest({
     'helper.ts': `
-      const test1 = folio.test.extend({
+      const test1 = pwt.test.extend({
         foo: async ({}, run) => {
           console.log('before-foo');
           await run('foo');

@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should be able to extend the expect matchers with test.extend in the folio config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      folio.expect.extend({
+      pwt.expect.extend({
         toBeWithinRange(received, floor, ceiling) {
           const pass = received >= floor && received <= ceiling;
           if (pass) {
@@ -36,7 +36,7 @@ test('should be able to extend the expect matchers with test.extend in the folio
           }
         },
       });
-      export const test = folio.test;
+      export const test = pwt.test;
     `,
     'expect-test.spec.ts': `
       import { test } from './helper';
@@ -53,7 +53,7 @@ test('should be able to extend the expect matchers with test.extend in the folio
 test('should work with default expect prototype functions', async ({runTSC}) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       const expected = [1, 2, 3, 4, 5, 6];
       test.expect([4, 1, 6, 7, 3, 5, 2, 5, 4, 6]).toEqual(
         expect.arrayContaining(expected),
@@ -66,7 +66,7 @@ test('should work with default expect prototype functions', async ({runTSC}) => 
 test('should work with default expect matchers', async ({runTSC}) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test.expect(42).toBe(42);
     `
   });
@@ -85,7 +85,7 @@ test('should work with jest-community/jest-extended', async ({runTSC}) => {
       }
     `,
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test.expect('').toBeEmpty();
       test.expect('hello').not.toBeEmpty();
       test.expect([]).toBeEmpty();
@@ -109,7 +109,7 @@ test('should work with custom folio namespace', async ({runTSC}) => {
       }
     `,
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test.expect.extend({
         toBeWithinRange() { },
       });

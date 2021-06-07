@@ -20,7 +20,7 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
     'helper.ts': `
       global.logs = [];
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         w: [ async ({}, run) => {
           global.logs.push('+w');
           await run(17);
@@ -79,7 +79,7 @@ test('afterEach failure should not prevent other hooks and fixtures teardown', a
   const report = await runInlineTest({
     'helper.ts': `
       global.logs = [];
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         foo: async ({}, run) => {
           console.log('+t');
           await run();
@@ -111,7 +111,7 @@ test('afterEach failure should not prevent other hooks and fixtures teardown', a
 test('beforeEach failure should prevent the test, but not other hooks', async ({ runInlineTest }) => {
   const report = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test.describe('suite', () => {
         test.beforeEach(async ({}) => {
           console.log('beforeEach1');
@@ -136,7 +136,7 @@ test('beforeEach failure should prevent the test, but not other hooks', async ({
 test('beforeAll should be run once', async ({ runInlineTest }) => {
   const report = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test.describe('suite1', () => {
         let counter = 0;
         test.beforeAll(async () => {
@@ -159,7 +159,7 @@ test('beforeAll should be run once', async ({ runInlineTest }) => {
 test('beforeEach should be able to skip a test', async ({ runInlineTest }) => {
   const { passed, skipped, exitCode } = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test.beforeEach(async ({}, testInfo) => {
         testInfo.skip(testInfo.title === 'test2');
       });
@@ -175,7 +175,7 @@ test('beforeEach should be able to skip a test', async ({ runInlineTest }) => {
 test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'my-test.ts': `
-      export const test = folio.test;
+      export const test = pwt.test;
       test.beforeAll(() => {});
     `,
     'playwright.config.ts': `

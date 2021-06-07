@@ -19,7 +19,7 @@ import { test, expect, stripAscii } from './playwright-test-fixtures';
 test('render unexpected after retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
@@ -38,7 +38,7 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
 test('render flaky', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(3);
       });

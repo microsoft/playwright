@@ -20,7 +20,7 @@ import * as path from 'path';
 test('should fail', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'one-failure.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('fails', () => {
         expect(1 + 1).toBe(7);
       });
@@ -35,7 +35,7 @@ test('should fail', async ({ runInlineTest }) => {
 test('should timeout', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, output } = await runInlineTest({
     'one-timeout.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('timeout', async () => {
         await new Promise(f => setTimeout(f, 10000));
       });
@@ -50,7 +50,7 @@ test('should timeout', async ({ runInlineTest }) => {
 test('should succeed', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'one-success.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('succeeds', () => {
         expect(1 + 1).toBe(2);
       });
@@ -67,7 +67,7 @@ test('should report suite errors', async ({ runInlineTest }) => {
       if (new Error().stack.includes('workerRunner'))
         throw new Error('Suite error');
 
-      const { test } = folio;
+      const { test } = pwt;
       test('passes',() => {
         expect(1 + 1).toBe(2);
       });
@@ -81,7 +81,7 @@ test('should report suite errors', async ({ runInlineTest }) => {
 test('should respect nested skip', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, skipped } = await runInlineTest({
     'nested-skip.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test.describe('skipped', () => {
         test.skip();
         test('succeeds',() => {
@@ -99,7 +99,7 @@ test('should respect nested skip', async ({ runInlineTest }) => {
 test('should respect excluded tests', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'excluded.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('included test', () => {
         expect(1 + 1).toBe(2);
       });
@@ -135,7 +135,7 @@ test('should respect excluded tests', async ({ runInlineTest }) => {
 test('should respect focused tests', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'focused.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('included test', () => {
         expect(1 + 1).toBe(3);
       });
@@ -183,7 +183,7 @@ test('should respect focused tests', async ({ runInlineTest }) => {
 test('skip should take priority over fail', async ({ runInlineTest }) => {
   const { passed, skipped, failed } = await runInlineTest({
     'test.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test.describe('failing suite', () => {
         test.fail();
 
@@ -220,13 +220,13 @@ test('should focus test from one runTests', async ({ runInlineTest }) => {
       ] };
     `,
     'a/afile.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('just a test', () => {
         expect(1 + 1).toBe(3);
       });
     `,
     'b/bfile.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test.only('focused test', () => {
         expect(1 + 1).toBe(2);
       });

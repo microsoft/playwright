@@ -38,7 +38,7 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
       };
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('should work', async ({}, testInfo) => {
         expect(process.env.FOO).toBe('42');
       });
@@ -70,7 +70,7 @@ test('globalTeardown runs after failures', async ({ runInlineTest }) => {
       };
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('should work', async ({}, testInfo) => {
         expect(process.env.FOO).toBe('43');
       });
@@ -101,7 +101,7 @@ test('globalTeardown does not run when globalSetup times out', async ({ runInlin
       };
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('should not run', async ({}, testInfo) => {
       });
     `,
@@ -128,7 +128,7 @@ test('globalSetup should be run before requiring tests', async ({ runInlineTest 
       };
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       let value = JSON.parse(process.env.FOO);
       test('should work', async ({}) => {
         expect(value).toEqual({ foo: 'bar' });
@@ -152,7 +152,7 @@ test('globalSetup should work with sync function', async ({ runInlineTest }) => 
       };
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       let value = JSON.parse(process.env.FOO);
       test('should work', async ({}) => {
         expect(value).toEqual({ foo: 'bar' });
@@ -174,7 +174,7 @@ test('globalSetup should throw when passed non-function', async ({ runInlineTest
       module.exports = 42;
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('should work', async ({}) => {
       });
     `,
@@ -202,7 +202,7 @@ test('globalSetup should work with default export and run the returned fn', asyn
       export default setup;
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('should work', async ({}) => {
       });
     `,

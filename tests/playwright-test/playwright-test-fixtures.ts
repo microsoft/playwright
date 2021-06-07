@@ -50,10 +50,10 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
 
   const internalPath = JSON.stringify(path.join(__dirname, 'entry'));
   const headerJS = `
-    const folio = require(${internalPath});
+    const pwt = require(${internalPath});
   `;
   const headerTS = `
-    import * as folio from ${internalPath};
+    import * as pwt from ${internalPath};
   `;
 
   const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
@@ -72,7 +72,7 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
     const isTypeScriptSourceFile = name.endsWith('ts') && !name.endsWith('d.ts');
     const header = isTypeScriptSourceFile ? headerTS : headerJS;
     if (/(spec|test)\.(js|ts)$/.test(name)) {
-      const fileHeader = header + 'const { expect } = folio;\n';
+      const fileHeader = header + 'const { expect } = pwt;\n';
       await fs.promises.writeFile(fullName, fileHeader + files[name]);
     } else if (/\.(js|ts)$/.test(name) && !name.endsWith('d.ts')) {
       await fs.promises.writeFile(fullName, header + files[name]);
@@ -107,7 +107,7 @@ async function runTSC(baseDir: string): Promise<TSCResult> {
   };
 }
 
-async function runFolio(baseDir: string, params: any, env: Env): Promise<RunResult> {
+async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promise<RunResult> {
   const paramList = [];
   let additionalArgs = '';
   for (const key of Object.keys(params)) {
@@ -219,7 +219,7 @@ export const test = base.extend<Fixtures>({
     let runResult: RunResult | undefined;
     await use(async (files: Files, params: Params = {}, env: Env = {}) => {
       const baseDir = await writeFiles(testInfo, files);
-      runResult = await runFolio(baseDir, params, env);
+      runResult = await runPlaywrightTest(baseDir, params, env);
       return runResult;
     });
     if (testInfo.status !== testInfo.expectedStatus && runResult)

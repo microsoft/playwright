@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should merge options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: 'foo',
         bar: 'bar',
       });
@@ -39,7 +39,7 @@ test('should merge options', async ({ runInlineTest }) => {
 test('should run tests with different test options in the same worker', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         foo: 'foo',
       });
     `,
@@ -74,7 +74,7 @@ test('should run tests with different test options in the same worker', async ({
 test('should run tests with different worker options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         foo: [undefined, { scope: 'worker' }],
       });
     `,
@@ -139,7 +139,7 @@ test('should run tests with different worker options', async ({ runInlineTest })
 test('should use options from the config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         foo: 'foo',
       });
     `,

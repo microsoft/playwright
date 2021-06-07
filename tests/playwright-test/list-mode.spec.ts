@@ -20,7 +20,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should have relative always-posix paths', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('math works!', async ({}) => {
         expect(1 + 1).toBe(2);
       });

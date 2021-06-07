@@ -20,13 +20,13 @@ import { test, expect } from './playwright-test-fixtures';
 test('should render expected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}) => {
         expect(1).toBe(1);
       });
     `,
     'b.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('two', async ({}) => {
         expect(1).toBe(1);
       });
@@ -47,7 +47,7 @@ test('should render expected', async ({ runInlineTest }) => {
 test('should render unexpected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
@@ -67,7 +67,7 @@ test('should render unexpected', async ({ runInlineTest }) => {
 test('should render unexpected after retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
@@ -85,7 +85,7 @@ test('should render unexpected after retry', async ({ runInlineTest }) => {
 test('should render flaky', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(3);
       });
@@ -99,7 +99,7 @@ test('should render stdout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import colors from 'colors/safe';
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}) => {
         console.log(colors.yellow('Hello world'));
         test.expect("abc").toBe('abcd');
@@ -124,7 +124,7 @@ test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       import colors from 'colors/safe';
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}) => {
         console.log(colors.yellow('Hello world'));
       });
@@ -140,7 +140,7 @@ test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
 test('should render skipped', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async () => {
         console.log('Hello world');
       });
@@ -163,7 +163,7 @@ test('should render projects', async ({ runInlineTest }) => {
       module.exports = { projects: [ { name: 'project1' }, { name: 'project2' } ] };
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('one', async ({}) => {
         expect(1).toBe(1);
       });

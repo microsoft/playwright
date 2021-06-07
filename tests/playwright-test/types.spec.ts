@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('sanity', async ({runTSC}) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       // @ts-expect-error
       test.foo();
     `
@@ -31,7 +31,7 @@ test('should check types of fixtures', async ({runTSC}) => {
   const result = await runTSC({
     'helper.ts': `
       export type MyOptions = { foo: string, bar: number };
-      export const test = folio.test.extend<{ foo: string }, { bar: number }>({
+      export const test = pwt.test.extend<{ foo: string }, { bar: number }>({
         foo: 'foo',
         bar: [ 42, { scope: 'worker' } ],
       });
@@ -74,14 +74,14 @@ test('should check types of fixtures', async ({runTSC}) => {
     `,
     'playwright.config.ts': `
       import { MyOptions } from './helper';
-      const configs1: folio.Config[] = [];
+      const configs1: pwt.Config[] = [];
       configs1.push({ use: { foo: '42', bar: 42 } });
       configs1.push({ use: { foo: '42', bar: 42 }, timeout: 100 });
 
-      const configs2: folio.Config<MyOptions>[] = [];
+      const configs2: pwt.Config<MyOptions>[] = [];
       configs2.push({ use: { foo: '42', bar: 42 } });
       // @ts-expect-error
-      folio.runTests({ use: { foo: '42', bar: 42 } }, {});
+      pwt.runTests({ use: { foo: '42', bar: 42 } }, {});
       // @ts-expect-error
       configs2.push({ use: { bar: '42' } });
       // @ts-expect-error
@@ -149,14 +149,14 @@ test('should check types of fixtures', async ({runTSC}) => {
 test('config should allow void/empty options', async ({runTSC}) => {
   const result = await runTSC({
     'playwright.config.ts': `
-      const configs: folio.Config[] = [];
+      const configs: pwt.Config[] = [];
       configs.push({});
       configs.push({ timeout: 100 });
       configs.push();
       configs.push({ use: { foo: 42 }});
     `,
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('my test', async () => {
       });
     `
