@@ -16,5 +16,5 @@
 
 module.exports = {
   ...require('./lib/inprocess'),
-  ...require('./lib/cli/fixtures')
+  ...require('./lib/test/index')
 };

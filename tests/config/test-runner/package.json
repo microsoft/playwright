@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "@playwright/test": "=1.12.0-next-1622928816000"
+  }
+}

@@ -681,8 +681,8 @@ playwright.chromium.launch().then(async browser => {
   for (const frameLike of frameLikes) {
     {
       const handle = await frameLike.waitForSelector('body');
-      const bodyAssertion: AssertType<playwright.ElementHandle<HTMLBodyElement>, typeof handle> = true;      
-      const canBeNull: AssertCanBeNull<typeof handle> = false     
+      const bodyAssertion: AssertType<playwright.ElementHandle<HTMLBodyElement>, typeof handle> = true;
+      const canBeNull: AssertCanBeNull<typeof handle> = false
     }
     {
       const handle = await frameLike.waitForSelector('body', {timeout: 0});
@@ -714,8 +714,8 @@ playwright.chromium.launch().then(async browser => {
     {
       const handle = await frameLike.waitForSelector('something-strange', {timeout: 0});
       const elementAssertion: AssertType<playwright.ElementHandle<HTMLElement|SVGElement>, typeof handle> = true;
-      const canBeNull: AssertCanBeNull<typeof handle> = false;      
-    }    
+      const canBeNull: AssertCanBeNull<typeof handle> = false;
+    }
     {
       const state = Math.random() > .5 ? 'attached' : 'visible';
       const handle = await frameLike.waitForSelector('something-strange', {state});

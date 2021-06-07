@@ -35,13 +35,14 @@ import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { installDeps } from '../install/installDeps';
 import { allBrowserNames, BrowserName } from '../utils/registry';
-import { addTestCommand } from './testRunner';
 import * as utils from '../utils/utils';
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
+
 type BrowserChannel = 'chrome-beta'|'chrome'|'msedge';
 const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta', 'chrome', 'msedge']);
+const packageJSON = require('../../package.json');
 
 const ChannelName = {
   'chrome-beta': 'Google Chrome Beta',
@@ -67,7 +68,7 @@ const InstallationScriptName = {
 };
 
 program
-    .version('Version ' + require('../../package.json').version)
+    .version('Version ' + packageJSON.version)
     .name(process.env.PW_CLI_NAME || 'npx playwright');
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
@@ -248,8 +249,19 @@ program
       console.log('  $ show-trace trace/directory');
     });
 
-if (!process.env.PW_CLI_TARGET_LANG)
-  addTestCommand(program);
+if (!process.env.PW_CLI_TARGET_LANG) {
+  if (packageJSON.name === '@playwright/test' || process.env.PWTEST_CLI_ALLOW_TEST_COMMAND) {
+    require('../test/cli').addTestCommand(program);
+  } else {
+    const command = program.command('test');
+    command.description('Run tests with Playwright Test. Available in @playwright/test package.');
+    command.action(async (args, opts) => {
+      console.error('Please install @playwright/test package to use Playwright Test.');
+      console.error('  npm install -D @playwright/test');
+      process.exit(1);
+    });
+  }
+}
 
 if (process.argv[2] === 'run-driver')
   runDriver();

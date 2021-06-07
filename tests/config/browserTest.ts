@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as folio from 'folio';
+import type { Fixtures } from './test-runner';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from '../../index';
 import { removeFolders } from '../../lib/utils/utils';
 import * as path from 'path';
@@ -49,7 +49,7 @@ type PlaywrightTestFixtures = {
 };
 export type PlaywrightOptions = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
-export const playwrightFixtures: folio.Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, {}, CommonWorkerFixtures> = {
+export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, {}, CommonWorkerFixtures> = {
   tracesDir: [ undefined, { scope: 'worker' } ],
   executablePath: [ undefined, { scope: 'worker' } ],
   proxy: [ undefined, { scope: 'worker' } ],
@@ -159,4 +159,4 @@ export const playwrightTest = test;
 export const browserTest = test;
 export const contextTest = test;
 
-export { expect } from 'folio';
+export { expect } from './test-runner';

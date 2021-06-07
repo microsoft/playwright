@@ -17,6 +17,18 @@
 import { Page } from '../../index';
 import { test as it, expect } from './inspectorTest';
 
+
+it('should resume when closing inspector', async ({page, recorderPageGetter, closeRecorder, mode}) => {
+  it.skip(mode !== 'default');
+
+  const scriptPromise = (async () => {
+    await page.pause();
+  })();
+  await recorderPageGetter();
+  await closeRecorder();
+  await scriptPromise;
+});
+
 it.describe('pause', () => {
   it.skip(({ mode }) => mode !== 'default');
 

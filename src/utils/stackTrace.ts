@@ -41,6 +41,7 @@ const PW_LIB_DIRS = [
   'playwright-chromium',
   'playwright-firefox',
   'playwright-webkit',
+  path.join('@playwright', 'test'),
 ].map(packageName => path.sep + path.join(packageName, 'lib'));
 
 export function captureStackTrace(): { stack: string, frames: StackFrame[] } {

@@ -61,9 +61,26 @@ const PACKAGES = {
   'playwright-chromium': {
     description: 'A high-level API to automate Chromium',
     browsers: ['chromium', 'ffmpeg'],
-    files: [...PLAYWRIGHT_CORE_FILES],
+    files: PLAYWRIGHT_CORE_FILES,
   },
 };
+
+const DEPENDENCIES = [
+  'commander',
+  'debug',
+  'extract-zip',
+  'https-proxy-agent',
+  'jpeg-js',
+  'mime',
+  'pngjs',
+  'progress',
+  'proper-lockfile',
+  'proxy-from-env',
+  'rimraf',
+  'stack-utils',
+  'ws',
+  'yazl',
+];
 
 // 1. Parse CLI arguments
 const args = process.argv.slice(2);
@@ -121,9 +138,10 @@ if (!args.some(arg => arg === '--no-cleanup')) {
 
   // 4. Generate package.json
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
-  const dependencies = { ...pwInternalJSON.dependencies };
-  if (packageName === 'playwright-test')
-    dependencies.folio = pwInternalJSON.devDependencies.folio;
+  const depNames = packageName === 'playwright-test' ? Object.keys(pwInternalJSON.dependencies) : DEPENDENCIES;
+  const dependencies = {};
+  for (const dep of depNames)
+    dependencies[dep] =  pwInternalJSON.dependencies[dep];
   await writeToPackage('package.json', JSON.stringify({
     name: package.name || packageName,
     version: pwInternalJSON.version,
