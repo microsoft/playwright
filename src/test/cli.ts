@@ -122,8 +122,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     }
   } else if (!loadConfig(path.resolve(process.cwd(), tsConfig)) && !loadConfig(path.resolve(process.cwd(), jsConfig))) {
     // No --config option, let's look for the config file in the current directory.
-    // If not, do not assume that current directory is a root testing directory, to avoid scanning the world.
-    throw new Error(`Configuration file not found. Run "npx playwright test --help" for more information.`);
+    // If not, scan the world.
+    runner.loadEmptyConfig(process.cwd());
   }
 
   const result = await runner.run(!!opts.list, args.map(forceRegExp), opts.project || undefined);
