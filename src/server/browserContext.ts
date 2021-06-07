@@ -76,6 +76,9 @@ export abstract class BrowserContext extends SdkObject {
     if (this._options.recordHar)
       this._harTracer = new HarTracer(this, this._options.recordHar);
     this.tracing = new Tracing(this);
+
+    if (typeof this._options.defaultTimeout === 'number' && !debugMode())
+      this._timeoutSettings.setDefaultTimeout(this._options.defaultTimeout);
   }
 
   _setSelectors(selectors: Selectors) {

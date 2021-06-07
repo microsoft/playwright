@@ -6986,6 +6986,12 @@ export interface BrowserType<Unused = {}> {
     colorScheme?: "light"|"dark"|"no-preference";
 
     /**
+     * Set the default browser context timeout for the new context. Equivalent to calling
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout).
+     */
+    defaultTimeout?: number;
+
+    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
      */
     deviceScaleFactor?: number;
@@ -8097,6 +8103,12 @@ export interface AndroidDevice {
     command?: string;
 
     /**
+     * Set the default browser context timeout for the new context. Equivalent to calling
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout).
+     */
+    defaultTimeout?: number;
+
+    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
      */
     deviceScaleFactor?: number;
@@ -8849,6 +8861,12 @@ export interface Browser extends EventEmitter {
      * Defaults to `'light'`.
      */
     colorScheme?: "light"|"dark"|"no-preference";
+
+    /**
+     * Set the default browser context timeout for the new context. Equivalent to calling
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout).
+     */
+    defaultTimeout?: number;
 
     /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
@@ -10918,6 +10936,12 @@ export interface BrowserContextOptions {
    * Defaults to `'light'`.
    */
   colorScheme?: "light"|"dark"|"no-preference";
+
+  /**
+   * Set the default browser context timeout for the new context. Equivalent to calling
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browsercontextsetdefaulttimeouttimeout).
+   */
+  defaultTimeout?: number;
 
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`.

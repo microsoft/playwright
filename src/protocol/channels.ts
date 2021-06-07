@@ -339,6 +339,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     omitContent?: boolean,
     path: string,
   },
+  defaultTimeout?: number,
   userDataDir: string,
   slowMo?: number,
 };
@@ -409,6 +410,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     omitContent?: boolean,
     path: string,
   },
+  defaultTimeout?: number,
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -499,6 +501,7 @@ export type BrowserNewContextParams = {
     omitContent?: boolean,
     path: string,
   },
+  defaultTimeout?: number,
   proxy?: {
     server: string,
     bypass?: string,
@@ -556,6 +559,7 @@ export type BrowserNewContextOptions = {
     omitContent?: boolean,
     path: string,
   },
+  defaultTimeout?: number,
   proxy?: {
     server: string,
     bypass?: string,
