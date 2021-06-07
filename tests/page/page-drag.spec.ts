@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { ElementHandle } from '../../index';
+import type { ElementHandle, Route } from '../../index';
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
 it.describe('Drag and drop', () => {
-  it.skip(({ isAndroid }) => isAndroid);
-  it.fixme(({ browserName }) => browserName === 'chromium');
+  it.skip(({isAndroid}) => isAndroid);
+  it.skip(({browserName, browserMajorVersion}) => browserName === 'chromium' && browserMajorVersion < 91);
 
   it('should work', async ({page, server}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
@@ -65,10 +65,10 @@ it.describe('Drag and drop', () => {
       browserName === 'firefox' ? 'dragstart' : 'mousemove',
       browserName === 'firefox' ? 'mousemove' : 'dragstart',
       'dragenter',
-      'dragover',
+      browserName !== 'chromium' ? 'dragover' : null,
       'dragend',
       'mouseup',
-    ]);
+    ].filter(Boolean));
   });
 
   it.describe('iframe', () => {
@@ -122,7 +122,6 @@ it.describe('Drag and drop', () => {
   });
 
   it('should respect the drop effect', async ({page, browserName, platform}) => {
-    it.fixme(browserName === 'chromium', 'Chromium doesn\'t let users set dropEffect on our fake data transfer');
     it.fixme(browserName === 'webkit' && platform !== 'linux', 'WebKit doesn\'t handle the drop effect correctly outside of linux.');
     it.fixme(browserName === 'firefox');
 
@@ -174,6 +173,60 @@ it.describe('Drag and drop', () => {
       return await page.evaluate('dropped');
     }
   });
+  it('should work if the drag is canceled', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/drag-n-drop.html');
+    await page.evaluate(() => {
+      document.body.addEventListener('dragstart', event => {
+        event.preventDefault();
+      }, false);
+    });
+    await page.hover('#source');
+    await page.mouse.down();
+    await page.hover('#target');
+    await page.mouse.up();
+    expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(false);
+  });
+
+  it('should work if the drag event is captured but not canceled', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/drag-n-drop.html');
+    await page.evaluate(() => {
+      document.body.addEventListener('dragstart', event => {
+        event.stopImmediatePropagation();
+      }, false);
+    });
+    await page.hover('#source');
+    await page.mouse.down();
+    await page.hover('#target');
+    await page.mouse.up();
+    expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true);
+  });
+
+  it('should be able to drag the mouse in a frame', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/frames/one-frame.html');
+    const eventsHandle = await trackEvents(await page.frames()[1].$('html'));
+    await page.mouse.move(30, 30);
+    await page.mouse.down();
+    await page.mouse.move(60, 60);
+    await page.mouse.up();
+    expect(await eventsHandle.jsonValue()).toEqual(['mousemove', 'mousedown', 'mousemove', 'mouseup']);
+  });
+
+  it('should work if a frame is stalled', async ({page, server, toImpl}) => {
+    await page.goto(server.PREFIX + '/drag-n-drop.html');
+    let madeRequest;
+    const routePromise = new Promise<Route>(x => madeRequest = x);
+    await page.route('**/empty.html', async (route, request) => {
+      madeRequest(route);
+    });
+    attachFrame(page, 'frame', server.EMPTY_PAGE).catch(() => {});
+    const route = await routePromise;
+    await page.hover('#source');
+    await page.mouse.down();
+    await page.hover('#target');
+    await page.mouse.up();
+    route.abort();
+    expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+  })
 
   async function trackEvents(target: ElementHandle) {
     const eventsHandle = await target.evaluateHandle(target => {
@@ -189,3 +242,26 @@ it.describe('Drag and drop', () => {
     return eventsHandle;
   }
 });
+
+it('should work if not doing a drag', async ({page}) => {
+  const eventsHandle = await trackEvents(await page.$('html'));
+  await page.mouse.move(50, 50);
+  await page.mouse.down();
+  await page.mouse.move(100, 100);
+  await page.mouse.up();
+  expect(await eventsHandle.jsonValue()).toEqual(['mousemove', 'mousedown', 'mousemove', 'mouseup']);
+});
+
+async function trackEvents(target: ElementHandle) {
+  const eventsHandle = await target.evaluateHandle(target => {
+    const events: string[] = [];
+    for (const event of [
+      'mousedown', 'mousemove', 'mouseup',
+      'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'dragexit',
+      'drop'
+    ])
+      target.addEventListener(event, () => events.push(event), false);
+    return events;
+  });
+  return eventsHandle;
+}

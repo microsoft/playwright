@@ -20,24 +20,15 @@ import * as types from '../types';
 import { CRSession } from './crConnection';
 import { macEditingCommands } from '../macEditingCommands';
 import { isString } from '../../utils/utils';
-
-function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
-  let mask = 0;
-  if (modifiers.has('Alt'))
-    mask |= 1;
-  if (modifiers.has('Control'))
-    mask |= 2;
-  if (modifiers.has('Meta'))
-    mask |= 4;
-  if (modifiers.has('Shift'))
-    mask |= 8;
-  return mask;
-}
+import { DragManager } from './crDragDrop';
+import { CRPage } from './crPage';
+import { toModifiersMask } from './crProtocolHelper';
 
 export class RawKeyboardImpl implements input.RawKeyboard {
   constructor(
     private _client: CRSession,
     private _isMac: boolean,
+    private _dragManger: DragManager,
   ) { }
 
   _commandsForCode(code: string, modifiers: Set<types.KeyboardModifier>) {
@@ -60,6 +51,8 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+    if (code === 'Escape' && await this._dragManger.cancelDrag())
+      return;
     const commands = this._commandsForCode(code, modifiers);
     await this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
@@ -94,22 +87,30 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
 export class RawMouseImpl implements input.RawMouse {
   private _client: CRSession;
+  private _page: CRPage;
+  private _dragManager: DragManager;
 
-  constructor(client: CRSession) {
+  constructor(page: CRPage, client: CRSession, dragManager: DragManager) {
+    this._page = page;
     this._client = client;
+    this._dragManager = dragManager;
   }
 
   async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>): Promise<void> {
-    await this._client.send('Input.dispatchMouseEvent', {
-      type: 'mouseMoved',
-      button,
-      x,
-      y,
-      modifiers: toModifiersMask(modifiers)
+    await this._dragManager.interceptDragCausedByMove(x, y, button, buttons, modifiers, async () => {
+      await this._client.send('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        button,
+        x,
+        y,
+        modifiers: toModifiersMask(modifiers)
+      });
     });
   }
 
   async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+    if (this._dragManager.isDragging())
+      return;
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       button,
@@ -121,6 +122,10 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+    if (this._dragManager.isDragging()) {
+      await this._dragManager.drop(x, y, modifiers);
+      return;
+    }
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
       button,
