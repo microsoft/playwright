@@ -11,7 +11,6 @@ We will create a `PlaywrightDevPage` helper class to encapsulate common operatio
 // playwright-dev-page.js
 exports.PlaywrightDevPage = class PlaywrightDevPage {
   constructor(page) {
-    /** @type {import('playwright').Page} */
     this.page = page;
   }
 
