@@ -48,7 +48,7 @@ type Env = { [key: string]: string | number | boolean | undefined };
 async function writeFiles(testInfo: TestInfo, files: Files) {
   const baseDir = testInfo.outputPath();
 
-  const internalPath = JSON.stringify(path.join(__dirname, 'playwright-test-internal'));
+  const internalPath = JSON.stringify(path.join(__dirname, 'entry'));
   const headerJS = `
     const folio = require(${internalPath});
   `;
