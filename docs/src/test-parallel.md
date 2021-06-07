@@ -22,12 +22,12 @@ You can control the maximum number of parallel worker processes via [command lin
 
 - Disable parallelization
   ```bash
-  npx playwright test --worker 1
+  npx playwright test --workers 1
   ```
 
 - Control the number of workers
   ```bash
-  npx playwright test --worker 4
+  npx playwright test --workers 4
   ```
 
 - In the configuration file
