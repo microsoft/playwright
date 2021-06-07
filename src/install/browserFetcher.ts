@@ -26,7 +26,7 @@ import { debugLogger } from '../utils/debugLogger';
 
 export async function downloadBrowserWithProgressBar(registry: Registry, browserName: BrowserName): Promise<boolean> {
   const browserDirectory = registry.browserDirectory(browserName);
-  const progressBarName = `playwright build of ${browserName} v${registry.revision(browserName)}`;
+  const progressBarName = `Playwright build of ${browserName} v${registry.revision(browserName)}`;
   if (await existsAsync(browserDirectory)) {
     // Already downloaded.
     debugLogger.log('install', `browser ${browserName} is already downloaded.`);
