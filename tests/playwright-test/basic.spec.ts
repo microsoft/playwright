@@ -241,7 +241,7 @@ test('should focus test from one runTests', async ({ runInlineTest }) => {
 test('should work with default export', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'file.spec.ts': `
-      import t from ${JSON.stringify(path.join(__dirname, 'playwright-test-internal'))};
+      import t from ${JSON.stringify(path.join(__dirname, 'entry'))};
       t('passed', () => {
         t.expect(1 + 1).toBe(2);
       });

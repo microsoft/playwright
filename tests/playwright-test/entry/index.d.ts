@@ -14,9 +14,4 @@
  * limitations under the License.
  */
 
-import type { TestType } from '../../types/testInternal';
-import type { Expect } from '../../types/testExpect';
-export type { Project, Config, TestStatus, TestInfo, WorkerInfo, TestType, Fixtures, TestFixture, WorkerFixture } from '../../types/testInternal';
-export const test: TestType<{}, {}>;
-export default test;
-export const expect: Expect;
+export * from '../../../types/test';

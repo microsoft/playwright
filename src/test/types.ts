@@ -14,4 +14,11 @@
  * limitations under the License.
  */
 
-export * from '../../types/testInternal';
+import type { Fixtures } from '../../types/test';
+export * from '../../types/test';
+
+export type Location = { file: string, line: number, column: number };
+export type FixturesWithLocation = {
+  fixtures: Fixtures;
+  location: Location;
+};
