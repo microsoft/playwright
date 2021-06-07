@@ -15,12 +15,12 @@
  */
 
 import * as fs from 'fs';
-import * as folio from 'folio';
+import { test as base } from './internal';
 import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
 import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 
-export * from 'folio';
-export const test = folio.test.extend<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>({
+export * from './internal';
+export const test = base.extend<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
   playwright: [ require('../inprocess'), { scope: 'worker' } ],
@@ -149,5 +149,3 @@ export const test = folio.test.extend<PlaywrightTestArgs & PlaywrightTestOptions
   },
 });
 export default test;
-
-export const __baseTest = folio.test;

@@ -15,7 +15,8 @@
  */
 
 import type { Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
-import type { Project, Config } from 'folio';
+import type { Project, Config, TestType } from './testInternal';
+import type { Expect } from './testExpect';
 
 /**
  * The name of the browser supported by Playwright.
@@ -279,9 +280,7 @@ export type PlaywrightTestArgs = {
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 
-export * from 'folio';
-
-import type { TestType } from 'folio';
+export type { Project, Config, TestStatus, TestInfo, WorkerInfo, TestType, Fixtures, TestFixture, WorkerFixture } from './testInternal';
 
 /**
  * These tests are executed in Playwright environment that launches the browser
@@ -289,3 +288,5 @@ import type { TestType } from 'folio';
  */
 export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
 export default test;
+
+export const expect: Expect;

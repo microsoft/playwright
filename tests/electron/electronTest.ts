@@ -16,10 +16,10 @@
 
 import { baseTest, CommonWorkerFixtures } from '../config/baseTest';
 import { ElectronApplication, Page } from '../../index';
-import * as folio from 'folio';
+import type { Fixtures } from '../config/test-runner';
 import * as path from 'path';
 import { PageTestFixtures } from '../page/pageTest';
-export { expect } from 'folio';
+export { expect } from '../config/test-runner';
 
 type ElectronTestFixtures = PageTestFixtures & {
   electronApp: ElectronApplication;
@@ -27,7 +27,7 @@ type ElectronTestFixtures = PageTestFixtures & {
 };
 
 const electronVersion = require('electron/package.json').version;
-export const electronFixtures: folio.Fixtures<ElectronTestFixtures, {}, {}, CommonWorkerFixtures> = {
+export const electronFixtures: Fixtures<ElectronTestFixtures, {}, {}, CommonWorkerFixtures> = {
   browserVersion: electronVersion,
   browserMajorVersion: Number(electronVersion.split('.')[0]),
   isAndroid: false,

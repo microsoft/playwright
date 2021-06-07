@@ -20,7 +20,7 @@ import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
 import { ChildProcess, spawn } from 'child_process';
 import { chromium } from '../../index';
-export { expect } from 'folio';
+export { expect } from '../config/test-runner';
 
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;

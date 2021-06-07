@@ -16,7 +16,7 @@
 
 import { baseTest } from '../config/baseTest';
 import type { Page } from '../../index';
-export { expect } from 'folio';
+export { expect } from '../config/test-runner';
 
 // Page test does not guarantee an isolated context, just a new page (because Android).
 export type PageTestFixtures = {
