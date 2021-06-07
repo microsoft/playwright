@@ -20,7 +20,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should support spec.ok', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('math works!', async ({}) => {
         expect(1 + 1).toBe(2);
       });
@@ -54,7 +54,7 @@ test('should report projects', async ({ runInlineTest }, testInfo) => {
       };
     `,
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('math works!', async ({}) => {
         expect(1 + 1).toBe(2);
       });

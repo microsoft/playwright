@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('basics should work', async ({runTSC}) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test.describe('suite', () => {
         test.beforeEach(async () => {});
         test('my test', async({}, testInfo) => {
@@ -35,7 +35,7 @@ test('basics should work', async ({runTSC}) => {
 test('can pass sync functions everywhere', async ({runTSC}) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const test = folio.test.extend<{ foo: string }>({
+      const test = pwt.test.extend<{ foo: string }>({
         foo: ({}, use) => use('bar'),
       });
       test.beforeEach(({ foo }) => {});
@@ -51,7 +51,7 @@ test('can pass sync functions everywhere', async ({runTSC}) => {
 test('can return anything from hooks', async ({runTSC}) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test.beforeEach(() => '123');
       test.afterEach(() => 123);
       test.beforeAll(() => [123]);
@@ -64,7 +64,7 @@ test('can return anything from hooks', async ({runTSC}) => {
 test('test.declare should check types', async ({runTSC}) => {
   const result = await runTSC({
     'helper.ts': `
-      export const test = folio.test;
+      export const test = pwt.test;
       export const test1 = test.declare<{ foo: string }>();
       export const test2 = test1.extend<{ bar: number }>({
         bar: async ({ foo }, run) => { await run(parseInt(foo)); }
@@ -76,7 +76,7 @@ test('test.declare should check types', async ({runTSC}) => {
     `,
     'playwright.config.ts': `
       import { test1 } from './helper';
-      const configs: folio.Config[] = [];
+      const configs: pwt.Config[] = [];
       configs.push({});
       configs.push({
         define: {

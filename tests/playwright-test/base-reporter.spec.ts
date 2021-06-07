@@ -20,7 +20,7 @@ test('handle long test names', async ({ runInlineTest }) => {
   const title = 'title'.repeat(30);
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('${title}', async ({}) => {
         expect(1).toBe(0);
       });
@@ -33,7 +33,7 @@ test('handle long test names', async ({ runInlineTest }) => {
 test('print the error name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     test('foobar', async ({}) => {
       const error = new Error('my-message');
       error.name = 'FooBarError';
@@ -49,7 +49,7 @@ test('print the error name', async ({ runInlineTest }) => {
 test('print should print the error name without a message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     test('foobar', async ({}) => {
       const error = new Error();
       error.name = 'FooBarError';
@@ -75,7 +75,7 @@ test('print an error in a codeframe', async ({ runInlineTest }) => {
     }
     `,
     'a.spec.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     import myLib from './my-lib';
     test('foobar', async ({}) => {
       const error = new Error('my-message');

@@ -18,7 +18,7 @@ import { test, expect } from './playwright-test-fixtures';
 
 const files = {
   'match-grep/b.test.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     test('test AA', () => {
       expect(1 + 1).toBe(2);
     });
@@ -32,7 +32,7 @@ const files = {
     });
   `,
   'match-grep/fdir/c.test.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     test('test AA', () => {
       expect(1 + 1).toBe(2);
     });
@@ -46,7 +46,7 @@ const files = {
     });
   `,
   'match-grep/adir/a.test.ts': `
-    const { test } = folio;
+    const { test } = pwt;
     test('test AA', () => {
       expect(1 + 1).toBe(2);
     });
@@ -88,7 +88,7 @@ test('should grep by project name', async ({ runInlineTest }) => {
       ]};
     `,
     'a.spec.ts': `
-      folio.test('should work', () => {});
+      pwt.test('should work', () => {});
     `,
   }, { 'grep': 'foo]' });
   expect(result.passed).toBe(1);

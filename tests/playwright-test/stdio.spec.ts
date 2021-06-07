@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should get top level stdio', async ({runInlineTest}) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = folio;
+      const { test } = pwt;
       console.log('\\n%% top level stdout');
       console.error('\\n%% top level stderr');
       test('is a test', () => {
@@ -41,7 +41,7 @@ test('should get top level stdio', async ({runInlineTest}) => {
 test('should get stdio from env afterAll', async ({runInlineTest}) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         fixture: [ async ({}, run) => {
           console.log('\\n%% worker setup');
           await run();

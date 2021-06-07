@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should access error in fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'test-error-visible-in-env.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: [async ({}, run, testInfo) => {
           await run();
           console.log('ERROR[[[' + JSON.stringify(testInfo.error, undefined, 2) + ']]]');
@@ -40,7 +40,7 @@ test('should access error in fixture', async ({ runInlineTest }) => {
 test('should access annotations in fixture', async ({ runInlineTest }) => {
   const { exitCode, report } = await runInlineTest({
     'test-data-visible-in-env.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: [async ({}, run, testInfo) => {
           await run();
           testInfo.annotations.push({ type: 'myname', description: 'hello' });
@@ -74,7 +74,7 @@ test('should report projectName in result', async ({ runInlineTest }) => {
       };
     `,
     'test-data-visible-in-env.spec.ts': `
-      folio.test('some test', async ({}, testInfo) => {
+      pwt.test('some test', async ({}, testInfo) => {
       });
     `
   });

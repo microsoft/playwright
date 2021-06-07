@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should handle fixture timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         timeout: async ({}, runTest) => {
           await runTest();
           await new Promise(f => setTimeout(f, 100000));
@@ -43,7 +43,7 @@ test('should handle fixture timeout', async ({ runInlineTest }) => {
 test('should handle worker fixture timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         timeout: [async ({}, runTest) => {
           await runTest();
           await new Promise(f => setTimeout(f, 100000));
@@ -61,7 +61,7 @@ test('should handle worker fixture timeout', async ({ runInlineTest }) => {
 test('should handle worker fixture error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         failure: [async ({}, runTest) => {
           throw new Error('Worker failed');
         }, { scope: 'worker' }]
@@ -79,7 +79,7 @@ test('should handle worker fixture error', async ({ runInlineTest }) => {
 test('should handle worker tear down fixture error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         failure: [async ({}, runTest) => {
           await runTest();
           throw new Error('Worker failed');
@@ -98,7 +98,7 @@ test('should handle worker tear down fixture error', async ({ runInlineTest }) =
 test('should throw when using non-defined super worker fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: [async ({ foo }, runTest) => {
           await runTest();
         }, { scope: 'worker' }]
@@ -108,14 +108,14 @@ test('should throw when using non-defined super worker fixture', async ({ runInl
     `
   });
   expect(result.output).toContain(`Fixture "foo" references itself, but does not have a base implementation.`);
-  expect(result.output).toContain('a.spec.ts:5:31');
+  expect(result.output).toContain('a.spec.ts:5:29');
   expect(result.exitCode).toBe(1);
 });
 
 test('should throw when defining test fixture with the same name as a worker fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'e.spec.ts': `
-      const test1 = folio.test.extend({
+      const test1 = pwt.test.extend({
         foo: [async ({}, runTest) => {
           await runTest();
         }, { scope: 'worker' }]
@@ -138,7 +138,7 @@ test('should throw when defining test fixture with the same name as a worker fix
 test('should throw when defining worker fixture with the same name as a test fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'e.spec.ts': `
-      const test1 = folio.test.extend({
+      const test1 = pwt.test.extend({
         foo: [async ({}, runTest) => {
           await runTest();
         }, { scope: 'test' }]
@@ -161,7 +161,7 @@ test('should throw when defining worker fixture with the same name as a test fix
 test('should throw when worker fixture depends on a test fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'f.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: [async ({}, runTest) => {
           await runTest();
         }, { scope: 'test' }],
@@ -182,7 +182,7 @@ test('should throw when worker fixture depends on a test fixture', async ({ runI
 test('should throw when beforeAll hook depends on a test fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'f.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: [async ({}, runTest) => {
           await runTest();
         }, { scope: 'test' }],
@@ -194,14 +194,14 @@ test('should throw when beforeAll hook depends on a test fixture', async ({ runI
   });
   expect(result.output).toContain('beforeAll hook cannot depend on a test fixture "foo".');
   expect(result.output).toContain(`f.spec.ts:11:12`);
-  expect(result.output).toContain(`f.spec.ts:5:31`);
+  expect(result.output).toContain(`f.spec.ts:5:29`);
   expect(result.exitCode).toBe(1);
 });
 
 test('should throw when afterAll hook depends on a test fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'f.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: [async ({}, runTest) => {
           await runTest();
         }, { scope: 'test' }],
@@ -213,14 +213,14 @@ test('should throw when afterAll hook depends on a test fixture', async ({ runIn
   });
   expect(result.output).toContain('afterAll hook cannot depend on a test fixture "foo".');
   expect(result.output).toContain(`f.spec.ts:11:12`);
-  expect(result.output).toContain(`f.spec.ts:5:31`);
+  expect(result.output).toContain(`f.spec.ts:5:29`);
   expect(result.exitCode).toBe(1);
 });
 
 test('should define the same fixture in two files', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test1 = folio.test.extend({
+      const test1 = pwt.test.extend({
         foo: [async ({}, runTest) => {
           await runTest();
         }, { scope: 'worker' }]
@@ -229,7 +229,7 @@ test('should define the same fixture in two files', async ({ runInlineTest }) =>
       test1('works', async ({foo}) => {});
     `,
     'b.spec.ts': `
-      const test2 = folio.test.extend({
+      const test2 = pwt.test.extend({
         foo: [async ({}, runTest) => {
           await runTest();
         }, { scope: 'worker' }]
@@ -245,7 +245,7 @@ test('should define the same fixture in two files', async ({ runInlineTest }) =>
 test('should detect fixture dependency cycle', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'x.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         good1: async ({}, run) => run(),
         foo: async ({bar}, run) => run(),
         bar: async ({baz}, run) => run(),
@@ -262,18 +262,18 @@ test('should detect fixture dependency cycle', async ({ runInlineTest }) => {
   expect(result.output).toContain('"bar" defined at');
   expect(result.output).toContain('"baz" defined at');
   expect(result.output).toContain('"qux" defined at');
-  expect(result.output).toContain('x.spec.ts:5:31');
+  expect(result.output).toContain('x.spec.ts:5:29');
   expect(result.exitCode).toBe(1);
 });
 
 test('should not reuse fixtures from one file in another one', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = folio.test.extend({ foo: ({}, run) => run() });
+      const test = pwt.test.extend({ foo: ({}, run) => run() });
       test('test1', async ({}) => {});
     `,
     'b.spec.ts': `
-      const test = folio.test;
+      const test = pwt.test;
       test('test1', async ({}) => {});
       test('test2', async ({foo}) => {});
     `,
@@ -285,7 +285,7 @@ test('should not reuse fixtures from one file in another one', async ({ runInlin
 test('should throw for cycle in two overrides', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const test1 = folio.test.extend({
+      const test1 = pwt.test.extend({
         foo: async ({}, run) => await run('foo'),
         bar: async ({}, run) => await run('bar'),
       });
@@ -309,7 +309,7 @@ test('should throw for cycle in two overrides', async ({ runInlineTest }) => {
 test('should throw when overridden worker fixture depends on a test fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'f.spec.ts': `
-      const test1 = folio.test.extend({
+      const test1 = pwt.test.extend({
         foo: async ({}, run) => await run('foo'),
         bar: [ async ({}, run) => await run('bar'), { scope: 'worker' } ],
       });
@@ -327,7 +327,7 @@ test('should throw when overridden worker fixture depends on a test fixture', as
 test('should throw for unknown fixture parameter', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'f.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: async ({ bar }, run) => await run('foo'),
       });
 
@@ -335,14 +335,14 @@ test('should throw for unknown fixture parameter', async ({ runInlineTest }) => 
     `,
   });
   expect(result.output).toContain('Fixture "foo" has unknown parameter "bar".');
-  expect(result.output).toContain('f.spec.ts:5:31');
+  expect(result.output).toContain('f.spec.ts:5:29');
   expect(result.exitCode).toBe(1);
 });
 
 test('should throw when calling runTest twice', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'f.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: async ({}, run) => {
           await run();
           await run();
@@ -359,7 +359,7 @@ test('should throw when calling runTest twice', async ({ runInlineTest }) => {
 test('should print nice error message for problematic fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'x.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         bad: [ undefined, { get scope() { throw new Error('oh my!') } } ],
       });
       test('works', async ({foo}) => {});
@@ -367,13 +367,13 @@ test('should print nice error message for problematic fixtures', async ({ runInl
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('oh my!');
-  expect(result.output).toContain('x.spec.ts:5:31');
+  expect(result.output).toContain('x.spec.ts:5:29');
 });
 
 test('should exit with timeout when fixture causes an exception in the test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         throwAfterTimeout: async ({}, use) => {
           let callback;
           const promise = new Promise((f, r) => callback = r);

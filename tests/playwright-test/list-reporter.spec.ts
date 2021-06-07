@@ -25,7 +25,7 @@ test('render each test with project name', async ({ runInlineTest }) => {
       ] };
     `,
     'a.test.ts': `
-      const { test } = folio;
+      const { test } = pwt;
       test('fails', async ({}) => {
         expect(1).toBe(0);
       });

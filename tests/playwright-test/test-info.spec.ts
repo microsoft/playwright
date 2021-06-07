@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should work directly', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = folio;
+      const { test } = pwt;
       test('test 1', async ({}, testInfo) => {
         expect(testInfo.title).toBe('test 1');
       });
@@ -34,7 +34,7 @@ test('should work directly', async ({ runInlineTest }) => {
 test('should work via fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         title: async ({}, run, testInfo) => {
           await run(testInfo.title);
         },

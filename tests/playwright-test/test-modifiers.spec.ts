@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('test modifiers should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = folio.test.extend({
+      export const test = pwt.test.extend({
         foo: true,
       });
     `,
@@ -133,7 +133,7 @@ test('test modifiers should work', async ({ runInlineTest }) => {
 test('test modifiers should check types', async ({runTSC}) => {
   const result = await runTSC({
     'helper.ts': `
-      export const test = folio.test.extend<{ foo: boolean }>({
+      export const test = pwt.test.extend<{ foo: boolean }>({
         foo: async ({}, use, testInfo) => {
           testInfo.skip();
           testInfo.fixme(false);
@@ -187,7 +187,7 @@ test('test modifiers should check types', async ({runTSC}) => {
 test('should skip inside fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = folio.test.extend({
+      const test = pwt.test.extend({
         foo: async ({}, run, testInfo) => {
           testInfo.skip(true, 'reason');
           await run();
@@ -206,8 +206,8 @@ test('should skip inside fixture', async ({ runInlineTest }) => {
 test('modifier with a function should throw in the test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      folio.test('skipped', async ({}) => {
-        folio.test.skip(() => true);
+      pwt.test('skipped', async ({}) => {
+        pwt.test.skip(() => true);
       });
     `,
   });
