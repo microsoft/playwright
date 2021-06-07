@@ -58,4 +58,4 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Legacy Edge and IE11 support**. Playwright does not support legacy Microsoft Edge or IE11 ([deprecation notice](https://techcommunity.microsoft.com/t5/microsoft-365-blog/microsoft-365-apps-say-farewell-to-internet-explorer-11-and/ba-p/1591666)). The new Microsoft Edge (on Chromium) is supported.
 
-* **Test on real mobile devices**: Playwright uses desktop browsers to emulate mobile devices. If you are interested in running on real mobile devices, please [upvote this issue](https://github.com/microsoft/playwright/issues/1122).
+* **Test on real mobile devices**: Playwright uses desktop browsers to emulate mobile devices. There is experimental Android support available see [here](https://playwright.dev/docs/mobile). If you are interested in iOS, please [upvote this issue](https://github.com/microsoft/playwright/issues/1122).

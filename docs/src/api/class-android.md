@@ -1,7 +1,7 @@
 # class: Android
 * langs: js
 
-Playwright has **experimental** support for Android automation. You can access android namespace via:
+Playwright has **experimental** support for Android automation. See [here](./mobile.md) for more information. You can access android namespace via:
 
 ```js
 const { _android: android } = require('playwright');
