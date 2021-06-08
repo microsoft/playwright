@@ -17,6 +17,11 @@ You can specify any options either locally in a test file, or globally in the co
   - `'off'` - Do not capture screenshots.
   - `'on'` - Capture screenshot after each test.
   - `'only-on-failure'` - Capture screenshot after each test failure.
+- `trace` option - whether to record trace for each test, off by default. Trace will appear in the test output directory, typically `test-results`.
+  - `'off'` - Do not record trace.
+  - `'on'` - Record trace for each test.
+  - `'retain-on-failure'` - Record trace for each test, but remove it from successful test runs.
+  - `'retry-with-trace'` - Record trace only when retrying a test.
 - `video` option - whether to record video for each test, off by default. Video will appear in the test output directory, typically `test-results`.
   - `'off'` - Do not record video.
   - `'on'` - Record video for each test.

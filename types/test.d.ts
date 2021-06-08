@@ -962,6 +962,15 @@ export type PlaywrightTestOptions = {
   screenshot: 'off' | 'on' | 'only-on-failure';
 
   /**
+   * Whether to record trace for each test, off by default.
+   * - `off`: Do not record trace.
+   * - `on`: Record trace for each test.
+   * - `retain-on-failure`: Record trace for each test, but remove trace from successful test run.
+   * - `retry-with-trace`: Record trace only when retrying a test.
+   */
+  trace: 'off' | 'on' | 'retain-on-failure' | 'retry-with-trace';
+
+  /**
   * Whether to record video for each test, off by default.
   * - `off`: Do not record video.
   * - `on`: Record video for each test.
