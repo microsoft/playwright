@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
+import type { LaunchOptions, BrowserContextOptions, Page, ViewportSize } from '../../types/types';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
@@ -84,16 +84,18 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
 
+    const videoMode = typeof video === 'string' ? video : video.mode;
     let recordVideoDir: string | null = null;
-    if (video === 'on' || (video === 'retry-with-video' && !!testInfo.retry))
+    const recordVideoSize = typeof video === 'string' ? undefined : video.size;
+    if (videoMode === 'on' || (videoMode === 'retry-with-video' && !!testInfo.retry))
       recordVideoDir = testInfo.outputPath('');
-    if (video === 'retain-on-failure') {
+    if (videoMode === 'retain-on-failure') {
       await fs.promises.mkdir(artifactsFolder, { recursive: true });
       recordVideoDir = artifactsFolder;
     }
 
     const options: BrowserContextOptions = {
-      recordVideo: recordVideoDir ? { dir: recordVideoDir } : undefined,
+      recordVideo: recordVideoDir ? { dir: recordVideoDir, size: recordVideoSize } : undefined,
       ...contextOptions,
     };
     if (acceptDownloads !== undefined)
@@ -167,15 +169,15 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     }
     await context.close();
 
-    if (video === 'retain-on-failure' && testFailed) {
+    if (videoMode === 'retain-on-failure' && testFailed) {
       await Promise.all(allPages.map(async page => {
-        const video = page.video();
-        if (!video)
+        const v = page.video();
+        if (!v)
           return;
         try {
-          const videoPath = await video.path();
+          const videoPath = await v.path();
           const fileName = path.basename(videoPath);
-          await video.saveAs(testInfo.outputPath(fileName));
+          await v.saveAs(testInfo.outputPath(fileName));
         } catch (e) {
           // Silent catch empty videos.
         }

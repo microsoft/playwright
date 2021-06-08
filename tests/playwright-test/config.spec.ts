@@ -330,7 +330,7 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
     'a.test.ts': `
       const { test } = pwt;
       test('pass', async ({}, testInfo) => {
-        expect(testInfo.config.updateSnapshots).toBe('none');
+        expect(testInfo.config.updateSnapshots).toBe('missing');
       });
     `
   }, {}, { CI: '1' });

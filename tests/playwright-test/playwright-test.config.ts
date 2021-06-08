@@ -19,7 +19,7 @@ import { Config } from '../config/test-runner';
 const config: Config = {
   testDir: __dirname,
   testIgnore: 'assets/**',
-  timeout: 20000,
+  timeout: 30000,
   forbidOnly: !!process.env.CI,
   projects: [
     { name: 'playwright-test' },
