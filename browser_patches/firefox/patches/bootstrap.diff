@@ -172,10 +172,10 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
-index f3292d8ae6da1865847ded8b1c79a80ba8fca70e..cf8fa57ce2363555d10c837c99efd282d515e64b 100644
+index f3292d8ae6da1865847ded8b1c79a80ba8fca70e..70a0aacfe2439bb8180f2f069f9e0db7059265ce 100644
 --- a/docshell/base/BrowsingContext.cpp
 +++ b/docshell/base/BrowsingContext.cpp
-@@ -105,6 +105,13 @@ struct ParamTraits<mozilla::dom::PrefersColorSchemeOverride>
+@@ -105,6 +105,20 @@ struct ParamTraits<mozilla::dom::PrefersColorSchemeOverride>
            mozilla::dom::PrefersColorSchemeOverride::None,
            mozilla::dom::PrefersColorSchemeOverride::EndGuard_> {};
  
@@ -186,10 +186,17 @@ index f3292d8ae6da1865847ded8b1c79a80ba8fca70e..cf8fa57ce2363555d10c837c99efd282
 +          mozilla::dom::PrefersReducedMotionOverride::None,
 +          mozilla::dom::PrefersReducedMotionOverride::EndGuard_> {};
 +
++template <>
++struct ParamTraits<mozilla::dom::ForcedColorsOverride>
++    : public ContiguousEnumSerializer<
++          mozilla::dom::ForcedColorsOverride,
++          mozilla::dom::ForcedColorsOverride::None,
++          mozilla::dom::ForcedColorsOverride::EndGuard_> {};
++
  template <>
  struct ParamTraits<mozilla::dom::ExplicitActiveStatus>
      : public ContiguousEnumSerializer<
-@@ -2637,6 +2644,23 @@ void BrowsingContext::DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
+@@ -2637,6 +2651,40 @@ void BrowsingContext::DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
    });
  }
  
@@ -210,22 +217,40 @@ index f3292d8ae6da1865847ded8b1c79a80ba8fca70e..cf8fa57ce2363555d10c837c99efd282
 +  });
 +}
 +
++void BrowsingContext::DidSet(FieldIndex<IDX_ForcedColorsOverride>,
++                             dom::ForcedColorsOverride aOldValue) {
++  MOZ_ASSERT(IsTop());
++  if (ForcedColorsOverride() == aOldValue) {
++    return;
++  }
++  PreOrderWalk([&](BrowsingContext* aContext) {
++    if (nsIDocShell* shell = aContext->GetDocShell()) {
++      if (nsPresContext* pc = shell->GetPresContext()) {
++        pc->MediaFeatureValuesChanged(
++            {MediaFeatureChangeReason::SystemMetricsChange},
++            MediaFeatureChangePropagation::JustThisDocument);
++      }
++    }
++  });
++}
++
  void BrowsingContext::DidSet(FieldIndex<IDX_MediumOverride>,
                               nsString&& aOldValue) {
    MOZ_ASSERT(IsTop());
 diff --git a/docshell/base/BrowsingContext.h b/docshell/base/BrowsingContext.h
-index ba3cceb7c9d6bc0014c1abf66d5b19d6d26a45db..d41680af40fe44ba1db2bff5946c902db7373225 100644
+index ba3cceb7c9d6bc0014c1abf66d5b19d6d26a45db..32be1631518591e4f4e0525ef87a924986fdfb49 100644
 --- a/docshell/base/BrowsingContext.h
 +++ b/docshell/base/BrowsingContext.h
-@@ -191,6 +191,7 @@ enum class ExplicitActiveStatus : uint8_t {
+@@ -191,6 +191,8 @@ enum class ExplicitActiveStatus : uint8_t {
    FIELD(ServiceWorkersTestingEnabled, bool)                                   \
    FIELD(MediumOverride, nsString)                                             \
    FIELD(PrefersColorSchemeOverride, mozilla::dom::PrefersColorSchemeOverride) \
 +  FIELD(PrefersReducedMotionOverride, mozilla::dom::PrefersReducedMotionOverride) \
++  FIELD(ForcedColorsOverride, mozilla::dom::ForcedColorsOverride) \
    FIELD(DisplayMode, mozilla::dom::DisplayMode)                               \
    /* True if the top level browsing context owns a main media controller */   \
    FIELD(HasMainMediaController, bool)                                         \
-@@ -847,6 +848,10 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -847,6 +849,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
      return GetPrefersColorSchemeOverride();
    }
  
@@ -233,10 +258,14 @@ index ba3cceb7c9d6bc0014c1abf66d5b19d6d26a45db..d41680af40fe44ba1db2bff5946c902d
 +    return GetPrefersReducedMotionOverride();
 +  }
 +
++  dom::ForcedColorsOverride ForcedColorsOverride() const {
++    return GetForcedColorsOverride();
++  }
++
    void FlushSessionStore();
  
   protected:
-@@ -961,6 +966,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -961,6 +971,23 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
    void DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
                dom::PrefersColorSchemeOverride aOldValue);
  
@@ -248,11 +277,20 @@ index ba3cceb7c9d6bc0014c1abf66d5b19d6d26a45db..d41680af40fe44ba1db2bff5946c902d
 +  void DidSet(FieldIndex<IDX_PrefersReducedMotionOverride>,
 +              dom::PrefersReducedMotionOverride aOldValue);
 +
++
++  bool CanSet(FieldIndex<IDX_ForcedColorsOverride>,
++              dom::ForcedColorsOverride, ContentParent*) {
++    return IsTop();
++  }
++
++  void DidSet(FieldIndex<IDX_ForcedColorsOverride>,
++              dom::ForcedColorsOverride aOldValue);
++
    void DidSet(FieldIndex<IDX_MediumOverride>, nsString&& aOldValue);
  
    bool CanSet(FieldIndex<IDX_SuspendMediaWhenInactive>, bool, ContentParent*) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index d99ddc3181cf9092633558ac5798f38860ad4f7d..52ff3ddb06b7714469b695b3c894172c33af0c83 100644
+index d99ddc3181cf9092633558ac5798f38860ad4f7d..783b945ed7ccb3f9692a549c439a7df009894df1 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -300,7 +338,7 @@ index d99ddc3181cf9092633558ac5798f38860ad4f7d..52ff3ddb06b7714469b695b3c894172c
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -397,6 +407,13 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -397,6 +407,14 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mAllowDNSPrefetch(true),
        mAllowWindowControl(true),
        mCSSErrorReportingEnabled(false),
@@ -311,10 +349,11 @@ index d99ddc3181cf9092633558ac5798f38860ad4f7d..52ff3ddb06b7714469b695b3c894172c
 +      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
 +      mColorSchemeOverride(COLOR_SCHEME_OVERRIDE_NONE),
 +      mReducedMotionOverride(REDUCED_MOTION_OVERRIDE_NONE),
++      mForcedColorsOverride(FORCED_COLORS_OVERRIDE_NO_OVERRIDE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mDisableMetaRefreshWhenInactive(false),
-@@ -3328,6 +3345,221 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3328,6 +3346,239 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -531,12 +570,30 @@ index d99ddc3181cf9092633558ac5798f38860ad4f7d..52ff3ddb06b7714469b695b3c894172c
 +  return NS_OK;
 +}
 +
++NS_IMETHODIMP
++nsDocShell::GetForcedColorsOverride(ForcedColorsOverride* aForcedColorsOverride) {
++  *aForcedColorsOverride = GetRootDocShell()->mForcedColorsOverride;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetForcedColorsOverride(ForcedColorsOverride aForcedColorsOverride) {
++  mForcedColorsOverride = aForcedColorsOverride;
++  RefPtr<nsPresContext> presContext = GetPresContext();
++  if (presContext) {
++    presContext->MediaFeatureValuesChanged(
++        {MediaFeatureChangeReason::SystemMetricsChange},
++        MediaFeatureChangePropagation::JustThisDocument);
++  }
++  return NS_OK;
++}
++
 +// =============== Juggler End =======================
 +
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -4952,7 +5184,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
+@@ -4952,7 +5203,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
  }
  
  void nsDocShell::ActivenessMaybeChanged() {
@@ -545,7 +602,7 @@ index d99ddc3181cf9092633558ac5798f38860ad4f7d..52ff3ddb06b7714469b695b3c894172c
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->SetIsActive(isActive);
    }
-@@ -8675,6 +8907,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8675,6 +8926,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -558,7 +615,7 @@ index d99ddc3181cf9092633558ac5798f38860ad4f7d..52ff3ddb06b7714469b695b3c894172c
        return rv;
      }
  
-@@ -12691,6 +12929,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12691,6 +12948,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -568,7 +625,7 @@ index d99ddc3181cf9092633558ac5798f38860ad4f7d..52ff3ddb06b7714469b695b3c894172c
      return NS_OK;
    }
  
-@@ -12769,6 +13010,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12769,6 +13029,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -578,7 +635,7 @@ index d99ddc3181cf9092633558ac5798f38860ad4f7d..52ff3ddb06b7714469b695b3c894172c
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index cde10e9424f0a97cf57ae740e1651731b8d8ac1c..89542ee3def7115b22d36bdb3fb61da308ea3a37 100644
+index cde10e9424f0a97cf57ae740e1651731b8d8ac1c..fbc9b7e2f5f80de04b7140775fad22677b0142e3 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -14,6 +14,7 @@
@@ -622,7 +679,7 @@ index cde10e9424f0a97cf57ae740e1651731b8d8ac1c..89542ee3def7115b22d36bdb3fb61da3
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1232,6 +1245,16 @@ class nsDocShell final : public nsDocLoader,
+@@ -1232,6 +1245,17 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowDNSPrefetch : 1;
    bool mAllowWindowControl : 1;
    bool mCSSErrorReportingEnabled : 1;
@@ -635,12 +692,13 @@ index cde10e9424f0a97cf57ae740e1651731b8d8ac1c..89542ee3def7115b22d36bdb3fb61da3
 +  OnlineOverride mOnlineOverride;
 +  ColorSchemeOverride mColorSchemeOverride;
 +  ReducedMotionOverride mReducedMotionOverride;
++  ForcedColorsOverride mForcedColorsOverride;
 +
    bool mAllowAuth : 1;
    bool mAllowKeywordFixup : 1;
    bool mDisableMetaRefreshWhenInactive : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index dcf0b8c00d70a08fdd5cbe07c30e415968cd9e3e..8ae4de4d5255bbbaa8cd270e50cb320248e35f33 100644
+index dcf0b8c00d70a08fdd5cbe07c30e415968cd9e3e..46c02047718a49e3b9656fbde58115c9a3be76b9 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -651,7 +709,7 @@ index dcf0b8c00d70a08fdd5cbe07c30e415968cd9e3e..8ae4de4d5255bbbaa8cd270e50cb3202
  interface nsIEditor;
  interface nsIEditingSession;
  interface nsIInputStream;
-@@ -855,6 +856,42 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -855,6 +856,49 @@ interface nsIDocShell : nsIDocShellTreeItem
     */
    void synchronizeLayoutHistoryState();
  
@@ -689,13 +747,20 @@ index dcf0b8c00d70a08fdd5cbe07c30e415968cd9e3e..8ae4de4d5255bbbaa8cd270e50cb3202
 +  };
 +  [infallible] attribute nsIDocShell_ReducedMotionOverride reducedMotionOverride;
 +
++  cenum ForcedColorsOverride : 8 {
++    FORCED_COLORS_OVERRIDE_ACTIVE,
++    FORCED_COLORS_OVERRIDE_NONE,
++    FORCED_COLORS_OVERRIDE_NO_OVERRIDE, /* This clears the override. */
++  };
++  [infallible] attribute nsIDocShell_ForcedColorsOverride forcedColorsOverride;
++
 +  void setGeolocationOverride(in nsIDOMGeoPosition position);
 +
    /**
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index ce2cbca4b4c5ebb95a0991793131aa53317b862b..2a016e0e5f658043c5ea14b0ead95da7ca5c963c 100644
+index ce2cbca4b4c5ebb95a0991793131aa53317b862b..8f08a5859a4e6fa1b1059f41ea58ae66ded407c1 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3490,6 +3490,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -731,7 +796,7 @@ index ce2cbca4b4c5ebb95a0991793131aa53317b862b..2a016e0e5f658043c5ea14b0ead95da7
    // Is there a focused DOMWindow?
    nsCOMPtr<mozIDOMWindowProxy> focusedWindow;
    fm->GetFocusedWindow(getter_AddRefs(focusedWindow));
-@@ -17083,6 +17095,19 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
+@@ -17083,6 +17095,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
  
  StylePrefersColorScheme Document::PrefersColorScheme(
      IgnoreRFP aIgnoreRFP) const {
@@ -744,6 +809,7 @@ index ce2cbca4b4c5ebb95a0991793131aa53317b862b..2a016e0e5f658043c5ea14b0ead95da7
 +        return StylePrefersColorScheme::Light;
 +      case nsIDocShell::COLOR_SCHEME_OVERRIDE_DARK:
 +        return StylePrefersColorScheme::Dark;
++      case nsIDocShell::COLOR_SCHEME_OVERRIDE_NONE:
 +      case nsIDocShell::COLOR_SCHEME_OVERRIDE_NO_PREFERENCE:
 +        break;
 +    };
@@ -751,7 +817,7 @@ index ce2cbca4b4c5ebb95a0991793131aa53317b862b..2a016e0e5f658043c5ea14b0ead95da7
    if (aIgnoreRFP == IgnoreRFP::No &&
        nsContentUtils::ShouldResistFingerprinting(this)) {
      return StylePrefersColorScheme::Light;
-@@ -17111,6 +17136,39 @@ StylePrefersColorScheme Document::PrefersColorScheme(
+@@ -17111,6 +17137,71 @@ StylePrefersColorScheme Document::PrefersColorScheme(
    return dark ? StylePrefersColorScheme::Dark : StylePrefersColorScheme::Light;
  }
  
@@ -788,18 +854,51 @@ index ce2cbca4b4c5ebb95a0991793131aa53317b862b..2a016e0e5f658043c5ea14b0ead95da7
 +  return LookAndFeel::GetInt(LookAndFeel::IntID::PrefersReducedMotion, 0) == 1;
 +}
 +
++bool Document::ForcedColors() const {
++  auto* docShell = static_cast<nsDocShell*>(GetDocShell());
++  nsIDocShell::ForcedColorsOverride forcedColors;
++  if (docShell && docShell->GetForcedColorsOverride(&forcedColors) == NS_OK) {
++    switch (forcedColors) {
++      case nsIDocShell::FORCED_COLORS_OVERRIDE_ACTIVE:
++        return true;
++      case nsIDocShell::FORCED_COLORS_OVERRIDE_NONE:
++        return false;
++      case nsIDocShell::FORCED_COLORS_OVERRIDE_NO_OVERRIDE:
++        break;
++    };
++  }
++
++  if (auto* bc = GetBrowsingContext()) {
++    switch (bc->Top()->ForcedColorsOverride()) {
++      case dom::ForcedColorsOverride::Active:
++        return true;
++      case dom::ForcedColorsOverride::None:
++        return false;
++      case dom::ForcedColorsOverride::No_override:
++      case dom::ForcedColorsOverride::EndGuard_:
++        break;
++    }
++  }
++
++  if (mIsBeingUsedAsImage) {
++    return false;
++  }
++  return !PreferenceSheet::PrefsFor(*this).mUseDocumentColors;
++}
++
  // static
  bool Document::UseOverlayScrollbars(const Document* aDocument) {
    BrowsingContext* bc = aDocument ? aDocument->GetBrowsingContext() : nullptr;
 diff --git a/dom/base/Document.h b/dom/base/Document.h
-index e5bf988011e6fdbcac6d54c596769b15da3077ae..e2c9f12828be70a116e3e74f2fef402a5441e84d 100644
+index e5bf988011e6fdbcac6d54c596769b15da3077ae..ec63675eecb67e7c6694c2dd947de7c66db6cd87 100644
 --- a/dom/base/Document.h
 +++ b/dom/base/Document.h
-@@ -3995,6 +3995,8 @@ class Document : public nsINode,
+@@ -3995,6 +3995,9 @@ class Document : public nsINode,
    enum class IgnoreRFP { No, Yes };
    StylePrefersColorScheme PrefersColorScheme(IgnoreRFP = IgnoreRFP::No) const;
  
 +  bool PrefersReducedMotion() const;
++  bool ForcedColors() const;
 +
    // Returns true if we use overlay scrollbars on the system wide or on the
    // given document.
@@ -1157,10 +1256,10 @@ index c47a5a8c78bd28e4a5afa048cd56ad762a7a684f..4007a192ecee88d6246f8245f11278f7
  
    static bool DumpEnabled();
 diff --git a/dom/chrome-webidl/BrowsingContext.webidl b/dom/chrome-webidl/BrowsingContext.webidl
-index 60c6bf107402fbcdcbc646451b4f92fae4be41d5..9f70659f20f06039ea396af6ac781239218c2ae4 100644
+index 60c6bf107402fbcdcbc646451b4f92fae4be41d5..7e813bfca999590897537f58b04fa4f5e9560476 100644
 --- a/dom/chrome-webidl/BrowsingContext.webidl
 +++ b/dom/chrome-webidl/BrowsingContext.webidl
-@@ -52,6 +52,15 @@ enum PrefersColorSchemeOverride {
+@@ -52,6 +52,24 @@ enum PrefersColorSchemeOverride {
    "dark",
  };
  
@@ -1173,15 +1272,27 @@ index 60c6bf107402fbcdcbc646451b4f92fae4be41d5..9f70659f20f06039ea396af6ac781239
 +  "no-preference",
 +};
 +
++/**
++ * CSS forced-colors values.
++ */
++enum ForcedColorsOverride {
++  "none",
++  "active",
++  "no-override",  /* This clears the override. */
++};
++
  /**
   * Allowed overrides of platform/pref default behaviour for touch events.
   */
-@@ -175,6 +184,9 @@ interface BrowsingContext {
+@@ -175,6 +193,12 @@ interface BrowsingContext {
    // Color-scheme simulation, for DevTools.
    [SetterThrows] attribute PrefersColorSchemeOverride prefersColorSchemeOverride;
  
 +  // Reduced-Motion simulation, for DevTools.
 +  [SetterThrows] attribute PrefersReducedMotionOverride prefersReducedMotionOverride;
++
++  // Forced-Colors simulation, for DevTools.
++  [SetterThrows] attribute ForcedColorsOverride forcedColorsOverride;
 +
    /**
     * A unique identifier for the browser element that is hosting this
@@ -1857,11 +1968,23 @@ index 77b4c4ea3581e3b66b0b40dae33c807b2d5aefd8..84af4461b9e946122527ac974dc30da5
    void updateTimeZone();
  
    void internalResyncICUDefaultTimeZone();
+diff --git a/layout/style/GeckoBindings.h b/layout/style/GeckoBindings.h
+index 79da76e80059e084b9cef6f7d93d337cfb543250..59aefaf8458cce10ad7975020c2c04338d5232b8 100644
+--- a/layout/style/GeckoBindings.h
++++ b/layout/style/GeckoBindings.h
+@@ -630,6 +630,7 @@ void Gecko_MediaFeatures_GetDeviceSize(const mozilla::dom::Document*,
+ 
+ float Gecko_MediaFeatures_GetResolution(const mozilla::dom::Document*);
+ bool Gecko_MediaFeatures_PrefersReducedMotion(const mozilla::dom::Document*);
++bool Gecko_MediaFeatures_ForcedColors(const mozilla::dom::Document*);
+ mozilla::StylePrefersContrast Gecko_MediaFeatures_PrefersContrast(
+     const mozilla::dom::Document*);
+ mozilla::StylePrefersColorScheme Gecko_MediaFeatures_PrefersColorScheme(
 diff --git a/layout/style/nsMediaFeatures.cpp b/layout/style/nsMediaFeatures.cpp
-index fffe37c359c5ba3a4e8cb4a44256f2c69182885b..8fcd8a1fa3e07f6c712b67247e303e624d316a69 100644
+index fffe37c359c5ba3a4e8cb4a44256f2c69182885b..6ef5b76cc58313266025f806755a89a8836c4e14 100644
 --- a/layout/style/nsMediaFeatures.cpp
 +++ b/layout/style/nsMediaFeatures.cpp
-@@ -246,10 +246,7 @@ nsAtom* Gecko_MediaFeatures_GetOperatingSystemVersion(
+@@ -246,10 +246,11 @@ nsAtom* Gecko_MediaFeatures_GetOperatingSystemVersion(
  }
  
  bool Gecko_MediaFeatures_PrefersReducedMotion(const Document* aDocument) {
@@ -1870,6 +1993,10 @@ index fffe37c359c5ba3a4e8cb4a44256f2c69182885b..8fcd8a1fa3e07f6c712b67247e303e62
 -  }
 -  return LookAndFeel::GetInt(LookAndFeel::IntID::PrefersReducedMotion, 0) == 1;
 +  return aDocument->PrefersReducedMotion();
++}
++
++bool Gecko_MediaFeatures_ForcedColors(const Document* aDocument) {
++  return aDocument->ForcedColors();
  }
  
  StylePrefersColorScheme Gecko_MediaFeatures_PrefersColorScheme(
@@ -2046,6 +2173,29 @@ index ee23591a6a72560b635a4184fedf18c74c447250..ca07729ef9e66f339be92d179712e6e1
        ? "https://firefox.settings.services.mozilla.com/v1"
        : gServerURL;
    },
+diff --git a/servo/components/style/gecko/media_features.rs b/servo/components/style/gecko/media_features.rs
+index 4c23620dd15076719aad430d59741478ff855acf..d14681584ae9a42584305940d8a31c888e77433d 100644
+--- a/servo/components/style/gecko/media_features.rs
++++ b/servo/components/style/gecko/media_features.rs
+@@ -336,10 +336,15 @@ pub enum ForcedColors {
+ 
+ /// https://drafts.csswg.org/mediaqueries-5/#forced-colors
+ fn eval_forced_colors(device: &Device, query_value: Option<ForcedColors>) -> bool {
+-    let forced = !device.use_document_colors();
++    let prefers_forced_colors =
++        unsafe { bindings::Gecko_MediaFeatures_ForcedColors(device.document()) };
++    let query_value = match query_value {
++        Some(v) => v,
++        None => return prefers_forced_colors,
++    };
+     match query_value {
+-        Some(query_value) => forced == (query_value == ForcedColors::Active),
+-        None => forced,
++        ForcedColors::Active => prefers_forced_colors,
++        ForcedColors::None => !prefers_forced_colors,
+     }
+ }
+ 
 diff --git a/toolkit/components/browser/nsIWebBrowserChrome.idl b/toolkit/components/browser/nsIWebBrowserChrome.idl
 index 1e9bea1655af731fc003f8d0cab3ad4d2ad29f5d..5081c0e1ee0c41c6a79bd2ed358a57442e3baa6b 100644
 --- a/toolkit/components/browser/nsIWebBrowserChrome.idl
