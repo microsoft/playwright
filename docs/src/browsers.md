@@ -11,8 +11,7 @@ of the browsers it supports, so that the latest Playwright would support the lat
 ## Chromium
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.
-These builds match the current [Chrome Dev Channel](https://support.google.com/chrome/a/answer/9027636?hl=en) at the time
-of each Playwright release, i.e. it is new with every Playwright update. Since Chromium project is ahead of the branded browsers,
+ Since Chromium project is ahead of the branded browsers,
 when the world is on Google Chrome 89, Playwright already supports Chromium 91 that will hit Google Chrome and Microsoft Edge
 if a few weeks.
 
@@ -21,7 +20,7 @@ on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edg
 
 ## Firefox
 
-Playwright's Firefox version matches the recent [Firefox Beta](https://www.mozilla.org/en-US/firefox/channel/desktop/)
+Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/)
 build.
 
 ## WebKit
