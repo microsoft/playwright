@@ -9,7 +9,7 @@ title: "Release notes"
 
 #### ⚡️ Introducing Playwright TestRunner
 
-[Playwright Testrunner](./test-intro) is a **new test runner** built from scratch by Playwright team specifically to accomdodate end-to-end testing needs:
+[Playwright TestRunner](./test-intro.md) is a **new test runner** built from scratch by Playwright team specifically to accommodate end-to-end testing needs:
 
 - Run tests across all browsers.
 - Execute tests in parallel.
@@ -40,11 +40,11 @@ Running:
 npx playwright test -c tests
 ```
 
-👉  Read more in [testrunner documentation](./test-intro).
+👉  Read more in [testrunner documentation](./test-intro.md).
 
 #### 🧟‍♂️ Introducing Playwright Trace Viewer
 
-[Playwright Trace Viewer](./trace-viewer) is a new GUI tool that helps exploring recorded Playwright traces after the script ran. Playwright traces let you examine:
+[Playwright Trace Viewer](./trace-viewer.md) is a new GUI tool that helps exploring recorded Playwright traces after the script ran. Playwright traces let you examine:
 - page DOM before and after each Playwright action
 - page rendering before and after each Playwright action
 - browser network during script execution
@@ -76,7 +76,7 @@ That will open the following GUI:
 
 ![image](https://user-images.githubusercontent.com/746130/121109654-d66c4480-c7c0-11eb-8d4d-eb70d2b03811.png)
 
-👉 Read more in [trace viewer documentation](./trace-viewer).
+👉 Read more in [trace viewer documentation](./trace-viewer.md).
 
 
 #### Browser Versions
