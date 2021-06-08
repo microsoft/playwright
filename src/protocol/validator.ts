@@ -924,9 +924,21 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     method: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
+    interceptResponse: tOptional(tBoolean),
   });
   scheme.RouteFulfillParams = tObject({
     status: tOptional(tNumber),
+    headers: tOptional(tArray(tType('NameValue'))),
+    body: tOptional(tString),
+    isBase64: tOptional(tBoolean),
+  });
+  scheme.InterceptedResponseBodyParams = tOptional(tObject({}));
+  scheme.InterceptedResponseAbortParams = tObject({
+    errorCode: tOptional(tString),
+  });
+  scheme.InterceptedResponseContinueParams = tObject({
+    status: tOptional(tNumber),
+    statusText: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),

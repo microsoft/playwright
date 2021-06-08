@@ -180,3 +180,26 @@ it('should include the origin header', async ({page, server, isAndroid}) => {
   expect(text).toBe('done');
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
+
+it('should intercept response', async ({page, server, browserName}) => {
+  it.fixme(browserName === 'firefox');
+  await page.route('**/*', async route => {
+    const intercepted = await route.continue({
+      interceptResponse: true
+    });
+    await intercepted.continue({
+      status: 201,
+      headers: {
+        foo: 'bar'
+      },
+      contentType: 'text/plain',
+      body: 'Yo, page!'
+    });
+  });
+  const response = await page.goto(server.PREFIX + '/empty.html');
+  expect(response.status()).toBe(201);
+  expect(response.headers().foo).toBe('bar');
+  expect(response.headers()['content-type']).toBe('text/plain');
+  expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
+});
+

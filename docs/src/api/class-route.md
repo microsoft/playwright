@@ -32,6 +32,7 @@ Optional error code. Defaults to `failed`, could be one of the following:
 * langs:
   - alias-java: resume
   - alias-python: continue_
+- returns: <[null]|[InterceptedResponse]>
 
 Continues route's request with optional overrides.
 
@@ -111,6 +112,11 @@ If set changes the post data of request
 - `headers` <[Object]<[string], [string]>>
 
 If set changes the request HTTP headers. Header values will be converted to a string.
+
+### option: Route.continue.interceptResponse
+- `interceptResponse` <[boolean]>>
+
+If set the method will reuturn [InterceptedResponse] that can be used to intercept response.
 
 ## async method: Route.fulfill
 

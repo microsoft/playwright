@@ -236,7 +236,7 @@ export class Route extends SdkObject {
     });
   }
 
-  async continue(overrides: types.NormalizedContinueOverrides = {}) {
+  async continue(overrides: types.NormalizedContinueOverrides = {}): Promise<InterceptedResponse|null> {
     assert(!this._handled, 'Route is already handled!');
     if (overrides.url) {
       const newUrl = new URL(overrides.url);
@@ -244,7 +244,7 @@ export class Route extends SdkObject {
       if (oldUrl.protocol !== newUrl.protocol)
         throw new Error('New URL must have same protocol as overridden URL');
     }
-    await this._delegate.continue(overrides);
+    return await this._delegate.continue(overrides);
   }
 }
 
@@ -385,6 +385,58 @@ export class Response extends SdkObject {
   }
 }
 
+export class InterceptedResponse extends SdkObject {
+  private readonly _request: Request;
+  private readonly _delegate: InterceptedResponseDelegate;
+  private readonly _status: number;
+  private readonly _statusText: string;
+  private readonly _headers: types.HeadersArray;
+  private _handled = false;
+
+  constructor(request: Request, delegate: InterceptedResponseDelegate, status: number, statusText: string, headers: types.HeadersArray) {
+    super(request.frame(), 'interceptedResponse');
+    this._delegate = delegate;
+    this._request = request;
+    this._status = status;
+    this._statusText = statusText;
+    this._headers = headers;
+  }
+
+  status(): number {
+    return this._status;
+  }
+
+  statusText(): string {
+    return this._statusText;
+  }
+
+  headers(): types.HeadersArray {
+    return this._headers;
+  }
+
+  async body(): Promise<Buffer> {
+    if (this._handled)
+      throw new Error('Response already resumed');
+    return this._delegate.body();
+  }
+
+  request(): Request {
+    return this._request;
+  }
+
+  async abort(errorCode: string = 'failed') {
+    assert(!this._handled, 'Intercepted Response is already handled!');
+    this._handled = true;
+    await this._delegate.abort(errorCode);
+  }
+
+  async continue(overrides: types.NormalizedResponseContinueOverrides = {}) {
+    assert(!this._handled, 'Intercepted Response is already handled!');
+    this._handled = true;
+    await this._delegate.continue(overrides);
+  }
+}
+
 export class WebSocket extends SdkObject {
   private _url: string;
 
@@ -424,7 +476,13 @@ export class WebSocket extends SdkObject {
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
-  continue(overrides: types.NormalizedContinueOverrides): Promise<void>;
+  continue(overrides: types.NormalizedContinueOverrides): Promise<InterceptedResponse|null>;
+}
+
+export interface InterceptedResponseDelegate {
+  abort(errorCode: string): Promise<void>;
+  continue(overrides: types.NormalizedResponseContinueOverrides): Promise<void>;
+  body(): Promise<Buffer>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

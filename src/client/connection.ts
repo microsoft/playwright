@@ -21,7 +21,7 @@ import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
 import { JSHandle } from './jsHandle';
-import { Request, Response, Route, WebSocket } from './network';
+import { InterceptedResponse, Request, Response, Route, WebSocket } from './network';
 import { Page, BindingCall } from './page';
 import { Worker } from './worker';
 import { ConsoleMessage } from './consoleMessage';
@@ -218,6 +218,9 @@ export class Connection extends EventEmitter {
         break;
       case 'Frame':
         result = new Frame(parent, type, guid, initializer);
+        break;
+      case 'InterceptedResponse':
+        result = new InterceptedResponse(parent, type, guid, initializer);
         break;
       case 'JSHandle':
         result = new JSHandle(parent, type, guid, initializer);

@@ -2320,14 +2320,18 @@ export type RouteContinueParams = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
+  interceptResponse?: boolean,
 };
 export type RouteContinueOptions = {
   url?: string,
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
+  interceptResponse?: boolean,
 };
-export type RouteContinueResult = void;
+export type RouteContinueResult = {
+  interceptedResponse?: InterceptedResponseChannel,
+};
 export type RouteFulfillParams = {
   status?: number,
   headers?: NameValue[],
@@ -2341,6 +2345,49 @@ export type RouteFulfillOptions = {
   isBase64?: boolean,
 };
 export type RouteFulfillResult = void;
+
+// ----------- InterceptedResponse -----------
+export type InterceptedResponseInitializer = {
+  request: RequestChannel,
+  status: number,
+  statusText: string,
+  headers: {
+    name: string,
+    value: string,
+  }[],
+};
+export interface InterceptedResponseChannel extends Channel {
+  body(params?: InterceptedResponseBodyParams, metadata?: Metadata): Promise<InterceptedResponseBodyResult>;
+  abort(params: InterceptedResponseAbortParams, metadata?: Metadata): Promise<InterceptedResponseAbortResult>;
+  continue(params: InterceptedResponseContinueParams, metadata?: Metadata): Promise<InterceptedResponseContinueResult>;
+}
+export type InterceptedResponseBodyParams = {};
+export type InterceptedResponseBodyOptions = {};
+export type InterceptedResponseBodyResult = {
+  binary: Binary,
+};
+export type InterceptedResponseAbortParams = {
+  errorCode?: string,
+};
+export type InterceptedResponseAbortOptions = {
+  errorCode?: string,
+};
+export type InterceptedResponseAbortResult = void;
+export type InterceptedResponseContinueParams = {
+  status?: number,
+  statusText?: string,
+  headers?: NameValue[],
+  body?: string,
+  isBase64?: boolean,
+};
+export type InterceptedResponseContinueOptions = {
+  status?: number,
+  statusText?: string,
+  headers?: NameValue[],
+  body?: string,
+  isBase64?: boolean,
+};
+export type InterceptedResponseContinueResult = void;
 
 export type ResourceTiming = {
   startTime: number,

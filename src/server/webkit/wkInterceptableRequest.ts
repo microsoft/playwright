@@ -21,6 +21,7 @@ import * as types from '../types';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 import { assert, headersObjectToArray, headersArrayToObject } from '../../utils/utils';
+import { InterceptedResponse } from '../network';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',
@@ -39,12 +40,72 @@ const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'failed': 'General',
 };
 
+class WKInterceptedResponse implements network.InterceptedResponseDelegate {
+  private _request: WKInterceptableRequest;
+  private _response: Protocol.Network.Response;
+
+  constructor(request: WKInterceptableRequest, response: Protocol.Network.Response) {
+    this._request = request;
+    this._response = response;
+  }
+
+  async abort(errorCode: string) {
+    await this._request.abort(errorCode);
+  }
+
+  async continue(overrides: types.NormalizedResponseContinueOverrides): Promise<void> {
+    if (Object.keys(overrides).length === 0) {
+      await this._request._session.sendMayFail('Network.interceptContinue', {
+        requestId: this._request._requestId,
+        stage: 'response'
+      });
+      return;
+    }
+
+    let mimeType;
+    if (typeof overrides.isBase64 === 'boolean')
+      mimeType = overrides.isBase64 ? 'application/octet-stream' : 'text/plain';
+    const headers = overrides.headers ? headersArrayToObject(overrides.headers, false /* lowerCase */) : this._response.headers;
+    const contentType = headers['content-type'];
+    if (contentType)
+      mimeType = contentType.split(';')[0].trim();
+
+    let base64Encoded = false;
+    let content;
+    if (overrides.body) {
+      content = overrides.body;
+      base64Encoded = !!overrides.isBase64;
+    } else {
+      content = (await this.body()).toString('base64');
+      base64Encoded = true;
+    }
+
+    await this._request._session.sendMayFail('Network.interceptWithResponse', {
+      requestId: this._request._requestId,
+      status: overrides.status || this._response.status,
+      statusText: overrides.statusText || this._response.statusText,
+      mimeType,
+      headers,
+      base64Encoded,
+      content
+    });
+  }
+
+  async body(): Promise<Buffer> {
+    const response = await this._request._session.send('Network.getResponseBody', { requestId: this._request._requestId });
+    return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+  }
+
+}
+
 export class WKInterceptableRequest implements network.RouteDelegate {
-  private readonly _session: WKSession;
+  readonly _session: WKSession;
   readonly request: network.Request;
   readonly _requestId: string;
   _interceptedCallback: () => void = () => {};
   private _interceptedPromise: Promise<unknown>;
+  _responseInterceptedCallback: ((r: Protocol.Network.Response) => void) | undefined;
+  private _responseInterceptedPromise: Promise<Protocol.Network.Response> | undefined;
   readonly _allowInterception: boolean;
   _timestamp: number;
   _wallTime: number;
@@ -97,7 +158,9 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     });
   }
 
-  async continue(overrides: types.NormalizedContinueOverrides) {
+  async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
+    if (overrides.interceptResponse)
+      this._responseInterceptedPromise = new Promise(f => this._responseInterceptedCallback = f);
     await this._interceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
@@ -108,6 +171,10 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       headers: overrides.headers ? headersArrayToObject(overrides.headers, false /* lowerCase */) : undefined,
       postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined
     });
+    if (!this._responseInterceptedPromise)
+      return null;
+    const responsePayload = await this._responseInterceptedPromise;
+    return new InterceptedResponse(this.request, new WKInterceptedResponse(this, responsePayload), responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers));
   }
 
   createResponse(responsePayload: Protocol.Network.Response): network.Response {

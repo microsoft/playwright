@@ -176,6 +176,7 @@ export class WKPage implements PageDelegate {
     if (this._page._needsRequestInterception()) {
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
       promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
+      promises.push(session.send('Network.addInterception', { url: '.*', stage: 'response', isRegex: true }));
     }
 
     const contextOptions = this._browserContext._options;
@@ -368,6 +369,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       helper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
       helper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(e)),
+      helper.addEventListener(this._session, 'Network.responseIntercepted', e => this._onResponseIntercepted(e)),
       helper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
       helper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       helper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
@@ -380,7 +382,6 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page._frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
   }
-
   private async _updateState<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
@@ -660,7 +661,8 @@ export class WKPage implements PageDelegate {
     const enabled = this._page._needsRequestInterception();
     await Promise.all([
       this._updateState('Network.setInterceptionEnabled', { enabled }),
-      this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true })
+      this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
+      this._updateState('Network.addInterception', { url: '.*', stage: 'response', isRegex: true })
     ]);
   }
 
@@ -975,6 +977,15 @@ export class WKPage implements PageDelegate {
     } else {
       request._interceptedCallback();
     }
+  }
+
+  private _onResponseIntercepted(event: Protocol.Network.responseInterceptedPayload) {
+    const request = this._requestIdToRequest.get(event.requestId);
+    if (!request || !request._responseInterceptedCallback) {
+      this._session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
+      return;
+    }
+    request._responseInterceptedCallback(event.response);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Request, Response, Route, WebSocket } from '../server/network';
+import { InterceptedResponse, Request, Response, Route, WebSocket } from '../server/network';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -97,10 +97,6 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
     return result || new RouteDispatcher(scope, route);
   }
 
-  static fromNullable(scope: DispatcherScope, route: Route | null): RouteDispatcher | undefined {
-    return route ? RouteDispatcher.from(scope, route) : undefined;
-  }
-
   private constructor(scope: DispatcherScope, route: Route) {
     super(scope, route, 'Route', {
       // Context route can point to a non-reported request.
@@ -108,17 +104,52 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
     });
   }
 
-  async continue(params: channels.RouteContinueParams): Promise<void> {
-    await this._object.continue({
+  async continue(params: channels.RouteContinueParams, metadata?: channels.Metadata): Promise<channels.RouteContinueResult> {
+    const intercepedResponse = await this._object.continue({
       url: params.url,
       method: params.method,
       headers: params.headers,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+      interceptResponse: params.interceptResponse
     });
+    return { interceptedResponse: InterceptedResponseDispatcher.fromNullable(this._scope, intercepedResponse) };
   }
 
   async fulfill(params: channels.RouteFulfillParams): Promise<void> {
     await this._object.fulfill(params);
+  }
+
+  async abort(params: channels.RouteAbortParams): Promise<void> {
+    await this._object.abort(params.errorCode || 'failed');
+  }
+}
+
+export class InterceptedResponseDispatcher extends Dispatcher<InterceptedResponse, channels.InterceptedResponseInitializer> implements channels.InterceptedResponseChannel {
+
+  static from(scope: DispatcherScope, interceptedResponse: InterceptedResponse): InterceptedResponseDispatcher {
+    const result = existingDispatcher<InterceptedResponseDispatcher>(interceptedResponse);
+    return result || new InterceptedResponseDispatcher(scope, interceptedResponse);
+  }
+
+  static fromNullable(scope: DispatcherScope, interceptedResponse: InterceptedResponse | null): InterceptedResponseDispatcher | undefined {
+    return interceptedResponse ? InterceptedResponseDispatcher.from(scope, interceptedResponse) : undefined;
+  }
+
+  private constructor(scope: DispatcherScope, interceptedResponse: InterceptedResponse) {
+    super(scope, interceptedResponse, 'InterceptedResponse', {
+      request: RequestDispatcher.from(scope, interceptedResponse.request()),
+      status: interceptedResponse.status(),
+      statusText: interceptedResponse.statusText(),
+      headers: interceptedResponse.headers(),
+    });
+  }
+
+  async body(): Promise<channels.InterceptedResponseBodyResult> {
+    return { binary: (await this._object.body()).toString('base64') };
+  }
+
+  async continue(params: channels.InterceptedResponseContinueParams): Promise<channels.InterceptedResponseContinueResult> {
+    await this._object.continue(params);
   }
 
   async abort(params: channels.RouteAbortParams): Promise<void> {

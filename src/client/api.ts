@@ -32,7 +32,7 @@ export { TimeoutError } from '../utils/errors';
 export { Frame } from './frame';
 export { Keyboard, Mouse, Touchscreen } from './input';
 export { JSHandle } from './jsHandle';
-export { Request, Response, Route, WebSocket } from './network';
+export { InterceptedResponse, Request, Response, Route, WebSocket } from './network';
 export { Page } from './page';
 export { Selectors } from './selectors';
 export { Tracing } from './tracing';

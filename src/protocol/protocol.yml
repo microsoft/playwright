@@ -1868,11 +1868,51 @@ Route:
           type: array?
           items: NameValue
         postData: binary?
+        interceptResponse: boolean?
+      returns:
+        interceptedResponse: InterceptedResponse?
 
     fulfill:
       parameters:
         # default is 200
         status: number?
+        headers:
+          type: array?
+          items: NameValue
+        body: string?
+        isBase64: boolean?
+
+
+InterceptedResponse:
+  type: interface
+
+  initializer:
+    request: Request
+    status: number
+    statusText: string
+    headers:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          value: string
+
+  commands:
+
+    body:
+      returns:
+        binary: binary
+
+    abort:
+      parameters:
+        errorCode: string?
+
+    continue:
+      parameters:
+        # default is 200
+        status: number?
+        statusText: string?
         headers:
           type: array?
           items: NameValue

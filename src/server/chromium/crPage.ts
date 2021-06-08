@@ -204,7 +204,7 @@ export class CRPage implements PageDelegate {
   }
 
   async updateRequestInterception(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateRequestInterception(false));
+    await this._forAllFrameSessions(frame => frame._updateRequestInterception());
   }
 
   async setFileChooserIntercepted(enabled: boolean) {
@@ -521,7 +521,7 @@ class FrameSession {
       promises.push(emulateTimezone(this._client, options.timezoneId));
     promises.push(this._updateGeolocation(true));
     promises.push(this._updateExtraHTTPHeaders(true));
-    promises.push(this._updateRequestInterception(true));
+    promises.push(this._updateRequestInterception());
     promises.push(this._updateOffline(true));
     promises.push(this._updateHttpCredentials(true));
     promises.push(this._updateEmulateMedia(true));
@@ -1007,7 +1007,7 @@ class FrameSession {
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
   }
 
-  async _updateRequestInterception(initial: boolean): Promise<void> {
+  async _updateRequestInterception(): Promise<void> {
     await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
   }
 
