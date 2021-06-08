@@ -438,6 +438,12 @@ const Browser = {
         reducedMotion: t.Nullable(t.Enum(['reduce', 'no-preference'])),
       },
     },
+    'setForcedColors': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        forcedColors: t.Nullable(t.Enum(['active', 'none'])),
+      },
+    },
     'setVideoRecordingOptions': {
       params: {
         browserContextId: t.Optional(t.String),
@@ -755,6 +761,7 @@ const Page = {
         type: t.Optional(t.Enum(['screen', 'print', ''])),
         colorScheme: t.Optional(t.Enum(['dark', 'light', 'no-preference'])),
         reducedMotion: t.Optional(t.Enum(['reduce', 'no-preference'])),
+        forcedColors: t.Optional(t.Enum(['active', 'none'])),
       },
     },
     'setCacheDisabled': {
