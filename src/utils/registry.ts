@@ -22,8 +22,8 @@ import * as util from 'util';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV } from './utils';
 
-export type BrowserName = 'chromium'|'webkit'|'firefox'|'firefox-stable'|'ffmpeg'|'webkit-technology-preview';
-export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview', 'firefox-stable']);
+export type BrowserName = 'chromium'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg'|'webkit-technology-preview';
+export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview', 'firefox-beta']);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
@@ -58,7 +58,7 @@ const EXECUTABLE_PATHS = {
     'win32': ['firefox', 'firefox.exe'],
     'win64': ['firefox', 'firefox.exe'],
   },
-  'firefox-stable': {
+  'firefox-beta': {
     'ubuntu18.04': ['firefox', 'firefox'],
     'ubuntu20.04': ['firefox', 'firefox'],
     'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
@@ -127,16 +127,16 @@ const DOWNLOAD_URLS = {
     'win32': '%s/builds/firefox/%s/firefox-win32.zip',
     'win64': '%s/builds/firefox/%s/firefox-win64.zip',
   },
-  'firefox-stable': {
-    'ubuntu18.04': '%s/builds/firefox-stable/%s/firefox-stable-ubuntu-18.04.zip',
-    'ubuntu20.04': '%s/builds/firefox-stable/%s/firefox-stable-ubuntu-20.04.zip',
-    'mac10.13': '%s/builds/firefox-stable/%s/firefox-stable-mac-10.14.zip',
-    'mac10.14': '%s/builds/firefox-stable/%s/firefox-stable-mac-10.14.zip',
-    'mac10.15': '%s/builds/firefox-stable/%s/firefox-stable-mac-10.14.zip',
-    'mac11': '%s/builds/firefox-stable/%s/firefox-stable-mac-10.14.zip',
-    'mac11-arm64': '%s/builds/firefox-stable/%s/firefox-stable-mac-11.0-arm64.zip',
-    'win32': '%s/builds/firefox-stable/%s/firefox-stable-win32.zip',
-    'win64': '%s/builds/firefox-stable/%s/firefox-stable-win64.zip',
+  'firefox-beta': {
+    'ubuntu18.04': '%s/builds/firefox-beta/%s/firefox-beta-ubuntu-18.04.zip',
+    'ubuntu20.04': '%s/builds/firefox-beta/%s/firefox-beta-ubuntu-20.04.zip',
+    'mac10.13': '%s/builds/firefox-beta/%s/firefox-beta-mac-10.14.zip',
+    'mac10.14': '%s/builds/firefox-beta/%s/firefox-beta-mac-10.14.zip',
+    'mac10.15': '%s/builds/firefox-beta/%s/firefox-beta-mac-10.14.zip',
+    'mac11': '%s/builds/firefox-beta/%s/firefox-beta-mac-10.14.zip',
+    'mac11-arm64': '%s/builds/firefox-beta/%s/firefox-beta-mac-11.0-arm64.zip',
+    'win32': '%s/builds/firefox-beta/%s/firefox-beta-win32.zip',
+    'win64': '%s/builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
     'ubuntu18.04': '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip',
@@ -306,7 +306,7 @@ export class Registry {
           path.join(browserDirectory, 'minibrowser-wpe', 'lib'),
         ];
       case 'firefox':
-      case 'firefox-stable':
+      case 'firefox-beta':
         return [path.join(browserDirectory, 'firefox')];
       default:
         return [];
@@ -336,7 +336,7 @@ export class Registry {
     const envDownloadHost: { [key: string]: string } = {
       'chromium': 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
       'firefox': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
-      'firefox-stable': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
+      'firefox-beta': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
       'webkit': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
       'webkit-technology-preview': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
       'ffmpeg': 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST',
