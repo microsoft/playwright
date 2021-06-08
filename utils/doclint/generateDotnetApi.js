@@ -37,7 +37,6 @@ const documentedResults = new Map(); // will hold documentation for new types
 const enumTypes = new Map();
 /** @type {Map<string, Documentation.Type>} */
 const optionTypes = new Map();
-const nullableTypes = ['int', 'bool', 'decimal', 'float'];
 const customTypeNames = new Map([
   ['domcontentloaded', 'DOMContentLoaded'],
   ['networkidle', 'NetworkIdle'],
@@ -355,13 +354,14 @@ function renderMember(member, parent, options, out) {
       if (member.spec)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       if (!member.clazz)
-        out.push(`[JsonPropertyName("${jsonName}")]`)
-      if (!type.endsWith('?') && !member.required && nullableTypes.includes(type))
+        out.push(`${member.required ? '[Required]\n' : ''}[JsonPropertyName("${jsonName}")]`)
+      if (!type.endsWith('?') && !member.required)
         type = `${type}?`;
+      const requiredSuffix = type.endsWith('?') ? '' : ' = default!;';
       if (member.clazz)
         out.push(`public ${type} ${name} { get; }`);
       else
-        out.push(`public ${type} ${name} { get; set; }`);
+        out.push(`public ${type} ${name} { get; set; }${requiredSuffix}`);
     }
     return;
   }
@@ -586,8 +586,7 @@ function renderMethod(member, parent, name, options, out) {
   function pushArg(innerArgType, innerArgName, argument, isExploded = false) {
     if (innerArgType === 'null')
       return;
-    const isNullable = nullableTypes.includes(innerArgType);
-    const requiredPrefix = (argument.required || isExploded) ? "" : isNullable ? "?" : "";
+    const requiredPrefix = (argument.required || isExploded) ? "" : "?";
     const requiredSuffix = (argument.required || isExploded) ? "" : " = default";
     var push = `${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`;
     if (isExploded)
@@ -608,8 +607,8 @@ function renderMethod(member, parent, name, options, out) {
       if (options.mode === 'options' || options.mode === 'base') {
         const optionsType = member.clazz.name + name + 'Options';
         optionTypes.set(optionsType, arg.type);
-        args.push(`${optionsType} options = default`);
-        argTypeMap.set(`${optionsType} options = default`, 'options');
+        args.push(`${optionsType}? options = default`);
+        argTypeMap.set(`${optionsType}? options = default`, 'options');
         addParamsDoc('options', ['Call options']);
       } else {
         arg.type.properties.forEach(processArg);
@@ -619,8 +618,8 @@ function renderMethod(member, parent, name, options, out) {
 
     if (arg.type.expression === '[string]|[path]') {
       let argName = toArgumentName(arg.name);
-      pushArg("string", `${argName} = null`, arg);
-      pushArg("string", `${argName}Path = null`, arg);
+      pushArg("string?", `${argName} = default`, arg);
+      pushArg("string?", `${argName}Path = default`, arg);
       if (arg.spec) {
         addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
         addParamsDoc(`${argName}Path`, [`Instead of specifying <paramref name="${argName}"/>, gives the file name to load from.`]);
@@ -794,7 +793,6 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
     // Regular primitive enums are named in the markdown.
     if (type.name) {
       enumTypes.set(type.name, type.union.map(t => t.name));
-      nullableTypes.push(type.name);
       return optional ? type.name + '?' : type.name;
     }
     return null;
@@ -832,7 +830,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
     } else if (type.name === 'Object') {
       registerModelType(objectName, type);
     }
-    return objectName;
+    return `${objectName}${optional ? '?' : ''}`;
   }
 
   if (type.name === 'Map') {
@@ -881,7 +879,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   // there's a chance this is a name we've already seen before, so check
   // this is also where we map known types, like boolean -> bool, etc.
   let name = classNameMap.get(type.name) || type.name;
-  return `${name}`;
+  return `${name}${optional ? '?' : ''}`;
 }
 
 /**
