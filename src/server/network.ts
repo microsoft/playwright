@@ -352,8 +352,8 @@ export class Response extends SdkObject {
   frame(): frames.Frame {
     return this._request.frame();
   }
-  protocol(): string {
-    return this._protocol || 'http/1.1';
+  protocol(): string | undefined {
+    return this._protocol;
   }
 
   encodedDataLength(): number {

@@ -172,7 +172,7 @@ export class HarTracer {
     if (!response)
       return;
 
-    const httpVersion = response.protocol() ? response.protocol() : FALLBACK_HTTP_VERSION;
+    const httpVersion = response.protocol() || FALLBACK_HTTP_VERSION;
     const transferSize = response.encodedDataLength();
     const headersSize = calcResponseHeadersSize(httpVersion, response.status(), response.statusText(), response.headers());
     const bodySize = transferSize - headersSize;
