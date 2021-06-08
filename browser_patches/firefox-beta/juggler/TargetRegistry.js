@@ -160,6 +160,7 @@ class TargetRegistry {
       target.updateTouchOverride();
       target.updateColorSchemeOverride();
       target.updateReducedMotionOverride();
+      target.updateForcedColorsOverride();
       if (!hasExplicitSize)
         target.updateViewportSize();
       if (browserContext.videoRecordingOptions)
@@ -339,6 +340,7 @@ class PageTarget {
     this._videoRecordingInfo = undefined;
     this._screencastRecordingInfo = undefined;
     this._dialogs = new Map();
+    this.forcedColors = 'no-override';
 
     const navigationListener = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener, Ci.nsISupportsWeakReference]),
@@ -445,6 +447,15 @@ class PageTarget {
 
   updateReducedMotionOverride() {
     this._linkedBrowser.browsingContext.prefersReducedMotionOverride = this.reducedMotion || this._browserContext.reducedMotion || 'none';
+  }
+
+  setForcedColors(forcedColors) {
+    this.forcedColors = fromProtocolForcedColors(forcedColors);
+    this.updateForcedColorsOverride();
+  }
+
+  updateForcedColorsOverride() {
+    this._linkedBrowser.browsingContext.forcedColorsOverride = (this.forcedColors !== 'no-override' ? this.forcedColors : this._browserContext.forcedColors) || 'no-override';
   }
 
   async setViewportSize(viewportSize) {
@@ -629,6 +640,14 @@ function fromProtocolReducedMotion(reducedMotion) {
   throw new Error('Unknown reduced motion: ' + reducedMotion);
 }
 
+function fromProtocolForcedColors(forcedColors) {
+  if (forcedColors === 'active' || forcedColors === 'none')
+    return forcedColors;
+  if (forcedColors === null)
+    return undefined;
+  throw new Error('Unknown forced colors: ' + forcedColors);
+}
+
 class BrowserContext {
   constructor(registry, browserContextId, removeOnDetach) {
     this._registry = registry;
@@ -656,6 +675,7 @@ class BrowserContext {
     this.defaultUserAgent = null;
     this.touchOverride = false;
     this.colorScheme = 'none';
+    this.forcedColors = 'no-override';
     this.reducedMotion = 'none';
     this.videoRecordingOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
@@ -674,6 +694,12 @@ class BrowserContext {
     this.reducedMotion = fromProtocolReducedMotion(reducedMotion);
     for (const page of this.pages)
       page.updateReducedMotionOverride();
+  }
+
+  setForcedColors(forcedColors) {
+    this.forcedColors = fromProtocolForcedColors(forcedColors);
+    for (const page of this.pages)
+      page.updateForcedColorsOverride();
   }
 
   async destroy() {

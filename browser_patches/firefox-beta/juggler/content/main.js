@@ -73,6 +73,10 @@ const applySetting = {
   reducedMotion: (reducedMotion) => {
     frameTree.setReducedMotion(reducedMotion);
   },
+
+  forcedColors: (forcedColors) => {
+    frameTree.setForcedColors(forcedColors);
+  },
 };
 
 const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
