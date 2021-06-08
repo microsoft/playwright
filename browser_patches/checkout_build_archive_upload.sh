@@ -189,43 +189,43 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
 
 
 # ===============================
-#    FIREFOX-STABLE COMPILATION
+#    FIREFOX-BETA COMPILATION
 # ===============================
-elif [[ "$BUILD_FLAVOR" == "firefox-stable-ubuntu-18.04" ]]; then
-  BROWSER_NAME="firefox-stable"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-18.04" ]]; then
+  BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="firefox-stable-ubuntu-18.04.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-stable-ubuntu-20.04" ]]; then
-  BROWSER_NAME="firefox-stable"
+  BUILD_BLOB_NAME="firefox-beta-ubuntu-18.04.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-20.04" ]]; then
+  BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
-  BUILD_BLOB_NAME="firefox-stable-ubuntu-20.04.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-stable-mac-10.14" ]]; then
-  BROWSER_NAME="firefox-stable"
+  BUILD_BLOB_NAME="firefox-beta-ubuntu-20.04.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-10.14" ]]; then
+  BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.14"
-  BUILD_BLOB_NAME="firefox-stable-mac-10.14.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-stable-mac-11.0-arm64" ]]; then
-  BROWSER_NAME="firefox-stable"
+  BUILD_BLOB_NAME="firefox-beta-mac-10.14.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-11.0-arm64" ]]; then
+  BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="11.0"
   EXPECTED_ARCH="arm64"
-  BUILD_BLOB_NAME="firefox-stable-mac-11.0-arm64.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-stable-win32" ]]; then
-  BROWSER_NAME="firefox-stable"
+  BUILD_BLOB_NAME="firefox-beta-mac-11.0-arm64.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-win32" ]]; then
+  BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="MINGW"
-  BUILD_BLOB_NAME="firefox-stable-win32.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-stable-win64" ]]; then
-  BROWSER_NAME="firefox-stable"
+  BUILD_BLOB_NAME="firefox-beta-win32.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-win64" ]]; then
+  BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--win64 --full"
   EXPECTED_HOST_OS="MINGW"
-  BUILD_BLOB_NAME="firefox-stable-win64.zip"
+  BUILD_BLOB_NAME="firefox-beta-win64.zip"
 
 # ===========================
 #    WEBKIT COMPILATION
