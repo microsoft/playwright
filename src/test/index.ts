@@ -48,6 +48,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
 
   screenshot: 'off',
   video: 'off',
+  trace: 'off',
   acceptDownloads: undefined,
   bypassCSP: undefined,
   colorScheme: undefined,
