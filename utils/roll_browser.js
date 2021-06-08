@@ -30,7 +30,7 @@ function usage() {
 usage: ${SCRIPT_NAME} <browser> <revision>
 
 Roll the <browser> to a specific <revision> and generate new protocol.
-Supported browsers: chromium, firefox, webkit, ffmpeg, firefox-stable, webkit-technology-preview.
+Supported browsers: chromium, firefox, webkit, ffmpeg, firefox-beta, webkit-technology-preview.
 
 Example:
   ${SCRIPT_NAME} chromium 123456
