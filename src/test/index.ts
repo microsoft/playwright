@@ -15,6 +15,7 @@
  */
 
 import * as fs from 'fs';
+import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 import { rootTestType } from './testType';
@@ -47,6 +48,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
 
   screenshot: 'off',
   video: 'off',
+  trace: 'off',
   acceptDownloads: undefined,
   bypassCSP: undefined,
   colorScheme: undefined,
@@ -68,7 +70,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   viewport: undefined,
   contextOptions: {},
 
-  context: async ({ browser, screenshot, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
+  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
     testInfo.snapshotSuffix = process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -122,9 +124,24 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     const allPages: Page[] = [];
     context.on('page', page => allPages.push(page));
 
+    const collectingTrace = trace === 'on' || trace === 'retain-on-failure' || (trace === 'retry-with-trace' && testInfo.retry);
+    if (collectingTrace) {
+      const name = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
+      await context.tracing.start({ name, screenshots: true, snapshots: true });
+    }
+
     await use(context);
 
     const testFailed = testInfo.status !== testInfo.expectedStatus;
+
+    const saveTrace = trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'retry-with-trace' && testInfo.retry);
+    if (saveTrace) {
+      const tracePath = testInfo.outputPath(`trace.zip`);
+      await context.tracing.stop({ path: tracePath });
+    } else if (collectingTrace) {
+      await context.tracing.stop();
+    }
+
     if (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed)) {
       await Promise.all(allPages.map((page, index) => {
         const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${++index}.png`);
