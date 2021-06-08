@@ -15,7 +15,7 @@
  */
 
 import { TestServer } from '../../utils/testserver';
-import { Fixtures, TestType } from './test-runner';
+import { Fixtures, _baseTest } from './test-runner';
 import * as path from 'path';
 import * as fs from 'fs';
 import socks from 'socksv5';
@@ -230,5 +230,4 @@ const coverageFixtures: Fixtures<{}, CoverageOptions & { __collectCoverage: void
 export type CommonOptions = BaseOptions & ServerOptions & CoverageOptions;
 export type CommonWorkerFixtures = CommonOptions & BaseFixtures;
 
-const __baseTest = require('./test-runner').__baseTest as TestType<{}, {}>;
-export const baseTest = __baseTest.extend<{}, CoverageOptions>(coverageFixtures).extend<ServerFixtures>(serverFixtures).extend<{}, BaseOptions & BaseFixtures>(baseFixtures);
+export const baseTest = _baseTest.extend<{}, CoverageOptions>(coverageFixtures).extend<ServerFixtures>(serverFixtures).extend<{}, BaseOptions & BaseFixtures>(baseFixtures);

@@ -66,7 +66,7 @@ for (const browserName of browserNames) {
   if (executablePath && !process.env.TEST_WORKER_INDEX)
     console.error(`Using executable at ${executablePath}`);
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
-  testIgnore.push(/android/, /electron/, /playwrigh-test/);
+  testIgnore.push(/android/, /electron/, /playwright-test/);
   config.projects.push({
     name: browserName,
     testDir,
