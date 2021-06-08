@@ -970,6 +970,8 @@ export class WKPage implements PageDelegate {
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
       if (event.metrics?.responseHeaderBytesReceived && event.metrics?.responseBodyBytesReceived)
         response.setEncodedDataLength(event.metrics.responseBodyBytesReceived  + event.metrics.responseHeaderBytesReceived);
+      if (event.metrics?.protocol)
+        response.setProtocol(event.metrics.protocol);
     }
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestFinished(request.request);

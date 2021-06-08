@@ -306,6 +306,10 @@ export class Response extends SdkObject {
     this._encodedDataLength = bytes;
   }
 
+  setProtocol(protocol: string) {
+    this._protocol = protocol;
+  }
+
   url(): string {
     return this._url;
   }
