@@ -169,7 +169,8 @@ export class HarTracer {
 
     const response = await request.response();
 
-    if (!response) return;
+    if (!response)
+      return;
 
     const httpVersion = response.protocol() ? response.protocol() : FALLBACK_HTTP_VERSION;
     const transferSize = response.encodedDataLength();
