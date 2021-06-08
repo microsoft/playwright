@@ -9395,7 +9395,7 @@ index e397c07b7cf7170f4d833997d499b4ac7ffcd898..ba2270f561b90cc54682b77c02c90285
      Cairo::Cairo
      Freetype::Freetype
 diff --git a/Source/WebKit/PlatformWin.cmake b/Source/WebKit/PlatformWin.cmake
-index 01565d550697b25367bb36971d6fe5ec33f712f0..46d2925adebe0b30d1c9bc1e99d2807a533d1be4 100644
+index 01565d550697b25367bb36971d6fe5ec33f712f0..98fb300309de1c0567912158f23ab39e7c0e21d5 100644
 --- a/Source/WebKit/PlatformWin.cmake
 +++ b/Source/WebKit/PlatformWin.cmake
 @@ -69,8 +69,12 @@ list(APPEND WebKit_SOURCES
@@ -9419,7 +9419,7 @@ index 01565d550697b25367bb36971d6fe5ec33f712f0..46d2925adebe0b30d1c9bc1e99d2807a
  
      WebProcess/WebPage/AcceleratedSurface.cpp
  
-@@ -129,6 +134,63 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
+@@ -129,6 +134,72 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
      "${WEBKIT_DIR}/win"
  )
  
@@ -9440,11 +9440,15 @@ index 01565d550697b25367bb36971d6fe5ec33f712f0..46d2925adebe0b30d1c9bc1e99d2807a
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_common.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_gcc.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_mmi.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_msa.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_neon64.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_neon.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_win.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_argb.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_from.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_from_argb.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_from.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_jpeg.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_to_argb.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/convert_to_i420.cc"
@@ -9452,29 +9456,34 @@ index 01565d550697b25367bb36971d6fe5ec33f712f0..46d2925adebe0b30d1c9bc1e99d2807a
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/mjpeg_decoder.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/mjpeg_validate.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/planar_functions.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_neon.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/compare_neon64.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_any.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_argb.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_common.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_gcc.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_neon.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_mmi.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_msa.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_neon64.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_neon.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/rotate_win.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_any.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_common.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_gcc.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_neon.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_mmi.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_msa.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_neon64.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_neon.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/row_win.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_any.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_argb.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_common.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_gcc.cc"
-+    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_neon.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_mmi.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_msa.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_neon64.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_neon.cc"
++    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_uv.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/scale_win.cc"
 +    "${THIRDPARTY_DIR}/libwebrtc/Source/third_party/libyuv/source/video_common.cc"
 +)
@@ -9483,7 +9492,7 @@ index 01565d550697b25367bb36971d6fe5ec33f712f0..46d2925adebe0b30d1c9bc1e99d2807a
  set(WebKitCommonIncludeDirectories ${WebKit_INCLUDE_DIRECTORIES})
  set(WebKitCommonSystemIncludeDirectories ${WebKit_SYSTEM_INCLUDE_DIRECTORIES})
  
-@@ -181,6 +243,7 @@ if (${WTF_PLATFORM_WIN_CAIRO})
+@@ -181,6 +252,7 @@ if (${WTF_PLATFORM_WIN_CAIRO})
          OpenSSL::SSL
          mfuuid.lib
          strmiids.lib
