@@ -62,8 +62,8 @@ playwright.close();
 * langs: java
 - `env` <[Object]<[string], [string]>>
 
-Specify environment variables that will be passed to the driver process. By default driver process
-inherits environment variables of the Playwright process.
+Additional environment variables that will be passed to the driver process. By default driver
+process inherits environment variables of the Playwright process.
 
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
