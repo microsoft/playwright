@@ -529,7 +529,7 @@ test('should create a new worker for worker fixtures', async ({ runInlineTest })
     'a.test.ts': `
       const { test } = pwt;
       test('base test', async ({}, testInfo) => {
-        expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.workerIndex).toBe(1);
       });
 
       const test2 = test.extend({
@@ -539,7 +539,7 @@ test('should create a new worker for worker fixtures', async ({ runInlineTest })
         }, { scope: 'worker' }],
       });
       test2('a test', async ({ foo }, testInfo) => {
-        expect(testInfo.workerIndex).toBe(1);
+        expect(testInfo.workerIndex).toBe(0);
       });
     `,
     'b.test.ts': `
@@ -551,7 +551,7 @@ test('should create a new worker for worker fixtures', async ({ runInlineTest })
         },
       });
       test2('b test', async ({ bar }, testInfo) => {
-        expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.workerIndex).toBe(1);
       });
     `,
   }, { workers: 1 });
