@@ -52,25 +52,25 @@ test('basic test', async ({ page }) => {
 Now run your tests, assuming that test files are in the `tests` directory.
 
 ```bash
-npx playwright test -c tests
+npx playwright test
 ```
 
 Playwright Test just ran a test using Chromium browser, in a headless manner. Let's tell it to use headed browser:
 
 ```bash
-npx playwright test -c tests --headed
+npx playwright test --headed
 ```
 
 What about other browsers? Let's run the same test using Firefox:
 
 ```bash
-npx playwright test -c tests --browser=firefox
+npx playwright test --browser=firefox
 ```
 
 And finally, on all three browsers:
 
 ```bash
-npx playwright test -c tests --browser=all
+npx playwright test --browser=all
 ```
 
 Refer to [configuration](./test-configuration.md) section for configuring test runs in different modes with different browsers.
@@ -283,7 +283,7 @@ drwxr-xr-x  3 user  group   96 Jun  4 11:46 example.spec.ts-snapshots
 To update your golden files, you can use the `--update-snapshots` parameter.
 
 ```bash
-npx playwright test -c tests --update-snapshots
+npx playwright test --update-snapshots
 ```
 
 
@@ -293,61 +293,61 @@ Here are the most common options available in the [command line](./test-cli.md).
 
 - Run tests in headed browsers
   ```bash
-  npx playwright test -c tests --headed
+  npx playwright test --headed
   ```
 
 - Run tests in a particular browser
   ```bash
-  npx playwright test -c tests --browser=webkit
+  npx playwright test --browser=webkit
   ```
 
 - Run tests in all browsers
   ```bash
-  npx playwright test -c tests --browser=all
+  npx playwright test --browser=all
   ```
 
 - Run a single test file
   ```bash
-  npx playwright test -c tests tests/todo-page.spec.ts
+  npx playwright test tests/todo-page.spec.ts
   ```
 
 - Run a set of test files
   ```bash
-  npx playwright test -c tests tests/todo-page/ tests/landing-page/
+  npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
 - Run a test with specific title
   ```bash
-  npx playwright test -c tests -g "add a todo item"
+  npx playwright test -g "add a todo item"
   ```
 
 - Run tests [in parallel](./test-parallel.md) - that's the default
   ```bash
-  npx playwright test -c tests
+  npx playwright test
   ```
 
 - Disable [parallelization](./test-parallel.md)
   ```bash
-  npx playwright test -c tests --workers=1
+  npx playwright test --workers=1
   ```
 
 - Choose a [reporter](./test-reporters.md)
   ```bash
-  npx playwright test -c tests --reporter=dot
+  npx playwright test --reporter=dot
   ```
 
 - Run in debug mode with [Playwright Inspector](./inspector.md)
   ```bash
   # Linux/macOS
-  PWDEBUG=1 npx playwright test -c tests
+  PWDEBUG=1 npx playwright test
 
   # Windows with cmd.exe
   set PWDEBUG=1
-  npx playwright test -c tests
+  npx playwright test
 
   # Windows with PowerShell
   $env:PWDEBUG=1
-  npx playwright test -c tests
+  npx playwright test
   ```
 
 ## Create a configuration file

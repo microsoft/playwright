@@ -37,7 +37,7 @@ test('basic test', async ({ page }) => {
 Running:
 
 ```bash
-npx playwright test -c tests
+npx playwright test
 ```
 
 👉  Read more in [testrunner documentation](./test-intro.md).
