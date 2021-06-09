@@ -248,7 +248,7 @@ Now add `globalSetup` option to the configuration file.
 ```js js-flavor=js
 // playwright.config.js
 module.export = {
-  globalSetup: 'global-setup.ts',
+  globalSetup: 'global-setup.js',
 };
 ```
 
