@@ -41,6 +41,7 @@ These options would be typically different between local development and CI oper
 - `quiet: boolean` - Whether to suppress stdout and stderr from the tests.
 - `shard: { total: number, current: number } | null` - [Shard](./test-parallel.md#shards) information.
 - `updateSnapshots: boolean` - Whether to update expected snapshots with the actual results produced by the test run.
+- `webServer: { command: string, port: number, timeout?: number }` - Launch a web server before the tests start.
 - `workers: number` - The maximum number of concurrent worker processes to use for parallelizing tests.
 
 Note that each [test project](#projects) can provide its own test suite options, for example two projects can run different tests by providing different `testDir`s. However, test run options are shared between all projects.

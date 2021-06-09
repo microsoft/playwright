@@ -34,6 +34,8 @@ import EmptyReporter from './reporters/empty';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config } from './types';
+import { launchWebServer } from './server';
+import type { ChildProcess } from 'child_process';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -151,6 +153,7 @@ export class Runner {
     let globalSetupResult: any;
     if (config.globalSetup)
       globalSetupResult = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup')(this._loader.fullConfig());
+    const webServer: ChildProcess|null = config.webServer && await launchWebServer(config.webServer);
     try {
       for (const file of allTestFiles)
         this._loader.loadTestFile(file);
@@ -232,6 +235,10 @@ export class Runner {
         await globalSetupResult(this._loader.fullConfig());
       if (config.globalTeardown)
         await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown')(this._loader.fullConfig());
+      if (webServer) {
+        webServer.kill();
+        delete process.env.PW_BASE_URL;
+      }
     }
   }
 }
