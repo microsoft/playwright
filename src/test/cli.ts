@@ -72,7 +72,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
     console.log('');
     console.log('Examples:');
     console.log('  $ test my.spec.ts');
-    console.log('  $ test -c tests/ --headed');
+    console.log('  $ test --headed');
     console.log('  $ test --browser=webkit');
   });
 }

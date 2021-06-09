@@ -77,7 +77,7 @@ cd PlaywrightTests
 Install dependencies, build project and download necessary browsers. This is only done once per project.
 
 ```bash
-dotnet add package Microsoft.Playwright
+dotnet add package Microsoft.Playwright.NUnit
 dotnet build
 playwright install
 ```
