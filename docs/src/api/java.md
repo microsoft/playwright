@@ -58,6 +58,13 @@ page.navigate("https://www.w3.org/");
 playwright.close();
 ```
 
+### option: Playwright.create.env
+* langs: java
+- `env` <[Object]<[string], [string]>>
+
+Additional environment variables that will be passed to the driver process. By default driver
+process inherits environment variables of the Playwright process.
+
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
