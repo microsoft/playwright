@@ -6936,6 +6936,26 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       sameSite?: CookieSameSitePolicy;
     }
     /**
+     * Name-value pair
+     */
+    export interface NameValue {
+      name: string;
+      value: string;
+    }
+    /**
+     * Origin object
+     */
+    export interface OriginStorage {
+      /**
+       * Origin.
+       */
+      origin: string;
+      /**
+       * Storage entries.
+       */
+      items: NameValue[];
+    }
+    /**
      * Geolocation
      */
     export interface Geolocation {
@@ -7162,6 +7182,36 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       browserContextId?: ContextID;
     }
     export type deleteAllCookiesReturnValue = {
+    }
+    /**
+     * Returns all local storage data in the given browser context.
+     */
+    export type getLocalStorageDataParameters = {
+      /**
+       * Browser context id.
+       */
+      browserContextId?: ContextID;
+    }
+    export type getLocalStorageDataReturnValue = {
+      /**
+       * Local storage data.
+       */
+      origins: OriginStorage[];
+    }
+    /**
+     * Populates local storage data in the given browser context.
+     */
+    export type setLocalStorageDataParameters = {
+      /**
+       * Browser context id.
+       */
+      browserContextId?: ContextID;
+      /**
+       * Local storage data.
+       */
+      origins: OriginStorage[];
+    }
+    export type setLocalStorageDataReturnValue = {
     }
     /**
      * Overrides the geolocation position or error.
@@ -8933,6 +8983,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.getAllCookies": Playwright.getAllCookiesParameters;
     "Playwright.setCookies": Playwright.setCookiesParameters;
     "Playwright.deleteAllCookies": Playwright.deleteAllCookiesParameters;
+    "Playwright.getLocalStorageData": Playwright.getLocalStorageDataParameters;
+    "Playwright.setLocalStorageData": Playwright.setLocalStorageDataParameters;
     "Playwright.setGeolocationOverride": Playwright.setGeolocationOverrideParameters;
     "Playwright.setLanguages": Playwright.setLanguagesParameters;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorParameters;
@@ -9226,6 +9278,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.getAllCookies": Playwright.getAllCookiesReturnValue;
     "Playwright.setCookies": Playwright.setCookiesReturnValue;
     "Playwright.deleteAllCookies": Playwright.deleteAllCookiesReturnValue;
+    "Playwright.getLocalStorageData": Playwright.getLocalStorageDataReturnValue;
+    "Playwright.setLocalStorageData": Playwright.setLocalStorageDataReturnValue;
     "Playwright.setGeolocationOverride": Playwright.setGeolocationOverrideReturnValue;
     "Playwright.setLanguages": Playwright.setLanguagesReturnValue;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorReturnValue;
