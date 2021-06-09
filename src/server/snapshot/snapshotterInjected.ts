@@ -190,7 +190,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         if (spaceIndex === -1)
           return this._sanitizeUrl(src);
         return this._sanitizeUrl(src.substring(0, spaceIndex).trim()) + src.substring(spaceIndex);
-      }).join(',');
+      }).join(', ');
     }
 
     private _resolveUrl(base: string, url: string): string {
