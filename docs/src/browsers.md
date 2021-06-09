@@ -3,8 +3,9 @@ id: browsers
 title: "Browsers"
 ---
 
-Each version of Playwright needs specific versions of browser binaries to operate. By default Playwright downloads Chromium, WebKit and Firefox browser versions that it supports. With every release, Playwright updates the versions
-of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment.
+Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you or will require you to use [Playwright CLI](./cli.md) to install the browsers. Please refer to the [getting started](./intro.md) to see what your platform port does.
+
+With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
 
 <!-- TOC -->
 
