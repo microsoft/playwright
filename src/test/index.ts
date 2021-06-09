@@ -28,9 +28,10 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   playwright: [ require('../inprocess'), { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
+  slowMo: [ undefined, { scope: 'worker' } ],
   launchOptions: [ {}, { scope: 'worker' } ],
 
-  browser: [ async ({ playwright, browserName, headless, channel, launchOptions }, use) => {
+  browser: [ async ({ playwright, browserName, headless, channel, slowMo, launchOptions }, use) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const options: LaunchOptions = {
@@ -41,6 +42,8 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       options.headless = headless;
     if (channel !== undefined)
       options.channel = channel;
+    if (slowMo !== undefined)
+      options.slowMo = slowMo;
     const browser = await playwright[browserName].launch(options);
     await use(browser);
     await browser.close();
@@ -52,6 +55,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   acceptDownloads: undefined,
   bypassCSP: undefined,
   colorScheme: undefined,
+  reducedMotion: undefined,
   deviceScaleFactor: undefined,
   extraHTTPHeaders: undefined,
   geolocation: undefined,
@@ -70,7 +74,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   viewport: undefined,
   contextOptions: {},
 
-  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
+  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, reducedMotion, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
     testInfo.snapshotSuffix = process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -87,6 +91,8 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       options.bypassCSP = bypassCSP;
     if (colorScheme !== undefined)
       options.colorScheme = colorScheme;
+    if (reducedMotion !== undefined)
+      options.reducedMotion = reducedMotion;
     if (deviceScaleFactor !== undefined)
       options.deviceScaleFactor = deviceScaleFactor;
     if (extraHTTPHeaders !== undefined)

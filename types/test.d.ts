@@ -883,6 +883,13 @@ type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 
 /**
+ * Emulates `'prefers-reduced-motion'` media feature,
+ * supported values are `'reduce'`, `'no-preference'`.
+ * @see BrowserContextOptions
+ */
+ type ReducedMotion = Exclude<BrowserContextOptions['reducedMotion'], undefined>;
+
+/**
  * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
  * @see BrowserContextOptions
  */
@@ -931,6 +938,13 @@ export type PlaywrightWorkerOptions = {
    * @see LaunchOptions
    */
   channel: BrowserChannel | undefined;
+
+  /**
+   * Slows down Playwright operations by the specified amount of milliseconds.
+   * Useful so that you can see what is going on.
+   * @see LaunchOptions
+   */
+   slowMo: number | undefined;
 
   /**
    * Options used to launch the browser. Other options above (e.g. `headless`) take priority.
@@ -996,6 +1010,12 @@ export type PlaywrightTestOptions = {
    * @see BrowserContextOptions
    */
   colorScheme: ColorScheme | undefined;
+
+  /**
+   * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`.
+   * @see BrowserContextOptions
+   */
+   reducedMotion: ReducedMotion | undefined;
 
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
