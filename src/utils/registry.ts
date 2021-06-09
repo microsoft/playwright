@@ -186,9 +186,16 @@ export const hostPlatform = ((): BrowserPlatform => {
         stdio: ['ignore', 'pipe', 'ignore']
       }).toString().trim() === '1';
     }
-    // We do not want to differentiate between minor big sur releases
-    // since they don't change core APIs so far.
-    const macVersion = major === 10 ? `${major}.${minor}` : `${major}`;
+    const LAST_STABLE_MAC_MAJOR_VERSION = 11;
+    // All new MacOS releases increase major version.
+    let macVersion = `${major}`;
+    if (major === 10) {
+      // Pre-BigSur MacOS was increasing minor version every release.
+      macVersion = `${major}.${minor}`;
+    } else if (major > LAST_STABLE_MAC_MAJOR_VERSION) {
+      // Best-effort support for MacOS beta versions.
+      macVersion = LAST_STABLE_MAC_MAJOR_VERSION + '';
+    }
     const archSuffix = arm64 ? '-arm64' : '';
     return `mac${macVersion}${archSuffix}` as BrowserPlatform;
   }
