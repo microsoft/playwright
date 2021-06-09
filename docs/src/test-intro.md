@@ -19,11 +19,30 @@ Playwright Test Runner was created specifically to accommodate the needs of the 
 
 ## Installation
 
-Playwright has its own test runner for end-to-end tests.
+Playwright has its own test runner for end-to-end tests, we call it Playwright Test.
 
 ```bash
 npm i -D @playwright/test
 ```
+
+:::note
+Playwright Test is self-contained, it does not need Playwright to be installed.
+If you are an existing Playwright user, make sure that you either uninstall
+Playwright or update Playwright before installing Playwright Test:
+
+```
+npm i -D playwright @playwright/test
+```
+:::
+
+
+Unlike Playwright, Playwright Test does not bundle browsers by default, so you need to install them explicitly:
+
+```bash
+npx playwright install
+```
+
+You can optionally install only selected browsers, see [Playwright CLI](./cli.md) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
 
 ## First test
 
