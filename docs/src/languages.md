@@ -34,13 +34,13 @@ The Playwright API is available in multiple languages.
 * [API](https://playwright.dev/java/docs/api/class-playwright)
 * [GitHub repo](https://github.com/microsoft/playwright-java)
 
-## C#
+## .NET
 
 [Playwright for .NET](https://playwright.dev/dotnet/docs/intro/) is available.
 
 * [Documentation](https://playwright.dev/dotnet/docs/intro/)
 * [API](https://playwright.dev/dotnet/docs/api/class-playwright)
-* [GitHub repo](https://github.com/microsoft/playwright-sharp)
+* [GitHub repo](https://github.com/microsoft/playwright-dotnet)
 * [Playwright on NuGet](https://www.nuget.org/packages/Microsoft.Playwright)
 
 ```
