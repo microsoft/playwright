@@ -101,59 +101,53 @@ The following code snippet retrieves state from an authenticated context and
 creates a new context with that state.
 
 ```js
-// Save storage state and store as an env variable
-const storage = await context.storageState();
-process.env.STORAGE = JSON.stringify(storage);
+// Save storage state into the file.
+await context.storageState({ path: 'state.json' });
 
-// Create a new context with the saved storage state
-const storageState = JSON.parse(process.env.STORAGE);
-const context = await browser.newContext({ storageState });
+// Create a new context with the saved storage state.
+const context = await browser.newContext({ storageState: 'state.json' });
 ```
 
 ```java
-// Save storage state and store as an env variable
-String storage = context.storageState();
-System.getenv().put("STORAGE", storage);
+// Save storage state into the file.
+context.storageState(new BrowserContext.StorageStateOptions().setPath("state.json"));
 
-// Create a new context with the saved storage state
+// Create a new context with the saved storage state.
 BrowserContext context = browser.newContext(
-  new Browser.NewContextOptions().setStorageState(storage));
+  new Browser.NewContextOptions().setStorageStatePath(Paths.get("state.json")));
 ```
 
 ```python async
-import json
-import os
-# Save storage state and store as an env variable
-storage = await context.storage_state()
-os.environ["STORAGE"] = json.dumps(storage)
+# Save storage state into the file.
+storage = await context.storage_state(path="state.json")
 
-# Create a new context with the saved storage state
-storage_state = json.loads(os.environ["STORAGE"])
-context = await browser.new_context(storage_state=storage_state)
+# Create a new context with the saved storage state.
+context = await browser.new_context(storage_state="state.json")
 ```
 
 ```python sync
-import json
-import os
-# Save storage state and store as an env variable
-storage = context.storage_state()
-os.environ["STORAGE"] = json.dumps(storage)
+# Save storage state into the file.
+storage = context.storage_state(path="state.json")
 
-# Create a new context with the saved storage state
-storage_state = json.loads(os.environ["STORAGE"])
-context = browser.new_context(storage_state=storage_state)
+# Create a new context with the saved storage state.
+context = browser.new_context(storage_state="state.json")
 ```
 
 ```csharp
-// Save storage state and store as an env variable
-var storage = await context.StorageStateAsync();
+// Save storage state into the file.
+await context.StorageStateAsync(new BrowserContextStorageStateOptions
+{
+    Path = "state.json"
+});
 
-// Create a new context with the saved storage state
+// Create a new context with the saved storage state.
 var context = await browser.NewContextAsync(new BrowserNewContextOptions
 {
-    StorageState = storage
+    StorageStatePath = "state.json"
 });
 ```
+
+### Code generation
 
 Logging in via the UI and then reusing authentication state can be combined to
 implement **login once and run multiple scenarios**. The lifecycle looks like:
@@ -164,6 +158,75 @@ implement **login once and run multiple scenarios**. The lifecycle looks like:
 1. In each test, load authentication state in `beforeEach` or `beforeAll` step.
 
 This approach will also **work in CI environments**, since it does not rely on any external state.
+
+### Reuse authentication in Playwright Test
+* langs: js
+
+When using [Playwright Test](./test-intro.md), you can log in once in the global setup
+and then reuse authentication state in tests. That way all your tests are completely
+isolated, yet you only waste time logging in once for the entire test suite run.
+
+First, introduce the global setup that would log in once.
+
+```js js-flavor=js
+// global-setup.js
+const { chromium } = require('@playwright/test');
+
+module.exports = async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  await page.goto('http://localhost:5000/');
+  await page.click('text=login');
+  await page.fill('input[name="user"]', 'user');
+  await page.fill('input[name="password"]', 'password');
+  await page.click('input:has-text("login")');
+  await page.context().storageState({ path: 'state.json' });
+  await browser.close();
+};
+```
+
+```js js-flavor=ts
+// global-setup.ts
+import { chromium } from '@playwright/test';
+
+async function globalSetup() {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  await page.goto('http://localhost:5000/');
+  await page.click('text=login');
+  await page.fill('input[name="user"]', 'user');
+  await page.fill('input[name="password"]', 'password');
+  await page.click('input:has-text("login")');
+  await page.context().storageState({ path: 'state.json' });
+  await browser.close();
+}
+
+export default globalSetup;
+```
+
+Then reuse saved authentication state in your tests.
+
+```js js-flavor=ts
+import { test } from '@playwright/test';
+
+test.use({ storageState: 'state.json' });
+
+test('test', async ({ page }) => {
+  await page.goto('http://localhost:5000/');
+  // You are logged in!
+});
+```
+
+```js js-flavor=js
+const { test } = require('@playwright/test');
+
+test.use({ storageState: 'state.json' });
+
+test('test', async ({ page }) => {
+  await page.goto('http://localhost:5000/');
+  // You are logged in!
+});
+```
 
 ### API reference
 - [`method: BrowserContext.storageState`]
