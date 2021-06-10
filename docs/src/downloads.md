@@ -57,7 +57,7 @@ var waitForDownloadTask = page.WaitForDownloadAsync();
 await page.ClickAsync("#downloadButton");
 // Wait for the download process to complete
 var download = await waitForDownloadTask;
-Console.WriteLine(await download.PathAsync());
+var path = await download.PathAsync();
 ```
 
 #### Variations

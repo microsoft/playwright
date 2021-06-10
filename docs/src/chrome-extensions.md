@@ -1,6 +1,6 @@
 ---
-id: extensions
-title: "Testing extensions"
+id: chrome-extensions
+title: "Chrome Extensions"
 ---
 
 :::note
