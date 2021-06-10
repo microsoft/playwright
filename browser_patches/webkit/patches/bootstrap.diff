@@ -7814,6 +7814,21 @@ index c4eb67d6f7c334076b32b798dcea40b570681e6f..ce86ab28225aa466350671441294f2ac
      String m_databasePath;
  
      bool m_detectedDatabaseCorruption { false };
+diff --git a/Source/WebCore/platform/network/curl/CurlContext.cpp b/Source/WebCore/platform/network/curl/CurlContext.cpp
+index 8ed09b2abc5d647fab6dc01b98616e153f678b4e..6f2dd5cfcb8fd48985b92c783608011ca98bcabc 100644
+--- a/Source/WebCore/platform/network/curl/CurlContext.cpp
++++ b/Source/WebCore/platform/network/curl/CurlContext.cpp
+@@ -793,6 +793,10 @@ std::optional<NetworkLoadMetrics> CurlHandle::getNetworkLoadMetrics(MonotonicTim
+ 
+     NetworkLoadMetrics networkLoadMetrics;
+ 
++    // Playwright begin
++    // FIXME: workaround for https://bugs.webkit.org/show_bug.cgi?id=226901
++    networkLoadMetrics.fetchStart = startTime;
++    // Playwright end
+     networkLoadMetrics.domainLookupStart = startTime;
+     networkLoadMetrics.domainLookupEnd = startTime + Seconds(nameLookup);
+     networkLoadMetrics.connectStart = networkLoadMetrics.domainLookupEnd;
 diff --git a/Source/WebCore/platform/network/curl/CurlStream.cpp b/Source/WebCore/platform/network/curl/CurlStream.cpp
 index ff55d352342786fcdeaefc64f6ccbe015f4c5b5f..37a657851d84c3693c1e31239a19d9edd935d039 100644
 --- a/Source/WebCore/platform/network/curl/CurlStream.cpp
