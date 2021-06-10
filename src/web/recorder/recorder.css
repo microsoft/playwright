@@ -35,7 +35,7 @@
   background: none;
   outline: none;
   color: var(--toolbar-color);
-  margin-left: 16px;
+  min-width: 100px;
 }
 
 .recorder .toolbar-button.toggled.microscope {

@@ -86,7 +86,7 @@ commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --b
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to use, one of javascript, python, python-async, csharp`, language()],
+      ['--target <language>', `language to generate, one of javascript, test, python, python-async, csharp`, language()],
     ]).action(function(url, command) {
   codegen(command, url, command.target, command.output).catch(logErrorAndExit);
 }).on('--help', function() {
@@ -554,7 +554,7 @@ function logErrorAndExit(e: Error) {
 }
 
 function language(): string {
-  return process.env.PW_CLI_TARGET_LANG || 'javascript';
+  return process.env.PW_CLI_TARGET_LANG || 'test';
 }
 
 function commandWithOpenOptions(command: string, description: string, options: any[][]): program.Command {
