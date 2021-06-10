@@ -15,10 +15,42 @@
  */
 
 const path = require('path');
-const InlineSource = require('./webpack-inline-source-plugin.js');
+const fs = require('fs');
+
+class InlineSource {
+  /**
+   * @param {string[]} outFiles 
+   */
+  constructor(outFiles) {
+    this.outFiles = outFiles;
+  }
+
+  /**
+   * @param {import('webpack').Compiler} compiler
+   */
+  apply(compiler) {
+    compiler.hooks.emit.tapAsync('InlineSource', (compilation, callback) => {
+      for (const outFile of this.outFiles) {
+        const source = compilation.assets[path.basename(outFile).replace('.ts', '.js')].source();
+        fs.mkdirSync(path.dirname(outFile), { recursive: true });
+        const newSource = 'export const source = ' + JSON.stringify(source) + ';';
+        fs.writeFileSync(outFile, newSource);
+      }
+      callback();
+    });
+  }
+}
+
+const entry = {
+  utilityScriptSource: path.join(__dirname, 'utilityScript.ts'),
+  injectedScriptSource: path.join(__dirname, 'injectedScript.ts'),
+  consoleApiSource: path.join(__dirname, '..', 'supplements', 'injected', 'consoleApi.ts'),
+  recorderSource: path.join(__dirname, '..', 'supplements', 'injected', 'recorder.ts'),
+}
+
 /** @type {import('webpack').Configuration} */
 module.exports = {
-  entry: path.join(__dirname, 'injectedScript.ts'),
+  entry,
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
   devtool: false,
   module: {
@@ -37,13 +69,15 @@ module.exports = {
     extensions: [ '.tsx', '.ts', '.js' ]
   },
   output: {
-    filename: 'injectedScriptSource.js',
     libraryTarget: 'var',
-    libraryExport: 'default',
     library: 'pwExport',
+    libraryExport: 'default',
+    filename: '[name].js',
     path: path.resolve(__dirname, '../../../lib/server/injected/packed')
   },
   plugins: [
-    new InlineSource(path.join(__dirname, '..', '..', 'generated', 'injectedScriptSource.ts')),
+    new InlineSource(
+      Object.keys(entry).map(x => path.join(__dirname, '..', '..', 'generated', x + '.ts'))
+    ),
   ]
 };

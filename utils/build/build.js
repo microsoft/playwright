@@ -90,10 +90,7 @@ function copyFile(file, from, to) {
 
 // Build injected scripts.
 const webPackFiles = [
-  'src/server/injected/injectedScript.webpack.config.js',
-  'src/server/injected/utilityScript.webpack.config.js',
-  'src/server/supplements/injected/consoleApi.webpack.config.js',
-  'src/server/supplements/injected/recorder.webpack.config.js',
+  'src/server/injected/webpack.config.js',
   'src/web/traceViewer/webpack.config.js',
   'src/web/recorder/webpack.config.js',
 ];

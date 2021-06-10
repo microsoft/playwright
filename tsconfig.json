@@ -12,5 +12,5 @@
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/server/deviceDescriptorsSource.json"],
-  "exclude": ["node_modules", "src/.eslintrc.js", "src/**/*webpack.config.js", "src/server/injected/webpack-inline-source-plugin.js"]
+  "exclude": ["node_modules", "src/.eslintrc.js", "src/**/*webpack.config.js"]
 }
