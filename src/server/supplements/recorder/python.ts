@@ -23,7 +23,7 @@ import deviceDescriptors from '../../deviceDescriptors';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
   id = 'python';
-  fileName = '<python>';
+  fileName = 'Python';
   highlighter = 'python';
 
   private _awaitPrefix: '' | 'await ';
@@ -32,7 +32,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
   constructor(isAsync: boolean) {
     this.id = isAsync ? 'python-async' : 'python';
-    this.fileName = isAsync ? '<async python>' : '<python>';
+    this.fileName = isAsync ? 'Python Async' : 'Python';
     this._isAsync = isAsync;
     this._awaitPrefix = isAsync ? 'await ' : '';
     this._asyncPrefix = isAsync ? 'async ' : '';

@@ -24,25 +24,25 @@ test.describe('cli codegen', () => {
     const recorder = await openRecorder();
 
     await recorder.setContentAndWait(``);
-    const sources = await recorder.waitForOutput('<javascript>', `page.goto`);
+    const sources = await recorder.waitForOutput('JavaScript', `page.goto`);
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Open new page
   const page = await context.newPage();`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Open new page
       Page page = context.newPage();`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Open new page
     page = context.new_page()`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Open new page
     page = await context.new_page()`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Open new page
         var page = await context.NewPageAsync();`);
   });
@@ -52,25 +52,25 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(``);
     await page.context().newPage();
-    const sources = await recorder.waitForOutput('<javascript>', 'page1');
+    const sources = await recorder.waitForOutput('JavaScript', 'page1');
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Open new page
   const page1 = await context.newPage();`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Open new page
       Page page1 = context.newPage();`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Open new page
     page1 = context.new_page()`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Open new page
     page1 = await context.new_page()`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Open new page
         var page1 = await context.NewPageAsync();`);
   });
@@ -81,21 +81,21 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(``);
     await page.context().newPage();
     await recorder.page.close();
-    const sources = await recorder.waitForOutput('<javascript>', 'page.close();');
+    const sources = await recorder.waitForOutput('JavaScript', 'page.close();');
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   await page.close();`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       page.close();`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     page.close()`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     await page.close()`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         await page.CloseAsync();`);
   });
 
@@ -110,7 +110,7 @@ test.describe('cli codegen', () => {
     const selector = await recorder.hoverOverElement('html');
     expect(selector).toBe('html');
     await recorder.page.close();
-    await recorder.waitForOutput('<javascript>', 'page.close();');
+    await recorder.waitForOutput('JavaScript', 'page.close();');
     expect(errors.length).toBe(0);
   });
 
@@ -128,25 +128,25 @@ test.describe('cli codegen', () => {
     await page.setInputFiles('input[type=file]', asset('file-to-upload.txt'));
     await page.click('input[type=file]');
 
-    const sources = await recorder.waitForOutput('<javascript>', 'setInputFiles');
+    const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Upload file-to-upload.txt
   await page.setInputFiles('input[type="file"]', 'file-to-upload.txt');`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Upload file-to-upload.txt
       page.setInputFiles("input[type=\\\"file\\\"]", Paths.get("file-to-upload.txt"));`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Upload file-to-upload.txt
     page.set_input_files(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt\")`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Upload file-to-upload.txt
     await page.set_input_files(\"input[type=\\\"file\\\"]\", \"file-to-upload.txt\")`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Upload file-to-upload.txt
         await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-upload.txt\" });`);
   });
@@ -165,25 +165,25 @@ test.describe('cli codegen', () => {
     await page.setInputFiles('input[type=file]', [asset('file-to-upload.txt'), asset('file-to-upload-2.txt')]);
     await page.click('input[type=file]');
 
-    const sources = await recorder.waitForOutput('<javascript>', 'setInputFiles');
+    const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Upload file-to-upload.txt, file-to-upload-2.txt
   await page.setInputFiles('input[type=\"file\"]', ['file-to-upload.txt', 'file-to-upload-2.txt']);`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Upload file-to-upload.txt, file-to-upload-2.txt
       page.setInputFiles("input[type=\\\"file\\\"]", new Path[] {Paths.get("file-to-upload.txt"), Paths.get("file-to-upload-2.txt")});`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Upload file-to-upload.txt, file-to-upload-2.txt
     page.set_input_files(\"input[type=\\\"file\\\"]\", [\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Upload file-to-upload.txt, file-to-upload-2.txt
     await page.set_input_files(\"input[type=\\\"file\\\"]\", [\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Upload file-to-upload.txt, file-to-upload-2.txt
         await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
@@ -202,25 +202,25 @@ test.describe('cli codegen', () => {
     await page.setInputFiles('input[type=file]', []);
     await page.click('input[type=file]');
 
-    const sources = await recorder.waitForOutput('<javascript>', 'setInputFiles');
+    const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Clear selected files
   await page.setInputFiles('input[type=\"file\"]', []);`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Clear selected files
       page.setInputFiles("input[type=\\\"file\\\"]", new Path[0]);`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Clear selected files
     page.set_input_files(\"input[type=\\\"file\\\"]\", []`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Clear selected files
     await page.set_input_files(\"input[type=\\\"file\\\"]\", []`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Clear selected files
         await page.SetInputFilesAsync(\"input[type=\\\"file\\\"]\", new[] {  });`);
 
@@ -248,50 +248,50 @@ test.describe('cli codegen', () => {
       page.waitForEvent('download'),
       page.click('text=Download')
     ]);
-    const sources = await recorder.waitForOutput('<javascript>', 'waitForEvent');
+    const sources = await recorder.waitForOutput('JavaScript', 'waitForEvent');
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   const context = await browser.newContext({
     acceptDownloads: true
   });`);
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Click text=Download
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.click('text=Download')
   ]);`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setAcceptDownloads(true));`);
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Click text=Download
       Download download = page.waitForDownload(() -> {
         page.click("text=Download");
       });`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     context = browser.new_context(accept_downloads=True)`);
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Click text=Download
     with page.expect_download() as download_info:
         page.click(\"text=Download\")
     download = download_info.value`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     context = await browser.new_context(accept_downloads=True)`);
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Click text=Download
     async with page.expect_download() as download_info:
         await page.click(\"text=Download\")
     download = await download_info.value`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
         {
             AcceptDownloads = true,
         });`);
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Click text=Download
         var download1 = await page.RunAndWaitForDownloadAsync(async () =>
         {
@@ -311,9 +311,9 @@ test.describe('cli codegen', () => {
     });
     await page.click('text=click me');
 
-    const sources = await recorder.waitForOutput('<javascript>', 'once');
+    const sources = await recorder.waitForOutput('JavaScript', 'once');
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Click text=click me
   page.once('dialog', dialog => {
     console.log(\`Dialog message: \${dialog.message()}\`);
@@ -321,7 +321,7 @@ test.describe('cli codegen', () => {
   });
   await page.click('text=click me');`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Click text=click me
       page.onceDialog(dialog -> {
         System.out.println(String.format("Dialog message: %s", dialog.message()));
@@ -329,17 +329,17 @@ test.describe('cli codegen', () => {
       });
       page.click("text=click me");`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Click text=click me
     page.once(\"dialog\", lambda dialog: dialog.dismiss())
     page.click(\"text=click me\")`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Click text=click me
     page.once(\"dialog\", lambda dialog: dialog.dismiss())
     await page.click(\"text=click me\")`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Click text=click me
         void page_Dialog1_EventHandler(object sender, IDialog dialog)
         {
@@ -364,7 +364,7 @@ test.describe('cli codegen', () => {
     </script>`, server.PREFIX);
     for (let i = 1; i < 3; ++i) {
       await page.evaluate('pushState()');
-      await recorder.waitForOutput('<javascript>', `await page.goto('${server.PREFIX}/#seqNum=${i}');`);
+      await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/#seqNum=${i}');`);
     }
   });
 
@@ -378,23 +378,23 @@ test.describe('cli codegen', () => {
     expect(selector).toBe('text=link');
 
     await page.click('a', { modifiers: [ platform === 'darwin' ? 'Meta' : 'Control'] });
-    const sources = await recorder.waitForOutput('<javascript>', 'page1');
+    const sources = await recorder.waitForOutput('JavaScript', 'page1');
 
     if (browserName === 'chromium') {
-      expect(sources.get('<javascript>').text).toContain(`
+      expect(sources.get('JavaScript').text).toContain(`
   // Open new page
   const page1 = await context.newPage();
   await page1.goto('about:blank?foo');`);
-      expect(sources.get('<async python>').text).toContain(`
+      expect(sources.get('Python Async').text).toContain(`
     # Open new page
     page1 = await context.new_page()
     await page1.goto("about:blank?foo")`);
-      expect(sources.get('<csharp>').text).toContain(`
+      expect(sources.get('C#').text).toContain(`
         // Open new page
         var page1 = await context.NewPageAsync();
         await page1.GotoAsync("about:blank?foo");`);
     } else if (browserName === 'firefox') {
-      expect(sources.get('<javascript>').text).toContain(`
+      expect(sources.get('JavaScript').text).toContain(`
   // Click text=link
   const [page1] = await Promise.all([
     page.waitForEvent('popup'),
@@ -422,26 +422,26 @@ test.describe('cli codegen', () => {
     await recorder.setPageContentAndWait(popup2, '<input id=name>');
 
     await popup1.type('input', 'TextA');
-    await recorder.waitForOutput('<javascript>', 'TextA');
+    await recorder.waitForOutput('JavaScript', 'TextA');
 
     await popup2.type('input', 'TextB');
-    await recorder.waitForOutput('<javascript>', 'TextB');
+    await recorder.waitForOutput('JavaScript', 'TextB');
 
     const sources = recorder.sources();
-    expect(sources.get('<javascript>').text).toContain(`await page1.fill('input', 'TextA');`);
-    expect(sources.get('<javascript>').text).toContain(`await page2.fill('input', 'TextB');`);
+    expect(sources.get('JavaScript').text).toContain(`await page1.fill('input', 'TextA');`);
+    expect(sources.get('JavaScript').text).toContain(`await page2.fill('input', 'TextB');`);
 
-    expect(sources.get('<java>').text).toContain(`page1.fill("input", "TextA");`);
-    expect(sources.get('<java>').text).toContain(`page2.fill("input", "TextB");`);
+    expect(sources.get('Java').text).toContain(`page1.fill("input", "TextA");`);
+    expect(sources.get('Java').text).toContain(`page2.fill("input", "TextB");`);
 
-    expect(sources.get('<python>').text).toContain(`page1.fill(\"input\", \"TextA\")`);
-    expect(sources.get('<python>').text).toContain(`page2.fill(\"input\", \"TextB\")`);
+    expect(sources.get('Python').text).toContain(`page1.fill(\"input\", \"TextA\")`);
+    expect(sources.get('Python').text).toContain(`page2.fill(\"input\", \"TextB\")`);
 
-    expect(sources.get('<async python>').text).toContain(`await page1.fill(\"input\", \"TextA\")`);
-    expect(sources.get('<async python>').text).toContain(`await page2.fill(\"input\", \"TextB\")`);
+    expect(sources.get('Python Async').text).toContain(`await page1.fill(\"input\", \"TextA\")`);
+    expect(sources.get('Python Async').text).toContain(`await page2.fill(\"input\", \"TextB\")`);
 
-    expect(sources.get('<csharp>').text).toContain(`await page1.FillAsync(\"input\", \"TextA\");`);
-    expect(sources.get('<csharp>').text).toContain(`await page2.FillAsync(\"input\", \"TextB\");`);
+    expect(sources.get('C#').text).toContain(`await page1.FillAsync(\"input\", \"TextA\");`);
+    expect(sources.get('C#').text).toContain(`await page2.FillAsync(\"input\", \"TextB\");`);
   });
 
   test('click should emit events in order', async ({ page, openRecorder }) => {
@@ -463,7 +463,7 @@ test.describe('cli codegen', () => {
     });
     await Promise.all([
       page.click('button'),
-      recorder.waitForOutput('<javascript>', 'page.click')
+      recorder.waitForOutput('JavaScript', 'page.click')
     ]);
     expect(messages).toEqual(['mousedown', 'mouseup', 'click']);
   });
@@ -513,83 +513,83 @@ test.describe('cli codegen', () => {
     const otherFrame = page.frames().find(f => f !== page.mainFrame() && !f.name());
 
     let [sources] = await Promise.all([
-      recorder.waitForOutput('<javascript>', 'one'),
+      recorder.waitForOutput('JavaScript', 'one'),
       frameOne.click('div'),
     ]);
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Click text=Hi, I'm frame
   await page.frame({
     name: 'one'
   }).click('text=Hi, I\\'m frame');`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Click text=Hi, I'm frame
       page.frame("one").click("text=Hi, I'm frame");`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Click text=Hi, I'm frame
     page.frame(name=\"one\").click(\"text=Hi, I'm frame\")`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Click text=Hi, I'm frame
     await page.frame(name=\"one\").click(\"text=Hi, I'm frame\")`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Click text=Hi, I'm frame
         await page.Frame(\"one\").ClickAsync(\"text=Hi, I'm frame\");`);
 
     [sources] = await Promise.all([
-      recorder.waitForOutput('<javascript>', 'two'),
+      recorder.waitForOutput('JavaScript', 'two'),
       frameTwo.click('div'),
     ]);
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Click text=Hi, I'm frame
   await page.frame({
     name: 'two'
   }).click('text=Hi, I\\'m frame');`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Click text=Hi, I'm frame
       page.frame("two").click("text=Hi, I'm frame");`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Click text=Hi, I'm frame
     page.frame(name=\"two\").click(\"text=Hi, I'm frame\")`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Click text=Hi, I'm frame
     await page.frame(name=\"two\").click(\"text=Hi, I'm frame\")`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Click text=Hi, I'm frame
         await page.Frame(\"two\").ClickAsync(\"text=Hi, I'm frame\");`);
 
     [sources] = await Promise.all([
-      recorder.waitForOutput('<javascript>', 'url: \''),
+      recorder.waitForOutput('JavaScript', 'url: \''),
       otherFrame.click('div'),
     ]);
 
-    expect(sources.get('<javascript>').text).toContain(`
+    expect(sources.get('JavaScript').text).toContain(`
   // Click text=Hi, I'm frame
   await page.frame({
     url: 'http://localhost:${server.PORT}/frames/frame.html'
   }).click('text=Hi, I\\'m frame');`);
 
-    expect(sources.get('<java>').text).toContain(`
+    expect(sources.get('Java').text).toContain(`
       // Click text=Hi, I'm frame
       page.frameByUrl("http://localhost:${server.PORT}/frames/frame.html").click("text=Hi, I'm frame");`);
 
-    expect(sources.get('<python>').text).toContain(`
+    expect(sources.get('Python').text).toContain(`
     # Click text=Hi, I'm frame
     page.frame(url=\"http://localhost:${server.PORT}/frames/frame.html\").click(\"text=Hi, I'm frame\")`);
 
-    expect(sources.get('<async python>').text).toContain(`
+    expect(sources.get('Python Async').text).toContain(`
     # Click text=Hi, I'm frame
     await page.frame(url=\"http://localhost:${server.PORT}/frames/frame.html\").click(\"text=Hi, I'm frame\")`);
 
-    expect(sources.get('<csharp>').text).toContain(`
+    expect(sources.get('C#').text).toContain(`
         // Click text=Hi, I'm frame
         await page.FrameByUrl(\"http://localhost:${server.PORT}/frames/frame.html\").ClickAsync(\"text=Hi, I'm frame\");`);
   });
@@ -610,7 +610,7 @@ test.describe('cli codegen', () => {
       await page.evaluate('pushState()');
 
     await page.goto(server.PREFIX + '/page2.html');
-    await recorder.waitForOutput('<javascript>', `await page.goto('${server.PREFIX}/page2.html');`);
+    await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
   test('should record slow navigation signal after mouse move', async ({ page, openRecorder, server }) => {
@@ -632,9 +632,9 @@ test.describe('cli codegen', () => {
     const [, sources] = await Promise.all([
       // This will click, finish the click, then mouse move, then navigate.
       page.click('button'),
-      recorder.waitForOutput('<javascript>', 'waitForNavigation'),
+      recorder.waitForOutput('JavaScript', 'waitForNavigation'),
     ]);
 
-    expect(sources.get('<javascript>').text).toContain(`page.waitForNavigation(/*{ url: '${server.EMPTY_PAGE}' }*/)`);
+    expect(sources.get('JavaScript').text).toContain(`page.waitForNavigation(/*{ url: '${server.EMPTY_PAGE}' }*/)`);
   });
 });

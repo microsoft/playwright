@@ -22,9 +22,16 @@ import { MouseClickOptions, toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
-  id = 'javascript';
-  fileName = '<javascript>';
+  id: string;
+  fileName: string;
   highlighter = 'javascript';
+  private _isTest: boolean;
+
+  constructor(isTest: boolean) {
+    this.id = isTest ? 'test' : 'javascript';
+    this.fileName = isTest ? 'Playwright Test' : 'JavaScript';
+    this._isTest = isTest;
+  }
 
   generateAction(actionInContext: ActionInContext): string {
     const { action, pageAlias } = actionInContext;
@@ -33,6 +40,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
+      if (this._isTest)
+        return '';
       formatter.add(`const ${pageAlias} = await context.newPage();`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
         formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
@@ -84,8 +93,12 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
     if (emitPromiseAll)
       formatter.add(`]);`);
-    else if (signals.assertNavigation)
-      formatter.add(`  // assert.equal(${pageAlias}.url(), ${quote(signals.assertNavigation.url)});`);
+    else if (signals.assertNavigation) {
+      if (this._isTest)
+        formatter.add(`  expect(${pageAlias}.url()).toBe(${quote(signals.assertNavigation.url)});`);
+      else
+        formatter.add(`  // assert.equal(${pageAlias}.url(), ${quote(signals.assertNavigation.url)});`);
+    }
     return formatter.format();
   }
 
@@ -131,6 +144,32 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
+    if (this._isTest)
+      return this.generateTestHeader(options);
+    return this.generateStandaloneHeader(options);
+  }
+
+  generateFooter(saveStorage: string | undefined): string {
+    if (this._isTest)
+      return this.generateTestFooter(saveStorage);
+    return this.generateStandaloneFooter(saveStorage);
+  }
+
+  generateTestHeader(options: LanguageGeneratorOptions): string {
+    const formatter = new JavaScriptFormatter();
+    const useText = formatContextOptions(options.contextOptions, options.deviceName);
+    formatter.add(`
+      const { test, expect${options.deviceName ? ', devices' : ''} } = require('@playwright/test');
+${useText ? '\ntest.use(' + useText + ');\n' : ''}
+      test('test', async ({ page }) => {`);
+    return formatter.format();
+  }
+
+  generateTestFooter(saveStorage: string | undefined): string {
+    return `\n});`;
+  }
+
+  generateStandaloneHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
     formatter.add(`
       const { ${options.browserName}${options.deviceName ? ', devices' : ''} } = require('playwright');
@@ -141,7 +180,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  generateFooter(saveStorage: string | undefined): string {
+  generateStandaloneFooter(saveStorage: string | undefined): string {
     const storageStateLine = saveStorage ? `\n  await context.storageState({ path: '${saveStorage}' });` : '';
     return `\n  // ---------------------${storageStateLine}
   await context.close();
