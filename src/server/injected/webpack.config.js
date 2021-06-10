@@ -57,10 +57,7 @@ module.exports = {
     rules: [
       {
         test: /\.(j|t)sx?$/,
-        loader: 'ts-loader',
-        options: {
-          transpileOnly: true
-        },
+        loader: 'babel-loader',
         exclude: /node_modules/
       }
     ]

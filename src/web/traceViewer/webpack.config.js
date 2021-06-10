@@ -19,9 +19,12 @@ module.exports = {
     rules: [
       {
         test: /\.(j|t)sx?$/,
-        loader: 'ts-loader',
+        loader: 'babel-loader',
         options: {
-          transpileOnly: true
+          presets: [
+            "@babel/preset-typescript",
+            "@babel/preset-react"
+          ]
         },
         exclude: /node_modules/
       },

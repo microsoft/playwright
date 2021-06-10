@@ -58,6 +58,7 @@
     "@babel/plugin-syntax-optional-catch-binding": "^7.8.3",
     "@babel/plugin-transform-modules-commonjs": "^7.14.0",
     "@babel/preset-typescript": "^7.13.0",
+    "babel-loader": "^8.2.2",
     "colors": "^1.4.0",
     "commander": "^6.1.0",
     "debug": "^4.1.1",
@@ -81,6 +82,7 @@
     "yazl": "^2.5.1"
   },
   "devDependencies": {
+    "@babel/preset-react": "^7.14.5",
     "@types/babel__code-frame": "^7.0.2",
     "@types/babel__core": "^7.1.14",
     "@types/debug": "^4.1.5",
@@ -121,7 +123,6 @@
     "react-dom": "^17.0.1",
     "socksv5": "0.0.6",
     "style-loader": "^1.2.1",
-    "ts-loader": "^8.0.3",
     "typescript": "=4.2.4",
     "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12",
