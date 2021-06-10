@@ -295,10 +295,12 @@ class ExecutionContext {
     this._id = generateId();
     this._auxData = auxData;
     this._jsonStringifyObject = this._debuggee.executeInGlobal(`((stringify, object) => {
-      const oldToJson = Date.prototype.toJSON;
+      const oldToJSON = Date.prototype.toJSON;
       Date.prototype.toJSON = undefined;
-      const oldArrayToJson = Array.prototype.toJSON;
-      Array.prototype.toJSON = undefined;
+      const oldArrayToJSON = Array.prototype.toJSON;
+      const oldArrayHadToJSON = Array.prototype.hasOwnProperty('toJSON');
+      if (oldArrayHadToJSON)
+        Array.prototype.toJSON = undefined;
 
       let hasSymbol = false;
       const result = stringify(object, (key, value) => {
@@ -307,8 +309,9 @@ class ExecutionContext {
         return value;
       });
 
-      Date.prototype.toJSON = oldToJson;
-      Array.prototype.toJSON = oldArrayToJson;
+      Date.prototype.toJSON = oldToJSON;
+      if (oldArrayHadToJSON)
+        Array.prototype.toJSON = oldArrayToJSON;
 
       return hasSymbol ? undefined : result;
     }).bind(null, JSON.stringify.bind(JSON))`).return;
