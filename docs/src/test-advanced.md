@@ -248,7 +248,7 @@ Now add `globalSetup` option to the configuration file.
 ```js js-flavor=js
 // playwright.config.js
 module.export = {
-  globalSetup: 'global-setup.js',
+  globalSetup: require.resolve('./global-setup'),
 };
 ```
 
@@ -257,7 +257,7 @@ module.export = {
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  globalSetup: 'global-setup.ts',
+  globalSetup: require.resolve('./global-setup'),
 };
 export default config;
 ```
