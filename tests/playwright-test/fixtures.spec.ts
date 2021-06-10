@@ -210,7 +210,7 @@ test('should only run worker fixtures once', async ({ runInlineTest }) => {
     'a.test.js': `
       let counter = 0;
       const test = pwt.test.extend({
-        asdf: [ async ({}, test) => await test(counter++), { scope: 'worker' } ],
+        asdf: pwt.workerFixture(async ({}, test) => await test(counter++)),
       });
       test('should use asdf', async ({asdf}) => {
         expect(asdf).toBe(0);

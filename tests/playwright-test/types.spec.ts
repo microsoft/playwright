@@ -30,10 +30,11 @@ test('sanity', async ({runTSC}) => {
 test('should check types of fixtures', async ({runTSC}) => {
   const result = await runTSC({
     'helper.ts': `
-      export type MyOptions = { foo: string, bar: number };
-      export const test = pwt.test.extend<{ foo: string }, { bar: number }>({
+      export type MyOptions = { foo: string, bar: number, foobar: string };
+      export const test = pwt.test.extend<{ foo: string }, { bar: number, foobar: string } >({
         foo: 'foo',
         bar: [ 42, { scope: 'worker' } ],
+        foobar: pwt.workerFixture('woof-woof'),
       });
 
       const good1 = test.extend<{}>({ foo: async ({ bar }, run) => run('foo') });
@@ -75,19 +76,21 @@ test('should check types of fixtures', async ({runTSC}) => {
     'playwright.config.ts': `
       import { MyOptions } from './helper';
       const configs1: pwt.Config[] = [];
-      configs1.push({ use: { foo: '42', bar: 42 } });
-      configs1.push({ use: { foo: '42', bar: 42 }, timeout: 100 });
+      configs1.push({ use: { foo: '42', bar: 42, foobar: 'woof-woof', } });
+      configs1.push({ use: { foo: '42', bar: 42, foobar: 'woof-woof', }, timeout: 100 });
 
       const configs2: pwt.Config<MyOptions>[] = [];
-      configs2.push({ use: { foo: '42', bar: 42 } });
+      configs2.push({ use: { foo: '42', bar: 42, foobar: 'woof-woof', } });
       // @ts-expect-error
-      pwt.runTests({ use: { foo: '42', bar: 42 } }, {});
+      pwt.runTests({ use: { foo: '42', bar: 42, foobar: 'woof-woof', } }, {});
       // @ts-expect-error
       configs2.push({ use: { bar: '42' } });
       // @ts-expect-error
       configs2.push(new Env2());
       // @ts-expect-error
       configs2.push({ use: { foo: 42, bar: 42 } });
+      // @ts-expect-error
+      configs2.push({ use: { foo: 42, bar: 42, foobar: 42 } });
       // @ts-expect-error
       configs2.push({ beforeAll: async () => { return {}; } });
       // TODO: next line should not compile.
