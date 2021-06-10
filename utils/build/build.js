@@ -108,7 +108,7 @@ for (const file of webPackFiles) {
 // Run babel.
 steps.push({
   command: 'npx',
-  args: ['babel', ...(watchMode ? ['-w'] : []), '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
+  args: ['babel', ...(watchMode ? ['-w'] : []), '-s', '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
   shell: true,
 });
 
