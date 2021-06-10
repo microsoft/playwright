@@ -24,7 +24,7 @@ import { JavaScriptFormatter } from './javascript';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';
-  fileName = '<java>';
+  fileName = 'Java';
   highlighter = 'java';
 
   generateAction(actionInContext: ActionInContext): string {
