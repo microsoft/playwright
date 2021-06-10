@@ -1,6 +1,6 @@
 ---
 id: extensions
-title: "Testing extensions (experimental)"
+title: "Testing extensions"
 ---
 
 :::note
