@@ -260,3 +260,24 @@ test('should ignore node_modules even with custom testIgnore', async ({ runInlin
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should only match files with JS/TS file extensions', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { testMatch: /foobar/ };
+    `,
+    'foobar.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'foobar.test.js': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'foobar.test.ts-snapshots/compares-page-screenshot-chromium-linux-test-chromium.png': `
+      <S0MeTh1ngN0nPArsAble!
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
