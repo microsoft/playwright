@@ -134,12 +134,15 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
+// The recorder has an app_icon.png that needs to be copied.
 copyFiles.push({
   files: 'src/web/recorder/*.png',
   from: 'src',
   to: 'lib',
 });
 
+// Babel doesn't touch JS files, so copy them manually.
+// For example: diff_match_patch.js
 copyFiles.push({
   files: 'src/**/*.js',
   from: 'src',
@@ -147,6 +150,8 @@ copyFiles.push({
   ignored: ['**/.eslintrc.js', '**/*webpack.config.js', '**/injected/**/*']
 });
 
+// Sometimes we require JSON files that babel ignores.
+// For example, deviceDescriptorsSource.json
 copyFiles.push({
   files: 'src/**/*.json',
   ignored: ['**/injected/**/*'],
