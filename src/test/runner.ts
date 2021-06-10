@@ -143,7 +143,8 @@ export class Runner {
       const allFiles = await collectFiles(project.config.testDir);
       const testMatch = createMatcher(project.config.testMatch);
       const testIgnore = createMatcher(project.config.testIgnore);
-      const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file));
+      const testFileExtension = (file: string) => ['.js', '.ts'].includes(path.extname(file));
+      const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
       testFiles.forEach(file => allTestFiles.add(file));
     }
