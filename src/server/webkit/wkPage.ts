@@ -1000,7 +1000,6 @@ export class WKPage implements PageDelegate {
     if (!request)
       return;
 
-    console.log(`_onLoadingFinished ${event.timestamp - request._timestamp} ${event.timestamp} ${request._timestamp}`);
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();

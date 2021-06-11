@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it.only('should work', async ({ contextFactory, server }) => {
+it('should work', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   const [request] = await Promise.all([
@@ -29,12 +29,11 @@ it.only('should work', async ({ contextFactory, server }) => {
   expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
   expect(timing.responseStart).toBeGreaterThanOrEqual(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
-  console.log(`timing.responseEnd = ${timing.responseEnd}`);
   expect(timing.responseEnd).toBeLessThan(10000);
   await context.close();
 });
 
-it.only('should work for subresource', async ({ contextFactory, server }) => {
+it('should work for subresource', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   const requests = [];
@@ -46,12 +45,11 @@ it.only('should work for subresource', async ({ contextFactory, server }) => {
   expect(timing.requestStart).toBeGreaterThanOrEqual(0);
   expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
-  console.log(`timing.responseEnd = ${timing.responseEnd}`);
   expect(timing.responseEnd).toBeLessThan(10000);
   await context.close();
 });
 
-it.only('should work for SSL', async ({ browser, httpsServer }) => {
+it('should work for SSL', async ({ browser, httpsServer }) => {
   const page = await browser.newPage({ ignoreHTTPSErrors: true });
   const [request] = await Promise.all([
     page.waitForEvent('requestfinished'),
@@ -62,12 +60,11 @@ it.only('should work for SSL', async ({ browser, httpsServer }) => {
   expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
   expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
-  console.log(`timing.responseEnd = ${timing.responseEnd}`);
   expect(timing.responseEnd).toBeLessThan(10000);
   await page.close();
 });
 
-it.only('should work for redirect', async ({ contextFactory, browserName, server }) => {
+it('should work for redirect', async ({ contextFactory, browserName, server }) => {
   it.fixme(browserName === 'webkit', `In WebKit, redirects don't carry the timing info`);
 
   const context = await contextFactory();
@@ -87,7 +84,6 @@ it.only('should work for redirect', async ({ contextFactory, browserName, server
   expect(timing1.requestStart).toBeGreaterThanOrEqual(timing1.connectEnd);
   expect(timing1.responseStart).toBeGreaterThan(timing1.requestStart);
   expect(timing1.responseEnd).toBeGreaterThanOrEqual(timing1.responseStart);
-  console.log(`timing1.responseEnd = ${timing1.responseEnd}`);
   expect(timing1.responseEnd).toBeLessThan(10000);
 
   const timing2 = responses[1].request().timing();
