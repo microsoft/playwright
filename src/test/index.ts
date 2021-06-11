@@ -162,8 +162,12 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
         const video = page.video();
         if (!video)
           return;
-        const videoPath = await video.path();
-        await fs.promises.unlink(videoPath).catch(e => {});
+        try {
+          const videoPath = await video.path();
+          await fs.promises.unlink(videoPath);
+        } catch (e) {
+          // Silent catch.
+        }
       }));
     }
   },
