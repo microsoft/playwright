@@ -43,7 +43,7 @@ Playwright APIs are asynchronous and return Promise objects. Our code examples u
 
 In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
 
-```js
+```js js-flavor=js
 const { webkit } = require('playwright');
 
 (async () => {
@@ -55,9 +55,23 @@ const { webkit } = require('playwright');
 })();
 ```
 
+```js js-flavor=ts
+import { webkit } from 'playwright';
+
+const browser = await webkit.launch();
+const page = await browser.newPage();
+await page.goto('http://whatsmyuseragent.org/');
+await page.screenshot({ path: `example.png` });
+await browser.close();
+```
+
 By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless: false` flag while launching the browser. You can also use `slowMo` to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
-```js
+```js js-flavor=js
+firefox.launch({ headless: false, slowMo: 50 });
+```
+
+```js js-flavor=ts
 firefox.launch({ headless: false, slowMo: 50 });
 ```
 
@@ -76,14 +90,14 @@ Playwright includes built-in support for TypeScript. Type definitions will be im
 ### In JavaScript
 Add the following to the top of your JavaScript file to get type-checking in VS Code or WebStorm.
 
-```js
+```js js-flavor=js
 //@ts-check
 // ...
 ```
 
 Alternatively, you can use JSDoc to set types for variables.
 
-```js
+```js js-flavor=js
 /** @type {import('playwright').Page} */
 let page;
 ```
@@ -91,7 +105,7 @@ let page;
 ### In TypeScript
 TypeScript support will work out-of-the-box. Types can also be imported explicitly.
 
-```js
+```js js-flavor=ts
 let page: import('playwright').Page;
 ```
 
