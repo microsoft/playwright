@@ -112,7 +112,7 @@ test('should not stall on dialogs', async ({ page, context, server }) => {
   });
 
   await page.evaluate(() => {
-    confirm("are you sure");
+    confirm('are you sure');
   });
   await context.tracing.stop();
 });
