@@ -276,6 +276,11 @@ export module Protocol {
       reducedMotion: ("reduce"|"no-preference")|null;
     };
     export type setReducedMotionReturnValue = void;
+    export type setForcedColorsParameters = {
+      browserContextId?: string;
+      forcedColors: ("active"|"none")|null;
+    };
+    export type setForcedColorsReturnValue = void;
     export type setVideoRecordingOptionsParameters = {
       browserContextId?: string;
       dir: string;
@@ -486,6 +491,7 @@ export module Protocol {
       type?: ("screen"|"print"|"");
       colorScheme?: ("dark"|"light"|"no-preference");
       reducedMotion?: ("reduce"|"no-preference");
+      forcedColors?: ("active"|"none");
     };
     export type setEmulatedMediaReturnValue = void;
     export type setCacheDisabledParameters = {
@@ -1066,6 +1072,7 @@ export module Protocol {
     "Browser.setOnlineOverride": Browser.setOnlineOverrideParameters;
     "Browser.setColorScheme": Browser.setColorSchemeParameters;
     "Browser.setReducedMotion": Browser.setReducedMotionParameters;
+    "Browser.setForcedColors": Browser.setForcedColorsParameters;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
     "Page.close": Page.closeParameters;
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
@@ -1141,6 +1148,7 @@ export module Protocol {
     "Browser.setOnlineOverride": Browser.setOnlineOverrideReturnValue;
     "Browser.setColorScheme": Browser.setColorSchemeReturnValue;
     "Browser.setReducedMotion": Browser.setReducedMotionReturnValue;
+    "Browser.setForcedColors": Browser.setForcedColorsReturnValue;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
     "Page.close": Page.closeReturnValue;
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
