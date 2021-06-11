@@ -103,6 +103,21 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
   }
 });
 
+test('should not stall on dialogs', async ({ page, context, server }) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.goto(server.EMPTY_PAGE);
+
+  page.on('dialog', async dialog => {
+    await dialog.accept();
+  });
+
+  await page.evaluate(() => {
+    confirm('are you sure');
+  });
+  await context.tracing.stop();
+});
+
+
 for (const params of [
   {
     id: 'fit',
