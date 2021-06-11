@@ -57,9 +57,9 @@ export class Loader {
       if (config && typeof config === 'object' && ('default' in config))
         config = config['default'];
       this._config = config;
+      this._configFile = file;
       const rawConfig = { ...config };
       this._processConfigObject(path.dirname(file));
-      this._configFile = file;
       return rawConfig;
     } catch (e) {
       prependErrorMessage(e, `Error while reading ${file}:\n`);
@@ -76,6 +76,12 @@ export class Loader {
 
   private _processConfigObject(rootDir: string) {
     validateConfig(this._config);
+
+    // Resolve script hooks relative to the root dir.
+    if (this._config.globalSetup)
+      this._config.globalSetup = path.resolve(rootDir, this._config.globalSetup);
+    if (this._config.globalTeardown)
+      this._config.globalTeardown = path.resolve(rootDir, this._config.globalTeardown);
 
     const configUse = mergeObjects(this._defaultConfig.use, this._config.use);
     this._config = mergeObjects(mergeObjects(this._defaultConfig, this._config), { use: configUse });
