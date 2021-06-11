@@ -21,17 +21,17 @@ Here is how typical test environment setup differs between traditional test styl
 const { test } = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
-describe('todo tests', () => {
+test.describe('todo tests', () => {
   let todoPage;
 
-  beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     todoPage = new TodoPage(page);
     await todoPage.goto();
     await todoPage.addToDo('item1');
     await todoPage.addToDo('item2');
   });
 
-  afterEach(async () => {
+  test.afterEach(async () => {
     await todoPage.removeAll();
   });
 
@@ -168,7 +168,7 @@ module.exports = base.test.extend({
 
 ```js js-flavor=ts
 // hello.ts
-import base from '@playwright/test';
+import { test as base } from '@playwright/test';
 
 // Define test fixtures "hello" and "helloWorld".
 type TestFixtures = {

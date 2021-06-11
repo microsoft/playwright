@@ -806,7 +806,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * can perform setup/teardown and provide a resource to the test.
    *
    * ```ts
-   * import base from '@playwright/test';
+   * import { test as base } from '@playwright/test';
    * import rimraf from 'rimraf';
    *
    * const test = base.extend<{ dirCount: number, dirs: string[] }>({
