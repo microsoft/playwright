@@ -27,6 +27,7 @@ import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrume
 import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
 import { TraceSnapshotter } from './traceSnapshotter';
+import { Dialog } from '../../dialog';
 
 export type TracerOptions = {
   name?: string;
@@ -128,6 +129,13 @@ export class Tracing implements InstrumentationListener {
       return;
     if (!this._snapshotter.started())
       return;
+
+    if (sdkObject instanceof Dialog && name === 'before') {
+      // A call on the dialog is going to dismiss it and resume the evaluation.
+      // We can't be capturing the snapshot before dismiss action is performed.
+      return;
+    }
+
     const snapshotName = `${name}@${metadata.id}`;
     metadata.snapshots.push({ title: name, snapshotName });
     await this._snapshotter!.captureSnapshot(sdkObject.attribution.page, snapshotName, element);
