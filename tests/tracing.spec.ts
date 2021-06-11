@@ -107,7 +107,7 @@ test('should not stall on dialogs', async ({ page, context, server }) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
 
-  page.on("dialog", async (dialog) => {
+  page.on('dialog', async dialog => {
     await dialog.accept();
   });
 
