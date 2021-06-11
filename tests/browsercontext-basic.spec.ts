@@ -218,16 +218,6 @@ it('should be able to navigate after disabling javascript', async ({browser, ser
   await context.close();
 });
 
-it('should respect default timeout when configured', async ({browser, playwright}) => {
-  const context = await browser.newContext({ defaultTimeout: 5 });
-  const page = await context.newPage();
-  let error = null;
-  await page.waitForFunction('false').catch(e => error = e);
-  expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
-  expect(error.message).toContain('page.waitForFunction: Timeout 5ms exceeded');
-  await context.close();
-});
-
 it('should work with offline option', async ({browser, server}) => {
   const context = await browser.newContext({offline: true});
   const page = await context.newPage();

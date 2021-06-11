@@ -252,7 +252,6 @@ export type BrowserContextOptions = {
   },
   proxy?: ProxySettings,
   _debugName?: string,
-  defaultTimeout?: number,
 };
 
 export type EnvArray = { name: string, value: string }[];
