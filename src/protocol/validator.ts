@@ -248,6 +248,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    defaultTimeout: tOptional(tNumber),
     userDataDir: tString,
     slowMo: tOptional(tNumber),
   });
@@ -307,6 +308,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    defaultTimeout: tOptional(tNumber),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),
