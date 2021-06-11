@@ -168,8 +168,11 @@ export class CodeGenerator extends EventEmitter {
     const text = [];
     if (this._options.generateHeaders)
       text.push(languageGenerator.generateHeader(this._options));
-    for (const action of this._actions)
-      text.push(languageGenerator.generateAction(action));
+    for (const action of this._actions) {
+      const actionText = languageGenerator.generateAction(action);
+      if (actionText)
+        text.push(actionText);
+    }
     if (this._options.generateHeaders)
       text.push(languageGenerator.generateFooter(this._options.saveStorage));
     return text.join('\n');

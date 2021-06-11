@@ -82,7 +82,8 @@ export class RecorderSupplement implements InstrumentationListener {
 
     const languages = new Set([
       new JavaLanguageGenerator(),
-      new JavaScriptLanguageGenerator(),
+      new JavaScriptLanguageGenerator(false),
+      new JavaScriptLanguageGenerator(true),
       new PythonLanguageGenerator(false),
       new PythonLanguageGenerator(true),
       new CSharpLanguageGenerator(),
