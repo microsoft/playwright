@@ -470,7 +470,6 @@ contexts override the proxy, global proxy will be never used and can be any stri
 :::
 
 ## context-option-defaulttimeout
-* langs: js
 - `defaultTimeout` <[float]>
 
 Set the default browser context timeout for the new context. Equivalent to calling [`method: BrowserContext.setDefaultTimeout`].
