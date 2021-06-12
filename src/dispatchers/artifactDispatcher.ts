@@ -89,6 +89,10 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactIn
     return { error: error || undefined };
   }
 
+  async cancel(): Promise<void> {
+    await this._object.cancel();
+  }
+
   async delete(): Promise<void> {
     await this._object.delete();
     this._dispose();

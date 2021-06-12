@@ -60,6 +60,10 @@ export class Download implements api.Download {
     return this._artifact.createReadStream();
   }
 
+  async _cancel(): Promise<void> {
+    return this._artifact.cancel();
+  }
+
   async delete(): Promise<void> {
     return this._artifact.delete();
   }

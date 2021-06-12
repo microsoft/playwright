@@ -62,6 +62,14 @@ downloaded content. If [`option: acceptDownloads`] is not set, download events a
 not performed and user has no access to the downloaded files.
 :::
 
+## async method: Download._cancel
+
+**Chromium-only** Cancels a download.
+Will not fail if the download is already finished or canceled.
+Upon successful cancellations, `download.failure()` would resolve to `'canceled'`.
+
+Currently **experimental** and may subject to further changes.
+
 ## async method: Download.createReadStream
 * langs: java, js, csharp
 - returns: <[null]|[Readable]>

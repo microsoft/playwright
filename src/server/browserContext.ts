@@ -152,6 +152,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract _doUpdateRequestInterception(): Promise<void>;
   abstract _doClose(): Promise<void>;
   abstract _onClosePersistent(): Promise<void>;
+  abstract _doCancelDownload(uuid: string): Promise<void>;
 
   async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
     if (urls && !Array.isArray(urls))

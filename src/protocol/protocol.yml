@@ -2043,6 +2043,8 @@ Artifact:
       returns:
         stream: Stream?
 
+    cancel:
+
     delete:
 
 

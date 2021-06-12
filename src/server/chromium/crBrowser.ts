@@ -479,6 +479,16 @@ export class CRBrowserContext extends BrowserContext {
     }
   }
 
+  async _doCancelDownload(guid: string) {
+    // The upstream CDP method is implemented in a way that no explicit error would be given
+    // regarding the requested `guid`, even if the download is in a state not suitable for
+    // cancellation (finished, cancelled, etc.) or the guid is invalid at all.
+    await this._browser._session.send('Browser.cancelDownload', {
+      guid: guid,
+      browserContextId: this._browserContextId,
+    });
+  }
+
   backgroundPages(): Page[] {
     const result: Page[] = [];
     for (const backgroundPage of this._browser._backgroundPages.values()) {

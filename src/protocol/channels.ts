@@ -2480,6 +2480,7 @@ export interface ArtifactChannel extends Channel {
   saveAsStream(params?: ArtifactSaveAsStreamParams, metadata?: Metadata): Promise<ArtifactSaveAsStreamResult>;
   failure(params?: ArtifactFailureParams, metadata?: Metadata): Promise<ArtifactFailureResult>;
   stream(params?: ArtifactStreamParams, metadata?: Metadata): Promise<ArtifactStreamResult>;
+  cancel(params?: ArtifactCancelParams, metadata?: Metadata): Promise<ArtifactCancelResult>;
   delete(params?: ArtifactDeleteParams, metadata?: Metadata): Promise<ArtifactDeleteResult>;
 }
 export type ArtifactPathAfterFinishedParams = {};
@@ -2509,6 +2510,9 @@ export type ArtifactStreamOptions = {};
 export type ArtifactStreamResult = {
   stream?: StreamChannel,
 };
+export type ArtifactCancelParams = {};
+export type ArtifactCancelOptions = {};
+export type ArtifactCancelResult = void;
 export type ArtifactDeleteParams = {};
 export type ArtifactDeleteOptions = {};
 export type ArtifactDeleteResult = void;

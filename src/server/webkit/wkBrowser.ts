@@ -326,4 +326,9 @@ export class WKBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
   }
+
+  async _doCancelDownload(uuid: string) {
+    // TODO: Have this implemented
+    throw new Error('Download cancellation not yet implemented in WebKit');
+  }
 }
