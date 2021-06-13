@@ -16,12 +16,17 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Browser } from '../../types/types';
+import { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
 import { rootTestType } from './testType';
-
+import { expect } from './expect';
 export { expect } from './expect';
+
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
+
+let debuggingContext: BrowserContext | null = null;
+let debuggingContextOptions: BrowserContextOptions | null = null;
+
 export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
@@ -71,103 +76,135 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   contextOptions: {},
 
   context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
+    const params = { browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions };
     testInfo.snapshotSuffix = process.platform;
-    if (process.env.PWDEBUG)
-      testInfo.setTimeout(0);
-
-    const recordVideo = video === 'on' || video === 'retain-on-failure' ||
-      (video === 'retry-with-video' && !!testInfo.retry);
-    const options: BrowserContextOptions = {
-      recordVideo: recordVideo ? { dir: testInfo.outputPath('') } : undefined,
-      ...contextOptions,
-    };
-    if (acceptDownloads !== undefined)
-      options.acceptDownloads = acceptDownloads;
-    if (bypassCSP !== undefined)
-      options.bypassCSP = bypassCSP;
-    if (colorScheme !== undefined)
-      options.colorScheme = colorScheme;
-    if (deviceScaleFactor !== undefined)
-      options.deviceScaleFactor = deviceScaleFactor;
-    if (extraHTTPHeaders !== undefined)
-      options.extraHTTPHeaders = extraHTTPHeaders;
-    if (geolocation !== undefined)
-      options.geolocation = geolocation;
-    if (hasTouch !== undefined)
-      options.hasTouch = hasTouch;
-    if (httpCredentials !== undefined)
-      options.httpCredentials = httpCredentials;
-    if (ignoreHTTPSErrors !== undefined)
-      options.ignoreHTTPSErrors = ignoreHTTPSErrors;
-    if (isMobile !== undefined)
-      options.isMobile = isMobile;
-    if (javaScriptEnabled !== undefined)
-      options.javaScriptEnabled = javaScriptEnabled;
-    if (locale !== undefined)
-      options.locale = locale;
-    if (offline !== undefined)
-      options.offline = offline;
-    if (permissions !== undefined)
-      options.permissions = permissions;
-    if (proxy !== undefined)
-      options.proxy = proxy;
-    if (storageState !== undefined)
-      options.storageState = storageState;
-    if (timezoneId !== undefined)
-      options.timezoneId = timezoneId;
-    if (userAgent !== undefined)
-      options.userAgent = userAgent;
-    if (viewport !== undefined)
-      options.viewport = viewport;
-
-    const context = await browser.newContext(options);
-    const allPages: Page[] = [];
-    context.on('page', page => allPages.push(page));
-
-    const collectingTrace = trace === 'on' || trace === 'retain-on-failure' || (trace === 'retry-with-trace' && testInfo.retry);
-    if (collectingTrace) {
-      const name = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
-      await context.tracing.start({ name, screenshots: true, snapshots: true });
-    }
-
-    await use(context);
-
-    const testFailed = testInfo.status !== testInfo.expectedStatus;
-
-    const saveTrace = trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'retry-with-trace' && testInfo.retry);
-    if (saveTrace) {
-      const tracePath = testInfo.outputPath(`trace.zip`);
-      await context.tracing.stop({ path: tracePath });
-    } else if (collectingTrace) {
-      await context.tracing.stop();
-    }
-
-    if (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed)) {
-      await Promise.all(allPages.map((page, index) => {
-        const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${++index}.png`);
-        return page.screenshot({ timeout: 5000, path: screenshotPath }).catch(e => {});
-      }));
-    }
-    await context.close();
-
-    const deleteVideos = video === 'retain-on-failure' && !testFailed;
-    if (deleteVideos) {
-      await Promise.all(allPages.map(async page => {
-        const video = page.video();
-        if (!video)
-          return;
-        try {
-          const videoPath = await video.path();
-          await fs.promises.unlink(videoPath);
-        } catch (e) {
-          // Silent catch.
-        }
-      }));
-    }
+    if (process.env.PWTDEBUG)
+      await withDebuggingContext(browser, params, testInfo, use);
+    else
+      await withProductionContext(browser, params, testInfo, use);
   },
 
-  page: async ({ context }, use) => {
-    await use(await context.newPage());
+  page: async ({ context }, use, testInfo) => {
+    if (process.env.PWTDEBUG) {
+      // Reuse first page, close other pages.
+      let [page] = context.pages();
+      if (page)
+        await page.goto('about:blank');
+      else
+        page = await context.newPage();
+      for (const page of context.pages().slice(1))
+        await page.close();
+
+      // Run test.
+      await use(page);
+
+      // Stall on failure.
+      const testFailed = testInfo.status !== testInfo.expectedStatus;
+      if (testFailed) {
+        console.error(testInfo.error.message);
+        await new Promise(() => {});
+      }
+    } else {
+      await use(await context.newPage());
+    }
   },
 });
+
+async function withProductionContext(browser: Browser, params: PlaywrightTestOptions, testInfo: TestInfo, use: (context: BrowserContext) => Promise<void>) {
+  const options = mergeContextOptions(params);
+  const { trace, video, screenshot } = params;
+
+  const recordVideo = params.video === 'on' ||
+      params.video === 'retain-on-failure' ||
+      (params.video === 'retry-with-video' && !!testInfo.retry);
+  options.recordVideo = recordVideo ? { dir: testInfo.outputPath('') } : undefined;
+
+  const context = await browser.newContext(options);
+  const allPages: Page[] = [];
+  context.on('page', page => allPages.push(page));
+
+  const collectingTrace = trace === 'on' || trace === 'retain-on-failure' || (trace === 'retry-with-trace' && testInfo.retry);
+  if (collectingTrace) {
+    const name = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
+    await context.tracing.start({ name, screenshots: true, snapshots: true });
+  }
+
+  await use(context);
+
+  const testFailed = testInfo.status !== testInfo.expectedStatus;
+
+  const saveTrace = trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'retry-with-trace' && testInfo.retry);
+  if (saveTrace) {
+    const tracePath = testInfo.outputPath(`trace.zip`);
+    await context.tracing.stop({ path: tracePath });
+  } else if (collectingTrace) {
+    await context.tracing.stop();
+  }
+
+  if (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed)) {
+    await Promise.all(allPages.map((page, index) => {
+      const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${++index}.png`);
+      return page.screenshot({ timeout: 5000, path: screenshotPath }).catch(e => {});
+    }));
+  }
+  await context.close();
+
+  const deleteVideos = video === 'retain-on-failure' && !testFailed;
+  if (deleteVideos) {
+    await Promise.all(allPages.map(async page => {
+      const video = page.video();
+      if (!video)
+        return;
+      try {
+        const videoPath = await video.path();
+        await fs.promises.unlink(videoPath);
+      } catch (e) {
+        // Silent catch.
+      }
+    }));
+  }
+}
+
+async function withDebuggingContext(browser: Browser, params: PlaywrightTestOptions, testInfo: TestInfo, use: (context: BrowserContext) => Promise<void>) {
+  testInfo.setTimeout(0);
+  const options = mergeContextOptions(params);
+
+  if (!debuggingContext) {
+    const options = mergeContextOptions(params);
+    debuggingContextOptions = options;
+    debuggingContext = await browser.newContext(options);
+  } else {
+    expect(options).toEqual(debuggingContextOptions);
+  }
+
+  await debuggingContext.clearCookies();
+  await debuggingContext.clearPermissions();
+  await use(debuggingContext);
+}
+
+function mergeContextOptions(testOptions: PlaywrightTestOptions): BrowserContextOptions {
+  const topLevelContextOptions: BrowserContextOptions = {
+    acceptDownloads: testOptions.acceptDownloads,
+    bypassCSP: testOptions.bypassCSP,
+    colorScheme: testOptions.colorScheme,
+    deviceScaleFactor: testOptions.deviceScaleFactor,
+    extraHTTPHeaders: testOptions.extraHTTPHeaders,
+    geolocation: testOptions.geolocation,
+    hasTouch: testOptions.hasTouch,
+    httpCredentials: testOptions.httpCredentials,
+    ignoreHTTPSErrors: testOptions.ignoreHTTPSErrors,
+    isMobile: testOptions.isMobile,
+    javaScriptEnabled: testOptions.javaScriptEnabled,
+    locale: testOptions.locale,
+    offline: testOptions.offline,
+    permissions: testOptions.permissions,
+    proxy: testOptions.proxy,
+    storageState: testOptions.storageState,
+    timezoneId: testOptions.timezoneId,
+    userAgent: testOptions.userAgent,
+    viewport: testOptions.viewport,
+  };
+  return { ...testOptions.contextOptions, ...topLevelContextOptions };
+}
+
 export default test;
