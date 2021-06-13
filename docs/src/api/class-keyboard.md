@@ -276,11 +276,11 @@ browser.close()
 ```csharp
 await page.GotoAsync("https://keycode.info");
 await page.Keyboard.PressAsync("A");
-await page.ScreenshotAsync("A.png");
+await page.ScreenshotAsync(new PageScreenshotOptions { Path = "A.png" });
 await page.Keyboard.PressAsync("ArrowLeft");
-await page.ScreenshotAsync("ArrowLeft.png");
+await page.ScreenshotAsync(new PageScreenshotOptions { Path = "ArrowLeft.png" });
 await page.Keyboard.PressAsync("Shift+O");
-await page.ScreenshotAsync("O.png");
+await page.ScreenshotAsync(new PageScreenshotOptions { Path = "O.png" });
 await browser.CloseAsync();
 ```
 
