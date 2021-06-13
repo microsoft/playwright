@@ -153,10 +153,10 @@ methods accept [`param: selector`] as their first argument.
   page.click(":nth-match(:text('Buy'), 3)");
   ```
   ```python async
-  await page.click(":nth-match(:text('Buy'), 3)"
+  await page.click(":nth-match(:text('Buy'), 3)")
   ```
   ```python sync
-  page.click(":nth-match(:text('Buy'), 3)"
+  page.click(":nth-match(:text('Buy'), 3)")
   ```
   ```csharp
   await page.ClickAsync(":nth-match(:text('Buy'), 3)");
