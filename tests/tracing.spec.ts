@@ -18,11 +18,12 @@ import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
 
-test('should collect trace', async ({ context, page, server, browserName }, testInfo) => {
+test('should collect trace', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
+  await page.waitForTimeout(2000);  // Give it some time to produce screenshots.
   await page.close();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
