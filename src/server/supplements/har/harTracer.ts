@@ -174,6 +174,7 @@ export class HarTracer {
 
     const httpVersion = response.protocol() || FALLBACK_HTTP_VERSION;
     const transferSize = response.encodedDataLength();
+    // TODO: replace with "native" headers size if/when supported in the telemetry by all supported browsers.
     const headersSize = calcResponseHeadersSize(httpVersion, response.status(), response.statusText(), response.headers());
     const bodySize = transferSize - headersSize;
     harEntry.request.httpVersion = httpVersion;
