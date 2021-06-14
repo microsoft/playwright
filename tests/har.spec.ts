@@ -322,7 +322,7 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
   expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
   expect(port).toBe(httpsServer.PORT);
   if (browserName === 'webkit' && platform === 'win32')
-    expect(securityDetails).toEqual({subjectName: 'puppeteer-tests', validFrom: 1550084863});
+    expect(securityDetails).toEqual({subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: -1});
   else if (browserName === 'webkit')
     expect(securityDetails).toEqual({protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863});
   else
