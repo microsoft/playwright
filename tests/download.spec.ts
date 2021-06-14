@@ -383,7 +383,7 @@ it.describe('download event', () => {
     expect(saveError.message).toContain('File not found on disk. Check download.failure() for details.');
   });
 
-  it('should close the context without awaiting the download', async ({browser, server, browserName, platform, headless}, testInfo) => {
+  it('should close the context without awaiting the download', async ({browser, server, browserName, platform}, testInfo) => {
     it.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
 
     server.setRoute('/downloadStall', (req, res) => {
@@ -407,10 +407,12 @@ it.describe('download event', () => {
       page.context().close(),
     ]);
     expect(downloadPath).toBe(null);
-    if (browserName === 'chromium' && headless)
-      expect(saveError.message).toContain('.saveAs: canceled');
-    else
-      expect(saveError.message).toContain('File deleted upon browser context closure.');
+    // The exact error message is racy, because sometimes browser is fast enough
+    // to cancel the download.
+    expect([
+      'download.saveAs: canceled',
+      'download.saveAs: File deleted upon browser context closure.',
+    ]).toContain(saveError.message);
   });
 
   it('should throw if browser dies', async ({ server, browserType, browserName, browserOptions, platform}, testInfo) => {
