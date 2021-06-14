@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import type expect from 'expect';
+import type * as expect from 'expect';
 import type { ExpectedAssertionsErrors } from 'expect/build/types';
 
 export declare type AsymmetricMatcher = Record<string, any>;

@@ -229,7 +229,7 @@ export const test = base.extend<Fixtures>({
   runTSC: async ({}, use, testInfo) => {
     let tscResult: TSCResult | undefined;
     await use(async files => {
-      const baseDir = await writeFiles(testInfo, { ...files, 'tsconfig.json': JSON.stringify(TSCONFIG) });
+      const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files });
       tscResult = await runTSC(baseDir);
       return tscResult;
     });
