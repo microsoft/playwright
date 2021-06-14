@@ -121,6 +121,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
       const artifactObject = Artifact.from(artifact);
       artifactObject._isRemote = !!this._browserContext._browser && !!this._browserContext._browser._remoteType;
+      artifactObject._apiName = 'download';
       this.emit(Events.Page.Download, new Download(this, url, suggestedFilename, artifactObject));
     });
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
@@ -131,6 +132,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
     this._channel.on('video', ({ artifact }) => {
       const artifactObject = Artifact.from(artifact);
+      artifactObject._apiName = 'video';
       this._forceVideo()._artifactReady(artifactObject);
     });
     this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));

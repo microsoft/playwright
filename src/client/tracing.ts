@@ -38,6 +38,7 @@ export class Tracing implements api.Tracing {
       if (options.path) {
         const result = await channel.tracingExport();
         const artifact = Artifact.from(result.artifact);
+        artifact._apiName = 'tracing';
         if (this._context.browser()?._remoteType)
           artifact._isRemote = true;
         await artifact.saveAs(options.path);
