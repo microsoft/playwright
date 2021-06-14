@@ -141,7 +141,7 @@ That helps locating the action of interest very quickly.
 
 ## Snapshots
 
-When tracing with the [`option: snapshots`] option turned on, Playwright captures a set of complete DOM snapshots for each action. Depending on the typ of the action, it will capture:
+When tracing with the [`option: snapshots`] option turned on, Playwright captures a set of complete DOM snapshots for each action. Depending on the type of the action, it will capture:
 
 | Type | Description |
 |------|-------------|
