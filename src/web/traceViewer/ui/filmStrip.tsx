@@ -38,11 +38,12 @@ export const FilmStrip: React.FunctionComponent<{
 
   const screencastFrames = context.pages[pageIndex]?.screencastFrames;
   let previewImage = undefined;
+  let previewSize = undefined;
   if (previewPoint !== undefined && screencastFrames) {
     const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
     previewImage = screencastFrames[upperBound(screencastFrames, previewTime, timeComparator) - 1];
+    previewSize = inscribe({width: previewImage.width, height: previewImage.height}, { width: 600, height: 600 });
   }
-  const previewSize = inscribe(context.options.viewport!, { width: 600, height: 600 });
 
   return <div className='film-strip' ref={ref}>{
     context.pages.filter(p => p.screencastFrames.length).map((page, index) => <FilmStripLane
@@ -52,7 +53,7 @@ export const FilmStrip: React.FunctionComponent<{
       key={index}
     />)
   }
-  {previewImage && previewPoint?.x !== undefined &&
+  {previewImage && previewSize && previewPoint?.x !== undefined &&
     <div className='film-strip-hover' style={{
       width: previewSize.width,
       height: previewSize.height,
