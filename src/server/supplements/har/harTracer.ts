@@ -70,6 +70,7 @@ export class HarTracer {
     this._pageEntries.set(page, pageEntry);
     this._log.pages.push(pageEntry);
     page.on(Page.Events.Request, (request: network.Request) => this._onRequest(page, request));
+    page.on(Page.Events.Response, (response: network.Response) => this._onResponse(response));
     page.on(Page.Events.RequestFinished, (request: network.Request) => this._onRequestFinished(page, request));
 
     page.on(Page.Events.DOMContentLoaded, () => {
@@ -160,39 +161,30 @@ export class HarTracer {
     this._entries.set(request, harEntry);
   }
 
-  private async _onRequestFinished(page: Page, request: network.Request) {
+  private async _onResponse(response: network.Response) {
+    const page = response.frame()._page;
     const pageEntry = this._pageEntries.get(page)!;
+    const request = response.request();
+
     const harEntry = this._entries.get(request)!;
     // Rewrite provisional headers with actual
     harEntry.request.headers = request.headers().map(header => ({ name: header.name, value: header.value }));
     harEntry.request.cookies = cookiesForHar(request.headerValue('cookie'), ';');
 
-    const response = await request.response();
-
-    if (!response)
-      return;
-
-    const httpVersion = response.protocol() || FALLBACK_HTTP_VERSION;
-    const transferSize = response.encodedDataLength();
-    // TODO: replace with "native" headers size if/when supported in the telemetry by all supported browsers.
-    const headersSize = calcResponseHeadersSize(httpVersion, response.status(), response.statusText(), response.headers());
-    const bodySize = transferSize - headersSize;
-    harEntry.request.httpVersion = httpVersion;
-
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
-      httpVersion: httpVersion,
+      httpVersion: response.protocol() || FALLBACK_HTTP_VERSION,
       cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {
         size: -1,
         mimeType: response.headerValue('content-type') || 'x-unknown',
       },
-      headersSize: headersSize || -1,
-      bodySize: bodySize || -1,
+      headersSize: -1,
+      bodySize: -1,
       redirectURL: '',
-      _transferSize: transferSize || -1
+      _transferSize: -1
     };
     const timing = response.timing();
 
@@ -211,6 +203,26 @@ export class HarTracer {
       wait: timing.responseStart !== -1 ? helper.millisToRoundishMillis(timing.responseStart - timing.requestStart) : -1,
       receive: response.request()._responseEndTiming !== -1 ? helper.millisToRoundishMillis(response.request()._responseEndTiming - timing.responseStart) : -1,
     };
+  }
+
+  private async _onRequestFinished(page: Page, request: network.Request) {
+    const harEntry = this._entries.get(request)!;
+    const response = await request.response();
+
+    if (!response)
+      return;
+
+    const httpVersion = response.protocol() || FALLBACK_HTTP_VERSION;
+    const transferSize = response.encodedDataLength();
+    // TODO: replace with "native" headers size if/when supported in the telemetry by all supported browsers.
+    const headersSize = calcResponseHeadersSize(httpVersion, response.status(), response.statusText(), response.headers());
+    const bodySize = transferSize - headersSize;
+    harEntry.request.httpVersion = httpVersion;
+
+    harEntry.response.bodySize = bodySize;
+    harEntry.response.headersSize = headersSize;
+    harEntry.response._transferSize = transferSize;
+
     if (!this._options.omitContent && response.status() === 200) {
       const promise = response.body().then(buffer => {
         if (buffer && buffer.length > 0) {
