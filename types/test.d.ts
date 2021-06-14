@@ -29,6 +29,7 @@ export type ReporterDescription =
   [string] | [string, any];
 
 export type Shard = { total: number, current: number } | null;
+export type ReportSlowTests = { max: number, threshold: number } | null;
 export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
@@ -150,6 +151,11 @@ interface ConfigBase {
   preserveOutput?: PreserveOutput;
 
   /**
+   * Whether to suppress stdio output from the tests.
+   */
+   quiet?: boolean;
+
+  /**
    * Reporter to use. Available options:
    * - `'list'` - default reporter, prints a single line per test;
    * - `'dot'` - minimal reporter that prints a single character per test run, useful on CI;
@@ -164,9 +170,12 @@ interface ConfigBase {
   reporter?: 'dot' | 'line' | 'list' | 'junit' | 'json' | 'null' | ReporterDescription[];
 
   /**
-   * Whether to suppress stdio output from the tests.
+   * Whether to report slow tests. When `null`, slow tests are not reported.
+   * Otherwise, tests that took more than `threshold` milliseconds are reported as slow,
+   * but no more than `max` number of them. Passing zero as `max` reports all slow tests
+   * that exceed the threshold.
    */
-  quiet?: boolean;
+  reportSlowTests?: ReportSlowTests;
 
   /**
    * Shard tests and execute only the selected shard.
@@ -205,6 +214,7 @@ export interface FullConfig {
   preserveOutput: PreserveOutput;
   projects: FullProject[];
   reporter: ReporterDescription[];
+  reportSlowTests: ReportSlowTests;
   rootDir: string;
   quiet: boolean;
   shard: Shard;

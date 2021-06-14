@@ -21,7 +21,7 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestStatus, Test, Suite, TestResult, TestError, Reporter } from '../reporter';
+import { FullConfig, TestStatus, Test, Spec, Suite, TestResult, TestError, Reporter } from '../reporter';
 
 const stackUtils = new StackUtils();
 
@@ -56,10 +56,10 @@ export class BaseReporter implements Reporter  {
   }
 
   onTestEnd(test: Test, result: TestResult) {
-    const spec = test.spec;
-    let duration = this.fileDurations.get(spec.file) || 0;
-    duration += result.duration;
-    this.fileDurations.set(spec.file, duration);
+    const relativePath = relativeSpecPath(this.config, test.spec);
+    const fileAndProject = relativePath + (test.projectName ? ` [${test.projectName}]` : '');
+    const duration = this.fileDurations.get(fileAndProject) || 0;
+    this.fileDurations.set(fileAndProject, duration + result.duration);
   }
 
   onError(error: TestError) {
@@ -75,14 +75,16 @@ export class BaseReporter implements Reporter  {
   }
 
   private _printSlowTests() {
+    if (!this.config.reportSlowTests)
+      return;
     const fileDurations = [...this.fileDurations.entries()];
     fileDurations.sort((a, b) => b[1] - a[1]);
-    for (let i = 0; i < 10 && i < fileDurations.length; ++i) {
-      const baseName = path.basename(fileDurations[i][0]);
+    const count = Math.min(fileDurations.length, this.config.reportSlowTests.max || Number.POSITIVE_INFINITY);
+    for (let i = 0; i < count; ++i) {
       const duration = fileDurations[i][1];
-      if (duration < 15000)
+      if (duration <= this.config.reportSlowTests.threshold)
         break;
-      console.log(colors.yellow('  Slow test: ') + baseName + colors.yellow(` (${milliseconds(duration)})`));
+      console.log(colors.yellow('  Slow test: ') + fileDurations[i][0] + colors.yellow(` (${milliseconds(duration)})`));
     }
   }
 
@@ -158,9 +160,13 @@ export function formatFailure(config: FullConfig, test: Test, index?: number): s
   return tokens.join('\n');
 }
 
+function relativeSpecPath(config: FullConfig, spec: Spec): string {
+  return path.relative(config.rootDir, spec.file) || path.basename(spec.file);
+}
+
 export function formatTestTitle(config: FullConfig, test: Test): string {
   const spec = test.spec;
-  let relativePath = path.relative(config.rootDir, spec.file) || path.basename(spec.file);
+  let relativePath = relativeSpecPath(config, spec);
   relativePath += ':' + spec.line + ':' + spec.column;
   return `${relativePath} › ${test.fullTitle()}`;
 }
