@@ -50,7 +50,8 @@ test.describe('non-stalling evaluate', () => {
     // Testing this as a race.
     expect([
       'Frame does not yet have a main execution context',
-      'Frame is currently attempting a navigation'
+      'Frame is currently attempting a navigation',
+      'Navigation interrupted the evaluation',
     ]).toContain(error.message);
   });
 });
