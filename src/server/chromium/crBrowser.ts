@@ -470,7 +470,9 @@ export class CRBrowserContext extends BrowserContext {
     }
   }
 
-  async _onClosePersistent() {
+  _onClosePersistent() {
+    // When persistent context is closed, we do not necessary get Target.detachedFromTarget
+    // for all the background pages.
     for (const [targetId, backgroundPage] of this._browser._backgroundPages.entries()) {
       if (backgroundPage._browserContext === this && backgroundPage._initializedPage) {
         backgroundPage.didClose();
