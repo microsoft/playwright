@@ -81,7 +81,7 @@ async function startTestServer() {
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>from-retargeted-server</body></html>');
   });
-  await new Promise(resolve => server.listen(0, resolve));
+  await new Promise<void>(resolve => server.listen(0, resolve));
   return {
     testServerPort: (server.address() as net.AddressInfo).port,
     stopTestServer: () => server.close()

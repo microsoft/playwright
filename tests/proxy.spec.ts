@@ -185,7 +185,7 @@ it('should use proxy', async ({ browserType, browserOptions }) => {
       socket.end();
     });
   });
-  await new Promise(f => server.listen(0, f));
+  await new Promise<void>(f => server.listen(0, f));
 
   const browser = await browserType.launch({
     ...browserOptions,

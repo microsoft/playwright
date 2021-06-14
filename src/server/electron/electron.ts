@@ -35,6 +35,7 @@ import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { internalCallMetadata, SdkObject } from '../instrumentation';
 import * as channels from '../../protocol/channels';
+import { assert } from '../../utils/utils';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -193,6 +194,7 @@ export class Electron extends SdkObject {
 
 function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp): Promise<RegExpMatchArray> {
   return new Promise((resolve, reject) => {
+    assert(process.stderr);
     const rl = readline.createInterface({ input: process.stderr });
     const failError = new Error('Process failed to launch!');
     const listeners = [

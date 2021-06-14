@@ -19,6 +19,7 @@ import { Transport } from './protocol/transport';
 import { Playwright } from './client/playwright';
 import * as childProcess from 'child_process';
 import * as path from 'path';
+import { assert } from './utils/utils';
 
 export async function start() {
   const client = new PlaywrightClient();
@@ -43,6 +44,8 @@ class PlaywrightClient {
       stdio: 'pipe',
       detached: true,
     });
+    assert(this._driverProcess.stdin);
+    assert(this._driverProcess.stdout);
     this._driverProcess.unref();
     this._driverProcess.on('exit', this._onExit);
 
@@ -57,9 +60,9 @@ class PlaywrightClient {
 
   async stop() {
     this._driverProcess.removeListener('exit', this._onExit);
-    this._driverProcess.stdin.destroy();
-    this._driverProcess.stdout.destroy();
-    this._driverProcess.stderr.destroy();
+    this._driverProcess.stdin?.destroy();
+    this._driverProcess.stdout?.destroy();
+    this._driverProcess.stderr?.destroy();
     await this._closePromise;
   }
 }

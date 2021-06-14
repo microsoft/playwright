@@ -99,12 +99,13 @@ export class VideoRecorder {
       tempDirectories: [],
       attemptToGracefullyClose: async () => {
         progress.log('Closing stdin...');
-        launchedProcess.stdin.end();
+        launchedProcess.stdin?.end();
       },
       onExit: (exitCode, signal) => {
         progress.log(`ffmpeg onkill exitCode=${exitCode} signal=${signal}`);
       },
     });
+    assert(launchedProcess.stdin);
     launchedProcess.stdin.on('finish', () => {
       progress.log('ffmpeg finished input.');
     });
@@ -140,7 +141,7 @@ export class VideoRecorder {
   }
 
   private async _sendFrame(frame: Buffer) {
-    return new Promise(f => this._process!.stdin.write(frame, f)).then(error => {
+    return new Promise(f => this._process?.stdin?.write(frame, f)).then(error => {
       if (error)
         this._progress.log(`ffmpeg failed to write: ${error}`);
     });

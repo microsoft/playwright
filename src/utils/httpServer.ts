@@ -17,6 +17,7 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
+import type { AddressInfo } from 'net';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
@@ -41,7 +42,7 @@ export class HttpServer {
     this._server = http.createServer(this._onRequest.bind(this));
     this._server.listen(port);
     await new Promise(cb => this._server!.once('listening', cb));
-    const address = this._server.address();
+    const address = this._server.address() as AddressInfo;
     this._urlPrefix = typeof address === 'string' ? address : `http://127.0.0.1:${address.port}`;
     return this._urlPrefix;
   }

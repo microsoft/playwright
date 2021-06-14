@@ -16,6 +16,7 @@
 
 import debug from 'debug';
 import * as http from 'http';
+import type { AddressInfo } from 'net';
 import * as ws from 'ws';
 import { DispatcherConnection, DispatcherScope } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
@@ -78,7 +79,7 @@ export class PlaywrightServer {
     const wsEndpoint = await new Promise<string>((resolve, reject) => {
       server.listen(port, () => {
         const address = server.address();
-        const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://127.0.0.1:${address.port}${path}`;
+        const wsEndpoint = `ws://127.0.0.1:${(address as AddressInfo).port}${path}`;
         resolve(wsEndpoint);
       }).on('error', reject);
     });
