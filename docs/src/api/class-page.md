@@ -85,7 +85,7 @@ class PageExamples
         await using var browser = await playwright.Webkit.LaunchAsync();
         var page = await browser.NewPageAsync();
         await page.GotoAsync("https://www.theverge.com");
-        await page.ScreenshotAsync("theverge.png");
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = "theverge.png" });
     }
 }
 ```
@@ -2304,11 +2304,11 @@ browser.close()
 var page = await browser.NewPageAsync();
 await page.GotoAsync("https://keycode.info");
 await page.PressAsync("body", "A");
-await page.ScreenshotAsync("A.png");
+await page.ScreenshotAsync(new PageScreenshotOptions { Path = "A.png" });
 await page.PressAsync("body", "ArrowLeft");
-await page.ScreenshotAsync("ArrowLeft.png");
+await page.ScreenshotAsync(new PageScreenshotOptions { Path = "ArrowLeft.png" });
 await page.PressAsync("body", "Shift+O");
-await page.ScreenshotAsync("O.png");
+await page.ScreenshotAsync(new PageScreenshotOptions { Path = "O.png" });
 ```
 
 ### param: Page.press.selector = %%-input-selector-%%
