@@ -163,8 +163,7 @@ DEPS['src/server/trace/common/'] = ['src/server/snapshot/', ...DEPS['src/server/
 DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/trace/common/']];
 DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', ...DEPS['src/server/trace/common/']];
 
-// No dependencies for test runner.
-DEPS['src/test/'] = ['src/test/**'];
+DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts'];
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);
