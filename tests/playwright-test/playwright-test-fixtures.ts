@@ -115,6 +115,8 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
       additionalArgs = params[key];
       continue;
     }
+    if (key === 'usesCustomOutputDir')
+      continue;
     for (const value of Array.isArray(params[key]) ? params[key] : [params[key]]) {
       const k = key.startsWith('-') ? key : '--' + key;
       paramList.push(params[key] === true ? `${k}` : `${k}=${value}`);
@@ -123,8 +125,9 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
   const outputDir = path.join(baseDir, 'test-results');
   const reportFile = path.join(outputDir, 'report.json');
   const args = [path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), 'test'];
+  if (!params.usesCustomOutputDir)
+    args.push('--output=' + outputDir)
   args.push(
-      '--output=' + outputDir,
       '--reporter=dot,json',
       '--workers=2',
       ...paramList
