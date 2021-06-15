@@ -16,12 +16,16 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 import { rootTestType } from './testType';
-
+import { createGuid, removeFolders } from '../utils/utils';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
+
+const artifactsFolder = path.join(os.tmpdir(), 'pwt-' + createGuid());
+
 export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
@@ -44,6 +48,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     const browser = await playwright[browserName].launch(options);
     await use(browser);
     await browser.close();
+    await removeFolders([artifactsFolder]);
   }, { scope: 'worker' } ],
 
   screenshot: 'off',
@@ -75,10 +80,16 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
 
-    const recordVideo = video === 'on' || video === 'retain-on-failure' ||
-      (video === 'retry-with-video' && !!testInfo.retry);
+    let recordVideoDir: string | null = null;
+    if (video === 'on' || (video === 'retry-with-video' && !!testInfo.retry))
+      recordVideoDir = testInfo.outputPath('');
+    if (video === 'retain-on-failure') {
+      await fs.promises.mkdir(artifactsFolder, { recursive: true });
+      recordVideoDir = artifactsFolder;
+    }
+
     const options: BrowserContextOptions = {
-      recordVideo: recordVideo ? { dir: testInfo.outputPath('') } : undefined,
+      recordVideo: recordVideoDir ? { dir: recordVideoDir } : undefined,
       ...contextOptions,
     };
     if (acceptDownloads !== undefined)
@@ -150,17 +161,17 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     }
     await context.close();
 
-    const deleteVideos = video === 'retain-on-failure' && !testFailed;
-    if (deleteVideos) {
+    if (video === 'retain-on-failure' && testFailed) {
       await Promise.all(allPages.map(async page => {
         const video = page.video();
         if (!video)
           return;
         try {
           const videoPath = await video.path();
-          await fs.promises.unlink(videoPath);
+          const fileName = path.basename(videoPath);
+          await video.saveAs(testInfo.outputPath(fileName));
         } catch (e) {
-          // Silent catch.
+          // Silent catch empty videos.
         }
       }));
     }
