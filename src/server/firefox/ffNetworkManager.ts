@@ -89,6 +89,20 @@ export class FFNetworkManager {
       responseStart: this._relativeTiming(event.timing.responseStart),
     };
     const response = new network.Response(request.request, event.status, event.statusText, event.headers, timing, getResponseBody);
+    if (event?.remoteIPAddress && typeof event?.remotePort === 'number')
+      response._serverAddrFinished({
+        ipAddress: event.remoteIPAddress,
+        port: event.remotePort,
+      });
+    else
+      response._serverAddrFinished()
+    response._securityDetailsFinished({
+      protocol: event?.securityDetails?.protocol,
+      subjectName: event?.securityDetails?.subjectName,
+      issuer: event?.securityDetails?.issuer,
+      validFrom: event?.securityDetails?.validFrom,
+      validTo: event?.securityDetails?.validTo,
+    });
     this._page._frameManager.requestReceivedResponse(response);
   }
 

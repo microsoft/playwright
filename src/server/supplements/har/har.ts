@@ -55,6 +55,8 @@ export type Entry = {
   timings: Timings;
   serverIPAddress?: string;
   connection?: string;
+  _serverPort?: number;
+  _securityDetails?: SecurityDetails;
 };
 
 export type Request = {
@@ -143,4 +145,12 @@ export type Timings = {
   wait: number;
   receive: number;
   ssl?: number;
+};
+
+export type SecurityDetails = {
+  protocol?: string;
+  subjectName?: string;
+  issuer?: string;
+  validFrom?: number;
+  validTo?: number;
 };

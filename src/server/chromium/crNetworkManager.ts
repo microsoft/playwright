@@ -296,7 +296,22 @@ export class CRNetworkManager {
         responseStart: -1,
       };
     }
-    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
+    const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
+    if (responsePayload?.remoteIPAddress && typeof responsePayload?.remotePort === 'number')
+      response._serverAddrFinished({
+        ipAddress: responsePayload.remoteIPAddress,
+        port: responsePayload.remotePort,
+      });
+    else
+      response._serverAddrFinished();
+    response._securityDetailsFinished({
+      protocol: responsePayload?.securityDetails?.protocol,
+      subjectName: responsePayload?.securityDetails?.subjectName,
+      issuer: responsePayload?.securityDetails?.issuer,
+      validFrom: responsePayload?.securityDetails?.validFrom,
+      validTo: responsePayload?.securityDetails?.validTo,
+    });
+    return response;
   }
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
