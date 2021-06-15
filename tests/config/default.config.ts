@@ -84,6 +84,7 @@ for (const browserName of browserNames) {
     define: { test: pageTest, fixtures: pageFixtures },
     metadata: {
       platform: process.platform,
+      docker: !!process.env.INSIDE_DOCKER,
       headful: !!headed,
       browserName,
       channel,
