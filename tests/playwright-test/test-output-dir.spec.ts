@@ -238,7 +238,7 @@ test('should accept a relative path for outputDir', async ({ runInlineTest }, te
     'my-test.spec.js': `
       const { test } = pwt;
       test('test', async ({}, testInfo) => {
-        expect(testInfo.outputDir).toBe('${path.join(testInfo.outputDir, './my-output-dir', 'my-test-test')}');
+        expect(testInfo.outputDir).toBe(${JSON.stringify(path.join(testInfo.outputDir, './my-output-dir', 'my-test-test'))});
       });
     `,
     'playwright.config.js': `
