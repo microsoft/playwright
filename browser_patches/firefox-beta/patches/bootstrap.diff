@@ -172,7 +172,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
-index e40855518df79fd7f8a3eb0d7195a87a1180157d..f8bba58dd2fc05ec0d2da3ec008523e214ab5a41 100644
+index 0093288d1a448afe7bd8e5b6e8c0cb31835ba3f5..93908f5719f2cb0fe2f58d7f3153a9af0e71f08b 100644
 --- a/docshell/base/BrowsingContext.cpp
 +++ b/docshell/base/BrowsingContext.cpp
 @@ -106,6 +106,20 @@ struct ParamTraits<mozilla::dom::PrefersColorSchemeOverride>
@@ -196,7 +196,7 @@ index e40855518df79fd7f8a3eb0d7195a87a1180157d..f8bba58dd2fc05ec0d2da3ec008523e2
  template <>
  struct ParamTraits<mozilla::dom::ExplicitActiveStatus>
      : public ContiguousEnumSerializer<
-@@ -2641,6 +2655,40 @@ void BrowsingContext::DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
+@@ -2643,6 +2657,40 @@ void BrowsingContext::DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
    });
  }
  
