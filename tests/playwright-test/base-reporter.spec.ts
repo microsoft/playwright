@@ -15,6 +15,7 @@
  */
 
 import { test, expect, stripAscii } from './playwright-test-fixtures';
+import * as path from 'path';
 
 test('handle long test names', async ({ runInlineTest }) => {
   const title = 'title'.repeat(30);
@@ -92,4 +93,68 @@ test('print an error in a codeframe', async ({ runInlineTest }) => {
   expect(result.output).toContain('test(\'foobar\', async');
   expect(result.output).toContain('throw error;');
   expect(result.output).toContain('import myLib from \'./my-lib\';');
+});
+
+test('should print slow tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'foo' },
+          { name: 'bar' },
+          { name: 'baz' },
+          { name: 'qux' },
+        ],
+        reportSlowTests: { max: 0, threshold: 500 },
+      };
+    `,
+    'dir/a.test.js': `
+      const { test } = pwt;
+      test('slow test', async ({}) => {
+        await new Promise(f => setTimeout(f, 1000));
+      });
+    `,
+    'dir/b.test.js': `
+      const { test } = pwt;
+      test('fast test', async ({}) => {
+        await new Promise(f => setTimeout(f, 100));
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(8);
+  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [foo] (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [bar] (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [baz] (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [qux] (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [foo] (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [bar] (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [baz] (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [qux] (`);
+});
+
+test('should not print slow tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'baz' },
+          { name: 'qux' },
+        ],
+        reportSlowTests: null,
+      };
+    `,
+    'dir/a.test.js': `
+      const { test } = pwt;
+      test('slow test', async ({}) => {
+        await new Promise(f => setTimeout(f, 1000));
+      });
+      test('fast test', async ({}) => {
+        await new Promise(f => setTimeout(f, 100));
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+  expect(stripAscii(result.output)).not.toContain('Slow test');
 });
