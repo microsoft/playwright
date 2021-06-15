@@ -119,7 +119,7 @@ In addition to everything from the [`workerInfo`](#workerinfo), the following in
 - `annotations` - [Annotations](./test-annotations.md) that were added to the test.
 - `snapshotSuffix: string` - Suffix used to locate snapshots for the test.
 - `snapshotPath(snapshotName: string)` - Function that returns the full path to a particular snapshot for the test.
-- `outputDir: string` - Absolute path to the output directory for this test run.
+- `outputDir: string` - Path to the output directory for this test run.
 - `outputPath(...pathSegments: string[])` - Function that returns the full path to a particular output artifact for the test.
 
 The following information is accessible after the test body has finished, in fixture teardown:

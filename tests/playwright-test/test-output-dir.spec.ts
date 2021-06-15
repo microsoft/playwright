@@ -231,3 +231,21 @@ test('should not remove folders on non-CI', async ({ runInlineTest }, testInfo) 
   expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1-retry1'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1-retry2'))).toBe(true);
 });
+
+
+test('should accept a relative path for outputDir', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'my-test.spec.js': `
+      const { test } = pwt;
+      test('test', async ({}, testInfo) => {
+        expect(testInfo.outputDir).toBe(${JSON.stringify(path.join(testInfo.outputDir, './my-output-dir', 'my-test-test'))});
+      });
+    `,
+    'playwright.config.js': `
+    module.exports = { projects: [
+      { outputDir: './my-output-dir' },
+    ] };
+    `,
+  }, {usesCustomOutputDir: true});
+  expect(result.exitCode).toBe(0);
+});
