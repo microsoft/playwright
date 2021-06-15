@@ -116,8 +116,9 @@ program
 
 program
     .command('install [browserType...]')
+    .option('--with-deps', 'install system dependencies for browsers')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(args) {
+    .action(async function(args, command) {
       try {
         // Install default browsers when invoked without arguments.
         if (!args.length) {
@@ -133,6 +134,8 @@ program
         }
         if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge'))
           browserNames.add('ffmpeg');
+        if (browserNames.size && command['with-deps'])
+          await installDeps([...browserNames]);
         if (browserNames.size)
           await installBrowsers([...browserNames]);
         for (const browserChannel of browserChannels)
