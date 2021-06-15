@@ -114,6 +114,43 @@ elif [[ "$BUILD_FLAVOR" == "chromium-linux" ]]; then
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-linux.zip"
 
+# ===========================
+#    CHROMIUM-WITH-SYMBOLS COMPILATION
+# ===========================
+elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-win32" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-win32 --symbols"
+  EXTRA_ARCHIVE_ARGS="--compile-win32"
+  EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="chromium-with-symbols-win32.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-win64" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-win64 --symbols"
+  EXTRA_ARCHIVE_ARGS="--compile-win64"
+  EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="chromium-with-symbols-win64.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-mac" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-mac --symbols"
+  EXTRA_ARCHIVE_ARGS="--compile-mac"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="10.15"
+  BUILD_BLOB_NAME="chromium-with-symbols-mac.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-mac-arm64" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-mac-arm64 --symbols"
+  EXTRA_ARCHIVE_ARGS="--compile-mac-arm64"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="10.15"
+  BUILD_BLOB_NAME="chromium-with-symbols-mac-arm64.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-linux" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-linux --symbols"
+  EXTRA_ARCHIVE_ARGS="--compile-linux"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="chromium-with-symbols-linux.zip"
+
 
 # ===========================
 #    CHROMIUM MIRRORING

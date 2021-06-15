@@ -62,10 +62,12 @@ compile_chromium() {
 
   # Prepare build folder.
   mkdir -p "./out/Default"
-  cat <<EOF>./out/Default/args.gn
-is_debug = false
-symbol_level = 0
-EOF
+  echo "is_debug = false" > ./out/Default/args.gn
+  if [[ $2 == "--symbols" ]]; then
+    echo "symbol_level = 1" >> ./out/Default/args.gn
+  else
+    echo "symbol_level = 0" >> ./out/Default/args.gn
+  fi
 
   if [[ $1 == "--compile-mac-arm64" ]]; then
     echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
