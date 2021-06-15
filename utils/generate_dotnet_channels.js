@@ -150,6 +150,7 @@ for (const [name, item] of Object.entries(protocol)) {
     const initializerName = channelName + 'Initializer';
     const superName = inherits.get(name);
     channels_ts.push('using System.Collections.Generic;');
+    channels_ts.push('using Microsoft.Playwright.Core;');
     channels_ts.push(``);
     channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol`);
     channels_ts.push(`{`);

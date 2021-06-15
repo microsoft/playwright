@@ -98,7 +98,7 @@ classNameMap.set('Readable', 'Stream');
  * @param {string} folder
  * @param {string} extendsName
  */
-function writeFile(kind, name, spec, body, folder, extendsName = null) {
+function writeFile(kind, name, spec, body, folder, extendsName = null, namespace = "Microsoft.Playwright") {
   const out = [];
   // console.log(`Generating ${name}`);
 
@@ -124,7 +124,7 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
   out.push(...body);
   out.push('}');
 
-  let content = template.replace('[CONTENT]', out.join(EOL));
+  let content = template.replace('[NAMESPACE]', namespace).replace('[CONTENT]', out.join(EOL));
   fs.writeFileSync(path.join(folder, name + '.cs'), content);
 }
 
@@ -184,7 +184,8 @@ function renderBaseClass(clazz) {
       [],
       body,
       adaptersDir,
-      null);
+      null,
+      'Microsoft.Playwright.Core');
 }
 
 /**
