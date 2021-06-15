@@ -201,7 +201,7 @@ playwrightTest('should connect over a ws endpoint', async ({browserType, browser
     const cdpBrowser2 = await browserType.connectOverCDP({
       wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
     });
-    const contexts2 = cdpBrowser.contexts();
+    const contexts2 = cdpBrowser2.contexts();
     expect(contexts2.length).toBe(1);
     await cdpBrowser2.close();
   } finally {
@@ -281,6 +281,29 @@ playwrightTest('should report all pages in an existing browser', async ({ browse
     expect(cdpBrowser2.contexts()[0].pages().length).toBe(3);
 
     await cdpBrowser2.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+playwrightTest('should return valid browser from context.browser()', async ({ browserType, browserOptions }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    ...browserOptions,
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://localhost:${port}/`,
+    });
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    expect(contexts[0].browser()).toBe(cdpBrowser);
+
+    const context2 = await cdpBrowser.newContext();
+    expect(context2.browser()).toBe(cdpBrowser);
+
+    await cdpBrowser.close();
   } finally {
     await browserServer.close();
   }
