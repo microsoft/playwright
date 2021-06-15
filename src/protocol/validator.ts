@@ -943,6 +943,19 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ResponseBodyParams = tOptional(tObject({}));
   scheme.ResponseFinishedParams = tOptional(tObject({}));
+  scheme.ResponseSecurityDetailsParams = tOptional(tObject({}));
+  scheme.ResponseServerAddrParams = tOptional(tObject({}));
+  scheme.SecurityDetails = tObject({
+    issuer: tOptional(tString),
+    protocol: tOptional(tString),
+    subjectName: tOptional(tString),
+    validFrom: tOptional(tNumber),
+    validTo: tOptional(tNumber),
+  });
+  scheme.RemoteAddr = tObject({
+    ipAddress: tString,
+    port: tNumber,
+  });
   scheme.BindingCallRejectParams = tObject({
     error: tType('SerializedError'),
   });

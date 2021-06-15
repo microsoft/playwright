@@ -111,3 +111,6 @@ export type SelectorEngine = {
    */
   queryAll(root: HTMLElement, selector: string): HTMLElement[];
 };
+
+export type RemoteAddr = channels.RemoteAddr;
+export type SecurityDetails = channels.SecurityDetails;
