@@ -11,8 +11,8 @@ Playwright Tests supports browser and context options that you typically pass to
 
 You can specify any options either locally in a test file, or globally in the configuration file.
 
-- Browser options match [`method: BrowserType.launch`] method.
-- Context options match [`method: Browser.newContext`] method.
+- `launchOptions` - Browser launch options match [`method: BrowserType.launch`] method.
+- `contextOptions` - Context options match [`method: Browser.newContext`] method.
 - `screenshot` option - whether to capture a screenshot after each test, off by default. Screenshot will appear in the test output directory, typically `test-results`.
   - `'off'` - Do not capture screenshots.
   - `'on'` - Capture screenshot after each test.
