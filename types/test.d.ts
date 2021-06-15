@@ -34,10 +34,22 @@ export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
 type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
 
+type ExpectSettings = {
+  toMatchSnapshot?: {
+    // Pixel match threshold.
+    threshold?: number
+  }
+};
+
 /**
  * Test run configuration.
  */
 interface ProjectBase {
+  /**
+   * Expect matcher settings.
+   */
+  expect?: ExpectSettings;
+
   /**
    * Any JSON-serializable metadata that will be put directly to the test report.
    */
@@ -102,6 +114,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends ProjectBase {
    */
   use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
 }
+
 export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
 
 /**

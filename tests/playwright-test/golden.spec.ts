@@ -254,3 +254,27 @@ test('should respect threshold', async ({runInlineTest}) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should respect project threshold', async ({runInlineTest}) => {
+  const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
+  const actual = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { expect: { toMatchSnapshot: { threshold: 0.2 } } },
+      ]};
+    `,
+    'a.spec.js-snapshots/snapshot.png': expected,
+    'a.spec.js-snapshots/snapshot2.png': expected,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', { threshold: 0.3 });
+        expect(Buffer.from('${actual.toString('base64')}', 'base64')).not.toMatchSnapshot('snapshot.png');
+        expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot('snapshot2.png', { threshold: 0.3 });
+        expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot({ name: 'snapshot2.png', threshold: 0.3 });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});

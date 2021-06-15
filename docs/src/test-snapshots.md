@@ -53,6 +53,26 @@ test('example test', async ({ page }) => {
 });
 ```
 
+If you'd like to share the default value among all the tests in the project, you can specify it in the playwright config, either globally or per project:
+
+```js js-flavor=js
+module.exports = {
+  expect: {
+    toMatchSnapshot: { threshold: 0.1 },
+  },
+};
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  expect: {
+    toMatchSnapshot: { threshold: 0.1 },
+  },
+};
+export default config;
+```
+
 Apart from screenshots, `expect(value).toMatchSnapshot(snapshotName)` can also be used to compare text, png and jpeg images, or arbitrary binary data. Playwright Test auto-detects the content type and uses the appropriate comparison algorithm.
 
 Here we compare text content against the reference.

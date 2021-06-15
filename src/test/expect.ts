@@ -33,6 +33,10 @@ function toMatchSnapshot(received: Buffer | string, nameOrOptions: string | { na
   if (!options.name)
     throw new Error(`toMatchSnapshot() requires a "name" parameter`);
 
+  const projectThreshold = testInfo.project.expect?.toMatchSnapshot?.threshold;
+  if (options.threshold === undefined && projectThreshold !== undefined)
+    options.threshold = projectThreshold;
+
   const { pass, message } = compare(received, options.name, testInfo.snapshotPath, testInfo.outputPath, testInfo.config.updateSnapshots, options);
   return { pass, message: () => message };
 }
