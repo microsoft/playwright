@@ -162,7 +162,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     await context.close();
 
     if (video === 'retain-on-failure' && testFailed) {
-      await Promise.all(allPages.map(async (page, i) => {
+      await Promise.all(allPages.map(async page => {
         const video = page.video();
         if (!video)
           return;
