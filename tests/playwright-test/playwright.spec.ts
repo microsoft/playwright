@@ -15,7 +15,27 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-import * as fs from 'fs';
+import fs from 'fs';
+import path from 'path';
+import { spawnSync } from 'child_process';
+import { Registry } from '../../src/utils/registry';
+
+const registry = new Registry(path.join(__dirname, '..', '..'));
+const ffmpeg = registry.executablePath('ffmpeg') || '';
+
+export class VideoPlayer {
+  videoWidth: number;
+  videoHeight: number;
+
+  constructor(fileName: string) {
+    var output = spawnSync(ffmpeg, ['-i', fileName, '-r', '25', `${fileName}-%03d.png`]).stderr.toString();
+    const lines = output.split('\n');
+    const streamLine = lines.find(l => l.trim().startsWith('Stream #0:0'));
+    const resolutionMatch = streamLine.match(/, (\d+)x(\d+),/);
+    this.videoWidth = parseInt(resolutionMatch![1], 10);
+    this.videoHeight = parseInt(resolutionMatch![2], 10);
+  }
+}
 
 test('should respect viewport option', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -193,4 +213,30 @@ test('should work with video: retry-with-video', async ({ runInlineTest }, testI
 
   const videoFailRetry = fs.readdirSync(testInfo.outputPath('test-results', 'a-fail-chromium-retry1')).find(file => file.endsWith('webm'));
   expect(videoFailRetry).toBeTruthy();
+});
+
+test('should work with video size', async ({ runInlineTest, browserName }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: { video: { mode: 'on', size: { width: 220, height: 110 } } },
+        preserveOutput: 'always',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>PASS</div>');
+        await page.waitForTimeout(3000);
+        test.expect(1 + 1).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const folder = testInfo.outputPath(`test-results/a-pass-${browserName}/`);
+  const [file] = fs.readdirSync(folder);
+  const videoPlayer = new VideoPlayer(path.join(folder, file));
+  expect(videoPlayer.videoWidth).toBe(220);
+  expect(videoPlayer.videoHeight).toBe(110);
 });

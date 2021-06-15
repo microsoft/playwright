@@ -213,7 +213,7 @@ test('should remove folders with preserveOutput=never', async ({ runInlineTest }
   expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1-retry2'))).toBe(false);
 });
 
-test('should not remove folders on non-CI', async ({ runInlineTest }, testInfo) => {
+test('should preserve failed results', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'dir/my-test.spec.js': `
       const { test } = pwt;
@@ -223,13 +223,12 @@ test('should not remove folders on non-CI', async ({ runInlineTest }, testInfo) 
           throw new Error('Give me retries');
       });
     `,
-  }, { 'retries': 2 }, { CI: '' });
+  }, { 'retries': 2 });
   expect(result.exitCode).toBe(0);
   expect(result.results.length).toBe(3);
 
   expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1-retry1'))).toBe(true);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1-retry2'))).toBe(true);
 });
 
 

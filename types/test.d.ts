@@ -963,6 +963,15 @@ export type PlaywrightWorkerOptions = {
 };
 
 /**
+ * Video recording mode:
+ * - `off`: Do not record video.
+ * - `on`: Record video for each test.
+ * - `retain-on-failure`: Record video for each test, but remove all videos from successful test runs.
+ * - `retry-with-video`: Record video only when retrying a test.
+ */
+export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'retry-with-video';
+
+/**
  * Options available to configure each test.
  *   - Set options in config:
  *   ```js
@@ -994,13 +1003,13 @@ export type PlaywrightTestOptions = {
   trace: 'off' | 'on' | 'retain-on-failure' | 'retry-with-trace';
 
   /**
-  * Whether to record video for each test, off by default.
-  * - `off`: Do not record video.
-  * - `on`: Record video for each test.
-  * - `retain-on-failure`: Record video for each test, but remove all videos from successful test runs.
-  * - `retry-with-video`: Record video only when retrying a test.
-  */
-  video: 'off' | 'on' | 'retain-on-failure' | 'retry-with-video';
+   * Whether to record video for each test, off by default.
+   * - `off`: Do not record video.
+   * - `on`: Record video for each test.
+   * - `retain-on-failure`: Record video for each test, but remove all videos from successful test runs.
+   * - `retry-with-video`: Record video only when retrying a test.
+   */
+  video: VideoMode | { mode: VideoMode, size: ViewportSize };
 
   /**
    * Whether to automatically download all the attachments. Takes priority over `contextOptions`.
