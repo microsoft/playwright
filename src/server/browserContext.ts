@@ -25,7 +25,7 @@ import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding, PageDelegate } from './page';
 import { Progress } from './progress';
-import { Selectors, serverSelectors } from './selectors';
+import { Selectors } from './selectors';
 import * as types from './types';
 import path from 'path';
 import { CallMetadata, internalCallMetadata, createInstrumentation, SdkObject } from './instrumentation';
@@ -83,7 +83,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   selectors(): Selectors {
-    return this._selectors || serverSelectors;
+    return this._selectors || this._browser.options.selectors;
   }
 
   async _initialize() {

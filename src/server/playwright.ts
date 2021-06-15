@@ -21,7 +21,7 @@ import { PlaywrightOptions } from './browser';
 import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
-import { Selectors, serverSelectors } from './selectors';
+import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
 import { Registry } from '../utils/registry';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
@@ -50,13 +50,14 @@ export class Playwright extends SdkObject {
     this.options = {
       registry: new Registry(path.join(__dirname, '..', '..')),
       rootSdkObject: this,
+      selectors: new Selectors(),
     };
     this.chromium = new Chromium(this.options);
     this.firefox = new Firefox(this.options);
     this.webkit = new WebKit(this.options);
     this.electron = new Electron(this.options);
     this.android = new Android(new AdbBackend(), this.options);
-    this.selectors = serverSelectors;
+    this.selectors = this.options.selectors;
   }
 
   async _enablePortForwarding() {

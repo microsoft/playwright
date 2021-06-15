@@ -21,7 +21,6 @@ import { DispatcherConnection, DispatcherScope } from '../dispatchers/dispatcher
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
-import { serverSelectors } from '../server/selectors';
 
 const debugLog = debug('pw:server');
 
@@ -44,7 +43,6 @@ export class PlaywrightServer {
   static async startDefault({ acceptForwardedPorts }: PlaywrightServerOptions = {}): Promise<PlaywrightServer> {
     const cleanup = async () => {
       await gracefullyCloseAll().catch(e => {});
-      serverSelectors.unregisterAll();
     };
     const delegate: PlaywrightServerDelegate = {
       path: '/ws',
@@ -58,6 +56,7 @@ export class PlaywrightServer {
         return () => {
           cleanup();
           playwright._disablePortForwarding();
+          playwright.selectors.unregisterAll();
         };
       },
     };

@@ -139,5 +139,3 @@ export class Selectors {
     };
   }
 }
-
-export const serverSelectors = new Selectors();

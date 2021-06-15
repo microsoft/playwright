@@ -24,6 +24,7 @@ import { RecentLogsCollector } from '../utils/debugLogger';
 import * as registry from '../utils/registry';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
+import { Selectors } from './selectors';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -35,6 +36,7 @@ export interface BrowserProcess {
 export type PlaywrightOptions = {
   registry: registry.Registry,
   rootSdkObject: SdkObject,
+  selectors: Selectors,
   loopbackProxyOverride?: () => string,
 };
 
