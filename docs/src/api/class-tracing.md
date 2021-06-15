@@ -17,12 +17,12 @@ await context.tracing.stop({ path: 'trace.zip' });
 ```java
 Browser browser = chromium.launch();
 BrowserContext context = browser.newContext();
-context.tracing.start(new Tracing.StartOptions()
+context.tracing().start(new Tracing.StartOptions()
   .setScreenshots(true)
-  .setSnapshots(true);
+  .setSnapshots(true));
 Page page = context.newPage();
-page.goto("https://playwright.dev");
-context.tracing.stop(new Tracing.StopOptions()
+page.navigate("https://playwright.dev");
+context.tracing().stop(new Tracing.StopOptions()
   .setPath(Paths.get("trace.zip")));
 ```
 
@@ -70,12 +70,12 @@ await context.tracing.stop({ path: 'trace.zip' });
 ```
 
 ```java
-context.tracing.start(new Tracing.StartOptions()
+context.tracing().start(new Tracing.StartOptions()
   .setScreenshots(true)
-  .setSnapshots(true);
+  .setSnapshots(true));
 Page page = context.newPage();
-page.goto('https://playwright.dev');
-context.tracing.stop(new Tracing.StopOptions()
+page.navigate("https://playwright.dev");
+context.tracing().stop(new Tracing.StopOptions()
   .setPath(Paths.get("trace.zip")));
 ```
 
