@@ -63,3 +63,19 @@ test('-x should work', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output.split('\n').filter(l => l.includes('expect(')).length).toBe(2);
 });
+
+test('max-failures should work with retries', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      for (let i = 0; i < 10; ++i) {
+        test('fail_' + i, () => {
+          expect(true).toBe(false);
+        });
+      }
+    `,
+  }, { 'max-failures': 2, 'retries': 4 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(l => l.includes('Received:')).length).toBe(2);
+});
