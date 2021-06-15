@@ -2,6 +2,7 @@ name: "Chromium With Symbols Builder"
 
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
