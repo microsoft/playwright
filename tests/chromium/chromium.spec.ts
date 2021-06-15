@@ -201,7 +201,7 @@ playwrightTest('should connect over a ws endpoint', async ({browserType, browser
     const cdpBrowser2 = await browserType.connectOverCDP({
       wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
     });
-    const contexts2 = cdpBrowser.contexts();
+    const contexts2 = cdpBrowser2.contexts();
     expect(contexts2.length).toBe(1);
     await cdpBrowser2.close();
   } finally {
