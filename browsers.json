@@ -7,6 +7,11 @@
       "installByDefault": true
     },
     {
+      "name": "chromium-with-symbols",
+      "revision": "888113",
+      "installByDefault": false
+    },
+    {
       "name": "firefox",
       "revision": "1271",
       "installByDefault": true

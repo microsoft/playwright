@@ -27,7 +27,7 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { debugMode, headersArrayToObject, removeFolders } from '../../utils/utils';
+import { assert, debugMode, headersArrayToObject, removeFolders } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
@@ -49,8 +49,16 @@ export class Chromium extends BrowserType {
   }
 
   executablePath(channel?: string): string {
-    if (channel)
-      return findChromiumChannel(channel);
+    if (channel) {
+      let executablePath = undefined;
+      if ((channel as any) === 'chromium-with-symbols')
+        executablePath = this._registry.executablePath('chromium-with-symbols');
+      else
+        executablePath = findChromiumChannel(channel);
+      assert(executablePath, `unsupported chromium channel "${channel}"`);
+      assert(fs.existsSync(executablePath), `"${channel}" channel is not installed. Try running 'npx playwright install ${channel}'`);
+      return executablePath;
+    }
     return super.executablePath(channel);
   }
 

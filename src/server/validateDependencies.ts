@@ -38,13 +38,8 @@ export async function validateHostRequirements(registry: registry.Registry, brow
 }
 
 const DL_OPEN_LIBRARIES = {
-  'chromium': [],
   'webkit': ['libGLESv2.so.2', 'libx264.so'],
   'webkit-technology-preview': ['libGLESv2.so.2', 'libx264.so'],
-  'firefox': [],
-  'firefox-beta': [],
-  'clank': [],
-  'ffmpeg': [],
 };
 
 function isSupportedWindowsVersion(): boolean {
@@ -245,7 +240,7 @@ async function missingFileDependencies(filePath: string, extraLDPaths: string[])
 }
 
 async function missingDLOPENLibraries(browserName: registry.BrowserName): Promise<string[]> {
-  const libraries = DL_OPEN_LIBRARIES[browserName];
+  const libraries: string[] = (DL_OPEN_LIBRARIES as any)[browserName] || [];
   if (!libraries.length)
     return [];
   // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the

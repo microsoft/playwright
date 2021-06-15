@@ -22,8 +22,8 @@ import * as util from 'util';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV } from './utils';
 
-export type BrowserName = 'chromium'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg'|'webkit-technology-preview';
-export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview', 'firefox-beta']);
+export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg'|'webkit-technology-preview';
+export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview', 'firefox-beta']);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
@@ -37,6 +37,17 @@ type BrowserDescriptor = {
 
 const EXECUTABLE_PATHS = {
   'chromium': {
+    'ubuntu18.04': ['chrome-linux', 'chrome'],
+    'ubuntu20.04': ['chrome-linux', 'chrome'],
+    'mac10.13': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'mac10.14': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'mac10.15': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'mac11': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'mac11-arm64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'win32': ['chrome-win', 'chrome.exe'],
+    'win64': ['chrome-win', 'chrome.exe'],
+  },
+  'chromium-with-symbols': {
     'ubuntu18.04': ['chrome-linux', 'chrome'],
     'ubuntu20.04': ['chrome-linux', 'chrome'],
     'mac10.13': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
@@ -115,6 +126,17 @@ const DOWNLOAD_URLS = {
     'mac11-arm64': '%s/builds/chromium/%s/chromium-mac-arm64.zip',
     'win32': '%s/builds/chromium/%s/chromium-win32.zip',
     'win64': '%s/builds/chromium/%s/chromium-win64.zip',
+  },
+  'chromium-with-symbols': {
+    'ubuntu18.04': '%s/builds/chromium/%s/chromium-with-symbols-linux.zip',
+    'ubuntu20.04': '%s/builds/chromium/%s/chromium-with-symbols-linux.zip',
+    'mac10.13': '%s/builds/chromium/%s/chromium-with-symbols-mac.zip',
+    'mac10.14': '%s/builds/chromium/%s/chromium-with-symbols-mac.zip',
+    'mac10.15': '%s/builds/chromium/%s/chromium-with-symbols-mac.zip',
+    'mac11': '%s/builds/chromium/%s/chromium-with-symbols-mac.zip',
+    'mac11-arm64': '%s/builds/chromium/%s/chromium-with-symbols-mac-arm64.zip',
+    'win32': '%s/builds/chromium/%s/chromium-with-symbols-win32.zip',
+    'win64': '%s/builds/chromium/%s/chromium-with-symbols-win64.zip',
   },
   'firefox': {
     'ubuntu18.04': '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip',
@@ -301,6 +323,7 @@ export class Registry {
     const browserDirectory = this.browserDirectory(browserName);
     switch (browserName) {
       case 'chromium':
+      case 'chromium-with-symbols':
         return [path.join(browserDirectory, 'chrome-linux')];
       case 'webkit':
       case 'webkit-technology-preview':
@@ -322,11 +345,11 @@ export class Registry {
 
   windowsExeAndDllDirectories(browserName: BrowserName): string[] {
     const browserDirectory = this.browserDirectory(browserName);
-    if (browserName === 'chromium')
+    if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
       return [path.join(browserDirectory, 'chrome-win')];
-    if (browserName === 'firefox')
+    if (browserName === 'firefox' || browserName === 'firefox-beta')
       return [path.join(browserDirectory, 'firefox')];
-    if (browserName === 'webkit')
+    if (browserName === 'webkit' || browserName === 'webkit-technology-preview')
       return [browserDirectory];
     return [];
   }
@@ -342,6 +365,7 @@ export class Registry {
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
     const envDownloadHost: { [key: string]: string } = {
       'chromium': 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
+      'chromium-with-symbols': 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
       'firefox': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
       'firefox-beta': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
       'webkit': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
