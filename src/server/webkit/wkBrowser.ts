@@ -319,7 +319,7 @@ export class WKBrowserContext extends BrowserContext {
       await (page._delegate as WKPage).updateRequestInterception();
   }
 
-  async _onClosePersistent() {}
+  _onClosePersistent() {}
 
   async _doClose() {
     assert(this._browserContextId);

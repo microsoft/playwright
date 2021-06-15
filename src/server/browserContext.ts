@@ -131,6 +131,8 @@ export abstract class BrowserContext extends SdkObject {
     this._closedStatus = 'closed';
     this._deleteAllDownloads();
     this._downloads.clear();
+    if (this._isPersistentContext)
+      this._onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
@@ -151,7 +153,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract _doExposeBinding(binding: PageBinding): Promise<void>;
   abstract _doUpdateRequestInterception(): Promise<void>;
   abstract _doClose(): Promise<void>;
-  abstract _onClosePersistent(): Promise<void>;
+  abstract _onClosePersistent(): void;
   abstract _doCancelDownload(uuid: string): Promise<void>;
 
   async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
@@ -285,7 +287,6 @@ export abstract class BrowserContext extends SdkObject {
         // Close all the pages instead of the context,
         // because we cannot close the default context.
         await Promise.all(this.pages().map(page => page.close(metadata)));
-        await this._onClosePersistent();
       } else {
         // Close the context.
         await this._doClose();
