@@ -285,3 +285,26 @@ playwrightTest('should report all pages in an existing browser', async ({ browse
     await browserServer.close();
   }
 });
+
+playwrightTest('should return valid browser from context.browser()', async ({ browserType, browserOptions }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    ...browserOptions,
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://localhost:${port}/`,
+    });
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    expect(contexts[0].browser()).toBe(cdpBrowser);
+
+    const context2 = await cdpBrowser.newContext();
+    expect(context2.browser()).toBe(cdpBrowser);
+
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
