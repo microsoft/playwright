@@ -14,12 +14,5 @@
  * limitations under the License.
  */
 
-import * as types from './types/types';
-
 export * from './types/types';
-export const chromium: types.BrowserType;
-export const firefox: types.BrowserType;
-export const webkit: types.BrowserType;
-export const _electron: types.Electron;
-export const _android: types.Android;
 export * from './types/test';

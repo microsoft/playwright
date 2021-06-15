@@ -321,5 +321,11 @@ export type AndroidKey =
   'Copy' |
   'Paste';
 
+export const chromium: BrowserType;
+export const firefox: BrowserType;
+export const webkit: BrowserType;
+export const _electron: Electron;
+export const _android: Android;
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
