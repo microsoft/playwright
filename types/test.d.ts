@@ -958,9 +958,9 @@ export type PlaywrightWorkerOptions = {
  * - `off`: Do not record video.
  * - `on`: Record video for each test.
  * - `retain-on-failure`: Record video for each test, but remove all videos from successful test runs.
- * - `retry-with-video`: Record video only when retrying a test.
+ * - `on-first-retry`: Record video only when retrying a test for the first time.
  */
-export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'retry-with-video';
+export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-video';
 
 /**
  * Options available to configure each test.
@@ -989,16 +989,12 @@ export type PlaywrightTestOptions = {
    * - `off`: Do not record trace.
    * - `on`: Record trace for each test.
    * - `retain-on-failure`: Record trace for each test, but remove trace from successful test run.
-   * - `retry-with-trace`: Record trace only when retrying a test.
+   * - `on-first-retry`: Record trace only when retrying a test for the first time.
    */
-  trace: 'off' | 'on' | 'retain-on-failure' | 'retry-with-trace';
+  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-trace';
 
   /**
    * Whether to record video for each test, off by default.
-   * - `off`: Do not record video.
-   * - `on`: Record video for each test.
-   * - `retain-on-failure`: Record video for each test, but remove all videos from successful test runs.
-   * - `retry-with-video`: Record video only when retrying a test.
    */
   video: VideoMode | { mode: VideoMode, size: ViewportSize };
 

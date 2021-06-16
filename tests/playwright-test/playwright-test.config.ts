@@ -21,6 +21,7 @@ const config: Config = {
   testIgnore: 'assets/**',
   timeout: 30000,
   forbidOnly: !!process.env.CI,
+  preserveOutput: process.env.CI ? 'failures-only' : 'always',
   projects: [
     { name: 'playwright-test' },
   ]

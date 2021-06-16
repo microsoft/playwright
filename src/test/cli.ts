@@ -28,7 +28,7 @@ const builtinReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'];
 const tsConfig = 'playwright.config.ts';
 const jsConfig = 'playwright.config.js';
 const defaultConfig: Config = {
-  preserveOutput: 'failures-only',
+  preserveOutput: 'always',
   reporter: [ [defaultReporter] ],
   timeout: defaultTimeout,
   updateSnapshots: 'missing',
