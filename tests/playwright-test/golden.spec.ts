@@ -80,20 +80,6 @@ test('should write missing expectations locally', async ({runInlineTest}, testIn
   expect(data.toString()).toBe('Hello world');
 });
 
-test('should not write missing expectations on CI', async ({runInlineTest}, testInfo) => {
-  const result = await runInlineTest({
-    'a.spec.js': `
-      const { test } = pwt;
-      test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('snapshot.txt');
-      });
-    `
-  }, {}, { CI: '1' });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('snapshot.txt is missing in snapshots');
-  expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots/snapshot.txt'))).toBe(false);
-});
-
 test('should update expectations', async ({runInlineTest}, testInfo) => {
   const result = await runInlineTest({
     'a.spec.js-snapshots/snapshot.txt': `Hello world`,
