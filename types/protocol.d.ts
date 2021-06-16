@@ -1702,6 +1702,11 @@ stylesheet rules) this rule came from.
 starting with the innermost one, going outwards.
        */
       media?: CSSMedia[];
+      /**
+       * Container query list array (for rules involving container queries).
+The array enumerates container queries starting with the innermost one, going outwards.
+       */
+      containerQueries?: CSSContainerQuery[];
     }
     /**
      * CSS coverage information.
@@ -1903,6 +1908,24 @@ available).
        * Computed length of media query expression (if applicable).
        */
       computedLength?: number;
+    }
+    /**
+     * CSS container query rule descriptor.
+     */
+    export interface CSSContainerQuery {
+      /**
+       * Container query text.
+       */
+      text: string;
+      /**
+       * The associated rule header range in the enclosing stylesheet (if
+available).
+       */
+      range?: SourceRange;
+      /**
+       * Identifier of the stylesheet containing this object (if exists).
+       */
+      styleSheetId?: StyleSheetId;
     }
     /**
      * Information about amount of glyphs that were rendered with given font.
@@ -2347,6 +2370,20 @@ property
        * The resulting CSS media rule after modification.
        */
       media: CSSMedia;
+    }
+    /**
+     * Modifies the expression of a container query.
+     */
+    export type setContainerQueryTextParameters = {
+      styleSheetId: StyleSheetId;
+      range: SourceRange;
+      text: string;
+    }
+    export type setContainerQueryTextReturnValue = {
+      /**
+       * The resulting CSS container query rule after modification.
+       */
+      containerQuery: CSSContainerQuery;
     }
     /**
      * Modifies the rule selector.
@@ -8840,21 +8877,6 @@ This is a temporary ability and it will be removed in the future.
     export type setCookiesReturnValue = {
     }
     /**
-     * For testing.
-     */
-    export type setDataSizeLimitsForTestParameters = {
-      /**
-       * Maximum total buffer size.
-       */
-      maxTotalSize: number;
-      /**
-       * Maximum per-resource size.
-       */
-      maxResourceSize: number;
-    }
-    export type setDataSizeLimitsForTestReturnValue = {
-    }
-    /**
      * Specifies whether to always send extra HTTP headers with the requests from this page.
      */
     export type setExtraHTTPHeadersParameters = {
@@ -10149,6 +10171,24 @@ Example URLs: http://www.google.com/file.html -> "google.com"
      * The type of a frameNavigated event.
      */
     export type NavigationType = "Navigation"|"BackForwardCacheRestore";
+    /**
+     * List of not restored reasons for back-forward cache.
+     */
+    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"WebSocket"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"PageShowEventListener"|"PageHideEventListener"|"BeforeUnloadEventListener"|"UnloadEventListener"|"FreezeEventListener"|"ResumeEventListener"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedGeolocationPermission"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebVR"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"WebFileSystem"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"IsolatedWorldScript"|"InjectedStyleSheet"|"MediaSessionImplOnServiceCreated"|"Unknown";
+    /**
+     * Types of not restored reasons for back-forward cache.
+     */
+    export type BackForwardCacheNotRestoredReasonType = "SupportPending"|"PageSupportNeeded"|"Circumstantial";
+    export interface BackForwardCacheNotRestoredExplanation {
+      /**
+       * Type of the reason
+       */
+      type: BackForwardCacheNotRestoredReasonType;
+      /**
+       * Not restored reason
+       */
+      reason: BackForwardCacheNotRestoredReason;
+    }
     
     export type domContentEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -10412,6 +10452,10 @@ when bfcache navigation fails.
        * The frame id of the associated frame.
        */
       frameId: FrameId;
+      /**
+       * Array of reasons why the page could not be cached. This must not be empty.
+       */
+      notRestoredExplanations: BackForwardCacheNotRestoredExplanation[];
     }
     export type loadEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -15770,6 +15814,12 @@ execution.
        * Identifier of the context where exception happened.
        */
       executionContextId?: ExecutionContextId;
+      /**
+       * Dictionary with entries of meta deta that the client associated
+with this exception, such as information about associated network
+requests, etc.
+       */
+      exceptionMetaData?: { [key: string]: string };
     }
     /**
      * Number of milliseconds since epoch.
@@ -16686,6 +16736,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeParameters;
     "CSS.setKeyframeKey": CSS.setKeyframeKeyParameters;
     "CSS.setMediaText": CSS.setMediaTextParameters;
+    "CSS.setContainerQueryText": CSS.setContainerQueryTextParameters;
     "CSS.setRuleSelector": CSS.setRuleSelectorParameters;
     "CSS.setStyleSheetText": CSS.setStyleSheetTextParameters;
     "CSS.setStyleTexts": CSS.setStyleTextsParameters;
@@ -16879,7 +16930,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setCacheDisabled": Network.setCacheDisabledParameters;
     "Network.setCookie": Network.setCookieParameters;
     "Network.setCookies": Network.setCookiesParameters;
-    "Network.setDataSizeLimitsForTest": Network.setDataSizeLimitsForTestParameters;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersParameters;
     "Network.setAttachDebugStack": Network.setAttachDebugStackParameters;
     "Network.setRequestInterception": Network.setRequestInterceptionParameters;
@@ -17203,6 +17253,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeReturnValue;
     "CSS.setKeyframeKey": CSS.setKeyframeKeyReturnValue;
     "CSS.setMediaText": CSS.setMediaTextReturnValue;
+    "CSS.setContainerQueryText": CSS.setContainerQueryTextReturnValue;
     "CSS.setRuleSelector": CSS.setRuleSelectorReturnValue;
     "CSS.setStyleSheetText": CSS.setStyleSheetTextReturnValue;
     "CSS.setStyleTexts": CSS.setStyleTextsReturnValue;
@@ -17396,7 +17447,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setCacheDisabled": Network.setCacheDisabledReturnValue;
     "Network.setCookie": Network.setCookieReturnValue;
     "Network.setCookies": Network.setCookiesReturnValue;
-    "Network.setDataSizeLimitsForTest": Network.setDataSizeLimitsForTestReturnValue;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersReturnValue;
     "Network.setAttachDebugStack": Network.setAttachDebugStackReturnValue;
     "Network.setRequestInterception": Network.setRequestInterceptionReturnValue;
