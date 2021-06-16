@@ -423,7 +423,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
   # Check if we uploaded the last build.
   (
     for i in $(cat "${BROWSER_NAME}/${BUILDS_LIST}"); do
-      URL="${HOST}/${BROWSER_NAME}/${BUILD_NUMBER}/$i"
+      URL="https://playwright2.blob.core.windows.net/builds/${BROWSER_NAME}/${BUILD_NUMBER}/$i"
       if ! [[ $(curl -s -L -I $URL | head -1 | cut -f2 -d' ') == 200 ]]; then
         # Exit subshell
         echo "Missing build at ${URL}"
