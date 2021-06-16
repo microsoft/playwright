@@ -28,7 +28,7 @@ const builtinReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'];
 const tsConfig = 'playwright.config.ts';
 const jsConfig = 'playwright.config.js';
 const defaultConfig: Config = {
-  preserveOutput: 'failures-only',
+  preserveOutput: 'always',
   reporter: [ [defaultReporter] ],
   reportSlowTests: { max: 5, threshold: 15000 },
   timeout: defaultTimeout,

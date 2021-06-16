@@ -80,12 +80,18 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
 
-    const videoMode = typeof video === 'string' ? video : video.mode;
+    let videoMode = typeof video === 'string' ? video : video.mode;
+    if (videoMode === 'retry-with-video')
+      videoMode = 'on-first-retry';
+    if (trace === 'retry-with-trace')
+      trace = 'on-first-retry';
+
+    const captureVideo = (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
+    const captureTrace = (trace === 'on' || trace === 'retain-on-failure' || (trace === 'on-first-retry' && testInfo.retry === 1));
+
     let recordVideoDir: string | null = null;
     const recordVideoSize = typeof video === 'string' ? undefined : video.size;
-    if (videoMode === 'on' || (videoMode === 'retry-with-video' && !!testInfo.retry))
-      recordVideoDir = testInfo.outputPath('');
-    if (videoMode === 'retain-on-failure') {
+    if (captureVideo) {
       await fs.promises.mkdir(artifactsFolder, { recursive: true });
       recordVideoDir = artifactsFolder;
     }
@@ -137,8 +143,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     const allPages: Page[] = [];
     context.on('page', page => allPages.push(page));
 
-    const collectingTrace = trace === 'on' || trace === 'retain-on-failure' || (trace === 'retry-with-trace' && testInfo.retry);
-    if (collectingTrace) {
+    if (captureTrace) {
       const name = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
       await context.tracing.start({ name, screenshots: true, snapshots: true });
     }
@@ -147,15 +152,16 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
 
     const testFailed = testInfo.status !== testInfo.expectedStatus;
 
-    const saveTrace = trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'retry-with-trace' && testInfo.retry);
-    if (saveTrace) {
+    const preserveTrace = captureTrace && (trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'on-first-retry' && testInfo.retry === 1));
+    if (preserveTrace) {
       const tracePath = testInfo.outputPath(`trace.zip`);
       await context.tracing.stop({ path: tracePath });
-    } else if (collectingTrace) {
+    } else if (captureTrace) {
       await context.tracing.stop();
     }
 
-    if (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed)) {
+    const captureScreenshots = (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
+    if (captureScreenshots) {
       await Promise.all(allPages.map((page, index) => {
         const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${++index}.png`);
         return page.screenshot({ timeout: 5000, path: screenshotPath }).catch(e => {});
@@ -163,7 +169,8 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     }
     await context.close();
 
-    if (videoMode === 'retain-on-failure' && testFailed) {
+    const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
+    if (preserveVideo) {
       await Promise.all(allPages.map(async page => {
         const v = page.video();
         if (!v)
