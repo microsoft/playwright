@@ -477,35 +477,3 @@ jobs:
         name: electron-linux-test-results
         path: test-results
 
-  test_linux_docker:
-    name: "Docker Ubuntu-${{ matrix.tag }} Tests"
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        tag: [bionic, focal]
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 16
-    - run: npm ci
-    - run: npm run build
-    - name: Build
-      run: bash utils/docker/build.sh ${{ matrix.tag }} playwright:localbuild-${{ matrix.tag }}
-    - name: Test
-      run: |
-        npm run clean
-        rm -rf node_modules/
-        CONTAINER_ID="$(docker run --rm -v $(pwd):/tmp/playwright --name playwright-docker-test -d -t playwright:localbuild-${{ matrix.tag }} /bin/bash)"
-        docker exec --workdir /tmp/playwright/ --user pwuser "${CONTAINER_ID}" npm ci
-        docker exec --workdir /tmp/playwright/ --user pwuser "${CONTAINER_ID}" npm run build
-        docker exec --workdir /tmp/playwright/ --user pwuser -e INSIDE_DOCKER=1 -e CI=1 "${CONTAINER_ID}" xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: docker-ubuntu-${{ matrix.tag }}-test-results
-        path: test-results
-
