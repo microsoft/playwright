@@ -7,7 +7,7 @@ title: "Installation"
 
 ## Managing browser binaries
 
-Each version of Playwright needs specific versions of browser binaries to operate. By default Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
+Each version of Playwright needs specific versions of browser binaries to operate. By default, Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
 
 - `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
 - `~/Library/Caches/ms-playwright` on MacOS
@@ -22,7 +22,7 @@ pip install playwright
 playwright install
 ```
 
-These browsers will take few hundreds of megabytes of the disk space when installed:
+These browsers will take a few hundred megabytes of disk space when installed:
 
 ```bash
 du -hs ./Library/Caches/ms-playwright/*
