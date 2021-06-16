@@ -15,7 +15,7 @@
  */
 
 import { Page } from '../../index';
-import { test as it, expect } from './inspectorTest';
+import { test as it, expect, sanitizeLog } from './inspectorTest';
 
 
 it('should resume when closing inspector', async ({page, recorderPageGetter, closeRecorder, mode}) => {
@@ -299,15 +299,3 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 });
-
-async function sanitizeLog(recorderPage: Page): Promise<string[]> {
-  const results = [];
-  for (const entry of await recorderPage.$$('.call-log-call')) {
-    const header =  (await (await entry.$('.call-log-call-header')).textContent()).replace(/— [\d.]+(ms|s)/, '- XXms');
-    results.push(header.replace(/page\.waitForEvent\(console\).*/, 'page.waitForEvent(console)'));
-    results.push(...await entry.$$eval('.call-log-message', ee => ee.map(e => {
-      return (e.classList.contains('error') ? 'error: ' : '') + e.textContent;
-    })));
-  }
-  return results;
-}

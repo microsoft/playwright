@@ -390,7 +390,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return 'done';
     }
 
-    await progress.beforeInputAction(this);
+    await progress.beforeTargetedAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       if ((options as any).__testHookBeforePointerAction)
         await (options as any).__testHookBeforePointerAction();
@@ -470,7 +470,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
     const optionsToSelect = [...elements, ...values];
-    await progress.beforeInputAction(this);
+    await progress.beforeTargetedAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       progress.log('  selecting specified option(s)');
@@ -494,7 +494,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.fill("${value}")`);
-    await progress.beforeInputAction(this);
+    await progress.beforeTargetedAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.log('  waiting for element to be visible, enabled and editable');
       const poll = await this.evaluateHandleInUtility(([injected, node, value]) => {
@@ -554,7 +554,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (typeof multiple === 'string')
       return multiple;
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
-    await progress.beforeInputAction(this);
+    await progress.beforeTargetedAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, files as types.FilePayload[]);
@@ -572,9 +572,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, 0);
   }
 
-  async _focus(progress: Progress, resetSelectionIfNotFocused?: boolean): Promise<'error:notconnected' | 'done'> {
+  async _focus(progress: Progress): Promise<'error:notconnected' | 'done'> {
+    await progress.beforeTargetedAction(this);
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    const result = await this.evaluateInUtility(([injected, node, resetSelectionIfNotFocused]) => injected.focusNode(node, resetSelectionIfNotFocused), resetSelectionIfNotFocused);
+    const result = await this.evaluateInUtility(([injected, node]) => injected.focusNode(node, false /* resetSelectionIfNotFocused */), {});
     return throwFatalDOMError(result);
   }
 
@@ -588,9 +589,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.type("${text}")`);
-    await progress.beforeInputAction(this);
+    await progress.beforeTargetedAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
+      const result = throwFatalDOMError(await this.evaluateInUtility(([injected, node]) => injected.focusNode(node, true /* resetSelectionIfNotFocused */), {}));
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
@@ -609,9 +610,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.press("${key}")`);
-    await progress.beforeInputAction(this);
+    await progress.beforeTargetedAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
+      const result = throwFatalDOMError(await this.evaluateInUtility(([injected, node]) => injected.focusNode(node, true /* resetSelectionIfNotFocused */), {}));
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
@@ -960,56 +961,6 @@ export function dispatchEventTask(selector: SelectorInfo, type: string, eventIni
       injected.dispatchEvent(element, type, eventInit);
     });
   }, { parsed: selector.parsed, type, eventInit });
-}
-
-export function textContentTask(selector: SelectorInfo): SchedulableTask<string | null> {
-  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return element.textContent;
-    });
-  }, selector.parsed);
-}
-
-export function innerTextTask(selector: SelectorInfo): SchedulableTask<'error:nothtmlelement' | { innerText: string }> {
-  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        return 'error:nothtmlelement';
-      return { innerText: (element as HTMLElement).innerText };
-    });
-  }, selector.parsed);
-}
-
-export function innerHTMLTask(selector: SelectorInfo): SchedulableTask<string> {
-  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return element.innerHTML;
-    });
-  }, selector.parsed);
-}
-
-export function getAttributeTask(selector: SelectorInfo, name: string): SchedulableTask<string | null> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, name }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return element.getAttribute(name);
-    });
-  }, { parsed: selector.parsed, name });
 }
 
 export function elementStateTask(selector: SelectorInfo, state: ElementStateWithoutStable): SchedulableTask<boolean | 'error:notconnected' | FatalDOMError> {

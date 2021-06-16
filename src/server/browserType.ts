@@ -105,8 +105,8 @@ export abstract class BrowserType extends SdkObject {
       persistent,
       headful: !options.headless,
       artifactsDir,
-      downloadsPath: (options.downloadsPath || artifactsDir)!,
-      tracesDir: (options.tracesDir || artifactsDir)!,
+      downloadsPath: options.downloadsPath || artifactsDir,
+      tracesDir: options.tracesDir || artifactsDir,
       browserProcess,
       customExecutablePath: options.executablePath,
       proxy: options.proxy,
@@ -144,7 +144,7 @@ export abstract class BrowserType extends SdkObject {
       await fs.promises.mkdir(options.tracesDir, { recursive: true });
 
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
-    tempDirectories.push(artifactsDir);  
+    tempDirectories.push(artifactsDir);
 
     if (!userDataDir) {
       userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));

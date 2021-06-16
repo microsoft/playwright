@@ -361,6 +361,7 @@ export class RecorderSupplement implements InstrumentationListener {
     const popupAlias = this._pageAliases.get(popup)!;
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'popup', popupAlias });
   }
+
   private _onDownload(page: Page) {
     const pageAlias = this._pageAliases.get(page)!;
     this._generator.signal(pageAlias, page.mainFrame(), { name: 'download', downloadAlias: String(++this._lastDownloadOrdinal) });
@@ -427,7 +428,7 @@ export class RecorderSupplement implements InstrumentationListener {
     this._recorderApp?.setSources([...this._recorderSources, ...this._userSources.values()]);
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
+  async onBeforeTargetedAction(sdkObject: SdkObject, metadata: CallMetadata) {
   }
 
   async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {

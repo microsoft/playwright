@@ -956,15 +956,6 @@ export class Frame extends SdkObject {
     return undefined as any;
   }
 
-  private async _retryWithSelectorIfNotConnected<R>(
-    controller: ProgressController,
-    selector: string, options: types.TimeoutOptions,
-    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    return controller.run(async progress => {
-      return this._retryWithProgressIfNotConnected(progress, selector, handle => action(progress, handle));
-    }, this._page._timeoutSettings.timeout(options));
-  }
-
   async click(metadata: CallMetadata, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
@@ -995,48 +986,49 @@ export class Frame extends SdkObject {
 
   async focus(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}) {
     const controller = new ProgressController(metadata, this);
-    await this._retryWithSelectorIfNotConnected(controller, selector, options, (progress, handle) => handle._focus(progress));
-    await this._page._doSlowMo();
+    return controller.run(async progress => {
+      dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._focus(progress)));
+      await this._page._doSlowMo();
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async textContent(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
-    const task = dom.textContentTask(info);
     return controller.run(async progress => {
-      progress.log(`  retrieving textContent from "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
+      return await this._retryWithProgressIfNotConnected(progress, selector, async handle => {
+        await progress.beforeTargetedAction(handle);
+        return handle.textContent();
+      });
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async innerText(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
-    const task = dom.innerTextTask(info);
     return controller.run(async progress => {
-      progress.log(`  retrieving innerText from "${selector}"`);
-      const result = dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));
-      return result.innerText;
+      return await this._retryWithProgressIfNotConnected(progress, selector, async handle => {
+        await progress.beforeTargetedAction(handle);
+        return handle.innerText();
+      });
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async innerHTML(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
-    const task = dom.innerHTMLTask(info);
     return controller.run(async progress => {
-      progress.log(`  retrieving innerHTML from "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
+      return await this._retryWithProgressIfNotConnected(progress, selector, async handle => {
+        await progress.beforeTargetedAction(handle);
+        return handle.innerHTML();
+      });
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async getAttribute(metadata: CallMetadata, selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
-    const task = dom.getAttributeTask(info, name);
     return controller.run(async progress => {
-      progress.log(`  retrieving attribute "${name}" from "${selector}"`);
-      return this._scheduleRerunnableTask(progress, info.world, task);
+      return await this._retryWithProgressIfNotConnected(progress, selector, async handle => {
+        await progress.beforeTargetedAction(handle);
+        return handle.getAttribute(name);
+      });
     }, this._page._timeoutSettings.timeout(options));
   }
 

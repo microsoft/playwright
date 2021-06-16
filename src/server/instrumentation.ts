@@ -71,7 +71,7 @@ export interface Instrumentation {
   addListener(listener: InstrumentationListener): void;
   removeListener(listener: InstrumentationListener): void;
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
+  onBeforeTargetedAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onEvent(sdkObject: SdkObject, metadata: CallMetadata): void;
@@ -79,7 +79,7 @@ export interface Instrumentation {
 
 export interface InstrumentationListener {
   onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
+  onBeforeTargetedAction?(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onCallLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onEvent?(sdkObject: SdkObject, metadata: CallMetadata): void;

@@ -240,3 +240,15 @@ function removeAnsiColors(input: string): string {
   ].join('|');
   return input.replace(new RegExp(pattern, 'g'), '');
 }
+
+export async function sanitizeLog(recorderPage: Page): Promise<string[]> {
+  const results = [];
+  for (const entry of await recorderPage.$$('.call-log-call')) {
+    const header =  (await (await entry.$('.call-log-call-header')).textContent()).replace(/— [\d.]+(ms|s)/, '- XXms');
+    results.push(header.replace(/page\.waitForEvent\(console\).*/, 'page.waitForEvent(console)'));
+    results.push(...await entry.$$eval('.call-log-message', ee => ee.map(e => {
+      return (e.classList.contains('error') ? 'error: ' : '') + e.textContent;
+    })));
+  }
+  return results;
+}

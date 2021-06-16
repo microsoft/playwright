@@ -59,7 +59,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
       await this.pause(sdkObject, metadata);
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onBeforeTargetedAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._muted)
       return;
     if (this._enabled && this._pauseOnNextStatement)

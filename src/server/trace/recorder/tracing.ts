@@ -146,7 +146,7 @@ export class Tracing implements InstrumentationListener {
     this._pendingCalls.set(metadata.id, { sdkObject, metadata });
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
+  async onBeforeTargetedAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
     await this._captureSnapshot('action', sdkObject, metadata, element);
   }
 

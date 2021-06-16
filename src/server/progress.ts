@@ -26,7 +26,7 @@ export interface Progress {
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
   throwIfAborted(): void;
-  beforeInputAction(element: ElementHandle): Promise<void>;
+  beforeTargetedAction(element: ElementHandle): Promise<void>;
   metadata: CallMetadata;
 }
 
@@ -87,8 +87,8 @@ export class ProgressController {
         if (this._state === 'aborted')
           throw new AbortedError();
       },
-      beforeInputAction: async (element: ElementHandle) => {
-        await this.instrumentation.onBeforeInputAction(this.sdkObject, this.metadata, element);
+      beforeTargetedAction: async (element: ElementHandle) => {
+        await this.instrumentation.onBeforeTargetedAction(this.sdkObject, this.metadata, element);
       },
       metadata: this.metadata
     };
