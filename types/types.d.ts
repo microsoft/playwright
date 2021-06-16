@@ -9812,103 +9812,6 @@ export interface FileChooser {
 }
 
 /**
- * Whenever a network route is set up with
- * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
- * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route), the
- * `Route` object allows to handle the route.
- */
-export interface InterceptedResponse {
-  /**
-   * Aborts the route's response.
-   * @param errorCode Optional error code. Defaults to `failed`, could be one of the following: - `'aborted'` - An operation was aborted (due to user action)
-   * - `'accessdenied'` - Permission to access a resource, other than the network, was denied
-   * - `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified
-   *   host or network.
-   * - `'blockedbyclient'` - The client chose to block the request.
-   * - `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not
-   *   met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
-   * - `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
-   * - `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
-   * - `'connectionfailed'` - A connection attempt failed.
-   * - `'connectionrefused'` - A connection attempt was refused.
-   * - `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
-   * - `'internetdisconnected'` - The Internet connection has been lost.
-   * - `'namenotresolved'` - The host name could not be resolved.
-   * - `'timedout'` - An operation timed out.
-   * - `'failed'` - A generic failure occurred.
-   */
-  abort(errorCode?: string): Promise<void>;
-
-  /**
-   * Returns the buffer with response body.
-   */
-  body(): Promise<Buffer>;
-
-  /**
-   * Continues route's response with optional overrides.
-   * @param options
-   */
-  continue(options?: {
-    /**
-     * Response body.
-     */
-    body?: string|Buffer;
-
-    /**
-     * If set, equals to setting `Content-Type` response header.
-     */
-    contentType?: string;
-
-    /**
-     * Response headers.
-     */
-    headers?: { [key: string]: string; };
-
-    /**
-     * Response status code.
-     */
-    status?: number;
-
-    /**
-     * Response status text.
-     */
-    statusText?: string;
-  }): Promise<void>;
-
-  /**
-   * Returns the object with HTTP headers associated with the response. All header names are lower-case.
-   */
-  headers(): { [key: string]: string; };
-
-  /**
-   * Returns the JSON representation of response body.
-   *
-   * This method will throw if the response body is not parsable via `JSON.parse`.
-   */
-  json(): Promise<Serializable>;
-
-  /**
-   * Returns the matching [Request] object.
-   */
-  request(): Request;
-
-  /**
-   * Contains the status code of the response (e.g., 200 for a success).
-   */
-  status(): number;
-
-  /**
-   * Contains the status text of the response (e.g. usually an "OK" for a success).
-   */
-  statusText(): string;
-
-  /**
-   * Returns the text representation of response body.
-   */
-  text(): Promise<string>;
-}
-
-/**
  * Keyboard provides an api for managing a virtual keyboard. The high level api is
  * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
  * characters and generates proper keydown, keypress/input, and keyup events on your page.
@@ -10577,11 +10480,6 @@ export interface Route {
     headers?: { [key: string]: string; };
 
     /**
-     * If set the method will reuturn [InterceptedResponse] that can be used to intercept response.
-     */
-    interceptResponse?: boolean;
-
-    /**
      * If set changes the request method (e.g. GET or POST)
      */
     method?: string;
@@ -10595,7 +10493,7 @@ export interface Route {
      * If set changes the request URL. New URL must have same protocol as original one.
      */
     url?: string;
-  }): Promise<null|InterceptedResponse>;
+  }): Promise<void>;
 
   /**
    * Fulfills route's request with given response.
@@ -10647,6 +10545,32 @@ export interface Route {
      */
     status?: number;
   }): Promise<void>;
+
+  /**
+   * Continues route's request with optional overrides and intercepts response.
+   * @param options
+   */
+  intercept(options?: {
+    /**
+     * If set changes the request HTTP headers. Header values will be converted to a string.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * If set changes the request method (e.g. GET or POST)
+     */
+    method?: string;
+
+    /**
+     * If set changes the post data of request
+     */
+    postData?: string|Buffer;
+
+    /**
+     * If set changes the request URL. New URL must have same protocol as original one.
+     */
+    url?: string;
+  }): Promise<Response>;
 
   /**
    * A request to be routed.

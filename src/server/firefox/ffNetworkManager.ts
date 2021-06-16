@@ -186,6 +186,10 @@ class InterceptableRequest implements network.RouteDelegate {
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
   }
 
+  responseBody(): Promise<Buffer> {
+    throw new Error('Method not implemented.');
+  }
+
   async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
     await this._session.sendMayFail('Network.resumeInterceptedRequest', {
       requestId: this._id,

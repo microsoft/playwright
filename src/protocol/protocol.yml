@@ -220,6 +220,21 @@ SerializedError:
     value: SerializedValue?
 
 
+InterceptedResponse:
+  type: object
+  properties:
+    request: Request
+    status: number
+    statusText: string
+    headers:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          value: string
+
+
 LaunchOptions:
   type: mixin
   properties:
@@ -1870,7 +1885,7 @@ Route:
         postData: binary?
         interceptResponse: boolean?
       returns:
-        interceptedResponse: InterceptedResponse?
+        response: InterceptedResponse?
 
     fulfill:
       parameters:
@@ -1882,42 +1897,9 @@ Route:
         body: string?
         isBase64: boolean?
 
-
-InterceptedResponse:
-  type: interface
-
-  initializer:
-    request: Request
-    status: number
-    statusText: string
-    headers:
-      type: array
-      items:
-        type: object
-        properties:
-          name: string
-          value: string
-
-  commands:
-
-    body:
+    responseBody:
       returns:
         binary: binary
-
-    abort:
-      parameters:
-        errorCode: string?
-
-    continue:
-      parameters:
-        # default is 200
-        status: number?
-        statusText: string?
-        headers:
-          type: array?
-          items: NameValue
-        body: string?
-        isBase64: boolean?
 
 
 ResourceTiming:

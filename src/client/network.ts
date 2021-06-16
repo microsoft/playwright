@@ -171,22 +171,36 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   }
 }
 
-export class InterceptedResponse extends ChannelOwner<channels.InterceptedResponseChannel, channels.InterceptedResponseInitializer> implements api.InterceptedResponse {
+export class InterceptedResponse implements api.Response {
+  private readonly _route: Route;
+  private readonly _initializer: channels.InterceptedResponse;
   private readonly _request: Request;
   private readonly _headers: Headers;
 
-  static from(interceptedResponse: channels.InterceptedResponseChannel): InterceptedResponse {
-    return (interceptedResponse as any)._object;
-  }
-
-  static fromNullable(interceptedResponse: channels.InterceptedResponseChannel | undefined): InterceptedResponse | null {
-    return interceptedResponse ? InterceptedResponse.from(interceptedResponse) : null;
-  }
-
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.InterceptedResponseInitializer) {
-    super(parent, type, guid, initializer);
+  constructor(route: Route, initializer: channels.InterceptedResponse) {
+    this._route = route;
+    this._initializer = initializer;
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
-    this._request = Request.from(this._initializer.request);
+    this._request = Request.from(initializer.request);
+  }
+
+  async finished(): Promise<Error | null> {
+    const response = await this._request.response();
+    if (!response)
+      return null;
+    return await response.finished();
+  }
+
+  frame(): api.Frame {
+    return this._request.frame();
+  }
+
+  ok(): boolean {
+    return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
+  }
+
+  url(): string {
+    return this._request.url();
   }
 
   status(): number {
@@ -202,9 +216,7 @@ export class InterceptedResponse extends ChannelOwner<channels.InterceptedRespon
   }
 
   async body(): Promise<Buffer> {
-    return this._wrapApiCall('interceptedResponse.body', async (channel: channels.InterceptedResponseChannel) => {
-      return Buffer.from((await channel.body()).binary, 'base64');
-    });
+    return this._route._responseBody();
   }
 
   async text(): Promise<string> {
@@ -220,55 +232,10 @@ export class InterceptedResponse extends ChannelOwner<channels.InterceptedRespon
   request(): Request {
     return this._request;
   }
-
-  abort(errorCode?: string): Promise<void> {
-    return this._wrapApiCall('interceptedResponse.abort', async (channel: channels.InterceptedResponseChannel) => {
-      await channel.abort({ errorCode });
-    });
-  }
-
-  continue(options: { body?: string | Buffer; contentType?: string; headers?: { [key: string]: string; }; status?: number;  statusText?: string } = {}): Promise<void> {
-    return this._wrapApiCall('interceptedResponse.continue', async (channel: channels.InterceptedResponseChannel) => {
-      let body = undefined;
-      let isBase64 = undefined;
-      let length = 0;
-      if (isString(options.body)) {
-        body = options.body;
-        isBase64 = false;
-        length = Buffer.byteLength(body);
-      } else if (options.body) {
-        body = options.body.toString('base64');
-        isBase64 = true;
-        length = options.body.length;
-      }
-
-      let headers: Headers | undefined;
-      if (options.headers) {
-        headers = {};
-        for (const header of Object.keys(options.headers || {}))
-          headers[header.toLowerCase()] = String(options.headers![header]);
-      }
-      if (options.contentType) {
-        if (!headers)
-          headers = {};
-        headers['content-type'] = String(options.contentType);
-      }
-      if (length && (!headers || !('content-length' in headers))) {
-        if (!headers)
-          headers = {};
-        headers['content-length'] = String(length);
-      }
-
-      await channel.continue({
-        status: options.status,
-        statusText: options.statusText,
-        headers: headers ? headersObjectToArray(headers) : undefined,
-        body,
-        isBase64
-      });
-    });
-  }
 }
+
+type InterceptResponse = true;
+type NotInterceptResponse = false;
 
 export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteInitializer> implements api.Route {
   static from(route: channels.RouteChannel): Route {
@@ -328,17 +295,35 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}) : Promise<null|api.InterceptedResponse> {
-    return await this._wrapApiCall('route.continue', async (channel: channels.RouteChannel) => {
+  async intercept(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}) : Promise<api.Response> {
+    return await this._continue('route.intercept', options, true);
+  }
+
+  async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
+    await this._continue('route.continue', options, false);
+  }
+
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: NotInterceptResponse) : Promise<null>;
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: InterceptResponse) : Promise<api.Response>;
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: boolean) : Promise<null|api.Response> {
+    return await this._wrapApiCall(apiName, async (channel: channels.RouteChannel) => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       const result = await channel.continue({
         url: options.url,
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
         postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
-        interceptResponse: options.interceptResponse,
+        interceptResponse,
       });
-      return InterceptedResponse.fromNullable(result.interceptedResponse);
+      if (result.response)
+        return new InterceptedResponse(this, result.response);
+      return null;
+    });
+  }
+
+  async _responseBody(): Promise<Buffer> {
+    return this._wrapApiCall('response.body', async (channel: channels.RouteChannel) => {
+      return Buffer.from((await channel.responseBody()).binary, 'base64');
     });
   }
 }

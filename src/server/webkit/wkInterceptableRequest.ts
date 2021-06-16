@@ -40,66 +40,8 @@ const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'failed': 'General',
 };
 
-class WKInterceptedResponse implements network.InterceptedResponseDelegate {
-  private _request: WKInterceptableRequest;
-  private _response: Protocol.Network.Response;
-
-  constructor(request: WKInterceptableRequest, response: Protocol.Network.Response) {
-    this._request = request;
-    this._response = response;
-  }
-
-  async abort(errorCode: string) {
-    await this._request.abort(errorCode);
-  }
-
-  async continue(overrides: types.NormalizedResponseContinueOverrides): Promise<void> {
-    if (Object.keys(overrides).length === 0) {
-      await this._request._session.sendMayFail('Network.interceptContinue', {
-        requestId: this._request._requestId,
-        stage: 'response'
-      });
-      return;
-    }
-
-    let mimeType;
-    if (typeof overrides.isBase64 === 'boolean')
-      mimeType = overrides.isBase64 ? 'application/octet-stream' : 'text/plain';
-    const headers = overrides.headers ? headersArrayToObject(overrides.headers, false /* lowerCase */) : this._response.headers;
-    const contentType = headers['content-type'];
-    if (contentType)
-      mimeType = contentType.split(';')[0].trim();
-
-    let base64Encoded = false;
-    let content;
-    if (overrides.body) {
-      content = overrides.body;
-      base64Encoded = !!overrides.isBase64;
-    } else {
-      content = (await this.body()).toString('base64');
-      base64Encoded = true;
-    }
-
-    await this._request._session.sendMayFail('Network.interceptWithResponse', {
-      requestId: this._request._requestId,
-      status: overrides.status || this._response.status,
-      statusText: overrides.statusText || this._response.statusText,
-      mimeType,
-      headers,
-      base64Encoded,
-      content
-    });
-  }
-
-  async body(): Promise<Buffer> {
-    const response = await this._request._session.send('Network.getResponseBody', { requestId: this._request._requestId });
-    return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
-  }
-
-}
-
 export class WKInterceptableRequest implements network.RouteDelegate {
-  readonly _session: WKSession;
+  private readonly _session: WKSession;
   readonly request: network.Request;
   readonly _requestId: string;
   _interceptedCallback: () => void = () => {};
@@ -125,6 +67,14 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     this._interceptedPromise = new Promise<void>(f => this._interceptedCallback = f);
   }
 
+  async responseBody(forFulfill: boolean): Promise<Buffer> {
+    // Empty buffer will result in the response being used.
+    if (forFulfill)
+      return Buffer.from('');
+    const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
+    return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+  }
+
   async abort(errorCode: string) {
     const errorType = errorReasons[errorCode];
     assert(errorType, 'Unknown error code: ' + errorCode);
@@ -147,7 +97,9 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     const contentType = headers['content-type'];
     if (contentType)
       mimeType = contentType.split(';')[0].trim();
-    await this._session.sendMayFail('Network.interceptRequestWithResponse', {
+
+    const isResponseIntercepted = await this._responseInterceptedPromise;
+    await this._session.sendMayFail(isResponseIntercepted ? 'Network.interceptWithResponse' :'Network.interceptRequestWithResponse', {
       requestId: this._requestId,
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)],
@@ -174,7 +126,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     if (!this._responseInterceptedPromise)
       return null;
     const responsePayload = await this._responseInterceptedPromise;
-    return new InterceptedResponse(this.request, new WKInterceptedResponse(this, responsePayload), responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers));
+    return new InterceptedResponse(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers));
   }
 
   createResponse(responsePayload: Protocol.Network.Response): network.Response {

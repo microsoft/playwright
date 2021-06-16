@@ -219,9 +219,6 @@ export class Connection extends EventEmitter {
       case 'Frame':
         result = new Frame(parent, type, guid, initializer);
         break;
-      case 'InterceptedResponse':
-        result = new InterceptedResponse(parent, type, guid, initializer);
-        break;
       case 'JSHandle':
         result = new JSHandle(parent, type, guid, initializer);
         break;

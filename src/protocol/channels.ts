@@ -150,6 +150,16 @@ export type SerializedError = {
   value?: SerializedValue,
 };
 
+export type InterceptedResponse = {
+  request: RequestChannel,
+  status: number,
+  statusText: string,
+  headers: {
+    name: string,
+    value: string,
+  }[],
+};
+
 // ----------- Playwright -----------
 export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
@@ -2307,6 +2317,7 @@ export interface RouteChannel extends Channel {
   abort(params: RouteAbortParams, metadata?: Metadata): Promise<RouteAbortResult>;
   continue(params: RouteContinueParams, metadata?: Metadata): Promise<RouteContinueResult>;
   fulfill(params: RouteFulfillParams, metadata?: Metadata): Promise<RouteFulfillResult>;
+  responseBody(params?: RouteResponseBodyParams, metadata?: Metadata): Promise<RouteResponseBodyResult>;
 }
 export type RouteAbortParams = {
   errorCode?: string,
@@ -2330,7 +2341,7 @@ export type RouteContinueOptions = {
   interceptResponse?: boolean,
 };
 export type RouteContinueResult = {
-  interceptedResponse?: InterceptedResponseChannel,
+  response?: InterceptedResponse,
 };
 export type RouteFulfillParams = {
   status?: number,
@@ -2345,49 +2356,11 @@ export type RouteFulfillOptions = {
   isBase64?: boolean,
 };
 export type RouteFulfillResult = void;
-
-// ----------- InterceptedResponse -----------
-export type InterceptedResponseInitializer = {
-  request: RequestChannel,
-  status: number,
-  statusText: string,
-  headers: {
-    name: string,
-    value: string,
-  }[],
-};
-export interface InterceptedResponseChannel extends Channel {
-  body(params?: InterceptedResponseBodyParams, metadata?: Metadata): Promise<InterceptedResponseBodyResult>;
-  abort(params: InterceptedResponseAbortParams, metadata?: Metadata): Promise<InterceptedResponseAbortResult>;
-  continue(params: InterceptedResponseContinueParams, metadata?: Metadata): Promise<InterceptedResponseContinueResult>;
-}
-export type InterceptedResponseBodyParams = {};
-export type InterceptedResponseBodyOptions = {};
-export type InterceptedResponseBodyResult = {
+export type RouteResponseBodyParams = {};
+export type RouteResponseBodyOptions = {};
+export type RouteResponseBodyResult = {
   binary: Binary,
 };
-export type InterceptedResponseAbortParams = {
-  errorCode?: string,
-};
-export type InterceptedResponseAbortOptions = {
-  errorCode?: string,
-};
-export type InterceptedResponseAbortResult = void;
-export type InterceptedResponseContinueParams = {
-  status?: number,
-  statusText?: string,
-  headers?: NameValue[],
-  body?: string,
-  isBase64?: boolean,
-};
-export type InterceptedResponseContinueOptions = {
-  status?: number,
-  statusText?: string,
-  headers?: NameValue[],
-  body?: string,
-  isBase64?: boolean,
-};
-export type InterceptedResponseContinueResult = void;
 
 export type ResourceTiming = {
   startTime: number,
