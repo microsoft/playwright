@@ -18,19 +18,25 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
-test('should work and remove non-failures on CI', async ({ runInlineTest }, testInfo) => {
+test('should work and remove non-failures', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        preserveOutput: 'failures-only',
+        testDir: 'dir',
+      };
+    `,
     'dir/my-test.spec.js': `
       const { test } = pwt;
       test('test 1', async ({}, testInfo) => {
         if (testInfo.retry) {
-          expect(testInfo.outputDir).toContain('dir-my-test-test-1-retry' + testInfo.retry);
-          expect(testInfo.outputPath('foo', 'bar')).toContain(require('path').join('dir-my-test-test-1-retry' + testInfo.retry, 'foo', 'bar'));
+          expect(testInfo.outputDir).toContain('my-test-test-1-chromium-retry' + testInfo.retry);
+          expect(testInfo.outputPath('foo', 'bar')).toContain(require('path').join('my-test-test-1-chromium-retry' + testInfo.retry, 'foo', 'bar'));
           require('fs').writeFileSync(testInfo.outputPath('file.txt'), 'content', 'utf-8');
         } else {
-          expect(testInfo.outputDir).toContain('dir-my-test-test-1');
-          expect(testInfo.outputPath()).toContain('dir-my-test-test-1');
-          expect(testInfo.outputPath('foo', 'bar')).toContain(require('path').join('dir-my-test-test-1', 'foo', 'bar'));
+          expect(testInfo.outputDir).toContain('my-test-test-1-chromium');
+          expect(testInfo.outputPath()).toContain('my-test-test-1-chromium');
+          expect(testInfo.outputPath('foo', 'bar')).toContain(require('path').join('my-test-test-1-chromium', 'foo', 'bar'));
           require('fs').writeFileSync(testInfo.outputPath('file.txt'), 'content', 'utf-8');
         }
         expect(require('fs').existsSync(testInfo.outputDir)).toBe(true);
@@ -38,7 +44,7 @@ test('should work and remove non-failures on CI', async ({ runInlineTest }, test
           throw new Error('Give me retries');
       });
     `,
-  }, { retries: 2 }, { CI: '1' });
+  }, { retries: 2 });
   expect(result.exitCode).toBe(0);
 
   expect(result.results[0].status).toBe('failed');
@@ -54,10 +60,10 @@ test('should work and remove non-failures on CI', async ({ runInlineTest }, test
   expect(result.results[2].status).toBe('passed');
   expect(result.results[2].retry).toBe(2);
 
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1'))).toBe(true);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1-retry1'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium-retry1'))).toBe(true);
   // Last retry is successfull, so output dir should be removed.
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'dir-my-test-test-1-retry2'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium-retry2'))).toBe(false);
 });
 
 test('should include repeat token', async ({runInlineTest}) => {

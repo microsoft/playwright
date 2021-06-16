@@ -181,10 +181,10 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }, test
   expect(videoFail).toBeTruthy();
 });
 
-test('should work with video: retry-with-video', async ({ runInlineTest }, testInfo) => {
+test('should work with video: on-first-retry', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'retry-with-video' }, retries: 1 };
+      module.exports = { use: { video: 'on-first-retry' }, retries: 1 };
     `,
     'a.test.ts': `
       const { test } = pwt;
