@@ -27,8 +27,7 @@ build.
 ## WebKit
 
 Playwright's WebKit version matches the recent WebKit trunk build, before it is used in Apple Safari and
-other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues. We are
-also working on a dedicated support for builds that would match Apple Safari Technology Preview.
+other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues.
 
 ## Google Chrome & Microsoft Edge
 
