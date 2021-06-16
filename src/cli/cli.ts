@@ -344,8 +344,8 @@ async function launchContext(options: Options, headless: boolean, executablePath
   if (options.proxyServer) {
     launchOptions.proxy = {
       server: options.proxyServer,
-      username: options.proxyUsername,
-      password: options.proxyPassword
+      ...(options.proxyUsername && {username: options.proxyUsername}),
+      ...(options.proxyPassword && {password: options.proxyPassword}),
     };
   }
 
