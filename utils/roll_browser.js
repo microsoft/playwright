@@ -66,6 +66,8 @@ Example:
   // 2. Update browsers.json.
   console.log('\nUpdating browsers.json...');
   descriptor.revision = String(revision);
+  if (browserName === 'chromium')
+    browsersJSON.browsers.find(b => b.name === 'chromium-with-symbols').revision = String(revision);
   fs.writeFileSync(path.join(ROOT_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
 
   if (descriptor.installByDefault) {
