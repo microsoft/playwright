@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
-import {spawn} from 'child_process';
 import * as path from 'path';
 import * as URL from 'url';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
+import * as os from 'os';
+import * as util from 'util';
+import * as child_process from 'child_process';
 
 const existsAsync = path => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -37,30 +39,44 @@ const EXECUTABLE_PATHS = {
   'win64': ['firefox', 'firefox.exe'],
 };
 
+const DOWNLOAD_URLS = {
+  'ubuntu18.04': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-ubuntu-18.04.zip',
+  'ubuntu20.04': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-ubuntu-20.04.zip',
+  'mac10.13': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
+  'mac10.14': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
+  'mac10.15': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
+  'mac11': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
+  'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.0-arm64.zip',
+  'win32': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win32.zip',
+  'win64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win64.zip',
+};
+
 const buildNumber = (await fs.promises.readFile(path.join(__dirname, 'BUILD_NUMBER'), 'utf8')).split('\n').shift();
-const expectedBuilds = (await fs.promises.readFile(path.join(__dirname, 'EXPECTED_BUILDS'), 'utf8')).split('\n');
 
-if (process.argv.length !== 3) {
-  console.error(`ERROR: pass build name to repackage - one of ${expectedBuilds.join(', ')}`);
+if (process.argv[2] === '--help' || process.argv[2] === '-h') {
+  console.log(`usage: ${path.basename(process.argv[1])} [platform]`);
+  console.log(``);
+  console.log(`Repackages firefox r${buildNumber} with tip-of-tree Juggler implementation`);
   process.exit(1);
 }
 
-const buildName = process.argv[2];
-if (!expectedBuilds.includes(buildName)) {
-  console.error(`ERROR: expected argument to be one of ${expectedBuilds.join(', ')}, received - "${buildName}"`);
-  process.exit(1);
-}
+const buildPlatform = process.argv[2] || getHostPlatform();
 
-const currentBuildInfo = await fs.promises.readFile(BUILD_INFO_PATH).then(text => JSON.parse(text)).catch(e => ({ buildName: '', buildNumber: '' }));
+const currentBuildInfo = await fs.promises.readFile(BUILD_INFO_PATH).then(text => JSON.parse(text)).catch(e => ({ buildPlatform: '', buildNumber: '' }));
 
-if (currentBuildInfo.buildName !== buildName || currentBuildInfo.buildNumber !== buildNumber) {
+if (currentBuildInfo.buildPlatform !== buildPlatform || currentBuildInfo.buildNumber !== buildNumber) {
   await fs.promises.rm(BUILD_DIRECTORY, { recursive: true }).catch(e => {});
   await fs.promises.mkdir(BUILD_DIRECTORY);
   const buildZipPath = path.join(BUILD_DIRECTORY, 'firefox.zip');
-  console.log(`Downloading ${buildName} ${buildNumber} - it might take a few minutes`);
-  await downloadFile(`https://playwright.azureedge.net/builds/firefox/${buildNumber}/${buildName}`, buildZipPath);
+  console.log(`Downloading Firefox r${buildNumber} for ${buildPlatform} - it might take a few minutes`);
+
+  const urlTemplate = DOWNLOAD_URLS[buildPlatform];
+  if (!urlTemplate)
+    throw new Error(`ERROR: repack-juggler does not support ${buildPlatform}`);
+  const url = util.format(urlTemplate, buildNumber);
+  await downloadFile(url, buildZipPath);
   await spawnAsync('unzip', [ buildZipPath ], {cwd: BUILD_DIRECTORY});
-  await fs.promises.writeFile(BUILD_INFO_PATH, JSON.stringify({ buildNumber, buildName }), 'utf8');
+  await fs.promises.writeFile(BUILD_INFO_PATH, JSON.stringify({ buildNumber, buildPlatform }), 'utf8');
 }
 
 // Find all omni.ja files in the Firefox build.
@@ -108,10 +124,9 @@ await fs.promises.rm(omniWithJugglerPath);
 await spawnAsync('zip', ['-0', '-qr9XD', omniWithJugglerPath, '.'], {cwd: OMNI_EXTRACT_DIR, stdio: 'inherit'});
 
 // Output executable path to be used in test.
-const buildPlatform = buildName.substring('firefox-'.length).slice(0, -'.zip'.length).replace('-', '');
 console.log(`
-  buildName: ${buildName}
   buildNumber: ${buildNumber}
+  buildPlatform: ${buildPlatform}
   executablePath: ${path.join(BUILD_DIRECTORY, ...EXECUTABLE_PATHS[buildPlatform])}
 `);
 
@@ -167,7 +182,7 @@ function downloadFile(url, destinationPath, progressCallback) {
 
 function spawnAsync(cmd, args, options) {
   // console.log(cmd, ...args, 'CWD:', options.cwd);
-  const process = spawn(cmd, args, options);
+  const process = child_process.spawn(cmd, args, options);
 
   return new Promise(resolve => {
     let stdout = '';
@@ -179,4 +194,79 @@ function spawnAsync(cmd, args, options) {
     process.on('close', code => resolve({stdout, stderr, code}));
     process.on('error', error => resolve({stdout, stderr, code: 0, error}));
   });
+}
+
+function getUbuntuVersionSync() {
+  if (os.platform() !== 'linux')
+    return '';
+  try {
+    let osReleaseText;
+    if (fs.existsSync('/etc/upstream-release/lsb-release'))
+      osReleaseText = fs.readFileSync('/etc/upstream-release/lsb-release', 'utf8');
+    else
+      osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
+    if (!osReleaseText)
+      return '';
+    return getUbuntuVersionInternal(osReleaseText);
+  }
+  catch (e) {
+    return '';
+  }
+}
+
+function getUbuntuVersionInternal(osReleaseText) {
+  const fields = new Map();
+  for (const line of osReleaseText.split('\n')) {
+    const tokens = line.split('=');
+    const name = tokens.shift();
+    let value = tokens.join('=').trim();
+    if (value.startsWith('"') && value.endsWith('"'))
+      value = value.substring(1, value.length - 1);
+    if (!name)
+      continue;
+    fields.set(name.toLowerCase(), value);
+  }
+  // For Linux mint
+  if (fields.get('distrib_id') && fields.get('distrib_id').toLowerCase() === 'ubuntu')
+    return fields.get('distrib_release') || '';
+  if (!fields.get('name') || fields.get('name').toLowerCase() !== 'ubuntu')
+    return '';
+  return fields.get('version_id') || '';
+}
+
+function getHostPlatform() {
+  const platform = os.platform();
+  if (platform === 'darwin') {
+    const [major, minor] = child_process.execSync('sw_vers -productVersion', {
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).toString('utf8').trim().split('.').map(x => parseInt(x, 10));
+    let arm64 = false;
+    // BigSur is the first version that might run on Apple Silicon.
+    if (major >= 11) {
+      arm64 = child_process.execSync('/usr/sbin/sysctl -in hw.optional.arm64', {
+        stdio: ['ignore', 'pipe', 'ignore']
+      }).toString().trim() === '1';
+    }
+    const LAST_STABLE_MAC_MAJOR_VERSION = 11;
+    // All new MacOS releases increase major version.
+    let macVersion = `${major}`;
+    if (major === 10) {
+      // Pre-BigSur MacOS was increasing minor version every release.
+      macVersion = `${major}.${minor}`;
+    } else if (major > LAST_STABLE_MAC_MAJOR_VERSION) {
+      // Best-effort support for MacOS beta versions.
+      macVersion = LAST_STABLE_MAC_MAJOR_VERSION + '';
+    }
+    const archSuffix = arm64 ? '-arm64' : '';
+    return `mac${macVersion}${archSuffix}`;
+  }
+  if (platform === 'linux') {
+    const ubuntuVersion = getUbuntuVersionSync();
+    if (parseInt(ubuntuVersion, 10) <= 19)
+      return 'ubuntu18.04';
+    return 'ubuntu20.04';
+  }
+  if (platform === 'win32')
+    return os.arch() === 'x64' ? 'win64' : 'win32';
+  return platform;
 }
