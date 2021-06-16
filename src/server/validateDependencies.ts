@@ -39,7 +39,6 @@ export async function validateHostRequirements(registry: registry.Registry, brow
 
 const DL_OPEN_LIBRARIES = {
   'webkit': ['libGLESv2.so.2', 'libx264.so'],
-  'webkit-technology-preview': ['libGLESv2.so.2', 'libx264.so'],
 };
 
 function isSupportedWindowsVersion(): boolean {
