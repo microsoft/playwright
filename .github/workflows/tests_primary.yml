@@ -83,18 +83,20 @@ jobs:
     - run: npm run build
     - name: Build
       run: bash utils/docker/build.sh ${{ matrix.tag }} playwright:localbuild-${{ matrix.tag }}
-    - name: Clean
+    - name: Clean & Prepare for Docker
       run: |
         npm run clean
         rm -rf node_modules/
+        # The whole folder has to be world-writable to avoid UID conflicts between this mount and docker.
+        chmod -R 777 .
     - name: Launch container
       run: docker run --rm -v $(pwd):/tmp/playwright --name playwright-docker-${{matrix.tag}}-test -d -t playwright:localbuild-${{ matrix.tag }} /bin/bash
     - name: Run "npm ci" inside docker
-      run: docker exec --workdir /tmp/playwright/ --user pwuser playwright-docker-${{matrix.tag}}-test  npm ci
+      run: docker exec --workdir /tmp/playwright/ playwright-docker-${{matrix.tag}}-test  npm ci
     - name: Run "npm run build" inside docker
-      run: docker exec --workdir /tmp/playwright/ --user pwuser playwright-docker-${{matrix.tag}}-test npm run build
+      run: docker exec --workdir /tmp/playwright/ playwright-docker-${{matrix.tag}}-test npm run build
     - name: Run "npm run test" inside docker
-      run: docker exec --workdir /tmp/playwright/ --user pwuser -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{matrix.tag}}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
+      run: docker exec --workdir /tmp/playwright/ -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{matrix.tag}}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
