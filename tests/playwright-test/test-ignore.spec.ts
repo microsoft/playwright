@@ -211,6 +211,26 @@ test('should match regex string argument', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should match case insensitive', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'capital/A.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'lowercase/a.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `
+  }, { args: ['a.test.ts'] });
+  expect(result.passed).toBe(2);
+  expect(result.report.suites.map(s => s.file).sort()).toEqual(['capital/A.test.ts', 'lowercase/a.test.ts']);
+  expect(result.exitCode).toBe(0);
+});
+
 test('should match by directory', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'dir-a/file.test.ts': `
