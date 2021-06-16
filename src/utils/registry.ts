@@ -22,8 +22,8 @@ import * as util from 'util';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV } from './utils';
 
-export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg'|'webkit-technology-preview';
-export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'webkit-technology-preview', 'firefox-beta']);
+export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg';
+export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'firefox-beta']);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
@@ -81,17 +81,6 @@ const EXECUTABLE_PATHS = {
     'win64': ['firefox', 'firefox.exe'],
   },
   'webkit': {
-    'ubuntu18.04': ['pw_run.sh'],
-    'ubuntu20.04': ['pw_run.sh'],
-    'mac10.13': undefined,
-    'mac10.14': ['pw_run.sh'],
-    'mac10.15': ['pw_run.sh'],
-    'mac11': ['pw_run.sh'],
-    'mac11-arm64': ['pw_run.sh'],
-    'win32': ['Playwright.exe'],
-    'win64': ['Playwright.exe'],
-  },
-  'webkit-technology-preview': {
     'ubuntu18.04': ['pw_run.sh'],
     'ubuntu20.04': ['pw_run.sh'],
     'mac10.13': undefined,
@@ -165,17 +154,6 @@ const DOWNLOAD_URLS = {
     'ubuntu20.04': '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip',
     'mac10.13': undefined,
     'mac10.14': '%s/builds/deprecated-webkit-mac-10.14/%s/deprecated-webkit-mac-10.14.zip',
-    'mac10.15': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
-    'mac11': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
-    'mac11-arm64': '%s/builds/webkit/%s/webkit-mac-11.0-arm64.zip',
-    'win32': '%s/builds/webkit/%s/webkit-win64.zip',
-    'win64': '%s/builds/webkit/%s/webkit-win64.zip',
-  },
-  'webkit-technology-preview': {
-    'ubuntu18.04': '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip',
-    'ubuntu20.04': '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip',
-    'mac10.13': undefined,
-    'mac10.14': undefined,
     'mac10.15': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
     'mac11': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
     'mac11-arm64': '%s/builds/webkit/%s/webkit-mac-11.0-arm64.zip',
@@ -326,7 +304,6 @@ export class Registry {
       case 'chromium-with-symbols':
         return [path.join(browserDirectory, 'chrome-linux')];
       case 'webkit':
-      case 'webkit-technology-preview':
         return [
           path.join(browserDirectory, 'minibrowser-gtk'),
           path.join(browserDirectory, 'minibrowser-gtk', 'bin'),
@@ -349,7 +326,7 @@ export class Registry {
       return [path.join(browserDirectory, 'chrome-win')];
     if (browserName === 'firefox' || browserName === 'firefox-beta')
       return [path.join(browserDirectory, 'firefox')];
-    if (browserName === 'webkit' || browserName === 'webkit-technology-preview')
+    if (browserName === 'webkit')
       return [browserDirectory];
     return [];
   }
@@ -369,7 +346,6 @@ export class Registry {
       'firefox': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
       'firefox-beta': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
       'webkit': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
-      'webkit-technology-preview': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
       'ffmpeg': 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST',
     };
     const downloadHost = getFromENV(envDownloadHost[browserName]) ||
