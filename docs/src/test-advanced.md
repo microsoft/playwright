@@ -204,7 +204,7 @@ export const test = base.extend<{ saveLogs: void }>({
 
 To set something up once before running all tests, use `globalSetup` option in the [configuration file](#configuration-object).
 
-Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown.
+Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment.
 
 Here is a global setup example that runs an app.
 ```js js-flavor=js
@@ -246,6 +246,7 @@ export default globalSetup;
 ```
 
 Now add `globalSetup` option to the configuration file.
+
 ```js js-flavor=js
 // playwright.config.js
 module.export = {
@@ -261,6 +262,26 @@ const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global-setup'),
 };
 export default config;
+```
+
+Tests will now run after the global setup is done and will have access to the data created in the global setup:
+
+```js js-flavor=js
+// test.spec.js
+const { test } = require('@playwright/test');
+
+test('test', async ({ }) => {
+  console.log(process.env.SERVER_PORT);
+});
+```
+
+```js js-flavor=ts
+// test.spec.ts
+import { test } = from '@playwright/test';
+
+test('test', async ({ }) => {
+  console.log(process.env.SERVER_PORT);
+});
 ```
 
 ## Projects
