@@ -17,8 +17,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { LaunchOptions, BrowserContextOptions, Page, ViewportSize } from '../../types/types';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext } from '../../types/types';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, FullConfig, TestInfo } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
 export { expect } from './expect';
@@ -167,7 +167,18 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
         return page.screenshot({ timeout: 5000, path: screenshotPath }).catch(e => {});
       }));
     }
+
+    const prependToError = testInfo.status ===  'timedOut' ? formatPendingCalls((context as any)._connection.pendingProtocolCalls(), testInfo) : '';
     await context.close();
+    if (prependToError) {
+      if (!testInfo.error) {
+        testInfo.error = { value: prependToError };
+      } else if (testInfo.error.message) {
+        testInfo.error.message = prependToError + testInfo.error.message;
+        if (testInfo.error.stack)
+          testInfo.error.stack = prependToError + testInfo.error.stack;
+      }
+    }
 
     const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
     if (preserveVideo) {
@@ -191,3 +202,29 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   },
 });
 export default test;
+
+function formatPendingCalls(calls: ProtocolCall[], testInfo: TestInfo) {
+  if (!calls.length)
+    return '';
+  return 'Pending operations:\n' + calls.map(call => {
+    const frame = call.stack && call.stack[0] ? formatStackFrame(testInfo.config, call.stack[0]) : '<unknown>';
+    return `  - ${call.apiName} at ${frame}\n`;
+  }).join('') + '\n';
+}
+
+function formatStackFrame(config: FullConfig, frame: StackFrame) {
+  const file = path.relative(config.rootDir, frame.file) || path.basename(frame.file);
+  return `${file}:${frame.line || 1}:${frame.column || 1}`;
+}
+
+type StackFrame = {
+  file: string,
+  line?: number,
+  column?: number,
+  function?: string,
+};
+
+type ProtocolCall = {
+  stack?: StackFrame[],
+  apiName?: string,
+};

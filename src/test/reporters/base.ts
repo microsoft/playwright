@@ -185,6 +185,8 @@ function formatFailedResult(test: Test, result: TestResult): string {
   if (result.status === 'timedOut') {
     tokens.push('');
     tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
+    if (result.error !== undefined)
+      tokens.push(indent(formatError(result.error, test.spec.file), '    '));
   } else {
     tokens.push(indent(formatError(result.error!, test.spec.file), '    '));
   }
