@@ -1927,6 +1927,31 @@ Response:
       returns:
         error: string?
 
+    securityDetails:
+      returns:
+        value: SecurityDetails?
+
+    serverAddr:
+      returns:
+        value: RemoteAddr?
+
+
+SecurityDetails:
+  type: object
+  properties:
+    issuer: string?
+    protocol: string?
+    subjectName: string?
+    validFrom: number?
+    validTo: number?
+
+
+RemoteAddr:
+  type: object
+  properties:
+    ipAddress: string
+    port: number
+
 
 WebSocket:
   type: interface

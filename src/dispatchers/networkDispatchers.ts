@@ -80,6 +80,14 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
   async body(): Promise<channels.ResponseBodyResult> {
     return { binary: (await this._object.body()).toString('base64') };
   }
+
+  async securityDetails(): Promise<channels.ResponseSecurityDetailsResult> {
+    return { value: await this._object.securityDetails() || undefined };
+  }
+
+  async serverAddr(): Promise<channels.ResponseServerAddrResult> {
+    return { value: await this._object.serverAddr() || undefined };
+  }
 }
 
 export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer> implements channels.RouteChannel {

@@ -18,7 +18,7 @@ import { URLSearchParams } from 'url';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { Headers, WaitForEventOptions } from './types';
+import { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
 import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';
@@ -324,6 +324,14 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
 
   frame(): Frame {
     return this._request.frame();
+  }
+
+  async serverAddr(): Promise<RemoteAddr|null> {
+    return (await this._channel.serverAddr()).value || null;
+  }
+
+  async securityDetails(): Promise<SecurityDetails|null> {
+    return (await this._channel.securityDetails()).value || null;
   }
 }
 

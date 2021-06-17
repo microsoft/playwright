@@ -2372,6 +2372,8 @@ export type ResponseInitializer = {
 export interface ResponseChannel extends Channel {
   body(params?: ResponseBodyParams, metadata?: Metadata): Promise<ResponseBodyResult>;
   finished(params?: ResponseFinishedParams, metadata?: Metadata): Promise<ResponseFinishedResult>;
+  securityDetails(params?: ResponseSecurityDetailsParams, metadata?: Metadata): Promise<ResponseSecurityDetailsResult>;
+  serverAddr(params?: ResponseServerAddrParams, metadata?: Metadata): Promise<ResponseServerAddrResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -2382,6 +2384,29 @@ export type ResponseFinishedParams = {};
 export type ResponseFinishedOptions = {};
 export type ResponseFinishedResult = {
   error?: string,
+};
+export type ResponseSecurityDetailsParams = {};
+export type ResponseSecurityDetailsOptions = {};
+export type ResponseSecurityDetailsResult = {
+  value?: SecurityDetails,
+};
+export type ResponseServerAddrParams = {};
+export type ResponseServerAddrOptions = {};
+export type ResponseServerAddrResult = {
+  value?: RemoteAddr,
+};
+
+export type SecurityDetails = {
+  issuer?: string,
+  protocol?: string,
+  subjectName?: string,
+  validFrom?: number,
+  validTo?: number,
+};
+
+export type RemoteAddr = {
+  ipAddress: string,
+  port: number,
 };
 
 // ----------- WebSocket -----------
