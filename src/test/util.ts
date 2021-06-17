@@ -17,8 +17,7 @@
 import path from 'path';
 import util from 'util';
 import StackUtils from 'stack-utils';
-import type { Location } from './types';
-import type { TestError } from './reporter';
+import type { Location, TestError } from './types';
 import { default as minimatch } from 'minimatch';
 
 const TEST_RUNNER_DIRS = [
