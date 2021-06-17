@@ -331,11 +331,12 @@ export class WorkerRunner extends EventEmitter {
           testInfo.status = 'skipped';
       } else {
         // We might fail after the timeout, e.g. due to fixture teardown.
-        // Do not overwrite the timeout status with this error.
-        if (testInfo.status === 'passed') {
+        // Do not overwrite the timeout status.
+        if (testInfo.status === 'passed')
           testInfo.status = 'failed';
+        // Keep the error even in the case of timeout, if there was no error before.
+        if (!('error' in  testInfo))
           testInfo.error = serializeError(error);
-        }
       }
     }
   }
@@ -344,21 +345,23 @@ export class WorkerRunner extends EventEmitter {
     try {
       await this._runHooks(test.spec.parent!, 'afterEach', testInfo);
     } catch (error) {
-      // Do not overwrite test failure error.
-      if (!(error instanceof SkipError) && testInfo.status === 'passed') {
-        testInfo.status = 'failed';
-        testInfo.error = serializeError(error);
+      if (!(error instanceof SkipError)) {
+        if (testInfo.status === 'passed')
+          testInfo.status = 'failed';
+        // Do not overwrite test failure error.
+        if (!('error' in  testInfo))
+          testInfo.error = serializeError(error);
         // Continue running even after the failure.
       }
     }
     try {
       await this._fixtureRunner.teardownScope('test');
     } catch (error) {
-      // Do not overwrite test failure error.
-      if (testInfo.status === 'passed') {
+      if (testInfo.status === 'passed')
         testInfo.status = 'failed';
+      // Do not overwrite test failure error.
+      if (!('error' in  testInfo))
         testInfo.error = serializeError(error);
-      }
     }
   }
 

@@ -59,10 +59,10 @@ export function captureStackTrace(): { stack: string, frames: StackFrame[] } {
     const fileName = path.resolve(process.cwd(), frame.file);
     if (PW_LIB_DIRS.some(libDir => fileName.includes(libDir)))
       continue;
-    // for tests.
-    if (isUnderTest() && fileName.includes(path.join('playwright', 'src')))
+    const isTesting = process.env.PWTEST_CLI_ALLOW_TEST_COMMAND || isUnderTest();
+    if (isTesting && fileName.includes(path.join('playwright', 'src')))
       continue;
-    if (isUnderTest() && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
+    if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       continue;
     frames.push({
       file: fileName,

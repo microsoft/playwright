@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAscii } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
@@ -120,6 +120,30 @@ test('should complain with projects and --browser', async ({ runInlineTest }) =>
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.output).toContain('Cannot use --browser option when configuration file defines projects');
+});
+
+test('should report error and pending operations on timeout', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('timedout', async ({ page }) => {
+        await page.setContent('<div>Click me</div>');
+        await Promise.all([
+          page.click('text=Missing'),
+          page.textContent('text=More missing'),
+        ]);
+      });
+    `,
+  }, { workers: 1, timeout: 2000 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Pending operations:');
+  expect(result.output).toContain('- page.click at a.test.ts:9:16');
+  expect(result.output).toContain('- page.textContent at a.test.ts:10:16');
+  expect(result.output).toContain('retrieving textContent from "text=More missing"');
+  expect(stripAscii(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
 });
 
 test('should work with screenshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
