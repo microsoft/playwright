@@ -51,84 +51,100 @@ const DOWNLOAD_URLS = {
   'win64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win64.zip',
 };
 
-const buildNumber = (await fs.promises.readFile(path.join(__dirname, 'BUILD_NUMBER'), 'utf8')).split('\n').shift();
-
 if (process.argv[2] === '--help' || process.argv[2] === '-h') {
-  console.log(`usage: ${path.basename(process.argv[1])} [platform]`);
+  console.log(`usage: ${path.basename(process.argv[1])} [--prepare] [build number]`);
   console.log(``);
-  console.log(`Repackages firefox r${buildNumber} with tip-of-tree Juggler implementation`);
+  console.log(`Repackages Firefox with tip-of-tree Juggler implementation`);
   process.exit(1);
 }
 
-const buildPlatform = process.argv[2] || getHostPlatform();
+if (process.argv[2] === '--prepare')
+  await prepareFirefoxBuild(process.argv[3], process.argv[4]);
+else
+  await repackageJuggler();
 
-const currentBuildInfo = await fs.promises.readFile(BUILD_INFO_PATH).then(text => JSON.parse(text)).catch(e => ({ buildPlatform: '', buildNumber: '' }));
+async function prepareFirefoxBuild(buildNumber, buildPlatform) {
+  if (!buildNumber)
+    buildNumber = (await fs.promises.readFile(path.join(__dirname, 'BUILD_NUMBER'), 'utf8')).split('\n').shift();
+  if (!buildPlatform)
+    buildPlatform = getHostPlatform();
+  const currentBuildInfo = await fs.promises.readFile(BUILD_INFO_PATH).then(text => JSON.parse(text)).catch(e => ({ buildPlatform: '', buildNumber: '' }));
 
-if (currentBuildInfo.buildPlatform !== buildPlatform || currentBuildInfo.buildNumber !== buildNumber) {
+  if (currentBuildInfo.buildPlatform === buildPlatform && currentBuildInfo.buildNumber === buildNumber)
+    return;
   await fs.promises.rm(BUILD_DIRECTORY, { recursive: true }).catch(e => {});
   await fs.promises.mkdir(BUILD_DIRECTORY);
   const buildZipPath = path.join(BUILD_DIRECTORY, 'firefox.zip');
-  console.log(`Downloading Firefox r${buildNumber} for ${buildPlatform} - it might take a few minutes`);
 
   const urlTemplate = DOWNLOAD_URLS[buildPlatform];
   if (!urlTemplate)
     throw new Error(`ERROR: repack-juggler does not support ${buildPlatform}`);
   const url = util.format(urlTemplate, buildNumber);
+  console.log(`Downloading Firefox r${buildNumber} for ${buildPlatform} - it might take a few minutes`);
   await downloadFile(url, buildZipPath);
   await spawnAsync('unzip', [ buildZipPath ], {cwd: BUILD_DIRECTORY});
   await fs.promises.writeFile(BUILD_INFO_PATH, JSON.stringify({ buildNumber, buildPlatform }), 'utf8');
 }
 
-// Find all omni.ja files in the Firefox build.
-const omniPaths = await spawnAsync('find', ['.', '-name', 'omni.ja'], {
-  cwd: BUILD_DIRECTORY,
-}).then(({stdout}) => stdout.trim().split('\n').map(aPath => path.join(BUILD_DIRECTORY, aPath)));
-
-// Iterate over all omni.ja files and find one that has juggler inside.
-const omniWithJugglerPath = await (async () => {
-  for (const omniPath of omniPaths) {
-    const {stdout} = await spawnAsync('unzip', ['-Z1', omniPath], {cwd: BUILD_DIRECTORY});
-    if (stdout.includes('chrome/juggler'))
-      return omniPath;
+async function repackageJuggler() {
+  const currentBuildInfo = await fs.promises.readFile(BUILD_INFO_PATH).then(text => JSON.parse(text)).catch(e => null);
+  if (!currentBuildInfo) {
+    console.log('ERROR: build is not prepared!');
+    console.log(`run ${path.basename(process.argv[1])} --prepare`);
   }
-  return null;
-})();
+  const {buildNumber, buildPlatform} = currentBuildInfo;
 
-if (!omniWithJugglerPath) {
-  console.error('ERROR: did not find omni.ja file with baked in Juggler!');
-  process.exit(1);
-} else {
-  if (!(await existsAsync(OMNI_BACKUP_PATH)))
-    await fs.promises.copyFile(omniWithJugglerPath, OMNI_BACKUP_PATH);
+  // Find all omni.ja files in the Firefox build.
+  const omniPaths = await spawnAsync('find', ['.', '-name', 'omni.ja'], {
+    cwd: BUILD_DIRECTORY,
+  }).then(({stdout}) => stdout.trim().split('\n').map(aPath => path.join(BUILD_DIRECTORY, aPath)));
+
+  // Iterate over all omni.ja files and find one that has juggler inside.
+  const omniWithJugglerPath = await (async () => {
+    for (const omniPath of omniPaths) {
+      const {stdout} = await spawnAsync('unzip', ['-Z1', omniPath], {cwd: BUILD_DIRECTORY});
+      if (stdout.includes('chrome/juggler'))
+        return omniPath;
+    }
+    return null;
+  })();
+
+  if (!omniWithJugglerPath) {
+    console.error('ERROR: did not find omni.ja file with baked in Juggler!');
+    process.exit(1);
+  } else {
+    if (!(await existsAsync(OMNI_BACKUP_PATH)))
+      await fs.promises.copyFile(omniWithJugglerPath, OMNI_BACKUP_PATH);
+  }
+
+  // Let's repackage omni folder!
+  await fs.promises.rm(OMNI_EXTRACT_DIR, { recursive: true }).catch(e => {});
+  await fs.promises.mkdir(OMNI_EXTRACT_DIR);
+
+  await spawnAsync('unzip', [OMNI_BACKUP_PATH], {cwd: OMNI_EXTRACT_DIR });
+  // Remove current juggler directory
+  await fs.promises.rm(OMNI_JUGGLER_DIR, { recursive: true });
+  // Repopulate with tip-of-tree juggler files
+  const jarmn = await fs.promises.readFile(JARMN_PATH, 'utf8');
+  const jarLines = jarmn.split('\n').map(line => line.trim()).filter(line => line.startsWith('content/') && line.endsWith(')'));
+  for (const line of jarLines) {
+    const tokens = line.split(/\s+/);
+    const toPath = path.join(OMNI_JUGGLER_DIR, tokens[0]);
+    const fromPath = path.join(__dirname, 'juggler', tokens[1].slice(1, -1));
+    await fs.promises.mkdir(path.dirname(toPath), { recursive: true});
+    await fs.promises.copyFile(fromPath, toPath);
+  }
+
+  await fs.promises.rm(omniWithJugglerPath);
+  await spawnAsync('zip', ['-0', '-qr9XD', omniWithJugglerPath, '.'], {cwd: OMNI_EXTRACT_DIR, stdio: 'inherit'});
+
+  // Output executable path to be used in test.
+  console.log(`
+    buildNumber: ${buildNumber}
+    buildPlatform: ${buildPlatform}
+    executablePath: ${path.join(BUILD_DIRECTORY, ...EXECUTABLE_PATHS[buildPlatform])}
+  `);
 }
-
-// Let's repackage omni folder!
-await fs.promises.rm(OMNI_EXTRACT_DIR, { recursive: true }).catch(e => {});
-await fs.promises.mkdir(OMNI_EXTRACT_DIR);
-
-await spawnAsync('unzip', [OMNI_BACKUP_PATH], {cwd: OMNI_EXTRACT_DIR });
-// Remove current juggler directory
-await fs.promises.rm(OMNI_JUGGLER_DIR, { recursive: true });
-// Repopulate with tip-of-tree juggler files
-const jarmn = await fs.promises.readFile(JARMN_PATH, 'utf8');
-const jarLines = jarmn.split('\n').map(line => line.trim()).filter(line => line.startsWith('content/') && line.endsWith(')'));
-for (const line of jarLines) {
-  const tokens = line.split(/\s+/);
-  const toPath = path.join(OMNI_JUGGLER_DIR, tokens[0]);
-  const fromPath = path.join(__dirname, 'juggler', tokens[1].slice(1, -1));
-  await fs.promises.mkdir(path.dirname(toPath), { recursive: true});
-  await fs.promises.copyFile(fromPath, toPath);
-}
-
-await fs.promises.rm(omniWithJugglerPath);
-await spawnAsync('zip', ['-0', '-qr9XD', omniWithJugglerPath, '.'], {cwd: OMNI_EXTRACT_DIR, stdio: 'inherit'});
-
-// Output executable path to be used in test.
-console.log(`
-  buildNumber: ${buildNumber}
-  buildPlatform: ${buildPlatform}
-  executablePath: ${path.join(BUILD_DIRECTORY, ...EXECUTABLE_PATHS[buildPlatform])}
-`);
 
 
 function httpRequest(url, method, response) {
