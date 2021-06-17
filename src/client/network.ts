@@ -184,6 +184,14 @@ export class InterceptedResponse implements api.Response {
     this._request = Request.from(initializer.request);
   }
 
+  async securityDetails(): Promise<{ issuer?: string | undefined; protocol?: string | undefined; subjectName?: string | undefined; validFrom?: number | undefined; validTo?: number | undefined; } | null> {
+    return null;
+  }
+
+  async serverAddr(): Promise<{ ipAddress: string; port: number; } | null> {
+    return null;
+  }
+
   async finished(): Promise<Error | null> {
     const response = await this._request.response();
     if (!response)
