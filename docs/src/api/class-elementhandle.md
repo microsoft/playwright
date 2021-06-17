@@ -728,7 +728,7 @@ This method expects `elementHandle` to point to an
 [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-are resolved relative to the the current working directory. For empty array, clears the selected files.
+are resolved relative to the current working directory. For empty array, clears the selected files.
 
 ### param: ElementHandle.setInputFiles.files = %%-input-files-%%
 

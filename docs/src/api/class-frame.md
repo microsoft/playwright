@@ -637,7 +637,7 @@ a_handle = page.evaluate_handle("document") # handle for the "document"
 ```
 
 ```csharp
-var docHandle = await frame.EvalueHandleAsync("document"); // Handle for the `document`
+var docHandle = await frame.EvaluateHandleAsync("document"); // Handle for the `document`
 ```
 
 [JSHandle] instances can be passed as an argument to the [`method: Frame.evaluateHandle`]:
@@ -1081,7 +1081,7 @@ This method expects [`param: selector`] to point to an
 [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-are resolved relative to the the current working directory. For empty array, clears the selected files.
+are resolved relative to the current working directory. For empty array, clears the selected files.
 
 ### param: Frame.setInputFiles.selector = %%-input-selector-%%
 
