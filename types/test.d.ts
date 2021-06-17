@@ -238,6 +238,26 @@ export interface FullConfig {
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
 
 /**
+ * Information about an error caught during test execution.
+ */
+export interface TestError {
+  /**
+   * Error message. Set when Error (or its subclass) has been thrown.
+   */
+  message?: string;
+
+  /**
+   * Error stack. Set when Error (or its subclass) has been thrown.
+   */
+  stack?: string;
+
+  /**
+   * The thrown value. Set when anything except the Error (or its subclass) has been thrown.
+   */
+  value?: string;
+}
+
+/**
  * Information common for all tests run in the same worker process.
  */
 export interface WorkerInfo {
@@ -367,7 +387,7 @@ export interface TestInfo extends WorkerInfo {
    * The error thrown by the test if any.
    * Only available after the test has finished.
    */
-  error?: any;
+  error?: TestError;
 
   /**
    * Output written to `process.stdout` or `console.log` from the test.

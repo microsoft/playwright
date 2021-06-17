@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { FullConfig, TestStatus } from './types';
-export type { FullConfig, TestStatus } from './types';
+import type { FullConfig, TestStatus, TestError } from './types';
+export type { FullConfig, TestStatus, TestError } from './types';
 
 export interface Suite {
   title: string;
@@ -59,11 +59,6 @@ export interface TestResult {
   error?: TestError;
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
-}
-export interface TestError {
-  message?: string;
-  stack?: string;
-  value?: string;
 }
 export interface Reporter {
   onBegin(config: FullConfig, suite: Suite): void;
