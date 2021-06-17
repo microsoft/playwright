@@ -103,7 +103,7 @@ export class CRNetworkManager {
         this._client.send('Network.setCacheDisabled', { cacheDisabled: true }),
         this._client.send('Fetch.enable', {
           handleAuthRequests: true,
-          patterns: [{urlPattern: '*'}, {urlPattern: '*', requestStage: 'Response'}],
+          patterns: [{urlPattern: '*', requestStage: 'Request'}, {urlPattern: '*', requestStage: 'Response'}],
         }),
       ]);
     } else {

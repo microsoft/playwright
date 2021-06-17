@@ -22,6 +22,7 @@ import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 import { assert, headersObjectToArray, headersArrayToObject } from '../../utils/utils';
 import { InterceptedResponse } from '../network';
+import { WKPage } from './wkPage';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',
@@ -111,8 +112,10 @@ export class WKInterceptableRequest implements network.RouteDelegate {
   }
 
   async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
-    if (overrides.interceptResponse)
+    if (overrides.interceptResponse) {
+      await (this.request.frame()._page._delegate as WKPage)._ensureResponseInterceptionEnabled();
       this._responseInterceptedPromise = new Promise(f => this._responseInterceptedCallback = f);
+    }
     await this._interceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.

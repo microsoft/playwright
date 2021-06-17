@@ -70,6 +70,7 @@ export class WKPage implements PageDelegate {
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
 
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
+  _needsResponseInterception: boolean = false;
   // Holds window features for the next popup being opened via window.open,
   // until the popup page proxy arrives.
   private _nextWindowOpenPopupFeatures?: string[];
@@ -176,7 +177,8 @@ export class WKPage implements PageDelegate {
     if (this._page._needsRequestInterception()) {
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
       promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
-      promises.push(session.send('Network.addInterception', { url: '.*', stage: 'response', isRegex: true }));
+      if (this._needsResponseInterception)
+        promises.push(session.send('Network.addInterception', { url: '.*', stage: 'response', isRegex: true }));
     }
 
     const contextOptions = this._browserContext._options;
@@ -657,13 +659,22 @@ export class WKPage implements PageDelegate {
     await Promise.all(promises);
   }
 
+  async _ensureResponseInterceptionEnabled() {
+    if (this._needsResponseInterception)
+      return;
+    this._needsResponseInterception = true;
+    await this.updateRequestInterception();
+  }
+
   async updateRequestInterception(): Promise<void> {
     const enabled = this._page._needsRequestInterception();
-    await Promise.all([
+    const promises = [
       this._updateState('Network.setInterceptionEnabled', { enabled }),
       this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
+    ];
+    if (this._needsResponseInterception)
       this._updateState('Network.addInterception', { url: '.*', stage: 'response', isRegex: true })
-    ]);
+    await Promise.all(promises);
   }
 
   async updateOffline() {
