@@ -116,7 +116,7 @@ program
 
 program
     .command('install [browserType...]')
-    .option('--with-deps', 'install system dependencies for browsers')
+    .option('--no-deps', 'do not install system dependencies for browsers')
     .description('ensure browsers necessary for this version of Playwright are installed')
     .action(async function(args, command) {
       try {
@@ -133,7 +133,7 @@ program
         }
         if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge'))
           browserNames.add('ffmpeg');
-        if (browserNames.size && command['with-deps'])
+        if (browserNames.size && !command['no-deps'])
           await installDeps([...browserNames]);
         if (browserNames.size)
           await installBrowsers([...browserNames]);
@@ -178,9 +178,9 @@ async function installBrowserChannel(channel: BrowserChannel) {
 program
     .command('install-deps [browserType...]')
     .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .action(async function(browserType) {
+    .action(async function(browserTypes) {
       try {
-        await installDeps(browserType);
+        await installDeps(browserTypes);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);

@@ -17,7 +17,7 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps
+    - run: node lib/cli/cli install
     - run: utils/publish_all_packages.sh --release
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -34,7 +34,7 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps
+    - run: node lib/cli/cli install
     - run: utils/build/build-playwright-driver.sh
     - run: utils/build/upload-playwright-driver.sh
       env:
@@ -58,7 +58,7 @@ jobs:
         node-version: 12
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps
+    - run: node lib/cli/cli install
     - run: ./utils/docker/build.sh bionic playwright:localbuild-bionic
     - run: ./utils/docker/build.sh focal playwright:localbuild-focal
     - name: tag & publish

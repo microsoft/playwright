@@ -21,7 +21,7 @@ jobs:
         node-version: 12
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli.js install --with-deps
+    - run: node lib/cli/cli.js install
     - run: npm run lint
     - name: Verify clean tree
       run: |
@@ -41,6 +41,6 @@ jobs:
         node-version: 12
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli.js install --with-deps
+    - run: node lib/cli/cli.js install
     - run: node utils/build/update_canary_version.js --today-date
     - run: utils/build/build-playwright-driver.sh

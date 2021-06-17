@@ -19,7 +19,7 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps
+    - run: node lib/cli/cli install
     - run: node utils/build/update_canary_version.js --commit-timestamp
     - run: utils/build/build-playwright-driver.sh
     - run: utils/build/upload-playwright-driver.sh

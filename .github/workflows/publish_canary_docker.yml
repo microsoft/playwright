@@ -27,7 +27,7 @@ jobs:
         node-version: 12
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps
+    - run: node lib/cli/cli install
     - run: ./utils/docker/build.sh bionic playwright:localbuild-bionic
     - run: ./utils/docker/build.sh focal playwright:localbuild-focal
     - name: tag & publish

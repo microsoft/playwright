@@ -38,7 +38,7 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
+    - run: node lib/cli/cli install ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -67,7 +67,7 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
+    - run: node lib/cli/cli install ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -94,7 +94,7 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps ${{matrix.browser}} chromium
+    - run: node lib/cli/cli install ${{matrix.browser}} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
       shell: bash
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -146,7 +146,7 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
+    - run: node lib/cli/cli install ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       if: ${{ always() }}
       env:
@@ -176,7 +176,7 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps chromium
+    - run: node lib/cli/cli install chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_MODE: ${{ matrix.mode }}
@@ -274,7 +274,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps firefox-beta chromium
+    - run: node lib/cli/cli install firefox-beta chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
@@ -298,7 +298,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps firefox-beta chromium
+    - run: node lib/cli/cli install firefox-beta chromium
     - run: npm run ftest
       shell: bash
       env:
@@ -470,7 +470,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps chromium
+    - run: node lib/cli/cli install chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run etest
     - run: node tests/config/checkCoverage.js electron
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
