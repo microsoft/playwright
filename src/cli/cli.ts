@@ -265,7 +265,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
   if (playwrightTestPackagePath) {
     require(playwrightTestPackagePath).addTestCommand(program);
   } else {
-    const command = program.command('test');
+    const command = program.command('test').allowUnknownOption(true);
     command.description('Run tests with Playwright Test. Available in @playwright/test package.');
     command.action(async (args, opts) => {
       console.error('Please install @playwright/test package to use Playwright Test.');
