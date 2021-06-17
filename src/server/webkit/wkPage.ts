@@ -368,8 +368,8 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       helper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
-      helper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(e)),
-      helper.addEventListener(this._session, 'Network.responseIntercepted', e => this._onResponseIntercepted(e)),
+      helper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(this._session, e)),
+      helper.addEventListener(this._session, 'Network.responseIntercepted', e => this._onResponseIntercepted(this._session, e)),
       helper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
       helper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       helper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
@@ -964,25 +964,25 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
+  _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (!request) {
-      this._session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
+      session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
       return;
     }
     if (!request._allowInterception) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
-      this._session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
+      session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
     } else {
       request._interceptedCallback();
     }
   }
 
-  private _onResponseIntercepted(event: Protocol.Network.responseInterceptedPayload) {
+  _onResponseIntercepted(session: WKSession, event: Protocol.Network.responseInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (!request || !request._responseInterceptedCallback) {
-      this._session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
+      session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
       return;
     }
     request._responseInterceptedCallback(event.response);
