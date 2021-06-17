@@ -34,7 +34,7 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { installDeps } from '../install/installDeps';
-import { allBrowserNames, BrowserName } from '../utils/registry';
+import { allBrowserNames, BrowserName, Registry } from '../utils/registry';
 import * as utils from '../utils/utils';
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
@@ -121,10 +121,9 @@ program
     .action(async function(args, command) {
       try {
         // Install default browsers when invoked without arguments.
-        if (!args.length) {
-          await installBrowsers();
-          return;
-        }
+        if (!args.length)
+          args = Registry.currentPackageRegistry().installByDefault();
+
         const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
         const browserChannels: Set<BrowserChannel> = new Set(args.filter((browser: any) => allBrowserChannels.has(browser)));
         const faultyArguments: string[] = args.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
