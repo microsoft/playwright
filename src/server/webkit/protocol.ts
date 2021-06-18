@@ -2220,6 +2220,15 @@ export module Protocol {
       nodeId: NodeId;
     }
     /**
+     * Fired when a detached DOM node is about to be destroyed. Currently, this event will only be fired when a DOM node that is detached is about to be destructed.
+     */
+    export type willDestroyDOMNodePayload = {
+      /**
+       * Id of the node that will be destroyed.
+       */
+      nodeId: NodeId;
+    }
+    /**
      * Called when shadow root is pushed into the element.
      */
     export type shadowRootPushedPayload = {
@@ -8650,6 +8659,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "DOM.childNodeCountUpdated": DOM.childNodeCountUpdatedPayload;
     "DOM.childNodeInserted": DOM.childNodeInsertedPayload;
     "DOM.childNodeRemoved": DOM.childNodeRemovedPayload;
+    "DOM.willDestroyDOMNode": DOM.willDestroyDOMNodePayload;
     "DOM.shadowRootPushed": DOM.shadowRootPushedPayload;
     "DOM.shadowRootPopped": DOM.shadowRootPoppedPayload;
     "DOM.customElementStateChanged": DOM.customElementStateChangedPayload;
