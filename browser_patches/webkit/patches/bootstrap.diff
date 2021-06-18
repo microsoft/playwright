@@ -3308,7 +3308,7 @@ index 6459cedc046c..a7167e7db8a7 100644
 +            return makeUnexpected("Unable to decode given content"_s);
 +
 +        ScriptExecutionContext* context = element->scriptExecutionContext();
-+	fileObjects.append(File::create(context, Blob::create(context, Vector { buffer->data(), buffer->size() }, type), name));
++        fileObjects.append(File::create(context, Blob::create(context, WTFMove(*buffer), type), name));
 +    }
 +    RefPtr<FileList> fileList = FileList::create(WTFMove(fileObjects));
 +    element->setFiles(WTFMove(fileList));
