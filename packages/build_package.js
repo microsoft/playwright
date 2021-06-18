@@ -43,7 +43,7 @@ const PACKAGES = {
     files: PLAYWRIGHT_CORE_FILES,
   },
   'playwright-test': {
-    description: 'Playwright Test Runner',
+    description: 'Playwright Test',
     browsers: ['chromium', 'firefox', 'webkit', 'ffmpeg'],
     files: PLAYWRIGHT_CORE_FILES,
     name: '@playwright/test',

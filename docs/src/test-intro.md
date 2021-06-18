@@ -1,9 +1,9 @@
 ---
 id: test-intro
-title: "Introduction"
+title: "Getting Started"
 ---
 
-Playwright Test Runner was created specifically to accommodate the needs of the end-to-end testing. It does everything you would expect from the regular test runner, and more. Playwright test allows to:
+Playwright Test was created specifically to accommodate the needs of the end-to-end testing. It does everything you would expect from the regular test runner, and more. Playwright test allows to:
 
 - Run tests across all browsers.
 - Execute tests in parallel.
@@ -13,30 +13,20 @@ Playwright Test Runner was created specifically to accommodate the needs of the 
 
 <br/>
 
+### Contents
 <!-- TOC -->
 
 <br/>
 
 ## Installation
 
-Playwright has its own test runner for end-to-end tests, we call it Playwright Test.
-
 ```bash
 npm i -D @playwright/test
 ```
 
-:::note
-Playwright Test is self-contained, it does not need Playwright to be installed.
-If you are an existing Playwright user, make sure that you either uninstall
-Playwright or update Playwright before installing Playwright Test:
+Playwright Test is self-contained solution, it does not need Playwright [library](./library.md) to be installed. If you are an existing Playwright library user, make sure that you either uninstall it or update it prior to installing Playwright Test.
 
-```
-npm i -D playwright @playwright/test
-```
-:::
-
-
-Unlike Playwright, Playwright Test does not bundle browsers by default, so you need to install them explicitly:
+Unlike Playwright [library](./library.md), Playwright Test does not download browsers by default, so you need to install them explicitly:
 
 ```bash
 npx playwright install
