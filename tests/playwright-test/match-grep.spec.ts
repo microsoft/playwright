@@ -96,3 +96,9 @@ test('should grep by project name', async ({ runInlineTest }) => {
   expect(result.failed).toBe(0);
   expect(result.exitCode).toBe(0);
 });
+
+test('should grep invert test name', async ({ runInlineTest }) => {
+  const result = await runInlineTest(files, { 'grep-invert': 'BB' });
+  expect(result.passed).toBe(6);
+  expect(result.exitCode).toBe(0);
+});

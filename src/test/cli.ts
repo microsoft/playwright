@@ -44,6 +44,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
   command.option('--forbid-only', `Fail if test.only is called (default: false)`);
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
+  command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
   command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
@@ -147,6 +148,7 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
     forbidOnly: options.forbidOnly ? true : undefined,
     globalTimeout: isDebuggerAttached ? 0 : (options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined),
     grep: options.grep ? forceRegExp(options.grep) : undefined,
+    grepInvert: options.grepInvert ? forceRegExp(options.grepInvert) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
     outputDir: options.output ? path.resolve(process.cwd(), options.output) : undefined,
     quiet: options.quiet ? options.quiet : undefined,
