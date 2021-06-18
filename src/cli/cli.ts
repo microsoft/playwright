@@ -343,8 +343,8 @@ async function launchContext(options: Options, headless: boolean, executablePath
     const proxyUrl = new URL(options.proxyServer);
     launchOptions.proxy = {
       server: proxyUrl.origin,
-      username: proxyUrl.username,
-      password: proxyUrl.password
+      ...(proxyUrl.username && {username: proxyUrl.username}),
+      ...(proxyUrl.password && {password: proxyUrl.password})
     };
   }
 
