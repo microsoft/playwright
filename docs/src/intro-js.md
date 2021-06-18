@@ -1,9 +1,9 @@
 ---
 id: intro
-title: "Getting Started"
+title: "Playwright Test"
 ---
 
-Playwright can either be used as a part of the [Playwright Test](./intro.md), or as a [Playwright Library](./library.md).
+Playwright can either be used as a part of the Playwright Test, or as a [Playwright Library](./library.md). If you intend to use Playwright for testing, read on.
 
 Playwright Test was created specifically to accommodate the needs of the end-to-end testing. It does everything you would expect from the regular test runner, and more. Playwright test allows to:
 
@@ -28,18 +28,7 @@ Playwright has its own test runner for end-to-end tests, we call it Playwright T
 npm i -D @playwright/test
 ```
 
-:::note
-Playwright Test is self-contained, it does not need Playwright to be installed.
-If you are an existing Playwright user, make sure that you either uninstall
-Playwright or update Playwright before installing Playwright Test:
-
-```
-npm i -D playwright @playwright/test
-```
-:::
-
-
-Unlike Playwright, Playwright Test does not bundle browsers by default, so you need to install them explicitly:
+Unlike Playwright Library, Playwright Test does not bundle browsers by default, so you need to install them explicitly:
 
 ```bash
 npx playwright install
