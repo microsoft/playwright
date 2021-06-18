@@ -296,8 +296,6 @@ type Options = {
   lang?: string;
   loadStorage?: string;
   proxyServer?: string;
-  proxyUsername?: string;
-  proxyPassword?: string;
   saveStorage?: string;
   timeout: string;
   timezone?: string;
@@ -342,10 +340,11 @@ async function launchContext(options: Options, headless: boolean, executablePath
   // Proxy
 
   if (options.proxyServer) {
+    const proxyUrl = new URL(options.proxyServer);
     launchOptions.proxy = {
-      server: options.proxyServer,
-      ...(options.proxyUsername && {username: options.proxyUsername}),
-      ...(options.proxyPassword && {password: options.proxyPassword}),
+      server: proxyUrl.origin,
+      username: proxyUrl.username,
+      password: proxyUrl.password
     };
   }
 
@@ -574,8 +573,6 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
       .option('--lang <language>', 'specify language / locale, for example "en-GB"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
-      .option('--proxy-username <proxy>', 'proxy user information')
-      .option('--proxy-password <proxy>', 'proxy password information')
       .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
