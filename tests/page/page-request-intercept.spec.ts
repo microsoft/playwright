@@ -121,14 +121,14 @@ it('should give access to the intercepted response body', async ({page, server, 
 
   let routeCallback;
   const routePromise = new Promise<Route>(f => routeCallback = f);
-  await page.route('**/title.html', routeCallback);
+  await page.route('**/simple.json', routeCallback);
 
-  const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/title.html').catch(console.log);
+  const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/simple.json').catch(console.log);
 
   const route = await routePromise;
   const response = await route.intercept();
 
-  expect((await response.text())).toBe('<title>Woof-Woof</title>\n');
+  expect((await response.text())).toBe('{"foo": "bar"}\n');
 
   await Promise.all([route.fulfill(), evalPromise]);
 });
