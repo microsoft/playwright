@@ -122,7 +122,6 @@ it('should give access to the intercepted response', async ({page, server, brows
 
 it('should give access to the intercepted response body', async ({page, server, browserName}) => {
   it.fixme(browserName === 'firefox');
-  it.fixme(browserName === 'webkit');
 
   await page.goto(server.EMPTY_PAGE);
 

@@ -72,8 +72,8 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     // Empty buffer will result in the response being used.
     if (forFulfill)
       return Buffer.from('');
-    const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
-    return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+    const response = await this._session.send('Network.getInterceptedResponseBody', { requestId: this._requestId });
+    return Buffer.from(response.body, 'base64');
   }
 
   async abort(errorCode: string) {
