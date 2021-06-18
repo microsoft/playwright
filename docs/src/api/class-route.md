@@ -220,6 +220,31 @@ Optional response body as raw bytes.
 File path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it
 is resolved relative to the current working directory.
 
+## async method: Route.intercept
+- returns: <[Response]>
+
+Continues route's request with optional overrides and intercepts response.
+
+### option: Route.intercept.url
+- `url` <[string]>
+
+If set changes the request URL. New URL must have same protocol as original one.
+
+### option: Route.intercept.method
+- `method` <[string]>
+
+If set changes the request method (e.g. GET or POST)
+
+### option: Route.intercept.postData
+- `postData` <[string]|[Buffer]>
+
+If set changes the post data of request
+
+### option: Route.intercept.headers
+- `headers` <[Object]<[string], [string]>>
+
+If set changes the request HTTP headers. Header values will be converted to a string.
+
 ## method: Route.request
 - returns: <[Request]>
 

@@ -150,6 +150,16 @@ export type SerializedError = {
   value?: SerializedValue,
 };
 
+export type InterceptedResponse = {
+  request: RequestChannel,
+  status: number,
+  statusText: string,
+  headers: {
+    name: string,
+    value: string,
+  }[],
+};
+
 // ----------- Playwright -----------
 export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
@@ -2307,6 +2317,7 @@ export interface RouteChannel extends Channel {
   abort(params: RouteAbortParams, metadata?: Metadata): Promise<RouteAbortResult>;
   continue(params: RouteContinueParams, metadata?: Metadata): Promise<RouteContinueResult>;
   fulfill(params: RouteFulfillParams, metadata?: Metadata): Promise<RouteFulfillResult>;
+  responseBody(params?: RouteResponseBodyParams, metadata?: Metadata): Promise<RouteResponseBodyResult>;
 }
 export type RouteAbortParams = {
   errorCode?: string,
@@ -2320,14 +2331,18 @@ export type RouteContinueParams = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
+  interceptResponse?: boolean,
 };
 export type RouteContinueOptions = {
   url?: string,
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
+  interceptResponse?: boolean,
 };
-export type RouteContinueResult = void;
+export type RouteContinueResult = {
+  response?: InterceptedResponse,
+};
 export type RouteFulfillParams = {
   status?: number,
   headers?: NameValue[],
@@ -2341,6 +2356,11 @@ export type RouteFulfillOptions = {
   isBase64?: boolean,
 };
 export type RouteFulfillResult = void;
+export type RouteResponseBodyParams = {};
+export type RouteResponseBodyOptions = {};
+export type RouteResponseBodyResult = {
+  binary: Binary,
+};
 
 export type ResourceTiming = {
   startTime: number,

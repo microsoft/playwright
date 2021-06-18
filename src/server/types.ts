@@ -193,6 +193,15 @@ export type NormalizedContinueOverrides = {
   method?: string,
   headers?: HeadersArray,
   postData?: Buffer,
+  interceptResponse?: boolean,
+};
+
+export type NormalizedResponseContinueOverrides = {
+  status?: number,
+  statusText?: string,
+  headers?: HeadersArray,
+  body?: string,
+  isBase64?: boolean,
 };
 
 export type NetworkCookie = {

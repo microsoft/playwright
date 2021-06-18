@@ -147,6 +147,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
+  scheme.InterceptedResponse = tObject({
+    request: tChannel('Request'),
+    status: tNumber,
+    statusText: tString,
+    headers: tArray(tObject({
+      name: tString,
+      value: tString,
+    })),
+  });
   scheme.PlaywrightSetForwardedPortsParams = tObject({
     ports: tArray(tNumber),
   });
@@ -924,6 +933,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     method: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
+    interceptResponse: tOptional(tBoolean),
   });
   scheme.RouteFulfillParams = tObject({
     status: tOptional(tNumber),
@@ -931,6 +941,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
   });
+  scheme.RouteResponseBodyParams = tOptional(tObject({}));
   scheme.ResourceTiming = tObject({
     startTime: tNumber,
     domainLookupStart: tNumber,

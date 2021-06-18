@@ -26,6 +26,7 @@ import { Events } from './events';
 import { Page } from './page';
 import { Waiter } from './waiter';
 import * as api from '../../types/types';
+import { Serializable } from '../../types/structs';
 
 export type NetworkCookie = {
   name: string,
@@ -170,6 +171,80 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   }
 }
 
+export class InterceptedResponse implements api.Response {
+  private readonly _route: Route;
+  private readonly _initializer: channels.InterceptedResponse;
+  private readonly _request: Request;
+  private readonly _headers: Headers;
+
+  constructor(route: Route, initializer: channels.InterceptedResponse) {
+    this._route = route;
+    this._initializer = initializer;
+    this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
+    this._request = Request.from(initializer.request);
+  }
+
+  async securityDetails(): Promise<{ issuer?: string | undefined; protocol?: string | undefined; subjectName?: string | undefined; validFrom?: number | undefined; validTo?: number | undefined; } | null> {
+    return null;
+  }
+
+  async serverAddr(): Promise<{ ipAddress: string; port: number; } | null> {
+    return null;
+  }
+
+  async finished(): Promise<Error | null> {
+    const response = await this._request.response();
+    if (!response)
+      return null;
+    return await response.finished();
+  }
+
+  frame(): api.Frame {
+    return this._request.frame();
+  }
+
+  ok(): boolean {
+    return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
+  }
+
+  url(): string {
+    return this._request.url();
+  }
+
+  status(): number {
+    return this._initializer.status;
+  }
+
+  statusText(): string {
+    return this._initializer.statusText;
+  }
+
+  headers(): Headers {
+    return { ...this._headers };
+  }
+
+  async body(): Promise<Buffer> {
+    return this._route._responseBody();
+  }
+
+  async text(): Promise<string> {
+    const content = await this.body();
+    return content.toString('utf8');
+  }
+
+  async json(): Promise<object> {
+    const content = await this.text();
+    return JSON.parse(content);
+  }
+
+  request(): Request {
+    return this._request;
+  }
+}
+
+type InterceptResponse = true;
+type NotInterceptResponse = false;
+
 export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteInitializer> implements api.Route {
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
@@ -228,15 +303,35 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
+  async intercept(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}) : Promise<api.Response> {
+    return await this._continue('route.intercept', options, true);
+  }
+
   async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
-    return this._wrapApiCall('route.continue', async (channel: channels.RouteChannel) => {
+    await this._continue('route.continue', options, false);
+  }
+
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: NotInterceptResponse) : Promise<null>;
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: InterceptResponse) : Promise<api.Response>;
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: boolean) : Promise<null|api.Response> {
+    return await this._wrapApiCall(apiName, async (channel: channels.RouteChannel) => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
-      await channel.continue({
+      const result = await channel.continue({
         url: options.url,
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
         postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+        interceptResponse,
       });
+      if (result.response)
+        return new InterceptedResponse(this, result.response);
+      return null;
+    });
+  }
+
+  async _responseBody(): Promise<Buffer> {
+    return this._wrapApiCall('response.body', async (channel: channels.RouteChannel) => {
+      return Buffer.from((await channel.responseBody()).binary, 'base64');
     });
   }
 }

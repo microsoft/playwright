@@ -70,6 +70,7 @@ export class WKPage implements PageDelegate {
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
 
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
+  _needsResponseInterception: boolean = false;
   // Holds window features for the next popup being opened via window.open,
   // until the popup page proxy arrives.
   private _nextWindowOpenPopupFeatures?: string[];
@@ -176,6 +177,8 @@ export class WKPage implements PageDelegate {
     if (this._page._needsRequestInterception()) {
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
       promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
+      if (this._needsResponseInterception)
+        promises.push(session.send('Network.addInterception', { url: '.*', stage: 'response', isRegex: true }));
     }
 
     const contextOptions = this._browserContext._options;
@@ -367,7 +370,8 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       helper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
-      helper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(e)),
+      helper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(this._session, e)),
+      helper.addEventListener(this._session, 'Network.responseIntercepted', e => this._onResponseIntercepted(this._session, e)),
       helper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
       helper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       helper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
@@ -380,7 +384,6 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page._frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
   }
-
   private async _updateState<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
@@ -656,12 +659,22 @@ export class WKPage implements PageDelegate {
     await Promise.all(promises);
   }
 
+  async _ensureResponseInterceptionEnabled() {
+    if (this._needsResponseInterception)
+      return;
+    this._needsResponseInterception = true;
+    await this.updateRequestInterception();
+  }
+
   async updateRequestInterception(): Promise<void> {
     const enabled = this._page._needsRequestInterception();
-    await Promise.all([
+    const promises = [
       this._updateState('Network.setInterceptionEnabled', { enabled }),
-      this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true })
-    ]);
+      this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
+    ];
+    if (this._needsResponseInterception)
+      this._updateState('Network.addInterception', { url: '.*', stage: 'response', isRegex: true })
+    await Promise.all(promises);
   }
 
   async updateOffline() {
@@ -962,19 +975,28 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
+  _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (!request) {
-      this._session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
+      session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
       return;
     }
     if (!request._allowInterception) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
-      this._session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
+      session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
     } else {
       request._interceptedCallback();
     }
+  }
+
+  _onResponseIntercepted(session: WKSession, event: Protocol.Network.responseInterceptedPayload) {
+    const request = this._requestIdToRequest.get(event.requestId);
+    if (!request || !request._responseInterceptedCallback) {
+      session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
+      return;
+    }
+    request._responseInterceptedCallback(event.response);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {

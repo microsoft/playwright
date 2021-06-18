@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Request, Response, Route, WebSocket } from '../server/network';
+import { InterceptedResponse, Request, Response, Route, WebSocket } from '../server/network';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -97,10 +97,6 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
     return result || new RouteDispatcher(scope, route);
   }
 
-  static fromNullable(scope: DispatcherScope, route: Route | null): RouteDispatcher | undefined {
-    return route ? RouteDispatcher.from(scope, route) : undefined;
-  }
-
   private constructor(scope: DispatcherScope, route: Route) {
     super(scope, route, 'Route', {
       // Context route can point to a non-reported request.
@@ -108,13 +104,28 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
     });
   }
 
-  async continue(params: channels.RouteContinueParams): Promise<void> {
-    await this._object.continue({
+  async responseBody(params?: channels.RouteResponseBodyParams, metadata?: channels.Metadata): Promise<channels.RouteResponseBodyResult> {
+    return { binary: (await this._object.responseBody()).toString('base64') };
+  }
+
+  async continue(params: channels.RouteContinueParams, metadata?: channels.Metadata): Promise<channels.RouteContinueResult> {
+    const response = await this._object.continue({
       url: params.url,
       method: params.method,
       headers: params.headers,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+      interceptResponse: params.interceptResponse
     });
+    const result: channels.RouteContinueResult = {};
+    if (response) {
+      result.response = {
+        request: RequestDispatcher.from(this._scope, response.request()),
+        status: response.status(),
+        statusText: response.statusText(),
+        headers: response.headers(),
+      };
+    }
+    return result;
   }
 
   async fulfill(params: channels.RouteFulfillParams): Promise<void> {

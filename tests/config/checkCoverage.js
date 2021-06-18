@@ -52,6 +52,10 @@ if (browserName !== 'chromium') {
 if (browserName === 'webkit')
   api.delete('browserContext.clearPermissions');
 
+// Response interception is not implemented in Firefox yet.
+if (browserName === 'firefox')
+  api.delete('route.intercept');
+
 const coverageDir = path.join(__dirname, '..', 'coverage-report');
 
 const coveredMethods = new Set();
