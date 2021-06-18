@@ -868,7 +868,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    */
-  extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
+  extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>, options?: { tag?: string|string[] }): TestType<TestArgs & T, WorkerArgs & W>;
 }
 
 type KeyValue = { [key: string]: any };

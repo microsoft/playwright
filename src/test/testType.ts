@@ -33,9 +33,11 @@ export class DeclaredFixtures {
 export class TestTypeImpl {
   readonly fixtures: (FixturesWithLocation | DeclaredFixtures)[];
   readonly test: TestType<any, any>;
+  readonly tags: ReadonlyArray<string>;
 
-  constructor(fixtures: (FixturesWithLocation | DeclaredFixtures)[]) {
+  constructor(fixtures: (FixturesWithLocation | DeclaredFixtures)[], tags: ReadonlyArray<string>) {
     this.fixtures = fixtures;
+    this.tags = tags;
 
     const test: any = this._spec.bind(this, 'default');
     test.expect = expect;
@@ -141,21 +143,22 @@ export class TestTypeImpl {
     suite._fixtureOverrides = { ...suite._fixtureOverrides, ...fixtures };
   }
 
-  private _extend(fixtures: Fixtures) {
+  private _extend(fixtures: Fixtures, options: {tag?: string|string[]} = {}) {
     const fixturesWithLocation = {
       fixtures,
       location: callLocation(),
     };
-    return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
+    const tags = options.tag ? (typeof options.tag === 'string' ? [options.tag] : options.tag) : [];
+    return new TestTypeImpl([...this.fixtures, fixturesWithLocation], tags).test;
   }
 
   private _declare() {
     const declared = new DeclaredFixtures();
     declared.location = callLocation();
-    const child = new TestTypeImpl([...this.fixtures, declared]);
+    const child = new TestTypeImpl([...this.fixtures, declared], this.tags);
     declared.testType = child;
     return child.test;
   }
 }
 
-export const rootTestType = new TestTypeImpl([]);
+export const rootTestType = new TestTypeImpl([], []);

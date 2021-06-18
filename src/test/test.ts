@@ -26,9 +26,15 @@ class Base {
   parent?: Suite;
 
   _only = false;
+  _tags: Set<string>;
 
   constructor(title: string) {
-    this.title = title;
+    this.title = title.split(' ').filter(x => !x.startsWith('#')).join(' ');
+    this._tags = tagsFromTitle(title);
+  }
+
+  hasTag(tag: string): boolean {
+    return this._tags.has(tag) || (!!this.parent && this.parent.hasTag(tag));
   }
 
   titlePath(): string[] {
@@ -40,6 +46,9 @@ class Base {
   }
 }
 
+function tagsFromTitle(title: string): Set<string> {
+  return new Set(title.split(' ').filter(x => x.startsWith('#')).map(x => x.substring(1)))
+}
 export class Spec extends Base implements reporterTypes.Spec {
   suite!: Suite;
   fn: Function;
@@ -52,6 +61,8 @@ export class Spec extends Base implements reporterTypes.Spec {
     this.fn = fn;
     this._ordinalInFile = ordinalInFile;
     this._testType = testType;
+    for (const tag of testType.tags)
+      this._tags.add(tag);
   }
 
   ok(): boolean {

@@ -21,7 +21,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher } from './dispatcher';
 import { createMatcher, monotonicTime, raceAgainstDeadline } from './util';
-import { Suite } from './test';
+import { Spec, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from './reporter';
 import { Multiplexer } from './reporters/multiplexer';
@@ -80,11 +80,11 @@ export class Runner {
     this._loader.loadEmptyConfig(rootDir);
   }
 
-  async run(list: boolean, testFileReFilters: RegExp[], projectName?: string): Promise<RunResult> {
+  async run(list: boolean, testFileReFilters: RegExp[], tags: string[], projectName?: string): Promise<RunResult> {
     this._reporter = this._createReporter();
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
-    const { result, timedOut } = await raceAgainstDeadline(this._run(list, testFileReFilters, projectName), globalDeadline);
+    const { result, timedOut } = await raceAgainstDeadline(this._run(list, testFileReFilters, tags, projectName), globalDeadline);
     if (timedOut) {
       if (!this._didBegin)
         this._reporter.onBegin(config, new Suite(''));
@@ -118,7 +118,7 @@ export class Runner {
       await new Promise(f => process.stderr.on('drain', f));
   }
 
-  async _run(list: boolean, testFileReFilters: RegExp[], projectName?: string): Promise<RunResult> {
+  async _run(list: boolean, testFileReFilters: RegExp[], tags: string[], projectName?: string): Promise<RunResult> {
     const testFileFilter = testFileReFilters.length ? createMatcher(testFileReFilters) : () => true;
     const config = this._loader.fullConfig();
 
@@ -159,6 +159,9 @@ export class Runner {
       const rootSuite = new Suite('');
       for (const fileSuite of this._loader.fileSuites().values())
         rootSuite._addSuite(fileSuite);
+
+      filterTags(rootSuite, tags);
+
       if (config.forbidOnly && rootSuite._hasOnly())
         return 'forbid-only';
       filterOnly(rootSuite);
@@ -248,6 +251,23 @@ function filterOnly(suite: Suite) {
     return true;
   }
   return false;
+}
+
+function filterTags(suite: Suite, tags: string[]): boolean {
+  function tagsMatch(a: string[], b: Spec|Suite) {
+    for (const tag of a) {
+      if (!b.hasTag(tag))
+        return false;
+    }
+    return true;
+  }
+  const taggedSuites = suite.suites.filter(child => tagsMatch(tags, child) || filterTags(child, tags));
+  const taggedTests = suite.specs.filter(spec => tagsMatch(tags, spec));
+  const taggedEntries = new Set([...taggedSuites, ...taggedTests]);
+  suite.suites = taggedSuites;
+  suite.specs = taggedTests;
+  suite._entries = suite._entries.filter(e => taggedEntries.has(e)); // Preserve the order.
+  return !!taggedEntries.size;
 }
 
 async function collectFiles(testDir: string): Promise<string[]> {

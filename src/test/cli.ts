@@ -55,6 +55,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name>', `Only run tests from the specified project (default: run all projects)`);
+  command.option('-t, --tag <tag...>', `Only run tests with the specified tag`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
   command.option('-x', `Stop after the first failure`);
@@ -126,8 +127,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     // If not, scan the world.
     runner.loadEmptyConfig(process.cwd());
   }
-
-  const result = await runner.run(!!opts.list, args.map(forceRegExp), opts.project || undefined);
+  const result = await runner.run(!!opts.list, args.map(forceRegExp), opts.tag || [], opts.project || undefined);
   if (result === 'sigint')
     process.exit(130);
   process.exit(result === 'passed' ? 0 : 1);
