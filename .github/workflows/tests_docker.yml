@@ -1,0 +1,67 @@
+name: "Docker tests"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+    paths:
+      - '.github/workflows/tests_docker.yml'
+      - '**/Dockerfile'
+      - 'browsers.json'
+      - 'package.json'
+  pull_request:
+    paths:
+      - '.github/workflows/tests_docker.yml'
+      - '**/Dockerfile'
+      - 'browsers.json'
+      - 'package.json'
+    branches:
+      - master
+      - release-*
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+  FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
+
+jobs:
+  test_linux_docker:
+    name: "Docker Ubuntu-${{ matrix.tag }}-${{ matrix.user }} Tests"
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: [bionic, focal]
+        user: [pwuser, root]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 14
+    - run: npm ci
+    - run: npm run build
+    - name: Build
+      run: bash utils/docker/build.sh ${{ matrix.tag }} playwright:localbuild-${{ matrix.tag }}
+    - name: Clean & Prepare for Docker
+      run: |
+        npm run clean
+        rm -rf node_modules/
+        # The whole folder has to be world-writable to avoid UID conflicts between this mount and docker.
+        chmod -R 777 .
+    - name: Launch container
+      run: docker run --rm -v $(pwd):/tmp/playwright --name playwright-docker-${{matrix.tag}}-test -d -t playwright:localbuild-${{ matrix.tag }} /bin/bash
+    - name: Run "npm ci" inside docker
+      run: docker exec --workdir /tmp/playwright/ --user=${{ matrix.user }} playwright-docker-${{matrix.tag}}-test  npm ci
+    - name: Run "npm run build" inside docker
+      run: docker exec --workdir /tmp/playwright/ --user=${{ matrix.user }} playwright-docker-${{matrix.tag}}-test npm run build
+    - name: Run "npm run test" inside docker
+      run: docker exec --workdir /tmp/playwright/ --user=${{ matrix.user }} -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{matrix.tag}}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: docker-ubuntu-${{ matrix.tag }}-${{ matrix.user }}-test-results
+        path: test-results
+
