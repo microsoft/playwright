@@ -25,6 +25,9 @@ Page object models wrap over a Playwright [Page].
 ```js
 // models/Search.js
 class SearchPage {
+  /**
+   * @param {import('playwright').Page} page 
+   */
   constructor(page) {
     this.page = page;
   }

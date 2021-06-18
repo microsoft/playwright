@@ -34,7 +34,10 @@ You can specify any options either locally in a test file, or globally in the co
 Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the `use` section.
 
 ```js js-flavor=js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   use: {
     // Browser options
     headless: false,
@@ -50,6 +53,8 @@ module.exports = {
     video: 'on-first-retry',
   },
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -162,7 +167,10 @@ You can specify these options in the configuration file.
 
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   // Look for test files in the "tests" directory, relative to this configuration file
   testDir: 'tests',
 
@@ -182,6 +190,8 @@ module.exports = {
     // Configure browser and context here
   },
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -217,7 +227,10 @@ To specify different options per browser, for example command line arguments for
 
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   // Put any shared options on the top level.
   use: {
     headless: true,
@@ -246,6 +259,8 @@ module.exports = {
     },
   ],
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -324,9 +339,11 @@ Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" em
 
 ```js js-flavor=js
 // playwright.config.js
+// @ts-check
 const { devices } = require('playwright');
 
-module.exports = {
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   projects: [
     // "Pixel 4" tests use Chromium browser.
     {
@@ -347,6 +364,8 @@ module.exports = {
     },
   ],
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts

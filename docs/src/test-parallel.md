@@ -33,10 +33,15 @@ You can control the maximum number of parallel worker processes via [command lin
 - In the configuration file
   ```js js-flavor=js
   // playwright.config.js
-  module.exports = {
+  // @ts-check
+
+  /** @type {import('@playwright/test').PlaywrightTestConfig} */
+  const config = {
     // Limit the number of workers on CI, use default locally
     workers: process.env.CI ? 2 : undefined,
   };
+
+  module.exports = config;
   ```
 
   ```js js-flavor=ts

@@ -367,9 +367,11 @@ Create `playwright.config.ts` (or `playwright.config.js`) to configure your test
 
 ```js js-flavor=js
 // playwright.config.js
+// @ts-check
 const { devices } = require('@playwright/test');
 
-module.exports = {
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   projects: [
     {
       name: 'Desktop Chromium',
@@ -404,6 +406,8 @@ module.exports = {
     },
   ],
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts

@@ -11,9 +11,14 @@ npx playwright test --retries=3
 
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   retries: 3,
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
