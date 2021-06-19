@@ -150,6 +150,11 @@ interface ConfigBase {
   grep?: RegExp | RegExp[];
 
   /**
+   * Filter out tests with a title matching one of the patterns.
+   */
+  grepInvert?: RegExp | RegExp[];
+
+   /**
    * The maximum number of test failures for this test run. After reaching this number,
    * testing will stop and exit with an error. Setting to zero (default) disables this behavior.
    */
@@ -223,6 +228,7 @@ export interface FullConfig {
   globalTeardown: string | null;
   globalTimeout: number;
   grep: RegExp | RegExp[];
+  grepInvert: RegExp | RegExp[] | null;
   maxFailures: number;
   preserveOutput: PreserveOutput;
   projects: FullProject[];

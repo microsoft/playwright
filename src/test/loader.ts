@@ -96,6 +96,7 @@ export class Loader {
     this._fullConfig.globalTeardown = takeFirst(this._configOverrides.globalTeardown, this._config.globalTeardown, baseFullConfig.globalTeardown);
     this._fullConfig.globalTimeout = takeFirst(this._configOverrides.globalTimeout, this._configOverrides.globalTimeout, this._config.globalTimeout, baseFullConfig.globalTimeout);
     this._fullConfig.grep = takeFirst(this._configOverrides.grep, this._config.grep, baseFullConfig.grep);
+    this._fullConfig.grepInvert = takeFirst(this._configOverrides.grepInvert, this._config.grepInvert, baseFullConfig.grepInvert);
     this._fullConfig.maxFailures = takeFirst(this._configOverrides.maxFailures, this._config.maxFailures, baseFullConfig.maxFailures);
     this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(this._configOverrides.preserveOutput, this._config.preserveOutput, baseFullConfig.preserveOutput);
     this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter), toReporters(this._config.reporter), baseFullConfig.reporter);
@@ -262,6 +263,17 @@ function validateConfig(config: Config) {
     }
   }
 
+  if ('grepInvert' in config && config.grepInvert !== undefined) {
+    if (Array.isArray(config.grepInvert)) {
+      config.grepInvert.forEach((item, index) => {
+        if (!isRegExp(item))
+          throw new Error(`config.grepInvert[${index}] must be a RegExp`);
+      });
+    } else if (!isRegExp(config.grepInvert)) {
+      throw new Error(`config.grep must be a RegExp`);
+    }
+  }
+
   if ('maxFailures' in config && config.maxFailures !== undefined) {
     if (typeof config.maxFailures !== 'number' || config.maxFailures < 0)
       throw new Error(`config.maxFailures must be a non-negative number`);
@@ -402,6 +414,7 @@ const baseFullConfig: FullConfig = {
   globalTeardown: null,
   globalTimeout: 0,
   grep: /.*/,
+  grepInvert: null,
   maxFailures: 0,
   preserveOutput: 'always',
   projects: [],

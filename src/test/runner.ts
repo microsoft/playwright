@@ -169,13 +169,17 @@ export class Runner {
 
       const outputDirs = new Set<string>();
       const grepMatcher = createMatcher(config.grep);
+      const grepInvertMatcher = config.grepInvert ? createMatcher(config.grepInvert) : null;
       for (const project of projects) {
         for (const file of files.get(project)!) {
           const fileSuite = fileSuites.get(file);
           if (!fileSuite)
             continue;
           for (const spec of fileSuite._allSpecs()) {
-            if (grepMatcher(spec._testFullTitle(project.config.name)))
+            const fullTitle = spec._testFullTitle(project.config.name);
+            if (grepInvertMatcher?.(fullTitle))
+              continue;
+            if (grepMatcher(fullTitle))
               project.generateTests(spec);
           }
         }
