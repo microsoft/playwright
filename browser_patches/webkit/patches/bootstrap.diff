@@ -3572,7 +3572,7 @@ index 3386cb879f1178c1b9635775c9a0e864f5b94c52..d2350182f5f061855e8ca172779ad60e
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 767046d37bc06b97b0de7340e7098bbc1a835121..92482b5c4a6610183c2ab5239a16f54c3a3523db 100644
+index 767046d37bc06b97b0de7340e7098bbc1a835121..633d26357df7ca26b1ded631833e8ea396a8e045 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -3693,7 +3693,7 @@ index 767046d37bc06b97b0de7340e7098bbc1a835121..92482b5c4a6610183c2ab5239a16f54c
 +    interceptedResponse->didFinishLoading();
 +}
 +
-+void InspectorNetworkAgent::interceptDidFailResourceLoad(unsigned long identifier, const ResourceError& error)
++void InspectorNetworkAgent::interceptDidFailResourceLoad(unsigned long identifier, const ResourceError&)
 +{
 +    interceptDidFinishResourceLoad(identifier);
 +}
