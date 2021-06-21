@@ -53,6 +53,7 @@ module.exports = {
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
+  reporter: !process.env.CI
     // Default 'list' reporter for the terminal
     ? 'list'
     // Two reporters for CI:
