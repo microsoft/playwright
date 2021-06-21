@@ -25,7 +25,7 @@
     "clean": "rimraf lib",
     "prepare": "node install-from-github.js",
     "build": "node utils/build/build.js",
-    "watch": "node utils/build/build.js --watch",
+    "watch": "node utils/build/build.js --watch --lint",
     "test-types": "node utils/generate_types/ && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && tsc -p ./tests/",
     "roll": "node utils/roll_browser.js",
     "check-deps": "node utils/check_deps.js",

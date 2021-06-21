@@ -24,6 +24,7 @@ const onChanges = [];
 const copyFiles = [];
 
 const watchMode = process.argv.slice(2).includes('--watch');
+const lintMode = process.argv.slice(2).includes('--lint');
 const ROOT = path.join(__dirname, '..', '..');
 
 function filePath(relative) {
@@ -105,7 +106,7 @@ for (const file of webPackFiles) {
   });
 }
 
-// Run babel.
+// Run Babel.
 steps.push({
   command: 'npx',
   args: ['babel', ...(watchMode ? ['-w'] : []), '-s', '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
@@ -158,5 +159,14 @@ copyFiles.push({
   from: 'src',
   to: 'lib',
 });
+
+if (lintMode) {
+  // Run TypeScript for type chekcing.
+  steps.push({
+    command: 'npx',
+    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', filePath('.')],
+    shell: true,
+  });
+}
 
 watchMode ? runWatch() : runBuild();
