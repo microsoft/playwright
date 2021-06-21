@@ -12,12 +12,16 @@ See [system requirements](#system-requirements).
 
 ### Pip
 
+[![PyPI version](https://badge.fury.io/py/playwright.svg)](https://pypi.python.org/pypi/playwright/)
+
 ```bash
 pip install playwright
 playwright install
 ```
 
 ### Conda
+
+[![Anaconda version](https://img.shields.io/conda/v/microsoft/playwright)](https://anaconda.org/Microsoft/playwright)
 
 ```bash
 conda config --add channels conda-forge
@@ -88,6 +92,54 @@ Command Line Interface [CLI](./cli.md) can be used to record user interactions a
 ```bash
 playwright codegen wikipedia.org
 ```
+
+## With Pytest
+
+See [here](./test-runners.md) for Pytest instructions and examples.
+
+## Interactive mode (REPL)
+
+Blocking REPL, as in CLI via Python directly:
+
+```bash
+python
+```
+
+```py
+>>> from playwright.sync_api import sync_playwright
+>>> playwright = sync_playwright().start()
+# Use playwright.chromium, playwright.firefox or playwright.webkit
+# Pass headless=False to launch() to see the browser UI
+>>> browser = playwright.chromium.launch()
+>>> page = browser.new_page()
+>>> page.goto("http://whatsmyuseragent.org/")
+>>> page.screenshot(path="example.png")
+>>> browser.close()
+>>> playwright.stop()
+```
+
+Async REPL such as `asyncio` REPL:
+
+```bash
+python -m asyncio
+```
+
+```py
+>>> from playwright.async_api import async_playwright
+>>> playwright = await async_playwright().start()
+>>> browser = await playwright.chromium.launch()
+>>> page = await browser.new_page()
+>>> await page.goto("http://whatsmyuseragent.org/")
+>>> await page.screenshot(path="example.png")
+>>> await browser.close()
+>>> await playwright.stop()
+```
+
+## Known issues
+
+### `time.sleep()` leads to outdated state
+
+You should use `page.wait_for_timeout(5000)` instead of `time.sleep(5)` and it is better to not wait for a timeout at all, but sometimes it is useful for debugging. In these cases, use our wait method instead of the `time` module. This is because we internally rely on asynchronous operations and when using `time.sleep(5)` they can't get processed correctly.
 
 ## System requirements
 
