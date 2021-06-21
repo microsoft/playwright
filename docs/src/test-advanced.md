@@ -64,7 +64,7 @@ const http = require('http');
 
 // Note how we mark the fixture as { scope: 'worker' }.
 // Also note that we pass empty {} first, since we do not declare any test fixtures.
-exports.test = base.test.extend<{}, { server: http.Server }>({
+exports.test = base.test.extend({
   server: [ async ({}, use, workerInfo) => {
     // Start the server.
     const server = http.createServer();
@@ -164,7 +164,7 @@ const base = require('@playwright/test');
 
 // Note how we mark the fixture as { auto: true }.
 // This way it is always instantiated, even if the test does not use it explicitly.
-exports.test = base.test.extend<{ saveLogs: void }>({
+exports.test = base.test.extend({
   saveLogs: [ async ({}, use, testInfo) => {
     const logs = [];
     debug.log = (...args) => logs.push(args.map(String).join(''));
@@ -249,9 +249,12 @@ Now add `globalSetup` option to the configuration file.
 
 ```js js-flavor=js
 // playwright.config.js
-module.export = {
+// @ts-check
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   globalSetup: require.resolve('./global-setup'),
 };
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -295,7 +298,7 @@ To make use of this feature, we will declare an "option fixture" for the backend
 const base = require('@playwright/test');
 const { startBackend } = require('./my-backend');
 
-exports.test = base.test.extend<{ version: string, backendUrl: string }>({
+exports.test = base.test.extend({
   // Default value for the version.
   version: '1.0',
 
@@ -364,7 +367,10 @@ test('test 2', async ({ version, page, backendUrl }) => {
 Now, we can run test in multiple configurations by using projects.
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   timeout: 20000,
   projects: [
     {
@@ -377,6 +383,8 @@ module.exports = {
     },
   ]
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -420,7 +428,7 @@ In this example we add a custom `toBeWithinRange` function in the configuration 
 const { expect } = require('@playwright/test');
 
 expect.extend({
-  toBeWithinRange(received: number, floor: number, ceiling: number) {
+  toBeWithinRange(received, floor, ceiling) {
     const pass = received >= floor && received <= ceiling;
     if (pass) {
       return {

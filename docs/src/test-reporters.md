@@ -18,9 +18,14 @@ For more control, you can specify reporters programmatically in the [configurati
 
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   reporter: 'line',
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -37,7 +42,10 @@ You can use different reporters locally and on CI.
 
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   reporter: !process.env.CI
     // Default 'list' reporter for the terminal
     ? 'list'
@@ -46,6 +54,8 @@ module.exports = {
     // - comprehensive json report
     : [ ['dot'], [ 'json', {  outputFile: 'test-results.json' }] ],
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -78,9 +88,14 @@ npx playwright test --reporter=list
 
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   reporter: 'list',
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -120,9 +135,14 @@ npx playwright test --reporter=line
 
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   reporter: 'line',
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -159,9 +179,14 @@ npx playwright test --reporter=dot
 
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   reporter: 'dot',
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -193,9 +218,14 @@ PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
 In configuration file, pass options directly:
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   reporter: [ ['json', { outputFile: 'results.json' }] ],
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts
@@ -220,9 +250,14 @@ PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,li
 In configuration file, pass options directly:
 ```js js-flavor=js
 // playwright.config.js
-module.exports = {
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
   reporter: [ ['junit', { outputFile: 'results.xml' }] ],
 };
+
+module.exports = config;
 ```
 
 ```js js-flavor=ts

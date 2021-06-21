@@ -10,6 +10,9 @@ We will create a `PlaywrightDevPage` helper class to encapsulate common operatio
 ```js js-flavor=js
 // playwright-dev-page.js
 exports.PlaywrightDevPage = class PlaywrightDevPage {
+  /**
+   * @param {import('playwright').Page} page 
+   */
   constructor(page) {
     this.page = page;
   }
