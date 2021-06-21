@@ -229,6 +229,9 @@ async function urlToWSEndpoint(endpointURL: string) {
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
   const json = await new Promise<string>((resolve, reject) => {
     http.get(httpURL, resp => {
+      if (resp.statusCode! < 200 || resp.statusCode! >= 400)
+        reject(new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
+        `This does not look like a DevTools server, try connecting via ws://.`));
       let data = '';
       resp.on('data', chunk => data += chunk);
       resp.on('end', () => resolve(data));

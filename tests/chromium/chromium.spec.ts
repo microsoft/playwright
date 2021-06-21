@@ -308,3 +308,26 @@ playwrightTest('should return valid browser from context.browser()', async ({ br
     await browserServer.close();
   }
 });
+
+test('should report an expected error when the endpointURL returns a non-expected status code', async ({ browserType, server }) => {
+  server.setRoute('/json/version/', (req, resp) => {
+    resp.statusCode = 404;
+    resp.end(JSON.stringify({
+      webSocketDebuggerUrl: 'dont-use-me',
+    }));
+  });
+  await expect(browserType.connectOverCDP({
+    endpointURL: server.PREFIX,
+  })).rejects.toThrowError(`browserType.connectOverCDP: Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`)
+});
+
+test('should report an expected error when the endpoint URL JSON webSocketDebuggerUrl is undefined', async ({ browserType, server }) => {
+  server.setRoute('/json/version/', (req, resp) => {
+    resp.end(JSON.stringify({
+      webSocketDebuggerUrl: undefined,
+    }));
+  });
+  await expect(browserType.connectOverCDP({
+    endpointURL: server.PREFIX,
+  })).rejects.toThrowError('browserType.connectOverCDP: Invalid URL');
+});
