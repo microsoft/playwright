@@ -90,7 +90,7 @@ export class ProjectImpl {
       test._repeatEachIndex = i;
       test._projectIndex = this.index;
       test._workerHash = `run${this.index}-${digest}-repeat${i}`;
-      test._id = `${spec._ordinalInFile}@${spec.file}#run${this.index}-repeat${i}`;
+      test._id = `${spec._ordinalInFile}@${spec._requireFile}#run${this.index}-repeat${i}`;
       spec.tests.push(test);
       tests.push(test);
     }

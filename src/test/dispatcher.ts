@@ -82,7 +82,7 @@ export class Dispatcher {
   _filesSortedByWorkerHash(): DispatcherEntry[] {
     const entriesByWorkerHashAndFile = new Map<string, Map<string, DispatcherEntry>>();
     for (const fileSuite of this._suite.suites) {
-      const file = fileSuite.file;
+      const file = fileSuite._requireFile;
       for (const spec of fileSuite._allSpecs()) {
         for (const test of spec.tests) {
           let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);

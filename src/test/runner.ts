@@ -165,7 +165,7 @@ export class Runner {
 
       const fileSuites = new Map<string, Suite>();
       for (const fileSuite of rootSuite.suites)
-        fileSuites.set(fileSuite.file, fileSuite);
+        fileSuites.set(fileSuite._requireFile, fileSuite);
 
       const outputDirs = new Set<string>();
       const grepMatcher = createMatcher(config.grep);
@@ -209,7 +209,7 @@ export class Runner {
       if (process.stdout.isTTY) {
         const workers = new Set();
         rootSuite.findTest(test => {
-          workers.add(test.spec.file + test._workerHash);
+          workers.add(test.spec._requireFile + test._workerHash);
         });
         console.log();
         const jobs = Math.min(config.workers, workers.size);
