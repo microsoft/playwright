@@ -117,6 +117,7 @@ export class Loader {
     const revertBabelRequire = installTransform();
     try {
       const suite = new Suite('');
+      suite._requireFile = file;
       suite.file = file;
       setCurrentlyLoadingFileSuite(suite);
       require(file);

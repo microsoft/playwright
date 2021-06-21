@@ -63,10 +63,11 @@ export class TestTypeImpl {
       throw errorWithCallLocation(`test() can only be called in a test file`);
     const location = callLocation(suite.file);
 
-    const ordinalInFile = countByFile.get(suite.file) || 0;
-    countByFile.set(location.file, ordinalInFile + 1);
+    const ordinalInFile = countByFile.get(suite._requireFile) || 0;
+    countByFile.set(suite._requireFile, ordinalInFile + 1);
 
     const spec = new Spec(title, fn, ordinalInFile, this);
+    spec._requireFile = suite._requireFile;
     spec.file = location.file;
     spec.line = location.line;
     spec.column = location.column;
@@ -83,7 +84,8 @@ export class TestTypeImpl {
     const location = callLocation(suite.file);
 
     const child = new Suite(title);
-    child.file = suite.file;
+    child._requireFile = suite._requireFile;
+    child.file = location.file;
     child.line = location.line;
     child.column = location.column;
     suite._addSuite(child);

@@ -26,6 +26,7 @@ class Base {
   parent?: Suite;
 
   _only = false;
+  _requireFile: string = '';
 
   constructor(title: string) {
     this.title = title;

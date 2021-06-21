@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAscii } from './playwright-test-fixtures';
 import * as path from 'path';
 
 test('should fail', async ({ runInlineTest }) => {
@@ -210,7 +210,7 @@ test('skip should take priority over fail', async ({ runInlineTest }) => {
   expect(failed).toBe(1);
 });
 
-test('should focus test from one runTests', async ({ runInlineTest }) => {
+test('should focus test from one project', async ({ runInlineTest }) => {
   const { exitCode, passed, skipped, failed } = await runInlineTest({
     'playwright.config.ts': `
       import * as path from 'path';
@@ -250,4 +250,104 @@ test('should work with default export', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(0);
+});
+
+test('should work with test wrapper', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.js': `
+      console.log('%%helper');
+      exports.wrap = (title, fn) => {
+        pwt.test(title, fn);
+      };
+    `,
+    'a.spec.js': `
+      console.log('%%a.spec');
+      const { wrap } = require('./helper');
+      wrap('test1', () => {
+        console.log('%%test1');
+      });
+      pwt.test.describe('suite1', () => {
+        wrap('suite1.test1', () => {
+          console.log('%%suite1.test1');
+        });
+      });
+    `,
+    'b.spec.js': `
+      console.log('%%b.spec');
+      const { wrap } = require('./helper');
+      wrap('test2', () => {
+        console.log('%%test2');
+      });
+      pwt.test.describe('suite2', () => {
+        wrap('suite2.test2', () => {
+          console.log('%%suite2.test2');
+        });
+      });
+    `,
+  }, { workers: 1, reporter: 'line' });
+  expect(result.passed).toBe(4);
+  expect(result.exitCode).toBe(0);
+  expect(stripAscii(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%a.spec',
+    '%%helper',
+    '%%b.spec',
+    '%%a.spec',
+    '%%helper',
+    '%%test1',
+    '%%suite1.test1',
+    '%%b.spec',
+    '%%test2',
+    '%%suite2.test2',
+  ]);
+});
+
+test('should work with test helper', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper-a.js': `
+      console.log('%%helper-a');
+      pwt.test('test1', () => {
+        console.log('%%test1');
+      });
+      pwt.test.describe('suite1', () => {
+        pwt.test('suite1.test1', () => {
+          console.log('%%suite1.test1');
+        });
+      });
+    `,
+    'a.spec.js': `
+      console.log('%%a.spec');
+      require('./helper-a');
+    `,
+    'helper-b.js': `
+      console.log('%%helper-b');
+      pwt.test('test1', () => {
+        console.log('%%test2');
+      });
+      pwt.test.describe('suite2', () => {
+        pwt.test('suite2.test2', () => {
+          console.log('%%suite2.test2');
+        });
+      });
+    `,
+    'b.spec.js': `
+      console.log('%%b.spec');
+      require('./helper-b');
+    `,
+  }, { workers: 1, reporter: 'line' });
+  expect(result.passed).toBe(4);
+  expect(result.exitCode).toBe(0);
+  expect(stripAscii(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%a.spec',
+    '%%helper-a',
+    '%%b.spec',
+    '%%helper-b',
+    '%%a.spec',
+    '%%helper-a',
+    '%%test1',
+    '%%suite1.test1',
+    '%%b.spec',
+    '%%helper-b',
+    '%%test2',
+    '%%suite2.test2',
+  ]);
 });
