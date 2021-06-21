@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Config } from './types';
 import { Runner } from './runner';
+import { stopProfiling, startProfiling } from './profiler';
 
 const defaultTimeout = 30000;
 const defaultReporter = process.env.CI ? 'dot' : 'list';
@@ -80,6 +81,8 @@ export function addTestCommand(program: commander.CommanderStatic) {
 }
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
+  await startProfiling();
+
   const browserOpt = opts.browser ? opts.browser.toLowerCase() : 'chromium';
   if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
     throw new Error(`Unsupported browser "${opts.browser}", must be one of "all", "chromium", "firefox" or "webkit"`);
@@ -129,6 +132,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   }
 
   const result = await runner.run(!!opts.list, args.map(forceRegExp), opts.project || undefined);
+  await stopProfiling(undefined);
+
   if (result === 'sigint')
     process.exit(130);
   process.exit(result === 'passed' ? 0 : 1);

@@ -17,6 +17,7 @@
 import { Console } from 'console';
 import * as util from 'util';
 import { RunPayload, TestOutputPayload, WorkerInitParams } from './ipc';
+import { startProfiling, stopProfiling } from './profiler';
 import { serializeError } from './util';
 import { WorkerRunner } from './workerRunner';
 
@@ -55,6 +56,7 @@ process.on('SIGINT',() => {});
 process.on('SIGTERM',() => {});
 
 let workerRunner: WorkerRunner;
+let workerIndex: number | undefined;
 
 process.on('unhandledRejection', (reason, promise) => {
   if (workerRunner)
@@ -69,6 +71,8 @@ process.on('uncaughtException', error => {
 process.on('message', async message => {
   if (message.method === 'init') {
     const initParams = message.params as WorkerInitParams;
+    workerIndex = initParams.workerIndex;
+    startProfiling();
     workerRunner = new WorkerRunner(initParams);
     for (const event of ['testBegin', 'testEnd', 'done'])
       workerRunner.on(event, sendMessageToParent.bind(null, event));
@@ -96,6 +100,8 @@ async function gracefullyCloseAndExit() {
       workerRunner.stop();
       await workerRunner.cleanup();
     }
+    if (workerIndex !== undefined)
+      await stopProfiling(workerIndex);
   } catch (e) {
     process.send!({ method: 'teardownError', params: { error: serializeError(e) } });
   }
