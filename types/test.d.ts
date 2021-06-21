@@ -1116,7 +1116,7 @@ export type PlaywrightTestOptions = {
    * Viewport used for all pages in the test. Takes priority over `contextOptions`.
    * @see BrowserContextOptions
    */
-  viewport: ViewportSize | undefined;
+  viewport: ViewportSize | null | undefined;
 
   /**
    * Options used to create the context. Other options above (e.g. `viewport`) take priority.
