@@ -52,7 +52,7 @@ function runWatch() {
     runOnChanges(onChange.inputs, onChange.script);
   for (const {files, from, to, ignored} of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], {ignored});
-    watcher.on('all', file => {
+    watcher.on('all', (event, file) => {
       copyFile(file, from, to);
     });
   }
