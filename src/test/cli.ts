@@ -64,7 +64,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
     try {
       await runTests(args, opts);
     } catch (e) {
-      console.error(e.toString());
+      console.error(e);
       process.exit(1);
     }
   });

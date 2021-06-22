@@ -17,11 +17,9 @@
 import { expect } from './expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { Spec, Suite } from './test';
-import { callLocation, errorWithCallLocation } from './util';
+import { wrapFunctionWithLocation } from './util';
 import { Fixtures, FixturesWithLocation, Location, TestInfo, TestType } from './types';
 import { inheritFixtureParameterNames } from './fixtures';
-
-Error.stackTraceLimit = 15;
 
 const countByFile = new Map<string, number>();
 
@@ -37,31 +35,30 @@ export class TestTypeImpl {
   constructor(fixtures: (FixturesWithLocation | DeclaredFixtures)[]) {
     this.fixtures = fixtures;
 
-    const test: any = this._spec.bind(this, 'default');
+    const test: any = wrapFunctionWithLocation(this._spec.bind(this, 'default'));
     test.expect = expect;
-    test.only = this._spec.bind(this, 'only');
-    test.describe = this._describe.bind(this, 'default');
-    test.describe.only = this._describe.bind(this, 'only');
-    test.beforeEach = this._hook.bind(this, 'beforeEach');
-    test.afterEach = this._hook.bind(this, 'afterEach');
-    test.beforeAll = this._hook.bind(this, 'beforeAll');
-    test.afterAll = this._hook.bind(this, 'afterAll');
-    test.skip = this._modifier.bind(this, 'skip');
-    test.fixme = this._modifier.bind(this, 'fixme');
-    test.fail = this._modifier.bind(this, 'fail');
-    test.slow = this._modifier.bind(this, 'slow');
+    test.only = wrapFunctionWithLocation(this._spec.bind(this, 'only'));
+    test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
+    test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
+    test.beforeEach = wrapFunctionWithLocation(this._hook.bind(this, 'beforeEach'));
+    test.afterEach = wrapFunctionWithLocation(this._hook.bind(this, 'afterEach'));
+    test.beforeAll = wrapFunctionWithLocation(this._hook.bind(this, 'beforeAll'));
+    test.afterAll = wrapFunctionWithLocation(this._hook.bind(this, 'afterAll'));
+    test.skip = wrapFunctionWithLocation(this._modifier.bind(this, 'skip'));
+    test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
+    test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
+    test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = this._setTimeout.bind(this);
-    test.use = this._use.bind(this);
-    test.extend = this._extend.bind(this);
-    test.declare = this._declare.bind(this);
+    test.use = wrapFunctionWithLocation(this._use.bind(this));
+    test.extend = wrapFunctionWithLocation(this._extend.bind(this));
+    test.declare = wrapFunctionWithLocation(this._declare.bind(this));
     this.test = test;
   }
 
-  private _spec(type: 'default' | 'only', title: string, fn: Function) {
+  private _spec(type: 'default' | 'only', location: Location, title: string, fn: Function) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw errorWithCallLocation(`test() can only be called in a test file`);
-    const location = callLocation(suite.file);
+      throw new Error(`test() can only be called in a test file`);
 
     const ordinalInFile = countByFile.get(suite._requireFile) || 0;
     countByFile.set(suite._requireFile, ordinalInFile + 1);
@@ -77,11 +74,10 @@ export class TestTypeImpl {
       spec._only = true;
   }
 
-  private _describe(type: 'default' | 'only', title: string, fn: Function) {
+  private _describe(type: 'default' | 'only', location: Location, title: string, fn: Function) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw errorWithCallLocation(`describe() can only be called in a test file`);
-    const location = callLocation(suite.file);
+      throw new Error(`describe() can only be called in a test file`);
 
     const child = new Suite(title);
     child._requireFile = suite._requireFile;
@@ -98,17 +94,16 @@ export class TestTypeImpl {
     setCurrentlyLoadingFileSuite(suite);
   }
 
-  private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function) {
+  private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw errorWithCallLocation(`${name} hook can only be called in a test file`);
-    suite._hooks.push({ type: name, fn, location: callLocation() });
+      throw new Error(`${name} hook can only be called in a test file`);
+    suite._hooks.push({ type: name, fn, location });
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', ...modiferAgs: [arg?: any | Function, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modiferAgs: [arg?: any | Function, description?: string]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
-      const location = callLocation();
       if (typeof modiferAgs[0] === 'function') {
         const [conditionFn, description] = modiferAgs;
         const fn = (args: any, testInfo: TestInfo) => testInfo[type](conditionFn(args), description!);
@@ -136,24 +131,21 @@ export class TestTypeImpl {
     testInfo.setTimeout(timeout);
   }
 
-  private _use(fixtures: Fixtures) {
+  private _use(location: Location, fixtures: Fixtures) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw errorWithCallLocation(`test.use() can only be called in a test file`);
+      throw new Error(`test.use() can only be called in a test file`);
     suite._fixtureOverrides = { ...suite._fixtureOverrides, ...fixtures };
   }
 
-  private _extend(fixtures: Fixtures) {
-    const fixturesWithLocation = {
-      fixtures,
-      location: callLocation(),
-    };
+  private _extend(location: Location, fixtures: Fixtures) {
+    const fixturesWithLocation = { fixtures, location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
 
-  private _declare() {
+  private _declare(location: Location) {
     const declared = new DeclaredFixtures();
-    declared.location = callLocation();
+    declared.location = location;
     const child = new TestTypeImpl([...this.fixtures, declared]);
     declared.testType = child;
     return child.test;

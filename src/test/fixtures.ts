@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { errorWithCallLocation, formatLocation, prependErrorMessage, wrapInPromise } from './util';
+import { formatLocation, prependErrorMessage, wrapInPromise } from './util';
 import * as crypto from 'crypto';
 import { FixturesWithLocation, Location } from './types';
 
@@ -56,9 +56,7 @@ class Fixture {
 
     const params: { [key: string]: any } = {};
     for (const name of this.registration.deps) {
-      const registration = this.runner.pool!.resolveDependency(this.registration, name);
-      if (!registration)
-        throw errorWithCallLocation(`Unknown fixture "${name}"`);
+      const registration = this.runner.pool!.resolveDependency(this.registration, name)!;
       const dep = await this.runner.setupFixtureForRegistration(registration, info);
       dep.usages.add(this);
       params[name] = dep.value;
@@ -71,7 +69,7 @@ class Fixture {
     const teardownFence = new Promise(f => this._teardownFenceCallback = f);
     this._tearDownComplete = wrapInPromise(this.registration.fn(params, async (value: any) => {
       if (called)
-        throw errorWithCallLocation(`Cannot provide fixture value for the second time`);
+        throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
       setupFenceFulfill();
@@ -247,9 +245,7 @@ export class FixtureRunner {
     const names = fixtureParameterNames(fn, { file: '<unused>', line: 1, column: 1 });
     const params: { [key: string]: any } = {};
     for (const name of names) {
-      const registration = this.pool!.registrations.get(name);
-      if (!registration)
-        throw errorWithCallLocation('Unknown fixture: ' + name);
+      const registration = this.pool!.registrations.get(name)!;
       const fixture = await this.setupFixtureForRegistration(registration, info);
       params[name] = fixture.value;
     }

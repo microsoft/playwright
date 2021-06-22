@@ -16,7 +16,7 @@
 
 import { installTransform } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
-import { errorWithCallLocation, isRegExp, mergeObjects, prependErrorMessage } from './util';
+import { isRegExp, mergeObjects, prependErrorMessage } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
@@ -139,7 +139,7 @@ export class Loader {
       if (hook && typeof hook === 'object' && ('default' in hook))
         hook = hook['default'];
       if (typeof hook !== 'function')
-        throw errorWithCallLocation(`${name} file must export a single function.`);
+        throw new Error(`${name} file must export a single function.`);
       return hook;
     } catch (e) {
       prependErrorMessage(e, `Error while reading ${file}:\n`);
@@ -156,7 +156,7 @@ export class Loader {
       if (func && typeof func === 'object' && ('default' in func))
         func = func['default'];
       if (typeof func !== 'function')
-        throw errorWithCallLocation(`Reporter file "${file}" must export a single class.`);
+        throw new Error(`Reporter file "${file}" must export a single class.`);
       return func;
     } catch (e) {
       prependErrorMessage(e, `Error while reading ${file}:\n`);

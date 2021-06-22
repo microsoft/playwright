@@ -20,12 +20,11 @@ import StackUtils from 'stack-utils';
 import type { Location, TestError } from './types';
 import { default as minimatch } from 'minimatch';
 
-const TEST_RUNNER_DIRS = [
-  path.join('@playwright', 'test', 'lib'),
-  path.join(__dirname, '..', '..', 'src', 'test'),
-];
 const cwd = process.cwd();
 const stackUtils = new StackUtils({ cwd });
+
+const kStackTraceLimit = 15;
+Error.stackTraceLimit = kStackTraceLimit;
 
 export class DeadlineRunner<T> {
   private _timer: NodeJS.Timer | undefined;
@@ -89,32 +88,21 @@ export function serializeError(error: Error | any): TestError {
   };
 }
 
-function callFrames(): string[] {
-  const obj = { stack: '' };
-  Error.captureStackTrace(obj);
-  const frames = obj.stack.split('\n').slice(1);
-  while (frames.length && TEST_RUNNER_DIRS.some(dir => frames[0].includes(dir)))
-    frames.shift();
-  return frames;
-}
-
-export function callLocation(fallbackFile?: string): Location {
-  const frames = callFrames();
-  if (!frames.length)
-    return {file: fallbackFile || '<unknown>', line: 1, column: 1};
-  const location = stackUtils.parseLine(frames[0])!;
-  return {
-    file: path.resolve(cwd, location.file || ''),
-    line: location.line || 0,
-    column: location.column || 0,
+export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
+  return (...args) => {
+    const obj = { stack: '' };
+    Error.stackTraceLimit = 2;
+    Error.captureStackTrace(obj);
+    Error.stackTraceLimit = kStackTraceLimit;
+    const frames = obj.stack.split('\n').slice(1);
+    const parsed = stackUtils.parseLine(frames[1])!;
+    const location = {
+      file: path.resolve(cwd, parsed.file || ''),
+      line: parsed.line || 0,
+      column: parsed.column || 0,
+    };
+    return func(location, ...args);
   };
-}
-
-export function errorWithCallLocation(message: string): Error {
-  const frames = callFrames();
-  const error = new Error(message);
-  error.stack = 'Error: ' + message + '\n' + frames.join('\n');
-  return error;
 }
 
 export function monotonicTime(): number {
