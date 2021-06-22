@@ -35,9 +35,11 @@ test('render each test with project name', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'list' });
   const text = stripAscii(result.output);
-  expect(text).toContain('a.test.ts:6:7 › [foo] fails');
-  expect(text).toContain('a.test.ts:6:7 › [bar] fails');
-  expect(text).toContain('a.test.ts:9:7 › [foo] passes');
-  expect(text).toContain('a.test.ts:9:7 › [bar] passes');
+  const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
+  const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
+  expect(text).toContain(`${negativateStatusMarkPrefix} 1) a.test.ts:6:7 › [foo] fails`);
+  expect(text).toContain(`${negativateStatusMarkPrefix} 2) a.test.ts:6:7 › [bar] fails`);
+  expect(text).toContain(`${positiveStatusMarkPrefix} a.test.ts:9:7 › [foo] passes`);
+  expect(text).toContain(`${positiveStatusMarkPrefix} a.test.ts:9:7 › [bar] passes`);
   expect(result.exitCode).toBe(1);
 });

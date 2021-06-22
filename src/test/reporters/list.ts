@@ -20,6 +20,11 @@ import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
 import { FullConfig, Suite, Test, TestResult } from '../reporter';
 
+// Allow it in the Visual Studio Code Terminal and the new Windows Terminal
+const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
+const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓';
+const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
+
 class ListReporter extends BaseReporter {
   private _failure = 0;
   private _lastRow = 0;
@@ -73,7 +78,7 @@ class ListReporter extends BaseReporter {
     if (result.status === 'skipped') {
       text = colors.green('  - ') + colors.cyan(title);
     } else {
-      const statusMark = result.status === 'passed' ? '  ✓ ' : '  x ';
+      const statusMark = ('  ' + (result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK)).padEnd(5);
       if (result.status === test.expectedStatus)
         text = '\u001b[2K\u001b[0G' + colors.green(statusMark) + colors.gray(title) + duration;
       else
