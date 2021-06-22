@@ -713,7 +713,7 @@ await page.SetInputFilesAsync("input#upload", new FilePayload
 {
     Name = "file.txt",
     MimeType = "text/plain",
-    Buffer = "this is a test".getBytes(StandardCharsets.UTF_8),
+    Buffer = System.Text.Encoding.UTF8.GetBytes("this is a test"),
 });
 ```
 
