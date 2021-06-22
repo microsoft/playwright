@@ -88,7 +88,7 @@ assert alt == "Text"
 ```
 
 ```python sync
-checked = page.get_attribute("input", "alt")
+alt = page.get_attribute("input", "alt")
 assert alt == "Text"
 ```
 
