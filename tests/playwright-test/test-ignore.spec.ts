@@ -211,6 +211,22 @@ test('should match regex string argument', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should match regex string with a colon argument', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'fileb.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'weird:file.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `
+  }, { args: ['/weird:file\.test\.ts/'] });
+  expect(result.passed).toBe(1);
+  expect(result.report.suites.map(s => s.file).sort()).toEqual(['weird:file.test.ts']);
+  expect(result.exitCode).toBe(0);
+});
+
 test('should match case insensitive', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'capital/A.test.ts': `

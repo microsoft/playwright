@@ -133,11 +133,10 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   }
 
   const filePatternFilters: FilePatternFilter[] = args.map(arg => {
-    const splitted = (typeof arg === 'string' && arg.includes(':')) ? arg.split(':') : null;
-    const containsLineNumber = splitted?.length === 2;
+    const match = /^(.*):(\d+)$/.exec(arg);
     return {
-      re: forceRegExp(containsLineNumber ? splitted![0] : arg),
-      line: containsLineNumber ? parseInt(splitted![1], 10) : null,
+      re: forceRegExp(match ? match[1] : arg),
+      line: match ? parseInt(match[2], 10) : null,
     };
   });
   const result = await runner.run(!!opts.list, filePatternFilters, opts.project || undefined);
