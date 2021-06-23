@@ -19,16 +19,28 @@ import os from 'os';
 import path from 'path';
 import { getUbuntuVersion } from '../utils/ubuntuVersion';
 import * as utils from '../utils/utils';
+import {BrowserName} from '../utils/registry';
 
 const { deps } = require('../nativeDeps');
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
-export async function installDeps(browserTypes: string[]) {
-  if (!browserTypes.length)
-    browserTypes = ['chromium', 'firefox', 'webkit'];
+type DependencyGroup = 'chromium'|'firefox'|'webkit'|'tools';
+
+const BROWSER_NAME_TO_DEPENDENCY_GROUP: { [key in BrowserName]?: DependencyGroup} = {
+  'chromium': 'chromium',
+  'chromium-with-symbols': 'chromium',
+  'webkit': 'webkit',
+  'firefox': 'firefox',
+  'firefox-beta': 'firefox',
+  'ffmpeg': undefined,
+};
+
+export async function installDeps(browserNames: BrowserName[]) {
+  const dependencyGroups : DependencyGroup[] = (browserNames.map(browserName => BROWSER_NAME_TO_DEPENDENCY_GROUP[browserName]).filter(Boolean) as DependencyGroup[]);
+
   if (os.platform() === 'win32') {
-    if (browserTypes.includes('chromium')) {
+    if (dependencyGroups.includes('chromium')) {
       const {code} = await utils.spawnAsync('powershell.exe', [path.join(SCRIPTS_DIRECTORY, 'install_media_pack.ps1')], { cwd: SCRIPTS_DIRECTORY, stdio: 'inherit' });
       if (code !== 0)
         throw new Error('Failed to install windows dependencies!');
@@ -37,7 +49,6 @@ export async function installDeps(browserTypes: string[]) {
   }
   if (os.platform() !== 'linux')
     return;
-  browserTypes.push('tools');
 
   const ubuntuVersion = await getUbuntuVersion();
   if (ubuntuVersion !== '18.04' && ubuntuVersion !== '20.04' && ubuntuVersion !== '21.04') {
@@ -46,13 +57,13 @@ export async function installDeps(browserTypes: string[]) {
   }
 
   const libraries: string[] = [];
-  for (const browserType of browserTypes) {
+  for (const dependencyGroup of [...dependencyGroups, 'tools']) {
     if (ubuntuVersion === '18.04')
-      libraries.push(...deps['bionic'][browserType]);
+      libraries.push(...deps['bionic'][dependencyGroup]);
     else if (ubuntuVersion === '20.04')
-      libraries.push(...deps['focal'][browserType]);
+      libraries.push(...deps['focal'][dependencyGroup]);
     else if (ubuntuVersion === '21.04')
-      libraries.push(...deps['hirsute'][browserType]);
+      libraries.push(...deps['hirsute'][dependencyGroup]);
   }
   const uniqueLibraries = Array.from(new Set(libraries));
   console.log('Installing Ubuntu dependencies...');  // eslint-disable-line no-console

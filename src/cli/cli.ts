@@ -34,7 +34,7 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { installDeps } from '../install/installDeps';
-import { allBrowserNames, BrowserName } from '../utils/registry';
+import { allBrowserNames, BrowserName, Registry } from '../utils/registry';
 import * as utils from '../utils/utils';
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
@@ -114,25 +114,33 @@ program
       console.log('  $ debug npm run test');
     });
 
+function parseBrowserArgumentsOrDie(args: any[]): {browserNames: Set<BrowserName>, browserChannels: Set<BrowserChannel>} {
+  // Install default browsers when invoked without arguments.
+  if (!args.length)
+    args = Registry.currentPackageRegistry().installByDefault();
+
+  const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
+  const browserChannels: Set<BrowserChannel> = new Set(args.filter((browser: any) => allBrowserChannels.has(browser)));
+  const faultyArguments: string[] = args.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
+  if (faultyArguments.length) {
+    console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}`);
+    process.exit(1);
+  }
+  // Implicitly add 'ffmpeg' if there's a chromium-based browser in the list since it's needed for screencasting.
+  if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge'))
+    browserNames.add('ffmpeg');
+  return {browserNames, browserChannels};
+}
+
 program
     .command('install [browserType...]')
+    .option('--no-deps', 'do not install system dependencies for browsers')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(args) {
+    .action(async function(args, command) {
       try {
-        // Install default browsers when invoked without arguments.
-        if (!args.length) {
-          await installBrowsers();
-          return;
-        }
-        const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
-        const browserChannels: Set<BrowserChannel> = new Set(args.filter((browser: any) => allBrowserChannels.has(browser)));
-        const faultyArguments: string[] = args.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
-        if (faultyArguments.length) {
-          console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}`);
-          process.exit(1);
-        }
-        if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge'))
-          browserNames.add('ffmpeg');
+        const {browserNames, browserChannels} = parseBrowserArgumentsOrDie(args);
+        if (browserNames.size && !command['no-deps'])
+          await installDeps([...browserNames]);
         if (browserNames.size)
           await installBrowsers([...browserNames]);
         for (const browserChannel of browserChannels)
@@ -176,9 +184,10 @@ async function installBrowserChannel(channel: BrowserChannel) {
 program
     .command('install-deps [browserType...]')
     .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .action(async function(browserType) {
+    .action(async function(args) {
       try {
-        await installDeps(browserType);
+        const {browserNames, browserChannels} = parseBrowserArgumentsOrDie(args);
+        await installDeps([...browserNames]);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);
