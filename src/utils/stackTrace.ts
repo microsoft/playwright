@@ -21,11 +21,6 @@ import { isUnderTest } from './utils';
 
 const stackUtils = new StackUtils();
 
-export function getCallerFilePath(ignorePrefix: string): string | null {
-  const frame = captureStackTrace().frames.find(f => !f.file.startsWith(ignorePrefix));
-  return frame ? frame.file : null;
-}
-
 export function rewriteErrorMessage(e: Error, newMessage: string): Error {
   if (e.stack) {
     const index = e.stack.indexOf(e.message);
