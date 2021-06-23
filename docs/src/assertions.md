@@ -83,12 +83,12 @@ assertEquals("Text", alt);
 ```
 
 ```python async
-checked = await page.get_attribute("input", "alt")
+alt = await page.get_attribute("input", "alt")
 assert alt == "Text"
 ```
 
 ```python sync
-checked = page.get_attribute("input", "alt")
+alt = page.get_attribute("input", "alt")
 assert alt == "Text"
 ```
 
