@@ -57,8 +57,9 @@ it('should throw on continue after intercept', async ({page, server, browserName
   }
 });
 
-it('should support fulfill after intercept', async ({page, server, browserName}) => {
+it('should support fulfill after intercept', async ({page, server, browserName, browserMajorVersion}) => {
   it.fixme(browserName === 'firefox');
+  it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**', async route => {
     await route.intercept();
@@ -70,8 +71,9 @@ it('should support fulfill after intercept', async ({page, server, browserName})
 });
 
 
-it('should support request overrides', async ({page, server, browserName}) => {
+it('should support request overrides', async ({page, server, browserName, browserMajorVersion}) => {
   it.fixme(browserName === 'firefox');
+  it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**/foo', async route => {
     await route.intercept({
