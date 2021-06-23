@@ -33,6 +33,7 @@ title: "Community Showcase"
 * [Lumberjack](https://github.com/JakePartusch/lumberjack): Automated accessibility scanner to run checks on your entire website
 * [mockiavelli](https://github.com/HLTech/mockiavelli) Request mocking library for Playwright to test SPA in isolation from backend APIs.
 * [Moon](https://github.com/aerokube/moon): Run Playwright tests in parallel in Kubernetes cluster (free up to 4 parallel sessions)
+* [Playwright Expect](https://github.com/elaichenkov/playwright-expect): Assertion library for JavaScript/TypeScript intended for use with Playwright Test runner.
 * [playwright-test](https://github.com/hugomrdias/playwright-test) Run unit tests and benchmarks in browsers with Node's seamless experience.
 * [playwright-video](https://github.com/qawolf/playwright-video): Capture a video while executing a Playwright script
 * [QA Wolf](https://github.com/qawolf/qawolf): Record and create Playwright tests and then run them in CI
