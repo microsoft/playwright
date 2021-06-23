@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import util from 'util';
-import StackUtils from 'stack-utils';
-import type { Location, TestError } from './types';
+import type { TestError } from './types';
 import { default as minimatch } from 'minimatch';
-
-const cwd = process.cwd();
-const stackUtils = new StackUtils({ cwd });
-
-const kStackTraceLimit = 15;
-Error.stackTraceLimit = kStackTraceLimit;
 
 export class DeadlineRunner<T> {
   private _timer: NodeJS.Timer | undefined;
@@ -88,37 +80,9 @@ export function serializeError(error: Error | any): TestError {
   };
 }
 
-export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
-  return (...args) => {
-    const obj = { stack: '' };
-    Error.stackTraceLimit = 2;
-    Error.captureStackTrace(obj);
-    Error.stackTraceLimit = kStackTraceLimit;
-    const frames = obj.stack.split('\n').slice(1);
-    const parsed = stackUtils.parseLine(frames[1])!;
-    const location = {
-      file: path.resolve(cwd, parsed.file || ''),
-      line: parsed.line || 0,
-      column: parsed.column || 0,
-    };
-    return func(location, ...args);
-  };
-}
-
 export function monotonicTime(): number {
   const [seconds, nanoseconds] = process.hrtime();
   return seconds * 1000 + (nanoseconds / 1000000 | 0);
-}
-
-export function prependErrorMessage(e: Error, message: string) {
-  let stack = e.stack || '';
-  if (stack.includes(e.message))
-    stack = stack.substring(stack.indexOf(e.message) + e.message.length);
-  let m = e.message;
-  if (m.startsWith('Error:'))
-    m = m.substring('Error:'.length);
-  e.message = message + m;
-  e.stack = e.message + stack;
 }
 
 export function isRegExp(e: any): e is RegExp {
@@ -170,10 +134,6 @@ export function mergeObjects<A extends object, B extends object>(a: A | undefine
 
 export async function wrapInPromise(value: any) {
   return value;
-}
-
-export function formatLocation(location: Location) {
-  return location.file + ':' + location.line + ':' + location.column;
 }
 
 export function forceRegExp(pattern: string): RegExp {

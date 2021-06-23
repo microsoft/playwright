@@ -27,7 +27,7 @@ test('should return the location of a syntax error', async ({ runInlineTest }) =
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.output).toContain('/error.spec.js:6');
+  expect(result.output).toContain('error.spec.js:6');
 });
 
 test('should print an improper error', async ({ runInlineTest }) => {
@@ -67,7 +67,7 @@ test('should return the location of a syntax error in typescript', async ({ runI
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.output).toContain('/error.spec.ts');
+  expect(result.output).toContain('error.spec.ts');
   expect(result.output).toContain(`'bar';`);
 });
 

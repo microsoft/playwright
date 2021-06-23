@@ -17,7 +17,7 @@
 import { expect } from './expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { Spec, Suite } from './test';
-import { wrapFunctionWithLocation } from './util';
+import { wrapFunctionWithLocation } from './transform';
 import { Fixtures, FixturesWithLocation, Location, TestInfo, TestType } from './types';
 import { inheritFixtureParameterNames } from './fixtures';
 

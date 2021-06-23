@@ -72,7 +72,7 @@ export class Loader {
   }
 
   private _processConfigObject(rootDir: string) {
-    validateConfig(this._configFile || '', this._config);
+    validateConfig(this._configFile || '<default config>', this._config);
 
     // Resolve script hooks relative to the root dir.
     if (this._config.globalSetup)
@@ -133,7 +133,7 @@ export class Loader {
       if (hook && typeof hook === 'object' && ('default' in hook))
         hook = hook['default'];
       if (typeof hook !== 'function')
-        throw new Error(`${file}: ${name} file must export a single function.`);
+        throw errorWithFile(file, `${name} file must export a single function.`);
       return hook;
     } finally {
       revertBabelRequire();
@@ -147,7 +147,7 @@ export class Loader {
       if (func && typeof func === 'object' && ('default' in func))
         func = func['default'];
       if (typeof func !== 'function')
-        throw new Error(`Reporter file "${file}" must export a single class.`);
+        throw errorWithFile(file, `reporter file must export a single class.`);
       return func;
     } finally {
       revertBabelRequire();

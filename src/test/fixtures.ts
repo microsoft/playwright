@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatLocation, prependErrorMessage, wrapInPromise } from './util';
+import { wrapInPromise } from './util';
 import * as crypto from 'crypto';
 import { FixturesWithLocation, Location } from './types';
 
@@ -347,4 +347,8 @@ function errorWithLocations(message: string, ...defined: { location: Location, n
     message += `\n  ${prefix}defined at ${formatLocation(location)}`;
   }
   return new Error(message);
+}
+
+function formatLocation(location: Location) {
+  return location.file + ':' + location.line + ':' + location.column;
 }
