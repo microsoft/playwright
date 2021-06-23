@@ -87,7 +87,7 @@ export function fetchData(url: string): Promise<string> {
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 type DownloadFileLogger = (message: string) => void;
 
-export function downloadFile(url: string, destinationPath: string, options : {progressCallback?: OnProgressCallback, log?: DownloadFileLogger} = {}): Promise<{error: any}> {
+export function downloadFile(url: string, destinationPath: string, options: {progressCallback?: OnProgressCallback, log?: DownloadFileLogger} = {}): Promise<{error: any}> {
   const {
     progressCallback,
     log = () => {},

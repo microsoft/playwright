@@ -673,7 +673,7 @@ export class WKPage implements PageDelegate {
       this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
     ];
     if (this._needsResponseInterception)
-      this._updateState('Network.addInterception', { url: '.*', stage: 'response', isRegex: true })
+      this._updateState('Network.addInterception', { url: '.*', stage: 'response', isRegex: true });
     await Promise.all(promises);
   }
 

@@ -78,7 +78,6 @@ test('test', async ({ page }) => {`;
 
 test('should print load storageState', async ({ browserName, channel, runCLI }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
-  const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, emptyHTML]);
   const expectedResult = `const { test, expect } = require('@playwright/test');

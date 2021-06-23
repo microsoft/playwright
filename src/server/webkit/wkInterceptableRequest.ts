@@ -100,7 +100,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       mimeType = contentType.split(';')[0].trim();
 
     const isResponseIntercepted = await this._responseInterceptedPromise;
-    await this._session.sendMayFail(isResponseIntercepted ? 'Network.interceptWithResponse' :'Network.interceptRequestWithResponse', {
+    await this._session.sendMayFail(isResponseIntercepted ? 'Network.interceptWithResponse' : 'Network.interceptRequestWithResponse', {
       requestId: this._requestId,
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)],

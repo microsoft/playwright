@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { InterceptedResponse, Request, Response, Route, WebSocket } from '../server/network';
+import { Request, Response, Route, WebSocket } from '../server/network';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';

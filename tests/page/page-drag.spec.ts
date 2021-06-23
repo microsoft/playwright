@@ -226,7 +226,7 @@ it.describe('Drag and drop', () => {
     await page.mouse.up();
     route.abort();
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
-  })
+  });
 
   async function trackEvents(target: ElementHandle) {
     const eventsHandle = await target.evaluateHandle(target => {

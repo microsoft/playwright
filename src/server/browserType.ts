@@ -144,7 +144,7 @@ export abstract class BrowserType extends SdkObject {
       await fs.promises.mkdir(options.tracesDir, { recursive: true });
 
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
-    tempDirectories.push(artifactsDir);  
+    tempDirectories.push(artifactsDir);
 
     if (!userDataDir) {
       userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));

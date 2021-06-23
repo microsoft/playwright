@@ -558,7 +558,7 @@ it('should not use Array.prototype.toJSON when evaluating', async ({ page }) => 
 
 it('should not add a toJSON property to newly created Arrays after evaluation', async ({ page, browserName }) => {
   await page.evaluate(() => []);
-  const hasToJSONProperty = await page.evaluate(() => "toJSON" in []);
+  const hasToJSONProperty = await page.evaluate(() => 'toJSON' in []);
   expect(hasToJSONProperty).toEqual(false);
 });
 

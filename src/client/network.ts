@@ -26,7 +26,6 @@ import { Events } from './events';
 import { Page } from './page';
 import { Waiter } from './waiter';
 import * as api from '../../types/types';
-import { Serializable } from '../../types/structs';
 
 export type NetworkCookie = {
   name: string,
@@ -303,7 +302,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async intercept(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}) : Promise<api.Response> {
+  async intercept(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}): Promise<api.Response> {
     return await this._continue('route.intercept', options, true);
   }
 
@@ -311,9 +310,9 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     await this._continue('route.continue', options, false);
   }
 
-  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: NotInterceptResponse) : Promise<null>;
-  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: InterceptResponse) : Promise<api.Response>;
-  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: boolean) : Promise<null|api.Response> {
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: NotInterceptResponse): Promise<null>;
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: InterceptResponse): Promise<api.Response>;
+  async _continue(apiName: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: boolean): Promise<null|api.Response> {
     return await this._wrapApiCall(apiName, async (channel: channels.RouteChannel) => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       const result = await channel.continue({

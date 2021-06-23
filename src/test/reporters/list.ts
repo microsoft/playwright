@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/* eslint-disable no-console */
 import colors from 'colors/safe';
 // @ts-ignore
 import milliseconds from 'ms';

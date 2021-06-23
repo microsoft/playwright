@@ -89,13 +89,12 @@ export class FFNetworkManager {
       responseStart: this._relativeTiming(event.timing.responseStart),
     };
     const response = new network.Response(request.request, event.status, event.statusText, event.headers, timing, getResponseBody);
-    if (event?.remoteIPAddress && typeof event?.remotePort === 'number')
+    if (event?.remoteIPAddress && typeof event?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: event.remoteIPAddress,
         port: event.remotePort,
       });
-    else
-      response._serverAddrFinished()
+    } else {response._serverAddrFinished();}
     response._securityDetailsFinished({
       protocol: event?.securityDetails?.protocol,
       subjectName: event?.securityDetails?.subjectName,

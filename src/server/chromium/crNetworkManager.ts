@@ -187,7 +187,7 @@ export class CRNetworkManager {
         return;
       }
       request._onInterceptedResponse!(event);
-      return
+      return;
     }
 
     const requestId = event.networkId;
@@ -310,13 +310,14 @@ export class CRNetworkManager {
       };
     }
     const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
-    if (responsePayload?.remoteIPAddress && typeof responsePayload?.remotePort === 'number')
+    if (responsePayload?.remoteIPAddress && typeof responsePayload?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: responsePayload.remoteIPAddress,
         port: responsePayload.remotePort,
       });
-    else
+    } else {
       response._serverAddrFinished();
+    }
     response._securityDetailsFinished({
       protocol: responsePayload?.securityDetails?.protocol,
       subjectName: responsePayload?.securityDetails?.subjectName,
