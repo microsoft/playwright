@@ -21,8 +21,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher } from './dispatcher';
-import { createMatcher, monotonicTime, raceAgainstDeadline } from './util';
-import { Suite } from './test';
+import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
+import { Spec, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from './reporter';
 import { Multiplexer } from './reporters/multiplexer';
@@ -81,11 +81,11 @@ export class Runner {
     this._loader.loadEmptyConfig(rootDir);
   }
 
-  async run(list: boolean, testFileReFilters: RegExp[], projectName?: string): Promise<RunResult> {
+  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResult> {
     this._reporter = this._createReporter();
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
-    const { result, timedOut } = await raceAgainstDeadline(this._run(list, testFileReFilters, projectName), globalDeadline);
+    const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
     if (timedOut) {
       if (!this._didBegin)
         this._reporter.onBegin(config, new Suite(''));
@@ -119,8 +119,8 @@ export class Runner {
       await new Promise(f => process.stderr.on('drain', f));
   }
 
-  async _run(list: boolean, testFileReFilters: RegExp[], projectName?: string): Promise<RunResult> {
-    const testFileFilter = testFileReFilters.length ? createMatcher(testFileReFilters) : () => true;
+  async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectName?: string): Promise<RunResult> {
+    const testFileFilter = testFileReFilters.length ? createMatcher(testFileReFilters.map(e => e.re)) : () => true;
     const config = this._loader.fullConfig();
 
     const projects = this._loader.projects().filter(project => {
@@ -163,6 +163,7 @@ export class Runner {
       if (config.forbidOnly && rootSuite._hasOnly())
         return 'forbid-only';
       filterOnly(rootSuite);
+      filterByFocusedLine(rootSuite, testFileReFilters);
 
       const fileSuites = new Map<string, Suite>();
       for (const fileSuite of rootSuite.suites)
@@ -243,8 +244,24 @@ export class Runner {
 }
 
 function filterOnly(suite: Suite) {
-  const onlySuites = suite.suites.filter(child => filterOnly(child) || child._only);
-  const onlyTests = suite.specs.filter(spec => spec._only);
+  const suiteFilter = (suite: Suite) => suite._only;
+  const specFilter = (spec: Spec) => spec._only;
+  return filterSuite(suite, suiteFilter, specFilter);
+}
+
+function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilter[]) {
+  const testFileLineMatches = (specFileName: string, specLine: number) => focusedTestFileLines.some(({re, line}) => {
+    re.lastIndex = 0;
+    return re.test(specFileName) && line === specLine;
+  });
+  const suiteFilter = (suite: Suite) => testFileLineMatches(suite.file, suite.line);
+  const specFilter = (spec: Spec) => testFileLineMatches(spec.file, spec.line);
+  return filterSuite(suite, suiteFilter, specFilter);
+}
+
+function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, specFilter: (spec: Spec) => boolean) {
+  const onlySuites = suite.suites.filter(child => filterSuite(child, suiteFilter, specFilter) || suiteFilter(child));
+  const onlyTests = suite.specs.filter(specFilter);
   const onlyEntries = new Set([...onlySuites, ...onlyTests]);
   if (onlyEntries.size) {
     suite.suites = onlySuites;
