@@ -52,7 +52,7 @@ Playwright enables fast, reliable and capable automation across all modern brows
 * **Language bindings**. Playwright is available for [Node.js](https://github.com/microsoft/playwright) [Python](https://github.com/microsoft/playwright-python), [.NET](https://github.com/microsoft/playwright-dotnet) and
 [Java](https://github.com/microsoft/playwright-java). Learn more about [supported languages](./languages.md).
 
-* **Deploy tests to CI**. First-party [Docker image](./docker.md) and [GitHub Actions](https://github.com/microsoft/playwright-github-action) to deploy tests to [your preferred CI/CD provider](./ci.md).
+* **Deploy tests to CI**. First-party [Docker image](./docker.md) and [GitHub Actions](./ci.md#github-actions) support to deploy tests to [your preferred CI/CD provider](./ci.md).
 
 ## Limitations
 

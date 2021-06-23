@@ -22,12 +22,12 @@ jobs:
         login-server: playwright.azurecr.io
         username: playwright
         password: ${{ secrets.DOCKER_PASSWORD }}
-    - uses: microsoft/playwright-github-action@v1
     - uses: actions/setup-node@v2
       with:
         node-version: 12
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - run: ./utils/docker/build.sh bionic playwright:localbuild-bionic
     - run: ./utils/docker/build.sh focal playwright:localbuild-focal
     - name: tag & publish
