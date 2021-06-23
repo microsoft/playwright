@@ -258,7 +258,7 @@ export class Route extends SdkObject {
         throw new Error('New URL must have same protocol as overridden URL');
     }
     this._response = await this._delegate.continue(overrides);
-    return this._response
+    return this._response;
   }
 
   async responseBody(): Promise<Buffer> {
@@ -285,7 +285,7 @@ export type ResourceTiming = {
 export type RemoteAddr = {
   ipAddress: string;
   port: number;
-}
+};
 
 export type SecurityDetails = {
     protocol?: string;

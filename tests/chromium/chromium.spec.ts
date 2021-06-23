@@ -318,7 +318,7 @@ test('should report an expected error when the endpointURL returns a non-expecte
   });
   await expect(browserType.connectOverCDP({
     endpointURL: server.PREFIX,
-  })).rejects.toThrowError(`browserType.connectOverCDP: Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`)
+  })).rejects.toThrowError(`browserType.connectOverCDP: Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`);
 });
 
 test('should report an expected error when the endpoint URL JSON webSocketDebuggerUrl is undefined', async ({ browserType, server }) => {

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+/* eslint-disable no-console */
 import rimraf from 'rimraf';
 import * as fs from 'fs';
 import * as path from 'path';

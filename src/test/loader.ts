@@ -190,7 +190,7 @@ export class Loader {
     let testDir = takeFirst(projectConfig.testDir, rootDir);
     if (!path.isAbsolute(testDir))
       testDir = path.resolve(rootDir, testDir);
-    let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results'))
+    let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results'));
     if (!path.isAbsolute(outputDir))
       outputDir = path.resolve(rootDir, outputDir);
     const fullProject: FullProject = {

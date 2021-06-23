@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+/* eslint-disable no-console */
 import colors from 'colors/safe';
 import fs from 'fs';
 import path from 'path';

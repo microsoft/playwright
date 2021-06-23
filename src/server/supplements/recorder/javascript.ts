@@ -91,9 +91,9 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     const suffix = (signals.waitForNavigation || emitPromiseAll) ? '' : ';';
     formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
 
-    if (emitPromiseAll)
+    if (emitPromiseAll) {
       formatter.add(`]);`);
-    else if (signals.assertNavigation) {
+    } else if (signals.assertNavigation) {
       if (this._isTest)
         formatter.add(`  expect(${pageAlias}.url()).toBe(${quote(signals.assertNavigation.url)});`);
       else

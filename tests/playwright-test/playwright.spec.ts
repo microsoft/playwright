@@ -28,7 +28,7 @@ export class VideoPlayer {
   videoHeight: number;
 
   constructor(fileName: string) {
-    var output = spawnSync(ffmpeg, ['-i', fileName, '-r', '25', `${fileName}-%03d.png`]).stderr.toString();
+    const output = spawnSync(ffmpeg, ['-i', fileName, '-r', '25', `${fileName}-%03d.png`]).stderr.toString();
     const lines = output.split('\n');
     const streamLine = lines.find(l => l.trim().startsWith('Stream #0:0'));
     const resolutionMatch = streamLine.match(/, (\d+)x(\d+),/);

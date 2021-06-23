@@ -126,7 +126,7 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
   const reportFile = path.join(outputDir, 'report.json');
   const args = [path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), 'test'];
   if (!params.usesCustomOutputDir)
-    args.push('--output=' + outputDir)
+    args.push('--output=' + outputDir);
   args.push(
       '--reporter=dot,json',
       '--workers=2',

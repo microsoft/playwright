@@ -124,7 +124,7 @@ export class Electron extends SdkObject {
       }
 
       const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
-  
+
       const browserLogsCollector = new RecentLogsCollector();
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
         executablePath: options.executablePath || require('electron/index.js'),

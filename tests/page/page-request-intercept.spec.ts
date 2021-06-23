@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
- import { fail } from 'assert';
+import { fail } from 'assert';
 import type { Route } from '../../index';
- import { test as it, expect } from './pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should fulfill intercepted response', async ({page, server, browserName}) => {
   it.fixme(browserName === 'firefox');
@@ -53,7 +53,7 @@ it('should throw on continue after intercept', async ({page, server, browserName
     await route.continue();
     fail('did not throw');
   } catch (e) {
-    expect(e.message).toContain('Cannot call continue after response interception!')
+    expect(e.message).toContain('Cannot call continue after response interception!');
   }
 });
 

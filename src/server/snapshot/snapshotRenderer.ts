@@ -162,7 +162,7 @@ function snapshotScript() {
           adoptedSheets.push(sheet);
         }
         (root as any).adoptedStyleSheets = adoptedSheets;
-    }
+      }
     };
     visit(document);
 
