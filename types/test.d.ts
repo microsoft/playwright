@@ -986,6 +986,15 @@ export type PlaywrightWorkerOptions = {
    * @see LaunchOptions
    */
   launchOptions: LaunchOptions;
+
+  /**
+   * Enables coverage collection via Istanbul. The coverage data gets stored in the '.nyc_output' directory
+   * and can get processed via the [Istanbul CLI](https://github.com/istanbuljs/nyc#readme). For example
+   * - npx nyc report --reporter=html # open the coverage/index.html in your browser
+   * - npx nyc report --reporter=lcovonly # ready to get sent to code coverage providers
+   */
+   collectIstanbulCoverage: boolean,
+   _collectIstanbulCoverageWritenPages: Map<Page, Promise<any>>
 };
 
 /**

@@ -25,6 +25,7 @@ export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
 const artifactsFolder = path.join(os.tmpdir(), 'pwt-' + createGuid());
+const istanbulCLIOutput = path.join(process.cwd(), '.nyc_output');
 
 export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
@@ -33,10 +34,13 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   headless: [ undefined, { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   launchOptions: [ {}, { scope: 'worker' } ],
-
-  browser: [ async ({ playwright, browserName, headless, channel, launchOptions }, use) => {
+  collectIstanbulCoverage: [ false, { scope: 'worker' } ],
+  _collectIstanbulCoverageWritenPages: [ new Map(), { scope: 'worker'}],
+  browser: [ async ({ playwright, browserName, headless, channel, launchOptions, collectIstanbulCoverage }, use) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
+    if (collectIstanbulCoverage)
+      await fs.promises.mkdir(istanbulCLIOutput, { recursive: true });
     const options: LaunchOptions = {
       handleSIGINT: false,
       ...launchOptions,
@@ -75,7 +79,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   viewport: undefined,
   contextOptions: {},
 
-  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
+  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, collectIstanbulCoverage, _collectIstanbulCoverageWritenPages, contextOptions }, use, testInfo) => {
     testInfo.snapshotSuffix = process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -148,6 +152,24 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       await context.tracing.start({ name, screenshots: true, snapshots: true });
     }
 
+    if (collectIstanbulCoverage) {
+      await context.addInitScript(() =>
+        window.addEventListener('beforeunload', () =>
+          (window as any).collectIstanbulCoverage((window as any).__coverage__)
+        ),
+      );
+      context.on('page', async (page: Page) => {
+        let resolve = (value?: unknown) => {};
+        const promise = new Promise(r => resolve = r);
+        _collectIstanbulCoverageWritenPages.set(page, promise);
+        await page.exposeFunction('collectIstanbulCoverage', (coverageData: unknown) => {
+          if (coverageData)
+            fs.writeFileSync(path.join(istanbulCLIOutput, `playwright_coverage_${createGuid()}.json`), JSON.stringify(coverageData));
+          resolve();
+        });
+      });
+    }
+
     await use(context);
 
     const testFailed = testInfo.status !== testInfo.expectedStatus;
@@ -169,6 +191,16 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     }
 
     const prependToError = testInfo.status ===  'timedOut' ? formatPendingCalls((context as any)._connection.pendingProtocolCalls(), testInfo) : '';
+    if (collectIstanbulCoverage) {
+      for (const page of context.pages()) {
+        await page.close({ runBeforeUnload: true });
+        if (_collectIstanbulCoverageWritenPages.has(page)) {
+          const coverageSaved = _collectIstanbulCoverageWritenPages.get(page)!;
+          _collectIstanbulCoverageWritenPages.delete(page);
+          await coverageSaved;
+        }
+      }
+    }
     await context.close();
     if (prependToError) {
       if (!testInfo.error) {
