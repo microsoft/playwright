@@ -854,6 +854,14 @@ Returns `element.innerText`.
 
 ### option: Frame.innerText.timeout = %%-input-timeout-%%
 
+## async method: Frame.inputValue
+- returns: <[string]>
+
+Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+
+### param: Frame.inputValue.selector = %%-input-selector-%%
+### option: Frame.inputValue.timeout = %%-input-timeout-%%
+
 ## async method: Frame.isChecked
 - returns: <[boolean]>
 

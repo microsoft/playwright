@@ -346,6 +346,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async inputValue(selector: string, options: channels.FrameInputValueOptions = {}): Promise<string> {
+    return this._wrapApiCall(this._apiName('inputValue'), async (channel: channels.FrameChannel) => {
+      return (await channel.inputValue({ selector, ...options })).value;
+    });
+  }
+
   async isChecked(selector: string, options: channels.FrameIsCheckedOptions = {}): Promise<boolean> {
     return this._wrapApiCall(this._apiName('isChecked'), async (channel: channels.FrameChannel) => {
       return (await channel.isChecked({ selector, ...options })).value;

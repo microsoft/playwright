@@ -60,6 +60,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
     return { value: value === null ? undefined : value };
   }
 
+  async inputValue(params: channels.ElementHandleInputValueParams, metadata: CallMetadata): Promise<channels.ElementHandleInputValueResult> {
+    const value = await this._elementHandle.inputValue();
+    return { value };
+  }
+
   async textContent(params: channels.ElementHandleTextContentParams, metadata: CallMetadata): Promise<channels.ElementHandleTextContentResult> {
     const value = await this._elementHandle.textContent();
     return { value: value === null ? undefined : value };

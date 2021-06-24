@@ -39,6 +39,22 @@ it('getAttribute should work', async ({ page, server }) => {
   expect(await page.getAttribute('#outer', 'foo')).toBe(null);
 });
 
+it('inputValue should work', async ({ page, server }) => {
+  await page.goto(`${server.PREFIX}/dom.html`);
+
+  await page.fill('#textarea', 'text value');
+  expect(await page.inputValue('#textarea')).toBe('text value');
+
+  await page.fill('#input', 'input value');
+  expect(await page.inputValue('#input')).toBe('input value');
+  const handle = await page.$('#input');
+  expect(await handle.inputValue()).toBe('input value');
+
+  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
+  const handle2 = await page.$('#inner');
+  expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
+});
+
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');

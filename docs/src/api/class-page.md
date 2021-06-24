@@ -1960,6 +1960,14 @@ Returns `element.innerText`.
 
 ### option: Page.innerText.timeout = %%-input-timeout-%%
 
+## async method: Page.inputValue
+- returns: <[string]>
+
+Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+
+### param: Page.inputValue.selector = %%-input-selector-%%
+### option: Page.inputValue.timeout = %%-input-timeout-%%
+
 ## async method: Page.isChecked
 - returns: <[boolean]>
 
