@@ -549,6 +549,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.getAttribute(selector, name, options));
   }
 
+  async inputValue(selector: string, options?: channels.FrameInputValueOptions): Promise<string> {
+    return this._attributeToPage(() => this._mainFrame.inputValue(selector, options));
+  }
+
   async isChecked(selector: string, options?: channels.FrameIsCheckedOptions): Promise<boolean> {
     return this._attributeToPage(() => this._mainFrame.isChecked(selector, options));
   }

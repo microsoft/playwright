@@ -2025,6 +2025,21 @@ export interface Page {
   }): Promise<string>;
 
   /**
+   * Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
+   */
+  inputValue(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<string>;
+
+  /**
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
@@ -4042,6 +4057,21 @@ export interface Frame {
    * @param options
    */
   innerText(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<string>;
+
+  /**
+   * Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
+   */
+  inputValue(selector: string, options?: {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -6370,6 +6400,20 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * Returns the `element.innerText`.
    */
   innerText(): Promise<string>;
+
+  /**
+   * Returns `input.value` for `<input>` or `<textarea>` element. Throws for non-input elements.
+   * @param options
+   */
+  inputValue(options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<string>;
 
   /**
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.

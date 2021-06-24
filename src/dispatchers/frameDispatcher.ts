@@ -147,6 +147,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return { value: value === null ? undefined : value };
   }
 
+  async inputValue(params: channels.FrameInputValueParams, metadata: CallMetadata): Promise<channels.FrameInputValueResult> {
+    const value = await this._frame.inputValue(metadata, params.selector, params);
+    return { value };
+  }
+
   async isChecked(params: channels.FrameIsCheckedParams, metadata: CallMetadata): Promise<channels.FrameIsCheckedResult> {
     return { value: await this._frame.isChecked(metadata, params.selector, params) };
   }

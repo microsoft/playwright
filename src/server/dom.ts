@@ -180,6 +180,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, name)).value;
   }
 
+  async inputValue(): Promise<string> {
+    return throwFatalDOMError(await this.evaluateInUtility(([injeced, node]) => {
+      if (node.nodeType !== Node.ELEMENT_NODE || (node.nodeName !== 'INPUT' && node.nodeName !== 'TEXTAREA'))
+        return 'error:notinputvalue';
+      const element = node as unknown as (HTMLInputElement | HTMLTextAreaElement);
+      return { value: element.value };
+    }, undefined)).value;
+  }
+
   async textContent(): Promise<string | null> {
     return this.evaluateInUtility(([injected, node]) => node.textContent, {});
   }
@@ -874,6 +883,8 @@ export function throwFatalDOMError<T>(result: T | FatalDOMError): T {
     throw new Error(`Malformed value`);
   if (result === 'error:notinput')
     throw new Error('Node is not an HTMLInputElement');
+  if (result === 'error:notinputvalue')
+    throw new Error('Node is not an HTMLInputElement or HTMLTextAreaElement');
   if (result === 'error:notselect')
     throw new Error('Element is not a <select> element.');
   if (result === 'error:notcheckbox')
@@ -1010,6 +1021,20 @@ export function getAttributeTask(selector: SelectorInfo, name: string): Schedula
       return element.getAttribute(name);
     });
   }, { parsed: selector.parsed, name });
+}
+
+export function inputValueTask(selector: SelectorInfo): SchedulableTask<string> {
+  return injectedScript => injectedScript.evaluateHandle((injected, { parsed }) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA')
+        return 'error:notinputvalue';
+      return (element as any).value;
+    });
+  }, { parsed: selector.parsed });
 }
 
 export function elementStateTask(selector: SelectorInfo, state: ElementStateWithoutStable): SchedulableTask<boolean | 'error:notconnected' | FatalDOMError> {

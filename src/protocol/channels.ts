@@ -1307,6 +1307,7 @@ export interface FrameChannel extends Channel {
   hover(params: FrameHoverParams, metadata?: Metadata): Promise<FrameHoverResult>;
   innerHTML(params: FrameInnerHTMLParams, metadata?: Metadata): Promise<FrameInnerHTMLResult>;
   innerText(params: FrameInnerTextParams, metadata?: Metadata): Promise<FrameInnerTextResult>;
+  inputValue(params: FrameInputValueParams, metadata?: Metadata): Promise<FrameInputValueResult>;
   isChecked(params: FrameIsCheckedParams, metadata?: Metadata): Promise<FrameIsCheckedResult>;
   isDisabled(params: FrameIsDisabledParams, metadata?: Metadata): Promise<FrameIsDisabledResult>;
   isEnabled(params: FrameIsEnabledParams, metadata?: Metadata): Promise<FrameIsEnabledResult>;
@@ -1569,6 +1570,16 @@ export type FrameInnerTextOptions = {
   timeout?: number,
 };
 export type FrameInnerTextResult = {
+  value: string,
+};
+export type FrameInputValueParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameInputValueOptions = {
+  timeout?: number,
+};
+export type FrameInputValueResult = {
   value: string,
 };
 export type FrameIsCheckedParams = {
@@ -1915,6 +1926,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   hover(params: ElementHandleHoverParams, metadata?: Metadata): Promise<ElementHandleHoverResult>;
   innerHTML(params?: ElementHandleInnerHTMLParams, metadata?: Metadata): Promise<ElementHandleInnerHTMLResult>;
   innerText(params?: ElementHandleInnerTextParams, metadata?: Metadata): Promise<ElementHandleInnerTextResult>;
+  inputValue(params?: ElementHandleInputValueParams, metadata?: Metadata): Promise<ElementHandleInputValueResult>;
   isChecked(params?: ElementHandleIsCheckedParams, metadata?: Metadata): Promise<ElementHandleIsCheckedResult>;
   isDisabled(params?: ElementHandleIsDisabledParams, metadata?: Metadata): Promise<ElementHandleIsDisabledResult>;
   isEditable(params?: ElementHandleIsEditableParams, metadata?: Metadata): Promise<ElementHandleIsEditableResult>;
@@ -2083,6 +2095,11 @@ export type ElementHandleInnerHTMLResult = {
 export type ElementHandleInnerTextParams = {};
 export type ElementHandleInnerTextOptions = {};
 export type ElementHandleInnerTextResult = {
+  value: string,
+};
+export type ElementHandleInputValueParams = {};
+export type ElementHandleInputValueOptions = {};
+export type ElementHandleInputValueResult = {
   value: string,
 };
 export type ElementHandleIsCheckedParams = {};

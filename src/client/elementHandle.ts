@@ -65,6 +65,12 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     });
   }
 
+  async inputValue(): Promise<string> {
+    return this._wrapApiCall('elementHandle.inputValue', async (channel: channels.ElementHandleChannel) => {
+      return (await channel.inputValue()).value;
+    });
+  }
+
   async textContent(): Promise<string | null> {
     return this._wrapApiCall('elementHandle.textContent', async (channel: channels.ElementHandleChannel) => {
       const value = (await channel.textContent()).value;

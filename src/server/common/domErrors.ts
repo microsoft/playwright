@@ -22,6 +22,7 @@ export type FatalDOMError =
   'error:notfillablenumberinput' |
   'error:notvaliddate' |
   'error:notinput' |
+  'error:notinputvalue' |
   'error:notselect' |
   'error:notcheckbox';
 

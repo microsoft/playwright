@@ -1243,6 +1243,13 @@ Frame:
       returns:
         value: string
 
+    inputValue:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: string
+
     isChecked:
       parameters:
         selector: string
@@ -1666,6 +1673,10 @@ ElementHandle:
         value: string
 
     innerText:
+      returns:
+        value: string
+
+    inputValue:
       returns:
         value: string
 
