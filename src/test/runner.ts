@@ -109,14 +109,9 @@ export class Runner {
   async _flushOutput() {
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
-    //
-    // We can use writableNeedDrain to workaround this, but it is only available
-    // since node v15.2.0.
-    // See https://nodejs.org/api/stream.html#stream_writable_writableneeddrain.
-    if ((process.stdout as any).writableNeedDrain)
-      await new Promise(f => process.stdout.on('drain', f));
-    if ((process.stderr as any).writableNeedDrain)
-      await new Promise(f => process.stderr.on('drain', f));
+    // See https://github.com/nodejs/node/issues/12921
+    await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
+    await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
   }
 
   async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectName?: string): Promise<RunResult> {
