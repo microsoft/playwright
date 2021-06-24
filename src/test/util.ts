@@ -91,6 +91,11 @@ export function isRegExp(e: any): e is RegExp {
 
 export type Matcher = (value: string) => boolean;
 
+export type FilePatternFilter = {
+  re: RegExp;
+  line: number | null;
+};
+
 export function createMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {
   const reList: RegExp[] = [];
   const filePatterns: string[] = [];
