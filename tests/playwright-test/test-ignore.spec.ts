@@ -281,13 +281,18 @@ test('should focus a single nested test spec', async ({ runInlineTest }) => {
     `,
     'bar.test.ts': `
       const { test } = pwt;
+      test('pass3', ({}) => {});
+    `,
+    'noooo.test.ts': `
+      const { test } = pwt;
       test('no-pass1', ({}) => {});
     `,
-  }, { args: ['foo.test.ts:9'] });
+  }, { args: ['foo.test.ts:9', 'bar.test.ts'] });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.skipped).toBe(0);
-  expect(result.report.suites[0].suites[0].suites[0].specs[0].title).toEqual('pass2');
+  expect(result.report.suites[0].specs[0].title).toEqual('pass3');
+  expect(result.report.suites[1].suites[0].suites[0].specs[0].title).toEqual('pass2');
 });
 
 test('should focus a single test suite', async ({ runInlineTest }) => {

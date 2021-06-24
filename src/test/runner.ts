@@ -252,7 +252,7 @@ function filterOnly(suite: Suite) {
 function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilter[]) {
   const testFileLineMatches = (specFileName: string, specLine: number) => focusedTestFileLines.some(({re, line}) => {
     re.lastIndex = 0;
-    return re.test(specFileName) && line === specLine;
+    return re.test(specFileName) && (line === specLine || line === null);
   });
   const suiteFilter = (suite: Suite) => testFileLineMatches(suite.file, suite.line);
   const specFilter = (spec: Spec) => testFileLineMatches(spec.file, spec.line);
