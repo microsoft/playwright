@@ -1178,6 +1178,7 @@ Frame:
       parameters:
         selector: string
         value: string
+        force: boolean?
         timeout: number?
         noWaitAfter: boolean?
 
@@ -1328,6 +1329,7 @@ Frame:
               value: string?
               label: string?
               index: number?
+        force: boolean?
         timeout: number?
         noWaitAfter: boolean?
       returns:
@@ -1641,6 +1643,7 @@ ElementHandle:
     fill:
       parameters:
         value: string
+        force: boolean?
         timeout: number?
         noWaitAfter: boolean?
 
@@ -1759,6 +1762,7 @@ ElementHandle:
               value: string?
               label: string?
               index: number?
+        force: boolean?
         timeout: number?
         noWaitAfter: boolean?
       returns:
@@ -1768,6 +1772,7 @@ ElementHandle:
 
     selectText:
       parameters:
+        force: boolean?
         timeout: number?
 
     setInputFiles:

@@ -608,6 +608,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameFillParams = tObject({
     selector: tString,
     value: tString,
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
@@ -692,6 +693,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       label: tOptional(tString),
       index: tOptional(tNumber),
     }))),
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
@@ -831,6 +833,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleFillParams = tObject({
     value: tString,
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
@@ -883,10 +886,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       label: tOptional(tString),
       index: tOptional(tNumber),
     }))),
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.ElementHandleSelectTextParams = tObject({
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.ElementHandleSetInputFilesParams = tObject({
