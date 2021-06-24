@@ -265,7 +265,7 @@ expect(userId).toBeTruthy();
 
 // Assert value for input element
 await page.waitForSelector('#search');
-const value = await page.$eval('#search', el => el.value);
+const value = await page.inputValue('#search');
 expect(value === 'query').toBeTruthy();
 
 // Assert computed style
