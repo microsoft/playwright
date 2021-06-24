@@ -699,8 +699,8 @@ To send fine-grained keyboard events, use [`method: Frame.type`].
 
 Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
+### option: Frame.fill.force = %%-input-force-%%
 ### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: Frame.fill.timeout = %%-input-timeout-%%
 
 ## async method: Frame.focus
@@ -1057,11 +1057,9 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 ```
 
 ### param: Frame.selectOption.selector = %%-query-selector-%%
-
 ### param: Frame.selectOption.values = %%-select-options-values-%%
-
+### option: Frame.selectOption.force = %%-input-force-%%
 ### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: Frame.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: Frame.setContent

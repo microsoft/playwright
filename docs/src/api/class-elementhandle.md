@@ -448,8 +448,8 @@ To send fine-grained keyboard events, use [`method: ElementHandle.type`].
 
 Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
+### option: ElementHandle.fill.force = %%-input-force-%%
 ### option: ElementHandle.fill.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: ElementHandle.fill.timeout = %%-input-timeout-%%
 
 ## async method: ElementHandle.focus
@@ -710,9 +710,8 @@ await handle.SelectOptionAsync(new[] {
 ```
 
 ### param: ElementHandle.selectOption.values = %%-select-options-values-%%
-
+### option: ElementHandle.selectOption.force = %%-input-force-%%
 ### option: ElementHandle.selectOption.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: ElementHandle.selectText
@@ -720,6 +719,7 @@ await handle.SelectOptionAsync(new[] {
 This method waits for [actionability](./actionability.md) checks, then focuses the element and selects all its text
 content.
 
+### option: ElementHandle.selectText.force = %%-input-force-%%
 ### option: ElementHandle.selectText.timeout = %%-input-timeout-%%
 
 ## async method: ElementHandle.setInputFiles

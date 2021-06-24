@@ -344,7 +344,7 @@ export class InjectedScript {
     return element;
   }
 
-  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[],
+  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined,
     callback: (node: Node, progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol): InjectedScriptPoll<T | 'error:notconnected' | FatalDOMError> {
     let lastRect: { x: number, y: number, width: number, height: number } | undefined;
     let counter = 0;
@@ -352,6 +352,11 @@ export class InjectedScript {
     let lastTime = 0;
 
     const predicate = (progress: InjectedScriptProgress, continuePolling: symbol) => {
+      if (force) {
+        progress.log(`    forcing action`);
+        return callback(node, progress, continuePolling);
+      }
+
       for (const state of states) {
         if (state !== 'stable') {
           const result = this.checkElementState(node, state);
