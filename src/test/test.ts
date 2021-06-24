@@ -155,6 +155,14 @@ export class Suite extends Base implements reporterTypes.Suite {
     return false;
   }
 
+  _hasUniqueSpecNames(): boolean {
+    if (this.suites.some(suite => !suite._hasUniqueSpecNames()))
+      return false;
+    if (new Set(this.specs.map(spec => spec.title)).size !== this.specs.length)
+      return false;
+    return true;
+  }
+
   _buildFixtureOverrides(): any {
     return this.parent ? { ...this.parent._buildFixtureOverrides(), ...this._fixtureOverrides } : this._fixtureOverrides;
   }

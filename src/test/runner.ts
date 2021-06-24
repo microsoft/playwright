@@ -40,7 +40,7 @@ const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 
-type RunResult = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'no-tests' | 'timedout';
+type RunResult = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-spec-titles' | 'no-tests' | 'timedout';
 
 export class Runner {
   private _loader: Loader;
@@ -101,6 +101,10 @@ export class Runner {
       console.error('=================');
       console.error(' no tests found.');
       console.error('=================');
+    } else if (result === 'clashing-spec-titles') {
+      console.error('=================');
+      console.error(' tests with the same name per Suite are not allowed.');
+      console.error('=================');
     }
     await this._flushOutput();
     return result!;
@@ -157,6 +161,8 @@ export class Runner {
         rootSuite._addSuite(fileSuite);
       if (config.forbidOnly && rootSuite._hasOnly())
         return 'forbid-only';
+      if (!rootSuite._hasUniqueSpecNames())
+        return 'clashing-spec-titles';
       filterOnly(rootSuite);
       filterByFocusedLine(rootSuite, testFileReFilters);
 
