@@ -212,6 +212,7 @@ test('should match regex string argument', async ({ runInlineTest }) => {
 });
 
 test('should match regex string with a colon argument', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'Windows does not support colons in the file name');
   const result = await runInlineTest({
     'fileb.test.ts': `
       const { test } = pwt;
