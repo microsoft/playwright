@@ -19,21 +19,23 @@ test('it should not allow multiple tests with the same name per suite', async ({
   const result = await runInlineTest({
     'retry-failures.spec.js': `
       const { test } = pwt;
-      test('pass', async () => {});
-      test('pass', async () => {});
+      test('i-am-a-duplicate', async () => {});
+      test('i-am-a-duplicate', async () => {});
     `
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('tests with the same name per Suite are not allowed.');
+  expect(result.output).toContain('- i-am-a-duplicate');
 });
 
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'retry-failures.spec.js': `
       const { test } = pwt;
-      test.only('pass', async () => {});
+      test.only('i-am-focused', async () => {});
     `
   }, { 'forbid-only': true });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('--forbid-only found a focused test.');
+  expect(result.output).toContain('- i-am-focused');
 });

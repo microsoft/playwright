@@ -145,22 +145,32 @@ export class Suite extends Base implements reporterTypes.Suite {
     return result;
   }
 
-  _hasOnly(): boolean {
+  _getOnlyItems(): (Spec | Suite)[] {
+    const items: (Spec | Suite)[] = [];
     if (this._only)
-      return true;
-    if (this.suites.find(suite => suite._hasOnly()))
-      return true;
-    if (this.specs.find(spec => spec._only))
-      return true;
-    return false;
+      items.push(this);
+    for (const suite of this.suites)
+      items.push(...suite._getOnlyItems());
+    items.push(...this.specs.filter(spec => spec._only));
+    return items;
   }
 
-  _hasUniqueSpecNames(): boolean {
-    if (this.suites.some(suite => !suite._hasUniqueSpecNames()))
-      return false;
-    if (new Set(this.specs.map(spec => spec.title)).size !== this.specs.length)
-      return false;
-    return true;
+  _getUniqueItems(): (Spec | Suite)[] {
+    const items: (Spec | Suite)[] = [];
+    for (const suite of this.suites)
+      items.push(...suite._getUniqueItems());
+
+    const clashingSpecs: Record<string, Spec> = {};
+    const specToOccurence: Record<string, number> = {};
+    for (const spec of this.specs) {
+      if (!specToOccurence[spec.title])
+        specToOccurence[spec.title] = 0;
+      specToOccurence[spec.title]++;
+      if (specToOccurence[spec.title] > 1 && !clashingSpecs[spec.title])
+        clashingSpecs[spec.title] = spec;
+    }
+    items.push(...Object.entries(clashingSpecs).map(([_, spec]) => spec));
+    return items;
   }
 
   _buildFixtureOverrides(): any {

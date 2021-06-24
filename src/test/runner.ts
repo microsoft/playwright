@@ -40,7 +40,14 @@ const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 
-type RunResult = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-spec-titles' | 'no-tests' | 'timedout';
+type RunResultStatus = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-spec-titles' | 'no-tests' | 'timedout';
+type RunResultWithTestNames<S> = {
+  status: S,
+  testNames: string[]
+};
+type RunResult = {
+  status: Exclude<RunResultStatus, 'forbid-only' | 'clashing-spec-titles'>;
+} | RunResultWithTestNames<'forbid-only'> | RunResultWithTestNames<'clashing-spec-titles'>;
 
 export class Runner {
   private _loader: Loader;
@@ -81,7 +88,7 @@ export class Runner {
     this._loader.loadEmptyConfig(rootDir);
   }
 
-  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResult> {
+  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResultStatus> {
     this._reporter = this._createReporter();
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
@@ -93,21 +100,25 @@ export class Runner {
       await this._flushOutput();
       return 'failed';
     }
-    if (result === 'forbid-only') {
+    if (result?.status === 'forbid-only') {
       console.error('=====================================');
       console.error(' --forbid-only found a focused test.');
+      for (const testName of result?.testNames)
+        console.error(` -- ${testName}`);
       console.error('=====================================');
-    } else if (result === 'no-tests') {
+    } else if (result!.status === 'no-tests') {
       console.error('=================');
       console.error(' no tests found.');
       console.error('=================');
-    } else if (result === 'clashing-spec-titles') {
+    } else if (result?.status === 'clashing-spec-titles') {
       console.error('=================');
       console.error(' tests with the same name per Suite are not allowed.');
+      for (const testName of result?.testNames)
+        console.error(` -- ${testName}`);
       console.error('=================');
     }
     await this._flushOutput();
-    return result!;
+    return result!.status!;
   }
 
   async _flushOutput() {
@@ -159,10 +170,14 @@ export class Runner {
       const rootSuite = new Suite('');
       for (const fileSuite of this._loader.fileSuites().values())
         rootSuite._addSuite(fileSuite);
-      if (config.forbidOnly && rootSuite._hasOnly())
-        return 'forbid-only';
-      if (!rootSuite._hasUniqueSpecNames())
-        return 'clashing-spec-titles';
+      if (config.forbidOnly) {
+        const onlySpecAndSuites = rootSuite._getOnlyItems();
+        if (onlySpecAndSuites.length > 0)
+          return { status: 'forbid-only', testNames: onlySpecAndSuites.map(specOrSuite => specOrSuite.title) };
+      }
+      const uniqueItems = rootSuite._getUniqueItems();
+      if (uniqueItems.length > 0)
+        return { status: 'clashing-spec-titles', testNames: uniqueItems.map(specOrSuite => specOrSuite.title) };
       filterOnly(rootSuite);
       filterByFocusedLine(rootSuite, testFileReFilters);
 
@@ -191,7 +206,7 @@ export class Runner {
 
       const total = rootSuite.totalTestCount();
       if (!total)
-        return 'no-tests';
+        return { status: 'no-tests' };
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(e => {})));
 
@@ -233,8 +248,8 @@ export class Runner {
       this._reporter.onEnd();
 
       if (sigint)
-        return 'sigint';
-      return hasWorkerErrors || rootSuite.findSpec(spec => !spec.ok()) ? 'failed' : 'passed';
+        return { status: 'sigint' };
+      return { status: hasWorkerErrors || rootSuite.findSpec(spec => !spec.ok()) ? 'failed' : 'passed' };
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());
