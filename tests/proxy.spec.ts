@@ -15,6 +15,7 @@
  */
 
 import { playwrightTest as it, expect } from './config/browserTest';
+import socks from 'socksv5';
 import net from 'net';
 
 it('should throw for bad server value', async ({browserType, browserOptions}) => {
@@ -202,4 +203,61 @@ it('should use proxy', async ({ browserType, browserOptions }) => {
   server.close();
   // This connect request should have emulated user agent.
   expect(requestText).toContain('MyUserAgent');
+});
+
+async function setupSocksForwardingServer(port: number, forwardPort: number){
+  const socksServer = socks.createServer((info, accept, deny) => {
+    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io'].includes(info.dstAddr) || info.dstPort !== 1337) {
+      deny();
+      return;
+    }
+    const socket = accept(true);
+    if (socket) {
+      const dstSock = new net.Socket();
+      socket.pipe(dstSock).pipe(socket);
+      socket.on('close', () => dstSock.end());
+      socket.on('end', () => dstSock.end());
+      dstSock.setKeepAlive(false);
+      dstSock.connect(forwardPort, '127.0.0.1');
+    }
+  });
+  await new Promise(resolve => socksServer.listen(port, 'localhost', resolve));
+  socksServer.useAuth(socks.auth.None());
+  return {
+    closeProxyServer: () => socksServer.close(),
+    proxyServerAddr: `socks5://localhost:${port}`,
+  };
+}
+
+it('should use SOCKS proxy for websocket requests', async ({browserName, platform, browserType, browserOptions, server}, testInfo) => {
+  it.fixme(browserName === 'webkit' && platform === 'darwin');
+  const {proxyServerAddr, closeProxyServer} = await setupSocksForwardingServer(testInfo.workerIndex + 2048 + 2, server.PORT);
+  const browser = await browserType.launch({
+    ...browserOptions,
+    proxy: {
+      server: proxyServerAddr,
+    }
+  });
+  server.sendOnWebSocketConnection('incoming');
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+
+  const page = await browser.newPage();
+
+  // Hosts get resolved by the client
+  await page.goto('http://fake-localhost-127-0-0-1.nip.io:1337/target.html');
+  expect(await page.title()).toBe('Served by the proxy');
+
+  const value = await page.evaluate(() => {
+    let cb;
+    const result = new Promise(f => cb = f);
+    const ws = new WebSocket('ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
+    ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+    return result;
+  });
+  expect(value).toBe('incoming');
+
+  await browser.close();
+  closeProxyServer();
 });
