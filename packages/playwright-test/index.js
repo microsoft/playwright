@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+const pwt = require('./lib/test/index');
+const playwright = require('./lib/inprocess');
 
-module.exports = {
-  ...require('./lib/inprocess'),
-  ...require('./lib/test/index')
-};
+module.exports = Object.assign(pwt, {
+  ...playwright,
+  ...pwt,
+});
