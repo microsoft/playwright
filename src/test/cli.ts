@@ -28,10 +28,10 @@ const builtinReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'];
 const tsConfig = 'playwright.config.ts';
 const jsConfig = 'playwright.config.js';
 const defaultConfig: Config = {
-  preserveOutput: process.env.CI ? 'failures-only' : 'always',
+  preserveOutput: 'failures-only',
   reporter: [ [defaultReporter] ],
   timeout: defaultTimeout,
-  updateSnapshots: process.env.CI ? 'none' : 'missing',
+  updateSnapshots: 'missing',
   workers: Math.ceil(require('os').cpus().length / 2),
 };
 
