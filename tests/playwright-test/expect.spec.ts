@@ -73,6 +73,31 @@ test('should work with default expect matchers', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should work with default expect matchers and esModuleInterop=false', async ({runTSC}) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test.expect(42).toBe(42);
+    `,
+    'tsconfig.json': JSON.stringify({
+      'compilerOptions': {
+        'target': 'ESNext',
+        'moduleResolution': 'node',
+        'module': 'commonjs',
+        'strict': true,
+        'rootDir': '.',
+        'esModuleInterop': false,
+        'allowSyntheticDefaultImports': false,
+        'lib': ['esnext', 'dom', 'DOM.Iterable']
+      },
+      'exclude': [
+        'node_modules'
+      ]
+    }),
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should work with custom PlaywrightTest namespace', async ({runTSC}) => {
   const result = await runTSC({
     'global.d.ts': `
