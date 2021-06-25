@@ -304,8 +304,8 @@ element_handle.dispatch_event("#source", "dragstart", {"dataTransfer": data_tran
 ```
 
 ```csharp
-var handle = await page.EvaluateHandleAsync("() => new DataTransfer()");
-await handle.AsElement().DispatchEventAsync("dragstart", new Dictionary<string, object>
+var dataTransfer = await page.EvaluateHandleAsync("() => new DataTransfer()");
+await elementHandle.DispatchEventAsync("dragstart", new Dictionary<string, object>
 {
     { "dataTransfer", dataTransfer }
 });

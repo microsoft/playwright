@@ -2046,6 +2046,18 @@ Returns whether the element is [visible](./actionability.md#visible). [`option: 
 ## property: Page.keyboard
 - type: <[Keyboard]>
 
+## method: Page.locator
+- returns: <[Locator]>
+
+The method returns an element locator that can be used to perform actions on the page.
+Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
+
+Note that locator always implies visibility, so it will always be locating visible elements.
+
+Shortcut for main frame's [`method: Frame.locator`].
+
+### param: Page.locator.selector = %%-find-selector-%%
+
 ## method: Page.mainFrame
 - returns: <[Frame]>
 
@@ -3675,7 +3687,6 @@ class FrameExamples
 ### param: Page.waitForSelector.selector = %%-query-selector-%%
 
 ### option: Page.waitForSelector.state = %%-wait-for-selector-state-%%
-
 ### option: Page.waitForSelector.timeout = %%-input-timeout-%%
 
 ## async method: Page.waitForTimeout
