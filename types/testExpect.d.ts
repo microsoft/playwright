@@ -31,7 +31,15 @@ export declare type Expect = {
 
 declare global {
   export namespace PlaywrightTest {
-    export interface Matchers<R> extends expect.Matchers<R> {
+    type OverriddenProperties = 
+      'not' |
+      'resolves' |
+      'rejects' |
+      'toMatchInlineSnapshot' |
+      'toThrowErrorMatchingInlineSnapshot' |
+      'toMatchSnapshot' | 
+      'toThrowErrorMatchingSnapshot';
+    export interface Matchers<R> extends Omit<expect.Matchers<R>, OverriddenProperties> {
       /**
        * If you know how to test something, `.not` lets you test its opposite.
        */
@@ -49,8 +57,8 @@ declare global {
       /**
        * Match snapshot
        */
-      toMatchSnapshot(options?: {
-        name?: string,
+      toMatchSnapshot(options: {
+        name: string,
         threshold?: number
       }): R;
       /**
