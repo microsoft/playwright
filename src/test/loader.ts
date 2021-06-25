@@ -187,10 +187,12 @@ export class Loader {
     let testDir = takeFirst(projectConfig.testDir, rootDir);
     if (!path.isAbsolute(testDir))
       testDir = path.resolve(rootDir, testDir);
-
+    let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results'))
+    if (!path.isAbsolute(outputDir))
+      outputDir = path.resolve(rootDir, outputDir);
     const fullProject: FullProject = {
       define: takeFirst(this._configOverrides.define, projectConfig.define, this._config.define, []),
-      outputDir: takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results')),
+      outputDir,
       repeatEach: takeFirst(this._configOverrides.repeatEach, projectConfig.repeatEach, this._config.repeatEach, 1),
       retries: takeFirst(this._configOverrides.retries, projectConfig.retries, this._config.retries, 0),
       metadata: takeFirst(this._configOverrides.metadata, projectConfig.metadata, this._config.metadata, undefined),
@@ -336,8 +338,6 @@ function validateProject(project: Project, title: string) {
   if ('outputDir' in project && project.outputDir !== undefined) {
     if (typeof project.outputDir !== 'string')
       throw new Error(`${title}.outputDir must be a string`);
-    if (!path.isAbsolute(project.outputDir))
-      throw new Error(`${title}.outputDir must be an absolute path`);
   }
 
   if ('repeatEach' in project && project.repeatEach !== undefined) {
