@@ -40,6 +40,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const options: LaunchOptions = {
       handleSIGINT: false,
+      timeout: 0,
       ...launchOptions,
     };
     if (headless !== undefined)
@@ -146,6 +147,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       options.viewport = viewport;
 
     const context = await browser.newContext(options);
+    context.setDefaultTimeout(0);
     const allPages: Page[] = [];
     context.on('page', page => allPages.push(page));
 
