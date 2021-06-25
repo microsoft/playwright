@@ -45,15 +45,26 @@ type Files = { [key: string]: string | Buffer };
 type Params = { [key: string]: string | number | boolean | string[] };
 type Env = { [key: string]: string | number | boolean | undefined };
 
+async function writePWTModule(baseDir: string) {
+  const moduleDir = path.join(baseDir, 'node_modules', 'pwt');
+  await fs.promises.mkdir(moduleDir, {recursive: true});
+  await fs.promises.writeFile(path.join(moduleDir, 'index.js'), `
+    module.exports = require(${JSON.stringify(path.join(__dirname, '..', '..', 'lib', 'test', 'index'))})
+  `);
+  await fs.promises.writeFile(path.join(moduleDir, 'index.d.ts'), `
+    export * from ${JSON.stringify(path.join(__dirname, '..', '..', 'types', 'test.d.ts'))};
+  `);
+}
+
 async function writeFiles(testInfo: TestInfo, files: Files) {
   const baseDir = testInfo.outputPath();
+  await writePWTModule(baseDir);
 
-  const internalPath = JSON.stringify(path.join(__dirname, 'entry'));
   const headerJS = `
-    const pwt = require(${internalPath});
+    const pwt = require('pwt');
   `;
   const headerTS = `
-    import * as pwt from ${internalPath};
+    import * as pwt from 'pwt';
   `;
 
   const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
