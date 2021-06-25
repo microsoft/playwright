@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
 test('it should not allow multiple tests with the same name per suite', async ({ runInlineTest }) => {
@@ -25,7 +26,7 @@ test('it should not allow multiple tests with the same name per suite', async ({
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('duplicate test titles are not allowed');
-  expect(result.output).toContain('- tests/example.spec.js:7 > i-am-a-duplicate');
+  expect(result.output).toContain(`- tests${path.sep}example.spec.js:7 > i-am-a-duplicate`);
 });
 
 test('it should enforce unique test names based on the describe block name', async ({ runInlineTest }) => {
@@ -39,7 +40,7 @@ test('it should enforce unique test names based on the describe block name', asy
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('duplicate test titles are not allowed');
-  expect(result.output).toContain('- tests/example.spec.js:7 > hello my world');
+  expect(result.output).toContain(`- tests${path.sep}example.spec.js:7 > hello my world`);
 });
 
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
@@ -51,5 +52,5 @@ test('it should not allow a focused test when forbid-only is used', async ({ run
   }, { 'forbid-only': true });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('--forbid-only found a focused test.');
-  expect(result.output).toContain('- tests/focused-test.spec.js:6 > i-am-focused');
+  expect(result.output).toContain(`- tests${path.sep}focused-test.spec.js:6 > i-am-focused`);
 });
