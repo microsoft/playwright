@@ -65,7 +65,7 @@ element.click()
 ```
 
 ```csharp
-var element = page.Finder("text=Submit");
+var element = page.Locator("text=Submit");
 await element.HoverAsync();
 await element.ClickAsync();
 ```
@@ -332,7 +332,7 @@ assert tweets.evaluate("node => node.innerText") == "10 retweets"
 ```
 
 ```csharp
-var tweets = page.Finder(".tweet .retweets");
+var tweets = page.Locator(".tweet .retweets");
 Assert.Equals("10 retweets", await tweets.EvaluateAsync("node => node.innerText"));
 ```
 
@@ -817,7 +817,7 @@ element.press("Enter")
 ```
 
 ```csharp
-var element = page.Finder("input");
+var element = page.Locator("input");
 await element.TypeAsync("some text");
 await element.PressAsync("Enter");
 ```
@@ -856,19 +856,3 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.uncheck.timeout = %%-input-timeout-%%
 ### option: Locator.uncheck.trial = %%-input-trial-%%
-
-## async method: Locator.waitFor
-- returns: <[null]|[ElementHandle]<[HTMLElement]|[SVGElement]>>
-
-Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or `detached`.
-
-Wait for the element to satisfy [`option: state`] option (either appear/disappear from dom, or become
-visible/hidden). If at the moment of calling the method it already satisfies the condition, the method
-will return immediately. If the selector doesn't satisfy the condition for the [`option: timeout`] milliseconds, the
-function will throw.
-
-This method works across navigations.
-
-### option: Locator.waitFor.state = %%-wait-for-selector-state-%%
-### option: Locator.waitFor.timeout = %%-input-timeout-%%
-
