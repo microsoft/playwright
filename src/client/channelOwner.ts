@@ -74,11 +74,11 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const channel = new Proxy(base, {
       get: (obj: any, prop) => {
         if (prop === 'debugScopeState')
-          return (params: any) => this._connection.sendMessageToServer(this._guid, prop, params, apiName);
+          return (params: any) => this._connection.sendMessageToServer(this, prop, params, apiName);
         if (typeof prop === 'string') {
           const validator = scheme[paramsName(this._type, prop)];
           if (validator)
-            return (params: any) => this._connection.sendMessageToServer(this._guid, prop, validator(params, ''), apiName);
+            return (params: any) => this._connection.sendMessageToServer(this, prop, validator(params, ''), apiName);
         }
         return obj[prop];
       },
@@ -103,15 +103,15 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   }
 
   _waitForEventInfoBefore(waitId: string, apiName: string) {
-    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { apiName, waitId, phase: 'before' } }, undefined).catch(() => {});
+    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { apiName, waitId, phase: 'before' } }, undefined).catch(() => {});
   }
 
   _waitForEventInfoAfter(waitId: string, error?: string) {
-    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { waitId, phase: 'after', error } }, undefined).catch(() => {});
+    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { waitId, phase: 'after', error } }, undefined).catch(() => {});
   }
 
   _waitForEventInfoLog(waitId: string, message: string) {
-    this._connection.sendMessageToServer(this._guid, 'waitForEventInfo', { info: { waitId, phase: 'log', message } }, undefined).catch(() => {});
+    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { waitId, phase: 'log', message } }, undefined).catch(() => {});
   }
 
   private toJSON() {
