@@ -37,6 +37,7 @@ export interface RawKeyboard {
   keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
   keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void>;
   sendText(text: string): Promise<void>;
+  imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, replacement_start: number, replacement_end: number): Promise<void>;
 }
 
 export class Keyboard {
@@ -84,6 +85,11 @@ export class Keyboard {
 
   async insertText(text: string) {
     await this._raw.sendText(text);
+    await this._page._doSlowMo();
+  }
+
+  async imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, replacement_start: number, replacement_end: number) {
+    await this._raw.imeSetComposition(text, selection_start, selection_end, trigger_key, replacement_start, replacement_end);
     await this._page._doSlowMo();
   }
 

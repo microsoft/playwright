@@ -902,6 +902,7 @@ export interface PageChannel extends Channel {
   keyboardDown(params: PageKeyboardDownParams, metadata?: Metadata): Promise<PageKeyboardDownResult>;
   keyboardUp(params: PageKeyboardUpParams, metadata?: Metadata): Promise<PageKeyboardUpResult>;
   keyboardInsertText(params: PageKeyboardInsertTextParams, metadata?: Metadata): Promise<PageKeyboardInsertTextResult>;
+  keyboardImeSetComposition(params: PageKeyboardImeSetCompositionParams, metadata?: Metadata): Promise<PageKeyboardImeSetCompositionResult>;
   keyboardType(params: PageKeyboardTypeParams, metadata?: Metadata): Promise<PageKeyboardTypeResult>;
   keyboardPress(params: PageKeyboardPressParams, metadata?: Metadata): Promise<PageKeyboardPressResult>;
   mouseMove(params: PageMouseMoveParams, metadata?: Metadata): Promise<PageMouseMoveResult>;
@@ -1112,6 +1113,18 @@ export type PageKeyboardInsertTextOptions = {
 
 };
 export type PageKeyboardInsertTextResult = void;
+export type PageKeyboardImeSetCompositionParams = {
+  text: string,
+  selection_start: number,
+  selection_end: number,
+  trigger_key: string,
+  replacement_start: number,
+  replacement_end: number,
+};
+export type PageKeyboardImeSetCompositionOptions = {
+
+};
+export type PageKeyboardImeSetCompositionResult = void;
 export type PageKeyboardTypeParams = {
   text: string,
   delay?: number,

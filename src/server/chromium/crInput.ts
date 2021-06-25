@@ -83,6 +83,10 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   async sendText(text: string): Promise<void> {
     await this._client.send('Input.insertText', { text });
   }
+
+  async imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, replacement_start: number, replacement_end: number): Promise<void> {
+    await this._client.send('Input.imeSetComposition', { text, selection_start, selection_end, trigger_key, replacement_start, replacement_end });
+  }
 }
 
 export class RawMouseImpl implements input.RawMouse {

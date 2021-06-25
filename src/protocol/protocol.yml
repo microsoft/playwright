@@ -834,6 +834,15 @@ Page:
       parameters:
         text: string
 
+    keyboardImeSetComposition:
+      parameters:
+        text: string
+        selection_start: number
+        selection_end: number
+        trigger_key: string
+        replacement_start: number
+        replacement_end: number
+
     keyboardType:
       parameters:
         text: string
