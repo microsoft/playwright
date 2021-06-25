@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import playwright from './index.js';
+import * as playwright from './index.js';
 
 export const chromium = playwright.chromium;
 export const firefox = playwright.firefox;
@@ -25,4 +25,4 @@ export const errors = playwright.errors;
 export const _electron = playwright._electron;
 export const _android = playwright._android;
 export const test = playwright.test;
-export default playwright;
+export default playwright.default;
