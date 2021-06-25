@@ -15,8 +15,11 @@
  */
 const pwt = require('./lib/test/index');
 const playwright = require('./lib/inprocess');
-
-module.exports = Object.assign(pwt, {
+const combinedExports = {
   ...playwright,
   ...pwt,
-});
+};
+
+Object.defineProperty(combinedExports, '__esModule', { value: true });
+
+module.exports = combinedExports;
