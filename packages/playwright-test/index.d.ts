@@ -23,3 +23,4 @@ export const webkit: types.BrowserType;
 export const _electron: types.Electron;
 export const _android: types.Android;
 export * from './types/test';
+export { default } from './types/test';

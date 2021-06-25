@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { chromium, firefox, webkit, selectors, devices, errors } from '@playwright/test';
-import playwright from '@playwright/test';
+import { chromium, firefox, webkit, selectors, devices, errors, test } from '@playwright/test';
+import * as playwright from '@playwright/test';
+import defaultExport from '@playwright/test';
 import errorsFile from '@playwright/test/lib/utils/errors.js';
-
 import testESM from './esm.mjs';
+if (defaultExport !== test)
+  process.exit(1);
 testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, errorsFile }, [chromium, firefox, webkit]);
