@@ -41,13 +41,16 @@ const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 
 type RunResultStatus = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-spec-titles' | 'no-tests' | 'timedout';
-type RunResultWithTestNames<S> = {
-  status: S,
-  testNames: string[]
-};
+
 type RunResult = {
   status: Exclude<RunResultStatus, 'forbid-only' | 'clashing-spec-titles'>;
-} | RunResultWithTestNames<'forbid-only'> | RunResultWithTestNames<'clashing-spec-titles'>;
+} | {
+  status: 'forbid-only',
+  locations: string[]
+} | {
+  status: 'clashing-spec-titles',
+  locations: string[]
+};
 
 export class Runner {
   private _loader: Loader;
@@ -103,8 +106,8 @@ export class Runner {
     if (result?.status === 'forbid-only') {
       console.error('=====================================');
       console.error(' --forbid-only found a focused test.');
-      for (const testName of result?.testNames)
-        console.error(` -- ${testName}`);
+      for (const location of result?.locations)
+        console.error(` - ${location}`);
       console.error('=====================================');
     } else if (result!.status === 'no-tests') {
       console.error('=================');
@@ -112,9 +115,9 @@ export class Runner {
       console.error('=================');
     } else if (result?.status === 'clashing-spec-titles') {
       console.error('=================');
-      console.error(' tests with the same name per Suite are not allowed.');
-      for (const testName of result?.testNames)
-        console.error(` -- ${testName}`);
+      console.error(' duplicate test titles are not allowed.');
+      for (const location of result?.locations)
+        console.error(` - ${location}`);
       console.error('=================');
     }
     await this._flushOutput();
@@ -173,11 +176,11 @@ export class Runner {
       if (config.forbidOnly) {
         const onlySpecAndSuites = rootSuite._getOnlyItems();
         if (onlySpecAndSuites.length > 0)
-          return { status: 'forbid-only', testNames: onlySpecAndSuites.map(specOrSuite => specOrSuite.title) };
+          return { status: 'forbid-only', locations: onlySpecAndSuites.map(specOrSuite => buildItemLocation(config.rootDir, specOrSuite)) };
       }
-      const uniqueItems = rootSuite._getUniqueItems();
+      const uniqueItems = rootSuite._getUniqueItemsPerFile();
       if (uniqueItems.length > 0)
-        return { status: 'clashing-spec-titles', testNames: uniqueItems.map(specOrSuite => specOrSuite.title) };
+        return { status: 'clashing-spec-titles', locations: uniqueItems.map(specOrSuite => buildItemLocation(config.rootDir, specOrSuite)) };
       filterOnly(rootSuite);
       filterByFocusedLine(rootSuite, testFileReFilters);
 
@@ -355,4 +358,9 @@ async function collectFiles(testDir: string): Promise<string[]> {
   };
   await visit(testDir, [], 'included');
   return files;
+}
+
+function buildItemLocation(rootDir: string, specOrSuite: Suite | Spec) {
+  const title = specOrSuite instanceof Spec ? specOrSuite.fullTitle() : specOrSuite.title;
+  return `${path.relative(rootDir, specOrSuite.file)}:${specOrSuite.line} > ${title}`;
 }

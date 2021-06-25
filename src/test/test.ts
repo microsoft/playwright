@@ -77,7 +77,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll',
     fn: Function,
     location: Location,
-  } [] = [];
+  }[] = [];
 
   _addSpec(spec: Spec) {
     spec.parent = this;
@@ -155,21 +155,28 @@ export class Suite extends Base implements reporterTypes.Suite {
     return items;
   }
 
-  _getUniqueItems(): (Spec | Suite)[] {
+  _getUniqueItemsPerFile(): (Spec | Suite)[] {
     const items: (Spec | Suite)[] = [];
-    for (const suite of this.suites)
-      items.push(...suite._getUniqueItems());
 
-    const clashingSpecs: Record<string, Spec> = {};
-    const specToOccurence: Record<string, number> = {};
-    for (const spec of this.specs) {
-      if (!specToOccurence[spec.title])
-        specToOccurence[spec.title] = 0;
-      specToOccurence[spec.title]++;
-      if (specToOccurence[spec.title] > 1 && !clashingSpecs[spec.title])
-        clashingSpecs[spec.title] = spec;
+    function visit(suite: Suite, clashingSpecs: Record<string, Spec>, specToOccurence: Record<string, number>) {
+      for (const childSuite of suite.suites)
+        visit(childSuite, clashingSpecs, specToOccurence);
+      for (const spec of suite.specs) {
+        const fullTitle = spec.fullTitle();
+        if (!specToOccurence[fullTitle])
+          specToOccurence[fullTitle] = 0;
+        specToOccurence[fullTitle]++;
+        if (specToOccurence[fullTitle] > 1 && !clashingSpecs[fullTitle])
+          clashingSpecs[fullTitle] = spec;
+      }
     }
-    items.push(...Object.entries(clashingSpecs).map(([_, spec]) => spec));
+
+    for (const fileSuite of this.suites) {
+      const clashingSpecs: Record<string, Spec> = {};
+      const specToOccurence: Record<string, number> = {};
+      visit(fileSuite, clashingSpecs, specToOccurence);
+      items.push(...Object.entries(clashingSpecs).map(([_, spec]) => spec));
+    }
     return items;
   }
 

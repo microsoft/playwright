@@ -17,25 +17,39 @@ import { test, expect } from './playwright-test-fixtures';
 
 test('it should not allow multiple tests with the same name per suite', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'retry-failures.spec.js': `
+    'tests/example.spec.js': `
       const { test } = pwt;
       test('i-am-a-duplicate', async () => {});
       test('i-am-a-duplicate', async () => {});
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('tests with the same name per Suite are not allowed.');
-  expect(result.output).toContain('- i-am-a-duplicate');
+  expect(result.output).toContain('duplicate test titles are not allowed');
+  expect(result.output).toContain('- tests/example.spec.js:7 > i-am-a-duplicate');
+});
+
+test('it should enforce unique test names based on the describe block name', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/example.spec.js': `
+      const { test } = pwt;
+      test.describe('hello', () => { test('my world', () => {}) });
+      test.describe('hello my', () => { test('world', () => {}) });
+      test('hello my world', () => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('duplicate test titles are not allowed');
+  expect(result.output).toContain('- tests/example.spec.js:7 > hello my world');
 });
 
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'retry-failures.spec.js': `
+    'tests/focused-test.spec.js': `
       const { test } = pwt;
       test.only('i-am-focused', async () => {});
     `
   }, { 'forbid-only': true });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('--forbid-only found a focused test.');
-  expect(result.output).toContain('- i-am-focused');
+  expect(result.output).toContain('- tests/focused-test.spec.js:6 > i-am-focused');
 });
