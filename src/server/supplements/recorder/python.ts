@@ -139,16 +139,19 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     if (this._isAsync) {
       formatter.add(`
 import asyncio
-from playwright.async_api import async_playwright
 
-async def run(playwright) {
+from playwright.async_api import Playwright, async_playwright
+
+
+async def run(playwright: Playwright) -> None {
     browser = await playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
     context = await browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
     } else {
       formatter.add(`
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Playwright, sync_playwright
 
-def run(playwright) {
+
+def run(playwright: Playwright) -> None {
     browser = playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
     context = browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
     }
@@ -162,18 +165,24 @@ def run(playwright) {
     await context.close()
     await browser.close()
 
-async def main():
+
+async def main() -> None:
     async with async_playwright() as playwright:
         await run(playwright)
-asyncio.run(main())`;
+
+
+asyncio.run(main())
+`;
     } else {
       const storageStateLine = saveStorage ? `\n    context.storage_state(path="${saveStorage}")` : '';
       return `\n    # ---------------------${storageStateLine}
     context.close()
     browser.close()
 
+
 with sync_playwright() as playwright:
-    run(playwright)`;
+    run(playwright)
+`;
     }
   }
 }

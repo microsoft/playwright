@@ -26,9 +26,11 @@ const launchOptions = (channel: string) => {
 test('should print the correct imports and context options', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI(['--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-from playwright.async_api import async_playwright
 
-async def run(playwright):
+from playwright.async_api import Playwright, async_playwright
+
+
+async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
     context = await browser.new_context()`;
   await cli.waitFor(expectedResult);
@@ -38,9 +40,11 @@ async def run(playwright):
 test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
   const cli = runCLI(['--color-scheme=light', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-from playwright.async_api import async_playwright
 
-async def run(playwright):
+from playwright.async_api import Playwright, async_playwright
+
+
+async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
     context = await browser.new_context(color_scheme="light")`;
   await cli.waitFor(expectedResult);
@@ -52,9 +56,11 @@ test('should print the correct context options when using a device', async ({ br
 
   const cli = runCLI(['--device=Pixel 2', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-from playwright.async_api import async_playwright
 
-async def run(playwright):
+from playwright.async_api import Playwright, async_playwright
+
+
+async def run(playwright: Playwright) -> None:
     browser = await playwright.chromium.launch(${launchOptions(channel)})
     context = await browser.new_context(**playwright.devices["Pixel 2"])`;
   await cli.waitFor(expectedResult);
@@ -66,9 +72,11 @@ test('should print the correct context options when using a device and additiona
 
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-from playwright.async_api import async_playwright
 
-async def run(playwright):
+from playwright.async_api import Playwright, async_playwright
+
+
+async def run(playwright: Playwright) -> None:
     browser = await playwright.webkit.launch(${launchOptions(channel)})
     context = await browser.new_context(**playwright.devices["iPhone 11"], color_scheme="light")`;
   await cli.waitFor(expectedResult);
@@ -81,9 +89,11 @@ test('should save the codegen output to a file if specified', async ({ browserNa
   await cli.exited;
   const content = await fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`import asyncio
-from playwright.async_api import async_playwright
 
-async def run(playwright):
+from playwright.async_api import Playwright, async_playwright
+
+
+async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
     context = await browser.new_context()
 
@@ -100,10 +110,14 @@ async def run(playwright):
     await context.close()
     await browser.close()
 
-async def main():
+
+async def main() -> None:
     async with async_playwright() as playwright:
         await run(playwright)
-asyncio.run(main())`);
+
+
+asyncio.run(main())
+`);
 });
 
 test('should print load/save storage_state', async ({ browserName, channel, runCLI }, testInfo) => {
@@ -112,9 +126,11 @@ test('should print load/save storage_state', async ({ browserName, channel, runC
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=python-async', emptyHTML]);
   const expectedResult1 = `import asyncio
-from playwright.async_api import async_playwright
 
-async def run(playwright):
+from playwright.async_api import Playwright, async_playwright
+
+
+async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
     context = await browser.new_context(storage_state="${loadFileName}")`;
   await cli.waitFor(expectedResult1);
@@ -125,9 +141,13 @@ async def run(playwright):
     await context.close()
     await browser.close()
 
-async def main():
+
+async def main() -> None:
     async with async_playwright() as playwright:
         await run(playwright)
-asyncio.run(main())`;
+
+
+asyncio.run(main())
+`;
   await cli.waitFor(expectedResult2);
 });
