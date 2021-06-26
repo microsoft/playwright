@@ -75,6 +75,26 @@ it.describe('snapshots', () => {
     expect(distillSnapshot(snapshot2)).toBe('<style>button { color: blue; }</style><BUTTON>Hello</BUTTON>');
   });
 
+  it('should respect node removal', async ({ page, toImpl, snapshotter }) => {
+    page.on('console', console.log);
+    await page.setContent('<div><button id="button1"></button><button id="button2"></button></div>');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    expect(distillSnapshot(snapshot1)).toBe('<DIV><BUTTON id=\"button1\"></BUTTON><BUTTON id=\"button2\"></BUTTON></DIV>');
+    await page.evaluate(() => document.getElementById('button2').remove());
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    expect(distillSnapshot(snapshot2)).toBe('<DIV><BUTTON id=\"button1\"></BUTTON></DIV>');
+  });
+
+  it('should respect attr removal', async ({ page, toImpl, snapshotter }) => {
+    page.on('console', console.log);
+    await page.setContent('<div id="div" attr1="1" attr2="2"></div>');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    expect(distillSnapshot(snapshot1)).toBe('<DIV id=\"div\" attr1=\"1\" attr2=\"2\"></DIV>');
+    await page.evaluate(() => document.getElementById('div').removeAttribute('attr2'));
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    expect(distillSnapshot(snapshot2)).toBe('<DIV id=\"div\" attr1=\"1\"></DIV>');
+  });
+
   it('should have a custom doctype', async ({page, server, toImpl, snapshotter}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<!DOCTYPE foo><body>hi</body>');
