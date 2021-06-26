@@ -285,6 +285,86 @@ class Runtime {
   }
 }
 
+function safeSerialize(isFinite, isArray, getObjectEntries, root) {
+  const CONTROL_CHARACTERS = {
+    '\b': '\\b',
+    '\f': '\\f',
+    '\n': '\\n',
+    '\r': '\\r',
+    '\t': '\\t',
+    '"' : '\\"',
+    '\\': '\\\\'
+  };
+  // This regex and function `quote` are taken from https://github.com/douglascrockford/JSON-js/blob/master/json2.js#L168
+  const ESCAPE_REGEX = /[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+
+  function quote(str) {
+    ESCAPE_REGEX.lastIndex = 0;
+    if (ESCAPE_REGEX.test(str)) {
+      str = str.replace(ESCAPE_REGEX, a => {
+        const c = CONTROL_CHARACTERS[a];
+        if (typeof c === 'string')
+          return c;
+        return '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+      });
+    }
+    return '"' + str + '"';
+  }
+
+  function isInvalidValue(value) {
+    const type = typeof value;
+    return type === 'symbol' || type === 'function' || type === 'undefined';
+  }
+
+  function serializeArray(array) {
+    let result = '';
+    for (let i = 0; i < array.length; ++i) {
+      if (result)
+        result += ',';
+      result += isInvalidValue(array[i]) ? 'null' : innerSerialize(array[i]);
+    }
+    return '[' + result + ']'
+  }
+
+  function serializeObject(obj) {
+    let result = '';
+    for (const [key, value] of getObjectEntries(obj)) {
+      if (isInvalidValue(value))
+        continue;
+      if (result)
+        result += ',';
+      result += quote(key) + ':' + innerSerialize(value);
+    }
+    return '{' + result + '}';
+  }
+
+  const visitedObjects = new Set();
+  function innerSerialize(value) {
+    const type = typeof value;
+    if (type === 'string')
+      return quote(value);
+    if (type === 'number')
+      return isFinite(value) ? value + '' : 'null';
+    if (type === 'boolean')
+      return value + '';
+    // null type is 'object' - handle proactively.
+    if (value === null)
+      return 'null';
+    if (type === 'object') {
+      if (visitedObjects.has(value))
+        throw new Error('Cannot serialize circular structure');
+      visitedObjects.add(value);
+      return isArray(value) ? serializeArray(value) : serializeObject(value);
+    }
+    throw new Error('ERROR: do not know how to serialize ' + type);
+  }
+
+  if (isInvalidValue(root))
+    return undefined;
+  return innerSerialize(root);
+}
+
+
 class ExecutionContext {
   constructor(runtime, domWindow, contextGlobal, auxData) {
     this._runtime = runtime;
@@ -294,27 +374,13 @@ class ExecutionContext {
     this._remoteObjects = new Map();
     this._id = generateId();
     this._auxData = auxData;
-    this._jsonStringifyObject = this._debuggee.executeInGlobal(`((stringify, object) => {
-      const oldToJSON = Date.prototype.toJSON;
-      Date.prototype.toJSON = undefined;
-      const oldArrayToJSON = Array.prototype.toJSON;
-      const oldArrayHadToJSON = Array.prototype.hasOwnProperty('toJSON');
-      if (oldArrayHadToJSON)
-        Array.prototype.toJSON = undefined;
 
-      let hasSymbol = false;
-      const result = stringify(object, (key, value) => {
-        if (typeof value === 'symbol')
-          hasSymbol = true;
-        return value;
-      });
-
-      Date.prototype.toJSON = oldToJSON;
-      if (oldArrayHadToJSON)
-        Array.prototype.toJSON = oldArrayToJSON;
-
-      return hasSymbol ? undefined : result;
-    }).bind(null, JSON.stringify.bind(JSON))`).return;
+    this._safeSerialize = this._debuggee.executeInGlobal(`(() => {
+      ${safeSerialize.toString()}
+      const isArray = Array.isArray.bind(Array);
+      const getObjectProperties = Object.entries.bind(Object);
+      return safeSerialize.bind(null, isFinite, isArray, getObjectProperties);
+    })()`).return;
   }
 
   id() {
@@ -508,9 +574,17 @@ class ExecutionContext {
   }
 
   _serialize(obj) {
-    const result = this._debuggee.executeInGlobalWithBindings('stringify(e)', {e: obj, stringify: this._jsonStringifyObject});
-    if (result.throw)
+    const result = this._debuggee.executeInGlobalWithBindings(`safeSerialize(obj)`, {
+      safeSerialize: this._safeSerialize,
+      obj,
+    });
+    if (result.throw) {
+      dump(`
+        ${this._debuggee.executeInGlobalWithBindings('e.message', {e: result.throw}).return}
+        ${this._debuggee.executeInGlobalWithBindings('e.stack', {e: result.throw}).return}
+      `);
       throw new Error('Object is not serializable');
+    }
     return result.return === undefined ? undefined : JSON.parse(result.return);
   }
 
