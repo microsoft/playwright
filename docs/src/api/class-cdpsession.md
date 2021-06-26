@@ -28,9 +28,9 @@ client = await page.context().new_cdp_session(page)
 await client.send("Animation.enable")
 client.on("Animation.animationCreated", lambda: print("animation created!"))
 response = await client.send("Animation.getPlaybackRate")
-print("playback rate is " + response["playbackRate"])
-await client.send("Animation.setPlaybackRatee", {
-    playback_rate: response["playbackRate"] / 2
+print("playback rate is " + str(response["playbackRate"]))
+await client.send("Animation.setPlaybackRate", {
+    playbackRate: response["playbackRate"] / 2
 })
 ```
 
@@ -39,7 +39,7 @@ client = page.context().new_cdp_session(page)
 client.send("Animation.enable")
 client.on("Animation.animationCreated", lambda: print("animation created!"))
 response = client.send("Animation.getPlaybackRate")
-print("playback rate is " + response["playbackRate"])
+print("playback rate is " + str(response["playbackRate"]))
 client.send("Animation.setPlaybackRate", {
     playback_rate: response["playbackRate"] / 2
 })
