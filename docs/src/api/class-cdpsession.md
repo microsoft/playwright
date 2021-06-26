@@ -41,7 +41,7 @@ client.on("Animation.animationCreated", lambda: print("animation created!"))
 response = client.send("Animation.getPlaybackRate")
 print("playback rate is " + str(response["playbackRate"]))
 client.send("Animation.setPlaybackRate", {
-    playback_rate: response["playbackRate"] / 2
+    playbackRate: response["playbackRate"] / 2
 })
 ```
 
