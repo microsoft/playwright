@@ -336,6 +336,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
+  forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -406,6 +407,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
+  forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -496,6 +498,7 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
+  forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -553,6 +556,7 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
+  forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -1000,11 +1004,13 @@ export type PageEmulateMediaParams = {
   media?: 'screen' | 'print' | 'null',
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
   reducedMotion?: 'reduce' | 'no-preference' | 'null',
+  forcedColors?: 'active' | 'none' | 'null',
 };
 export type PageEmulateMediaOptions = {
   media?: 'screen' | 'print' | 'null',
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
   reducedMotion?: 'reduce' | 'no-preference' | 'null',
+  forcedColors?: 'active' | 'none' | 'null',
 };
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
@@ -3025,6 +3031,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
+  forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {
@@ -3070,6 +3077,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
+  forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   _debugName?: string,
   recordVideo?: {

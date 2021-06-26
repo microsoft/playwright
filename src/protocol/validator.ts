@@ -244,6 +244,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
+    forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
@@ -303,6 +304,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
+    forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
@@ -425,6 +427,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     media: tOptional(tEnum(['screen', 'print', 'null'])),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'null'])),
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'null'])),
+    forcedColors: tOptional(tEnum(['active', 'none', 'null'])),
   });
   scheme.PageExposeBindingParams = tObject({
     name: tString,
@@ -1168,6 +1171,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
+    forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
