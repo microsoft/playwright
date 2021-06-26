@@ -39,6 +39,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
   const kShadowAttribute = '__playwright_shadow_root_';
   const kScrollTopAttribute = '__playwright_scroll_top_';
   const kScrollLeftAttribute = '__playwright_scroll_left_';
+  const kStyleSheetAttribute = '__playwright_style_sheet_';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -296,6 +297,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           }
         };
 
+        const visitChildStyleSheet = (child: CSSStyleSheet) => {
+          const snapshot = visitStyleSheet(child);
+          if (snapshot) {
+            result.push(snapshot.n);
+            expectValue(child);
+            equals = equals && snapshot.equals;
+          }
+        };
+
         if (nodeType === Node.DOCUMENT_FRAGMENT_NODE)
           attrs[kShadowAttribute] = 'open';
 
@@ -345,6 +355,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           }
           for (let child = node.firstChild; child; child = child.nextSibling)
             visitChild(child);
+          let documentOrShadowRoot = null;
+          if (node.ownerDocument!.documentElement === node)
+            documentOrShadowRoot = node.ownerDocument;
+          else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
+            documentOrShadowRoot = node;
+          if (documentOrShadowRoot) {
+            for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || [])
+              visitChildStyleSheet(sheet);
+          }
         }
 
         // Process iframe src attribute before bailing out since it depends on a symbol, not the DOM.
@@ -395,6 +414,21 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         if (result.length === 2 && !Object.keys(attrs).length)
           result.pop();  // Remove empty attrs when there are no children.
         return checkAndReturn(result);
+      };
+
+      const visitStyleSheet = (sheet: CSSStyleSheet) => {
+        const data = ensureCachedData(sheet);
+        const oldCSSText = data.cssText;
+        const cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet) || '';
+        if (cssText === oldCSSText)
+          return { equals: true, n: [[ snapshotNumber - data.ref![0], data.ref![1] ]] };
+        data.ref = [snapshotNumber, nodeCounter++];
+        return {
+          equals: false,
+          n: ['template', {
+            [kStyleSheetAttribute]: cssText,
+          }]
+        };
       };
 
       let html: NodeSnapshot;

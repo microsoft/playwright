@@ -124,7 +124,7 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 }
 
 function snapshotScript() {
-  function applyPlaywrightAttributes(shadowAttribute: string, scrollTopAttribute: string, scrollLeftAttribute: string) {
+  function applyPlaywrightAttributes(shadowAttribute: string, scrollTopAttribute: string, scrollLeftAttribute: string, styleSheetAttribute: string) {
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
 
@@ -152,6 +152,17 @@ function snapshotScript() {
         template.remove();
         visit(shadowRoot);
       }
+
+      if ('adoptedStyleSheets' in (root as any)) {
+        const adoptedSheets: CSSStyleSheet[] = [...(root as any).adoptedStyleSheets];
+        for (const element of root.querySelectorAll(`template[${styleSheetAttribute}]`)) {
+          const template = element as HTMLTemplateElement;
+          const sheet = new CSSStyleSheet();
+          (sheet as any).replaceSync(template.getAttribute(styleSheetAttribute));
+          adoptedSheets.push(sheet);
+        }
+        (root as any).adoptedStyleSheets = adoptedSheets;
+    }
     };
     visit(document);
 
@@ -172,5 +183,6 @@ function snapshotScript() {
   const kShadowAttribute = '__playwright_shadow_root_';
   const kScrollTopAttribute = '__playwright_scroll_top_';
   const kScrollLeftAttribute = '__playwright_scroll_left_';
-  return `\n(${applyPlaywrightAttributes.toString()})('${kShadowAttribute}', '${kScrollTopAttribute}', '${kScrollLeftAttribute}')`;
+  const kStyleSheetAttribute = '__playwright_style_sheet_';
+  return `\n(${applyPlaywrightAttributes.toString()})('${kShadowAttribute}', '${kScrollTopAttribute}', '${kScrollLeftAttribute}', '${kStyleSheetAttribute}')`;
 }
