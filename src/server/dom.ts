@@ -27,7 +27,7 @@ import * as types from './types';
 import { Progress, ProgressController } from './progress';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 import { CallMetadata } from './instrumentation';
-
+import { debugLogger } from '../utils/debugLogger';
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 
 export class FrameExecutionContext extends js.ExecutionContext {
@@ -70,6 +70,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
+    debugLogger.log('api', `    evaluating expression "${expression}" ${arg ? ` with arguments "${arg}"` : ''}`);
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return this.evaluateExpression(expression, isFunction, arg);
     });
