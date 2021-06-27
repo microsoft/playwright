@@ -21,7 +21,7 @@ import { compare } from './golden';
 
 export const expect: Expect = expectLibrary;
 
-function toMatchSnapshot(received: Buffer | string, nameOrOptions: string | { name: string, threshold?: number }, optOptions: { threshold?: number } = {}) {
+function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: string | { name: string, threshold?: number }, optOptions: { threshold?: number } = {}) {
   let options: { name: string, threshold?: number };
   const testInfo = currentTestInfo();
   if (!testInfo)
@@ -37,7 +37,16 @@ function toMatchSnapshot(received: Buffer | string, nameOrOptions: string | { na
   if (options.threshold === undefined && projectThreshold !== undefined)
     options.threshold = projectThreshold;
 
-  const { pass, message } = compare(received, options.name, testInfo.snapshotPath, testInfo.outputPath, testInfo.config.updateSnapshots, options);
+  const withNegateComparison = this.isNot;
+  const { pass, message } = compare(
+      received,
+      options.name,
+      testInfo.snapshotPath,
+      testInfo.outputPath,
+      testInfo.config.updateSnapshots,
+      withNegateComparison,
+      options
+  );
   return { pass, message: () => message };
 }
 

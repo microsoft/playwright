@@ -65,6 +65,70 @@ Line7`,
   expect(result.output).toContain('Line7');
 });
 
+test('should write detailed failure result to an output folder', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world updated').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Snapshot comparison failed:');
+  expect(result.output).toMatch(/ {4}Expected: .+?\/snapshot-expected\.txt/);
+  expect(result.output).toMatch(/ {4}Received: .+?\/snapshot-actual\.txt/);
+  expect(result.output).not.toMatch(/ {8}Diff: .+?\/snapshot-diff\.txt/);
+});
+
+test('should pass on different snapshots with negate matcher', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world updated').not.toMatchSnapshot('snapshot.txt');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should fail on same snapshots with negate matcher', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world').not.toMatchSnapshot('snapshot.txt');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Snapshot comparison failed:');
+  expect(result.output).toContain('Expected result should be different from the actual one.');
+  expect(result.output).not.toMatch(/ {4}Expected: .+?\/snapshot-expected\.txt/);
+  expect(result.output).not.toMatch(/ {4}Received: .+?\/snapshot-actual\.txt/);
+  expect(result.output).not.toMatch(/ {8}Diff: .+?\/snapshot-diff\.txt/);
+});
+
+test('should fail on same snapshots with negate matcher', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world').not.toMatchSnapshot('snapshot.txt');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Snapshot comparison failed:');
+  expect(result.output).toContain('Expected result should be different from the actual one.');
+});
+
+
 test('should write missing expectations locally', async ({runInlineTest}, testInfo) => {
   const result = await runInlineTest({
     'a.spec.js': `
@@ -74,6 +138,22 @@ test('should write missing expectations locally', async ({runInlineTest}, testIn
       });
     `
   }, {}, { CI: '' });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('snapshot.txt is missing in snapshots, writing actual');
+  const data = fs.readFileSync(testInfo.outputPath('a.spec.js-snapshots/snapshot.txt'));
+  expect(data.toString()).toBe('Hello world');
+});
+
+test('should write missing expectations locally with negated matcher', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world').not.toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, {}, { CI: '' });
+
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('snapshot.txt is missing in snapshots, writing actual');
   const data = fs.readFileSync(testInfo.outputPath('a.spec.js-snapshots/snapshot.txt'));
@@ -94,6 +174,52 @@ test('should update expectations', async ({runInlineTest}, testInfo) => {
   expect(result.output).toContain('snapshot.txt does not match, writing actual.');
   const data = fs.readFileSync(testInfo.outputPath('a.spec.js-snapshots/snapshot.txt'));
   expect(data.toString()).toBe('Hello world updated');
+});
+
+test('should update expectations with negated matcher', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world updated').not.toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('snapshot.txt does not match, writing actual.');
+  const data = fs.readFileSync(testInfo.outputPath('a.spec.js-snapshots/snapshot.txt'));
+  expect(data.toString()).toBe('Hello world updated');
+});
+
+test('should silently write missing expectations locally with the update-snapshots flag', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { 'update-snapshots': true }, { CI: '' });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('snapshot.txt is missing in snapshots, writing actual');
+  const data = fs.readFileSync(testInfo.outputPath('a.spec.js-snapshots/snapshot.txt'));
+  expect(data.toString()).toBe('Hello world');
+});
+
+test('should silently write missing expectations locally with the update-snapshots flag with negate matcher', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world').not.toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { 'update-snapshots': true }, { CI: '' });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('snapshot.txt is missing in snapshots, writing actual');
+  const data = fs.readFileSync(testInfo.outputPath('a.spec.js-snapshots/snapshot.txt'));
+  expect(data.toString()).toBe('Hello world');
 });
 
 test('should match multiple snapshots', async ({runInlineTest}) => {

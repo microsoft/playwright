@@ -61,7 +61,7 @@ function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mi
       errorMessage: `Sizes differ; expected image ${expected.width}px X ${expected.height}px, but got ${actual.width}px X ${actual.height}px. `
     };
   }
-  const diff = new PNG({width: expected.width, height: expected.height});
+  const diff = new PNG({ width: expected.width, height: expected.height });
   const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, { threshold: 0.2, ...options });
   return count > 0 ? { diff: PNG.sync.write(diff) } : null;
 }
@@ -80,8 +80,17 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: 
   };
 }
 
-export function compare(actual: Buffer | string, name: string, snapshotPath: (name: string) => string, outputPath: (name: string) => string, updateSnapshots: UpdateSnapshots, options?: { threshold?: number }): { pass: boolean; message?: string; } {
+export function compare(
+  actual: Buffer | string,
+  name: string,
+  snapshotPath: (name: string) => string,
+  outputPath: (name: string) => string,
+  updateSnapshots: UpdateSnapshots,
+  withNegateComparison: boolean,
+  options?: { threshold?: number }
+): { pass: boolean; message?: string; } {
   const snapshotFile = snapshotPath(name);
+
   if (!fs.existsSync(snapshotFile)) {
     const writingActual = updateSnapshots === 'all' || updateSnapshots === 'missing';
     if (writingActual) {
@@ -91,9 +100,9 @@ export function compare(actual: Buffer | string, name: string, snapshotPath: (na
     const message = snapshotFile + ' is missing in snapshots' + (writingActual ? ', writing actual.' : '.');
     if (updateSnapshots === 'all') {
       console.log(message);
-      return { pass: true, message };
+      return { pass: withNegateComparison ? false : true, message };
     }
-    return { pass: false, message };
+    return { pass: withNegateComparison ? true : false, message };
   }
   const expected = fs.readFileSync(snapshotFile);
   const extension = path.extname(snapshotFile).substring(1);
@@ -102,23 +111,42 @@ export function compare(actual: Buffer | string, name: string, snapshotPath: (na
   if (!comparator) {
     return {
       pass: false,
-      message: 'Failed to find comparator with type ' + mimeType + ': '  + snapshotFile,
+      message: 'Failed to find comparator with type ' + mimeType + ': ' + snapshotFile,
     };
   }
 
   const result = comparator(actual, expected, mimeType, options);
-  if (!result)
-    return { pass: true };
+  if (!result) {
+    if (!withNegateComparison)
+      return { pass: true };
+
+    const message = [
+      colors.red('Snapshot comparison failed:'),
+      '',
+      indent('Expected result should be different from the actual one.', '  '),
+    ].join('\n');
+    return {
+      pass: true,
+      message,
+    };
+  }
 
   if (updateSnapshots === 'all') {
     fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
     fs.writeFileSync(snapshotFile, actual);
     console.log(snapshotFile + ' does not match, writing actual.');
     return {
-      pass: true,
+      pass: withNegateComparison ? false : true,
       message: snapshotFile + ' running with --update-snapshots, writing actual.'
     };
   }
+
+  if (withNegateComparison) {
+    return {
+      pass: false,
+    };
+  }
+
   const outputFile = outputPath(name);
   const expectedPath = addSuffix(outputFile, '-expected');
   const actualPath = addSuffix(outputFile, '-actual');
