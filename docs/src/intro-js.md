@@ -454,7 +454,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-Configure NPM script to run tests. Test runner will automatically pick up `playwright.config.js` or `playwright.config.ts`.
+Configure NPM script to run tests. Playwright Test will automatically pick up `playwright.config.js` or `playwright.config.ts`.
 
 ```json
 {

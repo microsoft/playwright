@@ -7,9 +7,9 @@ title: "Release notes"
 
 ## Version 1.12
 
-#### ⚡️ Introducing Playwright TestRunner
+#### ⚡️ Introducing Playwright Test
 
-[Playwright TestRunner](./test-intro.md) is a **new test runner** built from scratch by Playwright team specifically to accommodate end-to-end testing needs:
+[Playwright Test](./intro.md) is a **new test runner** built from scratch by Playwright team specifically to accommodate end-to-end testing needs:
 
 - Run tests across all browsers.
 - Execute tests in parallel.
@@ -40,7 +40,7 @@ Running:
 npx playwright test
 ```
 
-👉  Read more in [testrunner documentation](./test-intro.md).
+👉  Read more in [Playwright Test documentation](./intro.md).
 
 #### 🧟‍♂️ Introducing Playwright Trace Viewer
 

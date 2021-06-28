@@ -7,9 +7,9 @@ With a few lines of code, you can hook up Playwright to your existing JavaScript
 
 <!-- TOC -->
 
-## playwright/test
+## Playwright Test
 
-[playwright/test](./test-intro.md) is our first-party recommended test runner to be used with Playwright. Learn more about it [here](./test-intro.md).
+[Playwright Test](./intro.md) is our first-party recommended test runner to be used with Playwright. Learn more about it [here](./intro.md).
 
 ## Jest / Jasmine
 
@@ -105,4 +105,4 @@ beforeAll(async() => {
 ```
 
 Then set `BROWSER=firefox` to run your tests with firefox, or any other browser.
- 
+
