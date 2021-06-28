@@ -191,13 +191,13 @@ test('should run the fixture every time', async ({ runInlineTest }) => {
       const test = pwt.test.extend({
         asdf: async ({}, test) => await test(counter++),
       });
-      test('should use asdf', async ({asdf}) => {
+      test('should use asdf 1', async ({asdf}) => {
         expect(asdf).toBe(0);
       });
-      test('should use asdf', async ({asdf}) => {
+      test('should use asdf 2', async ({asdf}) => {
         expect(asdf).toBe(1);
       });
-      test('should use asdf', async ({asdf}) => {
+      test('should use asdf 3', async ({asdf}) => {
         expect(asdf).toBe(2);
       });
     `,
@@ -212,13 +212,13 @@ test('should only run worker fixtures once', async ({ runInlineTest }) => {
       const test = pwt.test.extend({
         asdf: [ async ({}, test) => await test(counter++), { scope: 'worker' } ],
       });
-      test('should use asdf', async ({asdf}) => {
+      test('should use asdf 1', async ({asdf}) => {
         expect(asdf).toBe(0);
       });
-      test('should use asdf', async ({asdf}) => {
+      test('should use asdf 2', async ({asdf}) => {
         expect(asdf).toBe(0);
       });
-      test('should use asdf', async ({asdf}) => {
+      test('should use asdf 3', async ({asdf}) => {
         expect(asdf).toBe(0);
       });
     `,

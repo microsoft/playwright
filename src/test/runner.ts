@@ -40,7 +40,17 @@ const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 
-type RunResult = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'no-tests' | 'timedout';
+type RunResultStatus = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-spec-titles' | 'no-tests' | 'timedout';
+
+type RunResult = {
+  status: Exclude<RunResultStatus, 'forbid-only' | 'clashing-spec-titles'>;
+} | {
+  status: 'forbid-only',
+  locations: string[]
+} | {
+  status: 'clashing-spec-titles',
+  clashingSpecs: Map<string, Spec[]>
+};
 
 export class Runner {
   private _loader: Loader;
@@ -81,7 +91,7 @@ export class Runner {
     this._loader.loadEmptyConfig(rootDir);
   }
 
-  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResult> {
+  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResultStatus> {
     this._reporter = this._createReporter();
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
@@ -93,17 +103,28 @@ export class Runner {
       await this._flushOutput();
       return 'failed';
     }
-    if (result === 'forbid-only') {
+    if (result?.status === 'forbid-only') {
       console.error('=====================================');
       console.error(' --forbid-only found a focused test.');
+      for (const location of result?.locations)
+        console.error(` - ${location}`);
       console.error('=====================================');
-    } else if (result === 'no-tests') {
+    } else if (result!.status === 'no-tests') {
       console.error('=================');
       console.error(' no tests found.');
       console.error('=================');
+    } else if (result?.status === 'clashing-spec-titles') {
+      console.error('=================');
+      console.error(' duplicate test titles are not allowed.');
+      for (const [title, specs] of result?.clashingSpecs.entries()) {
+        console.error(` - title: ${title}`);
+        for (const spec of specs)
+          console.error(`   - ${buildItemLocation(config.rootDir, spec)}`);
+        console.error('=================');
+      }
     }
     await this._flushOutput();
-    return result!;
+    return result!.status!;
   }
 
   async _flushOutput() {
@@ -155,8 +176,14 @@ export class Runner {
       const rootSuite = new Suite('');
       for (const fileSuite of this._loader.fileSuites().values())
         rootSuite._addSuite(fileSuite);
-      if (config.forbidOnly && rootSuite._hasOnly())
-        return 'forbid-only';
+      if (config.forbidOnly) {
+        const onlySpecAndSuites = rootSuite._getOnlyItems();
+        if (onlySpecAndSuites.length > 0)
+          return { status: 'forbid-only', locations: onlySpecAndSuites.map(specOrSuite => `${buildItemLocation(config.rootDir, specOrSuite)} > ${specOrSuite.fullTitle()}`) };
+      }
+      const uniqueSpecs = getUniqueSpecsPerSuite(rootSuite);
+      if (uniqueSpecs.size > 0)
+        return { status: 'clashing-spec-titles', clashingSpecs: uniqueSpecs };
       filterOnly(rootSuite);
       filterByFocusedLine(rootSuite, testFileReFilters);
 
@@ -185,7 +212,7 @@ export class Runner {
 
       const total = rootSuite.totalTestCount();
       if (!total)
-        return 'no-tests';
+        return { status: 'no-tests' };
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(e => {})));
 
@@ -227,8 +254,8 @@ export class Runner {
       this._reporter.onEnd();
 
       if (sigint)
-        return 'sigint';
-      return hasWorkerErrors || rootSuite.findSpec(spec => !spec.ok()) ? 'failed' : 'passed';
+        return { status: 'sigint' };
+      return { status: hasWorkerErrors || rootSuite.findSpec(spec => !spec.ok()) ? 'failed' : 'passed' };
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());
@@ -334,4 +361,31 @@ async function collectFiles(testDir: string): Promise<string[]> {
   };
   await visit(testDir, [], 'included');
   return files;
+}
+
+function getUniqueSpecsPerSuite(rootSuite: Suite): Map<string, Spec[]> {
+  function visit(suite: Suite, clashingSpecs: Map<string, Spec[]>) {
+    for (const childSuite of suite.suites)
+      visit(childSuite, clashingSpecs);
+    for (const spec of suite.specs) {
+      const fullTitle = spec.fullTitle();
+      if (!clashingSpecs.has(fullTitle))
+        clashingSpecs.set(fullTitle, []);
+      clashingSpecs.set(fullTitle, clashingSpecs.get(fullTitle)!.concat(spec));
+    }
+  }
+  const out = new Map<string, Spec[]>();
+  for (const fileSuite of rootSuite.suites) {
+    const clashingSpecs = new Map<string, Spec[]>();
+    visit(fileSuite, clashingSpecs);
+    for (const [title, specs] of clashingSpecs.entries()) {
+      if (specs.length > 1)
+        out.set(title, specs);
+    }
+  }
+  return out;
+}
+
+function buildItemLocation(rootDir: string, specOrSuite: Suite | Spec) {
+  return `${path.relative(rootDir, specOrSuite.file)}:${specOrSuite.line}`;
 }
