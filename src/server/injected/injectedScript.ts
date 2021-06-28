@@ -326,7 +326,7 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  private _retarget(node: Node, behavior: 'follow-label' | 'no-follow-label'): Element | null {
+  retarget(node: Node, behavior: 'follow-label' | 'no-follow-label'): Element | null {
     let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
     if (!element)
       return null;
@@ -369,7 +369,7 @@ export class InjectedScript {
           continue;
         }
 
-        const element = this._retarget(node, 'no-follow-label');
+        const element = this.retarget(node, 'no-follow-label');
         if (!element)
           return 'error:notconnected';
 
@@ -411,7 +411,7 @@ export class InjectedScript {
   }
 
   checkElementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' | FatalDOMError {
-    const element = this._retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label');
+    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
         return true;
@@ -447,7 +447,7 @@ export class InjectedScript {
 
   selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
     node: Node, progress: InjectedScriptProgress, continuePolling: symbol): string[] | 'error:notconnected' | FatalDOMError | symbol {
-    const element = this._retarget(node, 'follow-label');
+    const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() !== 'select')
@@ -493,7 +493,7 @@ export class InjectedScript {
   }
 
   fill(value: string, node: Node, progress: InjectedScriptProgress): FatalDOMError | 'error:notconnected' | 'needsinput' | 'done' {
-    const element = this._retarget(node, 'follow-label');
+    const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
@@ -530,7 +530,7 @@ export class InjectedScript {
   }
 
   selectText(node: Node): 'error:notconnected' | 'done' {
-    const element = this._retarget(node, 'follow-label');
+    const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {

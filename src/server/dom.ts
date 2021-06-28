@@ -16,7 +16,6 @@
 
 import * as channels from '../protocol/channels';
 import * as frames from './frames';
-import { assert } from '../utils/utils';
 import type { ElementStateWithoutStable, InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as js from './javascript';
@@ -552,19 +551,22 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (!payload.mimeType)
         payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
     }
-    const multiple = throwFatalDOMError(await this.evaluateInUtility(([injected, node]): 'error:notinput' | 'error:notconnected' | boolean => {
-      if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
+    const retargeted = await this.evaluateHandleInUtility(([injected, node, multiple]): FatalDOMError | 'error:notconnected' | Element => {
+      const element = injected.retarget(node, 'follow-label');
+      if (!element)
+        return 'error:notconnected';
+      if (element.tagName !== 'INPUT')
         return 'error:notinput';
-      const input = node as Node as HTMLInputElement;
-      return input.multiple;
-    }, {}));
-    if (typeof multiple === 'string')
-      return multiple;
-    assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
+      if (multiple && !(element as HTMLInputElement).multiple)
+        return 'error:notmultiplefileinput';
+      return element;
+    }, files.length > 1);
+    if (!retargeted._objectId)
+      return throwFatalDOMError(retargeted.rawValue() as FatalDOMError | 'error:notconnected');
     await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, files as types.FilePayload[]);
+      await this._page._delegate.setInputFiles(retargeted as ElementHandle<HTMLInputElement>, files as types.FilePayload[]);
     });
     await this._page._doSlowMo();
     return 'done';
@@ -887,6 +889,8 @@ export function throwFatalDOMError<T>(result: T | FatalDOMError): T {
     throw new Error('Element is not a <select> element.');
   if (result === 'error:notcheckbox')
     throw new Error('Not a checkbox or radio button');
+  if (result === 'error:notmultiplefileinput')
+    throw new Error('Non-multiple file input can only accept single file');
   return result;
 }
 
