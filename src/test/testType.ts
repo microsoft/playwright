@@ -101,17 +101,19 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn, location });
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modiferAgs: [arg?: any | Function, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
-      if (typeof modiferAgs[0] === 'function') {
-        const [conditionFn, description] = modiferAgs;
+      if (typeof modifierArgs[0] === 'function') {
+        const [conditionFn, description] = modifierArgs;
         const fn = (args: any, testInfo: TestInfo) => testInfo[type](conditionFn(args), description!);
         inheritFixtureParameterNames(conditionFn, fn, location);
         suite._hooks.unshift({ type: 'beforeEach', fn, location });
       } else {
-        const fn = ({}: any, testInfo: TestInfo) => testInfo[type](...modiferAgs as [any, any]);
-        suite._hooks.unshift({ type: 'beforeEach', fn, location });
+        if (modifierArgs.length >= 1 && !modifierArgs[0])
+          return;
+        const description = modifierArgs[1];
+        suite._annotations.push({ type, description });
       }
       return;
     }
@@ -119,9 +121,9 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.${type}() can only be called inside test, describe block or fixture`);
-    if (typeof modiferAgs[0] === 'function')
+    if (typeof modifierArgs[0] === 'function')
       throw new Error(`test.${type}() with a function can only be called inside describe block`);
-    testInfo[type](...modiferAgs as [any, any]);
+    testInfo[type](...modifierArgs as [any, any]);
   }
 
   private _setTimeout(timeout: number) {

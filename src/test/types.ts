@@ -22,3 +22,4 @@ export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
 };
+export type Annotations = { type: 'fixme' | 'slow' | 'fail' | 'skip', description?: string }[];

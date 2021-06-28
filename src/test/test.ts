@@ -16,7 +16,7 @@
 
 import * as reporterTypes from './reporter';
 import type { TestTypeImpl } from './testType';
-import { Location } from './types';
+import { Annotations, Location } from './types';
 
 class Base {
   title: string;
@@ -78,6 +78,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     fn: Function,
     location: Location,
   } [] = [];
+  _annotations: Annotations = [];
 
   _addSpec(spec: Spec) {
     spec.parent = this;

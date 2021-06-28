@@ -214,3 +214,33 @@ test('modifier with a function should throw in the test', async ({ runInlineTest
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('test.skip() with a function can only be called inside describe block');
 });
+
+test('skip without a callback in describe block should skip hooks', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      const logs = [];
+      test.beforeAll(() => {
+        console.log('%%beforeAll');
+      });
+      test.beforeEach(() => {
+        console.log('%%beforeEach');
+      });
+
+      test.skip(!false, 'reason');
+      test('skipped1', () => {
+        console.log('%%skipped1');
+      });
+      test.describe('suite1', () => {
+        test('skipped2', () => {
+          console.log('%%skipped2');
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(2);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.output).not.toContain('%%');
+});

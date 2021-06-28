@@ -24,7 +24,7 @@ import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, W
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import { Spec, Suite, Test } from './test';
-import { TestInfo, WorkerInfo } from './types';
+import { Annotations, TestInfo, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
 
@@ -243,6 +243,25 @@ export class WorkerRunner extends EventEmitter {
           deadlineRunner.setDeadline(deadline());
       },
     };
+
+    // Process annotations defined on parent suites.
+    for (const annotation of this._specAnnotations(spec)) {
+      testInfo.annotations.push(annotation);
+      switch (annotation.type) {
+        case 'fixme':
+        case 'skip':
+          testInfo.expectedStatus = 'skipped';
+          break;
+        case 'fail':
+          if (testInfo.expectedStatus !== 'skipped')
+            testInfo.expectedStatus = 'failed';
+          break;
+        case 'slow':
+          testInfo.setTimeout(testInfo.timeout * 3);
+          break;
+      }
+    }
+
     this._setCurrentTest({ testInfo, testId });
     const deadline = () => {
       return testInfo.timeout ? startTime + testInfo.timeout : undefined;
@@ -404,10 +423,22 @@ export class WorkerRunner extends EventEmitter {
     this.stop();
   }
 
+  private _specAnnotations(spec: Spec): Annotations {
+    const result: Annotations = [];
+    for (let suite = spec.parent; suite; suite = suite.parent)
+      result.push(...suite._annotations);
+    return result;
+  }
+
   private _hasTestsToRun(suite: Suite): boolean {
     return suite.findSpec(spec => {
       const entry = this._entries.get(spec.tests[0]._id);
-      return !!entry;
+      if (!entry)
+        return false;
+      const annotations = this._specAnnotations(spec);
+      if (annotations.some(a => a.type === 'fixme' || a.type === 'skip'))
+        return false;
+      return true;
     });
   }
 }
