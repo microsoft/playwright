@@ -26,7 +26,9 @@ test('it should not allow multiple tests with the same name per suite', async ({
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('duplicate test titles are not allowed');
-  expect(result.output).toContain(`- tests${path.sep}example.spec.js:7 > i-am-a-duplicate`);
+  expect(result.output).toContain(`- title: i-am-a-duplicate`);
+  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:6`);
+  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:7`);
 });
 
 test('it should enforce unique test names based on the describe block name', async ({ runInlineTest }) => {
@@ -40,7 +42,10 @@ test('it should enforce unique test names based on the describe block name', asy
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('duplicate test titles are not allowed');
-  expect(result.output).toContain(`- tests${path.sep}example.spec.js:7 > hello my world`);
+  expect(result.output).toContain(`- title: hello my world`);
+  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:6`);
+  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:7`);
+  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:8`);
 });
 
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {

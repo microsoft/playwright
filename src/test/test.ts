@@ -39,6 +39,10 @@ class Base {
       return this.parent.titlePath();
     return [...this.parent.titlePath(), this.title];
   }
+
+  fullTitle(): string {
+    return this.titlePath().join(' ');
+  }
 }
 
 export class Spec extends Base implements reporterTypes.Spec {
@@ -57,10 +61,6 @@ export class Spec extends Base implements reporterTypes.Spec {
 
   ok(): boolean {
     return !this.tests.find(r => !r.ok());
-  }
-
-  fullTitle(): string {
-    return this.titlePath().join(' ');
   }
 
   _testFullTitle(projectName: string) {
@@ -152,31 +152,6 @@ export class Suite extends Base implements reporterTypes.Suite {
     for (const suite of this.suites)
       items.push(...suite._getOnlyItems());
     items.push(...this.specs.filter(spec => spec._only));
-    return items;
-  }
-
-  _getUniqueItemsPerFile(): (Spec | Suite)[] {
-    const items: (Spec | Suite)[] = [];
-
-    function visit(suite: Suite, clashingSpecs: Record<string, Spec>, specToOccurence: Record<string, number>) {
-      for (const childSuite of suite.suites)
-        visit(childSuite, clashingSpecs, specToOccurence);
-      for (const spec of suite.specs) {
-        const fullTitle = spec.fullTitle();
-        if (!specToOccurence[fullTitle])
-          specToOccurence[fullTitle] = 0;
-        specToOccurence[fullTitle]++;
-        if (specToOccurence[fullTitle] > 1 && !clashingSpecs[fullTitle])
-          clashingSpecs[fullTitle] = spec;
-      }
-    }
-
-    for (const fileSuite of this.suites) {
-      const clashingSpecs: Record<string, Spec> = {};
-      const specToOccurence: Record<string, number> = {};
-      visit(fileSuite, clashingSpecs, specToOccurence);
-      items.push(...Object.entries(clashingSpecs).map(([_, spec]) => spec));
-    }
     return items;
   }
 

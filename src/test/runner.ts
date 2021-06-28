@@ -49,7 +49,7 @@ type RunResult = {
   locations: string[]
 } | {
   status: 'clashing-spec-titles',
-  locations: string[]
+  clashingSpecs: Record<string, Spec[]>
 };
 
 export class Runner {
@@ -116,9 +116,12 @@ export class Runner {
     } else if (result?.status === 'clashing-spec-titles') {
       console.error('=================');
       console.error(' duplicate test titles are not allowed.');
-      for (const location of result?.locations)
-        console.error(` - ${location}`);
-      console.error('=================');
+      for (const [title, specs] of Object.entries(result?.clashingSpecs)) {
+        console.error(` - title: ${title}`);
+        for (const spec of specs)
+          console.error(`   - ${buildItemLocation(config.rootDir, spec)}`);
+        console.error('=================');
+      }
     }
     await this._flushOutput();
     return result!.status!;
@@ -176,11 +179,11 @@ export class Runner {
       if (config.forbidOnly) {
         const onlySpecAndSuites = rootSuite._getOnlyItems();
         if (onlySpecAndSuites.length > 0)
-          return { status: 'forbid-only', locations: onlySpecAndSuites.map(specOrSuite => buildItemLocation(config.rootDir, specOrSuite)) };
+          return { status: 'forbid-only', locations: onlySpecAndSuites.map(specOrSuite => `${buildItemLocation(config.rootDir, specOrSuite)} > ${specOrSuite.fullTitle()}`) };
       }
-      const uniqueItems = rootSuite._getUniqueItemsPerFile();
-      if (uniqueItems.length > 0)
-        return { status: 'clashing-spec-titles', locations: uniqueItems.map(specOrSuite => buildItemLocation(config.rootDir, specOrSuite)) };
+      const uniqueSpecs = getUniqueSpecsForRootSuite(rootSuite);
+      if (Object.keys(uniqueSpecs).length > 0)
+        return { status: 'clashing-spec-titles', clashingSpecs: uniqueSpecs };
       filterOnly(rootSuite);
       filterByFocusedLine(rootSuite, testFileReFilters);
 
@@ -360,7 +363,29 @@ async function collectFiles(testDir: string): Promise<string[]> {
   return files;
 }
 
+function getUniqueSpecsForRootSuite(rootSuite: Suite): Record<string, Spec[]> {
+  function visit(suite: Suite, clashingSpecs: Record<string, Spec[]>) {
+    for (const childSuite of suite.suites)
+      visit(childSuite, clashingSpecs);
+    for (const spec of suite.specs) {
+      const fullTitle = spec.fullTitle();
+      if (!clashingSpecs[fullTitle])
+        clashingSpecs[fullTitle] = [];
+      clashingSpecs[fullTitle].push(spec);
+    }
+  }
+  const out: Record<string, Spec[]> = {};
+  for (const fileSuite of rootSuite.suites) {
+    const clashingSpecs: Record<string, Spec[]> = {};
+    visit(fileSuite, clashingSpecs);
+    for (const title in clashingSpecs) {
+      if (clashingSpecs[title].length > 1)
+        out[title] = clashingSpecs[title];
+    }
+  }
+  return out;
+}
+
 function buildItemLocation(rootDir: string, specOrSuite: Suite | Spec) {
-  const title = specOrSuite instanceof Spec ? specOrSuite.fullTitle() : specOrSuite.title;
-  return `${path.relative(rootDir, specOrSuite.file)}:${specOrSuite.line} > ${title}`;
+  return `${path.relative(rootDir, specOrSuite.file)}:${specOrSuite.line}`;
 }
