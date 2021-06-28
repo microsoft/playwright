@@ -66,7 +66,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {
     const logger = options.logger;
-    return this._wrapApiCall('browserType.launch', async (channel: channels.BrowserTypeChannel) => {
+    return this._wrapApiCall(async (channel: channels.BrowserTypeChannel) => {
       assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
       const launchOptions: channels.BrowserTypeLaunchParams = {
@@ -88,7 +88,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
-    return this._wrapApiCall('browserType.launchPersistentContext', async (channel: channels.BrowserTypeChannel) => {
+    return this._wrapApiCall(async (channel: channels.BrowserTypeChannel) => {
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
       const contextParams = await prepareBrowserContextParams(options);
       const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
@@ -110,7 +110,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   async connect(params: ConnectOptions): Promise<Browser> {
     const logger = params.logger;
     const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers);
-    return this._wrapApiCall('browserType.connect', async () => {
+    return this._wrapApiCall(async () => {
       const ws = new WebSocket(params.wsEndpoint, [], {
         perMessageDeflate: false,
         maxPayload: 256 * 1024 * 1024, // 256Mb,
@@ -221,7 +221,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     if (this.name() !== 'chromium')
       throw new Error('Connecting over CDP is only supported in Chromium.');
     const logger = params.logger;
-    return this._wrapApiCall('browserType.connectOverCDP', async (channel: channels.BrowserTypeChannel) => {
+    return this._wrapApiCall(async (channel: channels.BrowserTypeChannel) => {
       const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers);
       const headers = paramsHeaders ? headersObjectToArray(paramsHeaders) : undefined;
       const result = await channel.connectOverCDP({

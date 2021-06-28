@@ -27,18 +27,17 @@ export class Tracing implements api.Tracing {
   }
 
   async start(options: { name?: string, snapshots?: boolean, screenshots?: boolean } = {}) {
-    await this._context._wrapApiCall('tracing.start', async (channel: channels.BrowserContextChannel) => {
+    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       return await channel.tracingStart(options);
     });
   }
 
   async stop(options: { path?: string } = {}) {
-    await this._context._wrapApiCall('tracing.stop', async (channel: channels.BrowserContextChannel) => {
+    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await channel.tracingStop();
       if (options.path) {
         const result = await channel.tracingExport();
         const artifact = Artifact.from(result.artifact);
-        artifact._apiName = 'tracing';
         if (this._context.browser()?._remoteType)
           artifact._isRemote = true;
         await artifact.saveAs(options.path);

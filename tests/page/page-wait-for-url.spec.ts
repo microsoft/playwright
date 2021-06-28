@@ -27,7 +27,7 @@ it('should respect timeout', async ({page, server}) => {
   const promise = page.waitForURL('**/frame.html', { timeout: 2500 }).catch(e => e);
   await page.goto(server.EMPTY_PAGE);
   const error = await promise;
-  expect(error.message).toContain('page.waitForNavigation: Timeout 2500ms exceeded.');
+  expect(error.message).toContain('page.waitForURL: Timeout 2500ms exceeded.');
 });
 
 it('should work with both domcontentloaded and load', async ({page, server}) => {

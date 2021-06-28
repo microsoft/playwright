@@ -23,7 +23,6 @@ import { Readable } from 'stream';
 
 export class Artifact extends ChannelOwner<channels.ArtifactChannel, channels.ArtifactInitializer> {
   _isRemote = false;
-  _apiName: string = '';
 
   static from(channel: channels.ArtifactChannel): Artifact {
     return (channel as any)._object;
@@ -32,13 +31,13 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel, channels.Ar
   async pathAfterFinished(): Promise<string | null> {
     if (this._isRemote)
       throw new Error(`Path is not available when using browserType.connect(). Use saveAs() to save a local copy.`);
-    return this._wrapApiCall(`${this._apiName}.path`, async (channel: channels.ArtifactChannel) => {
+    return this._wrapApiCall(async (channel: channels.ArtifactChannel) => {
       return (await channel.pathAfterFinished()).value || null;
     });
   }
 
   async saveAs(path: string): Promise<void> {
-    return this._wrapApiCall(`${this._apiName}.saveAs`, async (channel: channels.ArtifactChannel) => {
+    return this._wrapApiCall(async (channel: channels.ArtifactChannel) => {
       if (!this._isRemote) {
         await channel.saveAs({ path });
         return;
@@ -56,13 +55,13 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel, channels.Ar
   }
 
   async failure(): Promise<string | null> {
-    return this._wrapApiCall(`${this._apiName}.failure`, async (channel: channels.ArtifactChannel) => {
+    return this._wrapApiCall(async (channel: channels.ArtifactChannel) => {
       return (await channel.failure()).error || null;
     });
   }
 
   async createReadStream(): Promise<Readable | null> {
-    return this._wrapApiCall(`${this._apiName}.createReadStream`, async (channel: channels.ArtifactChannel) => {
+    return this._wrapApiCall(async (channel: channels.ArtifactChannel) => {
       const result = await channel.stream();
       if (!result.stream)
         return null;
@@ -72,13 +71,13 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel, channels.Ar
   }
 
   async cancel(): Promise<void> {
-    return this._wrapApiCall(`${this._apiName}.cancel`, async (channel: channels.ArtifactChannel) => {
+    return this._wrapApiCall(async (channel: channels.ArtifactChannel) => {
       return channel.cancel();
     });
   }
 
   async delete(): Promise<void> {
-    return this._wrapApiCall(`${this._apiName}.delete`, async (channel: channels.ArtifactChannel) => {
+    return this._wrapApiCall(async (channel: channels.ArtifactChannel) => {
       return channel.delete();
     });
   }

@@ -41,7 +41,7 @@ WaitForEventInfo:
       - before
       - after
       - log
-    apiName: string?
+    event: string?
     message: string?
     error: string?
 
