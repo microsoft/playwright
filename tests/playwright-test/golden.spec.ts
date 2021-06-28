@@ -77,9 +77,9 @@ test('should write detailed failure result to an output folder', async ({runInli
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Snapshot comparison failed:');
-  expect(result.output).toMatch(/ {4}Expected: .+?\/snapshot-expected\.txt/);
-  expect(result.output).toMatch(/ {4}Received: .+?\/snapshot-actual\.txt/);
-  expect(result.output).not.toMatch(/ {8}Diff: .+?\/snapshot-diff\.txt/);
+  expect(result.output).toMatch(/ {4}Expected: .+?(\/|\\\\)snapshot-expected\.txt/);
+  expect(result.output).toMatch(/ {4}Received: .+?(\/|\\\\)snapshot-actual\.txt/);
+  expect(result.output).not.toMatch(/ {8}Diff: .+?(\/|\\\\)snapshot-diff\.txt/);
 });
 
 test('should pass on different snapshots with negate matcher', async ({runInlineTest}, testInfo) => {
@@ -108,9 +108,9 @@ test('should fail on same snapshots with negate matcher', async ({runInlineTest}
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Snapshot comparison failed:');
   expect(result.output).toContain('Expected result should be different from the actual one.');
-  expect(result.output).not.toMatch(/ {4}Expected: .+?\/snapshot-expected\.txt/);
-  expect(result.output).not.toMatch(/ {4}Received: .+?\/snapshot-actual\.txt/);
-  expect(result.output).not.toMatch(/ {8}Diff: .+?\/snapshot-diff\.txt/);
+  expect(result.output).not.toMatch(/ {4}Expected: .+?(\/|\\\\)snapshot-expected\.txt/);
+  expect(result.output).not.toMatch(/ {4}Received: .+?(\/|\\\\)snapshot-actual\.txt/);
+  expect(result.output).not.toMatch(/ {8}Diff: .+?(\/|\\\\)snapshot-diff\.txt/);
 });
 
 test('should fail on same snapshots with negate matcher', async ({runInlineTest}, testInfo) => {
