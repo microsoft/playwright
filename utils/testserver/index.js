@@ -69,10 +69,17 @@ class TestServer {
     else
       this._server = http.createServer(this._onRequest.bind(this));
     this._server.on('connection', socket => this._onSocket(socket));
-    this._wsServer = new WebSocketServer({server: this._server, path: '/ws'});
-    this._wsServer.on('connection', ws => {
+    this._wsServer = new WebSocketServer({server: this._server });
+    this._wsServer.shouldHandle = (request) => {
+      const pathname = url.parse(request.url).pathname;
+      return ['/ws', '/ws-emit-and-close'].includes(pathname);
+    };
+    this._wsServer.on('connection', (ws, request) => {
+      const pathname = url.parse(request.url).pathname;
       if (this._onWebSocketConnectionData !== undefined)
         ws.send(this._onWebSocketConnectionData);
+      if (pathname === '/ws-emit-and-close')
+        ws.close(1003, 'closed by Playwright test-server');
     });
     this._server.listen(port);
     this._dirPath = dirPath;

@@ -442,12 +442,16 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.
     this._isClosed = false;
     this._page = parent as Page;
     this._channel.on('frameSent', (event: { opcode: number, data: string }) => {
-      const payload = event.opcode === 2 ? Buffer.from(event.data, 'base64') : event.data;
-      this.emit(Events.WebSocket.FrameSent, { payload });
+      if (event.opcode === 1)
+        this.emit(Events.WebSocket.FrameSent, { payload: event.data });
+      else if (event.opcode === 2)
+        this.emit(Events.WebSocket.FrameSent, { payload: Buffer.from(event.data, 'base64') });
     });
     this._channel.on('frameReceived', (event: { opcode: number, data: string }) => {
-      const payload = event.opcode === 2 ? Buffer.from(event.data, 'base64') : event.data;
-      this.emit(Events.WebSocket.FrameReceived, { payload });
+      if (event.opcode === 1)
+        this.emit(Events.WebSocket.FrameReceived, { payload: event.data });
+      else if (event.opcode === 2)
+        this.emit(Events.WebSocket.FrameReceived, { payload: Buffer.from(event.data, 'base64') });
     });
     this._channel.on('socketError', ({ error }) => this.emit(Events.WebSocket.Error, error));
     this._channel.on('close', () => {
