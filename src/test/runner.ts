@@ -49,7 +49,7 @@ type RunResult = {
   locations: string[]
 } | {
   status: 'clashing-spec-titles',
-  clashingSpecs: Record<string, Spec[]>
+  clashingSpecs: Map<string, Spec[]>
 };
 
 export class Runner {
@@ -116,7 +116,7 @@ export class Runner {
     } else if (result?.status === 'clashing-spec-titles') {
       console.error('=================');
       console.error(' duplicate test titles are not allowed.');
-      for (const [title, specs] of Object.entries(result?.clashingSpecs)) {
+      for (const [title, specs] of result?.clashingSpecs.entries()) {
         console.error(` - title: ${title}`);
         for (const spec of specs)
           console.error(`   - ${buildItemLocation(config.rootDir, spec)}`);
@@ -181,8 +181,8 @@ export class Runner {
         if (onlySpecAndSuites.length > 0)
           return { status: 'forbid-only', locations: onlySpecAndSuites.map(specOrSuite => `${buildItemLocation(config.rootDir, specOrSuite)} > ${specOrSuite.fullTitle()}`) };
       }
-      const uniqueSpecs = getUniqueSpecsForRootSuite(rootSuite);
-      if (Object.keys(uniqueSpecs).length > 0)
+      const uniqueSpecs = getUniqueSpecsPerSuite(rootSuite);
+      if (uniqueSpecs.size > 0)
         return { status: 'clashing-spec-titles', clashingSpecs: uniqueSpecs };
       filterOnly(rootSuite);
       filterByFocusedLine(rootSuite, testFileReFilters);
@@ -363,24 +363,24 @@ async function collectFiles(testDir: string): Promise<string[]> {
   return files;
 }
 
-function getUniqueSpecsForRootSuite(rootSuite: Suite): Record<string, Spec[]> {
-  function visit(suite: Suite, clashingSpecs: Record<string, Spec[]>) {
+function getUniqueSpecsPerSuite(rootSuite: Suite): Map<string, Spec[]> {
+  function visit(suite: Suite, clashingSpecs: Map<string, Spec[]>) {
     for (const childSuite of suite.suites)
       visit(childSuite, clashingSpecs);
     for (const spec of suite.specs) {
       const fullTitle = spec.fullTitle();
-      if (!clashingSpecs[fullTitle])
-        clashingSpecs[fullTitle] = [];
-      clashingSpecs[fullTitle].push(spec);
+      if (!clashingSpecs.has(fullTitle))
+        clashingSpecs.set(fullTitle, []);
+      clashingSpecs.set(fullTitle, clashingSpecs.get(fullTitle)!.concat(spec));
     }
   }
-  const out: Record<string, Spec[]> = {};
+  const out = new Map<string, Spec[]>();
   for (const fileSuite of rootSuite.suites) {
-    const clashingSpecs: Record<string, Spec[]> = {};
+    const clashingSpecs = new Map<string, Spec[]>();
     visit(fileSuite, clashingSpecs);
-    for (const title in clashingSpecs) {
-      if (clashingSpecs[title].length > 1)
-        out[title] = clashingSpecs[title];
+    for (const [title, specs] of clashingSpecs.entries()) {
+      if (specs.length > 1)
+        out.set(title, specs);
     }
   }
   return out;
