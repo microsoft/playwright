@@ -38,7 +38,7 @@ export type Metadata = {
 export type WaitForEventInfo = {
   waitId: string,
   phase: 'before' | 'after' | 'log',
-  apiName?: string,
+  event?: string,
   message?: string,
   error?: string,
 };

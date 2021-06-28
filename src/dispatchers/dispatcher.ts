@@ -237,7 +237,6 @@ export class DispatcherConnection {
       const info = params.info;
       switch (info.phase) {
         case 'before': {
-          callMetadata.apiName = info.apiName;
           this._waitOperations.set(info.waitId, callMetadata);
           await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
           return;
@@ -267,7 +266,7 @@ export class DispatcherConnection {
       // Dispatching error
       callMetadata.error = e.message;
       if (callMetadata.log.length)
-        rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log) + kLoggingNote);
+        rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log));
       error = serializeError(e);
     } finally {
       callMetadata.endTime = monotonicTime();
@@ -296,8 +295,6 @@ export class DispatcherConnection {
     return payload;
   }
 }
-
-const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable to capture Playwright logs.`;
 
 function formatLogRecording(log: string[]): string {
   if (!log.length)

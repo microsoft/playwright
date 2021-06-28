@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import { ParsedStackTrace, rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from '../utils/errors';
 import { createGuid } from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
@@ -30,17 +30,17 @@ export class Waiter {
   private _waitId: string;
   private _error: string | undefined;
 
-  constructor(channelOwner: ChannelOwner, apiName: string) {
+  constructor(channelOwner: ChannelOwner, event: string, stackTrace: ParsedStackTrace) {
     this._waitId = createGuid();
     this._channelOwner = channelOwner;
-    this._channelOwner._waitForEventInfoBefore(this._waitId, apiName);
+    this._channelOwner._waitForEventInfoBefore(this._waitId, event, stackTrace);
     this._dispose = [
       () => this._channelOwner._waitForEventInfoAfter(this._waitId, this._error)
     ];
   }
 
-  static createForEvent(channelOwner: ChannelOwner, target: string, event: string) {
-    return new Waiter(channelOwner, `${target}.waitForEvent(${event})`);
+  static createForEvent(channelOwner: ChannelOwner, event: string, stackTrace: ParsedStackTrace) {
+    return new Waiter(channelOwner, event, stackTrace);
   }
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {
@@ -82,7 +82,7 @@ export class Waiter {
         dispose();
       this._error = e.message;
       this.dispose();
-      rewriteErrorMessage(e, e.message + formatLogRecording(this._logs) + kLoggingNote);
+      rewriteErrorMessage(e, e.message + formatLogRecording(this._logs));
       throw e;
     }
   }
@@ -125,8 +125,6 @@ function waitForTimeout(timeout: number): { promise: Promise<void>, dispose: () 
   const dispose = () => clearTimeout(timeoutId);
   return { promise, dispose };
 }
-
-const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable to capture Playwright logs.`;
 
 function formatLogRecording(log: string[]): string {
   if (!log.length)
