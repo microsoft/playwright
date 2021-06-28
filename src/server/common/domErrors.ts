@@ -24,6 +24,7 @@ export type FatalDOMError =
   'error:notinput' |
   'error:notinputvalue' |
   'error:notselect' |
-  'error:notcheckbox';
+  'error:notcheckbox' |
+  'error:notmultiplefileinput';
 
 export type RetargetableDOMError = 'error:notconnected';
