@@ -253,6 +253,71 @@ it('should include content', async ({ contextFactory, server }, testInfo) => {
   expect(Buffer.from(content2.text, 'base64').toString()).toContain('pink');
 });
 
+it('should include content for JavaScript redirects with charset', async ({ contextFactory, server, browserName }, testInfo) => {
+  it.fail(browserName === 'chromium');
+  server.setRoute('/js-redirect', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+    res.end(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Redirect to Empty</title>
+      </head>
+      <body>
+        redirect content
+        <script>
+          window.location.href = "${server.EMPTY_PAGE}"
+        </script>
+      </body>
+    </html>
+  `);
+  });
+
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.PREFIX + '/js-redirect');
+
+  const log = await getLog();
+
+  const content = log.entries[0].response.content;
+  expect(content.encoding).toBe('base64');
+  expect(content.mimeType).toBe('text/html; charset=UTF-8');
+  expect(Buffer.from(content.text, 'base64').toString()).toContain('redirect content');
+
+  expect(log.entries[1].request.url).toBe(server.EMPTY_PAGE);
+});
+
+it('should include content for JavaScript redirects', async ({ contextFactory, server }, testInfo) => {
+  server.setRoute('/js-redirect', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Redirect to Empty</title>
+      </head>
+      <body>
+        redirect content
+        <script>
+          window.location.href = "${server.EMPTY_PAGE}"
+        </script>
+      </body>
+    </html>
+  `);
+  });
+
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.PREFIX + '/js-redirect');
+
+  const log = await getLog();
+
+  const content = log.entries[0].response.content;
+  expect(content.encoding).toBe('base64');
+  expect(content.mimeType).toBe('text/html');
+  expect(Buffer.from(content.text, 'base64').toString()).toContain('redirect content');
+
+  expect(log.entries[1].request.url).toBe(server.EMPTY_PAGE);
+});
+
 it('should calculate time', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
