@@ -99,7 +99,7 @@ export class Runner {
     if (timedOut) {
       if (!this._didBegin)
         this._reporter.onBegin(config, new Suite(''));
-      this._reporter.onTimeout(config.globalTimeout);
+      await this._reporter.onEnd({ status: 'timedout' });
       await this._flushOutput();
       return 'failed';
     }
@@ -251,11 +251,15 @@ export class Runner {
         await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
       }
-      this._reporter.onEnd();
 
-      if (sigint)
+      if (sigint) {
+        await this._reporter.onEnd({ status: 'interrupted' });
         return { status: 'sigint' };
-      return { status: hasWorkerErrors || rootSuite.findSpec(spec => !spec.ok()) ? 'failed' : 'passed' };
+      }
+
+      const failed = hasWorkerErrors || rootSuite.findSpec(spec => !spec.ok());
+      await this._reporter.onEnd({ status: failed ? 'failed' : 'passed' });
+      return { status: failed ? 'failed' : 'passed' };
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());

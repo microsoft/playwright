@@ -19,7 +19,7 @@ import colors from 'colors/safe';
 // @ts-ignore
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
-import { FullConfig, Suite, Test, TestResult } from '../reporter';
+import { FullConfig, FullResult, Suite, Test, TestResult } from '../reporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -107,8 +107,8 @@ class ListReporter extends BaseReporter {
     }
   }
 
-  onEnd() {
-    super.onEnd();
+  async onEnd(result: FullResult) {
+    await super.onEnd(result);
     process.stdout.write('\n');
     this.epilogue(true);
   }

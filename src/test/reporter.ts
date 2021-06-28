@@ -60,13 +60,15 @@ export interface TestResult {
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
 }
+export type FullResult = {
+  status: 'passed' | 'failed' | 'timedout' | 'interrupted';
+};
 export interface Reporter {
   onBegin(config: FullConfig, suite: Suite): void;
   onTestBegin(test: Test): void;
   onStdOut(chunk: string | Buffer, test?: Test): void;
   onStdErr(chunk: string | Buffer, test?: Test): void;
   onTestEnd(test: Test, result: TestResult): void;
-  onTimeout(timeout: number): void;
   onError(error: TestError): void;
-  onEnd(): void;
+  onEnd(result: FullResult): void | Promise<void>;
 }

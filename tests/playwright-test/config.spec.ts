@@ -350,7 +350,8 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
         onError() {
           console.log('\\n%%reporter-error%%');
         }
-        onEnd() {
+        async onEnd() {
+          await new Promise(f => setTimeout(f, 500));
           console.log('\\n%%reporter-end%%' + this.options.end);
         }
       }

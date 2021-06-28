@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FullConfig, Suite, Test, TestError, TestResult, Reporter } from '../reporter';
+import { FullConfig, Suite, Test, TestError, TestResult, Reporter, FullResult } from '../reporter';
 
 export class Multiplexer implements Reporter {
   private _reporters: Reporter[];
@@ -48,14 +48,9 @@ export class Multiplexer implements Reporter {
       reporter.onTestEnd(test, result);
   }
 
-  onTimeout(timeout: number) {
+  async onEnd(result: FullResult) {
     for (const reporter of this._reporters)
-      reporter.onTimeout(timeout);
-  }
-
-  onEnd() {
-    for (const reporter of this._reporters)
-      reporter.onEnd();
+      await reporter.onEnd(result);
   }
 
   onError(error: TestError) {

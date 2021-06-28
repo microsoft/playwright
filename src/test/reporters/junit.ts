@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import EmptyReporter from './empty';
-import { FullConfig, Suite, Test } from '../reporter';
+import { FullConfig, FullResult, Suite, Test } from '../reporter';
 import { monotonicTime } from '../util';
 import { formatFailure, formatTestTitle, stripAscii } from './base';
 
@@ -45,7 +45,7 @@ class JUnitReporter extends EmptyReporter {
     this.startTime = monotonicTime();
   }
 
-  onEnd() {
+  async onEnd(result: FullResult) {
     const duration = monotonicTime() - this.startTime;
     const children: XMLEntry[] = [];
     for (const suite of this.suite.suites)

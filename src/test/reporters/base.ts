@@ -21,7 +21,7 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestStatus, Test, Spec, Suite, TestResult, TestError, Reporter } from '../reporter';
+import { FullConfig, TestStatus, Test, Spec, Suite, TestResult, TestError, Reporter, FullResult } from '../reporter';
 
 const stackUtils = new StackUtils();
 
@@ -29,7 +29,7 @@ export class BaseReporter implements Reporter  {
   duration = 0;
   config!: FullConfig;
   suite!: Suite;
-  timeout: number = 0;
+  result!: FullResult;
   fileDurations = new Map<string, number>();
   monotonicStartTime: number = 0;
 
@@ -66,12 +66,9 @@ export class BaseReporter implements Reporter  {
     console.log(formatError(error));
   }
 
-  onTimeout(timeout: number) {
-    this.timeout = timeout;
-  }
-
-  onEnd() {
+  async onEnd(result: FullResult) {
     this.duration = monotonicTime() - this.monotonicStartTime;
+    this.result = result;
   }
 
   private _printSlowTests() {
@@ -123,8 +120,8 @@ export class BaseReporter implements Reporter  {
       console.log(colors.yellow(`  ${skipped} skipped`));
     if (expected)
       console.log(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
-    if (this.timeout)
-      console.log(colors.red(`  Timed out waiting ${this.timeout / 1000}s for the entire test run`));
+    if (this.result.status === 'timedout')
+      console.log(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
   }
 
   private _printTestHeaders(tests: Test[]) {

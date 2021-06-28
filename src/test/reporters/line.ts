@@ -16,7 +16,7 @@
 
 import colors from 'colors/safe';
 import { BaseReporter, formatFailure, formatTestTitle } from './base';
-import { FullConfig, Test, Suite, TestResult } from '../reporter';
+import { FullConfig, Test, Suite, TestResult, FullResult } from '../reporter';
 
 class LineReporter extends BaseReporter {
   private _total = 0;
@@ -64,9 +64,9 @@ class LineReporter extends BaseReporter {
     }
   }
 
-  onEnd() {
+  async onEnd(result: FullResult) {
     process.stdout.write(`\u001B[1A\u001B[2K`);
-    super.onEnd();
+    await super.onEnd(result);
     this.epilogue(false);
   }
 }

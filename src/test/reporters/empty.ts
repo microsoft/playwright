@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FullConfig, TestResult, Test, Suite, TestError, Reporter } from '../reporter';
+import { FullConfig, TestResult, Test, Suite, TestError, Reporter, FullResult } from '../reporter';
 
 class EmptyReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {}
@@ -22,9 +22,8 @@ class EmptyReporter implements Reporter {
   onStdOut(chunk: string | Buffer, test?: Test) {}
   onStdErr(chunk: string | Buffer, test?: Test) {}
   onTestEnd(test: Test, result: TestResult) {}
-  onTimeout(timeout: number) {}
   onError(error: TestError) {}
-  onEnd() {}
+  async onEnd(result: FullResult) {}
 }
 
 export default EmptyReporter;
