@@ -68,6 +68,35 @@ test('should respect test.setTimeout', async ({ runInlineTest }) => {
   expect(result.output).toContain('Timeout of 1000ms exceeded');
 });
 
+test('should respect test.setTimeout outside of the test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      test.setTimeout(500);
+      test('fails', async ({}) => {
+        await new Promise(f => setTimeout(f, 1000));
+      });
+      test('passes', async ({}) => {
+        await new Promise(f => setTimeout(f, 100));
+      });
+
+      test.describe('suite', () => {
+        test.setTimeout(50);
+        test('fails', async ({}) => {
+          await new Promise(f => setTimeout(f, 100));
+        });
+        test('passes', async ({}) => {
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.passed).toBe(2);
+  expect(result.output).toContain('Timeout of 500ms exceeded');
+});
+
 test('should timeout when calling test.setTimeout too late', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `

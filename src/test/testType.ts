@@ -125,9 +125,15 @@ export class TestTypeImpl {
   }
 
   private _setTimeout(timeout: number) {
+    const suite = currentlyLoadingFileSuite();
+    if (suite) {
+      suite._timeout = timeout;
+      return;
+    }
+
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw new Error(`test.setTimeout() can only be called inside test or fixture`);
+      throw new Error(`test.setTimeout() can only be called from a test file`);
     testInfo.setTimeout(timeout);
   }
 

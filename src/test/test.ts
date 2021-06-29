@@ -78,6 +78,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     fn: Function,
     location: Location,
   }[] = [];
+  _timeout: number | undefined;
 
   _addSpec(spec: Spec) {
     spec.parent = this;

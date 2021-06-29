@@ -243,6 +243,15 @@ export class WorkerRunner extends EventEmitter {
           deadlineRunner.setDeadline(deadline());
       },
     };
+
+    // Inherit test.setTimeout() from parent suites.
+    for (let suite = spec.parent; suite; suite = suite.parent) {
+      if (suite._timeout !== undefined) {
+        testInfo.setTimeout(suite._timeout);
+        break;
+      }
+    }
+
     this._setCurrentTest({ testInfo, testId });
     const deadline = () => {
       return testInfo.timeout ? startTime + testInfo.timeout : undefined;
