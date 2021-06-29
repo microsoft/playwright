@@ -173,7 +173,7 @@ const DOWNLOAD_URLS = {
   },
 };
 
-export const hostPlatform = ((): BrowserPlatform => {
+function lazyHostPlatform(): BrowserPlatform {
   const platform = os.platform();
   if (platform === 'darwin') {
     const [major, minor] = execSync('sw_vers -productVersion', {
@@ -208,7 +208,7 @@ export const hostPlatform = ((): BrowserPlatform => {
   if (platform === 'win32')
     return os.arch() === 'x64' ? 'win64' : 'win32';
   return platform as BrowserPlatform;
-})();
+}
 
 export const registryDirectory = (() => {
   let result: string;
@@ -254,7 +254,9 @@ export function isBrowserDirectory(browserDirectory: string): boolean {
 let currentPackageRegistry: Registry | undefined = undefined;
 
 export class Registry {
-  private _descriptors: BrowserDescriptor[];
+  private _packagePath: string;
+  private _loadedDescriptors: BrowserDescriptor[] | undefined;
+  private _hostPlatform: BrowserPlatform | undefined;
 
   static currentPackageRegistry() {
     if (!currentPackageRegistry)
@@ -263,36 +265,52 @@ export class Registry {
   }
 
   constructor(packagePath: string) {
-    // require() needs to be used there otherwise it breaks on Vercel serverless
-    // functions. See https://github.com/microsoft/playwright/pull/6186
-    const browsersJSON = require(path.join(packagePath, 'browsers.json'));
-    this._descriptors = browsersJSON['browsers'].map((obj: any) => {
-      const name = obj.name;
-      const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
-      const revision = revisionOverride || obj.revision;
-      const browserDirectoryPrefix = revisionOverride ? `${name}_${hostPlatform}_special` : `${name}`;
-      return {
-        name,
-        revision,
-        installByDefault: !!obj.installByDefault,
-        // Method `isBrowserDirectory` determines directory to be browser iff
-        // it starts with some browser name followed by '-'. Some browser names
-        // are prefixes of others, e.g. 'webkit' is a prefix of `webkit-technology-preview`.
-        // To avoid older registries erroneously removing 'webkit-technology-preview', we have to
-        // ensure that browser folders to never include dashes inside.
-        browserDirectory: browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision,
-      };
-    });
+    this._packagePath = packagePath;
+  }
+
+  private _descriptors(): BrowserDescriptor[] {
+    if (!this._loadedDescriptors) {
+      // Note: this function must be able to read any older version of browsers.json file.
+      //
+      // require() needs to be used here otherwise it breaks on Vercel serverless
+      // functions. See https://github.com/microsoft/playwright/pull/6186
+      const browsersJSON = require(path.join(this._packagePath, 'browsers.json'));
+      this._loadedDescriptors = browsersJSON['browsers'].map((obj: any) => {
+        const name = obj.name;
+        const revisionOverride = (obj.revisionOverrides || {})[this.hostPlatform()];
+        const revision = revisionOverride || obj.revision;
+        const browserDirectoryPrefix = revisionOverride ? `${name}_${this.hostPlatform()}_special` : `${name}`;
+        const descriptor: BrowserDescriptor = {
+          name,
+          revision,
+          installByDefault: !!obj.installByDefault,
+          // Method `isBrowserDirectory` determines directory to be browser iff
+          // it starts with some browser name followed by '-'. Some browser names
+          // are prefixes of others, e.g. 'webkit' is a prefix of `webkit-technology-preview`.
+          // To avoid older registries erroneously removing 'webkit-technology-preview', we have to
+          // ensure that browser folders to never include dashes inside.
+          browserDirectory: browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision,
+        };
+        return descriptor;
+      });
+    }
+    return this._loadedDescriptors!;
+  }
+
+  hostPlatform(): BrowserPlatform {
+    if (!this._hostPlatform)
+      this._hostPlatform = lazyHostPlatform();
+    return this._hostPlatform;
   }
 
   browserDirectory(browserName: BrowserName): string {
-    const browser = this._descriptors.find(browser => browser.name === browserName);
+    const browser = this._descriptors().find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
     return path.join(registryDirectory, browser.browserDirectory);
   }
 
   revision(browserName: BrowserName): number {
-    const browser = this._descriptors.find(browser => browser.name === browserName);
+    const browser = this._descriptors().find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
     return parseInt(browser.revision, 10);
   }
@@ -333,12 +351,12 @@ export class Registry {
 
   executablePath(browserName: BrowserName): string | undefined {
     const browserDirectory = this.browserDirectory(browserName);
-    const tokens = EXECUTABLE_PATHS[browserName][hostPlatform];
+    const tokens = EXECUTABLE_PATHS[browserName][this.hostPlatform()];
     return tokens ? path.join(browserDirectory, ...tokens) : undefined;
   }
 
   downloadURL(browserName: BrowserName): string {
-    const browser = this._descriptors.find(browser => browser.name === browserName);
+    const browser = this._descriptors().find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
     const envDownloadHost: { [key: string]: string } = {
       'chromium': 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
@@ -351,8 +369,8 @@ export class Registry {
     const downloadHost = getFromENV(envDownloadHost[browserName]) ||
                          getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||
                          'https://playwright.azureedge.net';
-    const urlTemplate = DOWNLOAD_URLS[browserName][hostPlatform];
-    assert(urlTemplate, `ERROR: Playwright does not support ${browserName} on ${hostPlatform}`);
+    const urlTemplate = DOWNLOAD_URLS[browserName][this.hostPlatform()];
+    assert(urlTemplate, `ERROR: Playwright does not support ${browserName} on ${this.hostPlatform()}`);
     return util.format(urlTemplate, downloadHost, browser.revision);
   }
 
@@ -362,10 +380,10 @@ export class Registry {
     // the "download" field in the browser descriptor and use its value
     // to retain and download browsers.
     // As of v1.10, we decided to abandon "download" field.
-    return this._descriptors.some(browser => browser.name === browserName);
+    return this._descriptors().some(browser => browser.name === browserName);
   }
 
   installByDefault(): BrowserName[] {
-    return this._descriptors.filter(browser => browser.installByDefault).map(browser => browser.name);
+    return this._descriptors().filter(browser => browser.installByDefault).map(browser => browser.name);
   }
 }

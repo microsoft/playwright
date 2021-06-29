@@ -19,7 +19,6 @@ import * as jpeg from 'jpeg-js';
 import path from 'path';
 import * as png from 'pngjs';
 import { splitErrorMessage } from '../../utils/stackTrace';
-import { hostPlatform } from '../../utils/registry';
 import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray } from '../../utils/utils';
 import * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
@@ -762,14 +761,15 @@ export class WKPage implements PageDelegate {
   }
 
   private _toolbarHeight(): number {
-    if (this._page._browserContext._browser?.options.headful)
-      return hostPlatform.startsWith('10.15') ? 55 : 59;
+    const options = this._page._browserContext._browser.options;
+    if (options.headful)
+      return options.registry.hostPlatform().startsWith('10.15') ? 55 : 59;
     return 0;
   }
 
   private async _startVideo(options: types.PageScreencastOptions): Promise<void> {
     assert(!this._recordingVideoFile);
-    const START_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.start' : 'Screencast.startVideo';
+    const START_VIDEO_PROTOCOL_COMMAND = this._page._browserContext._browser.options.registry.hostPlatform() === 'mac10.14' ? 'Screencast.start' : 'Screencast.startVideo';
     const { screencastId } = await this._pageProxySession.send(START_VIDEO_PROTOCOL_COMMAND as any, {
       file: options.outputFile,
       width: options.width,
@@ -783,7 +783,7 @@ export class WKPage implements PageDelegate {
   private async _stopVideo(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
-    const STOP_VIDEO_PROTOCOL_COMMAND = hostPlatform === 'mac10.14' ? 'Screencast.stop' : 'Screencast.stopVideo';
+    const STOP_VIDEO_PROTOCOL_COMMAND = this._page._browserContext._browser.options.registry.hostPlatform() === 'mac10.14' ? 'Screencast.stop' : 'Screencast.stopVideo';
     await this._pageProxySession.sendMayFail(STOP_VIDEO_PROTOCOL_COMMAND as any);
     this._recordingVideoFile = null;
   }

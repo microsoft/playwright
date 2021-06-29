@@ -20,7 +20,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import ProgressBar from 'progress';
-import { BrowserName, Registry, hostPlatform } from '../utils/registry';
+import { BrowserName, Registry } from '../utils/registry';
 import { downloadFile, existsAsync } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 
@@ -53,7 +53,7 @@ export async function downloadBrowserWithProgressBar(registry: Registry, browser
   }
 
   const url = registry.downloadURL(browserName);
-  const zipPath = path.join(os.tmpdir(), `playwright-download-${browserName}-${hostPlatform}-${registry.revision(browserName)}.zip`);
+  const zipPath = path.join(os.tmpdir(), `playwright-download-${browserName}-${registry.hostPlatform()}-${registry.revision(browserName)}.zip`);
   try {
     for (let attempt = 1, N = 3; attempt <= N; ++attempt) {
       debugLogger.log('install', `downloading ${progressBarName} - attempt #${attempt}`);
