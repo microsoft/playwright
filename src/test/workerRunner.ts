@@ -114,7 +114,7 @@ export class WorkerRunner extends EventEmitter {
     this._remaining = new Map(runPayload.entries.map(e => [ e.testId, e ]));
 
     this._loadIfNeeded();
-    const fileSuite = this._loader.loadTestFile(runPayload.file);
+    const fileSuite = await this._loader.loadTestFile(runPayload.file);
     let anySpec: Spec | undefined;
     fileSuite.findSpec(spec => {
       const test = this._project.generateTests(spec, this._params.repeatEachIndex)[0];
@@ -184,7 +184,7 @@ export class WorkerRunner extends EventEmitter {
     const testId = test._id;
 
     const baseOutputDir = (() => {
-      const relativeTestFilePath = path.relative(this._project.config.testDir, spec._requireFile.replace(/\.(spec|test)\.(js|ts)/, ''));
+      const relativeTestFilePath = path.relative(this._project.config.testDir, spec._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(spec.title);
       if (this._uniqueProjectNamePathSegment)

@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as pirates from 'pirates';
 import * as babel from '@babel/core';
 import * as sourceMapSupport from 'source-map-support';
+import * as url from 'url';
 import type { Location } from './types';
 
 const version = 4;
@@ -107,8 +108,11 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
     const oldPrepareStackTrace = Error.prepareStackTrace;
     Error.prepareStackTrace = (error, stackFrames) => {
       const frame: NodeJS.CallSite = sourceMapSupport.wrapCallSite(stackFrames[1]);
+      const fileName = frame.getFileName();
+      // Node error stacks for modules use file:// urls instead of paths.
+      const file = (fileName && fileName.startsWith('file://')) ? url.fileURLToPath(fileName) : fileName;
       return {
-        file: frame.getFileName(),
+        file,
         line: frame.getLineNumber(),
         column: frame.getColumnNumber(),
       };

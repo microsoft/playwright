@@ -148,3 +148,31 @@ test('should match tests well', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(5);
 });
+
+test('should load an mjs file', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'a.spec.mjs': `
+        const { test } = pwt;
+        test('succeeds', () => {
+          expect(1 + 1).toBe(2);
+        });
+      `
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+test('should throw a nice error if a js file uses import', async ({ runInlineTest }) => {
+  const { exitCode, output } = await runInlineTest({
+    'a.spec.js': `
+        import fs from 'fs';
+        const { test } = folio;
+        test('succeeds', () => {
+          expect(1 + 1).toBe(2);
+        });
+      `
+  });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('a.spec.js');
+  expect(output).toContain('JavaScript files must end with .mjs to use import.');
+});

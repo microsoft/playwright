@@ -160,7 +160,7 @@ export class Runner {
       const allFiles = await collectFiles(project.config.testDir);
       const testMatch = createMatcher(project.config.testMatch);
       const testIgnore = createMatcher(project.config.testIgnore);
-      const testFileExtension = (file: string) => ['.js', '.ts'].includes(path.extname(file));
+      const testFileExtension = (file: string) => ['.js', '.ts', '.mjs'].includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
       testFiles.forEach(file => allTestFiles.add(file));
@@ -171,7 +171,7 @@ export class Runner {
       globalSetupResult = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup')(this._loader.fullConfig());
     try {
       for (const file of allTestFiles)
-        this._loader.loadTestFile(file);
+        await this._loader.loadTestFile(file);
 
       const rootSuite = new Suite('');
       for (const fileSuite of this._loader.fileSuites().values())

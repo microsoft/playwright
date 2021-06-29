@@ -22,6 +22,7 @@ import * as os from 'os';
 import type { ReportFormat } from '../../src/test/reporters/json';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
+import * as url from 'url';
 
 const removeFolderAsync = promisify(rimraf);
 
@@ -55,6 +56,9 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   const headerTS = `
     import * as pwt from ${internalPath};
   `;
+  const headerMJS = `
+    import * as pwt from ${JSON.stringify(url.pathToFileURL(path.join(__dirname, 'entry', 'index.mjs')))};
+  `;
 
   const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
   if (!hasConfig) {
@@ -69,9 +73,10 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   await Promise.all(Object.keys(files).map(async name => {
     const fullName = path.join(baseDir, name);
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
-    const isTypeScriptSourceFile = name.endsWith('ts') && !name.endsWith('d.ts');
-    const header = isTypeScriptSourceFile ? headerTS : headerJS;
-    if (/(spec|test)\.(js|ts)$/.test(name)) {
+    const isTypeScriptSourceFile = name.endsWith('.ts') && !name.endsWith('.d.ts');
+    const isJSModule = name.endsWith('.mjs');
+    const header = isTypeScriptSourceFile ? headerTS : (isJSModule ? headerMJS : headerJS);
+    if (/(spec|test)\.(js|ts|mjs)$/.test(name)) {
       const fileHeader = header + 'const { expect } = pwt;\n';
       await fs.promises.writeFile(fullName, fileHeader + files[name]);
     } else if (/\.(js|ts)$/.test(name) && !name.endsWith('d.ts')) {

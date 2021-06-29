@@ -21,6 +21,7 @@ import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
 import * as path from 'path';
+import * as url from 'url';
 import { ProjectImpl } from './project';
 import { Reporter } from './reporter';
 
@@ -108,7 +109,7 @@ export class Loader {
     this._fullConfig.projects = this._projects.map(p => p.config);
   }
 
-  loadTestFile(file: string) {
+  async loadTestFile(file: string) {
     if (this._fileSuites.has(file))
       return this._fileSuites.get(file)!;
     const revertBabelRequire = installTransform();
@@ -117,9 +118,19 @@ export class Loader {
       suite._requireFile = file;
       suite.file = file;
       setCurrentlyLoadingFileSuite(suite);
-      require(file);
+      if (file.endsWith('.mjs')) {
+        // eval to prevent typescript from transpiling us here.
+        await eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
+      } else {
+        require(file);
+      }
       this._fileSuites.set(file, suite);
       return suite;
+    } catch (error) {
+      if (error instanceof SyntaxError && error.message.includes('Cannot use import statement outside a module'))
+        throw errorWithFile(file, 'JavaScript files must end with .mjs to use import.');
+
+      throw error;
     } finally {
       revertBabelRequire();
       setCurrentlyLoadingFileSuite(undefined);
@@ -191,7 +202,7 @@ export class Loader {
       name: takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, ''),
       testDir,
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
-      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).[jt]s'),
+      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).@(ts|js|mjs)'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),
       use: mergeObjects(mergeObjects(this._config.use, projectConfig.use), this._configOverrides.use),
     };
