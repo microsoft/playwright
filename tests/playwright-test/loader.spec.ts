@@ -104,3 +104,47 @@ test('should validate configuration object', async ({ runInlineTest }) => {
   expect(result.failed).toBe(0);
   expect(result.output).toContain('playwright.config.ts: config.timeout must be a non-negative number');
 });
+
+test.only('should match tests well', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('works', () => {});
+    `,
+    'hello.spec.ts': `
+      const { test } = pwt;
+      test('works', () => {});
+    `,
+    'test.ts': `
+      const { test } = pwt;
+      test('works', () => {});
+    `,
+    'spec.ts': `
+      const { test } = pwt;
+      test('works', () => {});
+    `,
+    'strange.....spec.ts': `
+      const { test } = pwt;
+      test('works', () => {});
+    `,
+    'badspec.ts': `
+      const { test } = pwt;
+      test('bad', () => { throw new Error('badspec.ts')});
+    `,
+    'specspec.ts': `
+      const { test } = pwt;
+      test('bad', () => { throw new Error('specspec.ts')});
+    `,
+    'a.testtest.ts': `
+      const { test } = pwt;
+      test('bad', () => { throw new Error('a.testtest.ts')});
+    `,
+    'b.testspec.ts': `
+      const { test } = pwt;
+      test('bad', () => { throw new Error('b.testspec.ts')});
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(5);
+});

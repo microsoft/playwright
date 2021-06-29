@@ -191,7 +191,7 @@ export class Loader {
       name: takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, ''),
       testDir,
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
-      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)+(spec|test).[jt]s'),
+      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).[jt]s'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),
       use: mergeObjects(mergeObjects(this._config.use, projectConfig.use), this._configOverrides.use),
     };
