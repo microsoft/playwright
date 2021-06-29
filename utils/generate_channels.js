@@ -167,6 +167,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   };
 `];
 
+const tracingSnapshots = [];
+
 const yml = fs.readFileSync(path.join(__dirname, '..', 'src', 'protocol', 'protocol.yml'), 'utf-8');
 const protocol = yaml.parse(yml);
 
@@ -208,6 +210,8 @@ for (const [name, item] of Object.entries(protocol)) {
     for (let [methodName, method] of Object.entries(item.commands || {})) {
       if (method === null)
         method = {};
+      if (method.tracing && method.tracing.snapshot)
+        tracingSnapshots.push(name + '.' + methodName);
       const parameters = objectType(method.parameters || {}, '');
       const paramsName = `${channelName}${titleCase(methodName)}Params`;
       const optionsName = `${channelName}${titleCase(methodName)}Options`;
@@ -237,6 +241,10 @@ for (const [name, item] of Object.entries(protocol)) {
     addScheme(name, inner.scheme);
   }
 }
+
+channels_ts.push(`export const commandsWithTracingSnapshots = new Set([
+  '${tracingSnapshots.join(`',\n  '`)}'
+]);`);
 
 validator_ts.push(`
   return scheme;

@@ -76,7 +76,8 @@ export class TraceModel {
       }
       case 'action': {
         const metadata = event.metadata;
-        if (metadata.pageId)
+        const include = typeof event.hasSnapshot !== 'boolean' || event.hasSnapshot;
+        if (include && metadata.pageId)
           this._pageEntry(metadata.pageId).actions.push(event);
         break;
       }
