@@ -105,7 +105,7 @@ test('should validate configuration object', async ({ runInlineTest }) => {
   expect(result.output).toContain('playwright.config.ts: config.timeout must be a non-negative number');
 });
 
-test.only('should match tests well', async ({ runInlineTest }) => {
+test('should match tests well', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
