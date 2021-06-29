@@ -227,7 +227,7 @@ function toReporters(reporters: 'dot' | 'line' | 'list' | 'junit' | 'json' | 'nu
 }
 
 function errorWithFile(file: string, message: string) {
-  return new Error(`${path.relative(process.cwd(), file)}: ${message}`);
+  return new Error(`${file}: ${message}`);
 }
 
 function validateConfig(file: string, config: Config) {
