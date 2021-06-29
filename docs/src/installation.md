@@ -25,7 +25,7 @@ playwright install
 These browsers will take a few hundred megabytes of disk space when installed:
 
 ```bash
-du -hs ./Library/Caches/ms-playwright/*
+du -hs ~/Library/Caches/ms-playwright/*
 281M  chromium-XXXXXX
 187M  firefox-XXXX
 180M  webkit-XXXX
@@ -145,7 +145,7 @@ Playwright keeps track of packages that need those browsers and will garbage col
 Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
 :::
 
-## Install behind the firewall or proxy
+## Install behind a firewall or a proxy
 
 By default, Playwright downloads browsers from Microsoft CDN.
 
