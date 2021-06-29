@@ -56,8 +56,6 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   const headerTS = `
     import * as pwt from ${internalPath};
   `;
-  // When testing, we esmodules interop doesn't work
-  // so we need to import folio as the default import.
   const headerMJS = `
     import * as pwt from ${JSON.stringify(url.pathToFileURL(path.join(__dirname, 'entry', 'index.mjs')))};
   `;
