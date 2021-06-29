@@ -35,6 +35,7 @@ export type ScreencastFrameTraceEvent = {
 
 export type ActionTraceEvent = {
   type: 'action' | 'event',
+  hasSnapshot: boolean,
   metadata: CallMetadata,
 };
 
