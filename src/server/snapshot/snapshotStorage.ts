@@ -33,6 +33,7 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
     renderer: SnapshotRenderer[]
   }>();
   protected _contextResources: ContextResources = new Map();
+  private _contextResourcesCopyOnWrite: ContextResources | null = null;
 
   clear() {
     this._resources = [];
@@ -42,6 +43,7 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
   }
 
   addResource(resource: ResourceSnapshot): void {
+    this._contextResourcesCopyOnWrite = null;
     this._resourceMap.set(resource.resourceId, resource);
     this._resources.push(resource);
     let resources = this._contextResources.get(resource.url);
@@ -64,7 +66,9 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
         this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
     }
     frameSnapshots.raw.push(snapshot);
-    const renderer = new SnapshotRenderer(new Map(this._contextResources), frameSnapshots.raw, frameSnapshots.raw.length - 1);
+    if (!this._contextResourcesCopyOnWrite)
+      this._contextResourcesCopyOnWrite = new Map(this._contextResources);
+    const renderer = new SnapshotRenderer(this._contextResourcesCopyOnWrite, frameSnapshots.raw, frameSnapshots.raw.length - 1);
     frameSnapshots.renderer.push(renderer);
     this.emit('snapshot', renderer);
   }
