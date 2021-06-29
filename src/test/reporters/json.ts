@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import EmptyReporter from './empty';
-import { FullConfig, Test, Suite, Spec, TestResult, TestError } from '../reporter';
+import { FullConfig, Test, Suite, Spec, TestResult, TestError, FullResult } from '../reporter';
 
 interface SerializedSuite {
   title: string;
@@ -50,15 +50,11 @@ class JSONReporter extends EmptyReporter {
     this.suite = suite;
   }
 
-  onTimeout() {
-    this.onEnd();
-  }
-
   onError(error: TestError): void {
     this._errors.push(error);
   }
 
-  onEnd() {
+  async onEnd(result: FullResult) {
     outputReport(this._serializeReport(), this._outputFile);
   }
 

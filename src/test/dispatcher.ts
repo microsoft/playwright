@@ -171,7 +171,7 @@ export class Dispatcher {
       if (params.fatalError) {
         for (const { testId } of remaining) {
           const { test, result } = this._testById.get(testId)!;
-          this._reporter.onTestBegin?.(test);
+          this._reporter.onTestBegin(test);
           result.error = params.fatalError;
           this._reportTestEnd(test, result, 'failed');
           failedTestIds.add(testId);

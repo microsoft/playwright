@@ -16,7 +16,7 @@
 
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
-import { Test, TestResult } from '../reporter';
+import { FullResult, Test, TestResult } from '../reporter';
 
 class DotReporter extends BaseReporter {
   private _counter = 0;
@@ -42,13 +42,8 @@ class DotReporter extends BaseReporter {
     }
   }
 
-  onTimeout(timeout: number) {
-    super.onTimeout(timeout);
-    this.onEnd();
-  }
-
-  onEnd() {
-    super.onEnd();
+  async onEnd(result: FullResult) {
+    await super.onEnd(result);
     process.stdout.write('\n');
     this.epilogue(true);
   }
