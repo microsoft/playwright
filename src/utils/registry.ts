@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { execSync } from 'child_process';
 import * as os from 'os';
 import path from 'path';
 import * as util from 'util';
@@ -176,28 +175,25 @@ const DOWNLOAD_URLS = {
 export const hostPlatform = ((): BrowserPlatform => {
   const platform = os.platform();
   if (platform === 'darwin') {
-    const [major, minor] = execSync('sw_vers -productVersion', {
-      stdio: ['ignore', 'pipe', 'ignore']
-    }).toString('utf8').trim().split('.').map(x => parseInt(x, 10));
-    let arm64 = false;
-    // BigSur is the first version that might run on Apple Silicon.
-    if (major >= 11) {
-      arm64 = execSync('/usr/sbin/sysctl -in hw.optional.arm64', {
-        stdio: ['ignore', 'pipe', 'ignore']
-      }).toString().trim() === '1';
-    }
-    const LAST_STABLE_MAC_MAJOR_VERSION = 11;
-    // All new MacOS releases increase major version.
-    let macVersion = `${major}`;
-    if (major === 10) {
-      // Pre-BigSur MacOS was increasing minor version every release.
-      macVersion = `${major}.${minor}`;
-    } else if (major > LAST_STABLE_MAC_MAJOR_VERSION) {
+    const ver = os.release().split('.').map((a: string) => parseInt(a, 10));
+    let macVersion = '';
+    if (ver[0] < 18) {
+      // Everything before 10.14 is considered 10.13.
+      macVersion = 'mac10.13';
+    } else if (ver[0] === 18) {
+      macVersion = 'mac10.14';
+    } else if (ver[0] === 19) {
+      macVersion = 'mac10.15';
+    } else {
+      // ver[0] >= 20
+      const LAST_STABLE_MAC_MAJOR_VERSION = 11;
       // Best-effort support for MacOS beta versions.
-      macVersion = LAST_STABLE_MAC_MAJOR_VERSION + '';
+      macVersion = 'mac' + Math.min(ver[0] - 9, LAST_STABLE_MAC_MAJOR_VERSION);
+      // BigSur is the first version that might run on Apple Silicon.
+      if (os.cpus().some(cpu => cpu.model.includes('Apple')))
+        macVersion += '-arm64';
     }
-    const archSuffix = arm64 ? '-arm64' : '';
-    return `mac${macVersion}${archSuffix}` as BrowserPlatform;
+    return macVersion as BrowserPlatform;
   }
   if (platform === 'linux') {
     const ubuntuVersion = getUbuntuVersionSync();
