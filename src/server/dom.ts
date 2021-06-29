@@ -70,7 +70,8 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
-    debugLogger.log('api', `    evaluating expression "${expression}" ${arg ? `with arguments "${arg}"` : ''}`);
+    const trimmedExpression = `${expression}`.substring(0, 50);
+    debugLogger.log('api', `    evaluating expression "${trimmedExpression}" ${arg ? `with arguments "${arg}"` : ''}`);
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return this.evaluateExpression(expression, isFunction, arg);
     });
