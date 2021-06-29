@@ -27,6 +27,7 @@ import * as types from './types';
 import { Progress, ProgressController } from './progress';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 import { CallMetadata } from './instrumentation';
+
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 
 export class FrameExecutionContext extends js.ExecutionContext {
