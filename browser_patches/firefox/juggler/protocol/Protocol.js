@@ -452,6 +452,11 @@ const Browser = {
         height: t.Number,
       },
     },
+    'cancelDownload': {
+      params: {
+        uuid: t.Optional(t.String),
+      }
+    }
   },
 };
 
