@@ -532,7 +532,7 @@ static BOOL areEssentiallyEqual(double a, double b)
         title = url.lastPathComponent ?: url._web_userVisibleString;
     }
 
-    self.window.title = title;
+    self.window.title = [NSString stringWithFormat:@"🎭 Playwright: %@", title];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context

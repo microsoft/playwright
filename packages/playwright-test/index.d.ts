@@ -16,3 +16,4 @@
 
 export * from './types/types';
 export * from './types/test';
+export { default } from './types/test';

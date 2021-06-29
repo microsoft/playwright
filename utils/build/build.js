@@ -17,11 +17,14 @@
 const child_process = require('child_process');
 const path = require('path');
 const chokidar = require('chokidar');
+const fs = require('fs');
 
 const steps = [];
 const onChanges = [];
+const copyFiles = [];
 
 const watchMode = process.argv.slice(2).includes('--watch');
+const lintMode = process.argv.slice(2).includes('--lint');
 const ROOT = path.join(__dirname, '..', '..');
 
 function filePath(relative) {
@@ -47,9 +50,15 @@ function runWatch() {
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
     runOnChanges(onChange.inputs, onChange.script);
+  for (const {files, from, to, ignored} of copyFiles) {
+    const watcher = chokidar.watch([filePath(files)], {ignored});
+    watcher.on('all', (event, file) => {
+      copyFile(file, from, to);
+    });
+  }
 }
 
-function runBuild() {
+async function runBuild() {
   function runStep(command, args, shell) {
     const out = child_process.spawnSync(command, args, { stdio: 'inherit', shell });
     if (out.status)
@@ -62,14 +71,27 @@ function runBuild() {
     if (!onChange.committed)
       runStep('node', [filePath(onChange.script)], false);
   }
+  for (const {files, from, to, ignored} of copyFiles) {
+    const watcher = chokidar.watch([filePath(files)], {
+      ignored
+    });
+    watcher.on('add', file => {
+      copyFile(file, from, to);
+    });
+    await new Promise(x => watcher.once('ready', x));
+    watcher.close();
+  }
+}
+
+function copyFile(file, from, to) {
+  const destination = path.resolve(filePath(to), path.relative(filePath(from), file));
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.copyFileSync(file, destination);
 }
 
 // Build injected scripts.
 const webPackFiles = [
-  'src/server/injected/injectedScript.webpack.config.js',
-  'src/server/injected/utilityScript.webpack.config.js',
-  'src/server/supplements/injected/consoleApi.webpack.config.js',
-  'src/server/supplements/injected/recorder.webpack.config.js',
+  'src/server/injected/webpack.config.js',
   'src/web/traceViewer/webpack.config.js',
   'src/web/recorder/webpack.config.js',
 ];
@@ -84,10 +106,10 @@ for (const file of webPackFiles) {
   });
 }
 
-// Run typescript.
+// Run Babel.
 steps.push({
   command: 'npx',
-  args: ['tsc', ...(watchMode ? ['-w', '--preserveWatchOutput'] : []), '-p', filePath('.')],
+  args: ['babel', ...(watchMode ? ['-w'] : []), '-s', '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
   shell: true,
 });
 
@@ -107,17 +129,44 @@ onChanges.push({
     'docs/src/api/',
     'utils/generate_types/overrides.d.ts',
     'utils/generate_types/exported.json',
-    'src/server/chromium/protocol.ts',
+    'src/server/chromium/protocol.d.ts',
     'src/trace/traceTypes.ts',
   ],
   script: 'utils/generate_types/index.js',
 });
 
-// Copy images.
-steps.push({
-  command: process.platform === 'win32' ? 'copy' : 'cp',
-  args: [filePath('src/web/recorder/*.png'), filePath('lib/web/recorder/')],
-  shell: true,
+// The recorder has an app_icon.png that needs to be copied.
+copyFiles.push({
+  files: 'src/web/recorder/*.png',
+  from: 'src',
+  to: 'lib',
 });
+
+// Babel doesn't touch JS files, so copy them manually.
+// For example: diff_match_patch.js
+copyFiles.push({
+  files: 'src/**/*.js',
+  from: 'src',
+  to: 'lib',
+  ignored: ['**/.eslintrc.js', '**/*webpack.config.js', '**/injected/**/*']
+});
+
+// Sometimes we require JSON files that babel ignores.
+// For example, deviceDescriptorsSource.json
+copyFiles.push({
+  files: 'src/**/*.json',
+  ignored: ['**/injected/**/*'],
+  from: 'src',
+  to: 'lib',
+});
+
+if (lintMode) {
+  // Run TypeScript for type chekcing.
+  steps.push({
+    command: 'npx',
+    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', filePath('.')],
+    shell: true,
+  });
+}
 
 watchMode ? runWatch() : runBuild();

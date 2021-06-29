@@ -32,7 +32,7 @@ try {
 
 console.log(`Rebuilding installer...`);
 try {
-  execSync('npm run tsc-installer', {
+  execSync('npm run build-installer', {
     stdio: ['inherit', 'inherit', 'inherit'],
   });
 } catch (e) {

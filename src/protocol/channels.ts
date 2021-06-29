@@ -38,7 +38,7 @@ export type Metadata = {
 export type WaitForEventInfo = {
   waitId: string,
   phase: 'before' | 'after' | 'log',
-  apiName?: string,
+  event?: string,
   message?: string,
   error?: string,
 };
@@ -1307,6 +1307,7 @@ export interface FrameChannel extends Channel {
   hover(params: FrameHoverParams, metadata?: Metadata): Promise<FrameHoverResult>;
   innerHTML(params: FrameInnerHTMLParams, metadata?: Metadata): Promise<FrameInnerHTMLResult>;
   innerText(params: FrameInnerTextParams, metadata?: Metadata): Promise<FrameInnerTextResult>;
+  inputValue(params: FrameInputValueParams, metadata?: Metadata): Promise<FrameInputValueResult>;
   isChecked(params: FrameIsCheckedParams, metadata?: Metadata): Promise<FrameIsCheckedResult>;
   isDisabled(params: FrameIsDisabledParams, metadata?: Metadata): Promise<FrameIsDisabledResult>;
   isEnabled(params: FrameIsEnabledParams, metadata?: Metadata): Promise<FrameIsEnabledResult>;
@@ -1489,10 +1490,12 @@ export type FrameEvaluateExpressionHandleResult = {
 export type FrameFillParams = {
   selector: string,
   value: string,
+  force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type FrameFillOptions = {
+  force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
@@ -1569,6 +1572,16 @@ export type FrameInnerTextOptions = {
   timeout?: number,
 };
 export type FrameInnerTextResult = {
+  value: string,
+};
+export type FrameInputValueParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameInputValueOptions = {
+  timeout?: number,
+};
+export type FrameInputValueResult = {
   value: string,
 };
 export type FrameIsCheckedParams = {
@@ -1670,6 +1683,7 @@ export type FrameSelectOptionParams = {
     label?: string,
     index?: number,
   }[],
+  force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
@@ -1680,6 +1694,7 @@ export type FrameSelectOptionOptions = {
     label?: string,
     index?: number,
   }[],
+  force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
@@ -1915,6 +1930,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   hover(params: ElementHandleHoverParams, metadata?: Metadata): Promise<ElementHandleHoverResult>;
   innerHTML(params?: ElementHandleInnerHTMLParams, metadata?: Metadata): Promise<ElementHandleInnerHTMLResult>;
   innerText(params?: ElementHandleInnerTextParams, metadata?: Metadata): Promise<ElementHandleInnerTextResult>;
+  inputValue(params?: ElementHandleInputValueParams, metadata?: Metadata): Promise<ElementHandleInputValueResult>;
   isChecked(params?: ElementHandleIsCheckedParams, metadata?: Metadata): Promise<ElementHandleIsCheckedResult>;
   isDisabled(params?: ElementHandleIsDisabledParams, metadata?: Metadata): Promise<ElementHandleIsDisabledResult>;
   isEditable(params?: ElementHandleIsEditableParams, metadata?: Metadata): Promise<ElementHandleIsEditableResult>;
@@ -2040,10 +2056,12 @@ export type ElementHandleDispatchEventOptions = {
 export type ElementHandleDispatchEventResult = void;
 export type ElementHandleFillParams = {
   value: string,
+  force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type ElementHandleFillOptions = {
+  force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
@@ -2083,6 +2101,11 @@ export type ElementHandleInnerHTMLResult = {
 export type ElementHandleInnerTextParams = {};
 export type ElementHandleInnerTextOptions = {};
 export type ElementHandleInnerTextResult = {
+  value: string,
+};
+export type ElementHandleInputValueParams = {};
+export type ElementHandleInputValueOptions = {};
+export type ElementHandleInputValueResult = {
   value: string,
 };
 export type ElementHandleIsCheckedParams = {};
@@ -2179,6 +2202,7 @@ export type ElementHandleSelectOptionParams = {
     label?: string,
     index?: number,
   }[],
+  force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
@@ -2189,6 +2213,7 @@ export type ElementHandleSelectOptionOptions = {
     label?: string,
     index?: number,
   }[],
+  force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
@@ -2196,9 +2221,11 @@ export type ElementHandleSelectOptionResult = {
   values: string[],
 };
 export type ElementHandleSelectTextParams = {
+  force?: boolean,
   timeout?: number,
 };
 export type ElementHandleSelectTextOptions = {
+  force?: boolean,
   timeout?: number,
 };
 export type ElementHandleSelectTextResult = void;

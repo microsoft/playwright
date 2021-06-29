@@ -78,9 +78,6 @@ function paramsForMember(member) {
   return new Set(member.argsArray.map(a => a.alias));
 }
 
-// Including experimental method names (with a leading underscore) that would be otherwise skipped
-const allowExperimentalMethods = new Set([ 'Download._cancel' ]);
-
 /**
  * @param {string[]} rootNames
  */
@@ -117,8 +114,6 @@ function listMethods(rootNames, apiFileName) {
    * @param {string} methodName
    */
   function shouldSkipMethodByName(className, methodName) {
-    if (allowExperimentalMethods.has(`${className}.${methodName}`))
-      return false;
     if (methodName.startsWith('_') || methodName === 'T' || methodName === 'toString')
       return true;
     if (/** @type {any} */(EventEmitter).prototype.hasOwnProperty(methodName))

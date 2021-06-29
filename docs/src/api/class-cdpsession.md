@@ -25,23 +25,23 @@ await client.send('Animation.setPlaybackRate', {
 
 ```python async
 client = await page.context().new_cdp_session(page)
-await client.send("animation.enable")
-client.on("animation.animation_created", lambda: print("animation created!"))
-response = await client.send("animation.get_playback_rate")
-print("playback rate is " + response["playback_rate"])
-await client.send("animation.set_playback_rate", {
-    playback_rate: response["playback_rate"] / 2
+await client.send("Animation.enable")
+client.on("Animation.animationCreated", lambda: print("animation created!"))
+response = await client.send("Animation.getPlaybackRate")
+print("playback rate is " + str(response["playbackRate"]))
+await client.send("Animation.setPlaybackRate", {
+    playbackRate: response["playbackRate"] / 2
 })
 ```
 
 ```python sync
 client = page.context().new_cdp_session(page)
-client.send("animation.enable")
-client.on("animation.animation_created", lambda: print("animation created!"))
-response = client.send("animation.get_playback_rate")
-print("playback rate is " + response["playback_rate"])
-client.send("animation.set_playback_rate", {
-    playback_rate: response["playback_rate"] / 2
+client.send("Animation.enable")
+client.on("Animation.animationCreated", lambda: print("animation created!"))
+response = client.send("Animation.getPlaybackRate")
+print("playback rate is " + str(response["playbackRate"]))
+client.send("Animation.setPlaybackRate", {
+    playbackRate: response["playbackRate"] / 2
 })
 ```
 

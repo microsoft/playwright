@@ -19,7 +19,13 @@ module.exports = {
     rules: [
       {
         test: /\.(j|t)sx?$/,
-        use: 'ts-loader',
+        loader: 'babel-loader',
+        options: {
+          presets: [
+            "@babel/preset-typescript",
+            "@babel/preset-react"
+          ]
+        },
         exclude: /node_modules/
       },
       {

@@ -2,9 +2,6 @@ test/assets/modernizr.js
 lib/
 *.js
 src/generated/*
-src/server/chromium/protocol.ts
-src/server/firefox/protocol.ts
-src/server/webkit/protocol.ts
 src/third_party/
 /types/*
 /index.d.ts
@@ -15,3 +12,4 @@ browser_patches/*/checkout/
 browser_patches/chromium/output/
 **/*.d.ts
 output/
+/test-results/

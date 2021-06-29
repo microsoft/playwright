@@ -39,6 +39,10 @@ class Base {
       return this.parent.titlePath();
     return [...this.parent.titlePath(), this.title];
   }
+
+  fullTitle(): string {
+    return this.titlePath().join(' ');
+  }
 }
 
 export class Spec extends Base implements reporterTypes.Spec {
@@ -59,10 +63,6 @@ export class Spec extends Base implements reporterTypes.Spec {
     return !this.tests.find(r => !r.ok());
   }
 
-  fullTitle(): string {
-    return this.titlePath().join(' ');
-  }
-
   _testFullTitle(projectName: string) {
     return (projectName ? `[${projectName}] ` : '') + this.fullTitle();
   }
@@ -77,7 +77,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll',
     fn: Function,
     location: Location,
-  } [] = [];
+  }[] = [];
 
   _addSpec(spec: Spec) {
     spec.parent = this;
@@ -145,14 +145,14 @@ export class Suite extends Base implements reporterTypes.Suite {
     return result;
   }
 
-  _hasOnly(): boolean {
+  _getOnlyItems(): (Spec | Suite)[] {
+    const items: (Spec | Suite)[] = [];
     if (this._only)
-      return true;
-    if (this.suites.find(suite => suite._hasOnly()))
-      return true;
-    if (this.specs.find(spec => spec._only))
-      return true;
-    return false;
+      items.push(this);
+    for (const suite of this.suites)
+      items.push(...suite._getOnlyItems());
+    items.push(...this.specs.filter(spec => spec._only));
+    return items;
   }
 
   _buildFixtureOverrides(): any {

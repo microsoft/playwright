@@ -1757,6 +1757,11 @@ export interface Page {
    */
   fill(selector: string, value: string, options?: {
     /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
      * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
      * inaccessible pages. Defaults to `false`.
@@ -2015,6 +2020,21 @@ export interface Page {
    * @param options
    */
   innerText(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<string>;
+
+  /**
+   * Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
+   */
+  inputValue(selector: string, options?: {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -2493,6 +2513,11 @@ export interface Page {
      */
     index?: number;
   }>, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
      * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
@@ -3856,6 +3881,11 @@ export interface Frame {
    */
   fill(selector: string, value: string, options?: {
     /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
      * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
      * inaccessible pages. Defaults to `false`.
@@ -4042,6 +4072,21 @@ export interface Frame {
    * @param options
    */
   innerText(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<string>;
+
+  /**
+   * Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
+   */
+  inputValue(selector: string, options?: {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -4269,6 +4314,11 @@ export interface Frame {
      */
     index?: number;
   }>, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
     /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
      * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
@@ -6284,6 +6334,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    */
   fill(value: string, options?: {
     /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
      * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
      * inaccessible pages. Defaults to `false`.
@@ -6370,6 +6425,20 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * Returns the `element.innerText`.
    */
   innerText(): Promise<string>;
+
+  /**
+   * Returns `input.value` for `<input>` or `<textarea>` element. Throws for non-input elements.
+   * @param options
+   */
+  inputValue(options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<string>;
 
   /**
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
@@ -6569,6 +6638,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     index?: number;
   }>, options?: {
     /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
      * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
      * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
      * inaccessible pages. Defaults to `false`.
@@ -6590,6 +6664,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param options
    */
   selectText(options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -9479,14 +9558,6 @@ export interface Dialog {
  * performed and user has no access to the downloaded files.
  */
 export interface Download {
-  /**
-   * **Chromium-only** Cancels a download. Will not fail if the download is already finished or canceled. Upon successful
-   * cancellations, `download.failure()` would resolve to `'canceled'`.
-   *
-   * Currently **experimental** and may subject to further changes.
-   */
-  _cancel(): Promise<void>;
-
   /**
    * Returns readable stream for current download or `null` if download failed.
    */

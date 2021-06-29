@@ -13,7 +13,7 @@ configurations for common CI providers.
 3 steps to get your tests running on CI:
 
 1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
-   in Linux agents. Windows and macOS agents do not require any additional dependencies.
+   in Linux agents or install your dependencies using the [CLI](./cli.md#install-system-dependencies). Windows and macOS agents do not require any additional dependencies.
 1. **Install Playwright**:
    ```bash js
    npm ci
@@ -35,20 +35,24 @@ configurations for common CI providers.
 
 ## CI configurations
 
-### GitHub Actions
+The [Command Line Interface](./cli.md#install-system-dependencies) can be used to install all operating system dependencies on GitHub Actions.
 
-The [Playwright GitHub Action](https://github.com/microsoft/playwright-github-action) can be used to run Playwright tests on GitHub Actions.
+### GitHub Actions
 
 ```yml js
 steps:
-  - uses: microsoft/playwright-github-action@v1
+  - uses: actions/checkout@v2
+  - uses: actions/setup-node@v2
+    with:
+      node-version: '14'
+  - name: Install operating system dependencies
+    run: npx playwright install-deps
   - name: Run your tests
     run: npm test
 ```
 
 ```yml python
 steps:
-  - uses: microsoft/playwright-github-action@v1
   - name: Set up Python
     uses: actions/setup-python@v2
     with:
@@ -60,11 +64,13 @@ steps:
       pip install -e .
   - name: Ensure browsers are installed
     run: python -m playwright install
+  - name: Install operating system dependencies
+    run: python -m playwright install-deps
   - name: Run your tests
     run: pytest
 ```
 
-We run [our tests](https://github.com/microsoft/playwright/blob/master/.github/workflows/tests.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
+We run [our tests](https://github.com/microsoft/playwright/blob/master/.github/workflows/tests_secondary.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
 
 ### Docker
 

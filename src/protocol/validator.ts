@@ -46,7 +46,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.WaitForEventInfo = tObject({
     waitId: tString,
     phase: tEnum(['before', 'after', 'log']),
-    apiName: tOptional(tString),
+    event: tOptional(tString),
     message: tOptional(tString),
     error: tOptional(tString),
   });
@@ -608,6 +608,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameFillParams = tObject({
     selector: tString,
     value: tString,
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
@@ -640,6 +641,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
   });
   scheme.FrameInnerTextParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameInputValueParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
   });
@@ -688,6 +693,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       label: tOptional(tString),
       index: tOptional(tNumber),
     }))),
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
@@ -827,6 +833,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleFillParams = tObject({
     value: tString,
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
@@ -843,6 +850,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));
   scheme.ElementHandleInnerTextParams = tOptional(tObject({}));
+  scheme.ElementHandleInputValueParams = tOptional(tObject({}));
   scheme.ElementHandleIsCheckedParams = tOptional(tObject({}));
   scheme.ElementHandleIsDisabledParams = tOptional(tObject({}));
   scheme.ElementHandleIsEditableParams = tOptional(tObject({}));
@@ -878,10 +886,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       label: tOptional(tString),
       index: tOptional(tNumber),
     }))),
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.ElementHandleSelectTextParams = tObject({
+    force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.ElementHandleSetInputFilesParams = tObject({

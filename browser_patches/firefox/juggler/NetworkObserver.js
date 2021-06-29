@@ -589,6 +589,7 @@ class NetworkRequest {
       pageNetwork.emit(PageNetwork.Events.RequestFinished, {
         requestId: this.requestId,
         responseEndTime: this.httpChannel.responseEndTime,
+        transferSize: this.httpChannel.transferSize,
       }, this._frameId);
     }
     this._networkObserver._channelToRequest.delete(this.httpChannel);

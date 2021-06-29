@@ -488,6 +488,7 @@ const Network = {
     'requestFinished': {
       requestId: t.String,
       responseEndTime: t.Number,
+      transferSize: t.Number,
     },
     'requestFailed': {
       requestId: t.String,

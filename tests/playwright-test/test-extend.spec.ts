@@ -71,10 +71,10 @@ test('test.extend should work', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       import { test1, test2 } from './helper';
-      test1('should work', async ({ derivedTest }) => {
+      test1('should work 1', async ({ derivedTest }) => {
         global.logs.push('test1');
       });
-      test2('should work', async ({ derivedTest }) => {
+      test2('should work 2', async ({ derivedTest }) => {
         global.logs.push('test2');
       });
     `,

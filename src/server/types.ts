@@ -33,8 +33,11 @@ export type NavigatingActionWaitOptions = TimeoutOptions & {
   noWaitAfter?: boolean,
 };
 
-export type PointerActionWaitOptions = TimeoutOptions & {
+export type ForceOptions = {
   force?: boolean,
+};
+
+export type PointerActionWaitOptions = TimeoutOptions & ForceOptions & {
   trial?: boolean;
 };
 

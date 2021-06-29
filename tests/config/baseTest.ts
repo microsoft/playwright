@@ -135,7 +135,7 @@ type ServerFixtures = {
   asset: (p: string) => string;
 };
 
-type ServersInternal = ServerFixtures & { socksServer: any };
+type ServersInternal = ServerFixtures & { socksServer: socks.SocksServer };
 const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: ServersInternal }> = {
   loopback: [ undefined, { scope: 'worker' } ],
   __servers: [ async ({ loopback }, run, workerInfo) => {
@@ -151,8 +151,8 @@ const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: Serv
     httpsServer.enableHTTPCache(cachedPath);
 
     const socksServer = socks.createServer((info, accept, deny) => {
-      let socket;
-      if ((socket = accept(true))) {
+      const socket = accept(true);
+      if (socket) {
         // Catch and ignore ECONNRESET errors.
         socket.on('error', () => {});
         const body = '<html><title>Served by the SOCKS proxy</title></html>';
