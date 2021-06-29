@@ -25,7 +25,7 @@ playwright install
 These browsers will take a few hundred megabytes of disk space when installed:
 
 ```bash
-du -hs ./Library/Caches/ms-playwright/*
+du -hs ~/Library/Caches/ms-playwright/*
 281M  chromium-XXXXXX
 187M  firefox-XXXX
 180M  webkit-XXXX
