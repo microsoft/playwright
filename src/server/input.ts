@@ -37,7 +37,8 @@ export interface RawKeyboard {
   keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
   keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void>;
   sendText(text: string): Promise<void>;
-  imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, replacement_start: number, replacement_end: number): Promise<void>;
+  imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, replacement_start: number | -1, replacement_end: number | -1): Promise<void>;
+  imeCommitComposition(text: string, trigger_key: string | 'None'): Promise<void>;
 }
 
 export class Keyboard {
@@ -88,8 +89,26 @@ export class Keyboard {
     await this._page._doSlowMo();
   }
 
-  async imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, replacement_start: number, replacement_end: number) {
+  async imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, options?: { replacement_start?: number, replacement_end?: number, delay?: number}) {
+    const delay = (options && options.delay) || undefined;
+    let replacement_start = -1;
+    let replacement_end = -1;
+    if (options && options.replacement_start !== undefined)
+      replacement_start = options.replacement_start;
+    if (options && options.replacement_end !== undefined)
+      replacement_end = options.replacement_end;
+    if (delay)
+      await new Promise(f => setTimeout(f, delay));
     await this._raw.imeSetComposition(text, selection_start, selection_end, trigger_key, replacement_start, replacement_end);
+    await this._page._doSlowMo();
+  }
+
+  async imeCommitComposition(text: string, options?: { trigger_key?: string, delay?: number}) {
+    const delay = (options && options.delay) || undefined;
+    const trigger_key = (options && options.trigger_key) || 'None';
+    if (delay)
+      await new Promise(f => setTimeout(f, delay));
+    await this._raw.imeCommitComposition(text, trigger_key);
     await this._page._doSlowMo();
   }
 

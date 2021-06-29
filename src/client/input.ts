@@ -38,9 +38,13 @@ export class Keyboard implements api.Keyboard {
   }
 
   async imeSetComposition(text: string, selection_start: number, selection_end: number,
-    trigger_key: string, replacement_start: number, replacement_end: number) {
+    trigger_key: string, options: channels.PageKeyboardImeSetCompositionOptions) {
     await this._channel.keyboardImeSetComposition({ text, selection_start, selection_end,
-      trigger_key, replacement_start, replacement_end});
+      trigger_key,  ...options });
+  }
+
+  async imeCommitComposition(text: string, options: channels.PageKeyboardImeCommitCompositionOptions) {
+    await this._channel.keyboardImeCommitComposition({ text, ...options });
   }
 
   async type(text: string, options: channels.PageKeyboardTypeOptions = {}) {

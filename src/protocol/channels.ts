@@ -903,6 +903,7 @@ export interface PageChannel extends Channel {
   keyboardUp(params: PageKeyboardUpParams, metadata?: Metadata): Promise<PageKeyboardUpResult>;
   keyboardInsertText(params: PageKeyboardInsertTextParams, metadata?: Metadata): Promise<PageKeyboardInsertTextResult>;
   keyboardImeSetComposition(params: PageKeyboardImeSetCompositionParams, metadata?: Metadata): Promise<PageKeyboardImeSetCompositionResult>;
+  keyboardImeCommitComposition(params: PageKeyboardImeCommitCompositionParams, metadata?: Metadata): Promise<PageKeyboardImeCommitCompositionResult>;
   keyboardType(params: PageKeyboardTypeParams, metadata?: Metadata): Promise<PageKeyboardTypeResult>;
   keyboardPress(params: PageKeyboardPressParams, metadata?: Metadata): Promise<PageKeyboardPressResult>;
   mouseMove(params: PageMouseMoveParams, metadata?: Metadata): Promise<PageMouseMoveResult>;
@@ -1118,13 +1119,26 @@ export type PageKeyboardImeSetCompositionParams = {
   selection_start: number,
   selection_end: number,
   trigger_key: string,
-  replacement_start: number,
-  replacement_end: number,
+  replacement_start?: number,
+  replacement_end?: number,
+  delay?: number,
 };
 export type PageKeyboardImeSetCompositionOptions = {
-
+  replacement_start?: number,
+  replacement_end?: number,
+  delay?: number,
 };
 export type PageKeyboardImeSetCompositionResult = void;
+export type PageKeyboardImeCommitCompositionParams = {
+  text: string,
+  trigger_key?: string,
+  delay?: number,
+};
+export type PageKeyboardImeCommitCompositionOptions = {
+  trigger_key?: string,
+  delay?: number,
+};
+export type PageKeyboardImeCommitCompositionResult = void;
 export type PageKeyboardTypeParams = {
   text: string,
   delay?: number,

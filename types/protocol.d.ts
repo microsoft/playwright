@@ -701,7 +701,7 @@ associated with some application cache.
     export interface AffectedFrame {
       frameId: Page.FrameId;
     }
-    export type SameSiteCookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty";
+    export type SameSiteCookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict";
     export type SameSiteCookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax";
     export type SameSiteCookieOperation = "SetCookie"|"ReadCookie";
     /**
@@ -710,14 +710,7 @@ time finding a specific cookie. With this, we can convey specific error
 information without the cookie.
      */
     export interface SameSiteCookieIssueDetails {
-      /**
-       * If AffectedCookie is not set then rawCookieLine contains the raw
-Set-Cookie header string. This hints at a problem where the
-cookie line is syntactically or semantically malformed in a way
-that no valid cookie could be created.
-       */
-      cookie?: AffectedCookie;
-      rawCookieLine?: string;
+      cookie: AffectedCookie;
       cookieWarningReasons: SameSiteCookieWarningReason[];
       cookieExclusionReasons: SameSiteCookieExclusionReason[];
       /**
@@ -861,7 +854,6 @@ CORS RFC1918 enforcement.
       corsErrorStatus: Network.CorsErrorStatus;
       isWarning: boolean;
       request: AffectedRequest;
-      location?: SourceCodeLocation;
       initiatorOrigin?: string;
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
@@ -893,16 +885,12 @@ instead of "limited-quirks".
       frameId: Page.FrameId;
       loaderId: Network.LoaderId;
     }
-    export interface NavigatorUserAgentIssueDetails {
-      url: string;
-      location?: SourceCodeLocation;
-    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -920,7 +908,6 @@ add a new optional field to this type.
       corsIssueDetails?: CorsIssueDetails;
       attributionReportingIssueDetails?: AttributionReportingIssueDetails;
       quirksModeIssueDetails?: QuirksModeIssueDetails;
-      navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -928,11 +915,6 @@ add a new optional field to this type.
     export interface InspectorIssue {
       code: InspectorIssueCode;
       details: InspectorIssueDetails;
-      /**
-       * A unique id for this issue. May be omitted if no other entity (e.g.
-exception, CDP message, etc.) is referencing this issue.
-       */
-      issueId?: string;
     }
     
     export type issueAddedPayload = {
@@ -1702,11 +1684,6 @@ stylesheet rules) this rule came from.
 starting with the innermost one, going outwards.
        */
       media?: CSSMedia[];
-      /**
-       * Container query list array (for rules involving container queries).
-The array enumerates container queries starting with the innermost one, going outwards.
-       */
-      containerQueries?: CSSContainerQuery[];
     }
     /**
      * CSS coverage information.
@@ -1908,24 +1885,6 @@ available).
        * Computed length of media query expression (if applicable).
        */
       computedLength?: number;
-    }
-    /**
-     * CSS container query rule descriptor.
-     */
-    export interface CSSContainerQuery {
-      /**
-       * Container query text.
-       */
-      text: string;
-      /**
-       * The associated rule header range in the enclosing stylesheet (if
-available).
-       */
-      range?: SourceRange;
-      /**
-       * Identifier of the stylesheet containing this object (if exists).
-       */
-      styleSheetId?: StyleSheetId;
     }
     /**
      * Information about amount of glyphs that were rendered with given font.
@@ -2372,20 +2331,6 @@ property
       media: CSSMedia;
     }
     /**
-     * Modifies the expression of a container query.
-     */
-    export type setContainerQueryTextParameters = {
-      styleSheetId: StyleSheetId;
-      range: SourceRange;
-      text: string;
-    }
-    export type setContainerQueryTextReturnValue = {
-      /**
-       * The resulting CSS container query rule after modification.
-       */
-      containerQuery: CSSContainerQuery;
-    }
-    /**
      * Modifies the rule selector.
      */
     export type setRuleSelectorParameters = {
@@ -2760,10 +2705,6 @@ front-end.
      */
     export type ShadowRootType = "user-agent"|"open"|"closed";
     /**
-     * Document compatibility mode.
-     */
-    export type CompatibilityMode = "QuirksMode"|"LimitedQuirksMode"|"NoQuirksMode";
-    /**
      * DOM interaction is implemented in terms of mirror objects that represent the actual DOM nodes.
 DOMNode is a base node mirror type.
      */
@@ -2884,7 +2825,6 @@ The property is always undefined now.
        * Whether the node is SVG.
        */
       isSVG?: boolean;
-      compatibilityMode?: CompatibilityMode;
     }
     /**
      * A structure holding an RGBA color.
@@ -6027,6 +5967,53 @@ for example an emoji keyboard or an IME.
     export type insertTextReturnValue = {
     }
     /**
+     * This method sets the current candidate text for ime.
+Use imeCommitComposition to commit the final text.
+     */
+    export type imeSetCompositionParameters = {
+      /**
+       * The text to insert
+       */
+      text: string;
+      /**
+       * selection start
+       */
+      selection_start: number;
+      /**
+       * selection end
+       */
+      selection_end: number;
+      /**
+       * key that triggers composition
+       */
+      trigger_key: string;
+      /**
+       * replacement start
+       */
+      replacement_start?: number;
+      /**
+       * replacement end
+       */
+      replacement_end?: number;
+    }
+    export type imeSetCompositionReturnValue = {
+    }
+    /**
+     * This method commits the current candidate text for ime
+     */
+    export type imeCommitCompositionParameters = {
+      /**
+       * the text to commit
+       */
+      text: string;
+      /**
+       * key to trigger end of composition
+       */
+      trigger_key?: string;
+    }
+    export type imeCommitCompositionReturnValue = {
+    }
+    /**
      * Dispatches a mouse event to the page.
      */
     export type dispatchMouseEventParameters = {
@@ -7200,7 +7187,7 @@ passed by the developer (e.g. via "fetch") as understood by the backend.
     /**
      * The reason why request was blocked.
      */
-    export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork"|"NoCorsRedirectModeNotFollow";
+    export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork";
     export interface CorsErrorStatus {
       corsError: CorsError;
       failedParameter: string;
@@ -7791,7 +7778,7 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
       reportingEndpoint?: string;
       reportOnlyReportingEndpoint?: string;
     }
-    export type CrossOriginEmbedderPolicyValue = "None"|"Credentialless"|"RequireCorp";
+    export type CrossOriginEmbedderPolicyValue = "None"|"CorsOrCredentialless"|"RequireCorp";
     export interface CrossOriginEmbedderPolicyStatus {
       value: CrossOriginEmbedderPolicyValue;
       reportOnlyValue: CrossOriginEmbedderPolicyValue;
@@ -8360,76 +8347,6 @@ preemptively (e.g. a cache hit).
        */
       issuedTokenCount?: number;
     }
-    /**
-     * Fired once when parsing the .wbn file has succeeded.
-The event contains the information about the web bundle contents.
-     */
-    export type subresourceWebBundleMetadataReceivedPayload = {
-      /**
-       * Request identifier. Used to match this information to another event.
-       */
-      requestId: RequestId;
-      /**
-       * A list of URLs of resources in the subresource Web Bundle.
-       */
-      urls: string[];
-    }
-    /**
-     * Fired once when parsing the .wbn file has failed.
-     */
-    export type subresourceWebBundleMetadataErrorPayload = {
-      /**
-       * Request identifier. Used to match this information to another event.
-       */
-      requestId: RequestId;
-      /**
-       * Error message
-       */
-      errorMessage: string;
-    }
-    /**
-     * Fired when handling requests for resources within a .wbn file.
-Note: this will only be fired for resources that are requested by the webpage.
-     */
-    export type subresourceWebBundleInnerResponseParsedPayload = {
-      /**
-       * Request identifier of the subresource request
-       */
-      innerRequestId: RequestId;
-      /**
-       * URL of the subresource resource.
-       */
-      innerRequestURL: string;
-      /**
-       * Bundle request identifier. Used to match this information to another event.
-This made be absent in case when the instrumentation was enabled only
-after webbundle was parsed.
-       */
-      bundleRequestId?: RequestId;
-    }
-    /**
-     * Fired when request for resources within a .wbn file failed.
-     */
-    export type subresourceWebBundleInnerResponseErrorPayload = {
-      /**
-       * Request identifier of the subresource request
-       */
-      innerRequestId: RequestId;
-      /**
-       * URL of the subresource resource.
-       */
-      innerRequestURL: string;
-      /**
-       * Error message
-       */
-      errorMessage: string;
-      /**
-       * Bundle request identifier. Used to match this information to another event.
-This made be absent in case when the instrumentation was enabled only
-after webbundle was parsed.
-       */
-      bundleRequestId?: RequestId;
-    }
     
     /**
      * Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
@@ -8875,6 +8792,21 @@ This is a temporary ability and it will be removed in the future.
       cookies: CookieParam[];
     }
     export type setCookiesReturnValue = {
+    }
+    /**
+     * For testing.
+     */
+    export type setDataSizeLimitsForTestParameters = {
+      /**
+       * Maximum total buffer size.
+       */
+      maxTotalSize: number;
+      /**
+       * Maximum per-resource size.
+       */
+      maxResourceSize: number;
+    }
+    export type setDataSizeLimitsForTestReturnValue = {
     }
     /**
      * Specifies whether to always send extra HTTP headers with the requests from this page.
@@ -9716,9 +9648,9 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     export type GatedAPIFeatures = "SharedArrayBuffers"|"SharedArrayBuffersTransferAllowed"|"PerformanceMeasureMemory"|"PerformanceProfile";
     /**
      * All Permissions Policy features. This enum should match the one defined
-in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
+in renderer/core/feature_policy/feature_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"conversion-measurement"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -10171,24 +10103,6 @@ Example URLs: http://www.google.com/file.html -> "google.com"
      * The type of a frameNavigated event.
      */
     export type NavigationType = "Navigation"|"BackForwardCacheRestore";
-    /**
-     * List of not restored reasons for back-forward cache.
-     */
-    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"WebSocket"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"PageShowEventListener"|"PageHideEventListener"|"BeforeUnloadEventListener"|"UnloadEventListener"|"FreezeEventListener"|"ResumeEventListener"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedGeolocationPermission"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebVR"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"WebFileSystem"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"IsolatedWorldScript"|"InjectedStyleSheet"|"MediaSessionImplOnServiceCreated"|"Unknown";
-    /**
-     * Types of not restored reasons for back-forward cache.
-     */
-    export type BackForwardCacheNotRestoredReasonType = "SupportPending"|"PageSupportNeeded"|"Circumstantial";
-    export interface BackForwardCacheNotRestoredExplanation {
-      /**
-       * Type of the reason
-       */
-      type: BackForwardCacheNotRestoredReasonType;
-      /**
-       * Not restored reason
-       */
-      reason: BackForwardCacheNotRestoredReason;
-    }
     
     export type domContentEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -10452,10 +10366,6 @@ when bfcache navigation fails.
        * The frame id of the associated frame.
        */
       frameId: FrameId;
-      /**
-       * Array of reasons why the page could not be cached. This must not be empty.
-       */
-      notRestoredExplanations: BackForwardCacheNotRestoredExplanation[];
     }
     export type loadEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -13110,7 +13020,7 @@ are ignored.
     /**
      * Stages of the request to handle. Request will intercept before the request is
 sent. Response will intercept after the response is received (but before response
-body is received).
+body is received.
      */
     export type RequestStage = "Request"|"Response";
     export interface RequestPattern {
@@ -14391,7 +14301,7 @@ enabled until the result for this command is received.
     export type enableParameters = {
       /**
        * The maximum size in bytes of collected scripts (not referenced by other heap objects)
-the debugger can hold. Puts no limit if parameter is omitted.
+the debugger can hold. Puts no limit if paramter is omitted.
        */
       maxScriptsCacheSize?: number;
     }
@@ -15083,7 +14993,7 @@ when the tracking is stopped.
        */
       reportProgress?: boolean;
       /**
-       * If true, a raw snapshot without artificial roots will be generated
+       * If true, a raw snapshot without artifical roots will be generated
        */
       treatGlobalObjectsAsRoots?: boolean;
       /**
@@ -15316,7 +15226,7 @@ profile startTime.
      * Reports coverage delta since the last poll (either from an event like this, or from
 `takePreciseCoverage` for the current isolate. May only be sent if precise code
 coverage has been started. This event can be trigged by the embedder to, for example,
-trigger collection of coverage data immediately at a certain point in time.
+trigger collection of coverage data immediatelly at a certain point in time.
      */
     export type preciseCoverageDeltaUpdatePayload = {
       /**
@@ -15326,7 +15236,7 @@ trigger collection of coverage data immediately at a certain point in time.
       /**
        * Identifier for distinguishing coverage events.
        */
-      occasion: string;
+      occassion: string;
       /**
        * Coverage data for the current isolate.
        */
@@ -15763,7 +15673,7 @@ script evaluation should be performed.
        */
       name: string;
       /**
-       * A system-unique execution context identifier. Unlike the id, this is unique across
+       * A system-unique execution context identifier. Unlike the id, this is unique accross
 multiple processes, so can be reliably used to identify specific context while backend
 performs a cross-process navigation.
        */
@@ -15814,12 +15724,6 @@ execution.
        * Identifier of the context where exception happened.
        */
       executionContextId?: ExecutionContextId;
-      /**
-       * Dictionary with entries of meta deta that the client associated
-with this exception, such as information about associated network
-requests, etc.
-       */
-      exceptionMetaData?: { [key: string]: string };
     }
     /**
      * Number of milliseconds since epoch.
@@ -16205,9 +16109,9 @@ evaluation and allows unsafe-eval. Defaults to true.
       allowUnsafeEvalBlockedByCSP?: boolean;
       /**
        * An alternative way to specify the execution context to evaluate in.
-Compared to contextId that may be reused across processes, this is guaranteed to be
+Compared to contextId that may be reused accross processes, this is guaranteed to be
 system-unique, so it can be used to prevent accidental evaluation of the expression
-in context different than intended (e.g. as a result of navigation across process
+in context different than intended (e.g. as a result of navigation accross process
 boundaries).
 This is mutually exclusive with `contextId`.
        */
@@ -16572,10 +16476,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.requestWillBeSentExtraInfo": Network.requestWillBeSentExtraInfoPayload;
     "Network.responseReceivedExtraInfo": Network.responseReceivedExtraInfoPayload;
     "Network.trustTokenOperationDone": Network.trustTokenOperationDonePayload;
-    "Network.subresourceWebBundleMetadataReceived": Network.subresourceWebBundleMetadataReceivedPayload;
-    "Network.subresourceWebBundleMetadataError": Network.subresourceWebBundleMetadataErrorPayload;
-    "Network.subresourceWebBundleInnerResponseParsed": Network.subresourceWebBundleInnerResponseParsedPayload;
-    "Network.subresourceWebBundleInnerResponseError": Network.subresourceWebBundleInnerResponseErrorPayload;
     "Overlay.inspectNodeRequested": Overlay.inspectNodeRequestedPayload;
     "Overlay.nodeHighlightRequested": Overlay.nodeHighlightRequestedPayload;
     "Overlay.screenshotRequested": Overlay.screenshotRequestedPayload;
@@ -16736,7 +16636,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeParameters;
     "CSS.setKeyframeKey": CSS.setKeyframeKeyParameters;
     "CSS.setMediaText": CSS.setMediaTextParameters;
-    "CSS.setContainerQueryText": CSS.setContainerQueryTextParameters;
     "CSS.setRuleSelector": CSS.setRuleSelectorParameters;
     "CSS.setStyleSheetText": CSS.setStyleSheetTextParameters;
     "CSS.setStyleTexts": CSS.setStyleTextsParameters;
@@ -16870,6 +16769,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Input.dispatchDragEvent": Input.dispatchDragEventParameters;
     "Input.dispatchKeyEvent": Input.dispatchKeyEventParameters;
     "Input.insertText": Input.insertTextParameters;
+    "Input.imeSetComposition": Input.imeSetCompositionParameters;
+    "Input.imeCommitComposition": Input.imeCommitCompositionParameters;
     "Input.dispatchMouseEvent": Input.dispatchMouseEventParameters;
     "Input.dispatchTouchEvent": Input.dispatchTouchEventParameters;
     "Input.emulateTouchFromMouseEvent": Input.emulateTouchFromMouseEventParameters;
@@ -16930,6 +16831,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setCacheDisabled": Network.setCacheDisabledParameters;
     "Network.setCookie": Network.setCookieParameters;
     "Network.setCookies": Network.setCookiesParameters;
+    "Network.setDataSizeLimitsForTest": Network.setDataSizeLimitsForTestParameters;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersParameters;
     "Network.setAttachDebugStack": Network.setAttachDebugStackParameters;
     "Network.setRequestInterception": Network.setRequestInterceptionParameters;
@@ -17253,7 +17155,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeReturnValue;
     "CSS.setKeyframeKey": CSS.setKeyframeKeyReturnValue;
     "CSS.setMediaText": CSS.setMediaTextReturnValue;
-    "CSS.setContainerQueryText": CSS.setContainerQueryTextReturnValue;
     "CSS.setRuleSelector": CSS.setRuleSelectorReturnValue;
     "CSS.setStyleSheetText": CSS.setStyleSheetTextReturnValue;
     "CSS.setStyleTexts": CSS.setStyleTextsReturnValue;
@@ -17387,6 +17288,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Input.dispatchDragEvent": Input.dispatchDragEventReturnValue;
     "Input.dispatchKeyEvent": Input.dispatchKeyEventReturnValue;
     "Input.insertText": Input.insertTextReturnValue;
+    "Input.imeSetComposition": Input.imeSetCompositionReturnValue;
+    "Input.imeCommitComposition": Input.imeCommitCompositionReturnValue;
     "Input.dispatchMouseEvent": Input.dispatchMouseEventReturnValue;
     "Input.dispatchTouchEvent": Input.dispatchTouchEventReturnValue;
     "Input.emulateTouchFromMouseEvent": Input.emulateTouchFromMouseEventReturnValue;
@@ -17447,6 +17350,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setCacheDisabled": Network.setCacheDisabledReturnValue;
     "Network.setCookie": Network.setCookieReturnValue;
     "Network.setCookies": Network.setCookiesReturnValue;
+    "Network.setDataSizeLimitsForTest": Network.setDataSizeLimitsForTestReturnValue;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersReturnValue;
     "Network.setAttachDebugStack": Network.setAttachDebugStackReturnValue;
     "Network.setRequestInterception": Network.setRequestInterceptionReturnValue;

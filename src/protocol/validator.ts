@@ -476,8 +476,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selection_start: tNumber,
     selection_end: tNumber,
     trigger_key: tString,
-    replacement_start: tNumber,
-    replacement_end: tNumber,
+    replacement_start: tOptional(tNumber),
+    replacement_end: tOptional(tNumber),
+    delay: tOptional(tNumber),
+  });
+  scheme.PageKeyboardImeCommitCompositionParams = tObject({
+    text: tString,
+    trigger_key: tOptional(tString),
+    delay: tOptional(tNumber),
   });
   scheme.PageKeyboardTypeParams = tObject({
     text: tString,
