@@ -162,7 +162,7 @@ This approach will also **work in CI environments**, since it does not rely on a
 ### Reuse authentication in Playwright Test
 * langs: js
 
-When using [Playwright Test](./test-intro.md), you can log in once in the global setup
+When using [Playwright Test](./intro.md), you can log in once in the global setup
 and then reuse authentication state in tests. That way all your tests are completely
 isolated, yet you only waste time logging in once for the entire test suite run.
 

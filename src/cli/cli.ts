@@ -141,6 +141,14 @@ program
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
       }
+    }).on('--help', function() {
+      console.log(``);
+      console.log(`Examples:`);
+      console.log(`  - $ install`);
+      console.log(`    Install default browsers.`);
+      console.log(``);
+      console.log(`  - $ install chrome firefox`);
+      console.log(`    Install custom browsers, supports ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}.`);
     });
 
 async function installBrowserChannel(channel: BrowserChannel) {
