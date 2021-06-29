@@ -54,6 +54,7 @@ title: "Community Showcase"
 ## Examples
 
 * [e2e Boilerplates](https://github.com/e2e-boilerplate?utf8=%E2%9C%93&q=playwright): Project boilerplates for using Playwright with TypeScript, Cucumber, Jest, and other libraries
+* [Playwright Test Boilerplate](https://github.com/elaichenkov/playwright-test-boilerplate): Playwright and Playwright Test boilerplate, using TypeScript and Playwright Expect.
 * [react-app-playwright](https://github.com/KyleADay/react-app-playwright): Using Playwright with a create-react-app project
 * [playwright-react-typescript-jest-example](https://github.com/azemetre/playwright-react-typescript-jest-example): Using Playwright + Jest with a custom webpack configuration for React + TypeScript project
 * [playwright-mocha](https://github.com/roggerfe/playwright-mocha): Using Playwright with Mocha and Chai
