@@ -150,8 +150,6 @@ test('should match tests well', async ({ runInlineTest }) => {
 });
 
 test('should load an mjs file', async ({ runInlineTest }) => {
-  // modules don't work with node < 12
-  test.skip(parseInt(process.versions.node, 10) < 12);
   const { exitCode, passed } = await runInlineTest({
     'a.spec.mjs': `
         const { test } = pwt;
@@ -165,8 +163,6 @@ test('should load an mjs file', async ({ runInlineTest }) => {
 });
 
 test('should throw a nice error if a js file uses import', async ({ runInlineTest }) => {
-  // modules don't work with node < 12
-  test.skip(parseInt(process.versions.node, 10) < 12);
   const { exitCode, output } = await runInlineTest({
     'a.spec.js': `
         import fs from 'fs';

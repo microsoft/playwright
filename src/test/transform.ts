@@ -109,6 +109,7 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
     Error.prepareStackTrace = (error, stackFrames) => {
       const frame: NodeJS.CallSite = sourceMapSupport.wrapCallSite(stackFrames[1]);
       const fileName = frame.getFileName();
+      // Node error stacks for modules use file:// urls instead of paths.
       const file = (fileName && fileName.startsWith('file://')) ? url.fileURLToPath(fileName) : fileName;
       return {
         file,
