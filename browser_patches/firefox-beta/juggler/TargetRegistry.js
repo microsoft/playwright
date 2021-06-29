@@ -12,6 +12,8 @@ const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
+const Cr = Components.results;
+
 const helper = new Helper();
 
 const IDENTITY_NAME = 'JUGGLER ';
@@ -26,6 +28,7 @@ class DownloadInterceptor {
   constructor(registry) {
     this._registry = registry
     this._handlerToUuid = new Map();
+    this._uuidToHandler = new Map();
   }
 
   //
@@ -60,6 +63,7 @@ class DownloadInterceptor {
     }
     outFile.value = file;
     this._handlerToUuid.set(externalAppHandler, uuid);
+    this._uuidToHandler.set(uuid, externalAppHandler);
     const downloadInfo = {
       uuid,
       browserContextId: browserContext.browserContextId,
@@ -76,15 +80,23 @@ class DownloadInterceptor {
     if (!uuid)
       return;
     this._handlerToUuid.delete(externalAppHandler);
+    this._uuidToHandler.delete(uuid);
     const downloadInfo = {
       uuid,
+      error: errorName,
     };
-    if (errorName === 'NS_BINDING_ABORTED') {
+    if (canceled === 'NS_BINDING_ABORTED') {
       downloadInfo.canceled = true;
-    } else {
-      downloadInfo.error = errorName;
     }
     this._registry.emit(TargetRegistry.Events.DownloadFinished, downloadInfo);
+  }
+
+  async cancelDownload(uuid) {
+    const externalAppHandler = this._uuidToHandler.get(uuid);
+    if (!externalAppHandler) {
+      return;
+    }
+    await externalAppHandler.cancel(Cr.NS_BINDING_ABORTED);
   }
 }
 
@@ -227,11 +239,16 @@ class TargetRegistry {
     };
 
     const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
-    extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
+    this._downloadInterceptor = new DownloadInterceptor(this);
+    extHelperAppSvc.setDownloadInterceptor(this._downloadInterceptor);
 
     Services.wm.addListener({ onOpenWindow, onCloseWindow });
     for (const win of Services.wm.getEnumerator(null))
       onOpenWindow(win);
+  }
+
+  async cancelDownload(options) {
+    this._downloadInterceptor.cancelDownload(options.uuid);
   }
 
   setBrowserProxy(proxy) {

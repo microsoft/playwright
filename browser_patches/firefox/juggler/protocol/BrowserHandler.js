@@ -125,6 +125,10 @@ class BrowserHandler {
     this._session.emitEvent('Browser.downloadFinished', downloadInfo);
   }
 
+  async ['Browser.cancelDownload']({uuid}) {
+    await this._targetRegistry.cancelDownload({uuid});
+  }
+
   async ['Browser.newPage']({browserContextId}) {
     const targetId = await this._targetRegistry.newPage({browserContextId});
     return {targetId};
