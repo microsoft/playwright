@@ -72,6 +72,29 @@ it('should emit frame events', async ({ page, server }) => {
   expect(log.join(':')).toBe('close:open:received<incoming>:sent<outgoing>');
 });
 
+it('should filter out the close events when the server closes with a message', async ({ page, server }) => {
+  server.sendOnWebSocketConnection('incoming');
+  let socketClosed;
+  const socketClosePromise = new Promise(f => socketClosed = f);
+  const log = [];
+  page.on('websocket', ws => {
+    log.push('open');
+    ws.on('framesent', d => log.push('sent<' + d.payload + '>'));
+    ws.on('framereceived', d => log.push('received<' + d.payload + '>'));
+    ws.on('close', () => { log.push('close'); socketClosed(); });
+  });
+  await page.evaluate(port => {
+    const ws = new WebSocket('ws://localhost:' + port + '/ws-emit-and-close');
+    ws.addEventListener('open', () => ws.send('outgoing'));
+    ws.addEventListener('message', () => { ws.close(); });
+  }, server.PORT);
+  await socketClosePromise;
+  expect(log[0]).toBe('open');
+  expect(log[3]).toBe('close');
+  log.sort();
+  expect(log.join(':')).toBe('close:open:received<incoming>:sent<outgoing>');
+});
+
 it('should pass self as argument to close event', async ({ page, server }) => {
   let socketClosed;
   const socketClosePromise = new Promise(f => socketClosed = f);

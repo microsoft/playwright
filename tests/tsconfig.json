@@ -9,5 +9,5 @@
         "strictBindCallApply": true,
         "allowSyntheticDefaultImports": true,
     },
-    "include": ["**/*.spec.js", "**/*.ts"]
+    "include": ["**/*.spec.js", "**/*.ts", "index.d.ts"]
 }

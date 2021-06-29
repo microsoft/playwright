@@ -104,12 +104,12 @@ test('should respect excluded tests', async ({ runInlineTest }) => {
         expect(1 + 1).toBe(2);
       });
 
-      test('excluded test', () => {
+      test('excluded test 1', () => {
         test.skip();
         expect(1 + 1).toBe(3);
       });
 
-      test('excluded test', () => {
+      test('excluded test 2', () => {
         test.skip();
         expect(1 + 1).toBe(3);
       });

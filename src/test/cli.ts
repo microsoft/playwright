@@ -22,6 +22,7 @@ import * as path from 'path';
 import type { Config } from './types';
 import { Runner } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
+import type { FilePatternFilter } from './util';
 
 const defaultTimeout = 30000;
 const defaultReporter = process.env.CI ? 'dot' : 'list';
@@ -64,7 +65,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
     try {
       await runTests(args, opts);
     } catch (e) {
-      console.error(e.toString());
+      console.error(e);
       process.exit(1);
     }
   });
@@ -131,7 +132,14 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     runner.loadEmptyConfig(process.cwd());
   }
 
-  const result = await runner.run(!!opts.list, args.map(forceRegExp), opts.project || undefined);
+  const filePatternFilters: FilePatternFilter[] = args.map(arg => {
+    const match = /^(.*):(\d+)$/.exec(arg);
+    return {
+      re: forceRegExp(match ? match[1] : arg),
+      line: match ? parseInt(match[2], 10) : null,
+    };
+  });
+  const result = await runner.run(!!opts.list, filePatternFilters, opts.project || undefined);
   await stopProfiling(undefined);
 
   if (result === 'sigint')

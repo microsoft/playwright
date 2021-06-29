@@ -29,9 +29,18 @@ export declare type Expect = {
   stringMatching(expected: string | RegExp): AsymmetricMatcher;
 };
 
+type OverriddenExpectProperties = 
+'not' |
+'resolves' |
+'rejects' |
+'toMatchInlineSnapshot' |
+'toThrowErrorMatchingInlineSnapshot' |
+'toMatchSnapshot' | 
+'toThrowErrorMatchingSnapshot';
+
 declare global {
   export namespace PlaywrightTest {
-    export interface Matchers<R> extends expect.Matchers<R> {
+    export interface Matchers<R> extends Omit<expect.Matchers<R>, OverriddenExpectProperties> {
       /**
        * If you know how to test something, `.not` lets you test its opposite.
        */
@@ -49,8 +58,8 @@ declare global {
       /**
        * Match snapshot
        */
-      toMatchSnapshot(options?: {
-        name?: string,
+      toMatchSnapshot(options: {
+        name: string,
         threshold?: number
       }): R;
       /**

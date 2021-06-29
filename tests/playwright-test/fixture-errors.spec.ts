@@ -367,7 +367,7 @@ test('should print nice error message for problematic fixtures', async ({ runInl
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('oh my!');
-  expect(result.output).toContain('x.spec.ts:5:29');
+  expect(result.output).toContain('x.spec.ts:6:49');
 });
 
 test('should exit with timeout when fixture causes an exception in the test', async ({ runInlineTest }) => {

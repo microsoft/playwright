@@ -18,7 +18,9 @@ import { CallMetadata } from '../../instrumentation';
 import { CallLog, CallLogStatus } from './recorderTypes';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
-  const title = metadata.apiName || metadata.method;
+  let title = metadata.apiName || metadata.method;
+  if (metadata.method === 'waitForEventInfo')
+    title += `(${metadata.params.info.event})`;
   if (metadata.error)
     status = 'error';
   const params = {

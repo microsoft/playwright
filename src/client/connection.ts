@@ -34,10 +34,9 @@ import * as channels from '../protocol/channels';
 import { Stream } from './stream';
 import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
-import { isUnderTest } from '../utils/utils';
 import { Android, AndroidSocket, AndroidDevice } from './android';
 import { SocksSocket } from './socksSocket';
-import { captureStackTrace } from '../utils/stackTrace';
+import { ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 
@@ -77,24 +76,20 @@ export class Connection extends EventEmitter {
     return this._objects.get(guid)!;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, apiName: string | undefined): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
     const guid = object._guid;
-    const { stack, frames } = captureStackTrace();
+    const { frames, apiName }: ParsedStackTrace = stackTrace || { frameTexts: [], frames: [], apiName: '' };
+
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.
     debugLogger.log('channel:command', converted);
     const metadata: channels.Metadata = { stack: frames, apiName };
     this.onmessage({ ...converted, metadata });
-    try {
-      if (this._disconnectedErrorMessage)
-        throw new Error(this._disconnectedErrorMessage);
-      return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, metadata }));
-    } catch (e) {
-      const innerStack = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? e.stack.substring(e.stack.indexOf(e.message) + e.message.length) : '';
-      e.stack = e.message + innerStack + '\n' + stack;
-      throw e;
-    }
+
+    if (this._disconnectedErrorMessage)
+      throw new Error(this._disconnectedErrorMessage);
+    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, metadata }));
   }
 
   _debugScopeState(): any {

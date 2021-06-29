@@ -16,7 +16,7 @@
 
 import { installTransform } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
-import { errorWithCallLocation, isRegExp, mergeObjects, prependErrorMessage } from './util';
+import { isRegExp, mergeObjects } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
@@ -61,9 +61,6 @@ export class Loader {
       const rawConfig = { ...config };
       this._processConfigObject(path.dirname(file));
       return rawConfig;
-    } catch (e) {
-      prependErrorMessage(e, `Error while reading ${file}:\n`);
-      throw e;
     } finally {
       revertBabelRequire();
     }
@@ -75,7 +72,7 @@ export class Loader {
   }
 
   private _processConfigObject(rootDir: string) {
-    validateConfig(this._config);
+    validateConfig(this._configFile || '<default config>', this._config);
 
     // Resolve script hooks relative to the root dir.
     if (this._config.globalSetup)
@@ -123,9 +120,6 @@ export class Loader {
       require(file);
       this._fileSuites.set(file, suite);
       return suite;
-    } catch (e) {
-      prependErrorMessage(e, `Error while reading ${file}:\n`);
-      throw e;
     } finally {
       revertBabelRequire();
       setCurrentlyLoadingFileSuite(undefined);
@@ -139,11 +133,8 @@ export class Loader {
       if (hook && typeof hook === 'object' && ('default' in hook))
         hook = hook['default'];
       if (typeof hook !== 'function')
-        throw errorWithCallLocation(`${name} file must export a single function.`);
+        throw errorWithFile(file, `${name} file must export a single function.`);
       return hook;
-    } catch (e) {
-      prependErrorMessage(e, `Error while reading ${file}:\n`);
-      throw e;
     } finally {
       revertBabelRequire();
     }
@@ -156,11 +147,8 @@ export class Loader {
       if (func && typeof func === 'object' && ('default' in func))
         func = func['default'];
       if (typeof func !== 'function')
-        throw errorWithCallLocation(`Reporter file "${file}" must export a single class.`);
+        throw errorWithFile(file, `reporter file must export a single class.`);
       return func;
-    } catch (e) {
-      prependErrorMessage(e, `Error while reading ${file}:\n`);
-      throw e;
     } finally {
       revertBabelRequire();
     }
@@ -227,40 +215,44 @@ function toReporters(reporters: 'dot' | 'line' | 'list' | 'junit' | 'json' | 'nu
   return reporters;
 }
 
-function validateConfig(config: Config) {
-  if (typeof config !== 'object' || !config)
-    throw new Error(`Configuration file must export a single object`);
+function errorWithFile(file: string, message: string) {
+  return new Error(`${file}: ${message}`);
+}
 
-  validateProject(config, 'config');
+function validateConfig(file: string, config: Config) {
+  if (typeof config !== 'object' || !config)
+    throw errorWithFile(file, `Configuration file must export a single object`);
+
+  validateProject(file, config, 'config');
 
   if ('forbidOnly' in config && config.forbidOnly !== undefined) {
     if (typeof config.forbidOnly !== 'boolean')
-      throw new Error(`config.forbidOnly must be a boolean`);
+      throw errorWithFile(file, `config.forbidOnly must be a boolean`);
   }
 
   if ('globalSetup' in config && config.globalSetup !== undefined) {
     if (typeof config.globalSetup !== 'string')
-      throw new Error(`config.globalSetup must be a string`);
+      throw errorWithFile(file, `config.globalSetup must be a string`);
   }
 
   if ('globalTeardown' in config && config.globalTeardown !== undefined) {
     if (typeof config.globalTeardown !== 'string')
-      throw new Error(`config.globalTeardown must be a string`);
+      throw errorWithFile(file, `config.globalTeardown must be a string`);
   }
 
   if ('globalTimeout' in config && config.globalTimeout !== undefined) {
     if (typeof config.globalTimeout !== 'number' || config.globalTimeout < 0)
-      throw new Error(`config.globalTimeout must be a non-negative number`);
+      throw errorWithFile(file, `config.globalTimeout must be a non-negative number`);
   }
 
   if ('grep' in config && config.grep !== undefined) {
     if (Array.isArray(config.grep)) {
       config.grep.forEach((item, index) => {
         if (!isRegExp(item))
-          throw new Error(`config.grep[${index}] must be a RegExp`);
+          throw errorWithFile(file, `config.grep[${index}] must be a RegExp`);
       });
     } else if (!isRegExp(config.grep)) {
-      throw new Error(`config.grep must be a RegExp`);
+      throw errorWithFile(file, `config.grep must be a RegExp`);
     }
   }
 
@@ -268,115 +260,115 @@ function validateConfig(config: Config) {
     if (Array.isArray(config.grepInvert)) {
       config.grepInvert.forEach((item, index) => {
         if (!isRegExp(item))
-          throw new Error(`config.grepInvert[${index}] must be a RegExp`);
+          throw errorWithFile(file, `config.grepInvert[${index}] must be a RegExp`);
       });
     } else if (!isRegExp(config.grepInvert)) {
-      throw new Error(`config.grep must be a RegExp`);
+      throw errorWithFile(file, `config.grep must be a RegExp`);
     }
   }
 
   if ('maxFailures' in config && config.maxFailures !== undefined) {
     if (typeof config.maxFailures !== 'number' || config.maxFailures < 0)
-      throw new Error(`config.maxFailures must be a non-negative number`);
+      throw errorWithFile(file, `config.maxFailures must be a non-negative number`);
   }
 
   if ('preserveOutput' in config && config.preserveOutput !== undefined) {
     if (typeof config.preserveOutput !== 'string' || !['always', 'never', 'failures-only'].includes(config.preserveOutput))
-      throw new Error(`config.preserveOutput must be one of "always", "never" or "failures-only"`);
+      throw errorWithFile(file, `config.preserveOutput must be one of "always", "never" or "failures-only"`);
   }
 
   if ('projects' in config && config.projects !== undefined) {
     if (!Array.isArray(config.projects))
-      throw new Error(`config.projects must be an array`);
+      throw errorWithFile(file, `config.projects must be an array`);
     config.projects.forEach((project, index) => {
-      validateProject(project, `config.projects[${index}]`);
+      validateProject(file, project, `config.projects[${index}]`);
     });
   }
 
   if ('quiet' in config && config.quiet !== undefined) {
     if (typeof config.quiet !== 'boolean')
-      throw new Error(`config.quiet must be a boolean`);
+      throw errorWithFile(file, `config.quiet must be a boolean`);
   }
 
   if ('reporter' in config && config.reporter !== undefined) {
     if (Array.isArray(config.reporter)) {
       config.reporter.forEach((item, index) => {
         if (!Array.isArray(item) || item.length <= 0 || item.length > 2 || typeof item[0] !== 'string')
-          throw new Error(`config.reporter[${index}] must be a tuple [name, optionalArgument]`);
+          throw errorWithFile(file, `config.reporter[${index}] must be a tuple [name, optionalArgument]`);
       });
     } else {
       const builtinReporters = ['dot', 'line', 'list', 'junit', 'json', 'null'];
       if (typeof config.reporter !== 'string' || !builtinReporters.includes(config.reporter))
-        throw new Error(`config.reporter must be one of ${builtinReporters.map(name => `"${name}"`).join(', ')}`);
+        throw errorWithFile(file, `config.reporter must be one of ${builtinReporters.map(name => `"${name}"`).join(', ')}`);
     }
   }
 
   if ('reportSlowTests' in config && config.reportSlowTests !== undefined && config.reportSlowTests !== null) {
     if (!config.reportSlowTests || typeof config.reportSlowTests !== 'object')
-      throw new Error(`config.reportSlowTests must be an object`);
+      throw errorWithFile(file, `config.reportSlowTests must be an object`);
     if (!('max' in config.reportSlowTests) || typeof config.reportSlowTests.max !== 'number' || config.reportSlowTests.max < 0)
-      throw new Error(`config.reportSlowTests.max must be a non-negative number`);
+      throw errorWithFile(file, `config.reportSlowTests.max must be a non-negative number`);
     if (!('threshold' in config.reportSlowTests) || typeof config.reportSlowTests.threshold !== 'number' || config.reportSlowTests.threshold < 0)
-      throw new Error(`config.reportSlowTests.threshold must be a non-negative number`);
+      throw errorWithFile(file, `config.reportSlowTests.threshold must be a non-negative number`);
   }
 
   if ('shard' in config && config.shard !== undefined && config.shard !== null) {
     if (!config.shard || typeof config.shard !== 'object')
-      throw new Error(`config.shard must be an object`);
+      throw errorWithFile(file, `config.shard must be an object`);
     if (!('total' in config.shard) || typeof config.shard.total !== 'number' || config.shard.total < 1)
-      throw new Error(`config.shard.total must be a positive number`);
+      throw errorWithFile(file, `config.shard.total must be a positive number`);
     if (!('current' in config.shard) || typeof config.shard.current !== 'number' || config.shard.current < 1 || config.shard.current > config.shard.total)
-      throw new Error(`config.shard.current must be a positive number, not greater than config.shard.total`);
+      throw errorWithFile(file, `config.shard.current must be a positive number, not greater than config.shard.total`);
   }
 
   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
     if (typeof config.updateSnapshots !== 'string' || !['all', 'none', 'missing'].includes(config.updateSnapshots))
-      throw new Error(`config.updateSnapshots must be one of "all", "none" or "missing"`);
+      throw errorWithFile(file, `config.updateSnapshots must be one of "all", "none" or "missing"`);
   }
 
   if ('workers' in config && config.workers !== undefined) {
     if (typeof config.workers !== 'number' || config.workers <= 0)
-      throw new Error(`config.workers must be a positive number`);
+      throw errorWithFile(file, `config.workers must be a positive number`);
   }
 }
 
-function validateProject(project: Project, title: string) {
+function validateProject(file: string, project: Project, title: string) {
   if (typeof project !== 'object' || !project)
-    throw new Error(`${title} must be an object`);
+    throw errorWithFile(file, `${title} must be an object`);
 
   if ('define' in project && project.define !== undefined) {
     if (Array.isArray(project.define)) {
       project.define.forEach((item, index) => {
-        validateDefine(item, `${title}.define[${index}]`);
+        validateDefine(file, item, `${title}.define[${index}]`);
       });
     } else {
-      validateDefine(project.define, `${title}.define`);
+      validateDefine(file, project.define, `${title}.define`);
     }
   }
 
   if ('name' in project && project.name !== undefined) {
     if (typeof project.name !== 'string')
-      throw new Error(`${title}.name must be a string`);
+      throw errorWithFile(file, `${title}.name must be a string`);
   }
 
   if ('outputDir' in project && project.outputDir !== undefined) {
     if (typeof project.outputDir !== 'string')
-      throw new Error(`${title}.outputDir must be a string`);
+      throw errorWithFile(file, `${title}.outputDir must be a string`);
   }
 
   if ('repeatEach' in project && project.repeatEach !== undefined) {
     if (typeof project.repeatEach !== 'number' || project.repeatEach < 0)
-      throw new Error(`${title}.repeatEach must be a non-negative number`);
+      throw errorWithFile(file, `${title}.repeatEach must be a non-negative number`);
   }
 
   if ('retries' in project && project.retries !== undefined) {
     if (typeof project.retries !== 'number' || project.retries < 0)
-      throw new Error(`${title}.retries must be a non-negative number`);
+      throw errorWithFile(file, `${title}.retries must be a non-negative number`);
   }
 
   if ('testDir' in project && project.testDir !== undefined) {
     if (typeof project.testDir !== 'string')
-      throw new Error(`${title}.testDir must be a string`);
+      throw errorWithFile(file, `${title}.testDir must be a string`);
   }
 
   for (const prop of ['testIgnore', 'testMatch'] as const) {
@@ -385,28 +377,28 @@ function validateProject(project: Project, title: string) {
       if (Array.isArray(value)) {
         value.forEach((item, index) => {
           if (typeof item !== 'string' && !isRegExp(item))
-            throw new Error(`${title}.${prop}[${index}] must be a string or a RegExp`);
+            throw errorWithFile(file, `${title}.${prop}[${index}] must be a string or a RegExp`);
         });
       } else if (typeof value !== 'string' && !isRegExp(value)) {
-        throw new Error(`${title}.${prop} must be a string or a RegExp`);
+        throw errorWithFile(file, `${title}.${prop} must be a string or a RegExp`);
       }
     }
   }
 
   if ('timeout' in project && project.timeout !== undefined) {
     if (typeof project.timeout !== 'number' || project.timeout < 0)
-      throw new Error(`${title}.timeout must be a non-negative number`);
+      throw errorWithFile(file, `${title}.timeout must be a non-negative number`);
   }
 
   if ('use' in project && project.use !== undefined) {
     if (!project.use || typeof project.use !== 'object')
-      throw new Error(`${title}.use must be an object`);
+      throw errorWithFile(file, `${title}.use must be an object`);
   }
 }
 
-function validateDefine(define: any, title: string) {
+function validateDefine(file: string, define: any, title: string) {
   if (!define || typeof define !== 'object' || !define.test || !define.fixtures)
-    throw new Error(`${title} must be an object with "test" and "fixtures" properties`);
+    throw errorWithFile(file, `${title} must be an object with "test" and "fixtures" properties`);
 }
 
 const baseFullConfig: FullConfig = {

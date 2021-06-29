@@ -42,14 +42,14 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel, channel
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    return this._wrapApiCall('cdpSession.send', async (channel: channels.CDPSessionChannel) => {
+    return this._wrapApiCall(async (channel: channels.CDPSessionChannel) => {
       const result = await channel.send({ method, params });
       return result.result as Protocol.CommandReturnValues[T];
     });
   }
 
   async detach() {
-    return this._wrapApiCall('cdpSession.detach', async (channel: channels.CDPSessionChannel) => {
+    return this._wrapApiCall(async (channel: channels.CDPSessionChannel) => {
       return channel.detach();
     });
   }

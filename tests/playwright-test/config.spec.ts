@@ -175,23 +175,6 @@ test('should support different testDirs', async ({ runInlineTest }) => {
   expect(result.report.suites[1].specs[0].title).toBe('runs twice');
 });
 
-test('should allow export default form the config file', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      export default { timeout: 1000 };
-    `,
-    'a.test.ts': `
-      const { test } = pwt;
-      test('fails', async ({}, testInfo) => {
-        await new Promise(f => setTimeout(f, 2000));
-      });
-    `
-  });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-  expect(result.output).toContain('Timeout of 1000ms exceeded.');
-});
 
 test('should allow root testDir and use it for relative paths', async ({ runInlineTest }) => {
   const result = await runInlineTest({

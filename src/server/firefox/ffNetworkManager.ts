@@ -94,7 +94,9 @@ export class FFNetworkManager {
         ipAddress: event.remoteIPAddress,
         port: event.remotePort,
       });
-    } else {response._serverAddrFinished();}
+    } else {
+      response._serverAddrFinished();
+    }
     response._securityDetailsFinished({
       protocol: event?.securityDetails?.protocol,
       subjectName: event?.securityDetails?.subjectName,

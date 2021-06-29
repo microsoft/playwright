@@ -39,12 +39,12 @@ export class Tracing implements InstrumentationListener {
   private _appendEventChain = Promise.resolve();
   private _snapshotter: TraceSnapshotter;
   private _eventListeners: RegisteredListener[] = [];
-  private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata }>();
+  private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
   private _context: BrowserContext;
   private _traceFile: string | undefined;
   private _resourcesDir: string;
   private _sha1s: string[] = [];
-  private _started = false;
+  private _recordingTraceEvents = false;
   private _tracesDir: string;
 
   constructor(context: BrowserContext) {
@@ -56,9 +56,9 @@ export class Tracing implements InstrumentationListener {
 
   async start(options: TracerOptions): Promise<void> {
     // context + page must be the first events added, this method can't have awaits before them.
-    if (this._started)
+    if (this._recordingTraceEvents)
       throw new Error('Tracing has already been started');
-    this._started = true;
+    this._recordingTraceEvents = true;
     this._traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
 
     this._appendEventChain = mkdirIfNeeded(this._traceFile);
@@ -83,18 +83,22 @@ export class Tracing implements InstrumentationListener {
   }
 
   async stop(): Promise<void> {
-    if (!this._started)
+    if (!this._eventListeners.length)
       return;
-    this._started = false;
     this._context.instrumentation.removeListener(this);
     helper.removeEventListeners(this._eventListeners);
-    for (const { sdkObject, metadata } of this._pendingCalls.values())
+    for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
+      await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
+      if (!afterSnapshot)
+        metadata.error = 'Action was interrupted';
       await this.onAfterCall(sdkObject, metadata);
+    }
     for (const page of this._context.pages())
       page.setScreencastOptions(null);
     await this._snapshotter.stop();
 
     // Ensure all writes are finished.
+    this._recordingTraceEvents = false;
     await this._appendEventChain;
   }
 
@@ -103,7 +107,7 @@ export class Tracing implements InstrumentationListener {
   }
 
   async export(): Promise<Artifact> {
-    if (!this._traceFile || this._started)
+    if (!this._traceFile || this._recordingTraceEvents)
       throw new Error('Must start and stop tracing before exporting');
     const zipFile = new yazl.ZipFile();
     const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
@@ -142,23 +146,30 @@ export class Tracing implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    await this._captureSnapshot('before', sdkObject, metadata);
-    this._pendingCalls.set(metadata.id, { sdkObject, metadata });
+    const beforeSnapshot = this._captureSnapshot('before', sdkObject, metadata);
+    this._pendingCalls.set(metadata.id, { sdkObject, metadata, beforeSnapshot });
+    await beforeSnapshot;
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
-    await this._captureSnapshot('action', sdkObject, metadata, element);
+    const actionSnapshot = this._captureSnapshot('action', sdkObject, metadata, element);
+    this._pendingCalls.get(metadata.id)!.actionSnapshot = actionSnapshot;
+    await actionSnapshot;
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (!this._pendingCalls.has(metadata.id))
+    const pendingCall = this._pendingCalls.get(metadata.id);
+    if (!pendingCall || pendingCall.afterSnapshot)
       return;
-    this._pendingCalls.delete(metadata.id);
-    if (!sdkObject.attribution.page)
+    if (!sdkObject.attribution.page) {
+      this._pendingCalls.delete(metadata.id);
       return;
-    await this._captureSnapshot('after', sdkObject, metadata);
+    }
+    pendingCall.afterSnapshot = this._captureSnapshot('after', sdkObject, metadata);
+    await pendingCall.afterSnapshot;
     const event: trace.ActionTraceEvent = { type: 'action', metadata };
     this._appendTraceEvent(event);
+    this._pendingCalls.delete(metadata.id);
   }
 
   onEvent(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -192,7 +203,7 @@ export class Tracing implements InstrumentationListener {
   }
 
   private _appendTraceEvent(event: any) {
-    if (!this._started)
+    if (!this._recordingTraceEvents)
       return;
 
     const visit = (object: any) => {

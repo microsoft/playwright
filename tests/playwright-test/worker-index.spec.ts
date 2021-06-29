@@ -52,15 +52,15 @@ test('should reuse worker for multiple tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
-      test('succeeds', async ({}, testInfo) => {
+      test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
       });
 
-      test('succeeds', async ({}, testInfo) => {
+      test('succeeds 2', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
       });
 
-      test('succeeds', async ({}, testInfo) => {
+      test('succeeds 3', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
       });
     `,

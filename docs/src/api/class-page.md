@@ -1746,8 +1746,8 @@ Shortcut for main frame's [`method: Frame.fill`].
 
 Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
+### option: Page.fill.force = %%-input-force-%%
 ### option: Page.fill.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: Page.fill.timeout = %%-input-timeout-%%
 
 ## async method: Page.focus
@@ -1959,6 +1959,14 @@ Returns `element.innerText`.
 ### param: Page.innerText.selector = %%-input-selector-%%
 
 ### option: Page.innerText.timeout = %%-input-timeout-%%
+
+## async method: Page.inputValue
+- returns: <[string]>
+
+Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+
+### param: Page.inputValue.selector = %%-input-selector-%%
+### option: Page.inputValue.timeout = %%-input-timeout-%%
 
 ## async method: Page.isChecked
 - returns: <[boolean]>
@@ -2623,11 +2631,9 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 Shortcut for main frame's [`method: Frame.selectOption`].
 
 ### param: Page.selectOption.selector = %%-input-selector-%%
-
 ### param: Page.selectOption.values = %%-select-options-values-%%
-
+### option: Page.selectOption.force = %%-input-force-%%
 ### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: Page.setContent

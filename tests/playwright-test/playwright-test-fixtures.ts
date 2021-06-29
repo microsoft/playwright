@@ -225,7 +225,7 @@ export const test = base.extend<Fixtures>({
       runResult = await runPlaywrightTest(baseDir, params, env);
       return runResult;
     });
-    if (testInfo.status !== testInfo.expectedStatus && runResult)
+    if (testInfo.status !== testInfo.expectedStatus && runResult && !process.env.PW_RUNNER_DEBUG)
       console.log(runResult.output);
   },
 
@@ -236,7 +236,7 @@ export const test = base.extend<Fixtures>({
       tscResult = await runTSC(baseDir);
       return tscResult;
     });
-    if (testInfo.status !== testInfo.expectedStatus && tscResult)
+    if (testInfo.status !== testInfo.expectedStatus && tscResult && !process.env.PW_RUNNER_DEBUG)
       console.log(tscResult.output);
   },
 });

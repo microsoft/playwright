@@ -48,7 +48,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel, channels.Worker
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return this._wrapApiCall('worker.evaluate', async (channel: channels.WorkerChannel) => {
+    return this._wrapApiCall(async (channel: channels.WorkerChannel) => {
       const result = await channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
       return parseResult(result.value);
     });
@@ -56,7 +56,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel, channels.Worker
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return this._wrapApiCall('worker.evaluateHandle', async (channel: channels.WorkerChannel) => {
+    return this._wrapApiCall(async (channel: channels.WorkerChannel) => {
       const result = await channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
       return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
     });

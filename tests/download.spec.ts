@@ -481,7 +481,7 @@ it.describe('download event', () => {
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    await download._cancel();
+    await (download as any)._cancel();
     const failure = await download.failure();
     expect(failure).toBe('canceled');
     await page.close();
@@ -500,7 +500,7 @@ it.describe('download event', () => {
     const path = await download.path();
     expect(fs.existsSync(path)).toBeTruthy();
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    await download._cancel();
+    await (download as any)._cancel();
     const failure = await download.failure();
     expect(failure).toBe(null);
     await page.close();

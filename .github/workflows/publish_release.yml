@@ -15,9 +15,9 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - run: utils/publish_all_packages.sh --release
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -32,9 +32,9 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
-    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - run: utils/build/build-playwright-driver.sh
     - run: utils/build/upload-playwright-driver.sh
       env:
@@ -53,12 +53,12 @@ jobs:
         login-server: playwright.azurecr.io
         username: playwright
         password: ${{ secrets.DOCKER_PASSWORD }}
-    - uses: microsoft/playwright-github-action@v1
     - uses: actions/setup-node@v2
       with:
         node-version: 12
     - run: npm ci
     - run: npm run build
+    - run: node lib/cli/cli install-deps
     - run: ./utils/docker/build.sh bionic playwright:localbuild-bionic
     - run: ./utils/docker/build.sh focal playwright:localbuild-focal
     - name: tag & publish

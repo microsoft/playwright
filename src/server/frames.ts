@@ -986,7 +986,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async fill(metadata: CallMetadata, selector: string, value: string, options: types.NavigatingActionWaitOptions) {
+  async fill(metadata: CallMetadata, selector: string, value: string, options: types.NavigatingActionWaitOptions & { force?: boolean }) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._fill(progress, value, options)));
@@ -1040,6 +1040,16 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
+    const controller = new ProgressController(metadata, this);
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.inputValueTask(info);
+    return controller.run(async progress => {
+      progress.log(`  retrieving value from "${selector}"`);
+      return dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
   private async _checkElementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.TimeoutOptions = {}): Promise<boolean> {
     const controller = new ProgressController(metadata, this);
     const info = this._page.selectors._parseSelector(selector);
@@ -1087,7 +1097,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
+  async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions & types.ForceOptions = {}): Promise<string[]> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._selectOption(progress, elements, values, options));

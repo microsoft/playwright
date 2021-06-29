@@ -21,10 +21,14 @@ import * as fs from 'fs';
 import * as pirates from 'pirates';
 import * as babel from '@babel/core';
 import * as sourceMapSupport from 'source-map-support';
+import type { Location } from './types';
 
 const version = 4;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
+
+const kStackTraceLimit = 15;
+Error.stackTraceLimit = kStackTraceLimit;
 
 sourceMapSupport.install({
   environment: 'node',
@@ -96,4 +100,25 @@ export function installTransform(): () => void {
   }, {
     exts: ['.ts']
   });
+}
+
+export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
+  return (...args) => {
+    const oldPrepareStackTrace = Error.prepareStackTrace;
+    Error.prepareStackTrace = (error, stackFrames) => {
+      const frame: NodeJS.CallSite = sourceMapSupport.wrapCallSite(stackFrames[1]);
+      return {
+        file: frame.getFileName(),
+        line: frame.getLineNumber(),
+        column: frame.getColumnNumber(),
+      };
+    };
+    Error.stackTraceLimit = 2;
+    const obj: { stack: Location } = {} as any;
+    Error.captureStackTrace(obj);
+    const location = obj.stack;
+    Error.stackTraceLimit = kStackTraceLimit;
+    Error.prepareStackTrace = oldPrepareStackTrace;
+    return func(location, ...args);
+  };
 }

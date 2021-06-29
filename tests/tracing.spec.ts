@@ -181,6 +181,21 @@ for (const params of [
   });
 }
 
+test('should include interrupted actions', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+  page.click('"ClickNoButton"').catch(() =>  {});
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  await context.close();
+
+  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  const clickEvent = events.find(e => e.metadata?.apiName === 'page.click');
+  expect(clickEvent).toBeTruthy();
+  expect(clickEvent.metadata.error).toBe('Action was interrupted');
+});
+
+
 async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
   const entries = await new Promise<any[]>(f => {
     const entries: Promise<any>[] = [];

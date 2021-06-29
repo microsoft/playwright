@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { errorWithCallLocation, formatLocation, prependErrorMessage, wrapInPromise } from './util';
+import { wrapInPromise } from './util';
 import * as crypto from 'crypto';
 import { FixturesWithLocation, Location } from './types';
 
@@ -56,9 +56,7 @@ class Fixture {
 
     const params: { [key: string]: any } = {};
     for (const name of this.registration.deps) {
-      const registration = this.runner.pool!.resolveDependency(this.registration, name);
-      if (!registration)
-        throw errorWithCallLocation(`Unknown fixture "${name}"`);
+      const registration = this.runner.pool!.resolveDependency(this.registration, name)!;
       const dep = await this.runner.setupFixtureForRegistration(registration, info);
       dep.usages.add(this);
       params[name] = dep.value;
@@ -71,7 +69,7 @@ class Fixture {
     const teardownFence = new Promise(f => this._teardownFenceCallback = f);
     this._tearDownComplete = wrapInPromise(this.registration.fn(params, async (value: any) => {
       if (called)
-        throw errorWithCallLocation(`Cannot provide fixture value for the second time`);
+        throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
       setupFenceFulfill();
@@ -111,40 +109,35 @@ export class FixturePool {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
 
     for (const { fixtures, location } of fixturesList) {
-      try {
-        for (const entry of Object.entries(fixtures)) {
-          const name = entry[0];
-          let value = entry[1];
-          let options: { auto: boolean, scope: FixtureScope } | undefined;
-          if (Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1])) {
-            options = {
-              auto: !!value[1].auto,
-              scope: value[1].scope || 'test'
-            };
-            value = value[0];
-          }
-          const fn = value as (Function | any);
-
-          const previous = this.registrations.get(name);
-          if (previous && options) {
-            if (previous.scope !== options.scope)
-              throw errorWithLocations(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture.`, { location, name}, previous);
-            if (previous.auto !== options.auto)
-              throw errorWithLocations(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture.`, { location, name }, previous);
-          } else if (previous) {
-            options = { auto: previous.auto, scope: previous.scope };
-          } else if (!options) {
-            options = { auto: false, scope: 'test' };
-          }
-
-          const deps = fixtureParameterNames(fn, location);
-          const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, deps, super: previous };
-          registrationId(registration);
-          this.registrations.set(name, registration);
+      for (const entry of Object.entries(fixtures)) {
+        const name = entry[0];
+        let value = entry[1];
+        let options: { auto: boolean, scope: FixtureScope } | undefined;
+        if (Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1])) {
+          options = {
+            auto: !!value[1].auto,
+            scope: value[1].scope || 'test'
+          };
+          value = value[0];
         }
-      } catch (e) {
-        prependErrorMessage(e, `Error processing fixtures at ${formatLocation(location)}:\n`);
-        throw e;
+        const fn = value as (Function | any);
+
+        const previous = this.registrations.get(name);
+        if (previous && options) {
+          if (previous.scope !== options.scope)
+            throw errorWithLocations(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture.`, { location, name }, previous);
+          if (previous.auto !== options.auto)
+            throw errorWithLocations(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture.`, { location, name }, previous);
+        } else if (previous) {
+          options = { auto: previous.auto, scope: previous.scope };
+        } else if (!options) {
+          options = { auto: false, scope: 'test' };
+        }
+
+        const deps = fixtureParameterNames(fn, location);
+        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, deps, super: previous };
+        registrationId(registration);
+        this.registrations.set(name, registration);
       }
     }
 
@@ -247,9 +240,7 @@ export class FixtureRunner {
     const names = fixtureParameterNames(fn, { file: '<unused>', line: 1, column: 1 });
     const params: { [key: string]: any } = {};
     for (const name of names) {
-      const registration = this.pool!.registrations.get(name);
-      if (!registration)
-        throw errorWithCallLocation('Unknown fixture: ' + name);
+      const registration = this.pool!.registrations.get(name)!;
       const fixture = await this.setupFixtureForRegistration(registration, info);
       params[name] = fixture.value;
     }
@@ -355,7 +346,9 @@ function errorWithLocations(message: string, ...defined: { location: Location, n
       prefix = `"${name}" `;
     message += `\n  ${prefix}defined at ${formatLocation(location)}`;
   }
-  const error = new Error(message);
-  error.stack = 'Error: ' + message + '\n';
-  return error;
+  return new Error(message);
+}
+
+function formatLocation(location: Location) {
+  return location.file + ':' + location.line + ':' + location.column;
 }

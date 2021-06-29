@@ -42,6 +42,13 @@ it('should work', async ({page, asset}) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
+it('should work with label', async ({page, asset}) => {
+  await page.setContent(`<label for=target>Choose a file</label><input id=target type=file>`);
+  await page.setInputFiles('text=Choose a file', asset('file-to-upload.txt'));
+  expect(await page.$eval('input', input => input.files.length)).toBe(1);
+  expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
+});
+
 it('should set from memory', async ({page}) => {
   await page.setContent(`<input type=file>`);
   await page.setInputFiles('input', {
