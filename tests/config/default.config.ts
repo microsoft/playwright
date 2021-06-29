@@ -51,7 +51,7 @@ const config: Config<CommonOptions & PlaywrightOptions> = {
   timeout: video || process.env.PWTRACE ? 60000 : 30000,
   globalTimeout: 5400000,
   workers: process.env.CI ? 1 : undefined,
-  forbidOnly: !!process.env.CI,
+  // forbidOnly: !!process.env.CI,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
   retries: process.env.CI ? 3 : 0,
   reporter: process.env.CI ? [
