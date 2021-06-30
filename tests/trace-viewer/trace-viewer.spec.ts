@@ -15,10 +15,10 @@
  */
 
 import path from 'path';
-import type { Browser, Page } from '../../../index';
-import { showTraceViewer } from '../../../lib/server/trace/viewer/traceViewer';
-import { playwrightTest } from '../../config/browserTest';
-import { expect } from '../../config/test-runner';
+import type { Browser, Page } from '../../index';
+import { showTraceViewer } from '../../lib/server/trace/viewer/traceViewer';
+import { playwrightTest } from '../config/browserTest';
+import { expect } from '../config/test-runner';
 
 class TraceViewerPage {
   constructor(public page: Page) {}
@@ -48,15 +48,30 @@ class TraceViewerPage {
     const result = [...set];
     return result.sort();
   }
+
+  async consoleLines() {
+    await this.page.waitForSelector('.console-line-message:visible');
+    return await this.page.$$eval('.console-line-message:visible', ee => ee.map(e => e.textContent));
+  }
+
+  async consoleLineTypes() {
+    await this.page.waitForSelector('.console-line-message:visible');
+    return await this.page.$$eval('.console-line:visible', ee => ee.map(e => e.className));
+  }
+
+  async consoleStacks() {
+    await this.page.waitForSelector('.console-stack:visible');
+    return await this.page.$$eval('.console-stack:visible', ee => ee.map(e => e.textContent));
+  }
 }
 
 const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise<TraceViewerPage> }>({
-  showTraceViewer: async ({ browserType, browserName, headless }, use) => {
+  showTraceViewer: async ({ playwright, browserName, headless }, use) => {
     let browser: Browser;
     let contextImpl: any;
     await use(async (trace: string) => {
       contextImpl = await showTraceViewer(trace, browserName, headless);
-      browser = await browserType.connectOverCDP({ endpointURL: contextImpl._browser.options.wsEndpoint });
+      browser = await playwright.chromium.connectOverCDP({ endpointURL: contextImpl._browser.options.wsEndpoint });
       return new TraceViewerPage(browser.contexts()[0].pages()[0]);
     });
     await browser.close();
@@ -66,12 +81,18 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
 
 let traceFile: string;
 
-test.beforeAll(async ({ browser }, workerInfo) => {
+test.beforeAll(async ({ browser, browserName }, workerInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
   const page = await context.newPage();
   await page.goto('data:text/html,<html>Hello world</html>');
   await page.setContent('<button>Click</button>');
+  await page.evaluate(() => {
+    console.log('Info');
+    console.warn('Warning');
+    console.error('Error');
+    setTimeout(() => { throw new Error('Unhandled exception'); }, 0);
+  });
   await page.click('"Click"');
   await Promise.all([
     page.waitForNavigation(),
@@ -83,7 +104,7 @@ test.beforeAll(async ({ browser }, workerInfo) => {
     console.error('Error');
   });
   await page.close();
-  traceFile = path.join(workerInfo.project.outputDir, 'trace.zip');
+  traceFile = path.join(workerInfo.project.outputDir, browserName, 'trace.zip');
   await context.tracing.stop({ path: traceFile });
 });
 
@@ -97,6 +118,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   expect(await traceViewer.actionTitles()).toEqual([
     'page.goto',
     'page.setContent',
+    'page.evaluate',
     'page.click',
     'page.waitForNavigation',
     'page.goto',
@@ -107,7 +129,6 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
 test('should contain action log', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('page.click');
-
   const logLines = await traceViewer.logLines();
   expect(logLines.length).toBeGreaterThan(10);
   expect(logLines).toContain('attempting click action');
@@ -118,4 +139,19 @@ test('should render events', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   const events = await traceViewer.eventBars();
   expect(events).toContain('page_console');
+});
+
+test('should render console', async ({ showTraceViewer, browserName }) => {
+  test.fixme(browserName === 'firefox', 'Firefox generates stray console message for page error');
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.selectAction('page.evaluate');
+  await traceViewer.page.click('"Console"');
+
+  const events = await traceViewer.consoleLines();
+  expect(events).toEqual(['Info', 'Warning', 'Error', 'Unhandled exception']);
+  const types = await traceViewer.consoleLineTypes();
+  expect(types).toEqual(['console-line log', 'console-line warning', 'console-line error', 'console-line error']);
+  const stacks = await traceViewer.consoleStacks();
+  expect(stacks.length).toBe(1);
+  expect(stacks[0]).toContain('Error: Unhandled exception');
 });

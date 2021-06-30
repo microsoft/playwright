@@ -120,13 +120,14 @@ export class TraceViewer {
     const urlPrefix = await this._server.start();
 
     const traceViewerPlaywright = createPlaywright(true);
-    const args = [
+    const traceViewerBrowser = isUnderTest() ? 'chromium' : this._browserName;
+    const args = traceViewerBrowser === 'chromium' ? [
       '--app=data:text/html,',
       '--window-size=1280,800'
-    ];
+    ] : [];
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
-    const context = await traceViewerPlaywright[this._browserName as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
+    const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
       sdkLanguage: 'javascript',
       args,
