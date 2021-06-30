@@ -133,7 +133,7 @@ export class Tracing implements InstrumentationListener {
       return;
     if (!this._snapshotter.started())
       return;
-    if (!this._shouldCaptureSnapshot(metadata))
+    if (!shouldCaptureSnapshot(metadata))
       return;
     const snapshotName = `${name}@${metadata.id}`;
     metadata.snapshots.push({ title: name, snapshotName });
@@ -162,7 +162,7 @@ export class Tracing implements InstrumentationListener {
     }
     pendingCall.afterSnapshot = this._captureSnapshot('after', sdkObject, metadata);
     await pendingCall.afterSnapshot;
-    const event: trace.ActionTraceEvent = { type: 'action', metadata, hasSnapshot: this._shouldCaptureSnapshot(metadata) };
+    const event: trace.ActionTraceEvent = { type: 'action', metadata, hasSnapshot: shouldCaptureSnapshot(metadata) };
     this._appendTraceEvent(event);
     this._pendingCalls.delete(metadata.id);
   }
@@ -225,8 +225,8 @@ export class Tracing implements InstrumentationListener {
       await fs.promises.appendFile(this._traceFile!, JSON.stringify(event) + '\n');
     });
   }
+}
 
-  private _shouldCaptureSnapshot(metadata: CallMetadata): boolean {
-    return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
-  }
+function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
+  return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
 }

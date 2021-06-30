@@ -31,21 +31,6 @@ Metadata:
     apiName: string?
 
 
-WaitForEventInfo:
-  type: object
-  properties:
-    waitId: string
-    phase:
-      type: enum
-      literals:
-      - before
-      - after
-      - log
-    event: string?
-    message: string?
-    error: string?
-
-
 Point:
   type: object
   properties:
@@ -504,9 +489,32 @@ Browser:
     close:
 
 
+EventTarget:
+  type: interface
+
+  commands:
+    waitForEventInfo:
+      parameters:
+        info:
+          type: object
+          properties:
+            waitId: string
+            phase:
+              type: enum
+              literals:
+              - before
+              - after
+              - log
+            event: string?
+            message: string?
+            error: string?
+      tracing:
+        snapshot: true
 
 BrowserContext:
   type: interface
+
+  extends: EventTarget
 
   initializer:
     isChromium: boolean
@@ -690,6 +698,8 @@ BrowserContext:
 
 Page:
   type: interface
+
+  extends: EventTarget
 
   initializer:
     mainFrame: Frame
@@ -2128,6 +2138,8 @@ RemoteAddr:
 WebSocket:
   type: interface
 
+  extends: EventTarget
+
   initializer:
     url: string
 
@@ -2346,6 +2358,8 @@ Electron:
 ElectronApplication:
   type: interface
 
+  extends: EventTarget
+
   initializer:
     context: BrowserContext
 
@@ -2412,6 +2426,8 @@ AndroidSocket:
 
 AndroidDevice:
   type: interface
+
+  extends: EventTarget
 
   initializer:
     model: string

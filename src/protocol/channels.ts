@@ -35,14 +35,6 @@ export type Metadata = {
   apiName?: string,
 };
 
-export type WaitForEventInfo = {
-  waitId: string,
-  phase: 'before' | 'after' | 'log',
-  event?: string,
-  message?: string,
-  error?: string,
-};
-
 export type Point = {
   x: number,
   y: number,
@@ -604,11 +596,30 @@ export type BrowserStopTracingResult = {
   binary: Binary,
 };
 
+// ----------- EventTarget -----------
+export type EventTargetInitializer = {};
+export interface EventTargetChannel extends Channel {
+  waitForEventInfo(params: EventTargetWaitForEventInfoParams, metadata?: Metadata): Promise<EventTargetWaitForEventInfoResult>;
+}
+export type EventTargetWaitForEventInfoParams = {
+  info: {
+    waitId: string,
+    phase: 'before' | 'after' | 'log',
+    event?: string,
+    message?: string,
+    error?: string,
+  },
+};
+export type EventTargetWaitForEventInfoOptions = {
+
+};
+export type EventTargetWaitForEventInfoResult = void;
+
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
   isChromium: boolean,
 };
-export interface BrowserContextChannel extends Channel {
+export interface BrowserContextChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
@@ -868,7 +879,7 @@ export type PageInitializer = {
   isClosed: boolean,
   opener?: PageChannel,
 };
-export interface PageChannel extends Channel {
+export interface PageChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
   on(event: 'console', callback: (params: PageConsoleEvent) => void): this;
@@ -2460,7 +2471,7 @@ export type RemoteAddr = {
 export type WebSocketInitializer = {
   url: string,
 };
-export interface WebSocketChannel extends Channel {
+export interface WebSocketChannel extends EventTargetChannel {
   on(event: 'open', callback: (params: WebSocketOpenEvent) => void): this;
   on(event: 'frameSent', callback: (params: WebSocketFrameSentEvent) => void): this;
   on(event: 'frameReceived', callback: (params: WebSocketFrameReceivedEvent) => void): this;
@@ -2717,7 +2728,7 @@ export type ElectronLaunchResult = {
 export type ElectronApplicationInitializer = {
   context: BrowserContextChannel,
 };
-export interface ElectronApplicationChannel extends Channel {
+export interface ElectronApplicationChannel extends EventTargetChannel {
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   browserWindow(params: ElectronApplicationBrowserWindowParams, metadata?: Metadata): Promise<ElectronApplicationBrowserWindowResult>;
   evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: Metadata): Promise<ElectronApplicationEvaluateExpressionResult>;
@@ -2807,7 +2818,7 @@ export type AndroidDeviceInitializer = {
   model: string,
   serial: string,
 };
-export interface AndroidDeviceChannel extends Channel {
+export interface AndroidDeviceChannel extends EventTargetChannel {
   on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
   on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
   wait(params: AndroidDeviceWaitParams, metadata?: Metadata): Promise<AndroidDeviceWaitResult>;
@@ -3237,6 +3248,12 @@ export type SocksSocketEndOptions = {};
 export type SocksSocketEndResult = void;
 
 export const commandsWithTracingSnapshots = new Set([
+  'EventTarget.waitForEventInfo',
+  'BrowserContext.waitForEventInfo',
+  'Page.waitForEventInfo',
+  'WebSocket.waitForEventInfo',
+  'ElectronApplication.waitForEventInfo',
+  'AndroidDevice.waitForEventInfo',
   'Page.goBack',
   'Page.goForward',
   'Page.reload',
@@ -3285,7 +3302,9 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.waitForFunction',
   'Frame.waitForSelector',
   'JSHandle.evaluateExpression',
+  'ElementHandle.evaluateExpression',
   'JSHandle.evaluateExpressionHandle',
+  'ElementHandle.evaluateExpressionHandle',
   'ElementHandle.evalOnSelector',
   'ElementHandle.evalOnSelectorAll',
   'ElementHandle.check',

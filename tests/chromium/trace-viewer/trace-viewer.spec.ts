@@ -24,8 +24,8 @@ class TraceViewerPage {
   constructor(public page: Page) {}
 
   async actionTitles() {
-    await this.page.waitForSelector('.action-title');
-    return await this.page.$$eval('.action-title', ee => ee.map(e => e.textContent));
+    await this.page.waitForSelector('.action-title:visible');
+    return await this.page.$$eval('.action-title:visible', ee => ee.map(e => e.textContent));
   }
 
   async selectAction(title: string) {
@@ -33,7 +33,20 @@ class TraceViewerPage {
   }
 
   async logLines() {
-    return await this.page.$$eval('.log-line', ee => ee.map(e => e.textContent));
+    await this.page.waitForSelector('.log-line:visible');
+    return await this.page.$$eval('.log-line:visible', ee => ee.map(e => e.textContent));
+  }
+
+  async eventBars() {
+    await this.page.waitForSelector('.timeline-bar.event:visible');
+    const list = await this.page.$$eval('.timeline-bar.event:visible', ee => ee.map(e => e.className));
+    const set = new Set<string>();
+    for (const item of list) {
+      for (const className of item.split(' '))
+        set.add(className);
+    }
+    const result = [...set];
+    return result.sort();
   }
 }
 
@@ -60,6 +73,15 @@ test.beforeAll(async ({ browser }, workerInfo) => {
   await page.goto('data:text/html,<html>Hello world</html>');
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
+  await Promise.all([
+    page.waitForNavigation(),
+    page.waitForTimeout(200).then(() => page.goto('data:text/html,<html>Hello world 2</html>'))
+  ]);
+  await page.evaluate(() => {
+    console.log('Log');
+    console.warn('Warning');
+    console.error('Error');
+  });
   await page.close();
   traceFile = path.join(workerInfo.project.outputDir, 'trace.zip');
   await context.tracing.stop({ path: traceFile });
@@ -72,7 +94,14 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
-  expect(await traceViewer.actionTitles()).toEqual(['page.goto', 'page.setContent', 'page.click']);
+  expect(await traceViewer.actionTitles()).toEqual([
+    'page.goto',
+    'page.setContent',
+    'page.click',
+    'page.waitForNavigation',
+    'page.goto',
+    'page.evaluate'
+  ]);
 });
 
 test('should contain action log', async ({ showTraceViewer }) => {
@@ -83,4 +112,10 @@ test('should contain action log', async ({ showTraceViewer }) => {
   expect(logLines.length).toBeGreaterThan(10);
   expect(logLines).toContain('attempting click action');
   expect(logLines).toContain('  click action done');
+});
+
+test('should render events', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  const events = await traceViewer.eventBars();
+  expect(events).toContain('page_console');
 });

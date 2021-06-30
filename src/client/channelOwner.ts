@@ -107,18 +107,6 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     }
   }
 
-  _waitForEventInfoBefore(waitId: string, event: string, stackTrace: ParsedStackTrace) {
-    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { waitId, phase: 'before', event } }, stackTrace).catch(() => {});
-  }
-
-  _waitForEventInfoAfter(waitId: string, error: string | undefined) {
-    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { waitId, phase: 'after', error } }, null).catch(() => {});
-  }
-
-  _waitForEventInfoLog(waitId: string, message: string) {
-    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { waitId, phase: 'log', message } }, null).catch(() => {});
-  }
-
   private toJSON() {
     // Jest's expect library tries to print objects sometimes.
     // RPC objects can contain links to lots of other objects,

@@ -42,7 +42,7 @@ export const FilmStrip: React.FunctionComponent<{
   if (previewPoint !== undefined && screencastFrames) {
     const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
     previewImage = screencastFrames[upperBound(screencastFrames, previewTime, timeComparator) - 1];
-    previewSize = inscribe({width: previewImage.width, height: previewImage.height}, { width: 600, height: 600 });
+    previewSize = previewImage ? inscribe({width: previewImage.width, height: previewImage.height}, { width: 600, height: 600 }) : undefined;
   }
 
   return <div className='film-strip' ref={ref}>{

@@ -30,7 +30,6 @@ import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayloa
 import { urlMatches } from './clientHelper';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
-import { ParsedStackTrace } from '../utils/stackTrace';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -94,8 +93,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  private _setupNavigationWaiter(options: { timeout?: number }, stackTrace: ParsedStackTrace): Waiter {
-    const waiter = new Waiter(this, '', stackTrace);
+  private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
+    const waiter = new Waiter(this._page!, '');
     if (this._page!.isClosed())
       waiter.rejectImmediately(new Error('Navigation failed because page was closed!'));
     waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
@@ -107,9 +106,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   }
 
   async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return this._wrapApiCall(async (channel: channels.FrameChannel, stackTrace: ParsedStackTrace) => {
+    return this._wrapApiCall(async (channel: channels.FrameChannel) => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      const waiter = this._setupNavigationWaiter(options, stackTrace);
+      const waiter = this._setupNavigationWaiter(options);
 
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
@@ -145,8 +144,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     state = verifyLoadState('state', state);
     if (this._loadStates.has(state))
       return;
-    return this._wrapApiCall(async (channel: channels.FrameChannel, stackTrace: ParsedStackTrace) => {
-      const waiter = this._setupNavigationWaiter(options, stackTrace);
+    return this._wrapApiCall(async (channel: channels.FrameChannel) => {
+      const waiter = this._setupNavigationWaiter(options);
       await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
         waiter.log(`  "${s}" event fired`);
         return s === state;

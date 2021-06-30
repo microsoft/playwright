@@ -22,6 +22,7 @@
 	user-select: none;
 }
 
+.codicon-blank:before { content: '\81'; }
 .codicon-add:before { content: '\ea60'; }
 .codicon-plus:before { content: '\ea60'; }
 .codicon-gist-new:before { content: '\ea60'; }

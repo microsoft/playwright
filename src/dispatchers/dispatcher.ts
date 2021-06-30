@@ -77,7 +77,7 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
 
     (object as any)[dispatcherSymbol] = this;
     if (this._parent)
-      this._connection.sendMessageToClient(this._parent._guid, type, '__create__', { type, initializer, guid });
+      this._connection.sendMessageToClient(this._parent._guid, type, '__create__', { type, initializer, guid }, this._parent._object);
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
@@ -142,8 +142,8 @@ export class DispatcherConnection {
       const eventMetadata: CallMetadata = {
         id: `event@${++lastEventId}`,
         objectId: sdkObject?.guid,
-        pageId: sdkObject?.attribution.page?.guid,
-        frameId: sdkObject?.attribution.frame?.guid,
+        pageId: sdkObject?.attribution?.page?.guid,
+        frameId: sdkObject?.attribution?.frame?.guid,
         startTime: monotonicTime(),
         endTime: 0,
         type,
@@ -152,7 +152,7 @@ export class DispatcherConnection {
         log: [],
         snapshots: []
       };
-      sdkObject.instrumentation.onEvent(sdkObject, eventMetadata);
+      sdkObject.instrumentation?.onEvent(sdkObject, eventMetadata);
     }
     this.onmessage({ guid, method, params });
   }
@@ -176,8 +176,6 @@ export class DispatcherConnection {
     };
     const scheme = createScheme(tChannel);
     this._validateParams = (type: string, method: string, params: any): any => {
-      if (method === 'waitForEventInfo')
-        return tOptional(scheme['WaitForEventInfo'])(params.info, '');
       const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
       if (!scheme[name])
         throw new ValidationError(`Unknown scheme for ${type}.${method}`);
@@ -221,8 +219,8 @@ export class DispatcherConnection {
       id: `call@${id}`,
       ...validMetadata,
       objectId: sdkObject?.guid,
-      pageId: sdkObject?.attribution.page?.guid,
-      frameId: sdkObject?.attribution.frame?.guid,
+      pageId: sdkObject?.attribution?.page?.guid,
+      frameId: sdkObject?.attribution?.frame?.guid,
       startTime: monotonicTime(),
       endTime: 0,
       type: dispatcher._type,
