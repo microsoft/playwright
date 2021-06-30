@@ -1897,7 +1897,7 @@ export interface Page {
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-   * last redirect.
+   * last redirect. It will consider a base URL if you set it via `baseURL` when creating the context.
    *
    * `page.goto` will throw an error if:
    * - there's an SSL error (e.g. in case of self-signed certificates).
@@ -7021,6 +7021,15 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
+     * Prefixes the URL on navigations when a path (no origin) is passed to
+     * [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto). You can specify also a base URL with
+     * a path. Examples:
+     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+     */
+    baseURL?: string;
+
+    /**
      * Toggles bypassing page's Content-Security-Policy.
      */
     bypassCSP?: boolean;
@@ -8145,6 +8154,15 @@ export interface AndroidDevice {
     acceptDownloads?: boolean;
 
     /**
+     * Prefixes the URL on navigations when a path (no origin) is passed to
+     * [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto). You can specify also a base URL with
+     * a path. Examples:
+     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+     */
+    baseURL?: string;
+
+    /**
      * Toggles bypassing page's Content-Security-Policy.
      */
     bypassCSP?: boolean;
@@ -8901,6 +8919,15 @@ export interface Browser extends EventEmitter {
      * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
      */
     acceptDownloads?: boolean;
+
+    /**
+     * Prefixes the URL on navigations when a path (no origin) is passed to
+     * [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto). You can specify also a base URL with
+     * a path. Examples:
+     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+     */
+    baseURL?: string;
 
     /**
      * Toggles bypassing page's Content-Security-Policy.
@@ -11038,6 +11065,15 @@ export interface BrowserContextOptions {
    * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
    */
   acceptDownloads?: boolean;
+
+  /**
+   * Prefixes the URL on navigations when a path (no origin) is passed to
+   * [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto). You can specify also a base URL with
+   * a path. Examples:
+   * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+   */
+  baseURL?: string;
 
   /**
    * Toggles bypassing page's Content-Security-Policy.

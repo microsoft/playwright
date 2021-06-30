@@ -213,6 +213,14 @@ Whether to ignore HTTPS errors during navigation. Defaults to `false`.
 
 Toggles bypassing page's Content-Security-Policy.
 
+## context-option-baseURL
+- `baseURL` <[string]>
+
+Prefixes the URL on navigations when a path (no origin) is passed to [`method: Page.goto`]. You can specify also a
+base URL with a path. Examples:
+* baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+* baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+
 ## context-option-viewport
 * langs: js, java
   - alias-java: viewportSize
@@ -566,6 +574,7 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%
 - %%-context-option-bypasscsp-%%
+- %%-context-option-baseURL-%%
 - %%-context-option-viewport-%%
 - %%-csharp-context-option-viewport-%%
 - %%-python-context-option-viewport-%%

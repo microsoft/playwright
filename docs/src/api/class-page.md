@@ -1874,7 +1874,7 @@ Navigate to the next page in history.
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect.
+last redirect. It will consider a base URL if you set it via [`option: baseURL`] when creating the context.
 
 `page.goto` will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).
