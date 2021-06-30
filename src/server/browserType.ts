@@ -166,7 +166,7 @@ export abstract class BrowserType extends SdkObject {
       const errorMessageLines = [`Failed to launch ${this._name} because executable doesn't exist at ${executable}`];
       // If we tried using stock downloaded browser, suggest re-installing playwright.
       if (!executablePath)
-        errorMessageLines.push(`Try re-installing playwright with "npm install playwright"`);
+        errorMessageLines.push(`Run "npx playwright install" to install browsers`);
       throw new Error(errorMessageLines.join('\n'));
     }
 
