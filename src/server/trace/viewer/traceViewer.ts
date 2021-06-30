@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import extract from 'extract-zip';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
+import rimraf from 'rimraf';
 import { createPlaywright } from '../../playwright';
 import { PersistentSnapshotStorage, TraceModel } from './traceModel';
 import { TraceEvent } from '../common/traceEvents';
@@ -25,6 +28,7 @@ import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { isUnderTest } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
+import { BrowserContext } from '../../browserContext';
 
 export class TraceViewer {
   private _server: HttpServer;
@@ -112,7 +116,7 @@ export class TraceViewer {
     this._server.routePrefix('/sha1/', sha1Handler);
   }
 
-  async show() {
+  async show(headless: boolean): Promise<BrowserContext> {
     const urlPrefix = await this._server.start();
 
     const traceViewerPlaywright = createPlaywright(true);
@@ -127,7 +131,7 @@ export class TraceViewer {
       sdkLanguage: 'javascript',
       args,
       noDefaultViewport: true,
-      headless: !!process.env.PWTEST_CLI_HEADLESS,
+      headless,
       useWebSocket: isUnderTest()
     });
 
@@ -137,7 +141,35 @@ export class TraceViewer {
     });
     await context.extendInjectedScript('main', consoleApiSource.source);
     const [page] = context.pages();
-    page.on('close', () => process.exit(0));
+    page.on('close', () => context.close(internalCallMetadata()).catch(() => {}));
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
+    return context;
   }
+}
+
+export async function showTraceViewer(tracePath: string, browserName: string, headless = false): Promise<BrowserContext | undefined> {
+  let stat;
+  try {
+    stat = fs.statSync(tracePath);
+  } catch (e) {
+    console.log(`No such file or directory: ${tracePath}`);  // eslint-disable-line no-console
+    return;
+  }
+
+  if (stat.isDirectory()) {
+    const traceViewer = new TraceViewer(tracePath, browserName);
+    return await traceViewer.show(headless);
+  }
+
+  const zipFile = tracePath;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
+  process.on('exit', () => rimraf.sync(dir));
+  try {
+    await extract(zipFile, { dir });
+  } catch (e) {
+    console.log(`Invalid trace file: ${zipFile}`);  // eslint-disable-line no-console
+    return;
+  }
+  const traceViewer = new TraceViewer(dir, browserName);
+  return await traceViewer.show(headless);
 }
