@@ -123,15 +123,8 @@ class NetworkRequest {
     this.requestId = httpChannel.channelId + '';
     this.navigationId = httpChannel.isMainDocumentChannel ? this.requestId : undefined;
 
-    const internalCauseType = this.httpChannel.loadInfo ? this.httpChannel.loadInfo.internalContentPolicyType : Ci.nsIContentPolicy.TYPE_OTHER;
-
     this._redirectedIndex = 0;
-    const ignoredRedirect = redirectedFrom && !redirectedFrom._sentOnResponse;
-    if (ignoredRedirect) {
-      // We just ignore redirect that did not hit the network before being redirected.
-      // This happens, for example, for automatic http->https redirects.
-      this.navigationId = redirectedFrom.navigationId;
-    } else if (redirectedFrom) {
+    if (redirectedFrom) {
       this.redirectedFromId = redirectedFrom.requestId;
       this._redirectedIndex = redirectedFrom._redirectedIndex + 1;
       this.requestId = this.requestId + '-redirect' + this._redirectedIndex;
@@ -513,7 +506,7 @@ class NetworkRequest {
     }, this._frameId);
   }
 
-  _sendOnResponse(fromCache) {
+  _sendOnResponse(fromCache, opt_statusCode, opt_statusText) {
     if (this._sentOnResponse) {
       // We can come here twice because of internal redirects, e.g. service workers.
       return;
@@ -537,8 +530,8 @@ class NetworkRequest {
     };
 
     const headers = [];
-    let status = 0;
-    let statusText = '';
+    let status = opt_statusCode || 0;
+    let statusText = opt_statusText || '';
     try {
       status = this.httpChannel.responseStatus;
       statusText = this.httpChannel.responseStatusText;
@@ -666,14 +659,21 @@ class NetworkObserver {
       return;
     const oldHttpChannel = oldChannel.QueryInterface(Ci.nsIHttpChannel);
     const newHttpChannel = newChannel.QueryInterface(Ci.nsIHttpChannel);
-    if (!(flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL)) {
-      const previous = this._channelToRequest.get(oldHttpChannel);
-      if (previous)
-        this._expectRedirect(newHttpChannel.channelId + '', previous);
-    } else {
-      const request = this._channelToRequest.get(oldHttpChannel);
+    const request = this._channelToRequest.get(oldHttpChannel);
+    if (flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL) {
       if (request)
         request._onInternalRedirect(newHttpChannel);
+    } else if (flags & Ci.nsIChannelEventSink.REDIRECT_STS_UPGRADE) {
+      if (request) {
+        // This is an internal HSTS upgrade. The original http request is canceled, and a new
+        // equivalent https request is sent. We forge 307 redirect to follow Chromium here:
+        // https://source.chromium.org/chromium/chromium/src/+/main:net/url_request/url_request_http_job.cc;l=211
+        request._sendOnResponse(false, 307, 'Temporary Redirect');
+        this._expectRedirect(newHttpChannel.channelId + '', request);
+      }
+    } else {
+      if (request)
+        this._expectRedirect(newHttpChannel.channelId + '', request);
     }
   }
 
