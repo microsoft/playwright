@@ -558,12 +558,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._mainFrame.isEnabled(selector, options);
   }
 
-  async isHidden(selector: string, options?: channels.FrameIsHiddenOptions): Promise<boolean> {
-    return this._mainFrame.isHidden(selector, options);
+  async isHidden(selector: string): Promise<boolean> {
+    return this._mainFrame.isHidden(selector);
   }
 
-  async isVisible(selector: string, options?: channels.FrameIsVisibleOptions): Promise<boolean> {
-    return this._mainFrame.isVisible(selector, options);
+  async isVisible(selector: string): Promise<boolean> {
+    return this._mainFrame.isVisible(selector);
   }
 
   async hover(selector: string, options?: channels.FrameHoverOptions) {
