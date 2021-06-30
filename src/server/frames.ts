@@ -681,6 +681,7 @@ export class Frame extends SdkObject {
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
+    debugLogger.log('api', `    finding element using the selector "${selector}"`);
     return this._page.selectors._query(this, selector);
   }
 
