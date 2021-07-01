@@ -18,8 +18,9 @@
 import * as os from 'os';
 import path from 'path';
 import * as util from 'util';
-import { getUbuntuVersionSync } from './ubuntuVersion';
-import { assert, getFromENV } from './utils';
+import { getUbuntuVersion, getUbuntuVersionSync } from './ubuntuVersion';
+import { assert, getFromENV, getAsBooleanFromENV } from './utils';
+import { validateDependenciesLinux, validateDependenciesWindows } from './validateDependencies';
 
 export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg';
 export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'firefox-beta']);
@@ -293,40 +294,6 @@ export class Registry {
     return parseInt(browser.revision, 10);
   }
 
-  linuxLddDirectories(browserName: BrowserName): string[] {
-    const browserDirectory = this.browserDirectory(browserName);
-    switch (browserName) {
-      case 'chromium':
-      case 'chromium-with-symbols':
-        return [path.join(browserDirectory, 'chrome-linux')];
-      case 'webkit':
-        return [
-          path.join(browserDirectory, 'minibrowser-gtk'),
-          path.join(browserDirectory, 'minibrowser-gtk', 'bin'),
-          path.join(browserDirectory, 'minibrowser-gtk', 'lib'),
-          path.join(browserDirectory, 'minibrowser-wpe'),
-          path.join(browserDirectory, 'minibrowser-wpe', 'bin'),
-          path.join(browserDirectory, 'minibrowser-wpe', 'lib'),
-        ];
-      case 'firefox':
-      case 'firefox-beta':
-        return [path.join(browserDirectory, 'firefox')];
-      default:
-        return [];
-    }
-  }
-
-  windowsExeAndDllDirectories(browserName: BrowserName): string[] {
-    const browserDirectory = this.browserDirectory(browserName);
-    if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
-      return [path.join(browserDirectory, 'chrome-win')];
-    if (browserName === 'firefox' || browserName === 'firefox-beta')
-      return [path.join(browserDirectory, 'firefox')];
-    if (browserName === 'webkit')
-      return [browserDirectory];
-    return [];
-  }
-
   executablePath(browserName: BrowserName): string | undefined {
     const browserDirectory = this.browserDirectory(browserName);
     const tokens = EXECUTABLE_PATHS[browserName][hostPlatform];
@@ -363,5 +330,48 @@ export class Registry {
 
   installByDefault(): BrowserName[] {
     return this._descriptors.filter(browser => browser.installByDefault).map(browser => browser.name);
+  }
+
+  async validateHostRequirements(browserName: BrowserName) {
+    if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
+      process.stdout.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
+      return;
+    }
+    const ubuntuVersion = await getUbuntuVersion();
+    if ((browserName === 'firefox' || browserName === 'firefox-beta') && ubuntuVersion === '16.04')
+      throw new Error(`Cannot launch ${browserName} on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
+    const browserDirectory = this.browserDirectory(browserName);
+
+    if (os.platform() === 'linux') {
+      const dlOpenLibraries: string[] = [];
+      const linuxLddDirectories: string[] = [];
+      if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
+        linuxLddDirectories.push(path.join(browserDirectory, 'chrome-linux'));
+      if (browserName === 'webkit') {
+        linuxLddDirectories.push(
+            path.join(browserDirectory, 'minibrowser-gtk'),
+            path.join(browserDirectory, 'minibrowser-gtk', 'bin'),
+            path.join(browserDirectory, 'minibrowser-gtk', 'lib'),
+            path.join(browserDirectory, 'minibrowser-wpe'),
+            path.join(browserDirectory, 'minibrowser-wpe', 'bin'),
+            path.join(browserDirectory, 'minibrowser-wpe', 'lib'),
+        );
+        dlOpenLibraries.push('libGLESv2.so.2', 'libx264.so');
+      }
+      if (browserName === 'firefox' || browserName === 'firefox-beta')
+        linuxLddDirectories.push(path.join(browserDirectory, 'firefox'));
+      return await validateDependenciesLinux(linuxLddDirectories, dlOpenLibraries);
+    }
+
+    if (os.platform() === 'win32' && os.arch() === 'x64') {
+      const windowsExeAndDllDirectories: string[] = [];
+      if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
+        windowsExeAndDllDirectories.push(path.join(browserDirectory, 'chrome-win'));
+      if (browserName === 'firefox' || browserName === 'firefox-beta')
+        windowsExeAndDllDirectories.push(path.join(browserDirectory, 'firefox'));
+      if (browserName === 'webkit')
+        windowsExeAndDllDirectories.push(browserDirectory);
+      return await validateDependenciesWindows(windowsExeAndDllDirectories);
+    }
   }
 }

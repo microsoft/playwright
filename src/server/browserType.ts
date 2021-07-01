@@ -26,7 +26,6 @@ import { PipeTransport } from './pipeTransport';
 import { Progress, ProgressController } from './progress';
 import * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
-import { validateHostRequirements } from './validateDependencies';
 import { debugMode, existsAsync } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -171,10 +170,9 @@ export abstract class BrowserType extends SdkObject {
     }
 
     // Only validate dependencies for downloadable browsers.
-    if (!executablePath && !options.channel)
-      await validateHostRequirements(this._registry, this._name);
-    else if (!executablePath && options.channel && this._registry.isSupportedBrowser(options.channel))
-      await validateHostRequirements(this._registry, options.channel as registry.BrowserName);
+    const browserName: registry.BrowserName = (options.channel || this._name) as registry.BrowserName;
+    if (!executablePath && this._registry.isSupportedBrowser(browserName))
+      await this._registry.validateHostRequirements(browserName);
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
     const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));
