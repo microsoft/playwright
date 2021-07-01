@@ -20,7 +20,7 @@ import path from 'path';
 import * as util from 'util';
 import { getUbuntuVersion, getUbuntuVersionSync } from './ubuntuVersion';
 import { assert, getFromENV, getAsBooleanFromENV } from './utils';
-import { validateDependenciesLinux, validateDependenciesWindows } from './validateDependencies';
+import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 
 export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg';
 export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'firefox-beta']);
@@ -373,5 +373,24 @@ export class Registry {
         windowsExeAndDllDirectories.push(browserDirectory);
       return await validateDependenciesWindows(windowsExeAndDllDirectories);
     }
+  }
+
+  async installDeps(browserNames: BrowserName[]) {
+    const targets = new Set<'chromium' | 'firefox' | 'webkit' | 'tools'>();
+    if (!browserNames.length)
+      browserNames = this.installByDefault();
+    for (const browserName of browserNames) {
+      if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
+        targets.add('chromium');
+      if (browserName === 'firefox' || browserName === 'firefox-beta')
+        targets.add('firefox');
+      if (browserName === 'webkit')
+        targets.add('webkit');
+    }
+    targets.add('tools');
+    if (os.platform() === 'win32')
+      return await installDependenciesWindows(targets);
+    if (os.platform() === 'linux')
+      return await installDependenciesLinux(targets);
   }
 }

@@ -17,8 +17,11 @@
 import fs from 'fs';
 import path from 'path';
 import * as os from 'os';
+import childProcess from 'child_process';
 import { getUbuntuVersion } from './ubuntuVersion';
 import * as utils from './utils';
+
+const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
 const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
 
@@ -30,6 +33,45 @@ function isSupportedWindowsVersion(): boolean {
   // The table with versions is taken from: https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw#remarks
   // Windows 7 is not supported and is encoded as `6.1`.
   return major > 6 || (major === 6 && minor > 1);
+}
+
+export async function installDependenciesWindows(targets: Set<'chromium' | 'firefox' | 'webkit' | 'tools'>) {
+  if (targets.has('chromium')) {
+    const {code} = await utils.spawnAsync('powershell.exe', [path.join(BIN_DIRECTORY, 'install_media_pack.ps1')], { cwd: BIN_DIRECTORY, stdio: 'inherit' });
+    if (code !== 0)
+      throw new Error('Failed to install windows dependencies!');
+  }
+}
+
+export async function installDependenciesLinux(targets: Set<'chromium' | 'firefox' | 'webkit' | 'tools'>) {
+  const ubuntuVersion = await getUbuntuVersion();
+  if (ubuntuVersion !== '18.04' && ubuntuVersion !== '20.04' && ubuntuVersion !== '21.04') {
+    console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console
+    return;
+  }
+
+  const libraries: string[] = [];
+  const { deps } = require('../nativeDeps');
+  for (const target of targets) {
+    if (ubuntuVersion === '18.04')
+      libraries.push(...deps['bionic'][target]);
+    else if (ubuntuVersion === '20.04')
+      libraries.push(...deps['focal'][target]);
+    else if (ubuntuVersion === '21.04')
+      libraries.push(...deps['hirsute'][target]);
+  }
+  const uniqueLibraries = Array.from(new Set(libraries));
+  console.log('Installing Ubuntu dependencies...');  // eslint-disable-line no-console
+  const commands: string[] = [];
+  commands.push('apt-get update');
+  commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
+    ...uniqueLibraries,
+  ].join(' '));
+  const isRoot = (process.getuid() === 0);
+  const child = isRoot ?
+    childProcess.spawn('sh', ['-c', `${commands.join('; ')}`], { stdio: 'inherit' }) :
+    childProcess.spawn('sudo', ['--', 'sh', '-c', `${commands.join('; ')}`], { stdio: 'inherit' });
+  await new Promise(f => child.on('exit', f));
 }
 
 export async function validateDependenciesWindows(windowsExeAndDllDirectories: string[]) {
