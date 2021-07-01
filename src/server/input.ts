@@ -46,6 +46,20 @@ export class Keyboard {
   private _pressedKeys = new Set<string>();
   private _raw: RawKeyboard;
   private _page: Page;
+  private split(keyString: string) {
+    const keys = [];
+    let building = '';
+    for (const char of keyString) {
+      if (char === '+' && building) {
+        keys.push(building);
+        building = '';
+      } else {
+        building += char;
+      }
+    }
+    keys.push(building);
+    return keys;
+  }
 
   constructor(raw: RawKeyboard, page: Page) {
     this._raw = raw;
@@ -99,7 +113,30 @@ export class Keyboard {
       replacement_end = options.replacement_end;
     if (delay)
       await new Promise(f => setTimeout(f, delay));
+    const description = this._keyDescriptionForString(trigger_key);
+    const autoRepeat = false;
+    this._pressedKeys.add(description.code);
+    if (kModifiers.includes(description.key as types.KeyboardModifier))
+      this._pressedModifiers.add(description.key as types.KeyboardModifier);
+    const no_text = undefined;
+    // if (trigger_key !== 'None') {
+    //   const tokens = this.split(trigger_key);
+    //   const promises = [];
+    //   trigger_key = tokens[tokens.length - 1];
+    //   for (let i = 0; i < tokens.length - 1; ++i) {
+    //     const description = this._keyDescriptionForString(tokens[i]);
+    //     autoRepeat = this._pressedKeys.has(description.code);
+    //     this._pressedKeys.add(description.code);
+    //     if (kModifiers.includes(description.key as types.KeyboardModifier))
+    //       this._pressedModifiers.add(description.key as types.KeyboardModifier);
+    //     const text_out = undefined;
+    //     promises.push(this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text_out));
+    //   }
+    //   promises.push();
+    // }
+    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, no_text);
     await this._raw.imeSetComposition(text, selection_start, selection_end, trigger_key, replacement_start, replacement_end);
+    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
     await this._page._doSlowMo();
   }
 
@@ -108,7 +145,21 @@ export class Keyboard {
     const trigger_key = (options && options.trigger_key) || 'None';
     if (delay)
       await new Promise(f => setTimeout(f, delay));
+    let autoRepeat = undefined;
+    if (trigger_key !== 'None') {
+      const description = this._keyDescriptionForString(trigger_key);
+      autoRepeat = this._pressedKeys.has(description.code);
+      this._pressedKeys.add(description.code);
+      if (kModifiers.includes(description.key as types.KeyboardModifier))
+        this._pressedModifiers.add(description.key as types.KeyboardModifier);
+      const text_out = undefined;
+      await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text_out);
+    }
     await this._raw.imeCommitComposition(text, trigger_key);
+    if (trigger_key !== 'None') {
+      const description = this._keyDescriptionForString(trigger_key);
+      await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
+    }
     await this._page._doSlowMo();
   }
 
@@ -126,22 +177,7 @@ export class Keyboard {
   }
 
   async press(key: string, options: { delay?: number } = {}) {
-    function split(keyString: string) {
-      const keys = [];
-      let building = '';
-      for (const char of keyString) {
-        if (char === '+' && building) {
-          keys.push(building);
-          building = '';
-        } else {
-          building += char;
-        }
-      }
-      keys.push(building);
-      return keys;
-    }
-
-    const tokens = split(key);
+    const tokens = this.split(key);
     const promises = [];
     key = tokens[tokens.length - 1];
     for (let i = 0; i < tokens.length - 1; ++i)

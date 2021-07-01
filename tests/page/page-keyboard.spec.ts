@@ -91,13 +91,13 @@ it('insertText should only emit input event', async ({page, server}) => {
 it('should verify keyboard.imeSetComposition, imeCommitComposition', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
-  await page.keyboard.imeSetComposition('ｓ', 1, 1, 's', { delay: 1000});
-  await page.keyboard.imeSetComposition('す', 1, 1, 'u', { delay: 1000});
-  await page.keyboard.imeSetComposition('すｓ', 2, 2, 's', { delay: 1000});
-  await page.keyboard.imeSetComposition('すｓｈ', 3, 3, 'h', { delay: 1000});
-  await page.keyboard.imeSetComposition('すし', 2, 2, 'i', { delay: 1000});
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, 's');
+  await page.keyboard.imeSetComposition('す', 1, 1, 'u');
+  await page.keyboard.imeSetComposition('すｓ', 2, 2, 's');
+  await page.keyboard.imeSetComposition('すｓｈ', 3, 3, 'h');
+  await page.keyboard.imeSetComposition('すし', 2, 2, 'i');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('すし');
-  await page.keyboard.imeCommitComposition('すし', { trigger_key: 'Enter', delay: 1000});
+  await page.keyboard.imeCommitComposition('すし', { trigger_key: 'Enter'});
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('すし');
 });
 
@@ -105,16 +105,16 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition reconversion 
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.fill('textarea', 'すしおに');
-  await page.press('textarea', 'ArrowLeft', { delay: 1000 });
-  await page.press('textarea', 'ArrowLeft', { delay: 1000 });
-  await page.press('textarea', 'ArrowLeft', { delay: 1000 });
-  await page.keyboard.imeSetComposition('オニ', 2, 2, 'Meta+Slash', { replacement_start: 0, replacement_end: 1, delay: 1000});
+  await page.press('textarea', 'ArrowLeft');
+  await page.press('textarea', 'ArrowLeft');
+  await page.press('textarea', 'ArrowLeft');
+  await page.keyboard.imeSetComposition('オニ', 2, 2, 'Meta', { replacement_start: 0, replacement_end: 1});
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('オニしおに');
-  await page.keyboard.imeCommitComposition('オニ', { trigger_key: 'Enter', delay: 1000});
+  await page.keyboard.imeCommitComposition('オニ', { trigger_key: 'Enter'});
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('オニしおに');
 });
 
-it.only('should verify keyboard.imeSetComposition, imeCommitComposition no trigger key for commit', async ({page, server}) => {
+it('should verify keyboard.imeSetComposition, imeCommitComposition no trigger key for commit', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.fill('textarea', 'abcd');
@@ -151,6 +151,7 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition', async ({ pa
   expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('すし');
   await page.keyboard.imeCommitComposition('すし', { trigger_key: 'Enter', delay: 2000});
   expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('すし');
+  await page.pause();
 });
 
 
@@ -161,10 +162,11 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition reconversion 
   await page.press('#input', 'ArrowLeft', { delay: 2000 });
   await page.press('#input', 'ArrowLeft', { delay: 2000 });
   await page.press('#input', 'ArrowLeft', { delay: 2000 });
-  await page.keyboard.imeSetComposition('オニ', 2, 2, 'Meta+Slash', { replacement_start: 0, replacement_end: 1, delay: 2000});
+  await page.keyboard.imeSetComposition('オニ', 2, 2, 'Meta', { replacement_start: 0, replacement_end: 1, delay: 2000});
   expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('オニしおに');
   await page.keyboard.imeCommitComposition('オニ', { trigger_key: 'Enter', delay: 2000});
   expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('オニしおに');
+  await page.pause();
 });
 
 
@@ -186,25 +188,26 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition composing in 
 
 
 it('should verify keyboard.imeSetComposition, arrowDown to simulate choosing from IME menu', async ({ page }) => {
-  await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
+  await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer.html');
   await page.focus('#input');
   await page.keyboard.imeSetComposition('ｓ', 1, 1, 's', { delay: 1000});
   await page.keyboard.imeSetComposition('す', 1, 1, 'u', { delay: 1000});
   await page.keyboard.imeSetComposition('すｓ', 2, 2, 's', { delay: 1000});
   await page.keyboard.imeSetComposition('すｓｈ', 3, 3, 'h', { delay: 1000});
   await page.keyboard.imeSetComposition('すし', 2, 2, 'i', { delay: 1000});
-  expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('すし');
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('すし');
   await page.keyboard.imeSetComposition('すし', 1, 1, 'ArrowLeft', { delay: 1000});
   await page.keyboard.imeSetComposition('すし', 0, 0, 'ArrowLeft', { delay: 1000});
   await page.keyboard.imeSetComposition('寿司屋', 3, 3, 'ArrowDown', { delay: 1000});
-  expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('寿司屋');
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('寿司屋');
   await page.keyboard.imeSetComposition('寿司', 2, 2, 'ArrowDown', { delay: 1000});
-  expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('寿司');
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('寿司');
   await page.keyboard.imeSetComposition('スシロー', 4, 4, 'ArrowDown', { delay: 1000});
-  expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('スシロー');
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('スシロー');
   await page.keyboard.imeCommitComposition('スシロー', 'Enter', { delay: 3000});
   await page.keyboard.type(' Done!', { delay: 300});
-  expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('スシロー Done!');
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('スシロー Done!');
+  await page.pause();
 });
 
 // END OF TESTS FOR DEMO

@@ -9969,6 +9969,35 @@ export interface Keyboard {
   insertText(text: string): Promise<void>;
 
   /**
+   * If there is an active composition, it will update the composition. Otherwise it will start a new one. It will dispatch
+   * either a `compositionstart` or a `compositionupdate`. It will also dispatch `keydown` and `keyup` events if
+   * `trigger_key` is specified.
+   * @param text Sets the text in the active composition
+   * @param selection_start Sets the selection start of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
+   * start of `1` will set the selection start to be after `d`, which is absolute position `4`.
+   * @param selection_end Sets the selection end of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
+   * end of `1` will set the selection end to be after `d`, which is absolute position `4`.
+   * @param trigger_key Sets the key(s) that triggers the composition event, a `key_up` and `key_down` event will be generated for each specified key. Key chaining is supported, so values such as `Meta+Slash` are permitted.
+   * @param options
+   */
+  imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, options?: {
+    /**
+     * Time to wait between `compositionupdate` events in milliseconds. Defaults to 0.
+     */
+    delay?: number;
+
+    /**
+     * Sets the end position of the absolute range that is to be replaced with the composition text.
+     */
+    replacememt_end?: number;
+
+    /**
+     * Sets the start position of the absolute range that is to be replaced with the composition text.
+     */
+    replacememt_start?: number;
+  }): Promise<void>;
+
+  /**
    * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
    * value or a single character to generate the text for. A superset of the `key` values can be found
    * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:

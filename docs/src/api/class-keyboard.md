@@ -205,6 +205,54 @@ Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not
 
 Sets input to the specified text value.
 
+## async method: Keyboard.imeSetComposition
+
+If there is an active composition, it will update the composition. Otherwise it will start a new one. It will dispatch either
+a `compositionstart` or a `compositionupdate`. It will also dispatch `keydown` and `keyup` events if [`param: trigger_key`] is specified.
+
+### param: Keyboard.imeSetComposition.text
+- `text` <[string]>
+
+Sets the text in the active composition
+
+### param: Keyboard.imeSetComposition.selection_start
+- `selection_start` <[int]>
+
+Sets the selection start of the focused element after the composition text is inserted. This is relatvie to the active composition,
+so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection start of `1` will set the
+selection start to be after `d`, which is absolute position `4`.
+
+### param: Keyboard.imeSetComposition.selection_end
+- `selection_end` <[int]>
+
+Sets the selection end of the focused element after the composition text is inserted. This is relatvie to the active composition,
+so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection end of `1` will set the
+selection end to be after `d`, which is absolute position `4`.
+
+### param: Keyboard.imeSetComposition.trigger_key
+- `trigger_key` <[string]>
+
+Sets the key(s) that triggers the composition event, a `key_up` and `key_down` event will be generated for each specified key.
+Key chaining is supported, so values such as `Meta+Slash` are permitted.
+
+### option: Keyboard.imeSetComposition.replacement_start
+- `replacememt_start` <[int]>
+
+Sets the start position of the absolute range that is to be replaced with the composition text.
+
+
+### option: Keyboard.imeSetComposition.replacement_end
+- `replacememt_end` <[int]>
+
+Sets the end position of the absolute range that is to be replaced with the composition text.
+
+
+### option: Keyboard.imeSetComposition.delay
+- `delay` <[float]>
+
+Time to wait between `compositionupdate` events in milliseconds. Defaults to 0.
+
+
 ## async method: Keyboard.press
 
 [`param: key`] can specify the intended
