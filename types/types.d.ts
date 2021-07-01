@@ -367,6 +367,35 @@ export interface Page {
    */
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<void>;
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
+
+  /**
+   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
+   * match any elements is considered hidden.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  isHidden(selector: string): Promise<boolean>;
+  isHidden(selector: string, options?: {
+    /**
+     * Option `timeout` has no effect.
+     * @deprecated
+     */
+    timeout?: number
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
+   * considered not visible.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  isVisible(selector: string): Promise<boolean>;
+  isVisible(selector: string, options?: {
+    /**
+     * Option `timeout` has no effect.
+     * @deprecated
+     */
+    timeout?: number
+  }): Promise<boolean>;
+
   /**
    * Emitted when the page closes.
    */
@@ -2109,38 +2138,6 @@ export interface Page {
     timeout?: number;
   }): Promise<boolean>;
 
-  /**
-   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
-   * match any elements is considered hidden.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param options
-   */
-  isHidden(selector: string, options?: {
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<boolean>;
-
-  /**
-   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
-   * considered not visible.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param options
-   */
-  isVisible(selector: string, options?: {
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<boolean>;
-
   keyboard: Keyboard;
 
   /**
@@ -3556,6 +3553,35 @@ export interface Frame {
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+
+  /**
+   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
+   * match any elements is considered hidden.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  isHidden(selector: string): Promise<boolean>;
+  isHidden(selector: string, options?: {
+    /**
+     * Option `timeout` has no effect.
+     * @deprecated
+     */
+    timeout?: number
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
+   * considered not visible.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  isVisible(selector: string): Promise<boolean>;
+  isVisible(selector: string, options?: {
+    /**
+     * Option `timeout` has no effect.
+     * @deprecated
+     */
+    timeout?: number
+  }): Promise<boolean>;
+
   /**
    * Returns the added tag when the script's onload fires or when the script content was injected into frame.
    *
@@ -4152,38 +4178,6 @@ export interface Frame {
    * @param options
    */
   isEnabled(selector: string, options?: {
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<boolean>;
-
-  /**
-   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
-   * match any elements is considered hidden.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param options
-   */
-  isHidden(selector: string, options?: {
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<boolean>;
-
-  /**
-   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
-   * considered not visible.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param options
-   */
-  isVisible(selector: string, options?: {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the

@@ -1062,17 +1062,17 @@ export class Frame extends SdkObject {
     return dom.throwFatalDOMError(dom.throwRetargetableDOMError(result));
   }
 
-  async isVisible(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+  async isVisible(metadata: CallMetadata, selector: string): Promise<boolean> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`  checking visibility of "${selector}"`);
       const element = await this.$(selector);
       return element ? await element.isVisible() : false;
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout({}));
   }
 
-  async isHidden(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
-    return !(await this.isVisible(metadata, selector, options));
+  async isHidden(metadata: CallMetadata, selector: string): Promise<boolean> {
+    return !(await this.isVisible(metadata, selector));
   }
 
   async isDisabled(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {

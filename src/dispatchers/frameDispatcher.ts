@@ -175,11 +175,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   }
 
   async isHidden(params: channels.FrameIsHiddenParams, metadata: CallMetadata): Promise<channels.FrameIsHiddenResult> {
-    return { value: await this._frame.isHidden(metadata, params.selector, params) };
+    return { value: await this._frame.isHidden(metadata, params.selector) };
   }
 
   async isVisible(params: channels.FrameIsVisibleParams, metadata: CallMetadata): Promise<channels.FrameIsVisibleResult> {
-    return { value: await this._frame.isVisible(metadata, params.selector, params) };
+    return { value: await this._frame.isVisible(metadata, params.selector) };
   }
 
   async hover(params: channels.FrameHoverParams, metadata: CallMetadata): Promise<void> {
