@@ -35,7 +35,7 @@ it('should not receive console message for pageError', async ({ page, server, br
   it.skip(browserName === 'firefox');
   const messages = [];
   page.on('console', e => messages.push(e));
-  const [error] = await Promise.all([
+  await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),
   ]);
