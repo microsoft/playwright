@@ -288,6 +288,10 @@ export module Protocol {
       height: number;
     };
     export type setVideoRecordingOptionsReturnValue = void;
+    export type cancelDownloadParameters = {
+      uuid?: string;
+    };
+    export type cancelDownloadReturnValue = void;
   }
   export module Page {
     export type DOMPoint = {
@@ -879,6 +883,7 @@ export module Protocol {
     export type requestFinishedPayload = {
       requestId: string;
       responseEndTime: number;
+      transferSize: number;
     }
     export type requestFailedPayload = {
       requestId: string;
@@ -1074,6 +1079,7 @@ export module Protocol {
     "Browser.setReducedMotion": Browser.setReducedMotionParameters;
     "Browser.setForcedColors": Browser.setForcedColorsParameters;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
+    "Browser.cancelDownload": Browser.cancelDownloadParameters;
     "Page.close": Page.closeParameters;
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
     "Page.addBinding": Page.addBindingParameters;
@@ -1150,6 +1156,7 @@ export module Protocol {
     "Browser.setReducedMotion": Browser.setReducedMotionReturnValue;
     "Browser.setForcedColors": Browser.setForcedColorsReturnValue;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
+    "Browser.cancelDownload": Browser.cancelDownloadReturnValue;
     "Page.close": Page.closeReturnValue;
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
     "Page.addBinding": Page.addBindingReturnValue;
