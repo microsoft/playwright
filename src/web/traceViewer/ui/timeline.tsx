@@ -170,8 +170,8 @@ export const Timeline: React.FunctionComponent<{
         return <div key={index}
           className={'timeline-label ' + bar.className + (targetBar === bar ? ' selected' : '')}
           style={{
-            left: bar.leftPosition + 'px',
-            width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
+            left: bar.leftPosition,
+            maxWidth: 100,
           }}
         >
           {bar.label}

@@ -187,6 +187,18 @@ for (const [name, value] of Object.entries(protocol)) {
     mixins.set(name, value);
 }
 
+const derivedClasses = new Map();
+for (const [name, item] of Object.entries(protocol)) {
+  if (item.type === 'interface' && item.extends) {
+    let items = derivedClasses.get(item.extends);
+    if (!items) {
+      items = [];
+      derivedClasses.set(item.extends, items);
+    }
+    items.push(name);
+  }
+}
+
 for (const [name, item] of Object.entries(protocol)) {
   if (item.type === 'interface') {
     const channelName = name;
@@ -210,8 +222,11 @@ for (const [name, item] of Object.entries(protocol)) {
     for (let [methodName, method] of Object.entries(item.commands || {})) {
       if (method === null)
         method = {};
-      if (method.tracing && method.tracing.snapshot)
+      if (method.tracing && method.tracing.snapshot) {
         tracingSnapshots.push(name + '.' + methodName);
+        for (const derived of derivedClasses.get(name) || [])
+          tracingSnapshots.push(derived + '.' + methodName);
+      }
       const parameters = objectType(method.parameters || {}, '');
       const paramsName = `${channelName}${titleCase(methodName)}Params`;
       const optionsName = `${channelName}${titleCase(methodName)}Options`;

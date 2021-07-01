@@ -46,7 +46,6 @@ import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } fro
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';
-import { ParsedStackTrace } from '../utils/stackTrace';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -349,7 +348,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Request> {
-    return this._wrapApiCall(async (channel: channels.PageChannel, stackTrace: ParsedStackTrace) => {
+    return this._wrapApiCall(async (channel: channels.PageChannel) => {
       const predicate = (request: Request) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
           return urlMatches(request.url(), urlOrPredicate);
@@ -357,12 +356,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
       const logLine = trimmedUrl ? `waiting for request ${trimmedUrl}` : undefined;
-      return this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout }, stackTrace, logLine);
+      return this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout }, logLine);
     });
   }
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Response> {
-    return this._wrapApiCall(async (channel: channels.PageChannel, stackTrace: ParsedStackTrace) => {
+    return this._wrapApiCall(async (channel: channels.PageChannel) => {
       const predicate = (response: Response) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
           return urlMatches(response.url(), urlOrPredicate);
@@ -370,20 +369,20 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
       const logLine = trimmedUrl ? `waiting for response ${trimmedUrl}` : undefined;
-      return this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout }, stackTrace, logLine);
+      return this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout }, logLine);
     });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async (channel: channels.PageChannel, stackTrace: ParsedStackTrace) => {
-      return this._waitForEvent(event, optionsOrPredicate, stackTrace, `waiting for event "${event}"`);
+    return this._wrapApiCall(async (channel: channels.PageChannel) => {
+      return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
     });
   }
 
-  private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, stackTrace: ParsedStackTrace, logLine?: string): Promise<any> {
+  private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-    const waiter = Waiter.createForEvent(this, event, stackTrace);
+    const waiter = Waiter.createForEvent(this, event);
     if (logLine)
       waiter.log(logLine);
     waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);

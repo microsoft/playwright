@@ -141,7 +141,10 @@ export class TraceViewer {
     });
     await context.extendInjectedScript('main', consoleApiSource.source);
     const [page] = context.pages();
-    page.on('close', () => context.close(internalCallMetadata()).catch(() => {}));
+    if (isUnderTest())
+      page.on('close', () => context.close(internalCallMetadata()).catch(() => {}));
+    else
+      page.on('close', () => process.exit());
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
     return context;
   }

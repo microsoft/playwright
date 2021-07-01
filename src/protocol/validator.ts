@@ -43,13 +43,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     stack: tOptional(tArray(tType('StackFrame'))),
     apiName: tOptional(tString),
   });
-  scheme.WaitForEventInfo = tObject({
-    waitId: tString,
-    phase: tEnum(['before', 'after', 'log']),
-    event: tOptional(tString),
-    message: tOptional(tString),
-    error: tOptional(tString),
-  });
   scheme.Point = tObject({
     x: tNumber,
     y: tNumber,
@@ -335,6 +328,20 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     categories: tOptional(tArray(tString)),
   });
   scheme.BrowserStopTracingParams = tOptional(tObject({}));
+  scheme.EventTargetWaitForEventInfoParams = tObject({
+    info: tObject({
+      waitId: tString,
+      phase: tEnum(['before', 'after', 'log']),
+      event: tOptional(tString),
+      message: tOptional(tString),
+      error: tOptional(tString),
+    }),
+  });
+  scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
   scheme.BrowserContextAddCookiesParams = tObject({
     cookies: tArray(tType('SetNetworkCookie')),
   });

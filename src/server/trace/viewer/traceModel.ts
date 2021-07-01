@@ -43,9 +43,8 @@ export class TraceModel {
   appendEvents(events: trace.TraceEvent[], snapshotStorage: SnapshotStorage) {
     for (const event of events)
       this.appendEvent(event);
-    const actions: trace.ActionTraceEvent[] = [];
     for (const page of this.contextEntry!.pages)
-      actions.push(...page.actions);
+      page.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
     this.contextEntry!.resources = snapshotStorage.resources();
   }
 
@@ -55,6 +54,7 @@ export class TraceModel {
       pageEntry = {
         actions: [],
         events: [],
+        objects: {},
         screencastFrames: [],
       };
       this.pageEntries.set(pageId, pageEntry);
@@ -83,8 +83,12 @@ export class TraceModel {
       }
       case 'event': {
         const metadata = event.metadata;
-        if (metadata.pageId)
-          this._pageEntry(metadata.pageId).events.push(event);
+        if (metadata.pageId) {
+          if (metadata.method === '__create__')
+            this._pageEntry(metadata.pageId).objects[metadata.params.guid] = metadata.params.initializer;
+          else
+            this._pageEntry(metadata.pageId).events.push(event);
+        }
         break;
       }
       case 'resource-snapshot':
@@ -113,6 +117,7 @@ export type ContextEntry = {
 export type PageEntry = {
   actions: trace.ActionTraceEvent[];
   events: trace.ActionTraceEvent[];
+  objects: { [ket: string]: any };
   screencastFrames: {
     sha1: string,
     timestamp: number,
