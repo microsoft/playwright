@@ -10618,32 +10618,6 @@ export interface Route {
   }): Promise<void>;
 
   /**
-   * Continues route's request with optional overrides and intercepts response.
-   * @param options
-   */
-  intercept(options?: {
-    /**
-     * If set changes the request HTTP headers. Header values will be converted to a string.
-     */
-    headers?: { [key: string]: string; };
-
-    /**
-     * If set changes the request method (e.g. GET or POST)
-     */
-    method?: string;
-
-    /**
-     * If set changes the post data of request
-     */
-    postData?: string|Buffer;
-
-    /**
-     * If set changes the request URL. New URL must have same protocol as original one.
-     */
-    url?: string;
-  }): Promise<Response>;
-
-  /**
    * A request to be routed.
    */
   request(): Request;

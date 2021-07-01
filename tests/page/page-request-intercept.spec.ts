@@ -22,7 +22,8 @@ import { test as it, expect } from './pageTest';
 it('should fulfill intercepted response', async ({page, server, browserName}) => {
   it.fixme(browserName === 'firefox');
   await page.route('**/*', async route => {
-    await route.intercept({});
+    // @ts-expect-error
+    await route._intercept({});
     await route.fulfill({
       status: 201,
       headers: {
@@ -48,7 +49,8 @@ it('should throw on continue after intercept', async ({page, server, browserName
 
   page.goto(server.EMPTY_PAGE).catch(e => {});
   const route = await routePromise;
-  await route.intercept();
+  // @ts-expect-error
+  await route._intercept();
   try {
     await route.continue();
     fail('did not throw');
@@ -62,7 +64,8 @@ it('should support fulfill after intercept', async ({page, server, browserName, 
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**', async route => {
-    await route.intercept();
+    // @ts-expect-error
+    await route._intercept();
     await route.fulfill();
   });
   await page.goto(server.EMPTY_PAGE);
@@ -76,7 +79,8 @@ it('should support request overrides', async ({page, server, browserName, browse
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**/foo', async route => {
-    await route.intercept({
+    // @ts-expect-error
+    await route._intercept({
       url: server.EMPTY_PAGE,
       method: 'POST',
       headers: {'foo': 'bar'},
@@ -105,7 +109,8 @@ it('should give access to the intercepted response', async ({page, server, brows
   const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/title.html').catch(console.log);
 
   const route = await routePromise;
-  const response = await route.intercept();
+  // @ts-expect-error
+  const response = await route._intercept();
 
   expect(response.status()).toBe(200);
   expect(response.ok()).toBeTruthy();
@@ -128,7 +133,8 @@ it('should give access to the intercepted response body', async ({page, server, 
   const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/simple.json').catch(console.log);
 
   const route = await routePromise;
-  const response = await route.intercept();
+  // @ts-expect-error
+  const response = await route._intercept();
 
   expect((await response.text())).toBe('{"foo": "bar"}\n');
 
@@ -140,7 +146,8 @@ it('should be abortable after interception', async ({page, server, browserName})
   it.fixme(browserName === 'webkit');
 
   await page.route(/\.css$/, async route => {
-    await route.intercept();
+    // @ts-expect-error
+    await route._intercept();
     await route.abort();
   });
   let failed = false;
