@@ -109,7 +109,6 @@ function listAllFiles(dir) {
 const DEPS = {};
 
 DEPS['src/protocol/'] = ['src/utils/'];
-DEPS['src/install/'] = ['src/utils/'];
 
 // Client depends on chromium protocol for types.
 DEPS['src/client/'] = ['src/common/', 'src/utils/', 'src/protocol/', 'src/server/chromium/protocol.d.ts'];
@@ -152,7 +151,7 @@ DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/protocol/', 'src/web/trac
 DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/server/trace/'];
 
 // CLI should only use client-side features.
-DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/install/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**'];
+DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**'];
 
 DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/common/', 'src/utils/', 'src/server/', 'src/server/chromium/'];
 DEPS['src/server/supplements/recorderSupplement.ts'] = ['src/server/snapshot/', ...DEPS['src/server/']];

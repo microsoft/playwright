@@ -20,16 +20,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import ProgressBar from 'progress';
-import { BrowserName, Registry, hostPlatform } from '../utils/registry';
-import { downloadFile, existsAsync } from '../utils/utils';
-import { debugLogger } from '../utils/debugLogger';
+import { downloadFile, existsAsync } from './utils';
+import { debugLogger } from './debugLogger';
 
-export async function downloadBrowserWithProgressBar(registry: Registry, browserName: BrowserName): Promise<boolean> {
-  const browserDirectory = registry.browserDirectory(browserName);
-  const progressBarName = `Playwright build of ${browserName} v${registry.revision(browserName)}`;
+export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
+  const progressBarName = `Playwright build of ${title}`;
   if (await existsAsync(browserDirectory)) {
     // Already downloaded.
-    debugLogger.log('install', `browser ${browserName} is already downloaded.`);
+    debugLogger.log('install', `browser ${title} is already downloaded.`);
     return false;
   }
 
@@ -52,8 +50,8 @@ export async function downloadBrowserWithProgressBar(registry: Registry, browser
     progressBar.tick(delta);
   }
 
-  const url = registry.downloadURL(browserName);
-  const zipPath = path.join(os.tmpdir(), `playwright-download-${browserName}-${hostPlatform}-${registry.revision(browserName)}.zip`);
+  const url = downloadURL;
+  const zipPath = path.join(os.tmpdir(), `${downloadFileName}.zip`);
   try {
     for (let attempt = 1, N = 3; attempt <= N; ++attempt) {
       debugLogger.log('install', `downloading ${progressBarName} - attempt #${attempt}`);
@@ -77,7 +75,6 @@ export async function downloadBrowserWithProgressBar(registry: Registry, browser
     debugLogger.log('install', `-- zip: ${zipPath}`);
     debugLogger.log('install', `-- location: ${browserDirectory}`);
     await extract(zipPath, { dir: browserDirectory});
-    const executablePath = registry.executablePath(browserName)!;
     debugLogger.log('install', `fixing permissions at ${executablePath}`);
     await fs.promises.chmod(executablePath, 0o755);
   } catch (e) {

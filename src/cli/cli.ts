@@ -22,7 +22,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import program from 'commander';
-import { runDriver, runServer, printApiJson, launchBrowserServer, installBrowsers } from './driver';
+import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
@@ -126,7 +126,7 @@ program
       try {
         // Install default browsers when invoked without arguments.
         if (!args.length) {
-          await installBrowsers();
+          await Registry.currentPackageRegistry().installBinaries();
           return;
         }
         const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
@@ -139,7 +139,7 @@ program
         if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge') || browserChannels.has('msedge-beta'))
           browserNames.add('ffmpeg');
         if (browserNames.size)
-          await installBrowsers([...browserNames]);
+          await Registry.currentPackageRegistry().installBinaries([...browserNames]);
         for (const browserChannel of browserChannels)
           await installBrowserChannel(browserChannel);
       } catch (e) {

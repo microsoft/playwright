@@ -73,8 +73,8 @@ Example:
   if (descriptor.installByDefault) {
     // 3. Download new browser.
     console.log('\nDownloading new browser...');
-    const { installBrowsersWithProgressBar } = require('../lib/install/installer');
-    await installBrowsersWithProgressBar();
+    const { installDefaultBrowsersForNpmInstall } = require('../lib/utils/registry');
+    await installDefaultBrowsersForNpmInstall();
 
     // 4. Generate types.
     console.log('\nGenerating protocol types...');
