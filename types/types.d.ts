@@ -9210,6 +9210,21 @@ export interface Browser extends EventEmitter {
   }): Promise<Page>;
 
   /**
+   * This setting will change the default maximum time for all the methods accepting `timeout` option.
+   *
+   * > NOTE:
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout),
+   * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * and
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout)
+   * take priority over
+   * [browser.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browser#browser-set-default-timeout).
+   * @param timeout Maximum time in milliseconds
+   */
+  setDefaultTimeout(timeout: number): void;
+
+  /**
    * > NOTE: Tracing is only supported on Chromium-based browsers.
    *
    * You can use [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browser-start-tracing)

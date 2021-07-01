@@ -244,6 +244,11 @@ This setting will change the default maximum time for all the methods accepting 
 [`method: BrowserContext.setDefaultNavigationTimeout`] take priority over [`method: Browser.setDefaultTimeout`].
 :::
 
+### param: Browser.setDefaultTimeout.timeout
+- `timeout` <[float]>
+
+Maximum time in milliseconds
+
 ## async method: Browser.startTracing
 * langs: java, js, python
 
