@@ -228,10 +228,9 @@ export class FFPage implements PageDelegate {
   }
 
   _onUncaughtError(params: Protocol.Page.uncaughtErrorPayload) {
-    const {name, message} = splitErrorMessage(params.message);
-
+    const { name, message } = splitErrorMessage(params.message);
     const error = new Error(message);
-    error.stack = params.stack;
+    error.stack = params.message + '\n' + params.stack.split('\n').filter(Boolean).map(a => a.replace(/([^@]*)@(.*)/, '    at $1 ($2)')).join('\n');
     error.name = name;
     this._page.emit(Page.Events.PageError, error);
   }

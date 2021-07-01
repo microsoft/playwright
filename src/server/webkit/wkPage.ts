@@ -502,16 +502,21 @@ export class WKPage implements PageDelegate {
       return;
     }
     if (level === 'error' && source === 'javascript') {
-      const {name, message} = splitErrorMessage(text);
-      const error = new Error(message);
+      const { name, message } = splitErrorMessage(text);
+
+      let stack: string;
       if (event.message.stackTrace) {
-        error.stack = event.message.stackTrace.map(callFrame => {
-          return `${callFrame.functionName}@${callFrame.url}:${callFrame.lineNumber}:${callFrame.columnNumber}`;
+        stack = text + '\n' + event.message.stackTrace.map(callFrame => {
+          return `    at ${callFrame.functionName || 'unknown'} (${callFrame.url}:${callFrame.lineNumber}:${callFrame.columnNumber})`;
         }).join('\n');
       } else {
-        error.stack = '';
+        stack = '';
       }
+
+      const error = new Error(message);
+      error.stack = stack;
       error.name = name;
+
       this._page.emit(Page.Events.PageError, error);
       return;
     }

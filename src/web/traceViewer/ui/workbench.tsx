@@ -28,6 +28,7 @@ import { SnapshotTab } from './snapshotTab';
 import { LogsTab } from './logsTab';
 import { SplitView } from '../../components/splitView';
 import { useAsyncMemo } from './helpers';
+import { ConsoleTab } from './consoleTab';
 
 
 export const Workbench: React.FunctionComponent<{
@@ -86,6 +87,7 @@ export const Workbench: React.FunctionComponent<{
         <SnapshotTab action={selectedAction} snapshotSize={snapshotSize} />
         <TabbedPane tabs={[
           { id: 'logs', title: 'Log', render: () => <LogsTab action={selectedAction} /> },
+          { id: 'console', title: 'Console', render: () => <ConsoleTab context={context} action={selectedAction} nextAction={nextAction}/> },
           { id: 'source', title: 'Source', render: () => <SourceTab action={selectedAction} /> },
           { id: 'network', title: 'Network', render: () => <NetworkTab context={context} action={selectedAction} nextAction={nextAction}/> },
         ]}/>
