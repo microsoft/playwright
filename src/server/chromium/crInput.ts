@@ -84,15 +84,15 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     await this._client.send('Input.insertText', { text });
   }
 
-  async imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, replacement_start: number | -1, replacement_end: number | -1): Promise<void> {
+  async imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string | 'None', replacement_start: number | -1, replacement_end: number | -1): Promise<void> {
     if (replacement_start === -1 && replacement_end === -1)
-      await this._client.send('Input.imeSetComposition', { text, selection_start, selection_end, trigger_key });
+      await this._client.send('Input.imeSetComposition', { text, selection_start, selection_end });
     else
-      await this._client.send('Input.imeSetComposition', { text, selection_start, selection_end, trigger_key, replacement_start, replacement_end });
+      await this._client.send('Input.imeSetComposition', { text, selection_start, selection_end, replacement_start, replacement_end });
   }
 
   async imeCommitComposition(text: string, trigger_key: string | 'None') {
-    await this._client.send('Input.imeCommitComposition', { text, trigger_key });
+    await this._client.send('Input.imeCommitComposition', { text });
   }
 }
 

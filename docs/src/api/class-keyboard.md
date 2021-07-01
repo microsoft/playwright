@@ -208,7 +208,7 @@ Sets input to the specified text value.
 ## async method: Keyboard.imeSetComposition
 
 If there is an active composition, it will update the composition. Otherwise it will start a new one. It will dispatch either
-a `compositionstart` or a `compositionupdate`. It will also dispatch `keydown` and `keyup` events if [`param: trigger_key`] is specified.
+a `compositionstart` or a `compositionupdate`. It will also dispatch `keydown` and `keyup` events if [`option: trigger_key`] is specified.
 
 ### param: Keyboard.imeSetComposition.text
 - `text` <[string]>
@@ -229,7 +229,7 @@ Sets the selection end of the focused element after the composition text is inse
 so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection end of `1` will set the
 selection end to be after `d`, which is absolute position `4`.
 
-### param: Keyboard.imeSetComposition.trigger_key
+### option: Keyboard.imeSetComposition.trigger_key
 - `trigger_key` <[string]>
 
 Sets the key(s) that triggers the composition event, a `key_up` and `key_down` event will be generated for each specified key.
@@ -250,7 +250,28 @@ Sets the end position of the absolute range that is to be replaced with the comp
 ### option: Keyboard.imeSetComposition.delay
 - `delay` <[float]>
 
-Time to wait between `compositionupdate` events in milliseconds. Defaults to 0.
+Time to wait between `composition` events in milliseconds. Defaults to 0.
+
+## async method: Keyboard.imeCommitComposition
+
+Will commit the composition with the given text, placing the caret at the end of the composition and dispatching a `compositionend` event as well as
+`keydown` and `keyup` events if [`option: trigger_key`] is specified.
+
+### param: Keyboard.imeCommitComposition.text
+- `text` <[string]>
+
+Text that will be committed with the composition. 
+
+### option: Keyboard.imeCommitComposition.trigger_key
+- `trigger_key` <[string]>
+
+Sets the key that triggers the composition event, a `key_up` and `key_down` event will be generated for the specified key.
+
+### option: Keyboard.imeCommitComposition.delay
+- `delay` <[float]>
+
+Time to wait before the `compositionend` event in milliseconds. Defaults to 0.
+
 
 
 ## async method: Keyboard.press

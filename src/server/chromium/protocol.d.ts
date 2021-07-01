@@ -5984,10 +5984,6 @@ Use imeCommitComposition to commit the final text.
        */
       selection_end: number;
       /**
-       * key that triggers composition
-       */
-      trigger_key: string;
-      /**
        * replacement start
        */
       replacement_start?: number;
@@ -6006,10 +6002,6 @@ Use imeCommitComposition to commit the final text.
        * the text to commit
        */
       text: string;
-      /**
-       * key to trigger end of composition
-       */
-      trigger_key?: string;
     }
     export type imeCommitCompositionReturnValue = {
     }

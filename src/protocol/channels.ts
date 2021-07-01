@@ -1118,12 +1118,13 @@ export type PageKeyboardImeSetCompositionParams = {
   text: string,
   selection_start: number,
   selection_end: number,
-  trigger_key: string,
+  trigger_key?: string,
   replacement_start?: number,
   replacement_end?: number,
   delay?: number,
 };
 export type PageKeyboardImeSetCompositionOptions = {
+  trigger_key?: string,
   replacement_start?: number,
   replacement_end?: number,
   delay?: number,

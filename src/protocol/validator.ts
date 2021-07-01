@@ -475,7 +475,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     text: tString,
     selection_start: tNumber,
     selection_end: tNumber,
-    trigger_key: tString,
+    trigger_key: tOptional(tString),
     replacement_start: tOptional(tNumber),
     replacement_end: tOptional(tNumber),
     delay: tOptional(tNumber),

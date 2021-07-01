@@ -9977,12 +9977,11 @@ export interface Keyboard {
    * start of `1` will set the selection start to be after `d`, which is absolute position `4`.
    * @param selection_end Sets the selection end of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
    * end of `1` will set the selection end to be after `d`, which is absolute position `4`.
-   * @param trigger_key Sets the key(s) that triggers the composition event, a `key_up` and `key_down` event will be generated for each specified key. Key chaining is supported, so values such as `Meta+Slash` are permitted.
    * @param options
    */
-  imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string, options?: {
+  imeSetComposition(text: string, selection_start: number, selection_end: number, options?: {
     /**
-     * Time to wait between `compositionupdate` events in milliseconds. Defaults to 0.
+     * Time to wait between `composition` events in milliseconds. Defaults to 0.
      */
     delay?: number;
 
@@ -9995,6 +9994,31 @@ export interface Keyboard {
      * Sets the start position of the absolute range that is to be replaced with the composition text.
      */
     replacememt_start?: number;
+
+    /**
+     * Sets the key(s) that triggers the composition event, a `key_up` and `key_down` event will be generated for each
+     * specified key. Key chaining is supported, so values such as `Meta+Slash` are permitted.
+     */
+    trigger_key?: string;
+  }): Promise<void>;
+
+  /**
+   * Will commit the composition with the given text, placing the caret at the end of the composition and dispatching a
+   * `compositionend` event as well as `keydown` and `keyup` events if `trigger_key` is specified.
+   * @param text Text that will be committed with the composition.
+   * @param options
+   */
+  imeCommitComposition(text: string, options?: {
+    /**
+     * Time to wait before the `compositionend` event in milliseconds. Defaults to 0.
+     */
+    delay?: number;
+
+    /**
+     * Sets the key that triggers the composition event, a `key_up` and `key_down` event will be generated for the specified
+     * key.
+     */
+    trigger_key?: string;
   }): Promise<void>;
 
   /**
