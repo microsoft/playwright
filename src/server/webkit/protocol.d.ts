@@ -5715,6 +5715,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       base64Encoded: boolean;
     }
     /**
+     * Returns content served for the given request. Will wait for the request to finish loading.
+     */
+    export type getInterceptedResponseBodyParameters = {
+      /**
+       * Identifier of the intercepted network response's request.
+       */
+      requestId: RequestId;
+    }
+    export type getInterceptedResponseBodyReturnValue = {
+      /**
+       * Base64 encoded response body.
+       */
+      body: string;
+    }
+    /**
      * Toggles whether the resource cache may be used when loading resources in the inspected page. If <code>true</code>, the resource cache will not be used when loading resources.
      */
     export type setResourceCachingDisabledParameters = {
@@ -8933,6 +8948,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.disable": Network.disableParameters;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersParameters;
     "Network.getResponseBody": Network.getResponseBodyParameters;
+    "Network.getInterceptedResponseBody": Network.getInterceptedResponseBodyParameters;
     "Network.setResourceCachingDisabled": Network.setResourceCachingDisabledParameters;
     "Network.loadResource": Network.loadResourceParameters;
     "Network.getSerializedCertificate": Network.getSerializedCertificateParameters;
@@ -9228,6 +9244,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.disable": Network.disableReturnValue;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersReturnValue;
     "Network.getResponseBody": Network.getResponseBodyReturnValue;
+    "Network.getInterceptedResponseBody": Network.getInterceptedResponseBodyReturnValue;
     "Network.setResourceCachingDisabled": Network.setResourceCachingDisabledReturnValue;
     "Network.loadResource": Network.loadResourceReturnValue;
     "Network.getSerializedCertificate": Network.getSerializedCertificateReturnValue;
