@@ -34,7 +34,6 @@ import { CRCoverage } from './crCoverage';
 import { CRPDF } from './crPdf';
 import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
-import { ConsoleMessage } from '../console';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, headersArrayToObject, createGuid, canAccessFile } from '../../utils/utils';
 import { VideoRecorder } from './videoRecorder';
@@ -785,7 +784,7 @@ class FrameSession {
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
-    this._page.emit(Page.Events.PageError, exceptionToError(exceptionDetails));
+    this._page.firePageError(exceptionToError(exceptionDetails));
   }
 
   async _onTargetCrashed() {
@@ -803,7 +802,7 @@ class FrameSession {
         lineNumber: lineNumber || 0,
         columnNumber: 0,
       };
-      this._page.emit(Page.Events.Console, new ConsoleMessage(this._page, level, text, [], location));
+      this._page._addConsoleMessage(level, [], location, text);
     }
   }
 

@@ -517,7 +517,7 @@ export class WKPage implements PageDelegate {
       error.stack = stack;
       error.name = name;
 
-      this._page.emit(Page.Events.PageError, error);
+      this._page.firePageError(error);
       return;
     }
 

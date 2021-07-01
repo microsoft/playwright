@@ -25,10 +25,12 @@ import { TraceEvent } from '../common/traceEvents';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
-import { isUnderTest } from '../../../utils/utils';
+import { canAccessFile, isUnderTest } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
+import { Registry } from '../../../utils/registry';
+import { findChromiumChannel } from '../../chromium/findChromiumChannel';
 
 export class TraceViewer {
   private _server: HttpServer;
@@ -127,8 +129,38 @@ export class TraceViewer {
     ] : [];
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
+
+    // For Chromium, fall back to the stable channels of popular vendors for work out of the box.
+    // Null means no installation and no channels found.
+    let channel = null;
+    if (traceViewerBrowser === 'chromium') {
+      const registry = Registry.currentPackageRegistry();
+      if (canAccessFile(registry.executablePath('chromium')!)) {
+        // This means we have a browser downloaded.
+        channel = undefined;
+      } else {
+        for (const c of ['chrome', 'msedge']) {
+          try {
+            findChromiumChannel(c);
+            channel = c;
+            break;
+          } catch (e) {
+          }
+        }
+      }
+
+      if (channel === null) {
+        throw new Error(`
+==================================================================
+Please run 'npx playwright install' to install Playwright browsers
+==================================================================
+`);
+      }
+    }
+
     const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
+      channel: channel as any,
       sdkLanguage: 'javascript',
       args,
       noDefaultViewport: true,
