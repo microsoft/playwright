@@ -56,6 +56,10 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserIniti
     return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
   }
 
+  async setDefaultTimeoutNoReply(params: channels.BrowserSetDefaultTimeoutNoReplyParams) {
+    this._object.setDefaultTimeout(params.timeout);
+  }
+
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);

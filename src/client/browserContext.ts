@@ -39,7 +39,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
   readonly _browser: Browser | null = null;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
-  _timeoutSettings = new TimeoutSettings();
+  readonly _timeoutSettings: TimeoutSettings;
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
   _options: channels.BrowserNewContextParams = {
@@ -62,8 +62,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
     super(parent, type, guid, initializer);
-    if (parent instanceof Browser)
+    if (parent instanceof Browser) {
       this._browser = parent;
+      this._timeoutSettings = new TimeoutSettings(this._browser._timeoutSettings);
+    }
+    else
+      this._timeoutSettings = new TimeoutSettings();
+    
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = new Tracing(this);
 

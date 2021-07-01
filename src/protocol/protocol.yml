@@ -483,6 +483,10 @@ Browser:
     stopTracing:
       returns:
         binary: binary
+    
+    setDefaultTimeoutNoReply:
+      parameters:
+        timeout: number
 
   events:
 

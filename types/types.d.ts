@@ -9253,6 +9253,8 @@ export interface Browser extends EventEmitter {
    * Returns the browser version.
    */
   version(): string;
+
+  setDefaultTimeout(timeout: number): void;
 }
 
 export interface BrowserServer {

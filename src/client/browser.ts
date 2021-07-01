@@ -23,14 +23,15 @@ import { BrowserContextOptions } from './types';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
-
+import { TimeoutSettings } from '../utils/timeoutSettings';
 export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;
   _remoteType: 'owns-connection' | 'uses-connection' | null = null;
   readonly _name: string;
-
+  _timeoutSettings = new TimeoutSettings();
+  
   static from(browser: channels.BrowserChannel): Browser {
     return (browser as any)._object;
   }
@@ -81,6 +82,11 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     return this._wrapApiCall(async (channel: channels.BrowserChannel) => {
       return CDPSession.from((await channel.newBrowserCDPSession()).session);
     });
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
+    this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
