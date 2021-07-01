@@ -31,6 +31,17 @@ it('should fire', async ({page, server, browserName}) => {
   expect(error.stack).toBe(stack);
 });
 
+it('should not receive console message for pageError', async ({ page, server, browserName }) => {
+  it.skip(browserName === 'firefox');
+  const messages = [];
+  page.on('console', e => messages.push(e));
+  const [error] = await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.goto(server.PREFIX + '/error.html'),
+  ]);
+  expect(messages.length).toBe(1);
+});
+
 it('should contain sourceURL', async ({page, server, browserName}) => {
   it.fail(browserName === 'webkit');
 
