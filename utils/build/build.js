@@ -135,9 +135,9 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
-// The recorder has an app_icon.png that needs to be copied.
+// The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
-  files: 'src/web/recorder/*.png',
+  files: 'src/server/chromium/*.png',
   from: 'src',
   to: 'lib',
 });

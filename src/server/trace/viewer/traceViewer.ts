@@ -31,6 +31,7 @@ import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
 import { Registry } from '../../../utils/registry';
 import { findChromiumChannel } from '../../chromium/findChromiumChannel';
+import { installAppIcon } from '../../chromium/crApp';
 
 export class TraceViewer {
   private _server: HttpServer;
@@ -174,10 +175,15 @@ Please run 'npx playwright install' to install Playwright browsers
     });
     await context.extendInjectedScript('main', consoleApiSource.source);
     const [page] = context.pages();
+
+    if (traceViewerBrowser === 'chromium')
+      await installAppIcon(page);
+
     if (isUnderTest())
       page.on('close', () => context.close(internalCallMetadata()).catch(() => {}));
     else
       page.on('close', () => process.exit());
+  
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
     return context;
   }
