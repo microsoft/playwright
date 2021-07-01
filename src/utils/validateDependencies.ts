@@ -13,33 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import fs from 'fs';
 import path from 'path';
 import * as os from 'os';
-import { getUbuntuVersion } from '../utils/ubuntuVersion';
-import * as registry from '../utils/registry';
-import * as utils from '../utils/utils';
-import { printDepsWindowsExecutable } from '../utils/binaryPaths';
+import { getUbuntuVersion } from './ubuntuVersion';
+import * as utils from './utils';
 
 const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
-
-export async function validateHostRequirements(registry: registry.Registry, browserName: registry.BrowserName) {
-  if (utils.getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
-    process.stdout.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
-    return;
-  }
-  const ubuntuVersion = await getUbuntuVersion();
-  if (browserName === 'firefox' && ubuntuVersion === '16.04')
-    throw new Error(`Cannot launch firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
-  if (os.platform() === 'linux')
-    return await validateDependenciesLinux(registry, browserName);
-  if (os.platform() === 'win32' && os.arch() === 'x64')
-    return await validateDependenciesWindows(registry, browserName);
-}
-
-const DL_OPEN_LIBRARIES = {
-  'webkit': ['libGLESv2.so.2', 'libx264.so'],
-};
 
 function isSupportedWindowsVersion(): boolean {
   if (os.platform() !== 'win32' || os.arch() !== 'x64')
@@ -51,8 +32,8 @@ function isSupportedWindowsVersion(): boolean {
   return major > 6 || (major === 6 && minor > 1);
 }
 
-async function validateDependenciesWindows(registry: registry.Registry, browserName: registry.BrowserName) {
-  const directoryPaths = registry.windowsExeAndDllDirectories(browserName);
+export async function validateDependenciesWindows(windowsExeAndDllDirectories: string[]) {
+  const directoryPaths = windowsExeAndDllDirectories;
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
@@ -112,8 +93,8 @@ async function validateDependenciesWindows(registry: registry.Registry, browserN
   }
 }
 
-async function validateDependenciesLinux(registry: registry.Registry, browserName: registry.BrowserName) {
-  const directoryPaths = registry.linuxLddDirectories(browserName);
+export async function validateDependenciesLinux(linuxLddDirectories: string[], dlOpenLibraries: string[]) {
+  const directoryPaths = linuxLddDirectories;
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
@@ -123,7 +104,7 @@ async function validateDependenciesLinux(registry: registry.Registry, browserNam
     for (const dep of deps)
       missingDeps.add(dep);
   }
-  for (const dep of (await missingDLOPENLibraries(browserName)))
+  for (const dep of (await missingDLOPENLibraries(dlOpenLibraries)))
     missingDeps.add(dep);
   if (!missingDeps.size)
     return;
@@ -202,10 +183,7 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
 }
 
 async function missingFileDependenciesWindows(filePath: string): Promise<Array<string>> {
-  const executable = printDepsWindowsExecutable();
-  if (!executable)
-    return [];
-
+  const executable = path.join(__dirname, '..', '..', 'bin', 'PrintDeps.exe');
   const dirname = path.dirname(filePath);
   const {stdout, code} = await utils.spawnAsync(executable, [filePath], {
     cwd: dirname,
@@ -238,8 +216,7 @@ async function missingFileDependencies(filePath: string, extraLDPaths: string[])
   return missingDeps;
 }
 
-async function missingDLOPENLibraries(browserName: registry.BrowserName): Promise<string[]> {
-  const libraries: string[] = (DL_OPEN_LIBRARIES as any)[browserName] || [];
+async function missingDLOPENLibraries(libraries: string[]): Promise<string[]> {
   if (!libraries.length)
     return [];
   // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the
