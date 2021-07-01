@@ -46,7 +46,7 @@ test('version should work', async function({browser, browserName}) {
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();
 });
 
-test('should fail when exceeding browser timeout', async function({ browser,server, browserName,playwright }) {
+test('should fail when exceeding browser timeout', async function({ browser, server, browserName, playwright }) {
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   const page = await browser.newPage();

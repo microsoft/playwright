@@ -56,7 +56,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserIniti
     return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
   }
 
-  async setDefaultTimeoutNoReply(params: channels.BrowserSetDefaultTimeoutNoReplyParams) {
+  async setDefaultTimeout(params: channels.BrowserSetDefaultTimeoutParams) {
     this._object.setDefaultTimeout(params.timeout);
   }
 

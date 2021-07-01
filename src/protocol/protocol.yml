@@ -484,7 +484,7 @@ Browser:
       returns:
         binary: binary
     
-    setDefaultTimeoutNoReply:
+    setDefaultTimeout:
       parameters:
         timeout: number
 

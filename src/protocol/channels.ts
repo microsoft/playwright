@@ -446,7 +446,7 @@ export interface BrowserChannel extends Channel {
   newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: Metadata): Promise<BrowserNewBrowserCDPSessionResult>;
   startTracing(params: BrowserStartTracingParams, metadata?: Metadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: Metadata): Promise<BrowserStopTracingResult>;
-  setDefaultTimeoutNoReply(params: BrowserSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<BrowserSetDefaultTimeoutNoReplyResult>;
+  setDefaultTimeout(params: BrowserSetDefaultTimeoutParams, metadata?: Metadata): Promise<BrowserSetDefaultTimeoutResult>;
 }
 export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {};
@@ -596,13 +596,13 @@ export type BrowserStopTracingOptions = {};
 export type BrowserStopTracingResult = {
   binary: Binary,
 };
-export type BrowserSetDefaultTimeoutNoReplyParams = {
+export type BrowserSetDefaultTimeoutParams = {
   timeout: number,
 };
-export type BrowserSetDefaultTimeoutNoReplyOptions = {
+export type BrowserSetDefaultTimeoutOptions = {
 
 };
-export type BrowserSetDefaultTimeoutNoReplyResult = void;
+export type BrowserSetDefaultTimeoutResult = void;
 
 // ----------- EventTarget -----------
 export type EventTargetInitializer = {};

@@ -86,7 +86,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout });
+    this._channel.setDefaultTimeout({ timeout });
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
