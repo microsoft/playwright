@@ -235,6 +235,15 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 
+## method: Browser.setDefaultTimeout
+
+This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
+
+:::note
+[`method: Page.setDefaultNavigationTimeout`], [`method: Page.setDefaultTimeout`], [`method: BrowserContext.setDefaultTimeout`] and
+[`method: BrowserContext.setDefaultNavigationTimeout`] take priority over [`method: Browser.setDefaultTimeout`].
+:::
+
 ## async method: Browser.startTracing
 * langs: java, js, python
 
