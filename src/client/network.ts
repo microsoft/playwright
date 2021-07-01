@@ -302,7 +302,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async intercept(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}): Promise<api.Response> {
+  async _intercept(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}): Promise<api.Response> {
     return await this._continue(options, true);
   }
 
