@@ -31,7 +31,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   _remoteType: 'owns-connection' | 'uses-connection' | null = null;
   readonly _name: string;
   _timeoutSettings = new TimeoutSettings();
-  
+
   static from(browser: channels.BrowserChannel): Browser {
     return (browser as any)._object;
   }

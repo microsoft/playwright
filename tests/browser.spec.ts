@@ -46,17 +46,16 @@ test('version should work', async function({browser, browserName}) {
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();
 });
 
-test('should fail when exceeding browser timeout', async function ({ browser,server, browserName,playwright }) {
-  
-    // Hang for request to the empty.html
+test('should fail when exceeding browser timeout', async function({ browser,server, browserName,playwright }) {
+  // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   const page = await browser.newPage();
-    let error = null
+  let error = null;
   browser.setDefaultTimeout(2);
-    await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-    expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
-    expect(error.message).toContain(server.PREFIX + '/empty.html');
-    expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
+  expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
+  expect(error.message).toContain(server.PREFIX + '/empty.html');
+  expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
   const version = browser.version();
   if (browserName === 'chromium')
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();

@@ -65,10 +65,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     if (parent instanceof Browser) {
       this._browser = parent;
       this._timeoutSettings = new TimeoutSettings(this._browser._timeoutSettings);
-    }
-    else
+    } else {
       this._timeoutSettings = new TimeoutSettings();
-    
+    }
+
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = new Tracing(this);
 
