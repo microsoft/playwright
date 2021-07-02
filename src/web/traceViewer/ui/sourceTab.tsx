@@ -18,11 +18,11 @@ import * as React from 'react';
 import { useAsyncMemo } from './helpers';
 import './sourceTab.css';
 import '../../../third_party/highlightjs/highlightjs/tomorrow.css';
-import { StackFrame } from '../../../common/types';
 import { Source as SourceView } from '../../components/source';
 import { StackTraceView } from './stackTrace';
 import { SplitView } from '../../components/splitView';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
+import { StackFrame } from '../../../protocol/channels';
 
 type StackInfo = string | {
   frames: StackFrame[];

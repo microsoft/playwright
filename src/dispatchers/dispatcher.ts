@@ -22,7 +22,6 @@ import { assert, debugAssert, isUnderTest, monotonicTime } from '../utils/utils'
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
-import { StackFrame } from '../common/types';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export const dispatcherSymbol = Symbol('dispatcher');
@@ -133,7 +132,7 @@ export class DispatcherConnection {
   private _rootDispatcher: Root;
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
-  private _validateMetadata: (metadata: any) => { stack?: StackFrame[] };
+  private _validateMetadata: (metadata: any) => { stack?: channels.StackFrame[] };
   private _waitOperations = new Map<string, CallMetadata>();
 
   sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
