@@ -21,35 +21,6 @@ RUN apt-get update && apt-get install -y python3.8 python3-pip && \
     update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
 
-#================
-# Font libraries
-#================
-# libfontconfig            ~1 MB
-# libfreetype6             ~1 MB
-# xfonts-cyrillic          ~2 MB
-# xfonts-scalable          ~2 MB
-# fonts-liberation         ~3 MB
-# fonts-ipafont-gothic     ~13 MB
-# fonts-wqy-zenhei         ~17 MB
-# fonts-tlwg-loma-otf      ~300 KB
-# ttf-ubuntu-font-family   ~5 MB
-#
-# Layer size: small: 36.28 MB (with --no-install-recommends)
-# Layer size: small: 36.28 MB
-RUN apt-get -qqy update \
-  && apt-get -qqy --no-install-recommends install \
-    libfontconfig \
-    libfreetype6 \
-    xfonts-cyrillic \
-    xfonts-scalable \
-    fonts-liberation \
-    fonts-ipafont-gothic \
-    fonts-wqy-zenhei \
-    fonts-tlwg-loma-otf \
-    ttf-ubuntu-font-family \
-  && rm -rf /var/lib/apt/lists/* \
-  && apt-get -qyy clean
-
 # === BAKE BROWSERS INTO IMAGE ===
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright

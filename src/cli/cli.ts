@@ -39,6 +39,8 @@ const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
 type BrowserChannel = 'chrome-beta'|'chrome'|'msedge'|'msedge-beta';
 const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta', 'chrome', 'msedge', 'msedge-beta']);
+const suggestedBrowsersToInstall = ['chromium', 'webkit', 'firefox', ...allBrowserChannels].map(name => `'${name}'`).join(', ');
+
 const packageJSON = require('../../package.json');
 
 const ChannelName = {
@@ -131,7 +133,7 @@ program
         const browserChannels: Set<BrowserChannel> = new Set(args.filter((browser: any) => allBrowserChannels.has(browser)));
         const faultyArguments: string[] = args.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
         if (faultyArguments.length) {
-          console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}`);
+          console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall}`);
           process.exit(1);
         }
         if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge') || browserChannels.has('msedge-beta'))
@@ -151,7 +153,7 @@ program
       console.log(`    Install default browsers.`);
       console.log(``);
       console.log(`  - $ install chrome firefox`);
-      console.log(`    Install custom browsers, supports ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}.`);
+      console.log(`    Install custom browsers, supports ${suggestedBrowsersToInstall}.`);
     });
 
 async function installBrowserChannel(channel: BrowserChannel) {
