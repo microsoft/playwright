@@ -170,7 +170,7 @@ async function installBrowserChannel(channel: BrowserChannel) {
       win32: {platform: 'Windows', arch: os.arch() === 'x64' ? 'x64' : 'x86', artifact: 'msi'},
     } as any)[platform];
     const release = searchConfig ? product.Releases.find((release: any) => release.Platform === searchConfig.platform && release.Architecture === searchConfig.arch) : null;
-    const artifact = release ? release.Artifacts.find((artifact: any) => artifact.ArtifactName ===searchConfig.artifact) : null;
+    const artifact = release ? release.Artifacts.find((artifact: any) => artifact.ArtifactName === searchConfig.artifact) : null;
     if (artifact)
       scriptArgs.push(artifact.Location /* url */);
     else

@@ -147,29 +147,3 @@ it('Page.bringToFront should work', async ({browserType, browserOptions}) => {
   await browser.close();
 });
 
-it('focused input should produce the same screenshot', async ({browserType, browserOptions, browserName, platform, channel}, testInfo) => {
-  it.fail(channel === 'msedge' && platform === 'darwin', 'focus ring is black on MSEdge');
-  it.fail(browserName === 'firefox' && platform === 'darwin', 'headless has thinner outline');
-  it.fail(browserName === 'firefox' && platform === 'linux', 'headless has no outline');
-  it.skip(browserName === 'webkit' && platform === 'linux', 'gtk vs wpe');
-  it.skip(!!process.env.CRPATH);
-
-  testInfo.snapshotSuffix = platform;
-
-  const headful = await browserType.launch({...browserOptions, headless: false });
-  const headfulPage = await headful.newPage();
-  await headfulPage.setContent('<input>');
-  await headfulPage.focus('input');
-  const headfulScreenshot = await headfulPage.screenshot();
-  await headful.close();
-
-  const headless = await browserType.launch({...browserOptions, headless: true });
-  const headlessPage = await headless.newPage();
-  await headlessPage.setContent('<input>');
-  await headlessPage.focus('input');
-  const headlessScreenshot = await headlessPage.screenshot();
-  await headless.close();
-
-  expect(headfulScreenshot).toMatchSnapshot('focused-input.png');
-  expect(headlessScreenshot).toMatchSnapshot('focused-input.png');
-});

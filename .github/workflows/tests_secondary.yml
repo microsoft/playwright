@@ -440,10 +440,10 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install edge-beta
+    - run: node lib/cli/cli install msedge-beta
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
-        PWTEST_CHANNEL: edge-beta
+        PWTEST_CHANNEL: msedge-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
