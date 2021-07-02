@@ -16,6 +16,7 @@
 
 import { EventEmitter } from 'events';
 import { Point, StackFrame } from '../common/types';
+import { SerializedError } from '../protocol/channels';
 import { createGuid } from '../utils/utils';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
@@ -46,7 +47,8 @@ export type CallMetadata = {
   stack?: StackFrame[];
   log: string[];
   snapshots: { title: string, snapshotName: string }[];
-  error?: string;
+  error?: SerializedError;
+  result?: any;
   point?: Point;
   objectId?: string;
   pageId?: string;

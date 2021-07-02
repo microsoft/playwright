@@ -32,7 +32,6 @@ export const CallLogView: React.FC<CallLogProps> = ({
     if (log.find(callLog => callLog.reveal))
       messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
-
   return <div className='call-log' style={{flex: 'auto'}}>
     {log.map(callLog => {
       const expandOverride = expandOverrides.get(callLog.id);
@@ -55,9 +54,7 @@ export const CallLogView: React.FC<CallLogProps> = ({
             { message.trim() }
           </div>;
         })}
-        { callLog.error ? <div className='call-log-message error' hidden={!isExpanded}>
-          { callLog.error }
-        </div> : undefined }
+        { !!callLog.error && <div className='call-log-message error' hidden={!isExpanded}>{ callLog.error.error?.message }</div> }
       </div>
     })}
     <div ref={messagesEndRef}></div>

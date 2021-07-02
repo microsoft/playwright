@@ -16,12 +16,12 @@
 
 import extract from 'extract-zip';
 import fs from 'fs';
+import readline from 'readline';
 import os from 'os';
 import path from 'path';
 import rimraf from 'rimraf';
 import { createPlaywright } from '../../playwright';
 import { PersistentSnapshotStorage, TraceModel } from './traceModel';
-import { TraceEvent } from '../common/traceEvents';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
@@ -80,10 +80,15 @@ export class TraceViewer {
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
       (async () => {
-        const traceContent = await fs.promises.readFile(tracePrefix + '.trace', 'utf8');
-        const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
+        const fileStream = fs.createReadStream(tracePrefix + '.trace', 'utf8');
+        const rl = readline.createInterface({
+          input: fileStream,
+          crlfDelay: Infinity
+        });
         const model = new TraceModel(snapshotStorage);
-        model.appendEvents(events, snapshotStorage);
+        for await (const line of rl as any)
+          model.appendEvent(line);
+        model.build();
         response.end(JSON.stringify(model.contextEntry));
       })().catch(e => console.error(e));
       return true;

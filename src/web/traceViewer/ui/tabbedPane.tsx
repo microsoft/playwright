@@ -16,10 +16,12 @@
 
 import './tabbedPane.css';
 import * as React from 'react';
+import { count } from 'console';
 
 export interface TabbedPaneTab {
   id: string;
   title: string;
+  count: number;
   render: () => React.ReactElement;
 }
 
@@ -37,6 +39,7 @@ export const TabbedPane: React.FunctionComponent<{
               onClick={() => setSelectedTab(tab.id)}
               key={tab.id}>
               <div className='tab-label'>{tab.title}</div>
+              <div className='tab-count'>{tab.count || ''}</div>
             </div>
           })
         }</div>

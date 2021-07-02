@@ -43,8 +43,8 @@ class TraceViewerPage {
   }
 
   async logLines() {
-    await this.page.waitForSelector('.log-line:visible');
-    return await this.page.$$eval('.log-line:visible', ee => ee.map(e => e.textContent));
+    await this.page.waitForSelector('.call-line:visible');
+    return await this.page.$$eval('.call-line:visible', ee => ee.map(e => e.textContent));
   }
 
   async eventBars() {
@@ -130,7 +130,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   ]);
 });
 
-test('should contain action log', async ({ showTraceViewer }) => {
+test('should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('page.click');
   const logLines = await traceViewer.logLines();

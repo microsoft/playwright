@@ -44,7 +44,7 @@
 }
 
 .tab-element {
-  padding: 2px 12px 0 12px;
+  padding: 2px 10px 0 10px;
   margin-right: 4px;
   cursor: pointer;
   display: flex;
@@ -63,6 +63,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
+}
+
+.tab-count {
+  font-size: 10px;
+  display: flex;
+  align-self: flex-start;
+  width: 0px;
 }
 
 .tab-element.selected {
