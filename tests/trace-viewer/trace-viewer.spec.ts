@@ -28,8 +28,18 @@ class TraceViewerPage {
     return await this.page.$$eval('.action-title:visible', ee => ee.map(e => e.textContent));
   }
 
+  async actionIconsText(action: string) {
+    const entry = await this.page.waitForSelector(`.action-entry:has-text("${action}")`);
+    await entry.waitForSelector('.action-icon-value:visible');
+    return await entry.$$eval('.action-icon-value:visible', ee => ee.map(e => e.textContent));
+  }
+
+  async actionIcons(action: string) {
+    return await this.page.waitForSelector(`.action-entry:has-text("${action}") .action-icons`);
+  }
+
   async selectAction(title: string) {
-    await this.page.click(`.action-title:text("${title}")`);
+    await this.page.click(`.action-title:has-text("${title}")`);
   }
 
   async logLines() {
@@ -98,11 +108,6 @@ test.beforeAll(async ({ browser, browserName }, workerInfo) => {
     page.waitForNavigation(),
     page.waitForTimeout(200).then(() => page.goto('data:text/html,<html>Hello world 2</html>'))
   ]);
-  await page.evaluate(() => {
-    console.log('Log');
-    console.warn('Warning');
-    console.error('Error');
-  });
   await page.close();
   traceFile = path.join(workerInfo.project.outputDir, browserName, 'trace.zip');
   await context.tracing.stop({ path: traceFile });
@@ -116,13 +121,12 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   expect(await traceViewer.actionTitles()).toEqual([
-    'page.goto',
+    'page.gotodata:text/html,<html>Hello world</html>',
     'page.setContent',
     'page.evaluate',
-    'page.click',
+    'page.click\"Click\"',
     'page.waitForNavigation',
-    'page.goto',
-    'page.evaluate'
+    'page.gotodata:text/html,<html>Hello world 2</html>',
   ]);
 });
 
@@ -154,4 +158,13 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   const stacks = await traceViewer.consoleStacks();
   expect(stacks.length).toBe(1);
   expect(stacks[0]).toContain('Error: Unhandled exception');
+});
+
+test('should open console errors on click', async ({ showTraceViewer, browserName }) => {
+  test.fixme(browserName === 'firefox', 'Firefox generates stray console message for page error');
+  const traceViewer = await showTraceViewer(traceFile);
+  expect(await traceViewer.actionIconsText('page.evaluate')).toEqual(['2', '1']);
+  expect(await traceViewer.page.isHidden('.console-tab'));
+  await (await traceViewer.actionIcons('page.evaluate')).click();
+  expect(await traceViewer.page.waitForSelector('.console-tab'));
 });
