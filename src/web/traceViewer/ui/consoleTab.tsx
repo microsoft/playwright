@@ -17,34 +17,29 @@
 import * as React from 'react';
 import './consoleTab.css';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry } from '../../../server/trace/viewer/traceModel';
 import * as channels from '../../../protocol/channels';
+import * as modelUtil from './modelUtil';
 
 export const ConsoleTab: React.FunctionComponent<{
-  context: ContextEntry,
   action: ActionTraceEvent | undefined,
-  nextAction: ActionTraceEvent | undefined,
-}> = ({ context, action, nextAction }) => {
+}> = ({ action }) => {
   const entries = React.useMemo(() => {
     if (!action)
       return [];
     const entries: { message?: channels.ConsoleMessageInitializer, error?: channels.SerializedError }[] = [];
-    for (const page of context.pages) {
-      for (const event of page.events) {
-        if (event.metadata.method !== 'console' && event.metadata.method !== 'pageError')
-          continue;
-        if (event.metadata.startTime < action.metadata.startTime || (nextAction && event.metadata.startTime >= nextAction.metadata.startTime))
-          continue;
-        if (event.metadata.method === 'console') {
-          const { guid } = event.metadata.params.message;
-          entries.push({ message: page.objects[guid] });
-        }
-        if (event.metadata.method === 'pageError')
-          entries.push({ error: event.metadata.params.error });
+    const page = modelUtil.page(action);
+    for (const event of modelUtil.eventsForAction(action)) {
+      if (event.metadata.method !== 'console' && event.metadata.method !== 'pageError')
+        continue;
+      if (event.metadata.method === 'console') {
+        const { guid } = event.metadata.params.message;
+        entries.push({ message: page.objects[guid] });
       }
+      if (event.metadata.method === 'pageError')
+        entries.push({ error: event.metadata.params.error });
     }
     return entries;
-  }, [context, action]);
+  }, [action]);
 
   return <div className='console-tab'>{
     entries.map((entry, index) => {

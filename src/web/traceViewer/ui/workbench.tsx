@@ -29,7 +29,7 @@ import { LogsTab } from './logsTab';
 import { SplitView } from '../../components/splitView';
 import { useAsyncMemo } from './helpers';
 import { ConsoleTab } from './consoleTab';
-
+import * as modelUtil from './modelUtil';
 
 export const Workbench: React.FunctionComponent<{
   debugNames: string[],
@@ -37,26 +37,29 @@ export const Workbench: React.FunctionComponent<{
   const [debugName, setDebugName] = React.useState(debugNames[0]);
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
+  const [selectedTab, setSelectedTab] = React.useState<string>('logs');
 
   let context = useAsyncMemo(async () => {
     if (!debugName)
       return emptyContext;
-    return (await fetch(`/context/${debugName}`).then(response => response.json())) as ContextEntry;
+    const context = (await fetch(`/context/${debugName}`).then(response => response.json())) as ContextEntry;
+    modelUtil.indexModel(context);
+    return context;
   }, [debugName], emptyContext);
 
-  const { actions, nextAction } = React.useMemo(() => {
+  const actions = React.useMemo(() => {
     const actions: ActionTraceEvent[] = [];
     for (const page of context.pages)
       actions.push(...page.actions);
-    const nextAction = selectedAction ? actions[actions.indexOf(selectedAction) + 1] : undefined;
-    return { actions, nextAction };
-  }, [context, selectedAction]);
+    return actions;
+  }, [context]);
 
   const snapshotSize = context.options.viewport || { width: 1280, height: 720 };
   const boundaries = { minimum: context.startTime, maximum: context.endTime };
 
   // Leave some nice free space on the right hand side.
   boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
+
 
   return <div className='vbox workbench'>
     <div className='hbox header'>
@@ -87,10 +90,10 @@ export const Workbench: React.FunctionComponent<{
         <SnapshotTab action={selectedAction} snapshotSize={snapshotSize} />
         <TabbedPane tabs={[
           { id: 'logs', title: 'Log', render: () => <LogsTab action={selectedAction} /> },
-          { id: 'console', title: 'Console', render: () => <ConsoleTab context={context} action={selectedAction} nextAction={nextAction}/> },
+          { id: 'console', title: 'Console', render: () => <ConsoleTab action={selectedAction} /> },
           { id: 'source', title: 'Source', render: () => <SourceTab action={selectedAction} /> },
-          { id: 'network', title: 'Network', render: () => <NetworkTab context={context} action={selectedAction} nextAction={nextAction}/> },
-        ]}/>
+          { id: 'network', title: 'Network', render: () => <NetworkTab action={selectedAction} /> },
+        ]} selectedTab={selectedTab} setSelectedTab={setSelectedTab}/>
       </SplitView>
       <ActionList
         actions={actions}
@@ -100,6 +103,7 @@ export const Workbench: React.FunctionComponent<{
           setSelectedAction(action);
         }}
         onHighlighted={action => setHighlightedAction(action)}
+        setSelectedTab={setSelectedTab}
       />
     </SplitView>
   </div>;
