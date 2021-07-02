@@ -261,11 +261,16 @@ export class FixtureRunner {
     await fixture.setup(info);
     return fixture;
   }
-}
 
-export function inheritFixtureParameterNames(from: Function, to: Function, location: Location) {
-  if (!(to as any)[signatureSymbol])
-    (to as any)[signatureSymbol] = innerFixtureParameterNames(from, location);
+  dependsOnWorkerFixturesOnly(fn: Function, location: Location): boolean {
+    const names = fixtureParameterNames(fn, location);
+    for (const name of names) {
+      const registration = this.pool!.registrations.get(name)!;
+      if (registration.scope !== 'worker')
+        return false;
+    }
+    return true;
+  }
 }
 
 const signatureSymbol = Symbol('signature');
