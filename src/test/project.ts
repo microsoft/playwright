@@ -73,6 +73,8 @@ export class ProjectImpl {
       for (let parent = spec.parent; parent; parent = parent.parent) {
         for (const hook of parent._hooks)
           pool.validateFunction(hook.fn, hook.type + ' hook', hook.type === 'beforeEach' || hook.type === 'afterEach', hook.location);
+        for (const modifier of parent._modifiers)
+          pool.validateFunction(modifier.fn, modifier.type + ' modifier', true, modifier.location);
       }
     }
     return this.specPools.get(spec)!;

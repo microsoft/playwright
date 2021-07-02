@@ -16,7 +16,7 @@
 
 import * as reporterTypes from './reporter';
 import type { TestTypeImpl } from './testType';
-import { Location } from './types';
+import { Annotations, Location } from './types';
 
 class Base {
   title: string;
@@ -68,6 +68,13 @@ export class Spec extends Base implements reporterTypes.Spec {
   }
 }
 
+export type Modifier = {
+  type: 'slow' | 'fixme' | 'skip' | 'fail',
+  fn: Function,
+  location: Location,
+  description: string | undefined
+};
+
 export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
   specs: Spec[] = [];
@@ -79,6 +86,8 @@ export class Suite extends Base implements reporterTypes.Suite {
     location: Location,
   }[] = [];
   _timeout: number | undefined;
+  _annotations: Annotations = [];
+  _modifiers: Modifier[] = [];
 
   _addSpec(spec: Spec) {
     spec.parent = this;
@@ -168,7 +177,7 @@ export class Test implements reporterTypes.Test {
   skipped = false;
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: { type: string, description?: string }[] = [];
+  annotations: Annotations = [];
   projectName = '';
   retries = 0;
 
