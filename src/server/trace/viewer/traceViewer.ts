@@ -183,7 +183,7 @@ Please run 'npx playwright install' to install Playwright browsers
       page.on('close', () => context.close(internalCallMetadata()).catch(() => {}));
     else
       page.on('close', () => process.exit());
-  
+
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
     return context;
   }
