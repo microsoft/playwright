@@ -1897,7 +1897,7 @@ export interface Page {
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-   * last redirect. It will consider a base URL if you set it via `baseURL` when creating the context.
+   * last redirect. It will consider the base URL if you set it via `baseURL` when creating the context.
    *
    * `page.goto` will throw an error if:
    * - there's an SSL error (e.g. in case of self-signed certificates).
@@ -2438,6 +2438,8 @@ export interface Page {
    *
    * To remove a route with its handler you can use
    * [page.unroute(url[, handler])](https://playwright.dev/docs/api/class-page#page-unroute).
+   *
+   * It will consider the base URL if you set it via `baseURL` when creating the context.
    *
    * > NOTE: Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
@@ -3169,8 +3171,8 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
-   * Waits for the matching request and returns it.  See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details
-   * about events.
+   * Waits for the matching request and returns it. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details
+   * about events. It will consider the base URL if you set it via `baseURL` when creating the context.
    *
    * ```js
    * // Note that Promise.all prevents a race condition
@@ -3204,7 +3206,8 @@ export interface Page {
   }): Promise<Request>;
 
   /**
-   * Returns the matched response. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details about events.
+   * Returns the matched response. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details about events. It
+   * will consider the base URL if you set it via `baseURL` when creating the context.
    *
    * ```js
    * // Note that Promise.all prevents a race condition
@@ -3256,7 +3259,8 @@ export interface Page {
   waitForTimeout(timeout: number): Promise<void>;
 
   /**
-   * Waits for the main frame to navigate to the given URL.
+   * Waits for the main frame to navigate to the given URL. It will consider the base URL if you set it via `baseURL` when
+   * creating the context.
    *
    * ```js
    * await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
@@ -5446,7 +5450,8 @@ export interface BrowserContext {
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
-   * is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
+   * is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted. It will
+   * consider the base URL if you set it via `baseURL` when creating the context.
    *
    * An example of a naive handler that aborts all image requests:
    *

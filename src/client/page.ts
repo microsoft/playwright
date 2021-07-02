@@ -162,7 +162,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   private _onRoute(route: Route, request: Request) {
     for (const {url, handler} of this._routes) {
-      if (urlMatches(request.url(), url)) {
+      if (urlMatches(this._browserContext._options.baseURL, request.url(), url)) {
         handler(route, request);
         return;
       }
@@ -217,7 +217,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this.frames().find(f => {
       if (name)
         return f.name() === name;
-      return urlMatches(f.url(), url);
+      return urlMatches(this._browserContext._options.baseURL, f.url(), url);
     }) || null;
   }
 
@@ -352,7 +352,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._wrapApiCall(async (channel: channels.PageChannel, stackTrace: ParsedStackTrace) => {
       const predicate = (request: Request) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
-          return urlMatches(request.url(), urlOrPredicate);
+          return urlMatches(this._browserContext._options.baseURL, request.url(), urlOrPredicate);
         return urlOrPredicate(request);
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
@@ -365,7 +365,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._wrapApiCall(async (channel: channels.PageChannel, stackTrace: ParsedStackTrace) => {
       const predicate = (response: Response) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
-          return urlMatches(response.url(), urlOrPredicate);
+          return urlMatches(this._browserContext._options.baseURL, response.url(), urlOrPredicate);
         return urlOrPredicate(response);
       };
       const trimmedUrl = trimUrl(urlOrPredicate);

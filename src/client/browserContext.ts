@@ -128,7 +128,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
 
   _onRoute(route: network.Route, request: network.Request) {
     for (const {url, handler} of this._routes) {
-      if (urlMatches(request.url(), url)) {
+      if (urlMatches(this._options.baseURL, request.url(), url)) {
         handler(route, request);
         return;
       }

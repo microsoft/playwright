@@ -1874,7 +1874,7 @@ Navigate to the next page in history.
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. It will consider a base URL if you set it via [`option: baseURL`] when creating the context.
+last redirect. It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 `page.goto` will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).
@@ -2505,6 +2505,8 @@ Page routes take precedence over browser context routes (set up with [`method: B
 matches both handlers.
 
 To remove a route with its handler you can use [`method: Page.unroute`].
+
+It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 :::note
 Enabling routing disables http cache.
@@ -3330,7 +3332,8 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
   * alias-csharp: RunAndWaitForRequest
 - returns: <[Request]>
 
-Waits for the matching request and returns it.  See [waiting for event](./events.md#waiting-for-event) for more details about events.
+Waits for the matching request and returns it. See [waiting for event](./events.md#waiting-for-event) for more details about events.
+It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -3446,6 +3449,7 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 - returns: <[Response]>
 
 Returns the matched response. See [waiting for event](./events.md#waiting-for-event) for more details about events.
+It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -3697,6 +3701,7 @@ A timeout to wait for
 ## async method: Page.waitForURL
 
 Waits for the main frame to navigate to the given URL.
+It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 ```js
 await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation

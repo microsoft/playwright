@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { URL } from 'url';
 import * as channels from '../protocol/channels';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
@@ -26,7 +25,7 @@ import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
-import { assert, makeWaitForNextTask } from '../utils/utils';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
@@ -557,7 +556,7 @@ export class Frame extends SdkObject {
   }
 
   async goto(metadata: CallMetadata, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
-    const constructedNavigationURL = constructNavigationURL(this._page._browserContext._options.baseURL, url);
+    const constructedNavigationURL = constructURLBasedOnBaseURL(this._page._browserContext._options.baseURL, url);
     const controller = new ProgressController(metadata, this);
     return controller.run(progress => this._goto(progress, constructedNavigationURL, options), this._page._timeoutSettings.navigationTimeout(options));
   }
@@ -1372,18 +1371,4 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
   if (!types.kLifecycleEvents.has(waitUntil))
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
   return waitUntil;
-}
-
-function constructNavigationURL(baseURL: string | undefined, givenURL: string): string {
-  if (!baseURL)
-    return givenURL;
-  try {
-    new URL(givenURL);
-    return givenURL;
-  } catch (error) {
-    if (givenURL === '/' || givenURL === '')
-      return baseURL + givenURL;
-    const additionalSlash = (baseURL[baseURL.length - 1] !== '/' && givenURL[0] !== '/') ? '/' : '';
-    return new URL(givenURL, baseURL + additionalSlash).toString();
-  }
 }

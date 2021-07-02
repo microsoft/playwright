@@ -313,3 +313,18 @@ export function getUserAgent() {
   const packageJson = require('./../../package.json');
   return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
 }
+
+export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
+  if (!baseURL)
+    return givenURL;
+  try {
+    new URL.URL(givenURL);
+    return givenURL;
+  } catch (error) {
+    if (givenURL === '/' || givenURL === '')
+      return baseURL + givenURL;
+    const hasNoSlashes = baseURL[baseURL.length - 1] !== '/' && givenURL[0] !== '/';
+    const hasDoubleSlashes = baseURL[baseURL.length - 1] === '/' && givenURL[0] === '/';
+    return baseURL + (hasNoSlashes ? '/' : '') + (hasDoubleSlashes ? givenURL.substr(1) : givenURL);
+  }
+}
