@@ -31,8 +31,7 @@ import { Page } from '../client/page';
 import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { installDeps } from '../install/installDeps';
-import { allBrowserNames, BrowserName } from '../utils/registry';
+import { allBrowserNames, BrowserName, Registry } from '../utils/registry';
 import * as utils from '../utils/utils';
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
@@ -182,9 +181,10 @@ async function installBrowserChannel(channel: BrowserChannel) {
 program
     .command('install-deps [browserType...]')
     .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .action(async function(browserType) {
+    .action(async function(browserTypes) {
       try {
-        await installDeps(browserType);
+        // TODO: verify the list and print supported browserTypes in the error message.
+        await Registry.currentPackageRegistry().installDeps(browserTypes);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);
