@@ -36,6 +36,7 @@ function linux(channel: string): string[] | undefined {
     case 'chrome-beta': return ['/opt/google/chrome-beta/chrome'];
     case 'chrome-dev': return ['/opt/google/chrome-unstable/chrome'];
     case 'msedge-dev': return ['/opt/microsoft/msedge-dev/msedge'];
+    case 'msedge-beta': return ['/opt/microsoft/msedge-beta/msedge'];
   }
 }
 

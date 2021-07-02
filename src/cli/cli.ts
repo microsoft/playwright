@@ -37,15 +37,17 @@ import * as utils from '../utils/utils';
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
 
-type BrowserChannel = 'chrome-beta'|'chrome'|'msedge';
-const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta', 'chrome', 'msedge']);
+type BrowserChannel = 'chrome-beta'|'chrome'|'msedge'|'msedge-beta';
+const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta', 'chrome', 'msedge', 'msedge-beta']);
 const suggestedBrowsersToInstall = ['chromium', 'webkit', 'firefox', ...allBrowserChannels].map(name => `'${name}'`).join(', ');
+
 const packageJSON = require('../../package.json');
 
 const ChannelName = {
   'chrome-beta': 'Google Chrome Beta',
   'chrome': 'Google Chrome',
   'msedge': 'Microsoft Edge',
+  'msedge-beta': 'Microsoft Edge Beta',
 };
 
 const InstallationScriptName = {
@@ -62,6 +64,11 @@ const InstallationScriptName = {
   'msedge': {
     'darwin': 'reinstall_msedge_stable_mac.sh',
     'win32': 'reinstall_msedge_stable_win.ps1',
+  },
+  'msedge-beta': {
+    'darwin': 'reinstall_msedge_beta_mac.sh',
+    'linux': 'reinstall_msedge_beta_linux.sh',
+    'win32': 'reinstall_msedge_beta_win.ps1',
   },
 };
 
@@ -129,7 +136,7 @@ program
           console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall}`);
           process.exit(1);
         }
-        if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge'))
+        if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge') || browserChannels.has('msedge-beta'))
           browserNames.add('ffmpeg');
         if (browserNames.size)
           await installBrowsers([...browserNames]);
@@ -156,21 +163,20 @@ async function installBrowserChannel(channel: BrowserChannel) {
     throw new Error(`Cannot install ${ChannelName[channel]} on ${platform}`);
 
   const scriptArgs = [];
-  if (channel === 'msedge') {
+  if ((channel === 'msedge' || channel === 'msedge-beta') && platform !== 'linux') {
     const products = JSON.parse(await utils.fetchData('https://edgeupdates.microsoft.com/api/products'));
-    const stable = products.find((product: any) => product.Product === 'Stable');
-    if (platform === 'win32') {
-      const arch = os.arch() === 'x64' ? 'x64' : 'x86';
-      const release = stable.Releases.find((release: any) => release.Platform === 'Windows' && release.Architecture === arch);
-      const artifact = release.Artifacts.find((artifact: any) => artifact.ArtifactName === 'msi');
+    const productName = channel === 'msedge' ? 'Stable' : 'Beta';
+    const product = products.find((product: any) => product.Product === productName);
+    const searchConfig = ({
+      darwin: {platform: 'MacOS', arch: 'universal', artifact: 'pkg'},
+      win32: {platform: 'Windows', arch: os.arch() === 'x64' ? 'x64' : 'x86', artifact: 'msi'},
+    } as any)[platform];
+    const release = searchConfig ? product.Releases.find((release: any) => release.Platform === searchConfig.platform && release.Architecture === searchConfig.arch) : null;
+    const artifact = release ? release.Artifacts.find((artifact: any) => artifact.ArtifactName === searchConfig.artifact) : null;
+    if (artifact)
       scriptArgs.push(artifact.Location /* url */);
-    } else if (platform === 'darwin') {
-      const release = stable.Releases.find((release: any) => release.Platform === 'MacOS' && release.Architecture === 'universal');
-      const artifact = release.Artifacts.find((artifact: any) => artifact.ArtifactName === 'pkg');
-      scriptArgs.push(artifact.Location /* url */);
-    } else {
+    else
       throw new Error(`Cannot install ${ChannelName[channel]} on ${platform}`);
-    }
   }
 
   const shell = scriptName.endsWith('.ps1') ? 'powershell.exe' : 'bash';
