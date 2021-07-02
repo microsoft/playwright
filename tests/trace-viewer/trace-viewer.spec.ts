@@ -42,7 +42,8 @@ class TraceViewerPage {
     await this.page.click(`.action-title:has-text("${title}")`);
   }
 
-  async logLines() {
+
+  async callLines() {
     await this.page.waitForSelector('.call-line:visible');
     return await this.page.$$eval('.call-line:visible', ee => ee.map(e => e.textContent));
   }
@@ -97,12 +98,13 @@ test.beforeAll(async ({ browser, browserName }, workerInfo) => {
   const page = await context.newPage();
   await page.goto('data:text/html,<html>Hello world</html>');
   await page.setContent('<button>Click</button>');
-  await page.evaluate(() => {
+  await page.evaluate(({ a }) => {
     console.log('Info');
     console.warn('Warning');
     console.error('Error');
     setTimeout(() => { throw new Error('Unhandled exception'); }, 0);
-  });
+    return 'return ' + a;
+  }, { a: 'paramA', b: 4 });
   await page.click('"Click"');
   await Promise.all([
     page.waitForNavigation(),
@@ -133,7 +135,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
 test('should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('page.click');
-  const logLines = await traceViewer.logLines();
+  const logLines = await traceViewer.callLines();
   expect(logLines.length).toBeGreaterThan(10);
   expect(logLines).toContain('attempting click action');
   expect(logLines).toContain('  click action done');
@@ -167,4 +169,16 @@ test('should open console errors on click', async ({ showTraceViewer, browserNam
   expect(await traceViewer.page.isHidden('.console-tab'));
   await (await traceViewer.actionIcons('page.evaluate')).click();
   expect(await traceViewer.page.waitForSelector('.console-tab'));
+});
+
+test('should show params and return value', async ({ showTraceViewer, browserName }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  expect(await traceViewer.selectAction('page.evaluate'));
+  expect(await traceViewer.callLines()).toEqual([
+    'page.evaluate',
+    'expression: "({↵    a↵  }) => {↵    console.log(\'Info\');↵    console.warn(\'Warning\');↵    con…"',
+    'isFunction: true',
+    'arg: {"a":"paramA","b":4}',
+    'value: "return paramA"'
+  ]);
 });

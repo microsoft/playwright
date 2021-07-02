@@ -15,8 +15,6 @@
  */
 
 import { EventEmitter } from 'events';
-import { Point, StackFrame } from '../common/types';
-import { SerializedError } from '../protocol/channels';
 import { createGuid } from '../utils/utils';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
@@ -34,26 +32,8 @@ export type Attribution = {
   frame?: Frame;
 };
 
-export type CallMetadata = {
-  id: string;
-  startTime: number;
-  endTime: number;
-  pauseStartTime?: number;
-  pauseEndTime?: number;
-  type: string;
-  method: string;
-  params: any;
-  apiName?: string;
-  stack?: StackFrame[];
-  log: string[];
-  snapshots: { title: string, snapshotName: string }[];
-  error?: SerializedError;
-  result?: any;
-  point?: Point;
-  objectId?: string;
-  pageId?: string;
-  frameId?: string;
-};
+import { CallMetadata } from '../protocol/callMetadata';
+export { CallMetadata } from '../protocol/callMetadata';
 
 export class SdkObject extends EventEmitter {
   guid: string;

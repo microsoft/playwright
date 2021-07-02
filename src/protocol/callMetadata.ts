@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,25 @@
  * limitations under the License.
  */
 
-export type Size = { width: number, height: number };
-export type Point = { x: number, y: number };
-export type Rect = Size & Point;
-export type Quad = [ Point, Point, Point, Point ];
-export type URLMatch = string | RegExp | ((url: URL) => boolean);
-export type TimeoutOptions = { timeout?: number };
+import { Point, StackFrame, SerializedError } from './channels';
+
+export type CallMetadata = {
+  id: string;
+  startTime: number;
+  endTime: number;
+  pauseStartTime?: number;
+  pauseEndTime?: number;
+  type: string;
+  method: string;
+  params: any;
+  apiName?: string;
+  stack?: StackFrame[];
+  log: string[];
+  snapshots: { title: string, snapshotName: string }[];
+  error?: SerializedError;
+  result?: any;
+  point?: Point;
+  objectId?: string;
+  pageId?: string;
+  frameId?: string;
+};
