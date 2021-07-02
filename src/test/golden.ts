@@ -92,18 +92,24 @@ export function compare(
   const snapshotFile = snapshotPath(name);
 
   if (!fs.existsSync(snapshotFile)) {
-    const writingActual = updateSnapshots === 'all' || updateSnapshots === 'missing';
-    if (writingActual) {
+    const isWriteMissingMode = updateSnapshots === 'all' || updateSnapshots === 'missing';
+    const commonMissingSnapshotMessage = `${snapshotFile} is missing in snapshots`;
+    if (withNegateComparison) {
+      const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
+      return { pass: true , message };
+    }
+    if (isWriteMissingMode) {
       fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
       fs.writeFileSync(snapshotFile, actual);
     }
-    const message = snapshotFile + ' is missing in snapshots' + (writingActual ? ', writing actual.' : '.');
+    const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (updateSnapshots === 'all') {
       console.log(message);
-      return { pass: withNegateComparison ? false : true, message };
+      return { pass: true, message };
     }
-    return { pass: withNegateComparison ? true : false, message };
+    return { pass: false, message };
   }
+
   const expected = fs.readFileSync(snapshotFile);
   const extension = path.extname(snapshotFile).substring(1);
   const mimeType = extensionToMimeType[extension] || 'application/octet-string';
@@ -117,33 +123,28 @@ export function compare(
 
   const result = comparator(actual, expected, mimeType, options);
   if (!result) {
-    if (!withNegateComparison)
-      return { pass: true };
+    if (withNegateComparison) {
+      const message = [
+        colors.red('Snapshot comparison failed:'),
+        '',
+        indent('Expected result should be different from the actual one.', '  '),
+      ].join('\n');
+      return {
+        pass: true,
+        message,
+      };
+    }
 
-    const message = [
-      colors.red('Snapshot comparison failed:'),
-      '',
-      indent('Expected result should be different from the actual one.', '  '),
-    ].join('\n');
-    return {
-      pass: true,
-      message,
-    };
+    return { pass: true };
   }
 
-  if (updateSnapshots === 'all') {
+  if (updateSnapshots === 'all' && !withNegateComparison) {
     fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
     fs.writeFileSync(snapshotFile, actual);
     console.log(snapshotFile + ' does not match, writing actual.');
     return {
-      pass: withNegateComparison ? false : true,
+      pass: true,
       message: snapshotFile + ' running with --update-snapshots, writing actual.'
-    };
-  }
-
-  if (withNegateComparison) {
-    return {
-      pass: false,
     };
   }
 
@@ -155,6 +156,12 @@ export function compare(
   fs.writeFileSync(actualPath, actual);
   if (result.diff)
     fs.writeFileSync(diffPath, result.diff);
+
+  if (withNegateComparison) {
+    return {
+      pass: false,
+    };
+  }
 
   const output = [
     colors.red(`Snapshot comparison failed:`),
