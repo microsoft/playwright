@@ -19,6 +19,7 @@ import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
 import { BrowserContextOptions } from '../../types';
 
 export type ContextCreatedTraceEvent = {
+  version: number,
   type: 'context-options',
   browserName: string,
   options: BrowserContextOptions

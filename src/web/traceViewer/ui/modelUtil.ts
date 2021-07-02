@@ -22,6 +22,7 @@ const contextSymbol = Symbol('context');
 const pageSymbol = Symbol('context');
 const nextSymbol = Symbol('next');
 const eventsSymbol = Symbol('events');
+const resourcesSymbol = Symbol('resources');
 
 export function indexModel(context: ContextEntry) {
   for (const page of context.pages) {
@@ -84,8 +85,14 @@ export function eventsForAction(action: ActionTraceEvent): ActionTraceEvent[] {
 }
 
 export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[] {
+  let result: ResourceSnapshot[] = (action as any)[resourcesSymbol];
+  if (result)
+    return result;
+
   const nextAction = next(action);
-  return context(action).resources.filter(resource => {
+  result = context(action).resources.filter(resource => {
     return resource.timestamp > action.metadata.startTime && (!nextAction || resource.timestamp < nextAction.metadata.startTime);
   });
+  (action as any)[resourcesSymbol] = result;
+  return result;
 }

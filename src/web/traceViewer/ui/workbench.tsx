@@ -25,7 +25,7 @@ import { ContextSelector } from './contextSelector';
 import { NetworkTab } from './networkTab';
 import { SourceTab } from './sourceTab';
 import { SnapshotTab } from './snapshotTab';
-import { LogsTab } from './logsTab';
+import { CallTab } from './callTab';
 import { SplitView } from '../../components/splitView';
 import { useAsyncMemo } from './helpers';
 import { ConsoleTab } from './consoleTab';
@@ -59,7 +59,9 @@ export const Workbench: React.FunctionComponent<{
 
   // Leave some nice free space on the right hand side.
   boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
-
+  const { errors, warnings } = selectedAction ? modelUtil.stats(selectedAction) : { errors: 0, warnings: 0 };
+  const consoleCount = errors + warnings;
+  const networkCount = selectedAction ? modelUtil.resourcesForAction(selectedAction).length : 0;
 
   return <div className='vbox workbench'>
     <div className='hbox header'>
@@ -89,10 +91,10 @@ export const Workbench: React.FunctionComponent<{
       <SplitView sidebarSize={300} orientation='horizontal'>
         <SnapshotTab action={selectedAction} snapshotSize={snapshotSize} />
         <TabbedPane tabs={[
-          { id: 'logs', title: 'Log', render: () => <LogsTab action={selectedAction} /> },
-          { id: 'console', title: 'Console', render: () => <ConsoleTab action={selectedAction} /> },
-          { id: 'source', title: 'Source', render: () => <SourceTab action={selectedAction} /> },
-          { id: 'network', title: 'Network', render: () => <NetworkTab action={selectedAction} /> },
+          { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={selectedAction} /> },
+          { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={selectedAction} /> },
+          { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={selectedAction} /> },
+          { id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={selectedAction} /> },
         ]} selectedTab={selectedTab} setSelectedTab={setSelectedTab}/>
       </SplitView>
       <ActionList

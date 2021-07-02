@@ -35,6 +35,8 @@ export type TracerOptions = {
   screenshots?: boolean;
 };
 
+export const VERSION = 1;
+
 export class Tracing implements InstrumentationListener {
   private _appendEventChain = Promise.resolve();
   private _snapshotter: TraceSnapshotter;
@@ -63,6 +65,7 @@ export class Tracing implements InstrumentationListener {
 
     this._appendEventChain = mkdirIfNeeded(this._traceFile);
     const event: trace.ContextCreatedTraceEvent = {
+      version: VERSION,
       type: 'context-options',
       browserName: this._context._browser.options.name,
       options: this._context._options
@@ -90,7 +93,7 @@ export class Tracing implements InstrumentationListener {
     for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
       await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
       if (!afterSnapshot)
-        metadata.error = 'Action was interrupted';
+        metadata.error = { error: { name: 'Error', message: 'Action was interrupted' } };
       await this.onAfterCall(sdkObject, metadata);
     }
     for (const page of this._context.pages())
@@ -227,6 +230,6 @@ export class Tracing implements InstrumentationListener {
   }
 }
 
-function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
+export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
   return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
 }

@@ -192,7 +192,7 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   const clickEvent = events.find(e => e.metadata?.apiName === 'page.click');
   expect(clickEvent).toBeTruthy();
-  expect(clickEvent.metadata.error).toBe('Action was interrupted');
+  expect(clickEvent.metadata.error.error.message).toBe('Action was interrupted');
 });
 
 
