@@ -38,9 +38,9 @@ it('should construct a new URL when a relative path in browser.newPage is passed
   const page = await browser.newPage({
     baseURL: server.PREFIX + '/url-construction',
   });
-  expect((await page.goto('mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
-  expect((await page.goto('./mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
-  expect((await page.goto('/mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
+  expect((await page.goto('mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
+  expect((await page.goto('./mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
+  expect((await page.goto('/mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
   await page.close();
 });
 
@@ -50,7 +50,7 @@ it('should construct a new URL when a relative path in browser.newPage is passed
   });
   expect((await page.goto('mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
   expect((await page.goto('./mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
-  expect((await page.goto('/mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
+  expect((await page.goto('/mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
   await page.close();
 });
 
@@ -89,13 +89,14 @@ it('should be able to match a URL relative to its given URL with urlMatcher', as
   });
   await page.goto('/kek/index.html');
   await page.waitForURL('/kek/index.html');
-  await page.route('/kek/index.html', route => route.fulfill({
+  expect(page.url()).toBe(server.PREFIX + '/kek/index.html');
+  await page.route('./kek/index.html', route => route.fulfill({
     body: 'base-url-matched-route',
   }));
   const [request, response] = await Promise.all([
-    page.waitForRequest('/kek/index.html'),
-    page.waitForResponse('/kek/index.html'),
-    page.goto('/kek/index.html'),
+    page.waitForRequest('./kek/index.html'),
+    page.waitForResponse('./kek/index.html'),
+    page.goto('./kek/index.html'),
   ]);
   expect(request.url()).toBe(server.PREFIX + '/foobar/kek/index.html');
   expect(response.url()).toBe(server.PREFIX + '/foobar/kek/index.html');

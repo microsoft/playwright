@@ -323,8 +323,6 @@ export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL
   } catch (error) {
     if (givenURL === '/' || givenURL === '')
       return baseURL + givenURL;
-    const hasNoSlashes = baseURL[baseURL.length - 1] !== '/' && givenURL[0] !== '/';
-    const hasDoubleSlashes = baseURL[baseURL.length - 1] === '/' && givenURL[0] === '/';
-    return baseURL + (hasNoSlashes ? '/' : '') + (hasDoubleSlashes ? givenURL.substr(1) : givenURL);
+    return (new URL.URL(givenURL, baseURL)).toString();
   }
 }
