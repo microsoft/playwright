@@ -21,7 +21,6 @@ import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
 import { RecentLogsCollector } from '../utils/debugLogger';
-import * as registry from '../utils/registry';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 import { Selectors } from './selectors';
@@ -34,7 +33,6 @@ export interface BrowserProcess {
 }
 
 export type PlaywrightOptions = {
-  registry: registry.Registry,
   rootSdkObject: SdkObject,
   selectors: Selectors,
   loopbackProxyOverride?: () => string,

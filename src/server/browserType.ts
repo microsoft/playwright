@@ -18,7 +18,7 @@ import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
 import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import * as registry from '../utils/registry';
+import { registry, BrowserName } from '../utils/registry';
 import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
 import { launchProcess, Env, envArrayToObject } from './processLauncher';
@@ -34,20 +34,18 @@ import { CallMetadata, SdkObject } from './instrumentation';
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export abstract class BrowserType extends SdkObject {
-  private _name: registry.BrowserName;
-  readonly _registry: registry.Registry;
+  private _name: BrowserName;
   readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(browserName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
+  constructor(browserName: BrowserName, playwrightOptions: PlaywrightOptions) {
     super(playwrightOptions.rootSdkObject, 'browser-type');
     this.attribution.browserType = this;
     this._playwrightOptions = playwrightOptions;
     this._name = browserName;
-    this._registry = playwrightOptions.registry;
   }
 
   executablePath(channel?: string): string {
-    return this._registry.executablePath(this._name) || '';
+    return registry.executablePath(this._name) || '';
   }
 
   name(): string {
@@ -170,9 +168,9 @@ export abstract class BrowserType extends SdkObject {
     }
 
     // Only validate dependencies for downloadable browsers.
-    const browserName: registry.BrowserName = (options.channel || this._name) as registry.BrowserName;
-    if (!executablePath && this._registry.isSupportedBrowser(browserName))
-      await this._registry.validateHostRequirements(browserName);
+    const browserName: BrowserName = (options.channel || this._name) as BrowserName;
+    if (!executablePath && registry.isSupportedBrowser(browserName))
+      await registry.validateHostRequirements(browserName);
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
     const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));

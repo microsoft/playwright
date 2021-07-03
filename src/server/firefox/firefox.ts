@@ -26,6 +26,7 @@ import { Env } from '../processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
+import { registry } from '../../utils/registry';
 
 export class Firefox extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
@@ -36,7 +37,7 @@ export class Firefox extends BrowserType {
     if (channel) {
       let executablePath = undefined;
       if ((channel as any) === 'firefox-beta')
-        executablePath = this._registry.executablePath('firefox-beta');
+        executablePath = registry.executablePath('firefox-beta');
       assert(executablePath, `unsupported firefox channel "${channel}"`);
       assert(fs.existsSync(executablePath), `"${channel}" channel is not installed. Try running 'npx playwright install ${channel}'`);
       return executablePath;

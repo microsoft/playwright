@@ -35,6 +35,7 @@ import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
 import { findChromiumChannel } from './findChromiumChannel';
 import http from 'http';
+import { registry } from '../../utils/registry';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -52,7 +53,7 @@ export class Chromium extends BrowserType {
     if (channel) {
       let executablePath = undefined;
       if ((channel as any) === 'chromium-with-symbols')
-        executablePath = this._registry.executablePath('chromium-with-symbols');
+        executablePath = registry.executablePath('chromium-with-symbols');
       else
         executablePath = findChromiumChannel(channel);
       assert(executablePath, `unsupported chromium channel "${channel}"`);
@@ -102,7 +103,7 @@ export class Chromium extends BrowserType {
   }
 
   private _createDevTools() {
-    return new CRDevTools(path.join(this._registry.browserDirectory('chromium'), 'devtools-preferences.json'));
+    return new CRDevTools(path.join(registry.browserDirectory('chromium'), 'devtools-preferences.json'));
   }
 
   async _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
