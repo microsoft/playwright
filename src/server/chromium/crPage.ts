@@ -40,6 +40,7 @@ import { assert, headersArrayToObject, createGuid, canAccessFile } from '../../u
 import { VideoRecorder } from './videoRecorder';
 import { Progress } from '../progress';
 import { DragManager } from './crDragDrop';
+import { registry } from '../../utils/registry';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -844,7 +845,7 @@ class FrameSession {
 
   async _createVideoRecorder(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
     assert(!this._screencastId);
-    const ffmpegPath = this._crPage._browserContext._browser.options.registry.executablePath('ffmpeg');
+    const ffmpegPath = registry.executablePath('ffmpeg');
     if (!ffmpegPath)
       throw new Error('ffmpeg executable was not found');
     if (!canAccessFile(ffmpegPath)) {

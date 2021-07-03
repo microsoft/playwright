@@ -29,7 +29,7 @@ import { canAccessFile, isUnderTest } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
-import { Registry } from '../../../utils/registry';
+import { registry } from '../../../utils/registry';
 import { findChromiumChannel } from '../../chromium/findChromiumChannel';
 import { installAppIcon } from '../../chromium/crApp';
 
@@ -140,7 +140,6 @@ export class TraceViewer {
     // Null means no installation and no channels found.
     let channel = null;
     if (traceViewerBrowser === 'chromium') {
-      const registry = Registry.currentPackageRegistry();
       if (canAccessFile(registry.executablePath('chromium')!)) {
         // This means we have a browser downloaded.
         channel = undefined;
