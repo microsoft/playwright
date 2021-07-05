@@ -98,6 +98,38 @@ By default NUnit will run all test files in parallel, while running tests inside
 
 For CPU-bound tests, we recommend using as many workers as there are cores on your system, divided by 2. For IO-bound tests you can use as many workers as you have cores.
 
+## Using Verbose API Logs with NUnit
+
+When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via the `DEBUG` environment variable, you will see the messages in the standard error stream. In NUnit, within Visual Studio, that will be the `Tests` pane of the `Output` window. It will also be displayed in the `Test Log` for each test.
+
+## Using the .runsettings file
+
+When running tests from Visual Studio, you can take advantage of the `.runsettings` file.
+
+For example, to specify the amount of workers (`NUnit.NumberOfTestWorkers`), you can use the following snippet:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <NUnit>
+    <NumberOfTestWorkers>24</NumberOfTestWorkers>
+  </NUnit>
+</RunSettings>
+```
+
+If you want to enable debugging, you can set the `DEBUG` variable to `pw:api` as documented, by doing:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <DEBUG>pw:api</DEBUG>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>
+```
+
 ## Base NUnit classes for Playwright
 
 There are few base classes available to you in Microsoft.Playwright.NUnit namespace:
