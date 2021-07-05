@@ -7277,6 +7277,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
     export type setDownloadBehaviorReturnValue = {
     }
+    /**
+     * Cancels a current running download.
+     */
+    export type cancelDownloadParameters = {
+      uuid: string;
+    }
+    export type cancelDownloadReturnValue = {
+    }
   }
   
   /**
@@ -9014,6 +9022,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.setGeolocationOverride": Playwright.setGeolocationOverrideParameters;
     "Playwright.setLanguages": Playwright.setLanguagesParameters;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorParameters;
+    "Playwright.cancelDownload": Playwright.cancelDownloadParameters;
     "Runtime.parse": Runtime.parseParameters;
     "Runtime.evaluate": Runtime.evaluateParameters;
     "Runtime.awaitPromise": Runtime.awaitPromiseParameters;
@@ -9310,6 +9319,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.setGeolocationOverride": Playwright.setGeolocationOverrideReturnValue;
     "Playwright.setLanguages": Playwright.setLanguagesReturnValue;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorReturnValue;
+    "Playwright.cancelDownload": Playwright.cancelDownloadReturnValue;
     "Runtime.parse": Runtime.parseReturnValue;
     "Runtime.evaluate": Runtime.evaluateReturnValue;
     "Runtime.awaitPromise": Runtime.awaitPromiseReturnValue;
