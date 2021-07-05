@@ -332,8 +332,7 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async _doCancelDownload(uuid: string) {
-    // TODO: Have this implemented
-    throw new Error('Download cancellation not yet implemented in Firefox');
+    await this._browser._connection.send('Browser.cancelDownload', { uuid });
   }
 }
 
