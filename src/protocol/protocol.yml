@@ -307,6 +307,7 @@ ContextOptions:
       - reduce
       - no-preference
     acceptDownloads: boolean?
+    baseURL: string?
     _debugName: string?
     recordVideo:
       type: object?

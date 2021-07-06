@@ -118,7 +118,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
         if (event.error)
           return true;
         waiter.log(`  navigated to "${event.url}"`);
-        return urlMatches(event.url, options.url);
+        return urlMatches(this._page?.context()._options.baseURL, event.url, options.url);
       });
       if (navigatedEvent.error) {
         const e = new Error(navigatedEvent.error);
@@ -155,7 +155,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   }
 
   async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {
-    if (urlMatches(this.url(), url))
+    if (urlMatches(this._page?.context()._options.baseURL, this.url(), url))
       return await this.waitForLoadState(options?.waitUntil, options);
     await this.waitForNavigation({ url, ...options });
   }

@@ -25,7 +25,7 @@ import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
-import { assert, makeWaitForNextTask } from '../utils/utils';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
@@ -556,8 +556,9 @@ export class Frame extends SdkObject {
   }
 
   async goto(metadata: CallMetadata, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
+    const constructedNavigationURL = constructURLBasedOnBaseURL(this._page._browserContext._options.baseURL, url);
     const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this._goto(progress, url, options), this._page._timeoutSettings.navigationTimeout(options));
+    return controller.run(progress => this._goto(progress, constructedNavigationURL, options), this._page._timeoutSettings.navigationTimeout(options));
   }
 
   private async _goto(progress: Progress, url: string, options: types.GotoOptions): Promise<network.Response | null> {

@@ -329,6 +329,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -399,6 +400,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -489,6 +491,7 @@ export type BrowserNewContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -546,6 +549,7 @@ export type BrowserNewContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,

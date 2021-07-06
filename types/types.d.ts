@@ -1945,7 +1945,8 @@ export interface Page {
    * [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
    *
    * Shortcut for main frame's [frame.goto(url[, options])](https://playwright.dev/docs/api/class-frame#frame-goto)
-   * @param url URL to navigate page to. The url should include scheme, e.g. `https://`.
+   * @param url URL to navigate page to. The url should include scheme, e.g. `https://`. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
    */
   goto(url: string, options?: {
@@ -2437,7 +2438,8 @@ export interface Page {
    * [page.unroute(url[, handler])](https://playwright.dev/docs/api/class-page#page-unroute).
    *
    * > NOTE: Enabling routing disables http cache.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    */
   route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
@@ -3166,7 +3168,7 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
-   * Waits for the matching request and returns it.  See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details
+   * Waits for the matching request and returns it. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details
    * about events.
    *
    * ```js
@@ -3222,7 +3224,8 @@ export interface Page {
    * ]);
    * ```
    *
-   * @param urlOrPredicate Request URL string, regex or predicate receiving [Response] object.
+   * @param urlOrPredicate Request URL string, regex or predicate receiving [Response] object. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
    */
   waitForResponse(urlOrPredicate: string|RegExp|((response: Response) => boolean|Promise<boolean>), options?: {
@@ -5481,7 +5484,8 @@ export interface BrowserContext {
    * [browserContext.unroute(url[, handler])](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute).
    *
    * > NOTE: Enabling routing disables http cache.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    */
   route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
@@ -7015,6 +7019,19 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
+     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
+     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
+     * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+     * constructor for building the corresponding URL. Examples:
+     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     */
+    baseURL?: string;
+
+    /**
      * Toggles bypassing page's Content-Security-Policy.
      */
     bypassCSP?: boolean;
@@ -8139,6 +8156,19 @@ export interface AndroidDevice {
     acceptDownloads?: boolean;
 
     /**
+     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
+     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
+     * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+     * constructor for building the corresponding URL. Examples:
+     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     */
+    baseURL?: string;
+
+    /**
      * Toggles bypassing page's Content-Security-Policy.
      */
     bypassCSP?: boolean;
@@ -8895,6 +8925,19 @@ export interface Browser extends EventEmitter {
      * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
      */
     acceptDownloads?: boolean;
+
+    /**
+     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
+     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
+     * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+     * constructor for building the corresponding URL. Examples:
+     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     */
+    baseURL?: string;
 
     /**
      * Toggles bypassing page's Content-Security-Policy.
@@ -11012,6 +11055,19 @@ export interface BrowserContextOptions {
    * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
    */
   acceptDownloads?: boolean;
+
+  /**
+   * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+   * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
+   * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
+   * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+   * constructor for building the corresponding URL. Examples:
+   * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+   */
+  baseURL?: string;
 
   /**
    * Toggles bypassing page's Content-Security-Policy.

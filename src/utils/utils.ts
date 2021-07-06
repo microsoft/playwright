@@ -313,3 +313,11 @@ export function getUserAgent() {
   const packageJson = require('./../../package.json');
   return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
 }
+
+export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
+  try {
+    return (new URL.URL(givenURL, baseURL)).toString();
+  } catch (e) {
+    return givenURL;
+  }
+}

@@ -1001,6 +1001,8 @@ Enabling routing disables http cache.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: BrowserContext.route.handler
 * langs: js, python
