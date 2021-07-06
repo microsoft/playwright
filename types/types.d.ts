@@ -9575,6 +9575,10 @@ export interface Download {
   /**
    * Returns path to the downloaded file in case of successful download. The method will wait for the download to finish if
    * necessary. The method throws when connected remotely.
+   *
+   * Note that the download's file name is a random GUID, use
+   * [download.suggestedFilename()](https://playwright.dev/docs/api/class-download#download-suggested-filename) to get
+   * suggested file name.
    */
   path(): Promise<null|string>;
 
