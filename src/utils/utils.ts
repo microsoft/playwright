@@ -22,6 +22,8 @@ import os from 'os';
 import { spawn } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
+import extract from 'extract-zip';
+import ProgressBar from 'progress';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -312,4 +314,88 @@ export function isLocalIpAddress(ipAdress: string): boolean {
 export function getUserAgent() {
   const packageJson = require('./../../package.json');
   return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
+}
+
+type DownloadAndExtractZipOptions = {
+  title: string,
+  downloadURL: string,
+  temporaryFileName: string,
+  targetDir: string,
+  log: (message: string) => void,
+};
+
+export async function downloadAndExtractZip(options: DownloadAndExtractZipOptions): Promise<boolean> {
+  const log = options.log;
+  if (await existsAsync(options.targetDir)) {
+    // Already downloaded.
+    log(`${options.title} is already downloaded.`);
+    return false;
+  }
+
+  let progressBar: ProgressBar;
+  let lastDownloadedBytes = 0;
+
+  function progressCallback(downloadedBytes: number, totalBytes: number) {
+    if (!process.stderr.isTTY)
+      return;
+    if (!progressBar) {
+      progressBar = new ProgressBar(`Downloading ${options.title} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
+        complete: '=',
+        incomplete: ' ',
+        width: 20,
+        total: totalBytes,
+      });
+    }
+    const delta = downloadedBytes - lastDownloadedBytes;
+    lastDownloadedBytes = downloadedBytes;
+    progressBar.tick(delta);
+  }
+
+  const zipPath = path.join(os.tmpdir(), `${options.temporaryFileName}.szip`);
+  try {
+    for (let attempt = 1, N = 3; attempt <= N; ++attempt) {
+      log(`downloading ${options.title} - attempt #${attempt}`);
+      const {error} = await downloadFile(options.downloadURL, zipPath, { progressCallback, log });
+      if (!error) {
+        log(`SUCCESS downloading ${options.title}`);
+        break;
+      }
+      const errorMessage = typeof error === 'object' && typeof error.message === 'string' ? error.message : '';
+      log(`attempt #${attempt} - ERROR: ${errorMessage}`);
+      if (attempt < N && (errorMessage.includes('ECONNRESET') || errorMessage.includes('ETIMEDOUT'))) {
+        // Maximum delay is 3rd retry: 1337.5ms
+        const millis = (Math.random() * 200) + (250 * Math.pow(1.5, attempt));
+        log(`sleeping ${millis}ms before retry...`);
+        await new Promise(c => setTimeout(c, millis));
+      } else {
+        throw error;
+      }
+    }
+    log(`extracting archive`);
+    log(`-- zip: ${zipPath}`);
+    log(`-- location: ${options.targetDir}`);
+    await extract(zipPath, { dir: options.targetDir });
+  } catch (e) {
+    log(`FAILED installation ${options.title} with error: ${e}`);
+    process.exitCode = 1;
+    throw e;
+  } finally {
+    if (await existsAsync(zipPath))
+      await fs.promises.unlink(zipPath);
+  }
+  logPolitely(`${options.title} downloaded to ${options.targetDir}`);
+  return true;
+}
+
+function toMegabytes(bytes: number) {
+  const mb = bytes / 1024 / 1024;
+  return `${Math.round(mb * 10) / 10} Mb`;
+}
+
+export function logPolitely(toBeLogged: string) {
+  const logLevel = process.env.npm_config_loglevel;
+  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
+
+  if (!logLevelDisplay)
+    console.log(toBeLogged);  // eslint-disable-line no-console
 }

@@ -21,9 +21,9 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion, getUbuntuVersionSync } from './ubuntuVersion';
-import { assert, getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync } from './utils';
+import { assert, getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, downloadAndExtractZip, logPolitely } from './utils';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
-import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
+import { debugLogger } from './debugLogger';
 
 export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg';
 export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'firefox-beta']);
@@ -431,11 +431,18 @@ export class Registry {
       for (const browserName of browserNames) {
         const revision = this._revision(browserName);
         const browserDirectory = this.browserDirectory(browserName);
-        const title = `${browserName} v${revision}`;
-        const downloadFileName = `playwright-download-${browserName}-${hostPlatform}-${revision}`;
-        await downloadBrowserWithProgressBar(title, browserDirectory, this.executablePath(browserName)!, this._downloadURL(browserName), downloadFileName).catch(e => {
-          throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
+        await downloadAndExtractZip({
+          title: `Playwright build of ${browserName} v${revision}`,
+          targetDir: browserDirectory,
+          downloadURL: this._downloadURL(browserName),
+          temporaryFileName: `playwright-download-${browserName}-${hostPlatform}-${revision}`,
+          log: debugLogger.log.bind(debugLogger, 'install'),
+        }).catch(e => {
+          throw new Error(`Failed to download ${browserName} v${revision}, caused by\n${e.stack}`);
         });
+        const executablePath = this.executablePath(browserName)!;
+        debugLogger.log('install', `fixing permissions at ${executablePath}`);
+        await fs.promises.chmod(executablePath, 0o755);
         await fs.promises.writeFile(markerFilePath(browserDirectory), '');
       }
     } finally {
