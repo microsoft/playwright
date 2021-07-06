@@ -14,7 +14,7 @@ With every release, Playwright updates the versions of the browsers it supports,
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.
  Since Chromium project is ahead of the branded browsers,
 when the world is on Google Chrome 89, Playwright already supports Chromium 91 that will hit Google Chrome and Microsoft Edge
-if a few weeks.
+in a few weeks.
 
 There is also a way to opt into using Google Chrome's or Microsoft Edge's branded builds for testing. For details
 on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edge](#google-chrome--microsoft-edge) section below.
@@ -84,6 +84,28 @@ class Program
 
 :::note
 Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be installed manually before use.
+
+You can use Playwright command line interface to install the browsers:
+
+```bash js
+# Install Chrome stable
+npx playwright install chrome
+```
+
+```bash java
+# Install Chrome stable
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chrome"
+```
+
+```bash python
+# Install Chrome stable
+playwright install chrome
+```
+
+```bash csharp
+# Install Chrome stable
+playwright install chrome
+```
 :::
 
 ### When to use Google Chrome & Microsoft Edge and when not to?
