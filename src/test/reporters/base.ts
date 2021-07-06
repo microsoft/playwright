@@ -226,7 +226,7 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-function positionInFile(stack: string, file: string): { column: number; line: number; } {
+function positionInFile(stack: string, file: string): { column: number; line: number; } | undefined {
   // Stack will have /private/var/folders instead of /var/folders on Mac.
   file = fs.realpathSync(file);
   for (const line of stack.split('\n')) {
@@ -236,7 +236,6 @@ function positionInFile(stack: string, file: string): { column: number; line: nu
     if (path.resolve(process.cwd(), parsed.file) === file)
       return {column: parsed.column || 0, line: parsed.line || 0};
   }
-  return { column: 0, line: 0 };
 }
 
 function monotonicTime(): number {

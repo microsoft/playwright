@@ -45,7 +45,7 @@ class ListReporter extends BaseReporter {
         process.stdout.write('\n');
         this._lastRow++;
       }
-      process.stdout.write('    ' + colors.gray(formatTestTitle(this.config, test) + ': ') + '\n');
+      process.stdout.write('     ' + colors.gray(formatTestTitle(this.config, test) + ': ') + '\n');
     }
     this._testRows.set(test, this._lastRow++);
   }

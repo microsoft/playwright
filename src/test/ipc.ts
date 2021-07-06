@@ -56,8 +56,7 @@ export type RunPayload = {
 
 export type DonePayload = {
   failedTestId?: string;
-  fatalError?: any;
-  remaining: TestEntry[];
+  fatalError?: TestError;
 };
 
 export type TestOutputPayload = {

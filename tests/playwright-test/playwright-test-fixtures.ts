@@ -112,7 +112,7 @@ async function runTSC(baseDir: string): Promise<TSCResult> {
   };
 }
 
-async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promise<RunResult> {
+async function runPlaywrightTest(baseDir: string, params: any, env: Env, options: RunOptions): Promise<RunResult> {
   const paramList = [];
   let additionalArgs = '';
   for (const key of Object.keys(params)) {
@@ -151,6 +151,7 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
     cwd: baseDir
   });
   let output = '';
+  let didSendSigint = false;
   testProcess.stderr.on('data', chunk => {
     output += String(chunk);
     if (process.env.PW_RUNNER_DEBUG)
@@ -158,6 +159,10 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
   });
   testProcess.stdout.on('data', chunk => {
     output += String(chunk);
+    if (options.sendSIGINTAfter && !didSendSigint && countTimes(output, '%%SEND-SIGINT%%') >= options.sendSIGINTAfter) {
+      didSendSigint = true;
+      process.kill(testProcess.pid, 'SIGINT');
+    }
     if (process.env.PW_RUNNER_DEBUG)
       process.stdout.write(String(chunk));
   });
@@ -212,9 +217,12 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
   };
 }
 
+type RunOptions = {
+  sendSIGINTAfter?: number;
+};
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
-  runInlineTest: (files: Files, params?: Params, env?: Env) => Promise<RunResult>;
+  runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
 };
 
@@ -225,9 +233,9 @@ export const test = base.extend<Fixtures>({
 
   runInlineTest: async ({}, use, testInfo: TestInfo) => {
     let runResult: RunResult | undefined;
-    await use(async (files: Files, params: Params = {}, env: Env = {}) => {
+    await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}) => {
       const baseDir = await writeFiles(testInfo, files);
-      runResult = await runPlaywrightTest(baseDir, params, env);
+      runResult = await runPlaywrightTest(baseDir, params, env, options);
       return runResult;
     });
     if (testInfo.status !== testInfo.expectedStatus && runResult && !process.env.PW_RUNNER_DEBUG)
@@ -267,4 +275,16 @@ export { expect } from '../config/test-runner';
 const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 export function stripAscii(str: string): string {
   return str.replace(asciiRegex, '');
+}
+
+function countTimes(s: string, sub: string): number {
+  let result = 0;
+  for (let index = 0; index !== -1;) {
+    index = s.indexOf(sub, index);
+    if (index !== -1) {
+      result++;
+      index += sub.length;
+    }
+  }
+  return result;
 }

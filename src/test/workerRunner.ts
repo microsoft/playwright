@@ -24,7 +24,7 @@ import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, W
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import { Modifier, Spec, Suite, Test } from './test';
-import { Annotations, TestInfo, WorkerInfo } from './types';
+import { Annotations, TestError, TestInfo, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
 
@@ -40,9 +40,8 @@ export class WorkerRunner extends EventEmitter {
   private _fixtureRunner: FixtureRunner;
 
   private _failedTestId: string | undefined;
-  private _fatalError: any | undefined;
+  private _fatalError: TestError | undefined;
   private _entries = new Map<string, TestEntry>();
-  private _remaining = new Map<string, TestEntry>();
   private _isStopped: any;
   _currentTest: { testId: string, testInfo: TestInfo } | null = null;
 
@@ -58,6 +57,8 @@ export class WorkerRunner extends EventEmitter {
   }
 
   async cleanup() {
+    // We have to load the project to get the right deadline below.
+    this._loadIfNeeded();
     // TODO: separate timeout for teardown?
     const result = await raceAgainstDeadline((async () => {
       await this._fixtureRunner.teardownScope('test');
@@ -111,7 +112,6 @@ export class WorkerRunner extends EventEmitter {
 
   async run(runPayload: RunPayload) {
     this._entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
-    this._remaining = new Map(runPayload.entries.map(e => [ e.testId, e ]));
 
     this._loadIfNeeded();
     const fileSuite = await this._loader.loadTestFile(runPayload.file);
@@ -194,7 +194,6 @@ export class WorkerRunner extends EventEmitter {
     const entry = this._entries.get(test._id);
     if (!entry)
       return;
-    this._remaining.delete(test._id);
 
     const startTime = monotonicTime();
     let deadlineRunner: DeadlineRunner<any> | undefined;
@@ -448,7 +447,6 @@ export class WorkerRunner extends EventEmitter {
     const donePayload: DonePayload = {
       failedTestId: this._failedTestId,
       fatalError: this._fatalError,
-      remaining: [...this._remaining.values()],
     };
     this.emit('done', donePayload);
   }
