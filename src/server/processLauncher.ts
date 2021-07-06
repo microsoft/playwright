@@ -19,7 +19,7 @@ import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { helper } from './helper';
 import * as types from './types';
-import { isUnderTest, removeFolders } from '../utils/utils';
+import { isUnderTest, killProcessGroup, removeFolders } from '../utils/utils';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 

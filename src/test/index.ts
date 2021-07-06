@@ -74,9 +74,12 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   timezoneId: undefined,
   userAgent: undefined,
   viewport: undefined,
+  baseURL: async ({ }, use) => {
+    await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
+  },
   contextOptions: {},
 
-  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
+  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, baseURL, contextOptions }, use, testInfo) => {
     testInfo.snapshotSuffix = process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -139,6 +142,8 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       options.userAgent = userAgent;
     if (viewport !== undefined)
       options.viewport = viewport;
+    if (baseURL !== undefined)
+      options.baseURL = baseURL;
 
     const context = await browser.newContext(options);
     context.setDefaultTimeout(0);

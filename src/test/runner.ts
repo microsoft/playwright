@@ -35,6 +35,7 @@ import EmptyReporter from './reporters/empty';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config } from './types';
+import { WebServer } from './webServer';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -169,6 +170,7 @@ export class Runner {
     let globalSetupResult: any;
     if (config.globalSetup)
       globalSetupResult = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup')(this._loader.fullConfig());
+    const webServer: WebServer|null = config.webServer ? await WebServer.create(config.webServer) : null;
     try {
       for (const file of allTestFiles)
         await this._loader.loadTestFile(file);
@@ -261,6 +263,7 @@ export class Runner {
       await this._reporter.onEnd({ status: failed ? 'failed' : 'passed' });
       return { status: failed ? 'failed' : 'passed' };
     } finally {
+      await webServer?.kill();
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());
       if (config.globalTeardown)
