@@ -82,10 +82,7 @@ class Program
 }
 ```
 
-:::note
-Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be installed manually before use.
-
-You can use Playwright command line interface to install the browsers:
+Note that Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be installed manually before use. You can use Playwright command line interface to install the browsers:
 
 ```bash js
 # Install Chrome stable
@@ -106,7 +103,6 @@ playwright install chrome
 # Install Chrome stable
 playwright install chrome
 ```
-:::
 
 ### When to use Google Chrome & Microsoft Edge and when not to?
 
