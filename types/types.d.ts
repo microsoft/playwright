@@ -9988,16 +9988,20 @@ export interface Keyboard {
     /**
      * Sets the end position of the absolute range that is to be replaced with the composition text.
      */
-    replacememt_end?: number;
+    replacement_end?: number;
 
     /**
      * Sets the start position of the absolute range that is to be replaced with the composition text.
      */
-    replacememt_start?: number;
+    replacement_start?: number;
 
     /**
-     * Sets the key(s) that triggers the composition event, a `key_up` and `key_down` event will be generated for each
-     * specified key. Key chaining is supported, so values such as `Meta+Slash` are permitted.
+     * Sets the key(s) that triggers the composition event, a `keyup` and `keydown` event will be generated for each specified
+     * key. Key chaining is supported, so values such as `Meta+Slash` are permitted. Examples of the keys are:
+     *
+     * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+     * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+     * `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, etc.
      */
     trigger_key?: string;
   }): Promise<void>;
@@ -10016,10 +10020,26 @@ export interface Keyboard {
 
     /**
      * Sets the key that triggers the composition event, a `key_up` and `key_down` event will be generated for the specified
-     * key.
+     * key. Examples of the keys are:
+     *
+     * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+     * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+     * `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, etc.
      */
     trigger_key?: string;
   }): Promise<void>;
+
+  /**
+   * If there is an active composition, it will end the composition and remove the text in active composition. It will
+   * dispatch either a `compositionupdate` and a `compositionend`. It will also dispatch `keydown` and `keyup` events for
+   * `trigger_key`.
+   * @param trigger_key Sets the key that triggers the composition event, a `keyup` and `keydown` event will be generated for the specified key. Examples of the keys are:
+   *
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+   * `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, etc.
+   */
+  imeCancelComposition(trigger_key: string): Promise<void>;
 
   /**
    * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)

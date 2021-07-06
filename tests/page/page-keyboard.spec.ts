@@ -88,7 +88,7 @@ it('insertText should only emit input event', async ({page, server}) => {
 
 // TESTS FOR PLAYWRIGHT PR
 
-it('should verify keyboard.imeSetComposition, imeCommitComposition', async ({page, server}) => {
+it('should verify correct text values for keyboard.imeSetComposition, imeCommitComposition', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's' });
@@ -99,6 +99,29 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition', async ({pag
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('すし');
   await page.keyboard.imeCommitComposition('すし', { trigger_key: 'Enter'});
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('すし');
+});
+
+it('should verify correct event sequence for keyboard.imeSetComposition, imeCommitComposition', async ({page, server, browserName}) => {
+  it.skip(browserName === 'firefox');
+  it.skip(browserName === 'webkit');
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  const events = await page.evaluateHandle(() => {
+    const events = [];
+    document.addEventListener('keydown', e => events.push(e.type));
+    document.addEventListener('keyup', e => events.push(e.type));
+    document.addEventListener('compositionstart', e => events.push(e.type));
+    document.addEventListener('input', e => events.push(e.type));
+    document.addEventListener('compositionupdate', e => events.push(e.type));
+    document.addEventListener('compositionend', e => events.push(e.type));
+    return events;
+  });
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's', delay: 2000 });
+  await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u', delay: 2000 });
+  await page.keyboard.imeCommitComposition('す', { trigger_key: 'Enter', delay: 2000});
+  expect(await events.jsonValue()).toEqual(['keydown', 'compositionstart', 'compositionupdate', 'input',
+    'keyup','keydown', 'compositionupdate', 'input', 'keyup', 'keydown', 'compositionupdate', 'input', 'compositionend',
+    'keyup']);
 });
 
 it('should verify keyboard.imeSetComposition, imeCommitComposition reconversion scenario', async ({page, server}) => {
@@ -127,6 +150,20 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition no trigger ke
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('abcde');
 });
 
+
+it('should verify keyboard.imeCancelComposition output', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's' });
+  await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u' });
+  await page.keyboard.imeSetComposition('すｓ', 2, 2, { trigger_key: 's' });
+  await page.keyboard.imeSetComposition('すｓｈ', 3, 3, { trigger_key: 'h' });
+  await page.keyboard.imeSetComposition('すし', 2, 2, { trigger_key: 'i' });
+  await page.keyboard.imeCancelComposition('Escape');
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('');
+
+});
+
 // END OF TESTS FOR PLAYWRIGHT PR
 
 // TESTS FOR DEMO
@@ -140,7 +177,7 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition no trigger ke
   expect(await page.evaluate(() => document.querySelector('#input').innerText)).toBe('abcde');
 });
 
-it.only('should verify keyboard.imeSetComposition, imeCommitComposition', async ({ page }) => {
+it('should verify keyboard.imeSetComposition, imeCommitComposition', async ({ page }) => {
   await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
   await page.focus('#input');
   await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's', delay: 2000});
@@ -187,7 +224,7 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition composing in 
 });
 
 
-it('should verify keyboard.imeSetComposition, arrowDown to simulate choosing from IME menu', async ({ page }) => {
+it.only('should verify keyboard.imeSetComposition, arrowDown to simulate choosing from IME menu', async ({ page }) => {
   await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer.html');
   await page.focus('#input');
   await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's', delay: 1000});
@@ -204,11 +241,71 @@ it('should verify keyboard.imeSetComposition, arrowDown to simulate choosing fro
   expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('寿司');
   await page.keyboard.imeSetComposition('スシロー', 4, 4, { trigger_key: 'ArrowDown', delay: 1000});
   expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('スシロー');
-  await page.keyboard.imeCommitComposition('スシロー', 'Enter', { delay: 3000});
+  await page.keyboard.imeCommitComposition('スシロー', { trigger_key: 'Enter', delay: 3000});
   await page.keyboard.type(' Done!', { delay: 300});
   expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('スシロー Done!');
   await page.pause();
 });
+
+// This one could be used for browser interop, since Chromium behavior is different than FF.
+it('should verify keyboard.imeSetComposition, simulating shapewriting and choosing from candidate window', async ({ server, page }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  const events = await page.evaluateHandle(() => {
+    const events = [];
+    document.addEventListener('compositionstart', e => events.push(e.type));
+    document.addEventListener('input', e => events.push(e.type));
+    document.addEventListener('compositionupdate', e => events.push(e.type));
+    document.addEventListener('compositionend', e => events.push(e.type));
+    return events;
+  });
+  await page.keyboard.imeSetComposition('Hello', 5, 5, { delay: 1000});
+  await page.keyboard.imeCommitComposition('Hello', { delay: 2000});
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello');
+  await page.keyboard.imeSetComposition('Bellow', 5, 5, { replacement_start: 0, replacement_end: 5, delay: 2000});
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Bellow');
+  await page.keyboard.imeCommitComposition('Bellow', { delay: 2000});
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Bellow');
+  expect(await events.jsonValue()).toEqual(['compositionstart', 'compositionupdate', 'input',
+    'compositionupdate', 'input', 'compositionend', 'compositionstart',
+    'compositionupdate', 'input', 'compositionupdate', 'input', 'compositionend']);
+});
+
+
+it('should verify keyboard.imeCancelComposition output', async ({page, server}) => {
+  await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer.html');
+  await page.focus('#input');
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's', delay: 1000 });
+  await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u', delay: 1000 });
+  await page.keyboard.imeCancelComposition('Escape');
+  await page.pause();
+  expect(await page.evaluate(() => document.querySelector('input').value)).toBe('');
+
+});
+
+it('should verify keyboard.imeCancelComposition output', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  await page.fill('textarea', 'abcd');
+  const events = await page.evaluateHandle(() => {
+    const events = [];
+    document.addEventListener('compositionstart', e => events.push(e.type));
+    document.addEventListener('input', e => events.push(e.type));
+    document.addEventListener('compositionupdate', e => events.push(e.type));
+    document.addEventListener('compositionend', e => events.push(e.type));
+    document.addEventListener('keydown', e => events.push(e.type));
+    document.addEventListener('keyup', e => events.push(e.type));
+    return events;
+  });
+  await page.keyboard.imeSetComposition('e', 1, 1, { trigger_key: 'e', delay: 1000});
+  await page.keyboard.imeCancelComposition('Escape');
+  await page.pause();
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('abcd');
+  expect(await events.jsonValue()).toEqual(['keydown', 'compositionstart', 'compositionupdate',
+    'input', 'keyup', 'keydown', 'compositionupdate', 'input', 'compositionend', 'keyup']);
+
+});
+
 
 // END OF TESTS FOR DEMO
 

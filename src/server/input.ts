@@ -39,6 +39,7 @@ export interface RawKeyboard {
   sendText(text: string): Promise<void>;
   imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string | 'None', replacement_start: number | -1, replacement_end: number | -1): Promise<void>;
   imeCommitComposition(text: string, trigger_key: string | 'None'): Promise<void>;
+  imeCancelComposition(): Promise<void>;
 }
 
 export class Keyboard {
@@ -100,6 +101,23 @@ export class Keyboard {
 
   async insertText(text: string) {
     await this._raw.sendText(text);
+    await this._page._doSlowMo();
+  }
+
+  async imeCancelComposition(trigger_key: string) {
+    let description = this._keyDescriptionForString(trigger_key);
+    const autoRepeat = this._pressedKeys.has(description.code);
+    this._pressedKeys.add(description.code);
+    if (kModifiers.includes(description.key as types.KeyboardModifier))
+      this._pressedModifiers.add(description.key as types.KeyboardModifier);
+    const text = description.text;
+    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
+    await this._raw.imeCancelComposition();
+    description = this._keyDescriptionForString(trigger_key);
+    if (kModifiers.includes(description.key as types.KeyboardModifier))
+      this._pressedModifiers.delete(description.key as types.KeyboardModifier);
+    this._pressedKeys.delete(description.code);
+    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
     await this._page._doSlowMo();
   }
 

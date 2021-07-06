@@ -480,6 +480,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     replacement_end: tOptional(tNumber),
     delay: tOptional(tNumber),
   });
+  scheme.PageKeyboardImeCancelCompositionParams = tObject({
+    trigger_key: tString,
+  });
   scheme.PageKeyboardImeCommitCompositionParams = tObject({
     text: tString,
     trigger_key: tOptional(tString),

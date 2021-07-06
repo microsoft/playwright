@@ -171,6 +171,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     await this._page.keyboard.imeSetComposition(params.text, params.selection_start, params.selection_end, params);
   }
 
+  async keyboardImeCancelComposition(params: channels.PageKeyboardImeCancelCompositionParams, metadata: CallMetadata): Promise<void> {
+    await this._page.keyboard.imeCancelComposition(params.trigger_key);
+  }
+
   async keyboardImeCommitComposition(params: channels.PageKeyboardImeCommitCompositionParams, metadata: CallMetadata): Promise<void> {
     await this._page.keyboard.imeCommitComposition(params.text, params);
   }

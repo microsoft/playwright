@@ -844,6 +844,10 @@ Page:
         replacement_end: number?
         delay: number?
 
+    keyboardImeCancelComposition:
+      parameters:
+        trigger_key: string
+
     keyboardImeCommitComposition:
       parameters:
         text: string
