@@ -129,13 +129,13 @@ export type WebServerConfig = {
    */
   port?: number,
   /**
-   * Environment variables which get set during the execution. Default it will use the environment variables from the current process.
+   * WebServer environment variables, process.env by default
    */
-  env?: Record<string, string>
+  env?: Record<string, string>,
   /**
-   * Current working directory of the spawned process. Default its process.cwd().
+   * Current working directory of the spawned process. Default is process.cwd().
    */
-  cwd?: string 
+  cwd?: string,
   /**
    * How long to wait for the server to start up in milliseconds. Defaults to 60000.
    */
@@ -231,7 +231,7 @@ interface ConfigBase {
   updateSnapshots?: UpdateSnapshots;
 
   /**
-   * Launch a web server before the tests start.
+   * Launch a web server before running tests.
    */
    webServer?: WebServerConfig;
 

@@ -23,15 +23,9 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
-      test('connect to the server via the full URL navigation', async ({baseURL, page}) => {
-        expect(baseURL).toBe('http://localhost:${port}');
-        await page.goto(baseURL + '/hello');
-        expect(await page.textContent('body')).toBe('hello');
-      });
-
       test('connect to the server via the baseURL', async ({baseURL, page}) => {
         await page.goto('/hello');
-        expect(page.url()).toBe('http://localhost:${port}/hello');
+        expect(page.url()).toBe('/hello');
         expect(await page.textContent('body')).toBe('hello');
       });
     `,
@@ -150,30 +144,6 @@ test('should be able to specify the baseURL without the server', async ({ runInl
         }
       };
     `,
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
-  server.close();
-});
-
-test('should be able to specify the baseURL via the environment variable', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
-  const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
-    res.end('<html><body>hello</body></html>');
-  });
-  await new Promise(resolve => server.listen(port, resolve));
-  const result = await runInlineTest({
-    'test.spec.ts': `
-      const { test } = pwt;
-      test('connect to the server', async ({baseURL, page}) => {
-        expect(baseURL).toBe('http://localhost:${port}');
-        await page.goto(baseURL + '/hello');
-        expect(await page.textContent('body')).toBe('hello');
-      });
-    `,
-  }, { }, {
-    PLAYWRIGHT_TEST_BASE_URL: `http://localhost:${port}`,
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
