@@ -216,10 +216,9 @@ Toggles bypassing page's Content-Security-Policy.
 ## context-option-baseURL
 - `baseURL` <[string]>
 
-Prefixes the URL on navigations when a path (no origin) is passed to [`method: Page.goto`]. You can specify also a
-base URL with a path. Examples:
+When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Examples:
 * baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
-* baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+* baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
 
 ## context-option-viewport
 * langs: js, java

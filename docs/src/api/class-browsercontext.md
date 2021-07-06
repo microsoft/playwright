@@ -852,7 +852,6 @@ Returns all open pages in the context.
 
 Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
 is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
-It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 An example of a naive handler that aborts all image requests:
 
@@ -1002,6 +1001,8 @@ Enabling routing disables http cache.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: BrowserContext.route.handler
 * langs: js, python

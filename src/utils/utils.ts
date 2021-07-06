@@ -315,14 +315,9 @@ export function getUserAgent() {
 }
 
 export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
-  if (!baseURL)
-    return givenURL;
   try {
-    new URL.URL(givenURL);
-    return givenURL;
-  } catch (error) {
-    if (givenURL === '/' || givenURL === '')
-      return baseURL + givenURL;
     return (new URL.URL(givenURL, baseURL)).toString();
+  } catch (e) {
+    return givenURL;
   }
 }

@@ -1897,7 +1897,7 @@ export interface Page {
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-   * last redirect. It will consider the base URL if you set it via `baseURL` when creating the context.
+   * last redirect.
    *
    * `page.goto` will throw an error if:
    * - there's an SSL error (e.g. in case of self-signed certificates).
@@ -1916,7 +1916,8 @@ export interface Page {
    * [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
    *
    * Shortcut for main frame's [frame.goto(url[, options])](https://playwright.dev/docs/api/class-frame#frame-goto)
-   * @param url URL to navigate page to. The url should include scheme, e.g. `https://`.
+   * @param url URL to navigate page to. The url should include scheme, e.g. `https://`. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
    */
   goto(url: string, options?: {
@@ -2439,10 +2440,9 @@ export interface Page {
    * To remove a route with its handler you can use
    * [page.unroute(url[, handler])](https://playwright.dev/docs/api/class-page#page-unroute).
    *
-   * It will consider the base URL if you set it via `baseURL` when creating the context.
-   *
    * > NOTE: Enabling routing disables http cache.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    */
   route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
@@ -3172,7 +3172,7 @@ export interface Page {
 
   /**
    * Waits for the matching request and returns it. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details
-   * about events. It will consider the base URL if you set it via `baseURL` when creating the context.
+   * about events.
    *
    * ```js
    * // Note that Promise.all prevents a race condition
@@ -3206,8 +3206,7 @@ export interface Page {
   }): Promise<Request>;
 
   /**
-   * Returns the matched response. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details about events. It
-   * will consider the base URL if you set it via `baseURL` when creating the context.
+   * Returns the matched response. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details about events.
    *
    * ```js
    * // Note that Promise.all prevents a race condition
@@ -3228,7 +3227,8 @@ export interface Page {
    * ]);
    * ```
    *
-   * @param urlOrPredicate Request URL string, regex or predicate receiving [Response] object.
+   * @param urlOrPredicate Request URL string, regex or predicate receiving [Response] object. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
    */
   waitForResponse(urlOrPredicate: string|RegExp|((response: Response) => boolean|Promise<boolean>), options?: {
@@ -3259,8 +3259,7 @@ export interface Page {
   waitForTimeout(timeout: number): Promise<void>;
 
   /**
-   * Waits for the main frame to navigate to the given URL. It will consider the base URL if you set it via `baseURL` when
-   * creating the context.
+   * Waits for the main frame to navigate to the given URL.
    *
    * ```js
    * await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
@@ -5450,8 +5449,7 @@ export interface BrowserContext {
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
-   * is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted. It will
-   * consider the base URL if you set it via `baseURL` when creating the context.
+   * is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
    * An example of a naive handler that aborts all image requests:
    *
@@ -5492,7 +5490,8 @@ export interface BrowserContext {
    * [browserContext.unroute(url[, handler])](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute).
    *
    * > NOTE: Enabling routing disables http cache.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    */
   route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
@@ -7026,11 +7025,15 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
-     * Prefixes the URL on navigations when a path (no origin) is passed to
-     * [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto). You can specify also a base URL with
-     * a path. Examples:
+     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
+     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
+     * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+     * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
-     * - baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
      */
     baseURL?: string;
 
@@ -8159,11 +8162,15 @@ export interface AndroidDevice {
     acceptDownloads?: boolean;
 
     /**
-     * Prefixes the URL on navigations when a path (no origin) is passed to
-     * [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto). You can specify also a base URL with
-     * a path. Examples:
+     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
+     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
+     * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+     * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
-     * - baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
      */
     baseURL?: string;
 
@@ -8926,11 +8933,15 @@ export interface Browser extends EventEmitter {
     acceptDownloads?: boolean;
 
     /**
-     * Prefixes the URL on navigations when a path (no origin) is passed to
-     * [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto). You can specify also a base URL with
-     * a path. Examples:
+     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
+     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
+     * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+     * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
-     * - baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
      */
     baseURL?: string;
 
@@ -11072,11 +11083,15 @@ export interface BrowserContextOptions {
   acceptDownloads?: boolean;
 
   /**
-   * Prefixes the URL on navigations when a path (no origin) is passed to
-   * [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto). You can specify also a base URL with
-   * a path. Examples:
+   * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+   * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
+   * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
+   * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+   * constructor for building the corresponding URL. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
-   * - baseURL: `http://localhost:3000/foo/` and navigating to `/bar.html` results in `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
    */
   baseURL?: string;
 

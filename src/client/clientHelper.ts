@@ -68,8 +68,8 @@ export function parsedURL(url: string): URL | null {
 export function urlMatches(baseURL: string | undefined, urlString: string, match: types.URLMatch | undefined): boolean {
   if (match === undefined || match === '')
     return true;
-  if (baseURL && isString(match) && !match.startsWith('*') && urlMatches(undefined, urlString, constructURLBasedOnBaseURL(baseURL, match)))
-    return true;
+  if (isString(match) && !match.startsWith('*'))
+    match = constructURLBasedOnBaseURL(baseURL, match);
   if (isString(match))
     match = globToRegex(match);
   if (isRegExp(match))

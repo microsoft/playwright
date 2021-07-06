@@ -1874,7 +1874,7 @@ Navigate to the next page in history.
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
+last redirect.
 
 `page.goto` will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).
@@ -1903,6 +1903,8 @@ Shortcut for main frame's [`method: Frame.goto`]
 - `url` <[string]>
 
 URL to navigate page to. The url should include scheme, e.g. `https://`.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.goto.waitUntil = %%-navigation-wait-until-%%
 
@@ -2506,8 +2508,6 @@ matches both handlers.
 
 To remove a route with its handler you can use [`method: Page.unroute`].
 
-It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
-
 :::note
 Enabling routing disables http cache.
 :::
@@ -2516,7 +2516,8 @@ Enabling routing disables http cache.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 ### param: Page.route.handler
 * langs: js, python
 - `handler` <[function]\([Route], [Request]\)>
@@ -3333,7 +3334,6 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 - returns: <[Request]>
 
 Waits for the matching request and returns it. See [waiting for event](./events.md#waiting-for-event) for more details about events.
-It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -3410,6 +3410,8 @@ await page.RunAndWaitForRequestAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Request] object.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForRequest.urlOrPredicate
 * langs: js
@@ -3449,7 +3451,6 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 - returns: <[Response]>
 
 Returns the matched response. See [waiting for event](./events.md#waiting-for-event) for more details about events.
-It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -3530,12 +3531,16 @@ await page.RunAndWaitForResponseAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Response] object.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForResponse.urlOrPredicate
 * langs: js
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Response] object.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.waitForResponse.timeout
 - `timeout` <[float]>
@@ -3701,7 +3706,6 @@ A timeout to wait for
 ## async method: Page.waitForURL
 
 Waits for the main frame to navigate to the given URL.
-It will consider the base URL if you set it via [`option: baseURL`] when creating the context.
 
 ```js
 await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation

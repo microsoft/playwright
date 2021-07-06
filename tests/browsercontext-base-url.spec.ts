@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should construct a new URL when a path in browser.newContext is passed to page.goto', async function({browser, server}) {
+it('should construct a new URL when a baseURL in browser.newContext is passed to page.goto', async function({browser, server}) {
   const context = await browser.newContext({
     baseURL: server.PREFIX,
   });
@@ -26,7 +26,7 @@ it('should construct a new URL when a path in browser.newContext is passed to pa
   await context.close();
 });
 
-it('should construct a new URL when a path in browser.newPage is passed to page.goto', async function({browser, server}) {
+it('should construct a new URL when a baseURL in browser.newPage is passed to page.goto', async function({browser, server}) {
   const page = await browser.newPage({
     baseURL: server.PREFIX,
   });
@@ -34,7 +34,7 @@ it('should construct a new URL when a path in browser.newPage is passed to page.
   await page.close();
 });
 
-it('should construct a new URL when a relative path in browser.newPage is passed to page.goto', async function({browser, server}) {
+it('should construct the URLs correctly when a baseURL without a trailing slash in browser.newPage is passed to page.goto', async function({browser, server}) {
   const page = await browser.newPage({
     baseURL: server.PREFIX + '/url-construction',
   });
@@ -44,37 +44,24 @@ it('should construct a new URL when a relative path in browser.newPage is passed
   await page.close();
 });
 
-it('should construct a new URL when a relative path in browser.newPage is passed to page.goto', async function({browser, server}) {
+it('should construct the URLs correctly when a baseURL with a trailing slash in browser.newPage is passed to page.goto', async function({browser, server}) {
   const page = await browser.newPage({
     baseURL: server.PREFIX + '/url-construction/',
   });
   expect((await page.goto('mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
   expect((await page.goto('./mypage.html')).url()).toBe(server.PREFIX + '/url-construction/mypage.html');
   expect((await page.goto('/mypage.html')).url()).toBe(server.PREFIX + '/mypage.html');
+  expect((await page.goto('.')).url()).toBe(server.PREFIX + '/url-construction/');
+  expect((await page.goto('/')).url()).toBe(server.PREFIX + '/');
   await page.close();
 });
 
-it('should navigate to the base URL if / or empty string is passed', async function({browser, server}) {
-  const page = await browser.newPage({
-    baseURL: server.PREFIX + '/url-construction',
-  });
-  expect((await page.goto('')).url()).toBe(server.PREFIX + '/url-construction');
-  expect((await page.goto('/')).url()).toBe(server.PREFIX + '/url-construction/');
-  await page.close();
-});
-
-it('should not construct a new URL when the given URL is valid', async function({browser, server}) {
+it('should not construct a new URL when valid URLs are passed', async function({browser, server}) {
   const page = await browser.newPage({
     baseURL: 'http://microsoft.com',
   });
   expect((await page.goto(server.EMPTY_PAGE)).url()).toBe(server.EMPTY_PAGE);
-  await page.close();
-});
 
-it('should not construct a new URL when no valid HTTP URLs are passed', async function({browser, server}) {
-  const page = await browser.newPage({
-    baseURL: 'http://microsoft.com',
-  });
   await page.goto('data:text/html,Hello world');
   expect(await page.evaluate(() => window.location.href)).toBe('data:text/html,Hello world');
 
@@ -90,6 +77,7 @@ it('should be able to match a URL relative to its given URL with urlMatcher', as
   await page.goto('/kek/index.html');
   await page.waitForURL('/kek/index.html');
   expect(page.url()).toBe(server.PREFIX + '/kek/index.html');
+
   await page.route('./kek/index.html', route => route.fulfill({
     body: 'base-url-matched-route',
   }));
