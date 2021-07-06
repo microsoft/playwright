@@ -65,7 +65,7 @@ Line7`,
   expect(result.output).toContain('Line7');
 });
 
-test('should write detailed failure result to an output folder', async ({runInlineTest}) => {
+test('should write detailed failure result to an output folder', async ({runInlineTest}, testInfo) => {
   const result = await runInlineTest({
     'a.spec.js-snapshots/snapshot.txt': `Hello world`,
     'a.spec.js': `
@@ -78,9 +78,32 @@ test('should write detailed failure result to an output folder', async ({runInli
 
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Snapshot comparison failed:');
-  expect(result.output).toMatch(/ {4}Expected: .+?snapshot-expected\.txt/);
-  expect(result.output).toMatch(/ {4}Received: .+?snapshot-actual\.txt/);
-  expect(result.output).not.toMatch(/ {8}Diff: .+?snapshot-diff\.txt/);
+  const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
+  const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
+  expect(result.output).toMatch(new RegExp(` {4}Expected: .+?${expectedSnapshotArtifactPath}`));
+  expect(result.output).toMatch(new RegExp(` {4}Received: .+?${actualSnapshotArtifactPath}`));
+  expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
+  expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
+});
+
+test("doesn\'t create comparison artifacts in an output folder for passed negated snapshot matcher", async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world updated').not.toMatchSnapshot('snapshot.txt');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
+  const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
+  expect(result.output).not.toMatch(new RegExp(` {4}Expected: .+?${expectedSnapshotArtifactPath}`));
+  expect(result.output).not.toMatch(new RegExp(` {4}Received: .+?${actualSnapshotArtifactPath}`));
+  expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(false);
+  expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(false);
 });
 
 test('should pass on different snapshots with negate matcher', async ({runInlineTest}) => {
@@ -329,7 +352,7 @@ test('should compare PNG images', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should compare different PNG images', async ({runInlineTest}) => {
+test('should compare different PNG images', async ({runInlineTest}, testInfo) => {
   const result = await runInlineTest({
     'a.spec.js-snapshots/snapshot.png':
         Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
@@ -340,9 +363,18 @@ test('should compare different PNG images', async ({runInlineTest}) => {
       });
     `
   });
+
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Snapshot comparison failed');
-  expect(result.output).toContain('snapshot-diff.png');
+  expect(result.output).toContain('Snapshot comparison failed:');
+  const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
+  const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.png');
+  const diffSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-diff.png');
+  expect(result.output).toMatch(new RegExp(` {4}Expected: .+?${expectedSnapshotArtifactPath}`));
+  expect(result.output).toMatch(new RegExp(` {4}Received: .+?${actualSnapshotArtifactPath}`));
+  expect(result.output).toMatch(new RegExp(` {8}Diff: .+?${diffSnapshotArtifactPath}`));
+  expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
+  expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
+  expect(fs.existsSync(diffSnapshotArtifactPath)).toBe(true);
 });
 
 test('should respect threshold', async ({runInlineTest}) => {

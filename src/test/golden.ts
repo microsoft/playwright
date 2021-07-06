@@ -138,7 +138,13 @@ export function compare(
     return { pass: true };
   }
 
-  if (updateSnapshots === 'all' && !withNegateComparison) {
+  if (withNegateComparison) {
+    return {
+      pass: false,
+    };
+  }
+
+  if (updateSnapshots === 'all') {
     fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
     fs.writeFileSync(snapshotFile, actual);
     console.log(snapshotFile + ' does not match, writing actual.');
@@ -156,12 +162,6 @@ export function compare(
   fs.writeFileSync(actualPath, actual);
   if (result.diff)
     fs.writeFileSync(diffPath, result.diff);
-
-  if (withNegateComparison) {
-    return {
-      pass: false,
-    };
-  }
 
   const output = [
     colors.red(`Snapshot comparison failed:`),
