@@ -88,6 +88,9 @@ Get the page that the download belongs to.
 Returns path to the downloaded file in case of successful download. The method will
 wait for the download to finish if necessary. The method throws when connected remotely.
 
+Note that the download's file name is a random GUID, use [`method: Download.suggestedFilename`]
+to get suggested file name.
+
 ## async method: Download.saveAs
 
 Copy the download to a user-specified path. It is safe to call this method while the download
