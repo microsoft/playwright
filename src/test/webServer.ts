@@ -97,6 +97,7 @@ export class WebServer {
     this._killProcess = kill;
 
     launchedProcess.stderr.pipe(newProcessLogPrefixer()).pipe(process.stderr);
+    launchedProcess.stdout.on('data', () => {});
 
     if (this.config.port)
       return this.config.port;

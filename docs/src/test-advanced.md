@@ -207,7 +207,7 @@ To launch a web server during the tests, use the `webServer` option in the [conf
 
 Playwright Test does automatically detect if a localhost URL like `http://localhost:3000` gets printed to the stdout.
 The port from the printed URL gets then used to check when its accepting requests and passed over to Playwright as a
-`baseURL`. You can also manually specify a `port` or additional environment variables, see [here](#configuration-object).
+[`param: baseURL`] when creating the context [`method: Browser.newContext`]. You can also manually specify a `port` or additional environment variables, see [here](#configuration-object).
 
 ```js js-flavor=ts
 // playwright.config.ts
@@ -223,6 +223,16 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+```js js-flavor=ts
+// test.spec.ts
+import { test } = from '@playwright/test';
+
+test('test', async ({ page }) => {
+  // This will result in e.g. http://localhost:3000/foo when your dev-server prints a http://localhost:3000 address
+  await page.goto('/foo');
+});
+```
+
 ```js js-flavor=js
 // @ts-check
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
@@ -234,6 +244,16 @@ const config = {
 };
 
 mode.exports = config;
+```
+
+```js js-flavor=js
+// test.spec.js
+const { test } = require('@playwright/test');
+
+test('test', async ({ page }) => {
+  // This will result in e.g. http://localhost:3000/foo when your dev-server prints a http://localhost:3000 address
+  await page.goto('/foo');
+});
 ```
 
 ## Global setup and teardown
