@@ -79,3 +79,36 @@ test('max-failures should work with retries', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output.split('\n').filter(l => l.includes('Received:')).length).toBe(2);
 });
+
+test('max-failures should stop workers', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('passed', async () => {
+        await new Promise(f => setTimeout(f, 500));
+      });
+      test('failed', async () => {
+        test.expect(1).toBe(2);
+      });
+    `,
+    'b.spec.js': `
+      const { test } = pwt;
+      test('passed short', async () => {
+        await new Promise(f => setTimeout(f, 1));
+      });
+      test('interrupted counts as skipped', async () => {
+        console.log('\\n%%interrupted');
+        await new Promise(f => setTimeout(f, 2000));
+      });
+      test('skipped', async () => {
+        console.log('\\n%%skipped');
+      });
+    `,
+  }, { 'max-failures': 1, 'workers': 2 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(2);
+  expect(result.output).toContain('%%interrupted');
+  expect(result.output).not.toContain('%%skipped');
+});

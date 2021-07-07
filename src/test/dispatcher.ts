@@ -149,34 +149,58 @@ export class Dispatcher {
     worker.run(entry.runPayload);
     let doneCallback = () => {};
     const result = new Promise<void>(f => doneCallback = f);
-    worker.once('done', (params: DonePayload) => {
+    const doneWithJob = () => {
+      worker.removeListener('testBegin', onTestBegin);
+      worker.removeListener('testEnd', onTestEnd);
+      worker.removeListener('done', onDone);
+      worker.removeListener('exit', onExit);
+      doneCallback();
+    };
+
+    const remainingByTestId = new Map(entry.runPayload.entries.map(e => [ e.testId, e ]));
+    let lastStartedTestId: string | undefined;
+
+    const onTestBegin = (params: TestBeginPayload) => {
+      lastStartedTestId = params.testId;
+    };
+    worker.addListener('testBegin', onTestBegin);
+
+    const onTestEnd = (params: TestEndPayload) => {
+      remainingByTestId.delete(params.testId);
+    };
+    worker.addListener('testEnd', onTestEnd);
+
+    const onDone = (params: DonePayload) => {
+      let remaining = [...remainingByTestId.values()];
+
       // We won't file remaining if:
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!params.remaining.length && !params.failedTestId && !params.fatalError) {
+      if (!remaining.length && !params.failedTestId && !params.fatalError) {
         this._freeWorkers.push(worker);
         this._notifyWorkerClaimer();
-        doneCallback();
+        doneWithJob();
         return;
       }
 
       // When worker encounters error, we will stop it and create a new one.
       worker.stop();
 
-      let remaining = params.remaining;
       const failedTestIds = new Set<string>();
 
       // In case of fatal error, report all remaining tests as failing with this error.
       if (params.fatalError) {
         for (const { testId } of remaining) {
           const { test, result } = this._testById.get(testId)!;
-          this._reporter.onTestBegin(test);
+          // There might be a single test that has started but has not finished yet.
+          if (testId !== lastStartedTestId)
+            this._reportTestBegin(test);
           result.error = params.fatalError;
           this._reportTestEnd(test, result, 'failed');
           failedTestIds.add(testId);
         }
-        // Since we pretent that all remaining tests failed, there is nothing else to run,
+        // Since we pretend that all remaining tests failed, there is nothing else to run,
         // except for possible retries.
         remaining = [];
       }
@@ -199,8 +223,15 @@ export class Dispatcher {
         this._queue.unshift({ ...entry, runPayload: { ...entry.runPayload, entries: remaining } });
 
       // This job is over, we just scheduled another one.
-      doneCallback();
-    });
+      doneWithJob();
+    };
+    worker.on('done', onDone);
+
+    const onExit = () => {
+      onDone({ fatalError: { value: 'Worker process exited unexpectedly' } });
+    };
+    worker.on('exit', onExit);
+
     return result;
   }
 
@@ -238,7 +269,7 @@ export class Dispatcher {
     worker.on('testBegin', (params: TestBeginPayload) => {
       const { test, result: testRun  } = this._testById.get(params.testId)!;
       testRun.workerIndex = params.workerIndex;
-      this._reporter.onTestBegin(test);
+      this._reportTestBegin(test);
     });
     worker.on('testEnd', (params: TestEndPayload) => {
       const { test, result } = this._testById.get(params.testId)!;
@@ -289,6 +320,14 @@ export class Dispatcher {
     }
   }
 
+  private _reportTestBegin(test: Test) {
+    if (this._isStopped)
+      return;
+    const maxFailures = this._loader.fullConfig().maxFailures;
+    if (!maxFailures || this._failureCount < maxFailures)
+      this._reporter.onTestBegin(test);
+  }
+
   private _reportTestEnd(test: Test, result: TestResult, status: TestStatus) {
     if (this._isStopped)
       return;
@@ -299,7 +338,7 @@ export class Dispatcher {
     if (!maxFailures || this._failureCount <= maxFailures)
       this._reporter.onTestEnd(test, result);
     if (maxFailures && this._failureCount === maxFailures)
-      this._isStopped = true;
+      this.stop().catch(e => {});
   }
 
   hasWorkerErrors(): boolean {
@@ -314,6 +353,7 @@ class Worker extends EventEmitter {
   runner: Dispatcher;
   hash = '';
   index: number;
+  private didSendStop = false;
 
   constructor(runner: Dispatcher) {
     super();
@@ -356,7 +396,9 @@ class Worker extends EventEmitter {
   }
 
   stop() {
-    this.process.send({ method: 'stop' });
+    if (!this.didSendStop)
+      this.process.send({ method: 'stop' });
+    this.didSendStop = true;
   }
 }
 
