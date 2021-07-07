@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { installTransform } from './transform';
+import { makeTransformer } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
 import { isRegExp, mergeObjects } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
@@ -33,11 +33,18 @@ export class Loader {
   private _configFile: string | undefined;
   private _projects: ProjectImpl[] = [];
   private _fileSuites = new Map<string, Suite>();
+  private _transformer!: () => () => void;
 
-  constructor(defaultConfig: Config, configOverrides: Config) {
+  private constructor(defaultConfig: Config, configOverrides: Config) {
     this._defaultConfig = defaultConfig;
     this._configOverrides = configOverrides;
     this._fullConfig = baseFullConfig;
+  }
+
+  static async create(defaultConfig: Config, configOverrides: Config) {
+    const loader = new Loader(defaultConfig, configOverrides);
+    loader._transformer = await makeTransformer();
+    return loader;
   }
 
   static deserialize(data: SerializedLoaderData): Loader {
@@ -52,7 +59,7 @@ export class Loader {
   loadConfigFile(file: string): Config {
     if (this._configFile)
       throw new Error('Cannot load two config files');
-    const revertBabelRequire = installTransform();
+    const revertBabelRequire = this._transformer();
     try {
       let config = require(file);
       if (config && typeof config === 'object' && ('default' in config))
@@ -112,7 +119,7 @@ export class Loader {
   async loadTestFile(file: string) {
     if (this._fileSuites.has(file))
       return this._fileSuites.get(file)!;
-    const revertBabelRequire = installTransform();
+    const revertBabelRequire = this._transformer();
     try {
       const suite = new Suite('');
       suite._requireFile = file;
@@ -138,7 +145,7 @@ export class Loader {
   }
 
   loadGlobalHook(file: string, name: string): (config: FullConfig) => any {
-    const revertBabelRequire = installTransform();
+    const revertBabelRequire = this._transformer();
     try {
       let hook = require(file);
       if (hook && typeof hook === 'object' && ('default' in hook))
@@ -152,7 +159,7 @@ export class Loader {
   }
 
   loadReporter(file: string): new (arg?: any) => Reporter {
-    const revertBabelRequire = installTransform();
+    const revertBabelRequire = this._transformer();
     try {
       let func = require(path.resolve(this._fullConfig.rootDir, file));
       if (func && typeof func === 'object' && ('default' in func))

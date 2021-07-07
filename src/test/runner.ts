@@ -53,12 +53,16 @@ type RunResult = {
 };
 
 export class Runner {
-  private _loader: Loader;
+  private _loader!: Loader;
   private _reporter!: Reporter;
   private _didBegin = false;
 
-  constructor(defaultConfig: Config, configOverrides: Config) {
-    this._loader = new Loader(defaultConfig, configOverrides);
+  private constructor() { }
+
+  static async create(defaultConfig: Config, configOverrides: Config) {
+    const runner = new Runner();
+    runner._loader = await Loader.create(defaultConfig, configOverrides);
+    return runner;
   }
 
   private _createReporter() {

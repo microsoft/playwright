@@ -98,7 +98,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   const overrides = overridesFromOptions(opts);
   if (opts.headed)
     overrides.use = { headless: false };
-  const runner = new Runner(defaultConfig, overrides);
+  const runner = await Runner.create(defaultConfig, overrides);
 
   function loadConfig(configFile: string) {
     if (fs.existsSync(configFile)) {
