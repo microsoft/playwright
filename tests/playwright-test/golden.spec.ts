@@ -17,7 +17,7 @@
 import colors from 'colors/safe';
 import * as fs from 'fs';
 import * as path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAscii } from './playwright-test-fixtures';
 
 test('should support golden', async ({runInlineTest}) => {
   const result = await runInlineTest({
@@ -77,11 +77,12 @@ test('should write detailed failure result to an output folder', async ({runInli
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Snapshot comparison failed:');
+  const outputText = stripAscii(result.output);
+  expect(outputText).toContain('Snapshot comparison failed:');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
-  expect(result.output).toMatch(new RegExp(` {4}Expected: .+?${expectedSnapshotArtifactPath}`));
-  expect(result.output).toMatch(new RegExp(` {4}Received: .+?${actualSnapshotArtifactPath}`));
+  expect(outputText).toContain(`Expected: ${expectedSnapshotArtifactPath}`);
+  expect(outputText).toContain(`Received: ${actualSnapshotArtifactPath}`);
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
 });
@@ -98,10 +99,11 @@ test("doesn\'t create comparison artifacts in an output folder for passed negate
   });
 
   expect(result.exitCode).toBe(0);
+  const outputText = stripAscii(result.output);
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
-  expect(result.output).not.toMatch(new RegExp(` {4}Expected: .+?${expectedSnapshotArtifactPath}`));
-  expect(result.output).not.toMatch(new RegExp(` {4}Received: .+?${actualSnapshotArtifactPath}`));
+  expect(outputText).not.toContain(`Expected: ${expectedSnapshotArtifactPath}`);
+  expect(outputText).not.toContain(`Received: ${actualSnapshotArtifactPath}`);
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(false);
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(false);
 });
@@ -364,14 +366,15 @@ test('should compare different PNG images', async ({runInlineTest}, testInfo) =>
     `
   });
 
+  const outputText = stripAscii(result.output);
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Snapshot comparison failed:');
+  expect(outputText).toContain('Snapshot comparison failed:');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.png');
   const diffSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-diff.png');
-  expect(result.output).toMatch(new RegExp(` {4}Expected: .+?${expectedSnapshotArtifactPath}`));
-  expect(result.output).toMatch(new RegExp(` {4}Received: .+?${actualSnapshotArtifactPath}`));
-  expect(result.output).toMatch(new RegExp(` {8}Diff: .+?${diffSnapshotArtifactPath}`));
+  expect(outputText).toContain(`Expected: ${expectedSnapshotArtifactPath}`);
+  expect(outputText).toContain(`Received: ${actualSnapshotArtifactPath}`);
+  expect(outputText).toContain(`Diff: ${diffSnapshotArtifactPath}`);
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(diffSnapshotArtifactPath)).toBe(true);
