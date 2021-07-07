@@ -182,7 +182,7 @@ export abstract class BrowserType extends SdkObject {
     let transport: ConnectionTransport | undefined = undefined;
     let browserProcess: BrowserProcess | undefined = undefined;
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-      executablePath: executable,
+      command: executable,
       args: browserArguments,
       env: this._amendEnvironment(env, userDataDir, executable, browserArguments),
       handleSIGINT,

@@ -118,6 +118,30 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends ProjectBase {
 
 export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
 
+export type WebServerConfig = {
+  /**
+   * Shell command to start the webserver. For example `npm run start`.
+   */
+  command: string,
+  /**
+   * The port that your server is expected to appear on. If not specified, it does get automatically collected via the 
+   * command output when a localhost URL gets printed.
+   */
+  port?: number,
+  /**
+   * WebServer environment variables, process.env by default
+   */
+  env?: Record<string, string>,
+  /**
+   * Current working directory of the spawned process. Default is process.cwd().
+   */
+  cwd?: string,
+  /**
+   * How long to wait for the server to start up in milliseconds. Defaults to 60000.
+   */
+  timeout?: number,
+};
+
 /**
  * Testing configuration.
  */
@@ -207,6 +231,11 @@ interface ConfigBase {
   updateSnapshots?: UpdateSnapshots;
 
   /**
+   * Launch a web server before running tests.
+   */
+   webServer?: WebServerConfig;
+
+  /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
    */
   workers?: number;
@@ -239,6 +268,7 @@ export interface FullConfig {
   shard: Shard;
   updateSnapshots: UpdateSnapshots;
   workers: number;
+  webServer: WebServerConfig | null;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
@@ -1146,6 +1176,12 @@ export type PlaywrightTestOptions = {
    * @see BrowserContextOptions
    */
   viewport: ViewportSize | null | undefined;
+
+  /**
+   * BaseURL used for all the contexts in the test. Takes priority over `contextOptions`.
+   * @see BrowserContextOptions
+   */
+  baseURL: string | undefined;
 
   /**
    * Options used to create the context. Other options above (e.g. `viewport`) take priority.

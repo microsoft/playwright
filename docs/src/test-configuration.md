@@ -161,6 +161,7 @@ In addition to configuring [Browser] or [BrowserContext], videos or screenshots,
 - `testIgnore`: Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'**/test-assets'`.
 - `testMatch`: Glob patterns or regular expressions that match test files. For example, `'**/todo-tests/*.spec.ts'`. By default, Playwright Test runs `.*(test|spec)\.(js|ts|mjs)` files.
 - `timeout`: Time in milliseconds given to each test.
+- `webServer: { command: string, port?: number, cwd?: string, timeout?: number, env?: object }` - Launch a web server before the tests will start. It will automaticially detect the port when it got printed to the stdout.
 - `workers`: The maximum number of concurrent worker processes to use for parallelizing tests.
 
 You can specify these options in the configuration file.

@@ -92,7 +92,7 @@ export class VideoRecorder {
     const progress = this._progress;
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: this._ffmpegPath,
+      command: this._ffmpegPath,
       args,
       stdio: 'stdin',
       log: (message: string) => progress.log(message),
