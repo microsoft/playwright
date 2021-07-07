@@ -41,12 +41,6 @@ class EventsHelper {
       listener.emitter.removeListener(listener.eventName, listener.handler);
     listeners.splice(0, listeners.length);
   }
-
-  static completeUserURL(urlString: string): string {
-    if (urlString.startsWith('localhost') || urlString.startsWith('127.0.0.1'))
-      urlString = 'http://' + urlString;
-    return urlString;
-  }
 }
 
 export const eventsHelper = EventsHelper;
