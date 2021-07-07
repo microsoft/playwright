@@ -3,6 +3,8 @@ id: installation
 title: "Installation"
 ---
 
+This is a browser installation guide for Playwright Library. If you are using Playwright Test, please refer to [installing browsers](./test-install.md) test guide.
+
 <!-- TOC -->
 
 ## Managing browser binaries
@@ -246,8 +248,6 @@ mvn test
 
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
 take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
-
-It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
 
 ```bash js
 # Linux/macOS

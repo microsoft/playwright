@@ -101,6 +101,8 @@ playwright install --help
 playwright install --help
 ```
 
+Learn more about managing browser binaries with [Playwright Library](./installation.md) or [Playwright Test](./test-install.md).
+
 ## Generate code
 
 ```bash js
