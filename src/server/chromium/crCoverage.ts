@@ -16,7 +16,7 @@
  */
 
 import { CRSession } from './crConnection';
-import { helper, RegisteredListener } from '../helper';
+import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { Protocol } from './protocol';
 import * as types from '../types';
 import { assert } from '../../utils/utils';
@@ -77,9 +77,9 @@ class JSCoverage {
     this._scriptIds.clear();
     this._scriptSources.clear();
     this._eventListeners = [
-      helper.addEventListener(this._client, 'Debugger.scriptParsed', this._onScriptParsed.bind(this)),
-      helper.addEventListener(this._client, 'Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
-      helper.addEventListener(this._client, 'Debugger.paused', this._onDebuggerPaused.bind(this)),
+      eventsHelper.addEventListener(this._client, 'Debugger.scriptParsed', this._onScriptParsed.bind(this)),
+      eventsHelper.addEventListener(this._client, 'Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
+      eventsHelper.addEventListener(this._client, 'Debugger.paused', this._onDebuggerPaused.bind(this)),
     ];
     await Promise.all([
       this._client.send('Profiler.enable'),
@@ -120,7 +120,7 @@ class JSCoverage {
       this._client.send('Profiler.disable'),
       this._client.send('Debugger.disable'),
     ] as const);
-    helper.removeEventListeners(this._eventListeners);
+    eventsHelper.removeEventListeners(this._eventListeners);
 
     const coverage: types.JSCoverageEntry[] = [];
     for (const entry of profileResponse.result) {
@@ -163,8 +163,8 @@ class CSSCoverage {
     this._stylesheetURLs.clear();
     this._stylesheetSources.clear();
     this._eventListeners = [
-      helper.addEventListener(this._client, 'CSS.styleSheetAdded', this._onStyleSheet.bind(this)),
-      helper.addEventListener(this._client, 'Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
+      eventsHelper.addEventListener(this._client, 'CSS.styleSheetAdded', this._onStyleSheet.bind(this)),
+      eventsHelper.addEventListener(this._client, 'Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
     ];
     await Promise.all([
       this._client.send('DOM.enable'),
@@ -201,7 +201,7 @@ class CSSCoverage {
       this._client.send('CSS.disable'),
       this._client.send('DOM.disable'),
     ]);
-    helper.removeEventListeners(this._eventListeners);
+    eventsHelper.removeEventListeners(this._eventListeners);
 
     // aggregate by styleSheetId
     const styleSheetIdToCoverage = new Map();

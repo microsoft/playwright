@@ -22,7 +22,7 @@ import { assert } from '../../utils/utils';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType } from '../browserType';
-import { Env } from '../processLauncher';
+import { Env } from '../../utils/processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';

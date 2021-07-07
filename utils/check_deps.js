@@ -148,7 +148,7 @@ DEPS['src/web/recorder/'] = ['src/common/', 'src/web/', 'src/web/components/', '
 DEPS['src/web/traceViewer/'] = ['src/common/', 'src/web/'];
 DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/protocol/', 'src/web/traceViewer/', 'src/web/', 'src/server/trace/viewer/', 'src/server/trace/', 'src/server/trace/common/', 'src/server/snapshot/snapshotTypes.ts', 'src/protocol/channels.ts'];
 // The service is a cross-cutting feature, and so it depends on a bunch of things.
-DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/server/trace/'];
+DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/server/trace/', 'src/utils/**'];
 
 // CLI should only use client-side features.
 DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**'];
@@ -161,7 +161,7 @@ DEPS['src/utils/'] = ['src/common/', 'src/protocol/'];
 DEPS['src/server/trace/common/'] = ['src/server/snapshot/', ...DEPS['src/server/']];
 DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/trace/common/']];
 DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', 'src/server/trace/recorder/', 'src/server/chromium/', ...DEPS['src/server/trace/common/']];
-DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/server/processLauncher.ts'];
+DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**'];
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);

@@ -18,7 +18,8 @@
 import * as channels from '../protocol/channels';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
-import { helper, RegisteredListener } from './helper';
+import { helper } from './helper';
+import { eventsHelper, RegisteredListener } from '../utils/eventsHelper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -916,7 +917,7 @@ export class Frame extends SdkObject {
       resolve();
     });
     const errorPromise = new Promise<void>(resolve => {
-      listeners.push(helper.addEventListener(this._page, Page.Events.Console, (message: ConsoleMessage) => {
+      listeners.push(eventsHelper.addEventListener(this._page, Page.Events.Console, (message: ConsoleMessage) => {
         if (message.type() === 'error' && message.text().includes('Content Security Policy')) {
           cspMessage = message;
           resolve();
@@ -924,7 +925,7 @@ export class Frame extends SdkObject {
       }));
     });
     await Promise.race([actionPromise, errorPromise]);
-    helper.removeEventListeners(listeners);
+    eventsHelper.removeEventListeners(listeners);
     if (cspMessage)
       throw new Error(cspMessage.text());
     if (error)

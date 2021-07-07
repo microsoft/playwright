@@ -21,7 +21,7 @@ import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions }
 import * as registry from '../utils/registry';
 import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
-import { launchProcess, Env, envArrayToObject } from './processLauncher';
+import { launchProcess, Env, envArrayToObject } from '../utils/processLauncher';
 import { PipeTransport } from './pipeTransport';
 import { Progress, ProgressController } from './progress';
 import * as types from './types';
