@@ -18,9 +18,12 @@
 import * as os from 'os';
 import path from 'path';
 import * as util from 'util';
+import * as fs from 'fs';
+import lockfile from 'proper-lockfile';
 import { getUbuntuVersion, getUbuntuVersionSync } from './ubuntuVersion';
-import { assert, getFromENV, getAsBooleanFromENV } from './utils';
+import { assert, getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync } from './utils';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
+import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
 export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg';
 export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'firefox-beta']);
@@ -288,7 +291,7 @@ export class Registry {
     return path.join(registryDirectory, browser.browserDirectory);
   }
 
-  revision(browserName: BrowserName): number {
+  private _revision(browserName: BrowserName): number {
     const browser = this._descriptors.find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
     return parseInt(browser.revision, 10);
@@ -300,7 +303,7 @@ export class Registry {
     return tokens ? path.join(browserDirectory, ...tokens) : undefined;
   }
 
-  downloadURL(browserName: BrowserName): string {
+  private _downloadURL(browserName: BrowserName): string {
     const browser = this._descriptors.find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
     const envDownloadHost: { [key: string]: string } = {
@@ -328,7 +331,7 @@ export class Registry {
     return this._descriptors.some(browser => browser.name === browserName);
   }
 
-  installByDefault(): BrowserName[] {
+  private _installByDefault(): BrowserName[] {
     return this._descriptors.filter(browser => browser.installByDefault).map(browser => browser.name);
   }
 
@@ -378,7 +381,7 @@ export class Registry {
   async installDeps(browserNames: BrowserName[]) {
     const targets = new Set<'chromium' | 'firefox' | 'webkit' | 'tools'>();
     if (!browserNames.length)
-      browserNames = this.installByDefault();
+      browserNames = this._installByDefault();
     for (const browserName of browserNames) {
       if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
         targets.add('chromium');
@@ -393,4 +396,102 @@ export class Registry {
     if (os.platform() === 'linux')
       return await installDependenciesLinux(targets);
   }
+
+  async installBinaries(browserNames?: BrowserName[]) {
+    if (!browserNames)
+      browserNames = this._installByDefault();
+    await fs.promises.mkdir(registryDirectory, { recursive: true });
+    const lockfilePath = path.join(registryDirectory, '__dirlock');
+    const releaseLock = await lockfile.lock(registryDirectory, {
+      retries: {
+        retries: 10,
+        // Retry 20 times during 10 minutes with
+        // exponential back-off.
+        // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
+        factor: 1.27579,
+      },
+      onCompromised: (err: Error) => {
+        throw new Error(`${err.message} Path: ${lockfilePath}`);
+      },
+      lockfilePath,
+    });
+    const linksDir = path.join(registryDirectory, '.links');
+
+    try {
+      // Create a link first, so that cache validation does not remove our own browsers.
+      await fs.promises.mkdir(linksDir, { recursive: true });
+      await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
+
+      // Remove stale browsers.
+      await this._validateInstallationCache(linksDir);
+
+      // Install missing browsers for this package.
+      for (const browserName of browserNames) {
+        const revision = this._revision(browserName);
+        const browserDirectory = this.browserDirectory(browserName);
+        const title = `${browserName} v${revision}`;
+        const downloadFileName = `playwright-download-${browserName}-${hostPlatform}-${revision}`;
+        await downloadBrowserWithProgressBar(title, browserDirectory, this.executablePath(browserName)!, this._downloadURL(browserName), downloadFileName).catch(e => {
+          throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
+        });
+        await fs.promises.writeFile(markerFilePath(browserDirectory), '');
+      }
+    } finally {
+      await releaseLock();
+    }
+  }
+
+  private async _validateInstallationCache(linksDir: string) {
+    // 1. Collect used downloads and package descriptors.
+    const usedBrowserPaths: Set<string> = new Set();
+    for (const fileName of await fs.promises.readdir(linksDir)) {
+      const linkPath = path.join(linksDir, fileName);
+      let linkTarget = '';
+      try {
+        linkTarget = (await fs.promises.readFile(linkPath)).toString();
+        const linkRegistry = new Registry(linkTarget);
+        for (const browserName of allBrowserNames) {
+          if (!linkRegistry.isSupportedBrowser(browserName))
+            continue;
+          const usedBrowserPath = linkRegistry.browserDirectory(browserName);
+          const browserRevision = linkRegistry._revision(browserName);
+          // Old browser installations don't have marker file.
+          const shouldHaveMarkerFile = (browserName === 'chromium' && browserRevision >= 786218) ||
+              (browserName === 'firefox' && browserRevision >= 1128) ||
+              (browserName === 'webkit' && browserRevision >= 1307) ||
+              // All new applications have a marker file right away.
+              (browserName !== 'firefox' && browserName !== 'chromium' && browserName !== 'webkit');
+          if (!shouldHaveMarkerFile || (await existsAsync(markerFilePath(usedBrowserPath))))
+            usedBrowserPaths.add(usedBrowserPath);
+        }
+      } catch (e) {
+        await fs.promises.unlink(linkPath).catch(e => {});
+      }
+    }
+
+    // 2. Delete all unused browsers.
+    if (!getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC')) {
+      let downloadedBrowsers = (await fs.promises.readdir(registryDirectory)).map(file => path.join(registryDirectory, file));
+      downloadedBrowsers = downloadedBrowsers.filter(file => isBrowserDirectory(file));
+      const directories = new Set<string>(downloadedBrowsers);
+      for (const browserDirectory of usedBrowserPaths)
+        directories.delete(browserDirectory);
+      for (const directory of directories)
+        logPolitely('Removing unused browser at ' + directory);
+      await removeFolders([...directories]);
+    }
+  }
+}
+
+function markerFilePath(browserDirectory: string): string {
+  return path.join(browserDirectory, 'INSTALLATION_COMPLETE');
+}
+
+export async function installDefaultBrowsersForNpmInstall() {
+  // PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should have a value of 0 or 1
+  if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
+    logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
+    return false;
+  }
+  await Registry.currentPackageRegistry().installBinaries();
 }
