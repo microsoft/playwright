@@ -19,7 +19,7 @@ import fs from 'fs';
 import removeFolder from 'rimraf';
 import * as crypto from 'crypto';
 import os from 'os';
-import { spawn, execSync } from 'child_process';
+import { spawn } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 
@@ -319,14 +319,5 @@ export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL
     return (new URL.URL(givenURL, baseURL)).toString();
   } catch (e) {
     return givenURL;
-  }
-}
-
-export function killProcessGroup(pid: number, { onTaskkillExit }: { onTaskkillExit?: (stdout: Buffer) => void } = {}) {
-  if (process.platform === 'win32') {
-    const stdout = execSync(`taskkill /pid ${pid} /T /F`);
-    onTaskkillExit?.(stdout);
-  } else {
-    process.kill(-pid, 'SIGKILL');
   }
 }

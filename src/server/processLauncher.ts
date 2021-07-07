@@ -19,14 +19,15 @@ import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { helper } from './helper';
 import * as types from './types';
-import { isUnderTest, killProcessGroup, removeFolders } from '../utils/utils';
+import { isUnderTest, removeFolders } from '../utils/utils';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 
 export type LaunchProcessOptions = {
-  executablePath: string,
-  args: string[],
+  command: string,
+  args?: string[],
   env?: Env,
+  shell?: boolean,
 
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
@@ -62,20 +63,18 @@ if (maxListeners !== 0)
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
-  options.log(`<launching> ${options.executablePath} ${options.args.join(' ')}`);
-  const spawnedProcess = childProcess.spawn(
-      options.executablePath,
-      options.args,
-      {
-        // On non-windows platforms, `detached: true` makes child process a leader of a new
-        // process group, making it possible to kill child process tree with `.kill(-pid)` command.
-        // @see https://nodejs.org/api/child_process.html#child_process_options_detached
-        detached: process.platform !== 'win32',
-        env: (options.env as {[key: string]: string}),
-        cwd: options.cwd,
-        stdio,
-      }
-  );
+  options.log(`<launching> ${options.command} ${options.args ? options.args.join(' ') : ''}`);
+  const spawnOptions: childProcess.SpawnOptions = {
+    // On non-windows platforms, `detached: true` makes child process a leader of a new
+    // process group, making it possible to kill child process tree with `.kill(-pid)` command.
+    // @see https://nodejs.org/api/child_process.html#child_process_options_detached
+    detached: process.platform !== 'win32',
+    env: (options.env as {[key: string]: string}),
+    cwd: options.cwd,
+    shell: options.shell,
+    stdio,
+  };
+  const spawnedProcess = childProcess.spawn(options.command, options.args, spawnOptions);
 
   const cleanup = async () => {
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);

@@ -25,7 +25,8 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
       const { test } = pwt;
       test('connect to the server via the baseURL', async ({baseURL, page}) => {
         await page.goto('/hello');
-        expect(page.url()).toBe('/hello');
+        await page.waitForURL('/hello');
+        expect(page.url()).toBe('http://localhost:${port}/hello');
         expect(await page.textContent('body')).toBe('hello');
       });
     `,
@@ -39,9 +40,8 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
     `,
   });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(1);
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
-  expect(result.report.suites[0].specs[1].tests[0].results[0].status).toContain('passed');
 });
 
 test('should create a server with environment variables', async ({ runInlineTest }, { workerIndex }) => {
@@ -94,7 +94,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`failed to start web server on port ${port} via "node`);
+  expect(result.output).toContain(`Timed out waiting 100ms for WebServer`);
 });
 
 test('should be able to detect the port from the process stdout', async ({ runInlineTest }, { workerIndex }) => {
@@ -118,7 +118,6 @@ test('should be able to detect the port from the process stdout', async ({ runIn
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output).toContain(`Listening on http://localhost:${port}`);
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 });
 

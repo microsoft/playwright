@@ -127,7 +127,7 @@ export class Electron extends SdkObject {
 
       const browserLogsCollector = new RecentLogsCollector();
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-        executablePath: options.executablePath || require('electron/index.js'),
+        command: options.executablePath || require('electron/index.js'),
         args: electronArguments,
         env: options.env ? envArrayToObject(options.env) : process.env,
         log: (message: string) => {

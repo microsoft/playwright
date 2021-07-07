@@ -15,13 +15,12 @@
  */
 /* eslint-disable no-console */
 
-import { ChildProcess, spawn } from 'child_process';
 import net from 'net';
 import os from 'os';
 import stream from 'stream';
 import { monotonicTime, raceAgainstDeadline } from './util';
 import { WebServerConfig } from '../../types/test';
-import { assert, killProcessGroup } from '../utils/utils';
+import { launchProcess } from '../server/processLauncher';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
@@ -35,8 +34,8 @@ const newProcessLogPrefixer = () => new stream.Transform({
 });
 
 export class WebServer {
-  private _process?: ChildProcess;
-  private _processExitedWithNonZeroStatusCode!: Promise<any>;
+  private _killProcess?: () => Promise<void>;
+  private _processExitedPromise!: Promise<any>;
   constructor(private readonly config: WebServerConfig) { }
 
   public static async create(config: WebServerConfig): Promise<WebServer> {
@@ -46,7 +45,9 @@ export class WebServer {
     try {
       const port = await webServer._startWebServer();
       await webServer._waitForAvailability(port);
-      process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${port}`;
+      const baseURL = `http://localhost:${port}`;
+      process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
+      console.log(`Using WebServer at '${baseURL}'.`);
       return webServer;
     } catch (error) {
       await webServer.kill();
@@ -74,34 +75,36 @@ export class WebServer {
         collectPortResolve(parseInt(regExp[1], 10));
     }
 
-    this._process = spawn(this.config.command, {
+    let processExitedReject = (error: Error) => { };
+    this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
+
+    console.log(`Starting WebServer with '${this.config.command}'...`);
+    const { launchedProcess, kill } = await launchProcess({
+      command: this.config.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
         ...process.env,
         ...this.config.env,
       },
       cwd: this.config.cwd,
+      stdio: 'stdin',
       shell: true,
-      // On non-windows platforms, `detached: true` makes child process a leader of a new
-      // process group, making it possible to kill child process tree with `.kill(-pid)` command.
-      // @see https://nodejs.org/api/child_process.html#child_process_options_detached
-      detached: process.platform !== 'win32',
+      attemptToGracefullyClose: async () => {},
+      log: () => {},
+      onExit: code => processExitedReject(new Error(`WebServer was not able to start. Exit code: ${code}`)),
+      tempDirectories: [],
     });
-    this._process.stdout.pipe(newProcessLogPrefixer()).pipe(process.stdout);
-    this._process.stderr.pipe(newProcessLogPrefixer()).pipe(process.stderr);
-    if (!this.config.port)
-      this._process.stdout.on('data', collectPort);
-    let processExitedWithNonZeroStatusCodeCallback = (error: Error) => { };
-    this._processExitedWithNonZeroStatusCode = new Promise((_, reject) => processExitedWithNonZeroStatusCodeCallback = reject);
-    this._process.on('exit', code => processExitedWithNonZeroStatusCodeCallback(new Error(`WebServer was not able to start. Exit code: ${code}`)));
+    this._killProcess = kill;
+
+    launchedProcess.stderr.pipe(newProcessLogPrefixer()).pipe(process.stderr);
+
     if (this.config.port)
       return this.config.port;
-    console.log(`Starting WebServer port detection.`);
+    launchedProcess.stdout.on('data', collectPort);
     const detectedPort = await Promise.race([
-      this._processExitedWithNonZeroStatusCode,
+      this._processExitedPromise,
       collectPortPromise,
     ]);
-    console.log(`Port ${detectedPort} by process '${this.config.command}' was automatically detected.`);
     return detectedPort;
   }
 
@@ -110,19 +113,14 @@ export class WebServer {
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
       raceAgainstDeadline(waitForSocket(port, 100, cancellationToken), launchTimeout + monotonicTime()),
-      this._processExitedWithNonZeroStatusCode,
+      this._processExitedPromise,
     ]));
     cancellationToken.canceled = true;
     if (timedOut)
-      throw new Error(`failed to start web server on port ${port} via "${this.config.command}"`);
+      throw new Error(`Timed out waiting ${launchTimeout}ms for WebServer"`);
   }
   public async kill() {
-    assert(this._process);
-    if (this._process.exitCode !== null || this._process.killed)
-      return;
-    const waitForExit = new Promise(resolve => this._process?.on('exit',resolve));
-    killProcessGroup(this._process.pid);
-    await waitForExit;
+    await this._killProcess?.();
   }
 }
 
