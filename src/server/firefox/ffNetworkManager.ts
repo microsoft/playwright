@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { helper, RegisteredListener } from '../helper';
+import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { FFSession } from './ffConnection';
 import { Page } from '../page';
 import * as network from '../network';
@@ -37,15 +37,15 @@ export class FFNetworkManager {
     this._page = page;
 
     this._eventListeners = [
-      helper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
-      helper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
-      helper.addEventListener(session, 'Network.requestFinished', this._onRequestFinished.bind(this)),
-      helper.addEventListener(session, 'Network.requestFailed', this._onRequestFailed.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.requestFinished', this._onRequestFinished.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.requestFailed', this._onRequestFailed.bind(this)),
     ];
   }
 
   dispose() {
-    helper.removeEventListeners(this._eventListeners);
+    eventsHelper.removeEventListeners(this._eventListeners);
   }
 
   async setRequestInterception(enabled: boolean) {

@@ -20,7 +20,7 @@ import os from 'os';
 import stream from 'stream';
 import { monotonicTime, raceAgainstDeadline } from './util';
 import { WebServerConfig } from '../../types/test';
-import { launchProcess } from '../server/processLauncher';
+import { launchProcess } from '../utils/processLauncher';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser

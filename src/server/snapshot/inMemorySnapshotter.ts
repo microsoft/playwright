@@ -16,7 +16,7 @@
 
 import { HttpServer } from '../../utils/httpServer';
 import { BrowserContext } from '../browserContext';
-import { helper } from '../helper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import { Page } from '../page';
 import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 import { SnapshotRenderer } from './snapshotRenderer';
@@ -53,9 +53,9 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
 
     this._snapshotter.captureSnapshot(page, snapshotName, element).catch(() => {});
     return new Promise<SnapshotRenderer>(fulfill => {
-      const listener = helper.addEventListener(this, 'snapshot', (renderer: SnapshotRenderer) => {
+      const listener = eventsHelper.addEventListener(this, 'snapshot', (renderer: SnapshotRenderer) => {
         if (renderer.snapshotName === snapshotName) {
-          helper.removeEventListeners([listener]);
+          eventsHelper.removeEventListeners([listener]);
           fulfill(renderer);
         }
       });

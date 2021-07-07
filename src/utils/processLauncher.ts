@@ -17,9 +17,8 @@
 
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
-import { helper } from './helper';
-import * as types from './types';
-import { isUnderTest, removeFolders } from '../utils/utils';
+import { eventsHelper } from './eventsHelper';
+import { isUnderTest, removeFolders } from './utils';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 
@@ -117,7 +116,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   spawnedProcess.once('exit', (exitCode, signal) => {
     options.log(`[pid=${spawnedProcess.pid}] <process did exit: exitCode=${exitCode}, signal=${signal}>`);
     processClosed = true;
-    helper.removeEventListeners(listeners);
+    eventsHelper.removeEventListeners(listeners);
     gracefullyCloseSet.delete(gracefullyClose);
     options.onExit(exitCode, signal);
     fulfillClose();
@@ -125,9 +124,9 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     cleanup().then(fulfillCleanup);
   });
 
-  const listeners = [ helper.addEventListener(process, 'exit', killProcess) ];
+  const listeners = [ eventsHelper.addEventListener(process, 'exit', killProcess) ];
   if (options.handleSIGINT) {
-    listeners.push(helper.addEventListener(process, 'SIGINT', () => {
+    listeners.push(eventsHelper.addEventListener(process, 'SIGINT', () => {
       gracefullyClose().then(() => {
         // Give tests a chance to dispatch any async calls.
         if (isUnderTest())
@@ -138,9 +137,9 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }));
   }
   if (options.handleSIGTERM)
-    listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyClose));
+    listeners.push(eventsHelper.addEventListener(process, 'SIGTERM', gracefullyClose));
   if (options.handleSIGHUP)
-    listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyClose));
+    listeners.push(eventsHelper.addEventListener(process, 'SIGHUP', gracefullyClose));
   gracefullyCloseSet.add(gracefullyClose);
 
   let gracefullyClosing = false;
@@ -166,7 +165,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   // This method has to be sync to be used as 'exit' event handler.
   function killProcess() {
     options.log(`[pid=${spawnedProcess.pid}] <kill>`);
-    helper.removeEventListeners(listeners);
+    eventsHelper.removeEventListeners(listeners);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
       options.log(`[pid=${spawnedProcess.pid}] <will force kill>`);
       // Force kill the browser.
@@ -195,7 +194,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   return { launchedProcess: spawnedProcess, gracefullyClose, kill: killAndWait };
 }
 
-export function envArrayToObject(env: types.EnvArray): Env {
+export function envArrayToObject(env: { name: string, value: string }[]): Env {
   const result: Env = {};
   for (const { name, value } of env)
     result[name] = value;
