@@ -86,7 +86,9 @@ it('insertText should only emit input event', async ({page, server}) => {
 });
 
 
-it('should verify correct text values for keyboard.imeSetComposition, imeCommitComposition', async ({page, server}) => {
+it('should verify correct text values for keyboard.imeSetComposition, imeCommitComposition', async ({page, server, browserName}) => {
+  it.skip(browserName === 'firefox');
+  it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's' });
@@ -122,7 +124,9 @@ it('should verify correct event sequence for keyboard.imeSetComposition, imeComm
     'keyup']);
 });
 
-it('should verify keyboard.imeSetComposition, imeCommitComposition reconversion scenario', async ({page, server}) => {
+it('should verify keyboard.imeSetComposition, imeCommitComposition reconversion scenario', async ({page, server, browserName}) => {
+  it.skip(browserName === 'firefox');
+  it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.fill('textarea', 'すしおに');
@@ -135,7 +139,9 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition reconversion 
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('オニしおに');
 });
 
-it('should verify keyboard.imeSetComposition, imeCommitComposition no trigger key for commit', async ({page, server}) => {
+it('should verify keyboard.imeSetComposition, imeCommitComposition no trigger key for commit', async ({page, server, browserName}) => {
+  it.skip(browserName === 'firefox');
+  it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.fill('textarea', 'abcd');
@@ -149,7 +155,9 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition no trigger ke
 });
 
 
-it('should verify keyboard.imeCancelComposition output', async ({page, server}) => {
+it('should verify keyboard.imeCancelComposition output', async ({page, server, browserName}) => {
+  it.skip(browserName === 'firefox');
+  it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's' });
