@@ -16,7 +16,7 @@
 
 import { wrapInPromise } from './util';
 import * as crypto from 'crypto';
-import { FixturesWithLocation, Location } from './types';
+import { FixturesWithLocation, Location, WorkerInfo, TestInfo } from './types';
 
 type FixtureScope = 'test' | 'worker';
 type FixtureRegistration = {
@@ -228,7 +228,7 @@ export class FixtureRunner {
       this.testScopeClean = true;
   }
 
-  async resolveParametersAndRunHookOrTest(fn: Function, scope: FixtureScope, info: any) {
+  async resolveParametersAndRunHookOrTest(fn: Function, scope: FixtureScope, info: WorkerInfo|TestInfo) {
     // Install all automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
       const shouldSkip = scope === 'worker' && registration.scope === 'test';
