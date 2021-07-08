@@ -58,7 +58,8 @@ export type EvalOptions = {
   returnHandle?: boolean;
   isFunction?: boolean;
   waitForSignals?: boolean;
-}
+};
+
 export class ExecutionContext extends SdkObject {
   readonly _delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
