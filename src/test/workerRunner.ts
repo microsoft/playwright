@@ -338,7 +338,7 @@ export class WorkerRunner extends EventEmitter {
     if (!preserveOutput)
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
 
-    if (testInfo.status !== 'passed') {
+    if (testInfo.status !== 'passed' && testInfo.status !== 'skipped') {
       this._failedTestId = testId;
       this._reportDoneAndStop();
     }
