@@ -537,11 +537,11 @@ export class Worker extends SdkObject {
   }
 
   async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    return js.evaluateExpression(await this._executionContextPromise, true /* returnByValue */, expression, isFunction, arg);
+    return (await this._executionContextPromise).eval(expression, {isFunction, arg});
   }
 
   async evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    return js.evaluateExpression(await this._executionContextPromise, false /* returnByValue */, expression, isFunction, arg);
+    return (await this._executionContextPromise).eval(expression, {isFunction, arg, returnHandle: true});
   }
 }
 
