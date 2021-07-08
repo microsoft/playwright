@@ -314,7 +314,7 @@ export class Response extends SdkObject {
   _httpVersion: string | undefined;
   _transferSize: number | undefined;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, protocol?: string) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
     super(request.frame(), 'response');
     this._request = request;
     this._timing = timing;
@@ -335,7 +335,7 @@ export class Response extends SdkObject {
       this._finishedPromiseCallback = f;
     });
     this._request._setResponse(this);
-    this._httpVersion = protocol;
+    this._httpVersion = httpVersion;
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {

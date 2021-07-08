@@ -213,7 +213,6 @@ export class HarTracer {
     // Rewrite provisional headers with actual
     const request = response.request();
 
-    // Rewrite provisional headers with actual
     harEntry.request.headers = request.headers().map(header => ({ name: header.name, value: header.value }));
     harEntry.request.cookies = cookiesForHar(request.headerValue('cookie'), ';');
     harEntry.request.postData = postDataForHar(request);
@@ -343,7 +342,7 @@ function calculateResponseHeadersSize(protocol: string, status: number, statusTe
   let rawHeaders = `${protocol} ${status} ${statusText}\r\n`;
   for (const header of headers)
     rawHeaders += `${header.name}: ${header.value}\r\n`;
-  rawHeaders +=  '\r\n';
+  rawHeaders += '\r\n';
   return rawHeaders.length;
 }
 
