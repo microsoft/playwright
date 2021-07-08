@@ -193,20 +193,17 @@ export class HarTracer {
     harEntry.response._transferSize = transferSize;
     harEntry.request.headersSize = calculateRequestHeadersSize(request.method(), request.url(), httpVersion, request.headers());
 
-    if (!this._options.omitContent) {
-      const promise = response.body().then(buffer => {
-        const content = harEntry.response.content;
+    const promise = response.body().then(buffer => {
+      const content = harEntry.response.content;
+      content.size = buffer.length;
+      content.compression = harEntry.response.bodySize !== -1 ? buffer.length - harEntry.response.bodySize : 0;
+
+      if (!this._options.omitContent && buffer && buffer.length > 0) {
         content.text = buffer.toString('base64');
         content.encoding = 'base64';
-        if (buffer && buffer.length > 0) {
-          content.text = buffer.toString('base64');
-          content.encoding = 'base64';
-        }
-        content.size = buffer.length;
-        content.compression = harEntry.response.bodySize !== -1 ? buffer.length - harEntry.response.bodySize : 0;
-      }).catch(() => {});
-      this._addBarrier(page, promise);
-    }
+      }
+    }).catch(() => {});
+    this._addBarrier(page, promise);
   }
 
   private _onResponse(response: network.Response) {
