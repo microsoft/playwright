@@ -162,6 +162,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     const preserveTrace = captureTrace && (trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'on-first-retry' && testInfo.retry === 1));
     if (preserveTrace) {
       const tracePath = testInfo.outputPath(`trace.zip`);
+      testInfo.data.playwrightTrace = tracePath;
       await context.tracing.stop({ path: tracePath });
     } else if (captureTrace) {
       await context.tracing.stop();
