@@ -110,3 +110,32 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
   expect(result.output).not.toContain('%%skipped1');
   expect(result.output).not.toContain('%%skipped2');
 });
+
+test('should use the first occurring error when an unhandled exception was thrown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'unhandled-exception.spec.js': `
+      const test = pwt.test.extend({
+        context: async ({}, test) => {
+          await test(123)
+          let errorWasThrownPromiseResolve = () => {}
+          const errorWasThrownPromise = new Promise(resolve => errorWasThrownPromiseResolve = resolve);
+          setTimeout(() => {
+            errorWasThrownPromiseResolve();
+            throw new Error('second error');
+          }, 0)
+          await errorWasThrownPromise;
+        },
+        page: async ({ context}, test) => {
+          throw new Error('first error');
+          await test(123)
+        },
+      });
+
+      test('my-test', async ({ page }) => { });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].error.message).toBe('first error');
+});

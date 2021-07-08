@@ -72,6 +72,8 @@ export class WorkerRunner extends EventEmitter {
     if (this._isStopped)
       return;
     if (this._currentTest) {
+      if (this._currentTest.testInfo.error)
+        return;
       this._currentTest.testInfo.status = 'failed';
       this._currentTest.testInfo.error = serializeError(error);
       this._failedTestId = this._currentTest.testId;
