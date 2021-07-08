@@ -587,6 +587,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     trial: tOptional(tBoolean),
   });
   scheme.FrameContentParams = tOptional(tObject({}));
+  scheme.FrameDragAndDropParams = tObject({
+    selector1: tString,
+    selector2: tString,
+    force: tOptional(tBoolean),
+    noWaitAfter: tOptional(tBoolean),
+    timeout: tOptional(tNumber),
+    trial: tOptional(tBoolean),
+  });
   scheme.FrameDblclickParams = tObject({
     selector: tString,
     force: tOptional(tBoolean),
