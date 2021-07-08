@@ -241,7 +241,29 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', secure: true });
 });
 
-it('should include content and sizes', async ({ contextFactory, server }, testInfo) => {
+it('should include content', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.PREFIX + '/har.html');
+  const log = await getLog();
+
+  expect(log.entries[0].response.httpVersion).toBe('HTTP/1.1');
+  expect(log.entries[0].response.content.encoding).toBe('base64');
+  expect(log.entries[0].response.content.mimeType).toBe('text/html; charset=utf-8');
+  expect(Buffer.from(log.entries[0].response.content.text, 'base64').toString()).toContain('HAR Page');
+  expect(log.entries[0].response.content.size).toBeGreaterThanOrEqual(96);
+  expect(log.entries[0].response.content.compression).toBe(0);
+
+  expect(log.entries[1].response.httpVersion).toBe('HTTP/1.1');
+  expect(log.entries[1].response.content.encoding).toBe('base64');
+  expect(log.entries[1].response.content.mimeType).toBe('text/css; charset=utf-8');
+  expect(Buffer.from(log.entries[1].response.content.text, 'base64').toString()).toContain('pink');
+  expect(log.entries[1].response.content.size).toBeGreaterThanOrEqual(37);
+  expect(log.entries[1].response.content.compression).toBe(0);
+});
+
+it('should include sizes', async ({ contextFactory, server, browserName, platform }, testInfo) => {
+  it.fixme(browserName === 'webkit' && platform === 'linux', 'blocked by libsoup3');
+
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
@@ -249,23 +271,11 @@ it('should include content and sizes', async ({ contextFactory, server }, testIn
   expect(log.entries[0].request.headersSize).toBeGreaterThanOrEqual(280);
   expect(log.entries[0].response.bodySize).toBeGreaterThanOrEqual(96);
   expect(log.entries[0].response.headersSize).toBe(198);
-  expect(log.entries[0].response.httpVersion).toBe('HTTP/1.1');
   expect(log.entries[0].response._transferSize).toBeGreaterThanOrEqual(294);
-  expect(log.entries[0].response.content.encoding).toBe('base64');
-  expect(log.entries[0].response.content.mimeType).toBe('text/html; charset=utf-8');
-  expect(Buffer.from(log.entries[0].response.content.text, 'base64').toString()).toContain('HAR Page');
-  expect(log.entries[0].response.content.size).toBeGreaterThanOrEqual(96);
-  expect(log.entries[0].response.content.compression).toBe(0);
 
   expect(log.entries[1].response.bodySize).toBeGreaterThanOrEqual(37);
   expect(log.entries[1].response.headersSize).toBe(197);
-  expect(log.entries[1].response.httpVersion).toBe('HTTP/1.1');
   expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(234);
-  expect(log.entries[1].response.content.encoding).toBe('base64');
-  expect(log.entries[1].response.content.mimeType).toBe('text/css; charset=utf-8');
-  expect(Buffer.from(log.entries[1].response.content.text, 'base64').toString()).toContain('pink');
-  expect(log.entries[1].response.content.size).toBeGreaterThanOrEqual(37);
-  expect(log.entries[1].response.content.compression).toBe(0);
 });
 
 it('should calculate time', async ({ contextFactory, server }, testInfo) => {
@@ -275,7 +285,8 @@ it('should calculate time', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[0].time).toBeGreaterThan(0);
 });
 
-it('should report the correct _transferSize with PNG files', async ({ contextFactory, server }, testInfo) => {
+it('should report the correct _transferSize with PNG files', async ({ contextFactory, server, browserName, platform }, testInfo) => {
+  it.fixme(browserName === 'webkit' && platform === 'linux', 'blocked by libsoup3');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`

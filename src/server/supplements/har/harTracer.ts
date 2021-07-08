@@ -185,7 +185,7 @@ export class HarTracer {
     const httpVersion = normaliseHttpVersion(response._httpVersion);
     const transferSize = response._transferSize || -1;
     const headersSize = calculateResponseHeadersSize(httpVersion, response.status(), response.statusText(), response.headers());
-    const bodySize = transferSize - headersSize;
+    const bodySize = transferSize !== -1 ? transferSize - headersSize : -1;
 
     harEntry.request.httpVersion = httpVersion;
     harEntry.response.bodySize = bodySize;
@@ -203,7 +203,7 @@ export class HarTracer {
           content.encoding = 'base64';
         }
         content.size = buffer.length;
-        content.compression = buffer.length - harEntry.response.bodySize;
+        content.compression = harEntry.response.bodySize !== -1 ? buffer.length - harEntry.response.bodySize : 0;
       }).catch(() => {});
       this._addBarrier(page, promise);
     }
