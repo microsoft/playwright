@@ -118,7 +118,7 @@ export class FFNetworkManager {
       response._requestFinished(this._relativeTiming(event.responseEndTime), 'Response body is unavailable for redirect responses');
     } else {
       this._requests.delete(request._id);
-      response._requestFinished(this._relativeTiming(event.responseEndTime));
+      response._requestFinished(this._relativeTiming(event.responseEndTime), undefined, event.transferSize);
     }
     this._page._frameManager.requestFinished(request.request);
   }

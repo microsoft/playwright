@@ -310,7 +310,7 @@ export class CRNetworkManager {
         responseStart: -1,
       };
     }
-    const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
+    const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody, responsePayload.protocol);
     if (responsePayload?.remoteIPAddress && typeof responsePayload?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: responsePayload.remoteIPAddress,
@@ -361,7 +361,7 @@ export class CRNetworkManager {
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
     if (response)
-      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp), undefined, event.encodedDataLength);
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
