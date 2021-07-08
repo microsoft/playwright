@@ -77,12 +77,12 @@ test('should reuse worker after test.fixme()', async ({ runInlineTest }) => {
         expect(testInfo.workerIndex).toBe(0);
       });
 
-      test('succeeds 2', async ({}, testInfo) => {
+      test('fixme 1', async ({}, testInfo) => {
         test.fixme();
         expect(testInfo.workerIndex).toBe(0);
       });
 
-      test('succeeds 3', async ({}, testInfo) => {
+      test('succeeds 2', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
       });
     `,
@@ -100,12 +100,12 @@ test('should reuse worker after test.skip()', async ({ runInlineTest }) => {
         expect(testInfo.workerIndex).toBe(0);
       });
 
-      test('succeeds 2', async ({}, testInfo) => {
+      test('skip 1', async ({}, testInfo) => {
         test.skip();
         expect(testInfo.workerIndex).toBe(0);
       });
 
-      test('succeeds 3', async ({}, testInfo) => {
+      test('succeeds 2', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
       });
     `,
