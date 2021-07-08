@@ -113,7 +113,7 @@ browserTest('should report null viewportSize when given null viewport', async ({
 });
 
 it.describe('screensize', () => {
-  it.skip(({ browserName }) => browserName === 'firefox');
+  it.fixme(({ browserName }) => browserName === 'firefox');
 
   browserTest('should respect screensize', async ({browser, server}) => {
     const context = await browser.newContext({ viewport: { width: 375, height: 667 }, screen: { width: 750, height: 1334 }});
@@ -121,6 +121,7 @@ it.describe('screensize', () => {
     expect(page.viewportSize()).toEqual({width: 375, height: 667});
     expect(await page.evaluate(() => matchMedia('(device-height: 1334px)').matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia('(device-width: 750px)').matches)).toBe(true);
+    await context.close();
   });
 
   browserTest('should ignore screensize when viewport is null', async ({browser}) => {
@@ -129,5 +130,6 @@ it.describe('screensize', () => {
     expect(page.viewportSize()).toBe(null);
     expect(await page.evaluate(() => matchMedia('(device-height: 1334px)').matches)).toBe(false);
     expect(await page.evaluate(() => matchMedia('(device-width: 750px)').matches)).toBe(false);
+    await context.close();
   });
 });
