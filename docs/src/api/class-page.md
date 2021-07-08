@@ -811,6 +811,20 @@ Optional event-specific initialization properties.
 
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
 
+## async method: Page.dragAndDrop
+### param: Page.dragAndDrop.selector1
+- `selector1` <[string]>
+
+### param: Page.dragAndDrop.selector2
+- `selector2` <[string]>
+### option: Page.dragAndDrop.force = %%-input-force-%%
+
+### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+
+### option: Page.dragAndDrop.timeout = %%-input-timeout-%%
+
+### option: Page.dragAndDrop.timeout = %%-input-trial-%%
+
 ## async method: Page.emulateMedia
 
 This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media feature, using the `colorScheme` argument.

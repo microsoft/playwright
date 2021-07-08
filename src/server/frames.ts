@@ -982,6 +982,24 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  async dragAndDrop(metadata: CallMetadata, selector1: string, selector2: string,  options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    const controller = new ProgressController(metadata, this);
+    await controller.run(async progress => {
+      await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector1, async handle => {
+        return handle._retryPointerAction(progress, 'move and down', false, async point => {
+          await this._page.mouse.move(point.x, point.y);
+          await this._page.mouse.down();
+        }, options);
+      }));
+      await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector2, async handle => {
+        return handle._retryPointerAction(progress, 'move and up', false, async point => {
+          await this._page.mouse.move(point.x, point.y);
+          await this._page.mouse.up();
+        }, options);
+      }));
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
   async tap(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {

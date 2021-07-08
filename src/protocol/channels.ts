@@ -1310,6 +1310,7 @@ export interface FrameChannel extends Channel {
   check(params: FrameCheckParams, metadata?: Metadata): Promise<FrameCheckResult>;
   click(params: FrameClickParams, metadata?: Metadata): Promise<FrameClickResult>;
   content(params?: FrameContentParams, metadata?: Metadata): Promise<FrameContentResult>;
+  dragAndDrop(params: FrameDragAndDropParams, metadata?: Metadata): Promise<FrameDragAndDropResult>;
   dblclick(params: FrameDblclickParams, metadata?: Metadata): Promise<FrameDblclickResult>;
   dispatchEvent(params: FrameDispatchEventParams, metadata?: Metadata): Promise<FrameDispatchEventResult>;
   evaluateExpression(params: FrameEvaluateExpressionParams, metadata?: Metadata): Promise<FrameEvaluateExpressionResult>;
@@ -1448,6 +1449,21 @@ export type FrameContentOptions = {};
 export type FrameContentResult = {
   value: string,
 };
+export type FrameDragAndDropParams = {
+  selector1: string,
+  selector2: string,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+  trial?: boolean,
+};
+export type FrameDragAndDropOptions = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+  trial?: boolean,
+};
+export type FrameDragAndDropResult = void;
 export type FrameDblclickParams = {
   selector: string,
   force?: boolean,
