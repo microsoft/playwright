@@ -44,11 +44,6 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [selectedAction]);
 
   return <div className='action-list vbox'>
-    <div className='.action-list-title tab-strip'>
-      <div className='tab-element'>
-        <div className='tab-label'>Actions</div>
-      </div>
-    </div>
     <div
       className='action-list-content'
       tabIndex={0}
@@ -75,7 +70,6 @@ export const ActionList: React.FC<ActionListProps> = ({
         const { metadata } = action;
         const selectedSuffix = action === selectedAction ? ' selected' : '';
         const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
-        const page = modelUtil.page(action);
         const { errors, warnings } = modelUtil.stats(action);
         return <div
           className={'action-entry' + selectedSuffix + highlightedSuffix}

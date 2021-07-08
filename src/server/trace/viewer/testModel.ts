@@ -1,4 +1,4 @@
-1;/**
+/**
  * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,4 @@
  * limitations under the License.
  */
 
-import '../third_party/vscode/codicon.css';
-import { Workbench } from './ui/workbench';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import { applyTheme } from '../theme';
-import '../common.css';
-import { indexTestReport } from './ui/modelUtil';
-
-(async () => {
-  applyTheme();
-  const report = indexTestReport(await fetch('/report').then(response => response.json()));
-  document.title = report.report ? 'Playwright Test Report' : 'Playwright Trace Viewer';
-  ReactDOM.render(<Workbench report={report} />, document.querySelector('#root'));
-})();
+export type { JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportSTDIOEntry } from '../../../test/reporters/json';

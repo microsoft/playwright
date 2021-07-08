@@ -1,0 +1,113 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.test-report-title {
+  cursor: pointer;
+  margin-left: -1px;
+}
+
+.test-report-title:hover .codicon {
+  text-shadow: -2px 0 3px rgb(0 0 0 / 60%);
+}
+
+.test-report-overview {
+  display: flex;
+  flex: 0 0 40px;
+  align-items: stretch;
+  font-variant: small-caps;
+  border-bottom: 1px solid #ddd;
+}
+
+.test-report-overview > div {
+  flex: auto;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.test-report-overview > div + div {
+  border-left: 1px solid #ddd;
+}
+
+.test-report-counter {
+  font-size: larger;
+}
+
+.test-report-list {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  color: #555;
+  overflow: hidden auto;
+  outline: none;
+}
+
+.test-report-item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 28px;
+}
+
+.test-report-item-title {
+  flex: 0 1 auto;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.test-report-item-duration {
+  flex: 0 1000000 auto;
+  font-size: smaller;
+  margin-left: 5px;
+}
+
+.test-report-test-result {
+  cursor: pointer;
+}
+
+.test-report-test-result.selected,
+.test-report-test-result:hover {
+  background-color: var(--light-gray);
+}
+
+.test-report-list:focus .test-report-test-result.selected {
+  background-color: var(--blue);
+}
+
+.test-report-test-result:hover *,
+.test-report-test-result.selected * {
+  color: white !important;
+}
+
+.test-report-error {
+  white-space: pre;
+  font-family: var(--monospace-font);
+  font-size: 12px;
+  overflow: auto;
+  padding-left: 6px;
+  flex: auto;
+}
+
+.test-report-error-header {
+  padding-left: 6px;
+  border-top: 1px solid #ddd;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 10px;
+  border-bottom: 1px solid #ddd;
+  background-color: #efefef;
+  line-height: 18px;
+}

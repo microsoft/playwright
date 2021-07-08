@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import fs from 'fs';
 import type { Browser, Page } from '../../index';
 import { showTraceViewer } from '../../lib/server/trace/viewer/traceViewer';
 import { playwrightTest } from '../config/browserTest';
@@ -22,6 +23,11 @@ import { expect } from '../config/test-runner';
 
 class TraceViewerPage {
   constructor(public page: Page) {}
+
+  async testTitles() {
+    await this.page.waitForSelector('.test-report-item-title:visible');
+    return await this.page.$$eval('.test-report-item-title:visible', ee => ee.map(e => e.textContent));
+  }
 
   async actionTitles() {
     await this.page.waitForSelector('.action-title:visible');
@@ -41,7 +47,6 @@ class TraceViewerPage {
   async selectAction(title: string) {
     await this.page.click(`.action-title:has-text("${title}")`);
   }
-
 
   async callLines() {
     await this.page.waitForSelector('.call-line:visible');
@@ -91,8 +96,9 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
 });
 
 let traceFile: string;
+let testReportFile: string;
 
-test.beforeAll(async ({ browser, browserName }, workerInfo) => {
+test.beforeAll(async ({ browser }, workerInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
   const page = await context.newPage();
@@ -111,13 +117,44 @@ test.beforeAll(async ({ browser, browserName }, workerInfo) => {
     page.waitForTimeout(200).then(() => page.goto('data:text/html,<html>Hello world 2</html>'))
   ]);
   await page.close();
-  traceFile = path.join(workerInfo.project.outputDir, browserName, 'trace.zip');
+  traceFile = path.join(workerInfo.project.outputDir, workerInfo.workerIndex + '-trace.zip');
   await context.tracing.stop({ path: traceFile });
-});
 
-test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => {
-  const traceViewer = await showTraceViewer(testInfo.outputPath());
-  expect(await traceViewer.page.title()).toBe('Playwright Trace Viewer');
+  testReportFile = path.join(workerInfo.project.outputDir, workerInfo.workerIndex + '-report.json');
+  await fs.promises.writeFile(testReportFile, JSON.stringify({
+    config: {},
+    suites: [{
+      title: '',
+      file: 'example.spec.ts',
+      line: 0,
+      column: 0,
+      specs: [{
+        title: 'example test',
+        ok: true,
+        file: 'example.spec.ts',
+        line: 4,
+        column: 1,
+        tests: [{
+          timeout: 3000,
+          annotations: [],
+          expectedStatus: 'passed',
+          projectName: 'chromium',
+          status: 'expected',
+          results: [{
+            workerIndex: 0,
+            status: 'passed',
+            duration: 123,
+            error: undefined,
+            stdout: [{ text: 'stdout' }],
+            stderr: [{ text: 'stderr' }],
+            retry: 0,
+            data: { playwrightTrace: traceFile },
+          }],
+        }],
+      }],
+    }],
+    errors: [],
+  }));
 });
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
@@ -180,5 +217,22 @@ test('should show params and return value', async ({ showTraceViewer, browserNam
     'isFunction: true',
     'arg: {"a":"paramA","b":4}',
     'value: "return paramA"'
+  ]);
+});
+
+test('should open simple test report', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(testReportFile);
+  expect(await traceViewer.testTitles()).toEqual([
+    `example.spec.ts`,
+    `[chromium] example test`,
+  ]);
+  await traceViewer.page.click('text=[chromium] example test');
+  expect(await traceViewer.actionTitles()).toEqual([
+    'page.gotodata:text/html,<html>Hello world</html>',
+    'page.setContent',
+    'page.evaluate',
+    'page.click\"Click\"',
+    'page.waitForNavigation',
+    'page.gotodata:text/html,<html>Hello world 2</html>',
   ]);
 });

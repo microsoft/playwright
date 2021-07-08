@@ -22,6 +22,7 @@
   flex-direction: column;
   padding: 20px 0 5px;
   cursor: text;
+  min-height: 135px;
 }
 
 .timeline-divider {

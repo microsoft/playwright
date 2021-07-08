@@ -29,6 +29,7 @@ export class TraceModel {
   contextResources = new Map<string, ContextResources>();
   private _snapshotStorage: PersistentSnapshotStorage;
   private _version: number | undefined;
+  private _empty = true;
 
   constructor(snapshotStorage: PersistentSnapshotStorage) {
     this._snapshotStorage = snapshotStorage;
@@ -46,6 +47,10 @@ export class TraceModel {
     for (const page of this.contextEntry!.pages)
       page.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
     this.contextEntry!.resources = this._snapshotStorage.resources();
+
+    if (this._empty)
+      this.contextEntry.startTime = 0;
+    this.contextEntry.endTime = Math.max(this.contextEntry.endTime, this.contextEntry.startTime + 100);
   }
 
   private _pageEntry(pageId: string): PageEntry {
@@ -101,8 +106,9 @@ export class TraceModel {
         break;
     }
     if (event.type === 'action' || event.type === 'event') {
-      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.metadata.startTime);
-      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.metadata.endTime);
+      this._empty = false;
+      this.contextEntry.startTime = Math.min(this.contextEntry.startTime, event.metadata.startTime);
+      this.contextEntry.endTime = Math.max(this.contextEntry.endTime, event.metadata.endTime);
     }
   }
 
@@ -147,14 +153,13 @@ export type PageEntry = {
 };
 
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
-  private _resourcesDir: string;
+  private _resourcesDir: string | undefined;
 
-  constructor(resourcesDir: string) {
-    super();
+  setResourcesDir(resourcesDir: string) {
     this._resourcesDir = resourcesDir;
   }
 
   resourceContent(sha1: string): Buffer | undefined {
-    return fs.readFileSync(path.join(this._resourcesDir, sha1));
+    return this._resourcesDir ? fs.readFileSync(path.join(this._resourcesDir, sha1)) : undefined;
   }
 }

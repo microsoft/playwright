@@ -22,6 +22,7 @@ import path from 'path';
 import rimraf from 'rimraf';
 import { createPlaywright } from '../../playwright';
 import { PersistentSnapshotStorage, TraceModel } from './traceModel';
+import { JSONReport } from './testModel';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
@@ -36,51 +37,39 @@ import { installAppIcon } from '../../chromium/crApp';
 export class TraceViewer {
   private _server: HttpServer;
   private _browserName: string;
+  private _unzippedTraceDir = new Map<string, Promise<string>>();
 
-  constructor(tracesDir: string, browserName: string) {
+  constructor(report: JSONReport | string, browserName: string) {
     this._browserName = browserName;
-    const resourcesDir = path.join(tracesDir, 'resources');
-
-    // Served by TraceServer
-    // - "/tracemodel" - json with trace model.
-    //
-    // Served by TraceViewer
-    // - "/traceviewer/..." - our frontend.
-    // - "/file?filePath" - local files, used by sources tab.
-    // - "/sha1/<sha1>" - trace resource bodies, used by network previews.
-    //
-    // Served by SnapshotServer
-    // - "/resources/<resourceId>" - network resources from the trace.
-    // - "/snapshot/" - root for snapshot frame.
-    // - "/snapshot/pageId/..." - actual snapshot html.
-    // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
-    //   and translates them into "/resources/<resourceId>".
-    const actionTraces = fs.readdirSync(tracesDir).filter(name => name.endsWith('.trace'));
-    const debugNames = actionTraces.map(name => {
-      const tracePrefix = path.join(tracesDir, name.substring(0, name.indexOf('.trace')));
-      return path.basename(tracePrefix);
-    });
-
     this._server = new HttpServer();
 
-    const traceListHandler: ServerRouteHandler = (request, response) => {
+    const reportHandler: ServerRouteHandler = (request, response) => {
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
-      response.end(JSON.stringify(debugNames));
+      response.end(JSON.stringify(report));
       return true;
     };
-    this._server.routePath('/contexts', traceListHandler);
-    const snapshotStorage = new PersistentSnapshotStorage(resourcesDir);
+    this._server.routePath('/report', reportHandler);
+
+    const snapshotStorage = new PersistentSnapshotStorage();
+    let resourcesDir: string | undefined;
     new SnapshotServer(this._server, snapshotStorage);
 
     const traceModelHandler: ServerRouteHandler = (request, response) => {
-      const debugName = request.url!.substring('/context/'.length);
-      const tracePrefix = path.join(tracesDir, debugName);
+      const traceFile = queryParamToFilePath(request.url!);
+      if (!traceFile)
+        return false;
+
       snapshotStorage.clear();
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
       (async () => {
-        const fileStream = fs.createReadStream(tracePrefix + '.trace', 'utf8');
+        const tracesDir = await this._unzipTraceFile(traceFile);
+        if (!tracesDir)
+          return;
+        resourcesDir = path.join(tracesDir, 'resources');
+        snapshotStorage.setResourcesDir(resourcesDir);
+        const fileStream = fs.createReadStream(path.join(tracesDir, 'trace.trace'), 'utf8');
         const rl = readline.createInterface({
           input: fileStream,
           crlfDelay: Infinity
@@ -93,7 +82,7 @@ export class TraceViewer {
       })().catch(e => console.error(e));
       return true;
     };
-    this._server.routePrefix('/context/', traceModelHandler);
+    this._server.routePrefix('/context', traceModelHandler);
 
     const traceViewerHandler: ServerRouteHandler = (request, response) => {
       const relativePath = request.url!.substring('/traceviewer/'.length);
@@ -103,12 +92,11 @@ export class TraceViewer {
     this._server.routePrefix('/traceviewer/', traceViewerHandler);
 
     const fileHandler: ServerRouteHandler = (request, response) => {
+      const filePath = queryParamToFilePath(request.url!);
+      if (!filePath)
+        return false;
       try {
-        const url = new URL('http://localhost' + request.url!);
-        const search = url.search;
-        if (search[0] !== '?')
-          return false;
-        return this._server.serveFile(response, search.substring(1));
+        return this._server.serveFile(response, filePath);
       } catch (e) {
         return false;
       }
@@ -117,9 +105,9 @@ export class TraceViewer {
 
     const sha1Handler: ServerRouteHandler = (request, response) => {
       const sha1 = request.url!.substring('/sha1/'.length);
-      if (sha1.includes('/'))
+      if (sha1.includes('/') || !resourcesDir)
         return false;
-      return this._server.serveFile(response, path.join(resourcesDir!, sha1));
+      return this._server.serveFile(response, path.join(resourcesDir, sha1));
     };
     this._server.routePrefix('/sha1/', sha1Handler);
   }
@@ -192,6 +180,30 @@ Please run 'npx playwright install' to install Playwright browsers
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
     return context;
   }
+
+  private _unzipTraceFile(tracePath: string) {
+    if (!this._unzippedTraceDir.has(tracePath)) {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
+      process.on('exit', () => rimraf.sync(dir));
+      const promise = extract(tracePath, { dir }).then(() => dir).catch(e => {
+        console.log(`Invalid trace file: ${tracePath}`);  // eslint-disable-line no-console
+        return '';
+      });
+      this._unzippedTraceDir.set(tracePath, promise);
+    }
+    return this._unzippedTraceDir.get(tracePath)!;
+  }
+}
+
+function queryParamToFilePath(requestUrl: string): string | undefined {
+  try {
+    const url = new URL('http://localhost' + requestUrl);
+    const search = url.search;
+    if (search[0] !== '?')
+      return;
+    return search.substring(1);
+  } catch (e) {
+  }
 }
 
 export async function showTraceViewer(tracePath: string, browserName: string, headless = false): Promise<BrowserContext | undefined> {
@@ -204,19 +216,20 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
   }
 
   if (stat.isDirectory()) {
-    const traceViewer = new TraceViewer(tracePath, browserName);
-    return await traceViewer.show(headless);
-  }
-
-  const zipFile = tracePath;
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
-  process.on('exit', () => rimraf.sync(dir));
-  try {
-    await extract(zipFile, { dir });
-  } catch (e) {
-    console.log(`Invalid trace file: ${zipFile}`);  // eslint-disable-line no-console
+    console.log(`${tracePath} is not a file`);  // eslint-disable-line no-console
     return;
   }
-  const traceViewer = new TraceViewer(dir, browserName);
+
+  let report: JSONReport | string;
+  if (path.extname(tracePath).toLowerCase() === '.zip') {
+    report = tracePath;
+  } else if (path.extname(tracePath).toLowerCase() === '.json') {
+    report = JSON.parse(fs.readFileSync(tracePath, 'utf-8')) as JSONReport;
+  } else {
+    console.log(`Unsupported trace file: ${tracePath}`);  // eslint-disable-line no-console
+    return;
+  }
+
+  const traceViewer = new TraceViewer(report, browserName);
   return await traceViewer.show(headless);
 }
