@@ -175,7 +175,7 @@ it('does launch without a port', async ({ browserType, browserOptions }) => {
   await browser.close();
 });
 
-it('should use proxy', async ({ browserType, browserOptions }) => {
+it('should use proxy with emulated user agent', async ({ browserType, browserOptions }) => {
   it.fixme(true, 'Non-emulated user agent is used in proxy CONNECT');
 
   let requestText = '';
