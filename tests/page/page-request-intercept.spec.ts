@@ -162,7 +162,8 @@ it('should fulfill after redirects', async ({page, server}) => {
   page.on('requestfinished', request => requestFinishedUrls.push(request.url()));
   await page.route('**/*', async route => {
     // @ts-expect-error
-    await route._intercept({});
+    const resp = await route._intercept({});
+    console.log(`did intercept ${resp.url()}`);
     await route.fulfill({
       status: 201,
       headers: {
@@ -171,6 +172,7 @@ it('should fulfill after redirects', async ({page, server}) => {
       contentType: 'text/plain',
       body: 'Yo, page!'
     });
+    console.log(`did fulfill ${route.request().url()}`);
   });
   const response = await page.goto(server.PREFIX + '/redirect/1.html');
   expect(requestUrls).toEqual(expectedUrls);
