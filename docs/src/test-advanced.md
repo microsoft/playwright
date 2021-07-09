@@ -223,17 +223,8 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-```js js-flavor=ts
-// test.spec.ts
-import { test } = from '@playwright/test';
-
-test('test', async ({ page }) => {
-  // This will result in e.g. http://localhost:3000/foo when your dev-server prints a http://localhost:3000 address
-  await page.goto('/foo');
-});
-```
-
 ```js js-flavor=js
+// playwright.config.js
 // @ts-check
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
@@ -246,12 +237,36 @@ const config = {
 mode.exports = config;
 ```
 
+Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+
+```js js-flavor=ts
+// test.spec.ts
+import { test } = from '@playwright/test';
+
+test('test', async ({ page, baseURL }) => {
+  // baseURL is taken directly from your web server,
+  // e.g. http://localhost:3000
+  await page.goto(baseURL + '/bar');
+
+  // Alternatively, just use relative path, because baseURL is already
+  // set for the default context and page.
+  // For example, this will result in http://localhost:3000/foo
+  await page.goto('/foo');
+});
+```
+
 ```js js-flavor=js
 // test.spec.js
 const { test } = require('@playwright/test');
 
-test('test', async ({ page }) => {
-  // This will result in e.g. http://localhost:3000/foo when your dev-server prints a http://localhost:3000 address
+test('test', async ({ page, baseURL }) => {
+  // baseURL is taken directly from your web server,
+  // e.g. http://localhost:3000
+  await page.goto(baseURL + '/bar');
+
+  // Alternatively, just use relative path, because baseURL is already
+  // set for the default context and page.
+  // For example, this will result in http://localhost:3000/foo
   await page.goto('/foo');
 });
 ```
