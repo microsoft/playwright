@@ -21,12 +21,9 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
-import { assert, getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform } from './utils';
+import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile } from './utils';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
-
-export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|'firefox-beta'|'ffmpeg';
-export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'firefox-beta']);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 
@@ -42,29 +39,7 @@ const EXECUTABLE_PATHS = {
     'win32': ['chrome-win', 'chrome.exe'],
     'win64': ['chrome-win', 'chrome.exe'],
   },
-  'chromium-with-symbols': {
-    'ubuntu18.04': ['chrome-linux', 'chrome'],
-    'ubuntu20.04': ['chrome-linux', 'chrome'],
-    'mac10.13': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac10.14': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac10.15': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac11': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac11-arm64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'win32': ['chrome-win', 'chrome.exe'],
-    'win64': ['chrome-win', 'chrome.exe'],
-  },
   'firefox': {
-    'ubuntu18.04': ['firefox', 'firefox'],
-    'ubuntu20.04': ['firefox', 'firefox'],
-    'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'mac10.14': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'mac11': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'mac11-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'win32': ['firefox', 'firefox.exe'],
-    'win64': ['firefox', 'firefox.exe'],
-  },
-  'firefox-beta': {
     'ubuntu18.04': ['firefox', 'firefox'],
     'ubuntu20.04': ['firefox', 'firefox'],
     'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
@@ -202,18 +177,18 @@ const registryDirectory = (() => {
 
 function isBrowserDirectory(browserDirectory: string): boolean {
   const baseName = path.basename(browserDirectory);
-  for (const browserName of allBrowserNames) {
+  for (const browserName of allDownloadable) {
     if (baseName.startsWith(browserName + '-'))
       return true;
   }
   return false;
 }
 
-type BrowserDescriptor = {
-  name: BrowserName,
+type BrowsersJSONDescriptor = {
+  name: string,
   revision: string,
   installByDefault: boolean,
-  browserDirectory: string,
+  dir: string,
 };
 
 function readDescriptors(packagePath: string) {
@@ -223,7 +198,7 @@ function readDescriptors(packagePath: string) {
     const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
     const revision = revisionOverride || obj.revision;
     const browserDirectoryPrefix = revisionOverride ? `${name}_${hostPlatform}_special` : `${name}`;
-    const descriptor: BrowserDescriptor = {
+    const descriptor: BrowsersJSONDescriptor = {
       name,
       revision,
       installByDefault: !!obj.installByDefault,
@@ -232,123 +207,176 @@ function readDescriptors(packagePath: string) {
       // are prefixes of others, e.g. 'webkit' is a prefix of `webkit-technology-preview`.
       // To avoid older registries erroneously removing 'webkit-technology-preview', we have to
       // ensure that browser folders to never include dashes inside.
-      browserDirectory: browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision,
+      dir: path.join(registryDirectory, browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision),
     };
     return descriptor;
   });
 }
 
+export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-with-symbols';
+const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-with-symbols'];
+
+export interface Executable {
+  type: 'browser' | 'tool';
+  name: BrowserName | InternalTool;
+  browserName: BrowserName | undefined;
+  installType: 'download-by-default' | 'download-on-demand';
+  maybeExecutablePath(): string | undefined;
+  executablePathIfExists(): string | undefined;
+  directoryIfExists(): string | undefined;
+  validateHostRequirements(): Promise<void>;
+}
+
+interface ExecutableImpl extends Executable {
+  _download?: () => Promise<void>;
+}
+
 export class Registry {
-  private _descriptors: BrowserDescriptor[];
+  private _executables: ExecutableImpl[];
 
   constructor(packagePath: string) {
-    this._descriptors = readDescriptors(packagePath);
-  }
-
-  browserDirectory(browserName: BrowserName): string {
-    const browser = this._descriptors.find(browser => browser.name === browserName);
-    assert(browser, `ERROR: Playwright does not support ${browserName}`);
-    return path.join(registryDirectory, browser.browserDirectory);
-  }
-
-  private _revision(browserName: BrowserName): string {
-    const browser = this._descriptors.find(browser => browser.name === browserName);
-    assert(browser, `ERROR: Playwright does not support ${browserName}`);
-    return browser.revision;
-  }
-
-  executablePath(browserName: BrowserName): string | undefined {
-    const browserDirectory = this.browserDirectory(browserName);
-    const tokens = EXECUTABLE_PATHS[browserName][hostPlatform];
-    return tokens ? path.join(browserDirectory, ...tokens) : undefined;
-  }
-
-  private _downloadURL(browserName: BrowserName): string {
-    const browser = this._descriptors.find(browser => browser.name === browserName);
-    assert(browser, `ERROR: Playwright does not support ${browserName}`);
-    const envDownloadHost: { [key: string]: string } = {
-      'chromium': 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
-      'chromium-with-symbols': 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
-      'firefox': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
-      'firefox-beta': 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
-      'webkit': 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
-      'ffmpeg': 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST',
+    const descriptors = readDescriptors(packagePath);
+    const executablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
+      const tokens = EXECUTABLE_PATHS[name][hostPlatform];
+      return tokens ? path.join(dir, ...tokens) : undefined;
     };
-    const downloadHost = getFromENV(envDownloadHost[browserName]) ||
-                         getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||
-                         'https://playwright.azureedge.net';
-    const urlTemplate = DOWNLOAD_URLS[browserName][hostPlatform];
-    assert(urlTemplate, `ERROR: Playwright does not support ${browserName} on ${hostPlatform}`);
-    return util.format(urlTemplate, downloadHost, browser.revision);
+    const directoryIfExists = (d: string) => fs.existsSync(d) ? d : undefined;
+    const executablePathIfExists = (e: string | undefined) => e && canAccessFile(e) ? e : undefined;
+    this._executables = [];
+
+    const chromium = descriptors.find(d => d.name === 'chromium')!;
+    const chromiumExecutable = executablePath(chromium.dir, 'chromium');
+    this._executables.push({
+      type: 'browser',
+      name: 'chromium',
+      browserName: 'chromium',
+      directoryIfExists: () => directoryIfExists(chromium.dir),
+      maybeExecutablePath: () => chromiumExecutable,
+      executablePathIfExists: () => executablePathIfExists(chromiumExecutable),
+      installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
+      validateHostRequirements: () => this._validateHostRequirements('chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
+      _download: () => this._downloadExecutable(chromium, chromiumExecutable, DOWNLOAD_URLS['chromium'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+    });
+
+    const chromiumWithSymbols = descriptors.find(d => d.name === 'chromium-with-symbols')!;
+    const chromiumWithSymbolsExecutable = executablePath(chromiumWithSymbols.dir, 'chromium');
+    this._executables.push({
+      type: 'tool',
+      name: 'chromium-with-symbols',
+      browserName: 'chromium',
+      directoryIfExists: () => directoryIfExists(chromiumWithSymbols.dir),
+      maybeExecutablePath: () => chromiumWithSymbolsExecutable,
+      executablePathIfExists: () => executablePathIfExists(chromiumWithSymbolsExecutable),
+      installType: chromiumWithSymbols.installByDefault ? 'download-by-default' : 'download-on-demand',
+      validateHostRequirements: () => this._validateHostRequirements('chromium', chromiumWithSymbols.dir, ['chrome-linux'], [], ['chrome-win']),
+      _download: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable, DOWNLOAD_URLS['chromium-with-symbols'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+    });
+
+    const firefox = descriptors.find(d => d.name === 'firefox')!;
+    const firefoxExecutable = executablePath(firefox.dir, 'firefox');
+    this._executables.push({
+      type: 'browser',
+      name: 'firefox',
+      browserName: 'firefox',
+      directoryIfExists: () => directoryIfExists(firefox.dir),
+      maybeExecutablePath: () => firefoxExecutable,
+      executablePathIfExists: () => executablePathIfExists(firefoxExecutable),
+      installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
+      validateHostRequirements: () => this._validateHostRequirements('firefox', firefox.dir, ['firefox'], [], ['firefox']),
+      _download: () => this._downloadExecutable(firefox, firefoxExecutable, DOWNLOAD_URLS['firefox'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
+    });
+
+    const firefoxBeta = descriptors.find(d => d.name === 'firefox-beta')!;
+    const firefoxBetaExecutable = executablePath(firefoxBeta.dir, 'firefox');
+    this._executables.push({
+      type: 'tool',
+      name: 'firefox-beta',
+      browserName: 'firefox',
+      directoryIfExists: () => directoryIfExists(firefoxBeta.dir),
+      maybeExecutablePath: () => firefoxBetaExecutable,
+      executablePathIfExists: () => executablePathIfExists(firefoxBetaExecutable),
+      installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
+      validateHostRequirements: () => this._validateHostRequirements('firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
+      _download: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable, DOWNLOAD_URLS['firefox-beta'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
+    });
+
+    const webkit = descriptors.find(d => d.name === 'webkit')!;
+    const webkitExecutable = executablePath(webkit.dir, 'webkit');
+    const webkitLinuxLddDirectories = [
+      path.join('minibrowser-gtk'),
+      path.join('minibrowser-gtk', 'bin'),
+      path.join('minibrowser-gtk', 'lib'),
+      path.join('minibrowser-wpe'),
+      path.join('minibrowser-wpe', 'bin'),
+      path.join('minibrowser-wpe', 'lib'),
+    ];
+    this._executables.push({
+      type: 'browser',
+      name: 'webkit',
+      browserName: 'webkit',
+      directoryIfExists: () => directoryIfExists(webkit.dir),
+      maybeExecutablePath: () => webkitExecutable,
+      executablePathIfExists: () => executablePathIfExists(webkitExecutable),
+      installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
+      validateHostRequirements: () => this._validateHostRequirements('webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
+      _download: () => this._downloadExecutable(webkit, webkitExecutable, DOWNLOAD_URLS['webkit'][hostPlatform], 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST'),
+    });
+
+    const ffmpeg = descriptors.find(d => d.name === 'ffmpeg')!;
+    const ffmpegExecutable = executablePath(ffmpeg.dir, 'ffmpeg');
+    this._executables.push({
+      type: 'tool',
+      name: 'ffmpeg',
+      browserName: undefined,
+      directoryIfExists: () => directoryIfExists(ffmpeg.dir),
+      maybeExecutablePath: () => ffmpegExecutable,
+      executablePathIfExists: () => executablePathIfExists(ffmpegExecutable),
+      installType: ffmpeg.installByDefault ? 'download-by-default' : 'download-on-demand',
+      validateHostRequirements: () => Promise.resolve(),
+      _download: () => this._downloadExecutable(ffmpeg, ffmpegExecutable, DOWNLOAD_URLS['ffmpeg'][hostPlatform], 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST'),
+    });
   }
 
-  isSupportedBrowser(browserName: string): boolean {
-    // We retain browsers if they are found in the descriptor.
-    // Note, however, that there are older versions out in the wild that rely on
-    // the "download" field in the browser descriptor and use its value
-    // to retain and download browsers.
-    // As of v1.10, we decided to abandon "download" field.
-    return this._descriptors.some(browser => browser.name === browserName);
+  findExecutable(name: BrowserName): Executable;
+  findExecutable(name: string): Executable | undefined;
+  findExecutable(name: string): Executable | undefined {
+    return this._executables.find(b => b.name === name);
   }
 
-  private _installByDefault(): BrowserName[] {
-    return this._descriptors.filter(browser => browser.installByDefault).map(browser => browser.name);
+  private _addRequirementsAndDedupe(executables: Executable[] | undefined): ExecutableImpl[] {
+    const set = new Set<ExecutableImpl>();
+    if (!executables)
+      executables = this._executables.filter(executable => executable.installType === 'download-by-default');
+    for (const executable of executables as ExecutableImpl[]) {
+      set.add(executable);
+      if (executable.browserName === 'chromium')
+        set.add(this.findExecutable('ffmpeg')!);
+    }
+    return Array.from(set);
   }
 
-  async validateHostRequirements(browserName: BrowserName) {
+  private async _validateHostRequirements(browserName: BrowserName, browserDirectory: string, linuxLddDirectories: string[], dlOpenLibraries: string[], windowsExeAndDllDirectories: string[]) {
     if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS')) {
       process.stdout.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
       return;
     }
     const ubuntuVersion = await getUbuntuVersion();
-    if ((browserName === 'firefox' || browserName === 'firefox-beta') && ubuntuVersion === '16.04')
-      throw new Error(`Cannot launch ${browserName} on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
-    const browserDirectory = this.browserDirectory(browserName);
+    if (browserName === 'firefox' && ubuntuVersion === '16.04')
+      throw new Error(`Cannot launch Firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
 
-    if (os.platform() === 'linux') {
-      const dlOpenLibraries: string[] = [];
-      const linuxLddDirectories: string[] = [];
-      if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
-        linuxLddDirectories.push(path.join(browserDirectory, 'chrome-linux'));
-      if (browserName === 'webkit') {
-        linuxLddDirectories.push(
-            path.join(browserDirectory, 'minibrowser-gtk'),
-            path.join(browserDirectory, 'minibrowser-gtk', 'bin'),
-            path.join(browserDirectory, 'minibrowser-gtk', 'lib'),
-            path.join(browserDirectory, 'minibrowser-wpe'),
-            path.join(browserDirectory, 'minibrowser-wpe', 'bin'),
-            path.join(browserDirectory, 'minibrowser-wpe', 'lib'),
-        );
-        dlOpenLibraries.push('libGLESv2.so.2', 'libx264.so');
-      }
-      if (browserName === 'firefox' || browserName === 'firefox-beta')
-        linuxLddDirectories.push(path.join(browserDirectory, 'firefox'));
-      return await validateDependenciesLinux(linuxLddDirectories, dlOpenLibraries);
-    }
-
-    if (os.platform() === 'win32' && os.arch() === 'x64') {
-      const windowsExeAndDllDirectories: string[] = [];
-      if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
-        windowsExeAndDllDirectories.push(path.join(browserDirectory, 'chrome-win'));
-      if (browserName === 'firefox' || browserName === 'firefox-beta')
-        windowsExeAndDllDirectories.push(path.join(browserDirectory, 'firefox'));
-      if (browserName === 'webkit')
-        windowsExeAndDllDirectories.push(browserDirectory);
-      return await validateDependenciesWindows(windowsExeAndDllDirectories);
-    }
+    if (os.platform() === 'linux')
+      return await validateDependenciesLinux(linuxLddDirectories.map(d => path.join(browserDirectory, d)), dlOpenLibraries);
+    if (os.platform() === 'win32' && os.arch() === 'x64')
+      return await validateDependenciesWindows(windowsExeAndDllDirectories.map(d => path.join(browserDirectory, d)));
   }
 
-  async installDeps(browserNames: BrowserName[]) {
+  async installDeps(executablesToInstallDeps?: Executable[]) {
+    const executables = this._addRequirementsAndDedupe(executablesToInstallDeps);
     const targets = new Set<'chromium' | 'firefox' | 'webkit' | 'tools'>();
-    if (!browserNames.length)
-      browserNames = this._installByDefault();
-    for (const browserName of browserNames) {
-      if (browserName === 'chromium' || browserName === 'chromium-with-symbols')
-        targets.add('chromium');
-      if (browserName === 'firefox' || browserName === 'firefox-beta')
-        targets.add('firefox');
-      if (browserName === 'webkit')
-        targets.add('webkit');
+    for (const executable of executables) {
+      if (executable.browserName)
+        targets.add(executable.browserName);
     }
     targets.add('tools');
     if (os.platform() === 'win32')
@@ -357,9 +385,8 @@ export class Registry {
       return await installDependenciesLinux(targets);
   }
 
-  async installBinaries(browserNames?: BrowserName[]) {
-    if (!browserNames)
-      browserNames = this._installByDefault();
+  async install(executablesToInstall?: Executable[]) {
+    const executables = this._addRequirementsAndDedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
     const releaseLock = await lockfile.lock(registryDirectory, {
@@ -385,20 +412,32 @@ export class Registry {
       // Remove stale browsers.
       await this._validateInstallationCache(linksDir);
 
-      // Install missing browsers for this package.
-      for (const browserName of browserNames) {
-        const revision = this._revision(browserName);
-        const browserDirectory = this.browserDirectory(browserName);
-        const title = `${browserName} v${revision}`;
-        const downloadFileName = `playwright-download-${browserName}-${hostPlatform}-${revision}.zip`;
-        await downloadBrowserWithProgressBar(title, browserDirectory, this.executablePath(browserName)!, this._downloadURL(browserName), downloadFileName).catch(e => {
-          throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
-        });
-        await fs.promises.writeFile(markerFilePath(browserDirectory), '');
+      // Install browsers for this package.
+      for (const executable of executables) {
+        if (executable._download)
+          await executable._download();
+        else
+          throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
       }
     } finally {
       await releaseLock();
     }
+  }
+
+  private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath: string | undefined, downloadURLTemplate: string | undefined, downloadHostEnv: string) {
+    if (!downloadURLTemplate || !executablePath)
+      throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
+    const downloadHost =
+        (downloadHostEnv && getFromENV(downloadHostEnv)) ||
+        getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||
+        'https://playwright.azureedge.net';
+    const downloadURL = util.format(downloadURLTemplate, downloadHost, descriptor.revision);
+    const title = `${descriptor.name} v${descriptor.revision}`;
+    const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
+    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURL, downloadFileName).catch(e => {
+      throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
+    });
+    await fs.promises.writeFile(markerFilePath(descriptor.dir), '');
   }
 
   private async _validateInstallationCache(linksDir: string) {
@@ -410,11 +449,16 @@ export class Registry {
       try {
         linkTarget = (await fs.promises.readFile(linkPath)).toString();
         const descriptors = readDescriptors(linkTarget);
-        for (const browserName of allBrowserNames) {
+        for (const browserName of allDownloadable) {
+          // We retain browsers if they are found in the descriptor.
+          // Note, however, that there are older versions out in the wild that rely on
+          // the "download" field in the browser descriptor and use its value
+          // to retain and download browsers.
+          // As of v1.10, we decided to abandon "download" field.
           const descriptor = descriptors.find(d => d.name === browserName);
           if (!descriptor)
             continue;
-          const usedBrowserPath = path.join(registryDirectory, descriptor.browserDirectory);
+          const usedBrowserPath = descriptor.dir;
           const browserRevision = parseInt(descriptor.revision, 10);
           // Old browser installations don't have marker file.
           const shouldHaveMarkerFile = (browserName === 'chromium' && browserRevision >= 786218) ||
@@ -454,7 +498,7 @@ export async function installDefaultBrowsersForNpmInstall() {
     logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
     return false;
   }
-  await registry.installBinaries();
+  await registry.install();
 }
 
 export const registry = new Registry(PACKAGE_PATH);

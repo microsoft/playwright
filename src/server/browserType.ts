@@ -45,7 +45,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   executablePath(channel?: string): string {
-    return registry.executablePath(this._name) || '';
+    return registry.findExecutable(this._name).maybeExecutablePath() || '';
   }
 
   name(): string {
@@ -167,10 +167,9 @@ export abstract class BrowserType extends SdkObject {
       throw new Error(errorMessageLines.join('\n'));
     }
 
-    // Only validate dependencies for downloadable browsers.
-    const browserName: BrowserName = (options.channel || this._name) as BrowserName;
-    if (!executablePath && registry.isSupportedBrowser(browserName))
-      await registry.validateHostRequirements(browserName);
+    // Do not validate dependencies for custom binaries.
+    if (!executablePath && !options.channel)
+      await registry.findExecutable(this._name).validateHostRequirements();
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
     const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));

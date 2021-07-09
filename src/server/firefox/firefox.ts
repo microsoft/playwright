@@ -37,7 +37,7 @@ export class Firefox extends BrowserType {
     if (channel) {
       let executablePath = undefined;
       if ((channel as any) === 'firefox-beta')
-        executablePath = registry.executablePath('firefox-beta');
+        executablePath = registry.findExecutable('firefox-beta')!.executablePathIfExists();
       assert(executablePath, `unsupported firefox channel "${channel}"`);
       assert(fs.existsSync(executablePath), `"${channel}" channel is not installed. Try running 'npx playwright install ${channel}'`);
       return executablePath;

@@ -53,7 +53,7 @@ export class Chromium extends BrowserType {
     if (channel) {
       let executablePath = undefined;
       if ((channel as any) === 'chromium-with-symbols')
-        executablePath = registry.executablePath('chromium-with-symbols');
+        executablePath = registry.findExecutable('chromium-with-symbols')!.executablePathIfExists();
       else
         executablePath = findChromiumChannel(channel);
       assert(executablePath, `unsupported chromium channel "${channel}"`);
@@ -103,7 +103,9 @@ export class Chromium extends BrowserType {
   }
 
   private _createDevTools() {
-    return new CRDevTools(path.join(registry.browserDirectory('chromium'), 'devtools-preferences.json'));
+    // TODO: this is totally wrong when using channels.
+    const directory = registry.findExecutable('chromium').directoryIfExists();
+    return directory ? new CRDevTools(path.join(directory, 'devtools-preferences.json')) : undefined;
   }
 
   async _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
