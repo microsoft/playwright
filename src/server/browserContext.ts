@@ -337,9 +337,9 @@ export abstract class BrowserContext extends SdkObject {
         const originStorage: types.OriginStorage = { origin, localStorage: [] };
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage = await frame.eval(`({
+        const storage = await frame.evaluateExpression(`({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        })`, {world: 'utility'});
+        })`, false, undefined, 'utility');
         originStorage.localStorage = storage.localStorage;
         if (storage.localStorage.length)
           result.origins.push(originStorage);
@@ -361,10 +361,11 @@ export abstract class BrowserContext extends SdkObject {
       for (const originState of state.origins) {
         const frame = page.mainFrame();
         await frame.goto(metadata, originState.origin);
-        await frame.eval((originState: types.OriginStorage) => {
-          for (const { name, value } of (originState.localStorage || []))
-            localStorage.setItem(name, value);
-        }, {arg: originState, world: 'utility'});
+        await frame.evaluateExpression(`
+          originState => {
+            for (const { name, value } of (originState.localStorage || []))
+              localStorage.setItem(name, value);
+          }`, true, originState, 'utility');
       }
       await page.close(internalMetadata);
     }

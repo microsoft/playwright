@@ -250,22 +250,22 @@ it('should work with internal bindings', async ({page, toImpl, server, mode, bro
     foo = arg;
   }, 'utility');
   expect(await page.evaluate('!!window.foo')).toBe(false);
-  expect(await implPage.mainFrame().eval('!!window.foo', {world: 'utility'})).toBe(true);
+  expect(await implPage.mainFrame().evaluateExpression('!!window.foo', false, {}, 'utility')).toBe(true);
   expect(foo).toBe(undefined);
-  await implPage.mainFrame().eval('window.foo(123)', {world: 'utility'});
+  await implPage.mainFrame().evaluateExpression('window.foo(123)', false, {}, 'utility');
   expect(foo).toBe(123);
 
   // should work after reload
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate('!!window.foo')).toBe(false);
-  await implPage.mainFrame().eval('window.foo(456)', {world: 'utility'});
+  await implPage.mainFrame().evaluateExpression('window.foo(456)', false, {}, 'utility');
   expect(foo).toBe(456);
 
   // should work inside frames
   const frame = await attachFrame(page, 'myframe', server.CROSS_PROCESS_PREFIX + '/empty.html');
   expect(await frame.evaluate('!!window.foo')).toBe(false);
   const implFrame: import('../../src/server/frames').Frame = toImpl(frame);
-  await implFrame.eval('window.foo(789)', {world: 'utility'});
+  await implFrame.evaluateExpression('window.foo(789)', false, {}, 'utility');
   expect(foo).toBe(789);
 });
 
