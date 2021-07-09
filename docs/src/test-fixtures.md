@@ -335,3 +335,41 @@ const test = base.extend<{}, ExpressWorkerFixtures>({
 
 export default test;
 ```
+
+## Augmenting fixtures
+
+In addition to creating your own fixtures, you can also augment existing fixtures to fit your needs. Consider the following example which augments the `page` fixture by navigating to a specified URL:
+
+```js js-flavor=js
+// button.spec.js
+const base = require('@playwright/test');
+
+const test = base.test.extend({
+  page: async ({ page }, use) => {
+    await page.goto('http://localhost:8080');
+    await use(page);
+  },
+});
+
+test('should click the button', async ({ page }) => {
+  await page.click('button')
+  // ...
+});
+```
+
+```js js-flavor=ts
+// button.spec.ts
+import { test as base } from '@playwright/test';
+
+const test = base.extend({
+  page: async ({ page }, use) => {
+    await page.goto('http://localhost:8080');
+    await use(page);
+  },
+});
+
+test('should click the button', async ({ page }) => {
+  await page.click('button')
+  // ...
+});
+```
