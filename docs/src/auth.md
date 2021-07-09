@@ -258,7 +258,7 @@ await context.addInitScript(storage => {
 
 ```java
 // Get session storage and store as env variable
-String sessionStorage = (String) page.evaluate("() => JSON.stringify(sessionStorage");
+String sessionStorage = (String) page.evaluate("JSON.stringify(sessionStorage)");
 System.getenv().put("SESSION_STORAGE", sessionStorage);
 
 // Set session storage in a new context
