@@ -68,7 +68,7 @@ export class ElectronApplication extends SdkObject {
       this._nodeSession.on('Runtime.executionContextCreated', async (event: any) => {
         if (event.context.auxData && event.context.auxData.isDefault) {
           this._nodeExecutionContext = new js.ExecutionContext(this, new CRExecutionContext(this._nodeSession, event.context));
-          f(await js.evaluate(this._nodeExecutionContext, false /* returnByValue */, `process.mainModule.require('electron')`));
+          f(this._nodeExecutionContext.eval(`process.mainModule.require('electron')`, { returnHandle: true }));
         }
       });
     });

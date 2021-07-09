@@ -50,36 +50,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return null;
   }
 
-  async evaluate<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<R> {
-    return js.evaluate(this, true /* returnByValue */, pageFunction, arg);
-  }
-
-  async evaluateHandle<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<js.SmartHandle<R>> {
-    return js.evaluate(this, false /* returnByValue */, pageFunction, arg);
-  }
-
-  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
-    return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, arg);
-  }
-
-  async evaluateAndWaitForSignals<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<R> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this.evaluate(pageFunction, arg);
-    });
-  }
-
-  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this.evaluateExpression(expression, isFunction, arg);
-    });
-  }
-
-  async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, arg);
-    });
-  }
-
   createHandle(remoteObject: js.RemoteObject): js.JSHandle {
     if (this.frame._page._delegate.isElementHandle(remoteObject))
       return new ElementHandle(this, remoteObject.objectId!);
@@ -135,7 +105,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   private async _evaluateInMainAndWaitForSignals<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
     const main = await this._context.frame._mainContext();
-    return main.evaluateAndWaitForSignals(pageFunction, [await main.injectedScript(), this, arg]);
+    return main.eval(pageFunction, {arg: [await main.injectedScript(), this, arg], waitForSignals: true});
   }
 
   async evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {

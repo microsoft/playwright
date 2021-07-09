@@ -191,7 +191,7 @@ export class WKPage implements PageDelegate {
       const bootstrapScript = this._calculateBootstrapScript(world);
       if (bootstrapScript.length)
         promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript, worldName: webkitWorldName(world) }));
-      this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript, false, undefined, world).catch(e => {}));
+      this._page.frames().map(frame => frame.eval(bootstrapScript, {world}).catch(e => {}));
     }
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
@@ -723,7 +723,7 @@ export class WKPage implements PageDelegate {
 
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
     const script = this._bindingToScript(binding);
-    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}, binding.world).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame.eval(script, {world: binding.world}).catch(e => {})));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
