@@ -16,9 +16,13 @@ configurations for common CI providers.
    in Linux agents or install your dependencies using the [CLI](./cli.md#install-system-dependencies). Windows and macOS agents do not require any additional dependencies.
 1. **Install Playwright**:
    ```bash js
+   # Install NPM packages
    npm ci
    # or
    npm install
+
+   # Install Playwright browsers
+   npx playwright install
    ```
    ```bash python
    pip install playwright
