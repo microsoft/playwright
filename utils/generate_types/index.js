@@ -221,8 +221,8 @@ function classBody(classDesc) {
   const parts = [];
   const eventDescriptions = createEventDescriptions(classDesc);
   const commentForMethod = {
-    off: 'Removes and event listener added by `on` or `addListener`',
-    removeListener: 'Removes and event listener added by `on` or `addListener`',
+    off: 'Removes an event listener added by `on` or `addListener`.',
+    removeListener: 'Removes an event listener added by `on` or `addListener`.',
     once: 'Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.'
   }
   for (const method of ['on', 'once', 'addListener', 'removeListener', 'off']) {

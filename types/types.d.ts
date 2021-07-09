@@ -844,192 +844,192 @@ export interface Page {
   addListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'close', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'crash', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'domcontentloaded', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'download', listener: (download: Download) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'frameattached', listener: (frame: Frame) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'framedetached', listener: (frame: Frame) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'framenavigated', listener: (frame: Frame) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'load', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'pageerror', listener: (error: Error) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'popup', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'request', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'crash', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'domcontentloaded', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'download', listener: (download: Download) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'frameattached', listener: (frame: Frame) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'framedetached', listener: (frame: Frame) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'framenavigated', listener: (frame: Frame) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'load', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'pageerror', listener: (error: Error) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'popup', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'request', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'requestfailed', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'worker', listener: (worker: Worker) => void): this;
 
@@ -4756,82 +4756,82 @@ export interface BrowserContext {
   addListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'backgroundpage', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'request', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'backgroundpage', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'request', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'requestfailed', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'response', listener: (response: Response) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
@@ -5417,12 +5417,12 @@ export interface Worker {
   addListener(event: 'close', listener: (worker: Worker) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'close', listener: (worker: Worker) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (worker: Worker) => void): this;
 
@@ -7395,22 +7395,22 @@ export interface ElectronApplication {
   addListener(event: 'window', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'close', listener: () => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'window', listener: (page: Page) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: () => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'window', listener: (page: Page) => void): this;
 
@@ -7662,12 +7662,12 @@ export interface AndroidDevice {
   addListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
 
@@ -8335,22 +8335,22 @@ export interface AndroidSocket {
   addListener(event: 'data', listener: (buffer: Buffer) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'close', listener: () => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'data', listener: (buffer: Buffer) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: () => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'data', listener: (buffer: Buffer) => void): this;
 
@@ -8387,12 +8387,12 @@ export interface AndroidWebView {
   addListener(event: 'close', listener: () => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'close', listener: () => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: () => void): this;
 
@@ -8452,12 +8452,12 @@ export interface Browser extends EventEmitter {
   addListener(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'disconnected', listener: (browser: Browser) => void): this;
 
@@ -8916,12 +8916,12 @@ export interface BrowserServer {
   addListener(event: 'close', listener: () => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'close', listener: () => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: () => void): this;
 
@@ -10540,12 +10540,12 @@ export interface WebSocket {
   addListener(event: 'socketerror', listener: (string: String) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'framereceived', listener: (data: {
   /**
@@ -10555,7 +10555,7 @@ export interface WebSocket {
 }) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'framesent', listener: (data: {
   /**
@@ -10565,17 +10565,17 @@ export interface WebSocket {
 }) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'socketerror', listener: (string: String) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'framereceived', listener: (data: {
   /**
@@ -10585,7 +10585,7 @@ export interface WebSocket {
 }) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'framesent', listener: (data: {
   /**
@@ -10595,7 +10595,7 @@ export interface WebSocket {
 }) => void): this;
 
   /**
-   * Removes and event listener added by `on` or `addListener`
+   * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'socketerror', listener: (string: String) => void): this;
 
