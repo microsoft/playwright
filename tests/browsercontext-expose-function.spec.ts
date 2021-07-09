@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { JSHandle } from '..';
 import { contextTest as it, expect } from './config/browserTest';
 
 it('expose binding should work', async ({context}) => {
@@ -74,7 +73,7 @@ it('should be callable from-inside addInitScript', async ({context, server}) => 
 });
 
 it('exposeBindingHandle should work', async ({context}) => {
-  let target: JSHandle;
+  let target;
   await context.exposeBinding('logme', (source, t) => {
     target = t;
     return 17;

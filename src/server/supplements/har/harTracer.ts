@@ -82,12 +82,12 @@ export class HarTracer {
 
   private _onDOMContentLoaded(page: Page) {
     const pageEntry = this._ensurePageEntry(page);
-    const promise = page.mainFrame().eval(() => {
+    const promise = page.mainFrame().evaluateExpression(String(() => {
       return {
         title: document.title,
         domContentLoaded: performance.timing.domContentLoadedEventStart,
       };
-    }, {world: 'utility'}).then(result => {
+    }), true, undefined, 'utility').then(result => {
       pageEntry.title = result.title;
       pageEntry.pageTimings.onContentLoad = result.domContentLoaded;
     }).catch(() => {});
@@ -96,12 +96,12 @@ export class HarTracer {
 
   private _onLoad(page: Page) {
     const pageEntry = this._ensurePageEntry(page);
-    const promise = page.mainFrame().eval(() => {
+    const promise = page.mainFrame().evaluateExpression(String(() => {
       return {
         title: document.title,
         loaded: performance.timing.loadEventStart,
       };
-    }, {world: 'utility'}).then(result => {
+    }), true, undefined, 'utility').then(result => {
       pageEntry.title = result.title;
       pageEntry.pageTimings.onLoad = result.loaded;
     }).catch(() => {});

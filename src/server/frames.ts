@@ -508,7 +508,7 @@ export class Frame extends SdkObject {
     this._nonStallingEvaluations.add(callback);
     try {
       return await Promise.race([
-        context.eval(expression, { isFunction }),
+        context.evaluateExpression(expression, isFunction),
         frameInvalidated
       ]);
     } finally {
@@ -658,10 +658,25 @@ export class Frame extends SdkObject {
     return this._context('utility');
   }
 
-  async eval(pageFunction: string|Function, options: js.EvalOptions & {world?: types.World} = {}) {
-    const {world = 'main'} = options;
+  async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
-    const value = await context.eval(pageFunction, options);
+    const handle = await context.evaluateExpressionHandleAndWaitForSignals(expression, isFunction, arg);
+    if (world === 'main')
+      await this._page._doSlowMo();
+    return handle;
+  }
+
+  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
+    const context = await this._context(world);
+    const value = await context.evaluateExpression(expression, isFunction, arg);
+    if (world === 'main')
+      await this._page._doSlowMo();
+    return value;
+  }
+
+  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
+    const context = await this._context(world);
+    const value = await context.evaluateExpressionAndWaitForSignals(expression, isFunction, arg);
     if (world === 'main')
       await this._page._doSlowMo();
     return value;
