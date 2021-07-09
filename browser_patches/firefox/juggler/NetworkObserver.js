@@ -240,20 +240,7 @@ class NetworkRequest {
     if (pageNetwork)
       pageNetwork._responseStorage.addResponseBody(this, newChannel, body);
 
-    const responseHeaders = [];
-    let status = 0;
-    let statusText = '';
-    try {
-      status = newChannel.responseStatus;
-      statusText = newChannel.responseStatusText;
-      newChannel.visitResponseHeaders({
-        visitHeader: (name, value) => responseHeaders.push({name, value}),
-      });
-    } catch (e) {
-      // Response headers, status and/or statusText are not available
-      // when redirect did not actually hit the network.
-    }
-    const response = { status, statusText, headers: responseHeaders };
+    const response = responseHead(newChannel);
     this._interceptedResponse = Object.assign({ body }, response);
     return response;
   }
@@ -322,7 +309,7 @@ class NetworkRequest {
   }
 
   // Instrumentation called by NetworkObserver.
-  _onResponse(fromCache, httpChannel) {
+  _onResponse(fromCache) {
     this._sendOnResponse(fromCache);
   }
 
@@ -596,20 +583,7 @@ class NetworkRequest {
       responseStart: this.httpChannel.responseStartTime,
     };
 
-    const headers = [];
-    let status = opt_statusCode || 0;
-    let statusText = opt_statusText || '';
-    try {
-      status = this.httpChannel.responseStatus;
-      statusText = this.httpChannel.responseStatusText;
-      this.httpChannel.visitResponseHeaders({
-        visitHeader: (name, value) => headers.push({name, value}),
-      });
-    } catch (e) {
-      // Response headers, status and/or statusText are not available
-      // when redirect did not actually hit the network.
-    }
-
+    const { status, statusText, headers } = responseHead(this.httpChannel, opt_statusCode, opt_statusText);
     let remoteIPAddress = undefined;
     let remotePort = undefined;
     try {
@@ -772,7 +746,7 @@ class NetworkObserver {
   _onResponse(fromCache, httpChannel, topic) {
     const request = this._channelToRequest.get(httpChannel);
     if (request)
-      request._onResponse(fromCache, httpChannel);
+      request._onResponse(fromCache);
   }
 
   dispose() {
@@ -919,6 +893,23 @@ class ResponseStorage {
     }
     return {base64body: btoa(result)};
   }
+}
+
+function responseHead(httpChannel, opt_statusCode, opt_statusText) {
+  const headers = [];
+  let status = opt_statusCode || 0;
+  let statusText = opt_statusText || '';
+  try {
+    status = httpChannel.responseStatus;
+    statusText = httpChannel.responseStatusText;
+    httpChannel.visitResponseHeaders({
+      visitHeader: (name, value) => headers.push({name, value}),
+    });
+  } catch (e) {
+    // Response headers, status and/or statusText are not available
+    // when redirect did not actually hit the network.
+  }
+  return { status, statusText, headers };
 }
 
 function setPostData(httpChannel, postData, headers) {
