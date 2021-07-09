@@ -115,6 +115,51 @@ test('should reuse worker after test.skip()', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should use new worker after test.fail()', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('succeeds 1', async ({}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(0);
+      });
+
+      test('fail 1', async ({}, testInfo) => {
+        test.fail();
+        expect(1).toBe(0);
+      });
+
+      test('succeeds 2', async ({}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(1);
+      });
+    `,
+  });
+  expect(result.passed).toBe(3);
+  expect(result.failed).toBe(0);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should use new worker after test failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('succeeds 1', async ({}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(0);
+      });
+
+      test('fail 1', async ({}, testInfo) => {
+        expect(1).toBe(0);
+      });
+
+      test('succeeds 2', async ({}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(1);
+      });
+    `,
+  });
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});
+
 test('should not reuse worker for different suites', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
