@@ -31,7 +31,7 @@ import { Page } from '../client/page';
 import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { allBrowserNames, BrowserName, Registry } from '../utils/registry';
+import { allBrowserNames, BrowserName, registry } from '../utils/registry';
 import * as utils from '../utils/utils';
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
@@ -126,7 +126,7 @@ program
       try {
         // Install default browsers when invoked without arguments.
         if (!args.length) {
-          await Registry.currentPackageRegistry().installBinaries();
+          await registry.installBinaries();
           return;
         }
         const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
@@ -139,7 +139,7 @@ program
         if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge') || browserChannels.has('msedge-beta'))
           browserNames.add('ffmpeg');
         if (browserNames.size)
-          await Registry.currentPackageRegistry().installBinaries([...browserNames]);
+          await registry.installBinaries([...browserNames]);
         for (const browserChannel of browserChannels)
           await installBrowserChannel(browserChannel);
       } catch (e) {
@@ -191,7 +191,7 @@ program
     .action(async function(browserTypes) {
       try {
         // TODO: verify the list and print supported browserTypes in the error message.
-        await Registry.currentPackageRegistry().installDeps(browserTypes);
+        await registry.installDeps(browserTypes);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);

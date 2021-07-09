@@ -20,8 +20,8 @@ import path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
-import { getUbuntuVersion, getUbuntuVersionSync } from './ubuntuVersion';
-import { assert, getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync } from './utils';
+import { getUbuntuVersion } from './ubuntuVersion';
+import { assert, getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform } from './utils';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
@@ -29,14 +29,6 @@ export type BrowserName = 'chromium'|'chromium-with-symbols'|'webkit'|'firefox'|
 export const allBrowserNames: Set<BrowserName> = new Set(['chromium', 'chromium-with-symbols', 'webkit', 'firefox', 'ffmpeg', 'firefox-beta']);
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
-
-type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11'|'mac11-arm64'|'ubuntu18.04'|'ubuntu20.04';
-type BrowserDescriptor = {
-  name: BrowserName,
-  revision: string,
-  installByDefault: boolean,
-  browserDirectory: string,
-};
 
 const EXECUTABLE_PATHS = {
   'chromium': {
@@ -176,41 +168,7 @@ const DOWNLOAD_URLS = {
   },
 };
 
-export const hostPlatform = ((): BrowserPlatform => {
-  const platform = os.platform();
-  if (platform === 'darwin') {
-    const ver = os.release().split('.').map((a: string) => parseInt(a, 10));
-    let macVersion = '';
-    if (ver[0] < 18) {
-      // Everything before 10.14 is considered 10.13.
-      macVersion = 'mac10.13';
-    } else if (ver[0] === 18) {
-      macVersion = 'mac10.14';
-    } else if (ver[0] === 19) {
-      macVersion = 'mac10.15';
-    } else {
-      // ver[0] >= 20
-      const LAST_STABLE_MAC_MAJOR_VERSION = 11;
-      // Best-effort support for MacOS beta versions.
-      macVersion = 'mac' + Math.min(ver[0] - 9, LAST_STABLE_MAC_MAJOR_VERSION);
-      // BigSur is the first version that might run on Apple Silicon.
-      if (os.cpus().some(cpu => cpu.model.includes('Apple')))
-        macVersion += '-arm64';
-    }
-    return macVersion as BrowserPlatform;
-  }
-  if (platform === 'linux') {
-    const ubuntuVersion = getUbuntuVersionSync();
-    if (parseInt(ubuntuVersion, 10) <= 19)
-      return 'ubuntu18.04';
-    return 'ubuntu20.04';
-  }
-  if (platform === 'win32')
-    return os.arch() === 'x64' ? 'win64' : 'win32';
-  return platform as BrowserPlatform;
-})();
-
-export const registryDirectory = (() => {
+const registryDirectory = (() => {
   let result: string;
 
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
@@ -242,7 +200,7 @@ export const registryDirectory = (() => {
   return result;
 })();
 
-export function isBrowserDirectory(browserDirectory: string): boolean {
+function isBrowserDirectory(browserDirectory: string): boolean {
   const baseName = path.basename(browserDirectory);
   for (const browserName of allBrowserNames) {
     if (baseName.startsWith(browserName + '-'))
@@ -251,38 +209,40 @@ export function isBrowserDirectory(browserDirectory: string): boolean {
   return false;
 }
 
-let currentPackageRegistry: Registry | undefined = undefined;
+type BrowserDescriptor = {
+  name: BrowserName,
+  revision: string,
+  installByDefault: boolean,
+  browserDirectory: string,
+};
+
+function readDescriptors(packagePath: string) {
+  const browsersJSON = require(path.join(packagePath, 'browsers.json'));
+  return (browsersJSON['browsers'] as any[]).map(obj => {
+    const name = obj.name;
+    const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
+    const revision = revisionOverride || obj.revision;
+    const browserDirectoryPrefix = revisionOverride ? `${name}_${hostPlatform}_special` : `${name}`;
+    const descriptor: BrowserDescriptor = {
+      name,
+      revision,
+      installByDefault: !!obj.installByDefault,
+      // Method `isBrowserDirectory` determines directory to be browser iff
+      // it starts with some browser name followed by '-'. Some browser names
+      // are prefixes of others, e.g. 'webkit' is a prefix of `webkit-technology-preview`.
+      // To avoid older registries erroneously removing 'webkit-technology-preview', we have to
+      // ensure that browser folders to never include dashes inside.
+      browserDirectory: browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision,
+    };
+    return descriptor;
+  });
+}
 
 export class Registry {
   private _descriptors: BrowserDescriptor[];
 
-  static currentPackageRegistry() {
-    if (!currentPackageRegistry)
-      currentPackageRegistry = new Registry(PACKAGE_PATH);
-    return currentPackageRegistry;
-  }
-
   constructor(packagePath: string) {
-    // require() needs to be used there otherwise it breaks on Vercel serverless
-    // functions. See https://github.com/microsoft/playwright/pull/6186
-    const browsersJSON = require(path.join(packagePath, 'browsers.json'));
-    this._descriptors = browsersJSON['browsers'].map((obj: any) => {
-      const name = obj.name;
-      const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
-      const revision = revisionOverride || obj.revision;
-      const browserDirectoryPrefix = revisionOverride ? `${name}_${hostPlatform}_special` : `${name}`;
-      return {
-        name,
-        revision,
-        installByDefault: !!obj.installByDefault,
-        // Method `isBrowserDirectory` determines directory to be browser iff
-        // it starts with some browser name followed by '-'. Some browser names
-        // are prefixes of others, e.g. 'webkit' is a prefix of `webkit-technology-preview`.
-        // To avoid older registries erroneously removing 'webkit-technology-preview', we have to
-        // ensure that browser folders to never include dashes inside.
-        browserDirectory: browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision,
-      };
-    });
+    this._descriptors = readDescriptors(packagePath);
   }
 
   browserDirectory(browserName: BrowserName): string {
@@ -291,10 +251,10 @@ export class Registry {
     return path.join(registryDirectory, browser.browserDirectory);
   }
 
-  private _revision(browserName: BrowserName): number {
+  private _revision(browserName: BrowserName): string {
     const browser = this._descriptors.find(browser => browser.name === browserName);
     assert(browser, `ERROR: Playwright does not support ${browserName}`);
-    return parseInt(browser.revision, 10);
+    return browser.revision;
   }
 
   executablePath(browserName: BrowserName): string | undefined {
@@ -430,7 +390,7 @@ export class Registry {
         const revision = this._revision(browserName);
         const browserDirectory = this.browserDirectory(browserName);
         const title = `${browserName} v${revision}`;
-        const downloadFileName = `playwright-download-${browserName}-${hostPlatform}-${revision}`;
+        const downloadFileName = `playwright-download-${browserName}-${hostPlatform}-${revision}.zip`;
         await downloadBrowserWithProgressBar(title, browserDirectory, this.executablePath(browserName)!, this._downloadURL(browserName), downloadFileName).catch(e => {
           throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
         });
@@ -449,12 +409,13 @@ export class Registry {
       let linkTarget = '';
       try {
         linkTarget = (await fs.promises.readFile(linkPath)).toString();
-        const linkRegistry = new Registry(linkTarget);
+        const descriptors = readDescriptors(linkTarget);
         for (const browserName of allBrowserNames) {
-          if (!linkRegistry.isSupportedBrowser(browserName))
+          const descriptor = descriptors.find(d => d.name === browserName);
+          if (!descriptor)
             continue;
-          const usedBrowserPath = linkRegistry.browserDirectory(browserName);
-          const browserRevision = linkRegistry._revision(browserName);
+          const usedBrowserPath = path.join(registryDirectory, descriptor.browserDirectory);
+          const browserRevision = parseInt(descriptor.revision, 10);
           // Old browser installations don't have marker file.
           const shouldHaveMarkerFile = (browserName === 'chromium' && browserRevision >= 786218) ||
               (browserName === 'firefox' && browserRevision >= 1128) ||
@@ -493,5 +454,7 @@ export async function installDefaultBrowsersForNpmInstall() {
     logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
     return false;
   }
-  await Registry.currentPackageRegistry().installBinaries();
+  await registry.installBinaries();
 }
+
+export const registry = new Registry(PACKAGE_PATH);
