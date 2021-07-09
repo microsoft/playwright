@@ -40,31 +40,26 @@ export class Loader {
     this._fullConfig = baseFullConfig;
   }
 
-  static deserialize(data: SerializedLoaderData): Loader {
+  static async deserialize(data: SerializedLoaderData): Promise<Loader> {
     const loader = new Loader(data.defaultConfig, data.overrides);
     if ('file' in data.configFile)
-      loader.loadConfigFile(data.configFile.file);
+      await loader.loadConfigFile(data.configFile.file);
     else
       loader.loadEmptyConfig(data.configFile.rootDir);
     return loader;
   }
 
-  loadConfigFile(file: string): Config {
+  async loadConfigFile(file: string): Promise<Config> {
     if (this._configFile)
       throw new Error('Cannot load two config files');
-    const revertBabelRequire = installTransform();
-    try {
-      let config = require(file);
-      if (config && typeof config === 'object' && ('default' in config))
-        config = config['default'];
-      this._config = config;
-      this._configFile = file;
-      const rawConfig = { ...config };
-      this._processConfigObject(path.dirname(file));
-      return rawConfig;
-    } finally {
-      revertBabelRequire();
-    }
+    let config = await this._requireOrImport(file);
+    if (config && typeof config === 'object' && ('default' in config))
+      config = config['default'];
+    this._config = config;
+    this._configFile = file;
+    const rawConfig = { ...config };
+    this._processConfigObject(path.dirname(file));
+    return rawConfig;
   }
 
   loadEmptyConfig(rootDir: string) {
@@ -113,57 +108,35 @@ export class Loader {
   async loadTestFile(file: string) {
     if (this._fileSuites.has(file))
       return this._fileSuites.get(file)!;
-    const revertBabelRequire = installTransform();
     try {
       const suite = new Suite('');
       suite._requireFile = file;
       suite.file = file;
       setCurrentlyLoadingFileSuite(suite);
-      if (file.endsWith('.mjs')) {
-        // eval to prevent typescript from transpiling us here.
-        await eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
-      } else {
-        require(file);
-      }
+      await this._requireOrImport(file);
       this._fileSuites.set(file, suite);
       return suite;
-    } catch (error) {
-      if (error instanceof SyntaxError && error.message.includes('Cannot use import statement outside a module'))
-        throw errorWithFile(file, 'JavaScript files must end with .mjs to use import.');
-
-      throw error;
     } finally {
-      revertBabelRequire();
       setCurrentlyLoadingFileSuite(undefined);
     }
   }
 
-  loadGlobalHook(file: string, name: string): (config: FullConfig) => any {
-    const revertBabelRequire = installTransform();
-    try {
-      let hook = require(file);
-      if (hook && typeof hook === 'object' && ('default' in hook))
-        hook = hook['default'];
-      if (typeof hook !== 'function')
-        throw errorWithFile(file, `${name} file must export a single function.`);
-      return hook;
-    } finally {
-      revertBabelRequire();
-    }
+  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfig) => any> {
+    let hook = await this._requireOrImport(file);
+    if (hook && typeof hook === 'object' && ('default' in hook))
+      hook = hook['default'];
+    if (typeof hook !== 'function')
+      throw errorWithFile(file, `${name} file must export a single function.`);
+    return hook;
   }
 
-  loadReporter(file: string): new (arg?: any) => Reporter {
-    const revertBabelRequire = installTransform();
-    try {
-      let func = require(path.resolve(this._fullConfig.rootDir, file));
-      if (func && typeof func === 'object' && ('default' in func))
-        func = func['default'];
-      if (typeof func !== 'function')
-        throw errorWithFile(file, `reporter file must export a single class.`);
-      return func;
-    } finally {
-      revertBabelRequire();
-    }
+  async loadReporter(file: string): Promise<new (arg?: any) => Reporter> {
+    let func = await this._requireOrImport(path.resolve(this._fullConfig.rootDir, file));
+    if (func && typeof func === 'object' && ('default' in func))
+      func = func['default'];
+    if (typeof func !== 'function')
+      throw errorWithFile(file, `reporter file must export a single class.`);
+    return func;
   }
 
   fullConfig(): FullConfig {
@@ -208,6 +181,33 @@ export class Loader {
       use: mergeObjects(mergeObjects(this._config.use, projectConfig.use), this._configOverrides.use),
     };
     this._projects.push(new ProjectImpl(fullProject, this._projects.length));
+  }
+
+
+  private async _requireOrImport(file: string) {
+    const revertBabelRequire = installTransform();
+    try {
+      const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
+      if (file.endsWith('.mjs')) {
+        return await esmImport();
+      } else {
+        try {
+          return require(file);
+        } catch (e) {
+          // Attempt to load this module as ESM if a normal require didn't work.
+          if (e.code === 'ERR_REQUIRE_ESM')
+            return await esmImport();
+          throw e;
+        }
+      }
+    } catch (error) {
+      if (error instanceof SyntaxError && error.message.includes('Cannot use import statement outside a module'))
+        throw errorWithFile(file, 'JavaScript files must end with .mjs to use import.');
+
+      throw error;
+    } finally {
+      revertBabelRequire();
+    }
   }
 }
 

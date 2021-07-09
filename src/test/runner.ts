@@ -62,7 +62,7 @@ export class Runner {
     this._loader = new Loader(defaultConfig, configOverrides);
   }
 
-  private _createReporter() {
+  private async _createReporter() {
     const reporters: Reporter[] = [];
     const defaultReporters = {
       dot: DotReporter,
@@ -77,14 +77,14 @@ export class Runner {
       if (name in defaultReporters) {
         reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
       } else {
-        const reporterConstructor = this._loader.loadReporter(name);
+        const reporterConstructor = await this._loader.loadReporter(name);
         reporters.push(new reporterConstructor(arg));
       }
     }
     return new Multiplexer(reporters);
   }
 
-  loadConfigFile(file: string): Config {
+  loadConfigFile(file: string): Promise<Config> {
     return this._loader.loadConfigFile(file);
   }
 
@@ -93,7 +93,7 @@ export class Runner {
   }
 
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResultStatus> {
-    this._reporter = this._createReporter();
+    this._reporter = await this._createReporter();
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
     const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
@@ -169,7 +169,7 @@ export class Runner {
 
     let globalSetupResult: any;
     if (config.globalSetup)
-      globalSetupResult = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup')(this._loader.fullConfig());
+      globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
     const webServer: WebServer|null = config.webServer ? await WebServer.create(config.webServer) : null;
     try {
       for (const file of allTestFiles)
@@ -267,7 +267,7 @@ export class Runner {
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());
       if (config.globalTeardown)
-        await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown')(this._loader.fullConfig());
+        await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
     }
   }
 }
