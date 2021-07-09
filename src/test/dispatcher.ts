@@ -275,6 +275,7 @@ export class Dispatcher {
       const { test, result } = this._testById.get(params.testId)!;
       result.duration = params.duration;
       result.error = params.error;
+      result.data = params.data;
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
       test.timeout = params.timeout;

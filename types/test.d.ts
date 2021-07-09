@@ -124,7 +124,7 @@ export type WebServerConfig = {
    */
   command: string,
   /**
-   * The port that your server is expected to appear on. If not specified, it does get automatically collected via the 
+   * The port that your server is expected to appear on. If not specified, it does get automatically collected via the
    * command output when a localhost URL gets printed.
    */
   port?: number,
@@ -393,6 +393,11 @@ export interface TestInfo extends WorkerInfo {
    * Annotations collected for this test.
    */
   annotations: { type: string, description?: string }[];
+
+  /**
+   * Arbitrary data that test fixtures can provide for the test report.
+   */
+  data: { [key: string]: any };
 
   /**
    * When tests are run multiple times, each run gets a unique `repeatEachIndex`.

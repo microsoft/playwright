@@ -19,7 +19,7 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { ReportFormat } from '../../src/test/reporters/json';
+import type { JSONReport, JSONReportSuite } from '../../src/test/reporters/json';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
 import * as url from 'url';
@@ -33,7 +33,7 @@ type RunResult = {
   failed: number,
   flaky: number,
   skipped: number,
-  report: ReportFormat,
+  report: JSONReport,
   results: any[],
 };
 
@@ -191,7 +191,7 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env, options
   }
 
   const results = [];
-  function visitSuites(suites?: ReportFormat['suites']) {
+  function visitSuites(suites?: JSONReportSuite[]) {
     if (!suites)
       return;
     for (const suite of suites) {

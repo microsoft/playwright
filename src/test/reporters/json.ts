@@ -17,18 +17,60 @@
 import fs from 'fs';
 import path from 'path';
 import EmptyReporter from './empty';
-import { FullConfig, Test, Suite, Spec, TestResult, TestError, FullResult } from '../reporter';
+import { FullConfig, Test, Suite, Spec, TestResult, TestError, FullResult, TestStatus } from '../reporter';
 
-interface SerializedSuite {
+export interface JSONReport {
+  config: Omit<FullConfig, 'projects'> & {
+    projects: {
+      outputDir: string,
+      repeatEach: number,
+      retries: number,
+      metadata: any,
+      name: string,
+      testDir: string,
+      testIgnore: string[],
+      testMatch: string[],
+      timeout: number,
+    }[],
+  };
+  suites: JSONReportSuite[];
+  errors: TestError[];
+}
+export interface JSONReportSuite {
   title: string;
   file: string;
   column: number;
   line: number;
-  specs: ReturnType<JSONReporter['_serializeTestSpec']>[];
-  suites?: SerializedSuite[];
+  specs: JSONReportSpec[];
+  suites?: JSONReportSuite[];
 }
-
-export type ReportFormat = ReturnType<JSONReporter['_serializeReport']>;
+export interface JSONReportSpec {
+  title: string;
+  ok: boolean;
+  tests: JSONReportTest[];
+  file: string;
+  line: number;
+  column: number;
+}
+export interface JSONReportTest {
+  timeout: number;
+  annotations: { type: string, description?: string }[],
+  expectedStatus: TestStatus;
+  projectName: string;
+  results: JSONReportTestResult[];
+  status: 'skipped' | 'expected' | 'unexpected' | 'flaky';
+}
+export interface JSONReportTestResult {
+  workerIndex: number;
+  status: TestStatus | undefined;
+  duration: number;
+  error: TestError | undefined;
+  stdout: JSONReportSTDIOEntry[],
+  stderr: JSONReportSTDIOEntry[],
+  retry: number;
+  data: { [key: string]: any },
+}
+export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
 
 function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
@@ -58,7 +100,7 @@ class JSONReporter extends EmptyReporter {
     outputReport(this._serializeReport(), this._outputFile);
   }
 
-  private _serializeReport() {
+  private _serializeReport(): JSONReport {
     return {
       config: {
         ...this.config,
@@ -77,15 +119,15 @@ class JSONReporter extends EmptyReporter {
           };
         })
       },
-      suites: this.suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s),
+      suites: this.suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as JSONReportSuite[],
       errors: this._errors
     };
   }
 
-  private _serializeSuite(suite: Suite): null | SerializedSuite {
+  private _serializeSuite(suite: Suite): null | JSONReportSuite {
     if (!suite.findSpec(test => true))
       return null;
-    const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as SerializedSuite[];
+    const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as JSONReportSuite[];
     return {
       title: suite.title,
       file: toPosixPath(path.relative(this.config.rootDir, suite.file)),
@@ -96,7 +138,7 @@ class JSONReporter extends EmptyReporter {
     };
   }
 
-  private _serializeTestSpec(spec: Spec) {
+  private _serializeTestSpec(spec: Spec): JSONReportSpec {
     return {
       title: spec.title,
       ok: spec.ok(),
@@ -107,17 +149,18 @@ class JSONReporter extends EmptyReporter {
     };
   }
 
-  private _serializeTest(test: Test) {
+  private _serializeTest(test: Test): JSONReportTest {
     return {
       timeout: test.timeout,
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
       projectName: test.projectName,
       results: test.results.map(r => this._serializeTestResult(r)),
+      status: test.status(),
     };
   }
 
-  private _serializeTestResult(result: TestResult) {
+  private _serializeTestResult(result: TestResult): JSONReportTestResult {
     return {
       workerIndex: result.workerIndex,
       status: result.status,
@@ -126,11 +169,12 @@ class JSONReporter extends EmptyReporter {
       stdout: result.stdout.map(s => stdioEntry(s)),
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
+      data: result.data,
     };
   }
 }
 
-function outputReport(report: ReportFormat, outputFile: string | undefined) {
+function outputReport(report: JSONReport, outputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
   outputFile = outputFile || process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`];
   if (outputFile) {

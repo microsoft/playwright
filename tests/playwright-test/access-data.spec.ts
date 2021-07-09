@@ -82,3 +82,21 @@ test('should report projectName in result', async ({ runInlineTest }) => {
   expect(report.suites[0].specs[0].tests[1].projectName).toBe('');
   expect(exitCode).toBe(0);
 });
+
+test('should access testInfo.data in fixture', async ({ runInlineTest }) => {
+  const { exitCode, report } = await runInlineTest({
+    'test-data-visible-in-env.spec.ts': `
+      const test = pwt.test.extend({
+        foo: async ({}, run, testInfo) => {
+          await run();
+          testInfo.data.foo = 'bar';
+        },
+      });
+      test('ensure fixture can set data', async ({ foo }) => {
+      });
+    `
+  });
+  expect(exitCode).toBe(0);
+  const test = report.suites[0].specs[0].tests[0];
+  expect(test.results[0].data).toEqual({ foo: 'bar' });
+});

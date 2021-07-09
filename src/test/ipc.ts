@@ -42,6 +42,7 @@ export type TestEndPayload = {
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;
+  data: { [key: string]: any },
 };
 
 export type TestEntry = {

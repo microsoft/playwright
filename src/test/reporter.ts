@@ -57,6 +57,7 @@ export interface TestResult {
   duration: number;
   status?: TestStatus;
   error?: TestError;
+  data: { [key: string]: any };
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
 }
