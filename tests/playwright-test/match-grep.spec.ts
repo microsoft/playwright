@@ -67,13 +67,13 @@ test('should grep test name', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should grep test name with //', async ({ runInlineTest }) => {
+test('should grep test name with regular expression', async ({ runInlineTest }) => {
   const result = await runInlineTest(files, { 'grep': '/B$/' });
   expect(result.passed).toBe(3);
   expect(result.exitCode).toBe(0);
 });
 
-test('should grep test name with //', async ({ runInlineTest }) => {
+test('should grep test name with regular expression and a space', async ({ runInlineTest }) => {
   const result = await runInlineTest(files, { 'grep': '/TesT c/i' });
   expect(result.passed).toBe(3);
   expect(result.exitCode).toBe(0);
