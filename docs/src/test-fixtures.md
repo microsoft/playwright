@@ -336,40 +336,54 @@ const test = base.extend<{}, ExpressWorkerFixtures>({
 export default test;
 ```
 
-## Augmenting fixtures
+## Overriding fixtures
 
-In addition to creating your own fixtures, you can also augment existing fixtures to fit your needs. Consider the following example which augments the `page` fixture by navigating to a specified URL:
+In addition to creating your own fixtures, you can also override existing fixtures to fit your needs. Consider the following example which overrides the `page` fixture by navigating to a specified URL:
 
 ```js js-flavor=js
-// button.spec.js
 const base = require('@playwright/test');
 
 const test = base.test.extend({
-  page: async ({ page }, use) => {
-    await page.goto('http://localhost:8080');
+  baseURL: 'http://localhost:8080',
+  page: async ({ baseURL, page }, use) => {
+    await page.goto(baseURL);
     await use(page);
   },
-});
-
-test('should click the button', async ({ page }) => {
-  await page.click('button')
-  // ...
 });
 ```
 
 ```js js-flavor=ts
-// button.spec.ts
 import { test as base } from '@playwright/test';
 
 const test = base.extend({
-  page: async ({ page }, use) => {
-    await page.goto('http://localhost:8080');
+  baseURL: 'http://localhost:8080',
+  page: async ({ baseURL, page }, use) => {
+    await page.goto(baseURL);
     await use(page);
   },
 });
+```
 
-test('should click the button', async ({ page }) => {
-  await page.click('button')
-  // ...
+Notice that in this example we added another fixture named `baseURL` which the `page` fixture uses. This allows us to override the `baseURL` used by the `page` fixture in our tests using `test.use`.
+
+```js
+test.use({ baseURL: 'https://playwright.dev' })
+```
+
+Fixtures can also be overridden where the base fixture is completely replaced with something different. For example, we could override the `storageState` fixture to provide our own data.
+
+```js js-flavor=js
+const base = require('@playwright/test');
+
+const test = base.test.extend({
+  storageState: { path: 'state.json' },
+});
+```
+
+```js js-flavor=ts
+import { test as base } from '@playwright/test';
+
+const test = base.extend({
+  storageState: { path: 'state.json' },
 });
 ```
