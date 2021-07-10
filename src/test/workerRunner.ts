@@ -58,7 +58,7 @@ export class WorkerRunner extends EventEmitter {
 
   async cleanup() {
     // We have to load the project to get the right deadline below.
-    this._loadIfNeeded();
+    await this._loadIfNeeded();
     // TODO: separate timeout for teardown?
     const result = await raceAgainstDeadline((async () => {
       await this._fixtureRunner.teardownScope('test');
