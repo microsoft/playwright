@@ -343,7 +343,7 @@ In addition to creating your own fixtures, you can also override existing fixtur
 ```js js-flavor=js
 const base = require('@playwright/test');
 
-const test = base.test.extend({
+exports.test = base.test.extend({
   baseURL: 'http://localhost:8080',
   page: async ({ baseURL, page }, use) => {
     await page.goto(baseURL);
@@ -355,7 +355,7 @@ const test = base.test.extend({
 ```js js-flavor=ts
 import { test as base } from '@playwright/test';
 
-const test = base.extend({
+export const test = base.extend({
   baseURL: 'http://localhost:8080',
   page: async ({ baseURL, page }, use) => {
     await page.goto(baseURL);
@@ -366,7 +366,11 @@ const test = base.extend({
 
 Notice that in this example we added another fixture named `baseURL` which the `page` fixture uses. This allows us to override the `baseURL` used by the `page` fixture in our tests using `test.use`.
 
-```js
+```js js-flavor=js
+test.use({ baseURL: 'https://playwright.dev' })
+```
+
+```js js-flavor=ts
 test.use({ baseURL: 'https://playwright.dev' })
 ```
 
@@ -375,15 +379,21 @@ Fixtures can also be overridden where the base fixture is completely replaced wi
 ```js js-flavor=js
 const base = require('@playwright/test');
 
-const test = base.test.extend({
-  storageState: { path: 'state.json' },
+exports.test = base.test.extend({
+  storageState: async ({}, use) => {
+    const cookie = await getAuthCookie();
+    await use({ cookies: [cookie] });
+  },
 });
 ```
 
 ```js js-flavor=ts
 import { test as base } from '@playwright/test';
 
-const test = base.extend({
-  storageState: { path: 'state.json' },
+export const test = base.extend({
+  storageState: async ({}, use) => {
+    const cookie = await getAuthCookie();
+    await use({ cookies: [cookie] });
+  },
 });
 ```
