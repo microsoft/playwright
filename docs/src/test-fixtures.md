@@ -344,7 +344,6 @@ In addition to creating your own fixtures, you can also override existing fixtur
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
-  baseURL: 'http://localhost:8080',
   page: async ({ baseURL, page }, use) => {
     await page.goto(baseURL);
     await use(page);
@@ -356,7 +355,6 @@ exports.test = base.test.extend({
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  baseURL: 'http://localhost:8080',
   page: async ({ baseURL, page }, use) => {
     await page.goto(baseURL);
     await use(page);
@@ -364,7 +362,7 @@ export const test = base.extend({
 });
 ```
 
-Notice that in this example we added another fixture named `baseURL` which the `page` fixture uses. This allows us to override the `baseURL` used by the `page` fixture in our tests using `test.use`.
+Notice that in this example, the `page` fixture is able to depend on other built in fixtures such as `baseURL`. This allows us to override the `baseURL` used by the `page` fixture in our tests using `test.use`.
 
 ```js js-flavor=js
 test.use({ baseURL: 'https://playwright.dev' })
