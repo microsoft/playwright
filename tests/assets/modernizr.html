@@ -1,7 +1,7 @@
 <script src='modernizr.js'></script>
 <body></body>
 <script>
-window.report = {};
+const report = {};
 for (const name in Modernizr) {
   if (name.startsWith('_'))
     continue;
@@ -11,5 +11,6 @@ for (const name in Modernizr) {
   report[name] = value;
 }
 document.body.style.whiteSpace = 'pre';
-document.body.textContent = JSON.stringify(window.report, undefined, 4);
+document.body.textContent = JSON.stringify(report, undefined, 4);
+window.report = JSON.parse(document.body.textContent);
 </script>
