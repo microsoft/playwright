@@ -386,7 +386,7 @@ Optional event-specific initialization properties.
 
 ### option: Frame.dragAndDrop.timeout = %%-input-timeout-%%
 
-### option: Frame.dragAndDrop.timeout = %%-input-trial-%%
+### option: Frame.dragAndDrop.trial = %%-input-trial-%%
 
 ## async method: Frame.evalOnSelector
 * langs:
