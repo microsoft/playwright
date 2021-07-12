@@ -30,35 +30,6 @@ async function checkFeatures(name: string, context: any, server: any) {
 }
 
 it('safari-14-1', async ({ browser, browserName, platform, server }) => {
-  it.fixme();
-
-  /* macOS
-   +   "atRule": undefined,
-       "atob-btoa": true,
-       "atobbtoa": true,
-   -   "audio": true,
-   +   "audio": Object {
-   +     "m4a": "maybe",
-   +     "mp3": "probably",
-   +     "ogg": "",
-   +     "opus": "",
-   +     "wav": "",
-   +   },
-   -   "hairline": true,
-   +   "hairline": false,
-   +   "hasEvent": undefined,
-   +   "mq": undefined,
-   +   "testStyles": undefined,
-   -   "video": true,
-   +   "video": Object {
-   +     "h264": "probably",
-   +     "hls": "probably",
-   +     "ogg": "",
-   +     "vp9": "",
-   +     "webm": "",
-   +   },
-   */
-
   /* GTK
    -   "gamepads": true,
    +   "gamepads": false,
@@ -102,7 +73,9 @@ it('safari-14-1', async ({ browser, browserName, platform, server }) => {
    */
 
   it.skip(browserName !== 'webkit' ||  platform !== 'darwin');
-  const context = await browser.newContext();
+  const context = await browser.newContext({
+    deviceScaleFactor: 2
+  });
   await checkFeatures('safari-14-1', context, server);
 });
 
@@ -110,17 +83,6 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, se
   it.fixme();
 
   /* macOS
-   +   "atRule": undefined,
-       "atob-btoa": true,
-       "atobbtoa": true,
-   -   "audio": true,
-   +   "audio": Object {
-   +     "m4a": "maybe",
-   +     "mp3": "probably",
-   +     "ogg": "",
-   +     "opus": "",
-   +     "wav": "",
-   +   },
    -   "capture": true,
    +   "capture": false,
    -   "cssscrollbar": false,
@@ -132,34 +94,21 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, se
    -   "devicemotion": true,
    -   "deviceorientation": true,
    +   "devicemotion": false,
-   +   "deviceorientation": falsef,
+   +   "deviceorientation": false,
    -   "fullscreen": false,
    +   "fullscreen": true,
-   -   "hairline": true,
-   +   "hairline": false,
-   +   "hasEvent": undefined,
        "inputtypes": Object {
    -     "month": true,
    +     "month": false,
    -     "week": true,
    +     "week": false,
        },
-   +   "mq": undefined,
    -   "notification": false,
    +   "notification": true,
    -   "overflowscrolling": true,
    +   "overflowscrolling": false,
    -   "pointerlock": false,
    +   "pointerlock": true,
-   +   "testStyles": undefined,
-   -   "video": true,
-   +   "video": Object {
-   +     "h264": "probably",
-   +     "hls": "probably",
-   +     "ogg": "",
-   +     "vp9": "",
-   +     "webm": "",
-   +   },
    */
 
   /* GTK
