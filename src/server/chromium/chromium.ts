@@ -150,6 +150,11 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...DEFAULT_ARGS];
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
+
+    // See https://github.com/microsoft/playwright/issues/7362
+    if (os.platform() === 'darwin')
+      chromeArguments.push('--enable-use-zoom-for-dsf=false');
+
     if (options.useWebSocket)
       chromeArguments.push('--remote-debugging-port=0');
     else
