@@ -76,7 +76,9 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
     const isTypeScriptSourceFile = name.endsWith('.ts') && !name.endsWith('.d.ts');
     const isJSModule = name.endsWith('.mjs');
     const header = isTypeScriptSourceFile ? headerTS : (isJSModule ? headerMJS : headerJS);
-    if (/(spec|test)\.(js|ts|mjs)$/.test(name)) {
+    if (typeof files[name] === 'string' && files[name].includes('//@no-header')) {
+      await fs.promises.writeFile(fullName, files[name]);
+    } else if (/(spec|test)\.(js|ts|mjs)$/.test(name)) {
       const fileHeader = header + 'const { expect } = pwt;\n';
       await fs.promises.writeFile(fullName, fileHeader + files[name]);
     } else if (/\.(js|ts)$/.test(name) && !name.endsWith('d.ts')) {

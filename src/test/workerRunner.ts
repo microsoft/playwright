@@ -58,7 +58,7 @@ export class WorkerRunner extends EventEmitter {
 
   async cleanup() {
     // We have to load the project to get the right deadline below.
-    this._loadIfNeeded();
+    await this._loadIfNeeded();
     // TODO: separate timeout for teardown?
     const result = await raceAgainstDeadline((async () => {
       await this._fixtureRunner.teardownScope('test');
@@ -89,11 +89,11 @@ export class WorkerRunner extends EventEmitter {
     return this._project.config.timeout ? monotonicTime() + this._project.config.timeout : undefined;
   }
 
-  private _loadIfNeeded() {
+  private async _loadIfNeeded() {
     if (this._loader)
       return;
 
-    this._loader = Loader.deserialize(this._params.loader);
+    this._loader = await Loader.deserialize(this._params.loader);
     this._project = this._loader.projects()[this._params.projectIndex];
 
     this._projectNamePathSegment = sanitizeForFilePath(this._project.config.name);
@@ -115,7 +115,7 @@ export class WorkerRunner extends EventEmitter {
   async run(runPayload: RunPayload) {
     this._entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
 
-    this._loadIfNeeded();
+    await this._loadIfNeeded();
     const fileSuite = await this._loader.loadTestFile(runPayload.file);
     let anySpec: Spec | undefined;
     fileSuite.findSpec(spec => {

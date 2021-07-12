@@ -176,3 +176,42 @@ test('should throw a nice error if a js file uses import', async ({ runInlineTes
   expect(output).toContain('a.spec.js');
   expect(output).toContain('JavaScript files must end with .mjs to use import.');
 });
+
+test('should load esm when package.json has type module', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      //@no-header
+      import * as fs from 'fs';
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'package.json': JSON.stringify({type: 'module'}),
+    'a.test.ts': `
+      const { test } = pwt;
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should load esm config files', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.mjs': `
+      //@no-header
+      import * as fs from 'fs';
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

@@ -29,6 +29,7 @@ const defaultReporter = process.env.CI ? 'dot' : 'list';
 const builtinReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'];
 const tsConfig = 'playwright.config.ts';
 const jsConfig = 'playwright.config.js';
+const mjsConfig = 'playwright.config.mjs';
 const defaultConfig: Config = {
   preserveOutput: 'always',
   reporter: [ [defaultReporter] ],
@@ -100,14 +101,23 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     overrides.use = { headless: false };
   const runner = new Runner(defaultConfig, overrides);
 
-  function loadConfig(configFile: string) {
+  async function loadConfig(configFile: string) {
     if (fs.existsSync(configFile)) {
       if (process.stdout.isTTY)
         console.log(`Using config at ` + configFile);
-      const loadedConfig = runner.loadConfigFile(configFile);
+      const loadedConfig = await runner.loadConfigFile(configFile);
       if (('projects' in loadedConfig) && opts.browser)
         throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
       return true;
+    }
+    return false;
+  }
+
+  async function loadConfigFromDirectory(directory: string) {
+    const configNames = [tsConfig, jsConfig, mjsConfig];
+    for (const configName of configNames) {
+      if (await loadConfig(path.resolve(directory, configName)))
+        return true;
     }
     return false;
   }
@@ -118,15 +128,15 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       throw new Error(`${opts.config} does not exist`);
     if (fs.statSync(configFile).isDirectory()) {
       // When passed a directory, look for a config file inside.
-      if (!loadConfig(path.join(configFile, tsConfig)) && !loadConfig(path.join(configFile, jsConfig))) {
+      if (!await loadConfigFromDirectory(configFile)) {
         // If there is no config, assume this as a root testing directory.
         runner.loadEmptyConfig(configFile);
       }
     } else {
       // When passed a file, it must be a config file.
-      loadConfig(configFile);
+      await loadConfig(configFile);
     }
-  } else if (!loadConfig(path.resolve(process.cwd(), tsConfig)) && !loadConfig(path.resolve(process.cwd(), jsConfig))) {
+  } else if (!await loadConfigFromDirectory(process.cwd())) {
     // No --config option, let's look for the config file in the current directory.
     // If not, scan the world.
     runner.loadEmptyConfig(process.cwd());
