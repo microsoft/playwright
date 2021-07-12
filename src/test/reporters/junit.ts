@@ -87,7 +87,7 @@ class JUnitReporter extends EmptyReporter {
 
     suite.findTest(test => {
       ++tests;
-      if (test.skipped)
+      if (test.status() == 'skipped')
         ++skipped;
       if (!test.ok())
         ++failures;
@@ -129,7 +129,7 @@ class JUnitReporter extends EmptyReporter {
     };
     entries.push(entry);
 
-    if (test.skipped) {
+    if (test.status() == 'skipped') {
       entry.children.push({ name: 'skipped'});
       return;
     }
