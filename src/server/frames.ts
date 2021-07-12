@@ -989,13 +989,19 @@ export class Frame extends SdkObject {
         return handle._retryPointerAction(progress, 'move and down', false, async point => {
           await this._page.mouse.move(point.x, point.y);
           await this._page.mouse.down();
-        }, options);
+        }, {
+          ...options,
+          timeout: progress.timeUntilDeadline(),
+        });
       }));
       await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector2, async handle => {
         return handle._retryPointerAction(progress, 'move and up', false, async point => {
           await this._page.mouse.move(point.x, point.y);
           await this._page.mouse.up();
-        }, options);
+        }, {
+          ...options,
+          timeout: progress.timeUntilDeadline(),
+        });
       }));
     }, this._page._timeoutSettings.timeout(options));
   }

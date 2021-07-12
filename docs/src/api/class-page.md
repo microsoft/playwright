@@ -823,7 +823,7 @@ Optional event-specific initialization properties.
 
 ### option: Page.dragAndDrop.timeout = %%-input-timeout-%%
 
-### option: Page.dragAndDrop.timeout = %%-input-trial-%%
+### option: Page.dragAndDrop.trial = %%-input-trial-%%
 
 ## async method: Page.emulateMedia
 
