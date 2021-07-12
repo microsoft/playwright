@@ -471,9 +471,7 @@ it.describe('download event', () => {
     await page.close();
   });
 
-  it('should be able to cancel pending downloads', async ({browser, server, browserName, browserVersion}) => {
-    // The exact upstream change is in b449b5c, which still does not appear in the first few 91.* tags until 91.0.4437.0.
-    it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
+  it('should be able to cancel pending downloads', async ({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/downloadWithDelay">download</a>`);
     const [ download ] = await Promise.all([
@@ -486,9 +484,7 @@ it.describe('download event', () => {
     await page.close();
   });
 
-  it('should not fail explicitly to cancel a download even if that is already finished', async ({browser, server, browserName, browserVersion}) => {
-    // The exact upstream change is in b449b5c, which still does not appear in the first few 91.* tags until 91.0.4437.0.
-    it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
+  it('should not fail explicitly to cancel a download even if that is already finished', async ({browser, server}) => {
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([

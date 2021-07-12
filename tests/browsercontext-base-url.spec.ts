@@ -34,6 +34,17 @@ it('should construct a new URL when a baseURL in browser.newPage is passed to pa
   await page.close();
 });
 
+it('should construct a new URL when a baseURL in browserType.launchPersistentContext is passed to page.goto', async function({browserType, server, createUserDataDir, browserOptions}) {
+  const userDataDir = await createUserDataDir();
+  const context = await browserType.launchPersistentContext(userDataDir, {
+    ...browserOptions,
+    baseURL: server.PREFIX,
+  });
+  const page = await context.newPage();
+  expect((await page.goto('/empty.html')).url()).toBe(server.EMPTY_PAGE);
+  await context.close();
+});
+
 it('should construct the URLs correctly when a baseURL without a trailing slash in browser.newPage is passed to page.goto', async function({browser, server}) {
   const page = await browser.newPage({
     baseURL: server.PREFIX + '/url-construction',
@@ -63,10 +74,10 @@ it('should not construct a new URL when valid URLs are passed', async function({
   expect((await page.goto(server.EMPTY_PAGE)).url()).toBe(server.EMPTY_PAGE);
 
   await page.goto('data:text/html,Hello world');
-  expect(await page.evaluate(() => window.location.href)).toBe('data:text/html,Hello world');
+  expect(page.url()).toBe('data:text/html,Hello world');
 
   await page.goto('about:blank');
-  expect(await page.evaluate(() => window.location.href)).toBe('about:blank');
+  expect(page.url()).toBe('about:blank');
   await page.close();
 });
 
