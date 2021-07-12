@@ -3,7 +3,7 @@ id: test-configuration
 title: "Configuration"
 ---
 
-Playwright Test provides options to configure default `browser`, `context` and `page` fixtures, for example `headless`, `viewport` or `ignoreHTTPSErrors`. You can also record video or trace for the test or capture screenshot at the end.
+Playwright Test provides options to configure the default `browser`, `context` and `page` fixtures. For example there are options for `headless`, `viewport` and `ignoreHTTPSErrors`. You can also record a video or a trace for the test or capture a screenshot at the end.
 
 Finally, there are plenty of testing options like `timeout` or `testDir` that configure how your tests are collected and executed.
 
