@@ -39,7 +39,7 @@ playwright
 
 ## Install browsers
 
-Playwright can install supported browsers. This is required to run tests with [Playwright Test](./intro.md).
+Playwright can install supported browsers.
 
 ```bash js
 # Running without arguments will install default browsers
@@ -100,8 +100,6 @@ playwright install --help
 ```bash csharp
 playwright install --help
 ```
-
-Learn more about managing browser binaries with [Playwright Library](./installation.md) or [Playwright Test](./test-install.md).
 
 ## Generate code
 

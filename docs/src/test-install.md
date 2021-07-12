@@ -3,8 +3,6 @@ id: test-install
 title: "Advanced: installing browsers"
 ---
 
-This is a browser installation guide for Playwright Test. If you are using Playwright Library, please refer to [Library Installation](./installation.md) guide.
-
 <!-- TOC -->
 
 ## Installing browser binaries

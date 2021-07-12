@@ -1,6 +1,6 @@
 ---
 id: intro
-title: "Playwright Test"
+title: "Getting Started"
 ---
 
 Playwright can either be used as a part of the Playwright Test, or as a [Playwright Library](./library.md). If you intend to use Playwright for testing, read on.
