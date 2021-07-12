@@ -219,7 +219,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-You can also specify options separately, instead of using predefined `devices`, or configure locale, geolocation, timezone and more:
+You can specify options separately instead of using predefined devices. There are also more options such as locale, geolocation, and timezone which can be configured.
 
 - `colorScheme` - Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
 - `deviceScaleFactor` - Specify device scale factor (can be thought of as dpr). Defaults to `1`.
