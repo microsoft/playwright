@@ -173,7 +173,7 @@ it('should fulfill after redirects', async ({page, server}) => {
   page.on('requestfinished', request => requestFinishedUrls.push(request.url()));
   await page.route('**/*', async route => {
     // @ts-expect-error
-    const resp = await route._intercept({});
+    await route._intercept({});
     await route.fulfill({
       status: 201,
       headers: {
