@@ -120,7 +120,7 @@ These are commonly used options for various scenarios. You usually set them glob
 
 - `baseURL` - Base URL used for all pages in the context. Allows navigating by using just the path, for example `page.goto('/settings')`.
 - `browserName` - Name of the browser that will run the tests, one of `chromium`, `firefox`, or `webkit`.
-- `bypassCSP` - Toggles bypassing page's Content-Security-Policy. Useful when CSP includes production origin.
+- `bypassCSP` - Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin.
 - `channel` - Browser channel to use. [Learn more](./browsers.md) about different browsers and channels.
 - `headless` - Whether to run browser in headless mode.
 - `viewport` - Viewport used for all pages in the context.
