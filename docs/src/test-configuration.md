@@ -481,7 +481,7 @@ In addition to configuring [Browser] or [BrowserContext], videos or screenshots,
 - `webServer: { command: string, port?: number, cwd?: string, timeout?: number, env?: object }` - Launch a web server before the tests will start. It will automatically detect the port when it got printed to the stdout.
 - `workers`: The maximum number of concurrent worker processes to use for parallelizing tests.
 
-You can specify these options in the configuration file. Note that testing options are **top-level**, do not put them into `use` section.
+You can specify these options in the configuration file. Note that testing options are **top-level**, do not put them into the `use` section.
 
 ```js js-flavor=js
 // playwright.config.js
