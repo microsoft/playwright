@@ -164,3 +164,24 @@ it('should tween mouse movement', async ({page, browserName, isAndroid}) => {
     [200, 300]
   ]);
 });
+
+it('should keep button state on move', async ({page, browserName, isAndroid}) => {
+  it.skip(isAndroid, 'Bad rounding');
+  it.fixme(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/7576');
+
+  // The test becomes flaky on WebKit without next line.
+  if (browserName === 'webkit')
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+  await page.mouse.move(100, 100);
+  await page.evaluate(() => {
+    window['result'] = [];
+    document.addEventListener('mousemove', event => {
+      window['result'].push(event.buttons);
+    });
+  });
+  await page.mouse.move(110, 110);
+  await page.mouse.down();
+  await page.mouse.move(130, 130, {steps: 2});
+  await page.mouse.up();
+  expect(await page.evaluate('result')).toEqual([0, 1, 1, 0, 2, 2, 0]);
+});
