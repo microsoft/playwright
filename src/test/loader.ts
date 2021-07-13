@@ -16,7 +16,7 @@
 
 import { installTransform } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
-import { isRegExp, mergeObjects } from './util';
+import { isRegExp, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
@@ -234,10 +234,6 @@ function toLaunchServers(launchConfigs?: LaunchConfig | LaunchConfig[]): LaunchC
   if (!Array.isArray(launchConfigs))
     return [launchConfigs];
   return launchConfigs;
-}
-
-function errorWithFile(file: string, message: string) {
-  return new Error(`${file}: ${message}`);
 }
 
 function validateConfig(file: string, config: Config) {

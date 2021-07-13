@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, FullConfig, TestInfo } from '../../types/test';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
 export { expect } from './expect';
@@ -219,13 +219,13 @@ function formatPendingCalls(calls: ProtocolCall[], testInfo: TestInfo) {
   if (!calls.length)
     return '';
   return 'Pending operations:\n' + calls.map(call => {
-    const frame = call.stack && call.stack[0] ? formatStackFrame(testInfo.config, call.stack[0]) : '<unknown>';
+    const frame = call.stack && call.stack[0] ? formatStackFrame(call.stack[0]) : '<unknown>';
     return `  - ${call.apiName} at ${frame}\n`;
   }).join('') + '\n';
 }
 
-function formatStackFrame(config: FullConfig, frame: StackFrame) {
-  const file = path.relative(config.rootDir, frame.file) || path.basename(frame.file);
+function formatStackFrame(frame: StackFrame) {
+  const file = path.relative(process.cwd(), frame.file) || path.basename(frame.file);
   return `${file}:${frame.line || 1}:${frame.column || 1}`;
 }
 
