@@ -35,7 +35,9 @@ function isSupportedWindowsVersion(): boolean {
   return major > 6 || (major === 6 && minor > 1);
 }
 
-export async function installDependenciesWindows(targets: Set<'chromium' | 'firefox' | 'webkit' | 'tools'>) {
+export type DependencyGroup = 'chromium' | 'firefox' | 'webkit' | 'tools';
+
+export async function installDependenciesWindows(targets: Set<DependencyGroup>) {
   if (targets.has('chromium')) {
     const {code} = await utils.spawnAsync('powershell.exe', [path.join(BIN_DIRECTORY, 'install_media_pack.ps1')], { cwd: BIN_DIRECTORY, stdio: 'inherit' });
     if (code !== 0)
@@ -43,7 +45,7 @@ export async function installDependenciesWindows(targets: Set<'chromium' | 'fire
   }
 }
 
-export async function installDependenciesLinux(targets: Set<'chromium' | 'firefox' | 'webkit' | 'tools'>) {
+export async function installDependenciesLinux(targets: Set<DependencyGroup>) {
   const ubuntuVersion = await getUbuntuVersion();
   if (ubuntuVersion !== '18.04' && ubuntuVersion !== '20.04' && ubuntuVersion !== '21.04') {
     console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console

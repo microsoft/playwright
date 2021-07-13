@@ -21,11 +21,12 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile } from './utils';
-import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
+import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData } from './utils';
+import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
+const BIN_PATH = path.join(__dirname, '..', '..', 'bin');
 
 const EXECUTABLE_PATHS = {
   'chromium': {
@@ -215,21 +216,23 @@ function readDescriptors(packagePath: string) {
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-with-symbols';
+type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-with-symbols'];
 
 export interface Executable {
-  type: 'browser' | 'tool';
-  name: BrowserName | InternalTool;
+  type: 'browser' | 'tool' | 'channel';
+  name: BrowserName | InternalTool | ChromiumChannel;
   browserName: BrowserName | undefined;
-  installType: 'download-by-default' | 'download-on-demand';
-  maybeExecutablePath(): string | undefined;
-  executablePathIfExists(): string | undefined;
-  directoryIfExists(): string | undefined;
+  installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
+  directory: string | undefined;
+  executablePathOrDie(): string;
+  executablePath(): string | undefined;
   validateHostRequirements(): Promise<void>;
 }
 
 interface ExecutableImpl extends Executable {
-  _download?: () => Promise<void>;
+  _install?: () => Promise<void>;
+  _dependencyGroup?: DependencyGroup;
 }
 
 export class Registry {
@@ -237,72 +240,146 @@ export class Registry {
 
   constructor(packagePath: string) {
     const descriptors = readDescriptors(packagePath);
-    const executablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
+    const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
       const tokens = EXECUTABLE_PATHS[name][hostPlatform];
       return tokens ? path.join(dir, ...tokens) : undefined;
     };
-    const directoryIfExists = (d: string) => fs.existsSync(d) ? d : undefined;
-    const executablePathIfExists = (e: string | undefined) => e && canAccessFile(e) ? e : undefined;
+    const executablePathOrDie = (name: string, e: string | undefined) => {
+      if (!e)
+        throw new Error(`${name} is not supported on ${hostPlatform}`);
+      // TODO: language-specific error message
+      if (!canAccessFile(e))
+        throw new Error(`Executable doesn't exist at ${e}\nRun "npx playwright install ${name}"`);
+      return e;
+    };
     this._executables = [];
 
     const chromium = descriptors.find(d => d.name === 'chromium')!;
-    const chromiumExecutable = executablePath(chromium.dir, 'chromium');
+    const chromiumExecutable = findExecutablePath(chromium.dir, 'chromium');
     this._executables.push({
       type: 'browser',
       name: 'chromium',
       browserName: 'chromium',
-      directoryIfExists: () => directoryIfExists(chromium.dir),
-      maybeExecutablePath: () => chromiumExecutable,
-      executablePathIfExists: () => executablePathIfExists(chromiumExecutable),
+      directory: chromium.dir,
+      executablePath: () => chromiumExecutable,
+      executablePathOrDie: () => executablePathOrDie('chromium', chromiumExecutable),
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
-      _download: () => this._downloadExecutable(chromium, chromiumExecutable, DOWNLOAD_URLS['chromium'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+      _install: () => this._downloadExecutable(chromium, chromiumExecutable, DOWNLOAD_URLS['chromium'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+      _dependencyGroup: 'chromium',
     });
 
     const chromiumWithSymbols = descriptors.find(d => d.name === 'chromium-with-symbols')!;
-    const chromiumWithSymbolsExecutable = executablePath(chromiumWithSymbols.dir, 'chromium');
+    const chromiumWithSymbolsExecutable = findExecutablePath(chromiumWithSymbols.dir, 'chromium');
     this._executables.push({
       type: 'tool',
       name: 'chromium-with-symbols',
       browserName: 'chromium',
-      directoryIfExists: () => directoryIfExists(chromiumWithSymbols.dir),
-      maybeExecutablePath: () => chromiumWithSymbolsExecutable,
-      executablePathIfExists: () => executablePathIfExists(chromiumWithSymbolsExecutable),
+      directory: chromiumWithSymbols.dir,
+      executablePath: () => chromiumWithSymbolsExecutable,
+      executablePathOrDie: () => executablePathOrDie('chromium-with-symbols', chromiumWithSymbolsExecutable),
       installType: chromiumWithSymbols.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('chromium', chromiumWithSymbols.dir, ['chrome-linux'], [], ['chrome-win']),
-      _download: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable, DOWNLOAD_URLS['chromium-with-symbols'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+      _install: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable, DOWNLOAD_URLS['chromium-with-symbols'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+      _dependencyGroup: 'chromium',
     });
 
+    this._executables.push(this._createChromiumChannel('chrome', {
+      'linux': '/opt/google/chrome/chrome',
+      'darwin': '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      'win32': `\\Google\\Chrome\\Application\\chrome.exe`,
+    }, () => this._installChromiumChannel('chrome', {
+      'linux': 'reinstall_chrome_stable_linux.sh',
+      'darwin': 'reinstall_chrome_stable_mac.sh',
+      'win32': 'reinstall_chrome_stable_win.ps1',
+    })));
+
+    this._executables.push(this._createChromiumChannel('chrome-beta', {
+      'linux': '/opt/google/chrome-beta/chrome',
+      'darwin': '/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta',
+      'win32': `\\Google\\Chrome Beta\\Application\\chrome.exe`,
+    }, () => this._installChromiumChannel('chrome-beta', {
+      'linux': 'reinstall_chrome_beta_linux.sh',
+      'darwin': 'reinstall_chrome_beta_mac.sh',
+      'win32': 'reinstall_chrome_beta_win.ps1',
+    })));
+
+    this._executables.push(this._createChromiumChannel('chrome-dev', {
+      'linux': '/opt/google/chrome-unstable/chrome',
+      'darwin': '/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev',
+      'win32': `\\Google\\Chrome Dev\\Application\\chrome.exe`,
+    }));
+
+    this._executables.push(this._createChromiumChannel('chrome-canary', {
+      'linux': '',
+      'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+      'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
+    }));
+
+    this._executables.push(this._createChromiumChannel('msedge', {
+      'linux': '',
+      'darwin': '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+      'win32': `\\Microsoft\\Edge\\Application\\msedge.exe`,
+    }, () => this._installMSEdgeChannel('msedge', {
+      'linux': '',
+      'darwin': 'reinstall_msedge_stable_mac.sh',
+      'win32': 'reinstall_msedge_stable_win.ps1',
+    })));
+
+    this._executables.push(this._createChromiumChannel('msedge-beta', {
+      'linux': '/opt/microsoft/msedge-beta/msedge',
+      'darwin': '/Applications/Microsoft Edge Beta.app/Contents/MacOS/Microsoft Edge Beta',
+      'win32': `\\Microsoft\\Edge Beta\\Application\\msedge.exe`,
+    }, () => this._installMSEdgeChannel('msedge-beta', {
+      'darwin': 'reinstall_msedge_beta_mac.sh',
+      'linux': 'reinstall_msedge_beta_linux.sh',
+      'win32': 'reinstall_msedge_beta_win.ps1',
+    })));
+
+    this._executables.push(this._createChromiumChannel('msedge-dev', {
+      'linux': '/opt/microsoft/msedge-dev/msedge',
+      'darwin': '/Applications/Microsoft Edge Dev.app/Contents/MacOS/Microsoft Edge Dev',
+      'win32': `\\Microsoft\\Edge Dev\\Application\\msedge.exe`,
+    }));
+
+    this._executables.push(this._createChromiumChannel('msedge-canary', {
+      'linux': '',
+      'darwin': '/Applications/Microsoft Edge Canary.app/Contents/MacOS/Microsoft Edge Canary',
+      'win32': `\\Microsoft\\Edge SxS\\Application\\msedge.exe`,
+    }));
+
     const firefox = descriptors.find(d => d.name === 'firefox')!;
-    const firefoxExecutable = executablePath(firefox.dir, 'firefox');
+    const firefoxExecutable = findExecutablePath(firefox.dir, 'firefox');
     this._executables.push({
       type: 'browser',
       name: 'firefox',
       browserName: 'firefox',
-      directoryIfExists: () => directoryIfExists(firefox.dir),
-      maybeExecutablePath: () => firefoxExecutable,
-      executablePathIfExists: () => executablePathIfExists(firefoxExecutable),
+      directory: firefox.dir,
+      executablePath: () => firefoxExecutable,
+      executablePathOrDie: () => executablePathOrDie('firefox', firefoxExecutable),
       installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('firefox', firefox.dir, ['firefox'], [], ['firefox']),
-      _download: () => this._downloadExecutable(firefox, firefoxExecutable, DOWNLOAD_URLS['firefox'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
+      _install: () => this._downloadExecutable(firefox, firefoxExecutable, DOWNLOAD_URLS['firefox'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
+      _dependencyGroup: 'firefox',
     });
 
     const firefoxBeta = descriptors.find(d => d.name === 'firefox-beta')!;
-    const firefoxBetaExecutable = executablePath(firefoxBeta.dir, 'firefox');
+    const firefoxBetaExecutable = findExecutablePath(firefoxBeta.dir, 'firefox');
     this._executables.push({
       type: 'tool',
       name: 'firefox-beta',
       browserName: 'firefox',
-      directoryIfExists: () => directoryIfExists(firefoxBeta.dir),
-      maybeExecutablePath: () => firefoxBetaExecutable,
-      executablePathIfExists: () => executablePathIfExists(firefoxBetaExecutable),
+      directory: firefoxBeta.dir,
+      executablePath: () => firefoxBetaExecutable,
+      executablePathOrDie: () => executablePathOrDie('firefox-beta', firefoxBetaExecutable),
       installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
-      _download: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable, DOWNLOAD_URLS['firefox-beta'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
+      _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable, DOWNLOAD_URLS['firefox-beta'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
+      _dependencyGroup: 'firefox',
     });
 
     const webkit = descriptors.find(d => d.name === 'webkit')!;
-    const webkitExecutable = executablePath(webkit.dir, 'webkit');
+    const webkitExecutable = findExecutablePath(webkit.dir, 'webkit');
     const webkitLinuxLddDirectories = [
       path.join('minibrowser-gtk'),
       path.join('minibrowser-gtk', 'bin'),
@@ -315,27 +392,71 @@ export class Registry {
       type: 'browser',
       name: 'webkit',
       browserName: 'webkit',
-      directoryIfExists: () => directoryIfExists(webkit.dir),
-      maybeExecutablePath: () => webkitExecutable,
-      executablePathIfExists: () => executablePathIfExists(webkitExecutable),
+      directory: webkit.dir,
+      executablePath: () => webkitExecutable,
+      executablePathOrDie: () => executablePathOrDie('webkit', webkitExecutable),
       installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
-      _download: () => this._downloadExecutable(webkit, webkitExecutable, DOWNLOAD_URLS['webkit'][hostPlatform], 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST'),
+      _install: () => this._downloadExecutable(webkit, webkitExecutable, DOWNLOAD_URLS['webkit'][hostPlatform], 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST'),
+      _dependencyGroup: 'webkit',
     });
 
     const ffmpeg = descriptors.find(d => d.name === 'ffmpeg')!;
-    const ffmpegExecutable = executablePath(ffmpeg.dir, 'ffmpeg');
+    const ffmpegExecutable = findExecutablePath(ffmpeg.dir, 'ffmpeg');
     this._executables.push({
       type: 'tool',
       name: 'ffmpeg',
       browserName: undefined,
-      directoryIfExists: () => directoryIfExists(ffmpeg.dir),
-      maybeExecutablePath: () => ffmpegExecutable,
-      executablePathIfExists: () => executablePathIfExists(ffmpegExecutable),
+      directory: ffmpeg.dir,
+      executablePath: () => ffmpegExecutable,
+      executablePathOrDie: () => executablePathOrDie('ffmpeg', ffmpegExecutable),
       installType: ffmpeg.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => Promise.resolve(),
-      _download: () => this._downloadExecutable(ffmpeg, ffmpegExecutable, DOWNLOAD_URLS['ffmpeg'][hostPlatform], 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST'),
+      _install: () => this._downloadExecutable(ffmpeg, ffmpegExecutable, DOWNLOAD_URLS['ffmpeg'][hostPlatform], 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST'),
+      _dependencyGroup: 'tools',
     });
+  }
+
+  private _createChromiumChannel(name: ChromiumChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+    const executablePath = (shouldThrow: boolean) => {
+      const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
+      if (!suffix) {
+        if (shouldThrow)
+          throw new Error(`Chromium distribution '${name}' is not supported on ${process.platform}`);
+        return undefined;
+      }
+      const prefixes = (process.platform === 'win32' ? [
+        process.env.LOCALAPPDATA, process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)']
+      ].filter(Boolean) : ['']) as string[];
+
+      for (const prefix of prefixes) {
+        const executablePath = path.join(prefix, suffix);
+        if (canAccessFile(executablePath))
+          return executablePath;
+      }
+      if (!shouldThrow)
+        return undefined;
+
+      const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
+      // TODO: language-specific error message
+      const installation = install ? `\nRun "npx playwright install ${name}"` : '';
+      throw new Error(`Chromium distribution '${name}' is not found${location}${installation}`);
+    };
+    return {
+      type: 'channel',
+      name,
+      browserName: 'chromium',
+      directory: undefined,
+      executablePath: () => executablePath(false),
+      executablePathOrDie: () => executablePath(true)!,
+      installType: install ? 'install-script' : 'none',
+      validateHostRequirements: () => Promise.resolve(),
+      _install: install,
+    };
+  }
+
+  executables(): Executable[] {
+    return this._executables;
   }
 
   findExecutable(name: BrowserName): Executable;
@@ -373,10 +494,10 @@ export class Registry {
 
   async installDeps(executablesToInstallDeps?: Executable[]) {
     const executables = this._addRequirementsAndDedupe(executablesToInstallDeps);
-    const targets = new Set<'chromium' | 'firefox' | 'webkit' | 'tools'>();
+    const targets = new Set<DependencyGroup>();
     for (const executable of executables) {
-      if (executable.browserName)
-        targets.add(executable.browserName);
+      if (executable._dependencyGroup)
+        targets.add(executable._dependencyGroup);
     }
     targets.add('tools');
     if (os.platform() === 'win32')
@@ -414,8 +535,8 @@ export class Registry {
 
       // Install browsers for this package.
       for (const executable of executables) {
-        if (executable._download)
-          await executable._download();
+        if (executable._install)
+          await executable._install();
         else
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
       }
@@ -438,6 +559,36 @@ export class Registry {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });
     await fs.promises.writeFile(markerFilePath(descriptor.dir), '');
+  }
+
+  private async _installMSEdgeChannel(channel: string, scripts: Record<'linux' | 'darwin' | 'win32', string>) {
+    const scriptArgs: string[] = [];
+    if (process.platform !== 'linux') {
+      const products = JSON.parse(await fetchData('https://edgeupdates.microsoft.com/api/products'));
+      const productName = channel === 'msedge' ? 'Stable' : 'Beta';
+      const product = products.find((product: any) => product.Product === productName);
+      const searchConfig = ({
+        darwin: {platform: 'MacOS', arch: 'universal', artifact: 'pkg'},
+        win32: {platform: 'Windows', arch: os.arch() === 'x64' ? 'x64' : 'x86', artifact: 'msi'},
+      } as any)[process.platform];
+      const release = searchConfig ? product.Releases.find((release: any) => release.Platform === searchConfig.platform && release.Architecture === searchConfig.arch) : null;
+      const artifact = release ? release.Artifacts.find((artifact: any) => artifact.ArtifactName === searchConfig.artifact) : null;
+      if (artifact)
+        scriptArgs.push(artifact.Location /* url */);
+      else
+        throw new Error(`Cannot install ${channel} on ${process.platform}`);
+    }
+    await this._installChromiumChannel(channel, scripts, scriptArgs);
+  }
+
+  private async _installChromiumChannel(channel: string, scripts: Record<'linux' | 'darwin' | 'win32', string>, scriptArgs: string[] = []) {
+    const scriptName = scripts[process.platform as 'linux' | 'darwin' | 'win32'];
+    if (!scriptName)
+      throw new Error(`Cannot install ${channel} on ${process.platform}`);
+    const shell = scriptName.endsWith('.ps1') ? 'powershell.exe' : 'bash';
+    const { code } = await spawnAsync(shell, [path.join(BIN_PATH, scriptName), ...scriptArgs], { cwd: BIN_PATH, stdio: 'inherit' });
+    if (code !== 0)
+      throw new Error(`Failed to install ${channel}`);
   }
 
   private async _validateInstallationCache(linksDir: string) {

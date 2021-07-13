@@ -44,8 +44,8 @@ export abstract class BrowserType extends SdkObject {
     this._name = browserName;
   }
 
-  executablePath(channel?: string): string {
-    return registry.findExecutable(this._name).maybeExecutablePath() || '';
+  executablePath(): string {
+    return registry.findExecutable(this._name).executablePath() || '';
   }
 
   name(): string {
@@ -156,20 +156,18 @@ export abstract class BrowserType extends SdkObject {
     else
       browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
 
-    const executable = executablePath || this.executablePath(options.channel);
-    if (!executable)
-      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
-    if (!(await existsAsync(executable))) {
-      const errorMessageLines = [`Failed to launch ${this._name} because executable doesn't exist at ${executable}`];
-      // If we tried using stock downloaded browser, suggest re-installing playwright.
-      if (!executablePath)
-        errorMessageLines.push(`Run "npx playwright install" to install browsers`);
-      throw new Error(errorMessageLines.join('\n'));
+    let executable: string;
+    if (executablePath) {
+      if (!(await existsAsync(executablePath)))
+        throw new Error(`Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
+      executable = executablePath;
+    } else {
+      const registryExecutable = registry.findExecutable(options.channel || this._name);
+      if (!registryExecutable || registryExecutable.browserName !== this._name)
+        throw new Error(`Unsupported ${this._name} channel "${options.channel}"`);
+      executable = registryExecutable.executablePathOrDie();
+      await registryExecutable.validateHostRequirements();
     }
-
-    // Do not validate dependencies for custom binaries.
-    if (!executablePath && !options.channel)
-      await registry.findExecutable(this._name).validateHostRequirements();
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
     const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));
