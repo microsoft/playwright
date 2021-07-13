@@ -183,5 +183,6 @@ it('should keep button state on move', async ({page, browserName, isAndroid}) =>
   await page.mouse.down();
   await page.mouse.move(130, 130, {steps: 2});
   await page.mouse.up();
-  expect(await page.evaluate('result')).toEqual([0, 1, 1, 0, 2, 2, 0]);
+  await page.mouse.move(110, 110);
+  expect(await page.evaluate('result')).toEqual([0, 1, 1, 0]);
 });
