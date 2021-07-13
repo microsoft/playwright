@@ -34,6 +34,17 @@ it('should construct a new URL when a baseURL in browser.newPage is passed to pa
   await page.close();
 });
 
+it('should construct a new URL when a baseURL in browserType.launchPersistentContext is passed to page.goto', async function({browserType, server, createUserDataDir, browserOptions}) {
+  const userDataDir = await createUserDataDir();
+  const context = await browserType.launchPersistentContext(userDataDir, {
+    ...browserOptions,
+    baseURL: server.PREFIX,
+  });
+  const page = await context.newPage();
+  expect((await page.goto('/empty.html')).url()).toBe(server.EMPTY_PAGE);
+  await context.close();
+});
+
 it('should construct the URLs correctly when a baseURL without a trailing slash in browser.newPage is passed to page.goto', async function({browser, server}) {
   const page = await browser.newPage({
     baseURL: server.PREFIX + '/url-construction',
@@ -89,5 +100,14 @@ it('should be able to match a URL relative to its given URL with urlMatcher', as
   expect(request.url()).toBe(server.PREFIX + '/foobar/kek/index.html');
   expect(response.url()).toBe(server.PREFIX + '/foobar/kek/index.html');
   expect((await response.body()).toString()).toBe('base-url-matched-route');
+  await page.close();
+});
+
+it('should not construct a new URL with baseURL when a glob was used', async function({browser, server}) {
+  const page = await browser.newPage({
+    baseURL: server.PREFIX + '/foobar/',
+  });
+  await page.goto('./kek/index.html');
+  await page.waitForURL('**/foobar/kek/index.html');
   await page.close();
 });
