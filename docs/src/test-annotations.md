@@ -119,6 +119,55 @@ Or if you want the opposite, you can skip the tests with a certain tag:
 npx playwright test --grep-invert @slow
 ```
 
+## Use test steps
+
+If you have a long test, it will be useful to annotate different steps in the test. This way you can follow along while the test is running and get an exact step that failed.
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test('example test', async ({ page }) => {
+  await test.step('Sign in', async () => {
+    await page.fill('#username', 'Username');
+    await page.fill('#password', 'Password');
+    await page.click('text=Sign in');
+  });
+
+  await test.step('Go to cart', async () => {
+    await page.click('text=Cart');
+    // Do more actions...
+  });
+
+  // Do more steps...
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test('example test', async ({ page }) => {
+  await test.step('Sign in', async () => {
+    await page.fill('#username', 'Username');
+    await page.fill('#password', 'Password');
+    await page.click('text=Sign in');
+  });
+
+  await test.step('Go to cart', async () => {
+    await page.click('text=Cart');
+    // Do more actions...
+  });
+
+  // Do more steps...
+});
+```
+
+Here is a sample output from the `list` reporter:
+```bash
+  ✓ example.spec.ts:9:6 › [chromium] example test
+    example.spec.ts:9:6 › [firefox] example test › Go to cart
+  ✘ 1) example.spec.ts:9:6 › [webkit] example test › Sign in (419ms)
+```
+
 ## Conditionally skip a group of tests
 
 For example, you can run a group of tests just in Chromium by passing a callback.

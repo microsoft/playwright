@@ -377,6 +377,11 @@ export interface TestInfo extends WorkerInfo {
   setTimeout(timeout: number): void;
 
   /**
+   * Mark a part of the test as a "step" with the given title.
+   */
+  step(title: string, callback: () => Promise<any> | any): Promise<void>;
+
+  /**
    * The expected status for the test:
    * - `'passed'` for most tests;
    * - `'failed'` for tests marked with `test.fail()`;
@@ -876,6 +881,29 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * When called inside a `test.describe()` block, fixtures/options only apply to the tests from the block.
    */
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
+
+  /**
+   * Mark a part of the test as a "step" with the given title. Steps get a special treatment
+   * in reporters and other test tools. Step will wait for the callback to finish.
+   *
+   * ```js
+   * test('example test', async ({ page }) => {
+   *   await test.step('Sign in', async () => {
+   *     await page.fill('#username', 'Username');
+   *     await page.fill('#password', 'Password');
+   *     await page.click('text=Sign in');
+   *   });
+   *
+   *   await test.step('Go to cart', async () => {
+   *     await page.click('text=Cart');
+   *     // Do more actions...
+   *   });
+   *
+   *   // Do more steps...
+   * });
+   * ```
+   */
+  step(title: string, callback: () => Promise<any> | any): Promise<void>;
 
   /**
    * Use `test.expect(value).toBe(expected)` to assert something in the test.

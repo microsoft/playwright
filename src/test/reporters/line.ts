@@ -16,13 +16,14 @@
 
 import colors from 'colors/safe';
 import { BaseReporter, formatFailure, formatTestTitle } from './base';
-import { FullConfig, Test, Suite, TestResult, FullResult } from '../reporter';
+import { FullConfig, Test, Suite, TestResult, FullResult, TestStep } from '../reporter';
 
 class LineReporter extends BaseReporter {
   private _total = 0;
   private _current = 0;
   private _failures = 0;
-  private _lastTest: Test | undefined;
+  private _lastTestOrStep: Test | TestStep | undefined;
+  private _currentStep = new Map<Test, TestStep | undefined>();
 
   onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
@@ -42,20 +43,30 @@ class LineReporter extends BaseReporter {
     if (this.config.quiet)
       return;
     stream.write(`\u001B[1A\u001B[2K`);
-    if (test && this._lastTest !== test) {
-      // Write new header for the output.
-      stream.write(colors.gray(formatTestTitle(this.config, test) + `\n`));
-      this._lastTest = test;
+    if (test) {
+      const step = this._currentStep.get(test);
+      const testOrStep = step || test;
+      if (this._lastTestOrStep !== testOrStep) {
+        // Write new header for the output.
+        stream.write(colors.gray(formatTestTitle(this.config, test, step) + `\n`));
+        this._lastTestOrStep = testOrStep;
+      }
     }
 
     stream.write(chunk);
     console.log();
   }
 
+  onTestStep(test: Test, step?: TestStep) {
+    super.onTestStep(test, step);
+    this._currentStep.set(test, step);
+  }
+
   onTestEnd(test: Test, result: TestResult) {
     super.onTestEnd(test, result);
+    this._currentStep.delete(test);
     const width = process.stdout.columns! - 1;
-    const title = `[${++this._current}/${this._total}] ${formatTestTitle(this.config, test)}`.substring(0, width);
+    const title = `[${++this._current}/${this._total}] ${formatTestTitle(this.config, test, result.errorStep)}`.substring(0, width);
     process.stdout.write(`\u001B[1A\u001B[2K${title}\n`);
     if (!this.willRetry(test, result) && !test.ok()) {
       process.stdout.write(`\u001B[1A\u001B[2K`);

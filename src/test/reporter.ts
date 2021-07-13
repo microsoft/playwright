@@ -57,18 +57,26 @@ export interface TestResult {
   duration: number;
   status?: TestStatus;
   error?: TestError;
+  errorStep?: TestStep;
   data: { [key: string]: any };
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
+  steps: TestStep[];
 }
-export type FullResult = {
+export interface TestStep {
+  title: string;
+  steps: TestStep[];
+  titlePath(): string[];
+}
+export interface FullResult {
   status: 'passed' | 'failed' | 'timedout' | 'interrupted';
-};
+}
 export interface Reporter {
   onBegin(config: FullConfig, suite: Suite): void;
   onTestBegin(test: Test): void;
   onStdOut(chunk: string | Buffer, test?: Test): void;
   onStdErr(chunk: string | Buffer, test?: Test): void;
+  onTestStep(test: Test, step?: TestStep): void;
   onTestEnd(test: Test, result: TestResult): void;
   onError(error: TestError): void;
   onEnd(result: FullResult): void | Promise<void>;

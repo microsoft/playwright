@@ -20,7 +20,7 @@ import rimraf from 'rimraf';
 import util from 'util';
 import { EventEmitter } from 'events';
 import { monotonicTime, DeadlineRunner, raceAgainstDeadline, serializeError } from './util';
-import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams } from './ipc';
+import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, TestStepBeginPayload, TestStepEndPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import { Modifier, Spec, Suite, Test } from './test';
@@ -214,6 +214,11 @@ export class WorkerRunner extends EventEmitter {
       return path.join(this._project.config.outputDir, testOutputDir);
     })();
 
+    type TestStepData = { title: string, id: string };
+    let lastStepId = 0;
+    let errorStep: TestStepData | undefined;
+    const currentSteps: TestStepData[] = [];
+
     const testInfo: TestInfo = {
       ...this._workerInfo,
       title: spec.title,
@@ -260,6 +265,25 @@ export class WorkerRunner extends EventEmitter {
         testInfo.timeout = timeout;
         if (deadlineRunner)
           deadlineRunner.setDeadline(deadline());
+      },
+      step: async (title: string, callback: () => any) => {
+        const currentStep = currentSteps[currentSteps.length - 1];
+        const stepId = String(++lastStepId);
+        const step: TestStepData = { title, id: stepId };
+        currentSteps.push(step);
+        const beginPayload: TestStepBeginPayload = { testId, title, stepId, parentId: currentStep ? currentStep.id : undefined };
+        this.emit('testStepBegin', beginPayload);
+        try {
+          await callback();
+        } catch (e) {
+          if (!errorStep)
+            errorStep = step;
+          throw e;
+        } finally {
+          const endPayload: TestStepEndPayload = { testId, stepId };
+          this.emit('testStepEnd', endPayload);
+          currentSteps.splice(currentSteps.indexOf(step), 1);
+        }
       },
     };
 
@@ -331,7 +355,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     testInfo.duration = monotonicTime() - startTime;
-    this.emit('testEnd', buildTestEndPayload(testId, testInfo));
+    this.emit('testEnd', buildTestEndPayload(testId, testInfo, errorStep?.id));
 
     const isFailure = testInfo.status === 'timedOut' || (testInfo.status === 'failed' && testInfo.expectedStatus !== 'failed');
     const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
@@ -346,7 +370,7 @@ export class WorkerRunner extends EventEmitter {
     this._setCurrentTest(null);
   }
 
-  private _setCurrentTest(currentTest: { testId: string, testInfo: TestInfo} | null) {
+  private _setCurrentTest(currentTest: { testId: string, testInfo: TestInfo } | null) {
     this._currentTest = currentTest;
     setCurrentTestInfo(currentTest ? currentTest.testInfo : null);
   }
@@ -476,12 +500,13 @@ function buildTestBeginPayload(testId: string, testInfo: TestInfo): TestBeginPay
   };
 }
 
-function buildTestEndPayload(testId: string, testInfo: TestInfo): TestEndPayload {
+function buildTestEndPayload(testId: string, testInfo: TestInfo, errorStepId?: string): TestEndPayload {
   return {
     testId,
     duration: testInfo.duration,
     status: testInfo.status!,
     error: testInfo.error,
+    errorStepId,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,
     timeout: testInfo.timeout,

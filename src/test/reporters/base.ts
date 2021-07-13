@@ -21,7 +21,7 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestStatus, Test, Spec, Suite, TestResult, TestError, Reporter, FullResult } from '../reporter';
+import { FullConfig, TestStatus, Test, Spec, Suite, TestResult, TestError, Reporter, FullResult, TestStep } from '../reporter';
 
 const stackUtils = new StackUtils();
 
@@ -53,6 +53,9 @@ export class BaseReporter implements Reporter  {
   onStdErr(chunk: string | Buffer) {
     if (!this.config.quiet)
       process.stderr.write(chunk);
+  }
+
+  onTestStep(test: Test, step?: TestStep) {
   }
 
   onTestEnd(test: Test, result: TestResult) {
@@ -126,7 +129,14 @@ export class BaseReporter implements Reporter  {
 
   private _printTestHeaders(tests: Test[]) {
     tests.forEach(test => {
-      console.log(formatTestHeader(this.config, test, '    '));
+      let errorStep: TestStep | undefined;
+      for (const result of test.results) {
+        if (result.errorStep) {
+          errorStep = result.errorStep;
+          break;
+        }
+      }
+      console.log(formatTestHeader(this.config, test, '    ', undefined, errorStep));
     });
   }
 
@@ -147,12 +157,15 @@ export class BaseReporter implements Reporter  {
 
 export function formatFailure(config: FullConfig, test: Test, index?: number): string {
   const tokens: string[] = [];
-  tokens.push(formatTestHeader(config, test, '  ', index));
   for (const result of test.results) {
     if (result.status === 'passed')
       continue;
+    if (!tokens.length)
+      tokens.push(formatTestHeader(config, test, '  ', index, result.errorStep));
     tokens.push(formatFailedResult(test, result));
   }
+  if (!tokens.length)
+    tokens.push(formatTestHeader(config, test, '  ', index));
   tokens.push('');
   return tokens.join('\n');
 }
@@ -161,15 +174,20 @@ function relativeSpecPath(config: FullConfig, spec: Spec): string {
   return path.relative(config.rootDir, spec.file) || path.basename(spec.file);
 }
 
-export function formatTestTitle(config: FullConfig, test: Test): string {
+function stepSuffix(step: TestStep | undefined) {
+  const stepTitles = step ? step.titlePath() : [];
+  return stepTitles.map(t => ' › ' + t).join('');
+}
+
+export function formatTestTitle(config: FullConfig, test: Test, step?: TestStep): string {
   const spec = test.spec;
   let relativePath = relativeSpecPath(config, spec);
   relativePath += ':' + spec.line + ':' + spec.column;
-  return `${relativePath} › ${test.fullTitle()}`;
+  return `${relativePath} › ${test.fullTitle()}${stepSuffix(step)}`;
 }
 
-function formatTestHeader(config: FullConfig, test: Test, indent: string, index?: number): string {
-  const title = formatTestTitle(config, test);
+function formatTestHeader(config: FullConfig, test: Test, indent: string, index?: number, step?: TestStep): string {
+  const title = formatTestTitle(config, test, step);
   const passedUnexpectedlySuffix = test.results[0].status === 'passed' ? ' -- passed unexpectedly' : '';
   const header = `${indent}${index ? index + ') ' : ''}${title}${passedUnexpectedlySuffix}`;
   return colors.red(pad(header, '='));
@@ -178,7 +196,7 @@ function formatTestHeader(config: FullConfig, test: Test, indent: string, index?
 function formatFailedResult(test: Test, result: TestResult): string {
   const tokens: string[] = [];
   if (result.retry)
-    tokens.push(colors.gray(pad(`\n    Retry #${result.retry}`, '-')));
+    tokens.push(colors.gray(pad(`\n    Retry #${result.retry}${stepSuffix(result.errorStep)}`, '-')));
   if (result.status === 'timedOut') {
     tokens.push('');
     tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));

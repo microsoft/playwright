@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { FullConfig, TestResult, Test, Suite, TestError, Reporter, FullResult } from '../reporter';
+import { FullConfig, TestResult, Test, Suite, TestError, Reporter, FullResult, TestStep } from '../reporter';
 
 class EmptyReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {}
   onTestBegin(test: Test) {}
   onStdOut(chunk: string | Buffer, test?: Test) {}
   onStdErr(chunk: string | Buffer, test?: Test) {}
+  onTestStep(test: Test, step?: TestStep) {}
   onTestEnd(test: Test, result: TestResult) {}
   onError(error: TestError) {}
   async onEnd(result: FullResult) {}

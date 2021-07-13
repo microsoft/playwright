@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestError } from './reporter';
-import type { Config, TestStatus } from './types';
+import type { Config, TestStatus, TestError } from './types';
 
 export type SerializedLoaderData = {
   defaultConfig: Config;
@@ -34,11 +33,24 @@ export type TestBeginPayload = {
   workerIndex: number,
 };
 
+export type TestStepBeginPayload = {
+  testId: string;
+  title: string;
+  stepId: string;
+  parentId?: string;
+};
+
+export type TestStepEndPayload = {
+  testId: string;
+  stepId: string;
+};
+
 export type TestEndPayload = {
   testId: string;
   duration: number;
   status: TestStatus;
   error?: TestError;
+  errorStepId?: string;
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;
