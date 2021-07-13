@@ -198,7 +198,7 @@ Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME
 
 ### Install behind a firewall or a proxy
 
-By default, Playwright downloads browsers from Microsoft CDN.
+By default, Playwright downloads browsers from Microsoft's CDN.
 
 Sometimes companies maintain an internal proxy that blocks direct access to the public
 resources. In this case, Playwright can be configured to download browsers via a proxy server.
@@ -218,7 +218,7 @@ npm i -D playwright
 
 ### Download from artifact repository
 
-By default, Playwright downloads browsers from Microsoft CDN.
+By default, Playwright downloads browsers from Microsoft's CDN.
 
 Sometimes companies maintain an internal artifact repository to host browser
 binaries. In this case, Playwright can be configured to download from a custom
