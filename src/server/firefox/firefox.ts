@@ -80,8 +80,6 @@ export class Firefox extends BrowserType {
 
   _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], devtools, headless } = options;
-    if (devtools)
-      console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument');
@@ -108,6 +106,8 @@ export class Firefox extends BrowserType {
       firefoxArguments.push('about:blank');
     else
       firefoxArguments.push('-silent');
+    if (devtools)
+      firefoxArguments.push('--auto-open-devtools-for-tabs');
     return firefoxArguments;
   }
 }

@@ -690,7 +690,7 @@ If specified, traces are saved into this directory.
 ## browser-option-devtools
 - `devtools` <[boolean]>
 
-**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+**Chromium and Firefox only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
 [`option: headless`] option will be set `false`.
 
 ## browser-option-slowmo
