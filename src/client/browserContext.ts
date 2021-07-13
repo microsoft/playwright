@@ -254,7 +254,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
 
   async route(url: URLMatch, handler: network.RouteHandler): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      this._routes.push({ url, handler });
+      this._routes.unshift({ url, handler });
       if (this._routes.length === 1)
         await channel.setNetworkInterceptionEnabled({ enabled: true });
     });
