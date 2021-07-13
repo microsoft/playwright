@@ -444,7 +444,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   async route(url: URLMatch, handler: RouteHandler): Promise<void> {
     return this._wrapApiCall(async (channel: channels.PageChannel) => {
-      this._routes.push({ url, handler });
+      this._routes.unshift({ url, handler });
       if (this._routes.length === 1)
         await channel.setNetworkInterceptionEnabled({ enabled: true });
     });
