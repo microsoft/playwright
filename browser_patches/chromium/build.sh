@@ -13,6 +13,7 @@ EOF
 )
 
 SCRIPT_PATH=$(pwd -P)
+source "${SCRIPT_FOLDER}/../utils.sh"
 
 main() {
   if [[ $1 == "--help" || $1 == "-h" ]]; then
@@ -44,12 +45,7 @@ compile_chromium() {
 
   if [[ $1 == "--compile-mac"* ]]; then
     # As of Jan, 2021 Chromium mac compilation requires Xcode12.2
-    if [[ ! -d /Applications/Xcode12.2.app ]]; then
-      echo "ERROR: chromium mac compilation requires /Applications/Xcode12.2.app"
-      echo "Download one from https://developer.apple.com/download/more/"
-      exit 1
-    fi
-    export DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer
+    selectXcodeVersionOrDie "12.2"
     # As of Jan, 2021 Chromium mac compilation is only possible on Intel macbooks.
     # See https://chromium.googlesource.com/chromium/src.git/+/master/docs/mac_arm64.md
     if [[ $1 == "--compile-mac-arm64" && $(uname -m) != "x86_64" ]]; then
