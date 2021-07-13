@@ -1183,7 +1183,7 @@ export type PlaywrightTestOptions = {
   viewport: ViewportSize | null | undefined;
 
   /**
-   * BaseURL used for all the contexts in the test. Takes priority over `contextOptions`.
+   * `baseURL` used for all pages in the test. Takes priority over `contextOptions`.
    * @see BrowserContextOptions
    */
   baseURL: string | undefined;
