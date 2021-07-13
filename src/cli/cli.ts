@@ -31,7 +31,7 @@ import { Page } from '../client/page';
 import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { allBrowserNames, BrowserName, registry } from '../utils/registry';
+import { registry, Executable } from '../utils/registry';
 import * as utils from '../utils/utils';
 
 const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
@@ -122,24 +122,24 @@ program
 program
     .command('install [browserType...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(args) {
+    .action(async function(args: any[]) {
       try {
         // Install default browsers when invoked without arguments.
         if (!args.length) {
-          await registry.installBinaries();
+          await registry.install();
           return;
         }
-        const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
-        const browserChannels: Set<BrowserChannel> = new Set(args.filter((browser: any) => allBrowserChannels.has(browser)));
-        const faultyArguments: string[] = args.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
+        const binaries = args.map(arg => registry.findExecutable(arg)).filter(b => !!b) as Executable[];
+        const browserChannels: Set<BrowserChannel> = new Set(args.filter(browser => allBrowserChannels.has(browser)));
+        const faultyArguments: string[] = args.filter((browser: any) => !binaries.find(b => b.name === browser) && !browserChannels.has(browser));
         if (faultyArguments.length) {
           console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall}`);
           process.exit(1);
         }
-        if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge') || browserChannels.has('msedge-beta'))
-          browserNames.add('ffmpeg');
-        if (browserNames.size)
-          await registry.installBinaries([...browserNames]);
+        if (browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge') || browserChannels.has('msedge-beta'))
+          binaries.push(registry.findExecutable('ffmpeg')!);
+        if (binaries.length)
+          await registry.install(binaries);
         for (const browserChannel of browserChannels)
           await installBrowserChannel(browserChannel);
       } catch (e) {
@@ -188,10 +188,12 @@ async function installBrowserChannel(channel: BrowserChannel) {
 program
     .command('install-deps [browserType...]')
     .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .action(async function(browserTypes) {
+    .action(async function(browserTypes: string[]) {
       try {
         // TODO: verify the list and print supported browserTypes in the error message.
-        await registry.installDeps(browserTypes);
+        const binaries = browserTypes.map(arg => registry.findExecutable(arg)).filter(b => !!b) as Executable[];
+        // When passed no arguments, assume default browsers.
+        await registry.installDeps(browserTypes.length ? binaries : undefined);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);

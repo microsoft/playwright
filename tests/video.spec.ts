@@ -21,7 +21,7 @@ import { spawnSync } from 'child_process';
 import { PNG } from 'pngjs';
 import { registry } from '../src/utils/registry';
 
-const ffmpeg = registry.executablePath('ffmpeg') || '';
+const ffmpeg = registry.findExecutable('ffmpeg')!.executablePathIfExists() || '';
 
 export class VideoPlayer {
   fileName: string;

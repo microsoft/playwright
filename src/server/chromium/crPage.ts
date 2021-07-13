@@ -845,7 +845,7 @@ class FrameSession {
 
   async _createVideoRecorder(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
     assert(!this._screencastId);
-    const ffmpegPath = registry.executablePath('ffmpeg');
+    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathIfExists();
     if (!ffmpegPath)
       throw new Error('ffmpeg executable was not found');
     if (!canAccessFile(ffmpegPath)) {

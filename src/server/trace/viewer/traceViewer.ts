@@ -25,7 +25,7 @@ import { PersistentSnapshotStorage, TraceModel } from './traceModel';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
-import { canAccessFile, isUnderTest } from '../../../utils/utils';
+import { isUnderTest } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
@@ -140,7 +140,7 @@ export class TraceViewer {
     // Null means no installation and no channels found.
     let channel = null;
     if (traceViewerBrowser === 'chromium') {
-      if (canAccessFile(registry.executablePath('chromium')!)) {
+      if (registry.findExecutable('chromium').executablePathIfExists()) {
         // This means we have a browser downloaded.
         channel = undefined;
       } else {

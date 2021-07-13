@@ -20,7 +20,7 @@ import path from 'path';
 import { spawnSync } from 'child_process';
 import { registry } from '../../src/utils/registry';
 
-const ffmpeg = registry.executablePath('ffmpeg') || '';
+const ffmpeg = registry.findExecutable('ffmpeg')!.executablePathIfExists() || '';
 
 export class VideoPlayer {
   videoWidth: number;
