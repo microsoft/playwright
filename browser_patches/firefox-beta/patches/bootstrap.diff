@@ -171,6 +171,67 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
  
    const transportProvider = {
      setListener(upgradeListener) {
+diff --git a/devtools/startup/DevToolsStartup.jsm b/devtools/startup/DevToolsStartup.jsm
+index 2c1f767f89f596fb5732572ad4e0cad3cafcc7c3..99401071ad93a2f2a3ba37e7643920f2e05e8b25 100644
+--- a/devtools/startup/DevToolsStartup.jsm
++++ b/devtools/startup/DevToolsStartup.jsm
+@@ -375,7 +375,7 @@ DevToolsStartup.prototype = {
+ 
+       // Store devtoolsFlag to check it later in onWindowReady.
+       this.devtoolsFlag = flags.devtools;
+-
++      this.autoOpenDevtoolsForTabs = flags.autoOpenDevtoolsForTabs;
+       /* eslint-disable mozilla/balanced-observers */
+       // We are not expecting to remove those listeners until Firefox closes.
+ 
+@@ -438,6 +438,7 @@ DevToolsStartup.prototype = {
+ 
+     const console = cmdLine.handleFlag("jsconsole", false);
+     const devtools = cmdLine.handleFlag("devtools", false);
++    const autoOpenDevtoolsForTabs = cmdLine.handleFlag("auto-open-devtools-for-tabs", false);
+ 
+     let devToolsServer;
+     try {
+@@ -460,7 +461,7 @@ DevToolsStartup.prototype = {
+       debuggerFlag = cmdLine.handleFlag("jsdebugger", false);
+     }
+ 
+-    return { console, debugger: debuggerFlag, devtools, devToolsServer };
++    return { console, debugger: debuggerFlag, devtools, autoOpenDevtoolsForTabs, devToolsServer };
+   },
+ 
+   /**
+@@ -482,9 +483,22 @@ DevToolsStartup.prototype = {
+       this._firstWindowReadyReceived = true;
+     }
+ 
++    if (this.autoOpenDevtoolsForTabs) {
++      this.handleDevToolsOpenForEveryTab(window);
++    }
++
+     JsonView.initialize();
+   },
+ 
++  handleDevToolsOpenForEveryTab(window) {
++    const require = this.initDevTools("CommandLine");
++    const { gDevTools } = require("devtools/client/framework/devtools");
++    window.gBrowser.tabContainer.addEventListener('TabOpen', async (event) => {
++      await gDevTools.showToolboxForTab(event.target);
++    });
++    gDevTools.showToolboxForTab(window.gBrowser.selectedTab).catch(() => {});
++  },
++
+   removeDevToolsMenus(window) {
+     // This will hide the "Tools > Web Developer" menu.
+     window.document.getElementById("webDeveloperMenu").hidden = true;
+@@ -1243,6 +1257,7 @@ DevToolsStartup.prototype = {
+     "                     Enables debugging (some) application startup code paths.\n" +
+     "                     Only has an effect when `--jsdebugger` is also supplied.\n" +
+     "  --devtools         Open DevTools on initial load.\n" +
++    "  --auto-open-devtools-for-tabs Open DevTools on new Tabs.\n" +
+     "  --start-debugger-server [ws:][ <port> | <path> ] Start the devtools server on\n" +
+     "                     a TCP port or Unix domain socket path. Defaults to TCP port\n" +
+     "                     6000. Use WebSocket protocol if ws: prefix is specified.\n",
 diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
 index 0093288d1a448afe7bd8e5b6e8c0cb31835ba3f5..93908f5719f2cb0fe2f58d7f3153a9af0e71f08b 100644
 --- a/docshell/base/BrowsingContext.cpp
