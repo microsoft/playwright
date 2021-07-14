@@ -926,17 +926,20 @@ index 882a2d56befef0aba460cc8ff041969e0d2c1ed3..71d4bfc4a4bc5a43bd2b98aefa316b4e
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a0fd368d5 100644
+index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..1bb05d97db731a934e66a49b461b7aca4f562445 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
-@@ -21,13 +21,15 @@
+@@ -21,13 +21,18 @@
                  "ShowDebugBorders",
                  "ShowRepaintCounter",
                  "WebRTCEncryptionEnabled",
 -                "WebSecurityEnabled"
 +                "WebSecurityEnabled",
 +                "DeviceOrientationEventEnabled",
-+                "SpeechRecognitionEnabled"
++                "SpeechRecognitionEnabled",
++                "PointerLockEnabled",
++                "NotificationsEnabled",
++                "FullScreenEnabled"
              ]
          },
          {
@@ -947,7 +950,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
              "description": "Resource type as it was perceived by the rendering engine."
          },
          {
-@@ -49,6 +51,12 @@
+@@ -49,6 +54,12 @@
              "enum": ["Light", "Dark"],
              "description": "Page appearance name."
          },
@@ -960,7 +963,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
          {
              "id": "Frame",
              "type": "object",
-@@ -112,6 +120,51 @@
+@@ -112,6 +123,51 @@
                  { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
                  { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
              ]
@@ -1012,7 +1015,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
          }
      ],
      "commands": [
-@@ -131,6 +184,14 @@
+@@ -131,6 +187,14 @@
                  { "name": "revalidateAllResources", "type": "boolean", "optional": true, "description": "If true, all cached subresources will be revalidated when the main resource loads. Otherwise, only expired cached subresources will be revalidated (the default behavior for most WebKit clients)." }
              ]
          },
@@ -1027,7 +1030,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
          {
              "name": "navigate",
              "description": "Navigates current page to the given URL.",
-@@ -204,7 +265,8 @@
+@@ -204,7 +268,8 @@
              "name": "setBootstrapScript",
              "targetTypes": ["page"],
              "parameters": [
@@ -1037,7 +1040,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
              ]
          },
          {
-@@ -270,6 +332,28 @@
+@@ -270,6 +335,28 @@
                  { "name": "appearance", "$ref": "Appearance", "optional": true }
              ]
          },
@@ -1066,7 +1069,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -290,7 +374,8 @@
+@@ -290,7 +377,8 @@
                  { "name": "y", "type": "integer", "description": "Y coordinate" },
                  { "name": "width", "type": "integer", "description": "Rectangle width" },
                  { "name": "height", "type": "integer", "description": "Rectangle height" },
@@ -1076,7 +1079,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
              ],
              "returns": [
                  { "name": "dataURL", "type": "string", "description": "Base64-encoded image data (PNG)." }
-@@ -308,12 +393,77 @@
+@@ -308,12 +396,77 @@
          {
              "name": "setScreenSizeOverride",
              "description": "Overrides screen size exposed to DOM and used in media queries for testing with provided values.",
@@ -1155,7 +1158,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
          }
      ],
      "events": [
-@@ -321,14 +471,16 @@
+@@ -321,14 +474,16 @@
              "name": "domContentEventFired",
              "targetTypes": ["page"],
              "parameters": [
@@ -1174,7 +1177,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
              ]
          },
          {
-@@ -338,6 +490,14 @@
+@@ -338,6 +493,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -1189,7 +1192,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -377,6 +537,22 @@
+@@ -377,6 +540,22 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1212,7 +1215,7 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..35b44b9fc9bbde387991155e6fa3d26a
          {
              "name": "defaultAppearanceDidChange",
              "description": "Fired when page's default appearance changes, even if there is a forced appearance.",
-@@ -385,6 +561,28 @@
+@@ -385,6 +564,28 @@
              "parameters": [
                  { "name": "appearance", "$ref": "Appearance", "description": "Name of the appearance that is active (not considering any forced appearance.)" }
              ]
@@ -1973,6 +1976,28 @@ index 9ecb7a3d6b39ca23ddd3258326a1fdc2f016ce30..743a455ad64684fd9fc35e4cd92056a9
        default: false
      WebCore:
        default: false
+diff --git a/Source/WTF/Scripts/Preferences/WebPreferencesInternal.yaml b/Source/WTF/Scripts/Preferences/WebPreferencesInternal.yaml
+index 0fbb06583dca9b81d555ba9656d577ee901034e1..3e4ba163ebc21316532566627538ffabc5566e95 100644
+--- a/Source/WTF/Scripts/Preferences/WebPreferencesInternal.yaml
++++ b/Source/WTF/Scripts/Preferences/WebPreferencesInternal.yaml
+@@ -584,6 +584,17 @@ OffscreenCanvasInWorkersEnabled:
+       "ENABLE(EXPERIMENTAL_FEATURES) && (PLATFORM(GTK) || PLATFORM(WPE))": true
+       default: false
+ 
++PointerLockEnabled:
++  type: bool
++  condition: ENABLE(POINTER_LOCK)
++  defaultValue:
++    WebKitLegacy:
++      default: true
++    WebKit:
++      default: true
++    WebCore:
++      default: true
++
+ PreferFasterClickOverDoubleTap:
+   type: bool
+   humanReadableName: "Fast clicks beat DTTZ"
 diff --git a/Source/WTF/wtf/DateMath.cpp b/Source/WTF/wtf/DateMath.cpp
 index ebd69a4c76cd7acb0a233be552071158ca2171ca..2ee388e94a56d3de9c9fb2506d2ddead2db1ef87 100644
 --- a/Source/WTF/wtf/DateMath.cpp
@@ -2219,6 +2244,18 @@ index 7995d4dd461de036cd8691b3ff181aeaefb12d92..49207cd294acebb4bac53ecb28817baa
              return false;
      }
  
+diff --git a/Source/WebCore/Modules/notifications/Notification.idl b/Source/WebCore/Modules/notifications/Notification.idl
+index d031bb73cda05092105d604dc608f89f6c834e8e..df98881af1df16ba4674edac42b3b0ca0d6740e1 100644
+--- a/Source/WebCore/Modules/notifications/Notification.idl
++++ b/Source/WebCore/Modules/notifications/Notification.idl
+@@ -34,6 +34,7 @@
+ [
+     Conditional=NOTIFICATIONS,
+     ActiveDOMObject,
++    EnabledBySetting=Notifications,
+     ExportMacro=WEBCORE_EXPORT,
+     Exposed=Window
+ ] interface Notification : EventTarget {
 diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 index f1b96958057d2fe6044d2c7b259db6c5ceb44efe..29e51dad380285fb16bd32ef04efde2ac4ed6479 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
@@ -2497,7 +2534,7 @@ index 4436fd8ca990af2e5cc147047fc39c2470104e64..9ebf2f8e499066a5e7461cfa1f8287f5
  {
      AXComputedObjectAttributeCache* attributeCache = nullptr;
 diff --git a/Source/WebCore/bindings/js/WebCoreBuiltinNames.h b/Source/WebCore/bindings/js/WebCoreBuiltinNames.h
-index 7790e27189a050ff4a8c37e431b01632975d27a4..8660a68fcba1d3950305669a2cbb3f36771cc9c8 100644
+index 7790e27189a050ff4a8c37e431b01632975d27a4..88903d81a4d07f9d1dc4efe4dee4139d589d0fa9 100644
 --- a/Source/WebCore/bindings/js/WebCoreBuiltinNames.h
 +++ b/Source/WebCore/bindings/js/WebCoreBuiltinNames.h
 @@ -88,6 +88,8 @@ namespace WebCore {
@@ -2509,6 +2546,14 @@ index 7790e27189a050ff4a8c37e431b01632975d27a4..8660a68fcba1d3950305669a2cbb3f36
      macro(DocumentTimeline) \
      macro(EnterPictureInPictureEvent) \
      macro(ExtendableEvent) \
+@@ -182,6 +184,7 @@ namespace WebCore {
+     macro(NavigatorCredentials) \
+     macro(NavigatorMediaDevices) \
+     macro(NavigatorUserMedia) \
++    macro(Notification) \
+     macro(OfflineAudioContext) \
+     macro(OffscreenCanvas) \
+     macro(OffscreenCanvasRenderingContext2D) \
 diff --git a/Source/WebCore/css/MediaQueryEvaluator.cpp b/Source/WebCore/css/MediaQueryEvaluator.cpp
 index a47b2fe549a89414a207864aabe897d07a59727c..53357bc9ce111bcb1241256647c3630ae767213d 100644
 --- a/Source/WebCore/css/MediaQueryEvaluator.cpp
@@ -2591,6 +2636,42 @@ index 1c1cbc1f55089ea7c73c83f04db3caddc5a8b3b3..f1ccf42cf7f699747b31873ab9d96b3f
      Exposed=Window
  ] interface DeviceOrientationEvent : Event {
      readonly attribute unrestricted double? alpha;
+diff --git a/Source/WebCore/dom/Document+PointerLock.idl b/Source/WebCore/dom/Document+PointerLock.idl
+index 898027004b8553cac8130541026af70ffb5ee073..ea5b3b292c9be31eba0353589da75a952ebebe90 100644
+--- a/Source/WebCore/dom/Document+PointerLock.idl
++++ b/Source/WebCore/dom/Document+PointerLock.idl
+@@ -25,6 +25,7 @@
+ 
+ // https://w3c.github.io/pointerlock/#extensions-to-the-document-interface
+ [
++    EnabledBySetting=PointerLock,
+     Conditional=POINTER_LOCK
+ ] partial interface Document {
+     [NotEnumerable] attribute EventHandler onpointerlockchange; // FIXME: Should be enumerable.
+diff --git a/Source/WebCore/dom/DocumentOrShadowRoot+PointerLock.idl b/Source/WebCore/dom/DocumentOrShadowRoot+PointerLock.idl
+index 9b8dbfc15ce078702321abcd6c0e636df7a60510..3c1fe92297c6229fd6594c2bebf50a34091ebb36 100644
+--- a/Source/WebCore/dom/DocumentOrShadowRoot+PointerLock.idl
++++ b/Source/WebCore/dom/DocumentOrShadowRoot+PointerLock.idl
+@@ -25,6 +25,7 @@
+ 
+ // https://w3c.github.io/pointerlock/#extensions-to-the-documentorshadowroot-mixin
+ [
++    EnabledBySetting=PointerLock,
+     Conditional=POINTER_LOCK
+ ] partial interface mixin DocumentOrShadowRoot {
+     readonly attribute Element? pointerLockElement;
+diff --git a/Source/WebCore/dom/Element+PointerLock.idl b/Source/WebCore/dom/Element+PointerLock.idl
+index f27718c1e2b8cd0a8075e556d4cdba7d9ae8fc54..04fcd27fbb9e4366d2144b328471d75fafdc7dfa 100644
+--- a/Source/WebCore/dom/Element+PointerLock.idl
++++ b/Source/WebCore/dom/Element+PointerLock.idl
+@@ -24,6 +24,7 @@
+  */
+ 
+ [
++    EnabledBySetting=PointerLock,
+     Conditional=POINTER_LOCK
+ ] partial interface Element {
+     undefined requestPointerLock();
 diff --git a/Source/WebCore/dom/PointerEvent.cpp b/Source/WebCore/dom/PointerEvent.cpp
 index f21879fdfbc64e7d2f11ab084d46794a9e601110..151c9b72f0f552c2ff741305c4c0a8c7f51a92e3 100644
 --- a/Source/WebCore/dom/PointerEvent.cpp
@@ -3929,7 +4010,7 @@ index 7cdc5865e58e9a9a30ea25202692d4b9aa77b2d6..7c42be0cbadf9a594926cbe89ce510b0
  
      std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42752ccb97 100644
+index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..5319f399eb3e415593ab525865aa57d74e76c024 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,19 +32,25 @@
@@ -4076,7 +4157,26 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
      case Protocol::Page::Setting::ICECandidateFilteringEnabled:
          inspectedPageSettings.setICECandidateFilteringEnabledInspectorOverride(value);
          return { };
-@@ -476,6 +526,10 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
+@@ -464,6 +514,18 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
+         inspectedPageSettings.setNeedsSiteSpecificQuirksInspectorOverride(value);
+         return { };
+ 
++    case Protocol::Page::Setting::NotificationsEnabled:
++        inspectedPageSettings.setNotificationsEnabled(value.value_or(false));
++        return { };
++
++    case Protocol::Page::Setting::FullScreenEnabled:
++        inspectedPageSettings.setFullScreenEnabled(value.value_or(false));
++        return { };
++
++    case Protocol::Page::Setting::PointerLockEnabled:
++        inspectedPageSettings.setPointerLockEnabled(value.value_or(false));
++        return { };
++
+     case Protocol::Page::Setting::ScriptEnabled:
+         inspectedPageSettings.setScriptEnabledInspectorOverride(value);
+         return { };
+@@ -476,6 +538,10 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
          inspectedPageSettings.setShowRepaintCounterInspectorOverride(value);
          return { };
  
@@ -4087,7 +4187,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
      case Protocol::Page::Setting::WebRTCEncryptionEnabled:
          inspectedPageSettings.setWebRTCEncryptionEnabledInspectorOverride(value);
          return { };
-@@ -696,9 +750,13 @@ Protocol::ErrorStringOr<std::tuple<String, bool /* base64Encoded */>> InspectorP
+@@ -696,9 +762,13 @@ Protocol::ErrorStringOr<std::tuple<String, bool /* base64Encoded */>> InspectorP
      return { { content, base64Encoded } };
  }
  
@@ -4103,7 +4203,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  
      return { };
  }
-@@ -801,15 +859,16 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setShowPaintRects(bool show)
+@@ -801,15 +871,16 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setShowPaintRects(bool show)
      return { };
  }
  
@@ -4125,7 +4225,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -817,13 +876,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -817,13 +888,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -4152,7 +4252,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  }
  
  Frame* InspectorPageAgent::frameForId(const Protocol::Network::FrameId& frameId)
-@@ -835,20 +904,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -835,20 +916,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -4179,7 +4279,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  }
  
  Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const Protocol::Network::FrameId& frameId)
-@@ -859,11 +926,6 @@ Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const
+@@ -859,11 +938,6 @@ Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const
      return frame;
  }
  
@@ -4191,7 +4291,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -884,6 +946,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -884,6 +958,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -4204,7 +4304,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
-@@ -893,13 +961,22 @@ void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
+@@ -893,13 +973,22 @@ void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  
  void InspectorPageAgent::didClearWindowObjectInWorld(Frame& frame, DOMWrapperWorld& world)
  {
@@ -4230,7 +4330,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  }
  
  void InspectorPageAgent::didPaint(RenderObject& renderer, const LayoutRect& rect)
-@@ -943,6 +1020,52 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -943,6 +1032,52 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -4283,7 +4383,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  Ref<Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1079,11 +1202,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
+@@ -1079,11 +1214,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4298,7 +4398,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  
      IntRect rectangle(x, y, width, height);
      auto snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, WTFMove(options));
-@@ -1094,6 +1219,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
+@@ -1094,6 +1231,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4346,7 +4446,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  {
-@@ -1106,7 +1272,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
+@@ -1106,7 +1284,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  }
  #endif
  
@@ -4354,7 +4454,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..3a63079e3bba97ef638224c476169e42
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::optional<int>&& width, std::optional<int>&& height)
  {
      if (width.has_value() != height.has_value())
-@@ -1121,6 +1286,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
+@@ -1121,6 +1298,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.value_or(0), height.value_or(0)));
      return { };
  }
