@@ -2383,6 +2383,12 @@ Once routing is enabled, every request matching the url pattern will stall unles
 The handler will only be called for the first url if the response is a redirect.
 :::
 
+
+:::note
+`page.route` will not affect requests intercepted by ServiceWorker. See https://github.com/microsoft/playwright/issues/1090
+We recommend disabling ServiceWorkers when using request interception.
+:::
+
 An example of a naive handler that aborts all image requests:
 
 ```js
