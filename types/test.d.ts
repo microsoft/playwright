@@ -118,28 +118,32 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends ProjectBase {
 
 export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
 
-export type WebServerConfig = {
+export type LaunchConfig = {
   /**
-   * Shell command to start the webserver. For example `npm run start`.
+   * Shell command to start. For example `npm run start`.
    */
   command: string,
   /**
-   * The port that your server is expected to appear on. If not specified, it does get automatically collected via the
-   * command output when a localhost URL gets printed.
+   * The port that your http server is expected to appear on. If specified it does wait until it accepts connections.
    */
-  port?: number,
+  waitForPort?: number,
   /**
-   * WebServer environment variables, process.env by default
+   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   */
+  waitForPortTimeout?: number,
+  /**
+   * If true it will verify that the given port via `waitForPort` is available and throw otherwise.
+   * This should commonly set to !!process.env.CI to allow the local dev server when running tests locally.
+   */
+  strict?: boolean
+  /**
+   * Environment variables, process.env by default
    */
   env?: Record<string, string>,
   /**
    * Current working directory of the spawned process. Default is process.cwd().
    */
   cwd?: string,
-  /**
-   * How long to wait for the server to start up in milliseconds. Defaults to 60000.
-   */
-  timeout?: number,
 };
 
 /**
@@ -233,7 +237,7 @@ interface ConfigBase {
   /**
    * Launch a web server before running tests.
    */
-   webServer?: WebServerConfig;
+  launch?: LaunchConfig | LaunchConfig[];
 
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
@@ -268,7 +272,7 @@ export interface FullConfig {
   shard: Shard;
   updateSnapshots: UpdateSnapshots;
   workers: number;
-  webServer: WebServerConfig | null;
+  launch: LaunchConfig[];
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
