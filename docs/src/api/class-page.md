@@ -2018,12 +2018,16 @@ Returns whether the element is hidden, the opposite of [visible](./actionability
 
 ### param: Page.isHidden.selector = %%-input-selector-%%
 
+### option: Page.isHidden.timeout = %%-input-timeout-%%
+
 ## async method: Page.isVisible
 - returns: <[boolean]>
 
 Returns whether the element is [visible](./actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
 
 ### param: Page.isVisible.selector = %%-input-selector-%%
+
+### option: Page.isVisible.timeout = %%-input-timeout-%%
 
 ## property: Page.keyboard
 - type: <[Keyboard]>
@@ -2623,7 +2627,7 @@ page.select_option("select#colors", value=["red", "green", "blue"])
 await page.SelectOptionAsync("select#colors", new[] { "blue" });
 // single selection matching both the value and the label
 await page.SelectOptionAsync("select#colors", new[] { new SelectOptionValue() { Label = "blue" } });
-// multiple
+// multiple 
 await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ```
 

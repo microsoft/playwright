@@ -1631,18 +1631,20 @@ export type FrameIsEnabledResult = {
 };
 export type FrameIsHiddenParams = {
   selector: string,
+  timeout?: number,
 };
 export type FrameIsHiddenOptions = {
-
+  timeout?: number,
 };
 export type FrameIsHiddenResult = {
   value: boolean,
 };
 export type FrameIsVisibleParams = {
   selector: string,
+  timeout?: number,
 };
 export type FrameIsVisibleOptions = {
-
+  timeout?: number,
 };
 export type FrameIsVisibleResult = {
   value: boolean,
@@ -3292,7 +3294,6 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.isDisabled',
   'Frame.isEnabled',
   'Frame.isHidden',
-  'Frame.isVisible',
   'Frame.isEditable',
   'Frame.press',
   'Frame.selectOption',

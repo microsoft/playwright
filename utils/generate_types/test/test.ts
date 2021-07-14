@@ -130,10 +130,6 @@ playwright.chromium.launch().then(async browser => {
   await page.emulateMedia({media: 'screen'});
   await page.pdf({ path: 'page.pdf' });
 
-  // Deprecated option still compiles.
-  await page.isVisible('div', { timeout: 123 });
-  await page.mainFrame().isHidden('div', { timeout: 123 });
-
   await page.route('**/*', (route, interceptedRequest) => {
     if (
       interceptedRequest.url().endsWith('.png') ||
