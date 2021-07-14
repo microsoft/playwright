@@ -62,7 +62,7 @@ class LaunchServer {
         return;
     }
 
-    console.log(`Starting WebServer with '${this.config.command}'...`);
+    console.log(`Starting launch process with '${this.config.command}'...`);
     const { launchedProcess, kill } = await launchProcess({
       command: this.config.command,
       env: {
@@ -75,7 +75,7 @@ class LaunchServer {
       shell: true,
       attemptToGracefullyClose: async () => {},
       log: () => {},
-      onExit: code => processExitedReject(new Error(`WebServer was not able to start. Exit code: ${code}`)),
+      onExit: code => processExitedReject(new Error(`Launch process was not able to start. Exit code: ${code}`)),
       tempDirectories: [],
     });
     this._killProcess = kill;
@@ -89,7 +89,7 @@ class LaunchServer {
       await this._waitForAvailability(this.config.waitForPort);
       const baseURL = `http://localhost:${this.config.waitForPort}`;
       process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
-      console.log(`Using WebServer at '${baseURL}'.`);
+      console.log(`Using baseURL by the launch process at '${baseURL}'.`);
     }
   }
 
@@ -102,7 +102,7 @@ class LaunchServer {
     ]));
     cancellationToken.canceled = true;
     if (timedOut)
-      throw new Error(`Timed out waiting ${launchTimeout}ms for WebServer"`);
+      throw new Error(`Timed out waiting ${launchTimeout}ms for launch process"`);
   }
   public async kill() {
     await this._killProcess?.();
@@ -143,20 +143,17 @@ async function waitForSocket(port: number, delay: number, cancellationToken: { c
 export class LaunchServers {
   private readonly _servers: LaunchServer[] = [];
 
-  public static async create(configs: LaunchConfig[] |  LaunchConfig | null): Promise<LaunchServers> {
-    const normalisedConfigs = this._normaliseConfigs(configs);
+  public static async create(configs: LaunchConfig[]): Promise<LaunchServers> {
     const launchServers = new LaunchServers();
-    for (const config of normalisedConfigs)
-      launchServers._servers.push(await LaunchServer.create(config));
+    try {
+      for (const config of configs)
+        launchServers._servers.push(await LaunchServer.create(config));
+    } catch (error) {
+      for (const server of launchServers._servers)
+        await server.kill();
+      throw error;
+    }
     return launchServers;
-  }
-
-  private static _normaliseConfigs(configs: LaunchConfig[] | LaunchConfig | null): LaunchConfig[] {
-    if (!configs)
-      return [];
-    if (!Array.isArray(configs))
-      return [configs];
-    return configs;
   }
 
   public async killAll() {

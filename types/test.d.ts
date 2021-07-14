@@ -237,7 +237,7 @@ interface ConfigBase {
   /**
    * Launch a web server before running tests.
    */
-  launch?: LaunchConfig;
+  launch?: LaunchConfig | LaunchConfig[];
 
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
@@ -272,7 +272,7 @@ export interface FullConfig {
   shard: Shard;
   updateSnapshots: UpdateSnapshots;
   workers: number;
-  launch: LaunchConfig | LaunchConfig[] | null;
+  launch: LaunchConfig[];
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';

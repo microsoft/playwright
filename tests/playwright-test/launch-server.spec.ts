@@ -61,7 +61,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   expect(result.passed).toBe(1);
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 
-  const expectedLogMessages = ['Starting WebServer', 'globalSetup', 'globalSetup teardown', 'globalTeardown-status-200'];
+  const expectedLogMessages = ['Starting launch process', 'globalSetup', 'globalSetup teardown', 'globalTeardown-status-200'];
   const actualLogMessages = expectedLogMessages.map(log => ({
     log,
     index: result.output.indexOf(log),
@@ -119,7 +119,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Timed out waiting 100ms for WebServer`);
+  expect(result.output).toContain(`Timed out waiting 100ms for launch process`);
 });
 
 test('should be able to specify the baseURL without the server', async ({ runInlineTest }, { workerIndex }) => {
@@ -213,4 +213,32 @@ test('should throw when a server is already running on the given port and strict
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Port ${port} is used, make sure that nothing is running on the port`);
   await new Promise(resolve => server.close(resolve));
+});
+
+test('should create multiple servers', async ({ runInlineTest }, { workerIndex }) => {
+  const port1 = workerIndex + 10500;
+  const port2 = workerIndex + 10600;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server via the baseURL', async ({baseURL, page}) => {
+        await page.goto('http://localhost:${port1}/hello');
+        await page.goto('http://localhost:${port2}/hello');
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        launch: [{
+          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port1}',
+          waitForPort: ${port1},
+        },{
+          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port2}',
+          waitForPort: ${port2},
+        }],
+      };
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 });
