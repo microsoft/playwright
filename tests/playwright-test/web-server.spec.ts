@@ -35,13 +35,38 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
         webServer: {
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
           port: ${port},
-        }
+        },
+        globalSetup: 'globalSetup.ts',
+        globalTeardown: 'globalTeardown.ts',
+      };
+    `,
+    'globalSetup.ts': `
+      module.exports = async () => {
+        console.log('globalSetup')
+        return () => console.log('globalSetup teardown');
+      };
+    `,
+    'globalTeardown.ts': `
+      module.exports = async () => {
+        const http = require("http");
+        const response = await new Promise(resolve => {
+          const request = http.request("http://localhost:${port}/hello", resolve);
+          request.end();
+        })
+        console.log('globalTeardown-status-'+response.statusCode)
       };
     `,
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
+
+  const expectedLogMessages = ['Starting WebServer', 'globalSetup', 'globalSetup teardown', 'globalTeardown-status-200'];
+  const actualLogMessages = expectedLogMessages.map(log => ({
+    log,
+    index: result.output.indexOf(log),
+  })).sort((a, b) => a.index - b.index).filter(l => l.index !== -1).map(l => l.log);
+  expect(actualLogMessages).toStrictEqual(expectedLogMessages);
 });
 
 test('should create a server with environment variables', async ({ runInlineTest }, { workerIndex }) => {

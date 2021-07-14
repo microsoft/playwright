@@ -167,10 +167,10 @@ export class Runner {
       testFiles.forEach(file => allTestFiles.add(file));
     }
 
+    const webServer: WebServer|null = config.webServer ? await WebServer.create(config.webServer) : null;
     let globalSetupResult: any;
     if (config.globalSetup)
       globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
-    const webServer: WebServer|null = config.webServer ? await WebServer.create(config.webServer) : null;
     try {
       for (const file of allTestFiles)
         await this._loader.loadTestFile(file);
@@ -263,11 +263,11 @@ export class Runner {
       await this._reporter.onEnd({ status: failed ? 'failed' : 'passed' });
       return { status: failed ? 'failed' : 'passed' };
     } finally {
-      await webServer?.kill();
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());
       if (config.globalTeardown)
         await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
+      await webServer?.kill();
     }
   }
 }
