@@ -422,3 +422,33 @@ test('should respect project threshold', async ({runInlineTest}) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should sanitize snapshot name', async ({runInlineTest}) => {
+  const result = await runInlineTest({
+    'a.spec.js-snapshots/-snapshot-.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should write missing expectations with sanitized snapshot name', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
+      });
+    `
+  }, {}, { CI: '' });
+
+  expect(result.exitCode).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/-snapshot-.txt');
+  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(data.toString()).toBe('Hello world');
+});

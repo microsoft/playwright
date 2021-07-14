@@ -47,6 +47,8 @@ Sometimes you need to update the reference screenshot, for example when the page
 npx playwright test --update-snapshots
 ```
 
+Note that `snapshotName` is *not a path* relative to the test file, so don't try to use it like `expect(value).toMatchSnapshot('../../test-snapshots/snapshot.png')`.
+
 Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can pass comparison `threshold` as an option.
 
 ```js js-flavor=js
