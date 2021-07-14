@@ -2129,6 +2129,19 @@ index d10aa42b80a2b576c9e8c5c699a5d8b0ee2d8009..94ebea19af93d8282246c6af6e8d4a1e
  #endif
  
  #if !defined(ENABLE_TOUCH_ACTION_REGIONS)
+diff --git a/Source/WTF/wtf/PlatformEnableCocoa.h b/Source/WTF/wtf/PlatformEnableCocoa.h
+index a9e10a2519e0939313bf2f58f4a9696ee21f57ad..e092b9c8180663afc80efc1ff5b7b1f98068b442 100644
+--- a/Source/WTF/wtf/PlatformEnableCocoa.h
++++ b/Source/WTF/wtf/PlatformEnableCocoa.h
+@@ -200,7 +200,7 @@
+ #define ENABLE_DATA_DETECTION 1
+ #endif
+ 
+-#if !defined(ENABLE_DEVICE_ORIENTATION) && !PLATFORM(MAC) && !PLATFORM(MACCATALYST)
++#if !defined(ENABLE_DEVICE_ORIENTATION) && !PLATFORM(MACCATALYST)
+ #define ENABLE_DEVICE_ORIENTATION 1
+ #endif
+ 
 diff --git a/Source/WTF/wtf/PlatformGTK.cmake b/Source/WTF/wtf/PlatformGTK.cmake
 index 9bd5fde5bc38355e25bc09d05a045df31efaa259..3f3be653fef9930a7ac8a348c8b9f9a281eea363 100644
 --- a/Source/WTF/wtf/PlatformGTK.cmake
