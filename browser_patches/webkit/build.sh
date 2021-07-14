@@ -5,6 +5,7 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 SCRIPT_FOLDER="$(pwd -P)"
+source "${SCRIPT_FOLDER}/../utils.sh"
 
 build_gtk() {
   if ! [[ -d ./WebKitBuild/GTK/DependenciesGTK ]]; then
@@ -43,6 +44,15 @@ else
 fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
+  CURRENT_HOST_OS_VERSION=$(getMacVersion)
+  if [[ "${CURRENT_HOST_OS_VERSION}" == "10.15" ]]; then
+    selectXcodeVersionOrDie "11.7"
+  elif [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
+    selectXcodeVersionOrDie "12.2"
+  else
+    echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
+    exit 1
+  fi
   ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
 elif [[ "$(uname)" == "Linux" ]]; then
   if [[ $# == 0 || (-z "$1") ]]; then
