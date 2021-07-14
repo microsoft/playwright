@@ -229,6 +229,12 @@ if (process.argv[3] !== "--skip-format") {
   execSync(`dotnet format -f "${outputDir}" --include-generated --fix-whitespace`);
 }
 
+try {
+  var revision = execSync('git rev-parse HEAD').toString();
+  fs.writeFileSync(path.join(apiDir, 'commitinfo'), revision);
+} catch (error) {
+}
+
 /**
  * @param {string} name
  */
