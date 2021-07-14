@@ -243,13 +243,11 @@ export class WorkerRunner extends EventEmitter {
           suffix += '-' + this._projectNamePathSegment;
         if (testInfo.snapshotSuffix)
           suffix += '-' + testInfo.snapshotSuffix;
-        if (suffix) {
-          const ext = path.extname(snapshotName);
-          if (ext)
-            snapshotName = snapshotName.substring(0, snapshotName.length - ext.length) + suffix + ext;
-          else
-            snapshotName += suffix;
-        }
+        const ext = path.extname(snapshotName);
+        if (ext)
+          snapshotName = sanitizeForFilePath(snapshotName.substring(0, snapshotName.length - ext.length)) + suffix + ext;
+        else
+          snapshotName = sanitizeForFilePath(snapshotName) + suffix;
         return path.join(spec._requireFile + '-snapshots', snapshotName);
       },
       skip: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'skip', args),
