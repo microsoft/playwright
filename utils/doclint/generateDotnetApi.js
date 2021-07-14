@@ -48,9 +48,8 @@ const apiDir = path.join(outputDir, 'API', 'Generated');
 const optionsDir = path.join(outputDir, 'API', 'Generated', 'Options');
 const enumsDir = path.join(outputDir, 'API', 'Generated', 'Enums');
 const typesDir = path.join(outputDir, 'API', 'Generated', 'Types');
-const adaptersDir = path.join(outputDir, 'Generated', 'Adapters');
 
-for (const dir of [apiDir, optionsDir, enumsDir, typesDir, adaptersDir])
+for (const dir of [apiDir, optionsDir, enumsDir, typesDir])
   fs.mkdirSync(dir, { recursive: true });
 
 const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
@@ -153,42 +152,6 @@ function renderClass(clazz) {
 }
 
 /**
- * @param {Documentation.Class} clazz 
- */
-function renderBaseClass(clazz) {
-  const name = clazz.name;
-  if (name === 'TimeoutException')
-    return;
-
-  const methodsWithOptions = [];
-  for (const member of clazz.membersArray) {
-    if (member.kind !== 'method')
-      continue;
-    if (member.argsArray.find(a => a.name === 'options'))
-      methodsWithOptions.push(member);
-  }
-
-  if (!methodsWithOptions.length)
-    return;
-
-  const body = [];
-  for (const member of methodsWithOptions) {
-    if (member.alias.startsWith('RunAnd'))
-      renderMethod(member, clazz, toMemberName(member), { mode: 'base', nodocs: true, public: true, trimRunAndPrefix: true }, body);
-    renderMethod(member, clazz, toMemberName(member), { mode: 'base', nodocs: true, public: true }, body);
-  }
-
-  writeFile(
-      'internal partial class',
-      name,
-      [],
-      body,
-      adaptersDir,
-      null,
-      'Microsoft.Playwright.Core');
-}
-
-/**
  * @param {string} name
  * @param {Documentation.Type} type
  */
@@ -250,7 +213,6 @@ function renderOptionType(name, type) {
 
 for (const element of documentation.classesArray) {
   renderClass(element);
-  renderBaseClass(element);
 }
 
 for (let [name, type] of optionTypes)
