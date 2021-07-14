@@ -19,7 +19,7 @@ if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
   cd "${FF_CHECKOUT_PATH}"
   echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
 else
-  cd "checkout"
+  cd "../firefox/checkout"
 fi
 
 rm -rf .mozconfig
@@ -83,11 +83,7 @@ echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
 
 if [[ $1 == "--full" || $2 == "--full" ]]; then
-  if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
-    ./mach artifact toolchain --from-build macosx64-node
-    rm -rf "$HOME/.mozbuild/node"
-    mv node "$HOME/.mozbuild/"
-  elif [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
+  if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
     SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   fi
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
