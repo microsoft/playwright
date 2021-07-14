@@ -35,7 +35,7 @@ import EmptyReporter from './reporters/empty';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config } from './types';
-import { WebServer } from './webServer';
+import { LaunchServers } from './launchServer';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -167,7 +167,7 @@ export class Runner {
       testFiles.forEach(file => allTestFiles.add(file));
     }
 
-    const webServer: WebServer|null = config.webServer ? await WebServer.create(config.webServer) : null;
+    const launchServers = await LaunchServers.create(config.launch);
     let globalSetupResult: any;
     if (config.globalSetup)
       globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
@@ -267,7 +267,7 @@ export class Runner {
         await globalSetupResult(this._loader.fullConfig());
       if (config.globalTeardown)
         await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
-      await webServer?.kill();
+      await launchServers.killAll();
     }
   }
 }

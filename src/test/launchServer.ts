@@ -19,7 +19,7 @@ import net from 'net';
 import os from 'os';
 import stream from 'stream';
 import { monotonicTime, raceAgainstDeadline } from './util';
-import { WebServerConfig } from '../../types/test';
+import { LaunchConfig } from '../../types/test';
 import { launchProcess } from '../utils/processLauncher';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
@@ -28,49 +28,38 @@ const DEFAULT_ENVIRONMENT_VARIABLES = {
 
 const newProcessLogPrefixer = () => new stream.Transform({
   transform(this: stream.Transform, chunk: Buffer, encoding: string, callback: stream.TransformCallback) {
-    this.push(chunk.toString().split(os.EOL).map((line: string): string => line ? `[WebServer] ${line}` : line).join(os.EOL));
+    this.push(chunk.toString().split(os.EOL).map((line: string): string => line ? `[Launch] ${line}` : line).join(os.EOL));
     callback();
   },
 });
 
-export class WebServer {
+class LaunchServer {
   private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
-  constructor(private readonly config: WebServerConfig) { }
+  constructor(private readonly config: LaunchConfig) { }
 
-  public static async create(config: WebServerConfig): Promise<WebServer> {
-    const webServer = new WebServer(config);
+  public static async create(config: LaunchConfig): Promise<LaunchServer> {
+    const launchServer = new LaunchServer(config);
     try {
-      const port = await webServer._startWebServer();
-      await webServer._waitForAvailability(port);
-      const baseURL = `http://localhost:${port}`;
-      process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
-      console.log(`Using WebServer at '${baseURL}'.`);
-      return webServer;
+      await launchServer._startProcess();
+      await launchServer._waitForProcess();
+      return launchServer;
     } catch (error) {
-      await webServer.kill();
+      await launchServer.kill();
       throw error;
     }
   }
 
-  private async _startWebServer(): Promise<number> {
+  private async _startProcess(): Promise<void> {
     let processExitedReject = (error: Error) => { };
     this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
 
-    if (this.config.port) {
-      const portIsUsed = !await canBindPort(this.config.port);
-      if (portIsUsed && this.config.useExistingWebServer)
-        return this.config.port;
+    if (this.config.waitForPort) {
+      const portIsUsed = !await canBindPort(this.config.waitForPort);
+      if (portIsUsed && this.config.strict)
+        throw new Error(`Port ${this.config.waitForPort} is used, make sure that nothing is running on the port`);
       if (portIsUsed)
-        throw new Error(`Port ${this.config.port} is used, make sure that nothing is running on the port`);
-    }
-
-    let collectPortResolve = (port: number) => { };
-    const collectPortPromise = new Promise<number>(resolve => collectPortResolve = resolve);
-    function collectPort(data: Buffer) {
-      const regExp = /http:\/\/localhost:(\d+)/.exec(data.toString());
-      if (regExp)
-        collectPortResolve(parseInt(regExp[1], 10));
+        return;
     }
 
     console.log(`Starting WebServer with '${this.config.command}'...`);
@@ -93,19 +82,19 @@ export class WebServer {
 
     launchedProcess.stderr.pipe(newProcessLogPrefixer()).pipe(process.stderr);
     launchedProcess.stdout.on('data', () => {});
+  }
 
-    if (this.config.port)
-      return this.config.port;
-    launchedProcess.stdout.on('data', collectPort);
-    const detectedPort = await Promise.race([
-      this._processExitedPromise,
-      collectPortPromise,
-    ]);
-    return detectedPort;
+  private async _waitForProcess() {
+    if (this.config.waitForPort) {
+      await this._waitForAvailability(this.config.waitForPort);
+      const baseURL = `http://localhost:${this.config.waitForPort}`;
+      process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
+      console.log(`Using WebServer at '${baseURL}'.`);
+    }
   }
 
   private async _waitForAvailability(port: number) {
-    const launchTimeout = this.config.timeout || 60 * 1000;
+    const launchTimeout = this.config.waitForPortTimeout || 60 * 1000;
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
       raceAgainstDeadline(waitForSocket(port, 100, cancellationToken), launchTimeout + monotonicTime()),
@@ -148,5 +137,30 @@ async function waitForSocket(port: number, delay: number, cancellationToken: { c
     if (connected)
       return;
     await new Promise(x => setTimeout(x, delay));
+  }
+}
+
+export class LaunchServers {
+  private readonly _servers: LaunchServer[] = [];
+
+  public static async create(configs: LaunchConfig[] |  LaunchConfig | null): Promise<LaunchServers> {
+    const normalisedConfigs = this._normaliseConfigs(configs);
+    const launchServers = new LaunchServers();
+    for (const config of normalisedConfigs)
+      launchServers._servers.push(await LaunchServer.create(config));
+    return launchServers;
+  }
+
+  private static _normaliseConfigs(configs: LaunchConfig[] | LaunchConfig | null): LaunchConfig[] {
+    if (!configs)
+      return [];
+    if (!Array.isArray(configs))
+      return [configs];
+    return configs;
+  }
+
+  public async killAll() {
+    for (const server of this._servers)
+      await server.kill();
   }
 }
