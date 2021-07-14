@@ -128,6 +128,12 @@ export type WebServerConfig = {
    * command output when a localhost URL gets printed.
    */
   port?: number,
+
+  /**
+   * If true and a server is already running on the given port, it will automatically use that server and not start a new one by launching the command.
+   * This should commonly set to !!process.env.CI to use the local dev server when running tests.
+   */
+  useExistingWebServer?: boolean
   /**
    * WebServer environment variables, process.env by default
    */

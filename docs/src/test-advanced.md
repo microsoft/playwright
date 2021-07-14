@@ -42,7 +42,7 @@ These options would be typically different between local development and CI oper
 - `reportSlowTests: { max: number, threshold: number } | null` - Whether to report slow tests. When `null`, slow tests are not reported. Otherwise, tests that took more than `threshold` milliseconds are reported as slow, but no more than `max` number of them. Passing zero as `max` reports all slow tests that exceed the threshold.
 - `shard: { total: number, current: number } | null` - [Shard](./test-parallel.md#shards) information.
 - `updateSnapshots: boolean` - Whether to update expected snapshots with the actual results produced by the test run.
-- `webServer: { command: string, port?: number, cwd?: string, timeout?: number, env?: object }` - Launch a web server before the tests will start. It will automaticially detect the port when it got printed to the stdout.
+- `webServer: { command: string, port?: number, useExistingWebServer?: boolean, cwd?: string, timeout?: number, env?: object }` - Launch a web server before the tests will start. It will automaticially detect the port when it got printed to the stdout.
 - `workers: number` - The maximum number of concurrent worker processes to use for parallelizing tests.
 
 Note that each [test project](#projects) can provide its own test suite options, for example two projects can run different tests by providing different `testDir`s. However, test run options are shared between all projects.
@@ -207,7 +207,10 @@ To launch a web server during the tests, use the `webServer` option in the [conf
 
 Playwright Test does automatically detect if a localhost URL like `http://localhost:3000` gets printed to the stdout.
 The port from the printed URL gets then used to check when its accepting requests and passed over to Playwright as a
-[`param: baseURL`] when creating the context [`method: Browser.newContext`]. You can also manually specify a `port` or additional environment variables, see [here](#configuration-object).
+[`param: baseURL`] when creating the context [`method: Browser.newContext`].
+
+You can also manually specify a `port` or additional environment variables, see [here](#configuration-object).
+The `useExistingWebServer` in combination with the `port` option will use the existing webServer instead of starting a new one if its already running on the port.
 
 ```js js-flavor=ts
 // playwright.config.ts
@@ -217,6 +220,8 @@ const config: PlaywrightTestConfig = {
   webServer: {
     command: 'npm run start',
     timeout: 120 * 1000,
+    port: 3000,
+    useExistingWebServer: !!process.env.CI,
   },
 };
 
@@ -231,6 +236,8 @@ const config = {
   webServer: {
     command: 'npm run start',
     timeout: 120 * 1000,
+    port: 3000,
+    useExistingWebServer: !!process.env.CI,
   },
 };
 

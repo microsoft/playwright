@@ -40,8 +40,6 @@ export class WebServer {
 
   public static async create(config: WebServerConfig): Promise<WebServer> {
     const webServer = new WebServer(config);
-    if (config.port)
-      await webServer._verifyFreePort(config.port);
     try {
       const port = await webServer._startWebServer();
       await webServer._waitForAvailability(port);
@@ -55,18 +53,18 @@ export class WebServer {
     }
   }
 
-  private async _verifyFreePort(port: number) {
-    const cancellationToken = { canceled: false };
-    const portIsUsed = await Promise.race([
-      new Promise(resolve => setTimeout(() => resolve(false), 100)),
-      waitForSocket(port, 100, cancellationToken),
-    ]);
-    cancellationToken.canceled = true;
-    if (portIsUsed)
-      throw new Error(`Port ${port} is used, make sure that nothing is running on the port`);
-  }
-
   private async _startWebServer(): Promise<number> {
+    let processExitedReject = (error: Error) => { };
+    this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
+
+    if (this.config.port) {
+      const portIsUsed = !await canBindPort(this.config.port);
+      if (portIsUsed && this.config.useExistingWebServer)
+        return this.config.port;
+      if (portIsUsed)
+        throw new Error(`Port ${this.config.port} is used, make sure that nothing is running on the port`);
+    }
+
     let collectPortResolve = (port: number) => { };
     const collectPortPromise = new Promise<number>(resolve => collectPortResolve = resolve);
     function collectPort(data: Buffer) {
@@ -74,9 +72,6 @@ export class WebServer {
       if (regExp)
         collectPortResolve(parseInt(regExp[1], 10));
     }
-
-    let processExitedReject = (error: Error) => { };
-    this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
 
     console.log(`Starting WebServer with '${this.config.command}'...`);
     const { launchedProcess, kill } = await launchProcess({
@@ -123,6 +118,18 @@ export class WebServer {
   public async kill() {
     await this._killProcess?.();
   }
+}
+
+async function canBindPort(port: number): Promise<boolean> {
+  return new Promise<boolean>(resolve => {
+    const server = net.createServer();
+    server.on('error', () => resolve(false));
+    server.listen(port, () => {
+      server.close(() => {
+        resolve(true);
+      });
+    });
+  });
 }
 
 async function waitForSocket(port: number, delay: number, cancellationToken: { canceled: boolean }) {
