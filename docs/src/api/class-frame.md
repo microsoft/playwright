@@ -910,12 +910,16 @@ Returns whether the element is hidden, the opposite of [visible](./actionability
 
 ### param: Frame.isHidden.selector = %%-input-selector-%%
 
+### option: Frame.isHidden.timeout = %%-input-timeout-%%
+
 ## async method: Frame.isVisible
 - returns: <[boolean]>
 
 Returns whether the element is [visible](./actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
 
 ### param: Frame.isVisible.selector = %%-input-selector-%%
+
+### option: Frame.isVisible.timeout = %%-input-timeout-%%
 
 ## method: Frame.name
 - returns: <[string]>

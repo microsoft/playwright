@@ -372,15 +372,15 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async isHidden(selector: string): Promise<boolean> {
+  async isHidden(selector: string, options: channels.FrameIsHiddenOptions = {}): Promise<boolean> {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
-      return (await channel.isHidden({ selector })).value;
+      return (await channel.isHidden({ selector, ...options })).value;
     });
   }
 
-  async isVisible(selector: string): Promise<boolean> {
+  async isVisible(selector: string, options: channels.FrameIsVisibleOptions = {}): Promise<boolean> {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
-      return (await channel.isVisible({ selector })).value;
+      return (await channel.isVisible({ selector, ...options })).value;
     });
   }
 

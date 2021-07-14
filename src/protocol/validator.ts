@@ -671,9 +671,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameIsHiddenParams = tObject({
     selector: tString,
+    timeout: tOptional(tNumber),
   });
   scheme.FrameIsVisibleParams = tObject({
     selector: tString,
+    timeout: tOptional(tNumber),
   });
   scheme.FrameIsEditableParams = tObject({
     selector: tString,

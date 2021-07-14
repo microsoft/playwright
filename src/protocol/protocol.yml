@@ -1356,6 +1356,7 @@ Frame:
     isHidden:
       parameters:
         selector: string
+        timeout: number?
       returns:
         value: boolean
       tracing:
@@ -1364,10 +1365,9 @@ Frame:
     isVisible:
       parameters:
         selector: string
+        timeout: number?
       returns:
         value: boolean
-      tracing:
-        snapshot: true
 
     isEditable:
       parameters:

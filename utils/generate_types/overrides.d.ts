@@ -59,25 +59,6 @@ export interface Page {
 
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<void>;
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
-
-  isHidden(selector: string): Promise<boolean>;
-  isHidden(selector: string, options?: {
-    /**
-     * Option `timeout` has no effect.
-     * @deprecated
-     */
-    timeout?: number
-  }): Promise<boolean>;
-
-  isVisible(selector: string): Promise<boolean>;
-  isVisible(selector: string, options?: {
-    /**
-     * Option `timeout` has no effect.
-     * @deprecated
-     */
-    timeout?: number
-  }): Promise<boolean>;
-
 }
 
 export interface Frame {
@@ -110,25 +91,6 @@ export interface Frame {
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
-
-  isHidden(selector: string): Promise<boolean>;
-  isHidden(selector: string, options?: {
-    /**
-     * Option `timeout` has no effect.
-     * @deprecated
-     */
-    timeout?: number
-  }): Promise<boolean>;
-
-  isVisible(selector: string): Promise<boolean>;
-  isVisible(selector: string, options?: {
-    /**
-     * Option `timeout` has no effect.
-     * @deprecated
-     */
-    timeout?: number
-  }): Promise<boolean>;
-
 }
 
 export interface BrowserContext {
