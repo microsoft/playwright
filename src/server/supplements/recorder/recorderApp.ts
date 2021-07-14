@@ -22,7 +22,7 @@ import { EventEmitter } from 'events';
 import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
-import { existsAsync, isUnderTest } from '../../../utils/utils';
+import { isUnderTest } from '../../../utils/utils';
 import { installAppIcon } from '../../chromium/crApp';
 
 declare global {
@@ -97,8 +97,7 @@ export class RecorderApp extends EventEmitter {
     let executablePath: string | undefined;
     if (inspectedContext._browser.options.isChromium) {
       channel = inspectedContext._browser.options.channel;
-      const defaultExecutablePath = recorderPlaywright.chromium.executablePath(channel);
-      if (!(await existsAsync(defaultExecutablePath)))
+      if (!channel)
         executablePath = inspectedContext._browser.options.customExecutablePath;
     }
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {

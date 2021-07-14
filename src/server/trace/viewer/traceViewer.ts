@@ -30,7 +30,6 @@ import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
 import { registry } from '../../../utils/registry';
-import { findChromiumChannel } from '../../chromium/findChromiumChannel';
 import { installAppIcon } from '../../chromium/crApp';
 
 export class TraceViewer {
@@ -140,21 +139,17 @@ export class TraceViewer {
     // Null means no installation and no channels found.
     let channel = null;
     if (traceViewerBrowser === 'chromium') {
-      if (registry.findExecutable('chromium').executablePathIfExists()) {
-        // This means we have a browser downloaded.
-        channel = undefined;
-      } else {
-        for (const c of ['chrome', 'msedge']) {
-          try {
-            findChromiumChannel(c);
-            channel = c;
-            break;
-          } catch (e) {
-          }
+      for (const name of ['chromium', 'chrome', 'msedge']) {
+        try {
+          registry.findExecutable(name)!.executablePathOrDie();
+          channel = name === 'chromium' ? undefined : name;
+          break;
+        } catch (e) {
         }
       }
 
       if (channel === null) {
+        // TODO: language-specific error message, or fallback to default error.
         throw new Error(`
 ==================================================================
 Please run 'npx playwright install' to install Playwright browsers

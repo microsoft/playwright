@@ -845,10 +845,9 @@ class FrameSession {
 
   async _createVideoRecorder(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
     assert(!this._screencastId);
-    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathIfExists();
-    if (!ffmpegPath)
-      throw new Error('ffmpeg executable was not found');
-    if (!canAccessFile(ffmpegPath)) {
+    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePath();
+    // TODO: use default error message once it's ready.
+    if (!ffmpegPath || !canAccessFile(ffmpegPath)) {
       let message: string = '';
       switch (this._page._browserContext._options.sdkLanguage) {
         case 'python': message = 'playwright install ffmpeg'; break;

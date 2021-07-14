@@ -18,7 +18,6 @@
 import * as os from 'os';
 import fs from 'fs';
 import path from 'path';
-import { assert } from '../../utils/utils';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType } from '../browserType';
@@ -26,23 +25,10 @@ import { Env } from '../../utils/processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { registry } from '../../utils/registry';
 
 export class Firefox extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
     super('firefox', playwrightOptions);
-  }
-
-  executablePath(channel?: string): string {
-    if (channel) {
-      let executablePath = undefined;
-      if ((channel as any) === 'firefox-beta')
-        executablePath = registry.findExecutable('firefox-beta')!.executablePathIfExists();
-      assert(executablePath, `unsupported firefox channel "${channel}"`);
-      assert(fs.existsSync(executablePath), `"${channel}" channel is not installed. Try running 'npx playwright install ${channel}'`);
-      return executablePath;
-    }
-    return super.executablePath(channel);
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {

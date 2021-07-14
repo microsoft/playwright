@@ -32,45 +32,8 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
-import * as utils from '../utils/utils';
-
-const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
-
-
-type BrowserChannel = 'chrome-beta'|'chrome'|'msedge'|'msedge-beta';
-const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta', 'chrome', 'msedge', 'msedge-beta']);
-const suggestedBrowsersToInstall = ['chromium', 'webkit', 'firefox', ...allBrowserChannels].map(name => `'${name}'`).join(', ');
 
 const packageJSON = require('../../package.json');
-
-const ChannelName = {
-  'chrome-beta': 'Google Chrome Beta',
-  'chrome': 'Google Chrome',
-  'msedge': 'Microsoft Edge',
-  'msedge-beta': 'Microsoft Edge Beta',
-};
-
-const InstallationScriptName = {
-  'chrome-beta': {
-    'linux': 'reinstall_chrome_beta_linux.sh',
-    'darwin': 'reinstall_chrome_beta_mac.sh',
-    'win32': 'reinstall_chrome_beta_win.ps1',
-  },
-  'chrome': {
-    'linux': 'reinstall_chrome_stable_linux.sh',
-    'darwin': 'reinstall_chrome_stable_mac.sh',
-    'win32': 'reinstall_chrome_stable_win.ps1',
-  },
-  'msedge': {
-    'darwin': 'reinstall_msedge_stable_mac.sh',
-    'win32': 'reinstall_msedge_stable_win.ps1',
-  },
-  'msedge-beta': {
-    'darwin': 'reinstall_msedge_beta_mac.sh',
-    'linux': 'reinstall_msedge_beta_linux.sh',
-    'win32': 'reinstall_msedge_beta_win.ps1',
-  },
-};
 
 program
     .version('Version ' + packageJSON.version)
@@ -119,29 +82,36 @@ program
       console.log('  $ debug npm run test');
     });
 
+function suggestedBrowsersToInstall() {
+  return registry.executables().filter(e => e.installType !== 'none' && e.type !== 'tool').map(e => e.name).join(', ');
+}
+
+function checkBrowsersToInstall(args: string[]) {
+  const faultyArguments: string[] = [];
+  const executables: Executable[] = [];
+  for (const arg of args) {
+    const executable = registry.findExecutable(arg);
+    if (!executable || executable.installType === 'none')
+      faultyArguments.push(arg);
+    else
+      executables.push(executable);
+  }
+  if (faultyArguments.length) {
+    console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall()}`);
+    process.exit(1);
+  }
+  return executables;
+}
+
 program
-    .command('install [browserType...]')
+    .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(args: any[]) {
+    .action(async function(args: string[]) {
       try {
-        // Install default browsers when invoked without arguments.
-        if (!args.length) {
+        if (!args.length)
           await registry.install();
-          return;
-        }
-        const binaries = args.map(arg => registry.findExecutable(arg)).filter(b => !!b) as Executable[];
-        const browserChannels: Set<BrowserChannel> = new Set(args.filter(browser => allBrowserChannels.has(browser)));
-        const faultyArguments: string[] = args.filter((browser: any) => !binaries.find(b => b.name === browser) && !browserChannels.has(browser));
-        if (faultyArguments.length) {
-          console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall}`);
-          process.exit(1);
-        }
-        if (browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge') || browserChannels.has('msedge-beta'))
-          binaries.push(registry.findExecutable('ffmpeg')!);
-        if (binaries.length)
-          await registry.install(binaries);
-        for (const browserChannel of browserChannels)
-          await installBrowserChannel(browserChannel);
+        else
+          await registry.install(checkBrowsersToInstall(args));
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
@@ -153,51 +123,31 @@ program
       console.log(`    Install default browsers.`);
       console.log(``);
       console.log(`  - $ install chrome firefox`);
-      console.log(`    Install custom browsers, supports ${suggestedBrowsersToInstall}.`);
+      console.log(`    Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
     });
 
-async function installBrowserChannel(channel: BrowserChannel) {
-  const platform = os.platform();
-  const scriptName: (string|undefined) = (InstallationScriptName[channel] as any)[platform];
-  if (!scriptName)
-    throw new Error(`Cannot install ${ChannelName[channel]} on ${platform}`);
-
-  const scriptArgs = [];
-  if ((channel === 'msedge' || channel === 'msedge-beta') && platform !== 'linux') {
-    const products = JSON.parse(await utils.fetchData('https://edgeupdates.microsoft.com/api/products'));
-    const productName = channel === 'msedge' ? 'Stable' : 'Beta';
-    const product = products.find((product: any) => product.Product === productName);
-    const searchConfig = ({
-      darwin: {platform: 'MacOS', arch: 'universal', artifact: 'pkg'},
-      win32: {platform: 'Windows', arch: os.arch() === 'x64' ? 'x64' : 'x86', artifact: 'msi'},
-    } as any)[platform];
-    const release = searchConfig ? product.Releases.find((release: any) => release.Platform === searchConfig.platform && release.Architecture === searchConfig.arch) : null;
-    const artifact = release ? release.Artifacts.find((artifact: any) => artifact.ArtifactName === searchConfig.artifact) : null;
-    if (artifact)
-      scriptArgs.push(artifact.Location /* url */);
-    else
-      throw new Error(`Cannot install ${ChannelName[channel]} on ${platform}`);
-  }
-
-  const shell = scriptName.endsWith('.ps1') ? 'powershell.exe' : 'bash';
-  const {code} = await utils.spawnAsync(shell, [path.join(SCRIPTS_DIRECTORY, scriptName), ...scriptArgs], { cwd: SCRIPTS_DIRECTORY, stdio: 'inherit' });
-  if (code !== 0)
-    throw new Error(`Failed to install ${ChannelName[channel]}`);
-}
 
 program
-    .command('install-deps [browserType...]')
+    .command('install-deps [browser...]')
     .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .action(async function(browserTypes: string[]) {
+    .action(async function(args: string[]) {
       try {
-        // TODO: verify the list and print supported browserTypes in the error message.
-        const binaries = browserTypes.map(arg => registry.findExecutable(arg)).filter(b => !!b) as Executable[];
-        // When passed no arguments, assume default browsers.
-        await registry.installDeps(browserTypes.length ? binaries : undefined);
+        if (!args.length)
+          await registry.installDeps();
+        else
+          await registry.installDeps(checkBrowsersToInstall(args));
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);
       }
+    }).on('--help', function() {
+      console.log(``);
+      console.log(`Examples:`);
+      console.log(`  - $ install-deps`);
+      console.log(`    Install dependecies fro default browsers.`);
+      console.log(``);
+      console.log(`  - $ install-deps chrome firefox`);
+      console.log(`    Install dependencies for specific browsers, supports ${suggestedBrowsersToInstall()}.`);
     });
 
 const browsers = [

@@ -27,13 +27,12 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { assert, debugMode, headersArrayToObject, removeFolders } from '../../utils/utils';
+import { debugMode, headersArrayToObject, removeFolders } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
-import { findChromiumChannel } from './findChromiumChannel';
 import http from 'http';
 import { registry } from '../../utils/registry';
 
@@ -47,20 +46,6 @@ export class Chromium extends BrowserType {
 
     if (debugMode())
       this._devtools = this._createDevTools();
-  }
-
-  executablePath(channel?: string): string {
-    if (channel) {
-      let executablePath = undefined;
-      if ((channel as any) === 'chromium-with-symbols')
-        executablePath = registry.findExecutable('chromium-with-symbols')!.executablePathIfExists();
-      else
-        executablePath = findChromiumChannel(channel);
-      assert(executablePath, `unsupported chromium channel "${channel}"`);
-      assert(fs.existsSync(executablePath), `"${channel}" channel is not installed. Try running 'npx playwright install ${channel}'`);
-      return executablePath;
-    }
-    return super.executablePath(channel);
   }
 
   async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string, headers?: types.HeadersArray }, timeout?: number) {
@@ -104,7 +89,7 @@ export class Chromium extends BrowserType {
 
   private _createDevTools() {
     // TODO: this is totally wrong when using channels.
-    const directory = registry.findExecutable('chromium').directoryIfExists();
+    const directory = registry.findExecutable('chromium').directory;
     return directory ? new CRDevTools(path.join(directory, 'devtools-preferences.json')) : undefined;
   }
 
