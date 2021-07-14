@@ -57,12 +57,12 @@ class LaunchServer {
     if (this.config.waitForPort) {
       const portIsUsed = !await canBindPort(this.config.waitForPort);
       if (portIsUsed && this.config.strict)
-        throw new Error(`Port ${this.config.waitForPort} is used, make sure that nothing is running on the port`);
+        throw new Error(`Port ${this.config.waitForPort} is used, make sure that nothing is running on the port or set strict:false in config.launch.`);
       if (portIsUsed)
         return;
     }
 
-    console.log(`Starting launch process with '${this.config.command}'...`);
+    console.log(`Launching '${this.config.command}'...`);
     const { launchedProcess, kill } = await launchProcess({
       command: this.config.command,
       env: {
@@ -75,7 +75,7 @@ class LaunchServer {
       shell: true,
       attemptToGracefullyClose: async () => {},
       log: () => {},
-      onExit: code => processExitedReject(new Error(`Launch process was not able to start. Exit code: ${code}`)),
+      onExit: code => processExitedReject(new Error(`Process from config.launch was not able to start. Exit code: ${code}`)),
       tempDirectories: [],
     });
     this._killProcess = kill;
@@ -89,7 +89,7 @@ class LaunchServer {
       await this._waitForAvailability(this.config.waitForPort);
       const baseURL = `http://localhost:${this.config.waitForPort}`;
       process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
-      console.log(`Using baseURL by the launch process at '${baseURL}'.`);
+      console.log(`Using baseURL '${baseURL}' from config.launch.`);
     }
   }
 
@@ -102,7 +102,7 @@ class LaunchServer {
     ]));
     cancellationToken.canceled = true;
     if (timedOut)
-      throw new Error(`Timed out waiting ${launchTimeout}ms for launch process"`);
+      throw new Error(`Timed out waiting ${launchTimeout}ms from config.launch.`);
   }
   public async kill() {
     await this._killProcess?.();

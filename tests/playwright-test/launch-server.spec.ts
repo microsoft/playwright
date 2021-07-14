@@ -61,7 +61,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   expect(result.passed).toBe(1);
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 
-  const expectedLogMessages = ['Starting launch process', 'globalSetup', 'globalSetup teardown', 'globalTeardown-status-200'];
+  const expectedLogMessages = ['Launching ', 'globalSetup', 'globalSetup teardown', 'globalTeardown-status-200'];
   const actualLogMessages = expectedLogMessages.map(log => ({
     log,
     index: result.output.indexOf(log),
@@ -119,7 +119,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Timed out waiting 100ms for launch process`);
+  expect(result.output).toContain(`Timed out waiting 100ms from config.launch.`);
 });
 
 test('should be able to specify the baseURL without the server', async ({ runInlineTest }, { workerIndex }) => {
