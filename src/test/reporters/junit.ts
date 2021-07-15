@@ -121,7 +121,7 @@ class JUnitReporter extends EmptyReporter {
     const entry = {
       name: 'testcase',
       attributes: {
-        name: test.spec.fullTitle(),
+        name: test.fullTitle(),
         classname: formatTestTitle(this.config, test),
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
       },
@@ -138,7 +138,7 @@ class JUnitReporter extends EmptyReporter {
       entry.children.push({
         name: 'failure',
         attributes: {
-          message: `${path.basename(test.spec.file)}:${test.spec.line}:${test.spec.column} ${test.spec.title}`,
+          message: `${path.basename(test.file)}:${test.line}:${test.column} ${test.title}`,
           type: 'FAILURE',
         },
         text: stripAscii(formatFailure(this.config, test))

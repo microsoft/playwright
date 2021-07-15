@@ -50,10 +50,8 @@ export class Dispatcher {
 
     this._suite = suite;
     for (const suite of this._suite.suites) {
-      for (const spec of suite._allSpecs()) {
-        for (const test of spec.tests)
-          this._testById.set(test._id, { test, result: test._appendTestResult() });
-      }
+      for (const test of suite._allTests())
+        this._testById.set(test._id, { test, result: test._appendTestResult() });
     }
 
     this._queue = this._filesSortedByWorkerHash();
@@ -83,31 +81,29 @@ export class Dispatcher {
     const entriesByWorkerHashAndFile = new Map<string, Map<string, DispatcherEntry>>();
     for (const fileSuite of this._suite.suites) {
       const file = fileSuite._requireFile;
-      for (const spec of fileSuite._allSpecs()) {
-        for (const test of spec.tests) {
-          let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
-          if (!entriesByFile) {
-            entriesByFile = new Map();
-            entriesByWorkerHashAndFile.set(test._workerHash, entriesByFile);
-          }
-          let entry = entriesByFile.get(file);
-          if (!entry) {
-            entry = {
-              runPayload: {
-                entries: [],
-                file,
-              },
-              repeatEachIndex: test._repeatEachIndex,
-              projectIndex: test._projectIndex,
-              hash: test._workerHash,
-            };
-            entriesByFile.set(file, entry);
-          }
-          entry.runPayload.entries.push({
-            retry: this._testById.get(test._id)!.result.retry,
-            testId: test._id,
-          });
+      for (const test of fileSuite._allTests()) {
+        let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
+        if (!entriesByFile) {
+          entriesByFile = new Map();
+          entriesByWorkerHashAndFile.set(test._workerHash, entriesByFile);
         }
+        let entry = entriesByFile.get(file);
+        if (!entry) {
+          entry = {
+            runPayload: {
+              entries: [],
+              file,
+            },
+            repeatEachIndex: fileSuite._repeatEachIndex,
+            projectIndex: fileSuite._projectIndex,
+            hash: test._workerHash,
+          };
+          entriesByFile.set(file, entry);
+        }
+        entry.runPayload.entries.push({
+          retry: this._testById.get(test._id)!.result.retry,
+          testId: test._id,
+        });
       }
     }
 

@@ -205,17 +205,23 @@ test('should render projects', async ({ runInlineTest }) => {
   const xml = parseXML(result.output);
   expect(xml['testsuites']['$']['tests']).toBe('2');
   expect(xml['testsuites']['$']['failures']).toBe('0');
-  expect(xml['testsuites']['testsuite'].length).toBe(1);
+  expect(xml['testsuites']['testsuite'].length).toBe(2);
+
   expect(xml['testsuites']['testsuite'][0]['$']['name']).toBe('a.test.js');
-  expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('2');
+  expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('1');
   expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
   expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('0');
-  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['name']).toBe('one');
+  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['name']).toBe('[project1] one');
   expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toContain('[project1] one');
   expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toContain('a.test.js:6:7');
-  expect(xml['testsuites']['testsuite'][0]['testcase'][1]['$']['name']).toBe('one');
-  expect(xml['testsuites']['testsuite'][0]['testcase'][1]['$']['classname']).toContain('[project2] one');
-  expect(xml['testsuites']['testsuite'][0]['testcase'][1]['$']['classname']).toContain('a.test.js:6:7');
+
+  expect(xml['testsuites']['testsuite'][1]['$']['name']).toBe('a.test.js');
+  expect(xml['testsuites']['testsuite'][1]['$']['tests']).toBe('1');
+  expect(xml['testsuites']['testsuite'][1]['$']['failures']).toBe('0');
+  expect(xml['testsuites']['testsuite'][1]['$']['skipped']).toBe('0');
+  expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['name']).toBe('[project2] one');
+  expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['classname']).toContain('[project2] one');
+  expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['classname']).toContain('a.test.js:6:7');
   expect(result.exitCode).toBe(0);
 });
 

@@ -23,23 +23,16 @@ export interface Suite {
   line: number;
   column: number;
   suites: Suite[];
-  specs: Spec[];
+  tests: Test[];
   findTest(fn: (test: Test) => boolean | void): boolean;
-  findSpec(fn: (spec: Spec) => boolean | void): boolean;
   totalTestCount(): number;
 }
-export interface Spec {
+export interface Test {
   suite: Suite;
   title: string;
   file: string;
   line: number;
   column: number;
-  tests: Test[];
-  fullTitle(): string;
-  ok(): boolean;
-}
-export interface Test {
-  spec: Spec;
   results: TestResult[];
   skipped: boolean;
   expectedStatus: TestStatus;
@@ -61,9 +54,9 @@ export interface TestResult {
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
 }
-export type FullResult = {
+export interface FullResult {
   status: 'passed' | 'failed' | 'timedout' | 'interrupted';
-};
+}
 export interface Reporter {
   onBegin(config: FullConfig, suite: Suite): void;
   onTestBegin(test: Test): void;

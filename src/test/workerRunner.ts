@@ -23,10 +23,10 @@ import { monotonicTime, DeadlineRunner, raceAgainstDeadline, serializeError } fr
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
-import { Modifier, Spec, Suite, Test } from './test';
+import { Modifier, Suite, Test } from './test';
 import { Annotations, TestError, TestInfo, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
-import { FixtureRunner } from './fixtures';
+import { FixturePool, FixtureRunner } from './fixtures';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -116,20 +116,22 @@ export class WorkerRunner extends EventEmitter {
     this._entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
 
     await this._loadIfNeeded();
+
     const fileSuite = await this._loader.loadTestFile(runPayload.file);
-    let anySpec: Spec | undefined;
-    fileSuite.findSpec(spec => {
-      const test = this._project.generateTests(spec, this._params.repeatEachIndex)[0];
-      if (this._entries.has(test._id))
-        anySpec = spec;
+    let anyPool: FixturePool | undefined;
+    const suite = this._project.cloneSuite(fileSuite, this._params.repeatEachIndex, test => {
+      if (!this._entries.has(test._id))
+        return false;
+      anyPool = test._pool;
+      return true;
     });
-    if (!anySpec) {
+
+    if (!suite || !anyPool) {
       this._reportDone();
       return;
     }
-
-    this._fixtureRunner.setPool(this._project.buildPool(anySpec));
-    await this._runSuite(fileSuite, []);
+    this._fixtureRunner.setPool(anyPool);
+    await this._runSuite(suite, []);
     if (this._isStopped)
       return;
 
@@ -156,7 +158,7 @@ export class WorkerRunner extends EventEmitter {
         annotations.push({ type: beforeAllModifier.type, description: beforeAllModifier.description });
     }
 
-    const skipHooks = !this._hasTestsToRun(suite) || annotations.some(a => a.type === 'fixme' || a.type === 'skip');
+    const skipHooks = annotations.some(a => a.type === 'fixme' || a.type === 'skip');
     for (const hook of suite._hooks) {
       if (hook.type !== 'beforeAll' || skipHooks)
         continue;
@@ -173,7 +175,7 @@ export class WorkerRunner extends EventEmitter {
       if (entry instanceof Suite)
         await this._runSuite(entry, annotations);
       else
-        await this._runSpec(entry, annotations);
+        await this._runTest(entry, annotations);
     }
     for (const hook of suite._hooks) {
       if (hook.type !== 'afterAll' || skipHooks)
@@ -189,10 +191,9 @@ export class WorkerRunner extends EventEmitter {
     }
   }
 
-  private async _runSpec(spec: Spec, annotations: Annotations) {
+  private async _runTest(test: Test, annotations: Annotations) {
     if (this._isStopped)
       return;
-    const test = spec.tests[0];
     const entry = this._entries.get(test._id);
     if (!entry)
       return;
@@ -202,9 +203,9 @@ export class WorkerRunner extends EventEmitter {
     const testId = test._id;
 
     const baseOutputDir = (() => {
-      const relativeTestFilePath = path.relative(this._project.config.testDir, spec._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
+      const relativeTestFilePath = path.relative(this._project.config.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
-      let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(spec.title);
+      let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(test.title);
       if (this._uniqueProjectNamePathSegment)
         testOutputDir += '-' + this._uniqueProjectNamePathSegment;
       if (entry.retry)
@@ -216,11 +217,11 @@ export class WorkerRunner extends EventEmitter {
 
     const testInfo: TestInfo = {
       ...this._workerInfo,
-      title: spec.title,
-      file: spec.file,
-      line: spec.line,
-      column: spec.column,
-      fn: spec.fn,
+      title: test.title,
+      file: test.file,
+      line: test.line,
+      column: test.column,
+      fn: test.fn,
       repeatEachIndex: this._params.repeatEachIndex,
       retry: entry.retry,
       expectedStatus: 'passed',
@@ -248,7 +249,7 @@ export class WorkerRunner extends EventEmitter {
           snapshotName = sanitizeForFilePath(snapshotName.substring(0, snapshotName.length - ext.length)) + suffix + ext;
         else
           snapshotName = sanitizeForFilePath(snapshotName) + suffix;
-        return path.join(spec._requireFile + '-snapshots', snapshotName);
+        return path.join(test._requireFile + '-snapshots', snapshotName);
       },
       skip: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'skip', args),
       fixme: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'fixme', args),
@@ -262,7 +263,7 @@ export class WorkerRunner extends EventEmitter {
     };
 
     // Inherit test.setTimeout() from parent suites.
-    for (let suite = spec.parent; suite; suite = suite.parent) {
+    for (let suite = test.parent; suite; suite = suite.parent) {
       if (suite._timeout !== undefined) {
         testInfo.setTimeout(suite._timeout);
         break;
@@ -301,7 +302,7 @@ export class WorkerRunner extends EventEmitter {
     }
 
     // Update the fixture pool - it may differ between tests, but only in test-scoped fixtures.
-    this._fixtureRunner.setPool(this._project.buildPool(spec));
+    this._fixtureRunner.setPool(test._pool!);
 
     deadlineRunner = new DeadlineRunner(this._runTestWithBeforeHooks(test, testInfo), deadline());
     const result = await deadlineRunner.result;
@@ -352,7 +353,7 @@ export class WorkerRunner extends EventEmitter {
   private async _runTestWithBeforeHooks(test: Test, testInfo: TestInfo) {
     try {
       const beforeEachModifiers: Modifier[] = [];
-      for (let s = test.spec.parent; s; s = s.parent) {
+      for (let s = test.parent; s; s = s.parent) {
         const modifiers = s._modifiers.filter(modifier => !this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location));
         beforeEachModifiers.push(...modifiers.reverse());
       }
@@ -363,7 +364,7 @@ export class WorkerRunner extends EventEmitter {
         const result = await this._fixtureRunner.resolveParametersAndRunHookOrTest(modifier.fn, 'test', testInfo);
         testInfo[modifier.type](!!result, modifier.description!);
       }
-      await this._runHooks(test.spec.parent!, 'beforeEach', testInfo);
+      await this._runHooks(test.parent!, 'beforeEach', testInfo);
     } catch (error) {
       if (error instanceof SkipError) {
         if (testInfo.status === 'passed')
@@ -380,7 +381,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     try {
-      await this._fixtureRunner.resolveParametersAndRunHookOrTest(test.spec.fn, 'test', testInfo);
+      await this._fixtureRunner.resolveParametersAndRunHookOrTest(test.fn, 'test', testInfo);
     } catch (error) {
       if (error instanceof SkipError) {
         if (testInfo.status === 'passed')
@@ -399,7 +400,7 @@ export class WorkerRunner extends EventEmitter {
 
   private async _runAfterHooks(test: Test, testInfo: TestInfo) {
     try {
-      await this._runHooks(test.spec.parent!, 'afterEach', testInfo);
+      await this._runHooks(test.parent!, 'afterEach', testInfo);
     } catch (error) {
       if (!(error instanceof SkipError)) {
         if (testInfo.status === 'passed')
@@ -457,13 +458,6 @@ export class WorkerRunner extends EventEmitter {
       return;
     this._reportDone();
     this.stop();
-  }
-
-  private _hasTestsToRun(suite: Suite): boolean {
-    return suite.findSpec(spec => {
-      const entry = this._entries.get(spec.tests[0]._id);
-      return !!entry;
-    });
   }
 }
 

@@ -64,12 +64,14 @@ const files = {
 test('should grep test name', async ({ runInlineTest }) => {
   const result = await runInlineTest(files, { 'grep': 'test [A-B]' });
   expect(result.passed).toBe(6);
+  expect(result.skipped).toBe(0);
   expect(result.exitCode).toBe(0);
 });
 
 test('should grep test name with regular expression', async ({ runInlineTest }) => {
   const result = await runInlineTest(files, { 'grep': '/B$/' });
   expect(result.passed).toBe(3);
+  expect(result.skipped).toBe(0);
   expect(result.exitCode).toBe(0);
 });
 
@@ -100,5 +102,6 @@ test('should grep by project name', async ({ runInlineTest }) => {
 test('should grep invert test name', async ({ runInlineTest }) => {
   const result = await runInlineTest(files, { 'grep-invert': 'BB' });
   expect(result.passed).toBe(6);
+  expect(result.skipped).toBe(0);
   expect(result.exitCode).toBe(0);
 });

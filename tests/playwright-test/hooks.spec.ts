@@ -190,3 +190,27 @@ test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('beforeAll hook can only be called in a test file');
 });
+
+test('beforeAll hooks are skipped when no tests in the suite are run', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.describe('suite1', () => {
+        test.beforeAll(() => {
+          console.log('\\n%%beforeAll1');
+        });
+        test('skipped', () => {});
+      });
+      test.describe('suite2', () => {
+        test.beforeAll(() => {
+          console.log('\\n%%beforeAll2');
+        });
+        test.only('passed', () => {});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('%%beforeAll2');
+  expect(result.output).not.toContain('%%beforeAll1');
+});
