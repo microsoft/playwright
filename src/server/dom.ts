@@ -938,15 +938,19 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
     let lastElement: Element | undefined;
 
     return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, root || document);
+      const elements = injected.querySelectorAll(parsed, root || document);
+      const element = elements[0];
       const visible = element ? injected.isVisible(element) : false;
 
       if (lastElement !== element) {
         lastElement = element;
-        if (!element)
+        if (!element) {
           progress.log(`  selector did not resolve to any element`);
-        else
+        } else {
+          if (elements.length > 1)
+            progress.log(`  selector resolved to ${elements.length} elements. Proceeding with the first one.`);
           progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
+        }
       }
 
       switch (state) {
