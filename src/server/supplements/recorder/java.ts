@@ -128,6 +128,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
     formatter.add(`
+    ///usr/bin/env jbang "$0" "$@" ; exit $?
+    //DEPS com.microsoft.playwright:playwright:RELEASE
     import com.microsoft.playwright.*;
     import com.microsoft.playwright.options.*;
     import java.util.*;
