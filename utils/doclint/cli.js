@@ -69,13 +69,29 @@ async function run() {
   {
     const devicesDescriptorsSourceFile = path.join(PROJECT_DIR, 'src', 'server', 'deviceDescriptorsSource.json')
     const devicesDescriptors = require(devicesDescriptorsSourceFile)
-    for (const deviceName of Object.keys(devicesDescriptors))
-      if (devicesDescriptors[deviceName].defaultBrowserType === 'chromium') {
+    for (const deviceName of Object.keys(devicesDescriptors)) 
+    switch (devicesDescriptors[deviceName].defaultBrowserType) {
+      case 'chromium':
         devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
           /(.*Chrome\/)(.*?)( .*)/,
           `$1${versions.chromium}$3`
         )
-      }
+        break;
+      case 'firefox':
+        devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
+          /(.*Firefox\/)(.*?)( .*)/,
+          `$1${versions.firefox}$3`
+        ).replace(/(.*rv:)(.*)\)(.*?)/, `$1${versions.firefox}$3`)
+        break;
+      case 'webkit':
+        devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
+          /(.*Version\/)(.*?)( .*)/,
+          `$1${versions.webkit}$3`
+        )
+        break;
+      default:
+        break;
+    }
     writeAssumeNoop(devicesDescriptorsSourceFile, JSON.stringify(devicesDescriptors, null, 2), dirtyFiles);
   }
 
