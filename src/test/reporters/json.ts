@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import EmptyReporter from './empty';
-import { FullConfig, Test, Suite, Spec, TestResult, TestError, FullResult, TestStatus } from '../reporter';
+import { FullConfig, Test, Suite, Spec, TestResult, TestError, FullResult, TestStatus, TestStep } from '../reporter';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -69,6 +69,11 @@ export interface JSONReportTestResult {
   stderr: JSONReportSTDIOEntry[],
   retry: number;
   data: { [key: string]: any },
+  steps: JSONReportTestStep[];
+}
+export interface JSONReportTestStep {
+  title: string;
+  steps: JSONReportTestStep[];
 }
 export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
 
@@ -170,6 +175,14 @@ class JSONReporter extends EmptyReporter {
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
       data: result.data,
+      steps: result.steps.map(s => this._serializeTestStep(s)),
+    };
+  }
+
+  private _serializeTestStep(step: TestStep): JSONReportTestStep {
+    return {
+      title: step.title,
+      steps: step.steps.map(s => this._serializeTestStep(s)),
     };
   }
 }

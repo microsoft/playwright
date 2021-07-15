@@ -228,8 +228,25 @@ export class Test implements reporterTypes.Test {
       stdout: [],
       stderr: [],
       data: {},
+      steps: [],
     };
     this.results.push(result);
     return result;
+  }
+}
+
+export class TestStep implements reporterTypes.TestStep {
+  title: string = '';
+  steps: TestStep[] = [];
+
+  _parent?: TestStep;
+  _id: string = '';
+  _ended = false;
+
+  titlePath(): string[] {
+    const titles = this._parent ? this._parent.titlePath() : [];
+    if (this.title)
+      titles.push(this.title);
+    return titles;
   }
 }

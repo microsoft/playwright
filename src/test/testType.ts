@@ -49,6 +49,7 @@ export class TestTypeImpl {
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = this._setTimeout.bind(this);
     test.use = wrapFunctionWithLocation(this._use.bind(this));
+    test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test.declare = wrapFunctionWithLocation(this._declare.bind(this));
     this.test = test;
@@ -140,6 +141,13 @@ export class TestTypeImpl {
     if (!suite)
       throw new Error(`test.use() can only be called in a test file`);
     suite._fixtureOverrides = { ...suite._fixtureOverrides, ...fixtures };
+  }
+
+  private _step(location: Location, title: string, callback: () => any) {
+    const testInfo = currentTestInfo();
+    if (!testInfo)
+      throw new Error(`test.step() can only be called inside test`);
+    return testInfo.step(title, callback);
   }
 
   private _extend(location: Location, fixtures: Fixtures) {

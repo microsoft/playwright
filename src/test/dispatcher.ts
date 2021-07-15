@@ -17,9 +17,9 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams } from './ipc';
+import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, TestStepBeginPayload, TestStepEndPayload } from './ipc';
 import type { TestResult, Reporter, TestStatus } from './reporter';
-import { Suite, Test } from './test';
+import { Suite, Test, TestStep } from './test';
 import { Loader } from './loader';
 
 type DispatcherEntry = {
@@ -194,8 +194,8 @@ export class Dispatcher {
         for (const { testId } of remaining) {
           const { test, result } = this._testById.get(testId)!;
           // There might be a single test that has started but has not finished yet.
-          if (testId !== lastStartedTestId)
-            this._reportTestBegin(test);
+          if (testId !== lastStartedTestId && this._shouldReportTestEvent())
+            this._reporter.onTestBegin(test);
           result.error = params.fatalError;
           this._reportTestEnd(test, result, 'failed');
           failedTestIds.add(testId);
@@ -267,15 +267,44 @@ export class Dispatcher {
   _createWorker(entry: DispatcherEntry) {
     const worker = new Worker(this);
     worker.on('testBegin', (params: TestBeginPayload) => {
-      const { test, result: testRun  } = this._testById.get(params.testId)!;
-      testRun.workerIndex = params.workerIndex;
-      this._reportTestBegin(test);
+      const { test, result } = this._testById.get(params.testId)!;
+      result.workerIndex = params.workerIndex;
+      if (this._shouldReportTestEvent())
+        this._reporter.onTestBegin(test);
+    });
+    worker.on('testStepBegin', (params: TestStepBeginPayload) => {
+      const { test, result } = this._testById.get(params.testId)!;
+      const step = new TestStep();
+      step.title = params.title;
+      step._id = params.stepId;
+      if (!params.parentId) {
+        result.steps.push(step);
+      } else {
+        const parent = findStepById(result.steps as TestStep[], params.parentId);
+        if (parent) {
+          parent.steps.push(step);
+          step._parent = parent;
+        }
+      }
+      if (this._shouldReportTestEvent())
+        this._reporter.onTestStep(test, findCurrentStep(result.steps as TestStep[]));
+    });
+    worker.on('testStepEnd', (params: TestStepEndPayload) => {
+      const { test, result } = this._testById.get(params.testId)!;
+      const step = findStepById(result.steps as TestStep[], params.stepId);
+      if (step) {
+        step._ended = true;
+        if (this._shouldReportTestEvent())
+          this._reporter.onTestStep(test, findCurrentStep(result.steps as TestStep[]));
+      }
     });
     worker.on('testEnd', (params: TestEndPayload) => {
       const { test, result } = this._testById.get(params.testId)!;
       result.duration = params.duration;
       result.error = params.error;
       result.data = params.data;
+      if (params.errorStepId)
+        result.errorStep = findStepById(result.steps as TestStep[], params.errorStepId);
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
       test.timeout = params.timeout;
@@ -321,12 +350,9 @@ export class Dispatcher {
     }
   }
 
-  private _reportTestBegin(test: Test) {
-    if (this._isStopped)
-      return;
+  private _shouldReportTestEvent() {
     const maxFailures = this._loader.fullConfig().maxFailures;
-    if (!maxFailures || this._failureCount < maxFailures)
-      this._reporter.onTestBegin(test);
+    return !this._isStopped && (!maxFailures || this._failureCount < maxFailures);
   }
 
   private _reportTestEnd(test: Test, result: TestResult, status: TestStatus) {
@@ -407,4 +433,24 @@ function chunkFromParams(params: TestOutputPayload): string | Buffer {
   if (typeof params.text === 'string')
     return params.text;
   return Buffer.from(params.buffer!, 'base64');
+}
+
+function findStepById(steps: TestStep[], id: string): TestStep | undefined {
+  for (const step of steps) {
+    if (step._id === id)
+      return step;
+    const found = findStepById(step.steps, id);
+    if (found)
+      return found;
+  }
+}
+
+function findCurrentStep(steps: TestStep[]): TestStep | undefined {
+  for (const step of steps) {
+    const found = findCurrentStep(step.steps);
+    if (found)
+      return found;
+    if (!step._ended)
+      return step;
+  }
 }

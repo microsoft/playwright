@@ -19,7 +19,7 @@ import colors from 'colors/safe';
 // @ts-ignore
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
-import { FullConfig, FullResult, Suite, Test, TestResult } from '../reporter';
+import { FullConfig, FullResult, Suite, Test, TestResult, TestStep } from '../reporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -45,7 +45,7 @@ class ListReporter extends BaseReporter {
         process.stdout.write('\n');
         this._lastRow++;
       }
-      process.stdout.write('     ' + colors.gray(formatTestTitle(this.config, test) + ': ') + '\n');
+      process.stdout.write('     ' + colors.gray(formatTestTitle(this.config, test)) + '\n');
     }
     this._testRows.set(test, this._lastRow++);
   }
@@ -56,6 +56,13 @@ class ListReporter extends BaseReporter {
 
   onStdErr(chunk: string | Buffer, test?: Test) {
     this._dumpToStdio(test, chunk, process.stdout);
+  }
+
+  onTestStep(test: Test, step?: TestStep) {
+    super.onTestStep(test, step);
+    if (!process.stdout.isTTY)
+      return;
+    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(this.config, test, step)));
   }
 
   private _dumpToStdio(test: Test | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
@@ -74,7 +81,7 @@ class ListReporter extends BaseReporter {
     super.onTestEnd(test, result);
 
     const duration = colors.dim(` (${milliseconds(result.duration)})`);
-    const title = formatTestTitle(this.config, test);
+    const title = formatTestTitle(this.config, test, result.errorStep);
     let text = '';
     if (result.status === 'skipped') {
       text = colors.green('  - ') + colors.cyan(title);
@@ -86,25 +93,29 @@ class ListReporter extends BaseReporter {
         text = '\u001b[2K\u001b[0G' + colors.red(`${statusMark}${++this._failure}) ` + title) + duration;
     }
 
-    const testRow = this._testRows.get(test)!;
-    // Go up if needed
-    if (process.stdout.isTTY && testRow !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
-    // Erase line
-    if (process.stdout.isTTY)
-      process.stdout.write('\u001B[2K');
-    if (!process.stdout.isTTY && this._needNewLine) {
-      this._needNewLine = false;
+    if (process.stdout.isTTY) {
+      this._updateTestLine(test, text);
+    } else {
+      if (this._needNewLine) {
+        this._needNewLine = false;
+        process.stdout.write('\n');
+      }
+      process.stdout.write(text);
       process.stdout.write('\n');
     }
-    process.stdout.write(text);
+  }
+
+  private _updateTestLine(test: Test, line: string) {
+    const testRow = this._testRows.get(test)!;
+    // Go up if needed
+    if (testRow !== this._lastRow)
+      process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
+    // Erase line
+    process.stdout.write('\u001B[2K');
+    process.stdout.write(line);
     // Go down if needed.
-    if (testRow !== this._lastRow) {
-      if (process.stdout.isTTY)
-        process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
-      else
-        process.stdout.write('\n');
-    }
+    if (testRow !== this._lastRow)
+      process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
   }
 
   async onEnd(result: FullResult) {
