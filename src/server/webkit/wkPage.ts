@@ -209,6 +209,7 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.setTimeZone', { timeZone: contextOptions.timezoneId }).
           catch(e => { throw new Error(`Invalid timezone ID: ${contextOptions.timezoneId}`); }));
     }
+    promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled' as any, value: contextOptions.isMobile }));
     await Promise.all(promises);
   }
 
