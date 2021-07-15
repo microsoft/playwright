@@ -11425,6 +11425,13 @@ type Devices = {
   "Pixel 5 landscape": DeviceDescriptor;
   "Moto G4": DeviceDescriptor;
   "Moto G4 landscape": DeviceDescriptor;
+  "Desktop Chrome HiDPI": DeviceDescriptor;
+  "Desktop Edge HiDPI": DeviceDescriptor;
+  "Desktop Firefox HiDPI": DeviceDescriptor;
+  "Desktop Safari": DeviceDescriptor;
+  "Desktop Chrome": DeviceDescriptor;
+  "Dekstop Edge": DeviceDescriptor;
+  "Desktop Firefox": DeviceDescriptor;
   [key: string]: DeviceDescriptor;
 }
 
