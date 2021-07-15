@@ -473,6 +473,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.PageKeyboardDownParams = tObject({
     key: tString,
+    overrides: tOptional(tObject({
+      key: tOptional(tString),
+      text: tOptional(tString),
+    })),
   });
   scheme.PageKeyboardUpParams = tObject({
     key: tString,

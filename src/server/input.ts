@@ -50,14 +50,17 @@ export class Keyboard {
     this._page = page;
   }
 
-  async down(key: string) {
+  async down(key: string, options: { key?: string, text?: string} = {}) {
     const description = this._keyDescriptionForString(key);
     const autoRepeat = this._pressedKeys.has(description.code);
     this._pressedKeys.add(description.code);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.add(description.key as types.KeyboardModifier);
-    const text = description.text;
-    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
+    if (options.key !== undefined)
+      description.key = options.key;
+    if (options.text !== undefined)
+      description.text = options.text;
+    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, description.text);
     await this._page._doSlowMo();
   }
 
@@ -70,7 +73,7 @@ export class Keyboard {
     // if any modifiers besides shift are pressed, no text should be sent
     if (this._pressedModifiers.size > 1 || (!this._pressedModifiers.has('Shift') && this._pressedModifiers.size === 1))
       return { ...description, text: '' };
-    return description;
+    return { ...description};
   }
 
   async up(key: string) {

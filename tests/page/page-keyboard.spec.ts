@@ -440,6 +440,29 @@ it('should move to the start of the document', async ({page, isMac}) => {
   expect(await page.evaluate(() => window.getSelection().toString())).toBe('1\n2\n3\n');
 });
 
+it('should allow overriding the key and text', async ({page, isMac}) => {
+  const eventLogHandle = await page.evaluateHandle(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+    const eventLog = [];
+    textarea.addEventListener('keydown', event => {
+      eventLog.push({key: event.key, code: event.code});
+    });
+    return eventLog;
+  });
+  await page.keyboard.down('a', {text: 'b'});
+  await page.keyboard.down('s', {text: '', key: 'と'});
+  expect(await page.inputValue('textarea')).toBe('b');
+  expect(await eventLogHandle.jsonValue()).toEqual([{
+    code: 'KeyA',
+    key: 'a',
+  }, {
+    code: 'KeyS',
+    key: 'と',
+  }]);
+});
+
 async function captureLastKeydown(page) {
   const lastEvent = await page.evaluateHandle(() => {
     const lastEvent = {
