@@ -19,7 +19,7 @@ import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
 
 test('should collect trace', async ({ context, page, server }, testInfo) => {
-  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
+  await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
@@ -182,7 +182,7 @@ for (const params of [
 }
 
 test('should include interrupted actions', async ({ context, page, server }, testInfo) => {
-  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
+  await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   page.click('"ClickNoButton"').catch(() =>  {});
