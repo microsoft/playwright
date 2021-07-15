@@ -267,6 +267,9 @@ test('my test', async ({ page }) => {
   // Expect an attribute "to be strictly equal" to the value.
   expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
 
+  // Expect an element "to be visible".
+  expect(await page.isVisible('text=Learn more')).toBeTruthy();
+
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
   expect(await page.waitForSelector('text=System requirements')).toBeTruthy();
