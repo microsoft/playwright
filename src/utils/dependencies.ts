@@ -291,6 +291,7 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libenchant.so.1': 'libenchant1c2a',
   'libepoxy.so.0': 'libepoxy0',
   'libevent-2.1.so.6': 'libevent-2.1-6',
+  'libevdev.so.2': 'libevdev2',
   'libfontconfig.so.1': 'libfontconfig1',
   'libfreetype.so.6': 'libfreetype6',
   'libgbm.so.1': 'libgbm1',
