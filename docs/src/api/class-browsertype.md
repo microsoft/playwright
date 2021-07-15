@@ -113,14 +113,14 @@ A browser websocket endpoint to connect to.
 Additional HTTP headers to be sent with web socket connect request. Optional.
 
 ### option: BrowserType.connect.slowMo
-* langs: java, python
+* langs: java, python, csharp
 - `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
 ### option: BrowserType.connect.timeout
-* langs: java, python
+* langs: java, python, csharp
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
