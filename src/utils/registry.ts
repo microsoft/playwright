@@ -144,7 +144,7 @@ const DOWNLOAD_URLS = {
   },
 };
 
-const registryDirectory = (() => {
+export const registryDirectory = (() => {
   let result: string;
 
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
