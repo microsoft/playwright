@@ -835,6 +835,14 @@ export module Protocol {
       requestStart: number;
       responseStart: number;
     };
+    export type InterceptedResponse = {
+      status: number;
+      statusText: string;
+      headers: {
+        name: string;
+        value: string;
+      }[];
+    };
     export type requestWillBeSentPayload = {
       frameId?: string;
       requestId: string;
@@ -914,8 +922,18 @@ export module Protocol {
         value: string;
       }[];
       postData?: string;
+      interceptResponse?: boolean;
     };
-    export type resumeInterceptedRequestReturnValue = void;
+    export type resumeInterceptedRequestReturnValue = {
+      response?: {
+        status: number;
+        statusText: string;
+        headers: {
+          name: string;
+          value: string;
+        }[];
+      };
+    };
     export type fulfillInterceptedRequestParameters = {
       requestId: string;
       status: number;
