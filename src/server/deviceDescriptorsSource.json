@@ -664,7 +664,7 @@
     "defaultBrowserType": "webkit"
   },
   "JioPhone 2": {
-    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:89.0 Gecko/48.0 Firefox/89.0 KAIOS/2.5",
+    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:89.0 Gecko/48.0 Firefox/90.0 KAIOS/2.5",
     "viewport": {
       "width": 240,
       "height": 320
@@ -675,7 +675,7 @@
     "defaultBrowserType": "firefox"
   },
   "JioPhone 2 landscape": {
-    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:89.0 Gecko/48.0 Firefox/89.0 KAIOS/2.5",
+    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:89.0 Gecko/48.0 Firefox/90.0 KAIOS/2.5",
     "viewport": {
       "width": 320,
       "height": 240
