@@ -10280,6 +10280,18 @@ index 7a5893eb68ad24cf92c832070485489b7cfafa0c..a2d68a5eb59d8b7155c1e17b75a12e55
  #endif
  
      const String& text() const { return m_text; }
+diff --git a/Source/WebKit/Shared/WebMouseEvent.h b/Source/WebKit/Shared/WebMouseEvent.h
+index 3dbe10d49b4de34636900efe31fb57e7e60e341c..1457cbaad0bf5c3b17902fd8c2f243a2c0688716 100644
+--- a/Source/WebKit/Shared/WebMouseEvent.h
++++ b/Source/WebKit/Shared/WebMouseEvent.h
+@@ -59,6 +59,7 @@ public:
+ 
+     Button button() const { return static_cast<Button>(m_button); }
+     unsigned short buttons() const { return m_buttons; }
++    void playwrightSetButtons(unsigned short buttons) { m_buttons = buttons; }
+     const WebCore::IntPoint& position() const { return m_position; } // Relative to the view.
+     const WebCore::IntPoint& globalPosition() const { return m_globalPosition; }
+     float deltaX() const { return m_deltaX; }
 diff --git a/Source/WebKit/Shared/WebPageCreationParameters.cpp b/Source/WebKit/Shared/WebPageCreationParameters.cpp
 index 2baef06cacab3e515e7046d517a5356bf03c3c30..ffd8d0943845f727d96c6631e9d4a3ea4cf790ee 100644
 --- a/Source/WebKit/Shared/WebPageCreationParameters.cpp
@@ -16747,7 +16759,7 @@ index 0000000000000000000000000000000000000000..b3bb4880a866ee6132b8b26acf8dad81
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..eb16b3aa8912b4cc26a2e555669c27682b76378d
+index 0000000000000000000000000000000000000000..61d1f18d8b7ba5eda1ec1e3c7fd59f3dd90f546d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 @@ -0,0 +1,288 @@
@@ -17014,7 +17026,7 @@ index 0000000000000000000000000000000000000000..eb16b3aa8912b4cc26a2e555669c2768
 +    // operating system. This is turned off in the callback.
 +    m_page.setInterceptDrags(true);
 +#if PLATFORM(MAC)
-+    platformDispatchMouseEvent(type, x, y, WTFMove(modifiers), button, WTFMove(clickCount));
++    platformDispatchMouseEvent(type, x, y, WTFMove(modifiers), button, WTFMove(clickCount), eventButtons);
 +#elif PLATFORM(GTK) || PLATFORM(WPE) || PLATFORM(WIN)
 +    WallTime timestamp = WallTime::now();
 +    NativeWebMouseEvent event(
@@ -17041,10 +17053,10 @@ index 0000000000000000000000000000000000000000..eb16b3aa8912b4cc26a2e555669c2768
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..94e9f24353337169992724e2fcdf7086dd888fa6
+index 0000000000000000000000000000000000000000..fb4855b939efdd36acd011a41244a579152bf574
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,82 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -17111,11 +17123,8 @@ index 0000000000000000000000000000000000000000..94e9f24353337169992724e2fcdf7086
 +
 +private:
 +    void platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp);
-+#if PLATFORM(WPE)
-+    void platformDispatchMouseEvent(WebMouseEvent::Type type, int x, int y, WebMouseEvent::Button button, OptionSet<WebEvent::Modifier> modifiers);
-+#endif
 +#if PLATFORM(MAC)
-+    void platformDispatchMouseEvent(const String& type, int x, int y, std::optional<int>&& modifier, const String& button, std::optional<int>&& clickCount);
++    void platformDispatchMouseEvent(const String& type, int x, int y, std::optional<int>&& modifier, const String& button, std::optional<int>&& clickCount, unsigned short buttons);
 +#endif
 +
 +    Ref<Inspector::InputBackendDispatcher> m_backendDispatcher;
@@ -19058,10 +19067,10 @@ index 0000000000000000000000000000000000000000..6113f4cd60a5d72b8ead61176cb43200
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..e6e2c8c2769e4657c01f1452e554fd6f6d457279
+index 0000000000000000000000000000000000000000..cbcc097c924d0a04c5a2265a8027347fe12d0449
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,125 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -19099,7 +19108,7 @@ index 0000000000000000000000000000000000000000..e6e2c8c2769e4657c01f1452e554fd6f
 +
 +using namespace WebCore;
 +
-+void WebPageInspectorInputAgent::platformDispatchMouseEvent(const String& type, int x, int y, std::optional<int>&& optionalModifiers, const String& button, std::optional<int>&& optionalClickCount) {
++void WebPageInspectorInputAgent::platformDispatchMouseEvent(const String& type, int x, int y, std::optional<int>&& optionalModifiers, const String& button, std::optional<int>&& optionalClickCount, unsigned short buttons) {
 +    IntPoint locationInWindow(x, y);
 +
 +    NSEventModifierFlags modifiers = 0;
@@ -19154,6 +19163,7 @@ index 0000000000000000000000000000000000000000..e6e2c8c2769e4657c01f1452e554fd6f
 +
 +    if (event) {
 +        NativeWebMouseEvent nativeEvent(event, nil, [window contentView]);
++        nativeEvent.playwrightSetButtons(buttons);
 +        m_page.handleMouseEvent(nativeEvent);
 +    }
 +}
