@@ -249,15 +249,13 @@ export class Registry {
         throw new Error(`${name} is not supported on ${hostPlatform}`);
       // TODO: language-specific error message
       if (!canAccessFile(e)) {
-        let prettyMessage = [
-          ``,
+        const prettyMessage = [
           `Looks like Playwright Test or Playwright was just installed or updated.`,
           `Please run the following command to download new browsers:`,
           ``,
           `    npx playwright install${installByDefault ? '' : ' ' + name}`,
           ``,
-          `                                                    <3 Playwright Team`,
-          ``,
+          `<3 Playwright Team`,
         ].join('\n');
         throw new Error(`Executable doesn't exist at ${e}\n${wrapInASCIIBox(prettyMessage, 1)}`);
       }
