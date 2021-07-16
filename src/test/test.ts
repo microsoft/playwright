@@ -139,7 +139,6 @@ export class Test extends Base implements reporterTypes.Test {
   }
 
   status(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    // List mode bail out.
     if (!this.results.length)
       return 'skipped';
     if (this.results.length === 1 && this.expectedStatus === this.results[0].status)

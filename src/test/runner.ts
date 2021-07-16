@@ -34,7 +34,7 @@ import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
-import { Config } from './types';
+import { Config, FullConfig } from './types';
 import { LaunchServers } from './launchServer';
 
 const removeFolderAsync = promisify(rimraf);
@@ -93,7 +93,7 @@ export class Runner {
   }
 
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResultStatus> {
-    this._reporter = await this._createReporter();
+    this._reporter = list ? new ListModeReporter() : await this._createReporter();
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
     const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
@@ -407,4 +407,21 @@ function getClashingTestsPerSuite(rootSuite: Suite): Map<string, Test[]> {
 
 function buildItemLocation(rootDir: string, testOrSuite: Suite | Test) {
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
+}
+
+class ListModeReporter implements Reporter {
+  onBegin(config: FullConfig, suite: Suite): void {
+    console.log(`Listing tests:`);
+    const tests = suite.allTests();
+    const files = new Set<string>();
+    for (const test of tests) {
+      // root, project, file, ...describes, test
+      const [, projectName, , ...titles] = test.titlePath();
+      const location = `${path.relative(config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
+      const projectTitle = projectName ? `[${projectName}] › ` : '';
+      console.log(`  ${projectTitle}${location} › ${titles.join(' ')}`);
+      files.add(test.location.file);
+    }
+    console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
+  }
 }
