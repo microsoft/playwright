@@ -357,3 +357,13 @@ export const hostPlatform = ((): HostPlatform => {
     return os.arch() === 'x64' ? 'win64' : 'win32';
   return platform as HostPlatform;
 })();
+
+export function wrapInASCIIBox(text: string, padding = 0): string {
+  const lines = text.split('\n');
+  const maxLength = Math.max(...lines.map(line => line.length));
+  return [
+    '╔' + '═'.repeat(maxLength + padding * 2) + '╗',
+    ...lines.map(line => '║' + ' '.repeat(padding) + line + ' '.repeat(maxLength - line.length + padding) + '║'),
+    '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
+  ].join('\n');
+}

@@ -21,7 +21,7 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData } from './utils';
+import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
@@ -244,12 +244,23 @@ export class Registry {
       const tokens = EXECUTABLE_PATHS[name][hostPlatform];
       return tokens ? path.join(dir, ...tokens) : undefined;
     };
-    const executablePathOrDie = (name: string, e: string | undefined) => {
+    const executablePathOrDie = (name: string, e: string | undefined, installByDefault: boolean) => {
       if (!e)
         throw new Error(`${name} is not supported on ${hostPlatform}`);
       // TODO: language-specific error message
-      if (!canAccessFile(e))
-        throw new Error(`Executable doesn't exist at ${e}\nRun "npx playwright install ${name}"`);
+      if (!canAccessFile(e)) {
+        let prettyMessage = [
+          ``,
+          `Looks like Playwright Test or Playwright was just installed or updated.`,
+          `Please run the following command to download new browsers:`,
+          ``,
+          `    npx playwright install${installByDefault ? '' : ' ' + name}`,
+          ``,
+          `                                                    <3 Playwright Team`,
+          ``,
+        ].join('\n');
+        throw new Error(`Executable doesn't exist at ${e}\n${wrapInASCIIBox(prettyMessage, 1)}`);
+      }
       return e;
     };
     this._executables = [];
