@@ -64,11 +64,9 @@ export class TestTypeImpl {
 
     const test = new Test(title, fn, ordinalInFile, this);
     test._requireFile = suite._requireFile;
-    test.file = location.file;
-    test.line = location.line;
-    test.column = location.column;
+    test.location = location;
     suite._addTest(test);
-    test._buildFullTitle(suite.fullTitle());
+    test._buildTitlePath(suite._titlePath);
 
     if (type === 'only')
       test._only = true;
@@ -81,11 +79,9 @@ export class TestTypeImpl {
 
     const child = new Suite(title);
     child._requireFile = suite._requireFile;
-    child.file = location.file;
-    child.line = location.line;
-    child.column = location.column;
+    child.location = location;
     suite._addSuite(child);
-    child._buildFullTitle(suite.fullTitle());
+    child._buildTitlePath(suite._titlePath);
 
     if (type === 'only')
       child._only = true;

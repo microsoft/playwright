@@ -16,12 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import EmptyReporter from './empty';
-import { FullConfig, FullResult, Suite, Test } from '../reporter';
+import { FullConfig, FullResult, Reporter, Suite, Test } from '../reporter';
 import { monotonicTime } from '../util';
 import { formatFailure, formatTestTitle, stripAscii } from './base';
 
-class JUnitReporter extends EmptyReporter {
+class JUnitReporter implements Reporter {
   private config!: FullConfig;
   private suite!: Suite;
   private timestamp!: number;
@@ -33,7 +32,6 @@ class JUnitReporter extends EmptyReporter {
   private stripANSIControlSequences = false;
 
   constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
-    super();
     this.outputFile = options.outputFile;
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
   }
@@ -85,7 +83,7 @@ class JUnitReporter extends EmptyReporter {
     let duration = 0;
     const children: XMLEntry[] = [];
 
-    suite.findTest(test => {
+    suite.allTests().forEach(test => {
       ++tests;
       if (test.status() === 'skipped')
         ++skipped;
@@ -102,7 +100,7 @@ class JUnitReporter extends EmptyReporter {
     const entry: XMLEntry = {
       name: 'testsuite',
       attributes: {
-        name: path.relative(this.config.rootDir, suite.file),
+        name: path.relative(this.config.rootDir, suite.location.file),
         timestamp: this.timestamp,
         hostname: '',
         tests,
@@ -138,7 +136,7 @@ class JUnitReporter extends EmptyReporter {
       entry.children.push({
         name: 'failure',
         attributes: {
-          message: `${path.basename(test.file)}:${test.line}:${test.column} ${test.title}`,
+          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
           type: 'FAILURE',
         },
         text: stripAscii(formatFailure(this.config, test))

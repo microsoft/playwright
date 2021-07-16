@@ -25,36 +25,36 @@ export class Multiplexer implements Reporter {
 
   onBegin(config: FullConfig, suite: Suite) {
     for (const reporter of this._reporters)
-      reporter.onBegin(config, suite);
+      reporter.onBegin?.(config, suite);
   }
 
   onTestBegin(test: Test) {
     for (const reporter of this._reporters)
-      reporter.onTestBegin(test);
+      reporter.onTestBegin?.(test);
   }
 
   onStdOut(chunk: string | Buffer, test?: Test) {
     for (const reporter of this._reporters)
-      reporter.onStdOut(chunk, test);
+      reporter.onStdOut?.(chunk, test);
   }
 
   onStdErr(chunk: string | Buffer, test?: Test) {
     for (const reporter of this._reporters)
-      reporter.onStdErr(chunk, test);
+      reporter.onStdErr?.(chunk, test);
   }
 
   onTestEnd(test: Test, result: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onTestEnd(test, result);
+      reporter.onTestEnd?.(test, result);
   }
 
   async onEnd(result: FullResult) {
     for (const reporter of this._reporters)
-      await reporter.onEnd(result);
+      await reporter.onEnd?.(result);
   }
 
   onError(error: TestError) {
     for (const reporter of this._reporters)
-      reporter.onError(error);
+      reporter.onError?.(error);
   }
 }

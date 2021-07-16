@@ -38,7 +38,6 @@ class ListReporter extends BaseReporter {
   }
 
   onTestBegin(test: Test) {
-    super.onTestBegin(test);
     if (process.stdout.isTTY) {
       if (this._needNewLine) {
         this._needNewLine = false;

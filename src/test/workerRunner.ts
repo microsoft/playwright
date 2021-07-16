@@ -218,9 +218,9 @@ export class WorkerRunner extends EventEmitter {
     const testInfo: TestInfo = {
       ...this._workerInfo,
       title: test.title,
-      file: test.file,
-      line: test.line,
-      column: test.column,
+      file: test.location.file,
+      line: test.location.line,
+      column: test.location.column,
       fn: test.fn,
       repeatEachIndex: this._params.repeatEachIndex,
       retry: entry.retry,

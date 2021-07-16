@@ -60,17 +60,14 @@ export class ProjectImpl {
       if (Object.entries(overrides).length) {
         const overridesWithLocation = {
           fixtures: overrides,
-          location: {
-            file: test.file,
-            line: 1,  // TODO: capture location
-            column: 1,  // TODO: capture location
-          }
+          // TODO: pass location from test.use() callsite.
+          location: test.location,
         };
         pool = new FixturePool([overridesWithLocation], pool);
       }
       this.testPools.set(test, pool);
 
-      pool.validateFunction(test.fn, 'Test', true, test);
+      pool.validateFunction(test.fn, 'Test', true, test.location);
       for (let parent = test.parent; parent; parent = parent.parent) {
         for (const hook of parent._hooks)
           pool.validateFunction(hook.fn, hook.type + ' hook', hook.type === 'beforeEach' || hook.type === 'afterEach', hook.location);
@@ -98,7 +95,7 @@ export class ProjectImpl {
         test._workerHash = `run${this.index}-${pool.digest}-repeat${repeatEachIndex}`;
         test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
         test._pool = pool;
-        test._buildFullTitle(suite.fullTitle());
+        test._buildTitlePath(suite._titlePath);
         if (!filter(test))
           continue;
         result._addTest(test);

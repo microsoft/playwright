@@ -17,29 +17,30 @@
 import type { FullConfig, TestStatus, TestError } from './types';
 export type { FullConfig, TestStatus, TestError } from './types';
 
+export interface Location {
+  file: string;
+  line: number;
+  column: number;
+}
 export interface Suite {
   title: string;
-  file: string;
-  line: number;
-  column: number;
+  location: Location;
   suites: Suite[];
   tests: Test[];
-  findTest(fn: (test: Test) => boolean | void): boolean;
-  totalTestCount(): number;
+  titlePath(): string[];
+  fullTitle(): string;
+  allTests(): Test[];
 }
 export interface Test {
-  suite: Suite;
   title: string;
-  file: string;
-  line: number;
-  column: number;
+  location: Location;
   results: TestResult[];
-  skipped: boolean;
   expectedStatus: TestStatus;
   timeout: number;
   annotations: { type: string, description?: string }[];
   projectName: string;
   retries: number;
+  titlePath(): string[];
   fullTitle(): string;
   status(): 'skipped' | 'expected' | 'unexpected' | 'flaky';
   ok(): boolean;
@@ -58,11 +59,11 @@ export interface FullResult {
   status: 'passed' | 'failed' | 'timedout' | 'interrupted';
 }
 export interface Reporter {
-  onBegin(config: FullConfig, suite: Suite): void;
-  onTestBegin(test: Test): void;
-  onStdOut(chunk: string | Buffer, test?: Test): void;
-  onStdErr(chunk: string | Buffer, test?: Test): void;
-  onTestEnd(test: Test, result: TestResult): void;
-  onError(error: TestError): void;
-  onEnd(result: FullResult): void | Promise<void>;
+  onBegin?(config: FullConfig, suite: Suite): void;
+  onTestBegin?(test: Test): void;
+  onStdOut?(chunk: string | Buffer, test?: Test): void;
+  onStdErr?(chunk: string | Buffer, test?: Test): void;
+  onTestEnd?(test: Test, result: TestResult): void;
+  onError?(error: TestError): void;
+  onEnd?(result: FullResult): void | Promise<void>;
 }

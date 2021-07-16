@@ -99,8 +99,8 @@ export class Runner {
     const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
     if (timedOut) {
       if (!this._didBegin)
-        this._reporter.onBegin(config, new Suite(''));
-      await this._reporter.onEnd({ status: 'timedout' });
+        this._reporter.onBegin?.(config, new Suite(''));
+      await this._reporter.onEnd?.({ status: 'timedout' });
       await this._flushOutput();
       return 'failed';
     }
@@ -205,9 +205,10 @@ export class Runner {
           for (let repeatEachIndex = 0; repeatEachIndex < project.config.repeatEach; repeatEachIndex++) {
             const cloned = project.cloneSuite(fileSuite, repeatEachIndex, test => {
               const fullTitle = test.fullTitle();
-              if (grepInvertMatcher?.(fullTitle))
+              const titleWithProject = (test.projectName ? `[${test.projectName}] ` : '') + fullTitle;
+              if (grepInvertMatcher?.(titleWithProject))
                 return false;
-              return grepMatcher(fullTitle);
+              return grepMatcher(titleWithProject);
             });
             if (cloned)
               rootSuite._addSuite(cloned);
@@ -216,7 +217,7 @@ export class Runner {
         outputDirs.add(project.config.outputDir);
       }
 
-      const total = rootSuite.totalTestCount();
+      const total = rootSuite.allTests().length;
       if (!total)
         return { status: 'no-tests' };
 
@@ -238,7 +239,7 @@ export class Runner {
 
       if (process.stdout.isTTY) {
         const workers = new Set();
-        rootSuite.findTest(test => {
+        rootSuite.allTests().forEach(test => {
           workers.add(test._requireFile + test._workerHash);
         });
         console.log();
@@ -248,7 +249,7 @@ export class Runner {
         console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`);
       }
 
-      this._reporter.onBegin(config, rootSuite);
+      this._reporter.onBegin?.(config, rootSuite);
       this._didBegin = true;
       let hasWorkerErrors = false;
       if (!list) {
@@ -259,12 +260,12 @@ export class Runner {
       }
 
       if (sigint) {
-        await this._reporter.onEnd({ status: 'interrupted' });
+        await this._reporter.onEnd?.({ status: 'interrupted' });
         return { status: 'sigint' };
       }
 
-      const failed = hasWorkerErrors || rootSuite.findTest(test => !test.ok());
-      await this._reporter.onEnd({ status: failed ? 'failed' : 'passed' });
+      const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
+      await this._reporter.onEnd?.({ status: failed ? 'failed' : 'passed' });
       return { status: failed ? 'failed' : 'passed' };
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
@@ -287,8 +288,8 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilt
     re.lastIndex = 0;
     return re.test(testFileName) && (line === testLine || line === null);
   });
-  const suiteFilter = (suite: Suite) => testFileLineMatches(suite.file, suite.line);
-  const testFilter = (test: Test) => testFileLineMatches(test.file, test.line);
+  const suiteFilter = (suite: Suite) => testFileLineMatches(suite.location.file, suite.location.line);
+  const testFilter = (test: Test) => testFileLineMatches(test.location.file, test.location.line);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
@@ -398,5 +399,5 @@ function getClashingTestsPerSuite(rootSuite: Suite): Map<string, Test[]> {
 }
 
 function buildItemLocation(rootDir: string, testOrSuite: Suite | Test) {
-  return `${path.relative(rootDir, testOrSuite.file)}:${testOrSuite.line}`;
+  return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
 }
