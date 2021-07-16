@@ -258,6 +258,7 @@ type Options = {
   colorScheme?: string;
   device?: string;
   geolocation?: string;
+  ignoreHttpsErrors?: boolean;
   lang?: string;
   loadStorage?: string;
   proxyServer?: string;
@@ -363,6 +364,9 @@ async function launchContext(options: Options, headless: boolean, executablePath
 
   if (options.loadStorage)
     contextOptions.storageState = options.loadStorage;
+
+  if (options.ignoreHttpsErrors)
+    contextOptions.ignoreHTTPSErrors = true;
 
   // Close app when the last window closes.
 
@@ -532,6 +536,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
       .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
       .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')
+      .option('--ignore-https-errors', 'ignore https errors')
       .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
       .option('--lang <language>', 'specify language / locale, for example "en-GB"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
