@@ -253,19 +253,20 @@ it('should work if not doing a drag', async ({page}) => {
 });
 
 it('should report event.buttons', async ({page, browserName}) => {
-  const logsHandle = await page.evaluateHandle(() => {
+  const logsHandle = await page.evaluateHandle(async () => {
     const div = document.createElement('div');
     document.body.appendChild(div);
     div.style.width = '200px';
     div.style.height = '200px';
     div.style.backgroundColor = 'blue';
     div.addEventListener('mousedown', onEvent);
-    div.addEventListener('mousemove', onEvent);
+    div.addEventListener('mousemove', onEvent, { passive: false });
     div.addEventListener('mouseup', onEvent);
     const logs = [];
     function onEvent(event) {
       logs.push({ type: event.type, buttons: event.buttons });
     }
+    await new Promise(requestAnimationFrame);
     return logs;
   });
   await page.mouse.move(20, 20);
