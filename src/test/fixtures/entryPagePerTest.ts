@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -13,5 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as browserTest from './browserFixtures';
+export { expect } from '../expect';
+import type { PlaywrightTestArgs, PlaywrightTestOptions } from '../../../types/test';
+import { pageFixtures } from './pageFixtures';
 
-export * from './fixtures/entryPagePerTest';
+export const _baseTest = browserTest._baseTest;
+export const test = browserTest.test.extend<PlaywrightTestArgs & PlaywrightTestOptions>(pageFixtures);
+
