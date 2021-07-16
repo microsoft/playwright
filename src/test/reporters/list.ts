@@ -19,7 +19,7 @@ import colors from 'colors/safe';
 // @ts-ignore
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
-import { FullConfig, FullResult, Suite, Test, TestResult } from '../reporter';
+import { FullConfig, FullResult, Test, TestProject, TestResult } from '../reporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -32,8 +32,8 @@ class ListReporter extends BaseReporter {
   private _testRows = new Map<Test, number>();
   private _needNewLine = false;
 
-  onBegin(config: FullConfig, suite: Suite) {
-    super.onBegin(config, suite);
+  onBegin(config: FullConfig, projects: TestProject[]) {
+    super.onBegin(config, projects);
     console.log();
   }
 

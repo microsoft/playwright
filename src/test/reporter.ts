@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-import type { FullConfig, TestStatus, TestError } from './types';
-export type { FullConfig, TestStatus, TestError } from './types';
+import type { FullConfig, FullProject, TestStatus, TestError } from './types';
+export type { FullConfig, FullProject, TestStatus, TestError } from './types';
 
+export interface TestProject {
+  config: FullProject;
+  files: Suite[];
+}
 export interface Location {
   file: string;
   line: number;
@@ -27,6 +31,7 @@ export interface Suite {
   location: Location;
   suites: Suite[];
   tests: Test[];
+  project: TestProject;
   titlePath(): string[];
   fullTitle(): string;
   allTests(): Test[];
@@ -38,7 +43,7 @@ export interface Test {
   expectedStatus: TestStatus;
   timeout: number;
   annotations: { type: string, description?: string }[];
-  projectName: string;
+  project: TestProject;
   retries: number;
   titlePath(): string[];
   fullTitle(): string;
@@ -59,7 +64,7 @@ export interface FullResult {
   status: 'passed' | 'failed' | 'timedout' | 'interrupted';
 }
 export interface Reporter {
-  onBegin?(config: FullConfig, suite: Suite): void;
+  onBegin?(config: FullConfig, projects: TestProject[]): void;
   onTestBegin?(test: Test): void;
   onStdOut?(chunk: string | Buffer, test?: Test): void;
   onStdErr?(chunk: string | Buffer, test?: Test): void;

@@ -19,8 +19,9 @@ import path from 'path';
 import { EventEmitter } from 'events';
 import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import type { TestResult, Reporter, TestStatus } from './reporter';
-import { Suite, Test } from './test';
+import { Test } from './test';
 import { Loader } from './loader';
+import { ProjectImpl } from './project';
 
 type DispatcherEntry = {
   runPayload: RunPayload;
@@ -38,28 +39,29 @@ export class Dispatcher {
   private _queue: DispatcherEntry[] = [];
   private _stopCallback = () => {};
   readonly _loader: Loader;
-  private _suite: Suite;
   private _reporter: Reporter;
   private _hasWorkerErrors = false;
   private _isStopped = false;
   private _failureCount = 0;
 
-  constructor(loader: Loader, suite: Suite, reporter: Reporter) {
+  constructor(loader: Loader, projects: ProjectImpl[], reporter: Reporter) {
     this._loader = loader;
     this._reporter = reporter;
 
-    this._suite = suite;
-    for (const suite of this._suite.suites) {
-      for (const test of suite.allTests())
-        this._testById.set(test._id, { test, result: test._appendTestResult() });
+    let allTests: Test[] = [];
+    for (const project of projects) {
+      for (const fileSuite of project.files)
+        allTests = allTests.concat(fileSuite.allTests());
     }
+    for (const test of allTests)
+      this._testById.set(test._id, { test, result: test._appendTestResult() });
 
-    this._queue = this._filesSortedByWorkerHash();
+    this._queue = this._filesSortedByWorkerHash(projects);
 
     // Shard tests.
     const shard = this._loader.fullConfig().shard;
     if (shard) {
-      let total = this._suite.allTests().length;
+      let total = allTests.length;
       const shardSize = Math.ceil(total / shard.total);
       const from = shardSize * shard.current;
       const to = shardSize * (shard.current + 1);
@@ -77,33 +79,35 @@ export class Dispatcher {
     }
   }
 
-  _filesSortedByWorkerHash(): DispatcherEntry[] {
+  _filesSortedByWorkerHash(projects: ProjectImpl[]): DispatcherEntry[] {
     const entriesByWorkerHashAndFile = new Map<string, Map<string, DispatcherEntry>>();
-    for (const fileSuite of this._suite.suites) {
-      const file = fileSuite._requireFile;
-      for (const test of fileSuite.allTests()) {
-        let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
-        if (!entriesByFile) {
-          entriesByFile = new Map();
-          entriesByWorkerHashAndFile.set(test._workerHash, entriesByFile);
+    for (const project of projects) {
+      for (const fileSuite of project.files) {
+        const file = fileSuite._requireFile;
+        for (const test of fileSuite.allTests()) {
+          let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
+          if (!entriesByFile) {
+            entriesByFile = new Map();
+            entriesByWorkerHashAndFile.set(test._workerHash, entriesByFile);
+          }
+          let entry = entriesByFile.get(file);
+          if (!entry) {
+            entry = {
+              runPayload: {
+                entries: [],
+                file,
+              },
+              repeatEachIndex: fileSuite._repeatEachIndex,
+              projectIndex: project._index,
+              hash: test._workerHash,
+            };
+            entriesByFile.set(file, entry);
+          }
+          entry.runPayload.entries.push({
+            retry: this._testById.get(test._id)!.result.retry,
+            testId: test._id,
+          });
         }
-        let entry = entriesByFile.get(file);
-        if (!entry) {
-          entry = {
-            runPayload: {
-              entries: [],
-              file,
-            },
-            repeatEachIndex: fileSuite._repeatEachIndex,
-            projectIndex: fileSuite._projectIndex,
-            hash: test._workerHash,
-          };
-          entriesByFile.set(file, entry);
-        }
-        entry.runPayload.entries.push({
-          retry: this._testById.get(test._id)!.result.retry,
-          testId: test._id,
-        });
       }
     }
 

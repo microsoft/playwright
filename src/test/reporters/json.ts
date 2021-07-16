@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, Test, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter } from '../reporter';
+import { FullConfig, Test, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter, TestProject } from '../reporter';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -77,7 +77,7 @@ function toPosixPath(aPath: string): string {
 
 class JSONReporter implements Reporter {
   config!: FullConfig;
-  suite!: Suite;
+  projects!: TestProject[];
   private _errors: TestError[] = [];
   private _outputFile: string | undefined;
 
@@ -85,9 +85,9 @@ class JSONReporter implements Reporter {
     this._outputFile = options.outputFile;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onBegin(config: FullConfig, projects: TestProject[]) {
     this.config = config;
-    this.suite = suite;
+    this.projects = projects;
   }
 
   onError(error: TestError): void {
@@ -99,6 +99,9 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeReport(): JSONReport {
+    let suites: Suite[] = [];
+    for (const project of this.projects)
+      suites = suites.concat(project.files);
     return {
       config: {
         ...this.config,
@@ -117,7 +120,7 @@ class JSONReporter implements Reporter {
           };
         })
       },
-      suites: this._mergeSuites(this.suite.suites),
+      suites: this._mergeSuites(suites),
       errors: this._errors
     };
   }
@@ -202,7 +205,7 @@ class JSONReporter implements Reporter {
       timeout: test.timeout,
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
-      projectName: test.projectName,
+      projectName: test.project.config.name,
       results: test.results.map(r => this._serializeTestResult(r)),
       status: test.status(),
     };

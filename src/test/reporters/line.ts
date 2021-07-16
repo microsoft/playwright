@@ -16,7 +16,7 @@
 
 import colors from 'colors/safe';
 import { BaseReporter, formatFailure, formatTestTitle } from './base';
-import { FullConfig, Test, Suite, TestResult, FullResult } from '../reporter';
+import { FullConfig, Test, TestResult, FullResult, TestProject } from '../reporter';
 
 class LineReporter extends BaseReporter {
   private _total = 0;
@@ -24,9 +24,12 @@ class LineReporter extends BaseReporter {
   private _failures = 0;
   private _lastTest: Test | undefined;
 
-  onBegin(config: FullConfig, suite: Suite) {
-    super.onBegin(config, suite);
-    this._total = suite.allTests().length;
+  onBegin(config: FullConfig, projects: TestProject[]) {
+    super.onBegin(config, projects);
+    for (const project of projects) {
+      for (const suite of project.files)
+        this._total += suite.allTests().length;
+    }
     console.log();
   }
 

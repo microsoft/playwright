@@ -16,13 +16,13 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, FullResult, Reporter, Suite, Test } from '../reporter';
+import { FullConfig, FullResult, Reporter, Suite, Test, TestProject } from '../reporter';
 import { monotonicTime } from '../util';
 import { formatFailure, formatTestTitle, stripAscii } from './base';
 
 class JUnitReporter implements Reporter {
   private config!: FullConfig;
-  private suite!: Suite;
+  private projects!: TestProject[];
   private timestamp!: number;
   private startTime!: number;
   private totalTests = 0;
@@ -36,9 +36,9 @@ class JUnitReporter implements Reporter {
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onBegin(config: FullConfig, projects: TestProject[]) {
     this.config = config;
-    this.suite = suite;
+    this.projects = projects;
     this.timestamp = Date.now();
     this.startTime = monotonicTime();
   }
@@ -46,8 +46,10 @@ class JUnitReporter implements Reporter {
   async onEnd(result: FullResult) {
     const duration = monotonicTime() - this.startTime;
     const children: XMLEntry[] = [];
-    for (const suite of this.suite.suites)
-      children.push(this._buildTestSuite(suite));
+    for (const project of this.projects) {
+      for (const suite of project.files)
+        children.push(this._buildTestSuite(suite));
+    }
     const tokens: string[] = [];
 
     const self = this;

@@ -99,7 +99,7 @@ export class Runner {
     const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
     if (timedOut) {
       if (!this._didBegin)
-        this._reporter.onBegin?.(config, new Suite(''));
+        this._reporter.onBegin?.(config, []);
       await this._reporter.onEnd?.({ status: 'timedout' });
       await this._flushOutput();
       return 'failed';
@@ -196,28 +196,28 @@ export class Runner {
       const outputDirs = new Set<string>();
       const grepMatcher = createMatcher(config.grep);
       const grepInvertMatcher = config.grepInvert ? createMatcher(config.grepInvert) : null;
-      const rootSuite = new Suite('');
+      let allTests: Test[] = [];
       for (const project of projects) {
         for (const file of files.get(project)!) {
           const fileSuite = fileSuites.get(file);
           if (!fileSuite)
             continue;
           for (let repeatEachIndex = 0; repeatEachIndex < project.config.repeatEach; repeatEachIndex++) {
-            const cloned = project.cloneSuite(fileSuite, repeatEachIndex, test => {
+            const suite = project.cloneSuite(fileSuite, repeatEachIndex, test => {
               const fullTitle = test.fullTitle();
-              const titleWithProject = (test.projectName ? `[${test.projectName}] ` : '') + fullTitle;
+              const titleWithProject = (test.project.config.name ? `[${test.project.config.name}] ` : '') + fullTitle;
               if (grepInvertMatcher?.(titleWithProject))
                 return false;
               return grepMatcher(titleWithProject);
             });
-            if (cloned)
-              rootSuite._addSuite(cloned);
+            if (suite)
+              allTests = allTests.concat(suite.allTests());
           }
         }
         outputDirs.add(project.config.outputDir);
       }
 
-      const total = rootSuite.allTests().length;
+      const total = allTests.length;
       if (!total)
         return { status: 'no-tests' };
 
@@ -239,7 +239,7 @@ export class Runner {
 
       if (process.stdout.isTTY) {
         const workers = new Set();
-        rootSuite.allTests().forEach(test => {
+        allTests.forEach(test => {
           workers.add(test._requireFile + test._workerHash);
         });
         console.log();
@@ -249,11 +249,11 @@ export class Runner {
         console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`);
       }
 
-      this._reporter.onBegin?.(config, rootSuite);
+      this._reporter.onBegin?.(config, projects);
       this._didBegin = true;
       let hasWorkerErrors = false;
       if (!list) {
-        const dispatcher = new Dispatcher(this._loader, rootSuite, this._reporter);
+        const dispatcher = new Dispatcher(this._loader, projects, this._reporter);
         await Promise.race([dispatcher.run(), sigIntPromise]);
         await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
@@ -264,7 +264,7 @@ export class Runner {
         return { status: 'sigint' };
       }
 
-      const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
+      const failed = hasWorkerErrors || allTests.some(test => !test.ok());
       await this._reporter.onEnd?.({ status: failed ? 'failed' : 'passed' });
       return { status: failed ? 'failed' : 'passed' };
     } finally {

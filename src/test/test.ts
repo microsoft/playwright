@@ -57,6 +57,7 @@ export type Modifier = {
 export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
   tests: Test[] = [];
+  project!: reporterTypes.TestProject;
   _fixtureOverrides: any = {};
   _entries: (Suite | Test)[] = [];
   _hooks: {
@@ -68,7 +69,6 @@ export class Suite extends Base implements reporterTypes.Suite {
   _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
   _repeatEachIndex = 0;
-  _projectIndex = 0;
 
   _addTest(test: Test) {
     test.parent = this;
@@ -131,8 +131,8 @@ export class Test extends Base implements reporterTypes.Test {
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
   annotations: Annotations = [];
-  projectName = '';
   retries = 0;
+  project!: reporterTypes.TestProject;
 
   _ordinalInFile: number;
   _testType: TestTypeImpl;

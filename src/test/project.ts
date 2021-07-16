@@ -18,17 +18,19 @@ import type { TestType, FullProject, Fixtures, FixturesWithLocation } from './ty
 import { Suite, Test } from './test';
 import { FixturePool } from './fixtures';
 import { DeclaredFixtures, TestTypeImpl } from './testType';
+import { TestProject } from './reporter';
 
-export class ProjectImpl {
+export class ProjectImpl implements TestProject {
   config: FullProject;
-  private index: number;
+  files: Suite[] = [];
+  _index: number;
   private defines = new Map<TestType<any, any>, Fixtures>();
   private testTypePools = new Map<TestTypeImpl, FixturePool>();
   private testPools = new Map<Test, FixturePool>();
 
   constructor(project: FullProject, index: number) {
     this.config = project;
-    this.index = index;
+    this._index = index;
     this.defines = new Map();
     for (const { test, fixtures } of Array.isArray(project.define) ? project.define : [project.define])
       this.defines.set(test, fixtures);
@@ -78,22 +80,22 @@ export class ProjectImpl {
     return this.testPools.get(test)!;
   }
 
-  cloneSuite(suite: Suite, repeatEachIndex: number, filter: (test: Test) => boolean): Suite | undefined {
+  private cloneSuiteInternal(suite: Suite, repeatEachIndex: number, filter: (test: Test) => boolean): Suite | undefined {
     const result = suite._clone();
     result._repeatEachIndex = repeatEachIndex;
-    result._projectIndex = this.index;
+    result.project = this;
     for (const entry of suite._entries) {
       if (entry instanceof Suite) {
-        const cloned = this.cloneSuite(entry, repeatEachIndex, filter);
+        const cloned = this.cloneSuiteInternal(entry, repeatEachIndex, filter);
         if (cloned)
           result._addSuite(cloned);
       } else {
         const pool = this.buildPool(entry);
         const test = entry._clone();
-        test.projectName = this.config.name;
+        test.project = this;
         test.retries = this.config.retries;
-        test._workerHash = `run${this.index}-${pool.digest}-repeat${repeatEachIndex}`;
-        test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
+        test._workerHash = `run${this._index}-${pool.digest}-repeat${repeatEachIndex}`;
+        test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this._index}-repeat${repeatEachIndex}`;
         test._pool = pool;
         test._buildTitlePath(suite._titlePath);
         if (!filter(test))
@@ -103,6 +105,13 @@ export class ProjectImpl {
     }
     if (result._entries.length)
       return result;
+  }
+
+  cloneSuite(suite: Suite, repeatEachIndex: number, filter: (test: Test) => boolean): Suite | undefined {
+    const cloned = this.cloneSuiteInternal(suite, repeatEachIndex, filter);
+    if (cloned)
+      this.files.push(cloned);
+    return cloned;
   }
 
   private resolveFixtures(testType: TestTypeImpl): FixturesWithLocation[] {

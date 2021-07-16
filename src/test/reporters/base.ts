@@ -21,22 +21,22 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestStatus, Test, Suite, TestResult, TestError, Reporter, FullResult } from '../reporter';
+import { FullConfig, TestStatus, Test, TestResult, TestError, Reporter, FullResult, TestProject } from '../reporter';
 
 const stackUtils = new StackUtils();
 
 export class BaseReporter implements Reporter  {
   duration = 0;
   config!: FullConfig;
-  suite!: Suite;
+  projects!: TestProject[];
   result!: FullResult;
   fileDurations = new Map<string, number>();
   monotonicStartTime: number = 0;
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onBegin(config: FullConfig, projects: TestProject[]) {
     this.monotonicStartTime = monotonicTime();
     this.config = config;
-    this.suite = suite;
+    this.projects = projects;
   }
 
   onStdOut(chunk: string | Buffer) {
@@ -51,7 +51,7 @@ export class BaseReporter implements Reporter  {
 
   onTestEnd(test: Test, result: TestResult) {
     const relativePath = relativeTestPath(this.config, test);
-    const fileAndProject = relativePath + (test.projectName ? ` [${test.projectName}]` : '');
+    const fileAndProject = relativePath + (test.project.config.name ? ` [${test.project.config.name}]` : '');
     const duration = this.fileDurations.get(fileAndProject) || 0;
     this.fileDurations.set(fileAndProject, duration + result.duration);
   }
@@ -85,14 +85,18 @@ export class BaseReporter implements Reporter  {
     const unexpected: Test[] = [];
     const flaky: Test[] = [];
 
-    this.suite.allTests().forEach(test => {
-      switch (test.status()) {
-        case 'skipped': ++skipped; break;
-        case 'expected': ++expected; break;
-        case 'unexpected': unexpected.push(test); break;
-        case 'flaky': flaky.push(test); break;
+    for (const project of this.projects) {
+      for (const suite of project.files) {
+        suite.allTests().forEach(test => {
+          switch (test.status()) {
+            case 'skipped': ++skipped; break;
+            case 'expected': ++expected; break;
+            case 'unexpected': unexpected.push(test); break;
+            case 'flaky': flaky.push(test); break;
+          }
+        });
       }
-    });
+    }
 
     if (full && unexpected.length) {
       console.log('');
@@ -158,7 +162,7 @@ function relativeTestPath(config: FullConfig, test: Test): string {
 export function formatTestTitle(config: FullConfig, test: Test): string {
   let relativePath = relativeTestPath(config, test);
   relativePath += ':' + test.location.line + ':' + test.location.column;
-  const title = (test.projectName ? `[${test.projectName}] ` : '') + test.fullTitle();
+  const title = (test.project.config.name ? `[${test.project.config.name}] ` : '') + test.fullTitle();
   return `${relativePath} › ${title}`;
 }
 
