@@ -253,7 +253,6 @@ it('should work if not doing a drag', async ({page}) => {
 });
 
 it('should report event.buttons', async ({page, browserName}) => {
-  it.fail(browserName === 'webkit');
   const logsHandle = await page.evaluateHandle(() => {
     const div = document.createElement('div');
     document.body.appendChild(div);
