@@ -26,7 +26,7 @@ class LineReporter extends BaseReporter {
 
   onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
-    this._total = suite.totalTestCount();
+    this._total = suite.allTests().length;
     console.log();
   }
 

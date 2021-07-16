@@ -33,16 +33,10 @@ export class BaseReporter implements Reporter  {
   fileDurations = new Map<string, number>();
   monotonicStartTime: number = 0;
 
-  constructor() {
-  }
-
   onBegin(config: FullConfig, suite: Suite) {
     this.monotonicStartTime = monotonicTime();
     this.config = config;
     this.suite = suite;
-  }
-
-  onTestBegin(test: Test) {
   }
 
   onStdOut(chunk: string | Buffer) {
@@ -91,7 +85,7 @@ export class BaseReporter implements Reporter  {
     const unexpected: Test[] = [];
     const flaky: Test[] = [];
 
-    this.suite.findTest(test => {
+    this.suite.allTests().forEach(test => {
       switch (test.status()) {
         case 'skipped': ++skipped; break;
         case 'expected': ++expected; break;
@@ -158,13 +152,14 @@ export function formatFailure(config: FullConfig, test: Test, index?: number): s
 }
 
 function relativeTestPath(config: FullConfig, test: Test): string {
-  return path.relative(config.rootDir, test.file) || path.basename(test.file);
+  return path.relative(config.rootDir, test.location.file) || path.basename(test.location.file);
 }
 
 export function formatTestTitle(config: FullConfig, test: Test): string {
   let relativePath = relativeTestPath(config, test);
-  relativePath += ':' + test.line + ':' + test.column;
-  return `${relativePath} › ${test.fullTitle()}`;
+  relativePath += ':' + test.location.line + ':' + test.location.column;
+  const title = (test.projectName ? `[${test.projectName}] ` : '') + test.fullTitle();
+  return `${relativePath} › ${title}`;
 }
 
 function formatTestHeader(config: FullConfig, test: Test, indent: string, index?: number): string {
@@ -182,9 +177,9 @@ function formatFailedResult(test: Test, result: TestResult): string {
     tokens.push('');
     tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
     if (result.error !== undefined)
-      tokens.push(indent(formatError(result.error, test.file), '    '));
+      tokens.push(indent(formatError(result.error, test.location.file), '    '));
   } else {
-    tokens.push(indent(formatError(result.error!, test.file), '    '));
+    tokens.push(indent(formatError(result.error!, test.location.file), '    '));
   }
   return tokens.join('\n');
 }

@@ -16,8 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import EmptyReporter from './empty';
-import { FullConfig, Test, Suite, TestResult, TestError, FullResult, TestStatus } from '../reporter';
+import { FullConfig, Test, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter } from '../reporter';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -76,14 +75,13 @@ function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
-class JSONReporter extends EmptyReporter {
+class JSONReporter implements Reporter {
   config!: FullConfig;
   suite!: Suite;
   private _errors: TestError[] = [];
   private _outputFile: string | undefined;
 
   constructor(options: { outputFile?: string } = {}) {
-    super();
     this._outputFile = options.outputFile;
   }
 
@@ -129,22 +127,35 @@ class JSONReporter extends EmptyReporter {
     const fileSuites = new Map<string, JSONReportSuite>();
     const result: JSONReportSuite[] = [];
     for (const suite of suites) {
-      if (!fileSuites.has(suite.file)) {
+      if (!fileSuites.has(suite.location.file)) {
         const serialized = this._serializeSuite(suite);
         if (serialized) {
-          fileSuites.set(suite.file, serialized);
+          fileSuites.set(suite.location.file, serialized);
           result.push(serialized);
         }
       } else {
-        this._mergeTestsFromSuite(fileSuites.get(suite.file)!, suite);
+        this._mergeTestsFromSuite(fileSuites.get(suite.location.file)!, suite);
       }
     }
     return result;
   }
 
+  private _relativeLocation(location: Location): Location {
+    return {
+      file: toPosixPath(path.relative(this.config.rootDir, location.file)),
+      line: location.line,
+      column: location.column,
+    };
+  }
+
+  private _locationMatches(s: JSONReportSuite | JSONReportSpec, location: Location) {
+    const relative = this._relativeLocation(location);
+    return s.file === relative.file && s.line === relative.line && s.column === relative.column;
+  }
+
   private _mergeTestsFromSuite(to: JSONReportSuite, from: Suite) {
     for (const fromSuite of from.suites) {
-      const toSuite = (to.suites || []).find(s => s.title === fromSuite.title && s.file === toPosixPath(path.relative(this.config.rootDir, fromSuite.file)) && s.line === fromSuite.line && s.column === fromSuite.column);
+      const toSuite = (to.suites || []).find(s => s.title === fromSuite.title && this._locationMatches(s, from.location));
       if (toSuite) {
         this._mergeTestsFromSuite(toSuite, fromSuite);
       } else {
@@ -157,7 +168,7 @@ class JSONReporter extends EmptyReporter {
       }
     }
     for (const test of from.tests) {
-      const toSpec = to.specs.find(s => s.title === test.title && s.file === toPosixPath(path.relative(this.config.rootDir, test.file)) && s.line === test.line && s.column === test.column);
+      const toSpec = to.specs.find(s => s.title === test.title && s.file === toPosixPath(path.relative(this.config.rootDir, test.location.file)) && s.line === test.location.line && s.column === test.location.column);
       if (toSpec)
         toSpec.tests.push(this._serializeTest(test));
       else
@@ -166,14 +177,12 @@ class JSONReporter extends EmptyReporter {
   }
 
   private _serializeSuite(suite: Suite): null | JSONReportSuite {
-    if (!suite.findTest(test => true))
+    if (!suite.allTests().length)
       return null;
     const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as JSONReportSuite[];
     return {
       title: suite.title,
-      file: toPosixPath(path.relative(this.config.rootDir, suite.file)),
-      line: suite.line,
-      column: suite.column,
+      ...this._relativeLocation(suite.location),
       specs: suite.tests.map(test => this._serializeTestSpec(test)),
       suites: suites.length ? suites : undefined,
     };
@@ -184,9 +193,7 @@ class JSONReporter extends EmptyReporter {
       title: test.title,
       ok: test.ok(),
       tests: [ this._serializeTest(test) ],
-      file: toPosixPath(path.relative(this.config.rootDir, test.file)),
-      line: test.line,
-      column: test.column,
+      ...this._relativeLocation(test.location),
     };
   }
 

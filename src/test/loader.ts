@@ -112,7 +112,7 @@ export class Loader {
     try {
       const suite = new Suite('');
       suite._requireFile = file;
-      suite.file = file;
+      suite.location.file = file;
       setCurrentlyLoadingFileSuite(suite);
       await this._requireOrImport(file);
       this._fileSuites.set(file, suite);

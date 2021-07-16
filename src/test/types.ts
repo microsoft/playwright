@@ -15,9 +15,10 @@
  */
 
 import type { Fixtures } from '../../types/test';
+import type { Location } from './reporter';
 export * from '../../types/test';
+export { Location } from './reporter';
 
-export type Location = { file: string, line: number, column: number };
 export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;

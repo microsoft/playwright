@@ -21,12 +21,10 @@ import { Annotations, Location } from './types';
 
 class Base {
   title: string;
-  file: string = '';
-  line: number = 0;
-  column: number = 0;
+  location: Location = { file: '', line: 0, column: 0 };
   parent?: Suite;
 
-  _fullTitle: string = '';
+  _titlePath: string[] = [];
   _only = false;
   _requireFile: string = '';
 
@@ -34,15 +32,18 @@ class Base {
     this.title = title;
   }
 
-  _buildFullTitle(parentFullTitle: string) {
+  _buildTitlePath(parentTitlePath: string[]) {
+    this._titlePath = [...parentTitlePath];
     if (this.title)
-      this._fullTitle = (parentFullTitle ? parentFullTitle + ' ' : '') + this.title;
-    else
-      this._fullTitle = parentFullTitle;
+      this._titlePath.push(this.title);
+  }
+
+  titlePath(): string[] {
+    return this._titlePath;
   }
 
   fullTitle(): string {
-    return this._fullTitle;
+    return this._titlePath.join(' ');
   }
 }
 
@@ -71,7 +72,6 @@ export class Suite extends Base implements reporterTypes.Suite {
 
   _addTest(test: Test) {
     test.parent = this;
-    test.suite = this;
     this.tests.push(test);
     this._entries.push(test);
   }
@@ -82,30 +82,17 @@ export class Suite extends Base implements reporterTypes.Suite {
     this._entries.push(suite);
   }
 
-  findTest(fn: (test: Test) => boolean | void): boolean {
-    for (const entry of this._entries) {
-      if (entry instanceof Suite) {
-        if (entry.findTest(fn))
-          return true;
-      } else {
-        if (fn(entry))
-          return true;
-      }
-    }
-    return false;
-  }
-
-  totalTestCount(): number {
-    let total = 0;
-    for (const suite of this.suites)
-      total += suite.totalTestCount();
-    total += this.tests.length;
-    return total;
-  }
-
-  _allTests(): Test[] {
+  allTests(): Test[] {
     const result: Test[] = [];
-    this.findTest(test => { result.push(test); });
+    const visit = (suite: Suite) => {
+      for (const entry of suite._entries) {
+        if (entry instanceof Suite)
+          visit(entry);
+        else
+          result.push(entry);
+      }
+    };
+    visit(this);
     return result;
   }
 
@@ -126,9 +113,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _clone(): Suite {
     const suite = new Suite(this.title);
     suite._only = this._only;
-    suite.file = this.file;
-    suite.line = this.line;
-    suite.column = this.column;
+    suite.location = this.location;
     suite._requireFile = this._requireFile;
     suite._fixtureOverrides = this._fixtureOverrides;
     suite._hooks = this._hooks.slice();
@@ -140,11 +125,9 @@ export class Suite extends Base implements reporterTypes.Suite {
 }
 
 export class Test extends Base implements reporterTypes.Test {
-  suite!: Suite;
   fn: Function;
   results: reporterTypes.TestResult[] = [];
 
-  skipped = false;
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
   annotations: Annotations = [];
@@ -165,15 +148,14 @@ export class Test extends Base implements reporterTypes.Test {
   }
 
   status(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    if (this.skipped)
-      return 'skipped';
     // List mode bail out.
     if (!this.results.length)
       return 'skipped';
     if (this.results.length === 1 && this.expectedStatus === this.results[0].status)
-      return 'expected';
+      return this.expectedStatus === 'skipped' ? 'skipped' : 'expected';
     let hasPassedResults = false;
     for (const result of this.results) {
+      // TODO: we should not report tests that do not belong to the shard.
       // Missing status is Ok when running in shards mode.
       if (!result.status)
         return 'skipped';
@@ -193,15 +175,9 @@ export class Test extends Base implements reporterTypes.Test {
   _clone(): Test {
     const test = new Test(this.title, this.fn, this._ordinalInFile, this._testType);
     test._only = this._only;
-    test.file = this.file;
-    test.line = this.line;
-    test.column = this.column;
+    test.location = this.location;
     test._requireFile = this._requireFile;
     return test;
-  }
-
-  fullTitle(): string {
-    return (this.projectName ? `[${this.projectName}] ` : '') + this._fullTitle;
   }
 
   _appendTestResult(): reporterTypes.TestResult {

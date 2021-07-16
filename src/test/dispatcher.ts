@@ -50,7 +50,7 @@ export class Dispatcher {
 
     this._suite = suite;
     for (const suite of this._suite.suites) {
-      for (const test of suite._allTests())
+      for (const test of suite.allTests())
         this._testById.set(test._id, { test, result: test._appendTestResult() });
     }
 
@@ -59,7 +59,7 @@ export class Dispatcher {
     // Shard tests.
     const shard = this._loader.fullConfig().shard;
     if (shard) {
-      let total = this._suite.totalTestCount();
+      let total = this._suite.allTests().length;
       const shardSize = Math.ceil(total / shard.total);
       const from = shardSize * shard.current;
       const to = shardSize * (shard.current + 1);
@@ -81,7 +81,7 @@ export class Dispatcher {
     const entriesByWorkerHashAndFile = new Map<string, Map<string, DispatcherEntry>>();
     for (const fileSuite of this._suite.suites) {
       const file = fileSuite._requireFile;
-      for (const test of fileSuite._allTests()) {
+      for (const test of fileSuite.allTests()) {
         let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
         if (!entriesByFile) {
           entriesByFile = new Map();
@@ -275,8 +275,6 @@ export class Dispatcher {
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
       test.timeout = params.timeout;
-      if (params.expectedStatus === 'skipped' && params.status === 'skipped')
-        test.skipped = true;
       this._reportTestEnd(test, result, params.status);
     });
     worker.on('stdOut', (params: TestOutputPayload) => {
@@ -284,18 +282,18 @@ export class Dispatcher {
       const pair = params.testId ? this._testById.get(params.testId) : undefined;
       if (pair)
         pair.result.stdout.push(chunk);
-      this._reporter.onStdOut(chunk, pair ? pair.test : undefined);
+      this._reporter.onStdOut?.(chunk, pair ? pair.test : undefined);
     });
     worker.on('stdErr', (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       const pair = params.testId ? this._testById.get(params.testId) : undefined;
       if (pair)
         pair.result.stderr.push(chunk);
-      this._reporter.onStdErr(chunk, pair ? pair.test : undefined);
+      this._reporter.onStdErr?.(chunk, pair ? pair.test : undefined);
     });
     worker.on('teardownError', ({error}) => {
       this._hasWorkerErrors = true;
-      this._reporter.onError(error);
+      this._reporter.onError?.(error);
     });
     worker.on('exit', () => {
       this._workers.delete(worker);
@@ -322,7 +320,7 @@ export class Dispatcher {
       return;
     const maxFailures = this._loader.fullConfig().maxFailures;
     if (!maxFailures || this._failureCount < maxFailures)
-      this._reporter.onTestBegin(test);
+      this._reporter.onTestBegin?.(test);
   }
 
   private _reportTestEnd(test: Test, result: TestResult, status: TestStatus) {
@@ -333,7 +331,7 @@ export class Dispatcher {
       ++this._failureCount;
     const maxFailures = this._loader.fullConfig().maxFailures;
     if (!maxFailures || this._failureCount <= maxFailures)
-      this._reporter.onTestEnd(test, result);
+      this._reporter.onTestEnd?.(test, result);
     if (maxFailures && this._failureCount === maxFailures)
       this.stop().catch(e => {});
   }
