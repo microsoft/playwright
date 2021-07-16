@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import os from 'os';
 import { test as it, expect } from './pageTest';
 
 it.skip(({ isAndroid }) => isAndroid);
@@ -49,7 +50,11 @@ it('should emulate scheme work', async ({page}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
 });
 
-it('should default to light', async ({page}) => {
+it('should default to light', async ({page, platform}) => {
+  if (platform === 'darwin') {
+    const osRelease = os.release().split('.').map(a => parseInt(a, 10));
+    it.fail(osRelease[0] === 20 && osRelease[1] <= 3, 'reset the color-scheme does not work on <= 11.2 MacOS');
+  }
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
 
