@@ -185,7 +185,9 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 
 ## method: Request.timing
 - returns: <[Object]>
-  - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+  - `issueTime` <[float]> Request issued time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+  - `startTime` <[float]> Request start time in milliseconds elapsed since
+    January 1, 1970 00:00:00 UTC. Includes time spent in queue waiting for a network connection.
   - `domainLookupStart` <[float]> Time immediately before the browser starts the domain name lookup for the
     resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
   - `domainLookupEnd` <[float]> Time immediately after the browser starts the domain name lookup for the resource.

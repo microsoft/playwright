@@ -519,7 +519,8 @@ class NetworkRequest {
     this.httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
     this.httpChannel.QueryInterface(Ci.nsITimedChannel);
     const timing = {
-      startTime: this.httpChannel.channelCreationTime,
+      issueTime: this.httpChannel.channelCreationTime,
+      startTime: this.httpChannel.asyncOpenTime,
       domainLookupStart: this.httpChannel.domainLookupStartTime,
       domainLookupEnd: this.httpChannel.domainLookupEndTime,
       connectStart: this.httpChannel.connectStartTime,

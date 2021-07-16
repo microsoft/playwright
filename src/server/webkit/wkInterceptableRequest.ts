@@ -139,6 +139,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     };
     const timingPayload = responsePayload.timing;
     const timing: network.ResourceTiming = {
+      issueTime: this._timestamp,
       startTime: this._wallTime,
       domainLookupStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupStart) : -1,
       domainLookupEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupEnd) : -1,
