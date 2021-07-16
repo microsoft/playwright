@@ -12,7 +12,7 @@ USAGE=$(cat<<EOF
 EOF
 )
 
-SCRIPT_PATH=$(pwd -P)
+SCRIPT_FOLDER=$(pwd -P)
 source "${SCRIPT_FOLDER}/../utils.sh"
 
 main() {
@@ -41,7 +41,7 @@ compile_chromium() {
     exit 1
   fi
 
-  source "${SCRIPT_PATH}/ensure_depot_tools.sh"
+  source "${SCRIPT_FOLDER}/ensure_depot_tools.sh"
 
   if [[ $1 == "--compile-mac"* ]]; then
     # As of Jan, 2021 Chromium mac compilation requires Xcode12.2
@@ -72,7 +72,7 @@ compile_chromium() {
   fi
 
   if [[ ! -z "$USE_GOMA" ]]; then
-    PLAYWRIGHT_GOMA_PATH="${SCRIPT_PATH}/electron-build-tools/third_party/goma"
+    PLAYWRIGHT_GOMA_PATH="${SCRIPT_FOLDER}/electron-build-tools/third_party/goma"
     if [[ $1 == "--compile-win"* ]]; then
       PLAYWRIGHT_GOMA_PATH=$(cygpath -w "${PLAYWRIGHT_GOMA_PATH}")
     fi
@@ -82,9 +82,9 @@ compile_chromium() {
 
   if [[ $1 == "--compile-win"* ]]; then
     if [[ -z "$USE_GOMA" ]]; then
-      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_PATH}/buildwin.bat)"
+      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_FOLDER}/buildwin.bat)"
     else
-      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_PATH}/buildwingoma.bat)"
+      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_FOLDER}/buildwingoma.bat)"
     fi
   else
     gn gen out/Default
@@ -102,7 +102,7 @@ compile_chromium() {
 }
 
 mirror_chromium() {
-  cd "$SCRIPT_PATH"
+  cd "$SCRIPT_FOLDER"
   rm -rf output
   mkdir -p output
   cd output
@@ -124,7 +124,7 @@ mirror_chromium() {
     fi
   fi
 
-  CRREV=$(head -1 "${SCRIPT_PATH}/BUILD_NUMBER")
+  CRREV=$(head -1 "${SCRIPT_FOLDER}/BUILD_NUMBER")
   if [[ "${PLATFORM}" == "--mirror-win32" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Win/${CRREV}/chrome-win.zip"
   elif [[ "${PLATFORM}" == "--mirror-win64" ]]; then
