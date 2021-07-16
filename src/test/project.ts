@@ -78,15 +78,15 @@ export class ProjectImpl {
     return this.testPools.get(test)!;
   }
 
-  cloneSuite(suite: Suite, repeatEachIndex: number, filter: (test: Test) => boolean): Suite | undefined {
-    const result = suite._clone();
-    result._repeatEachIndex = repeatEachIndex;
-    result._projectIndex = this.index;
-    for (const entry of suite._entries) {
+  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: Test) => boolean): boolean {
+    for (const entry of from._entries) {
       if (entry instanceof Suite) {
-        const cloned = this.cloneSuite(entry, repeatEachIndex, filter);
-        if (cloned)
-          result._addSuite(cloned);
+        const suite = entry._clone();
+        to._addSuite(suite);
+        if (!this._cloneEntries(entry, suite, repeatEachIndex, filter)) {
+          to._entries.pop();
+          to.suites.pop();
+        }
       } else {
         const pool = this.buildPool(entry);
         const test = entry._clone();
@@ -95,14 +95,21 @@ export class ProjectImpl {
         test._workerHash = `run${this.index}-${pool.digest}-repeat${repeatEachIndex}`;
         test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
         test._pool = pool;
-        test._buildTitlePath(suite._titlePath);
-        if (!filter(test))
-          continue;
-        result._addTest(test);
+        test._repeatEachIndex = repeatEachIndex;
+        test._projectIndex = this.index;
+        to._addTest(test);
+        if (!filter(test)) {
+          to._entries.pop();
+          to.suites.pop();
+        }
       }
     }
-    if (result._entries.length)
-      return result;
+    return to._entries.length > 0;
+  }
+
+  cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: Test) => boolean): Suite | undefined {
+    const result = suite._clone();
+    return this._cloneEntries(suite, result, repeatEachIndex, filter) ? result : undefined;
   }
 
   private resolveFixtures(testType: TestTypeImpl): FixturesWithLocation[] {

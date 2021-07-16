@@ -110,7 +110,7 @@ export class Loader {
     if (this._fileSuites.has(file))
       return this._fileSuites.get(file)!;
     try {
-      const suite = new Suite('');
+      const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
       suite._requireFile = file;
       suite.location.file = file;
       setCurrentlyLoadingFileSuite(suite);

@@ -180,8 +180,14 @@ export class Runner {
         preprocessRoot._addSuite(fileSuite);
       if (config.forbidOnly) {
         const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
-        if (onlyTestsAndSuites.length > 0)
-          return { status: 'forbid-only', locations: onlyTestsAndSuites.map(testOrSuite => `${buildItemLocation(config.rootDir, testOrSuite)} > ${testOrSuite.fullTitle()}`) };
+        if (onlyTestsAndSuites.length > 0) {
+          const locations = onlyTestsAndSuites.map(testOrSuite => {
+            // Skip root and file.
+            const title = testOrSuite.titlePath().slice(2).join(' ');
+            return `${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`;
+          });
+          return { status: 'forbid-only', locations };
+        }
       }
       const clashingTests = getClashingTestsPerSuite(preprocessRoot);
       if (clashingTests.size > 0)
@@ -198,20 +204,21 @@ export class Runner {
       const grepInvertMatcher = config.grepInvert ? createMatcher(config.grepInvert) : null;
       const rootSuite = new Suite('');
       for (const project of projects) {
+        const projectSuite = new Suite(project.config.name);
+        rootSuite._addSuite(projectSuite);
         for (const file of files.get(project)!) {
           const fileSuite = fileSuites.get(file);
           if (!fileSuite)
             continue;
           for (let repeatEachIndex = 0; repeatEachIndex < project.config.repeatEach; repeatEachIndex++) {
-            const cloned = project.cloneSuite(fileSuite, repeatEachIndex, test => {
-              const fullTitle = test.fullTitle();
-              const titleWithProject = (test.projectName ? `[${test.projectName}] ` : '') + fullTitle;
-              if (grepInvertMatcher?.(titleWithProject))
+            const cloned = project.cloneFileSuite(fileSuite, repeatEachIndex, test => {
+              const grepTitle = test.titlePath().join(' ');
+              if (grepInvertMatcher?.(grepTitle))
                 return false;
-              return grepMatcher(titleWithProject);
+              return grepMatcher(grepTitle);
             });
             if (cloned)
-              rootSuite._addSuite(cloned);
+              projectSuite._addSuite(cloned);
           }
         }
         outputDirs.add(project.config.outputDir);
@@ -380,7 +387,7 @@ function getClashingTestsPerSuite(rootSuite: Suite): Map<string, Test[]> {
     for (const childSuite of suite.suites)
       visit(childSuite, clashingTests);
     for (const test of suite.tests) {
-      const fullTitle = test.fullTitle();
+      const fullTitle = test.titlePath().slice(2).join(' ');
       if (!clashingTests.has(fullTitle))
         clashingTests.set(fullTitle, []);
       clashingTests.set(fullTitle, clashingTests.get(fullTitle)!.concat(test));

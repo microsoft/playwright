@@ -28,7 +28,6 @@ export interface Suite {
   suites: Suite[];
   tests: Test[];
   titlePath(): string[];
-  fullTitle(): string;
   allTests(): Test[];
 }
 export interface Test {
@@ -38,10 +37,8 @@ export interface Test {
   expectedStatus: TestStatus;
   timeout: number;
   annotations: { type: string, description?: string }[];
-  projectName: string;
   retries: number;
   titlePath(): string[];
-  fullTitle(): string;
   status(): 'skipped' | 'expected' | 'unexpected' | 'flaky';
   ok(): boolean;
 }

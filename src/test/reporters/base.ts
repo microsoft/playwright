@@ -50,8 +50,9 @@ export class BaseReporter implements Reporter  {
   }
 
   onTestEnd(test: Test, result: TestResult) {
+    const projectName = test.titlePath()[1];
     const relativePath = relativeTestPath(this.config, test);
-    const fileAndProject = relativePath + (test.projectName ? ` [${test.projectName}]` : '');
+    const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
     const duration = this.fileDurations.get(fileAndProject) || 0;
     this.fileDurations.set(fileAndProject, duration + result.duration);
   }
@@ -156,10 +157,11 @@ function relativeTestPath(config: FullConfig, test: Test): string {
 }
 
 export function formatTestTitle(config: FullConfig, test: Test): string {
-  let relativePath = relativeTestPath(config, test);
-  relativePath += ':' + test.location.line + ':' + test.location.column;
-  const title = (test.projectName ? `[${test.projectName}] ` : '') + test.fullTitle();
-  return `${relativePath} › ${title}`;
+  // root, project, file, ...describes, test
+  const [, projectName, , ...titles] = test.titlePath();
+  const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
+  const projectTitle = projectName ? `[${projectName}] › ` : '';
+  return `${projectTitle}${location} › ${titles.join(' ')}`;
 }
 
 function formatTestHeader(config: FullConfig, test: Test, indent: string, index?: number): string {

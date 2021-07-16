@@ -24,7 +24,6 @@ class Base {
   location: Location = { file: '', line: 0, column: 0 };
   parent?: Suite;
 
-  _titlePath: string[] = [];
   _only = false;
   _requireFile: string = '';
 
@@ -32,18 +31,10 @@ class Base {
     this.title = title;
   }
 
-  _buildTitlePath(parentTitlePath: string[]) {
-    this._titlePath = [...parentTitlePath];
-    if (this.title)
-      this._titlePath.push(this.title);
-  }
-
   titlePath(): string[] {
-    return this._titlePath;
-  }
-
-  fullTitle(): string {
-    return this._titlePath.join(' ');
+    const titlePath = this.parent ? this.parent.titlePath() : [];
+    titlePath.push(this.title);
+    return titlePath;
   }
 }
 
@@ -67,8 +58,6 @@ export class Suite extends Base implements reporterTypes.Suite {
   _timeout: number | undefined;
   _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
-  _repeatEachIndex = 0;
-  _projectIndex = 0;
 
   _addTest(test: Test) {
     test.parent = this;
@@ -139,6 +128,8 @@ export class Test extends Base implements reporterTypes.Test {
   _id = '';
   _workerHash = '';
   _pool: FixturePool | undefined;
+  _repeatEachIndex = 0;
+  _projectIndex = 0;
 
   constructor(title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl) {
     super(title);

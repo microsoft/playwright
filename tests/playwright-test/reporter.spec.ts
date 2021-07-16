@@ -24,10 +24,10 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
           this.options = options;
         }
         onBegin(config, suite) {
-          console.log('\\n%%reporter-begin-' + this.options.begin + '-' + suite.suites.length + '%%');
+          console.log('\\n%%reporter-begin-' + this.options.begin + '%%');
         }
         onTestBegin(test) {
-          console.log('\\n%%reporter-testbegin-' + test.title + '-' + test.projectName + '%%');
+          console.log('\\n%%reporter-testbegin-' + test.title + '-' + test.titlePath()[1] + '%%');
         }
         onStdOut() {
           console.log('\\n%%reporter-stdout%%');
@@ -36,7 +36,7 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
           console.log('\\n%%reporter-stderr%%');
         }
         onTestEnd(test) {
-          console.log('\\n%%reporter-testend-' + test.title + '-' + test.projectName + '%%');
+          console.log('\\n%%reporter-testend-' + test.title + '-' + test.titlePath()[1] + '%%');
         }
         onTimeout() {
           console.log('\\n%%reporter-timeout%%');
@@ -73,7 +73,7 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(0);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%reporter-begin-begin-3%%',
+    '%%reporter-begin-begin%%',
     '%%reporter-testbegin-pass-foo%%',
     '%%reporter-stdout%%',
     '%%reporter-stderr%%',

@@ -119,7 +119,7 @@ export class WorkerRunner extends EventEmitter {
 
     const fileSuite = await this._loader.loadTestFile(runPayload.file);
     let anyPool: FixturePool | undefined;
-    const suite = this._project.cloneSuite(fileSuite, this._params.repeatEachIndex, test => {
+    const suite = this._project.cloneFileSuite(fileSuite, this._params.repeatEachIndex, test => {
       if (!this._entries.has(test._id))
         return false;
       anyPool = test._pool;

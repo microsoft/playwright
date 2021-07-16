@@ -46,8 +46,10 @@ class JUnitReporter implements Reporter {
   async onEnd(result: FullResult) {
     const duration = monotonicTime() - this.startTime;
     const children: XMLEntry[] = [];
-    for (const suite of this.suite.suites)
-      children.push(this._buildTestSuite(suite));
+    for (const projectSuite of this.suite.suites) {
+      for (const fileSuite of projectSuite.suites)
+        children.push(this._buildTestSuite(fileSuite));
+    }
     const tokens: string[] = [];
 
     const self = this;
@@ -119,7 +121,8 @@ class JUnitReporter implements Reporter {
     const entry = {
       name: 'testcase',
       attributes: {
-        name: test.fullTitle(),
+        // Skip root, project, file
+        name: test.titlePath().slice(3).join(' '),
         classname: formatTestTitle(this.config, test),
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
       },
