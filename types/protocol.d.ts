@@ -897,12 +897,18 @@ instead of "limited-quirks".
       url: string;
       location?: SourceCodeLocation;
     }
+    export interface WasmCrossOriginModuleSharingIssueDetails {
+      wasmModuleUrl: string;
+      sourceOrigin: string;
+      targetOrigin: string;
+      isWarning: boolean;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"WasmCrossOriginModuleSharingIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -921,7 +927,13 @@ add a new optional field to this type.
       attributionReportingIssueDetails?: AttributionReportingIssueDetails;
       quirksModeIssueDetails?: QuirksModeIssueDetails;
       navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
+      wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
     }
+    /**
+     * A unique id for a DevTools inspector issue. Allows other entities (e.g.
+exceptions, CDP message, console messages, etc.) to reference an issue.
+     */
+    export type IssueId = string;
     /**
      * An inspector issue reported from the back-end.
      */
@@ -932,7 +944,7 @@ add a new optional field to this type.
        * A unique id for this issue. May be omitted if no other entity (e.g.
 exception, CDP message, etc.) is referencing this issue.
        */
-      issueId?: string;
+      issueId?: IssueId;
     }
     
     export type issueAddedPayload = {
@@ -1612,7 +1624,9 @@ inspector" rules), "regular" for regular stylesheets.
        */
       frameId: Page.FrameId;
       /**
-       * Stylesheet resource URL.
+       * Stylesheet resource URL. Empty if this is a constructed stylesheet created using
+new CSSStyleSheet() (but non-empty if this is a constructed sylesheet imported
+as a CSS module script).
        */
       sourceURL: string;
       /**
@@ -1652,7 +1666,8 @@ Constructed stylesheets (new CSSStyleSheet()) are mutable immediately after crea
        */
       isMutable: boolean;
       /**
-       * Whether this stylesheet is a constructed stylesheet (created using new CSSStyleSheet()).
+       * True if this stylesheet is created through new CSSStyleSheet() or imported as a
+CSS module script.
        */
       isConstructed: boolean;
       /**
@@ -1926,6 +1941,10 @@ available).
        * Identifier of the stylesheet containing this object (if exists).
        */
       styleSheetId?: StyleSheetId;
+      /**
+       * Optional name for the container.
+       */
+      name?: string;
     }
     /**
      * Information about amount of glyphs that were rendered with given font.
@@ -2754,7 +2773,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"before"|"after"|"marker"|"backdrop"|"selection"|"target-text"|"spelling-error"|"grammar-error"|"first-line-inherited"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button";
+    export type PseudoType = "first-line"|"first-letter"|"before"|"after"|"marker"|"backdrop"|"selection"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button";
     /**
      * Shadow root type.
      */
@@ -3976,6 +3995,21 @@ $x functions).
        */
       nodeId?: NodeId;
     }
+    /**
+     * Returns the container of the given node based on container query conditions.
+If containerName is given, it will find the nearest container with a matching name;
+otherwise it will find the nearest container regardless of its container name.
+     */
+    export type getContainerForNodeParameters = {
+      nodeId: NodeId;
+      containerName?: string;
+    }
+    export type getContainerForNodeReturnValue = {
+      /**
+       * The container node for the given node, or null if not found.
+       */
+      nodeId?: NodeId;
+    }
   }
   
   /**
@@ -4482,6 +4516,10 @@ getSnapshot was true.
        * `Node`'s nodeType.
        */
       nodeType?: number[];
+      /**
+       * Type of the shadow root the `Node` is in. String values are equal to the `ShadowRootType` enum.
+       */
+      shadowRootType?: RareStringData;
       /**
        * `Node`'s nodeName.
        */
@@ -7094,6 +7132,11 @@ milliseconds relatively to this requestTime.
 passed by the developer (e.g. via "fetch") as understood by the backend.
        */
       trustTokenParams?: TrustTokenParams;
+      /**
+       * True if this resource request is considered to be the 'same site' as the
+request correspondinfg to the main frame.
+       */
+      isSameSite?: boolean;
     }
     /**
      * Details of a signed certificate timestamp (SCT).
@@ -9227,6 +9270,10 @@ continueInterceptedRequest call.
        * The contrast algorithm to use for the contrast ratio (default: aa).
        */
       contrastAlgorithm?: ContrastAlgorithm;
+      /**
+       * The container query container highlight configuration (default: all transparent).
+       */
+      containerQueryContainerHighlightConfig?: ContainerQueryContainerHighlightConfig;
     }
     export type ColorFormat = "rgb"|"hsl"|"hex";
     /**
@@ -9296,6 +9343,22 @@ continueInterceptedRequest call.
        * The content box highlight outline color (default: transparent).
        */
       outlineColor?: DOM.RGBA;
+    }
+    export interface ContainerQueryHighlightConfig {
+      /**
+       * A descriptor for the highlight appearance of container query containers.
+       */
+      containerQueryContainerHighlightConfig: ContainerQueryContainerHighlightConfig;
+      /**
+       * Identifier of the container node to highlight.
+       */
+      nodeId: DOM.NodeId;
+    }
+    export interface ContainerQueryContainerHighlightConfig {
+      /**
+       * The style of the container border
+       */
+      containerBorder?: LineStyle;
     }
     export type InspectMode = "searchForNode"|"searchForUAShadowDOM"|"captureAreaScreenshot"|"showDistances"|"none";
     
@@ -9413,6 +9476,9 @@ user manually inspects an element.
     }
     /**
      * Highlights owner element of the frame with given id.
+Deprecated: Doesn't work reliablity and cannot be fixed due to process
+separatation (the owner node might be in a different process). Determine
+the owner node in the client and use highlightNode.
      */
     export type highlightFrameParameters = {
       /**
@@ -9617,6 +9683,14 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     }
     export type setShowScrollSnapOverlaysReturnValue = {
     }
+    export type setShowContainerQueryOverlaysParameters = {
+      /**
+       * An array of node identifiers and descriptors for the highlight appearance.
+       */
+      containerQueryHighlightConfigs: ContainerQueryHighlightConfig[];
+    }
+    export type setShowContainerQueryOverlaysReturnValue = {
+    }
     /**
      * Requests that backend shows paint rectangles
      */
@@ -9705,6 +9779,14 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      * Indicates whether a frame has been identified as an ad.
      */
     export type AdFrameType = "none"|"child"|"root";
+    export type AdFrameExplanation = "ParentIsAd"|"CreatedByAdScript"|"MatchedBlockingRule";
+    /**
+     * Indicates whether a frame has been identified as an ad and why.
+     */
+    export interface AdFrameStatus {
+      adFrameType: AdFrameType;
+      explanations?: AdFrameExplanation[];
+    }
     /**
      * Indicates whether the frame is a secure context and why it is the case.
      */
@@ -9718,7 +9800,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      * All Permissions Policy features. This enum should match the one defined
 in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -9812,9 +9894,9 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        */
       unreachableUrl?: string;
       /**
-       * Indicates whether this frame was tagged as an ad.
+       * Indicates whether this frame was tagged as an ad and why.
        */
-      adFrameType?: AdFrameType;
+      adFrameStatus?: AdFrameStatus;
       /**
        * Indicates whether the main document is a secure context and explains why that is the case.
        */
@@ -10174,7 +10256,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
     /**
      * List of not restored reasons for back-forward cache.
      */
-    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"WebSocket"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"PageShowEventListener"|"PageHideEventListener"|"BeforeUnloadEventListener"|"UnloadEventListener"|"FreezeEventListener"|"ResumeEventListener"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedGeolocationPermission"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebVR"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"WebFileSystem"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"IsolatedWorldScript"|"InjectedStyleSheet"|"MediaSessionImplOnServiceCreated"|"Unknown";
+    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"WebSocket"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"WebFileSystem"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"IsolatedWorldScript"|"InjectedStyleSheet"|"MediaSessionImplOnServiceCreated"|"Unknown";
     /**
      * Types of not restored reasons for back-forward cache.
      */
@@ -10582,7 +10664,7 @@ to false.
       /**
        * Image compression format (defaults to png).
        */
-      format?: "jpeg"|"png";
+      format?: "jpeg"|"png"|"webp";
       /**
        * Compression quality from range [0..100] (jpeg only).
        */
@@ -15815,7 +15897,7 @@ execution.
        */
       executionContextId?: ExecutionContextId;
       /**
-       * Dictionary with entries of meta deta that the client associated
+       * Dictionary with entries of meta data that the client associated
 with this exception, such as information about associated network
 requests, etc.
        */
@@ -16065,6 +16147,10 @@ executionContextId or objectId should be specified.
 specified and objectId is, objectGroup will be inherited from object.
        */
       objectGroup?: string;
+      /**
+       * Whether to throw an exception if side effect cannot be ruled out during evaluation.
+       */
+      throwOnSideEffect?: boolean;
     }
     export type callFunctionOnReturnValue = {
       /**
@@ -16800,6 +16886,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "DOM.setOuterHTML": DOM.setOuterHTMLParameters;
     "DOM.undo": DOM.undoParameters;
     "DOM.getFrameOwner": DOM.getFrameOwnerParameters;
+    "DOM.getContainerForNode": DOM.getContainerForNodeParameters;
     "DOMDebugger.getEventListeners": DOMDebugger.getEventListenersParameters;
     "DOMDebugger.removeDOMBreakpoint": DOMDebugger.removeDOMBreakpointParameters;
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointParameters;
@@ -16955,6 +17042,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysParameters;
     "Overlay.setShowFlexOverlays": Overlay.setShowFlexOverlaysParameters;
     "Overlay.setShowScrollSnapOverlays": Overlay.setShowScrollSnapOverlaysParameters;
+    "Overlay.setShowContainerQueryOverlays": Overlay.setShowContainerQueryOverlaysParameters;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsParameters;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsParameters;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsParameters;
@@ -17317,6 +17405,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "DOM.setOuterHTML": DOM.setOuterHTMLReturnValue;
     "DOM.undo": DOM.undoReturnValue;
     "DOM.getFrameOwner": DOM.getFrameOwnerReturnValue;
+    "DOM.getContainerForNode": DOM.getContainerForNodeReturnValue;
     "DOMDebugger.getEventListeners": DOMDebugger.getEventListenersReturnValue;
     "DOMDebugger.removeDOMBreakpoint": DOMDebugger.removeDOMBreakpointReturnValue;
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointReturnValue;
@@ -17472,6 +17561,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysReturnValue;
     "Overlay.setShowFlexOverlays": Overlay.setShowFlexOverlaysReturnValue;
     "Overlay.setShowScrollSnapOverlays": Overlay.setShowScrollSnapOverlaysReturnValue;
+    "Overlay.setShowContainerQueryOverlays": Overlay.setShowContainerQueryOverlaysReturnValue;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsReturnValue;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsReturnValue;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsReturnValue;
