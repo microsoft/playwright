@@ -83,6 +83,7 @@ export class FFNetworkManager {
 
     this._startTime = event.timing.startTime;
     const timing = {
+      issueTime: event.timing.issueTime,
       startTime: this._startTime / 1000,
       domainLookupStart: this._relativeTiming(event.timing.domainLookupStart),
       domainLookupEnd: this._relativeTiming(event.timing.domainLookupEnd),

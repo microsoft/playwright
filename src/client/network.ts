@@ -76,6 +76,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
     this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
     this._timing = {
+      issueTime: 0,
       startTime: 0,
       domainLookupStart: -1,
       domainLookupEnd: -1,
@@ -357,6 +358,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
 export type RouteHandlerCallback = (route: Route, request: Request) => void;
 
 export type ResourceTiming = {
+  issueTime: number;
   startTime: number;
   domainLookupStart: number;
   domainLookupEnd: number;

@@ -11684,7 +11684,13 @@ export interface Request {
    */
   timing(): {
     /**
-     * Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+     * Request issued time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+     */
+    issueTime: number;
+
+    /**
+     * Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC. Includes time spent in queue waiting for
+     * a network connection.
      */
     startTime: number;
 

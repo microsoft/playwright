@@ -289,8 +289,10 @@ export class CRNetworkManager {
     const timingPayload = responsePayload.timing!;
     let timing: network.ResourceTiming;
     if (timingPayload) {
+      const requestSentTime = Math.min(request._timestamp, timingPayload.requestTime);
       timing = {
-        startTime: (timingPayload.requestTime - request._timestamp + request._wallTime) * 1000,
+        issueTime: (requestSentTime - request._timestamp + request._wallTime) * 1000,
+        startTime: (timingPayload.requestTime + request._wallTime) * 1000,
         domainLookupStart: timingPayload.dnsStart,
         domainLookupEnd: timingPayload.dnsEnd,
         connectStart: timingPayload.connectStart,
@@ -301,6 +303,7 @@ export class CRNetworkManager {
       };
     } else {
       timing = {
+        issueTime: request._timestamp * 1000,
         startTime: request._wallTime * 1000,
         domainLookupStart: -1,
         domainLookupEnd: -1,

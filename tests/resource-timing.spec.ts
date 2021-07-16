@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should work', async ({ contextFactory, server }) => {
+it('should work for resource', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   const [request] = await Promise.all([
@@ -26,6 +26,7 @@ it('should work', async ({ contextFactory, server }) => {
   ]);
   const timing = request.timing();
   verifyConnectionTimingConsistency(timing);
+  expect(timing.startTime).toBeGreaterThanOrEqual(timing.issueTime);
   expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
   expect(timing.responseStart).toBeGreaterThanOrEqual(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);

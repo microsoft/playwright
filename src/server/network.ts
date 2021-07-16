@@ -263,6 +263,7 @@ export type RouteHandler = (route: Route, request: Request) => void;
 type GetResponseBodyCallback = () => Promise<Buffer>;
 
 export type ResourceTiming = {
+  issueTime: number;
   startTime: number;
   domainLookupStart: number;
   domainLookupEnd: number;
