@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
+import os from 'os';
 import { browserTest as it, expect } from './config/browserTest';
 
-it.use({ proxy: { server: 'per-context' } });
+it.use({
+  browserOptions: {
+    ...(os.platform() === 'win32' ? { proxy: { server: `per-context` } } : {})
+  }
+});
 
 it('should throw for missing global proxy on Chromium Windows', async ({ browserName, platform, browserType, browserOptions, server }) => {
   it.skip(browserName !== 'chromium' || platform !== 'win32');
 
-  delete browserOptions.proxy;
-  const browser = await browserType.launch(browserOptions);
+  const browser = await browserType.launch({
+    ...browserOptions,
+    proxy: undefined,
+  });
   const error = await browser.newContext({ proxy: { server: `localhost:${server.PORT}` } }).catch(e => e);
   expect(error.toString()).toContain('Browser needs to be launched with the global proxy');
   await browser.close();
