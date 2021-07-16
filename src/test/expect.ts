@@ -38,7 +38,7 @@ function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer 
     options.threshold = projectThreshold;
 
   const withNegateComparison = this.isNot;
-  const { pass, message } = compare(
+  const { pass, message, expectedPath, actualPath, diffPath, mimeType } = compare(
       received,
       options.name,
       testInfo.snapshotPath,
@@ -47,6 +47,13 @@ function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer 
       withNegateComparison,
       options
   );
+  const contentType = mimeType || 'application/octet-stream';
+  if (expectedPath)
+    testInfo.attachments.push({ name: 'expected', contentType, path: expectedPath });
+  if (actualPath)
+    testInfo.attachments.push({ name: 'actual', contentType, path: actualPath });
+  if (diffPath)
+    testInfo.attachments.push({ name: 'diff', contentType, path: diffPath });
   return { pass, message: () => message };
 }
 

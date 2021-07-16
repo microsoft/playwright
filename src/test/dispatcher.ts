@@ -271,7 +271,12 @@ export class Dispatcher {
       const { test, result } = this._testById.get(params.testId)!;
       result.duration = params.duration;
       result.error = params.error;
-      result.data = params.data;
+      result.attachments = params.attachments.map(a => ({
+        name: a.name,
+        path: a.path,
+        contentType: a.contentType,
+        body: a.body ? Buffer.from(a.body, 'base64') : undefined
+      }));
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
       test.timeout = params.timeout;

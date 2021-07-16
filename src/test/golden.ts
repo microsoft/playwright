@@ -88,7 +88,7 @@ export function compare(
   updateSnapshots: UpdateSnapshots,
   withNegateComparison: boolean,
   options?: { threshold?: number }
-): { pass: boolean; message?: string; } {
+): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
   const snapshotFile = snapshotPath(name);
 
   if (!fs.existsSync(snapshotFile)) {
@@ -179,6 +179,10 @@ export function compare(
   return {
     pass: false,
     message: output.join('\n'),
+    expectedPath,
+    actualPath,
+    diffPath,
+    mimeType
   };
 }
 

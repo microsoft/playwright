@@ -51,7 +51,7 @@ export interface TestResult {
   duration: number;
   status?: TestStatus;
   error?: TestError;
-  data: { [key: string]: any };
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
 }
