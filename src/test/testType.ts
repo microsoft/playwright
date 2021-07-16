@@ -66,7 +66,6 @@ export class TestTypeImpl {
     test._requireFile = suite._requireFile;
     test.location = location;
     suite._addTest(test);
-    test._buildTitlePath(suite._titlePath);
 
     if (type === 'only')
       test._only = true;
@@ -81,7 +80,6 @@ export class TestTypeImpl {
     child._requireFile = suite._requireFile;
     child.location = location;
     suite._addSuite(child);
-    child._buildTitlePath(suite._titlePath);
 
     if (type === 'only')
       child._only = true;

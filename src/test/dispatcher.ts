@@ -79,14 +79,14 @@ export class Dispatcher {
 
   _filesSortedByWorkerHash(): DispatcherEntry[] {
     const entriesByWorkerHashAndFile = new Map<string, Map<string, DispatcherEntry>>();
-    for (const fileSuite of this._suite.suites) {
-      const file = fileSuite._requireFile;
-      for (const test of fileSuite.allTests()) {
+    for (const projectSuite of this._suite.suites) {
+      for (const test of projectSuite.allTests()) {
         let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
         if (!entriesByFile) {
           entriesByFile = new Map();
           entriesByWorkerHashAndFile.set(test._workerHash, entriesByFile);
         }
+        const file = test._requireFile;
         let entry = entriesByFile.get(file);
         if (!entry) {
           entry = {
@@ -94,8 +94,8 @@ export class Dispatcher {
               entries: [],
               file,
             },
-            repeatEachIndex: fileSuite._repeatEachIndex,
-            projectIndex: fileSuite._projectIndex,
+            repeatEachIndex: test._repeatEachIndex,
+            projectIndex: test._projectIndex,
             hash: test._workerHash,
           };
           entriesByFile.set(file, entry);

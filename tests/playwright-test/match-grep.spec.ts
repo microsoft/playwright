@@ -81,24 +81,6 @@ test('should grep test name with regular expression and a space', async ({ runIn
   expect(result.exitCode).toBe(0);
 });
 
-test('should grep by project name', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { projects: [
-        { name: 'foo' },
-        { name: 'bar' },
-      ]};
-    `,
-    'a.spec.ts': `
-      pwt.test('should work', () => {});
-    `,
-  }, { 'grep': 'foo]' });
-  expect(result.passed).toBe(1);
-  expect(result.skipped).toBe(0);
-  expect(result.failed).toBe(0);
-  expect(result.exitCode).toBe(0);
-});
-
 test('should grep invert test name', async ({ runInlineTest }) => {
   const result = await runInlineTest(files, { 'grep-invert': 'BB' });
   expect(result.passed).toBe(6);

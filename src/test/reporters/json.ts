@@ -123,18 +123,19 @@ class JSONReporter implements Reporter {
   }
 
   private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
-    debugger;
     const fileSuites = new Map<string, JSONReportSuite>();
     const result: JSONReportSuite[] = [];
-    for (const suite of suites) {
-      if (!fileSuites.has(suite.location.file)) {
-        const serialized = this._serializeSuite(suite);
-        if (serialized) {
-          fileSuites.set(suite.location.file, serialized);
-          result.push(serialized);
+    for (const projectSuite of suites) {
+      for (const fileSuite of projectSuite.suites) {
+        if (!fileSuites.has(fileSuite.location.file)) {
+          const serialized = this._serializeSuite(fileSuite);
+          if (serialized) {
+            fileSuites.set(fileSuite.location.file, serialized);
+            result.push(serialized);
+          }
+        } else {
+          this._mergeTestsFromSuite(fileSuites.get(fileSuite.location.file)!, fileSuite);
         }
-      } else {
-        this._mergeTestsFromSuite(fileSuites.get(suite.location.file)!, suite);
       }
     }
     return result;
@@ -202,7 +203,7 @@ class JSONReporter implements Reporter {
       timeout: test.timeout,
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
-      projectName: test.projectName,
+      projectName: test.titlePath()[1],
       results: test.results.map(r => this._serializeTestResult(r)),
       status: test.status(),
     };
