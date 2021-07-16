@@ -859,6 +859,26 @@ Page:
       tracing:
         snapshot: true
 
+    keyboardImeSetComposition:
+      parameters:
+        text: string
+        selection_start: number
+        selection_end: number
+        trigger_key: string?
+        replacement_start: number?
+        replacement_end: number?
+        delay: number?
+
+    keyboardImeCancelComposition:
+      parameters:
+        trigger_key: string
+
+    keyboardImeCommitComposition:
+      parameters:
+        text: string
+        trigger_key: string?
+        delay: number?
+
     keyboardType:
       parameters:
         text: string
