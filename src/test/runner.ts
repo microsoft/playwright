@@ -26,6 +26,7 @@ import { Test, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from './reporter';
 import { Multiplexer } from './reporters/multiplexer';
+import AllureReporter from './reporters/allure';
 import DotReporter from './reporters/dot';
 import LineReporter from './reporters/line';
 import ListReporter from './reporters/list';
@@ -65,6 +66,7 @@ export class Runner {
   private async _createReporter() {
     const reporters: Reporter[] = [];
     const defaultReporters = {
+      allure: AllureReporter,
       dot: DotReporter,
       line: LineReporter,
       list: ListReporter,

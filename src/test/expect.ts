@@ -38,7 +38,7 @@ function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer 
     options.threshold = projectThreshold;
 
   const withNegateComparison = this.isNot;
-  const { pass, message } = compare(
+  const { pass, message, expectedPath, actualPath, diffPath, mimeType } = compare(
       received,
       options.name,
       testInfo.snapshotPath,
@@ -47,6 +47,14 @@ function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer 
       withNegateComparison,
       options
   );
+  if (expectedPath) {
+    testInfo.data['toMatchSnapshot'] = {
+      expectedPath,
+      actualPath,
+      diffPath,
+      mimeType
+    };
+  }
   return { pass, message: () => message };
 }
 
