@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { FixturePool } from './fixtures';
 import * as reporterTypes from './reporter';
 import type { TestTypeImpl } from './testType';
 import { Annotations, Location } from './types';
@@ -25,6 +26,7 @@ class Base {
   column: number = 0;
   parent?: Suite;
 
+  _fullTitle: string = '';
   _only = false;
   _requireFile: string = '';
 
@@ -32,39 +34,15 @@ class Base {
     this.title = title;
   }
 
-  titlePath(): string[] {
-    if (!this.parent)
-      return [];
-    if (!this.title)
-      return this.parent.titlePath();
-    return [...this.parent.titlePath(), this.title];
+  _buildFullTitle(parentFullTitle: string) {
+    if (this.title)
+      this._fullTitle = (parentFullTitle ? parentFullTitle + ' ' : '') + this.title;
+    else
+      this._fullTitle = parentFullTitle;
   }
 
   fullTitle(): string {
-    return this.titlePath().join(' ');
-  }
-}
-
-export class Spec extends Base implements reporterTypes.Spec {
-  suite!: Suite;
-  fn: Function;
-  tests: Test[] = [];
-  _ordinalInFile: number;
-  _testType: TestTypeImpl;
-
-  constructor(title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl) {
-    super(title);
-    this.fn = fn;
-    this._ordinalInFile = ordinalInFile;
-    this._testType = testType;
-  }
-
-  ok(): boolean {
-    return !this.tests.find(r => !r.ok());
-  }
-
-  _testFullTitle(projectName: string) {
-    return (projectName ? `[${projectName}] ` : '') + this.fullTitle();
+    return this._fullTitle;
   }
 }
 
@@ -77,9 +55,9 @@ export type Modifier = {
 
 export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
-  specs: Spec[] = [];
+  tests: Test[] = [];
   _fixtureOverrides: any = {};
-  _entries: (Suite | Spec)[] = [];
+  _entries: (Suite | Test)[] = [];
   _hooks: {
     type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll',
     fn: Function,
@@ -88,12 +66,14 @@ export class Suite extends Base implements reporterTypes.Suite {
   _timeout: number | undefined;
   _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
+  _repeatEachIndex = 0;
+  _projectIndex = 0;
 
-  _addSpec(spec: Spec) {
-    spec.parent = this;
-    spec.suite = this;
-    this.specs.push(spec);
-    this._entries.push(spec);
+  _addTest(test: Test) {
+    test.parent = this;
+    test.suite = this;
+    this.tests.push(test);
+    this._entries.push(test);
   }
 
   _addSuite(suite: Suite) {
@@ -108,34 +88,9 @@ export class Suite extends Base implements reporterTypes.Suite {
         if (entry.findTest(fn))
           return true;
       } else {
-        for (const test of entry.tests) {
-          if (fn(test))
-            return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  findSpec(fn: (spec: Spec) => boolean | void): boolean {
-    for (const entry of this._entries) {
-      if (entry instanceof Suite) {
-        if (entry.findSpec(fn))
-          return true;
-      } else {
         if (fn(entry))
           return true;
       }
-    }
-    return false;
-  }
-
-  findSuite(fn: (suite: Suite) => boolean | void): boolean {
-    if (fn(this))
-      return true;
-    for (const suite of this.suites) {
-      if (suite.findSuite(fn))
-        return true;
     }
     return false;
   }
@@ -144,34 +99,49 @@ export class Suite extends Base implements reporterTypes.Suite {
     let total = 0;
     for (const suite of this.suites)
       total += suite.totalTestCount();
-    for (const spec of this.specs)
-      total += spec.tests.length;
+    total += this.tests.length;
     return total;
   }
 
-  _allSpecs(): Spec[] {
-    const result: Spec[] = [];
-    this.findSpec(test => { result.push(test); });
+  _allTests(): Test[] {
+    const result: Test[] = [];
+    this.findTest(test => { result.push(test); });
     return result;
   }
 
-  _getOnlyItems(): (Spec | Suite)[] {
-    const items: (Spec | Suite)[] = [];
+  _getOnlyItems(): (Test | Suite)[] {
+    const items: (Test | Suite)[] = [];
     if (this._only)
       items.push(this);
     for (const suite of this.suites)
       items.push(...suite._getOnlyItems());
-    items.push(...this.specs.filter(spec => spec._only));
+    items.push(...this.tests.filter(test => test._only));
     return items;
   }
 
   _buildFixtureOverrides(): any {
     return this.parent ? { ...this.parent._buildFixtureOverrides(), ...this._fixtureOverrides } : this._fixtureOverrides;
   }
+
+  _clone(): Suite {
+    const suite = new Suite(this.title);
+    suite._only = this._only;
+    suite.file = this.file;
+    suite.line = this.line;
+    suite.column = this.column;
+    suite._requireFile = this._requireFile;
+    suite._fixtureOverrides = this._fixtureOverrides;
+    suite._hooks = this._hooks.slice();
+    suite._timeout = this._timeout;
+    suite._annotations = this._annotations.slice();
+    suite._modifiers = this._modifiers.slice();
+    return suite;
+  }
 }
 
-export class Test implements reporterTypes.Test {
-  spec: Spec;
+export class Test extends Base implements reporterTypes.Test {
+  suite!: Suite;
+  fn: Function;
   results: reporterTypes.TestResult[] = [];
 
   skipped = false;
@@ -181,13 +151,17 @@ export class Test implements reporterTypes.Test {
   projectName = '';
   retries = 0;
 
+  _ordinalInFile: number;
+  _testType: TestTypeImpl;
   _id = '';
-  _repeatEachIndex = 0;
-  _projectIndex = 0;
   _workerHash = '';
+  _pool: FixturePool | undefined;
 
-  constructor(spec: Spec) {
-    this.spec = spec;
+  constructor(title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl) {
+    super(title);
+    this.fn = fn;
+    this._ordinalInFile = ordinalInFile;
+    this._testType = testType;
   }
 
   status(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
@@ -216,8 +190,18 @@ export class Test implements reporterTypes.Test {
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
+  _clone(): Test {
+    const test = new Test(this.title, this.fn, this._ordinalInFile, this._testType);
+    test._only = this._only;
+    test.file = this.file;
+    test.line = this.line;
+    test.column = this.column;
+    test._requireFile = this._requireFile;
+    return test;
+  }
+
   fullTitle(): string {
-    return this.spec._testFullTitle(this.projectName);
+    return (this.projectName ? `[${this.projectName}] ` : '') + this._fullTitle;
   }
 
   _appendTestResult(): reporterTypes.TestResult {

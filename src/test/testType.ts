@@ -16,7 +16,7 @@
 
 import { expect } from './expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
-import { Spec, Suite } from './test';
+import { Test, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 
@@ -34,9 +34,9 @@ export class TestTypeImpl {
   constructor(fixtures: (FixturesWithLocation | DeclaredFixtures)[]) {
     this.fixtures = fixtures;
 
-    const test: any = wrapFunctionWithLocation(this._spec.bind(this, 'default'));
+    const test: any = wrapFunctionWithLocation(this._createTest.bind(this, 'default'));
     test.expect = expect;
-    test.only = wrapFunctionWithLocation(this._spec.bind(this, 'only'));
+    test.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
     test.beforeEach = wrapFunctionWithLocation(this._hook.bind(this, 'beforeEach'));
@@ -54,7 +54,7 @@ export class TestTypeImpl {
     this.test = test;
   }
 
-  private _spec(type: 'default' | 'only', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only', location: Location, title: string, fn: Function) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
       throw new Error(`test() can only be called in a test file`);
@@ -62,15 +62,16 @@ export class TestTypeImpl {
     const ordinalInFile = countByFile.get(suite._requireFile) || 0;
     countByFile.set(suite._requireFile, ordinalInFile + 1);
 
-    const spec = new Spec(title, fn, ordinalInFile, this);
-    spec._requireFile = suite._requireFile;
-    spec.file = location.file;
-    spec.line = location.line;
-    spec.column = location.column;
-    suite._addSpec(spec);
+    const test = new Test(title, fn, ordinalInFile, this);
+    test._requireFile = suite._requireFile;
+    test.file = location.file;
+    test.line = location.line;
+    test.column = location.column;
+    suite._addTest(test);
+    test._buildFullTitle(suite.fullTitle());
 
     if (type === 'only')
-      spec._only = true;
+      test._only = true;
   }
 
   private _describe(type: 'default' | 'only', location: Location, title: string, fn: Function) {
@@ -84,6 +85,7 @@ export class TestTypeImpl {
     child.line = location.line;
     child.column = location.column;
     suite._addSuite(child);
+    child._buildFullTitle(suite.fullTitle());
 
     if (type === 'only')
       child._only = true;

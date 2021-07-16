@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import EmptyReporter from './empty';
-import { FullConfig, Test, Suite, Spec, TestResult, TestError, FullResult, TestStatus } from '../reporter';
+import { FullConfig, Test, Suite, TestResult, TestError, FullResult, TestStatus } from '../reporter';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -119,13 +119,54 @@ class JSONReporter extends EmptyReporter {
           };
         })
       },
-      suites: this.suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as JSONReportSuite[],
+      suites: this._mergeSuites(this.suite.suites),
       errors: this._errors
     };
   }
 
+  private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
+    debugger;
+    const fileSuites = new Map<string, JSONReportSuite>();
+    const result: JSONReportSuite[] = [];
+    for (const suite of suites) {
+      if (!fileSuites.has(suite.file)) {
+        const serialized = this._serializeSuite(suite);
+        if (serialized) {
+          fileSuites.set(suite.file, serialized);
+          result.push(serialized);
+        }
+      } else {
+        this._mergeTestsFromSuite(fileSuites.get(suite.file)!, suite);
+      }
+    }
+    return result;
+  }
+
+  private _mergeTestsFromSuite(to: JSONReportSuite, from: Suite) {
+    for (const fromSuite of from.suites) {
+      const toSuite = (to.suites || []).find(s => s.title === fromSuite.title && s.file === toPosixPath(path.relative(this.config.rootDir, fromSuite.file)) && s.line === fromSuite.line && s.column === fromSuite.column);
+      if (toSuite) {
+        this._mergeTestsFromSuite(toSuite, fromSuite);
+      } else {
+        const serialized = this._serializeSuite(fromSuite);
+        if (serialized) {
+          if (!to.suites)
+            to.suites = [];
+          to.suites.push(serialized);
+        }
+      }
+    }
+    for (const test of from.tests) {
+      const toSpec = to.specs.find(s => s.title === test.title && s.file === toPosixPath(path.relative(this.config.rootDir, test.file)) && s.line === test.line && s.column === test.column);
+      if (toSpec)
+        toSpec.tests.push(this._serializeTest(test));
+      else
+        to.specs.push(this._serializeTestSpec(test));
+    }
+  }
+
   private _serializeSuite(suite: Suite): null | JSONReportSuite {
-    if (!suite.findSpec(test => true))
+    if (!suite.findTest(test => true))
       return null;
     const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as JSONReportSuite[];
     return {
@@ -133,19 +174,19 @@ class JSONReporter extends EmptyReporter {
       file: toPosixPath(path.relative(this.config.rootDir, suite.file)),
       line: suite.line,
       column: suite.column,
-      specs: suite.specs.map(test => this._serializeTestSpec(test)),
+      specs: suite.tests.map(test => this._serializeTestSpec(test)),
       suites: suites.length ? suites : undefined,
     };
   }
 
-  private _serializeTestSpec(spec: Spec): JSONReportSpec {
+  private _serializeTestSpec(test: Test): JSONReportSpec {
     return {
-      title: spec.title,
-      ok: spec.ok(),
-      tests: spec.tests.map(r => this._serializeTest(r)),
-      file: toPosixPath(path.relative(this.config.rootDir, spec.file)),
-      line: spec.line,
-      column: spec.column,
+      title: test.title,
+      ok: test.ok(),
+      tests: [ this._serializeTest(test) ],
+      file: toPosixPath(path.relative(this.config.rootDir, test.file)),
+      line: test.line,
+      column: test.column,
     };
   }
 

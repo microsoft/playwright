@@ -22,7 +22,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher } from './dispatcher';
 import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
-import { Spec, Suite } from './test';
+import { Test, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from './reporter';
 import { Multiplexer } from './reporters/multiplexer';
@@ -41,16 +41,16 @@ const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 
-type RunResultStatus = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-spec-titles' | 'no-tests' | 'timedout';
+type RunResultStatus = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-test-titles' | 'no-tests' | 'timedout';
 
 type RunResult = {
-  status: Exclude<RunResultStatus, 'forbid-only' | 'clashing-spec-titles'>;
+  status: Exclude<RunResultStatus, 'forbid-only' | 'clashing-test-titles'>;
 } | {
   status: 'forbid-only',
   locations: string[]
 } | {
-  status: 'clashing-spec-titles',
-  clashingSpecs: Map<string, Spec[]>
+  status: 'clashing-test-titles',
+  clashingTests: Map<string, Test[]>
 };
 
 export class Runner {
@@ -114,13 +114,13 @@ export class Runner {
       console.error('=================');
       console.error(' no tests found.');
       console.error('=================');
-    } else if (result?.status === 'clashing-spec-titles') {
+    } else if (result?.status === 'clashing-test-titles') {
       console.error('=================');
       console.error(' duplicate test titles are not allowed.');
-      for (const [title, specs] of result?.clashingSpecs.entries()) {
+      for (const [title, tests] of result?.clashingTests.entries()) {
         console.error(` - title: ${title}`);
-        for (const spec of specs)
-          console.error(`   - ${buildItemLocation(config.rootDir, spec)}`);
+        for (const test of tests)
+          console.error(`   - ${buildItemLocation(config.rootDir, test)}`);
         console.error('=================');
       }
     }
@@ -175,38 +175,42 @@ export class Runner {
       for (const file of allTestFiles)
         await this._loader.loadTestFile(file);
 
-      const rootSuite = new Suite('');
+      const preprocessRoot = new Suite('');
       for (const fileSuite of this._loader.fileSuites().values())
-        rootSuite._addSuite(fileSuite);
+        preprocessRoot._addSuite(fileSuite);
       if (config.forbidOnly) {
-        const onlySpecAndSuites = rootSuite._getOnlyItems();
-        if (onlySpecAndSuites.length > 0)
-          return { status: 'forbid-only', locations: onlySpecAndSuites.map(specOrSuite => `${buildItemLocation(config.rootDir, specOrSuite)} > ${specOrSuite.fullTitle()}`) };
+        const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
+        if (onlyTestsAndSuites.length > 0)
+          return { status: 'forbid-only', locations: onlyTestsAndSuites.map(testOrSuite => `${buildItemLocation(config.rootDir, testOrSuite)} > ${testOrSuite.fullTitle()}`) };
       }
-      const uniqueSpecs = getUniqueSpecsPerSuite(rootSuite);
-      if (uniqueSpecs.size > 0)
-        return { status: 'clashing-spec-titles', clashingSpecs: uniqueSpecs };
-      filterOnly(rootSuite);
-      filterByFocusedLine(rootSuite, testFileReFilters);
+      const clashingTests = getClashingTestsPerSuite(preprocessRoot);
+      if (clashingTests.size > 0)
+        return { status: 'clashing-test-titles', clashingTests: clashingTests };
+      filterOnly(preprocessRoot);
+      filterByFocusedLine(preprocessRoot, testFileReFilters);
 
       const fileSuites = new Map<string, Suite>();
-      for (const fileSuite of rootSuite.suites)
+      for (const fileSuite of preprocessRoot.suites)
         fileSuites.set(fileSuite._requireFile, fileSuite);
 
       const outputDirs = new Set<string>();
       const grepMatcher = createMatcher(config.grep);
       const grepInvertMatcher = config.grepInvert ? createMatcher(config.grepInvert) : null;
+      const rootSuite = new Suite('');
       for (const project of projects) {
         for (const file of files.get(project)!) {
           const fileSuite = fileSuites.get(file);
           if (!fileSuite)
             continue;
-          for (const spec of fileSuite._allSpecs()) {
-            const fullTitle = spec._testFullTitle(project.config.name);
-            if (grepInvertMatcher?.(fullTitle))
-              continue;
-            if (grepMatcher(fullTitle))
-              project.generateTests(spec);
+          for (let repeatEachIndex = 0; repeatEachIndex < project.config.repeatEach; repeatEachIndex++) {
+            const cloned = project.cloneSuite(fileSuite, repeatEachIndex, test => {
+              const fullTitle = test.fullTitle();
+              if (grepInvertMatcher?.(fullTitle))
+                return false;
+              return grepMatcher(fullTitle);
+            });
+            if (cloned)
+              rootSuite._addSuite(cloned);
           }
         }
         outputDirs.add(project.config.outputDir);
@@ -235,7 +239,7 @@ export class Runner {
       if (process.stdout.isTTY) {
         const workers = new Set();
         rootSuite.findTest(test => {
-          workers.add(test.spec._requireFile + test._workerHash);
+          workers.add(test._requireFile + test._workerHash);
         });
         console.log();
         const jobs = Math.min(config.workers, workers.size);
@@ -259,7 +263,7 @@ export class Runner {
         return { status: 'sigint' };
       }
 
-      const failed = hasWorkerErrors || rootSuite.findSpec(spec => !spec.ok());
+      const failed = hasWorkerErrors || rootSuite.findTest(test => !test.ok());
       await this._reporter.onEnd({ status: failed ? 'failed' : 'passed' });
       return { status: failed ? 'failed' : 'passed' };
     } finally {
@@ -274,27 +278,27 @@ export class Runner {
 
 function filterOnly(suite: Suite) {
   const suiteFilter = (suite: Suite) => suite._only;
-  const specFilter = (spec: Spec) => spec._only;
-  return filterSuite(suite, suiteFilter, specFilter);
+  const testFilter = (test: Test) => test._only;
+  return filterSuite(suite, suiteFilter, testFilter);
 }
 
 function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilter[]) {
-  const testFileLineMatches = (specFileName: string, specLine: number) => focusedTestFileLines.some(({re, line}) => {
+  const testFileLineMatches = (testFileName: string, testLine: number) => focusedTestFileLines.some(({re, line}) => {
     re.lastIndex = 0;
-    return re.test(specFileName) && (line === specLine || line === null);
+    return re.test(testFileName) && (line === testLine || line === null);
   });
   const suiteFilter = (suite: Suite) => testFileLineMatches(suite.file, suite.line);
-  const specFilter = (spec: Spec) => testFileLineMatches(spec.file, spec.line);
-  return filterSuite(suite, suiteFilter, specFilter);
+  const testFilter = (test: Test) => testFileLineMatches(test.file, test.line);
+  return filterSuite(suite, suiteFilter, testFilter);
 }
 
-function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, specFilter: (spec: Spec) => boolean) {
-  const onlySuites = suite.suites.filter(child => filterSuite(child, suiteFilter, specFilter) || suiteFilter(child));
-  const onlyTests = suite.specs.filter(specFilter);
+function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: Test) => boolean) {
+  const onlySuites = suite.suites.filter(child => filterSuite(child, suiteFilter, testFilter) || suiteFilter(child));
+  const onlyTests = suite.tests.filter(testFilter);
   const onlyEntries = new Set([...onlySuites, ...onlyTests]);
   if (onlyEntries.size) {
     suite.suites = onlySuites;
-    suite.specs = onlyTests;
+    suite.tests = onlyTests;
     suite._entries = suite._entries.filter(e => onlyEntries.has(e)); // Preserve the order.
     return true;
   }
@@ -370,29 +374,29 @@ async function collectFiles(testDir: string): Promise<string[]> {
   return files;
 }
 
-function getUniqueSpecsPerSuite(rootSuite: Suite): Map<string, Spec[]> {
-  function visit(suite: Suite, clashingSpecs: Map<string, Spec[]>) {
+function getClashingTestsPerSuite(rootSuite: Suite): Map<string, Test[]> {
+  function visit(suite: Suite, clashingTests: Map<string, Test[]>) {
     for (const childSuite of suite.suites)
-      visit(childSuite, clashingSpecs);
-    for (const spec of suite.specs) {
-      const fullTitle = spec.fullTitle();
-      if (!clashingSpecs.has(fullTitle))
-        clashingSpecs.set(fullTitle, []);
-      clashingSpecs.set(fullTitle, clashingSpecs.get(fullTitle)!.concat(spec));
+      visit(childSuite, clashingTests);
+    for (const test of suite.tests) {
+      const fullTitle = test.fullTitle();
+      if (!clashingTests.has(fullTitle))
+        clashingTests.set(fullTitle, []);
+      clashingTests.set(fullTitle, clashingTests.get(fullTitle)!.concat(test));
     }
   }
-  const out = new Map<string, Spec[]>();
+  const out = new Map<string, Test[]>();
   for (const fileSuite of rootSuite.suites) {
-    const clashingSpecs = new Map<string, Spec[]>();
-    visit(fileSuite, clashingSpecs);
-    for (const [title, specs] of clashingSpecs.entries()) {
-      if (specs.length > 1)
-        out.set(title, specs);
+    const clashingTests = new Map<string, Test[]>();
+    visit(fileSuite, clashingTests);
+    for (const [title, tests] of clashingTests.entries()) {
+      if (tests.length > 1)
+        out.set(title, tests);
     }
   }
   return out;
 }
 
-function buildItemLocation(rootDir: string, specOrSuite: Suite | Spec) {
-  return `${path.relative(rootDir, specOrSuite.file)}:${specOrSuite.line}`;
+function buildItemLocation(rootDir: string, testOrSuite: Suite | Test) {
+  return `${path.relative(rootDir, testOrSuite.file)}:${testOrSuite.line}`;
 }
