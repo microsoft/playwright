@@ -83,13 +83,13 @@ test('should report projectName in result', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
-test('should access testInfo.data in fixture', async ({ runInlineTest }) => {
+test('should access testInfo.attachments in fixture', async ({ runInlineTest }) => {
   const { exitCode, report } = await runInlineTest({
     'test-data-visible-in-env.spec.ts': `
       const test = pwt.test.extend({
         foo: async ({}, run, testInfo) => {
           await run();
-          testInfo.data.foo = 'bar';
+          testInfo.attachments.push({ name: 'foo', body: Buffer.from([1, 2, 3]), contentType: 'application/octet-stream' });
         },
       });
       test('ensure fixture can set data', async ({ foo }) => {
@@ -98,5 +98,5 @@ test('should access testInfo.data in fixture', async ({ runInlineTest }) => {
   });
   expect(exitCode).toBe(0);
   const test = report.suites[0].specs[0].tests[0];
-  expect(test.results[0].data).toEqual({ foo: 'bar' });
+  expect(test.results[0].attachments[0]).toEqual({ name: 'foo', body: 'AQID', contentType: 'application/octet-stream' });
 });

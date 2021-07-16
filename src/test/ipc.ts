@@ -42,7 +42,7 @@ export type TestEndPayload = {
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;
-  data: { [key: string]: any },
+  attachments: { name: string, path?: string, body?: string, contentType: string }[];
 };
 
 export type TestEntry = {

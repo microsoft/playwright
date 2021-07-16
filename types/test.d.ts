@@ -399,9 +399,9 @@ export interface TestInfo extends WorkerInfo {
   annotations: { type: string, description?: string }[];
 
   /**
-   * Arbitrary data that test fixtures can provide for the test report.
+   * File attachments for this test.
    */
-  data: { [key: string]: any };
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 
   /**
    * When tests are run multiple times, each run gets a unique `repeatEachIndex`.

@@ -226,7 +226,7 @@ export class WorkerRunner extends EventEmitter {
       retry: entry.retry,
       expectedStatus: 'passed',
       annotations: [],
-      data: {},
+      attachments: [],
       duration: 0,
       status: 'passed',
       stdout: [],
@@ -477,7 +477,12 @@ function buildTestEndPayload(testId: string, testInfo: TestInfo): TestEndPayload
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,
     timeout: testInfo.timeout,
-    data: testInfo.data,
+    attachments: testInfo.attachments.map(a => ({
+      name: a.name,
+      contentType: a.contentType,
+      path: a.path,
+      body: a.body?.toString('base64')
+    }))
   };
 }
 

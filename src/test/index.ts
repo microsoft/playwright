@@ -162,17 +162,21 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     const preserveTrace = captureTrace && (trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'on-first-retry' && testInfo.retry === 1));
     if (preserveTrace) {
       const tracePath = testInfo.outputPath(`trace.zip`);
-      testInfo.data.playwrightTrace = tracePath;
       await context.tracing.stop({ path: tracePath });
+      testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
     } else if (captureTrace) {
       await context.tracing.stop();
     }
 
     const captureScreenshots = (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
     if (captureScreenshots) {
-      await Promise.all(allPages.map((page, index) => {
+      await Promise.all(allPages.map(async (page, index) => {
         const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${++index}.png`);
-        return page.screenshot({ timeout: 5000, path: screenshotPath }).catch(e => {});
+        try {
+          await page.screenshot({ timeout: 5000, path: screenshotPath });
+          testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
+        } catch {
+        }
       }));
     }
 

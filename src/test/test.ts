@@ -187,7 +187,7 @@ export class Test extends Base implements reporterTypes.Test {
       duration: 0,
       stdout: [],
       stderr: [],
-      data: {},
+      attachments: [],
     };
     this.results.push(result);
     return result;

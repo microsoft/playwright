@@ -67,7 +67,7 @@ export interface JSONReportTestResult {
   stdout: JSONReportSTDIOEntry[],
   stderr: JSONReportSTDIOEntry[],
   retry: number;
-  data: { [key: string]: any },
+  attachments: { name: string, path?: string, body?: string, contentType: string }[];
 }
 export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
 
@@ -217,7 +217,12 @@ class JSONReporter implements Reporter {
       stdout: result.stdout.map(s => stdioEntry(s)),
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
-      data: result.data,
+      attachments: result.attachments.map(a => ({
+        name: a.name,
+        contentType: a.contentType,
+        path: a.path,
+        body: a.body?.toString('base64')
+      })),
     };
   }
 }
