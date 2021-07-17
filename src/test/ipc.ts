@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestError } from './reporter';
+import type { TestError } from '../../types/testReporter';
 import type { Config, TestStatus } from './types';
 
 export type SerializedLoaderData = {

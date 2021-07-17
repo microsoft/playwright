@@ -14,9 +14,4 @@
  * limitations under the License.
  */
 
-import { Reporter } from '../../../types/testReporter';
-
-class EmptyReporter implements Reporter {
-}
-
-export default EmptyReporter;
+export * from './types/testReporter';

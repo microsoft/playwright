@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, Test, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter } from '../reporter';
+import { FullConfig, Test, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
