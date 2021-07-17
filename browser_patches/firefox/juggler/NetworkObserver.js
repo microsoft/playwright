@@ -662,15 +662,14 @@ class NetworkRequest {
     httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
     httpChannel.QueryInterface(Ci.nsITimedChannel);
     const timing = {
-      issueTime: this.httpChannel.channelCreationTime,
-      startTime: this.httpChannel.asyncOpenTime,
-      domainLookupStart: this.httpChannel.domainLookupStartTime,
-      domainLookupEnd: this.httpChannel.domainLookupEndTime,
-      connectStart: this.httpChannel.connectStartTime,
-      secureConnectionStart: this.httpChannel.secureConnectionStartTime,
-      connectEnd: this.httpChannel.connectEndTime,
-      requestStart: this.httpChannel.requestStartTime,
-      responseStart: this.httpChannel.responseStartTime,
+      startTime: httpChannel.channelCreationTime,
+      domainLookupStart: httpChannel.domainLookupStartTime,
+      domainLookupEnd: httpChannel.domainLookupEndTime,
+      connectStart: httpChannel.connectStartTime,
+      secureConnectionStart: httpChannel.secureConnectionStartTime,
+      connectEnd: httpChannel.connectEndTime,
+      requestStart: httpChannel.requestStartTime,
+      responseStart: httpChannel.responseStartTime,
     };
 
     const { status, statusText, headers } = responseHead(httpChannel, opt_statusCode, opt_statusText);
