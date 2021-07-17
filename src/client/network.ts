@@ -58,6 +58,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   _failureText: string | null = null;
   _headers: Headers;
   private _postData: Buffer | null;
+  _timestamp: number;
   _timing: ResourceTiming;
 
   static from(request: channels.RequestChannel): Request {
@@ -75,8 +76,8 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
       this._redirectedFrom._redirectedTo = this;
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
     this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
+    this._timestamp = initializer.issueTime;
     this._timing = {
-      issueTime: 0,
       startTime: 0,
       domainLookupStart: -1,
       domainLookupEnd: -1,
@@ -162,6 +163,10 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     return {
       errorText: this._failureText
     };
+  }
+
+  issueTime() {
+    return this._timestamp;
   }
 
   timing(): ResourceTiming {
@@ -358,7 +363,6 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
 export type RouteHandlerCallback = (route: Route, request: Request) => void;
 
 export type ResourceTiming = {
-  issueTime: number;
   startTime: number;
   domainLookupStart: number;
   domainLookupEnd: number;

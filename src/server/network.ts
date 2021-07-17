@@ -91,13 +91,14 @@ export class Request extends SdkObject {
   private _postData: Buffer | null;
   private _headers: types.HeadersArray;
   private _headersMap = new Map<string, string>();
+  private _timestamp: number;
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
   _responseEndTiming = -1;
 
   constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
+    url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray, timestamp: number) {
     super(frame, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._frame = frame;
@@ -110,6 +111,7 @@ export class Request extends SdkObject {
     this._method = method;
     this._postData = postData;
     this._headers = headers;
+    this._timestamp = timestamp;
     for (const { name, value } of this._headers)
       this._headersMap.set(name.toLowerCase(), value);
     this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
@@ -143,6 +145,10 @@ export class Request extends SdkObject {
 
   headerValue(name: string): string | undefined {
     return this._headersMap.get(name);
+  }
+
+  issueTime() {
+    return this._timestamp;
   }
 
   response(): Promise<Response | null> {
@@ -263,7 +269,6 @@ export type RouteHandler = (route: Route, request: Request) => void;
 type GetResponseBodyCallback = () => Promise<Buffer>;
 
 export type ResourceTiming = {
-  issueTime: number;
   startTime: number;
   domainLookupStart: number;
   domainLookupEnd: number;

@@ -273,12 +273,14 @@ export class HarTracer {
     const timing = response.timing();
     if (pageEntry.startedDateTime.valueOf() > timing.startTime)
       pageEntry.startedDateTime = new Date(timing.startTime);
+    const blocked = timing.startTime !== -1 ? helper.millisToRoundishMillis(timing.startTime - request.issueTime()) : -1;
     const dns = timing.domainLookupEnd !== -1 ? helper.millisToRoundishMillis(timing.domainLookupEnd - timing.domainLookupStart) : -1;
     const connect = timing.connectEnd !== -1 ? helper.millisToRoundishMillis(timing.connectEnd - timing.connectStart) : -1;
     const ssl = timing.connectEnd !== -1 ? helper.millisToRoundishMillis(timing.connectEnd - timing.secureConnectionStart) : -1;
     const wait = timing.responseStart !== -1 ? helper.millisToRoundishMillis(timing.responseStart - timing.requestStart) : -1;
     const receive = response.request()._responseEndTiming !== -1 ? helper.millisToRoundishMillis(response.request()._responseEndTiming - timing.responseStart) : -1;
     harEntry.timings = {
+      blocked,
       dns,
       connect,
       ssl,
@@ -286,7 +288,8 @@ export class HarTracer {
       wait,
       receive,
     };
-    harEntry.time = [dns, connect, ssl, wait, receive].reduce((pre, cur) => cur > 0 ? cur + pre : pre, 0);
+    harEntry.time = [blocked, dns, connect, ssl, wait, receive].reduce((pre, cur) => cur > 0 ? cur + pre : pre, 0);
+
     this._addBarrier(page, response.serverAddr().then(server => {
       if (server?.ipAddress)
         harEntry.serverIPAddress = server.ipAddress;

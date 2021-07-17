@@ -26,11 +26,10 @@ it('should work for resource', async ({ contextFactory, server }) => {
   ]);
   const timing = request.timing();
   verifyConnectionTimingConsistency(timing);
-  expect(timing.startTime).toBeGreaterThanOrEqual(timing.issueTime);
+  expect(timing.startTime).toBeGreaterThanOrEqual(request.issueTime());
   expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
   expect(timing.responseStart).toBeGreaterThanOrEqual(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
-  expect(timing.responseEnd).toBeLessThan(10000);
   await context.close();
 });
 
@@ -43,10 +42,10 @@ it('should work for subresource', async ({ contextFactory, server }) => {
   expect(requests.length).toBe(2);
   const timing = requests[1].timing();
   verifyConnectionTimingConsistency(timing);
+  expect(timing.startTime).toBeGreaterThanOrEqual(requests[1].issueTime());
   expect(timing.requestStart).toBeGreaterThanOrEqual(0);
   expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
-  expect(timing.responseEnd).toBeLessThan(10000);
   await context.close();
 });
 
@@ -58,10 +57,10 @@ it('should work for SSL', async ({ browser, httpsServer }) => {
   ]);
   const timing = request.timing();
   verifyConnectionTimingConsistency(timing);
+  expect(timing.startTime).toBeGreaterThanOrEqual(request.issueTime());
   expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
   expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
-  expect(timing.responseEnd).toBeLessThan(10000);
   await page.close();
 });
 
@@ -82,17 +81,17 @@ it('should work for redirect', async ({ contextFactory, browserName, server }) =
 
   const timing1 = responses[0].request().timing();
   verifyConnectionTimingConsistency(timing1);
+  expect(timing1.startTime).toBeGreaterThanOrEqual(responses[0].request().issueTime());
   expect(timing1.requestStart).toBeGreaterThanOrEqual(timing1.connectEnd);
   expect(timing1.responseStart).toBeGreaterThan(timing1.requestStart);
   expect(timing1.responseEnd).toBeGreaterThanOrEqual(timing1.responseStart);
-  expect(timing1.responseEnd).toBeLessThan(10000);
 
   const timing2 = responses[1].request().timing();
   verifyConnectionTimingConsistency(timing2);
+  expect(timing1.startTime).toBeGreaterThanOrEqual(responses[1].request().issueTime());
   expect(timing2.requestStart).toBeGreaterThanOrEqual(0);
   expect(timing2.responseStart).toBeGreaterThan(timing2.requestStart);
   expect(timing2.responseEnd).toBeGreaterThanOrEqual(timing2.responseStart);
-  expect(timing2.responseEnd).toBeLessThan(10000);
 
   await context.close();
 });

@@ -62,7 +62,7 @@ export class WKInterceptableRequest {
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
     this.request = new network.Request(frame, redirectedFrom?.request || null, documentId, event.request.url,
-        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
+        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers), this._timestamp);
   }
 
   _routeForRedirectChain(): WKRouteImpl | null {
@@ -79,7 +79,6 @@ export class WKInterceptableRequest {
     };
     const timingPayload = responsePayload.timing;
     const timing: network.ResourceTiming = {
-      issueTime: this._timestamp,
       startTime: this._wallTime,
       domainLookupStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupStart) : -1,
       domainLookupEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupEnd) : -1,
