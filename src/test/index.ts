@@ -213,6 +213,11 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     await use(await context.newPage());
   },
 });
+
+export function workerFixture<T>(a: T) {
+    return [a, {scope: 'worker'}] as const;
+}
+
 export default test;
 
 function formatPendingCalls(calls: ProtocolCall[], testInfo: TestInfo) {
