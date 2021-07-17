@@ -17,6 +17,7 @@
 import { ResourceSnapshot } from '../../../server/snapshot/snapshotTypes';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 import { ContextEntry, PageEntry } from '../../../server/trace/viewer/traceModel';
+import { JSONReport, JSONReportSuite } from '../../../server/trace/viewer/testModel';
 
 const contextSymbol = Symbol('context');
 const pageSymbol = Symbol('context');
@@ -95,4 +96,54 @@ export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[]
   });
   (action as any)[resourcesSymbol] = result;
   return result;
+}
+
+export type TestReport = {
+  json: JSONReport;
+  unexpected: number;
+  expected: number;
+  skipped: number;
+  flaky: number;
+};
+
+export type TestReportOrStandalone = {
+  standalone?: {
+    tracePath: string;
+    title: string;
+  };
+  report?: TestReport;
+};
+
+export function indexTestReport(report: string | JSONReport): TestReportOrStandalone {
+  if (typeof report === 'string') {
+    const sep = navigator.platform.toLowerCase().includes('win') ? '\\' : '/';
+    const last = report.lastIndexOf(sep);
+    const title = last === -1 ? report : report.substring(last + 1);
+    return { standalone: { tracePath: report, title } };
+  }
+
+  const result = {
+    json: report,
+    unexpected: 0,
+    expected: 0,
+    skipped: 0,
+    flaky: 0,
+  };
+
+  function visitSuite(suite: JSONReportSuite) {
+    (suite.suites || []).forEach(visitSuite);
+    for (const spec of suite.specs) {
+      for (const test of spec.tests) {
+        switch (test.status) {
+          case 'skipped': ++result.skipped; break;
+          case 'expected': ++result.expected; break;
+          case 'unexpected': ++result.unexpected; break;
+          case 'flaky': ++result.flaky; break;
+        }
+      }
+    }
+  }
+  report.suites.forEach(visitSuite);
+
+  return { report: result };
 }

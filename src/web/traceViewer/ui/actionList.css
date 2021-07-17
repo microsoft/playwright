@@ -14,10 +14,6 @@
   limitations under the License.
 */
 
-.action-list-title {
-  padding: 0 10px;
-}
-
 .action-list-content {
   display: flex;
   flex-direction: column;

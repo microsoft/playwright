@@ -17,16 +17,12 @@
 .workbench {
   contain: size;
   user-select: none;
-}
 
-.workbench .header {
-  display: flex;
-  background-color: #000;
-  flex: none;
-  flex-basis: 48px;
-  line-height: 48px;
-  font-size: 16px;
-  color: white;
+  --expected: #367d36;
+  --unexpected: #b21515;
+  --flaky: #b21515;
+  --skipped: #ffb01f;
+  --retry: gray;
 }
 
 .workbench tab-content {
@@ -40,21 +36,22 @@
 	box-shadow: var(--box-shadow);
 }
 
-.workbench .logo {
-  font-size: 20px;
-  margin-left: 16px;
-}
-
-.workbench .product {
-  font-weight: 600;
-  margin-left: 16px;
-}
-
-.workbench .spacer {
-  flex: auto;
-}
-
 tab-strip {
   background-color: var(--light-background);
 }
 
+.workbench-title {
+  cursor: default;
+}
+
+.workbench-title.workbench-title-closed {
+  cursor: pointer;
+}
+
+.workbench-title:not(.workbench-title-closed) .codicon-chevron-right {
+  display: none;
+}
+
+.workbench-title-closed:hover .codicon-chevron-right {
+  text-shadow: 2px 0 3px rgb(0 0 0 / 60%);
+}

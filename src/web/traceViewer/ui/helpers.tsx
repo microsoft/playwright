@@ -72,3 +72,40 @@ export const Expandable: React.FunctionComponent<{
     { expanded && <div style={{ display: 'flex', flex: 'auto', margin: '5px 0 5px 20px' }}>{body}</div> }
   </div>;
 };
+
+export function highlightANSIText(text: string): JSX.Element {
+  if (!text.includes('\u001b'))
+    return <span>{text}</span>;
+  let color: string | null = null;
+  return <span>{text.split('\u001b').map((segment, index) => {
+    if (index !== 0) {
+      const matches = /^[[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/.exec(segment);
+      if (matches && matches.length) {
+        const match = matches[0];
+        segment = segment.slice(match.length);
+        const COLORS: Record<string, string> = {
+          '[30m': 'black',
+          '[31m': 'red',
+          '[32m': 'green',
+          '[33m': 'yellow',
+          '[34m': 'blue',
+          '[35m': 'magenta',
+          '[36m': 'cyan',
+          '[37m': '#999',
+        };
+        if (match in COLORS)
+          color = COLORS[match];
+        else
+          color = null;
+      }
+    }
+    if (!color)
+      return <span key={index}>{segment}</span>;
+    return <span key={index}  style={{ color }}>{segment}</span>;
+  })}</span>;
+}
+
+export function renderTestStatus(status: string, style: React.CSSProperties): JSX.Element {
+  const codicon = { 'expected': 'check', 'unexpected': 'close', 'skipped': 'circle-slash', 'retry': 'refresh' }[status];
+  return <div className={'codicon codicon-' + codicon} style={{ color: `var(--${status})`, fontWeight: 'bold', ...style }} />;
+}
