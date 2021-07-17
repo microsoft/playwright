@@ -2015,6 +2015,7 @@ Request:
           value: string
     isNavigationRequest: boolean
     redirectedFrom: Request?
+    issueTime: number
 
   commands:
 

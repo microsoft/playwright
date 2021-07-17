@@ -183,11 +183,14 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 
 Returns the matching [Response] object, or `null` if the response was not received due to error.
 
+## method: Request.issueTime
+- returns: <[float]>
+
+Denotes the monotonically increasing time in seconds when the request is issued by the browser.
+
 ## method: Request.timing
 - returns: <[Object]>
-  - `issueTime` <[float]> Request issued time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
-  - `startTime` <[float]> Request start time in milliseconds elapsed since
-    January 1, 1970 00:00:00 UTC. Includes time spent in queue waiting for a network connection.
+  - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
   - `domainLookupStart` <[float]> Time immediately before the browser starts the domain name lookup for the
     resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
   - `domainLookupEnd` <[float]> Time immediately after the browser starts the domain name lookup for the resource.

@@ -878,7 +878,6 @@ export module Protocol {
         value: string;
       }[];
       timing: {
-        issueTime: number;
         startTime: number;
         domainLookupStart: number;
         domainLookupEnd: number;

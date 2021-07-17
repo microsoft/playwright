@@ -9979,6 +9979,11 @@ export interface Request {
   response(): Promise<null|Response>;
 
   /**
+   * Denotes the monotonically increasing time in seconds when the request is issued by the browser.
+   */
+  issueTime(): number;
+
+  /**
    * Returns resource timing information for given request. Most of the timing values become available upon the response,
    * `responseEnd` becomes available when request finishes. Find more information at
    * [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
@@ -9994,13 +9999,7 @@ export interface Request {
    */
   timing(): {
     /**
-     * Request issued time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
-     */
-    issueTime: number;
-
-    /**
-     * Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC. Includes time spent in queue waiting for
-     * a network connection.
+     * Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
      */
     startTime: number;
 

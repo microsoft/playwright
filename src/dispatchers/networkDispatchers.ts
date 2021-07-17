@@ -40,6 +40,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestIniti
       postData: postData === null ? undefined : postData.toString('base64'),
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
+      issueTime: request.issueTime(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
   }
