@@ -23,7 +23,7 @@ import { LaunchServerOptions } from '../client/types';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { Transport } from '../protocol/transport';
-import { PlaywrightServer } from '../remote/playwrightServer';
+import { PlaywrightServer, PlaywrightServerOptions } from '../remote/playwrightServer';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
@@ -51,8 +51,13 @@ export function runDriver() {
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
 
-export async function runServer(port: number | undefined) {
-  const wsEndpoint = await (await PlaywrightServer.startDefault()).listen(port);
+export async function runServer(port: number | undefined,  configFile?: string) {
+  let options: PlaywrightServerOptions = {};
+  if (configFile)
+    options = JSON.parse(fs.readFileSync(configFile).toString());
+  const server = await PlaywrightServer.startDefault(options);
+  const wsEndpoint = await server.listen(port);
+  process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
 }
 
