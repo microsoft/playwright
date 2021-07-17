@@ -2341,6 +2341,7 @@ export type RequestInitializer = {
   }[],
   isNavigationRequest: boolean,
   redirectedFrom?: RequestChannel,
+  issueTime: number,
 };
 export interface RequestChannel extends Channel {
   response(params?: RequestResponseParams, metadata?: Metadata): Promise<RequestResponseResult>;

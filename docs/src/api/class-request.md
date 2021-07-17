@@ -183,6 +183,11 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 
 Returns the matching [Response] object, or `null` if the response was not received due to error.
 
+## method: Request.issueTime
+- returns: <[float]>
+
+Denotes the monotonically increasing time in seconds when the request is issued by the browser.
+
 ## method: Request.timing
 - returns: <[Object]>
   - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC

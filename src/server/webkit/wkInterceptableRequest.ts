@@ -64,7 +64,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
     this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, event.request.url,
-        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
+        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers), this._timestamp);
     this._interceptedPromise = new Promise<void>(f => this._interceptedCallback = f);
   }
 
@@ -139,7 +139,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     };
     const timingPayload = responsePayload.timing;
     const timing: network.ResourceTiming = {
-      startTime: this._wallTime,
+      startTime: timingPayload ? wkMillisToRoundishMillis(timingPayload.startTime) : -1,
       domainLookupStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupStart) : -1,
       domainLookupEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupEnd) : -1,
       connectStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.connectStart) : -1,

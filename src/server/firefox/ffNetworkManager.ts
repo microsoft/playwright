@@ -184,7 +184,7 @@ class InterceptableRequest implements network.RouteDelegate {
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
     this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
-        payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
+        payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers, 0);
   }
 
   responseBody(): Promise<Buffer> {

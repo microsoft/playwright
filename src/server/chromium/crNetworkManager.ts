@@ -288,15 +288,19 @@ export class CRNetworkManager {
     const timingPayload = responsePayload.timing!;
     let timing: network.ResourceTiming;
     if (timingPayload) {
+      // requestTime is a baseline in seconds, while other timings are ticks in milliseconds relatively to this requestTime.
+      const calculateOffset = (value: number) => {
+        return timingPayload.requestTime + (value / 1000);
+      };
       timing = {
-        startTime: (timingPayload.requestTime - request._timestamp + request._wallTime) * 1000,
-        domainLookupStart: timingPayload.dnsStart,
-        domainLookupEnd: timingPayload.dnsEnd,
-        connectStart: timingPayload.connectStart,
-        secureConnectionStart: timingPayload.sslStart,
-        connectEnd: timingPayload.connectEnd,
-        requestStart: timingPayload.sendStart,
-        responseStart: timingPayload.receiveHeadersEnd,
+        startTime: timingPayload.requestTime,
+        domainLookupStart: calculateOffset(timingPayload.dnsStart),
+        domainLookupEnd: calculateOffset(timingPayload.dnsEnd),
+        connectStart: calculateOffset(timingPayload.connectStart),
+        secureConnectionStart: calculateOffset(timingPayload.sslStart),
+        connectEnd: calculateOffset(timingPayload.connectEnd),
+        requestStart: calculateOffset(timingPayload.sendStart),
+        responseStart: calculateOffset(timingPayload.receiveHeadersEnd),
       };
     } else {
       timing = {
@@ -442,7 +446,7 @@ class InterceptableRequest implements network.RouteDelegate {
     if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
       postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
 
-    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
+    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers), this._timestamp);
   }
 
   async responseBody(): Promise<Buffer> {

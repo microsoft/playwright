@@ -56,6 +56,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   _failureText: string | null = null;
   _headers: Headers;
   private _postData: Buffer | null;
+  _timestamp: number;
   _timing: ResourceTiming;
 
   static from(request: channels.RequestChannel): Request {
@@ -73,6 +74,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
       this._redirectedFrom._redirectedTo = this;
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
     this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
+    this._timestamp = initializer.issueTime;
     this._timing = {
       startTime: 0,
       domainLookupStart: -1,
@@ -159,6 +161,10 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     return {
       errorText: this._failureText
     };
+  }
+
+  issueTime() {
+    return this._timestamp;
   }
 
   timing(): ResourceTiming {
