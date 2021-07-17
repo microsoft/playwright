@@ -23,7 +23,7 @@ import { SerializedLoaderData } from './ipc';
 import * as path from 'path';
 import * as url from 'url';
 import { ProjectImpl } from './project';
-import { Reporter } from './reporter';
+import { Reporter } from '../../types/testReporter';
 import { LaunchConfig } from '../../types/test';
 
 export class Loader {

@@ -15,7 +15,7 @@
  */
 
 import type { FixturePool } from './fixtures';
-import * as reporterTypes from './reporter';
+import * as reporterTypes from '../../types/testReporter';
 import type { TestTypeImpl } from './testType';
 import { Annotations, Location } from './types';
 

@@ -15,9 +15,9 @@
  */
 
 import type { Fixtures } from '../../types/test';
-import type { Location } from './reporter';
+import type { Location } from '../../types/testReporter';
 export * from '../../types/test';
-export { Location } from './reporter';
+export { Location } from '../../types/testReporter';
 
 export type FixturesWithLocation = {
   fixtures: Fixtures;

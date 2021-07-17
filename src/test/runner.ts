@@ -24,7 +24,7 @@ import { Dispatcher } from './dispatcher';
 import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
 import { Test, Suite } from './test';
 import { Loader } from './loader';
-import { Reporter } from './reporter';
+import { Reporter } from '../../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import DotReporter from './reporters/dot';
 import LineReporter from './reporters/line';

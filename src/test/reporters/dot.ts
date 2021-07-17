@@ -16,7 +16,7 @@
 
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
-import { FullResult, Test, TestResult } from '../reporter';
+import { FullResult, Test, TestResult } from '../../../types/testReporter';
 
 class DotReporter extends BaseReporter {
   private _counter = 0;
