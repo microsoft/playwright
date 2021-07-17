@@ -179,13 +179,10 @@ test('should report skipped due to sharding', async ({ runInlineTest }) => {
     `,
   }, { shard: '1/3', reporter: 'junit' });
   const xml = parseXML(result.output);
+  expect(xml['testsuites']['testsuite'].length).toBe(1);
   expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('2');
   expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
   expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('1');
-
-  expect(xml['testsuites']['testsuite'][1]['$']['tests']).toBe('3');
-  expect(xml['testsuites']['testsuite'][1]['$']['failures']).toBe('0');
-  expect(xml['testsuites']['testsuite'][1]['$']['skipped']).toBe('3');
   expect(result.exitCode).toBe(0);
 });
 
