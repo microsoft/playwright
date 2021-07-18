@@ -47,7 +47,7 @@ export abstract class BrowserContext extends SdkObject {
     VideoStarted: 'videostarted',
   };
 
-  readonly _timeoutSettings = new TimeoutSettings();
+  readonly _timeoutSettings: TimeoutSettings;
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
   _requestInterceptor?: network.RouteHandler;
@@ -72,6 +72,8 @@ export abstract class BrowserContext extends SdkObject {
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+    // to ensure that timeout settings are inherited from browser
+    this._timeoutSettings = new TimeoutSettings(browser._timeoutSettings);
 
     if (this._options.recordHar)
       this._harTracer = new HarTracer(this, this._options.recordHar);

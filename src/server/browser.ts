@@ -24,7 +24,7 @@ import { RecentLogsCollector } from '../utils/debugLogger';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 import { Selectors } from './selectors';
-
+import { TimeoutSettings } from '../utils/timeoutSettings';
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
   process?: ChildProcess;
@@ -66,6 +66,7 @@ export abstract class Browser extends SdkObject {
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
   readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
+  readonly _timeoutSettings = new TimeoutSettings();
 
   constructor(options: BrowserOptions) {
     super(options.rootSdkObject, 'browser');
@@ -122,6 +123,10 @@ export abstract class Browser extends SdkObject {
     if (this._defaultContext)
       this._defaultContext._browserClosed();
     this.emit(Browser.Events.Disconnected);
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
   async close() {

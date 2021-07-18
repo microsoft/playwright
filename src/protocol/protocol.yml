@@ -484,6 +484,10 @@ Browser:
     stopTracing:
       returns:
         binary: binary
+    
+    setDefaultTimeout:
+      parameters:
+        timeout: number
 
   events:
 

@@ -330,6 +330,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     categories: tOptional(tArray(tString)),
   });
   scheme.BrowserStopTracingParams = tOptional(tObject({}));
+  scheme.BrowserSetDefaultTimeoutParams = tObject({
+    timeout: tNumber,
+  });
   scheme.EventTargetWaitForEventInfoParams = tObject({
     info: tObject({
       waitId: tString,

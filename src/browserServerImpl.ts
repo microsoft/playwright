@@ -34,6 +34,7 @@ import { BrowserContext } from './server/browserContext';
 import { CRBrowser } from './server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './dispatchers/cdpSessionDispatcher';
 import { PageDispatcher } from './dispatchers/pageDispatcher';
+import { TimeoutSettings } from './utils/timeoutSettings';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserName: 'chromium' | 'firefox' | 'webkit';
@@ -100,6 +101,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {
   private _contexts = new Set<BrowserContext>();
   private _selectors: Selectors;
+  private _timeoutSettings = new TimeoutSettings();
 
   constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
@@ -150,6 +152,10 @@ class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserIni
 
   async cleanupContexts() {
     await Promise.all(Array.from(this._contexts).map(context => context.close(internalCallMetadata())));
+  }
+
+  async setDefaultTimeout(params: channels.BrowserSetDefaultTimeoutParams) {
+    this._timeoutSettings.setDefaultTimeout(params.timeout);
   }
 }
 
