@@ -50,36 +50,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return null;
   }
 
-  async evaluate<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<R> {
-    return js.evaluate(this, true /* returnByValue */, pageFunction, arg);
-  }
-
-  async evaluateHandle<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<js.SmartHandle<R>> {
-    return js.evaluate(this, false /* returnByValue */, pageFunction, arg);
-  }
-
-  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
-    return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, arg);
-  }
-
-  async evaluateAndWaitForSignals<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<R> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this.evaluate(pageFunction, arg);
-    });
-  }
-
-  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this.evaluateExpression(expression, isFunction, arg);
-    });
-  }
-
-  async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, arg);
-    });
-  }
-
   createHandle(remoteObject: js.RemoteObject): js.JSHandle {
     if (this.frame._page._delegate.isElementHandle(remoteObject))
       return new ElementHandle(this, remoteObject.objectId!);
@@ -131,11 +101,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   asElement(): ElementHandle<T> | null {
     return this;
-  }
-
-  private async _evaluateInMainAndWaitForSignals<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
-    const main = await this._context.frame._mainContext();
-    return main.evaluateAndWaitForSignals(pageFunction, [await main.injectedScript(), this, arg]);
   }
 
   async evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
@@ -213,9 +178,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
-    await this._evaluateInMainAndWaitForSignals(([injected, node, { type, eventInit }]) =>
-      injected.dispatchEvent(node, type, eventInit), { type, eventInit });
-    await this._page._doSlowMo();
+    const main = await this._context.frame._mainContext();
+    await main.eval(([injected, node, { type, eventInit }]) => injected.dispatchEvent(node, type, eventInit), {
+      arg: [await main.injectedScript(), this, { type, eventInit }] as const,
+      waitForSignals: true,
+      doSlowMo: true,
+    });
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -685,14 +653,26 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const handle = await this._page.selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+    const result = await handle._context.eval(expression, {
+      isFunction,
+      args: [handle, arg],
+      doSlowMo: true,
+      returnHandle: false,
+      waitForSignals: true,
+    });
     handle.dispose();
     return result;
   }
 
   async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._page.selectors._queryArray(this._context.frame, selector, this);
-    const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+    const result = await arrayHandle._context.eval(expression, {
+      isFunction,
+      args: [arrayHandle, arg],
+      doSlowMo: true,
+      returnHandle: false,
+      waitForSignals: true,
+    });
     arrayHandle.dispose();
     return result;
   }

@@ -52,6 +52,15 @@ export interface ExecutionContextDelegate {
   releaseHandle(objectId: ObjectId): Promise<void>;
 }
 
+export type EvalOptions<Arg = any> = {
+  arg?: Arg;
+  args?: any[];
+  returnHandle?: boolean;
+  isFunction?: boolean;
+  waitForSignals?: boolean;
+  doSlowMo?: boolean;
+};
+
 export class ExecutionContext extends SdkObject {
   readonly _delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
@@ -89,6 +98,31 @@ export class ExecutionContext extends SdkObject {
     return await this._delegate.rawEvaluateJSON(expression);
   }
 
+  async eval<Options extends EvalOptions, R>(page: (...args: Options extends EvalOptions<infer Args> ? Unboxed<Args[]> : never) => R | Promise<R>, options: Options): Promise<Options extends {returnHandle: true} ? SmartHandle<R> : Promise<R>>
+  async eval(pageFunction: string, options: EvalOptions): Promise<any>
+  async eval(pageFunction: Function|string, {
+    arg,
+    args = [arg],
+    returnHandle = false,
+    isFunction = typeof pageFunction === 'function',
+    waitForSignals = false,
+    doSlowMo = false,
+  }: EvalOptions): Promise<any> {
+    const action = () => evaluateExpression(this, !returnHandle, String(pageFunction), isFunction, ...args);
+    const value = waitForSignals ? await this.waitForSignalsCreatedBy(action) : await action();
+    if (doSlowMo)
+      await this.doSlowMo();
+    return value;
+  }
+
+  async evaluate<Arg, R>(pageFunction: Func1<Arg, R>, arg?: Arg): Promise<R> {
+    return this.eval(pageFunction as string, {arg});
+  }
+
+  async evaluateHandle<Arg, R>(pageFunction: Func1<Arg, R>, arg?: Arg): Promise<SmartHandle<R>> {
+    return this.eval(pageFunction as string, {arg, returnHandle: true});
+  }
+
   async doSlowMo() {
     // overrided in FrameExecutionContext
   }
@@ -119,17 +153,11 @@ export class JSHandle<T = any> extends SdkObject {
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<R> {
-    return evaluate(this._context, true /* returnByValue */, pageFunction, this, arg);
+    return this._context.eval(pageFunction as string, { args: [this, arg]});
   }
 
   async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<SmartHandle<R>> {
-    return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
-  }
-
-  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, returnByValue: boolean, arg: any) {
-    const value = await evaluateExpressionAndWaitForSignals(this._context, returnByValue, expression, isFunction, this, arg);
-    await this._context.doSlowMo();
-    return value;
+    return this._context.eval(pageFunction as string, { returnHandle: true, args: [this, arg]});
   }
 
   async getProperty(propertyName: string): Promise<JSHandle> {
@@ -189,11 +217,7 @@ export class JSHandle<T = any> extends SdkObject {
   }
 }
 
-export async function evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-  return evaluateExpression(context, returnByValue, String(pageFunction), typeof pageFunction === 'function', ...args);
-}
-
-export async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
+async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
   const utilityScript = await context.utilityScript();
   expression = normalizeEvaluationExpression(expression, isFunction);
   const handles: (Promise<JSHandle>)[] = [];
@@ -234,10 +258,6 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }
-}
-
-export async function evaluateExpressionAndWaitForSignals(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction?: boolean, ...args: any[]): Promise<any> {
-  return await context.waitForSignalsCreatedBy(() => evaluateExpression(context, returnByValue, expression, isFunction, ...args));
 }
 
 export function parseUnserializableValue(unserializableValue: string): any {

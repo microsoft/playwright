@@ -31,11 +31,24 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
   }
 
   async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams): Promise<channels.JSHandleEvaluateExpressionResult> {
-    return { value: serializeResult(await this._object.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
+    const result = await this._object._context.eval(params.expression, {
+      isFunction: params.isFunction,
+      args: [this._object, parseArgument(params.arg)],
+      doSlowMo: true,
+      returnHandle: false,
+      waitForSignals: true,
+    });
+    return { value: serializeResult(result) };
   }
 
   async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
-    const jsHandle = await this._object.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
+    const jsHandle = await this._object._context.eval(params.expression, {
+      isFunction: params.isFunction,
+      args: [this._object, parseArgument(params.arg)],
+      doSlowMo: true,
+      returnHandle: true,
+      waitForSignals: true,
+    });
     return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, jsHandle) };
   }
 

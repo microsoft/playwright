@@ -249,7 +249,7 @@ export class RecorderSupplement implements InstrumentationListener {
 
   private _refreshOverlay() {
     for (const page of this._context.pages())
-      page.mainFrame().evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'main').catch(() => {});
+      page.mainFrame().eval('window._playwrightRefreshOverlay()').catch(() => {});
   }
 
   private async _onPage(page: Page) {
