@@ -14,15 +14,50 @@
  * limitations under the License.
  */
 
+import childProcess from 'child_process';
 import http from 'http';
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
 import net from 'net';
 
-import { PlaywrightClient } from '../lib/remote/playwrightClient';
-import { PlaywrightServer } from '../lib/remote/playwrightServer';
-
 import { contextTest, expect } from './config/browserTest';
+import { PlaywrightClient } from '../lib/remote/playwrightClient';
+import { createGuid } from '../src/utils/utils';
+import type { PlaywrightServerOptions } from '../src/remote/playwrightServer';
 import type { LaunchOptions, ConnectOptions } from '../index';
 import type { Page, BrowserServer } from '..';
+
+class OutOfProcessPlaywrightServer {
+  private _driverProcess: childProcess.ChildProcess;
+  private _receivedPortPromise: Promise<string>;
+  constructor(port: number, config: PlaywrightServerOptions) {
+    const configFile = path.join(os.tmpdir(), `playwright-server-config-${createGuid()}.json`);
+    fs.writeFileSync(configFile, JSON.stringify(config));
+    this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'cli', 'cli.js'), ['run-server', port.toString(), configFile], {
+      stdio: 'pipe',
+      detached: true,
+    });
+    this._driverProcess.unref();
+    this._receivedPortPromise = new Promise<string>((resolve, reject) => {
+      this._driverProcess.stdout.on('data', (data: Buffer) => {
+        const prefix = 'Listening on ';
+        const line = data.toString();
+        if (line.startsWith(prefix))
+          resolve(line.substr(prefix.length));
+      });
+      this._driverProcess.on('exit', () => reject());
+    });
+  }
+  async kill() {
+    const waitForExit = new Promise<void>(resolve =>  this._driverProcess.on('exit', () => resolve()));
+    this._driverProcess.kill('SIGKILL');
+    await waitForExit;
+  }
+  public async wsEndpoint(): Promise<string> {
+    return await this._receivedPortPromise;
+  }
+}
 
 type PageFactoryOptions = {
   acceptForwardedPorts: boolean
@@ -35,17 +70,16 @@ const it = contextTest.extend<{ pageFactory: (options?: PageFactoryOptions) => P
   launchMode: [ 'launchServer', { scope: 'test' }],
   pageFactory: async ({ launchMode, browserType, browserName, browserOptions }, run) => {
     const browserServers: BrowserServer[] = [];
-    const playwrightServers: PlaywrightServer[] = [];
+    const playwrightServers: OutOfProcessPlaywrightServer[] = [];
     await run(async (options?: PageFactoryOptions): Promise<Page> => {
       const { acceptForwardedPorts, forwardPorts } = options;
       if (launchMode === 'playwrightclient') {
-        const server = await PlaywrightServer.startDefault({
+        const server = new OutOfProcessPlaywrightServer(0, {
           acceptForwardedPorts,
         });
         playwrightServers.push(server);
-        const wsEndpoint = await server.listen(0);
         const service = await PlaywrightClient.connect({
-          wsEndpoint,
+          wsEndpoint: await server.wsEndpoint(),
           forwardPorts,
         });
         const playwright = service.playwright();
@@ -66,7 +100,7 @@ const it = contextTest.extend<{ pageFactory: (options?: PageFactoryOptions) => P
     for (const browserServer of browserServers)
       await browserServer.close();
     for (const playwrightServer of playwrightServers)
-      await playwrightServer.close();
+      await playwrightServer.kill();
   },
 });
 
