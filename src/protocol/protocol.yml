@@ -844,6 +844,11 @@ Page:
     keyboardDown:
       parameters:
         key: string
+        overrides:
+          type: object?
+          properties:
+            key: string?
+            text: string?
       tracing:
         snapshot: true
 

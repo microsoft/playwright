@@ -172,6 +172,16 @@ Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the t
 
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
+### option: Keyboard.down.key
+- `key` <[string]>
+
+Override the event.key property of this event.
+
+### option: Keyboard.down.text
+- `text` <[string]>
+
+Override the text produced by this event.
+
 ## async method: Keyboard.insertText
 
 Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.

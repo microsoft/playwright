@@ -156,7 +156,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
   }
 
   async keyboardDown(params: channels.PageKeyboardDownParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.down(params.key);
+    await this._page.keyboard.down(params.key, params.overrides);
   }
 
   async keyboardUp(params: channels.PageKeyboardUpParams, metadata: CallMetadata): Promise<void> {

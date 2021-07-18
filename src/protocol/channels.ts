@@ -1108,9 +1108,16 @@ export type PageSetViewportSizeOptions = {
 export type PageSetViewportSizeResult = void;
 export type PageKeyboardDownParams = {
   key: string,
+  overrides?: {
+    key?: string,
+    text?: string,
+  },
 };
 export type PageKeyboardDownOptions = {
-
+  overrides?: {
+    key?: string,
+    text?: string,
+  },
 };
 export type PageKeyboardDownResult = void;
 export type PageKeyboardUpParams = {

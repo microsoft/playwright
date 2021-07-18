@@ -25,8 +25,8 @@ export class Keyboard implements api.Keyboard {
     this._channel = channel;
   }
 
-  async down(key: string) {
-    await this._channel.keyboardDown({ key });
+  async down(key: string, overrides: channels.PageKeyboardDownOptions['overrides']) {
+    await this._channel.keyboardDown({ key, overrides });
   }
 
   async up(key: string) {

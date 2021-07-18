@@ -2070,8 +2070,9 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
-   * Focuses the element, and then uses [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down)
-   * and [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+   * Focuses the element, and then uses
+   * [keyboard.down(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
+   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
    *
    * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
    * value or a single character to generate the text for. A superset of the `key` values can be found
@@ -6096,8 +6097,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   ownerFrame(): Promise<null|Frame>;
 
   /**
-   * Focuses the element, and then uses [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down)
-   * and [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+   * Focuses the element, and then uses
+   * [keyboard.down(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
+   * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
    *
    * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
    * value or a single character to generate the text for. A superset of the `key` values can be found
@@ -9547,7 +9549,8 @@ export interface FileChooser {
  * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
  * characters and generates proper keydown, keypress/input, and keyup events on your page.
  *
- * For finer control, you can use [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down),
+ * For finer control, you can use
+ * [keyboard.down(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-down),
  * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up), and
  * [keyboard.insertText(text)](https://playwright.dev/docs/api/class-keyboard#keyboard-insert-text) to manually fire events
  * as if they were generated from a real keyboard.
@@ -9607,14 +9610,25 @@ export interface Keyboard {
    * active. To release the modifier key, use [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
    *
    * After the key is pressed once, subsequent calls to
-   * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) will have
+   * [keyboard.down(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-down) will have
    * [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
    * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
    *
    * > NOTE: Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   * @param options
    */
-  down(key: string): Promise<void>;
+  down(key: string, options?: {
+    /**
+     * Override the event.key property of this event.
+     */
+    key?: string;
+
+    /**
+     * Override the text produced by this event.
+     */
+    text?: string;
+  }): Promise<void>;
 
   /**
    * Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
@@ -9658,7 +9672,7 @@ export interface Keyboard {
    * await browser.close();
    * ```
    *
-   * Shortcut for [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
+   * Shortcut for [keyboard.down(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
    * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
