@@ -6683,8 +6683,8 @@ export interface BrowserType<Unused = {}> {
     deviceScaleFactor?: number;
 
     /**
-     * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
-     * option will be set `false`.
+     * **Chromium and Firefox only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+     * `headless` option will be set `false`.
      */
     devtools?: boolean;
 
@@ -7013,8 +7013,8 @@ export interface BrowserType<Unused = {}> {
     chromiumSandbox?: boolean;
 
     /**
-     * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
-     * option will be set `false`.
+     * **Chromium and Firefox only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+     * `headless` option will be set `false`.
      */
     devtools?: boolean;
 
@@ -11019,8 +11019,8 @@ export interface LaunchOptions {
   chromiumSandbox?: boolean;
 
   /**
-   * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
-   * option will be set `false`.
+   * **Chromium and Firefox only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+   * `headless` option will be set `false`.
    */
   devtools?: boolean;
 

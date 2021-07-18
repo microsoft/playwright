@@ -71,7 +71,7 @@ a Playwright script in headed mode. Developer tools help to:
 Using a [`method: Page.pause`] method is an easy way to pause the Playwright script execution
 and inspect the page in Developer tools. It will also open [Playwright Inspector](./inspector.md) to help with debugging.
 
-**For Chromium**: you can also open developer tools through a launch option.
+**For Chromium and Firefox**: you can also open developer tools through a launch option.
 ```js
 await chromium.launch({ devtools: true });
 ```
