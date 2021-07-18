@@ -379,6 +379,14 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Defaults
 to `'no-preference'`.
 
+## context-option-scrollbars
+- `scrollbars` <[boolean]>
+
+Whether to show visible scrollbars for the browser. Defaults to `false` in headless mode. Otherwise defaults to true.
+
+This option has no effect on a Mac or with WebKit browsers. This is because MacOS uses overlay scrollbars which
+are not visible by default.
+
 ## context-option-logger
 * langs: js
 - `logger` <[Logger]>
@@ -593,6 +601,7 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 - %%-context-option-httpcredentials-%%
 - %%-context-option-colorscheme-%%
 - %%-context-option-reducedMotion-%%
+- %%-context-option-scrollbars-%%
 - %%-context-option-logger-%%
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%

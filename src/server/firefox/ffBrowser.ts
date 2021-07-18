@@ -204,6 +204,8 @@ export class FFBrowserContext extends BrowserContext {
       browserContextId,
       reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
     }));
+    if (this._options.scrollbars === undefined ? !this._browser.options.headful : !this._options.scrollbars)
+      promises.push(this._browser._connection.send('Browser.setScrollbarsHidden', { browserContextId, hidden: true }));
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser._connection.send('Browser.setVideoRecordingOptions', {

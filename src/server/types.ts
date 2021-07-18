@@ -253,6 +253,7 @@ export type BrowserContextOptions = {
   hasTouch?: boolean,
   colorScheme?: ColorScheme,
   reducedMotion?: ReducedMotion,
+  scrollbars?: boolean,
   acceptDownloads?: boolean,
   recordVideo?: {
     dir: string,
@@ -281,6 +282,7 @@ type LaunchOptionsBase = {
   timeout?: number,
   env?: EnvArray,
   headless?: boolean,
+  scrollbars?: boolean,
   devtools?: boolean,
   proxy?: ProxySettings,
   downloadsPath?: string,
