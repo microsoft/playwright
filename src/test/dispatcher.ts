@@ -265,6 +265,7 @@ export class Dispatcher {
     worker.on('testBegin', (params: TestBeginPayload) => {
       const { test, result: testRun  } = this._testById.get(params.testId)!;
       testRun.workerIndex = params.workerIndex;
+      testRun.startTime = new Date(params.startWallTime);
       this._reportTestBegin(test);
     });
     worker.on('testEnd', (params: TestEndPayload) => {

@@ -295,7 +295,7 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilt
     re.lastIndex = 0;
     return re.test(testFileName) && (line === testLine || line === null);
   });
-  const suiteFilter = (suite: Suite) => testFileLineMatches(suite.location.file, suite.location.line);
+  const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line);
   const testFilter = (test: Test) => testFileLineMatches(test.location.file, test.location.line);
   return filterSuite(suite, suiteFilter, testFilter);
 }
@@ -406,6 +406,8 @@ function getClashingTestsPerSuite(rootSuite: Suite): Map<string, Test[]> {
 }
 
 function buildItemLocation(rootDir: string, testOrSuite: Suite | Test) {
+  if (!testOrSuite.location)
+    return '';
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
 }
 

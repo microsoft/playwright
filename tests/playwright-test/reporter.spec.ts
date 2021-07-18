@@ -35,8 +35,10 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
         onStdErr() {
           console.log('\\n%%reporter-stderr%%');
         }
-        onTestEnd(test) {
+        onTestEnd(test, result) {
           console.log('\\n%%reporter-testend-' + test.title + '-' + test.titlePath()[1] + '%%');
+          if (!result.startTime)
+            console.log('\\n%%error-no-start-time');
         }
         onTimeout() {
           console.log('\\n%%reporter-timeout%%');

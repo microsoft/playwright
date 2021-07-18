@@ -21,7 +21,6 @@ import { Annotations, Location } from './types';
 
 class Base {
   title: string;
-  location: Location = { file: '', line: 0, column: 0 };
   parent?: Suite;
 
   _only = false;
@@ -48,6 +47,7 @@ export type Modifier = {
 export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
   tests: Test[] = [];
+  location?: Location;
   _fixtureOverrides: any = {};
   _entries: (Suite | Test)[] = [];
   _hooks: {
@@ -116,6 +116,7 @@ export class Suite extends Base implements reporterTypes.Suite {
 export class Test extends Base implements reporterTypes.Test {
   fn: Function;
   results: reporterTypes.TestResult[] = [];
+  location: Location;
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
@@ -131,14 +132,15 @@ export class Test extends Base implements reporterTypes.Test {
   _repeatEachIndex = 0;
   _projectIndex = 0;
 
-  constructor(title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl) {
+  constructor(title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
     super(title);
     this.fn = fn;
     this._ordinalInFile = ordinalInFile;
     this._testType = testType;
+    this.location = location;
   }
 
-  status(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
+  outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
     if (!this.results.length)
       return 'skipped';
     if (this.results.length === 1 && this.expectedStatus === this.results[0].status)
@@ -158,14 +160,13 @@ export class Test extends Base implements reporterTypes.Test {
   }
 
   ok(): boolean {
-    const status = this.status();
+    const status = this.outcome();
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
   _clone(): Test {
-    const test = new Test(this.title, this.fn, this._ordinalInFile, this._testType);
+    const test = new Test(this.title, this.fn, this._ordinalInFile, this._testType, this.location);
     test._only = this._only;
-    test.location = this.location;
     test._requireFile = this._requireFile;
     return test;
   }
@@ -175,6 +176,7 @@ export class Test extends Base implements reporterTypes.Test {
       retry: this.results.length,
       workerIndex: 0,
       duration: 0,
+      startTime: new Date(),
       stdout: [],
       stderr: [],
       attachments: [],

@@ -62,9 +62,8 @@ export class TestTypeImpl {
     const ordinalInFile = countByFile.get(suite._requireFile) || 0;
     countByFile.set(suite._requireFile, ordinalInFile + 1);
 
-    const test = new Test(title, fn, ordinalInFile, this);
+    const test = new Test(title, fn, ordinalInFile, this, location);
     test._requireFile = suite._requireFile;
-    test.location = location;
     suite._addTest(test);
 
     if (type === 'only')
