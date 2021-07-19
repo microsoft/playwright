@@ -58,3 +58,4 @@ function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer 
 }
 
 expectLibrary.extend({ toMatchSnapshot });
+expectLibrary.setState({ expand: false });
