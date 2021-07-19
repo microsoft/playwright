@@ -85,7 +85,6 @@ class BrowserTypeExamples
 ```
 
 ## async method: BrowserType.connect
-* langs: js, python, java
 - returns: <[Browser]>
 
 This methods attaches Playwright to an existing browser instance.
@@ -102,26 +101,26 @@ This methods attaches Playwright to an existing browser instance.
     `30000` (30 seconds). Pass `0` to disable timeout.
 
 ### param: BrowserType.connect.wsEndpoint
-* langs: java, python
+* langs: java, python, csharp
 - `wsEndpoint` <[string]>
 
 A browser websocket endpoint to connect to.
 
 ### option: BrowserType.connect.headers
-* langs: java, python
+* langs: java, python, csharp
 - `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with web socket connect request. Optional.
 
 ### option: BrowserType.connect.slowMo
-* langs: java, python
+* langs: java, python, csharp
 - `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
 ### option: BrowserType.connect.timeout
-* langs: java, python
+* langs: java, python, csharp
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
