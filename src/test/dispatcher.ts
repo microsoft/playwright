@@ -19,7 +19,7 @@ import path from 'path';
 import { EventEmitter } from 'events';
 import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import type { TestResult, Reporter, TestStatus } from '../../types/testReporter';
-import { Suite, Test } from './test';
+import { Suite, TestCase } from './test';
 import { Loader } from './loader';
 
 type DispatcherEntry = {
@@ -34,7 +34,7 @@ export class Dispatcher {
   private _freeWorkers: Worker[] = [];
   private _workerClaimers: (() => void)[] = [];
 
-  private _testById = new Map<string, { test: Test, result: TestResult }>();
+  private _testById = new Map<string, { test: TestCase, result: TestResult }>();
   private _queue: DispatcherEntry[] = [];
   private _stopCallback = () => {};
   readonly _loader: Loader;
@@ -321,7 +321,7 @@ export class Dispatcher {
     }
   }
 
-  private _reportTestBegin(test: Test) {
+  private _reportTestBegin(test: TestCase) {
     if (this._isStopped)
       return;
     const maxFailures = this._loader.fullConfig().maxFailures;
@@ -329,7 +329,7 @@ export class Dispatcher {
       this._reporter.onTestBegin?.(test);
   }
 
-  private _reportTestEnd(test: Test, result: TestResult, status: TestStatus) {
+  private _reportTestEnd(test: TestCase, result: TestResult, status: TestStatus) {
     if (this._isStopped)
       return;
     result.status = status;

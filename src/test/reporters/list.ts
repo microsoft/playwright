@@ -19,7 +19,7 @@ import colors from 'colors/safe';
 // @ts-ignore
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
-import { FullConfig, FullResult, Suite, Test, TestResult } from '../../../types/testReporter';
+import { FullConfig, FullResult, Suite, TestCase, TestResult } from '../../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -29,7 +29,7 @@ const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
 class ListReporter extends BaseReporter {
   private _failure = 0;
   private _lastRow = 0;
-  private _testRows = new Map<Test, number>();
+  private _testRows = new Map<TestCase, number>();
   private _needNewLine = false;
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -37,7 +37,7 @@ class ListReporter extends BaseReporter {
     console.log();
   }
 
-  onTestBegin(test: Test) {
+  onTestBegin(test: TestCase) {
     if (process.stdout.isTTY) {
       if (this._needNewLine) {
         this._needNewLine = false;
@@ -49,15 +49,15 @@ class ListReporter extends BaseReporter {
     this._testRows.set(test, this._lastRow++);
   }
 
-  onStdOut(chunk: string | Buffer, test?: Test) {
+  onStdOut(chunk: string | Buffer, test?: TestCase) {
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  onStdErr(chunk: string | Buffer, test?: Test) {
+  onStdErr(chunk: string | Buffer, test?: TestCase) {
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  private _dumpToStdio(test: Test | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
     const text = chunk.toString('utf-8');
@@ -69,7 +69,7 @@ class ListReporter extends BaseReporter {
     stream.write(chunk);
   }
 
-  onTestEnd(test: Test, result: TestResult) {
+  onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
 
     const duration = colors.dim(` (${milliseconds(result.duration)})`);

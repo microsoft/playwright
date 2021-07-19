@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, FullResult, Reporter, Suite, Test } from '../../../types/testReporter';
+import { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../../types/testReporter';
 import { monotonicTime } from '../util';
 import { formatFailure, formatTestTitle, stripAscii } from './base';
 
@@ -117,7 +117,7 @@ class JUnitReporter implements Reporter {
     return entry;
   }
 
-  private _addTestCase(test: Test, entries: XMLEntry[]) {
+  private _addTestCase(test: TestCase, entries: XMLEntry[]) {
     const entry = {
       name: 'testcase',
       attributes: {

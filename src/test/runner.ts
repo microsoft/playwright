@@ -22,7 +22,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher } from './dispatcher';
 import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
-import { Test, Suite } from './test';
+import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from '../../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
@@ -50,7 +50,7 @@ type RunResult = {
   locations: string[]
 } | {
   status: 'clashing-test-titles',
-  clashingTests: Map<string, Test[]>
+  clashingTests: Map<string, TestCase[]>
 };
 
 export class Runner {
@@ -286,7 +286,7 @@ export class Runner {
 
 function filterOnly(suite: Suite) {
   const suiteFilter = (suite: Suite) => suite._only;
-  const testFilter = (test: Test) => test._only;
+  const testFilter = (test: TestCase) => test._only;
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
@@ -296,11 +296,11 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilt
     return re.test(testFileName) && (line === testLine || line === null);
   });
   const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line);
-  const testFilter = (test: Test) => testFileLineMatches(test.location.file, test.location.line);
+  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
-function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: Test) => boolean) {
+function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
   const onlySuites = suite.suites.filter(child => filterSuite(child, suiteFilter, testFilter) || suiteFilter(child));
   const onlyTests = suite.tests.filter(testFilter);
   const onlyEntries = new Set([...onlySuites, ...onlyTests]);
@@ -382,8 +382,8 @@ async function collectFiles(testDir: string): Promise<string[]> {
   return files;
 }
 
-function getClashingTestsPerSuite(rootSuite: Suite): Map<string, Test[]> {
-  function visit(suite: Suite, clashingTests: Map<string, Test[]>) {
+function getClashingTestsPerSuite(rootSuite: Suite): Map<string, TestCase[]> {
+  function visit(suite: Suite, clashingTests: Map<string, TestCase[]>) {
     for (const childSuite of suite.suites)
       visit(childSuite, clashingTests);
     for (const test of suite.tests) {
@@ -393,9 +393,9 @@ function getClashingTestsPerSuite(rootSuite: Suite): Map<string, Test[]> {
       clashingTests.set(fullTitle, clashingTests.get(fullTitle)!.concat(test));
     }
   }
-  const out = new Map<string, Test[]>();
+  const out = new Map<string, TestCase[]>();
   for (const fileSuite of rootSuite.suites) {
-    const clashingTests = new Map<string, Test[]>();
+    const clashingTests = new Map<string, TestCase[]>();
     visit(fileSuite, clashingTests);
     for (const [title, tests] of clashingTests.entries()) {
       if (tests.length > 1)
@@ -405,7 +405,7 @@ function getClashingTestsPerSuite(rootSuite: Suite): Map<string, Test[]> {
   return out;
 }
 
-function buildItemLocation(rootDir: string, testOrSuite: Suite | Test) {
+function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   if (!testOrSuite.location)
     return '';
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;

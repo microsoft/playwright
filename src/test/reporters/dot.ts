@@ -16,12 +16,12 @@
 
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
-import { FullResult, Test, TestResult } from '../../../types/testReporter';
+import { FullResult, TestCase, TestResult } from '../../../types/testReporter';
 
 class DotReporter extends BaseReporter {
   private _counter = 0;
 
-  onTestEnd(test: Test, result: TestResult) {
+  onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     if (++this._counter === 81) {
       process.stdout.write('\n');

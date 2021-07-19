@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FullConfig, Suite, Test, TestError, TestResult, Reporter, FullResult } from '../../../types/testReporter';
+import { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult } from '../../../types/testReporter';
 
 export class Multiplexer implements Reporter {
   private _reporters: Reporter[];
@@ -28,22 +28,22 @@ export class Multiplexer implements Reporter {
       reporter.onBegin?.(config, suite);
   }
 
-  onTestBegin(test: Test) {
+  onTestBegin(test: TestCase) {
     for (const reporter of this._reporters)
       reporter.onTestBegin?.(test);
   }
 
-  onStdOut(chunk: string | Buffer, test?: Test) {
+  onStdOut(chunk: string | Buffer, test?: TestCase) {
     for (const reporter of this._reporters)
       reporter.onStdOut?.(chunk, test);
   }
 
-  onStdErr(chunk: string | Buffer, test?: Test) {
+  onStdErr(chunk: string | Buffer, test?: TestCase) {
     for (const reporter of this._reporters)
       reporter.onStdErr?.(chunk, test);
   }
 
-  onTestEnd(test: Test, result: TestResult) {
+  onTestEnd(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
       reporter.onTestEnd?.(test, result);
   }

@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { Reporter, Test } from '@playwright/test/reporter';
+import { Reporter, TestCase } from '@playwright/test/reporter';
 
 test.use({ locale: 'en-US' });
 
@@ -49,7 +49,7 @@ test2('should work 2', async ({ foo, bar }) => {
 });
 
 export class MyReporter implements Reporter {
-  onTestBegin(test: Test) {
+  onTestBegin(test: TestCase) {
     test.titlePath().slice();
     if (test.results[0].status === test.expectedStatus)
       console.log(`Nice test ${test.title} at ${test.location.file}`);

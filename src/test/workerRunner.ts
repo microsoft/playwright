@@ -23,7 +23,7 @@ import { monotonicTime, DeadlineRunner, raceAgainstDeadline, serializeError } fr
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
-import { Modifier, Suite, Test } from './test';
+import { Modifier, Suite, TestCase } from './test';
 import { Annotations, TestError, TestInfo, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixturePool, FixtureRunner } from './fixtures';
@@ -191,7 +191,7 @@ export class WorkerRunner extends EventEmitter {
     }
   }
 
-  private async _runTest(test: Test, annotations: Annotations) {
+  private async _runTest(test: TestCase, annotations: Annotations) {
     if (this._isStopped)
       return;
     const entry = this._entries.get(test._id);
@@ -351,7 +351,7 @@ export class WorkerRunner extends EventEmitter {
     setCurrentTestInfo(currentTest ? currentTest.testInfo : null);
   }
 
-  private async _runTestWithBeforeHooks(test: Test, testInfo: TestInfo) {
+  private async _runTestWithBeforeHooks(test: TestCase, testInfo: TestInfo) {
     try {
       const beforeEachModifiers: Modifier[] = [];
       for (let s = test.parent; s; s = s.parent) {
@@ -399,7 +399,7 @@ export class WorkerRunner extends EventEmitter {
     }
   }
 
-  private async _runAfterHooks(test: Test, testInfo: TestInfo) {
+  private async _runAfterHooks(test: TestCase, testInfo: TestInfo) {
     try {
       await this._runHooks(test.parent!, 'afterEach', testInfo);
     } catch (error) {
