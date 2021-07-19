@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
 export { expect } from './expect';
@@ -180,7 +180,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       }));
     }
 
-    const prependToError = testInfo.status ===  'timedOut' ? formatPendingCalls((context as any)._connection.pendingProtocolCalls(), testInfo) : '';
+    const prependToError = testInfo.status ===  'timedOut' ? formatPendingCalls((context as any)._connection.pendingProtocolCalls()) : '';
     await context.close();
     if (prependToError) {
       if (!testInfo.error) {
@@ -215,7 +215,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
 });
 export default test;
 
-function formatPendingCalls(calls: ProtocolCall[], testInfo: TestInfo) {
+function formatPendingCalls(calls: ProtocolCall[]) {
   if (!calls.length)
     return '';
   return 'Pending operations:\n' + calls.map(call => {
