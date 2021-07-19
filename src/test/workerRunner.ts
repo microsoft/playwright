@@ -199,6 +199,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     const startTime = monotonicTime();
+    const startWallTime = Date.now();
     let deadlineRunner: DeadlineRunner<any> | undefined;
     const testId = test._id;
 
@@ -293,7 +294,7 @@ export class WorkerRunner extends EventEmitter {
       return testInfo.timeout ? startTime + testInfo.timeout : undefined;
     };
 
-    this.emit('testBegin', buildTestBeginPayload(testId, testInfo));
+    this.emit('testBegin', buildTestBeginPayload(testId, testInfo, startWallTime));
 
     if (testInfo.expectedStatus === 'skipped') {
       testInfo.status = 'skipped';
@@ -461,10 +462,11 @@ export class WorkerRunner extends EventEmitter {
   }
 }
 
-function buildTestBeginPayload(testId: string, testInfo: TestInfo): TestBeginPayload {
+function buildTestBeginPayload(testId: string, testInfo: TestInfo, startWallTime: number): TestBeginPayload {
   return {
     testId,
-    workerIndex: testInfo.workerIndex
+    workerIndex: testInfo.workerIndex,
+    startWallTime,
   };
 }
 

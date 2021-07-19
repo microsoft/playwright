@@ -87,7 +87,7 @@ export class BaseReporter implements Reporter  {
     const flaky: Test[] = [];
 
     this.suite.allTests().forEach(test => {
-      switch (test.status()) {
+      switch (test.outcome()) {
         case 'skipped': ++skipped; break;
         case 'expected': ++expected; break;
         case 'unexpected': unexpected.push(test); break;

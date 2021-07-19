@@ -64,7 +64,7 @@ export interface Suite {
   /**
    * Location where the suite is defined.
    */
-  location: Location;
+  location?: Location;
 
   /**
    * Child suites.
@@ -142,9 +142,11 @@ export interface Test {
   results: TestResult[];
 
   /**
-   * Overall test status.
+   * Testing outcome for this test. Note that outcome does not directly match to the status:
+   *   - Test that is expected to fail and actually fails is 'expected'.
+   *   - Test that passes on a second retry is 'flaky'.
    */
-  status(): 'skipped' | 'expected' | 'unexpected' | 'flaky';
+  outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky';
 
   /**
    * Whether the test is considered running fine.
@@ -165,7 +167,12 @@ export interface TestResult {
   /**
    * Index of the worker where the test was run.
    */
-  workerIndex: number,
+  workerIndex: number;
+
+  /**
+   * Test run start time.
+   */
+  startTime: Date;
 
   /**
    * Running time in milliseconds.

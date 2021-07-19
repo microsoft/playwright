@@ -87,7 +87,7 @@ class JUnitReporter implements Reporter {
 
     suite.allTests().forEach(test => {
       ++tests;
-      if (test.status() === 'skipped')
+      if (test.outcome() === 'skipped')
         ++skipped;
       if (!test.ok())
         ++failures;
@@ -102,7 +102,7 @@ class JUnitReporter implements Reporter {
     const entry: XMLEntry = {
       name: 'testsuite',
       attributes: {
-        name: path.relative(this.config.rootDir, suite.location.file),
+        name: suite.location ? path.relative(this.config.rootDir, suite.location.file) : '',
         timestamp: this.timestamp,
         hostname: '',
         tests,
@@ -130,7 +130,7 @@ class JUnitReporter implements Reporter {
     };
     entries.push(entry);
 
-    if (test.status() === 'skipped') {
+    if (test.outcome() === 'skipped') {
       entry.children.push({ name: 'skipped'});
       return;
     }

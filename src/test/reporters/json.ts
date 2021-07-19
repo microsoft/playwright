@@ -127,21 +127,24 @@ class JSONReporter implements Reporter {
     const result: JSONReportSuite[] = [];
     for (const projectSuite of suites) {
       for (const fileSuite of projectSuite.suites) {
-        if (!fileSuites.has(fileSuite.location.file)) {
+        const file = fileSuite.location!.file;
+        if (!fileSuites.has(file)) {
           const serialized = this._serializeSuite(fileSuite);
           if (serialized) {
-            fileSuites.set(fileSuite.location.file, serialized);
+            fileSuites.set(file, serialized);
             result.push(serialized);
           }
         } else {
-          this._mergeTestsFromSuite(fileSuites.get(fileSuite.location.file)!, fileSuite);
+          this._mergeTestsFromSuite(fileSuites.get(file)!, fileSuite);
         }
       }
     }
     return result;
   }
 
-  private _relativeLocation(location: Location): Location {
+  private _relativeLocation(location: Location | undefined): Location {
+    if (!location)
+      return { file: '', line: 0, column: 0 };
     return {
       file: toPosixPath(path.relative(this.config.rootDir, location.file)),
       line: location.line,
@@ -149,7 +152,7 @@ class JSONReporter implements Reporter {
     };
   }
 
-  private _locationMatches(s: JSONReportSuite | JSONReportSpec, location: Location) {
+  private _locationMatches(s: JSONReportSuite | JSONReportSpec, location: Location | undefined) {
     const relative = this._relativeLocation(location);
     return s.file === relative.file && s.line === relative.line && s.column === relative.column;
   }
@@ -205,7 +208,7 @@ class JSONReporter implements Reporter {
       expectedStatus: test.expectedStatus,
       projectName: test.titlePath()[1],
       results: test.results.map(r => this._serializeTestResult(r)),
-      status: test.status(),
+      status: test.outcome(),
     };
   }
 
