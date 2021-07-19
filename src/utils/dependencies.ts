@@ -175,6 +175,20 @@ export async function validateDependenciesLinux(linuxLddDirectories: string[], d
     }
   }
 
+  // Happy path: known dependencies are missing for browsers.
+  // Suggest installation with a Playwright CLI.
+  if (missingPackages.size && !missingDeps.size) {
+    throw new Error('\n' + utils.wrapInASCIIBox([
+      `Host system is missing a few dependencies to run browsers.`,
+      `Please install them with the following command:`,
+      ``,
+      `    sudo npx playwright install-deps`,
+      ``,
+      `<3 Playwright Team`,
+    ].join('\n'), 1));
+  }
+
+  // Unhappy path - unusual distribution configuration.
   let missingPackagesMessage = '';
   if (missingPackages.size) {
     missingPackagesMessage = [
