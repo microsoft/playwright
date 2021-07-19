@@ -62,12 +62,12 @@ export class Runner {
     this._loader = new Loader(defaultConfig, configOverrides);
   }
 
-  private async _createReporter() {
+  private async _createReporter(list: boolean) {
     const reporters: Reporter[] = [];
     const defaultReporters = {
-      dot: DotReporter,
-      line: LineReporter,
-      list: ListReporter,
+      dot: list ? ListModeReporter : DotReporter,
+      line: list ? ListModeReporter : LineReporter,
+      list: list ? ListModeReporter : ListReporter,
       json: JSONReporter,
       junit: JUnitReporter,
       null: EmptyReporter,
@@ -93,7 +93,7 @@ export class Runner {
   }
 
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResultStatus> {
-    this._reporter = list ? new ListModeReporter() : await this._createReporter();
+    this._reporter = await this._createReporter(list);
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
     const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
