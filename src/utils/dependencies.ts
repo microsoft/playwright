@@ -175,11 +175,26 @@ export async function validateDependenciesLinux(linuxLddDirectories: string[], d
     }
   }
 
+  const maybeSudo = (process.getuid() !== 0) && os.platform() !== 'win32' ? 'sudo ' : '';
+  // Happy path: known dependencies are missing for browsers.
+  // Suggest installation with a Playwright CLI.
+  if (missingPackages.size && !missingDeps.size) {
+    throw new Error('\n' + utils.wrapInASCIIBox([
+      `Host system is missing a few dependencies to run browsers.`,
+      `Please install them with the following command:`,
+      ``,
+      `    ${maybeSudo}npx playwright install-deps`,
+      ``,
+      `<3 Playwright Team`,
+    ].join('\n'), 1));
+  }
+
+  // Unhappy path - unusual distribution configuration.
   let missingPackagesMessage = '';
   if (missingPackages.size) {
     missingPackagesMessage = [
       `  Install missing packages with:`,
-      `      sudo apt-get install ${[...missingPackages].join('\\\n          ')}`,
+      `      ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n          ')}`,
       ``,
       ``,
     ].join('\n');
