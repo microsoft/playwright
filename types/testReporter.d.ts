@@ -18,7 +18,7 @@ import type { FullConfig, TestStatus, TestError } from './test';
 export type { FullConfig, TestStatus, TestError } from './test';
 
 /**
- * Test or Suite location where it was defined.
+ * Location where TestCase or Suite was defined.
  */
 export interface Location {
   /**
@@ -43,9 +43,9 @@ export interface Location {
  *   - Project suite #1 (for each project)
  *     - File suite #1 (for each file in the project)
  *       - Suites for any describe() calls
- *         - Test #1 defined in the file or describe() group
- *         - Test #2
- *         ... < more tests >
+ *         - TestCase #1 defined in the file or describe() group
+ *         - TestCase #2
+ *         ... < more test cases >
  *     - File suite #2
  *     ... < more file suites >
  *   - Second project suite
@@ -57,7 +57,7 @@ export interface Suite {
    *   - Empty for root suite.
    *   - Project name for project suite.
    *   - File path for file suite.
-   *   - Title passed to describe() for describe suites
+   *   - Title passed to describe() for describe suites.
    */
   title: string;
 
@@ -72,11 +72,11 @@ export interface Suite {
   suites: Suite[];
 
   /**
-   * Tests in the suite. Note that only tests defined directly in this suite
-   * are in the list. Any tests defined in nested describe() groups are listed
+   * Test cases in the suite. Note that only test cases defined directly in this suite
+   * are in the list. Any test cases defined in nested describe() groups are listed
    * in the child `suites`.
    */
-  tests: Test[];
+  tests: TestCase[];
 
   /**
    * A list of titles from the root down to this suite.
@@ -84,17 +84,17 @@ export interface Suite {
   titlePath(): string[];
 
   /**
-   * Returns the list of all tests in this suite and its descendants.
+   * Returns the list of all test cases in this suite and its descendants.
    */
-  allTests(): Test[];
+  allTests(): TestCase[];
 }
 
 /**
- * A test, corresponds to test() call in a test file. When a single test() is
- * running in multiple projects (or repeated multiple times), it will have multiple
- * `Test` objects in corresponding projects' suites.
+ * `TestCase` corresponds to a test() call in a test file. When a single test() is
+ * running in multiple projects or repeated multiple times, it will have multiple
+ * `TestCase` objects in corresponding projects' suites.
  */
-export interface Test {
+export interface TestCase {
   /**
    * Test title as passed to the test() call.
    */
@@ -232,24 +232,24 @@ export interface Reporter {
   /**
    * Called after a test has been started in the worker process.
    */
-  onTestBegin?(test: Test): void;
+  onTestBegin?(test: TestCase): void;
 
   /**
    * Called when something has been written to the standard output in the worker process.
    * When `test` is given, output happened while the test was running.
    */
-  onStdOut?(chunk: string | Buffer, test?: Test): void;
+  onStdOut?(chunk: string | Buffer, test?: TestCase): void;
 
   /**
    * Called when something has been written to the standard error in the worker process.
    * When `test` is given, output happened while the test was running.
    */
-  onStdErr?(chunk: string | Buffer, test?: Test): void;
+  onStdErr?(chunk: string | Buffer, test?: TestCase): void;
 
   /**
    * Called after a test has been finished in the worker process.
    */
-  onTestEnd?(test: Test, result: TestResult): void;
+  onTestEnd?(test: TestCase, result: TestResult): void;
 
   /**
    * Called on some global error, for example unhandled expection in the worker process.

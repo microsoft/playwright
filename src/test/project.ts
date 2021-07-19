@@ -15,7 +15,7 @@
  */
 
 import type { TestType, FullProject, Fixtures, FixturesWithLocation } from './types';
-import { Suite, Test } from './test';
+import { Suite, TestCase } from './test';
 import { FixturePool } from './fixtures';
 import { DeclaredFixtures, TestTypeImpl } from './testType';
 
@@ -24,7 +24,7 @@ export class ProjectImpl {
   private index: number;
   private defines = new Map<TestType<any, any>, Fixtures>();
   private testTypePools = new Map<TestTypeImpl, FixturePool>();
-  private testPools = new Map<Test, FixturePool>();
+  private testPools = new Map<TestCase, FixturePool>();
 
   constructor(project: FullProject, index: number) {
     this.config = project;
@@ -53,7 +53,7 @@ export class ProjectImpl {
   }
 
   // TODO: we can optimize this function by building the pool inline in cloneSuite
-  private buildPool(test: Test): FixturePool {
+  private buildPool(test: TestCase): FixturePool {
     if (!this.testPools.has(test)) {
       let pool = this.buildTestTypePool(test._testType);
       const overrides: Fixtures = test.parent!._buildFixtureOverrides();
@@ -78,7 +78,7 @@ export class ProjectImpl {
     return this.testPools.get(test)!;
   }
 
-  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: Test) => boolean): boolean {
+  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
     for (const entry of from._entries) {
       if (entry instanceof Suite) {
         const suite = entry._clone();
@@ -107,7 +107,7 @@ export class ProjectImpl {
     return to._entries.length > 0;
   }
 
-  cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: Test) => boolean): Suite | undefined {
+  cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
     const result = suite._clone();
     return this._cloneEntries(suite, result, repeatEachIndex, filter) ? result : undefined;
   }

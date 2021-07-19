@@ -16,7 +16,7 @@
 
 import { expect } from './expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
-import { Test, Suite } from './test';
+import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 
@@ -62,7 +62,7 @@ export class TestTypeImpl {
     const ordinalInFile = countByFile.get(suite._requireFile) || 0;
     countByFile.set(suite._requireFile, ordinalInFile + 1);
 
-    const test = new Test(title, fn, ordinalInFile, this, location);
+    const test = new TestCase(title, fn, ordinalInFile, this, location);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 

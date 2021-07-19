@@ -21,7 +21,7 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestStatus, Test, Suite, TestResult, TestError, Reporter, FullResult } from '../../../types/testReporter';
+import { FullConfig, TestStatus, TestCase, Suite, TestResult, TestError, Reporter, FullResult } from '../../../types/testReporter';
 
 const stackUtils = new StackUtils();
 
@@ -49,7 +49,7 @@ export class BaseReporter implements Reporter  {
       process.stderr.write(chunk);
   }
 
-  onTestEnd(test: Test, result: TestResult) {
+  onTestEnd(test: TestCase, result: TestResult) {
     const projectName = test.titlePath()[1];
     const relativePath = relativeTestPath(this.config, test);
     const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
@@ -83,8 +83,8 @@ export class BaseReporter implements Reporter  {
   epilogue(full: boolean) {
     let skipped = 0;
     let expected = 0;
-    const unexpected: Test[] = [];
-    const flaky: Test[] = [];
+    const unexpected: TestCase[] = [];
+    const flaky: TestCase[] = [];
 
     this.suite.allTests().forEach(test => {
       switch (test.outcome()) {
@@ -119,28 +119,28 @@ export class BaseReporter implements Reporter  {
       console.log(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
   }
 
-  private _printTestHeaders(tests: Test[]) {
+  private _printTestHeaders(tests: TestCase[]) {
     tests.forEach(test => {
       console.log(formatTestHeader(this.config, test, '    '));
     });
   }
 
-  private _printFailures(failures: Test[]) {
+  private _printFailures(failures: TestCase[]) {
     failures.forEach((test, index) => {
       console.log(formatFailure(this.config, test, index + 1));
     });
   }
 
-  hasResultWithStatus(test: Test, status: TestStatus): boolean {
+  hasResultWithStatus(test: TestCase, status: TestStatus): boolean {
     return !!test.results.find(r => r.status === status);
   }
 
-  willRetry(test: Test, result: TestResult): boolean {
+  willRetry(test: TestCase, result: TestResult): boolean {
     return result.status !== 'passed' && result.status !== test.expectedStatus && test.results.length <= test.retries;
   }
 }
 
-export function formatFailure(config: FullConfig, test: Test, index?: number): string {
+export function formatFailure(config: FullConfig, test: TestCase, index?: number): string {
   const tokens: string[] = [];
   tokens.push(formatTestHeader(config, test, '  ', index));
   for (const result of test.results) {
@@ -152,11 +152,11 @@ export function formatFailure(config: FullConfig, test: Test, index?: number): s
   return tokens.join('\n');
 }
 
-function relativeTestPath(config: FullConfig, test: Test): string {
+function relativeTestPath(config: FullConfig, test: TestCase): string {
   return path.relative(config.rootDir, test.location.file) || path.basename(test.location.file);
 }
 
-export function formatTestTitle(config: FullConfig, test: Test): string {
+export function formatTestTitle(config: FullConfig, test: TestCase): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
   const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
@@ -164,14 +164,14 @@ export function formatTestTitle(config: FullConfig, test: Test): string {
   return `${projectTitle}${location} › ${titles.join(' ')}`;
 }
 
-function formatTestHeader(config: FullConfig, test: Test, indent: string, index?: number): string {
+function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
   const passedUnexpectedlySuffix = test.results[0].status === 'passed' ? ' -- passed unexpectedly' : '';
   const header = `${indent}${index ? index + ') ' : ''}${title}${passedUnexpectedlySuffix}`;
   return colors.red(pad(header, '='));
 }
 
-function formatFailedResult(test: Test, result: TestResult): string {
+function formatFailedResult(test: TestCase, result: TestResult): string {
   const tokens: string[] = [];
   if (result.retry)
     tokens.push(colors.gray(pad(`\n    Retry #${result.retry}`, '-')));

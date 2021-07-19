@@ -46,10 +46,10 @@ export type Modifier = {
 
 export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
-  tests: Test[] = [];
+  tests: TestCase[] = [];
   location?: Location;
   _fixtureOverrides: any = {};
-  _entries: (Suite | Test)[] = [];
+  _entries: (Suite | TestCase)[] = [];
   _hooks: {
     type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll',
     fn: Function,
@@ -59,7 +59,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
 
-  _addTest(test: Test) {
+  _addTest(test: TestCase) {
     test.parent = this;
     this.tests.push(test);
     this._entries.push(test);
@@ -71,8 +71,8 @@ export class Suite extends Base implements reporterTypes.Suite {
     this._entries.push(suite);
   }
 
-  allTests(): Test[] {
-    const result: Test[] = [];
+  allTests(): TestCase[] {
+    const result: TestCase[] = [];
     const visit = (suite: Suite) => {
       for (const entry of suite._entries) {
         if (entry instanceof Suite)
@@ -85,8 +85,8 @@ export class Suite extends Base implements reporterTypes.Suite {
     return result;
   }
 
-  _getOnlyItems(): (Test | Suite)[] {
-    const items: (Test | Suite)[] = [];
+  _getOnlyItems(): (TestCase | Suite)[] {
+    const items: (TestCase | Suite)[] = [];
     if (this._only)
       items.push(this);
     for (const suite of this.suites)
@@ -113,7 +113,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   }
 }
 
-export class Test extends Base implements reporterTypes.Test {
+export class TestCase extends Base implements reporterTypes.TestCase {
   fn: Function;
   results: reporterTypes.TestResult[] = [];
   location: Location;
@@ -164,8 +164,8 @@ export class Test extends Base implements reporterTypes.Test {
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
-  _clone(): Test {
-    const test = new Test(this.title, this.fn, this._ordinalInFile, this._testType, this.location);
+  _clone(): TestCase {
+    const test = new TestCase(this.title, this.fn, this._ordinalInFile, this._testType, this.location);
     test._only = this._only;
     test._requireFile = this._requireFile;
     return test;

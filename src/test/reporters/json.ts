@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, Test, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
+import { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -192,7 +192,7 @@ class JSONReporter implements Reporter {
     };
   }
 
-  private _serializeTestSpec(test: Test): JSONReportSpec {
+  private _serializeTestSpec(test: TestCase): JSONReportSpec {
     return {
       title: test.title,
       ok: test.ok(),
@@ -201,7 +201,7 @@ class JSONReporter implements Reporter {
     };
   }
 
-  private _serializeTest(test: Test): JSONReportTest {
+  private _serializeTest(test: TestCase): JSONReportTest {
     return {
       timeout: test.timeout,
       annotations: test.annotations,
