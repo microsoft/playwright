@@ -41,3 +41,26 @@ test('should list tests', async ({ runInlineTest }) => {
     `Total: 4 tests in 1 file`
   ].join('\n'));
 });
+
+test('should not list tests to stdout when JSON reporter is used', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [{ name: 'foo' }, {}] };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('example1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('example2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { 'list': true, 'reporter': 'json' });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain('Listing tests');
+  expect(result.report.config.projects.length).toBe(2);
+  expect(result.report.suites.length).toBe(1);
+  expect(result.report.suites[0].specs.length).toBe(2);
+  expect(result.report.suites[0].specs.map(spec => spec.title)).toStrictEqual(['example1', 'example2']);
+});
