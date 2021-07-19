@@ -298,6 +298,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async dragAndDrop(source: string, target: string, options: channels.FrameDragAndDropOptions = {}) {
+    return this._wrapApiCall(async (channel: channels.FrameChannel) => {
+      return await channel.dragAndDrop({ source, target, ...options });
+    });
+  }
+
   async tap(selector: string, options: channels.FrameTapOptions = {}) {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
       return await channel.tap({ selector, ...options });

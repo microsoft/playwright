@@ -1177,6 +1177,15 @@ Frame:
       returns:
         value: string
 
+    dragAndDrop:
+      parameters:
+        source: string
+        target: string
+        force: boolean?
+        noWaitAfter: boolean?
+        timeout: number?
+        trial: boolean?
+
     dblclick:
       parameters:
         selector: string

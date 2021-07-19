@@ -1125,7 +1125,7 @@ export interface Page {
    * zero timeout disables this.
    *
    * Shortcut for main frame's [frame.check(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-check).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   check(selector: string, options?: {
@@ -1180,7 +1180,7 @@ export interface Page {
    * zero timeout disables this.
    *
    * Shortcut for main frame's [frame.click(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-click).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   click(selector: string, options?: {
@@ -1295,7 +1295,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.dblclick(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-dblclick).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   dblclick(selector: string, options?: {
@@ -1381,7 +1381,7 @@ export interface Page {
    * await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
    * ```
    *
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
    * @param options
@@ -1394,6 +1394,39 @@ export interface Page {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * @param source
+   * @param target
+   * @param options
+   */
+  dragAndDrop(source: string, target: string, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults to
+     * `false`. Useful to wait until the element is ready for the action without performing it.
+     */
+    trial?: boolean;
   }): Promise<void>;
 
   /**
@@ -1508,7 +1541,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.fill(selector, value[, options])](https://playwright.dev/docs/api/class-frame#frame-fill).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
    */
@@ -1539,7 +1572,7 @@ export interface Page {
    * waits until a matching element appears in the DOM.
    *
    * Shortcut for main frame's [frame.focus(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-focus).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   focus(selector: string, options?: {
@@ -1584,7 +1617,7 @@ export interface Page {
 
   /**
    * Returns element attribute value.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param name Attribute name to get the value for.
    * @param options
    */
@@ -1717,7 +1750,7 @@ export interface Page {
    * zero timeout disables this.
    *
    * Shortcut for main frame's [frame.hover(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-hover).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   hover(selector: string, options?: {
@@ -1759,7 +1792,7 @@ export interface Page {
 
   /**
    * Returns `element.innerHTML`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   innerHTML(selector: string, options?: {
@@ -1774,7 +1807,7 @@ export interface Page {
 
   /**
    * Returns `element.innerText`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   innerText(selector: string, options?: {
@@ -1789,7 +1822,7 @@ export interface Page {
 
   /**
    * Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   inputValue(selector: string, options?: {
@@ -1804,7 +1837,7 @@ export interface Page {
 
   /**
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isChecked(selector: string, options?: {
@@ -1824,7 +1857,7 @@ export interface Page {
 
   /**
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isDisabled(selector: string, options?: {
@@ -1839,7 +1872,7 @@ export interface Page {
 
   /**
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isEditable(selector: string, options?: {
@@ -1854,7 +1887,7 @@ export interface Page {
 
   /**
    * Returns whether the element is [enabled](https://playwright.dev/docs/actionability#enabled).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isEnabled(selector: string, options?: {
@@ -1870,7 +1903,7 @@ export interface Page {
   /**
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
    * match any elements is considered hidden.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isHidden(selector: string, options?: {
@@ -1886,7 +1919,7 @@ export interface Page {
   /**
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
    * considered not visible.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isVisible(selector: string, options?: {
@@ -2102,7 +2135,7 @@ export interface Page {
    * await browser.close();
    * ```
    *
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
    */
@@ -2236,7 +2269,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.selectOption(selector, values[, options])](https://playwright.dev/docs/api/class-frame#frame-select-option).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
    * is considered matching if all specified properties match.
    * @param options
@@ -2364,7 +2397,7 @@ export interface Page {
    *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the the current working directory. For empty array, clears the selected files.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param files
    * @param options
    */
@@ -2463,7 +2496,7 @@ export interface Page {
    * `hasTouch` option of the browser context be set to true.
    *
    * Shortcut for main frame's [frame.tap(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-tap).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   tap(selector: string, options?: {
@@ -2512,7 +2545,7 @@ export interface Page {
 
   /**
    * Returns `element.textContent`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   textContent(selector: string, options?: {
@@ -2548,7 +2581,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.type(selector, text[, options])](https://playwright.dev/docs/api/class-frame#frame-type).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param text A text to type into a focused element.
    * @param options
    */
@@ -2591,7 +2624,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.uncheck(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-uncheck).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   uncheck(selector: string, options?: {
@@ -3385,7 +3418,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   check(selector: string, options?: {
@@ -3440,7 +3473,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   click(selector: string, options?: {
@@ -3522,7 +3555,7 @@ export interface Frame {
    * zero timeout disables this.
    *
    * > NOTE: `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   dblclick(selector: string, options?: {
@@ -3608,7 +3641,7 @@ export interface Frame {
    * await frame.dispatchEvent('#source', 'dragstart', { dataTransfer });
    * ```
    *
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
    * @param options
@@ -3624,6 +3657,39 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * @param source
+   * @param target
+   * @param options
+   */
+  dragAndDrop(source: string, target: string, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults to
+     * `false`. Useful to wait until the element is ready for the action without performing it.
+     */
+    trial?: boolean;
+  }): Promise<void>;
+
+  /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
    * element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input
    * field.
@@ -3635,7 +3701,7 @@ export interface Frame {
    *
    * To send fine-grained keyboard events, use
    * [frame.type(selector, text[, options])](https://playwright.dev/docs/api/class-frame#frame-type).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
    */
@@ -3664,7 +3730,7 @@ export interface Frame {
   /**
    * This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method
    * waits until a matching element appears in the DOM.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   focus(selector: string, options?: {
@@ -3697,7 +3763,7 @@ export interface Frame {
 
   /**
    * Returns element attribute value.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param name Attribute name to get the value for.
    * @param options
    */
@@ -3771,7 +3837,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   hover(selector: string, options?: {
@@ -3813,7 +3879,7 @@ export interface Frame {
 
   /**
    * Returns `element.innerHTML`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   innerHTML(selector: string, options?: {
@@ -3828,7 +3894,7 @@ export interface Frame {
 
   /**
    * Returns `element.innerText`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   innerText(selector: string, options?: {
@@ -3843,7 +3909,7 @@ export interface Frame {
 
   /**
    * Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   inputValue(selector: string, options?: {
@@ -3858,7 +3924,7 @@ export interface Frame {
 
   /**
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isChecked(selector: string, options?: {
@@ -3878,7 +3944,7 @@ export interface Frame {
 
   /**
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isDisabled(selector: string, options?: {
@@ -3893,7 +3959,7 @@ export interface Frame {
 
   /**
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isEditable(selector: string, options?: {
@@ -3908,7 +3974,7 @@ export interface Frame {
 
   /**
    * Returns whether the element is [enabled](https://playwright.dev/docs/actionability#enabled).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isEnabled(selector: string, options?: {
@@ -3924,7 +3990,7 @@ export interface Frame {
   /**
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
    * match any elements is considered hidden.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isHidden(selector: string, options?: {
@@ -3940,7 +4006,7 @@ export interface Frame {
   /**
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
    * considered not visible.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   isVisible(selector: string, options?: {
@@ -3989,7 +4055,7 @@ export interface Frame {
    *
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
    */
@@ -4125,7 +4191,7 @@ export interface Frame {
    *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the the current working directory. For empty array, clears the selected files.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param files
    * @param options
    */
@@ -4190,7 +4256,7 @@ export interface Frame {
    * zero timeout disables this.
    *
    * > NOTE: `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   tap(selector: string, options?: {
@@ -4239,7 +4305,7 @@ export interface Frame {
 
   /**
    * Returns `element.textContent`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   textContent(selector: string, options?: {
@@ -4270,7 +4336,7 @@ export interface Frame {
    * await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
    * ```
    *
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param text A text to type into a focused element.
    * @param options
    */
@@ -4310,7 +4376,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   uncheck(selector: string, options?: {

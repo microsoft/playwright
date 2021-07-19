@@ -123,6 +123,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return await this._frame.dblclick(metadata, params.selector, params);
   }
 
+  async dragAndDrop(params: channels.FrameDragAndDropParams, metadata: CallMetadata): Promise<void> {
+    return await this._frame.dragAndDrop(metadata, params.source, params.target, params);
+  }
+
   async tap(params: channels.FrameTapParams, metadata: CallMetadata): Promise<void> {
     return await this._frame.tap(metadata, params.selector, params);
   }
