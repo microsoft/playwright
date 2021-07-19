@@ -125,3 +125,20 @@ test('should work with custom PlaywrightTest namespace', async ({runTSC}) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should not expand huge arrays', async ({runInlineTest}) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('numeric ranges', () => {
+        const a1 = Array(100000).fill(1);
+        const a2 = Array(100000).fill(1);
+        a2[500] = 2;
+        test.expect(a1).toEqual(a2);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output.length).toBeLessThan(100000);
+});
