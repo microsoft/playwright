@@ -298,9 +298,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async dragAndDrop(selector1: string, selector2: string, options: channels.FrameDragAndDropOptions = {}) {
+  async dragAndDrop(source: string, target: string, options: channels.FrameDragAndDropOptions = {}) {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
-      return await channel.dragAndDrop({ selector1, selector2, ...options });
+      return await channel.dragAndDrop({ source, target, ...options });
     });
   }
 

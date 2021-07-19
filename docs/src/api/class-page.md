@@ -812,11 +812,11 @@ Optional event-specific initialization properties.
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
 
 ## async method: Page.dragAndDrop
-### param: Page.dragAndDrop.selector1
-- `selector1` <[string]>
 
-### param: Page.dragAndDrop.selector2
-- `selector2` <[string]>
+### param: Page.dragAndDrop.source = %%-input-source-%%
+
+### param: Page.dragAndDrop.target = %%-input-target-%%
+
 ### option: Page.dragAndDrop.force = %%-input-force-%%
 
 ### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%

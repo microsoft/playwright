@@ -505,8 +505,8 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._mainFrame.click(selector, options);
   }
 
-  async dragAndDrop(selector1: string, selector2: string, options?: channels.FrameDragAndDropOptions) {
-    return this._mainFrame.dragAndDrop(selector1, selector2, options);
+  async dragAndDrop(source: string, target: string, options?: channels.FrameDragAndDropOptions) {
+    return this._mainFrame.dragAndDrop(source, target, options);
   }
 
   async dblclick(selector: string, options?: channels.FrameDblclickOptions) {

@@ -124,7 +124,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   }
 
   async dragAndDrop(params: channels.FrameDragAndDropParams, metadata: CallMetadata): Promise<void> {
-    return await this._frame.dragAndDrop(metadata, params.selector1, params.selector2, params);
+    return await this._frame.dragAndDrop(metadata, params.source, params.target, params);
   }
 
   async tap(params: channels.FrameTapParams, metadata: CallMetadata): Promise<void> {

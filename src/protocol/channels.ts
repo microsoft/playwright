@@ -1450,8 +1450,8 @@ export type FrameContentResult = {
   value: string,
 };
 export type FrameDragAndDropParams = {
-  selector1: string,
-  selector2: string,
+  source: string,
+  target: string,
   force?: boolean,
   noWaitAfter?: boolean,
   timeout?: number,
