@@ -243,7 +243,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
 if (process.argv[2] === 'run-driver')
   runDriver();
 else if (process.argv[2] === 'run-server')
-  runServer(process.argv[3] ? +process.argv[3] : undefined, process.argv?.[4]).catch(logErrorAndExit);
+  runServer(process.argv[3] ? +process.argv[3] : undefined, process.argv[4]).catch(logErrorAndExit);
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')
