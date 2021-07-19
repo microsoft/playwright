@@ -3,7 +3,7 @@ id: test-runners
 title: "Test Runners"
 ---
 
-With a few lines of code, you can hook up Playwright to your favorite .NET test runner.
+With a few lines of code, you can hook up Playwright to the NUnit test runner.
 
 Playwright and Browser instances can be reused between tests for better performance. We
 recommend running each test case in a new BrowserContext, this way browser state will be
