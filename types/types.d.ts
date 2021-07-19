@@ -8860,9 +8860,9 @@ export interface Browser extends EventEmitter {
   }): Promise<Page>;
 
   /**
-   * > NOTE: This is about
-   * [Chromium specific Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool), you can find
-   * Playwright Tracing [here](https://playwright.dev/docs/class-tracing).
+   * > NOTE: This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
+   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](../trace-viewer) could be
+   * found [here](https://playwright.dev/docs/class-tracing).
    *
    * You can use [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browser-start-tracing)
    * and [browser.stopTracing()](https://playwright.dev/docs/api/class-browser#browser-stop-tracing) to create a trace file
@@ -8895,9 +8895,9 @@ export interface Browser extends EventEmitter {
   }): Promise<void>;
 
   /**
-   * > NOTE: This is about
-   * [Chromium specific Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool), you can find
-   * Playwright Tracing [here](https://playwright.dev/docs/class-tracing).
+   * > NOTE: This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
+   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](../trace-viewer) could be
+   * found [here](https://playwright.dev/docs/class-tracing).
    *
    * Returns the buffer with trace data.
    */
