@@ -44,7 +44,9 @@ Note the `chromium-darwin` in the generated snapshot file name - it contains the
 If you are not on the same operating system as your CI system, you can use Docker to generate/update the screenshots:
 
 ```bash
-docker run -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.12.3-focal
+docker run --rm --network host -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.12.3-focal /bin/bash
+npm install
+npx playwright test --update-snapshots
 ```
 
 Sometimes you need to update the reference screenshot, for example when the page has changed. Do this with the  `--update-snapshots` flag.
