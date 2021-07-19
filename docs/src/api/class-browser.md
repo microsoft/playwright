@@ -239,7 +239,7 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 * langs: java, js, python
 
 :::note
-Tracing is only supported on Chromium-based browsers.
+This is about [Chromium specific Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool), you can find Playwright Tracing [here](./class-tracing).
 :::
 
 You can use [`method: Browser.startTracing`] and [`method: Browser.stopTracing`] to create a trace file that can
@@ -295,7 +295,7 @@ specify custom categories to use instead of default.
 - returns: <[Buffer]>
 
 :::note
-Tracing is only supported on Chromium-based browsers.
+This is about [Chromium specific Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool), you can find Playwright Tracing [here](./class-tracing).
 :::
 
 Returns the buffer with trace data.

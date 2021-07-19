@@ -8860,7 +8860,9 @@ export interface Browser extends EventEmitter {
   }): Promise<Page>;
 
   /**
-   * > NOTE: Tracing is only supported on Chromium-based browsers.
+   * > NOTE: This is about
+   * [Chromium specific Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool), you can find
+   * Playwright Tracing [here](https://playwright.dev/docs/class-tracing).
    *
    * You can use [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browser-start-tracing)
    * and [browser.stopTracing()](https://playwright.dev/docs/api/class-browser#browser-stop-tracing) to create a trace file
@@ -8893,7 +8895,9 @@ export interface Browser extends EventEmitter {
   }): Promise<void>;
 
   /**
-   * > NOTE: Tracing is only supported on Chromium-based browsers.
+   * > NOTE: This is about
+   * [Chromium specific Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool), you can find
+   * Playwright Tracing [here](https://playwright.dev/docs/class-tracing).
    *
    * Returns the buffer with trace data.
    */
