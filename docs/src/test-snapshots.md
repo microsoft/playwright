@@ -41,6 +41,12 @@ drwxr-xr-x  3 user  group   96 Jun  4 11:46 example.spec.ts-snapshots
 
 Note the `chromium-darwin` in the generated snapshot file name - it contains the browser name and the platform. Screenshots differ between browsers and platforms due to different rendering, fonts and more, so you will need different snapshots for them. If you use multiple projects in your [configuration file](./test-configuration.md), project name will be used instead of `chromium`.
 
+If you are not on the same operating system as your CI system, you can use Docker to generate/update the screenshots:
+
+```bash
+docker run -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.12.3-focal
+```
+
 Sometimes you need to update the reference screenshot, for example when the page has changed. Do this with the  `--update-snapshots` flag.
 
 ```bash
