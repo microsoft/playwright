@@ -306,8 +306,11 @@ async function launchContext(options: Options, headless: boolean, executablePath
   // Proxy
 
   if (options.proxyServer) {
+    const proxyUrl = new URL(options.proxyServer);
     launchOptions.proxy = {
-      server: options.proxyServer
+      server: proxyUrl.origin,
+      ...(proxyUrl.username && {username: proxyUrl.username}),
+      ...(proxyUrl.password && {password: proxyUrl.password})
     };
   }
 
