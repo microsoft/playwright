@@ -20,7 +20,7 @@ import rimraf from 'rimraf';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
-import { Dispatcher } from './dispatcher';
+import { Dispatcher, TestGroup } from './dispatcher';
 import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
 import { Test, Suite } from './test';
 import { Loader } from './loader';
@@ -230,6 +230,43 @@ export class Runner {
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(e => {})));
 
+      let testGroups = createTestGroups(rootSuite);
+
+      const shard = config.shard;
+      if (shard) {
+        const shardGroups: TestGroup[] = [];
+        const shardTests = new Set<Test>();
+
+        // Each shard gets some tests.
+        const shardSize = Math.floor(total / shard.total);
+        // First few shards get one more test each.
+        const extraOne = total - shardSize * shard.total;
+
+        const from = shardSize * shard.current + Math.min(extraOne, shard.current);
+        const to = from + shardSize + (shard.current < extraOne ? 1 : 0);
+        let current = 0;
+        for (const group of testGroups) {
+          // Any test group goes to the shard that contains the first test of this group.
+          // So, this shard gets any group that starts at [from; to)
+          if (current >= from && current < to) {
+            shardGroups.push(group);
+            for (const test of group.tests)
+              shardTests.add(test);
+          }
+          current += group.tests.length;
+        }
+
+        testGroups = shardGroups;
+        filterSuite(rootSuite, () => false, test => shardTests.has(test));
+      }
+
+      if (process.stdout.isTTY) {
+        console.log();
+        const jobs = Math.min(config.workers, testGroups.length);
+        const shardDetails = shard ? `, shard ${shard.current + 1} of ${shard.total}` : '';
+        console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`);
+      }
+
       let sigint = false;
       let sigintCallback: () => void;
       const sigIntPromise = new Promise<void>(f => sigintCallback = f);
@@ -244,23 +281,11 @@ export class Runner {
       };
       process.on('SIGINT', sigintHandler);
 
-      if (process.stdout.isTTY) {
-        const workers = new Set();
-        rootSuite.allTests().forEach(test => {
-          workers.add(test._requireFile + test._workerHash);
-        });
-        console.log();
-        const jobs = Math.min(config.workers, workers.size);
-        const shard = config.shard;
-        const shardDetails = shard ? `, shard ${shard.current + 1} of ${shard.total}` : '';
-        console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`);
-      }
-
       this._reporter.onBegin?.(config, rootSuite);
       this._didBegin = true;
       let hasWorkerErrors = false;
       if (!list) {
-        const dispatcher = new Dispatcher(this._loader, rootSuite, this._reporter);
+        const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
         await Promise.race([dispatcher.run(), sigIntPromise]);
         await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
@@ -409,6 +434,30 @@ function buildItemLocation(rootDir: string, testOrSuite: Suite | Test) {
   if (!testOrSuite.location)
     return '';
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
+}
+
+function createTestGroups(rootSuite: Suite): TestGroup[] {
+  const groupById = new Map<string, TestGroup>();
+  for (const projectSuite of rootSuite.suites) {
+    for (const test of projectSuite.allTests()) {
+      const id = test._workerHash + '::' + test._requireFile;
+      let group = groupById.get(id);
+      if (!group) {
+        group = {
+          workerHash: test._workerHash,
+          requireFile: test._requireFile,
+          repeatEachIndex: test._repeatEachIndex,
+          projectIndex: test._projectIndex,
+          tests: [],
+        };
+        groupById.set(id, group);
+      }
+      group.tests.push(test);
+    }
+  }
+  const groups = Array.from(groupById.values());
+  groups.sort((a, b) => a.workerHash.localeCompare(b.workerHash));
+  return groups;
 }
 
 class ListModeReporter implements Reporter {
