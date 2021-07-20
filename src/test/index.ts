@@ -29,7 +29,7 @@ const artifactsFolder = path.join(os.tmpdir(), 'pwt-' + createGuid());
 export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
-  playwright: [ () => require('../inprocess'), { scope: 'worker' } ],
+  playwright: [ ({}, use) => use(require('../inprocess')), { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   launchOptions: [ {}, { scope: 'worker' } ],
