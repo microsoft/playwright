@@ -111,7 +111,7 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
 });
 
 
-test.only('should work without a file extension', async ({ runInlineTest }) => {
+test('should work without a file extension', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': smallReporterJS,
     'playwright.config.ts': `
