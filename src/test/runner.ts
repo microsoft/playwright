@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher } from './dispatcher';
-import { BuiltInReporters, createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
+import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from '../../types/testReporter';
@@ -64,7 +64,7 @@ export class Runner {
 
   private async _createReporter(list: boolean) {
     const reporters: Reporter[] = [];
-    const defaultReporters: {[key in BuiltInReporters]: new(arg: any) => Reporter} = {
+    const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
       dot: list ? ListModeReporter : DotReporter,
       line: list ? ListModeReporter : LineReporter,
       list: list ? ListModeReporter : ListReporter,
@@ -427,3 +427,6 @@ class ListModeReporter implements Reporter {
     console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
   }
 }
+
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'] as const;
+export type BuiltInReporter = typeof builtInReporters[number];

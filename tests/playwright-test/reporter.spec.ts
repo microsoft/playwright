@@ -133,7 +133,7 @@ test('should work without a file extension', async ({ runInlineTest }) => {
   ]);
 });
 
-test('should work load from node_modules', async ({ runInlineTest }) => {
+test('should load reporter from node_modules', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'node_modules/my-reporter/index.js': smallReporterJS,
     'playwright.config.ts': `

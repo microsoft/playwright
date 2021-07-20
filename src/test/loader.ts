@@ -16,7 +16,7 @@
 
 import { installTransform } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
-import { isRegExp, mergeObjects, errorWithFile, BuiltInReporters, builtInReporters } from './util';
+import { isRegExp, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
@@ -25,6 +25,7 @@ import * as url from 'url';
 import { ProjectImpl } from './project';
 import { Reporter } from '../../types/testReporter';
 import { LaunchConfig } from '../../types/test';
+import { BuiltInReporter, builtInReporters } from './runner';
 
 export class Loader {
   private _defaultConfig: Config;
@@ -220,7 +221,7 @@ function takeFirst<T>(...args: (T | undefined)[]): T {
   return undefined as any as T;
 }
 
-function toReporters(reporters: BuiltInReporters | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
+function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
   if (!reporters)
     return;
   if (typeof reporters === 'string')

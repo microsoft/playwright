@@ -20,12 +20,12 @@ import * as commander from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Config } from './types';
-import { Runner } from './runner';
+import { Runner, builtInReporters, BuiltInReporter } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
-import { FilePatternFilter, builtInReporters, BuiltInReporters } from './util';
+import { FilePatternFilter } from './util';
 
 const defaultTimeout = 30000;
-const defaultReporter: BuiltInReporters = process.env.CI ? 'dot' : 'list';
+const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
 const tsConfig = 'playwright.config.ts';
 const jsConfig = 'playwright.config.js';
 const mjsConfig = 'playwright.config.mjs';

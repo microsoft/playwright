@@ -162,6 +162,3 @@ export function formatLocation(location: Location) {
 export function errorWithFile(file: string, message: string) {
   return new Error(`${relativeFilePath(file)}: ${message}`);
 }
-
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'] as const;
-export type BuiltInReporters = typeof builtInReporters[number];
