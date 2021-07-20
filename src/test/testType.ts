@@ -19,6 +19,7 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
+import { errorWithLocation } from './util';
 
 const countByFile = new Map<string, number>();
 
@@ -47,7 +48,7 @@ export class TestTypeImpl {
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
-    test.setTimeout = this._setTimeout.bind(this);
+    test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test.declare = wrapFunctionWithLocation(this._declare.bind(this));
@@ -58,7 +59,7 @@ export class TestTypeImpl {
     throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw new Error(`test() can only be called in a test file`);
+      throw errorWithLocation(location, `test() can only be called in a test file`);
 
     const ordinalInFile = countByFile.get(suite._requireFile) || 0;
     countByFile.set(suite._requireFile, ordinalInFile + 1);
@@ -75,7 +76,16 @@ export class TestTypeImpl {
     throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw new Error(`describe() can only be called in a test file`);
+      throw errorWithLocation(location, `describe() can only be called in a test file`);
+
+    if (typeof title === 'function') {
+      throw errorWithLocation(location, [
+        'It looks like you are calling describe() without the title. Pass the title as a first argument:',
+        `test.describe('my test group', () => {`,
+        `  // Declare tests here`,
+        `});`,
+      ].join('\n'));
+    }
 
     const child = new Suite(title);
     child._requireFile = suite._requireFile;
@@ -93,7 +103,7 @@ export class TestTypeImpl {
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw new Error(`${name} hook can only be called in a test file`);
+      throw errorWithLocation(location, `${name} hook can only be called in a test file`);
     suite._hooks.push({ type: name, fn, location });
   }
 
@@ -113,13 +123,13 @@ export class TestTypeImpl {
 
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw new Error(`test.${type}() can only be called inside test, describe block or fixture`);
+      throw errorWithLocation(location, `test.${type}() can only be called inside test, describe block or fixture`);
     if (typeof modifierArgs[0] === 'function')
-      throw new Error(`test.${type}() with a function can only be called inside describe block`);
+      throw errorWithLocation(location, `test.${type}() with a function can only be called inside describe block`);
     testInfo[type](...modifierArgs as [any, any]);
   }
 
-  private _setTimeout(timeout: number) {
+  private _setTimeout(location: Location, timeout: number) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
       suite._timeout = timeout;
@@ -128,14 +138,14 @@ export class TestTypeImpl {
 
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw new Error(`test.setTimeout() can only be called from a test file`);
+      throw errorWithLocation(location, `test.setTimeout() can only be called from a test file`);
     testInfo.setTimeout(timeout);
   }
 
   private _use(location: Location, fixtures: Fixtures) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw new Error(`test.use() can only be called in a test file`);
+      throw errorWithLocation(location, `test.use() can only be called in a test file`);
     suite._fixtureOverrides = { ...suite._fixtureOverrides, ...fixtures };
   }
 

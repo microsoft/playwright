@@ -162,3 +162,7 @@ export function formatLocation(location: Location) {
 export function errorWithFile(file: string, message: string) {
   return new Error(`${relativeFilePath(file)}: ${message}`);
 }
+
+export function errorWithLocation(location: Location, message: string) {
+  return new Error(`${formatLocation(location)}: ${message}`);
+}
