@@ -15,7 +15,6 @@ title: "Release notes"
 #### Tools
 
 - Playwright Trace Viewer now shows parameters, returned values and `console.log()` calls.
-- Playwright Inspector can generate Playwright Test tests.
 
 #### New and Overhauled Guides
 
