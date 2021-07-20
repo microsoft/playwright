@@ -42,7 +42,9 @@ These options would be typically different between local development and CI oper
 - `reportSlowTests: { max: number, threshold: number } | null` - Whether to report slow tests. When `null`, slow tests are not reported. Otherwise, tests that took more than `threshold` milliseconds are reported as slow, but no more than `max` number of them. Passing zero as `max` reports all slow tests that exceed the threshold.
 - `shard: { total: number, current: number } | null` - [Shard](./test-parallel.md#shards) information.
 - `updateSnapshots: boolean` - Whether to update expected snapshots with the actual results produced by the test run.
-- `launch: { command: string, waitForPort?: number, waitForPortTimeout?: number, strict?: boolean, cwd?: string, env?: object }[]` - Launch a process before the tests will start. When using `waitForPort` it will wait until the server is available, see [launch server](#launching-a-development-web-server-during-the-tests) configuration for examples. `strict` will verify that the `waitForPort` port is available instead of using it by default.
+- `_launch: { command: string, waitForPort?: number, waitForPortTimeout?: number, strict?: boolean, cwd?: string, env?: object }[]` - Launch a process before the tests will start. When using `waitForPort` it will wait until the server is available, see [launch server](#launching-a-development-web-server-during-the-tests) configuration for examples. `strict` will verify that the `waitForPort` port is available instead of using it by default.
+> NOTE: ** Experimental **
+
 - `workers: number` - The maximum number of concurrent worker processes to use for parallelizing tests.
 
 Note that each [test project](#projects) can provide its own test suite options, for example two projects can run different tests by providing different `testDir`s. However, test run options are shared between all projects.
@@ -214,7 +216,7 @@ The port gets then passed over to Playwright as a [`param: baseURL`] when creati
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  launch: {
+  _launch: {
     command: 'npm run start',
     waitForPort: 3000,
     waitForPortTimeout: 120 * 1000,
@@ -230,7 +232,7 @@ export default config;
 // @ts-check
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  launch: {
+  _launch: {
     command: 'npm run start',
     waitForPort: 3000,
     waitForPortTimeout: 120 * 1000,
