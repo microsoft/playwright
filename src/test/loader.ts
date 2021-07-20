@@ -22,6 +22,7 @@ import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
 import * as path from 'path';
 import * as url from 'url';
+import * as fs from 'fs';
 import { ProjectImpl } from './project';
 import { Reporter } from '../../types/testReporter';
 import { LaunchConfig } from '../../types/test';
@@ -74,9 +75,9 @@ export class Loader {
 
     // Resolve script hooks relative to the root dir.
     if (this._config.globalSetup)
-      this._config.globalSetup = path.resolve(rootDir, this._config.globalSetup);
+      this._config.globalSetup = resolveScript(this._config.globalSetup, rootDir);
     if (this._config.globalTeardown)
-      this._config.globalTeardown = path.resolve(rootDir, this._config.globalTeardown);
+      this._config.globalTeardown = resolveScript(this._config.globalTeardown, rootDir);
 
     const configUse = mergeObjects(this._defaultConfig.use, this._config.use);
     this._config = mergeObjects(mergeObjects(this._defaultConfig, this._config), { use: configUse });
@@ -443,4 +444,11 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
       return [id, arg];
     return [require.resolve(id, { paths: [ rootDir ] }), arg];
   });
+}
+
+function resolveScript(id: string, rootDir: string) {
+  const localPath = path.resolve(rootDir, id);
+  if (fs.existsSync(localPath))
+    return localPath;
+  return require.resolve(id, { paths: [rootDir] });
 }
