@@ -624,3 +624,37 @@ test('should run tests in order', async ({ runInlineTest }) => {
     '%%test3',
   ]);
 });
+
+test('should re-run worker fixtures between files', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import test from './helper';
+      test('test1', async ({workerFixture}, testInfo) => {
+        console.log('\\n%%' + workerFixture);
+      });
+    `,
+    'b.test.ts': `
+      import test from './helper';
+      test('test2', async ({workerFixture}, testInfo) => {
+        console.log('\\n%%' + workerFixture);
+      });
+    `,
+    'helper.ts': `
+      const { test } = pwt;
+      let count = 0;
+      export default test.extend({
+        workerFixture: async ({}, run) => {
+          console.log('\\n%%workerFixture');
+          await run(++count);
+        },
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(2);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%workerFixture',
+    '%%1',
+    '%%workerFixture',
+    '%%2',
+  ]);
+});
