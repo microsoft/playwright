@@ -21,7 +21,7 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
     'playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
-        globalSetup: './globalSetup.ts',
+        globalSetup: './globalSetup',
         globalTeardown: path.join(__dirname, 'globalTeardown.ts'),
       };
     `,
@@ -54,7 +54,7 @@ test('globalTeardown runs after failures', async ({ runInlineTest }) => {
       import * as path from 'path';
       module.exports = {
         globalSetup: 'globalSetup.ts',
-        globalTeardown: 'globalTeardown.ts',
+        globalTeardown: './globalTeardown.ts',
       };
     `,
     'globalSetup.ts': `
@@ -85,7 +85,7 @@ test('globalTeardown does not run when globalSetup times out', async ({ runInlin
     'playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
-        globalSetup: 'globalSetup.ts',
+        globalSetup: './globalSetup.ts',
         globalTeardown: 'globalTeardown.ts',
         globalTimeout: 1000,
       };
@@ -119,7 +119,7 @@ test('globalSetup should be run before requiring tests', async ({ runInlineTest 
     'playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
-        globalSetup: 'globalSetup.ts',
+        globalSetup: './globalSetup.ts',
       };
     `,
     'globalSetup.ts': `
@@ -143,7 +143,7 @@ test('globalSetup should work with sync function', async ({ runInlineTest }) => 
     'playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
-        globalSetup: 'globalSetup.ts',
+        globalSetup: './globalSetup.ts',
       };
     `,
     'globalSetup.ts': `
@@ -167,7 +167,7 @@ test('globalSetup should throw when passed non-function', async ({ runInlineTest
     'playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
-        globalSetup: 'globalSetup.ts',
+        globalSetup: './globalSetup.ts',
       };
     `,
     'globalSetup.ts': `
@@ -187,7 +187,7 @@ test('globalSetup should work with default export and run the returned fn', asyn
     'playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
-        globalSetup: 'globalSetup.ts',
+        globalSetup: './globalSetup.ts',
       };
     `,
     'globalSetup.ts': `
