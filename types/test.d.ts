@@ -213,7 +213,7 @@ interface ConfigBase {
    * It is possible to pass multiple reporters. A common pattern is using one terminal reporter
    * like `'line'` or `'list'`, and one file reporter like `'json'` or `'junit'`.
    */
-  reporter?: 'dot' | 'line' | 'list' | 'junit' | 'json' | 'null' | ReporterDescription[];
+  reporter?: string | ReporterDescription[];
 
   /**
    * Whether to report slow tests. When `null`, slow tests are not reported.

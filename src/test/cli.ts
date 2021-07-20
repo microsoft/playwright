@@ -22,11 +22,10 @@ import * as path from 'path';
 import type { Config } from './types';
 import { Runner } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
-import type { FilePatternFilter } from './util';
+import { FilePatternFilter, builtInReporters, BuiltInReporters } from './util';
 
 const defaultTimeout = 30000;
-const defaultReporter = process.env.CI ? 'dot' : 'list';
-const builtinReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'];
+const defaultReporter: BuiltInReporters = process.env.CI ? 'dot' : 'list';
 const tsConfig = 'playwright.config.ts';
 const jsConfig = 'playwright.config.js';
 const mjsConfig = 'playwright.config.mjs';
@@ -55,7 +54,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
   command.option('--quiet', `Suppress stdio`);
   command.option('--repeat-each <N>', `Run each test N times (default: 1)`);
-  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtinReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name>', `Only run tests from the specified project (default: run all projects)`);
@@ -177,10 +176,19 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
     quiet: options.quiet ? options.quiet : undefined,
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
-    reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [r]) : undefined,
+    reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [resolveReporter(r)]) : undefined,
     shard: shardPair ? { current: shardPair[0] - 1, total: shardPair[1] } : undefined,
     timeout: isDebuggerAttached ? 0 : (options.timeout ? parseInt(options.timeout, 10) : undefined),
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers ? parseInt(options.workers, 10) : undefined,
   };
+}
+
+function resolveReporter(id: string) {
+  if (builtInReporters.includes(id as any))
+    return id;
+  const localPath = path.resolve(process.cwd(), id);
+  if (fs.existsSync(localPath))
+    return localPath;
+  return require.resolve(id, { paths: [ process.cwd() ] });
 }

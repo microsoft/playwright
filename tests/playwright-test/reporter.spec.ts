@@ -16,6 +16,24 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
+const smallReporterJS = `
+class Reporter {
+  onBegin(config, suite) {
+    console.log('\\n%%begin');
+  }
+  onTestBegin(test) {}
+  onStdOut() {}
+  onStdErr() {}
+  onTestEnd(test, result) {}
+  onTimeout() {}
+  onError() {}
+  onEnd() {
+    console.log('\\n%%end');
+  }
+}
+module.exports = Reporter;
+`;
+
 test('should work with custom reporter', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
@@ -89,5 +107,50 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
     '%%reporter-stderr%%',
     '%%reporter-testend-pass-bar%%',
     '%%reporter-end-end%%',
+  ]);
+});
+
+
+test.only('should work without a file extension', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': smallReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({}) => {
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%begin',
+    '%%end',
+  ]);
+});
+
+test('should work load from node_modules', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'node_modules/my-reporter/index.js': smallReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'my-reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({}) => {
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%begin',
+    '%%end',
   ]);
 });

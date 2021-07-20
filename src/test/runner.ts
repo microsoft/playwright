@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher } from './dispatcher';
-import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
+import { BuiltInReporters, createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from '../../types/testReporter';
@@ -64,7 +64,7 @@ export class Runner {
 
   private async _createReporter(list: boolean) {
     const reporters: Reporter[] = [];
-    const defaultReporters = {
+    const defaultReporters: {[key in BuiltInReporters]: new(arg: any) => Reporter} = {
       dot: list ? ListModeReporter : DotReporter,
       line: list ? ListModeReporter : LineReporter,
       list: list ? ListModeReporter : ListReporter,
