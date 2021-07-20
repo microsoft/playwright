@@ -146,6 +146,9 @@ export type LaunchConfig = {
   cwd?: string,
 };
 
+type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never })
+
+
 /**
  * Testing configuration.
  */
@@ -213,7 +216,7 @@ interface ConfigBase {
    * It is possible to pass multiple reporters. A common pattern is using one terminal reporter
    * like `'line'` or `'list'`, and one file reporter like `'json'` or `'junit'`.
    */
-  reporter?: string | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'line'|'json'|'junit'|'null', string> | ReporterDescription[];
 
   /**
    * Whether to report slow tests. When `null`, slow tests are not reported.

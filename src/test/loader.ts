@@ -93,7 +93,7 @@ export class Loader {
     this._fullConfig.grepInvert = takeFirst(this._configOverrides.grepInvert, this._config.grepInvert, baseFullConfig.grepInvert);
     this._fullConfig.maxFailures = takeFirst(this._configOverrides.maxFailures, this._config.maxFailures, baseFullConfig.maxFailures);
     this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(this._configOverrides.preserveOutput, this._config.preserveOutput, baseFullConfig.preserveOutput);
-    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter), resolveReporters(this._config.reporter, rootDir), baseFullConfig.reporter);
+    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter as any), resolveReporters(this._config.reporter, rootDir), baseFullConfig.reporter);
     this._fullConfig.reportSlowTests = takeFirst(this._configOverrides.reportSlowTests, this._config.reportSlowTests, baseFullConfig.reportSlowTests);
     this._fullConfig.quiet = takeFirst(this._configOverrides.quiet, this._config.quiet, baseFullConfig.quiet);
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
@@ -437,7 +437,7 @@ const baseFullConfig: FullConfig = {
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
-  return toReporters(reporters)?.map(([id, arg]) => {
+  return toReporters(reporters as any)?.map(([id, arg]) => {
     if (builtInReporters.includes(id as any))
       return [id, arg];
     return [require.resolve(id, { paths: [ rootDir ] }), arg];
