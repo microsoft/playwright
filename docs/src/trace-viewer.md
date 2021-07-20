@@ -77,8 +77,8 @@ await using var context = await browser.NewContextAsync();
 // Start tracing before creating / navigating a page.
 await context.Tracing.StartAsync(new TracingStartOptions
 {
-  Screenshots: true,
-  Snapshots: true
+  Screenshots = true,
+  Snapshots = true
 });
 
 var page = context.NewPageAsync();
@@ -87,7 +87,7 @@ await page.GotoAsync("https://playwright.dev");
 // Stop tracing and export it into a zip archive.
 await context.Tracing.StopAsync(new TracingStopOptions
 {
-  Path: "trace.zip"
+  Path = "trace.zip"
 });
 ```
 
