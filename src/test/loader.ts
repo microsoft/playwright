@@ -132,7 +132,12 @@ export class Loader {
   }
 
   async loadReporter(file: string): Promise<new (arg?: any) => Reporter> {
-    let func = await this._requireOrImport(path.resolve(this._fullConfig.rootDir, file));
+    let func = '';
+    try {
+      func = await this._requireOrImport(path.resolve(this._fullConfig.rootDir, file));
+    } catch (e) {
+      func = await this._requireOrImport(file);
+    }
     if (func && typeof func === 'object' && ('default' in func))
       func = func['default'];
     if (typeof func !== 'function')
