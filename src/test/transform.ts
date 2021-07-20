@@ -19,7 +19,6 @@ import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as pirates from 'pirates';
-import * as babel from '@babel/core';
 import * as sourceMapSupport from 'source-map-support';
 import * as url from 'url';
 import type { Location } from './types';
@@ -64,6 +63,7 @@ export function installTransform(): () => void {
     // We don't use any browserslist data, but babel checks it anyway.
     // Silence the annoying warning.
     process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
+    const babel: typeof import('@babel/core') = require('@babel/core');
     const result = babel.transformFileSync(filename, {
       babelrc: false,
       configFile: false,
