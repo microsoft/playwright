@@ -7,10 +7,24 @@ title: "Release notes"
 
 ## Version 1.13
 
-#### Highlights
+#### Playwright
 
 - **🖖 Programmatic drag-and-drop support** via the [`method: Page.dragAndDrop`] API.
-- **🔎 Enhanced HAR support** with body sizes for requests and responses. Use via `recordHar` option in [`method: Browser.newContext`].
+- **🔎 Enhanced HAR** with body sizes for requests and responses. Use via `recordHar` option in [`method: Browser.newContext`].
+
+#### Tools
+
+- Playwright Trace Viewer now shows parameters, returned values and `console.log()` calls.
+- Playwright Inspector can generate Playwright Test tests.
+
+#### New and Overhauled Guides
+
+- [Intro](./intro.md)
+- [Authentication](./auth.md)
+- [Chome Extensions](./chrome-extensions.md)
+- [Playwright Test Annotations](./test-annotations.md)
+- [Playwright Test Configuration](./test-configuration.md)
+- [Playwright Test Fixtures](./test-fixtures.md)
 
 #### Browser Versions
 
@@ -18,7 +32,7 @@ title: "Release notes"
 - Mozilla Firefox 90.0
 - WebKit 14.2
 
-#### New APIs
+#### New Playwright APIs
 
 - new `baseURL` option in [`method: Browser.newContext`] and [`method: Browser.newPage`]
 - [`method: Response.securityDetails`] and [`method: Response.serverAddr`]
