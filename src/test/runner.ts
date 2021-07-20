@@ -64,7 +64,7 @@ export class Runner {
 
   private async _createReporter() {
     const reporters: Reporter[] = [];
-    const defaultReporters = {
+    const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
       dot: DotReporter,
       line: LineReporter,
       list: ListReporter,
@@ -427,3 +427,6 @@ class ListModeReporter implements Reporter {
     console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
   }
 }
+
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'] as const;
+export type BuiltInReporter = typeof builtInReporters[number];

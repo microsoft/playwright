@@ -21,7 +21,7 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
     'playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
-        globalSetup: 'globalSetup.ts',
+        globalSetup: './globalSetup.ts',
         globalTeardown: path.join(__dirname, 'globalTeardown.ts'),
       };
     `,

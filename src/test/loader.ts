@@ -25,6 +25,7 @@ import * as url from 'url';
 import { ProjectImpl } from './project';
 import { Reporter } from '../../types/testReporter';
 import { LaunchConfig } from '../../types/test';
+import { BuiltInReporter, builtInReporters } from './runner';
 
 export class Loader {
   private _defaultConfig: Config;
@@ -80,7 +81,7 @@ export class Loader {
     const configUse = mergeObjects(this._defaultConfig.use, this._config.use);
     this._config = mergeObjects(mergeObjects(this._defaultConfig, this._config), { use: configUse });
 
-    if (('testDir' in this._config) && this._config.testDir !== undefined && !path.isAbsolute(this._config.testDir))
+    if (this._config.testDir !== undefined)
       this._config.testDir = path.resolve(rootDir, this._config.testDir);
     const projects: Project[] = ('projects' in this._config) && this._config.projects !== undefined ? this._config.projects : [this._config];
 
@@ -93,7 +94,7 @@ export class Loader {
     this._fullConfig.grepInvert = takeFirst(this._configOverrides.grepInvert, this._config.grepInvert, baseFullConfig.grepInvert);
     this._fullConfig.maxFailures = takeFirst(this._configOverrides.maxFailures, this._config.maxFailures, baseFullConfig.maxFailures);
     this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(this._configOverrides.preserveOutput, this._config.preserveOutput, baseFullConfig.preserveOutput);
-    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter), toReporters(this._config.reporter), baseFullConfig.reporter);
+    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter as any), resolveReporters(this._config.reporter, rootDir), baseFullConfig.reporter);
     this._fullConfig.reportSlowTests = takeFirst(this._configOverrides.reportSlowTests, this._config.reportSlowTests, baseFullConfig.reportSlowTests);
     this._fullConfig.quiet = takeFirst(this._configOverrides.quiet, this._config.quiet, baseFullConfig.quiet);
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
@@ -220,7 +221,7 @@ function takeFirst<T>(...args: (T | undefined)[]): T {
   return undefined as any as T;
 }
 
-function toReporters(reporters: 'dot' | 'line' | 'list' | 'junit' | 'json' | 'null' | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
+function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
   if (!reporters)
     return;
   if (typeof reporters === 'string')
@@ -313,10 +314,8 @@ function validateConfig(file: string, config: Config) {
         if (!Array.isArray(item) || item.length <= 0 || item.length > 2 || typeof item[0] !== 'string')
           throw errorWithFile(file, `config.reporter[${index}] must be a tuple [name, optionalArgument]`);
       });
-    } else {
-      const builtinReporters = ['dot', 'line', 'list', 'junit', 'json', 'null'];
-      if (typeof config.reporter !== 'string' || !builtinReporters.includes(config.reporter))
-        throw errorWithFile(file, `config.reporter must be one of ${builtinReporters.map(name => `"${name}"`).join(', ')}`);
+    } else if (typeof config.reporter !== 'string') {
+      throw errorWithFile(file, `config.reporter must be a string`);
     }
   }
 
@@ -437,3 +436,11 @@ const baseFullConfig: FullConfig = {
   workers: 1,
   launch: [],
 };
+
+function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
+  return toReporters(reporters as any)?.map(([id, arg]) => {
+    if (builtInReporters.includes(id as any))
+      return [id, arg];
+    return [require.resolve(id, { paths: [ rootDir ] }), arg];
+  });
+}
