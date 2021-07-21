@@ -32,7 +32,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
     `,
     'playwright.config.ts': `
       module.exports = {
-        launch: {
+        _launch: {
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
           waitForPort: ${port},
         },
@@ -82,7 +82,7 @@ test('should create a server with environment variables', async ({ runInlineTest
     `,
     'playwright.config.ts': `
       module.exports = {
-        launch: {
+        _launch: {
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
           waitForPort: ${port},
           env: {
@@ -110,7 +110,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
     `,
     'playwright.config.ts': `
       module.exports = {
-        launch: {
+        _launch: {
           command: 'node ${JSON.stringify(JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js')))} ${port}',
           waitForPort: ${port},
           waitForPortTimeout: 100,
@@ -169,7 +169,7 @@ test('should be able to use an existing server when strict is false ', async ({ 
     `,
     'playwright.config.ts': `
       module.exports = {
-        launch: {
+        _launch: {
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
           waitForPort: ${port},
           strict: false,
@@ -202,7 +202,7 @@ test('should throw when a server is already running on the given port and strict
     `,
     'playwright.config.ts': `
       module.exports = {
-        launch: {
+        _launch: {
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
           waitForPort: ${port},
           strict: true,
@@ -228,7 +228,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
     `,
     'playwright.config.ts': `
       module.exports = {
-        launch: [{
+        _launch: [{
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port1}',
           waitForPort: ${port1},
         },{
