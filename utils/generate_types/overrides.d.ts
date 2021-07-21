@@ -141,12 +141,20 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 }
 
 export interface BrowserType<Unused = {}> {
-  connectOverCDP(options: ConnectOverCDPOptions): Promise<Browser>;
+  connectOverCDP(endpointURL: string, options?: ConnectOverCDPOptions): Promise<Browser>;
   /**
    * Option `wsEndpoint` is deprecated. Instead use `endpointURL`.
    * @deprecated
    */
-  connectOverCDP(options: ConnectOptions): Promise<Browser>;
+  connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
+  connect(wsEndpoint: string, options?: ConnectOptions): Promise<Browser>;
+  /**
+   * wsEndpoint in options is deprecated. Instead use `wsEndpoint`.
+   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * @param options
+   * @deprecated
+   */
+  connect(options: ConnectOptions & { wsEndpoint?: string }): Promise<Browser>;
 }
 
 export interface CDPSession {

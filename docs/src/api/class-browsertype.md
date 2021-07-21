@@ -90,38 +90,33 @@ class BrowserTypeExamples
 
 This methods attaches Playwright to an existing browser instance.
 
-### param: BrowserType.connect.params
-* langs: js
-- `params` <[Object]>
-  - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
-  - `headers` <[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
-  - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
-    can see what is going on. Defaults to 0.
-  - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
-  - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to
-    `30000` (30 seconds). Pass `0` to disable timeout.
-
 ### param: BrowserType.connect.wsEndpoint
-* langs: java, python
+* langs: java, python, js
 - `wsEndpoint` <[string]>
 
 A browser websocket endpoint to connect to.
 
 ### option: BrowserType.connect.headers
-* langs: java, python
+* langs: java, python, js
 - `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with web socket connect request. Optional.
 
 ### option: BrowserType.connect.slowMo
-* langs: java, python
+* langs: java, python, js
 - `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
+### option: BrowserType.connect.logger
+* langs: js
+- `logger` <[Logger]>
+
+Logger sink for Playwright logging. Optional.
+
 ### option: BrowserType.connect.timeout
-* langs: java, python
+* langs: java, python, js
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
@@ -139,38 +134,39 @@ The default browser context is accessible via [`method: Browser.contexts`].
 Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
 :::
 
-### param: BrowserType.connectOverCDP.params
-* langs: js
-- `params` <[Object]>
-  - `endpointURL` <[string]> A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
-  - `headers` <[Object]<[string], [string]>> Additional HTTP headers to be sent with connect request. Optional.
-  - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
-    can see what is going on. Defaults to 0.
-  - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
-  - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to
-    `30000` (30 seconds). Pass `0` to disable timeout.
-
 ### param: BrowserType.connectOverCDP.endpointURL
-* langs: java, python
+* langs: java, python, js
 - `endpointURL` <[string]>
 
 A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
 
+### option: BrowserType.connectOverCDP.endpointURL
+* langs: js
+- `endpointURL` <[string]>
+
+Deprecated, use the first argument instead. Optional.
+
 ### option: BrowserType.connectOverCDP.headers
-* langs: java, python
+* langs: java, python, js
 - `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with connect request. Optional.
 
 ### option: BrowserType.connectOverCDP.slowMo
-* langs: java, python
+* langs: java, python, js
 - `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
+### option: BrowserType.connectOverCDP.logger
+* langs: js
+- `logger` <[Logger]>
+
+Logger sink for Playwright logging. Optional.
+
 ### option: BrowserType.connectOverCDP.timeout
-* langs: java, python
+* langs: java, python, js
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to

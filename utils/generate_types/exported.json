@@ -1,7 +1,7 @@
 {
   "BrowserTypeLaunchOptions": "LaunchOptions",
-  "BrowserTypeConnectParams": "ConnectOptions",
-  "BrowserTypeConnectOverCDPParams": "ConnectOverCDPOptions",
+  "BrowserTypeConnectOptions": "ConnectOptions",
+  "BrowserTypeConnectOverCDPOptions": "ConnectOverCDPOptions",
   "BrowserContextCookies": "Cookie",
   "BrowserNewContextOptions": "BrowserContextOptions",
   "BrowserNewContextOptionsViewport": "ViewportSize",
