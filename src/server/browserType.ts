@@ -165,7 +165,7 @@ export abstract class BrowserType extends SdkObject {
       const registryExecutable = registry.findExecutable(options.channel || this._name);
       if (!registryExecutable || registryExecutable.browserName !== this._name)
         throw new Error(`Unsupported ${this._name} channel "${options.channel}"`);
-      executable = registryExecutable.executablePathOrDie();
+      executable = registryExecutable.executablePathOrDie(this._playwrightOptions.cliLanguage);
       await registryExecutable.validateHostRequirements();
     }
 
@@ -239,7 +239,7 @@ export abstract class BrowserType extends SdkObject {
     return { browserProcess, artifactsDir, transport };
   }
 
-  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
+  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number }, timeout?: number): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
   }
 

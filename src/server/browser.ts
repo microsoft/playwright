@@ -36,6 +36,7 @@ export type PlaywrightOptions = {
   rootSdkObject: SdkObject,
   selectors: Selectors,
   loopbackProxyOverride?: () => string,
+  cliLanguage: string,
 };
 
 export type BrowserOptions = PlaywrightOptions & {

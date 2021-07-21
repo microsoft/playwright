@@ -206,7 +206,7 @@ program
         command.browser = 'firefox';
       if (command.browser === 'wk')
         command.browser = 'webkit';
-      showTraceViewer(trace, command.browser).catch(logErrorAndExit);
+      showTraceViewer(trace, command.browser, false, process.env.PW_CLI_TARGET_LANG).catch(logErrorAndExit);
     }).on('--help', function() {
       console.log('');
       console.log('Examples:');

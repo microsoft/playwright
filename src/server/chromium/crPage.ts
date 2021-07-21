@@ -40,7 +40,7 @@ import { assert, headersArrayToObject, createGuid, canAccessFile } from '../../u
 import { VideoRecorder } from './videoRecorder';
 import { Progress } from '../progress';
 import { DragManager } from './crDragDrop';
-import { registry } from '../../utils/registry';
+import { buildPlaywrightCLICommand, registry } from '../../utils/registry';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -848,18 +848,12 @@ class FrameSession {
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePath();
     // TODO: use default error message once it's ready.
     if (!ffmpegPath || !canAccessFile(ffmpegPath)) {
-      let message: string = '';
-      switch (this._page._browserContext._options.sdkLanguage) {
-        case 'python': message = 'playwright install ffmpeg'; break;
-        case 'python-async': message = 'playwright install ffmpeg'; break;
-        case 'javascript': message = 'npx playwright install ffmpeg'; break;
-        case 'java': message = 'mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install ffmpeg"'; break;
-      }
+      const command = buildPlaywrightCLICommand(this._page._browserContext._browser.options.cliLanguage, 'install ffmpeg');
       throw new Error(`
 ============================================================
   Please install ffmpeg in order to record video.
 
-  $ ${message}
+  $ ${command}
 ============================================================
       `);
     }

@@ -123,10 +123,10 @@ export class TraceViewer {
     this._server.routePrefix('/sha1/', sha1Handler);
   }
 
-  async show(headless: boolean): Promise<BrowserContext> {
+  async show(headless: boolean, cliLanguage?: string): Promise<BrowserContext> {
     const urlPrefix = await this._server.start();
 
-    const traceViewerPlaywright = createPlaywright(true);
+    const traceViewerPlaywright = createPlaywright({ isInternal: true, cliLanguage });
     const traceViewerBrowser = isUnderTest() ? 'chromium' : this._browserName;
     const args = traceViewerBrowser === 'chromium' ? [
       '--app=data:text/html,',
@@ -141,7 +141,7 @@ export class TraceViewer {
     if (traceViewerBrowser === 'chromium') {
       for (const name of ['chromium', 'chrome', 'msedge']) {
         try {
-          registry.findExecutable(name)!.executablePathOrDie();
+          registry.findExecutable(name)!.executablePathOrDie(traceViewerPlaywright.options.cliLanguage);
           channel = name === 'chromium' ? undefined : name;
           break;
         } catch (e) {
@@ -161,7 +161,6 @@ Please run 'npx playwright install' to install Playwright browsers
     const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
       channel: channel as any,
-      sdkLanguage: 'javascript',
       args,
       noDefaultViewport: true,
       headless,
@@ -188,7 +187,7 @@ Please run 'npx playwright install' to install Playwright browsers
   }
 }
 
-export async function showTraceViewer(tracePath: string, browserName: string, headless = false): Promise<BrowserContext | undefined> {
+export async function showTraceViewer(tracePath: string, browserName: string, headless = false, cliLanguage?: string): Promise<BrowserContext | undefined> {
   let stat;
   try {
     stat = fs.statSync(tracePath);
@@ -199,7 +198,7 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
 
   if (stat.isDirectory()) {
     const traceViewer = new TraceViewer(tracePath, browserName);
-    return await traceViewer.show(headless);
+    return await traceViewer.show(headless, cliLanguage);
   }
 
   const zipFile = tracePath;
@@ -212,5 +211,5 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
     return;
   }
   const traceViewer = new TraceViewer(dir, browserName);
-  return await traceViewer.show(headless);
+  return await traceViewer.show(headless, cliLanguage);
 }

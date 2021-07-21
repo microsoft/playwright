@@ -204,7 +204,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     downloadsPath: tOptional(tString),
     tracesDir: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
-    sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
       width: tNumber,
@@ -255,7 +254,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeConnectOverCDPParams = tObject({
-    sdkLanguage: tString,
     endpointURL: tString,
     headers: tOptional(tArray(tType('NameValue'))),
     slowMo: tOptional(tNumber),
@@ -264,7 +262,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserCloseParams = tOptional(tObject({}));
   scheme.BrowserKillForTestsParams = tOptional(tObject({}));
   scheme.BrowserNewContextParams = tObject({
-    sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
       width: tNumber,
@@ -1023,7 +1020,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.CDPSessionDetachParams = tOptional(tObject({}));
   scheme.ElectronLaunchParams = tObject({
-    sdkLanguage: tString,
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     cwd: tOptional(tString),
@@ -1160,7 +1156,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     steps: tNumber,
   });
   scheme.AndroidDeviceLaunchBrowserParams = tObject({
-    sdkLanguage: tString,
     pkg: tOptional(tString),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
@@ -1224,7 +1219,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tNumber,
   });
   scheme.AndroidDeviceConnectToWebViewParams = tObject({
-    sdkLanguage: tString,
     pid: tNumber,
   });
   scheme.AndroidDeviceCloseParams = tOptional(tObject({}));

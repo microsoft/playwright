@@ -21,7 +21,7 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox } from './utils';
+import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, assert } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
@@ -225,7 +225,7 @@ export interface Executable {
   browserName: BrowserName | undefined;
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;
-  executablePathOrDie(): string;
+  executablePathOrDie(cliLanguage: string): string;
   executablePath(): string | undefined;
   validateHostRequirements(): Promise<void>;
 }
@@ -244,16 +244,16 @@ export class Registry {
       const tokens = EXECUTABLE_PATHS[name][hostPlatform];
       return tokens ? path.join(dir, ...tokens) : undefined;
     };
-    const executablePathOrDie = (name: string, e: string | undefined, installByDefault: boolean) => {
+    const executablePathOrDie = (name: string, e: string | undefined, installByDefault: boolean, cliLanguage: string) => {
       if (!e)
         throw new Error(`${name} is not supported on ${hostPlatform}`);
-      // TODO: language-specific error message
+      const installCommand = buildPlaywrightCLICommand(cliLanguage, `install${installByDefault ? '' : ' ' + name}`);
       if (!canAccessFile(e)) {
         const prettyMessage = [
-          `Looks like Playwright Test or Playwright was just installed or updated.`,
+          `Looks like ${cliLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just installed or updated.`,
           `Please run the following command to download new browser${installByDefault ? 's' : ''}:`,
           ``,
-          `    npx playwright install${installByDefault ? '' : ' ' + name}`,
+          `    ${installCommand}`,
           ``,
           `<3 Playwright Team`,
         ].join('\n');
@@ -271,7 +271,7 @@ export class Registry {
       browserName: 'chromium',
       directory: chromium.dir,
       executablePath: () => chromiumExecutable,
-      executablePathOrDie: () => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault),
+      executablePathOrDie: (cliLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, cliLanguage),
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
       _install: () => this._downloadExecutable(chromium, chromiumExecutable, DOWNLOAD_URLS['chromium'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
@@ -286,7 +286,7 @@ export class Registry {
       browserName: 'chromium',
       directory: chromiumWithSymbols.dir,
       executablePath: () => chromiumWithSymbolsExecutable,
-      executablePathOrDie: () => executablePathOrDie('chromium-with-symbols', chromiumWithSymbolsExecutable, chromiumWithSymbols.installByDefault),
+      executablePathOrDie: (cliLanguage: string) => executablePathOrDie('chromium-with-symbols', chromiumWithSymbolsExecutable, chromiumWithSymbols.installByDefault, cliLanguage),
       installType: chromiumWithSymbols.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('chromium', chromiumWithSymbols.dir, ['chrome-linux'], [], ['chrome-win']),
       _install: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable, DOWNLOAD_URLS['chromium-with-symbols'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
@@ -369,7 +369,7 @@ export class Registry {
       browserName: 'firefox',
       directory: firefox.dir,
       executablePath: () => firefoxExecutable,
-      executablePathOrDie: () => executablePathOrDie('firefox', firefoxExecutable, firefox.installByDefault),
+      executablePathOrDie: (cliLanguage: string) => executablePathOrDie('firefox', firefoxExecutable, firefox.installByDefault, cliLanguage),
       installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('firefox', firefox.dir, ['firefox'], [], ['firefox']),
       _install: () => this._downloadExecutable(firefox, firefoxExecutable, DOWNLOAD_URLS['firefox'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
@@ -384,7 +384,7 @@ export class Registry {
       browserName: 'firefox',
       directory: firefoxBeta.dir,
       executablePath: () => firefoxBetaExecutable,
-      executablePathOrDie: () => executablePathOrDie('firefox-beta', firefoxBetaExecutable, firefoxBeta.installByDefault),
+      executablePathOrDie: (cliLanguage: string) => executablePathOrDie('firefox-beta', firefoxBetaExecutable, firefoxBeta.installByDefault, cliLanguage),
       installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
       _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable, DOWNLOAD_URLS['firefox-beta'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
@@ -407,7 +407,7 @@ export class Registry {
       browserName: 'webkit',
       directory: webkit.dir,
       executablePath: () => webkitExecutable,
-      executablePathOrDie: () => executablePathOrDie('webkit', webkitExecutable, webkit.installByDefault),
+      executablePathOrDie: (cliLanguage: string) => executablePathOrDie('webkit', webkitExecutable, webkit.installByDefault, cliLanguage),
       installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => this._validateHostRequirements('webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
       _install: () => this._downloadExecutable(webkit, webkitExecutable, DOWNLOAD_URLS['webkit'][hostPlatform], 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST'),
@@ -422,7 +422,7 @@ export class Registry {
       browserName: undefined,
       directory: ffmpeg.dir,
       executablePath: () => ffmpegExecutable,
-      executablePathOrDie: () => executablePathOrDie('ffmpeg', ffmpegExecutable, ffmpeg.installByDefault),
+      executablePathOrDie: (cliLanguage: string) => executablePathOrDie('ffmpeg', ffmpegExecutable, ffmpeg.installByDefault, cliLanguage),
       installType: ffmpeg.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => Promise.resolve(),
       _install: () => this._downloadExecutable(ffmpeg, ffmpegExecutable, DOWNLOAD_URLS['ffmpeg'][hostPlatform], 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST'),
@@ -658,6 +658,18 @@ export class Registry {
 
 function markerFilePath(browserDirectory: string): string {
   return path.join(browserDirectory, 'INSTALLATION_COMPLETE');
+}
+
+export function buildPlaywrightCLICommand(cliLanguage: string, parameters: string): string {
+  const cliLanguageToCLIBuilder: Partial<Record<string, (parameters: string) => string>> = {
+    'python': (parameters: string) => `playwright ${parameters}`,
+    'java': (parameters: string) => `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="${parameters}"`,
+    'csharp': (parameters: string) => `playwright ${parameters}`,
+    'javascript': (parameters: string) => `npx playwright ${parameters}`,
+  };
+  const build = cliLanguageToCLIBuilder[cliLanguage];
+  assert(build, `Unknown CLI language: ${cliLanguage}`);
+  return build(parameters);
 }
 
 export async function installDefaultBrowsersForNpmInstall() {

@@ -117,7 +117,6 @@ const emptyContext: ContextEntry = {
   endTime: now,
   browserName: '',
   options: {
-    sdkLanguage: '',
     deviceScaleFactor: 1,
     isMobile: false,
     viewport: { width: 1280, height: 800 },

@@ -36,7 +36,7 @@ export class TraceModel {
       startTime: Number.MAX_VALUE,
       endTime: Number.MIN_VALUE,
       browserName: '',
-      options: { sdkLanguage: '' },
+      options: {},
       pages: [],
       resources: []
     };

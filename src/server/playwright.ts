@@ -38,7 +38,7 @@ export class Playwright extends SdkObject {
   readonly options: PlaywrightOptions;
   private _portForwardingServer: PortForwardingServer | undefined;
 
-  constructor(isInternal: boolean) {
+  constructor({ isInternal, cliLanguage }: { isInternal?: boolean, cliLanguage?: string }) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.instrumentation.addListener({
       onCallLog: (logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata) => {
@@ -48,6 +48,7 @@ export class Playwright extends SdkObject {
     this.options = {
       rootSdkObject: this,
       selectors: new Selectors(),
+      cliLanguage: cliLanguage || 'javascript',
     };
     this.chromium = new Chromium(this.options);
     this.firefox = new Firefox(this.options);
@@ -79,6 +80,6 @@ export class Playwright extends SdkObject {
   }
 }
 
-export function createPlaywright(isInternal = false) {
-  return new Playwright(isInternal);
+export function createPlaywright(options: { isInternal?: boolean, cliLanguage?: string } = {}) {
+  return new Playwright(options);
 }

@@ -163,7 +163,6 @@ export class Electron extends SdkObject {
         isChromium: true,
         headful: true,
         persistent: {
-          sdkLanguage: options.sdkLanguage,
           noDefaultViewport: true,
           acceptDownloads: options.acceptDownloads,
           bypassCSP: options.bypassCSP,

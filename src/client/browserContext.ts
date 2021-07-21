@@ -42,9 +42,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
-  _options: channels.BrowserNewContextParams = {
-    sdkLanguage: 'javascript'
-  };
+  _options: channels.BrowserNewContextParams = { };
 
   readonly tracing: Tracing;
 
@@ -346,7 +344,6 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
   if (options.extraHTTPHeaders)
     network.validateHeaders(options.extraHTTPHeaders);
   const contextParams: channels.BrowserNewContextParams = {
-    sdkLanguage: 'javascript',
     ...options,
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
