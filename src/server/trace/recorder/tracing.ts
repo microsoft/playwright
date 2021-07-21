@@ -61,6 +61,8 @@ export class Tracing implements InstrumentationListener {
     if (this._recordingTraceEvents)
       throw new Error('Tracing has already been started');
     this._recordingTraceEvents = true;
+    // TODO: passing the same name for two contexts makes them write into a single file
+    // and conflict.
     this._traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
 
     this._appendEventChain = mkdirIfNeeded(this._traceFile);

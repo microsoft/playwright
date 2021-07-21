@@ -221,6 +221,8 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
       });
       test('fail', async ({ page }) => {
         await page.setContent('<div>FAIL</div>');
+        const page2 = await page.context().newPage();
+        await page2.setContent('<div>FAIL</div>');
         test.expect(1 + 1).toBe(1);
       });
     `,
@@ -230,9 +232,11 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   const screenshotPass = testInfo.outputPath('test-results', 'a-pass-chromium', 'test-failed-1.png');
-  const screenshotFail = testInfo.outputPath('test-results', 'a-fail-chromium', 'test-failed-1.png');
+  const screenshotFail1 = testInfo.outputPath('test-results', 'a-fail-chromium', 'test-failed-1.png');
+  const screenshotFail2 = testInfo.outputPath('test-results', 'a-fail-chromium', 'test-failed-2.png');
   expect(fs.existsSync(screenshotPass)).toBe(false);
-  expect(fs.existsSync(screenshotFail)).toBe(true);
+  expect(fs.existsSync(screenshotFail1)).toBe(true);
+  expect(fs.existsSync(screenshotFail2)).toBe(true);
 });
 
 test('should work with video: retain-on-failure', async ({ runInlineTest }, testInfo) => {
@@ -326,4 +330,37 @@ test('should work with video size', async ({ runInlineTest }, testInfo) => {
   const videoPlayer = new VideoPlayer(path.join(folder, file));
   expect(videoPlayer.videoWidth).toBe(220);
   expect(videoPlayer.videoHeight).toBe(110);
+});
+
+test('should work with multiple contexts and trace: on', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page, createContext }) => {
+        await page.setContent('<div>PASS</div>');
+
+        const context1 = await createContext();
+        const page1 = await context1.newPage();
+        await page1.setContent('<div>PASS</div>');
+
+        const context2 = await createContext({ locale: 'en-US' });
+        const page2 = await context2.newPage();
+        await page2.setContent('<div>PASS</div>');
+
+        test.expect(1 + 1).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const traceDefault = testInfo.outputPath('test-results', 'a-pass', 'trace.zip');
+  const trace1 = testInfo.outputPath('test-results', 'a-pass', 'trace-1.zip');
+  const trace2 = testInfo.outputPath('test-results', 'a-pass', 'trace-2.zip');
+  expect(fs.existsSync(traceDefault)).toBe(true);
+  expect(fs.existsSync(trace1)).toBe(true);
+  expect(fs.existsSync(trace2)).toBe(true);
 });
