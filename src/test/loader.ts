@@ -101,7 +101,7 @@ export class Loader {
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
     this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, this._config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, this._config.workers, baseFullConfig.workers);
-    this._fullConfig.launch = takeFirst(toLaunchServers(this._configOverrides.launch), toLaunchServers(this._config.launch), baseFullConfig.launch);
+    this._fullConfig._launch = takeFirst(toLaunchServers(this._configOverrides._launch), toLaunchServers(this._config._launch), baseFullConfig._launch);
 
     for (const project of projects)
       this._addProject(project, this._fullConfig.rootDir);
@@ -435,7 +435,7 @@ const baseFullConfig: FullConfig = {
   shard: null,
   updateSnapshots: 'missing',
   workers: 1,
-  launch: [],
+  _launch: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

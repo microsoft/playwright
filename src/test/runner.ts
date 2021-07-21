@@ -167,7 +167,7 @@ export class Runner {
       testFiles.forEach(file => allTestFiles.add(file));
     }
 
-    const launchServers = await LaunchServers.create(config.launch);
+    const launchServers = await LaunchServers.create(config._launch);
     let globalSetupResult: any;
     if (config.globalSetup)
       globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
