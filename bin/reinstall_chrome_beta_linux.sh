@@ -14,6 +14,10 @@ if dpkg --get-selections | grep -q "^google-chrome-beta[[:space:]]*install$" >/d
   $maybesudo apt-get remove -y google-chrome-beta
 fi
 
+if ! command -v wget >/dev/null; then
+  $maybesudo apt-get install -y wget
+fi
+
 # 2. download chrome beta from dl.google.com and install it.
 cd /tmp
 wget https://dl.google.com/linux/direct/google-chrome-beta_current_amd64.deb
