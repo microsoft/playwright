@@ -76,7 +76,9 @@ async function parseOverrides(filePath, commentForClass, commentForMethod, extra
     for (const [name, member] of symbol.members || []) {
       if (member.flags & ts.SymbolFlags.TypeParameter)
         continue;
-      const pos = member.valueDeclaration.getStart(file, false)
+      if (!member.valueDeclaration)
+        continue;
+      const pos = member.valueDeclaration.getStart(file, false);
       replacers.push({
         pos,
         text: commentForMethod(className, name),
