@@ -210,6 +210,11 @@ export class WKPage implements PageDelegate {
           catch(e => { throw new Error(`Invalid timezone ID: ${contextOptions.timezoneId}`); }));
     }
     promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled' as any, value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled' as any, value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled' as any, value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'PointerLockEnabled' as any, value: !contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeMonthEnabled' as any, value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeWeekEnabled' as any, value: contextOptions.isMobile }));
     await Promise.all(promises);
   }
 
