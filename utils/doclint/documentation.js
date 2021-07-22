@@ -62,6 +62,14 @@ class Documentation {
   }
 
   /**
+   * @param {!Documentation} documentation
+   * @return {!Documentation}
+   */
+  mergeWith(documentation) {
+    return new Documentation([...this.classesArray, ...documentation.classesArray]);
+  }
+
+  /**
    * @param {string[]} errors
    */
   copyDocsFromSuperclasses(errors) {
@@ -304,7 +312,7 @@ Documentation.Member = class {
     };
     this.async = false;
     this.alias = name;
-    /** 
+    /**
      * Param is true and option false
      * @type {Boolean}
      */
