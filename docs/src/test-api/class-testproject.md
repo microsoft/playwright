@@ -273,3 +273,43 @@ Timeout for each test in milliseconds. Defaults to 30 seconds.
 
 This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`].
 
+## property: TestProject.use
+- type: <[Fixtures]>
+
+Additional fixtures for this project. Most useful for specifying options, for example [`property: Fixtures.browserName`]. Learn more about [Fixtures] and [configuration](./test-configuration.md).
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  projects: [
+    {
+      name: 'Chromium',
+      use: {
+        browserName: 'chromium',
+      },
+    },
+  ],
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  projects: [
+    {
+      name: 'Chromium',
+      use: {
+        browserName: 'chromium',
+      },
+    },
+  ],
+};
+export default config;
+```

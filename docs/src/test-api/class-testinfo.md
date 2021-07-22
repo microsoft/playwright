@@ -154,7 +154,7 @@ Optional condition - the test is marked as "fixme" when the condition is `true`.
 Optional description that will be reflected in a test report.
 
 ## property: TestInfo.fn
-- type: <[function]\([Object], [TestInfo]\)>
+- type: <[function]\([TestArgs], [TestInfo]\)>
 
 Test function as passed to `test(title, testFunction)`.
 

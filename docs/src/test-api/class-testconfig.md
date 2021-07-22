@@ -266,6 +266,36 @@ Whether to update expected snapshots with the actual results produced by the tes
 
 Learn more about [snapshots](./test-snapshots.md).
 
+## property: TestConfig.use
+- type: <[Fixtures]>
+
+Additional fixtures for this project. Most useful for specifying options, for example [`property: Fixtures.browserName`]. Learn more about [Fixtures] and [configuration](./test-configuration.md).
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    browserName: 'chromium',
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  use: {
+    browserName: 'chromium',
+  },
+};
+export default config;
+```
 
 ## property: TestConfig.workers
 - type: <[int]>
