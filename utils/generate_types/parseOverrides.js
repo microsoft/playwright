@@ -16,13 +16,14 @@
 
 const path = require('path');
 const ts = require('typescript');
+
 /**
- * @param {(className: string) => string} commentForClass 
- * @param {(className: string, methodName: string) => string} commentForMethod 
- * @param {(className: string) => string} extraForClass 
+ * @param {string} filePath
+ * @param {(className: string) => string} commentForClass
+ * @param {(className: string, methodName: string) => string} commentForMethod
+ * @param {(className: string) => string} extraForClass
  */
-async function parseOverrides(commentForClass, commentForMethod, extraForClass) {
-  const filePath = path.join(__dirname, 'overrides.d.ts');
+async function parseOverrides(filePath, commentForClass, commentForMethod, extraForClass) {
   const program = ts.createProgram({
     rootNames: [filePath],
     options: {
