@@ -3,7 +3,9 @@ id: test-runners
 title: "Test Runners"
 ---
 
-With a few lines of code, you can hook up Playwright to the NUnit test runner.
+While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience
+it works best with the built-in .NET test runner, and using NUnit as the test framework. NUnit is
+also what we use internally for [our tests](https://github.com/microsoft/playwright-dotnet/tree/main/src/Playwright.Tests).
 
 Playwright and Browser instances can be reused between tests for better performance. We
 recommend running each test case in a new BrowserContext, this way browser state will be
@@ -11,18 +13,16 @@ isolated between the tests.
 
 <!-- TOC -->
 
-## Creating NUnit project
+## Creating an NUnit project
 
 ```bash
-dotnet new console -n pw_test
-cd pw_test
-dotnet add package Microsoft.Playwright --prerelease
-dotnet add package Microsoft.Playwright.NUnit --prerelease
-```
-
-Ensure browsers necessary for testing are installed.
-
-```bash
+# Create a new project
+dotnet new nunit -n PlaywrightTests
+cd PlaywrightTests
+# Add the required reference
+dotnet add package Microsoft.Playwright.NUnit
+dotnet build
+# Install the required pre-requisites
 playwright install
 ```
 
@@ -92,6 +92,12 @@ Linux & Mac
 HEADED=1 dotnet test
 ```
 
+You can also choose specifically which tests to run, using the [filtering capabilities](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=nunit):
+
+```bash
+dotnet test --filter "Name~ShouldAdd"
+```
+
 ## Running NUnit tests in Parallel
 
 By default NUnit will run all test files in parallel, while running tests inside each file sequentially. It will create as many processes as there are cores on the host system. You can adjust this behavior using the NUnit.NumberOfTestWorkers parameter.
@@ -141,3 +147,7 @@ There are few base classes available to you in Microsoft.Playwright.NUnit namesp
 |BrowserTest   |Each test will get a browser and can create as many contexts as it likes. Each test is responsible for cleaning up all the contexts it created.|
 |PlaywrightTest|This gives each test a Playwright object so that the test could start and stop as many browsers as it likes.|
 
+## xUnit support
+
+While using xUnit is also supported, we do not support running parallel tests. This is a well known problem/design limitation
+outlined by the maintainers across [several](https://github.com/xunit/xunit/issues/2003) [issues](https://github.com/xunit/xunit/issues/2111#issuecomment-650004247).
