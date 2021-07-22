@@ -161,12 +161,12 @@ pyinstaller -F main.py
 
 # Windows with cmd.exe
 set PLAYWRIGHT_BROWSERS_PATH=0
-playwright install
+playwright install chromium
 pyinstaller -F main.py
 
 # Windows with PowerShell
 $env:PLAYWRIGHT_BROWSERS_PATH="0"
-playwright install
+playwright install chromium
 pyinstaller -F main.py
 ```
 
