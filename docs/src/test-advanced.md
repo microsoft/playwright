@@ -316,7 +316,12 @@ exports.test = base.test.extend({
 import { test as base } from '@playwright/test';
 import { startBackend } from './my-backend';
 
-export const test = base.extend<{ version: string, backendUrl: string }>({
+export type TestOptions = {
+  version: string;
+  backendUrl: string;
+};
+
+export const test = base.extend<TestOptions>({
   // Default value for the version.
   version: '1.0',
 
@@ -369,7 +374,7 @@ Now, we can run test in multiple configurations by using projects.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
+/** @type {import('@playwright/test').PlaywrightTestConfig<{ version: string }>} */
 const config = {
   timeout: 20000,
   projects: [
@@ -390,8 +395,9 @@ module.exports = config;
 ```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from '@playwright/test';
+import { TestOptions } from './my-test';
 
-const config: PlaywrightTestConfig = {
+const config: PlaywrightTestConfig<TestOptions> = {
   timeout: 20000,
   projects: [
     {
