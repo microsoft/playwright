@@ -4047,7 +4047,7 @@ index 7cdc5865e58e9a9a30ea25202692d4b9aa77b2d6..7c42be0cbadf9a594926cbe89ce510b0
  
      std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db3261aa25f1d 100644
+index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..a94c2ac8e375635003c76b7c1158d2e7d1058243 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,19 +32,25 @@
@@ -4183,56 +4183,70 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  Protocol::ErrorStringOr<void> InspectorPageAgent::navigate(const String& url)
  {
      UserGestureIndicator indicator { ProcessingUserGesture };
-@@ -439,6 +485,10 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
+@@ -439,6 +485,12 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
          inspectedPageSettings.setAuthorAndUserStylesEnabledInspectorOverride(value);
          return { };
  
++#if ENABLE(DEVICE_ORIENTATION)
 +    case Protocol::Page::Setting::DeviceOrientationEventEnabled:
 +        inspectedPageSettings.setDeviceOrientationEventEnabled(value.value_or(false));
 +        return { };
++#endif
 +
      case Protocol::Page::Setting::ICECandidateFilteringEnabled:
          inspectedPageSettings.setICECandidateFilteringEnabledInspectorOverride(value);
          return { };
-@@ -464,6 +514,26 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
+@@ -464,6 +516,36 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
          inspectedPageSettings.setNeedsSiteSpecificQuirksInspectorOverride(value);
          return { };
  
++#if ENABLE(NOTIFICATIONS)
 +    case Protocol::Page::Setting::NotificationsEnabled:
 +        inspectedPageSettings.setNotificationsEnabled(value.value_or(false));
 +        return { };
++#endif
 +
++#if ENABLE(FULLSCREEN_API)
 +    case Protocol::Page::Setting::FullScreenEnabled:
 +        inspectedPageSettings.setFullScreenEnabled(value.value_or(false));
 +        return { };
++#endif
 +
++#if ENABLE(INPUT_TYPE_MONTH)
 +    case Protocol::Page::Setting::InputTypeMonthEnabled:
 +        inspectedPageSettings.setInputTypeMonthEnabled(value.value_or(false));
 +        return { };
++#endif
 +
++#if ENABLE(INPUT_TYPE_WEEK)
 +    case Protocol::Page::Setting::InputTypeWeekEnabled:
 +        inspectedPageSettings.setInputTypeWeekEnabled(value.value_or(false));
 +        return { };
++#endif
 +
++#if ENABLE(POINTER_LOCK)
 +    case Protocol::Page::Setting::PointerLockEnabled:
 +        inspectedPageSettings.setPointerLockEnabled(value.value_or(false));
 +        return { };
++#endif
 +
      case Protocol::Page::Setting::ScriptEnabled:
          inspectedPageSettings.setScriptEnabledInspectorOverride(value);
          return { };
-@@ -476,6 +546,10 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
+@@ -476,6 +558,12 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::overrideSetting(Protocol::Page
          inspectedPageSettings.setShowRepaintCounterInspectorOverride(value);
          return { };
  
++#if ENABLE(MEDIA_STREAM)
 +    case Protocol::Page::Setting::SpeechRecognitionEnabled:
 +        inspectedPageSettings.setSpeechRecognitionEnabled(value.value_or(false));
 +        return { };
++#endif
 +
      case Protocol::Page::Setting::WebRTCEncryptionEnabled:
          inspectedPageSettings.setWebRTCEncryptionEnabledInspectorOverride(value);
          return { };
-@@ -696,9 +770,13 @@ Protocol::ErrorStringOr<std::tuple<String, bool /* base64Encoded */>> InspectorP
+@@ -696,9 +784,13 @@ Protocol::ErrorStringOr<std::tuple<String, bool /* base64Encoded */>> InspectorP
      return { { content, base64Encoded } };
  }
  
@@ -4248,7 +4262,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  
      return { };
  }
-@@ -801,15 +879,16 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setShowPaintRects(bool show)
+@@ -801,15 +893,16 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setShowPaintRects(bool show)
      return { };
  }
  
@@ -4270,7 +4284,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -817,13 +896,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -817,13 +910,23 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -4297,7 +4311,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  }
  
  Frame* InspectorPageAgent::frameForId(const Protocol::Network::FrameId& frameId)
-@@ -835,20 +924,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -835,20 +938,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -4324,7 +4338,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  }
  
  Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const Protocol::Network::FrameId& frameId)
-@@ -859,11 +946,6 @@ Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const
+@@ -859,11 +960,6 @@ Frame* InspectorPageAgent::assertFrame(Protocol::ErrorString& errorString, const
      return frame;
  }
  
@@ -4336,7 +4350,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -884,6 +966,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -884,6 +980,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -4349,7 +4363,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
-@@ -893,13 +981,22 @@ void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
+@@ -893,13 +995,22 @@ void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  
  void InspectorPageAgent::didClearWindowObjectInWorld(Frame& frame, DOMWrapperWorld& world)
  {
@@ -4375,7 +4389,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  }
  
  void InspectorPageAgent::didPaint(RenderObject& renderer, const LayoutRect& rect)
-@@ -943,6 +1040,52 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -943,6 +1054,52 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -4428,7 +4442,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  Ref<Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1079,11 +1222,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
+@@ -1079,11 +1236,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4443,7 +4457,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  
      IntRect rectangle(x, y, width, height);
      auto snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, WTFMove(options));
-@@ -1094,6 +1239,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
+@@ -1094,6 +1253,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4491,7 +4505,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  {
-@@ -1106,7 +1292,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
+@@ -1106,7 +1306,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  }
  #endif
  
@@ -4499,7 +4513,7 @@ index 64117425ba5c5b6a71d190dfc8f1eefb4ffc637c..308022b846e08c1aa996ffc9e45db326
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::optional<int>&& width, std::optional<int>&& height)
  {
      if (width.has_value() != height.has_value())
-@@ -1121,6 +1306,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
+@@ -1121,6 +1320,595 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.value_or(0), height.value_or(0)));
      return { };
  }
