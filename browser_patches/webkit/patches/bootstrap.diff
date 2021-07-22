@@ -5875,7 +5875,7 @@ index 7b77e407ee5d08ab3784d0899cfa33f0177f0648..0060ebfb1128cc5eb28baa5ecf4538a2
      request.setHTTPHeaderField(HTTPHeaderName::Accept, "text/event-stream");
      request.setHTTPHeaderField(HTTPHeaderName::CacheControl, "no-cache");
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
-index 7054acc90214eb817bd784298ce77f76d32c5dee..5a8d7af631d7f573575f633b906a0798103199c6 100644
+index 7054acc90214eb817bd784298ce77f76d32c5dee..9f6a77a76ba4ef1eff10a6a61f1d7c48a1c389b0 100644
 --- a/Source/WebCore/page/Frame.cpp
 +++ b/Source/WebCore/page/Frame.cpp
 @@ -39,6 +39,7 @@
@@ -5915,7 +5915,7 @@ index 7054acc90214eb817bd784298ce77f76d32c5dee..5a8d7af631d7f573575f633b906a0798
  
  #endif
  
-+#ifdef !PLATFORM(IOS_FAMILY)
++#if !PLATFORM(IOS_FAMILY)
 +
 +void Frame::betterApproximateNode(const IntPoint& testPoint, const NodeQualifier& nodeQualifierFunction, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect)
 +{
