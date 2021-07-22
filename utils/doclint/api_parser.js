@@ -26,10 +26,10 @@ const Documentation = require('./documentation');
 class ApiParser {
   /**
    * @param {string} apiDir
+   * @param {string=} paramsPath
    */
-  constructor(apiDir) {
+  constructor(apiDir, paramsPath) {
     let bodyParts = [];
-    let paramsPath;
     for (const name of fs.readdirSync(apiDir)) {
       if (!name.endsWith('.md'))
         continue;
@@ -314,9 +314,10 @@ function guessRequired(comment) {
 
 /**
  * @param {string} apiDir
+ * @param {string=} paramsPath
  */
-function parseApi(apiDir) {
-  return new ApiParser(apiDir).documentation;
+function parseApi(apiDir, paramsPath) {
+  return new ApiParser(apiDir, paramsPath).documentation;
 }
 
 /**

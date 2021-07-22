@@ -53,7 +53,7 @@ test('basic test', async ({ page }) => {
 Test title.
 
 ### param: Test.(call).testFunction
-- `testFunction` <[function]\([Object], [TestInfo]\)>
+- `testFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
@@ -64,7 +64,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 Declares an `afterAll` hook that is executed once after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group.
 
 ### param: Test.afterAll.hookFunction
-- `hookFunction` <[function]\([Object], [WorkerInfo]\)>
+- `hookFunction` <[function]\([Fixtures], [WorkerInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [WorkerInfo].
 
@@ -75,7 +75,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.
 
 ### param: Test.afterEach.hookFunction
-- `hookFunction` <[function]\([Object], [TestInfo]\)>
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
@@ -121,7 +121,7 @@ test('my test', async ({ page }) => {
 You can use [`method: Test.afterAll`] to teardown any resources set up in `beforeAll`.
 
 ### param: Test.beforeAll.hookFunction
-- `hookFunction` <[function]\([Object], [WorkerInfo]\)>
+- `hookFunction` <[function]\([Fixtures], [WorkerInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [WorkerInfo].
 
@@ -162,7 +162,7 @@ test('my test', async ({ page }) => {
 You can use [`method: Test.afterEach`] to teardown any resources set up in `beforeEach`.
 
 ### param: Test.beforeEach.hookFunction
-- `hookFunction` <[function]\([Object], [TestInfo]\)>
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
@@ -327,9 +327,9 @@ test('fail in WebKit 2', async ({ page }) => {
 ```
 
 ### param: Test.fail.condition
-- `condition` <[void]|[boolean]|[function]\([Object]\):[boolean]>
+- `condition` <[void]|[boolean]|[function]\([Fixtures]\):[boolean]>
 
-Optional condition - either a boolean value, or a function that takes a fixtures Object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
+Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
 
 ### param: Test.fail.description
 - `description` <[void]|[string]>
@@ -432,9 +432,9 @@ test.beforeEach(async ({ page }) => {
 ```
 
 ### param: Test.fixme.condition
-- `condition` <[void]|[boolean]|[function]\([Object]\):[boolean]>
+- `condition` <[void]|[boolean]|[function]\([Fixtures]\):[boolean]>
 
-Optional condition - either a boolean value, or a function that takes a fixtures Object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
+Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
 
 ### param: Test.fixme.description
 - `description` <[void]|[string]>
@@ -465,7 +465,7 @@ test.only('focus this test', async ({ page }) => {
 Test title.
 
 ### param: Test.only.testFunction
-- `testFunction` <[function]\([Object], [TestInfo]\)>
+- `testFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
@@ -617,9 +617,9 @@ test.beforeEach(async ({ page }) => {
 ```
 
 ### param: Test.skip.condition
-- `condition` <[void]|[boolean]|[function]\([Object]\):[boolean]>
+- `condition` <[void]|[boolean]|[function]\([Fixtures]\):[boolean]>
 
-Optional condition - either a boolean value, or a function that takes a fixtures Object and returns a boolean. Test or tests are skipped when the condition is `true`.
+Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are skipped when the condition is `true`.
 
 ### param: Test.skip.description
 - `description` <[void]|[string]>
@@ -702,9 +702,9 @@ test('fail in WebKit 2', async ({ page }) => {
 ```
 
 ### param: Test.slow.condition
-- `condition` <[void]|[boolean]|[function]\([Object]\):[boolean]>
+- `condition` <[void]|[boolean]|[function]\([Fixtures]\):[boolean]>
 
-Optional condition - either a boolean value, or a function that takes a fixtures Object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
+Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
 
 ### param: Test.slow.description
 - `description` <[void]|[string]>
@@ -738,9 +738,43 @@ test('test with locale', async ({ page }) => {
 });
 ```
 
-### param: Test.use.fixtures
-- `fixtures` <[Object]>
+It is possible not only to provide a fixture value, but also to override a fixture by providing a fixture function.
 
-An object with fixture values.
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test.use({
+  locale: async ({}, use) => {
+    // Read locale from some configuration file.
+    const locale = await fs.promises.readFile('test-locale', 'utf-8');
+    await use(locale);
+  },
+});
+
+test('test with locale', async ({ page }) => {
+  // Default context and page have locale as specified
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test.use({
+  locale: async ({}, use) => {
+    // Read locale from some configuration file.
+    const locale = await fs.promises.readFile('test-locale', 'utf-8');
+    await use(locale);
+  },
+});
+
+test('test with locale', async ({ page }) => {
+  // Default context and page have locale as specified
+});
+```
+
+### param: Test.use.fixtures
+- `fixtures` <[Fixtures]>
+
+An object with fixture definitions.
 
 

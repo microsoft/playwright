@@ -39,7 +39,7 @@ run().catch(e => {
 async function run() {
   const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   apiDocumentation.filterForLanguage('js');
-  const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'));
+  const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
   testDocumentation.filterForLanguage('js');
   const documentation = apiDocumentation.mergeWith(testDocumentation);
   documentation.mergeWith(testDocumentation);
