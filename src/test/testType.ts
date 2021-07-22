@@ -55,6 +55,7 @@ export class TestTypeImpl {
   }
 
   private _createTest(type: 'default' | 'only', location: Location, title: string, fn: Function) {
+    throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
       throw new Error(`test() can only be called in a test file`);
@@ -71,6 +72,7 @@ export class TestTypeImpl {
   }
 
   private _describe(type: 'default' | 'only', location: Location, title: string, fn: Function) {
+    throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
       throw new Error(`describe() can only be called in a test file`);
@@ -148,6 +150,16 @@ export class TestTypeImpl {
     const child = new TestTypeImpl([...this.fixtures, declared]);
     declared.testType = child;
     return child.test;
+  }
+}
+
+function throwIfRunningInsideJest() {
+  if (process.env.JEST_WORKER_ID) {
+    throw new Error(
+        `Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.\n` +
+        `Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.\n` +
+        `See https://playwright.dev/docs/intro/ for more information about Playwright Test.`,
+    );
   }
 }
 
