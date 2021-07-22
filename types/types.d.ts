@@ -6636,20 +6636,28 @@ export interface BrowserType<Unused = {}> {
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
    *
    * > NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
-   * @param params
+   * @param endpointURL A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+   * @param options
    */
-  connectOverCDP(options: ConnectOverCDPOptions): Promise<Browser>;
+  connectOverCDP(endpointURL: string, options?: ConnectOverCDPOptions): Promise<Browser>;
   /**
    * Option `wsEndpoint` is deprecated. Instead use `endpointURL`.
    * @deprecated
    */
-  connectOverCDP(options: ConnectOptions): Promise<Browser>;
+  connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
    * This methods attaches Playwright to an existing browser instance.
-   * @param params
+   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * @param options
    */
-  connect(params: ConnectOptions): Promise<Browser>;
-
+  connect(wsEndpoint: string, options?: ConnectOptions): Promise<Browser>;
+  /**
+   * wsEndpoint in options is deprecated. Instead use `wsEndpoint`.
+   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * @param options
+   * @deprecated
+   */
+  connect(options: ConnectOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
    * A path where Playwright expects to find a bundled browser executable.
    */
@@ -9020,8 +9028,8 @@ export interface BrowserServer {
    * Browser websocket url.
    *
    * Browser websocket endpoint which can be used as an argument to
-   * [browserType.connect(params)](https://playwright.dev/docs/api/class-browsertype#browser-type-connect) to establish
-   * connection to the browser.
+   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect) to
+   * establish connection to the browser.
    */
   wsEndpoint(): string;
 }
@@ -11196,10 +11204,9 @@ export interface LaunchOptions {
 
 export interface ConnectOverCDPOptions {
   /**
-   * A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or
-   * `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+   * Deprecated, use the first argument instead. Optional.
    */
-  endpointURL: string;
+  endpointURL?: string;
 
   /**
    * Additional HTTP headers to be sent with connect request. Optional.
@@ -11207,15 +11214,15 @@ export interface ConnectOverCDPOptions {
   headers?: { [key: string]: string; };
 
   /**
+   * Logger sink for Playwright logging. Optional.
+   */
+  logger?: Logger;
+
+  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
    * Defaults to 0.
    */
   slowMo?: number;
-
-  /**
-   * Logger sink for Playwright logging. Optional.
-   */
-  logger?: Logger;
 
   /**
    * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
@@ -11226,25 +11233,20 @@ export interface ConnectOverCDPOptions {
 
 export interface ConnectOptions {
   /**
-   * A browser websocket endpoint to connect to.
-   */
-  wsEndpoint: string;
-
-  /**
    * Additional HTTP headers to be sent with web socket connect request. Optional.
    */
   headers?: { [key: string]: string; };
+
+  /**
+   * Logger sink for Playwright logging. Optional.
+   */
+  logger?: Logger;
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
    * Defaults to 0.
    */
   slowMo?: number;
-
-  /**
-   * Logger sink for Playwright logging. Optional.
-   */
-  logger?: Logger;
 
   /**
    * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
