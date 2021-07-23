@@ -34,7 +34,6 @@ title: "Community Showcase"
 * [Lumberjack](https://github.com/JakePartusch/lumberjack): Automated accessibility scanner to run checks on your entire website
 * [mockiavelli](https://github.com/HLTech/mockiavelli) Request mocking library for Playwright to test SPA in isolation from backend APIs.
 * [Moon](https://github.com/aerokube/moon): Run Playwright tests in parallel in Kubernetes cluster (free up to 4 parallel sessions)
-* [Playwright Expect](https://github.com/elaichenkov/playwright-expect): Assertion library for JavaScript/TypeScript intended for use with Playwright Test runner.
 * [playwright-test](https://github.com/hugomrdias/playwright-test) Run unit tests and benchmarks in browsers with Node's seamless experience.
 * [playwright-video](https://github.com/qawolf/playwright-video): Capture a video while executing a Playwright script
 * [QA Wolf](https://github.com/qawolf/qawolf): Record and create Playwright tests and then run them in CI
@@ -55,7 +54,6 @@ title: "Community Showcase"
 ## Examples
 
 * [e2e Boilerplates](https://github.com/e2e-boilerplate?utf8=%E2%9C%93&q=playwright): Project boilerplates for using Playwright with TypeScript, Cucumber, Jest, and other libraries
-* [Playwright Test Boilerplate](https://github.com/elaichenkov/playwright-test-boilerplate): Playwright and Playwright Test boilerplate, using TypeScript and Playwright Expect.
 * [react-app-playwright](https://github.com/KyleADay/react-app-playwright): Using Playwright with a create-react-app project
 * [playwright-react-typescript-jest-example](https://github.com/azemetre/playwright-react-typescript-jest-example): Using Playwright + Jest with a custom webpack configuration for React + TypeScript project
 * [playwright-mocha](https://github.com/roggerfe/playwright-mocha): Using Playwright with Mocha and Chai
