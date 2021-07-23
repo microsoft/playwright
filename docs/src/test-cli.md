@@ -14,7 +14,7 @@ All the options are available in the [configuration file](./test-advanced.md). H
 
 - `--headed`: Run tests in headed browsers. Useful for debugging.
 
-- `--baseURL`: Base URL used for all pages in the context.
+- `--baseURL`: Run tests against the Base URL, which is used for all pages in the context.
 
 - `--browser`: Run test in a specific browser. Available options are  `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time.
 

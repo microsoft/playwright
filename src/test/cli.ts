@@ -41,7 +41,7 @@ const defaultConfig: Config = {
 export function addTestCommand(program: commander.CommanderStatic) {
   const command = program.command('test [test-filter...]');
   command.description('Run tests with Playwright Test');
-  command.option('--baseURL <baseURL>', `Base URL used for all pages in the context`);
+  command.option('--baseURL <baseURL>', `Base URL is used for all pages in the context`);
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
