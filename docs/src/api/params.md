@@ -102,6 +102,11 @@ When set, this method only performs the [actionability](./actionability.md) chec
 
 A selector to query for. See [working with selectors](./selectors.md) for more details.
 
+## find-selector
+- `selector` <[string]>
+
+A selector to use when resolving DOM element. See [working with selectors](./selectors.md) for more details.
+
 ## wait-for-selector-state
 - `state` <[WaitForSelectorState]<"attached"|"detached"|"visible"|"hidden">>
 
