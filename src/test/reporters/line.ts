@@ -16,29 +16,29 @@
 
 import colors from 'colors/safe';
 import { BaseReporter, formatFailure, formatTestTitle } from './base';
-import { FullConfig, Test, Suite, TestResult } from '../reporter';
+import { FullConfig, TestCase, Suite, TestResult, FullResult } from '../../../types/testReporter';
 
 class LineReporter extends BaseReporter {
   private _total = 0;
   private _current = 0;
   private _failures = 0;
-  private _lastTest: Test | undefined;
+  private _lastTest: TestCase | undefined;
 
   onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
-    this._total = suite.totalTestCount();
+    this._total = suite.allTests().length;
     console.log();
   }
 
-  onStdOut(chunk: string | Buffer, test?: Test) {
+  onStdOut(chunk: string | Buffer, test?: TestCase) {
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  onStdErr(chunk: string | Buffer, test?: Test) {
+  onStdErr(chunk: string | Buffer, test?: TestCase) {
     this._dumpToStdio(test, chunk, process.stderr);
   }
 
-  private _dumpToStdio(test: Test | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
     stream.write(`\u001B[1A\u001B[2K`);
@@ -52,7 +52,7 @@ class LineReporter extends BaseReporter {
     console.log();
   }
 
-  onTestEnd(test: Test, result: TestResult) {
+  onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     const width = process.stdout.columns! - 1;
     const title = `[${++this._current}/${this._total}] ${formatTestTitle(this.config, test)}`.substring(0, width);
@@ -64,9 +64,9 @@ class LineReporter extends BaseReporter {
     }
   }
 
-  onEnd() {
+  async onEnd(result: FullResult) {
     process.stdout.write(`\u001B[1A\u001B[2K`);
-    super.onEnd();
+    await super.onEnd(result);
     this.epilogue(false);
   }
 }

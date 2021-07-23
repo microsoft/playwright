@@ -26,7 +26,6 @@ import { Page } from './page';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
-import { ParsedStackTrace } from '../utils/stackTrace';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };
@@ -236,10 +235,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async (channel: channels.AndroidDeviceChannel, stackTrace: ParsedStackTrace) => {
+    return this._wrapApiCall(async (channel: channels.AndroidDeviceChannel) => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event, stackTrace);
+      const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
       if (event !== Events.AndroidDevice.Close)
         waiter.rejectOnEvent(this, Events.AndroidDevice.Close, new Error('Device closed'));

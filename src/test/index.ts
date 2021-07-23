@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, FullConfig, TestInfo } from '../../types/test';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
 export { expect } from './expect';
@@ -74,9 +74,12 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   timezoneId: undefined,
   userAgent: undefined,
   viewport: undefined,
+  baseURL: async ({ }, use) => {
+    await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
+  },
   contextOptions: {},
 
-  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, contextOptions }, use, testInfo) => {
+  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, baseURL, contextOptions }, use, testInfo) => {
     testInfo.snapshotSuffix = process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -139,6 +142,8 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       options.userAgent = userAgent;
     if (viewport !== undefined)
       options.viewport = viewport;
+    if (baseURL !== undefined)
+      options.baseURL = baseURL;
 
     const context = await browser.newContext(options);
     context.setDefaultTimeout(0);
@@ -158,19 +163,24 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     if (preserveTrace) {
       const tracePath = testInfo.outputPath(`trace.zip`);
       await context.tracing.stop({ path: tracePath });
+      testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
     } else if (captureTrace) {
       await context.tracing.stop();
     }
 
     const captureScreenshots = (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
     if (captureScreenshots) {
-      await Promise.all(allPages.map((page, index) => {
+      await Promise.all(allPages.map(async (page, index) => {
         const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${++index}.png`);
-        return page.screenshot({ timeout: 5000, path: screenshotPath }).catch(e => {});
+        try {
+          await page.screenshot({ timeout: 5000, path: screenshotPath });
+          testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
+        } catch {
+        }
       }));
     }
 
-    const prependToError = testInfo.status ===  'timedOut' ? formatPendingCalls((context as any)._connection.pendingProtocolCalls(), testInfo) : '';
+    const prependToError = testInfo.status ===  'timedOut' ? formatPendingCalls((context as any)._connection.pendingProtocolCalls()) : '';
     await context.close();
     if (prependToError) {
       if (!testInfo.error) {
@@ -205,17 +215,17 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
 });
 export default test;
 
-function formatPendingCalls(calls: ProtocolCall[], testInfo: TestInfo) {
+function formatPendingCalls(calls: ProtocolCall[]) {
   if (!calls.length)
     return '';
   return 'Pending operations:\n' + calls.map(call => {
-    const frame = call.stack && call.stack[0] ? formatStackFrame(testInfo.config, call.stack[0]) : '<unknown>';
+    const frame = call.stack && call.stack[0] ? formatStackFrame(call.stack[0]) : '<unknown>';
     return `  - ${call.apiName} at ${frame}\n`;
   }).join('') + '\n';
 }
 
-function formatStackFrame(config: FullConfig, frame: StackFrame) {
-  const file = path.relative(config.rootDir, frame.file) || path.basename(frame.file);
+function formatStackFrame(frame: StackFrame) {
+  const file = path.relative(process.cwd(), frame.file) || path.basename(frame.file);
   return `${file}:${frame.line || 1}:${frame.column || 1}`;
 }
 

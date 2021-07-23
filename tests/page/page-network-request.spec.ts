@@ -185,7 +185,7 @@ it('should override post data content type', async ({page, server, isAndroid}) =
   expect(request.headers['content-type']).toBe('application/x-www-form-urlencoded; charset=UTF-8');
 });
 
-it('should be |undefined| when there is no post data', async ({page, server, isAndroid}) => {
+it('should get |undefined| with postData() when there is no post data', async ({page, server, isAndroid}) => {
   it.fixme(isAndroid, 'Post data does not work');
 
   const response = await page.goto(server.EMPTY_PAGE);
@@ -217,7 +217,7 @@ it('should parse the data if content-type is application/x-www-form-urlencoded',
   expect(request.postDataJSON()).toEqual({'foo': 'bar','baz': '123'});
 });
 
-it('should be |undefined| when there is no post data', async ({ page, server }) => {
+it('should get |undefined| with postDataJSON() when there is no post data', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.request().postDataJSON()).toBe(null);
 });

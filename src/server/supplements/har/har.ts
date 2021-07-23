@@ -81,6 +81,7 @@ export type Response = {
   redirectURL: string;
   headersSize: number;
   bodySize: number;
+  _transferSize: number;
 };
 
 export type Cookie = {

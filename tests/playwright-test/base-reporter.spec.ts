@@ -123,14 +123,14 @@ test('should print slow tests', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(8);
-  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [foo] (`);
-  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [bar] (`);
-  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [baz] (`);
-  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [qux] (`);
-  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [foo] (`);
-  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [bar] (`);
-  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [baz] (`);
-  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [qux] (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: [foo] › dir${path.sep}a.test.js (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: [bar] › dir${path.sep}a.test.js (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: [baz] › dir${path.sep}a.test.js (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: [qux] › dir${path.sep}a.test.js (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: [foo] › dir${path.sep}b.test.js (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: [bar] › dir${path.sep}b.test.js (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: [baz] › dir${path.sep}b.test.js (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: [qux] › dir${path.sep}b.test.js (`);
 });
 
 test('should not print slow tests', async ({ runInlineTest }) => {

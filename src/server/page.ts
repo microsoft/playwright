@@ -504,6 +504,10 @@ export class Page extends SdkObject {
   setScreencastOptions(options: { width: number, height: number, quality: number } | null) {
     this._delegate.setScreencastOptions(options).catch(e => debugLogger.log('error', e));
   }
+
+  firePageError(error: Error) {
+    this.emit(Page.Events.PageError, error);
+  }
 }
 
 export class Worker extends SdkObject {

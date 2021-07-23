@@ -169,6 +169,22 @@ it('should report logs while waiting for hidden', async ({page, server}) => {
   expect(error.message).toContain(`selector resolved to visible <div class="another">hello</div>`);
 });
 
+it('should report logs when the selector resolves to multiple elements', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <button style="display: none; position: absolute; top: 0px; left: 0px; width: 100%;">
+      Reset
+    </button>
+    <button>
+      Reset
+    </button>
+  `);
+  const error = await page.click('text=Reset', {
+    timeout: 1000
+  }).catch(e => e);
+  expect(error.toString()).toContain('selector resolved to 2 elements. Proceeding with the first one.');
+});
+
 it('should resolve promise when node is added in shadow dom', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const watchdog = page.waitForSelector('span');

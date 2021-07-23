@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
+import extract from 'extract-zip';
 import fs from 'fs';
+import readline from 'readline';
+import os from 'os';
 import path from 'path';
+import rimraf from 'rimraf';
 import { createPlaywright } from '../../playwright';
 import { PersistentSnapshotStorage, TraceModel } from './traceModel';
-import { TraceEvent } from '../common/traceEvents';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { isUnderTest } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
+import { BrowserContext } from '../../browserContext';
+import { registry } from '../../../utils/registry';
+import { installAppIcon } from '../../chromium/crApp';
 
 export class TraceViewer {
   private _server: HttpServer;
@@ -73,10 +79,15 @@ export class TraceViewer {
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
       (async () => {
-        const traceContent = await fs.promises.readFile(tracePrefix + '.trace', 'utf8');
-        const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
+        const fileStream = fs.createReadStream(tracePrefix + '.trace', 'utf8');
+        const rl = readline.createInterface({
+          input: fileStream,
+          crlfDelay: Infinity
+        });
         const model = new TraceModel(snapshotStorage);
-        model.appendEvents(events, snapshotStorage);
+        for await (const line of rl as any)
+          model.appendEvent(line);
+        model.build();
         response.end(JSON.stringify(model.contextEntry));
       })().catch(e => console.error(e));
       return true;
@@ -112,22 +123,48 @@ export class TraceViewer {
     this._server.routePrefix('/sha1/', sha1Handler);
   }
 
-  async show() {
+  async show(headless: boolean): Promise<BrowserContext> {
     const urlPrefix = await this._server.start();
 
     const traceViewerPlaywright = createPlaywright(true);
-    const args = [
+    const traceViewerBrowser = isUnderTest() ? 'chromium' : this._browserName;
+    const args = traceViewerBrowser === 'chromium' ? [
       '--app=data:text/html,',
       '--window-size=1280,800'
-    ];
+    ] : [];
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
-    const context = await traceViewerPlaywright[this._browserName as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
+
+    // For Chromium, fall back to the stable channels of popular vendors for work out of the box.
+    // Null means no installation and no channels found.
+    let channel = null;
+    if (traceViewerBrowser === 'chromium') {
+      for (const name of ['chromium', 'chrome', 'msedge']) {
+        try {
+          registry.findExecutable(name)!.executablePathOrDie();
+          channel = name === 'chromium' ? undefined : name;
+          break;
+        } catch (e) {
+        }
+      }
+
+      if (channel === null) {
+        // TODO: language-specific error message, or fallback to default error.
+        throw new Error(`
+==================================================================
+Please run 'npx playwright install' to install Playwright browsers
+==================================================================
+`);
+      }
+    }
+
+    const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
+      channel: channel as any,
       sdkLanguage: 'javascript',
       args,
       noDefaultViewport: true,
-      headless: !!process.env.PWTEST_CLI_HEADLESS,
+      headless,
       useWebSocket: isUnderTest()
     });
 
@@ -137,7 +174,43 @@ export class TraceViewer {
     });
     await context.extendInjectedScript('main', consoleApiSource.source);
     const [page] = context.pages();
-    page.on('close', () => process.exit(0));
+
+    if (traceViewerBrowser === 'chromium')
+      await installAppIcon(page);
+
+    if (isUnderTest())
+      page.on('close', () => context.close(internalCallMetadata()).catch(() => {}));
+    else
+      page.on('close', () => process.exit());
+
     await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
+    return context;
   }
+}
+
+export async function showTraceViewer(tracePath: string, browserName: string, headless = false): Promise<BrowserContext | undefined> {
+  let stat;
+  try {
+    stat = fs.statSync(tracePath);
+  } catch (e) {
+    console.log(`No such file or directory: ${tracePath}`);  // eslint-disable-line no-console
+    return;
+  }
+
+  if (stat.isDirectory()) {
+    const traceViewer = new TraceViewer(tracePath, browserName);
+    return await traceViewer.show(headless);
+  }
+
+  const zipFile = tracePath;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
+  process.on('exit', () => rimraf.sync(dir));
+  try {
+    await extract(zipFile, { dir });
+  } catch (e) {
+    console.log(`Invalid trace file: ${zipFile}`);  // eslint-disable-line no-console
+    return;
+  }
+  const traceViewer = new TraceViewer(dir, browserName);
+  return await traceViewer.show(headless);
 }

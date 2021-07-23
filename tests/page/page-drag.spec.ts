@@ -228,6 +228,12 @@ it.describe('Drag and drop', () => {
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
   });
 
+  it('should work with the helper method', async ({page, server}) => {
+    await page.goto(server.PREFIX + '/drag-n-drop.html');
+    await page.dragAndDrop('#source', '#target');
+    expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+  });
+
   async function trackEvents(target: ElementHandle) {
     const eventsHandle = await target.evaluateHandle(target => {
       const events: string[] = [];
@@ -250,6 +256,36 @@ it('should work if not doing a drag', async ({page}) => {
   await page.mouse.move(100, 100);
   await page.mouse.up();
   expect(await eventsHandle.jsonValue()).toEqual(['mousemove', 'mousedown', 'mousemove', 'mouseup']);
+});
+
+it('should report event.buttons', async ({page, browserName}) => {
+  const logsHandle = await page.evaluateHandle(async () => {
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    div.style.width = '200px';
+    div.style.height = '200px';
+    div.style.backgroundColor = 'blue';
+    div.addEventListener('mousedown', onEvent);
+    div.addEventListener('mousemove', onEvent, { passive: false });
+    div.addEventListener('mouseup', onEvent);
+    const logs = [];
+    function onEvent(event) {
+      logs.push({ type: event.type, buttons: event.buttons });
+    }
+    await new Promise(requestAnimationFrame);
+    return logs;
+  });
+  await page.mouse.move(20, 20);
+  await page.mouse.down();
+  await page.mouse.move(40, 40);
+  await page.mouse.up();
+  const logs = await logsHandle.jsonValue();
+  expect(logs).toEqual([
+    { type: 'mousemove', buttons: 0 },
+    { type: 'mousedown', buttons: 1 },
+    { type: 'mousemove', buttons: 1 },
+    { type: 'mouseup', buttons: 0 },
+  ]);
 });
 
 async function trackEvents(target: ElementHandle) {

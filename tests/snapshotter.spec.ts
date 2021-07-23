@@ -237,6 +237,45 @@ it.describe('snapshots', () => {
     expect(divColor).toBe('rgb(0, 0, 255)');
     await previewContext.close();
   });
+
+  it('should restore scroll positions', async ({ page, contextFactory, toImpl, snapshotter, snapshotPort, browserName }) => {
+    it.skip(browserName === 'firefox');
+
+    await page.setContent(`
+      <style>
+        li { height: 20px; margin: 0; padding: 0; }
+        div { height: 60px; overflow-x: hidden; overflow-y: scroll; background: green; padding: 0; margin: 0; }
+      </style>
+      <div>
+        <ul>
+          <li>Item 1</li>
+          <li>Item 2</li>
+          <li>Item 3</li>
+          <li>Item 4</li>
+          <li>Item 5</li>
+          <li>Item 6</li>
+          <li>Item 7</li>
+          <li>Item 8</li>
+          <li>Item 9</li>
+          <li>Item 10</li>
+        </ul>
+      </div>
+    `);
+
+    await (await page.$('text=Item 8')).scrollIntoViewIfNeeded();
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'scrolled');
+
+    // Render snapshot, check expectations.
+    const previewContext = await contextFactory();
+    const previewPage = await previewContext.newPage();
+    await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/`);
+    await previewPage.evaluate(snapshotId => {
+      (window as any).showSnapshot(snapshotId);
+    }, `${snapshot.snapshot().pageId}?name=scrolled`);
+    const div = await previewPage.frames()[1].waitForSelector('div');
+    await previewPage.frames()[1].waitForLoadState();
+    expect(await div.evaluate(div => div.scrollTop)).toBe(136);
+  });
 });
 
 function distillSnapshot(snapshot) {

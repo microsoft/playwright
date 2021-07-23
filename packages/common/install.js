@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-const { installBrowsersWithProgressBar } = require('./lib/install/installer');
+const { installDefaultBrowsersForNpmInstall } = require('./lib/utils/registry');
 
-installBrowsersWithProgressBar();
+installDefaultBrowsersForNpmInstall();

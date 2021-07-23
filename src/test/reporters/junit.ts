@@ -16,12 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import EmptyReporter from './empty';
-import { FullConfig, Suite, Test } from '../reporter';
+import { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../../types/testReporter';
 import { monotonicTime } from '../util';
 import { formatFailure, formatTestTitle, stripAscii } from './base';
 
-class JUnitReporter extends EmptyReporter {
+class JUnitReporter implements Reporter {
   private config!: FullConfig;
   private suite!: Suite;
   private timestamp!: number;
@@ -33,7 +32,6 @@ class JUnitReporter extends EmptyReporter {
   private stripANSIControlSequences = false;
 
   constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
-    super();
     this.outputFile = options.outputFile;
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
   }
@@ -45,11 +43,13 @@ class JUnitReporter extends EmptyReporter {
     this.startTime = monotonicTime();
   }
 
-  onEnd() {
+  async onEnd(result: FullResult) {
     const duration = monotonicTime() - this.startTime;
     const children: XMLEntry[] = [];
-    for (const suite of this.suite.suites)
-      children.push(this._buildTestSuite(suite));
+    for (const projectSuite of this.suite.suites) {
+      for (const fileSuite of projectSuite.suites)
+        children.push(this._buildTestSuite(fileSuite));
+    }
     const tokens: string[] = [];
 
     const self = this;
@@ -85,9 +85,9 @@ class JUnitReporter extends EmptyReporter {
     let duration = 0;
     const children: XMLEntry[] = [];
 
-    suite.findTest(test => {
+    suite.allTests().forEach(test => {
       ++tests;
-      if (test.skipped)
+      if (test.outcome() === 'skipped')
         ++skipped;
       if (!test.ok())
         ++failures;
@@ -102,7 +102,7 @@ class JUnitReporter extends EmptyReporter {
     const entry: XMLEntry = {
       name: 'testsuite',
       attributes: {
-        name: path.relative(this.config.rootDir, suite.file),
+        name: suite.location ? path.relative(this.config.rootDir, suite.location.file) : '',
         timestamp: this.timestamp,
         hostname: '',
         tests,
@@ -117,11 +117,12 @@ class JUnitReporter extends EmptyReporter {
     return entry;
   }
 
-  private _addTestCase(test: Test, entries: XMLEntry[]) {
+  private _addTestCase(test: TestCase, entries: XMLEntry[]) {
     const entry = {
       name: 'testcase',
       attributes: {
-        name: test.spec.fullTitle(),
+        // Skip root, project, file
+        name: test.titlePath().slice(3).join(' '),
         classname: formatTestTitle(this.config, test),
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
       },
@@ -129,7 +130,7 @@ class JUnitReporter extends EmptyReporter {
     };
     entries.push(entry);
 
-    if (test.skipped) {
+    if (test.outcome() === 'skipped') {
       entry.children.push({ name: 'skipped'});
       return;
     }
@@ -138,7 +139,7 @@ class JUnitReporter extends EmptyReporter {
       entry.children.push({
         name: 'failure',
         attributes: {
-          message: `${path.basename(test.spec.file)}:${test.spec.line}:${test.spec.column} ${test.spec.title}`,
+          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
           type: 'FAILURE',
         },
         text: stripAscii(formatFailure(this.config, test))

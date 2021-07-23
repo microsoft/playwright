@@ -3,33 +3,15 @@ id: test-configuration
 title: "Configuration"
 ---
 
+Playwright Test provides options to configure the default `browser`, `context` and `page` fixtures. For example there are options for `headless`, `viewport` and `ignoreHTTPSErrors`. You can also record a video or a trace for the test or capture a screenshot at the end.
+
+Finally, there are plenty of testing options like `timeout` or `testDir` that configure how your tests are collected and executed.
+
+You can specify any options globally in the configuration file, and most of them locally in a test file.
+
 <!-- TOC -->
 
-## Configure browser, context, videos and screenshots
-
-Playwright Tests supports browser and context options that you typically pass to [`method: BrowserType.launch`] and [`method: Browser.newContext`] methods, for example `headless`, `viewport` or `ignoreHTTPSErrors`. It also provides options to record video for the test or capture screenshot at the end.
-
-You can specify any options either locally in a test file, or globally in the configuration file.
-
-- `launchOptions` - Browser launch options match [`method: BrowserType.launch`] method.
-- `contextOptions` - Context options match [`method: Browser.newContext`] method.
-- `screenshot` option - whether to capture a screenshot after each test, off by default. Screenshot will appear in the test output directory, typically `test-results`.
-  - `'off'` - Do not capture screenshots.
-  - `'on'` - Capture screenshot after each test.
-  - `'only-on-failure'` - Capture screenshot after each test failure.
-- `trace` option - whether to record trace for each test, off by default. Trace will appear in the test output directory, typically `test-results`.
-  - `'off'` - Do not record trace.
-  - `'on'` - Record trace for each test.
-  - `'retain-on-failure'` - Record trace for each test, but remove it from successful test runs.
-  - `'on-first-retry'` - Record trace only when retrying a test for the first time.
-- `video` option - whether to record video for each test, off by default. Video will appear in the test output directory, typically `test-results`.
-  - `'off'` - Do not record video.
-  - `'on'` - Record video for each test.
-  - `'retain-on-failure'` - Record video for each test, but remove all videos from successful test runs.
-  - `'on-first-retry'` - Record video only when retrying a test for the first time.
-
-
-### Global configuration
+## Global configuration
 
 Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the `use` section.
 
@@ -39,17 +21,9 @@ Create `playwright.config.js` (or `playwright.config.ts`) and specify options in
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   use: {
-    // Browser options
     headless: false,
-    launchOptions: {
-      slowMo: 50,
-    },
-    // Context options
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
-
-    // Artifacts
-    screenshot: 'only-on-failure',
     video: 'on-first-retry',
   },
 };
@@ -61,18 +35,9 @@ module.exports = config;
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
-    // Browser options
     headless: false,
-    launchOptions: {
-      slowMo: 50,
-    },
-
-    // Context options
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
-
-    // Artifacts
-    screenshot: 'only-on-failure',
     video: 'on-first-retry',
   },
 };
@@ -91,7 +56,7 @@ If you put your configuration file in a different place, pass it with `--config`
 npx playwright test --config=tests/my.config.js
 ```
 
-### Local configuration
+## Local configuration
 
 With `test.use()` you can override some options for a file or a `test.describe` block.
 
@@ -149,6 +114,358 @@ test.describe('headed block', () => {
 });
 ```
 
+## Basic options
+
+These are commonly used options for various scenarios. You usually set them globally in [configuration file](#global-configuration).
+
+- `baseURL` - Base URL used for all pages in the context. Allows navigating by using just the path, for example `page.goto('/settings')`.
+- `browserName` - Name of the browser that will run the tests, one of `chromium`, `firefox`, or `webkit`.
+- `bypassCSP` - Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin.
+- `channel` - Browser channel to use. [Learn more](./browsers.md) about different browsers and channels.
+- `headless` - Whether to run the browser in headless mode.
+- `viewport` - Viewport used for all pages in the context.
+- `storageState` - Populates context with given storage state. Useful for easy authentication, [learn more](./auth.md).
+
+```js js-flavor=js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    baseURL: 'http://localhost:3000',
+    browserName: 'firefox',
+    headless: true,
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    baseURL: 'http://localhost:3000',
+    browserName: 'firefox',
+    headless: true,
+  },
+};
+export default config;
+```
+
+## Emulation
+
+Playwright can [emulate different environments](./emulation.md) like mobile device, locale or timezone.
+
+Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" emulation modes. Note that it uses the [projects](./test-advanced.md#projects) feature to run the same set of tests in multiple configurations.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+const { devices } = require('playwright');
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  projects: [
+    // "Pixel 4" tests use Chromium browser.
+    {
+      name: 'Pixel 4',
+      use: {
+        browserName: 'chromium',
+        ...devices['Pixel 4'],
+      },
+    },
+
+    // "iPhone 11" tests use WebKit browser.
+    {
+      name: 'iPhone 11',
+      use: {
+        browserName: 'webkit',
+        ...devices['iPhone 11'],
+      },
+    },
+  ],
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+import { devices } from 'playwright';
+
+const config: PlaywrightTestConfig = {
+  projects: [
+    // "Pixel 4" tests use Chromium browser.
+    {
+      name: 'Pixel 4',
+      use: {
+        browserName: 'chromium',
+        ...devices['Pixel 4'],
+      },
+    },
+
+    // "iPhone 11" tests use WebKit browser.
+    {
+      name: 'iPhone 11',
+      use: {
+        browserName: 'webkit',
+        ...devices['iPhone 11'],
+      },
+    },
+  ],
+};
+export default config;
+```
+
+You can specify options separately instead of using predefined devices. There are also more options such as locale, geolocation, and timezone which can be configured.
+
+- `colorScheme` - Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
+- `deviceScaleFactor` - Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+- `geolocation` - Context geolocation.
+- `hasTouch` - Specifies if device supports touch events.
+- `isMobile` - Whether the `meta viewport` tag is taken into account and touch events are enabled.
+- `javaScriptEnabled` - Whether or not to enable JavaScript in the context.
+- `locale` - User locale, for example `en-GB`, `de-DE`, etc.
+- `permissions` - A list of permissions to grant to all pages in the context.
+- `timezoneId` - Changes the timezone of the context.
+- `userAgent` - Specific user agent to use in the context.
+
+```js js-flavor=js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    locale: 'fr-FR',
+    geolocation: { longitude: 48.858455, latitude: 2.294474 },
+    permissions: ['geolocation'],
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    locale: 'fr-FR',
+    geolocation: { longitude: 48.858455, latitude: 2.294474 },
+    permissions: ['geolocation'],
+  },
+};
+export default config;
+```
+
+## Network
+
+Available options to configure networking:
+
+- `acceptDownloads` - Whether to automatically download all the attachments. [Learn more](./downloads.md) about working with downloads.
+- `extraHTTPHeaders` - An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+- `httpCredentials` - Credentials for [HTTP authentication](./network.md#http-authentication).
+- `ignoreHTTPSErrors` - Whether to ignore HTTPS errors during navigation.
+- `offline` - Whether to emulate network being offline.
+- `proxy` - [Proxy settings](./network.md#http-proxy) used for all pages in the test.
+
+### Network mocking
+
+You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context.
+
+```js js-flavor=js
+// example.spec.js
+const { test, expect } = require('@playwright/test');
+
+test.beforeEach(async ({ context }) => {
+  // Block any css requests for each test in this file.
+  await context.route(/.css/, route => route.abort());
+});
+
+test('loads page without css', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.beforeEach(async ({ context }) => {
+  // Block any css requests for each test in this file.
+  await context.route(/.css/, route => route.abort());
+});
+
+test('loads page without css', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+Alternatively, you can use [`method: Page.route`] to mock network in a single test.
+
+```js js-flavor=js
+// example.spec.js
+const { test, expect } = require('@playwright/test');
+
+test('loads page without images', async ({ page }) => {
+  // Block png and jpeg images.
+  await page.route(/(png|jpeg)$/, route => route.abort());
+
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('loads page without images', async ({ page }) => {
+  // Block png and jpeg images.
+  await page.route(/(png|jpeg)$/, route => route.abort());
+
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+## Automatic screenshots
+
+You can make Playwright Test capture screenshots for you - control it with the `screenshot` option. By default screenshots are off.
+
+- `'off'` - Do not capture screenshots.
+- `'on'` - Capture screenshot after each test.
+- `'only-on-failure'` - Capture screenshot after each test failure.
+
+Screenshots will appear in the test output directory, typically `test-results`.
+
+```js js-flavor=js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    screenshot: 'only-on-failure',
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    screenshot: 'only-on-failure',
+  },
+};
+export default config;
+```
+
+## Record video
+
+Playwright Test can record videos for your tests, controlled by the `video` option. By default videos are off.
+
+- `'off'` - Do not record video.
+- `'on'` - Record video for each test.
+- `'retain-on-failure'` - Record video for each test, but remove all videos from successful test runs.
+- `'on-first-retry'` - Record video only when retrying a test for the first time.
+
+Video files will appear in the test output directory, typically `test-results`.
+
+```js js-flavor=js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    video: 'on-first-retry',
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    video: 'on-first-retry',
+  },
+};
+export default config;
+```
+
+## Record test trace
+
+Playwright Test can produce test traces while running the tests. Later on, you can view the trace and get detailed information about Playwright execution by opening [Trace Viewer](./trace-viewer.md). By default tracing is off, controlled by the `trace` option.
+
+- `'off'` - Do not record trace.
+- `'on'` - Record trace for each test.
+- `'retain-on-failure'` - Record trace for each test, but remove it from successful test runs.
+- `'on-first-retry'` - Record trace only when retrying a test for the first time.
+
+Trace files will appear in the test output directory, typically `test-results`.
+
+```js js-flavor=js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    trace: 'retain-on-failure',
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    trace: 'retain-on-failure',
+  },
+};
+export default config;
+```
+
+## More browser and context options
+
+Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section.
+
+```js js-flavor=js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    launchOptions: {
+      slowMo: 50,
+    },
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    launchOptions: {
+      slowMo: 50,
+    },
+  },
+};
+export default config;
+```
+
+However, most common ones like `headless` or `viewport` are available directly in the `use` section - see [basic options](#basic-options), [emulation](#emulation) or [network](#network).
+
 ## Testing options
 
 In addition to configuring [Browser] or [BrowserContext], videos or screenshots, Playwright Test has many options to configure how your tests are run. Below are the most common ones, see [advanced configuration](./test-advanced.md) for the full list.
@@ -163,7 +480,7 @@ In addition to configuring [Browser] or [BrowserContext], videos or screenshots,
 - `timeout`: Time in milliseconds given to each test.
 - `workers`: The maximum number of concurrent worker processes to use for parallelizing tests.
 
-You can specify these options in the configuration file.
+You can specify these options in the configuration file. Note that testing options are **top-level**, do not put them into the `use` section.
 
 ```js js-flavor=js
 // playwright.config.js
@@ -330,131 +647,3 @@ There are many more things you can do with projects:
 :::note
 `--browser` command line option is not compatible with projects. Specify `browserName` in each project instead.
 :::
-
-## Mobile emulation
-
-You can use configuration file to make default `context` emulate a mobile device.
-
-Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" emulation modes. Note that it uses the [projects](./test-advanced.md#projects) feature to run the same set of tests in multiple configurations.
-
-```js js-flavor=js
-// playwright.config.js
-// @ts-check
-const { devices } = require('playwright');
-
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  projects: [
-    // "Pixel 4" tests use Chromium browser.
-    {
-      name: 'Pixel 4',
-      use: {
-        browserName: 'chromium',
-        ...devices['Pixel 4'],
-      },
-    },
-
-    // "iPhone 11" tests use WebKit browser.
-    {
-      name: 'iPhone 11',
-      use: {
-        browserName: 'webkit',
-        ...devices['iPhone 11'],
-      },
-    },
-  ],
-};
-
-module.exports = config;
-```
-
-```js js-flavor=ts
-// playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
-import { devices } from 'playwright';
-
-const config: PlaywrightTestConfig = {
-  projects: [
-    // "Pixel 4" tests use Chromium browser.
-    {
-      name: 'Pixel 4',
-      use: {
-        browserName: 'chromium',
-        ...devices['Pixel 4'],
-      },
-    },
-
-    // "iPhone 11" tests use WebKit browser.
-    {
-      name: 'iPhone 11',
-      use: {
-        browserName: 'webkit',
-        ...devices['iPhone 11'],
-      },
-    },
-  ],
-};
-export default config;
-```
-
-## Network mocking
-
-You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context.
-
-```js js-flavor=js
-// example.spec.js
-const { test, expect } = require('@playwright/test');
-
-test.beforeEach(async ({ context }) => {
-  // Block any css requests for each test in this file.
-  await context.route(/.css/, route => route.abort());
-});
-
-test('loads page without css', async ({ page }) => {
-  await page.goto('https://playwright.dev');
-  // ... test goes here
-});
-```
-
-```js js-flavor=ts
-// example.spec.ts
-import { test, expect } from '@playwright/test';
-
-test.beforeEach(async ({ context }) => {
-  // Block any css requests for each test in this file.
-  await context.route(/.css/, route => route.abort());
-});
-
-test('loads page without css', async ({ page }) => {
-  await page.goto('https://playwright.dev');
-  // ... test goes here
-});
-```
-
-Alternatively, you can use [`method: Page.route`] to mock network in a single test.
-
-```js js-flavor=js
-// example.spec.js
-const { test, expect } = require('@playwright/test');
-
-test('loads page without images', async ({ page }) => {
-  // Block png and jpeg images.
-  await page.route(/(png|jpeg)$/, route => route.abort());
-
-  await page.goto('https://playwright.dev');
-  // ... test goes here
-});
-```
-
-```js js-flavor=ts
-// example.spec.ts
-import { test, expect } from '@playwright/test';
-
-test('loads page without images', async ({ page }) => {
-  // Block png and jpeg images.
-  await page.route(/(png|jpeg)$/, route => route.abort());
-
-  await page.goto('https://playwright.dev');
-  // ... test goes here
-});
-```

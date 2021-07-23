@@ -1,6 +1,6 @@
 ---
 id: intro
-title: "Playwright Test"
+title: "Getting Started"
 ---
 
 Playwright can either be used as a part of the Playwright Test, or as a [Playwright Library](./library.md). If you intend to use Playwright for testing, read on.
@@ -34,7 +34,7 @@ Unlike Playwright Library, Playwright Test does not bundle browsers by default, 
 npx playwright install
 ```
 
-You can optionally install only selected browsers, see [Playwright CLI](./cli.md) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
+You can optionally install only selected browsers, see [installing browsers](./test-install.md) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
 
 ## First test
 
@@ -266,6 +266,9 @@ test('my test', async ({ page }) => {
 
   // Expect an attribute "to be strictly equal" to the value.
   expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
+
+  // Expect an element "to be visible".
+  expect(await page.isVisible('text=Learn more')).toBeTruthy();
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.

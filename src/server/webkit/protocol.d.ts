@@ -5715,6 +5715,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       base64Encoded: boolean;
     }
     /**
+     * Returns content served for the given request. Will wait for the request to finish loading.
+     */
+    export type getInterceptedResponseBodyParameters = {
+      /**
+       * Identifier of the intercepted network response's request.
+       */
+      requestId: RequestId;
+    }
+    export type getInterceptedResponseBodyReturnValue = {
+      /**
+       * Base64 encoded response body.
+       */
+      body: string;
+    }
+    /**
      * Toggles whether the resource cache may be used when loading resources in the inspected page. If <code>true</code>, the resource cache will not be used when loading resources.
      */
     export type setResourceCachingDisabledParameters = {
@@ -5975,7 +5990,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * List of settings able to be overridden by WebInspector.
      */
-    export type Setting = "PrivateClickMeasurementDebugModeEnabled"|"AuthorAndUserStylesEnabled"|"ICECandidateFilteringEnabled"|"ITPDebugModeEnabled"|"ImagesEnabled"|"MediaCaptureRequiresSecureConnection"|"MockCaptureDevicesEnabled"|"NeedsSiteSpecificQuirks"|"ScriptEnabled"|"ShowDebugBorders"|"ShowRepaintCounter"|"WebRTCEncryptionEnabled"|"WebSecurityEnabled";
+    export type Setting = "PrivateClickMeasurementDebugModeEnabled"|"AuthorAndUserStylesEnabled"|"ICECandidateFilteringEnabled"|"ITPDebugModeEnabled"|"ImagesEnabled"|"MediaCaptureRequiresSecureConnection"|"MockCaptureDevicesEnabled"|"NeedsSiteSpecificQuirks"|"ScriptEnabled"|"ShowDebugBorders"|"ShowRepaintCounter"|"WebRTCEncryptionEnabled"|"WebSecurityEnabled"|"DeviceOrientationEventEnabled"|"SpeechRecognitionEnabled";
     /**
      * Resource type as it was perceived by the rendering engine.
      */
@@ -7261,6 +7276,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       browserContextId?: ContextID;
     }
     export type setDownloadBehaviorReturnValue = {
+    }
+    /**
+     * Cancels a current running download.
+     */
+    export type cancelDownloadParameters = {
+      uuid: string;
+    }
+    export type cancelDownloadReturnValue = {
     }
   }
   
@@ -8933,6 +8956,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.disable": Network.disableParameters;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersParameters;
     "Network.getResponseBody": Network.getResponseBodyParameters;
+    "Network.getInterceptedResponseBody": Network.getInterceptedResponseBodyParameters;
     "Network.setResourceCachingDisabled": Network.setResourceCachingDisabledParameters;
     "Network.loadResource": Network.loadResourceParameters;
     "Network.getSerializedCertificate": Network.getSerializedCertificateParameters;
@@ -8998,6 +9022,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.setGeolocationOverride": Playwright.setGeolocationOverrideParameters;
     "Playwright.setLanguages": Playwright.setLanguagesParameters;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorParameters;
+    "Playwright.cancelDownload": Playwright.cancelDownloadParameters;
     "Runtime.parse": Runtime.parseParameters;
     "Runtime.evaluate": Runtime.evaluateParameters;
     "Runtime.awaitPromise": Runtime.awaitPromiseParameters;
@@ -9228,6 +9253,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.disable": Network.disableReturnValue;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersReturnValue;
     "Network.getResponseBody": Network.getResponseBodyReturnValue;
+    "Network.getInterceptedResponseBody": Network.getInterceptedResponseBodyReturnValue;
     "Network.setResourceCachingDisabled": Network.setResourceCachingDisabledReturnValue;
     "Network.loadResource": Network.loadResourceReturnValue;
     "Network.getSerializedCertificate": Network.getSerializedCertificateReturnValue;
@@ -9293,6 +9319,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.setGeolocationOverride": Playwright.setGeolocationOverrideReturnValue;
     "Playwright.setLanguages": Playwright.setLanguagesReturnValue;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorReturnValue;
+    "Playwright.cancelDownload": Playwright.cancelDownloadReturnValue;
     "Runtime.parse": Runtime.parseReturnValue;
     "Runtime.evaluate": Runtime.evaluateReturnValue;
     "Runtime.awaitPromise": Runtime.awaitPromiseReturnValue;

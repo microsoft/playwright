@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { StackFrame } from '../common/types';
+import { StackFrame } from '../protocol/channels';
 import StackUtils from 'stack-utils';
 import { isUnderTest } from './utils';
 
@@ -39,8 +39,13 @@ const PW_LIB_DIRS = [
   path.join('@playwright', 'test'),
 ].map(packageName => path.sep + packageName);
 
-const runnerLib = path.join('@playwright', 'test', 'lib', 'test');
+const runnerNpmPkgLib = path.join('@playwright', 'test', 'lib', 'test');
+const runnerLib = path.join('lib', 'test');
 const runnerSrc = path.join('src', 'test');
+
+function includesFileInPlaywrightSubDir(subDir: string, fileName: string) {
+  return PW_LIB_DIRS.map(p => path.join(p, subDir)).some(libDir => fileName.includes(libDir));
+}
 
 export type ParsedStackTrace = {
   frames: StackFrame[];
@@ -59,7 +64,7 @@ export function captureStackTrace(): ParsedStackTrace {
   const lines = stack.split('\n').reverse();
   let apiName = '';
 
-  const isTesting = process.env.PWTEST_CLI_ALLOW_TEST_COMMAND || isUnderTest();
+  const isTesting = !!process.env.PWTEST_CLI_ALLOW_TEST_COMMAND || isUnderTest();
 
   for (const line of lines) {
     const frame = stackUtils.parseLine(line);
@@ -70,7 +75,7 @@ export function captureStackTrace(): ParsedStackTrace {
     const fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       continue;
-    if (!fileName.includes(runnerLib) && !(isTesting && fileName.includes(runnerSrc)) && PW_LIB_DIRS.map(p => path.join(p, isTesting ? 'src' : 'lib')).some(libDir => fileName.includes(libDir))) {
+    if (isFilePartOfPlaywright(isTesting, fileName)) {
       apiName = frame.function ? frame.function[0].toLowerCase() + frame.function.slice(1) : '';
       break;
     }
@@ -85,6 +90,13 @@ export function captureStackTrace(): ParsedStackTrace {
   frames.reverse();
   frameTexts.reverse();
   return { frames, frameTexts, apiName };
+}
+
+function isFilePartOfPlaywright(isTesting: boolean, fileName: string): boolean {
+  const isPlaywrightTest = fileName.includes(runnerNpmPkgLib);
+  const isLocalPlaywright = isTesting && (fileName.includes(runnerSrc) || fileName.includes(runnerLib));
+  const isInPlaywright = (includesFileInPlaywrightSubDir('src', fileName) || includesFileInPlaywrightSubDir('lib', fileName));
+  return !isPlaywrightTest && !isLocalPlaywright && isInPlaywright;
 }
 
 export function splitErrorMessage(message: string): { name: string, message: string } {

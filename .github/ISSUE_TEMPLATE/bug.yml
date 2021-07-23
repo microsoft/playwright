@@ -1,0 +1,69 @@
+name: Bug Report
+description: Something doesn't work like it should? Tell us!
+title: "[Bug]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: version
+    attributes:
+      label: Playwright version
+      description: Which version of of Playwright are you using?
+      placeholder: ex. 1.12.0
+    validations:
+      required: true
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      multiple: true
+      description: What operating system are you running Playwright on?
+      options:
+        - Windows
+        - MacOS
+        - Linux
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: What browsers are you seeing the problem on?
+      multiple: true
+      options:
+        - Chromium
+        - Firefox
+        - WebKit
+  - type: textarea
+    id: other-information
+    attributes:
+      label: Other information
+      description: ex. Node.js version, Linux distribution etc.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened? / Describe the bug
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: reproducible
+    attributes:
+      label: Code snippet to reproduce your bug
+      description: Help us help you! Put down a short code snippet that illustrates your bug and that we can run and debug locally. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+      placeholder: |
+        const { chromium, webkit, firefox } = require('playwright');
+
+        (async () => {
+          const browser = await chromium.launch();
+          // ...
+        })();
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output like [Playwright debug logs](https://playwright.dev/docs/debug#verbose-api-logs). This will be automatically formatted into code, so no need for backticks.
+      render: shell
+

@@ -35,6 +35,17 @@ function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   return mask;
 }
 
+function toButtonsMask(buttons: Set<types.MouseButton>): number {
+  let mask = 0;
+  if (buttons.has('left'))
+    mask |= 1;
+  if (buttons.has('middle'))
+    mask |= 2;
+  if (buttons.has('right'))
+    mask |= 4;
+  return mask;
+}
+
 export class RawKeyboardImpl implements input.RawKeyboard {
   private readonly _pageProxySession: WKSession;
   private _session?: WKSession;
@@ -99,6 +110,7 @@ export class RawMouseImpl implements input.RawMouse {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'move',
       button,
+      buttons: toButtonsMask(buttons),
       x,
       y,
       modifiers: toModifiersMask(modifiers)
@@ -109,6 +121,7 @@ export class RawMouseImpl implements input.RawMouse {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'down',
       button,
+      buttons: toButtonsMask(buttons),
       x,
       y,
       modifiers: toModifiersMask(modifiers),
@@ -120,6 +133,7 @@ export class RawMouseImpl implements input.RawMouse {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'up',
       button,
+      buttons: toButtonsMask(buttons),
       x,
       y,
       modifiers: toModifiersMask(modifiers),

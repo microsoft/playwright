@@ -14,11 +14,26 @@
  * limitations under the License.
  */
 
-import { chromium, firefox, webkit, selectors, devices, errors, test } from '@playwright/test';
+import { chromium, firefox, webkit, selectors, devices, errors, test, expect } from '@playwright/test';
 import * as playwright from '@playwright/test';
 import defaultExport from '@playwright/test';
 import errorsFile from '@playwright/test/lib/utils/errors.js';
 import testESM from './esm.mjs';
-if (defaultExport !== test)
+
+if (defaultExport !== test) {
+  console.error('default export is not test.');
   process.exit(1);
+}
+
+if (typeof test !== 'function') {
+  console.error('test is not a function');
+  process.exit(1);
+}
+
+if (typeof expect !== 'function') {
+  console.error('expect is not a function');
+  process.exit(1);
+}
+expect(1).toBe(1);
+
 testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, errorsFile }, [chromium, firefox, webkit]);

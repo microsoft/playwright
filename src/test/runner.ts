@@ -22,9 +22,9 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher } from './dispatcher';
 import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
-import { Spec, Suite } from './test';
+import { TestCase, Suite } from './test';
 import { Loader } from './loader';
-import { Reporter } from './reporter';
+import { Reporter } from '../../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import DotReporter from './reporters/dot';
 import LineReporter from './reporters/line';
@@ -34,22 +34,23 @@ import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
-import { Config } from './types';
+import { Config, FullConfig } from './types';
+import { LaunchServers } from './launchServer';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 
-type RunResultStatus = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-spec-titles' | 'no-tests' | 'timedout';
+type RunResultStatus = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-test-titles' | 'no-tests' | 'timedout';
 
 type RunResult = {
-  status: Exclude<RunResultStatus, 'forbid-only' | 'clashing-spec-titles'>;
+  status: Exclude<RunResultStatus, 'forbid-only' | 'clashing-test-titles'>;
 } | {
   status: 'forbid-only',
   locations: string[]
 } | {
-  status: 'clashing-spec-titles',
-  clashingSpecs: Map<string, Spec[]>
+  status: 'clashing-test-titles',
+  clashingTests: Map<string, TestCase[]>
 };
 
 export class Runner {
@@ -61,12 +62,12 @@ export class Runner {
     this._loader = new Loader(defaultConfig, configOverrides);
   }
 
-  private _createReporter() {
+  private async _createReporter(list: boolean) {
     const reporters: Reporter[] = [];
-    const defaultReporters = {
-      dot: DotReporter,
-      line: LineReporter,
-      list: ListReporter,
+    const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
+      dot: list ? ListModeReporter : DotReporter,
+      line: list ? ListModeReporter : LineReporter,
+      list: list ? ListModeReporter : ListReporter,
       json: JSONReporter,
       junit: JUnitReporter,
       null: EmptyReporter,
@@ -76,14 +77,14 @@ export class Runner {
       if (name in defaultReporters) {
         reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
       } else {
-        const reporterConstructor = this._loader.loadReporter(name);
+        const reporterConstructor = await this._loader.loadReporter(name);
         reporters.push(new reporterConstructor(arg));
       }
     }
     return new Multiplexer(reporters);
   }
 
-  loadConfigFile(file: string): Config {
+  loadConfigFile(file: string): Promise<Config> {
     return this._loader.loadConfigFile(file);
   }
 
@@ -92,14 +93,14 @@ export class Runner {
   }
 
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResultStatus> {
-    this._reporter = this._createReporter();
+    this._reporter = await this._createReporter(list);
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
     const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
     if (timedOut) {
       if (!this._didBegin)
-        this._reporter.onBegin(config, new Suite(''));
-      this._reporter.onTimeout(config.globalTimeout);
+        this._reporter.onBegin?.(config, new Suite(''));
+      await this._reporter.onEnd?.({ status: 'timedout' });
       await this._flushOutput();
       return 'failed';
     }
@@ -113,13 +114,13 @@ export class Runner {
       console.error('=================');
       console.error(' no tests found.');
       console.error('=================');
-    } else if (result?.status === 'clashing-spec-titles') {
+    } else if (result?.status === 'clashing-test-titles') {
       console.error('=================');
       console.error(' duplicate test titles are not allowed.');
-      for (const [title, specs] of result?.clashingSpecs.entries()) {
+      for (const [title, tests] of result?.clashingTests.entries()) {
         console.error(` - title: ${title}`);
-        for (const spec of specs)
-          console.error(`   - ${buildItemLocation(config.rootDir, spec)}`);
+        for (const test of tests)
+          console.error(`   - ${buildItemLocation(config.rootDir, test)}`);
         console.error('=================');
       }
     }
@@ -160,57 +161,70 @@ export class Runner {
       const allFiles = await collectFiles(project.config.testDir);
       const testMatch = createMatcher(project.config.testMatch);
       const testIgnore = createMatcher(project.config.testIgnore);
-      const testFileExtension = (file: string) => ['.js', '.ts'].includes(path.extname(file));
+      const testFileExtension = (file: string) => ['.js', '.ts', '.mjs'].includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
       testFiles.forEach(file => allTestFiles.add(file));
     }
 
+    const launchServers = await LaunchServers.create(config._launch);
     let globalSetupResult: any;
     if (config.globalSetup)
-      globalSetupResult = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup')(this._loader.fullConfig());
+      globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
     try {
       for (const file of allTestFiles)
-        this._loader.loadTestFile(file);
+        await this._loader.loadTestFile(file);
 
-      const rootSuite = new Suite('');
+      const preprocessRoot = new Suite('');
       for (const fileSuite of this._loader.fileSuites().values())
-        rootSuite._addSuite(fileSuite);
+        preprocessRoot._addSuite(fileSuite);
       if (config.forbidOnly) {
-        const onlySpecAndSuites = rootSuite._getOnlyItems();
-        if (onlySpecAndSuites.length > 0)
-          return { status: 'forbid-only', locations: onlySpecAndSuites.map(specOrSuite => `${buildItemLocation(config.rootDir, specOrSuite)} > ${specOrSuite.fullTitle()}`) };
+        const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
+        if (onlyTestsAndSuites.length > 0) {
+          const locations = onlyTestsAndSuites.map(testOrSuite => {
+            // Skip root and file.
+            const title = testOrSuite.titlePath().slice(2).join(' ');
+            return `${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`;
+          });
+          return { status: 'forbid-only', locations };
+        }
       }
-      const uniqueSpecs = getUniqueSpecsPerSuite(rootSuite);
-      if (uniqueSpecs.size > 0)
-        return { status: 'clashing-spec-titles', clashingSpecs: uniqueSpecs };
-      filterOnly(rootSuite);
-      filterByFocusedLine(rootSuite, testFileReFilters);
+      const clashingTests = getClashingTestsPerSuite(preprocessRoot);
+      if (clashingTests.size > 0)
+        return { status: 'clashing-test-titles', clashingTests: clashingTests };
+      filterOnly(preprocessRoot);
+      filterByFocusedLine(preprocessRoot, testFileReFilters);
 
       const fileSuites = new Map<string, Suite>();
-      for (const fileSuite of rootSuite.suites)
+      for (const fileSuite of preprocessRoot.suites)
         fileSuites.set(fileSuite._requireFile, fileSuite);
 
       const outputDirs = new Set<string>();
       const grepMatcher = createMatcher(config.grep);
       const grepInvertMatcher = config.grepInvert ? createMatcher(config.grepInvert) : null;
+      const rootSuite = new Suite('');
       for (const project of projects) {
+        const projectSuite = new Suite(project.config.name);
+        rootSuite._addSuite(projectSuite);
         for (const file of files.get(project)!) {
           const fileSuite = fileSuites.get(file);
           if (!fileSuite)
             continue;
-          for (const spec of fileSuite._allSpecs()) {
-            const fullTitle = spec._testFullTitle(project.config.name);
-            if (grepInvertMatcher?.(fullTitle))
-              continue;
-            if (grepMatcher(fullTitle))
-              project.generateTests(spec);
+          for (let repeatEachIndex = 0; repeatEachIndex < project.config.repeatEach; repeatEachIndex++) {
+            const cloned = project.cloneFileSuite(fileSuite, repeatEachIndex, test => {
+              const grepTitle = test.titlePath().join(' ');
+              if (grepInvertMatcher?.(grepTitle))
+                return false;
+              return grepMatcher(grepTitle);
+            });
+            if (cloned)
+              projectSuite._addSuite(cloned);
           }
         }
         outputDirs.add(project.config.outputDir);
       }
 
-      const total = rootSuite.totalTestCount();
+      const total = rootSuite.allTests().length;
       if (!total)
         return { status: 'no-tests' };
 
@@ -232,8 +246,8 @@ export class Runner {
 
       if (process.stdout.isTTY) {
         const workers = new Set();
-        rootSuite.findTest(test => {
-          workers.add(test.spec._requireFile + test._workerHash);
+        rootSuite.allTests().forEach(test => {
+          workers.add(test._requireFile + test._workerHash);
         });
         console.log();
         const jobs = Math.min(config.workers, workers.size);
@@ -242,7 +256,7 @@ export class Runner {
         console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`);
       }
 
-      this._reporter.onBegin(config, rootSuite);
+      this._reporter.onBegin?.(config, rootSuite);
       this._didBegin = true;
       let hasWorkerErrors = false;
       if (!list) {
@@ -251,43 +265,48 @@ export class Runner {
         await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
       }
-      this._reporter.onEnd();
 
-      if (sigint)
+      if (sigint) {
+        await this._reporter.onEnd?.({ status: 'interrupted' });
         return { status: 'sigint' };
-      return { status: hasWorkerErrors || rootSuite.findSpec(spec => !spec.ok()) ? 'failed' : 'passed' };
+      }
+
+      const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
+      await this._reporter.onEnd?.({ status: failed ? 'failed' : 'passed' });
+      return { status: failed ? 'failed' : 'passed' };
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());
       if (config.globalTeardown)
-        await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown')(this._loader.fullConfig());
+        await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
+      await launchServers.killAll();
     }
   }
 }
 
 function filterOnly(suite: Suite) {
   const suiteFilter = (suite: Suite) => suite._only;
-  const specFilter = (spec: Spec) => spec._only;
-  return filterSuite(suite, suiteFilter, specFilter);
+  const testFilter = (test: TestCase) => test._only;
+  return filterSuite(suite, suiteFilter, testFilter);
 }
 
 function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilter[]) {
-  const testFileLineMatches = (specFileName: string, specLine: number) => focusedTestFileLines.some(({re, line}) => {
+  const testFileLineMatches = (testFileName: string, testLine: number) => focusedTestFileLines.some(({re, line}) => {
     re.lastIndex = 0;
-    return re.test(specFileName) && (line === specLine || line === null);
+    return re.test(testFileName) && (line === testLine || line === null);
   });
-  const suiteFilter = (suite: Suite) => testFileLineMatches(suite.file, suite.line);
-  const specFilter = (spec: Spec) => testFileLineMatches(spec.file, spec.line);
-  return filterSuite(suite, suiteFilter, specFilter);
+  const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line);
+  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line);
+  return filterSuite(suite, suiteFilter, testFilter);
 }
 
-function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, specFilter: (spec: Spec) => boolean) {
-  const onlySuites = suite.suites.filter(child => filterSuite(child, suiteFilter, specFilter) || suiteFilter(child));
-  const onlyTests = suite.specs.filter(specFilter);
+function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
+  const onlySuites = suite.suites.filter(child => filterSuite(child, suiteFilter, testFilter) || suiteFilter(child));
+  const onlyTests = suite.tests.filter(testFilter);
   const onlyEntries = new Set([...onlySuites, ...onlyTests]);
   if (onlyEntries.size) {
     suite.suites = onlySuites;
-    suite.specs = onlyTests;
+    suite.tests = onlyTests;
     suite._entries = suite._entries.filter(e => onlyEntries.has(e)); // Preserve the order.
     return true;
   }
@@ -363,29 +382,51 @@ async function collectFiles(testDir: string): Promise<string[]> {
   return files;
 }
 
-function getUniqueSpecsPerSuite(rootSuite: Suite): Map<string, Spec[]> {
-  function visit(suite: Suite, clashingSpecs: Map<string, Spec[]>) {
+function getClashingTestsPerSuite(rootSuite: Suite): Map<string, TestCase[]> {
+  function visit(suite: Suite, clashingTests: Map<string, TestCase[]>) {
     for (const childSuite of suite.suites)
-      visit(childSuite, clashingSpecs);
-    for (const spec of suite.specs) {
-      const fullTitle = spec.fullTitle();
-      if (!clashingSpecs.has(fullTitle))
-        clashingSpecs.set(fullTitle, []);
-      clashingSpecs.set(fullTitle, clashingSpecs.get(fullTitle)!.concat(spec));
+      visit(childSuite, clashingTests);
+    for (const test of suite.tests) {
+      const fullTitle = test.titlePath().slice(2).join(' ');
+      if (!clashingTests.has(fullTitle))
+        clashingTests.set(fullTitle, []);
+      clashingTests.set(fullTitle, clashingTests.get(fullTitle)!.concat(test));
     }
   }
-  const out = new Map<string, Spec[]>();
+  const out = new Map<string, TestCase[]>();
   for (const fileSuite of rootSuite.suites) {
-    const clashingSpecs = new Map<string, Spec[]>();
-    visit(fileSuite, clashingSpecs);
-    for (const [title, specs] of clashingSpecs.entries()) {
-      if (specs.length > 1)
-        out.set(title, specs);
+    const clashingTests = new Map<string, TestCase[]>();
+    visit(fileSuite, clashingTests);
+    for (const [title, tests] of clashingTests.entries()) {
+      if (tests.length > 1)
+        out.set(title, tests);
     }
   }
   return out;
 }
 
-function buildItemLocation(rootDir: string, specOrSuite: Suite | Spec) {
-  return `${path.relative(rootDir, specOrSuite.file)}:${specOrSuite.line}`;
+function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
+  if (!testOrSuite.location)
+    return '';
+  return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
 }
+
+class ListModeReporter implements Reporter {
+  onBegin(config: FullConfig, suite: Suite): void {
+    console.log(`Listing tests:`);
+    const tests = suite.allTests();
+    const files = new Set<string>();
+    for (const test of tests) {
+      // root, project, file, ...describes, test
+      const [, projectName, , ...titles] = test.titlePath();
+      const location = `${path.relative(config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
+      const projectTitle = projectName ? `[${projectName}] › ` : '';
+      console.log(`  ${projectTitle}${location} › ${titles.join(' ')}`);
+      files.add(test.location.file);
+    }
+    console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
+  }
+}
+
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'] as const;
+export type BuiltInReporter = typeof builtInReporters[number];

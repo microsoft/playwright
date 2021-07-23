@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { wrapInPromise } from './util';
+import { formatLocation, wrapInPromise } from './util';
 import * as crypto from 'crypto';
-import { FixturesWithLocation, Location } from './types';
+import { FixturesWithLocation, Location, WorkerInfo, TestInfo } from './types';
 
 type FixtureScope = 'test' | 'worker';
 type FixtureRegistration = {
@@ -228,7 +228,7 @@ export class FixtureRunner {
       this.testScopeClean = true;
   }
 
-  async resolveParametersAndRunHookOrTest(fn: Function, scope: FixtureScope, info: any) {
+  async resolveParametersAndRunHookOrTest(fn: Function, scope: FixtureScope, info: WorkerInfo|TestInfo) {
     // Install all automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
       const shouldSkip = scope === 'worker' && registration.scope === 'test';
@@ -261,11 +261,16 @@ export class FixtureRunner {
     await fixture.setup(info);
     return fixture;
   }
-}
 
-export function inheritFixtureParameterNames(from: Function, to: Function, location: Location) {
-  if (!(to as any)[signatureSymbol])
-    (to as any)[signatureSymbol] = innerFixtureParameterNames(from, location);
+  dependsOnWorkerFixturesOnly(fn: Function, location: Location): boolean {
+    const names = fixtureParameterNames(fn, location);
+    for (const name of names) {
+      const registration = this.pool!.registrations.get(name)!;
+      if (registration.scope !== 'worker')
+        return false;
+    }
+    return true;
+  }
 }
 
 const signatureSymbol = Symbol('signature');
@@ -347,8 +352,4 @@ function errorWithLocations(message: string, ...defined: { location: Location, n
     message += `\n  ${prefix}defined at ${formatLocation(location)}`;
   }
   return new Error(message);
-}
-
-function formatLocation(location: Location) {
-  return location.file + ':' + location.line + ':' + location.column;
 }

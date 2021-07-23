@@ -55,9 +55,9 @@ Returns the matching [Request] object.
   - `protocol` <[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
   - `subjectName` <[string]> Common Name component of the Subject
     field from the certificate. This should only be used for informational purposes. Optional.
-  - `validFrom` <[int]> Unix timestamp (in seconds) specifying
+  - `validFrom` <[float]> Unix timestamp (in seconds) specifying
     when this cert becomes valid. Optional.
-  - `validTo` <[int]> Unix timestamp (in seconds) specifying
+  - `validTo` <[float]> Unix timestamp (in seconds) specifying
     when this cert becomes invalid. Optional.
 
 Returns SSL and other security information.

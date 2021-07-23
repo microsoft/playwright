@@ -18,8 +18,8 @@ import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams } from './ipc';
-import type { TestResult, Reporter, TestStatus } from './reporter';
-import { Suite, Test } from './test';
+import type { TestResult, Reporter, TestStatus } from '../../types/testReporter';
+import { Suite, TestCase } from './test';
 import { Loader } from './loader';
 
 type DispatcherEntry = {
@@ -34,7 +34,7 @@ export class Dispatcher {
   private _freeWorkers: Worker[] = [];
   private _workerClaimers: (() => void)[] = [];
 
-  private _testById = new Map<string, { test: Test, result: TestResult }>();
+  private _testById = new Map<string, { test: TestCase, result: TestResult }>();
   private _queue: DispatcherEntry[] = [];
   private _stopCallback = () => {};
   readonly _loader: Loader;
@@ -50,10 +50,8 @@ export class Dispatcher {
 
     this._suite = suite;
     for (const suite of this._suite.suites) {
-      for (const spec of suite._allSpecs()) {
-        for (const test of spec.tests)
-          this._testById.set(test._id, { test, result: test._appendTestResult() });
-      }
+      for (const test of suite.allTests())
+        this._testById.set(test._id, { test, result: test._appendTestResult() });
     }
 
     this._queue = this._filesSortedByWorkerHash();
@@ -61,7 +59,7 @@ export class Dispatcher {
     // Shard tests.
     const shard = this._loader.fullConfig().shard;
     if (shard) {
-      let total = this._suite.totalTestCount();
+      let total = this._suite.allTests().length;
       const shardSize = Math.ceil(total / shard.total);
       const from = shardSize * shard.current;
       const to = shardSize * (shard.current + 1);
@@ -81,33 +79,31 @@ export class Dispatcher {
 
   _filesSortedByWorkerHash(): DispatcherEntry[] {
     const entriesByWorkerHashAndFile = new Map<string, Map<string, DispatcherEntry>>();
-    for (const fileSuite of this._suite.suites) {
-      const file = fileSuite._requireFile;
-      for (const spec of fileSuite._allSpecs()) {
-        for (const test of spec.tests) {
-          let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
-          if (!entriesByFile) {
-            entriesByFile = new Map();
-            entriesByWorkerHashAndFile.set(test._workerHash, entriesByFile);
-          }
-          let entry = entriesByFile.get(file);
-          if (!entry) {
-            entry = {
-              runPayload: {
-                entries: [],
-                file,
-              },
-              repeatEachIndex: test._repeatEachIndex,
-              projectIndex: test._projectIndex,
-              hash: test._workerHash,
-            };
-            entriesByFile.set(file, entry);
-          }
-          entry.runPayload.entries.push({
-            retry: this._testById.get(test._id)!.result.retry,
-            testId: test._id,
-          });
+    for (const projectSuite of this._suite.suites) {
+      for (const test of projectSuite.allTests()) {
+        let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
+        if (!entriesByFile) {
+          entriesByFile = new Map();
+          entriesByWorkerHashAndFile.set(test._workerHash, entriesByFile);
         }
+        const file = test._requireFile;
+        let entry = entriesByFile.get(file);
+        if (!entry) {
+          entry = {
+            runPayload: {
+              entries: [],
+              file,
+            },
+            repeatEachIndex: test._repeatEachIndex,
+            projectIndex: test._projectIndex,
+            hash: test._workerHash,
+          };
+          entriesByFile.set(file, entry);
+        }
+        entry.runPayload.entries.push({
+          retry: this._testById.get(test._id)!.result.retry,
+          testId: test._id,
+        });
       }
     }
 
@@ -149,34 +145,58 @@ export class Dispatcher {
     worker.run(entry.runPayload);
     let doneCallback = () => {};
     const result = new Promise<void>(f => doneCallback = f);
-    worker.once('done', (params: DonePayload) => {
+    const doneWithJob = () => {
+      worker.removeListener('testBegin', onTestBegin);
+      worker.removeListener('testEnd', onTestEnd);
+      worker.removeListener('done', onDone);
+      worker.removeListener('exit', onExit);
+      doneCallback();
+    };
+
+    const remainingByTestId = new Map(entry.runPayload.entries.map(e => [ e.testId, e ]));
+    let lastStartedTestId: string | undefined;
+
+    const onTestBegin = (params: TestBeginPayload) => {
+      lastStartedTestId = params.testId;
+    };
+    worker.addListener('testBegin', onTestBegin);
+
+    const onTestEnd = (params: TestEndPayload) => {
+      remainingByTestId.delete(params.testId);
+    };
+    worker.addListener('testEnd', onTestEnd);
+
+    const onDone = (params: DonePayload) => {
+      let remaining = [...remainingByTestId.values()];
+
       // We won't file remaining if:
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!params.remaining.length && !params.failedTestId && !params.fatalError) {
+      if (!remaining.length && !params.failedTestId && !params.fatalError) {
         this._freeWorkers.push(worker);
         this._notifyWorkerClaimer();
-        doneCallback();
+        doneWithJob();
         return;
       }
 
       // When worker encounters error, we will stop it and create a new one.
       worker.stop();
 
-      let remaining = params.remaining;
       const failedTestIds = new Set<string>();
 
       // In case of fatal error, report all remaining tests as failing with this error.
       if (params.fatalError) {
         for (const { testId } of remaining) {
           const { test, result } = this._testById.get(testId)!;
-          this._reporter.onTestBegin?.(test);
+          // There might be a single test that has started but has not finished yet.
+          if (testId !== lastStartedTestId)
+            this._reportTestBegin(test);
           result.error = params.fatalError;
           this._reportTestEnd(test, result, 'failed');
           failedTestIds.add(testId);
         }
-        // Since we pretent that all remaining tests failed, there is nothing else to run,
+        // Since we pretend that all remaining tests failed, there is nothing else to run,
         // except for possible retries.
         remaining = [];
       }
@@ -199,8 +219,15 @@ export class Dispatcher {
         this._queue.unshift({ ...entry, runPayload: { ...entry.runPayload, entries: remaining } });
 
       // This job is over, we just scheduled another one.
-      doneCallback();
-    });
+      doneWithJob();
+    };
+    worker.on('done', onDone);
+
+    const onExit = () => {
+      onDone({ fatalError: { value: 'Worker process exited unexpectedly' } });
+    };
+    worker.on('exit', onExit);
+
     return result;
   }
 
@@ -238,17 +265,22 @@ export class Dispatcher {
     worker.on('testBegin', (params: TestBeginPayload) => {
       const { test, result: testRun  } = this._testById.get(params.testId)!;
       testRun.workerIndex = params.workerIndex;
-      this._reporter.onTestBegin(test);
+      testRun.startTime = new Date(params.startWallTime);
+      this._reportTestBegin(test);
     });
     worker.on('testEnd', (params: TestEndPayload) => {
       const { test, result } = this._testById.get(params.testId)!;
       result.duration = params.duration;
       result.error = params.error;
+      result.attachments = params.attachments.map(a => ({
+        name: a.name,
+        path: a.path,
+        contentType: a.contentType,
+        body: a.body ? Buffer.from(a.body, 'base64') : undefined
+      }));
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
       test.timeout = params.timeout;
-      if (params.expectedStatus === 'skipped' && params.status === 'skipped')
-        test.skipped = true;
       this._reportTestEnd(test, result, params.status);
     });
     worker.on('stdOut', (params: TestOutputPayload) => {
@@ -256,18 +288,18 @@ export class Dispatcher {
       const pair = params.testId ? this._testById.get(params.testId) : undefined;
       if (pair)
         pair.result.stdout.push(chunk);
-      this._reporter.onStdOut(chunk, pair ? pair.test : undefined);
+      this._reporter.onStdOut?.(chunk, pair ? pair.test : undefined);
     });
     worker.on('stdErr', (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       const pair = params.testId ? this._testById.get(params.testId) : undefined;
       if (pair)
         pair.result.stderr.push(chunk);
-      this._reporter.onStdErr(chunk, pair ? pair.test : undefined);
+      this._reporter.onStdErr?.(chunk, pair ? pair.test : undefined);
     });
     worker.on('teardownError', ({error}) => {
       this._hasWorkerErrors = true;
-      this._reporter.onError(error);
+      this._reporter.onError?.(error);
     });
     worker.on('exit', () => {
       this._workers.delete(worker);
@@ -289,7 +321,15 @@ export class Dispatcher {
     }
   }
 
-  private _reportTestEnd(test: Test, result: TestResult, status: TestStatus) {
+  private _reportTestBegin(test: TestCase) {
+    if (this._isStopped)
+      return;
+    const maxFailures = this._loader.fullConfig().maxFailures;
+    if (!maxFailures || this._failureCount < maxFailures)
+      this._reporter.onTestBegin?.(test);
+  }
+
+  private _reportTestEnd(test: TestCase, result: TestResult, status: TestStatus) {
     if (this._isStopped)
       return;
     result.status = status;
@@ -297,9 +337,9 @@ export class Dispatcher {
       ++this._failureCount;
     const maxFailures = this._loader.fullConfig().maxFailures;
     if (!maxFailures || this._failureCount <= maxFailures)
-      this._reporter.onTestEnd(test, result);
+      this._reporter.onTestEnd?.(test, result);
     if (maxFailures && this._failureCount === maxFailures)
-      this._isStopped = true;
+      this.stop().catch(e => {});
   }
 
   hasWorkerErrors(): boolean {
@@ -314,6 +354,7 @@ class Worker extends EventEmitter {
   runner: Dispatcher;
   hash = '';
   index: number;
+  private didSendStop = false;
 
   constructor(runner: Dispatcher) {
     super();
@@ -356,7 +397,9 @@ class Worker extends EventEmitter {
   }
 
   stop() {
-    this.process.send({ method: 'stop' });
+    if (!this.didSendStop)
+      this.process.send({ method: 'stop' });
+    this.didSendStop = true;
   }
 }
 

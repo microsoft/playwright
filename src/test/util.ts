@@ -15,7 +15,8 @@
  */
 
 import util from 'util';
-import type { TestError } from './types';
+import path from 'path';
+import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 
 export class DeadlineRunner<T> {
@@ -146,4 +147,22 @@ export function forceRegExp(pattern: string): RegExp {
   if (match)
     return new RegExp(match[1], match[2]);
   return new RegExp(pattern, 'g');
+}
+
+export function relativeFilePath(file: string): string {
+  if (!path.isAbsolute(file))
+    return file;
+  return path.relative(process.cwd(), file);
+}
+
+export function formatLocation(location: Location) {
+  return relativeFilePath(location.file) + ':' + location.line + ':' + location.column;
+}
+
+export function errorWithFile(file: string, message: string) {
+  return new Error(`${relativeFilePath(file)}: ${message}`);
+}
+
+export function errorWithLocation(location: Location, message: string) {
+  return new Error(`${formatLocation(location)}: ${message}`);
 }

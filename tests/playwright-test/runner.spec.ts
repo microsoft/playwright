@@ -59,3 +59,83 @@ test('it should not allow a focused test when forbid-only is used', async ({ run
   expect(result.output).toContain('--forbid-only found a focused test.');
   expect(result.output).toContain(`- tests${path.sep}focused-test.spec.js:6 > i-am-focused`);
 });
+
+test('it should not hang and report results when worker process suddenly exits', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('passed1', () => {});
+      test('passed2', () => {});
+      test('failed1', () => { process.exit(0); });
+      test('failed2', () => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(2);
+  expect(result.output).toContain('Worker process exited unexpectedly');
+});
+
+test('sigint should stop workers', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('interrupted1', async () => {
+        console.log('\\n%%SEND-SIGINT%%1');
+        await new Promise(f => setTimeout(f, 1000));
+      });
+      test('skipped1', async () => {
+        console.log('\\n%%skipped1');
+      });
+    `,
+    'b.spec.js': `
+      const { test } = pwt;
+      test('interrupted2', async () => {
+        console.log('\\n%%SEND-SIGINT%%2');
+        await new Promise(f => setTimeout(f, 1000));
+      });
+      test('skipped2', async () => {
+        console.log('\\n%%skipped2');
+      });
+    `,
+  }, { 'workers': 2 }, {}, { sendSIGINTAfter: 2 });
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(4);
+  expect(result.output).toContain('%%SEND-SIGINT%%1');
+  expect(result.output).toContain('%%SEND-SIGINT%%2');
+  expect(result.output).not.toContain('%%skipped1');
+  expect(result.output).not.toContain('%%skipped2');
+});
+
+test('should use the first occurring error when an unhandled exception was thrown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'unhandled-exception.spec.js': `
+      const test = pwt.test.extend({
+        context: async ({}, test) => {
+          await test(123)
+          let errorWasThrownPromiseResolve = () => {}
+          const errorWasThrownPromise = new Promise(resolve => errorWasThrownPromiseResolve = resolve);
+          setTimeout(() => {
+            errorWasThrownPromiseResolve();
+            throw new Error('second error');
+          }, 0)
+          await errorWasThrownPromise;
+        },
+        page: async ({ context}, test) => {
+          throw new Error('first error');
+          await test(123)
+        },
+      });
+
+      test('my-test', async ({ page }) => { });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].error.message).toBe('first error');
+});

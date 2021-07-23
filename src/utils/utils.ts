@@ -22,6 +22,7 @@ import os from 'os';
 import { spawn } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
+import { getUbuntuVersionSync } from './ubuntuVersion';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -312,4 +313,57 @@ export function isLocalIpAddress(ipAdress: string): boolean {
 export function getUserAgent() {
   const packageJson = require('./../../package.json');
   return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
+}
+
+export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
+  try {
+    return (new URL.URL(givenURL, baseURL)).toString();
+  } catch (e) {
+    return givenURL;
+  }
+}
+
+export type HostPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11'|'mac11-arm64'|'ubuntu18.04'|'ubuntu20.04';
+export const hostPlatform = ((): HostPlatform => {
+  const platform = os.platform();
+  if (platform === 'darwin') {
+    const ver = os.release().split('.').map((a: string) => parseInt(a, 10));
+    let macVersion = '';
+    if (ver[0] < 18) {
+      // Everything before 10.14 is considered 10.13.
+      macVersion = 'mac10.13';
+    } else if (ver[0] === 18) {
+      macVersion = 'mac10.14';
+    } else if (ver[0] === 19) {
+      macVersion = 'mac10.15';
+    } else {
+      // ver[0] >= 20
+      const LAST_STABLE_MAC_MAJOR_VERSION = 11;
+      // Best-effort support for MacOS beta versions.
+      macVersion = 'mac' + Math.min(ver[0] - 9, LAST_STABLE_MAC_MAJOR_VERSION);
+      // BigSur is the first version that might run on Apple Silicon.
+      if (os.cpus().some(cpu => cpu.model.includes('Apple')))
+        macVersion += '-arm64';
+    }
+    return macVersion as HostPlatform;
+  }
+  if (platform === 'linux') {
+    const ubuntuVersion = getUbuntuVersionSync();
+    if (parseInt(ubuntuVersion, 10) <= 19)
+      return 'ubuntu18.04';
+    return 'ubuntu20.04';
+  }
+  if (platform === 'win32')
+    return os.arch() === 'x64' ? 'win64' : 'win32';
+  return platform as HostPlatform;
+})();
+
+export function wrapInASCIIBox(text: string, padding = 0): string {
+  const lines = text.split('\n');
+  const maxLength = Math.max(...lines.map(line => line.length));
+  return [
+    '╔' + '═'.repeat(maxLength + padding * 2) + '╗',
+    ...lines.map(line => '║' + ' '.repeat(padding) + line + ' '.repeat(maxLength - line.length + padding) + '║'),
+    '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
+  ].join('\n');
 }

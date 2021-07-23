@@ -445,3 +445,11 @@ test('should properly disconnect when connection closes from the server side', a
   expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
   expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
 });
+
+test('should be able to connect when the wsEndpont is passed as the first argument', async ({browserType, startRemoteServer}) => {
+  const remoteServer = await startRemoteServer();
+  const browser = await browserType.connect(remoteServer.wsEndpoint());
+  const page = await browser.newPage();
+  expect(await page.evaluate('1 + 2')).toBe(3);
+  await browser.close();
+});

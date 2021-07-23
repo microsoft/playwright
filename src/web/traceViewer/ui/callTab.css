@@ -1,0 +1,65 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.call-tab {
+  flex: auto;
+  line-height: 24px;
+  white-space: pre;
+  overflow: auto;
+  padding: 6px 0;
+  user-select: text;
+}
+
+.call-error {
+  border-bottom: 1px solid var(--background);
+  padding: 3px 0 3px 12px;
+}
+
+.call-error .codicon {
+  color: red;
+  position: relative;
+  top: 2px;
+  margin-right: 2px;
+}
+
+.call-section {
+  padding-left: 6px;
+  border-top: 1px solid #ddd;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 10px;
+  border-bottom: 1px solid #ddd;
+  background-color: #efefef;
+  line-height: 18px;
+}
+
+.call-line {
+  padding: 0 0 2px 6px;
+  flex: none;
+  align-items: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.call-line .string {
+  color: var(--orange);
+}
+
+.call-line .number,
+.call-line .boolean,
+.call-line .object {
+  color: var(--blue);
+}

@@ -35,14 +35,6 @@ export type Metadata = {
   apiName?: string,
 };
 
-export type WaitForEventInfo = {
-  waitId: string,
-  phase: 'before' | 'after' | 'log',
-  event?: string,
-  message?: string,
-  error?: string,
-};
-
 export type Point = {
   x: number,
   y: number,
@@ -337,6 +329,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -407,6 +400,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -497,6 +491,7 @@ export type BrowserNewContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -554,6 +549,7 @@ export type BrowserNewContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -604,11 +600,30 @@ export type BrowserStopTracingResult = {
   binary: Binary,
 };
 
+// ----------- EventTarget -----------
+export type EventTargetInitializer = {};
+export interface EventTargetChannel extends Channel {
+  waitForEventInfo(params: EventTargetWaitForEventInfoParams, metadata?: Metadata): Promise<EventTargetWaitForEventInfoResult>;
+}
+export type EventTargetWaitForEventInfoParams = {
+  info: {
+    waitId: string,
+    phase: 'before' | 'after' | 'log',
+    event?: string,
+    message?: string,
+    error?: string,
+  },
+};
+export type EventTargetWaitForEventInfoOptions = {
+
+};
+export type EventTargetWaitForEventInfoResult = void;
+
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
   isChromium: boolean,
 };
-export interface BrowserContextChannel extends Channel {
+export interface BrowserContextChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
@@ -868,7 +883,7 @@ export type PageInitializer = {
   isClosed: boolean,
   opener?: PageChannel,
 };
-export interface PageChannel extends Channel {
+export interface PageChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
   on(event: 'console', callback: (params: PageConsoleEvent) => void): this;
@@ -1295,6 +1310,7 @@ export interface FrameChannel extends Channel {
   check(params: FrameCheckParams, metadata?: Metadata): Promise<FrameCheckResult>;
   click(params: FrameClickParams, metadata?: Metadata): Promise<FrameClickResult>;
   content(params?: FrameContentParams, metadata?: Metadata): Promise<FrameContentResult>;
+  dragAndDrop(params: FrameDragAndDropParams, metadata?: Metadata): Promise<FrameDragAndDropResult>;
   dblclick(params: FrameDblclickParams, metadata?: Metadata): Promise<FrameDblclickResult>;
   dispatchEvent(params: FrameDispatchEventParams, metadata?: Metadata): Promise<FrameDispatchEventResult>;
   evaluateExpression(params: FrameEvaluateExpressionParams, metadata?: Metadata): Promise<FrameEvaluateExpressionResult>;
@@ -1433,6 +1449,21 @@ export type FrameContentOptions = {};
 export type FrameContentResult = {
   value: string,
 };
+export type FrameDragAndDropParams = {
+  source: string,
+  target: string,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+  trial?: boolean,
+};
+export type FrameDragAndDropOptions = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+  trial?: boolean,
+};
+export type FrameDragAndDropResult = void;
 export type FrameDblclickParams = {
   selector: string,
   force?: boolean,
@@ -2460,7 +2491,7 @@ export type RemoteAddr = {
 export type WebSocketInitializer = {
   url: string,
 };
-export interface WebSocketChannel extends Channel {
+export interface WebSocketChannel extends EventTargetChannel {
   on(event: 'open', callback: (params: WebSocketOpenEvent) => void): this;
   on(event: 'frameSent', callback: (params: WebSocketFrameSentEvent) => void): this;
   on(event: 'frameReceived', callback: (params: WebSocketFrameReceivedEvent) => void): this;
@@ -2717,7 +2748,7 @@ export type ElectronLaunchResult = {
 export type ElectronApplicationInitializer = {
   context: BrowserContextChannel,
 };
-export interface ElectronApplicationChannel extends Channel {
+export interface ElectronApplicationChannel extends EventTargetChannel {
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   browserWindow(params: ElectronApplicationBrowserWindowParams, metadata?: Metadata): Promise<ElectronApplicationBrowserWindowResult>;
   evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: Metadata): Promise<ElectronApplicationEvaluateExpressionResult>;
@@ -2807,7 +2838,7 @@ export type AndroidDeviceInitializer = {
   model: string,
   serial: string,
 };
-export interface AndroidDeviceChannel extends Channel {
+export interface AndroidDeviceChannel extends EventTargetChannel {
   on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
   on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
   wait(params: AndroidDeviceWaitParams, metadata?: Metadata): Promise<AndroidDeviceWaitResult>;
@@ -3235,3 +3266,81 @@ export type SocksSocketConnectedResult = void;
 export type SocksSocketEndParams = {};
 export type SocksSocketEndOptions = {};
 export type SocksSocketEndResult = void;
+
+export const commandsWithTracingSnapshots = new Set([
+  'EventTarget.waitForEventInfo',
+  'BrowserContext.waitForEventInfo',
+  'Page.waitForEventInfo',
+  'WebSocket.waitForEventInfo',
+  'ElectronApplication.waitForEventInfo',
+  'AndroidDevice.waitForEventInfo',
+  'Page.goBack',
+  'Page.goForward',
+  'Page.reload',
+  'Page.setViewportSize',
+  'Page.keyboardDown',
+  'Page.keyboardUp',
+  'Page.keyboardInsertText',
+  'Page.keyboardType',
+  'Page.keyboardPress',
+  'Page.mouseMove',
+  'Page.mouseDown',
+  'Page.mouseUp',
+  'Page.mouseClick',
+  'Page.touchscreenTap',
+  'Frame.evalOnSelector',
+  'Frame.evalOnSelectorAll',
+  'Frame.addScriptTag',
+  'Frame.addStyleTag',
+  'Frame.check',
+  'Frame.click',
+  'Frame.dblclick',
+  'Frame.dispatchEvent',
+  'Frame.evaluateExpression',
+  'Frame.evaluateExpressionHandle',
+  'Frame.fill',
+  'Frame.focus',
+  'Frame.getAttribute',
+  'Frame.goto',
+  'Frame.hover',
+  'Frame.innerHTML',
+  'Frame.innerText',
+  'Frame.inputValue',
+  'Frame.isChecked',
+  'Frame.isDisabled',
+  'Frame.isEnabled',
+  'Frame.isHidden',
+  'Frame.isEditable',
+  'Frame.press',
+  'Frame.selectOption',
+  'Frame.setContent',
+  'Frame.setInputFiles',
+  'Frame.tap',
+  'Frame.textContent',
+  'Frame.type',
+  'Frame.uncheck',
+  'Frame.waitForFunction',
+  'Frame.waitForSelector',
+  'JSHandle.evaluateExpression',
+  'ElementHandle.evaluateExpression',
+  'JSHandle.evaluateExpressionHandle',
+  'ElementHandle.evaluateExpressionHandle',
+  'ElementHandle.evalOnSelector',
+  'ElementHandle.evalOnSelectorAll',
+  'ElementHandle.check',
+  'ElementHandle.click',
+  'ElementHandle.dblclick',
+  'ElementHandle.dispatchEvent',
+  'ElementHandle.fill',
+  'ElementHandle.hover',
+  'ElementHandle.press',
+  'ElementHandle.scrollIntoViewIfNeeded',
+  'ElementHandle.selectOption',
+  'ElementHandle.selectText',
+  'ElementHandle.setInputFiles',
+  'ElementHandle.tap',
+  'ElementHandle.type',
+  'ElementHandle.uncheck',
+  'ElementHandle.waitForElementState',
+  'ElementHandle.waitForSelector'
+]);

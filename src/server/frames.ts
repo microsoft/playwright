@@ -18,14 +18,15 @@
 import * as channels from '../protocol/channels';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
-import { helper, RegisteredListener } from './helper';
+import { helper } from './helper';
+import { eventsHelper, RegisteredListener } from '../utils/eventsHelper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
-import { assert, makeWaitForNextTask } from '../utils/utils';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
@@ -556,8 +557,9 @@ export class Frame extends SdkObject {
   }
 
   async goto(metadata: CallMetadata, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
+    const constructedNavigationURL = constructURLBasedOnBaseURL(this._page._browserContext._options.baseURL, url);
     const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this._goto(progress, url, options), this._page._timeoutSettings.navigationTimeout(options));
+    return controller.run(progress => this._goto(progress, constructedNavigationURL, options), this._page._timeoutSettings.navigationTimeout(options));
   }
 
   private async _goto(progress: Progress, url: string, options: types.GotoOptions): Promise<network.Response | null> {
@@ -681,6 +683,7 @@ export class Frame extends SdkObject {
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
+    debugLogger.log('api', `    finding element using the selector "${selector}"`);
     return this._page.selectors._query(this, selector);
   }
 
@@ -914,7 +917,7 @@ export class Frame extends SdkObject {
       resolve();
     });
     const errorPromise = new Promise<void>(resolve => {
-      listeners.push(helper.addEventListener(this._page, Page.Events.Console, (message: ConsoleMessage) => {
+      listeners.push(eventsHelper.addEventListener(this._page, Page.Events.Console, (message: ConsoleMessage) => {
         if (message.type() === 'error' && message.text().includes('Content Security Policy')) {
           cspMessage = message;
           resolve();
@@ -922,7 +925,7 @@ export class Frame extends SdkObject {
       }));
     });
     await Promise.race([actionPromise, errorPromise]);
-    helper.removeEventListeners(listeners);
+    eventsHelper.removeEventListeners(listeners);
     if (cspMessage)
       throw new Error(cspMessage.text());
     if (error)
@@ -976,6 +979,30 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._dblclick(progress, options)));
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  async dragAndDrop(metadata: CallMetadata, source: string, target: string,  options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    const controller = new ProgressController(metadata, this);
+    await controller.run(async progress => {
+      await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, async handle => {
+        return handle._retryPointerAction(progress, 'move and down', false, async point => {
+          await this._page.mouse.move(point.x, point.y);
+          await this._page.mouse.down();
+        }, {
+          ...options,
+          timeout: progress.timeUntilDeadline(),
+        });
+      }));
+      await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, async handle => {
+        return handle._retryPointerAction(progress, 'move and up', false, async point => {
+          await this._page.mouse.move(point.x, point.y);
+          await this._page.mouse.up();
+        }, {
+          ...options,
+          timeout: progress.timeUntilDeadline(),
+        });
+      }));
     }, this._page._timeoutSettings.timeout(options));
   }
 

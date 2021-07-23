@@ -18,8 +18,9 @@ import fs from 'fs';
 import path from 'path';
 import * as trace from '../common/traceEvents';
 import { ContextResources, ResourceSnapshot } from '../../snapshot/snapshotTypes';
-import { BaseSnapshotStorage, SnapshotStorage } from '../../snapshot/snapshotStorage';
+import { BaseSnapshotStorage } from '../../snapshot/snapshotStorage';
 import { BrowserContextOptions } from '../../types';
+import { shouldCaptureSnapshot, VERSION } from '../recorder/tracing';
 export * as trace from '../common/traceEvents';
 
 export class TraceModel {
@@ -27,6 +28,7 @@ export class TraceModel {
   pageEntries = new Map<string, PageEntry>();
   contextResources = new Map<string, ContextResources>();
   private _snapshotStorage: PersistentSnapshotStorage;
+  private _version: number | undefined;
 
   constructor(snapshotStorage: PersistentSnapshotStorage) {
     this._snapshotStorage = snapshotStorage;
@@ -40,13 +42,10 @@ export class TraceModel {
     };
   }
 
-  appendEvents(events: trace.TraceEvent[], snapshotStorage: SnapshotStorage) {
-    for (const event of events)
-      this.appendEvent(event);
-    const actions: trace.ActionTraceEvent[] = [];
+  build() {
     for (const page of this.contextEntry!.pages)
-      actions.push(...page.actions);
-    this.contextEntry!.resources = snapshotStorage.resources();
+      page.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
+    this.contextEntry!.resources = this._snapshotStorage.resources();
   }
 
   private _pageEntry(pageId: string): PageEntry {
@@ -55,6 +54,7 @@ export class TraceModel {
       pageEntry = {
         actions: [],
         events: [],
+        objects: {},
         screencastFrames: [],
       };
       this.pageEntries.set(pageId, pageEntry);
@@ -63,9 +63,11 @@ export class TraceModel {
     return pageEntry;
   }
 
-  appendEvent(event: trace.TraceEvent) {
+  appendEvent(line: string) {
+    const event = this._modernize(JSON.parse(line));
     switch (event.type) {
       case 'context-options': {
+        this._version = event.version || 0;
         this.contextEntry.browserName = event.browserName;
         this.contextEntry.options = event.options;
         break;
@@ -76,14 +78,19 @@ export class TraceModel {
       }
       case 'action': {
         const metadata = event.metadata;
-        if (metadata.pageId)
+        const include = event.hasSnapshot;
+        if (include && metadata.pageId)
           this._pageEntry(metadata.pageId).actions.push(event);
         break;
       }
       case 'event': {
         const metadata = event.metadata;
-        if (metadata.pageId)
-          this._pageEntry(metadata.pageId).events.push(event);
+        if (metadata.pageId) {
+          if (metadata.method === '__create__')
+            this._pageEntry(metadata.pageId).objects[metadata.params.guid] = metadata.params.initializer;
+          else
+            this._pageEntry(metadata.pageId).events.push(event);
+        }
         break;
       }
       case 'resource-snapshot':
@@ -97,6 +104,24 @@ export class TraceModel {
       this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.metadata.startTime);
       this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.metadata.endTime);
     }
+  }
+
+  private _modernize(event: any): trace.TraceEvent {
+    if (this._version === undefined)
+      return event;
+    for (let version = this._version; version < VERSION; ++version)
+      event = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, event);
+    return event;
+  }
+
+  _modernize_0_to_1(event: any): any {
+    if (event.type === 'action') {
+      if (typeof event.metadata.error === 'string')
+        event.metadata.error = { error: { name: 'Error', message: event.metadata.error } };
+      if (event.metadata && typeof event.hasSnapshot !== 'boolean')
+        event.hasSnapshot = shouldCaptureSnapshot(event.metadata);
+    }
+    return event;
   }
 }
 
@@ -112,6 +137,7 @@ export type ContextEntry = {
 export type PageEntry = {
   actions: trace.ActionTraceEvent[];
   events: trace.ActionTraceEvent[];
+  objects: { [ket: string]: any };
   screencastFrames: {
     sha1: string,
     timestamp: number,

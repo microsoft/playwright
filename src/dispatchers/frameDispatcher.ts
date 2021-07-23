@@ -30,11 +30,17 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return result || new FrameDispatcher(scope, frame);
   }
 
+  static fromNullable(scope: DispatcherScope, frame: Frame | null): FrameDispatcher | undefined {
+    if (!frame)
+      return;
+    return FrameDispatcher.from(scope, frame);
+  }
+
   private constructor(scope: DispatcherScope, frame: Frame) {
     super(scope, frame, 'Frame', {
       url: frame.url(),
       name: frame.name(),
-      parentFrame: lookupNullableDispatcher<FrameDispatcher>(frame.parentFrame()),
+      parentFrame: FrameDispatcher.fromNullable(scope, frame.parentFrame()),
       loadStates: Array.from(frame._subtreeLifecycleEvents),
     });
     this._frame = frame;
@@ -115,6 +121,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
 
   async dblclick(params: channels.FrameDblclickParams, metadata: CallMetadata): Promise<void> {
     return await this._frame.dblclick(metadata, params.selector, params);
+  }
+
+  async dragAndDrop(params: channels.FrameDragAndDropParams, metadata: CallMetadata): Promise<void> {
+    return await this._frame.dragAndDrop(metadata, params.source, params.target, params);
   }
 
   async tap(params: channels.FrameTapParams, metadata: CallMetadata): Promise<void> {

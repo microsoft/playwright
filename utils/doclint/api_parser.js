@@ -26,11 +26,13 @@ const Documentation = require('./documentation');
 class ApiParser {
   /**
    * @param {string} apiDir
+   * @param {string=} paramsPath
    */
-  constructor(apiDir) {
+  constructor(apiDir, paramsPath) {
     let bodyParts = [];
-    let paramsPath;
     for (const name of fs.readdirSync(apiDir)) {
+      if (!name.endsWith('.md'))
+        continue;
       if (name === 'params.md')
         paramsPath = path.join(apiDir, name);
       else
@@ -118,16 +120,25 @@ class ApiParser {
    * @param {MarkdownNode} spec
    */
   parseArgument(spec) {
-    const match = spec.text.match(/(param|option): ([^.]+)\.([^.]+)\.(.*)/);
-    if(!match)
+    const match = spec.text.match(/(param|option): (.*)/);
+    if (!match)
       throw `Something went wrong with matching ${spec.text}`;
-    const clazz = this.classes.get(match[2]);
+
+    // For "test.describe.only.title":
+    // - className is "test"
+    // - methodName is "describe.only"
+    // - argument name is "title"
+    const parts = match[2].split('.');
+    const className = parts[0];
+    const name = parts[parts.length - 1];
+    const methodName = parts.slice(1, parts.length - 1).join('.');
+
+    const clazz = this.classes.get(className);
     if (!clazz)
-      throw new Error('Invalid class ' + match[2]);
-    const method = clazz.membersArray.find(m => m.kind === 'method' && m.alias === match[3]);
+      throw new Error('Invalid class ' + className);
+    const method = clazz.membersArray.find(m => m.kind === 'method' && m.alias === methodName);
     if (!method)
-      throw new Error('Invalid method ' + match[2] + '.' + match[3]);
-    const name = match[4];
+      throw new Error(`Invalid method ${className}.${methodName} when parsing: ${match[0]}`);
     if (!name)
       throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
@@ -201,7 +212,7 @@ function parseVariable(line) {
   const name = match[1];
   const remainder = match[2];
   if (!remainder.startsWith('<'))
-    throw new Error('Bad argument: ' + remainder);
+    throw new Error(`Bad argument: "${name}" in "${line}"`);
   let depth = 0;
   for (let i = 0; i < remainder.length; ++i) {
     const c = remainder.charAt(i);
@@ -303,9 +314,10 @@ function guessRequired(comment) {
 
 /**
  * @param {string} apiDir
+ * @param {string=} paramsPath
  */
-function parseApi(apiDir) {
-  return new ApiParser(apiDir).documentation;
+function parseApi(apiDir, paramsPath) {
+  return new ApiParser(apiDir, paramsPath).documentation;
 }
 
 /**

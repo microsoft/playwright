@@ -25,9 +25,9 @@ export class TestServer {
   enableGzip(path: string);
   setCSP(path: string, csp: string);
   stop(): Promise<void>;
-  setRoute(path: string, handler: (message: IncomingMessage & {postBody: Buffer}, response: ServerResponse) => void);
+  setRoute(path: string, handler: (message: IncomingMessage & { postBody: Promise<Buffer> }, response: ServerResponse) => void);
   setRedirect(from: string, to: string);
-  waitForRequest(path: string): Promise<IncomingMessage & {postBody: Buffer}>;
+  waitForRequest(path: string): Promise<IncomingMessage & { postBody: Promise<Buffer> }>;
   waitForWebSocketConnectionRequest(): Promise<IncomingMessage>;
   sendOnWebSocketConnection(data: string);
   reset();

@@ -263,6 +263,7 @@ export type BrowserContextOptions = {
     path: string
   },
   proxy?: ProxySettings,
+  baseURL?: string,
   _debugName?: string,
 };
 

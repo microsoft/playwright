@@ -351,3 +351,18 @@ test('should work with test helper', async ({ runInlineTest }) => {
     '%%suite2.test2',
   ]);
 });
+
+test('should help with describe() misuse', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      pwt.test.describe(() => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain([
+    'Error: a.spec.js:5:16: It looks like you are calling describe() without the title. Pass the title as a first argument:',
+    `test.describe('my test group', () => {`,
+    `  // Declare tests here`,
+    `});`,
+  ].join('\n'));
+});

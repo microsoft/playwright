@@ -43,13 +43,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     stack: tOptional(tArray(tType('StackFrame'))),
     apiName: tOptional(tString),
   });
-  scheme.WaitForEventInfo = tObject({
-    waitId: tString,
-    phase: tEnum(['before', 'after', 'log']),
-    event: tOptional(tString),
-    message: tOptional(tString),
-    error: tOptional(tString),
-  });
   scheme.Point = tObject({
     x: tNumber,
     y: tNumber,
@@ -245,6 +238,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
+    baseURL: tOptional(tString),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
@@ -304,6 +298,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
+    baseURL: tOptional(tString),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
@@ -335,6 +330,20 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     categories: tOptional(tArray(tString)),
   });
   scheme.BrowserStopTracingParams = tOptional(tObject({}));
+  scheme.EventTargetWaitForEventInfoParams = tObject({
+    info: tObject({
+      waitId: tString,
+      phase: tEnum(['before', 'after', 'log']),
+      event: tOptional(tString),
+      message: tOptional(tString),
+      error: tOptional(tString),
+    }),
+  });
+  scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
   scheme.BrowserContextAddCookiesParams = tObject({
     cookies: tArray(tType('SetNetworkCookie')),
   });
@@ -578,6 +587,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     trial: tOptional(tBoolean),
   });
   scheme.FrameContentParams = tOptional(tObject({}));
+  scheme.FrameDragAndDropParams = tObject({
+    source: tString,
+    target: tString,
+    force: tOptional(tBoolean),
+    noWaitAfter: tOptional(tBoolean),
+    timeout: tOptional(tNumber),
+    trial: tOptional(tBoolean),
+  });
   scheme.FrameDblclickParams = tObject({
     selector: tString,
     force: tOptional(tBoolean),

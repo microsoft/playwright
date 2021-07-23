@@ -61,7 +61,7 @@ function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mi
       errorMessage: `Sizes differ; expected image ${expected.width}px X ${expected.height}px, but got ${actual.width}px X ${actual.height}px. `
     };
   }
-  const diff = new PNG({width: expected.width, height: expected.height});
+  const diff = new PNG({ width: expected.width, height: expected.height });
   const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, { threshold: 0.2, ...options });
   return count > 0 ? { diff: PNG.sync.write(diff) } : null;
 }
@@ -80,21 +80,36 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: 
   };
 }
 
-export function compare(actual: Buffer | string, name: string, snapshotPath: (name: string) => string, outputPath: (name: string) => string, updateSnapshots: UpdateSnapshots, options?: { threshold?: number }): { pass: boolean; message?: string; } {
+export function compare(
+  actual: Buffer | string,
+  name: string,
+  snapshotPath: (name: string) => string,
+  outputPath: (name: string) => string,
+  updateSnapshots: UpdateSnapshots,
+  withNegateComparison: boolean,
+  options?: { threshold?: number }
+): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
   const snapshotFile = snapshotPath(name);
+
   if (!fs.existsSync(snapshotFile)) {
-    const writingActual = updateSnapshots === 'all' || updateSnapshots === 'missing';
-    if (writingActual) {
+    const isWriteMissingMode = updateSnapshots === 'all' || updateSnapshots === 'missing';
+    const commonMissingSnapshotMessage = `${snapshotFile} is missing in snapshots`;
+    if (withNegateComparison) {
+      const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
+      return { pass: true , message };
+    }
+    if (isWriteMissingMode) {
       fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
       fs.writeFileSync(snapshotFile, actual);
     }
-    const message = snapshotFile + ' is missing in snapshots' + (writingActual ? ', writing actual.' : '.');
+    const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (updateSnapshots === 'all') {
       console.log(message);
       return { pass: true, message };
     }
     return { pass: false, message };
   }
+
   const expected = fs.readFileSync(snapshotFile);
   const extension = path.extname(snapshotFile).substring(1);
   const mimeType = extensionToMimeType[extension] || 'application/octet-string';
@@ -102,13 +117,32 @@ export function compare(actual: Buffer | string, name: string, snapshotPath: (na
   if (!comparator) {
     return {
       pass: false,
-      message: 'Failed to find comparator with type ' + mimeType + ': '  + snapshotFile,
+      message: 'Failed to find comparator with type ' + mimeType + ': ' + snapshotFile,
     };
   }
 
   const result = comparator(actual, expected, mimeType, options);
-  if (!result)
+  if (!result) {
+    if (withNegateComparison) {
+      const message = [
+        colors.red('Snapshot comparison failed:'),
+        '',
+        indent('Expected result should be different from the actual one.', '  '),
+      ].join('\n');
+      return {
+        pass: true,
+        message,
+      };
+    }
+
     return { pass: true };
+  }
+
+  if (withNegateComparison) {
+    return {
+      pass: false,
+    };
+  }
 
   if (updateSnapshots === 'all') {
     fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
@@ -119,6 +153,7 @@ export function compare(actual: Buffer | string, name: string, snapshotPath: (na
       message: snapshotFile + ' running with --update-snapshots, writing actual.'
     };
   }
+
   const outputFile = outputPath(name);
   const expectedPath = addSuffix(outputFile, '-expected');
   const actualPath = addSuffix(outputFile, '-actual');
@@ -144,6 +179,10 @@ export function compare(actual: Buffer | string, name: string, snapshotPath: (na
   return {
     pass: false,
     message: output.join('\n'),
+    expectedPath,
+    actualPath,
+    diffPath,
+    mimeType
   };
 }
 

@@ -331,3 +331,19 @@ test('should report an expected error when the endpoint URL JSON webSocketDebugg
     endpointURL: server.PREFIX,
   })).rejects.toThrowError('browserType.connectOverCDP: Invalid URL');
 });
+
+playwrightTest('should connect to an existing cdp session when passed as a first argument', async ({ browserType, browserOptions }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    ...browserOptions,
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});

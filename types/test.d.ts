@@ -118,6 +118,37 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends ProjectBase {
 
 export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
 
+export type LaunchConfig = {
+  /**
+   * Shell command to start. For example `npm run start`.
+   */
+  command: string,
+  /**
+   * The port that your http server is expected to appear on. If specified it does wait until it accepts connections.
+   */
+  waitForPort?: number,
+  /**
+   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   */
+  waitForPortTimeout?: number,
+  /**
+   * If true it will verify that the given port via `waitForPort` is available and throw otherwise.
+   * This should commonly set to !!process.env.CI to allow the local dev server when running tests locally.
+   */
+  strict?: boolean
+  /**
+   * Environment variables, process.env by default
+   */
+  env?: Record<string, string>,
+  /**
+   * Current working directory of the spawned process. Default is process.cwd().
+   */
+  cwd?: string,
+};
+
+type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never })
+
+
 /**
  * Testing configuration.
  */
@@ -185,7 +216,7 @@ interface ConfigBase {
    * It is possible to pass multiple reporters. A common pattern is using one terminal reporter
    * like `'line'` or `'list'`, and one file reporter like `'json'` or `'junit'`.
    */
-  reporter?: 'dot' | 'line' | 'list' | 'junit' | 'json' | 'null' | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'line'|'json'|'junit'|'null', string> | ReporterDescription[];
 
   /**
    * Whether to report slow tests. When `null`, slow tests are not reported.
@@ -205,6 +236,11 @@ interface ConfigBase {
    * Whether to update expected snapshots with the actual results produced by the test run.
    */
   updateSnapshots?: UpdateSnapshots;
+
+  /**
+   * Launch a web server before running tests.
+   */
+  _launch?: LaunchConfig | LaunchConfig[];
 
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
@@ -239,6 +275,7 @@ export interface FullConfig {
   shard: Shard;
   updateSnapshots: UpdateSnapshots;
   workers: number;
+  _launch: LaunchConfig[];
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
@@ -363,6 +400,11 @@ export interface TestInfo extends WorkerInfo {
    * Annotations collected for this test.
    */
   annotations: { type: string, description?: string }[];
+
+  /**
+   * File attachments for this test.
+   */
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 
   /**
    * When tests are run multiple times, each run gets a unique `repeatEachIndex`.
@@ -1146,6 +1188,12 @@ export type PlaywrightTestOptions = {
    * @see BrowserContextOptions
    */
   viewport: ViewportSize | null | undefined;
+
+  /**
+   * `baseURL` used for all pages in the test. Takes priority over `contextOptions`.
+   * @see BrowserContextOptions
+   */
+  baseURL: string | undefined;
 
   /**
    * Options used to create the context. Other options above (e.g. `viewport`) take priority.

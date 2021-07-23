@@ -18,14 +18,12 @@
 
 /* eslint-disable no-console */
 
-import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import rimraf from 'rimraf';
 import program from 'commander';
-import { runDriver, runServer, printApiJson, launchBrowserServer, installBrowsers } from './driver';
-import { TraceViewer } from '../server/trace/viewer/traceViewer';
+import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
+import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
 import { Browser } from '../client/browser';
@@ -33,39 +31,9 @@ import { Page } from '../client/page';
 import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { installDeps } from '../install/installDeps';
-import { allBrowserNames, BrowserName } from '../utils/registry';
-import * as utils from '../utils/utils';
+import { registry, Executable } from '../utils/registry';
 
-const SCRIPTS_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
-
-
-type BrowserChannel = 'chrome-beta'|'chrome'|'msedge';
-const allBrowserChannels: Set<BrowserChannel> = new Set(['chrome-beta', 'chrome', 'msedge']);
 const packageJSON = require('../../package.json');
-
-const ChannelName = {
-  'chrome-beta': 'Google Chrome Beta',
-  'chrome': 'Google Chrome',
-  'msedge': 'Microsoft Edge',
-};
-
-const InstallationScriptName = {
-  'chrome-beta': {
-    'linux': 'reinstall_chrome_beta_linux.sh',
-    'darwin': 'reinstall_chrome_beta_mac.sh',
-    'win32': 'reinstall_chrome_beta_win.ps1',
-  },
-  'chrome': {
-    'linux': 'reinstall_chrome_stable_linux.sh',
-    'darwin': 'reinstall_chrome_stable_mac.sh',
-    'win32': 'reinstall_chrome_stable_win.ps1',
-  },
-  'msedge': {
-    'darwin': 'reinstall_msedge_stable_mac.sh',
-    'win32': 'reinstall_msedge_stable_win.ps1',
-  },
-};
 
 program
     .version('Version ' + packageJSON.version)
@@ -114,29 +82,36 @@ program
       console.log('  $ debug npm run test');
     });
 
+function suggestedBrowsersToInstall() {
+  return registry.executables().filter(e => e.installType !== 'none' && e.type !== 'tool').map(e => e.name).join(', ');
+}
+
+function checkBrowsersToInstall(args: string[]) {
+  const faultyArguments: string[] = [];
+  const executables: Executable[] = [];
+  for (const arg of args) {
+    const executable = registry.findExecutable(arg);
+    if (!executable || executable.installType === 'none')
+      faultyArguments.push(arg);
+    else
+      executables.push(executable);
+  }
+  if (faultyArguments.length) {
+    console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall()}`);
+    process.exit(1);
+  }
+  return executables;
+}
+
 program
-    .command('install [browserType...]')
+    .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(args) {
+    .action(async function(args: string[]) {
       try {
-        // Install default browsers when invoked without arguments.
-        if (!args.length) {
-          await installBrowsers();
-          return;
-        }
-        const browserNames: Set<BrowserName> = new Set(args.filter((browser: any) => allBrowserNames.has(browser)));
-        const browserChannels: Set<BrowserChannel> = new Set(args.filter((browser: any) => allBrowserChannels.has(browser)));
-        const faultyArguments: string[] = args.filter((browser: any) => !browserNames.has(browser) && !browserChannels.has(browser));
-        if (faultyArguments.length) {
-          console.log(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}`);
-          process.exit(1);
-        }
-        if (browserNames.has('chromium') || browserChannels.has('chrome-beta') || browserChannels.has('chrome') || browserChannels.has('msedge'))
-          browserNames.add('ffmpeg');
-        if (browserNames.size)
-          await installBrowsers([...browserNames]);
-        for (const browserChannel of browserChannels)
-          await installBrowserChannel(browserChannel);
+        if (!args.length)
+          await registry.install();
+        else
+          await registry.install(checkBrowsersToInstall(args));
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
@@ -148,49 +123,31 @@ program
       console.log(`    Install default browsers.`);
       console.log(``);
       console.log(`  - $ install chrome firefox`);
-      console.log(`    Install custom browsers, supports ${[...allBrowserNames, ...allBrowserChannels].map(name => `'${name}'`).join(', ')}.`);
+      console.log(`    Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
     });
 
-async function installBrowserChannel(channel: BrowserChannel) {
-  const platform = os.platform();
-  const scriptName: (string|undefined) = (InstallationScriptName[channel] as any)[platform];
-  if (!scriptName)
-    throw new Error(`Cannot install ${ChannelName[channel]} on ${platform}`);
-
-  const scriptArgs = [];
-  if (channel === 'msedge') {
-    const products = JSON.parse(await utils.fetchData('https://edgeupdates.microsoft.com/api/products'));
-    const stable = products.find((product: any) => product.Product === 'Stable');
-    if (platform === 'win32') {
-      const arch = os.arch() === 'x64' ? 'x64' : 'x86';
-      const release = stable.Releases.find((release: any) => release.Platform === 'Windows' && release.Architecture === arch);
-      const artifact = release.Artifacts.find((artifact: any) => artifact.ArtifactName === 'msi');
-      scriptArgs.push(artifact.Location /* url */);
-    } else if (platform === 'darwin') {
-      const release = stable.Releases.find((release: any) => release.Platform === 'MacOS' && release.Architecture === 'universal');
-      const artifact = release.Artifacts.find((artifact: any) => artifact.ArtifactName === 'pkg');
-      scriptArgs.push(artifact.Location /* url */);
-    } else {
-      throw new Error(`Cannot install ${ChannelName[channel]} on ${platform}`);
-    }
-  }
-
-  const shell = scriptName.endsWith('.ps1') ? 'powershell.exe' : 'bash';
-  const {code} = await utils.spawnAsync(shell, [path.join(SCRIPTS_DIRECTORY, scriptName), ...scriptArgs], { cwd: SCRIPTS_DIRECTORY, stdio: 'inherit' });
-  if (code !== 0)
-    throw new Error(`Failed to install ${ChannelName[channel]}`);
-}
 
 program
-    .command('install-deps [browserType...]')
+    .command('install-deps [browser...]')
     .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .action(async function(browserType) {
+    .action(async function(args: string[]) {
       try {
-        await installDeps(browserType);
+        if (!args.length)
+          await registry.installDeps();
+        else
+          await registry.installDeps(checkBrowsersToInstall(args));
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);
       }
+    }).on('--help', function() {
+      console.log(``);
+      console.log(`Examples:`);
+      console.log(`  - $ install-deps`);
+      console.log(`    Install dependecies fro default browsers.`);
+      console.log(``);
+      console.log(`  - $ install-deps chrome firefox`);
+      console.log(`    Install dependencies for specific browsers, supports ${suggestedBrowsersToInstall()}.`);
     });
 
 const browsers = [
@@ -286,7 +243,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
 if (process.argv[2] === 'run-driver')
   runDriver();
 else if (process.argv[2] === 'run-server')
-  runServer(process.argv[3] ? +process.argv[3] : undefined);
+  runServer(process.argv[3] ? +process.argv[3] : undefined, process.argv[4]).catch(logErrorAndExit);
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')
@@ -301,6 +258,7 @@ type Options = {
   colorScheme?: string;
   device?: string;
   geolocation?: string;
+  ignoreHttpsErrors?: boolean;
   lang?: string;
   loadStorage?: string;
   proxyServer?: string;
@@ -406,6 +364,9 @@ async function launchContext(options: Options, headless: boolean, executablePath
 
   if (options.loadStorage)
     contextOptions.storageState = options.loadStorage;
+
+  if (options.ignoreHttpsErrors)
+    contextOptions.ignoreHTTPSErrors = true;
 
   // Close app when the last window closes.
 
@@ -575,6 +536,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
       .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
       .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')
+      .option('--ignore-https-errors', 'ignore https errors')
       .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
       .option('--lang <language>', 'specify language / locale, for example "en-GB"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
@@ -583,32 +545,4 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
-}
-
-export async function showTraceViewer(tracePath: string, browserName: string) {
-  let stat;
-  try {
-    stat = fs.statSync(tracePath);
-  } catch (e) {
-    console.log(`No such file or directory: ${tracePath}`);
-    return;
-  }
-
-  if (stat.isDirectory()) {
-    const traceViewer = new TraceViewer(tracePath, browserName);
-    await traceViewer.show();
-    return;
-  }
-
-  const zipFile = tracePath;
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
-  process.on('exit', () => rimraf.sync(dir));
-  try {
-    await extract(zipFile, { dir: dir });
-  } catch (e) {
-    console.log(`Invalid trace file: ${zipFile}`);
-    return;
-  }
-  const traceViewer = new TraceViewer(dir, browserName);
-  await traceViewer.show();
 }

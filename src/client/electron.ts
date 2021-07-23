@@ -18,7 +18,6 @@ import type { BrowserWindow } from 'electron';
 import * as structs from '../../types/structs';
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
-import { ParsedStackTrace } from '../utils/stackTrace';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { headersObjectToArray } from '../utils/utils';
 import { BrowserContext } from './browserContext';
@@ -101,16 +100,16 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async close() {
-    return this._wrapApiCall(async (channel: channels.ElectronApplicationChannel, stackTrace: ParsedStackTrace) => {
+    return this._wrapApiCall(async (channel: channels.ElectronApplicationChannel) => {
       await channel.close();
     });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async (channel: channels.ElectronApplicationChannel, stackTrace: ParsedStackTrace) => {
+    return this._wrapApiCall(async (channel: channels.ElectronApplicationChannel) => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event, stackTrace);
+      const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
       if (event !== Events.ElectronApplication.Close)
         waiter.rejectOnEvent(this, Events.ElectronApplication.Close, new Error('Electron application closed'));

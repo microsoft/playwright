@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-import { FullConfig, TestResult, Test, Suite, TestError, Reporter } from '../reporter';
+import { Reporter } from '../../../types/testReporter';
 
 class EmptyReporter implements Reporter {
-  onBegin(config: FullConfig, suite: Suite) {}
-  onTestBegin(test: Test) {}
-  onStdOut(chunk: string | Buffer, test?: Test) {}
-  onStdErr(chunk: string | Buffer, test?: Test) {}
-  onTestEnd(test: Test, result: TestResult) {}
-  onTimeout(timeout: number) {}
-  onError(error: TestError) {}
-  onEnd() {}
 }
 
 export default EmptyReporter;

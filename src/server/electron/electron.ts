@@ -24,11 +24,12 @@ import * as js from '../javascript';
 import { Page } from '../page';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { WebSocketTransport } from '../transport';
-import { launchProcess, envArrayToObject } from '../processLauncher';
+import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
 import { Progress, ProgressController } from '../progress';
 import { helper } from '../helper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
@@ -127,7 +128,7 @@ export class Electron extends SdkObject {
 
       const browserLogsCollector = new RecentLogsCollector();
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-        executablePath: options.executablePath || require('electron/index.js'),
+        command: options.executablePath || require('electron/index.js'),
         args: electronArguments,
         env: options.env ? envArrayToObject(options.env) : process.env,
         log: (message: string) => {
@@ -196,11 +197,11 @@ function waitForLine(progress: Progress, process: childProcess.ChildProcess, reg
     const rl = readline.createInterface({ input: process.stderr });
     const failError = new Error('Process failed to launch!');
     const listeners = [
-      helper.addEventListener(rl, 'line', onLine),
-      helper.addEventListener(rl, 'close', reject.bind(null, failError)),
-      helper.addEventListener(process, 'exit', reject.bind(null, failError)),
+      eventsHelper.addEventListener(rl, 'line', onLine),
+      eventsHelper.addEventListener(rl, 'close', reject.bind(null, failError)),
+      eventsHelper.addEventListener(process, 'exit', reject.bind(null, failError)),
       // It is Ok to remove error handler because we did not create process and there is another listener.
-      helper.addEventListener(process, 'error', reject.bind(null, failError))
+      eventsHelper.addEventListener(process, 'error', reject.bind(null, failError))
     ];
 
     progress.cleanupWhenAborted(cleanup);
@@ -214,7 +215,7 @@ function waitForLine(progress: Progress, process: childProcess.ChildProcess, reg
     }
 
     function cleanup() {
-      helper.removeEventListeners(listeners);
+      eventsHelper.removeEventListeners(listeners);
     }
   });
 }

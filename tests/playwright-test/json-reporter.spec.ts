@@ -34,6 +34,35 @@ test('should support spec.ok', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs[1].ok).toBe(false);
 });
 
+test('should report skipped due to sharding', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async () => {
+      });
+      test('two', async () => {
+        test.skip();
+      });
+    `,
+    'b.test.js': `
+      const { test } = pwt;
+      test('three', async () => {
+      });
+      test('four', async () => {
+        test.skip();
+      });
+      test('five', async () => {
+      });
+    `,
+  }, { shard: '1/3', reporter: 'json' });
+  expect(result.exitCode).toBe(0);
+  expect(result.report.suites[0].specs[0].tests[0].status).toBe('expected');
+  expect(result.report.suites[0].specs[1].tests[0].status).toBe('skipped');
+  expect(result.report.suites[1].specs[0].tests[0].status).toBe('skipped');
+  expect(result.report.suites[1].specs[1].tests[0].status).toBe('skipped');
+  expect(result.report.suites[1].specs[2].tests[0].status).toBe('skipped');
+});
+
 test('should report projects', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -78,4 +107,20 @@ test('should report projects', async ({ runInlineTest }, testInfo) => {
 
   expect(result.report.suites[0].specs[0].tests[0].projectName).toBe('p1');
   expect(result.report.suites[0].specs[0].tests[1].projectName).toBe('p2');
+});
+
+test('should have relative always-posix paths', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('math works!', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.report.config.rootDir.indexOf(path.win32.sep)).toBe(-1);
+  expect(result.report.suites[0].specs[0].file).toBe('a.test.js');
+  expect(result.report.suites[0].specs[0].line).toBe(6);
+  expect(result.report.suites[0].specs[0].column).toBe(7);
 });

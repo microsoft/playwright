@@ -506,7 +506,7 @@ it('should work with CSP', async ({ page, server }) => {
   expect(await page.evaluate(() => 2 + 2)).toBe(4);
 });
 
-it('should evaluate exception', async ({ page }) => {
+it('should evaluate exception with a function on the stack', async ({ page }) => {
   const error = await page.evaluate(() => {
     return (function functionOnStack() {
       return new Error('error message');

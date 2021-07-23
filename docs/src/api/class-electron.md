@@ -87,9 +87,9 @@ Maximum time in milliseconds to wait for the application to start. Defaults to `
 ### option: Electron.launch.locale = %%-context-option-locale-%%
 ### option: Electron.launch.offline = %%-context-option-offline-%%
 ### option: Electron.launch.recordhar = %%-context-option-recordhar-%%
-### option: Electron.launch.recordhar.path = %%-context-option-recordhar-path-%%
-### option: Electron.launch.recordhar.recordHarOmitContent = %%-context-option-recordhar-omit-content-%%
+### option: Electron.launch.recordharpath = %%-context-option-recordhar-path-%%
+### option: Electron.launch.recordHarOmitContent = %%-context-option-recordhar-omit-content-%%
 ### option: Electron.launch.recordvideo = %%-context-option-recordvideo-%%
-### option: Electron.launch.recordvideo.dir = %%-context-option-recordvideo-dir-%%
-### option: Electron.launch.recordvideo.size = %%-context-option-recordvideo-size-%%
+### option: Electron.launch.recordvideodir = %%-context-option-recordvideo-dir-%%
+### option: Electron.launch.recordvideosize = %%-context-option-recordvideo-size-%%
 ### option: Electron.launch.timezoneId = %%-context-option-timezoneid-%%

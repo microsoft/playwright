@@ -22,10 +22,13 @@ lib/**/injected/
 # Include generated types and entrypoint.
 !types/*
 !index.d.ts
+!reporter.d.ts
 # Include main entrypoint.
 !index.js
+!reporter.js
 # Include main entrypoint for ES Modules.
 !index.mjs
+!reporter.mjs
 # Include installer.
 !install.js
 # Include essentials.

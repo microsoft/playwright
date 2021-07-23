@@ -1,11 +1,11 @@
-name: "Chromium With Symbols Builder"
+name: "Trigger: Chromium with Symbols Builds"
 
 
 on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Playwright SHA / ref to build Chromium'
+        description: 'Playwright SHA / ref to build Chromium With Symbols'
         required: true
         default: 'master'
   release:
@@ -16,7 +16,7 @@ on:
       - release-*
     paths:
       - browser_patches/chromium/BUILD_NUMBER
-      - .github/workflows/trigger_build_chromium.yml
+      - .github/workflows/trigger_build_chromium_with_symbols.yml
 
 jobs:
   trigger:

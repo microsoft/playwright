@@ -16,9 +16,13 @@ configurations for common CI providers.
    in Linux agents or install your dependencies using the [CLI](./cli.md#install-system-dependencies). Windows and macOS agents do not require any additional dependencies.
 1. **Install Playwright**:
    ```bash js
+   # Install NPM packages
    npm ci
    # or
    npm install
+
+   # Install Playwright browsers
+   npx playwright install
    ```
    ```bash python
    pip install playwright
@@ -308,7 +312,7 @@ tests:
 
 By default, Playwright downloads browser binaries when the Playwright NPM package
 is installed. The NPM packages have a `postinstall` hook that downloads the browser
-binaries. This behavior can be [customized with environment variables](./installation.md).
+binaries. This behavior can be [customized with environment variables](./library.md#managing-browser-binaries).
 
 Caching browsers on CI is **strictly optional**: The `postinstall` hooks should
 execute and download the browser binaries on every run.
@@ -329,7 +333,7 @@ This behavior can be fixed with one of the following approaches:
    behavior in most CI providers.)
 1. Set `PLAYWRIGHT_BROWSERS_PATH=0` as the environment variable before running
    `npm install`. This will download the browser binaries in the `node_modules`
-   directory and cache them with the package code. See [installation docs](./installation.md).
+   directory and cache them with the package code. See [managing browser binaries](./library.md#managing-browser-binaries).
 1. Use `npm ci` (instead of `npm install`) which forces a clean install: by
    removing the existing `node_modules` directory. See [npm docs](https://docs.npmjs.com/cli/ci.html).
 1. Cache the browser binaries, with the steps below.

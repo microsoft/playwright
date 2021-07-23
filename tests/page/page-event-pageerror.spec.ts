@@ -18,17 +18,43 @@
 import { test as it, expect } from './pageTest';
 
 it('should fire', async ({page, server, browserName}) => {
+  const url = server.PREFIX + '/error.html';
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
-    page.goto(server.PREFIX + '/error.html'),
+    page.goto(url),
   ]);
   expect(error.name).toBe('Error');
   expect(error.message).toBe('Fancy error!');
-  let stack = await page.evaluate(() => window['e'].stack);
-  // Note that WebKit reports the stack of the 'throw' statement instead of the Error constructor call.
-  if (browserName === 'webkit')
-    stack = stack.replace('14:25', '15:19');
-  expect(error.stack).toBe(stack);
+  if (browserName === 'chromium') {
+    expect(error.stack).toBe(`Error: Fancy error!
+    at c (myscript.js:14:11)
+    at b (myscript.js:10:5)
+    at a (myscript.js:6:5)
+    at myscript.js:3:1`);
+  } else if (browserName === 'webkit') {
+    expect(error.stack).toBe(`Error: Fancy error!
+    at c (${url}:14:36)
+    at b (${url}:10:6)
+    at a (${url}:6:6)
+    at global code (${url}:3:2)`);
+  } else if (browserName === 'firefox') {
+    expect(error.stack).toBe(`Error: Fancy error!
+    at c (myscript.js:14:11)
+    at b (myscript.js:10:5)
+    at a (myscript.js:6:5)
+    at  (myscript.js:3:1)`);
+  }
+});
+
+it('should not receive console message for pageError', async ({ page, server, browserName }) => {
+  it.skip(browserName === 'firefox');
+  const messages = [];
+  page.on('console', e => messages.push(e));
+  await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.goto(server.PREFIX + '/error.html'),
+  ]);
+  expect(messages.length).toBe(1);
 });
 
 it('should contain sourceURL', async ({page, server, browserName}) => {

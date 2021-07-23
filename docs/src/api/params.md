@@ -44,7 +44,17 @@ Whether to bypass the [actionability](./actionability.md) checks. Defaults to `f
 ## input-selector
 - `selector` <[string]>
 
-A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See
+A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See
+[working with selectors](./selectors.md) for more details.
+
+## input-source
+- `source` <[string]>
+A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used. See
+[working with selectors](./selectors.md) for more details.
+
+## input-target
+- `target` <[string]>
+A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used. See
 [working with selectors](./selectors.md) for more details.
 
 ## input-position
@@ -91,6 +101,11 @@ When set, this method only performs the [actionability](./actionability.md) chec
 - `selector` <[string]>
 
 A selector to query for. See [working with selectors](./selectors.md) for more details.
+
+## find-selector
+- `selector` <[string]>
+
+A selector to use when resolving DOM element. See [working with selectors](./selectors.md) for more details.
 
 ## wait-for-selector-state
 - `state` <[WaitForSelectorState]<"attached"|"detached"|"visible"|"hidden">>
@@ -212,6 +227,13 @@ Whether to ignore HTTPS errors during navigation. Defaults to `false`.
 - `bypassCSP` <[boolean]>
 
 Toggles bypassing page's Content-Security-Policy.
+
+## context-option-baseURL
+- `baseURL` <[string]>
+
+When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Examples:
+* baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+* baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
 
 ## context-option-viewport
 * langs: js, java
@@ -566,6 +588,7 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%
 - %%-context-option-bypasscsp-%%
+- %%-context-option-baseURL-%%
 - %%-context-option-viewport-%%
 - %%-csharp-context-option-viewport-%%
 - %%-python-context-option-viewport-%%

@@ -18,15 +18,14 @@ import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
 import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import * as registry from '../utils/registry';
+import { registry, BrowserName } from '../utils/registry';
 import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
-import { launchProcess, Env, envArrayToObject } from './processLauncher';
+import { launchProcess, Env, envArrayToObject } from '../utils/processLauncher';
 import { PipeTransport } from './pipeTransport';
 import { Progress, ProgressController } from './progress';
 import * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
-import { validateHostRequirements } from './validateDependencies';
 import { debugMode, existsAsync } from '../utils/utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -35,20 +34,18 @@ import { CallMetadata, SdkObject } from './instrumentation';
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export abstract class BrowserType extends SdkObject {
-  private _name: registry.BrowserName;
-  readonly _registry: registry.Registry;
+  private _name: BrowserName;
   readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(browserName: registry.BrowserName, playwrightOptions: PlaywrightOptions) {
+  constructor(browserName: BrowserName, playwrightOptions: PlaywrightOptions) {
     super(playwrightOptions.rootSdkObject, 'browser-type');
     this.attribution.browserType = this;
     this._playwrightOptions = playwrightOptions;
     this._name = browserName;
-    this._registry = playwrightOptions.registry;
   }
 
-  executablePath(channel?: string): string {
-    return this._registry.executablePath(this._name) || '';
+  executablePath(): string {
+    return registry.findExecutable(this._name).executablePath() || '';
   }
 
   name(): string {
@@ -159,22 +156,18 @@ export abstract class BrowserType extends SdkObject {
     else
       browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
 
-    const executable = executablePath || this.executablePath(options.channel);
-    if (!executable)
-      throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
-    if (!(await existsAsync(executable))) {
-      const errorMessageLines = [`Failed to launch ${this._name} because executable doesn't exist at ${executable}`];
-      // If we tried using stock downloaded browser, suggest re-installing playwright.
-      if (!executablePath)
-        errorMessageLines.push(`Try re-installing playwright with "npm install playwright"`);
-      throw new Error(errorMessageLines.join('\n'));
+    let executable: string;
+    if (executablePath) {
+      if (!(await existsAsync(executablePath)))
+        throw new Error(`Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
+      executable = executablePath;
+    } else {
+      const registryExecutable = registry.findExecutable(options.channel || this._name);
+      if (!registryExecutable || registryExecutable.browserName !== this._name)
+        throw new Error(`Unsupported ${this._name} channel "${options.channel}"`);
+      executable = registryExecutable.executablePathOrDie();
+      await registryExecutable.validateHostRequirements();
     }
-
-    // Only validate dependencies for downloadable browsers.
-    if (!executablePath && !options.channel)
-      await validateHostRequirements(this._registry, this._name);
-    else if (!executablePath && options.channel && this._registry.isSupportedBrowser(options.channel))
-      await validateHostRequirements(this._registry, options.channel as registry.BrowserName);
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
     const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));
@@ -184,7 +177,7 @@ export abstract class BrowserType extends SdkObject {
     let transport: ConnectionTransport | undefined = undefined;
     let browserProcess: BrowserProcess | undefined = undefined;
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-      executablePath: executable,
+      command: executable,
       args: browserArguments,
       env: this._amendEnvironment(env, userDataDir, executable, browserArguments),
       handleSIGINT,

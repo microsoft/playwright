@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { helper, RegisteredListener } from '../helper';
+import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
@@ -31,10 +31,10 @@ export class WKWorkers {
   }
 
   setSession(session: WKSession) {
-    helper.removeEventListeners(this._sessionListeners);
+    eventsHelper.removeEventListeners(this._sessionListeners);
     this.clear();
     this._sessionListeners = [
-      helper.addEventListener(session, 'Worker.workerCreated', (event: Protocol.Worker.workerCreatedPayload) => {
+      eventsHelper.addEventListener(session, 'Worker.workerCreated', (event: Protocol.Worker.workerCreatedPayload) => {
         const worker = new Worker(this._page, event.url);
         const workerSession = new WKSession(session.connection, event.workerId, 'Most likely the worker has been closed.', (message: any) => {
           session.send('Worker.sendMessageToWorker', {
@@ -57,13 +57,13 @@ export class WKWorkers {
           this._page._removeWorker(event.workerId);
         });
       }),
-      helper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
+      eventsHelper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
         if (!workerSession)
           return;
         workerSession.dispatchMessage(JSON.parse(event.message));
       }),
-      helper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
+      eventsHelper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
         if (!workerSession)
           return;

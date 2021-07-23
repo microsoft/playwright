@@ -311,8 +311,10 @@ export class Response extends SdkObject {
   private _serverAddrPromiseCallback: (arg?: RemoteAddr) => void = () => {};
   private _securityDetailsPromise: Promise<SecurityDetails|undefined>;
   private _securityDetailsPromiseCallback: (arg?: SecurityDetails) => void = () => {};
+  _httpVersion: string | undefined;
+  _transferSize: number | undefined;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
     super(request.frame(), 'response');
     this._request = request;
     this._timing = timing;
@@ -333,6 +335,7 @@ export class Response extends SdkObject {
       this._finishedPromiseCallback = f;
     });
     this._request._setResponse(this);
+    this._httpVersion = httpVersion;
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {
@@ -343,9 +346,14 @@ export class Response extends SdkObject {
     this._securityDetailsPromiseCallback(securityDetails);
   }
 
-  _requestFinished(responseEndTiming: number, error?: string) {
+  _requestFinished(responseEndTiming: number, error?: string, transferSize?: number) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
+    this._transferSize = transferSize;
     this._finishedPromiseCallback({ error });
+  }
+
+  _setHttpVersion(httpVersion: string) {
+    this._httpVersion = httpVersion;
   }
 
   url(): string {

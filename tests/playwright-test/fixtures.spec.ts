@@ -340,6 +340,34 @@ test('automatic fixtures should work', async ({ runInlineTest }) => {
   expect(result.results.map(r => r.status)).toEqual(['passed', 'passed']);
 });
 
+test('automatic fixtures should keep workerInfo after conditional skip', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test;
+      test.use({
+        automaticTestFixture: [ async ({}, runTest, workerInfo) => {
+          await runTest();
+          expect(workerInfo.workerIndex).toBe(0);
+          console.log('success test fixture')
+        }, { auto: true } ],
+
+        automaticWorkerFixture: [ async ({}, runTest, workerInfo) => {
+          await runTest();
+          expect(workerInfo.workerIndex).toBe(0);
+          console.log('success worker fixture')
+        }, { scope: 'worker', auto: true } ],
+      });
+      test.skip(({ }) => false);
+      test('good', async ({ }) => {
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('success test fixture');
+  expect(result.output).toContain('success worker fixture');
+  expect(result.results.map(r => r.status)).toEqual(['passed']);
+});
+
 test('tests does not run non-automatic worker fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `

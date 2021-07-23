@@ -109,7 +109,7 @@ for (const file of webPackFiles) {
 // Run Babel.
 steps.push({
   command: 'npx',
-  args: ['babel', ...(watchMode ? ['-w'] : []), '-s', '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
+  args: ['babel', ...(watchMode ? ['-w', '--source-maps'] : []), '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
   shell: true,
 });
 
@@ -135,9 +135,9 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
-// The recorder has an app_icon.png that needs to be copied.
+// The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
-  files: 'src/web/recorder/*.png',
+  files: 'src/server/chromium/*.png',
   from: 'src',
   to: 'lib',
 });

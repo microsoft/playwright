@@ -18,7 +18,21 @@
 import fs from 'fs';
 import * as os from 'os';
 
+let ubuntuVersionCached: string | undefined;
+
 export async function getUbuntuVersion(): Promise<string> {
+  if (ubuntuVersionCached === undefined)
+    ubuntuVersionCached = await getUbuntuVersionAsyncInternal();
+  return ubuntuVersionCached;
+}
+
+export function getUbuntuVersionSync(): string {
+  if (ubuntuVersionCached === undefined)
+    ubuntuVersionCached = getUbuntuVersionSyncInternal();
+  return ubuntuVersionCached;
+}
+
+async function getUbuntuVersionAsyncInternal(): Promise<string> {
   if (os.platform() !== 'linux')
     return '';
   let osReleaseText = await fs.promises.readFile('/etc/upstream-release/lsb-release', 'utf8').catch(e => '');
@@ -26,10 +40,10 @@ export async function getUbuntuVersion(): Promise<string> {
     osReleaseText = await fs.promises.readFile('/etc/os-release', 'utf8').catch(e => '');
   if (!osReleaseText)
     return '';
-  return getUbuntuVersionInternal(osReleaseText);
+  return parseUbuntuVersion(osReleaseText);
 }
 
-export function getUbuntuVersionSync(): string {
+function getUbuntuVersionSyncInternal(): string {
   if (os.platform() !== 'linux')
     return '';
   try {
@@ -40,13 +54,13 @@ export function getUbuntuVersionSync(): string {
       osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
     if (!osReleaseText)
       return '';
-    return getUbuntuVersionInternal(osReleaseText);
+    return parseUbuntuVersion(osReleaseText);
   } catch (e) {
     return '';
   }
 }
 
-function getUbuntuVersionInternal(osReleaseText: string): string {
+function parseUbuntuVersion(osReleaseText: string): string {
   const fields = new Map();
   for (const line of osReleaseText.split('\n')) {
     const tokens = line.split('=');

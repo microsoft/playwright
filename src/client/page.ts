@@ -27,6 +27,7 @@ import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
+import { Locator } from './locator';
 import { Worker } from './worker';
 import { Frame, verifyLoadState, WaitForNavigationOptions } from './frame';
 import { Keyboard, Mouse, Touchscreen } from './input';
@@ -46,7 +47,6 @@ import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } fro
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';
-import { ParsedStackTrace } from '../utils/stackTrace';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -162,7 +162,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   private _onRoute(route: Route, request: Request) {
     for (const {url, handler} of this._routes) {
-      if (urlMatches(request.url(), url)) {
+      if (urlMatches(this._browserContext._options.baseURL, request.url(), url)) {
         handler(route, request);
         return;
       }
@@ -217,7 +217,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this.frames().find(f => {
       if (name)
         return f.name() === name;
-      return urlMatches(f.url(), url);
+      return urlMatches(this._browserContext._options.baseURL, f.url(), url);
     }) || null;
   }
 
@@ -349,41 +349,41 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Request> {
-    return this._wrapApiCall(async (channel: channels.PageChannel, stackTrace: ParsedStackTrace) => {
+    return this._wrapApiCall(async (channel: channels.PageChannel) => {
       const predicate = (request: Request) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
-          return urlMatches(request.url(), urlOrPredicate);
+          return urlMatches(this._browserContext._options.baseURL, request.url(), urlOrPredicate);
         return urlOrPredicate(request);
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
       const logLine = trimmedUrl ? `waiting for request ${trimmedUrl}` : undefined;
-      return this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout }, stackTrace, logLine);
+      return this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout }, logLine);
     });
   }
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Response> {
-    return this._wrapApiCall(async (channel: channels.PageChannel, stackTrace: ParsedStackTrace) => {
+    return this._wrapApiCall(async (channel: channels.PageChannel) => {
       const predicate = (response: Response) => {
         if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
-          return urlMatches(response.url(), urlOrPredicate);
+          return urlMatches(this._browserContext._options.baseURL, response.url(), urlOrPredicate);
         return urlOrPredicate(response);
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
       const logLine = trimmedUrl ? `waiting for response ${trimmedUrl}` : undefined;
-      return this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout }, stackTrace, logLine);
+      return this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout }, logLine);
     });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async (channel: channels.PageChannel, stackTrace: ParsedStackTrace) => {
-      return this._waitForEvent(event, optionsOrPredicate, stackTrace, `waiting for event "${event}"`);
+    return this._wrapApiCall(async (channel: channels.PageChannel) => {
+      return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
     });
   }
 
-  private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, stackTrace: ParsedStackTrace, logLine?: string): Promise<any> {
+  private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-    const waiter = Waiter.createForEvent(this, event, stackTrace);
+    const waiter = Waiter.createForEvent(this, event);
     if (logLine)
       waiter.log(logLine);
     waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
@@ -445,7 +445,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   async route(url: URLMatch, handler: RouteHandler): Promise<void> {
     return this._wrapApiCall(async (channel: channels.PageChannel) => {
-      this._routes.push({ url, handler });
+      this._routes.unshift({ url, handler });
       if (this._routes.length === 1)
         await channel.setNetworkInterceptionEnabled({ enabled: true });
     });
@@ -506,6 +506,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._mainFrame.click(selector, options);
   }
 
+  async dragAndDrop(source: string, target: string, options?: channels.FrameDragAndDropOptions) {
+    return this._mainFrame.dragAndDrop(source, target, options);
+  }
+
   async dblclick(selector: string, options?: channels.FrameDblclickOptions) {
     return this._mainFrame.dblclick(selector, options);
   }
@@ -516,6 +520,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   async fill(selector: string, value: string, options?: channels.FrameFillOptions) {
     return this._mainFrame.fill(selector, value, options);
+  }
+
+  locator(selector: string): Locator {
+    return this.mainFrame().locator(selector);
   }
 
   async focus(selector: string, options?: channels.FrameFocusOptions) {

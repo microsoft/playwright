@@ -39,7 +39,7 @@ playwright
 
 ## Install browsers
 
-Playwright can install supported browsers. This is required to run tests with [Playwright Test](./intro.md).
+Playwright can install supported browsers.
 
 ```bash js
 # Running without arguments will install default browsers

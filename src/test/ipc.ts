@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestError } from './reporter';
+import type { TestError } from '../../types/testReporter';
 import type { Config, TestStatus } from './types';
 
 export type SerializedLoaderData = {
@@ -31,7 +31,8 @@ export type WorkerInitParams = {
 
 export type TestBeginPayload = {
   testId: string;
-  workerIndex: number,
+  startWallTime: number;  // milliseconds since unix epoch
+  workerIndex: number;
 };
 
 export type TestEndPayload = {
@@ -42,6 +43,7 @@ export type TestEndPayload = {
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;
+  attachments: { name: string, path?: string, body?: string, contentType: string }[];
 };
 
 export type TestEntry = {
@@ -56,8 +58,7 @@ export type RunPayload = {
 
 export type DonePayload = {
   failedTestId?: string;
-  fatalError?: any;
-  remaining: TestEntry[];
+  fatalError?: TestError;
 };
 
 export type TestOutputPayload = {

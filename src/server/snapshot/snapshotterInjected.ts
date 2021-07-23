@@ -322,19 +322,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
               attrs['checked'] = '';
             }
           }
-          if (element === document.scrollingElement) {
-            // TODO: restoring scroll positions of all elements
-            // is somewhat expensive. Figure this out.
-            if (element.scrollTop) {
-              expectValue(kScrollTopAttribute);
-              expectValue(element.scrollTop);
-              attrs[kScrollTopAttribute] = '' + element.scrollTop;
-            }
-            if (element.scrollLeft) {
-              expectValue(kScrollLeftAttribute);
-              expectValue(element.scrollLeft);
-              attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
-            }
+          if (element.scrollTop) {
+            expectValue(kScrollTopAttribute);
+            expectValue(element.scrollTop);
+            attrs[kScrollTopAttribute] = '' + element.scrollTop;
+          }
+          if (element.scrollLeft) {
+            expectValue(kScrollLeftAttribute);
+            expectValue(element.scrollLeft);
+            attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
           }
           if (element.shadowRoot) {
             ++shadowDomNesting;

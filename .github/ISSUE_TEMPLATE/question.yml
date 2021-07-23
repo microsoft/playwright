@@ -1,0 +1,11 @@
+name: I have a question
+description: Feel free to ask us your questions!
+title: "[Question]: "
+labels: []
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true

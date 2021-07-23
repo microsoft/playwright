@@ -24,6 +24,8 @@ All the options are available in the [configuration file](./test-advanced.md). H
 
 - `-g <grep>` or `--grep <grep>`: Only run tests matching this regular expression. For example, this will run `'should add to cart'` when passed `-g="add to cart"`.
 
+- `--grep-invert <grep>`: Only run tests **not** matching this regular expression. The opposite of `--grep`.
+
 - `--global-timeout <number>`: Total timeout for the whole test run in milliseconds. By default, there is no global timeout.
 
 - `--list`: List all the tests, but do not run them.

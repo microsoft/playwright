@@ -13,32 +13,33 @@ trap "cd $(pwd -P)" EXIT
 
 cd "$(dirname $0)"
 SCRIPT_FOLDER="$(pwd -P)"
+source "${SCRIPT_FOLDER}/../utils.sh"
 
 if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
   cd "${FF_CHECKOUT_PATH}"
   echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
 else
-  cd "checkout"
+  cd "../firefox/checkout"
 fi
 
 rm -rf .mozconfig
 
 if [[ "$(uname)" == "Darwin" ]]; then
-  if [[ $(uname -m) == "arm64" ]]; then
-    # Building on Apple Silicon requires XCode12.2 and does not require any extra SDKs.
-    if ! [[ -d "/Applications/Xcode12.2.app" ]]; then
-      echo "As of Jan 2021, building Firefox on Apple Silicon requires XCode 12.2"
-      echo "Make sure there's an /Applications/Xcode12.2.app"
-      echo "Download XCode from https://developer.apple.com/download/more/"
-      echo ""
-      exit 1
-    fi
-    export DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer
+  CURRENT_HOST_OS_VERSION=$(getMacVersion)
+  if [[ "${CURRENT_HOST_OS_VERSION}" == "10.14" ]]; then
+    selectXcodeVersionOrDie "11.3.1"
+  elif [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
+    # As of Jan 2021, building Firefox on Apple Silicon requires XCode 12.2
+    selectXcodeVersionOrDie "12.2"
   else
-    # Firefox currently does not build on 10.15 out of the box - it requires SDK for 10.12.
+    echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
+    exit 1
+  fi
+  if [[ "${CURRENT_HOST_OS_VERSION}" == "10."* ]]; then
+    # Firefox currently does not build on 10.14 or 10.15 out of the box - it requires SDK for 10.12.
     # Make sure the SDK is out there.
     if ! [[ -d $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk ]]; then
-      echo "As of Dec 2020, Firefox does not build on Mac without ${MACOS_SDK_VERSION} SDK."
+      echo "As of Dec 2020, Firefox does not build on Mac ${CURRENT_HOST_OS_VERSION} without ${MACOS_SDK_VERSION} SDK."
       echo "Download XCode ${XCODE_VERSION_WITH_REQUIRED_SDK_VERSION} from https://developer.apple.com/download/more/ and"
       echo "extract SDK to $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk"
       echo ""
@@ -82,11 +83,7 @@ echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
 
 if [[ $1 == "--full" || $2 == "--full" ]]; then
-  if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
-    ./mach artifact toolchain --from-build macosx64-node
-    rm -rf "$HOME/.mozbuild/node"
-    mv node "$HOME/.mozbuild/"
-  elif [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
+  if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
     SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   fi
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then

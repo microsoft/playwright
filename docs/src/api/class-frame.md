@@ -374,6 +374,20 @@ Optional event-specific initialization properties.
 
 ### option: Frame.dispatchEvent.timeout = %%-input-timeout-%%
 
+## async method: Frame.dragAndDrop
+
+### param: Frame.dragAndDrop.source = %%-input-source-%%
+
+### param: Frame.dragAndDrop.target = %%-input-target-%%
+
+### option: Frame.dragAndDrop.force = %%-input-force-%%
+
+### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+
+### option: Frame.dragAndDrop.timeout = %%-input-timeout-%%
+
+### option: Frame.dragAndDrop.trial = %%-input-trial-%%
+
 ## async method: Frame.evalOnSelector
 * langs:
   - alias-python: eval_on_selector
@@ -920,6 +934,16 @@ Returns whether the element is [visible](./actionability.md#visible). [`option: 
 ### param: Frame.isVisible.selector = %%-input-selector-%%
 
 ### option: Frame.isVisible.timeout = %%-input-timeout-%%
+
+## method: Frame.locator
+- returns: <[Locator]>
+
+The method returns an element locator that can be used to perform actions in the frame.
+Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
+
+Note that locator always implies visibility, so it will always be locating visible elements.
+
+### param: Frame.locator.selector = %%-find-selector-%%
 
 ## method: Frame.name
 - returns: <[string]>

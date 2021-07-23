@@ -18,10 +18,9 @@ import { test, expect, stripAscii } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
-import { Registry } from '../../src/utils/registry';
+import { registry } from '../../src/utils/registry';
 
-const registry = new Registry(path.join(__dirname, '..', '..'));
-const ffmpeg = registry.executablePath('ffmpeg') || '';
+const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath();
 
 export class VideoPlayer {
   videoWidth: number;

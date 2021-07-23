@@ -7,7 +7,7 @@ title: "Reporters"
 
 ## Using reporters
 
-Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./cli.md).
+Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./test-cli.md).
 
 
 ```bash
@@ -38,7 +38,9 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-You can use different reporters locally and on CI.
+### Multiple reporters
+
+You can use multiple reporters at the same time. For example  you can use`'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
 
 ```js js-flavor=js
 // playwright.config.js
@@ -46,13 +48,10 @@ You can use different reporters locally and on CI.
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: !process.env.CI
-    // Default 'list' reporter for the terminal
-    ? 'list'
-    // Two reporters for CI:
-    // - concise "dot"
-    // - comprehensive json report
-    : [ ['dot'], [ 'json', {  outputFile: 'test-results.json' }] ],
+  reporter: [
+    ['list'],
+    ['json', {  outputFile: 'test-results.json' }]
+  ],
 };
 
 module.exports = config;
@@ -63,13 +62,38 @@ module.exports = config;
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: !process.env.CI
-    // Default 'list' reporter for the terminal
-    ? 'list'
-    // Two reporters for CI:
-    // - concise "dot"
-    // - comprehensive json report
-    : [ ['dot'], [ 'json', {  outputFile: 'test-results.json' }] ],
+  reporter: [
+    ['list'],
+    ['json', {  outputFile: 'test-results.json' }]
+  ],
+};
+export default config;
+```
+
+### Reporters on CI
+
+You can use different reporters locally and on CI. For example, using concise `'dot'` reporter avoids too much output.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  // Concise 'dot' for CI, default 'list' when running locally
+  reporter: process.env.CI ? 'dot' : 'list',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  // Concise 'dot' for CI, default 'list' when running locally
+  reporter: process.env.CI ? 'dot' : 'list',
 };
 export default config;
 ```

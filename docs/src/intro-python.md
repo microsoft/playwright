@@ -4,6 +4,7 @@ title: "Getting Started"
 ---
 
 <!-- TOC -->
+
 - [Release notes](./release-notes.md)
 
 ## Installation
@@ -134,6 +135,45 @@ python -m asyncio
 >>> await browser.close()
 >>> await playwright.stop()
 ```
+
+## Pyinstaller
+
+You can use Playwright with [Pyinstaller](https://www.pyinstaller.org/) to create standalone executables.
+
+```py
+# main.py
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    page = browser.new_page()
+    page.goto("http://whatsmyuseragent.org/")
+    page.screenshot(path="example.png")
+    browser.close()
+```
+
+If you want to bundle browsers with the executables:
+
+```bash
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium
+pyinstaller -F main.py
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=0
+playwright install chromium
+pyinstaller -F main.py
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="0"
+playwright install chromium
+pyinstaller -F main.py
+```
+
+:::note
+Bundling the browsers with the executables will generate bigger binaries.
+It is recommended to only bundle the browsers you use.
+:::
 
 ## Known issues
 

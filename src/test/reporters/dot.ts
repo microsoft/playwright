@@ -16,12 +16,12 @@
 
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
-import { Test, TestResult } from '../reporter';
+import { FullResult, TestCase, TestResult } from '../../../types/testReporter';
 
 class DotReporter extends BaseReporter {
   private _counter = 0;
 
-  onTestEnd(test: Test, result: TestResult) {
+  onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     if (++this._counter === 81) {
       process.stdout.write('\n');
@@ -35,20 +35,15 @@ class DotReporter extends BaseReporter {
       process.stdout.write(colors.gray('×'));
       return;
     }
-    switch (test.status()) {
+    switch (test.outcome()) {
       case 'expected': process.stdout.write(colors.green('·')); break;
       case 'unexpected': process.stdout.write(colors.red(test.results[test.results.length - 1].status === 'timedOut' ? 'T' : 'F')); break;
       case 'flaky': process.stdout.write(colors.yellow('±')); break;
     }
   }
 
-  onTimeout(timeout: number) {
-    super.onTimeout(timeout);
-    this.onEnd();
-  }
-
-  onEnd() {
-    super.onEnd();
+  async onEnd(result: FullResult) {
+    await super.onEnd(result);
     process.stdout.write('\n');
     this.epilogue(true);
   }

@@ -811,6 +811,20 @@ Optional event-specific initialization properties.
 
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
 
+## async method: Page.dragAndDrop
+
+### param: Page.dragAndDrop.source = %%-input-source-%%
+
+### param: Page.dragAndDrop.target = %%-input-target-%%
+
+### option: Page.dragAndDrop.force = %%-input-force-%%
+
+### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+
+### option: Page.dragAndDrop.timeout = %%-input-timeout-%%
+
+### option: Page.dragAndDrop.trial = %%-input-trial-%%
+
 ## async method: Page.emulateMedia
 
 This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media feature, using the `colorScheme` argument.
@@ -1903,6 +1917,8 @@ Shortcut for main frame's [`method: Frame.goto`]
 - `url` <[string]>
 
 URL to navigate page to. The url should include scheme, e.g. `https://`.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.goto.waitUntil = %%-navigation-wait-until-%%
 
@@ -2029,6 +2045,18 @@ Returns whether the element is [visible](./actionability.md#visible). [`option: 
 
 ## property: Page.keyboard
 - type: <[Keyboard]>
+
+## method: Page.locator
+- returns: <[Locator]>
+
+The method returns an element locator that can be used to perform actions on the page.
+Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
+
+Note that locator always implies visibility, so it will always be locating visible elements.
+
+Shortcut for main frame's [`method: Frame.locator`].
+
+### param: Page.locator.selector = %%-find-selector-%%
 
 ## method: Page.mainFrame
 - returns: <[Frame]>
@@ -2514,7 +2542,8 @@ Enabling routing disables http cache.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 ### param: Page.route.handler
 * langs: js, python
 - `handler` <[function]\([Route], [Request]\)>
@@ -3330,7 +3359,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
   * alias-csharp: RunAndWaitForRequest
 - returns: <[Request]>
 
-Waits for the matching request and returns it.  See [waiting for event](./events.md#waiting-for-event) for more details about events.
+Waits for the matching request and returns it. See [waiting for event](./events.md#waiting-for-event) for more details about events.
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -3407,6 +3436,8 @@ await page.RunAndWaitForRequestAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Request] object.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForRequest.urlOrPredicate
 * langs: js
@@ -3526,12 +3557,16 @@ await page.RunAndWaitForResponseAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Response] object.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForResponse.urlOrPredicate
 * langs: js
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Response] object.
+When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.waitForResponse.timeout
 - `timeout` <[float]>
@@ -3652,7 +3687,6 @@ class FrameExamples
 ### param: Page.waitForSelector.selector = %%-query-selector-%%
 
 ### option: Page.waitForSelector.state = %%-wait-for-selector-state-%%
-
 ### option: Page.waitForSelector.timeout = %%-input-timeout-%%
 
 ## async method: Page.waitForTimeout

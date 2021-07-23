@@ -205,6 +205,12 @@ networkTypes.ResourceTiming = {
   responseStart: t.Number,
 };
 
+networkTypes.InterceptedResponse = {
+  status: t.Number,
+  statusText: t.String,
+  headers: t.Array(networkTypes.HTTPHeader),
+};
+
 const Browser = {
   targets: ['browser'],
 
@@ -452,6 +458,11 @@ const Browser = {
         height: t.Number,
       },
     },
+    'cancelDownload': {
+      params: {
+        uuid: t.Optional(t.String),
+      }
+    }
   },
 };
 
@@ -519,6 +530,10 @@ const Network = {
         method: t.Optional(t.String),
         headers: t.Optional(t.Array(networkTypes.HTTPHeader)),
         postData: t.Optional(t.String),
+        interceptResponse: t.Optional(t.Boolean),
+      },
+      returns: {
+        response: t.Optional(networkTypes.InterceptedResponse),
       },
     },
     'fulfillInterceptedRequest': {

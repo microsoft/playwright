@@ -39,11 +39,10 @@ it('should intercept', async ({page, server}) => {
 
 it('should unroute', async ({page, server}) => {
   let intercepted = [];
-  const handler1 = route => {
+  await page.route('**/*', route => {
     intercepted.push(1);
     route.continue();
-  };
-  await page.route('**/empty.html', handler1);
+  });
   await page.route('**/empty.html', route => {
     intercepted.push(2);
     route.continue();
@@ -52,22 +51,23 @@ it('should unroute', async ({page, server}) => {
     intercepted.push(3);
     route.continue();
   });
-  await page.route('**/*', route => {
+  const handler4 = route => {
     intercepted.push(4);
     route.continue();
-  });
+  };
+  await page.route('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([1]);
+  expect(intercepted).toEqual([4]);
 
   intercepted = [];
-  await page.unroute('**/empty.html', handler1);
+  await page.unroute('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([2]);
+  expect(intercepted).toEqual([3]);
 
   intercepted = [];
   await page.unroute('**/empty.html');
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([4]);
+  expect(intercepted).toEqual([1]);
 });
 
 it('should work when POST is redirected with 302', async ({page, server}) => {

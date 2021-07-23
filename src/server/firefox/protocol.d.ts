@@ -288,6 +288,10 @@ export module Protocol {
       height: number;
     };
     export type setVideoRecordingOptionsReturnValue = void;
+    export type cancelDownloadParameters = {
+      uuid?: string;
+    };
+    export type cancelDownloadReturnValue = void;
   }
   export module Page {
     export type DOMPoint = {
@@ -831,6 +835,14 @@ export module Protocol {
       requestStart: number;
       responseStart: number;
     };
+    export type InterceptedResponse = {
+      status: number;
+      statusText: string;
+      headers: {
+        name: string;
+        value: string;
+      }[];
+    };
     export type requestWillBeSentPayload = {
       frameId?: string;
       requestId: string;
@@ -879,6 +891,7 @@ export module Protocol {
     export type requestFinishedPayload = {
       requestId: string;
       responseEndTime: number;
+      transferSize: number;
     }
     export type requestFailedPayload = {
       requestId: string;
@@ -909,8 +922,18 @@ export module Protocol {
         value: string;
       }[];
       postData?: string;
+      interceptResponse?: boolean;
     };
-    export type resumeInterceptedRequestReturnValue = void;
+    export type resumeInterceptedRequestReturnValue = {
+      response?: {
+        status: number;
+        statusText: string;
+        headers: {
+          name: string;
+          value: string;
+        }[];
+      };
+    };
     export type fulfillInterceptedRequestParameters = {
       requestId: string;
       status: number;
@@ -1074,6 +1097,7 @@ export module Protocol {
     "Browser.setReducedMotion": Browser.setReducedMotionParameters;
     "Browser.setForcedColors": Browser.setForcedColorsParameters;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
+    "Browser.cancelDownload": Browser.cancelDownloadParameters;
     "Page.close": Page.closeParameters;
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
     "Page.addBinding": Page.addBindingParameters;
@@ -1150,6 +1174,7 @@ export module Protocol {
     "Browser.setReducedMotion": Browser.setReducedMotionReturnValue;
     "Browser.setForcedColors": Browser.setForcedColorsReturnValue;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
+    "Browser.cancelDownload": Browser.cancelDownloadReturnValue;
     "Page.close": Page.closeReturnValue;
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
     "Page.addBinding": Page.addBindingReturnValue;
