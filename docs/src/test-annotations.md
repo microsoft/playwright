@@ -33,17 +33,17 @@ test.only('focus this test', async ({ page }) => {
 
 ## Skip a test
 
-You can skip certain tests based on the condition.
+Mark a test as skipped.
 
 ```js js-flavor=js
-test('skip this test', async ({ page, browserName }) => {
-  test.skip(browserName === 'firefox', 'Still working on it');
+tests.skip('skip this test', async ({ page }) => {
+  // the test will not run.
 });
 ```
 
 ```js js-flavor=ts
-test('skip this test', async ({ page, browserName }) => {
-  test.skip(browserName === 'firefox', 'Still working on it');
+test.skip('skip this test', async ({ page }) => {
+  // the test will not run.
 });
 ```
 

@@ -55,7 +55,7 @@ export class TestTypeImpl {
     this.test = test;
   }
 
-  private _createTest(type: 'default' | 'only', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
@@ -70,6 +70,8 @@ export class TestTypeImpl {
 
     if (type === 'only')
       test._only = true;
+    if (type === 'skip')
+      test.expectedStatus = 'skipped';
   }
 
   private _describe(type: 'default' | 'only', location: Location, title: string, fn: Function) {
@@ -108,6 +110,12 @@ export class TestTypeImpl {
   }
 
   private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
+    // skip is allowed to create a test if the first parameter is the title.
+    if (type === 'skip' && typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function') {
+      this._createTest('skip', location, ...(modifierArgs as unknown) as [string, Function]);
+      return;
+    }
+
     const suite = currentlyLoadingFileSuite();
     if (suite) {
       if (typeof modifierArgs[0] === 'function') {

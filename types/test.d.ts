@@ -538,6 +538,11 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   };
 
   /**
+   * Use `test.skip()` instead of `test()` to skip this test.
+   */
+  skip(name: string, inner: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
+
+  /**
    * Skip running this test.
    *
    * ```js

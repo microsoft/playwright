@@ -225,7 +225,7 @@ export class WorkerRunner extends EventEmitter {
       fn: test.fn,
       repeatEachIndex: this._params.repeatEachIndex,
       retry: entry.retry,
-      expectedStatus: 'passed',
+      expectedStatus: test.expectedStatus,
       annotations: [],
       attachments: [],
       duration: 0,
