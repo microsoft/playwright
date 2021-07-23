@@ -201,9 +201,9 @@ test('basic test', async ({ page }) => {
 - type: <[Screenshot]<"off"|"on"|"only-on-failure">>
 
 Whether to automatically capture a screenshot after each test. Defaults to `'off'`.
-1. `'off'`: Do not capture screenshots.
-1. `'on'`: Capture screenshot after each test.
-1. `'only-on-failure'`: Capture screenshot after each test failure.
+* `'off'`: Do not capture screenshots.
+* `'on'`: Capture screenshot after each test.
+* `'only-on-failure'`: Capture screenshot after each test failure.
 
 Learn more about [automatic screenshots](./test-configuration.md#automatic-screenshots).
 
@@ -215,10 +215,10 @@ Learn more about [automatic screenshots](./test-configuration.md#automatic-scree
 - type: <[Screenshot]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
 
 Whether to record a trace for each test. Defaults to `'off'`.
-1. `'off'`: Do not record a trace.
-1. `'on'`: Record a trace for each test.
-1. `'retain-on-failure'`: Record a trace for each test, but remove it from successful test runs.
-1. `'on-first-retry'`: Record a trace only when retrying a test for the first time.
+* `'off'`: Do not record a trace.
+* `'on'`: Record a trace for each test.
+* `'retain-on-failure'`: Record a trace for each test, but remove it from successful test runs.
+* `'on-first-retry'`: Record a trace only when retrying a test for the first time.
 
 Learn more about [recording trace](./test-configuration.md#record-test-trace).
 
@@ -232,10 +232,10 @@ Learn more about [recording trace](./test-configuration.md#record-test-trace).
     - `height` <[int]>
 
 Whether to record video for each test. Defaults to `'off'`.
-1. `'off'`: Do not record video.
-1. `'on'`: Record video for each test.
-1. `'retain-on-failure'`: Record video for each test, but remove all videos from successful test runs.
-1. `'on-first-retry'`: Record video only when retrying a test for the first time.
+* `'off'`: Do not record video.
+* `'on'`: Record video for each test.
+* `'retain-on-failure'`: Record video for each test, but remove all videos from successful test runs.
+* `'on-first-retry'`: Record video only when retrying a test for the first time.
 
 Learn more about [recording video](./test-configuration.md#record-video).
 

@@ -41,7 +41,9 @@ async function run() {
   apiDocumentation.filterForLanguage('js');
   const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
   testDocumentation.filterForLanguage('js');
-  const documentation = apiDocumentation.mergeWith(testDocumentation);
+  const testRerpoterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
+  testRerpoterDocumentation.filterForLanguage('js');
+  const documentation = apiDocumentation.mergeWith(testDocumentation).mergeWith(testRerpoterDocumentation);
   documentation.mergeWith(testDocumentation);
 
   // This validates member links.

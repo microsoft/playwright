@@ -22,7 +22,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig, devices } from '@playwright/test';
+import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   timeout: 30000,
@@ -150,9 +150,9 @@ test('example test', async ({}, testInfo) => {
 - type: <[PreserveOutput]<"always"|"never"|"failures-only">>
 
 Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defaults to `'always'`.
-1. `'always'` - preserve output for all tests;
-1. `'never'` - do not preserve output for any tests;
-1. `'failures-only'` - only preserve output for failed tests.
+* `'always'` - preserve output for all tests;
+* `'never'` - do not preserve output for any tests;
+* `'failures-only'` - only preserve output for failed tests.
 
 
 ## property: TestConfig.projects
@@ -177,9 +177,9 @@ The number of times to repeat each test, useful for debugging flaky tests.
   - `1` <[Object]> An object with reporter options if any
 
 The list of reporters to use. Each reporter can be:
-1. A builtin reporter name like `'list'` or `'json'`.
-2. A module name like `'my-awesome-reporter'`.
-3. A relative path to the reporter like `'./reporters/my-awesome-reporter.js'`.
+* A builtin reporter name like `'list'` or `'json'`.
+* A module name like `'my-awesome-reporter'`.
+* A relative path to the reporter like `'./reporters/my-awesome-reporter.js'`.
 
 You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`.
 
@@ -260,9 +260,9 @@ This is a base timeout for all tests. In addition, each test can configure its o
 - type: <[UpdateSnapshots]<"all"|"none"|"missing">>
 
 Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
-1. `'all'` - All tests that are executed will update snapshots.
-1. `'none'` - No snapshots are updated.
-1. `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first time. This is the default.
+* `'all'` - All tests that are executed will update snapshots.
+* `'none'` - No snapshots are updated.
+* `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first time. This is the default.
 
 Learn more about [snapshots](./test-snapshots.md).
 
