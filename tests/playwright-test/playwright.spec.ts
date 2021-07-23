@@ -121,6 +121,46 @@ test('should complain with projects and --browser', async ({ runInlineTest }) =>
   expect(result.output).toContain('Cannot use --browser option when configuration file defines projects');
 });
 
+test('should not override use:browserName without projects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { browserName: 'webkit' } };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page, browserName }) => {
+        console.log('\\n%%browser=' + browserName);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).sort()).toEqual([
+    '%%browser=webkit',
+  ]);
+});
+
+test('should override use:browserName with --browser', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { browserName: 'webkit' } };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page, browserName }) => {
+        console.log('\\n%%browser=' + browserName);
+      });
+    `,
+  }, { browser: 'firefox', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).sort()).toEqual([
+    '%%browser=firefox',
+  ]);
+});
+
 test('should report error and pending operations on timeout', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
@@ -148,7 +188,7 @@ test('should report error and pending operations on timeout', async ({ runInline
 test('should work with screenshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'only-on-failure' } };
+      module.exports = { use: { screenshot: 'only-on-failure' }, name: 'chromium' };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -175,7 +215,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
 test('should work with video: retain-on-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'retain-on-failure' } };
+      module.exports = { use: { video: 'retain-on-failure' }, name: 'chromium' };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -207,7 +247,7 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }, test
 test('should work with video: on-first-retry', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'on-first-retry' }, retries: 1 };
+      module.exports = { use: { video: 'on-first-retry' }, retries: 1, name: 'chromium' };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -238,11 +278,12 @@ test('should work with video: on-first-retry', async ({ runInlineTest }, testInf
   expect(videoFailRetry).toBeTruthy();
 });
 
-test('should work with video size', async ({ runInlineTest, browserName }, testInfo) => {
+test('should work with video size', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
         use: { video: { mode: 'on', size: { width: 220, height: 110 } } },
+        name: 'chromium',
         preserveOutput: 'always',
       };
     `,
@@ -257,7 +298,7 @@ test('should work with video size', async ({ runInlineTest, browserName }, testI
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const folder = testInfo.outputPath(`test-results/a-pass-${browserName}/`);
+  const folder = testInfo.outputPath(`test-results/a-pass-chromium/`);
   const [file] = fs.readdirSync(folder);
   const videoPlayer = new VideoPlayer(path.join(folder, file));
   expect(videoPlayer.videoWidth).toBe(220);
