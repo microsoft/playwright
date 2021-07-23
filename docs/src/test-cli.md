@@ -14,6 +14,8 @@ All the options are available in the [configuration file](./test-advanced.md). H
 
 - `--headed`: Run tests in headed browsers. Useful for debugging.
 
+- `--baseURL`: Base URL used for all pages in the context.
+
 - `--browser`: Run test in a specific browser. Available options are  `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time.
 
 - `-c <file>` or `--config <file>`: Configuration file. If not passed, defaults to `playwright.config.ts` or `playwright.config.js` in the current directory.
