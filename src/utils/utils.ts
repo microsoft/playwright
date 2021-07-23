@@ -270,7 +270,7 @@ export function monotonicTime(): number {
 class HashStream extends stream.Writable {
   private _hash = crypto.createHash('sha1');
 
-  _write(chunk: Buffer, encoding: string, done: () => void) {
+  override _write(chunk: Buffer, encoding: string, done: () => void) {
     this._hash.update(chunk);
     done();
   }

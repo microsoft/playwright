@@ -37,7 +37,7 @@ class ListReporter extends BaseReporter {
     this._liveTerminal = process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  override onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
     console.log();
   }
@@ -54,12 +54,12 @@ class ListReporter extends BaseReporter {
     this._testRows.set(test, this._lastRow++);
   }
 
-  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+  override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+  override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stdout);
   }
@@ -92,7 +92,7 @@ class ListReporter extends BaseReporter {
     stream.write(chunk);
   }
 
-  onTestEnd(test: TestCase, result: TestResult) {
+  override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
 
     const duration = colors.dim(` (${milliseconds(result.duration)})`);
@@ -145,7 +145,7 @@ class ListReporter extends BaseReporter {
     process.stdout.write(testRow + ' : ' + line + '\n');
   }
 
-  async onEnd(result: FullResult) {
+  override async onEnd(result: FullResult) {
     await super.onEnd(result);
     process.stdout.write('\n');
     this.epilogue(true);

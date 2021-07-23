@@ -153,7 +153,7 @@ export class FFBrowserContext extends BrowserContext {
     super(browser, options, browserContextId);
   }
 
-  async _initialize() {
+  override async _initialize() {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [ super._initialize() ];

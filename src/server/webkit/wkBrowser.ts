@@ -207,7 +207,7 @@ export class WKBrowserContext extends BrowserContext {
     this._authenticateProxyViaHeader();
   }
 
-  async _initialize() {
+  override async _initialize() {
     assert(!this._wkPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [ super._initialize() ];

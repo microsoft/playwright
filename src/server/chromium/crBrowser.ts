@@ -308,7 +308,7 @@ export class CRBrowserContext extends BrowserContext {
     this._authenticateProxyViaCredentials();
   }
 
-  async _initialize() {
+  override async _initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
     const promises: Promise<any>[] = [ super._initialize() ];
     if (this._browser.options.name !== 'electron' && this._browser.options.name !== 'clank') {

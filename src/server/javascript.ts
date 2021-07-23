@@ -172,7 +172,7 @@ export class JSHandle<T = any> extends SdkObject {
       this._context._delegate.releaseHandle(this._objectId).catch(e => {});
   }
 
-  toString(): string {
+  override toString(): string {
     return this._preview;
   }
 
