@@ -97,10 +97,10 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   });
 
   const overrides = overridesFromOptions(opts);
-  if (opts.headed)
-    overrides.use = { headless: false };
-  if (opts.baseURL)
-    overrides.use = { baseURL: opts.baseURL };
+  overrides.use = {
+    ...(opts.headed) && { headless: false },
+    ...(opts.baseURL) && { baseURL: opts.baseURL }
+  };
   const runner = new Runner(defaultConfig, overrides);
 
   async function loadConfig(configFile: string) {
