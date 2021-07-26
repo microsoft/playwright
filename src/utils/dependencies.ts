@@ -463,6 +463,7 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04: { [s: string]: string} = {
   'libxslt.so.1': 'libxslt1.1',
   'libXt.so.6': 'libxt6',
   'libXtst.so.6': 'libxtst6',
+  'libxshmfence.so.1': 'libxshmfence1',
 };
 
 const LIBRARY_TO_PACKAGE_NAME_UBUNTU_21_04: { [s: string]: string} = {
