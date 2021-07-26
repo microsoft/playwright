@@ -682,7 +682,7 @@ export class Frame extends SdkObject {
     return value;
   }
 
-  async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
+  async querySelector(selector: string): Promise<dom.ElementHandle<Element> | null> {
     debugLogger.log('api', `    finding element using the selector "${selector}"`);
     return this._page.selectors._query(this, selector);
   }
@@ -736,7 +736,7 @@ export class Frame extends SdkObject {
   }
 
   async evalOnSelectorAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const handle = await this.$(selector);
+    const handle = await this.querySelector(selector);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
@@ -751,7 +751,7 @@ export class Frame extends SdkObject {
     return result;
   }
 
-  async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
+  async querySelectorAll(selector: string): Promise<dom.ElementHandle<Element>[]> {
     return this._page.selectors._queryAll(this, selector, undefined, true /* adoptToMain */);
   }
 
@@ -1092,7 +1092,7 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`  checking visibility of "${selector}"`);
-      const element = await this.$(selector);
+      const element = await this.querySelector(selector);
       return element ? await element.isVisible() : false;
     }, this._page._timeoutSettings.timeout(options));
   }
