@@ -18,7 +18,13 @@
 import { Size, Point, Rect, TimeoutOptions } from '../common/types';
 export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
 
-export type WaitForElementOptions = TimeoutOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' };
+export type StrictOptions = {
+  strict?: boolean,
+};
+
+export type QueryOnSelectorOptions = StrictOptions & TimeoutOptions;
+
+export type WaitForElementOptions = TimeoutOptions & StrictOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' };
 
 export type WaitForFunctionOptions = TimeoutOptions & { pollingInterval?: number };
 
@@ -29,7 +35,7 @@ export type NavigateOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,
 };
 
-export type NavigatingActionWaitOptions = TimeoutOptions & {
+export type NavigatingActionWaitOptions = TimeoutOptions & StrictOptions & {
   noWaitAfter?: boolean,
 };
 
@@ -37,7 +43,7 @@ export type ForceOptions = {
   force?: boolean,
 };
 
-export type PointerActionWaitOptions = TimeoutOptions & ForceOptions & {
+export type PointerActionWaitOptions = TimeoutOptions & ForceOptions & StrictOptions & {
   trial?: boolean;
 };
 

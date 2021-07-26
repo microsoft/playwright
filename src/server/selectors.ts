@@ -25,6 +25,7 @@ export type SelectorInfo = {
   parsed: ParsedSelector,
   world: types.World,
   selector: string,
+  strict: boolean,
 };
 
 export class Selectors {
@@ -61,13 +62,13 @@ export class Selectors {
     this._engines.clear();
   }
 
-  async _query(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
-    const info = this._parseSelector(selector);
+  async _query(frame: frames.Frame, selector: string,  strict: boolean, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
+    const info = this._parseSelector(selector, strict);
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
-    const handle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
-      return injected.querySelector(parsed, scope || document);
-    }, { parsed: info.parsed, scope });
+    const handle = await injectedScript.evaluateHandle((injected, { parsed, scope, strict }) => {
+      return injected.querySelector(parsed, scope || document, strict);
+    }, { parsed: info.parsed, scope, strict });
     const elementHandle = handle.asElement() as dom.ElementHandle<Element> | null;
     if (!elementHandle) {
       handle.dispose();
@@ -78,7 +79,7 @@ export class Selectors {
   }
 
   async _queryArray(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
-    const info = this._parseSelector(selector);
+    const info = this._parseSelector(selector, false);
     const context = await frame._mainContext();
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
@@ -88,7 +89,7 @@ export class Selectors {
   }
 
   async _queryAll(frame: frames.Frame, selector: string, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
-    const info = this._parseSelector(selector);
+    const info = this._parseSelector(selector, false);
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
@@ -120,7 +121,7 @@ export class Selectors {
     return adopted;
   }
 
-  _parseSelector(selector: string): SelectorInfo {
+  _parseSelector(selector: string, strict: boolean): SelectorInfo {
     const parsed = parseSelector(selector);
     let needsMainWorld = false;
     for (const part of parsed.parts) {
@@ -136,6 +137,7 @@ export class Selectors {
       parsed,
       selector,
       world: needsMainWorld ? 'main' : 'utility',
+      strict,
     };
   }
 }

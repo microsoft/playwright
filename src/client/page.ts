@@ -250,8 +250,8 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._forceVideo();
   }
 
-  async $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
-    return this._mainFrame.$(selector);
+  async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
+    return this._mainFrame.$(selector, options);
   }
 
   waitForSelector(selector: string, options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<ElementHandle<SVGElement | HTMLElement>>;

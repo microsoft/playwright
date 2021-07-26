@@ -69,6 +69,7 @@ export class InjectedScript {
     this._engines.set('data-test', this._createAttributeEngine('data-test', true));
     this._engines.set('data-test:light', this._createAttributeEngine('data-test', false));
     this._engines.set('css', this._createCSSEngine());
+
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
 
@@ -85,24 +86,32 @@ export class InjectedScript {
     return result;
   }
 
-  querySelector(selector: ParsedSelector, root: Node): Element | undefined {
+  querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
     this._evaluator.begin();
     try {
-      return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
+      return this._querySelectorRecursively(root as SelectorRoot, selector, strict, 0);
     } finally {
       this._evaluator.end();
     }
   }
 
-  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
+  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, strict: boolean, index: number): Element | undefined {
     const current = selector.parts[index];
-    if (index === selector.parts.length - 1)
-      return this._queryEngine(current, root);
+    if (index === selector.parts.length - 1) {
+      if (strict) {
+        const all = this._queryEngineAll(current, root);
+        if (all.length > 1)
+          throw new Error(`strict mode violation: selector resolved to ${all.length} elements.`);
+        return all[0];
+      } else {
+        return this._queryEngine(current, root);
+      }
+    }
     const all = this._queryEngineAll(current, root);
     for (const next of all) {
-      const result = this._querySelectorRecursively(next, selector, index + 1);
+      const result = this._querySelectorRecursively(next, selector, strict, index + 1);
       if (result)
         return selector.capture === index ? next : result;
     }
@@ -133,7 +142,7 @@ export class InjectedScript {
       let result = [...set] as Element[];
       if (partsToCheckOne.length) {
         const partial = { parts: partsToCheckOne };
-        result = result.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+        result = result.filter(e => !!this._querySelectorRecursively(e, partial, false, 0));
       }
       return result;
     } finally {
@@ -243,6 +252,7 @@ export class InjectedScript {
           else
             requestAnimationFrame(onRaf);
         } catch (e) {
+          progress.log('  ' + e.message);
           reject(e);
         }
       };
