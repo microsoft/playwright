@@ -15,10 +15,6 @@ Each version of Playwright needs specific versions of browser binaries to operat
 - `~/Library/Caches/ms-playwright` on MacOS
 - `~/.cache/ms-playwright` on Linux
 
-```bash js
-npm i -D playwright
-```
-
 ```bash python
 pip install playwright
 playwright install
@@ -54,6 +50,14 @@ playwright install
 ```bash java
 # Linux/macOS
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn test
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+mvn test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+mvn test
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location.
@@ -79,24 +83,6 @@ mvn test
 # Windows with PowerShell
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 mvn test
-```
-
-Or you can opt into the hermetic install and place binaries in the local folder:
-
-```bash python
-# Linux/macOS
-pip install playwright
-PLAYWRIGHT_BROWSERS_PATH=0 playwright install
-
-# Windows with cmd.exe
-set PLAYWRIGHT_BROWSERS_PATH=0
-pip install playwright
-playwright install
-
-# Windows with PowerShell
-$env:PLAYWRIGHT_BROWSERS_PATH=0
-pip install playwright
-playwright install
 ```
 
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
