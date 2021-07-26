@@ -18,40 +18,46 @@ import { CSSComplexSelectorList, parseCSS } from './cssParser';
 
 export type ParsedSelectorPart = {
   name: string,
-  body: string,
-} | CSSComplexSelectorList;
+  body: string | CSSComplexSelectorList,
+};
 
 export type ParsedSelector = {
   parts: ParsedSelectorPart[],
   capture?: number,
 };
 
+type ParsedSelectorStrings = {
+  parts: { name: string, body: string }[],
+  capture?: number,
+};
+
 export const customCSSNames = new Set(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is', 'has-text', 'above', 'below', 'right-of', 'left-of', 'near', 'nth-match']);
 
 export function parseSelector(selector: string): ParsedSelector {
-  const result = parseSelectorV1(selector);
-  result.parts = result.parts.map(part => {
-    if (Array.isArray(part))
-      return part;
+  const result = parseSelectorString(selector);
+  const parts: ParsedSelectorPart[] = result.parts.map(part => {
     if (part.name === 'css' || part.name === 'css:light') {
       if (part.name === 'css:light')
         part.body = ':light(' + part.body + ')';
       const parsedCSS = parseCSS(part.body, customCSSNames);
-      return parsedCSS.selector;
+      return {
+        name: 'css',
+        body: parsedCSS.selector
+      };
     }
     return part;
   });
   return {
-    parts: result.parts,
     capture: result.capture,
+    parts
   };
 }
 
-function parseSelectorV1(selector: string): ParsedSelector {
+function parseSelectorString(selector: string): ParsedSelectorStrings {
   let index = 0;
   let quote: string | undefined;
   let start = 0;
-  const result: ParsedSelector = { parts: [] };
+  const result: ParsedSelectorStrings = { parts: [] };
   const append = () => {
     const part = selector.substring(start, index).trim();
     const eqIndex = part.indexOf('=');
