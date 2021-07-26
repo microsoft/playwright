@@ -91,11 +91,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   }
 
   async querySelector(params: channels.FrameQuerySelectorParams, metadata: CallMetadata): Promise<channels.FrameQuerySelectorResult> {
-    return { element: ElementHandleDispatcher.fromNullable(this._scope, await this._frame.$(params.selector)) };
+    return { element: ElementHandleDispatcher.fromNullable(this._scope, await this._frame.querySelector(params.selector)) };
   }
 
   async querySelectorAll(params: channels.FrameQuerySelectorAllParams, metadata: CallMetadata): Promise<channels.FrameQuerySelectorAllResult> {
-    const elements = await this._frame.$$(params.selector);
+    const elements = await this._frame.querySelectorAll(params.selector);
     return { elements: elements.map(e => ElementHandleDispatcher.from(this._scope, e)) };
   }
 
