@@ -125,13 +125,11 @@ export class Selectors {
     const parsed = parseSelector(selector);
     let needsMainWorld = false;
     for (const part of parsed.parts) {
-      if (!Array.isArray(part)) {
-        const custom = this._engines.get(part.name);
-        if (!custom && !this._builtinEngines.has(part.name))
-          throw new Error(`Unknown engine "${part.name}" while parsing selector ${selector}`);
-        if (custom && !custom.contentScript)
-          needsMainWorld = true;
-      }
+      const custom = this._engines.get(part.name);
+      if (!custom && !this._builtinEngines.has(part.name))
+        throw new Error(`Unknown engine "${part.name}" while parsing selector ${selector}`);
+      if (custom && !custom.contentScript)
+        needsMainWorld = true;
     }
     return {
       parsed,
