@@ -198,12 +198,11 @@ export class WKBrowser extends Browser {
 }
 
 export class WKBrowserContext extends BrowserContext {
-  readonly _browser: WKBrowser;
+  declare readonly _browser: WKBrowser;
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._browser = browser;
     this._evaluateOnNewDocumentSources = [];
     this._authenticateProxyViaHeader();
   }
