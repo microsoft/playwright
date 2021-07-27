@@ -42,9 +42,13 @@ export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disa
 export type ElementState = ElementStateWithoutStable | 'stable';
 
 export interface SelectorEngineV2 {
-  query?(root: SelectorRoot, body: any): Element | undefined;
   queryAll(root: SelectorRoot, body: any): Element[];
 }
+
+export type ElementMatch = {
+  element: Element;
+  capture: Element | undefined;
+};
 
 export class InjectedScript {
   private _engines: Map<string, SelectorEngineV2>;
@@ -69,6 +73,8 @@ export class InjectedScript {
     this._engines.set('data-test', this._createAttributeEngine('data-test', true));
     this._engines.set('data-test:light', this._createAttributeEngine('data-test', false));
     this._engines.set('css', this._createCSSEngine());
+    this._engines.set('_first', { queryAll: () => [] });
+    this._engines.set('_visible', { queryAll: () => [] });
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -91,30 +97,47 @@ export class InjectedScript {
       throw new Error('Node is not queryable.');
     this._evaluator.begin();
     try {
-      return this._querySelectorRecursively(root as SelectorRoot, selector, strict, 0);
+      const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
+      if (strict && result.length > 1)
+        throw new Error(`strict mode violation: selector resolved to ${result.length} elements.`);
+      return result[0]?.capture || result[0]?.element;
     } finally {
       this._evaluator.end();
     }
   }
 
-  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, strict: boolean, index: number): Element | undefined {
-    const current = selector.parts[index];
-    if (index === selector.parts.length - 1) {
-      if (strict) {
-        const all = this._queryEngineAll(current, root);
-        if (all.length > 1)
-          throw new Error(`strict mode violation: selector resolved to ${all.length} elements.`);
-        return all[0];
-      } else {
-        return this._queryEngine(current, root);
+  private _querySelectorRecursively(roots: ElementMatch[], selector: ParsedSelector, index: number, queryCache: Map<Element, Element[][]>): ElementMatch[] {
+    if (index === selector.parts.length)
+      return roots;
+
+    if (selector.parts[index].name === '_first')
+      return roots.slice(0, 1);
+
+    if (selector.parts[index].name === '_visible') {
+      const visible = Boolean(selector.parts[index].body);
+      return roots.filter(match => visible === isVisible(match.element));
+    }
+
+    const result: ElementMatch[] = [];
+    for (const root of roots) {
+      const capture = index - 1 === selector.capture ? root.element : root.capture;
+
+      // Do not query engine twice for the same element.
+      let queryResults = queryCache.get(root.element);
+      if (!queryResults) {
+        queryResults = [];
+        queryCache.set(root.element, queryResults);
       }
+      let all = queryResults[index];
+      if (!all) {
+        all = this._queryEngineAll(selector.parts[index], root.element);
+        queryResults[index] = all;
+      }
+
+      for (const element of all)
+        result.push({ element, capture });
     }
-    const all = this._queryEngineAll(current, root);
-    for (const next of all) {
-      const result = this._querySelectorRecursively(next, selector, strict, index + 1);
-      if (result)
-        return selector.capture === index ? next : result;
-    }
+    return this._querySelectorRecursively(result, selector, index + 1, queryCache);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
@@ -122,40 +145,14 @@ export class InjectedScript {
       throw new Error('Node is not queryable.');
     this._evaluator.begin();
     try {
-      const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
-      // Query all elements up to the capture.
-      const partsToQueryAll = selector.parts.slice(0, capture + 1);
-      // Check they have a descendant matching everything after the capture.
-      const partsToCheckOne = selector.parts.slice(capture + 1);
-      let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
-      for (const part of partsToQueryAll) {
-        const newSet = new Set<Element>();
-        for (const prev of set) {
-          for (const next of this._queryEngineAll(part, prev)) {
-            if (newSet.has(next))
-              continue;
-            newSet.add(next);
-          }
-        }
-        set = newSet;
-      }
-      let result = [...set] as Element[];
-      if (partsToCheckOne.length) {
-        const partial = { parts: partsToCheckOne };
-        result = result.filter(e => !!this._querySelectorRecursively(e, partial, false, 0));
-      }
-      return result;
+      const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
+      const set = new Set<Element>();
+      for (const r of result)
+        set.add(r.capture || r.element);
+      return [...set];
     } finally {
       this._evaluator.end();
     }
-  }
-
-  private _queryEngine(part: ParsedSelectorPart, root: SelectorRoot): Element | undefined {
-    const engine = this._engines.get(part.name)!;
-    if (engine.query)
-      return engine.query(root, part.body);
-    else
-      return engine.queryAll(root, part.body)[0];
   }
 
   private _queryEngineAll(part: ParsedSelectorPart, root: SelectorRoot): Element[] {
@@ -184,7 +181,7 @@ export class InjectedScript {
   }
 
   private _createTextEngine(shadow: boolean): SelectorEngine {
-    const queryList = (root: SelectorRoot, selector: string, single: boolean): Element[] => {
+    const queryList = (root: SelectorRoot, selector: string): Element[] => {
       const { matcher, kind } = createTextMatcher(selector);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
@@ -198,26 +195,19 @@ export class InjectedScript {
           lastDidNotMatchSelf = element;
         if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict'))
           result.push(element);
-        return single && result.length > 0;
       };
 
-      if (root.nodeType === Node.ELEMENT_NODE && appendElement(root as Element))
-        return result;
+      if (root.nodeType === Node.ELEMENT_NODE)
+        appendElement(root as Element);
       const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: shadow }, '*');
-      for (const element of elements) {
-        if (appendElement(element))
-          return result;
-      }
+      for (const element of elements)
+        appendElement(element);
       return result;
     };
 
     return {
-      query: (root: SelectorRoot, selector: string): Element | undefined => {
-        return queryList(root, selector, true)[0];
-      },
-
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        return queryList(root, selector, false);
+        return queryList(root, selector);
       }
     };
   }

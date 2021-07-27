@@ -143,6 +143,16 @@ it('should keep dom order with comma separated list', async ({page}) => {
   expect(await page.$$eval(`css=section >> *css=div,span >> css=y`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
 });
 
+it('should return multiple captures for the same node', async ({page}) => {
+  await page.setContent(`<div><div><div><span></span></div></div></div>`);
+  expect(await page.$$eval(`*css=div >> span`, els => els.map(e => e.nodeName).join(','))).toBe('DIV,DIV,DIV');
+});
+
+it('should return multiple captures when going up the hierarchy', async ({page}) => {
+  await page.setContent(`<section>Hello<ul><li></li><li></li></ul></section>`);
+  expect(await page.$$eval(`*css=li >> ../.. >> text=Hello`, els => els.map(e => e.nodeName).join(','))).toBe('LI,LI');
+});
+
 it('should work with comma separated list in various positions', async ({page}) => {
   await page.setContent(`<section><span><div><x></x><y></y></div></span></section>`);
   expect(await page.$$eval(`css=span,div >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('X,Y');
