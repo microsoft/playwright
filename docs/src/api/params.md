@@ -22,6 +22,12 @@ The default value can be changed by using the
 maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
 value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
+## input-strict
+- `strict` <[boolean]>
+
+When true, the call requires selector to resolve to a single element. If given selector resolves to more
+then one element, the call throws an exception.
+
 ## input-timeout
 - `timeout` <[float]>
 

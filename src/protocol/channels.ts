@@ -1358,11 +1358,13 @@ export type FrameNavigatedEvent = {
 };
 export type FrameEvalOnSelectorParams = {
   selector: string,
+  strict?: boolean,
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type FrameEvalOnSelectorOptions = {
+  strict?: boolean,
   isFunction?: boolean,
 };
 export type FrameEvalOnSelectorResult = {
@@ -1406,6 +1408,7 @@ export type FrameAddStyleTagResult = {
 };
 export type FrameCheckParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
@@ -1413,6 +1416,7 @@ export type FrameCheckParams = {
   trial?: boolean,
 };
 export type FrameCheckOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
@@ -1422,6 +1426,7 @@ export type FrameCheckOptions = {
 export type FrameCheckResult = void;
 export type FrameClickParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1433,6 +1438,7 @@ export type FrameClickParams = {
   trial?: boolean,
 };
 export type FrameClickOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1466,6 +1472,7 @@ export type FrameDragAndDropOptions = {
 export type FrameDragAndDropResult = void;
 export type FrameDblclickParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1476,6 +1483,7 @@ export type FrameDblclickParams = {
   trial?: boolean,
 };
 export type FrameDblclickOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1488,11 +1496,13 @@ export type FrameDblclickOptions = {
 export type FrameDblclickResult = void;
 export type FrameDispatchEventParams = {
   selector: string,
+  strict?: boolean,
   type: string,
   eventInit: SerializedArgument,
   timeout?: number,
 };
 export type FrameDispatchEventOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameDispatchEventResult = void;
@@ -1520,12 +1530,14 @@ export type FrameEvaluateExpressionHandleResult = {
 };
 export type FrameFillParams = {
   selector: string,
+  strict?: boolean,
   value: string,
   force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type FrameFillOptions = {
+  strict?: boolean,
   force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
@@ -1533,9 +1545,11 @@ export type FrameFillOptions = {
 export type FrameFillResult = void;
 export type FrameFocusParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameFocusOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameFocusResult = void;
@@ -1546,10 +1560,12 @@ export type FrameFrameElementResult = {
 };
 export type FrameGetAttributeParams = {
   selector: string,
+  strict?: boolean,
   name: string,
   timeout?: number,
 };
 export type FrameGetAttributeOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameGetAttributeResult = {
@@ -1571,6 +1587,7 @@ export type FrameGotoResult = {
 };
 export type FrameHoverParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
@@ -1578,6 +1595,7 @@ export type FrameHoverParams = {
   trial?: boolean,
 };
 export type FrameHoverOptions = {
+  strict?: boolean,
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
@@ -1587,9 +1605,11 @@ export type FrameHoverOptions = {
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInnerHTMLOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInnerHTMLResult = {
@@ -1597,9 +1617,11 @@ export type FrameInnerHTMLResult = {
 };
 export type FrameInnerTextParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInnerTextOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInnerTextResult = {
@@ -1607,9 +1629,11 @@ export type FrameInnerTextResult = {
 };
 export type FrameInputValueParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInputValueOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInputValueResult = {
@@ -1617,9 +1641,11 @@ export type FrameInputValueResult = {
 };
 export type FrameIsCheckedParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsCheckedOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsCheckedResult = {
@@ -1627,9 +1653,11 @@ export type FrameIsCheckedResult = {
 };
 export type FrameIsDisabledParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsDisabledOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsDisabledResult = {
@@ -1637,9 +1665,11 @@ export type FrameIsDisabledResult = {
 };
 export type FrameIsEnabledParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsEnabledOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsEnabledResult = {
@@ -1647,9 +1677,11 @@ export type FrameIsEnabledResult = {
 };
 export type FrameIsHiddenParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsHiddenOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsHiddenResult = {
@@ -1657,9 +1689,11 @@ export type FrameIsHiddenResult = {
 };
 export type FrameIsVisibleParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsVisibleOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsVisibleResult = {
@@ -1667,9 +1701,11 @@ export type FrameIsVisibleResult = {
 };
 export type FrameIsEditableParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsEditableOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsEditableResult = {
@@ -1677,12 +1713,14 @@ export type FrameIsEditableResult = {
 };
 export type FramePressParams = {
   selector: string,
+  strict?: boolean,
   key: string,
   delay?: number,
   noWaitAfter?: boolean,
   timeout?: number,
 };
 export type FramePressOptions = {
+  strict?: boolean,
   delay?: number,
   noWaitAfter?: boolean,
   timeout?: number,
@@ -1690,24 +1728,27 @@ export type FramePressOptions = {
 export type FramePressResult = void;
 export type FrameQuerySelectorParams = {
   selector: string,
+  strict?: boolean,
 };
 export type FrameQuerySelectorOptions = {
-
+  strict?: boolean,
 };
 export type FrameQuerySelectorResult = {
   element?: ElementHandleChannel,
 };
 export type FrameQuerySelectorAllParams = {
   selector: string,
+  strict?: boolean,
 };
 export type FrameQuerySelectorAllOptions = {
-
+  strict?: boolean,
 };
 export type FrameQuerySelectorAllResult = {
   elements: ElementHandleChannel[],
 };
 export type FrameSelectOptionParams = {
   selector: string,
+  strict?: boolean,
   elements?: ElementHandleChannel[],
   options?: {
     value?: string,
@@ -1719,6 +1760,7 @@ export type FrameSelectOptionParams = {
   noWaitAfter?: boolean,
 };
 export type FrameSelectOptionOptions = {
+  strict?: boolean,
   elements?: ElementHandleChannel[],
   options?: {
     value?: string,
@@ -1744,6 +1786,7 @@ export type FrameSetContentOptions = {
 export type FrameSetContentResult = void;
 export type FrameSetInputFilesParams = {
   selector: string,
+  strict?: boolean,
   files: {
     name: string,
     mimeType?: string,
@@ -1753,12 +1796,14 @@ export type FrameSetInputFilesParams = {
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesOptions = {
+  strict?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesResult = void;
 export type FrameTapParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1767,6 +1812,7 @@ export type FrameTapParams = {
   trial?: boolean,
 };
 export type FrameTapOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1777,9 +1823,11 @@ export type FrameTapOptions = {
 export type FrameTapResult = void;
 export type FrameTextContentParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameTextContentOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameTextContentResult = {
@@ -1792,12 +1840,14 @@ export type FrameTitleResult = {
 };
 export type FrameTypeParams = {
   selector: string,
+  strict?: boolean,
   text: string,
   delay?: number,
   noWaitAfter?: boolean,
   timeout?: number,
 };
 export type FrameTypeOptions = {
+  strict?: boolean,
   delay?: number,
   noWaitAfter?: boolean,
   timeout?: number,
@@ -1805,6 +1855,7 @@ export type FrameTypeOptions = {
 export type FrameTypeResult = void;
 export type FrameUncheckParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
@@ -1812,6 +1863,7 @@ export type FrameUncheckParams = {
   trial?: boolean,
 };
 export type FrameUncheckOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
@@ -1836,10 +1888,12 @@ export type FrameWaitForFunctionResult = {
 };
 export type FrameWaitForSelectorParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
 export type FrameWaitForSelectorOptions = {
+  strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
@@ -1986,11 +2040,13 @@ export interface ElementHandleChannel extends JSHandleChannel {
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
+  strict?: boolean,
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type ElementHandleEvalOnSelectorOptions = {
+  strict?: boolean,
   isFunction?: boolean,
 };
 export type ElementHandleEvalOnSelectorResult = {
@@ -2188,9 +2244,10 @@ export type ElementHandlePressOptions = {
 export type ElementHandlePressResult = void;
 export type ElementHandleQuerySelectorParams = {
   selector: string,
+  strict?: boolean,
 };
 export type ElementHandleQuerySelectorOptions = {
-
+  strict?: boolean,
 };
 export type ElementHandleQuerySelectorResult = {
   element?: ElementHandleChannel,
@@ -2333,10 +2390,12 @@ export type ElementHandleWaitForElementStateOptions = {
 export type ElementHandleWaitForElementStateResult = void;
 export type ElementHandleWaitForSelectorParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
 export type ElementHandleWaitForSelectorOptions = {
+  strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };

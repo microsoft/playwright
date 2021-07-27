@@ -183,9 +183,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
+  async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
-      const result = await channel.querySelector({ selector });
+      const result = await channel.querySelector({ selector, ...options });
       return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
     });
   }

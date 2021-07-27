@@ -168,11 +168,13 @@ export interface Page {
    * return value resolves to `null`. To wait for an element on the page, use
    * [page.waitForSelector(selector[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-selector).
    *
-   * Shortcut for main frame's [frame.$(selector)](https://playwright.dev/docs/api/class-frame#frame-query-selector).
+   * Shortcut for main frame's
+   * [frame.$(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-query-selector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
    */
-  $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
+  $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
+  $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
   /**
    * The method finds all elements matching the specified selector within the page. If no elements match the selector, the
@@ -189,8 +191,8 @@ export interface Page {
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
    *
    * If `pageFunction` returns a [Promise], then
-   * [page.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector) would wait
-   * for the promise to resolve and return its value.
+   * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
+   * would wait for the promise to resolve and return its value.
    *
    * Examples:
    *
@@ -203,10 +205,11 @@ export interface Page {
    * ```
    *
    * Shortcut for main frame's
-   * [frame.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector).
+   * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
+   * @param options
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
@@ -1152,6 +1155,12 @@ export interface Page {
     };
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1226,6 +1235,12 @@ export interface Page {
 
       y: number;
     };
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -1338,6 +1353,12 @@ export interface Page {
     };
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1388,6 +1409,12 @@ export interface Page {
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1413,6 +1440,12 @@ export interface Page {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -1559,6 +1592,12 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1576,6 +1615,12 @@ export interface Page {
    * @param options
    */
   focus(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -1622,6 +1667,12 @@ export interface Page {
    * @param options
    */
   getAttribute(selector: string, name: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -1776,6 +1827,12 @@ export interface Page {
     };
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1797,6 +1854,12 @@ export interface Page {
    */
   innerHTML(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1811,6 +1874,12 @@ export interface Page {
    * @param options
    */
   innerText(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -1827,6 +1896,12 @@ export interface Page {
    */
   inputValue(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1841,6 +1916,12 @@ export interface Page {
    * @param options
    */
   isChecked(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -1862,6 +1943,12 @@ export interface Page {
    */
   isDisabled(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1877,6 +1964,12 @@ export interface Page {
    */
   isEditable(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1891,6 +1984,12 @@ export interface Page {
    * @param options
    */
   isEnabled(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -1908,6 +2007,12 @@ export interface Page {
    */
   isHidden(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -1923,6 +2028,12 @@ export interface Page {
    * @param options
    */
   isVisible(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -2165,6 +2276,12 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -2330,6 +2447,12 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -2452,6 +2575,12 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -2541,6 +2670,12 @@ export interface Page {
     };
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -2561,6 +2696,12 @@ export interface Page {
    * @param options
    */
   textContent(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -2609,6 +2750,12 @@ export interface Page {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -2661,6 +2808,12 @@ export interface Page {
 
       y: number;
     };
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -3228,9 +3381,10 @@ export interface Frame {
    * The method finds an element matching the specified selector within the frame. See
    * [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, returns `null`.
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
    */
-  $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
+  $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
+  $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
   /**
    * Returns the ElementHandles pointing to the frame elements.
@@ -3250,8 +3404,8 @@ export interface Frame {
    * method throws an error.
    *
    * If `pageFunction` returns a [Promise], then
-   * [frame.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector) would
-   * wait for the promise to resolve and return its value.
+   * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector)
+   * would wait for the promise to resolve and return its value.
    *
    * Examples:
    *
@@ -3264,6 +3418,7 @@ export interface Frame {
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
+   * @param options
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
@@ -3457,6 +3612,12 @@ export interface Frame {
     };
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3531,6 +3692,12 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -3610,6 +3777,12 @@ export interface Frame {
     };
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3660,6 +3833,12 @@ export interface Frame {
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3685,6 +3864,12 @@ export interface Frame {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -3747,6 +3932,12 @@ export interface Frame {
    */
   focus(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3780,6 +3971,12 @@ export interface Frame {
    * @param options
    */
   getAttribute(selector: string, name: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -3875,6 +4072,12 @@ export interface Frame {
     };
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3896,6 +4099,12 @@ export interface Frame {
    */
   innerHTML(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3910,6 +4119,12 @@ export interface Frame {
    * @param options
    */
   innerText(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -3926,6 +4141,12 @@ export interface Frame {
    */
   inputValue(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3940,6 +4161,12 @@ export interface Frame {
    * @param options
    */
   isChecked(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -3961,6 +4188,12 @@ export interface Frame {
    */
   isDisabled(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3976,6 +4209,12 @@ export interface Frame {
    */
   isEditable(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -3990,6 +4229,12 @@ export interface Frame {
    * @param options
    */
   isEnabled(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -4007,6 +4252,12 @@ export interface Frame {
    */
   isHidden(selector: string, options?: {
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -4022,6 +4273,12 @@ export interface Frame {
    * @param options
    */
   isVisible(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -4093,6 +4350,12 @@ export interface Frame {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -4173,6 +4436,12 @@ export interface Frame {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -4256,6 +4525,12 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -4311,6 +4586,12 @@ export interface Frame {
     };
 
     /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -4331,6 +4612,12 @@ export interface Frame {
    * @param options
    */
   textContent(selector: string, options?: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
@@ -4374,6 +4661,12 @@ export interface Frame {
      * inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -4423,6 +4716,12 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -5536,7 +5835,7 @@ export interface Worker {
  * their origin frame gets navigated or the parent context gets destroyed.
  *
  * JSHandle instances can be used as an argument in
- * [page.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector),
+ * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector),
  * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) and
  * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) methods.
  */
@@ -5621,7 +5920,7 @@ export interface JSHandle<T = any> {
  * - extends: [JSHandle]
  *
  * ElementHandle represents an in-page DOM element. ElementHandles can be created with the
- * [page.$(selector)](https://playwright.dev/docs/api/class-page#page-query-selector) method.
+ * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector) method.
  *
  * ```js
  * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
@@ -5641,8 +5940,8 @@ export interface JSHandle<T = any> {
  * when their origin frame gets navigated.
  *
  * ElementHandle instances can be used as an argument in
- * [page.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector) and
- * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) methods.
+ * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
+ * and [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) methods.
  */
 export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
@@ -5650,8 +5949,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, returns `null`.
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
-  $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
+  $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
+  $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
   /**
    * The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
@@ -12447,6 +12746,12 @@ interface PageWaitForSelectorOptions {
    *   This is opposite to the `'visible'` option.
    */
   state?: "attached"|"detached"|"visible"|"hidden";
+
+  /**
+   * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+   * element, the call throws an exception.
+   */
+  strict?: boolean;
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by

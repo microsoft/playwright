@@ -599,14 +599,11 @@ Shortcut for main frame's [`method: Frame.check`].
 
 ### param: Page.check.selector = %%-input-selector-%%
 
-### option: Page.check.position = %%-input-position-%%
-
 ### option: Page.check.force = %%-input-force-%%
-
 ### option: Page.check.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Page.check.position = %%-input-position-%%
+### option: Page.check.strict = %%-input-strict-%%
 ### option: Page.check.timeout = %%-input-timeout-%%
-
 ### option: Page.check.trial = %%-input-trial-%%
 
 ## async method: Page.click
@@ -628,21 +625,14 @@ Shortcut for main frame's [`method: Frame.click`].
 ### param: Page.click.selector = %%-input-selector-%%
 
 ### option: Page.click.button = %%-input-button-%%
-
 ### option: Page.click.clickCount = %%-input-click-count-%%
-
 ### option: Page.click.delay = %%-input-down-up-delay-%%
-
-### option: Page.click.position = %%-input-position-%%
-
-### option: Page.click.modifiers = %%-input-modifiers-%%
-
 ### option: Page.click.force = %%-input-force-%%
-
+### option: Page.click.modifiers = %%-input-modifiers-%%
 ### option: Page.click.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Page.click.position = %%-input-position-%%
+### option: Page.click.strict = %%-input-strict-%%
 ### option: Page.click.timeout = %%-input-timeout-%%
-
 ### option: Page.click.trial = %%-input-trial-%%
 
 ## async method: Page.close
@@ -709,19 +699,13 @@ Shortcut for main frame's [`method: Frame.dblclick`].
 ### param: Page.dblclick.selector = %%-input-selector-%%
 
 ### option: Page.dblclick.button = %%-input-button-%%
-
-### option: Page.dblclick.delay = %%-input-down-up-delay-%%
-
-### option: Page.dblclick.position = %%-input-position-%%
-
-### option: Page.dblclick.modifiers = %%-input-modifiers-%%
-
 ### option: Page.dblclick.force = %%-input-force-%%
-
+### option: Page.dblclick.delay = %%-input-down-up-delay-%%
+### option: Page.dblclick.modifiers = %%-input-modifiers-%%
 ### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Page.dblclick.position = %%-input-position-%%
+### option: Page.dblclick.strict = %%-input-strict-%%
 ### option: Page.dblclick.timeout = %%-input-timeout-%%
-
 ### option: Page.dblclick.trial = %%-input-trial-%%
 
 ## async method: Page.dispatchEvent
@@ -809,20 +793,18 @@ DOM event type: `"click"`, `"dragstart"`, etc.
 
 Optional event-specific initialization properties.
 
+### option: Page.dispatchEvent.strict = %%-input-strict-%%
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
 
 ## async method: Page.dragAndDrop
 
 ### param: Page.dragAndDrop.source = %%-input-source-%%
-
 ### param: Page.dragAndDrop.target = %%-input-target-%%
 
 ### option: Page.dragAndDrop.force = %%-input-force-%%
-
 ### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Page.dragAndDrop.strict = %%-input-strict-%%
 ### option: Page.dragAndDrop.timeout = %%-input-timeout-%%
-
 ### option: Page.dragAndDrop.trial = %%-input-trial-%%
 
 ## async method: Page.emulateMedia
@@ -1063,13 +1045,13 @@ var html = await page.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.o
 Shortcut for main frame's [`method: Frame.evalOnSelector`].
 
 ### param: Page.evalOnSelector.selector = %%-query-selector-%%
-
 ### param: Page.evalOnSelector.expression = %%-evaluate-expression-%%
-
 ### param: Page.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
+
+### option: Page.evalOnSelector.strict = %%-input-strict-%%
 
 ## async method: Page.evalOnSelectorAll
 * langs:
@@ -1106,9 +1088,7 @@ var divsCount = await page.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => d
 ```
 
 ### param: Page.evalOnSelectorAll.selector = %%-query-selector-%%
-
 ### param: Page.evalOnSelectorAll.expression = %%-evaluate-expression-%%
-
 ### param: Page.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
@@ -1762,6 +1742,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: Page.fill.force = %%-input-force-%%
 ### option: Page.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.fill.strict = %%-input-strict-%%
 ### option: Page.fill.timeout = %%-input-timeout-%%
 
 ## async method: Page.focus
@@ -1773,6 +1754,7 @@ Shortcut for main frame's [`method: Frame.focus`].
 
 ### param: Page.focus.selector = %%-input-selector-%%
 
+### option: Page.focus.strict = %%-input-strict-%%
 ### option: Page.focus.timeout = %%-input-timeout-%%
 
 ## method: Page.frame
@@ -1856,6 +1838,7 @@ Returns element attribute value.
 
 Attribute name to get the value for.
 
+### option: Page.getAttribute.strict = %%-input-strict-%%
 ### option: Page.getAttribute.timeout = %%-input-timeout-%%
 
 ## async method: Page.goBack
@@ -1948,14 +1931,11 @@ Shortcut for main frame's [`method: Frame.hover`].
 
 ### param: Page.hover.selector = %%-input-selector-%%
 
-### option: Page.hover.position = %%-input-position-%%
-
-### option: Page.hover.modifiers = %%-input-modifiers-%%
-
 ### option: Page.hover.force = %%-input-force-%%
-
+### option: Page.hover.modifiers = %%-input-modifiers-%%
+### option: Page.hover.position = %%-input-position-%%
+### option: Page.hover.strict = %%-input-strict-%%
 ### option: Page.hover.timeout = %%-input-timeout-%%
-
 ### option: Page.hover.trial = %%-input-trial-%%
 
 ## async method: Page.innerHTML
@@ -1965,6 +1945,7 @@ Returns `element.innerHTML`.
 
 ### param: Page.innerHTML.selector = %%-input-selector-%%
 
+### option: Page.innerHTML.strict = %%-input-strict-%%
 ### option: Page.innerHTML.timeout = %%-input-timeout-%%
 
 ## async method: Page.innerText
@@ -1974,6 +1955,7 @@ Returns `element.innerText`.
 
 ### param: Page.innerText.selector = %%-input-selector-%%
 
+### option: Page.innerText.strict = %%-input-strict-%%
 ### option: Page.innerText.timeout = %%-input-timeout-%%
 
 ## async method: Page.inputValue
@@ -1982,6 +1964,8 @@ Returns `element.innerText`.
 Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
 
 ### param: Page.inputValue.selector = %%-input-selector-%%
+
+### option: Page.inputValue.strict = %%-input-strict-%%
 ### option: Page.inputValue.timeout = %%-input-timeout-%%
 
 ## async method: Page.isChecked
@@ -1991,6 +1975,8 @@ Returns whether the element is checked. Throws if the element is not a checkbox 
 
 ### param: Page.isChecked.selector = %%-input-selector-%%
 
+
+### option: Page.isChecked.strict = %%-input-strict-%%
 ### option: Page.isChecked.timeout = %%-input-timeout-%%
 
 ## method: Page.isClosed
@@ -2005,6 +1991,7 @@ Returns whether the element is disabled, the opposite of [enabled](./actionabili
 
 ### param: Page.isDisabled.selector = %%-input-selector-%%
 
+### option: Page.isDisabled.strict = %%-input-strict-%%
 ### option: Page.isDisabled.timeout = %%-input-timeout-%%
 
 ## async method: Page.isEditable
@@ -2014,6 +2001,7 @@ Returns whether the element is [editable](./actionability.md#editable).
 
 ### param: Page.isEditable.selector = %%-input-selector-%%
 
+### option: Page.isEditable.strict = %%-input-strict-%%
 ### option: Page.isEditable.timeout = %%-input-timeout-%%
 
 ## async method: Page.isEnabled
@@ -2023,6 +2011,7 @@ Returns whether the element is [enabled](./actionability.md#enabled).
 
 ### param: Page.isEnabled.selector = %%-input-selector-%%
 
+### option: Page.isEnabled.strict = %%-input-strict-%%
 ### option: Page.isEnabled.timeout = %%-input-timeout-%%
 
 ## async method: Page.isHidden
@@ -2032,6 +2021,7 @@ Returns whether the element is hidden, the opposite of [visible](./actionability
 
 ### param: Page.isHidden.selector = %%-input-selector-%%
 
+### option: Page.isHidden.strict = %%-input-strict-%%
 ### option: Page.isHidden.timeout = %%-input-timeout-%%
 
 ## async method: Page.isVisible
@@ -2041,6 +2031,7 @@ Returns whether the element is [visible](./actionability.md#visible). [`option: 
 
 ### param: Page.isVisible.selector = %%-input-selector-%%
 
+### option: Page.isVisible.strict = %%-input-strict-%%
 ### option: Page.isVisible.timeout = %%-input-timeout-%%
 
 ## property: Page.keyboard
@@ -2360,7 +2351,7 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ### option: Page.press.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Page.press.strict = %%-input-strict-%%
 ### option: Page.press.timeout = %%-input-timeout-%%
 
 ## async method: Page.querySelector
@@ -2375,6 +2366,8 @@ return value resolves to `null`. To wait for an element on the page, use [`metho
 Shortcut for main frame's [`method: Frame.querySelector`].
 
 ### param: Page.querySelector.selector = %%-query-selector-%%
+
+### option: Page.querySelector.strict = %%-input-strict-%%
 
 ## async method: Page.querySelectorAll
 * langs:
@@ -2663,6 +2656,7 @@ Shortcut for main frame's [`method: Frame.selectOption`].
 ### param: Page.selectOption.values = %%-select-options-values-%%
 ### option: Page.selectOption.force = %%-input-force-%%
 ### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.selectOption.strict = %%-input-strict-%%
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: Page.setContent
@@ -2736,7 +2730,7 @@ are resolved relative to the the current working directory. For empty array, cle
 ### param: Page.setInputFiles.files = %%-input-files-%%
 
 ### option: Page.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Page.setInputFiles.strict = %%-input-strict-%%
 ### option: Page.setInputFiles.timeout = %%-input-timeout-%%
 
 ## async method: Page.setViewportSize
@@ -2816,16 +2810,12 @@ Shortcut for main frame's [`method: Frame.tap`].
 
 ### param: Page.tap.selector = %%-input-selector-%%
 
-### option: Page.tap.position = %%-input-position-%%
-
-### option: Page.tap.modifiers = %%-input-modifiers-%%
-
-### option: Page.tap.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: Page.tap.force = %%-input-force-%%
-
+### option: Page.tap.modifiers = %%-input-modifiers-%%
+### option: Page.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.tap.position = %%-input-position-%%
+### option: Page.tap.strict = %%-input-strict-%%
 ### option: Page.tap.timeout = %%-input-timeout-%%
-
 ### option: Page.tap.trial = %%-input-trial-%%
 
 ## async method: Page.textContent
@@ -2835,6 +2825,7 @@ Returns `element.textContent`.
 
 ### param: Page.textContent.selector = %%-input-selector-%%
 
+### option: Page.textContent.strict = %%-input-strict-%%
 ### option: Page.textContent.timeout = %%-input-timeout-%%
 
 ## async method: Page.title
@@ -2894,7 +2885,7 @@ A text to type into a focused element.
 Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: Page.type.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Page.type.strict = %%-input-strict-%%
 ### option: Page.type.timeout = %%-input-timeout-%%
 
 ## async method: Page.uncheck
@@ -2918,14 +2909,11 @@ Shortcut for main frame's [`method: Frame.uncheck`].
 
 ### param: Page.uncheck.selector = %%-input-selector-%%
 
-### option: Page.uncheck.position = %%-input-position-%%
-
 ### option: Page.uncheck.force = %%-input-force-%%
-
 ### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Page.uncheck.position = %%-input-position-%%
+### option: Page.uncheck.strict = %%-input-strict-%%
 ### option: Page.uncheck.timeout = %%-input-timeout-%%
-
 ### option: Page.uncheck.trial = %%-input-trial-%%
 
 ## async method: Page.unroute
@@ -3687,6 +3675,7 @@ class FrameExamples
 ### param: Page.waitForSelector.selector = %%-query-selector-%%
 
 ### option: Page.waitForSelector.state = %%-wait-for-selector-state-%%
+### option: Page.waitForSelector.strict = %%-input-strict-%%
 ### option: Page.waitForSelector.timeout = %%-input-timeout-%%
 
 ## async method: Page.waitForTimeout
