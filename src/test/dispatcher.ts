@@ -19,14 +19,23 @@ import path from 'path';
 import { EventEmitter } from 'events';
 import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import type { TestResult, Reporter, TestStatus } from '../../types/testReporter';
-import { Suite, TestCase } from './test';
+import { TestCase } from './test';
 import { Loader } from './loader';
 
+// TODO: use TestGroup instead of DispatcherEntry
 type DispatcherEntry = {
   runPayload: RunPayload;
   hash: string;
   repeatEachIndex: number;
   projectIndex: number;
+};
+
+export type TestGroup = {
+  workerHash: string;
+  requireFile: string;
+  repeatEachIndex: number;
+  projectIndex: number;
+  tests: TestCase[];
 };
 
 export class Dispatcher {
@@ -38,82 +47,36 @@ export class Dispatcher {
   private _queue: DispatcherEntry[] = [];
   private _stopCallback = () => {};
   readonly _loader: Loader;
-  private _suite: Suite;
   private _reporter: Reporter;
   private _hasWorkerErrors = false;
   private _isStopped = false;
   private _failureCount = 0;
 
-  constructor(loader: Loader, suite: Suite, reporter: Reporter) {
+  constructor(loader: Loader, testGroups: TestGroup[], reporter: Reporter) {
     this._loader = loader;
     this._reporter = reporter;
 
-    this._suite = suite;
-    for (const suite of this._suite.suites) {
-      for (const test of suite.allTests())
-        this._testById.set(test._id, { test, result: test._appendTestResult() });
-    }
-
-    this._queue = this._filesSortedByWorkerHash();
-
-    // Shard tests.
-    const shard = this._loader.fullConfig().shard;
-    if (shard) {
-      let total = this._suite.allTests().length;
-      const shardSize = Math.ceil(total / shard.total);
-      const from = shardSize * (shard.current - 1);
-      const to = shardSize * shard.current;
-      let current = 0;
-      total = 0;
-      const filteredQueue: DispatcherEntry[] = [];
-      for (const entry of this._queue) {
-        if (current >= from && current < to) {
-          filteredQueue.push(entry);
-          total += entry.runPayload.entries.length;
-        }
-        current += entry.runPayload.entries.length;
-      }
-      this._queue = filteredQueue;
-    }
-  }
-
-  _filesSortedByWorkerHash(): DispatcherEntry[] {
-    const entriesByWorkerHashAndFile = new Map<string, Map<string, DispatcherEntry>>();
-    for (const projectSuite of this._suite.suites) {
-      for (const test of projectSuite.allTests()) {
-        let entriesByFile = entriesByWorkerHashAndFile.get(test._workerHash);
-        if (!entriesByFile) {
-          entriesByFile = new Map();
-          entriesByWorkerHashAndFile.set(test._workerHash, entriesByFile);
-        }
-        const file = test._requireFile;
-        let entry = entriesByFile.get(file);
-        if (!entry) {
-          entry = {
-            runPayload: {
-              entries: [],
-              file,
-            },
-            repeatEachIndex: test._repeatEachIndex,
-            projectIndex: test._projectIndex,
-            hash: test._workerHash,
-          };
-          entriesByFile.set(file, entry);
-        }
+    this._queue = [];
+    for (const group of testGroups) {
+      const entry: DispatcherEntry = {
+        runPayload: {
+          file: group.requireFile,
+          entries: []
+        },
+        hash: group.workerHash,
+        repeatEachIndex: group.repeatEachIndex,
+        projectIndex: group.projectIndex,
+      };
+      for (const test of group.tests) {
+        const result = test._appendTestResult();
+        this._testById.set(test._id, { test, result });
         entry.runPayload.entries.push({
-          retry: this._testById.get(test._id)!.result.retry,
+          retry: result.retry,
           testId: test._id,
         });
       }
+      this._queue.push(entry);
     }
-
-    const result: DispatcherEntry[] = [];
-    for (const entriesByFile of entriesByWorkerHashAndFile.values()) {
-      for (const entry of entriesByFile.values())
-        result.push(entry);
-    }
-    result.sort((a, b) => a.hash < b.hash ? -1 : (a.hash === b.hash ? 0 : 1));
-    return result;
   }
 
   async run() {
