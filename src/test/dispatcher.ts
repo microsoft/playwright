@@ -61,8 +61,8 @@ export class Dispatcher {
     if (shard) {
       let total = this._suite.allTests().length;
       const shardSize = Math.ceil(total / shard.total);
-      const from = shardSize * shard.current;
-      const to = shardSize * (shard.current + 1);
+      const from = shardSize * (shard.current - 1);
+      const to = shardSize * shard.current;
       let current = 0;
       total = 0;
       const filteredQueue: DispatcherEntry[] = [];
