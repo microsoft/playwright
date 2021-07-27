@@ -43,6 +43,7 @@ export class Selectors {
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
+      '_visible', '_first'
     ]);
     this._engines = new Map();
   }

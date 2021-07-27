@@ -141,10 +141,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 }
 
 export interface Locator {
-  first(options?: {
+  elementHandle(options?: {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
-  all(): Promise<null|ElementHandle<SVGElement | HTMLElement>[]>;
+  elementHandles(): Promise<null|ElementHandle<SVGElement | HTMLElement>[]>;
   evaluate<R, Arg>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg: Arg): Promise<R>;
   evaluate<R>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, void, R>): Promise<R>;
   evaluateAll<R, Arg>(pageFunction: PageFunctionOn<(SVGElement | HTMLElement)[], Arg, R>, arg: Arg): Promise<R>;

@@ -27,7 +27,7 @@ import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
 import { Events } from './events';
-import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, kLifecycleEvents } from './types';
+import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, kLifecycleEvents, StrictOptions } from './types';
 import { urlMatches } from './clientHelper';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -401,7 +401,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async selectOption(selector: string, values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
+  async selectOption(selector: string, values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions & StrictOptions = {}): Promise<string[]> {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
       return (await channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options })).values;
     });

@@ -6963,17 +6963,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  */
 export interface Locator {
   /**
-   * Resolves given locator to the first VISIBLE matching DOM element. If no elements matching the query are visible, waits
-   * for them up to a given timeout.
+   * Resolves given locator to the first matching DOM element. If no elements matching the query are visible, waits for them
+   * up to a given timeout. If multiple elements match the selector, throws.
    * @param options
    */
-  first(options?: {
+  elementHandle(options?: {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
    * Resolves given locator to all matching DOM elements.
    */
-  all(): Promise<null|ElementHandle<SVGElement | HTMLElement>[]>;
+  elementHandles(): Promise<null|ElementHandle<SVGElement | HTMLElement>[]>;
   /**
    * Returns the return value of `pageFunction`.
    *
@@ -7193,6 +7193,11 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Returns the number of elements matching given selector.
+   */
+  count(): Promise<number>;
+
+  /**
    * This method double clicks the element by performing the following steps:
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
@@ -7375,6 +7380,11 @@ export interface Locator {
      */
     timeout?: number;
   }): Promise<void>;
+
+  /**
+   * Returns locator to the first matching element.
+   */
+  first(): Locator;
 
   /**
    * Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the element.
