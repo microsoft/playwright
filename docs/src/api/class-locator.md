@@ -534,6 +534,11 @@ Returns whether the element is [visible](./actionability.md#visible).
 
 ### option: Locator.isVisible.timeout = %%-input-timeout-%%
 
+## method: Locator.last
+- returns: <[Locator]>
+
+Returns locator to the last matching element.
+
 ## method: Locator.locator
 - returns: <[Locator]>
 
@@ -541,6 +546,14 @@ The method finds an element matching the specified selector in the `Locator`'s s
 [Working with selectors](./selectors.md) for more details.
 
 ### param: Locator.locator.selector = %%-find-selector-%%
+
+## method: Locator.nth
+- returns: <[Locator]>
+
+Returns locator to the n-th matching element.
+
+### param: Locator.nth.index
+- `index` <[int]>
 
 ## async method: Locator.press
 

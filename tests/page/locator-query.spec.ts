@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should respect first()', async ({page}) => {
+it('should respect first() and last()', async ({page}) => {
   await page.setContent(`
   <section>
     <div><p>A</p></div>
@@ -27,4 +27,23 @@ it('should respect first()', async ({page}) => {
   expect(await page.locator('div >> p').count()).toBe(6);
   expect(await page.locator('div').locator('p').count()).toBe(6);
   expect(await page.locator('div').first().locator('p').count()).toBe(1);
+  expect(await page.locator('div').last().locator('p').count()).toBe(3);
+});
+
+it('should respect nth()', async ({page}) => {
+  await page.setContent(`
+  <section>
+    <div><p>A</p></div>
+    <div><p>A</p><p>A</p></div>
+    <div><p>A</p><p>A</p><p>A</p></div>
+  </section>`);
+  expect(await page.locator('div >> p').nth(0).count()).toBe(1);
+  expect(await page.locator('div').nth(1).locator('p').count()).toBe(2);
+  expect(await page.locator('div').nth(2).locator('p').count()).toBe(3);
+});
+
+it('should throw on capture w/ nth()', async ({page}) => {
+  await page.setContent(`<section><div><p>A</p></div></section>`);
+  const e = await page.locator('*css=div >> p').nth(0).click().catch(e => e);
+  expect(e.message).toContain(`Can't query n-th element`);
 });
