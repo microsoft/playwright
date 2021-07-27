@@ -84,7 +84,11 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({}) => {
+      test('not run', async ({}) => {
+        console.log('log');
+        console.error('error');
+      });
+      test.only('is run', async ({}) => {
         console.log('log');
         console.error('error');
       });
@@ -94,18 +98,18 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%reporter-begin-begin%%',
-    '%%reporter-testbegin-pass-foo%%',
+    '%%reporter-testbegin-is run-foo%%',
     '%%reporter-stdout%%',
     '%%reporter-stderr%%',
-    '%%reporter-testend-pass-foo%%',
-    '%%reporter-testbegin-pass-foo%%',
+    '%%reporter-testend-is run-foo%%',
+    '%%reporter-testbegin-is run-foo%%',
     '%%reporter-stdout%%',
     '%%reporter-stderr%%',
-    '%%reporter-testend-pass-foo%%',
-    '%%reporter-testbegin-pass-bar%%',
+    '%%reporter-testend-is run-foo%%',
+    '%%reporter-testbegin-is run-bar%%',
     '%%reporter-stdout%%',
     '%%reporter-stderr%%',
-    '%%reporter-testend-pass-bar%%',
+    '%%reporter-testend-is run-bar%%',
     '%%reporter-end-end%%',
   ]);
 });
