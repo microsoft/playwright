@@ -81,6 +81,7 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.14.8",
+    "@babel/plugin-transform-typescript": "^7.14.6",
     "@babel/preset-react": "^7.14.5",
     "@types/babel__code-frame": "^7.0.3",
     "@types/babel__core": "^7.1.15",
