@@ -84,24 +84,24 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     await this._client.send('Input.insertText', { text });
   }
 
-  async imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string | 'None', replacement_start: number | -1, replacement_end: number | -1): Promise<void> {
-    if (replacement_start === -1 && replacement_end === -1)
-      await this._client.send('Input.imeSetComposition', { text, selection_start, selection_end });
+  async imeSetComposition(text: string, selectionStart: number, selectionEnd: number, triggerKey: string | 'None', replacementStart: number | -1, replacementEnd: number | -1): Promise<void> {
+    if (replacementStart === -1 && replacementEnd === -1)
+      await this._client.send('Input.imeSetComposition', { text, selectionStart, selectionEnd });
     else
-      await this._client.send('Input.imeSetComposition', { text, selection_start, selection_end, replacement_start, replacement_end });
+      await this._client.send('Input.imeSetComposition', { text, selectionStart, selectionEnd, replacementStart, replacementEnd });
   }
 
-  async imeCommitComposition(text: string, trigger_key: string | 'None') {
+  async imeCommitComposition(text: string, triggerKey: string | 'None') {
     await this._client.send('Input.imeCommitComposition', { text });
   }
 
   async imeCancelComposition(): Promise<void> {
     const text = '';
-    const selection_start = 0;
-    const selection_end = 0;
-    const replacement_start = 0;
-    const replacement_end = 0;
-    await this._client.send('Input.imeSetComposition', { text, selection_start, selection_end, replacement_start, replacement_end});
+    const selectionStart = 0;
+    const selectionEnd = 0;
+    const replacementStart = 0;
+    const replacementEnd = 0;
+    await this._client.send('Input.imeSetComposition', { text, selectionStart, selectionEnd, replacementStart, replacementEnd});
   }
 }
 

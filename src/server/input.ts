@@ -37,8 +37,8 @@ export interface RawKeyboard {
   keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
   keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void>;
   sendText(text: string): Promise<void>;
-  imeSetComposition(text: string, selection_start: number, selection_end: number, trigger_key: string | 'None', replacement_start: number | -1, replacement_end: number | -1): Promise<void>;
-  imeCommitComposition(text: string, trigger_key: string | 'None'): Promise<void>;
+  imeSetComposition(text: string, selectionStart: number, selectionEnd: number, triggerKey: string | 'None', replacementStart: number | -1, replacementEnd: number | -1): Promise<void>;
+  imeCommitComposition(text: string, triggerKey: string | 'None'): Promise<void>;
   imeCancelComposition(): Promise<void>;
 }
 
@@ -104,8 +104,8 @@ export class Keyboard {
     await this._page._doSlowMo();
   }
 
-  async imeCancelComposition(trigger_key: string) {
-    let description = this._keyDescriptionForString(trigger_key);
+  async imeCancelComposition(triggerKey: string) {
+    let description = this._keyDescriptionForString(triggerKey);
     const autoRepeat = this._pressedKeys.has(description.code);
     this._pressedKeys.add(description.code);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
@@ -113,7 +113,7 @@ export class Keyboard {
     const text = description.text;
     await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
     await this._raw.imeCancelComposition();
-    description = this._keyDescriptionForString(trigger_key);
+    description = this._keyDescriptionForString(triggerKey);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.delete(description.key as types.KeyboardModifier);
     this._pressedKeys.delete(description.code);
@@ -121,22 +121,20 @@ export class Keyboard {
     await this._page._doSlowMo();
   }
 
-  async imeSetComposition(text: string, selection_start: number, selection_end: number, options?: { trigger_key?: string, replacement_start?: number, replacement_end?: number, delay?: number}) {
+  async imeSetComposition(text: string, selectionStart: number, selectionEnd: number, options?: { triggerKey?: string, replacementStart?: number, replacementEnd?: number, delay?: number}) {
     const delay = (options && options.delay) || undefined;
-    let replacement_start = -1;
-    let replacement_end = -1;
+    let replacementStart = -1;
+    let replacementEnd = -1;
     let autoRepeat = undefined;
-    let trigger_key = (options && options.trigger_key) || 'None';
-    if (options && options.replacement_start !== undefined)
-      replacement_start = options.replacement_start;
-    if (options && options.replacement_end !== undefined)
-      replacement_end = options.replacement_end;
-    if (delay)
-      await new Promise(f => setTimeout(f, delay));
-    if (trigger_key !== 'None') {
-      const tokens = this.split(trigger_key);
+    let triggerKey = (options && options.triggerKey) || 'None';
+    if (options && options.replacementStart !== undefined)
+      replacementStart = options.replacementStart;
+    if (options && options.replacementEnd !== undefined)
+      replacementEnd = options.replacementEnd;
+    if (triggerKey !== 'None') {
+      const tokens = this.split(triggerKey);
       const promises = [];
-      trigger_key = tokens[tokens.length - 1];
+      triggerKey = tokens[tokens.length - 1];
       const no_text = undefined;
       for (let i = 0; i < tokens.length - 1; ++i) {
         const description = this._keyDescriptionForString(tokens[i]);
@@ -146,7 +144,7 @@ export class Keyboard {
           this._pressedModifiers.add(description.key as types.KeyboardModifier);
         promises.push(this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, no_text));
       }
-      const description = this._keyDescriptionForString(trigger_key);
+      const description = this._keyDescriptionForString(triggerKey);
       autoRepeat = this._pressedKeys.has(description.code);
       this._pressedKeys.add(description.code);
       if (kModifiers.includes(description.key as types.KeyboardModifier))
@@ -154,11 +152,13 @@ export class Keyboard {
       promises.push(this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, no_text));
       await Promise.all(promises);
     }
-    await this._raw.imeSetComposition(text, selection_start, selection_end, trigger_key, replacement_start, replacement_end);
-    if (trigger_key !== 'None') {
-      const tokens = this.split(trigger_key);
+    await this._raw.imeSetComposition(text, selectionStart, selectionEnd, triggerKey, replacementStart, replacementEnd);
+    if (delay)
+      await new Promise(f => setTimeout(f, delay));
+    if (triggerKey !== 'None') {
+      const tokens = this.split(triggerKey);
       const promises = [];
-      trigger_key = tokens[tokens.length - 1];
+      triggerKey = tokens[tokens.length - 1];
       for (let i = 0; i < tokens.length - 1; ++i) {
         const description = this._keyDescriptionForString(tokens[i]);
         this._pressedKeys.delete(description.code);
@@ -166,7 +166,7 @@ export class Keyboard {
           this._pressedModifiers.delete(description.key as types.KeyboardModifier);
         promises.push(this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location,));
       }
-      const description = this._keyDescriptionForString(trigger_key);
+      const description = this._keyDescriptionForString(triggerKey);
       if (kModifiers.includes(description.key as types.KeyboardModifier))
         this._pressedModifiers.delete(description.key as types.KeyboardModifier);
       this._pressedKeys.delete(description.code);
@@ -176,12 +176,12 @@ export class Keyboard {
     await this._page._doSlowMo();
   }
 
-  async imeCommitComposition(text: string, options?: { trigger_key?: string, delay?: number}) {
+  async imeCommitComposition(text: string, options?: { triggerKey?: string, delay?: number}) {
     const delay = (options && options.delay) || undefined;
-    const trigger_key = (options && options.trigger_key) || 'None';
+    const triggerKey = (options && options.triggerKey) || 'None';
     let autoRepeat = undefined;
-    if (trigger_key !== 'None') {
-      const description = this._keyDescriptionForString(trigger_key);
+    if (triggerKey !== 'None') {
+      const description = this._keyDescriptionForString(triggerKey);
       autoRepeat = this._pressedKeys.has(description.code);
       this._pressedKeys.add(description.code);
       if (kModifiers.includes(description.key as types.KeyboardModifier))
@@ -189,11 +189,11 @@ export class Keyboard {
       const no_text = undefined;
       await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, no_text);
     }
+    await this._raw.imeCommitComposition(text, triggerKey);
     if (delay)
       await new Promise(f => setTimeout(f, delay));
-    await this._raw.imeCommitComposition(text, trigger_key);
-    if (trigger_key !== 'None') {
-      const description = this._keyDescriptionForString(trigger_key);
+    if (triggerKey !== 'None') {
+      const description = this._keyDescriptionForString(triggerKey);
       await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
     }
     await this._page._doSlowMo();

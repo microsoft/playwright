@@ -208,29 +208,29 @@ Sets input to the specified text value.
 ## async method: Keyboard.imeSetComposition
 
 If there is an active composition, it will update the composition. Otherwise it will start a new one. It will dispatch either
-a `compositionstart` or a `compositionupdate`. It will also dispatch `keydown` and `keyup` events if [`option: trigger_key`] is specified.
+a `compositionstart` or a `compositionupdate`. It will also dispatch `keydown` and `keyup` events if [`option: triggerKey`] is specified.
 
 ### param: Keyboard.imeSetComposition.text
 - `text` <[string]>
 
 Sets the text in the active composition
 
-### param: Keyboard.imeSetComposition.selection_start
-- `selection_start` <[int]>
+### param: Keyboard.imeSetComposition.selectionStart
+- `selectionStart` <[int]>
 
 Sets the selection start of the focused element after the composition text is inserted. This is relatvie to the active composition,
 so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection start of `1` will set the
 selection start to be after `d`, which is absolute position `4`.
 
-### param: Keyboard.imeSetComposition.selection_end
-- `selection_end` <[int]>
+### param: Keyboard.imeSetComposition.selectionEnd
+- `selectionEnd` <[int]>
 
 Sets the selection end of the focused element after the composition text is inserted. This is relatvie to the active composition,
 so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection end of `1` will set the
 selection end to be after `d`, which is absolute position `4`.
 
-### option: Keyboard.imeSetComposition.trigger_key
-- `trigger_key` <[string]>
+### option: Keyboard.imeSetComposition.triggerKey
+- `triggerKey` <[string]>
 
 Sets the key(s) that triggers the composition event, a `keyup` and `keydown` event will be generated for each specified key.
 Key chaining is supported, so values such as `Meta+Slash` are permitted.
@@ -240,14 +240,14 @@ Examples of the keys are:
 `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, 
  `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, etc.
 
-### option: Keyboard.imeSetComposition.replacement_start
-- `replacement_start` <[int]>
+### option: Keyboard.imeSetComposition.replacementStart
+- `replacementStart` <[int]>
 
 Sets the start position of the absolute range that is to be replaced with the composition text.
 
 
-### option: Keyboard.imeSetComposition.replacement_end
-- `replacement_end` <[int]>
+### option: Keyboard.imeSetComposition.replacementEnd
+- `replacementEnd` <[int]>
 
 Sets the end position of the absolute range that is to be replaced with the composition text.
 
@@ -261,8 +261,8 @@ Time to wait between `composition` events in milliseconds. Defaults to 0.
 const page = await browser.newPage();
 await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
 await page.focus('#input');
-await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's'});
-await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u'});
+await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's'});
+await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u'});
 await browser.close();
 ```
 
@@ -271,8 +271,8 @@ await browser.close();
 page = await browser.new_page()
 await page.goto("https://w3c.github.io/uievents/tools/key-event-viewer-ce.html")
 await page.focus("#input");
-await page.keyboard.imeSetComposition("ｓ", 1, 1, trigger_key="s")
-await page.keyboard.imeSetComposition("す", 1, 1, trigger_key="u")
+await page.keyboard.imeSetComposition("ｓ", 1, 1, triggerKey="s")
+await page.keyboard.imeSetComposition("す", 1, 1, triggerKey="u")
 await browser.close()
 ```
 
@@ -280,8 +280,8 @@ await browser.close()
 page = browser.new_page()
 page.goto("https://w3c.github.io/uievents/tools/key-event-viewer-ce.html")
 page.focus("#input");
-page.keyboard.imeSetComposition("ｓ", 1, 1, trigger_key="s")
-page.keyboard.imeSetComposition("す", 1, 1, trigger_key="u")
+page.keyboard.imeSetComposition("ｓ", 1, 1, triggerKey="s")
+page.keyboard.imeSetComposition("す", 1, 1, triggerKey="u")
 browser.close()
 ```
 
@@ -289,15 +289,15 @@ browser.close()
 ## async method: Keyboard.imeCommitComposition
 
 Will commit the composition with the given text, placing the caret at the end of the composition and dispatching a `compositionend` event as well as
-`keydown` and `keyup` events if [`option: trigger_key`] is specified.
+`keydown` and `keyup` events if [`option: triggerKey`] is specified.
 
 ### param: Keyboard.imeCommitComposition.text
 - `text` <[string]>
 
 Text that will be committed with the composition. 
 
-### option: Keyboard.imeCommitComposition.trigger_key
-- `trigger_key` <[string]>
+### option: Keyboard.imeCommitComposition.triggerKey
+- `triggerKey` <[string]>
 
 Sets the key that triggers the composition event, a `key_up` and `key_down` event will be generated for the specified key.
 Examples of the keys are:
@@ -315,8 +315,8 @@ Time to wait before the `compositionend` event in milliseconds. Defaults to 0.
 const page = await browser.newPage();
 await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
 await page.focus('#input');
-await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's'});
-await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u'});
+await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's'});
+await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u'});
 await page.keyboard.imeCommitComposition('す', { delay: 2000});
 await browser.close();
 ```
@@ -326,8 +326,8 @@ await browser.close();
 page = await browser.new_page()
 await page.goto("https://w3c.github.io/uievents/tools/key-event-viewer-ce.html")
 await page.focus("#input");
-await page.keyboard.imeSetComposition("ｓ", 1, 1, trigger_key="s")
-await page.keyboard.imeSetComposition("す", 1, 1, trigger_key="u")
+await page.keyboard.imeSetComposition("ｓ", 1, 1, triggerKey="s")
+await page.keyboard.imeSetComposition("す", 1, 1, triggerKey="u")
 await page.keyboard.imeCommitComposition("す", delay=2000)
 await browser.close()
 ```
@@ -336,8 +336,8 @@ await browser.close()
 page = browser.new_page()
 page.goto("https://w3c.github.io/uievents/tools/key-event-viewer-ce.html")
 page.focus("#input");
-page.keyboard.imeSetComposition("ｓ", 1, 1, trigger_key="s")
-page.keyboard.imeSetComposition("す", 1, 1, trigger_key="u")
+page.keyboard.imeSetComposition("ｓ", 1, 1, triggerKey="s")
+page.keyboard.imeSetComposition("す", 1, 1, triggerKey="u")
 page.keyboard.imeCommitComposition("す", delay=2000)
 browser.close()
 ```
@@ -346,10 +346,10 @@ browser.close()
 ## async method: Keyboard.imeCancelComposition
 
 If there is an active composition, it will end the composition and remove the text in active composition. It will dispatch either
-a `compositionupdate` and a `compositionend`. It will also dispatch `keydown` and `keyup` events for [`param: trigger_key`].
+a `compositionupdate` and a `compositionend`. It will also dispatch `keydown` and `keyup` events for [`param: triggerKey`].
 
-### param: Keyboard.imeCancelComposition.trigger_key
-- `trigger_key` <[string]>
+### param: Keyboard.imeCancelComposition.triggerKey
+- `triggerKey` <[string]>
 
 Sets the key that triggers the composition event, a `keyup` and `keydown` event will be generated for the specified key.
 Examples of the keys are:
@@ -362,8 +362,8 @@ Examples of the keys are:
 const page = await browser.newPage();
 await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
 await page.focus('#input');
-await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's'});
-await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u'});
+await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's'});
+await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u'});
 await page.keyboard.imeCancelComposition("Enter");
 await browser.close();
 ```
@@ -373,8 +373,8 @@ await browser.close();
 page = await browser.new_page()
 await page.goto("https://w3c.github.io/uievents/tools/key-event-viewer-ce.html")
 await page.focus("#input");
-await page.keyboard.imeSetComposition("ｓ", 1, 1, trigger_key="s")
-await page.keyboard.imeSetComposition("す", 1, 1, trigger_key="u")
+await page.keyboard.imeSetComposition("ｓ", 1, 1, triggerKey="s")
+await page.keyboard.imeSetComposition("す", 1, 1, triggerKey="u")
 await page.keyboard.imeCancelComposition("Enter")
 await browser.close()
 ```
@@ -383,8 +383,8 @@ await browser.close()
 page = browser.new_page()
 page.goto("https://w3c.github.io/uievents/tools/key-event-viewer-ce.html")
 page.focus("#input");
-page.keyboard.imeSetComposition("ｓ", 1, 1, trigger_key="s")
-page.keyboard.imeSetComposition("す", 1, 1, trigger_key="u")
+page.keyboard.imeSetComposition("ｓ", 1, 1, triggerKey="s")
+page.keyboard.imeSetComposition("す", 1, 1, triggerKey="u")
 page.keyboard.imeCancelComposition("Enter")
 browser.close()
 ```

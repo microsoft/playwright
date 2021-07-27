@@ -86,22 +86,22 @@ it('insertText should only emit input event', async ({page, server}) => {
 });
 
 
-it('should verify correct text values for keyboard.imeSetComposition, imeCommitComposition', async ({page, server, browserName}) => {
+it.only('should verify correct text values for keyboard.imeSetComposition, imeCommitComposition', async ({page, server, browserName}) => {
   it.skip(browserName === 'firefox');
   it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
-  await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's' });
-  await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u' });
-  await page.keyboard.imeSetComposition('すｓ', 2, 2, { trigger_key: 's' });
-  await page.keyboard.imeSetComposition('すｓｈ', 3, 3, { trigger_key: 'h' });
-  await page.keyboard.imeSetComposition('すし', 2, 2, { trigger_key: 'i' });
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's' });
+  await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u' });
+  await page.keyboard.imeSetComposition('すｓ', 2, 2, { triggerKey: 's' });
+  await page.keyboard.imeSetComposition('すｓｈ', 3, 3, { triggerKey: 'h' });
+  await page.keyboard.imeSetComposition('すし', 2, 2, { triggerKey: 'i' });
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('すし');
-  await page.keyboard.imeCommitComposition('すし', { trigger_key: 'Enter'});
+  await page.keyboard.imeCommitComposition('すし', { triggerKey: 'Enter'});
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('すし');
 });
 
-it('should verify correct event sequence for keyboard.imeSetComposition, imeCommitComposition', async ({page, server, browserName}) => {
+it.only('should verify correct event sequence for keyboard.imeSetComposition, imeCommitComposition', async ({page, server, browserName}) => {
   it.skip(browserName === 'firefox');
   it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
@@ -116,15 +116,15 @@ it('should verify correct event sequence for keyboard.imeSetComposition, imeComm
     document.addEventListener('compositionend', e => events.push(e.type));
     return events;
   });
-  await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's', delay: 2000 });
-  await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u', delay: 2000 });
-  await page.keyboard.imeCommitComposition('す', { trigger_key: 'Enter', delay: 2000});
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's', delay: 2000 });
+  await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u', delay: 2000 });
+  await page.keyboard.imeCommitComposition('す', { triggerKey: 'Enter', delay: 2000});
   expect(await events.jsonValue()).toEqual(['keydown', 'compositionstart', 'compositionupdate', 'input',
     'keyup','keydown', 'compositionupdate', 'input', 'keyup', 'keydown', 'compositionupdate', 'input', 'compositionend',
     'keyup']);
 });
 
-it('should verify keyboard.imeSetComposition, imeCommitComposition reconversion scenario', async ({page, server, browserName}) => {
+it.only('should verify keyboard.imeSetComposition, imeCommitComposition reconversion scenario', async ({page, server, browserName}) => {
   it.skip(browserName === 'firefox');
   it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
@@ -133,43 +133,114 @@ it('should verify keyboard.imeSetComposition, imeCommitComposition reconversion 
   await page.press('textarea', 'ArrowLeft');
   await page.press('textarea', 'ArrowLeft');
   await page.press('textarea', 'ArrowLeft');
-  await page.keyboard.imeSetComposition('オニ', 2, 2, { trigger_key: 'Meta+Slash', replacement_start: 0, replacement_end: 1});
+  await page.keyboard.imeSetComposition('オニ', 2, 2, { triggerKey: 'Meta+Slash', replacementStart: 0, replacementEnd: 1});
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('オニしおに');
-  await page.keyboard.imeCommitComposition('オニ', { trigger_key: 'Enter'});
+  await page.keyboard.imeCommitComposition('オニ', { triggerKey: 'Enter'});
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('オニしおに');
 });
 
-it('should verify keyboard.imeSetComposition, imeCommitComposition no trigger key for commit', async ({page, server, browserName}) => {
+it.only('should verify keyboard.imeSetComposition, imeCommitComposition no trigger key for commit', async ({page, server, browserName}) => {
   it.skip(browserName === 'firefox');
   it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.fill('textarea', 'abcd');
-  await page.keyboard.imeSetComposition('e', 1, 1, { trigger_key: 'e'});
-  const selection_start = await page.$eval('textarea', el => el.selectionStart);
-  const selection_end = await page.$eval('textarea', el => el.selectionEnd);
-  expect(selection_start === 5).toBeTruthy();
-  expect(selection_end === 5).toBeTruthy();
+  await page.keyboard.imeSetComposition('e', 1, 1, { triggerKey: 'e'});
+  const selectionStart = await page.$eval('textarea', el => el.selectionStart);
+  const selectionEnd = await page.$eval('textarea', el => el.selectionEnd);
+  expect(selectionStart === 5).toBeTruthy();
+  expect(selectionEnd === 5).toBeTruthy();
   await page.keyboard.imeCommitComposition('e');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('abcde');
 });
 
 
-it('should verify keyboard.imeCancelComposition output', async ({page, server, browserName}) => {
+it.only('should verify keyboard.imeCancelComposition output', async ({page, server, browserName}) => {
   it.skip(browserName === 'firefox');
   it.skip(browserName === 'webkit');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
-  await page.keyboard.imeSetComposition('ｓ', 1, 1, { trigger_key: 's' });
-  await page.keyboard.imeSetComposition('す', 1, 1, { trigger_key: 'u' });
-  await page.keyboard.imeSetComposition('すｓ', 2, 2, { trigger_key: 's' });
-  await page.keyboard.imeSetComposition('すｓｈ', 3, 3, { trigger_key: 'h' });
-  await page.keyboard.imeSetComposition('すし', 2, 2, { trigger_key: 'i' });
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's' });
+  await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u' });
+  await page.keyboard.imeSetComposition('すｓ', 2, 2, { triggerKey: 's' });
+  await page.keyboard.imeSetComposition('すｓｈ', 3, 3, { triggerKey: 'h' });
+  await page.keyboard.imeSetComposition('すし', 2, 2, { triggerKey: 'i' });
   await page.keyboard.imeCancelComposition('Escape');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('');
 
 });
 
+// Tests for demo
+
+it('should verify keyboard.imeSetComposition, arrowDown to simulate choosing from IME menu', async ({ page }) => {
+  await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer.html');
+  await page.focus('#input');
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's', delay: 2000});
+  await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u', delay: 2000});
+  await page.keyboard.imeSetComposition('すｓ', 2, 2, { triggerKey: 's', delay: 2000});
+  await page.keyboard.imeSetComposition('すｓｈ', 3, 3, { triggerKey: 'h', delay: 2000});
+  await page.keyboard.imeSetComposition('すし', 2, 2, { triggerKey: 'i', delay: 2000});
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('すし');
+  await page.keyboard.imeSetComposition('すし', 1, 1, { triggerKey: 'ArrowLeft', delay: 2000});
+  await page.keyboard.imeSetComposition('すし', 0, 0, { triggerKey: 'ArrowLeft', delay: 2000});
+  await page.keyboard.imeSetComposition('寿司屋', 3, 3, { triggerKey: 'ArrowDown', delay: 2000});
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('寿司屋');
+  await page.keyboard.imeSetComposition('寿司', 2, 2, { triggerKey: 'ArrowDown', delay: 2000});
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('寿司');
+  await page.keyboard.imeSetComposition('スシロー', 4, 4, { triggerKey: 'ArrowDown', delay: 2000});
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('スシロー');
+  await page.keyboard.imeCommitComposition('スシロー', { triggerKey: 'Enter', delay: 4000});
+  expect(await page.evaluate(() => document.querySelector('#input').value)).toBe('スシロー');
+  await page.pause();
+});
+
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+
+it('should verify keyboard.imeCancelComposition output', async ({page}) => {
+  await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer.html');
+  await page.focus('#input');
+  await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's', delay: 5000 });
+  await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u', delay: 5000 });
+  await page.keyboard.imeCommitComposition('す', { triggerKey: 'Enter'});
+  expect(await page.evaluate(() => document.querySelector('input').value)).toBe('す');
+  await page.pause();
+});
+
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+
+it('should verify keyboard.imeCancelComposition output', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  await page.fill('textarea', 'abcd');
+  const events = await page.evaluateHandle(() => {
+    const events = [];
+    document.addEventListener('compositionstart', e => events.push(e.type));
+    document.addEventListener('input', e => events.push(e.type));
+    document.addEventListener('compositionupdate', e => events.push(e.type));
+    document.addEventListener('compositionend', e => events.push(e.type));
+    document.addEventListener('keydown', e => events.push(e.type));
+    document.addEventListener('keyup', e => events.push(e.type));
+    return events;
+  });
+  await page.keyboard.imeSetComposition('e', 1, 1, { triggerKey: 'e', delay: 1000});
+  await page.keyboard.imeCancelComposition('Escape');
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('abcd');
+  expect(await events.jsonValue()).toEqual(['keydown', 'compositionstart', 'compositionupdate',
+    'input', 'keyup', 'keydown', 'compositionupdate', 'input', 'compositionend', 'keyup']);
+});
+
+// END OF TESTS FOR DEMO
 
 it('should report shiftKey', async ({page, server, browserName, platform}) => {
   it.fail(browserName === 'firefox' && platform === 'darwin');

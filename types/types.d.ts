@@ -9970,30 +9970,40 @@ export interface Keyboard {
 
   /**
    * If there is an active composition, it will update the composition. Otherwise it will start a new one. It will dispatch
-   * either a `compositionstart` or a `compositionupdate`. It will also dispatch `keydown` and `keyup` events if
-   * `trigger_key` is specified.
+   * either a `compositionstart` or a `compositionupdate`. It will also dispatch `keydown` and `keyup` events if `triggerKey`
+   * is specified.
    * @param text Sets the text in the active composition
-   * @param selection_start Sets the selection start of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
+   * @param selectionStart Sets the selection start of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
    * start of `1` will set the selection start to be after `d`, which is absolute position `4`.
-   * @param selection_end Sets the selection end of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
+   * @param selectionEnd Sets the selection end of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
    * end of `1` will set the selection end to be after `d`, which is absolute position `4`.
    * @param options
    */
-  imeSetComposition(text: string, selection_start: number, selection_end: number, options?: {
+  imeSetComposition(text: string, selectionStart: number, selectionEnd: number, options?: {
     /**
      * Time to wait between `composition` events in milliseconds. Defaults to 0.
+     *
+     * ```js
+     * const page = await browser.newPage();
+     * await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
+     * await page.focus('#input');
+     * await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's'});
+     * await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u'});
+     * await browser.close();
+     * ```
+     *
      */
     delay?: number;
 
     /**
      * Sets the end position of the absolute range that is to be replaced with the composition text.
      */
-    replacement_end?: number;
+    replacementEnd?: number;
 
     /**
      * Sets the start position of the absolute range that is to be replaced with the composition text.
      */
-    replacement_start?: number;
+    replacementStart?: number;
 
     /**
      * Sets the key(s) that triggers the composition event, a `keyup` and `keydown` event will be generated for each specified
@@ -10003,18 +10013,29 @@ export interface Keyboard {
      * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
      * `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, etc.
      */
-    trigger_key?: string;
+    triggerKey?: string;
   }): Promise<void>;
 
   /**
    * Will commit the composition with the given text, placing the caret at the end of the composition and dispatching a
-   * `compositionend` event as well as `keydown` and `keyup` events if `trigger_key` is specified.
+   * `compositionend` event as well as `keydown` and `keyup` events if `triggerKey` is specified.
    * @param text Text that will be committed with the composition.
    * @param options
    */
   imeCommitComposition(text: string, options?: {
     /**
      * Time to wait before the `compositionend` event in milliseconds. Defaults to 0.
+     *
+     * ```js
+     * const page = await browser.newPage();
+     * await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
+     * await page.focus('#input');
+     * await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's'});
+     * await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u'});
+     * await page.keyboard.imeCommitComposition('す', { delay: 2000});
+     * await browser.close();
+     * ```
+     *
      */
     delay?: number;
 
@@ -10026,20 +10047,31 @@ export interface Keyboard {
      * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
      * `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, etc.
      */
-    trigger_key?: string;
+    triggerKey?: string;
   }): Promise<void>;
 
   /**
    * If there is an active composition, it will end the composition and remove the text in active composition. It will
    * dispatch either a `compositionupdate` and a `compositionend`. It will also dispatch `keydown` and `keyup` events for
-   * `trigger_key`.
-   * @param trigger_key Sets the key that triggers the composition event, a `keyup` and `keydown` event will be generated for the specified key. Examples of the keys are:
+   * `triggerKey`.
+   * @param triggerKey Sets the key that triggers the composition event, a `keyup` and `keydown` event will be generated for the specified key. Examples of the keys are:
    *
    * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
    * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
    * `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`, etc.
+   *
+   * ```js
+   * const page = await browser.newPage();
+   * await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
+   * await page.focus('#input');
+   * await page.keyboard.imeSetComposition('ｓ', 1, 1, { triggerKey: 's'});
+   * await page.keyboard.imeSetComposition('す', 1, 1, { triggerKey: 'u'});
+   * await page.keyboard.imeCancelComposition("Enter");
+   * await browser.close();
+   * ```
+   *
    */
-  imeCancelComposition(trigger_key: string): Promise<void>;
+  imeCancelComposition(triggerKey: string): Promise<void>;
 
   /**
    * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)

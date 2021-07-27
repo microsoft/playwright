@@ -5978,19 +5978,19 @@ Use imeCommitComposition to commit the final text.
       /**
        * selection start
        */
-      selection_start: number;
+      selectionStart: number;
       /**
        * selection end
        */
-      selection_end: number;
+      selectionEnd: number;
       /**
        * replacement start
        */
-      replacement_start?: number;
+      replacementStart?: number;
       /**
        * replacement end
        */
-      replacement_end?: number;
+      replacementEnd?: number;
     }
     export type imeSetCompositionReturnValue = {
     }

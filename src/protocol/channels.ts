@@ -1117,22 +1117,22 @@ export type PageKeyboardInsertTextOptions = {
 export type PageKeyboardInsertTextResult = void;
 export type PageKeyboardImeSetCompositionParams = {
   text: string,
-  selection_start: number,
-  selection_end: number,
-  trigger_key?: string,
-  replacement_start?: number,
-  replacement_end?: number,
+  selectionStart: number,
+  selectionEnd: number,
+  triggerKey?: string,
+  replacementStart?: number,
+  replacementEnd?: number,
   delay?: number,
 };
 export type PageKeyboardImeSetCompositionOptions = {
-  trigger_key?: string,
-  replacement_start?: number,
-  replacement_end?: number,
+  triggerKey?: string,
+  replacementStart?: number,
+  replacementEnd?: number,
   delay?: number,
 };
 export type PageKeyboardImeSetCompositionResult = void;
 export type PageKeyboardImeCancelCompositionParams = {
-  trigger_key: string,
+  triggerKey: string,
 };
 export type PageKeyboardImeCancelCompositionOptions = {
 
@@ -1140,11 +1140,11 @@ export type PageKeyboardImeCancelCompositionOptions = {
 export type PageKeyboardImeCancelCompositionResult = void;
 export type PageKeyboardImeCommitCompositionParams = {
   text: string,
-  trigger_key?: string,
+  triggerKey?: string,
   delay?: number,
 };
 export type PageKeyboardImeCommitCompositionOptions = {
-  trigger_key?: string,
+  triggerKey?: string,
   delay?: number,
 };
 export type PageKeyboardImeCommitCompositionResult = void;

@@ -37,14 +37,14 @@ export class Keyboard implements api.Keyboard {
     await this._channel.keyboardInsertText({ text });
   }
 
-  async imeSetComposition(text: string, selection_start: number, selection_end: number,
+  async imeSetComposition(text: string, selectionStart: number, selectionEnd: number,
     options: channels.PageKeyboardImeSetCompositionOptions) {
-    await this._channel.keyboardImeSetComposition({ text, selection_start, selection_end,
+    await this._channel.keyboardImeSetComposition({ text, selectionStart, selectionEnd,
       ...options });
   }
 
-  async imeCancelComposition(trigger_key: string) {
-    await this._channel.keyboardImeCancelComposition({ trigger_key });
+  async imeCancelComposition(triggerKey: string) {
+    await this._channel.keyboardImeCancelComposition({ triggerKey });
   }
 
   async imeCommitComposition(text: string, options: channels.PageKeyboardImeCommitCompositionOptions) {

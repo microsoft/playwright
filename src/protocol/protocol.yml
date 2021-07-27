@@ -837,21 +837,21 @@ Page:
     keyboardImeSetComposition:
       parameters:
         text: string
-        selection_start: number
-        selection_end: number
-        trigger_key: string?
-        replacement_start: number?
-        replacement_end: number?
+        selectionStart: number
+        selectionEnd: number
+        triggerKey: string?
+        replacementStart: number?
+        replacementEnd: number?
         delay: number?
 
     keyboardImeCancelComposition:
       parameters:
-        trigger_key: string
+        triggerKey: string
 
     keyboardImeCommitComposition:
       parameters:
         text: string
-        trigger_key: string?
+        triggerKey: string?
         delay: number?
 
     keyboardType:
