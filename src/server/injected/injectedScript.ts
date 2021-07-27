@@ -75,6 +75,7 @@ export class InjectedScript {
     this._engines.set('css', this._createCSSEngine());
     this._engines.set('_first', { queryAll: () => [] });
     this._engines.set('_visible', { queryAll: () => [] });
+    this._engines.set('_nth', { queryAll: () => [] });
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -110,11 +111,30 @@ export class InjectedScript {
     if (index === selector.parts.length)
       return roots;
 
-    if (selector.parts[index].name === '_first')
-      return roots.slice(0, 1);
+    const part = selector.parts[index];
+    if (part.name === '_nth') {
+      let filtered: ElementMatch[] = [];
+      if (part.body === 'first') {
+        filtered = roots.slice(0, 1);
+      } else if (part.body === 'last') {
+        if (roots.length)
+          filtered = roots.slice(roots.length - 1);
+      } else {
+        if (typeof selector.capture === 'number')
+          throw new Error(`Can't query n-th element in a request with the capture.`);
+        const nth = +part.body;
+        const set = new Set<Element>();
+        for (const root of roots) {
+          set.add(root.element);
+          if (nth + 1 === set.size)
+            filtered = [root];
+        }
+      }
+      return this._querySelectorRecursively(filtered, selector, index + 1, queryCache);
+    }
 
-    if (selector.parts[index].name === '_visible') {
-      const visible = Boolean(selector.parts[index].body);
+    if (part.name === '_visible') {
+      const visible = Boolean(part.body);
       return roots.filter(match => visible === isVisible(match.element));
     }
 

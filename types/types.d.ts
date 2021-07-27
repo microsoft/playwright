@@ -7593,11 +7593,22 @@ export interface Locator {
   }): Promise<boolean>;
 
   /**
+   * Returns locator to the last matching element.
+   */
+  last(): Locator;
+
+  /**
    * The method finds an element matching the specified selector in the `Locator`'s subtree. See
    * [Working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   locator(selector: string): Locator;
+
+  /**
+   * Returns locator to the n-th matching element.
+   * @param index
+   */
+  nth(index: number): Locator;
 
   /**
    * Focuses the element, and then uses [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down)
