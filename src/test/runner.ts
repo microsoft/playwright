@@ -252,7 +252,7 @@ export class Runner {
         console.log();
         const jobs = Math.min(config.workers, workers.size);
         const shard = config.shard;
-        const shardDetails = shard ? `, shard ${shard.current + 1} of ${shard.total}` : '';
+        const shardDetails = shard ? `, shard ${shard.current} of ${shard.total}` : '';
         console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`);
       }
 
