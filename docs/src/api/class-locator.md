@@ -70,11 +70,6 @@ await element.HoverAsync();
 await element.ClickAsync();
 ```
 
-## async method: Locator.all
-- returns: <[Array]<[ElementHandle]>>
-
-Resolves given locator to all matching DOM elements.
-
 ## async method: Locator.boundingBox
 - returns: <[null]|[Object]>
   - `x` <[float]> the x coordinate of the element in pixels.
@@ -166,6 +161,13 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.click.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.click.timeout = %%-input-timeout-%%
 ### option: Locator.click.trial = %%-input-trial-%%
+
+## async method: Locator.count
+- returns: <[int]>
+
+Returns the number of elements matching given selector.
+
+### option: Locator.elementHandle.elementHandle = %%-input-timeout-%%
 
 ## async method: Locator.dblclick
 * langs:
@@ -283,6 +285,19 @@ DOM event type: `"click"`, `"dragstart"`, etc.
 Optional event-specific initialization properties.
 
 ### option: Locator.dispatchEvent.timeout = %%-input-timeout-%%
+
+## async method: Locator.elementHandle
+- returns: <[ElementHandle]>
+
+Resolves given locator to the first matching DOM element. If no elements matching the query are visible, waits for them up to a given timeout. If multiple elements match the selector, throws.
+
+### option: Locator.elementHandle.elementHandle = %%-input-timeout-%%
+
+
+## async method: Locator.elementHandles
+- returns: <[Array]<[ElementHandle]>>
+
+Resolves given locator to all matching DOM elements.
 
 ## async method: Locator.evaluate
 - returns: <[Serializable]>
@@ -414,13 +429,10 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.fill.timeout = %%-input-timeout-%%
 
-## async method: Locator.first
-- returns: <[ElementHandle]>
+## method: Locator.first
+- returns: <[Locator]>
 
-Resolves given locator to the first VISIBLE matching DOM element. If no elements matching
-the query are visible, waits for them up to a given timeout.
-
-### option: Locator.first.timeout = %%-input-timeout-%%
+Returns locator to the first matching element.
 
 ## async method: Locator.focus
 

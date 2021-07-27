@@ -39,21 +39,6 @@ it('should work for TextNodes', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should throw for recursively hidden nodes with force', async ({ page, server }) => {
-  await page.goto(server.PREFIX + '/input/button.html');
-  const button = page.locator('button');
-  await page.evaluate(button => button.parentElement.style.display = 'none', await button.first());
-  const error = await button.click({ force: true }).catch(err => err);
-  expect(error.message).toContain('Element is not visible');
-});
-
-it('should throw for <br> elements with force', async ({ page, server }) => {
-  await page.setContent('hello<br>goodbye');
-  const br = page.locator('br');
-  const error = await br.click({ force: true }).catch(err => err);
-  expect(error.message).toContain('Element is outside of the viewport');
-});
-
 it('should double click the button', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => {

@@ -88,9 +88,9 @@ it('should dispatch click event via ElementHandles', async ({page, server}) => {
 it('should upload the file', async ({page, server, asset}) => {
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
-  const input = page.locator('input');
+  const input = page.locator('input[type=file]');
   await input.setInputFiles(filePath);
-  expect(await page.evaluate(e => (e as HTMLInputElement).files[0].name, await input.first())).toBe('file-to-upload.txt');
+  expect(await page.evaluate(e => (e as HTMLInputElement).files[0].name, await input.elementHandle())).toBe('file-to-upload.txt');
 });
 
 it.describe('tap group', () => {
