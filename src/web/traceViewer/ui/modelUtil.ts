@@ -59,7 +59,7 @@ export function stats(action: ActionTraceEvent): { errors: number, warnings: num
   for (const event of eventsForAction(action)) {
     if (event.metadata.method === 'console') {
       const { guid } = event.metadata.params.message;
-      const type = p.objects[guid].type;
+      const type = p.objects[guid]?.type;
       if (type === 'warning')
         ++warnings;
       else if (type === 'error')
