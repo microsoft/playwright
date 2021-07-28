@@ -34,7 +34,7 @@ Unlike Playwright Library, Playwright Test does not bundle browsers by default, 
 npx playwright install
 ```
 
-You can optionally install only selected browsers, see [installing browsers](./test-install.md) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
+You can optionally install only selected browsers, see [installing browsers](./library.md) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
 
 ## First test
 
