@@ -6969,18 +6969,6 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  */
 export interface Locator {
   /**
-   * Resolves given locator to the first matching DOM element. If no elements matching the query are visible, waits for them
-   * up to a given timeout. If multiple elements match the selector, throws.
-   * @param options
-   */
-  elementHandle(options?: {
-    timeout?: number;
-  }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
-  /**
-   * Resolves given locator to all matching DOM elements.
-   */
-  elementHandles(): Promise<null|ElementHandle<SVGElement | HTMLElement>[]>;
-  /**
    * Returns the return value of `pageFunction`.
    *
    * This method passes this handle as the first argument to `pageFunction`.
@@ -6999,8 +6987,12 @@ export interface Locator {
    * @param arg Optional argument to pass to `pageFunction`.
    * @param options
    */
-  evaluate<R, Arg>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg: Arg): Promise<R>;
-  evaluate<R>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, void, R>): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg: Arg, options?: {
+    timeout?: number;
+  }): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, void, R>, options?: {
+    timeout?: number;
+  }): Promise<R>;
   /**
    * The method finds all elements matching the specified locator and passes an array of matched elements as a first argument
    * to `pageFunction`. Returns the result of `pageFunction` invocation.
@@ -7020,6 +7012,14 @@ export interface Locator {
    */
   evaluateAll<R, Arg>(pageFunction: PageFunctionOn<(SVGElement | HTMLElement)[], Arg, R>, arg: Arg): Promise<R>;
   evaluateAll<R>(pageFunction: PageFunctionOn<(SVGElement | HTMLElement)[], void, R>): Promise<R>;
+  /**
+   * Resolves given locator to the first matching DOM element. If no elements matching the query are visible, waits for them
+   * up to a given timeout. If multiple elements match the selector, throws.
+   * @param options
+   */
+  elementHandle(options?: {
+    timeout?: number;
+  }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
    * This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is
    * calculated relative to the main frame viewport - which is usually the same as the browser window.
@@ -7316,6 +7316,11 @@ export interface Locator {
      */
     timeout?: number;
   }): Promise<void>;
+
+  /**
+   * Resolves given locator to all matching DOM elements.
+   */
+  elementHandles(): Promise<Array<ElementHandle>>;
 
   /**
    * Returns the return value of `pageFunction` as a [JSHandle].

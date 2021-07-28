@@ -141,14 +141,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 }
 
 export interface Locator {
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg: Arg, options?: {
+    timeout?: number;
+  }): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, void, R>, options?: {
+    timeout?: number;
+  }): Promise<R>;
+  evaluateAll<R, Arg>(pageFunction: PageFunctionOn<(SVGElement | HTMLElement)[], Arg, R>, arg: Arg): Promise<R>;
+  evaluateAll<R>(pageFunction: PageFunctionOn<(SVGElement | HTMLElement)[], void, R>): Promise<R>;
   elementHandle(options?: {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
-  elementHandles(): Promise<null|ElementHandle<SVGElement | HTMLElement>[]>;
-  evaluate<R, Arg>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg: Arg): Promise<R>;
-  evaluate<R>(pageFunction: PageFunctionOn<SVGElement | HTMLElement, void, R>): Promise<R>;
-  evaluateAll<R, Arg>(pageFunction: PageFunctionOn<(SVGElement | HTMLElement)[], Arg, R>, arg: Arg): Promise<R>;
-  evaluateAll<R>(pageFunction: PageFunctionOn<(SVGElement | HTMLElement)[], void, R>): Promise<R>;
 }
 
 export interface BrowserType<Unused = {}> {

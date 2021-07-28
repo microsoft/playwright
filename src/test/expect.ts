@@ -14,11 +14,29 @@
  * limitations under the License.
  */
 
-import type { Expect } from './types';
 import expectLibrary from 'expect';
+import { toBeChecked, toBeDisabled, toBeEditable, toBeEmpty, toBeEnabled, toBeFocused, toBeHidden, toBeVisible } from './matchers/toBeTruthy';
 import { toMatchSnapshot } from './matchers/toMatchSnapshot';
-import { toMatchText, toHaveText } from './matchers/toMatchText';
+import { toContainText, toHaveAttr, toHaveCSS, toHaveData, toHaveId, toHaveText, toHaveValue } from './matchers/toMatchText';
+import type { Expect } from './types';
 
 export const expect: Expect = expectLibrary as any;
 expectLibrary.setState({ expand: false });
-expectLibrary.extend({ toMatchSnapshot, toMatchText, toHaveText });
+expectLibrary.extend({
+  toBeChecked,
+  toBeDisabled,
+  toBeEditable,
+  toBeEmpty,
+  toBeEnabled,
+  toBeFocused,
+  toBeHidden,
+  toBeVisible,
+  toContainText,
+  toHaveAttr,
+  toHaveCSS,
+  toHaveData,
+  toHaveId,
+  toHaveText,
+  toHaveValue,
+  toMatchSnapshot,
+});
