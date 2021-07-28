@@ -47,23 +47,23 @@ export const Source: React.FC<SourceProps> = ({
       result.push(highlighted.value);
     }
     return result;
-  }, [text]);
+  }, [text, language]);
 
   const revealedLineRef = React.createRef<HTMLDivElement>();
   React.useLayoutEffect(() => {
     if (typeof revealLine === 'number' && revealedLineRef.current)
       revealedLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
-  }, [revealedLineRef]);
+  }, [revealedLineRef, revealLine]);
 
   return <div className='source'>{
-      lines.map((markup, index) => {
-        const lineNumber = index + 1;
-        const lineHighlight = highlight.find(h => h.line === lineNumber);
-        const lineClass = lineHighlight ? `source-line source-line-${lineHighlight.type}` : 'source-line';
-        return <div key={lineNumber} className={lineClass} ref={revealLine === lineNumber ? revealedLineRef : null}>
-          <div className='source-line-number'>{lineNumber}</div>
-          <div className='source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>
-        </div>;
-      })
-    }</div>
+    lines.map((markup, index) => {
+      const lineNumber = index + 1;
+      const lineHighlight = highlight.find(h => h.line === lineNumber);
+      const lineClass = lineHighlight ? `source-line source-line-${lineHighlight.type}` : 'source-line';
+      return <div key={lineNumber} className={lineClass} ref={revealLine === lineNumber ? revealedLineRef : null}>
+        <div className='source-line-number'>{lineNumber}</div>
+        <div className='source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>
+      </div>;
+    })
+  }</div>;
 };

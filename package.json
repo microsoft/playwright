@@ -17,7 +17,7 @@
     "etest": "npm run basetest -- --config=tests/config/electron.config.ts",
     "ttest": "npm run basetest -- --config=tests/playwright-test/playwright-test.config.ts",
     "test": "npm run basetest -- --config=tests/config/default.config.ts",
-    "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts . || eslint --ext ts .",
+    "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts,tsx . || eslint --ext ts,tsx .",
     "tsc": "tsc -p .",
     "build-installer": "babel -s --extensions \".ts\" --out-dir lib/utils/ src/utils",
     "doc": "node utils/doclint/cli.js",

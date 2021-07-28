@@ -41,7 +41,7 @@ export const ActionList: React.FC<ActionListProps> = ({
 
   React.useEffect(() => {
     actionListRef.current?.focus();
-  }, [selectedAction]);
+  }, [selectedAction, actionListRef]);
 
   return <div className='action-list vbox'>
     <div className='.action-list-title tab-strip'>
@@ -75,7 +75,6 @@ export const ActionList: React.FC<ActionListProps> = ({
         const { metadata } = action;
         const selectedSuffix = action === selectedAction ? ' selected' : '';
         const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
-        const page = modelUtil.page(action);
         const { errors, warnings } = modelUtil.stats(action);
         return <div
           className={'action-entry' + selectedSuffix + highlightedSuffix}

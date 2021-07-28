@@ -39,7 +39,7 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('logs');
 
-  let context = useAsyncMemo(async () => {
+  const context = useAsyncMemo(async () => {
     if (!debugName)
       return emptyContext;
     const context = (await fetch(`/context/${debugName}`).then(response => response.json())) as ContextEntry;
