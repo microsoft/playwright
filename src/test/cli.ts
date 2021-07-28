@@ -84,16 +84,18 @@ export function addTestCommand(program: commander.CommanderStatic) {
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
 
-  const browserOpt = opts.browser ? opts.browser.toLowerCase() : 'chromium';
-  if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
-    throw new Error(`Unsupported browser "${opts.browser}", must be one of "all", "chromium", "firefox" or "webkit"`);
-  const browserNames = browserOpt === 'all' ? ['chromium', 'firefox', 'webkit'] : [browserOpt];
-  defaultConfig.projects = browserNames.map(browserName => {
-    return {
-      name: browserName,
-      use: { browserName },
-    };
-  });
+  if (opts.browser) {
+    const browserOpt = opts.browser.toLowerCase();
+    if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
+      throw new Error(`Unsupported browser "${opts.browser}", must be one of "all", "chromium", "firefox" or "webkit"`);
+    const browserNames = browserOpt === 'all' ? ['chromium', 'firefox', 'webkit'] : [browserOpt];
+    defaultConfig.projects = browserNames.map(browserName => {
+      return {
+        name: browserName,
+        use: { browserName },
+      };
+    });
+  }
 
   const overrides = overridesFromOptions(opts);
   if (opts.headed)
