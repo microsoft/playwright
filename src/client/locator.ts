@@ -22,14 +22,17 @@ import { monotonicTime } from '../utils/utils';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
 import { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 
 export class Locator implements api.Locator {
   private _frame: Frame;
   private _selector: string;
   private _visibleSelector: string;
+  private _timeoutSettings: TimeoutSettings;
 
   constructor(frame: Frame, selector: string) {
     this._frame = frame;
+    this._timeoutSettings = this._frame.page()._timeoutSettings;
     this._selector = selector;
     this._visibleSelector = selector + ' >> _visible=true';
   }
@@ -200,12 +203,6 @@ export class Locator implements api.Locator {
 
   async uncheck(options: channels.ElementHandleUncheckOptions = {}) {
     return this._frame.uncheck(this._visibleSelector, { strict: true, ...options });
-  }
-
-  waitFor(options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<ElementHandle<SVGElement | HTMLElement>>;
-  waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
-  async waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
-    return this._frame.waitForSelector(this._visibleSelector, { strict: true, ...options });
   }
 
   [(util.inspect as any).custom]() {

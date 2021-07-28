@@ -61,28 +61,6 @@ it('should type', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('hello');
 });
 
-it('should wait for visible', async ({ page }) => {
-  async function giveItAChanceToResolve() {
-    for (let i = 0; i < 5; i++)
-      await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
-  }
-
-  await page.setContent(`<div id='div' style='display:none'>content</div>`);
-  const div = page.locator('div');
-  let done = false;
-  const promise = div.waitFor({ state: 'visible' }).then(() => done = true);
-  await giveItAChanceToResolve();
-  expect(done).toBe(false);
-  await page.evaluate(() => (window as any).div.style.display = 'block');
-  await promise;
-});
-
-it('should wait for already visible', async ({ page }) => {
-  await page.setContent(`<div>content</div>`);
-  const div = page.locator('div');
-  await div.waitFor({ state: 'visible' });
-});
-
 it('should take screenshot', async ({ page, server, browserName, headless, isAndroid }) => {
   it.skip(browserName === 'firefox' && !headless);
   it.skip(isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');

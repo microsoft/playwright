@@ -18,6 +18,7 @@ import util from 'util';
 import path from 'path';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
+import { TimeoutError } from '../utils/errors';
 
 export class DeadlineRunner<T> {
   private _timer: NodeJS.Timer | undefined;
@@ -68,6 +69,20 @@ export class DeadlineRunner<T> {
 export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: number | undefined): Promise<{ result?: T, timedOut?: boolean }> {
   return (new DeadlineRunner(promise, deadline)).result;
 }
+
+export async function pollUntilDeadline(func: () => Promise<boolean>, deadline: number, delay: number): Promise<void> {
+  while (true) {
+    if (await func())
+      return;
+
+    const timeUntilDeadline = deadline ? deadline - monotonicTime() : Number.MAX_VALUE;
+    if (timeUntilDeadline > 0)
+      await new Promise(f => setTimeout(f, Math.min(timeUntilDeadline, delay)));
+    else
+      throw new TimeoutError('Timed out while waiting for condition to be met');
+  }
+}
+
 
 export function serializeError(error: Error | any): TestError {
   if (error instanceof Error) {

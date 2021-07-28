@@ -35,7 +35,7 @@ type OverriddenExpectProperties =
 'rejects' |
 'toMatchInlineSnapshot' |
 'toThrowErrorMatchingInlineSnapshot' |
-'toMatchSnapshot' | 
+'toMatchSnapshot' |
 'toThrowErrorMatchingSnapshot';
 
 declare global {
@@ -68,6 +68,16 @@ declare global {
       toMatchSnapshot(name: string, options?: {
         threshold?: number
       }): R;
+
+      /**
+       * Asserts element's exact text content.
+       */
+      toHaveText(expected: string, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+
+       /**
+       * Asserts element's text content matches given pattern or contains given substring.
+       */
+      toMatchText(expected: string | RegExp, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
     }
   }
 }

@@ -8036,39 +8036,7 @@ export interface Locator {
      * `false`. Useful to wait until the element is ready for the action without performing it.
      */
     trial?: boolean;
-  }): Promise<void>;
-
-  /**
-   * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
-   * `detached`.
-   *
-   * Wait for the element to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at the
-   * moment of calling the method it already satisfies the condition, the method will return immediately. If the selector
-   * doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
-   *
-   * This method works across navigations.
-   * @param options
-   */
-  waitFor(options?: {
-    /**
-     * Defaults to `'visible'`. Can be either:
-     * - `'attached'` - wait for element to be present in DOM.
-     * - `'detached'` - wait for element to not be present in DOM.
-     * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without
-     *   any content or with `display:none` has an empty bounding box and is not considered visible.
-     * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`.
-     *   This is opposite to the `'visible'` option.
-     */
-    state?: "attached"|"detached"|"visible"|"hidden";
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<null|ElementHandle<HTMLElement|SVGElement>>;}
+  }): Promise<void>;}
 
 /**
  * BrowserType provides methods to launch a specific browser instance or connect to an existing one. The following is a
