@@ -21,7 +21,7 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestStatus, TestCase, Suite, TestResult, TestError, Reporter, FullResult } from '../../../types/testReporter';
+import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult } from '../../../types/testReporter';
 
 const stackUtils = new StackUtils();
 
@@ -83,21 +83,27 @@ export class BaseReporter implements Reporter  {
   epilogue(full: boolean) {
     let skipped = 0;
     let expected = 0;
+    const skippedWithError: TestCase[] = [];
     const unexpected: TestCase[] = [];
     const flaky: TestCase[] = [];
 
     this.suite.allTests().forEach(test => {
       switch (test.outcome()) {
-        case 'skipped': ++skipped; break;
+        case 'skipped': {
+          ++skipped;
+          if (test.results.some(result => !!result.error))
+            skippedWithError.push(test);
+          break;
+        }
         case 'expected': ++expected; break;
         case 'unexpected': unexpected.push(test); break;
         case 'flaky': flaky.push(test); break;
       }
     });
 
-    if (full && unexpected.length) {
+    if (full && (unexpected.length || skippedWithError.length)) {
       console.log('');
-      this._printFailures(unexpected);
+      this._printFailures([...unexpected, ...skippedWithError]);
     }
 
     this._printSlowTests();
@@ -131,10 +137,6 @@ export class BaseReporter implements Reporter  {
     });
   }
 
-  hasResultWithStatus(test: TestCase, status: TestStatus): boolean {
-    return !!test.results.find(r => r.status === status);
-  }
-
   willRetry(test: TestCase, result: TestResult): boolean {
     return result.status !== 'passed' && result.status !== test.expectedStatus && test.results.length <= test.retries;
   }
@@ -144,9 +146,21 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
   const tokens: string[] = [];
   tokens.push(formatTestHeader(config, test, '  ', index));
   for (const result of test.results) {
-    if (result.status === 'passed')
+    const resultTokens: string[] = [];
+    if (result.status === 'timedOut') {
+      resultTokens.push('');
+      resultTokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
+    }
+    if (result.error !== undefined)
+      resultTokens.push(indent(formatError(result.error, test.location.file), '    '));
+    if (!resultTokens.length)
       continue;
-    tokens.push(formatFailedResult(test, result));
+    const statusSuffix = result.status === 'passed' ? ' -- passed unexpectedly' : '';
+    if (result.retry) {
+      tokens.push('');
+      tokens.push(colors.gray(pad(`    Retry #${result.retry}${statusSuffix}`, '-')));
+    }
+    tokens.push(...resultTokens);
   }
   tokens.push('');
   return tokens.join('\n');
@@ -169,21 +183,6 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
   const passedUnexpectedlySuffix = test.results[0].status === 'passed' ? ' -- passed unexpectedly' : '';
   const header = `${indent}${index ? index + ') ' : ''}${title}${passedUnexpectedlySuffix}`;
   return colors.red(pad(header, '='));
-}
-
-function formatFailedResult(test: TestCase, result: TestResult): string {
-  const tokens: string[] = [];
-  if (result.retry)
-    tokens.push(colors.gray(pad(`\n    Retry #${result.retry}`, '-')));
-  if (result.status === 'timedOut') {
-    tokens.push('');
-    tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
-    if (result.error !== undefined)
-      tokens.push(indent(formatError(result.error, test.location.file), '    '));
-  } else {
-    tokens.push(indent(formatError(result.error!, test.location.file), '    '));
-  }
-  return tokens.join('\n');
 }
 
 function formatError(error: TestError, file?: string) {

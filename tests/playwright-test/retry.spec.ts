@@ -134,7 +134,7 @@ test('should retry unhandled rejection', async ({ runInlineTest }) => {
         setTimeout(() => {
           throw new Error('Unhandled rejection in the test');
         });
-        await new Promise(f => setTimeout(f, 20));
+        await new Promise(f => setTimeout(f, 2000));
       });
     `
   }, { retries: 2 });

@@ -18,7 +18,7 @@ import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams } from './ipc';
-import type { TestResult, Reporter, TestStatus } from '../../types/testReporter';
+import type { TestResult, Reporter } from '../../types/testReporter';
 import { TestCase } from './test';
 import { Loader } from './loader';
 
@@ -148,16 +148,22 @@ export class Dispatcher {
 
       const failedTestIds = new Set<string>();
 
-      // In case of fatal error, report all remaining tests as failing with this error.
+      // In case of fatal error, report first remaining test as failing with this error,
+      // and all others as skipped.
       if (params.fatalError) {
+        let first = true;
         for (const { testId } of remaining) {
           const { test, result } = this._testById.get(testId)!;
+          if (this._hasReachedMaxFailures())
+            break;
           // There might be a single test that has started but has not finished yet.
           if (testId !== lastStartedTestId)
-            this._reportTestBegin(test);
+            this._reporter.onTestBegin?.(test);
           result.error = params.fatalError;
-          this._reportTestEnd(test, result, 'failed');
+          result.status = first ? 'failed' : 'skipped';
+          this._reportTestEnd(test, result);
           failedTestIds.add(testId);
+          first = false;
         }
         // Since we pretend that all remaining tests failed, there is nothing else to run,
         // except for possible retries.
@@ -187,7 +193,10 @@ export class Dispatcher {
     worker.on('done', onDone);
 
     const onExit = () => {
-      onDone({ fatalError: { value: 'Worker process exited unexpectedly' } });
+      if (worker.didSendStop)
+        onDone({});
+      else
+        onDone({ fatalError: { value: 'Worker process exited unexpectedly' } });
     };
     worker.on('exit', onExit);
 
@@ -226,12 +235,16 @@ export class Dispatcher {
   _createWorker(entry: DispatcherEntry) {
     const worker = new Worker(this);
     worker.on('testBegin', (params: TestBeginPayload) => {
+      if (this._hasReachedMaxFailures())
+        return;
       const { test, result: testRun  } = this._testById.get(params.testId)!;
       testRun.workerIndex = params.workerIndex;
       testRun.startTime = new Date(params.startWallTime);
-      this._reportTestBegin(test);
+      this._reporter.onTestBegin?.(test);
     });
     worker.on('testEnd', (params: TestEndPayload) => {
+      if (this._hasReachedMaxFailures())
+        return;
       const { test, result } = this._testById.get(params.testId)!;
       result.duration = params.duration;
       result.error = params.error;
@@ -241,10 +254,11 @@ export class Dispatcher {
         contentType: a.contentType,
         body: a.body ? Buffer.from(a.body, 'base64') : undefined
       }));
+      result.status = params.status;
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
       test.timeout = params.timeout;
-      this._reportTestEnd(test, result, params.status);
+      this._reportTestEnd(test, result);
     });
     worker.on('stdOut', (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
@@ -284,23 +298,16 @@ export class Dispatcher {
     }
   }
 
-  private _reportTestBegin(test: TestCase) {
-    if (this._isStopped)
-      return;
+  private _hasReachedMaxFailures() {
     const maxFailures = this._loader.fullConfig().maxFailures;
-    if (!maxFailures || this._failureCount < maxFailures)
-      this._reporter.onTestBegin?.(test);
+    return maxFailures > 0 && this._failureCount >= maxFailures;
   }
 
-  private _reportTestEnd(test: TestCase, result: TestResult, status: TestStatus) {
-    if (this._isStopped)
-      return;
-    result.status = status;
+  private _reportTestEnd(test: TestCase, result: TestResult) {
     if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
+    this._reporter.onTestEnd?.(test, result);
     const maxFailures = this._loader.fullConfig().maxFailures;
-    if (!maxFailures || this._failureCount <= maxFailures)
-      this._reporter.onTestEnd?.(test, result);
     if (maxFailures && this._failureCount === maxFailures)
       this.stop().catch(e => {});
   }
@@ -317,7 +324,7 @@ class Worker extends EventEmitter {
   runner: Dispatcher;
   hash = '';
   index: number;
-  private didSendStop = false;
+  didSendStop = false;
 
   constructor(runner: Dispatcher) {
     super();

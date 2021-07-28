@@ -185,6 +185,29 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(stripAscii(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
 });
 
+test('should report click error on sigint', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('timedout', async ({ page }) => {
+        await page.setContent('<div>Click me</div>');
+        const promise = page.click('text=Missing');
+        await new Promise(f => setTimeout(f, 100));
+        console.log('\\n%%SEND-SIGINT%%');
+        await promise;
+      });
+    `,
+  }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
+
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(stripAscii(result.output)).toContain(`8 |         const promise = page.click('text=Missing');`);
+});
+
 test('should work with screenshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

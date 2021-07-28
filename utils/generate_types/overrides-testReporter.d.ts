@@ -50,7 +50,7 @@ export interface TestResult {
   workerIndex: number;
   startTime: Date;
   duration: number;
-  status?: TestStatus;
+  status: TestStatus;
   error?: TestError;
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   stdout: (string | Buffer)[];

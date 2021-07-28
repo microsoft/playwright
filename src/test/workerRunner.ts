@@ -42,7 +42,7 @@ export class WorkerRunner extends EventEmitter {
   private _failedTestId: string | undefined;
   private _fatalError: TestError | undefined;
   private _entries = new Map<string, TestEntry>();
-  private _isStopped: any;
+  private _isStopped = false;
   _currentTest: { testId: string, testInfo: TestInfo } | null = null;
 
   constructor(params: WorkerInitParams) {
@@ -52,8 +52,10 @@ export class WorkerRunner extends EventEmitter {
   }
 
   stop() {
+    // TODO: mark test as 'interrupted' instead.
+    if (this._currentTest && this._currentTest.testInfo.status === 'passed')
+      this._currentTest.testInfo.status = 'skipped';
     this._isStopped = true;
-    this._setCurrentTest(null);
   }
 
   async cleanup() {
@@ -310,25 +312,24 @@ export class WorkerRunner extends EventEmitter {
     // Do not overwrite test failure upon hook timeout.
     if (result.timedOut && testInfo.status === 'passed')
       testInfo.status = 'timedOut';
-    if (this._isStopped)
-      return;
 
-    if (!result.timedOut) {
-      deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), deadline());
-      deadlineRunner.setDeadline(deadline());
-      const hooksResult = await deadlineRunner.result;
-      // Do not overwrite test failure upon hook timeout.
-      if (hooksResult.timedOut && testInfo.status === 'passed')
-        testInfo.status = 'timedOut';
-    } else {
-      // A timed-out test gets a full additional timeout to run after hooks.
-      const newDeadline = this._deadline();
-      deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), newDeadline);
-      await deadlineRunner.result;
+    if (!this._isStopped) {
+      // When stopped during the test run (usually either a user interruption or an unhandled error),
+      // we do not run cleanup because the worker will cleanup() anyway.
+      if (!result.timedOut) {
+        deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), deadline());
+        deadlineRunner.setDeadline(deadline());
+        const hooksResult = await deadlineRunner.result;
+        // Do not overwrite test failure upon hook timeout.
+        if (hooksResult.timedOut && testInfo.status === 'passed')
+          testInfo.status = 'timedOut';
+      } else {
+        // A timed-out test gets a full additional timeout to run after hooks.
+        const newDeadline = this._deadline();
+        deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), newDeadline);
+        await deadlineRunner.result;
+      }
     }
-
-    if (this._isStopped)
-      return;
 
     testInfo.duration = monotonicTime() - startTime;
     this.emit('testEnd', buildTestEndPayload(testId, testInfo));
@@ -339,11 +340,14 @@ export class WorkerRunner extends EventEmitter {
     if (!preserveOutput)
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
 
+    this._setCurrentTest(null);
+
+    if (this._isStopped)
+      return;
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped') {
       this._failedTestId = testId;
       this._reportDoneAndStop();
     }
-    this._setCurrentTest(null);
   }
 
   private _setCurrentTest(currentTest: { testId: string, testInfo: TestInfo} | null) {
