@@ -54,3 +54,18 @@ test('should respect shard=2/2', async ({ runInlineTest }) => {
   expect(result.skipped).toBe(3);
   expect(result.output).toContain('test4-done');
 });
+
+test('should respect shard=1/2 in config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...tests,
+    'playwright.config.js': `
+      module.exports = { shard: { current: 1, total: 2 } };
+    `,
+  }, { shard: '1/2' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.skipped).toBe(1);
+  expect(result.output).toContain('test1-done');
+  expect(result.output).toContain('test2-done');
+  expect(result.output).toContain('test3-done');
+});

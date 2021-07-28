@@ -179,7 +179,7 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [resolveReporter(r)]) : undefined,
-    shard: shardPair ? { current: shardPair[0] - 1, total: shardPair[1] } : undefined,
+    shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
     timeout: isDebuggerAttached ? 0 : (options.timeout ? parseInt(options.timeout, 10) : undefined),
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers ? parseInt(options.workers, 10) : undefined,
