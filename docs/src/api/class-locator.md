@@ -167,8 +167,6 @@ When all steps combined have not finished during the specified [`option: timeout
 
 Returns the number of elements matching given selector.
 
-### option: Locator.elementHandle.elementHandle = %%-input-timeout-%%
-
 ## async method: Locator.dblclick
 * langs:
   - alias-csharp: DblClickAsync
@@ -291,8 +289,7 @@ Optional event-specific initialization properties.
 
 Resolves given locator to the first matching DOM element. If no elements matching the query are visible, waits for them up to a given timeout. If multiple elements match the selector, throws.
 
-### option: Locator.elementHandle.elementHandle = %%-input-timeout-%%
-
+### option: Locator.elementHandle.timeout = %%-input-timeout-%%
 
 ## async method: Locator.elementHandles
 - returns: <[Array]<[ElementHandle]>>
