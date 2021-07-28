@@ -5929,16 +5929,8 @@ export interface JSHandle<T = any> {
  * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector) method.
  *
  * ```js
- * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
- *
- * (async () => {
- *   const browser = await chromium.launch();
- *   const page = await browser.newPage();
- *   await page.goto('https://example.com');
- *   const hrefElement = await page.$('a');
- *   await hrefElement.click();
- *   // ...
- * })();
+ * const hrefElement = await page.$('a');
+ * await hrefElement.click();
  * ```
  *
  * ElementHandle prevents DOM element from garbage collection unless the handle is disposed with
@@ -5948,6 +5940,35 @@ export interface JSHandle<T = any> {
  * ElementHandle instances can be used as an argument in
  * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
  * and [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) methods.
+ *
+ * > NOTE: In most cases, you would want to use the [Locator] object instead. You should only use [ElementHandle] if you
+ * want to retain a handle to a particular DOM Node that you intend to pass into
+ * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) as an argument.
+ *
+ * The difference between the [Locator] and ElementHandle is that the ElementHandle points to a particular element, while
+ * [Locator] captures the logic of how to retrieve an element.
+ *
+ * In the example below, handle points to a particular DOM element on page. If that element changes text or is used by
+ * React to render an entirely different component, handle is still pointing to that very DOM element. This can lead to
+ * unexpected behaviors.
+ *
+ * ```js
+ * const handle = await page.$('text=Submit');
+ * // ...
+ * await handle.hover();
+ * await handle.click();
+ * ```
+ *
+ * With the locator, every time the `element` is used, up-to-date DOM element is located in the page using the selector. So
+ * in the snippet below, underlying DOM element is going to be located twice.
+ *
+ * ```js
+ * const locator = page.locator('text=Submit');
+ * // ...
+ * await locator.hover();
+ * await locator.click();
+ * ```
+ *
  */
 export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
@@ -6943,11 +6964,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  * given moment. Locator can be created with the
  * [page.locator(selector)](https://playwright.dev/docs/api/class-page#page-locator) method.
  *
+ * ```js
+ * const locator = page.locator('text=Submit');
+ * await locator.click();
+ * ```
+ *
  * The difference between the Locator and [ElementHandle] is that the latter points to a particular element, while Locator
- * only captures the logic of how to retrieve an element at any given moment.
+ * captures the logic of how to retrieve that element.
  *
  * In the example below, handle points to a particular DOM element on page. If that element changes text or is used by
- * React to render an entirely different component, handle is still pointing to that very DOM element.
+ * React to render an entirely different component, handle is still pointing to that very DOM element. This can lead to
+ * unexpected behaviors.
  *
  * ```js
  * const handle = await page.$('text=Submit');
@@ -6956,14 +6983,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  * await handle.click();
  * ```
  *
- * With the locator, every time the `element` is used, corresponding DOM element is located in the page using given
- * selector. So in the snippet below, underlying DOM element is going to be located twice, using the given selector.
+ * With the locator, every time the `element` is used, up-to-date DOM element is located in the page using the selector. So
+ * in the snippet below, underlying DOM element is going to be located twice.
  *
  * ```js
- * const element = page.locator('text=Submit');
+ * const locator = page.locator('text=Submit');
  * // ...
- * await element.hover();
- * await element.click();
+ * await locator.hover();
+ * await locator.click();
  * ```
  *
  */

@@ -2,9 +2,34 @@
 
 Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment. Locator can be created with the [`method: Page.locator`] method.
 
-The difference between the Locator and [ElementHandle] is that the latter points to a particular element, while Locator only captures the logic of how to retrieve an element at any given moment.
+```js
+const locator = page.locator('text=Submit');
+await locator.click();
+```
 
-In the example below, handle points to a particular DOM element on page. If that element changes text or is used by React to render an entirely different component, handle is still pointing to that very DOM element.
+```java
+Locator locator = page.locator("text=Submit");
+locator.click();
+```
+
+```python async
+locator = page.locator("text=Submit")
+await locator.click()
+```
+
+```python sync
+locator = page.locator("text=Submit")
+locator.click()
+```
+
+```csharp
+var locator = page.Locator("text=Submit");
+await locator.ClickAsync();
+```
+
+The difference between the Locator and [ElementHandle] is that the latter points to a particular element, while Locator captures the logic of how to retrieve that element.
+
+In the example below, handle points to a particular DOM element on page. If that element changes text or is used by React to render an entirely different component, handle is still pointing to that very DOM element. This can lead to unexpected behaviors.
 
 ```js
 const handle = await page.$('text=Submit');
@@ -37,37 +62,37 @@ await handle.HoverAsync();
 await handle.ClickAsync();
 ```
 
-With the locator, every time the `element` is used, corresponding DOM element is located in the page using given selector. So in the snippet below, underlying DOM element is going to be located twice, using the given selector.
+With the locator, every time the `element` is used, up-to-date DOM element is located in the page using the selector. So in the snippet below, underlying DOM element is going to be located twice.
 
 ```js
-const element = page.locator('text=Submit');
+const locator = page.locator('text=Submit');
 // ...
-await element.hover();
-await element.click();
+await locator.hover();
+await locator.click();
 ```
 
 ```java
-Locator element = page.locator("text=Submit");
-element.hover();
-element.click();
+Locator locator = page.locator("text=Submit");
+locator.hover();
+locator.click();
 ```
 
 ```python async
-element = page.locator("text=Submit")
-await element.hover()
-await element.click()
+locator = page.locator("text=Submit")
+await locator.hover()
+await locator.click()
 ```
 
 ```python sync
-element = page.locator("text=Submit")
-element.hover()
-element.click()
+locator = page.locator("text=Submit")
+locator.hover()
+locator.click()
 ```
 
 ```csharp
-var element = page.Locator("text=Submit");
-await element.HoverAsync();
-await element.ClickAsync();
+var locator = page.Locator("text=Submit");
+await locator.HoverAsync();
+await locator.ClickAsync();
 ```
 
 ## async method: Locator.boundingBox
