@@ -194,7 +194,7 @@ export interface TestResult {
    * The status of this test result. See also
    * [testCase.expectedStatus](https://playwright.dev/docs/api/class-testcase#test-case-expected-status).
    */
-  status?: TestStatus;
+  status: TestStatus;
   /**
    * An error thrown during the test execution, if any.
    */

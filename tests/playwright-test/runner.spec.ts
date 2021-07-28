@@ -67,12 +67,13 @@ test('it should not hang and report results when worker process suddenly exits',
       test('passed1', () => {});
       test('passed2', () => {});
       test('failed1', () => { process.exit(0); });
-      test('failed2', () => {});
+      test('skipped', () => {});
     `
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
-  expect(result.failed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(1);
   expect(result.output).toContain('Worker process exited unexpectedly');
 });
 
@@ -138,4 +139,30 @@ test('should use the first occurring error when an unhandled exception was throw
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.report.suites[0].specs[0].tests[0].results[0].error.message).toBe('first error');
+});
+
+test('worker interrupt should report errors', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const test = pwt.test.extend({
+        throwOnTeardown: async ({}, use) => {
+          let reject;
+          await use(new Promise((f, r) => reject = r));
+          reject(new Error('INTERRUPT'));
+        },
+      });
+      test('interrupted', async ({ throwOnTeardown }) => {
+        console.log('\\n%%SEND-SIGINT%%');
+        await throwOnTeardown;
+      });
+    `,
+  }, {}, {}, { sendSIGINTAfter: 1 });
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.output).toContain('%%SEND-SIGINT%%');
+  expect(result.output).toContain('Error: INTERRUPT');
 });
