@@ -68,6 +68,10 @@ title: "Community Showcase"
 
 * [theheadless.dev](https://theheadless.dev): Practical guides and runnable examples on Playwright (and Puppeteer)
 
+## Video Guide
+
+* [Playwright Masterclass: Playwright Test by Lethcode](https://youtu.be/VKvZSpSWDZw): Examples of creating tests and running the command line tools avaliable in Playwright along with many useful settings. 
+
 ## Contributing
 
 Did we miss something in this list? Send us a PR!
