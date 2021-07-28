@@ -15,6 +15,9 @@ if dpkg --get-selections | grep -q "^google-chrome[[:space:]]*install$" >/dev/nu
   $maybesudo apt-get remove -y google-chrome
 fi
 
+if ! command -v wget >/dev/null; then
+  $maybesudo apt-get install -y wget
+fi
 
 # 2. download chrome stable from dl.google.com and install it.
 cd /tmp
