@@ -16,50 +16,46 @@
 
 import {
   matcherHint,
-  MatcherHintOptions,
-  printReceived
+  MatcherHintOptions
 } from 'jest-matcher-utils';
 import { Locator } from '../../..';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
-import { monotonicTime, pollUntilDeadline } from '../util';
+import { expectLocator, monotonicTime, pollUntilDeadline } from '../util';
 
-
-async function toBeTruthyImpl(
+async function toBeTruthyImpl<T>(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
-  query: (timeout: number) => Promise<boolean>,
+  locator: Locator,
+  query: (timeout: number) => Promise<T>,
   options: { timeout?: number } = {},
 ) {
   const testInfo = currentTestInfo();
   if (!testInfo)
-    throw new Error(`toMatchSnapshot() must be called during the test`);
+    throw new Error(`${matcherName} must be called during the test`);
+  expectLocator(locator, matcherName);
 
   const matcherOptions: MatcherHintOptions = {
     isNot: this.isNot,
     promise: this.promise,
   };
 
-  let received: boolean;
+  let received: T;
   let pass = false;
   const timeout = options.timeout === 0 ? 0 : options.timeout || testInfo.timeout;
   const deadline = timeout ? monotonicTime() + timeout : 0;
 
-  try {
-    await pollUntilDeadline(async () => {
-      const remainingTime = deadline ? deadline - monotonicTime() : 0;
-      received = await query(remainingTime);
-      pass = !!received;
-      return pass === !matcherOptions.isNot;
-    }, deadline, 100);
-  } catch (e) {
-    pass = false;
-  }
+  // TODO: interrupt on timeout for nice message.
+  await pollUntilDeadline(async () => {
+    const remainingTime = deadline ? deadline - monotonicTime() : 0;
+    received = await query(remainingTime);
+    pass = !!received;
+    return pass === !matcherOptions.isNot;
+  }, deadline, 100);
 
-  const message = () =>
-    matcherHint(matcherName, undefined, '', matcherOptions) +
-      '\n\n' +
-      `Received: ${printReceived(received)}`;
+  const message = () => {
+    return matcherHint(matcherName, undefined, '', matcherOptions);
+  };
 
   return { message, pass };
 }
@@ -69,7 +65,7 @@ export async function toBeChecked(
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthyImpl.call(this, 'toBeChecked', async timeout => {
+  return toBeTruthyImpl.call(this, 'toBeChecked', locator, async timeout => {
     return await locator.isChecked({ timeout });
   }, options);
 }
@@ -79,7 +75,7 @@ export async function toBeEditable(
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthyImpl.call(this, 'toBeEditable', async timeout => {
+  return toBeTruthyImpl.call(this, 'toBeEditable', locator, async timeout => {
     return await locator.isEditable({ timeout });
   }, options);
 }
@@ -89,7 +85,7 @@ export async function toBeEnabled(
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthyImpl.call(this, 'toBeEnabled', async timeout => {
+  return toBeTruthyImpl.call(this, 'toBeEnabled', locator, async timeout => {
     return await locator.isEnabled({ timeout });
   }, options);
 }
@@ -99,7 +95,7 @@ export async function toBeDisabled(
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthyImpl.call(this, 'toBeDisabled', async timeout => {
+  return toBeTruthyImpl.call(this, 'toBeDisabled', locator, async timeout => {
     return await locator.isDisabled({ timeout });
   }, options);
 }
@@ -109,7 +105,7 @@ export async function toBeEmpty(
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthyImpl.call(this, 'toBeEmpty', async timeout => {
+  return toBeTruthyImpl.call(this, 'toBeEmpty', locator, async timeout => {
     return await locator.evaluate(element => {
       if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
         return !(element as HTMLInputElement).value;
@@ -123,7 +119,7 @@ export async function toBeHidden(
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthyImpl.call(this, 'toBeHidden', async timeout => {
+  return toBeTruthyImpl.call(this, 'toBeHidden', locator, async timeout => {
     return await locator.isHidden({ timeout });
   }, options);
 }
@@ -133,7 +129,7 @@ export async function toBeVisible(
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthyImpl.call(this, 'toBeVisible', async timeout => {
+  return toBeTruthyImpl.call(this, 'toBeVisible', locator, async timeout => {
     return await locator.isVisible({ timeout });
   }, options);
 }
@@ -143,9 +139,21 @@ export async function toBeFocused(
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthyImpl.call(this, 'toBeFocused', async timeout => {
+  return toBeTruthyImpl.call(this, 'toBeFocused', locator, async timeout => {
     return await locator.evaluate(element => {
       return document.activeElement === element;
+    }, { timeout });
+  }, options);
+}
+
+export async function toBeSelected(
+  this: ReturnType<Expect['getState']>,
+  locator: Locator,
+  options?: { timeout?: number },
+) {
+  return toBeTruthyImpl.call(this, 'toBeSelected', locator, async timeout => {
+    return await locator.evaluate(element => {
+      return (element as HTMLOptionElement).selected;
     }, { timeout });
   }, options);
 }

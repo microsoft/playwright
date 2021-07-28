@@ -47,3 +47,15 @@ it('should throw on capture w/ nth()', async ({page}) => {
   const e = await page.locator('*css=div >> p').nth(0).click().catch(e => e);
   expect(e.message).toContain(`Can't query n-th element`);
 });
+
+it('should throw on due to strictness', async ({page}) => {
+  await page.setContent(`<div>A</div><div>B</div>`);
+  const e = await page.locator('div').isVisible().catch(e => e);
+  expect(e.message).toContain(`strict mode violation`);
+});
+
+it('should throw on due to strictness 2', async ({page}) => {
+  await page.setContent(`<select><option>One</option><option>Two</option></select>`);
+  const e = await page.locator('option').evaluate(e => {}).catch(e => e);
+  expect(e.message).toContain(`strict mode violation`);
+});
