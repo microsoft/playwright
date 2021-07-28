@@ -3,8 +3,6 @@ id: installation
 title: "Installation"
 ---
 
-This is a browser installation guide for Playwright Library. If you are using Playwright Test, please refer to [installing browsers](./test-install.md) test guide.
-
 <!-- TOC -->
 
 ### Prerequisites for .NET
