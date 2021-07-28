@@ -36,7 +36,7 @@ test('should support toBeChecked', async ({ runInlineTest }) => {
       test('fail', async ({ page }) => {
         await page.setContent('<input type=checkbox></input>');
         const locator = page.locator('input');
-        await expect(locator).toBeChecked({ timeout: 100 });
+        await expect(locator).toBeChecked({ timeout: 1000 });
       });
       `,
   }, { workers: 1 });
@@ -72,7 +72,7 @@ test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async 
       });
 
       test('empty input', async ({ page }) => {
-        await page.setContent('<input></inpput>');
+        await page.setContent('<input></input>');
         const locator = page.locator('input');
         await expect(locator).toBeEmpty();
       });
@@ -128,7 +128,7 @@ test('should support toBeVisible, toBeHidden', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should support toBeFocused', async ({ runInlineTest }) => {
+test('should support toBeFocused, toBeSelected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
@@ -139,8 +139,23 @@ test('should support toBeFocused', async ({ runInlineTest }) => {
         await locator.focus();
         await expect(locator).toBeFocused({ timeout: 1000 });
       });
+
+      test('selected', async ({ page }) => {
+        await page.setContent('<select><option>One</option></select>');
+        const locator = page.locator('option');
+        await expect(locator).toBeSelected();
+      });
+
+      test('fail on strict option', async ({ page }) => {
+        await page.setContent('<select><option>One</option><option>Two</option></select>');
+        const locator = page.locator('option');
+        await expect(locator).toBeSelected();
+      });
       `,
   }, { workers: 1 });
-  expect(result.passed).toBe(1);
-  expect(result.exitCode).toBe(0);
+  const output = stripAscii(result.output);
+  expect(output).toContain('strict mode violation');
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
 });

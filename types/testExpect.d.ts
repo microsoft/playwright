@@ -143,7 +143,22 @@ declare global {
        * Asserts given DOM is a focused (active) in document.
        */
       toBeFocused(options?: { timeout?: number }): Promise<R>;
-      }
+
+      /**
+       * Asserts given select option is selected
+       */
+      toBeSelected(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts JavaScript object that corresponds to the Node has a property with given value.
+       */
+      toHaveProp(name: string, value: any, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts that DOM node has a given CSS class.
+       */
+      toHaveClass(className: string, options?: { timeout?: number }): Promise<R>;
+    }
   }
 }
 
