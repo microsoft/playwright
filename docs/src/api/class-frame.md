@@ -697,6 +697,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: Frame.fill.force = %%-input-force-%%
 ### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.fill.strict = %%-input-strict-%%
 ### option: Frame.fill.timeout = %%-input-timeout-%%
 
 ## async method: Frame.focus
