@@ -72,13 +72,78 @@ declare global {
       /**
        * Asserts element's exact text content.
        */
-      toHaveText(expected: string, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+      toHaveText(expected: string | RegExp, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
 
-       /**
+      /**
        * Asserts element's text content matches given pattern or contains given substring.
        */
-      toMatchText(expected: string | RegExp, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
-    }
+      toContainText(expected: string, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+
+      /**
+       * Asserts element's attributes `name` matches expected value.
+       */
+      toHaveAttr(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's data attribute data-`name` matches expected value.
+       */
+      toHaveData(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's computed CSS property `name` matches expected value.
+       */
+      toHaveCSS(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's `id` attribute matches expected value.
+       */
+      toHaveId(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input element's value.
+       */
+      toHaveValue(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input is checked.
+       */
+      toBeChecked(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input is editable.
+       */
+      toBeEditable(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input is enabled.
+       */
+      toBeEnabled(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input is disabled.
+       */
+      toBeDisabled(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM node or input has no text content or no input value.
+       */
+      toBeEmpty(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM node is hidden or detached from DOM.
+       */
+      toBeHidden(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM node visible on the screen.
+       */
+      toBeVisible(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM is a focused (active) in document.
+       */
+      toBeFocused(options?: { timeout?: number }): Promise<R>;
+      }
   }
 }
 

@@ -16,49 +16,55 @@
 
 import { test, expect, stripAscii } from './playwright-test-fixtures';
 
-test('should support toMatchText', async ({ runInlineTest }) => {
+test('should support toHaveText w/ regex', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        const handle = page.locator('#node');
-        await expect(handle).toMatchText(/Text/);
+        const locator = page.locator('#node');
+        await expect(locator).toHaveText(/Text/);
       });
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        const handle = page.locator('#node');
-        await expect(handle).toMatchText(/Text 2/, { timeout: 100 });
+        const locator = page.locator('#node');
+        await expect(locator).toHaveText(/Text 2/, { timeout: 100 });
       });
       `,
   }, { workers: 1 });
   const output = stripAscii(result.output);
-  expect(output).toContain('Error: expect(received).toMatchText(expected)');
+  expect(output).toContain('Error: expect(received).toHaveText(expected)');
   expect(output).toContain('Expected pattern: /Text 2/');
   expect(output).toContain('Received string:  "Text content"');
-  expect(output).toContain('expect(handle).toMatchText');
+  expect(output).toContain('expect(locator).toHaveText');
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
 
-test('should support toHaveText', async ({ runInlineTest }) => {
+test('should support toHaveText w/ text', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        const handle = page.locator('#node');
-        await expect(handle).toHaveText('Text content');
+        const locator = page.locator('#node');
+        await expect(locator).toHaveText('Text content');
+      });
+
+      test('pass contain', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        const locator = page.locator('#node');
+        await expect(locator).toContainText('Text');
       });
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        const handle = page.locator('#node');
-        await expect(handle).toHaveText('Text', { timeout: 100 });
+        const locator = page.locator('#node');
+        await expect(locator).toHaveText('Text', { timeout: 100 });
       });
       `,
   }, { workers: 1 });
@@ -66,23 +72,23 @@ test('should support toHaveText', async ({ runInlineTest }) => {
   expect(output).toContain('Error: expect(received).toHaveText(expected)');
   expect(output).toContain('Expected string: "Text"');
   expect(output).toContain('Received string: "Text content"');
-  expect(output).toContain('expect(handle).toHaveText');
-  expect(result.passed).toBe(1);
+  expect(output).toContain('expect(locator).toHaveText');
+  expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
 
-test('should support toMatchText eventually', async ({ runInlineTest }) => {
+test('should support toHaveText eventually', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
 
       test('pass eventually', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        const handle = page.locator('#node');
+        const locator = page.locator('#node');
         await Promise.all([
-          expect(handle).toMatchText(/Text 2/),
-          page.waitForTimeout(1000).then(() => handle.evaluate(element => element.textContent = 'Text 2 content')),
+          expect(locator).toHaveText(/Text 2/),
+          page.waitForTimeout(1000).then(() => locator.evaluate(element => element.textContent = 'Text 2 content')),
         ]);
       });
       `,
@@ -92,15 +98,15 @@ test('should support toMatchText eventually', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should support toMatchText with innerText', async ({ runInlineTest }) => {
+test('should support toHaveText with innerText', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        const handle = page.locator('#node');
-        await expect(handle).toHaveText('Text content', { useInnerText: true });
+        const locator = page.locator('#node');
+        await expect(locator).toHaveText('Text content', { useInnerText: true });
       });
       `,
   }, { workers: 1 });
@@ -108,3 +114,83 @@ test('should support toMatchText with innerText', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should support toHaveAttr', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        const locator = page.locator('#node');
+        await expect(locator).toHaveAttr('id', 'node');
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support toHaveData', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        const locator = page.locator('#node');
+        await expect(locator).toHaveAttr('id', 'node');
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support toHaveCSS', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div id=node style="color: rgb(255, 0, 0)">Text content</div>');
+        const locator = page.locator('#node');
+        await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)');
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support toHaveId', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        const locator = page.locator('#node');
+        await expect(locator).toHaveId('node');
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support toHaveValue', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<input id=node></input>');
+        const locator = page.locator('#node');
+        await locator.fill('Text content');
+        await expect(locator).toHaveValue('Text content');
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});

@@ -22,17 +22,14 @@ import { monotonicTime } from '../utils/utils';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
 import { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
-import { TimeoutSettings } from '../utils/timeoutSettings';
 
 export class Locator implements api.Locator {
   private _frame: Frame;
   private _selector: string;
   private _visibleSelector: string;
-  private _timeoutSettings: TimeoutSettings;
 
   constructor(frame: Frame, selector: string) {
     this._frame = frame;
-    this._timeoutSettings = this._frame.page()._timeoutSettings;
     this._selector = selector;
     this._visibleSelector = selector + ' >> _visible=true';
   }
@@ -158,11 +155,11 @@ export class Locator implements api.Locator {
   }
 
   async isHidden(options?: TimeoutOptions): Promise<boolean> {
-    return this._frame.isHidden(this._visibleSelector, { strict: true, ...options });
+    return this._frame.isHidden(this._selector, { strict: true, ...options });
   }
 
   async isVisible(options?: TimeoutOptions): Promise<boolean> {
-    return this._frame.isVisible(this._visibleSelector, { strict: true, ...options });
+    return this._frame.isVisible(this._selector, { strict: true, ...options });
   }
 
   async press(key: string, options: channels.ElementHandlePressOptions = {}): Promise<void> {
