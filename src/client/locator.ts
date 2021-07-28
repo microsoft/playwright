@@ -26,12 +26,10 @@ import { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } 
 export class Locator implements api.Locator {
   private _frame: Frame;
   private _selector: string;
-  private _visibleSelector: string;
 
   constructor(frame: Frame, selector: string) {
     this._frame = frame;
     this._selector = selector;
-    this._visibleSelector = selector + ' >> _visible=true';
   }
 
   private async _withElement<R, O extends TimeoutOptions>(task: (handle: ElementHandle<SVGElement | HTMLElement>, options?: O) => Promise<R>, options?: O): Promise<R> {
@@ -54,19 +52,19 @@ export class Locator implements api.Locator {
   }
 
   async check(options: channels.ElementHandleCheckOptions = {}) {
-    return this._frame.check(this._visibleSelector, { strict: true, ...options });
+    return this._frame.check(this._selector, { strict: true, ...options });
   }
 
   async click(options: channels.ElementHandleClickOptions = {}): Promise<void> {
-    return this._frame.click(this._visibleSelector, { strict: true, ...options });
+    return this._frame.click(this._selector, { strict: true, ...options });
   }
 
   async dblclick(options: channels.ElementHandleDblclickOptions = {}): Promise<void> {
-    return this._frame.dblclick(this._visibleSelector, { strict: true, ...options });
+    return this._frame.dblclick(this._selector, { strict: true, ...options });
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}, options?: TimeoutOptions) {
-    return this._frame.dispatchEvent(this._visibleSelector, type, eventInit, { strict: true, ...options });
+    return this._frame.dispatchEvent(this._selector, type, eventInit, { strict: true, ...options });
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {
@@ -74,7 +72,7 @@ export class Locator implements api.Locator {
   }
 
   async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<(SVGElement | HTMLElement)[], Arg, R>, arg?: Arg): Promise<R> {
-    return this._frame.$$eval(this._visibleSelector, pageFunction as any, arg);
+    return this._frame.$$eval(this._selector, pageFunction as any, arg);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<structs.SmartHandle<R>> {
@@ -82,7 +80,7 @@ export class Locator implements api.Locator {
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions = {}): Promise<void> {
-    return this._frame.fill(this._visibleSelector, value, { strict: true, ...options });
+    return this._frame.fill(this._selector, value, { strict: true, ...options });
   }
 
   locator(selector: string): Locator {
@@ -90,12 +88,12 @@ export class Locator implements api.Locator {
   }
 
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
-    const result = await this._frame.waitForSelector(this._visibleSelector, { strict: true, state: 'attached', ...options });
+    const result = await this._frame.waitForSelector(this._selector, { strict: true, state: 'attached', ...options });
     return result!;
   }
 
   async elementHandles(): Promise<api.ElementHandle<SVGElement | HTMLElement>[]> {
-    return this._frame.$$(this._visibleSelector);
+    return this._frame.$$(this._selector);
   }
 
   first(): Locator {
@@ -111,7 +109,7 @@ export class Locator implements api.Locator {
   }
 
   async focus(options?: TimeoutOptions): Promise<void> {
-    return this._frame.focus(this._visibleSelector, { strict: true, ...options });
+    return this._frame.focus(this._selector, { strict: true, ...options });
   }
 
   async count(): Promise<number> {
@@ -119,39 +117,39 @@ export class Locator implements api.Locator {
   }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
-    return this._frame.getAttribute(this._visibleSelector, name, { strict: true, ...options });
+    return this._frame.getAttribute(this._selector, name, { strict: true, ...options });
   }
 
   async hover(options: channels.ElementHandleHoverOptions = {}): Promise<void> {
-    return this._frame.hover(this._visibleSelector, { strict: true, ...options });
+    return this._frame.hover(this._selector, { strict: true, ...options });
   }
 
   async innerHTML(options?: TimeoutOptions): Promise<string> {
-    return this._frame.innerHTML(this._visibleSelector, { strict: true, ...options });
+    return this._frame.innerHTML(this._selector, { strict: true, ...options });
   }
 
   async innerText(options?: TimeoutOptions): Promise<string> {
-    return this._frame.innerText(this._visibleSelector, { strict: true, ...options });
+    return this._frame.innerText(this._selector, { strict: true, ...options });
   }
 
   async inputValue(options?: TimeoutOptions): Promise<string> {
-    return this._frame.inputValue(this._visibleSelector, { strict: true, ...options });
+    return this._frame.inputValue(this._selector, { strict: true, ...options });
   }
 
   async isChecked(options?: TimeoutOptions): Promise<boolean> {
-    return this._frame.isChecked(this._visibleSelector, { strict: true, ...options });
+    return this._frame.isChecked(this._selector, { strict: true, ...options });
   }
 
   async isDisabled(options?: TimeoutOptions): Promise<boolean> {
-    return this._frame.isDisabled(this._visibleSelector, { strict: true, ...options });
+    return this._frame.isDisabled(this._selector, { strict: true, ...options });
   }
 
   async isEditable(options?: TimeoutOptions): Promise<boolean> {
-    return this._frame.isEditable(this._visibleSelector, { strict: true, ...options });
+    return this._frame.isEditable(this._selector, { strict: true, ...options });
   }
 
   async isEnabled(options?: TimeoutOptions): Promise<boolean> {
-    return this._frame.isEnabled(this._visibleSelector, { strict: true, ...options });
+    return this._frame.isEnabled(this._selector, { strict: true, ...options });
   }
 
   async isHidden(options?: TimeoutOptions): Promise<boolean> {
@@ -163,7 +161,7 @@ export class Locator implements api.Locator {
   }
 
   async press(key: string, options: channels.ElementHandlePressOptions = {}): Promise<void> {
-    return this._frame.press(this._visibleSelector, key, { strict: true, ...options });
+    return this._frame.press(this._selector, key, { strict: true, ...options });
   }
 
   async screenshot(options: channels.ElementHandleScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
@@ -175,7 +173,7 @@ export class Locator implements api.Locator {
   }
 
   async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
-    return this._frame.selectOption(this._visibleSelector, values, { strict: true, ...options });
+    return this._frame.selectOption(this._selector, values, { strict: true, ...options });
   }
 
   async selectText(options: channels.ElementHandleSelectTextOptions = {}): Promise<void> {
@@ -183,23 +181,23 @@ export class Locator implements api.Locator {
   }
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
-    return this._frame.setInputFiles(this._visibleSelector, files, { strict: true, ...options });
+    return this._frame.setInputFiles(this._selector, files, { strict: true, ...options });
   }
 
   async tap(options: channels.ElementHandleTapOptions = {}): Promise<void> {
-    return this._frame.tap(this._visibleSelector, { strict: true, ...options });
+    return this._frame.tap(this._selector, { strict: true, ...options });
   }
 
   async textContent(options?: TimeoutOptions): Promise<string | null> {
-    return this._frame.textContent(this._visibleSelector, { strict: true, ...options });
+    return this._frame.textContent(this._selector, { strict: true, ...options });
   }
 
   async type(text: string, options: channels.ElementHandleTypeOptions = {}): Promise<void> {
-    return this._frame.type(this._visibleSelector, text, { strict: true, ...options });
+    return this._frame.type(this._selector, text, { strict: true, ...options });
   }
 
   async uncheck(options: channels.ElementHandleUncheckOptions = {}) {
-    return this._frame.uncheck(this._visibleSelector, { strict: true, ...options });
+    return this._frame.uncheck(this._selector, { strict: true, ...options });
   }
 
   [(util.inspect as any).custom]() {
