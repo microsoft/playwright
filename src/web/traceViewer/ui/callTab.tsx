@@ -32,30 +32,30 @@ export const CallTab: React.FunctionComponent<{
   delete params.info;
   const paramKeys = Object.keys(params);
   return <div className='call-tab'>
-      <div className='call-error' key='error' hidden={!error}>
-        <div className='codicon codicon-issues'/>
-        {error}
-      </div>
-      <div className='call-line'>{action.metadata.apiName}</div>
-      { !!paramKeys.length && <div className='call-section'>Parameters</div> }
-      {
-        !!paramKeys.length && paramKeys.map(name => renderLine(action.metadata, name, params[name]))
-      }
-      { !!action.metadata.result && <div className='call-section'>Return value</div> }
-      {
-        !!action.metadata.result && Object.keys(action.metadata.result).map(name =>
-          renderLine(action.metadata, name, action.metadata.result[name])
-        )
-      }
-      <div className='call-section'>Log</div>
-      {
-        logs.map((logLine, index) => {
-          return <div key={index} className='call-line'>
-            {logLine}
-          </div>;
-        })
-      }
-    </div>;
+    <div className='call-error' key='error' hidden={!error}>
+      <div className='codicon codicon-issues'/>
+      {error}
+    </div>
+    <div className='call-line'>{action.metadata.apiName}</div>
+    { !!paramKeys.length && <div className='call-section'>Parameters</div> }
+    {
+      !!paramKeys.length && paramKeys.map(name => renderLine(action.metadata, name, params[name]))
+    }
+    { !!action.metadata.result && <div className='call-section'>Return value</div> }
+    {
+      !!action.metadata.result && Object.keys(action.metadata.result).map(name =>
+        renderLine(action.metadata, name, action.metadata.result[name])
+      )
+    }
+    <div className='call-section'>Log</div>
+    {
+      logs.map((logLine, index) => {
+        return <div key={index} className='call-line'>
+          {logLine}
+        </div>;
+      })
+    }
+  </div>;
 };
 
 function renderLine(metadata: CallMetadata, name: string, value: any) {
@@ -63,7 +63,7 @@ function renderLine(metadata: CallMetadata, name: string, value: any) {
   let text = trimRight(title.replace(/\n/g, '↵'), 80);
   if (type === 'string')
     text = `"${text}"`;
-  return <div className='call-line'>{name}: <span className={type} title={title}>{text}</span></div>
+  return <div className='call-line'>{name}: <span className={type} title={title}>{text}</span></div>;
 }
 
 function toString(metadata: CallMetadata, name: string, value: any): { title: string, type: string } {

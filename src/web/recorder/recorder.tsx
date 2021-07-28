@@ -80,7 +80,7 @@ export const Recorder: React.FC<RecorderProps> = ({
 
   return <div className='recorder'>
     <Toolbar>
-      <ToolbarButton icon='record' title='Record' toggled={mode == 'recording'} onClick={() => {
+      <ToolbarButton icon='record' title='Record' toggled={mode === 'recording'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' }});
       }}>Record</ToolbarButton>
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
@@ -98,8 +98,8 @@ export const Recorder: React.FC<RecorderProps> = ({
       <div style={{flex: 'auto'}}></div>
       <div>Target:</div>
       <select className='recorder-chooser' hidden={!sources.length} value={file} onChange={event => {
-          setFile(event.target.selectedOptions[0].value);
-        }}>{
+        setFile(event.target.selectedOptions[0].value);
+      }}>{
           sources.map(s => {
             const title = s.file.replace(/.*[/\\]([^/\\]+)/, '$1');
             return <option key={s.file} value={s.file}>{title}</option>;
@@ -114,7 +114,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       <SourceView text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></SourceView>
       <div className='vbox'>
         <Toolbar>
-          <ToolbarButton icon='microscope' title='Explore' toggled={mode == 'inspecting'} onClick={() => {
+          <ToolbarButton icon='microscope' title='Explore' toggled={mode === 'inspecting'} onClick={() => {
             window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' }}).catch(() => { });
           }}>Explore</ToolbarButton>
           <input ref={selectorInputRef} className='selector-input' placeholder='Playwright Selector' value={selector} disabled={mode !== 'none'} onChange={event => {

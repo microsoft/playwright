@@ -27,7 +27,7 @@ export const SnapshotTab: React.FunctionComponent<{
   snapshotSize: Size,
 }> = ({ action, snapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
-  let [snapshotIndex, setSnapshotIndex] = React.useState(0);
+  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
   const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
   for (const snapshot of action?.metadata.snapshots || [])
@@ -35,8 +35,10 @@ export const SnapshotTab: React.FunctionComponent<{
   const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
 
-  if (snapshotIndex >= snapshots.length)
-    snapshotIndex = snapshots.length - 1;
+  React.useEffect(() => {
+    if (snapshotIndex >= snapshots.length)
+      setSnapshotIndex(snapshots.length - 1);
+  }, [snapshotIndex, snapshots]);
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
   React.useEffect(() => {
@@ -57,7 +59,7 @@ export const SnapshotTab: React.FunctionComponent<{
       (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
     } catch (e) {
     }
-  }, [action, snapshotIndex]);
+  }, [action, snapshotIndex, iframeRef, snapshots]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   const scaledSize = {
@@ -79,7 +81,7 @@ export const SnapshotTab: React.FunctionComponent<{
           onClick={() => setSnapshotIndex(index)}
           key={snapshot.title}>
           <div className='tab-label'>{renderTitle(snapshot.title)}</div>
-        </div>
+        </div>;
       })}
     </div>
     <div ref={ref} className='snapshot-wrapper'>
