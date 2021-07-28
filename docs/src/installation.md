@@ -7,6 +7,15 @@ This is a browser installation guide for Playwright Library. If you are using Pl
 
 <!-- TOC -->
 
+### Prerequisites for .NET
+* langs: csharp
+
+All examples require the `Microsoft.Playwright.CLI` to be installed. You only have to do this once:
+
+```bash
+dotnet tool install -g Microsoft.Playwright.CLI
+```
+
 ## Managing browser binaries
 
 Each version of Playwright needs specific versions of browser binaries to operate. By default, Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
@@ -17,6 +26,11 @@ Each version of Playwright needs specific versions of browser binaries to operat
 
 ```bash python
 pip install playwright
+playwright install
+```
+
+```bash csharp
+# In your solution/project folder...
 playwright install
 ```
 
@@ -60,6 +74,20 @@ $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 mvn test
 ```
 
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers 
+playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+playwright install
+```
+
 When running Playwright scripts, ask it to search for browsers in a shared location.
 
 ```bash python
@@ -83,6 +111,19 @@ mvn test
 # Windows with PowerShell
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 mvn test
+```
+
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers dotnet test
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+dotnet test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+dotnet test
 ```
 
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
@@ -127,6 +168,19 @@ $env:HTTPS_PROXY="https://192.0.2.1"
 mvn test
 ```
 
+```bash csharp
+# Linux/macOS
+HTTPS_PROXY=https://192.0.2.1 playwright install
+
+# Windows with cmd.exe
+set HTTPS_PROXY=https://192.0.2.1
+playwright install
+
+# Windows with PowerShell
+$env:HTTPS_PROXY="https://192.0.2.1"
+playwright install
+```
+
 ## Download from artifact repository
 
 By default, Playwright downloads browsers from Microsoft CDN.
@@ -164,6 +218,19 @@ $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 mvn test
 ```
 
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+playwright install
+```
+
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
 take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
 
@@ -176,6 +243,11 @@ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 
 ```bash java
 # Linux/macOS
 PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
+```
+
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
 ```
 
 ## Skip browser downloads
@@ -212,6 +284,19 @@ mvn test
 # Windows with PowerShell
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 mvn test
+```
+
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+playwright install
 ```
 
 ## Download single browser binary
