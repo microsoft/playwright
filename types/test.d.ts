@@ -2676,6 +2676,71 @@ export interface PlaywrightWorkerArgs {
  */
 export interface PlaywrightTestArgs {
   /**
+   * A function that creates a new context, taking into account all options set through
+   * [configuration file](https://playwright.dev/docs/test-configuration) or
+   * [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) calls. All contexts created by this function
+   * are similar to the default [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context).
+   *
+   * This function is useful for multi-context scenarios, for example testing two users talking over the chat application.
+   *
+   * A single `options` argument will be merged with all the default options from
+   * [configuration file](https://playwright.dev/docs/test-configuration) or
+   * [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) calls and passed to
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). If you'd like to
+   * undo some of these options, override them with some value or `undefined`. For example:
+   *
+   * ```js js-flavor=ts
+   * // example.spec.ts
+   *
+   * import { test } from '@playwright/test';
+   *
+   * // All contexts will use this storage state.
+   * test.use({ storageState: 'state.json' });
+   *
+   * test('my test', async ({ createContext }) => {
+   *   // An isolated context
+   *   const context1 = await createContext();
+   *
+   *   // Another isolated context with custom options
+   *   const context2 = await createContext({
+   *     // Undo 'state.json' from above
+   *     storageState: undefined,
+   *     // Set custom locale
+   *     locale: 'en-US',
+   *   });
+   *
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=js
+   * // example.spec.js
+   * // @ts-check
+   *
+   * const { test } = require('@playwright/test');
+   *
+   * // All contexts will use this storage state.
+   * test.use({ storageState: 'state.json' });
+   *
+   * test('my test', async ({ createContext }) => {
+   *   // An isolated context
+   *   const context1 = await createContext();
+   *
+   *   // Another isolated context with custom options
+   *   const context2 = await createContext({
+   *     // Undo 'state.json' from above
+   *     storageState: undefined,
+   *     // Set custom locale
+   *     locale: 'en-US',
+   *   });
+   *
+   *   // ...
+   * });
+   * ```
+   *
+   */
+  createContext: (options?: BrowserContextOptions) => Promise<BrowserContext>;
+  /**
    * Isolated [BrowserContext] instance, created for each test. Since contexts are isolated between each other, every test
    * gets a fresh environment, even when multiple tests run in a single [Browser] for maximum efficiency.
    *

@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { LaunchOptions, BrowserContextOptions, Page } from '../../types/types';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext } from '../../types/types';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
@@ -79,7 +79,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   },
   contextOptions: {},
 
-  context: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, baseURL, contextOptions }, use, testInfo) => {
+  createContext: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, baseURL, contextOptions }, use, testInfo) => {
     testInfo.snapshotSuffix = process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -93,17 +93,7 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     const captureVideo = (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
     const captureTrace = (trace === 'on' || trace === 'retain-on-failure' || (trace === 'on-first-retry' && testInfo.retry === 1));
 
-    let recordVideoDir: string | null = null;
-    const recordVideoSize = typeof video === 'string' ? undefined : video.size;
-    if (captureVideo) {
-      await fs.promises.mkdir(artifactsFolder, { recursive: true });
-      recordVideoDir = artifactsFolder;
-    }
-
-    const options: BrowserContextOptions = {
-      recordVideo: recordVideoDir ? { dir: recordVideoDir, size: recordVideoSize } : undefined,
-      ...contextOptions,
-    };
+    const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
       options.acceptDownloads = acceptDownloads;
     if (bypassCSP !== undefined)
@@ -145,33 +135,55 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
     if (baseURL !== undefined)
       options.baseURL = baseURL;
 
-    const context = await browser.newContext(options);
-    context.setDefaultTimeout(0);
+    const allContexts: BrowserContext[] = [];
     const allPages: Page[] = [];
-    context.on('page', page => allPages.push(page));
 
-    if (captureTrace) {
-      const name = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
-      await context.tracing.start({ name, screenshots: true, snapshots: true });
-    }
+    await use(async (additionalOptions = {}) => {
+      let recordVideoDir: string | null = null;
+      const recordVideoSize = typeof video === 'string' ? undefined : video.size;
+      if (captureVideo) {
+        await fs.promises.mkdir(artifactsFolder, { recursive: true });
+        recordVideoDir = artifactsFolder;
+      }
 
-    await use(context);
+      const combinedOptions = {
+        recordVideo: recordVideoDir ? { dir: recordVideoDir, size: recordVideoSize } : undefined,
+        ...contextOptions,
+        ...options,
+        ...additionalOptions,
+      };
+      const context = await browser.newContext(combinedOptions);
+      context.setDefaultTimeout(0);
+      context.on('page', page => allPages.push(page));
+
+      if (captureTrace) {
+        const name = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
+        const suffix = allContexts.length ? '-' + allContexts.length : '';
+        await context.tracing.start({ name: name + suffix, screenshots: true, snapshots: true });
+      }
+
+      allContexts.push(context);
+      return context;
+    });
 
     const testFailed = testInfo.status !== testInfo.expectedStatus;
 
-    const preserveTrace = captureTrace && (trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'on-first-retry' && testInfo.retry === 1));
-    if (preserveTrace) {
-      const tracePath = testInfo.outputPath(`trace.zip`);
-      await context.tracing.stop({ path: tracePath });
-      testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
-    } else if (captureTrace) {
-      await context.tracing.stop();
-    }
+    await Promise.all(allContexts.map(async (context, contextIndex) => {
+      const preserveTrace = captureTrace && (trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'on-first-retry' && testInfo.retry === 1));
+      if (preserveTrace) {
+        const suffix = contextIndex ? '-' + contextIndex : '';
+        const tracePath = testInfo.outputPath(`trace${suffix}.zip`);
+        await context.tracing.stop({ path: tracePath });
+        testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
+      } else if (captureTrace) {
+        await context.tracing.stop();
+      }
+    }));
 
     const captureScreenshots = (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
     if (captureScreenshots) {
       await Promise.all(allPages.map(async (page, index) => {
-        const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${++index}.png`);
+        const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index + 1}.png`);
         try {
           await page.screenshot({ timeout: 5000, path: screenshotPath });
           testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
@@ -180,8 +192,9 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       }));
     }
 
-    const prependToError = testInfo.status ===  'timedOut' ? formatPendingCalls((context as any)._connection.pendingProtocolCalls()) : '';
-    await context.close();
+    const prependToError = (testInfo.status ===  'timedOut' && allContexts.length) ?
+      formatPendingCalls((allContexts[0] as any)._connection.pendingProtocolCalls()) : '';
+    await Promise.all(allContexts.map(context => context.close()));
     if (prependToError) {
       if (!testInfo.error) {
         testInfo.error = { value: prependToError };
@@ -207,6 +220,10 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
         }
       }));
     }
+  },
+
+  context: async ({ createContext }, use) => {
+    await use(await createContext());
   },
 
   page: async ({ context }, use) => {
