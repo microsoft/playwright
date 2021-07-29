@@ -439,10 +439,27 @@ function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
 }
 
 function createTestGroups(rootSuite: Suite): TestGroup[] {
-  const groupById = new Map<string, TestGroup>();
+  // We try to preserve the order of tests when they require different workers
+  // by ordering different worker hashes sequentially.
+  const workerHashToOrdinal = new Map<string, number>();
+  const requireFileToOrdinal = new Map<string, number>();
+
+  const groupById = new Map<number, TestGroup>();
   for (const projectSuite of rootSuite.suites) {
     for (const test of projectSuite.allTests()) {
-      const id = test._workerHash + '::' + test._requireFile;
+      let workerHashOrdinal = workerHashToOrdinal.get(test._workerHash);
+      if (!workerHashOrdinal) {
+        workerHashOrdinal = workerHashToOrdinal.size + 1;
+        workerHashToOrdinal.set(test._workerHash, workerHashOrdinal);
+      }
+
+      let requireFileOrdinal = requireFileToOrdinal.get(test._requireFile);
+      if (!requireFileOrdinal) {
+        requireFileOrdinal = requireFileToOrdinal.size + 1;
+        requireFileToOrdinal.set(test._requireFile, requireFileOrdinal);
+      }
+
+      const id = workerHashOrdinal * 10000 + requireFileOrdinal;
       let group = groupById.get(id);
       if (!group) {
         group = {
@@ -457,9 +474,11 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
       group.tests.push(test);
     }
   }
-  const groups = Array.from(groupById.values());
-  groups.sort((a, b) => a.workerHash.localeCompare(b.workerHash));
-  return groups;
+
+  // Sorting ids will preserve the natural order, because we
+  // replaced hashes with ordinals according to the natural ordering.
+  const ids = Array.from(groupById.keys()).sort();
+  return ids.map(id => groupById.get(id)!);
 }
 
 class ListModeReporter implements Reporter {
