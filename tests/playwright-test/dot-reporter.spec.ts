@@ -90,3 +90,20 @@ test('should work from config', async ({ runInlineTest }) => {
   expect(result.output).toContain(colors.green('·'));
   expect(result.exitCode).toBe(0);
 });
+
+test('render 243 tests in rows by 80', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      for (let i = 0; i < 243; i++) {
+        test('test' + i, () => {});
+      }
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain(
+      colors.green('·').repeat(80) + '\n' +
+      colors.green('·').repeat(80) + '\n' +
+      colors.green('·').repeat(80) + '\n' +
+      colors.green('·').repeat(3));
+});
