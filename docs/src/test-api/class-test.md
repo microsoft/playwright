@@ -528,13 +528,12 @@ Timeout in milliseconds.
 
 Skips a test or a group of tests.
 
-Unconditionally skip a test:
+Unconditionally skip a test, this is similar syntax to [`method: Test.(call)`]:
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
 
-test('broken test', async ({ page }) => {
-  test.skip();
+test.skip('broken test', async ({ page }) => {
   // ...
 });
 ```
@@ -542,13 +541,12 @@ test('broken test', async ({ page }) => {
 ```js js-flavor=ts
 import { test, expect } from '@playwright/test';
 
-test('broken test', async ({ page }) => {
-  test.skip();
+test.skip('broken test', async ({ page }) => {
   // ...
 });
 ```
 
-Conditionally skip a test with an optional description:
+Conditionally skip a test with an optional description. In this case, call `test.skip()` inside the test function:
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -617,15 +615,14 @@ test.beforeEach(async ({ page }) => {
 ```
 
 ### param: Test.skip.condition
-- `condition` <[void]|[boolean]|[function]\([Fixtures]\):[boolean]>
+- `titleOrCondition` <[string]|[void]|[boolean]|[function]\([Fixtures]\):[boolean]>
 
-Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are skipped when the condition is `true`.
+When used with `test.skip('test', () => {})` notation, first argument is a test title. Otherwise it is an optional skip condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are skipped when the condition is `true`.
 
 ### param: Test.skip.description
-- `description` <[void]|[string]>
+- `testFunctionOrDescription` <[function]\([Fixtures], [TestInfo]\)|[void]|[string]>
 
-Optional description that will be reflected in a test report.
-
+When used with `test.skip('test', () => {})` notation, second argument is a test function. Otherwise it is an optional description that will be reflected in a test report.
 
 
 

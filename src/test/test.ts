@@ -159,6 +159,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     const test = new TestCase(this.title, this.fn, this._ordinalInFile, this._testType, this.location);
     test._only = this._only;
     test._requireFile = this._requireFile;
+    test.expectedStatus = this.expectedStatus;
     return test;
   }
 

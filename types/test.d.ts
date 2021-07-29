@@ -1177,7 +1177,7 @@ export interface TestInfo {
 
   /**
    * Skips the currently running test. This is similar to
-   * [test.skip([condition, description])](https://playwright.dev/docs/api/class-test#test-skip).
+   * [test.skip(titleOrCondition, testFunctionOrDescription)](https://playwright.dev/docs/api/class-test#test-skip).
    * @param condition Optional condition - the test is skipped when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
@@ -1245,7 +1245,7 @@ export interface TestInfo {
   /**
    * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
    * - `'skipped'` for skipped tests, e.g. with
-   *   [test.skip([condition, description])](https://playwright.dev/docs/api/class-test#test-skip);
+   *   [test.skip(titleOrCondition, testFunctionOrDescription)](https://playwright.dev/docs/api/class-test#test-skip);
    * - `'failed'` for tests marked as failed with
    *   [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail).
    *
@@ -1527,13 +1527,13 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Skips a test or a group of tests.
    *
-   * Unconditionally skip a test:
+   * Unconditionally skip a test, this is similar syntax to
+   * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call):
    *
    * ```js js-flavor=js
    * const { test, expect } = require('@playwright/test');
    *
-   * test('broken test', async ({ page }) => {
-   *   test.skip();
+   * test.skip('broken test', async ({ page }) => {
    *   // ...
    * });
    * ```
@@ -1541,13 +1541,12 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```js js-flavor=ts
    * import { test, expect } from '@playwright/test';
    *
-   * test('broken test', async ({ page }) => {
-   *   test.skip();
+   * test.skip('broken test', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   * Conditionally skip a test with an optional description:
+   * Conditionally skip a test with an optional description. In this case, call `test.skip()` inside the test function:
    *
    * ```js js-flavor=js
    * const { test, expect } = require('@playwright/test');
@@ -1616,8 +1615,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are skipped when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
+   * @param titleOrCondition When used with `test.skip('test', () => {})` notation, first argument is a test title. Otherwise it is an optional skip condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are
+   * skipped when the condition is `true`.
+   * @param testFunctionOrDescription When used with `test.skip('test', () => {})` notation, second argument is a test function. Otherwise it is an optional description that will be reflected in a test report.
    */
   skip(): void;
   skip(condition: boolean): void;

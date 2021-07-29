@@ -288,3 +288,21 @@ test('test.skip without a callback in describe block should skip hooks', async (
   expect(result.report.suites[0].suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
   expect(result.output).not.toContain('%%');
 });
+
+test('test.skip should not define a skipped test inside another test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      const logs = [];
+      test('passes', () => {
+        test.skip('foo', () => {
+          console.log('%%dontseethis');
+          throw new Error('foo');
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('It looks like you are calling test.skip() inside the test and pass a callback');
+});

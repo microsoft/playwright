@@ -113,7 +113,8 @@ export interface TestCase {
   titlePath(): string[];
   /**
    * Expected test status.
-   * - Tests marked as [test.skip([condition, description])](https://playwright.dev/docs/api/class-test#test-skip) or
+   * - Tests marked as
+   *   [test.skip(titleOrCondition, testFunctionOrDescription)](https://playwright.dev/docs/api/class-test#test-skip) or
    *   [test.fixme([condition, description])](https://playwright.dev/docs/api/class-test#test-fixme) are expected to be
    *   `'skipped'`.
    * - Tests marked as [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail) are

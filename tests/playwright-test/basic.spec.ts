@@ -366,3 +366,19 @@ test('should help with describe() misuse', async ({ runInlineTest }) => {
     `});`,
   ].join('\n'));
 });
+
+test('test.skip should define a skipped test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      const logs = [];
+      test.skip('foo', () => {
+        console.log('%%dontseethis');
+        throw new Error('foo');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.output).not.toContain('%%dontseethis');
+});

@@ -227,7 +227,7 @@ export class WorkerRunner extends EventEmitter {
       fn: test.fn,
       repeatEachIndex: this._params.repeatEachIndex,
       retry: entry.retry,
-      expectedStatus: 'passed',
+      expectedStatus: test.expectedStatus,
       annotations: [],
       attachments: [],
       duration: 0,
@@ -493,6 +493,16 @@ function buildTestEndPayload(testId: string, testInfo: TestInfo): TestEndPayload
 }
 
 function modifier(testInfo: TestInfo, type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) {
+  if (typeof modifierArgs[1] === 'function') {
+    throw new Error([
+      'It looks like you are calling test.skip() inside the test and pass a callback.',
+      'Pass a condition instead and optional description instead:',
+      `test('my test', async ({ page, isMobile }) => {`,
+      `  test.skip(isMobile, 'This test is not applicable on mobile');`,
+      `});`,
+    ].join('\n'));
+  }
+
   if (modifierArgs.length >= 1 && !modifierArgs[0])
     return;
 
