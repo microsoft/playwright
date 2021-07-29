@@ -7048,6 +7048,16 @@ export interface Locator {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * Returns an array of `node.innerText` values for all matching nodes.
+   */
+  allInnerTexts(): Promise<Array<string>>;
+
+  /**
+   * Returns an array of `node.textContent` values for all matching nodes.
+   */
+  allTextContents(): Promise<Array<string>>;
+
+  /**
    * This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is
    * calculated relative to the main frame viewport - which is usually the same as the browser window.
    *

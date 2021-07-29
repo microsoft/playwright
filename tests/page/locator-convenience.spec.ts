@@ -47,25 +47,25 @@ it('inputValue should work', async ({ page, server }) => {
 
   await page.fill('#input', 'input value');
   expect(await page.inputValue('#input')).toBe('input value');
-  const handle = page.locator('#input');
-  expect(await handle.inputValue()).toBe('input value');
+  const locator = page.locator('#input');
+  expect(await locator.inputValue()).toBe('input value');
 
   expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
-  const handle2 = page.locator('#inner');
-  expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
+  const locator2 = page.locator('#inner');
+  expect(await locator2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
 });
 
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
-  const handle = page.locator('#outer');
-  expect(await handle.innerHTML()).toBe('<div id="inner">Text,\nmore text</div>');
+  const locator = page.locator('#outer');
+  expect(await locator.innerHTML()).toBe('<div id="inner">Text,\nmore text</div>');
   expect(await page.innerHTML('#outer')).toBe('<div id="inner">Text,\nmore text</div>');
 });
 
 it('innerText should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
-  const handle = page.locator('#inner');
-  expect(await handle.innerText()).toBe('Text, more text');
+  const locator = page.locator('#inner');
+  expect(await locator.innerText()).toBe('Text, more text');
   expect(await page.innerText('#inner')).toBe('Text, more text');
 });
 
@@ -73,15 +73,15 @@ it('innerText should throw', async ({ page, server }) => {
   await page.setContent(`<svg>text</svg>`);
   const error1 = await page.innerText('svg').catch(e => e);
   expect(error1.message).toContain('Not an HTMLElement');
-  const handle = page.locator('svg');
-  const error2 = await handle.innerText().catch(e => e);
+  const locator = page.locator('svg');
+  const error2 = await locator.innerText().catch(e => e);
   expect(error2.message).toContain('Not an HTMLElement');
 });
 
 it('textContent should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
-  const handle = page.locator('#inner');
-  expect(await handle.textContent()).toBe('Text,\nmore text');
+  const locator = page.locator('#inner');
+  expect(await locator.textContent()).toBe('Text,\nmore text');
   expect(await page.textContent('#inner')).toBe('Text,\nmore text');
 });
 
@@ -195,4 +195,14 @@ it('isChecked should work', async ({page}) => {
   expect(await page.isChecked('input')).toBe(false);
   const error = await page.isChecked('div').catch(e => e);
   expect(error.message).toContain('Not a checkbox or radio button');
+});
+
+it('addTextContents should work', async ({page}) => {
+  await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
+  expect(await page.locator('div').allTextContents()).toEqual(['A', 'B', 'C']);
+});
+
+it('addInnerTexts should work', async ({page}) => {
+  await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
+  expect(await page.locator('div').allInnerTexts()).toEqual(['A', 'B', 'C']);
 });
