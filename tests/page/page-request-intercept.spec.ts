@@ -20,7 +20,6 @@ import type { Route } from '../../index';
 import { test as it, expect } from './pageTest';
 
 it('should fulfill intercepted response', async ({page, server, browserName}) => {
-  it.fixme(browserName === 'firefox');
   await page.route('**/*', async route => {
     // @ts-expect-error
     await route._intercept({});
@@ -41,8 +40,6 @@ it('should fulfill intercepted response', async ({page, server, browserName}) =>
 });
 
 it('should throw on continue after intercept', async ({page, server, browserName}) => {
-  it.fixme(browserName === 'firefox');
-
   let routeCallback;
   const routePromise = new Promise<Route>(f => routeCallback = f);
   await page.route('**', routeCallback);
@@ -60,7 +57,6 @@ it('should throw on continue after intercept', async ({page, server, browserName
 });
 
 it('should support fulfill after intercept', async ({page, server, browserName, browserMajorVersion}) => {
-  it.fixme(browserName === 'firefox');
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**', async route => {
@@ -75,7 +71,6 @@ it('should support fulfill after intercept', async ({page, server, browserName, 
 
 
 it('should support request overrides', async ({page, server, browserName, browserMajorVersion}) => {
-  it.fixme(browserName === 'firefox');
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**/foo', async route => {
@@ -97,9 +92,6 @@ it('should support request overrides', async ({page, server, browserName, browse
 });
 
 it('should give access to the intercepted response', async ({page, server, browserName}) => {
-  it.fixme(browserName === 'firefox');
-  // it.fixme(browserName === 'webkit');
-
   await page.goto(server.EMPTY_PAGE);
 
   let routeCallback;
@@ -121,8 +113,6 @@ it('should give access to the intercepted response', async ({page, server, brows
 });
 
 it('should give access to the intercepted response body', async ({page, server, browserName}) => {
-  it.fixme(browserName === 'firefox');
-
   await page.goto(server.EMPTY_PAGE);
 
   let routeCallback;
@@ -141,7 +131,6 @@ it('should give access to the intercepted response body', async ({page, server, 
 });
 
 it('should be abortable after interception', async ({page, server, browserName}) => {
-  it.fixme(browserName === 'firefox');
   it.fixme(browserName === 'webkit');
 
   await page.route(/\.css$/, async route => {
