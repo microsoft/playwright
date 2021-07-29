@@ -144,7 +144,7 @@ program
       console.log(``);
       console.log(`Examples:`);
       console.log(`  - $ install-deps`);
-      console.log(`    Install dependecies fro default browsers.`);
+      console.log(`    Install dependencies for default browsers.`);
       console.log(``);
       console.log(`  - $ install-deps chrome firefox`);
       console.log(`    Install dependencies for specific browsers, supports ${suggestedBrowsersToInstall()}.`);
