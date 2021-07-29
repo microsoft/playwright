@@ -273,11 +273,21 @@ export class Runner {
       let sigintCallback: () => void;
       const sigIntPromise = new Promise<void>(f => sigintCallback = f);
       const sigintHandler = () => {
-        // We remove handler so that double Ctrl+C immediately kills the runner,
-        // for the case where our shutdown takes a lot of time or is buggy.
-        // Removing the handler synchronously sometimes triggers the default handler
-        // that exits the process, so we remove asynchronously.
-        setTimeout(() => process.off('SIGINT', sigintHandler), 0);
+        // We remove the handler so that second Ctrl+C immediately kills the runner
+        // via the default sigint handler. This is handy in the case where our shutdown
+        // takes a lot of time or is buggy.
+        //
+        // When running through NPM we might get multiple SIGINT signals
+        // for a single Ctrl+C - this is an NPM bug present since at least NPM v6.
+        // https://github.com/npm/cli/issues/1591
+        // https://github.com/npm/cli/issues/2124
+        //
+        // Therefore, removing the handler too soon will just kill the process
+        // with default handler without printing the results.
+        // We work around this by giving NPM 1000ms to send us duplicate signals.
+        // The side effect is that slow shutdown or bug in our runner will force
+        // the user to hit Ctrl+C again after at least a second.
+        setTimeout(() => process.off('SIGINT', sigintHandler), 1000);
         sigint = true;
         sigintCallback();
       };
