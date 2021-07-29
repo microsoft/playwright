@@ -95,6 +95,16 @@ await locator.HoverAsync();
 await locator.ClickAsync();
 ```
 
+## async method: Locator.allInnerTexts
+- returns: <[Array]<[string]>>
+
+Returns an array of `node.innerText` values for all matching nodes.
+
+## async method: Locator.allTextContents
+- returns: <[Array]<[string]>>
+
+Returns an array of `node.textContent` values for all matching nodes.
+
 ## async method: Locator.boundingBox
 - returns: <[null]|[Object]>
   - `x` <[float]> the x coordinate of the element in pixels.

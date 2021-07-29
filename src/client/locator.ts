@@ -200,6 +200,14 @@ export class Locator implements api.Locator {
     return this._frame.uncheck(this._selector, { strict: true, ...options });
   }
 
+  async allInnerTexts(): Promise<string[]> {
+    return this._frame.$$eval(this._selector, ee => ee.map(e => (e as HTMLElement).innerText));
+  }
+
+  async allTextContents(): Promise<string[]> {
+    return this._frame.$$eval(this._selector, ee => ee.map(e => e.textContent || ''));
+  }
+
   [(util.inspect as any).custom]() {
     return this.toString();
   }
