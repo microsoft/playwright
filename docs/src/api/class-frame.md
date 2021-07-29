@@ -195,14 +195,11 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: Frame.check.selector = %%-input-selector-%%
 
-### option: Frame.check.position = %%-input-position-%%
-
 ### option: Frame.check.force = %%-input-force-%%
-
 ### option: Frame.check.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Frame.check.position = %%-input-position-%%
+### option: Frame.check.strict = %%-input-strict-%%
 ### option: Frame.check.timeout = %%-input-timeout-%%
-
 ### option: Frame.check.trial = %%-input-trial-%%
 
 ## method: Frame.childFrames
@@ -225,21 +222,14 @@ When all steps combined have not finished during the specified [`option: timeout
 ### param: Frame.click.selector = %%-input-selector-%%
 
 ### option: Frame.click.button = %%-input-button-%%
-
 ### option: Frame.click.clickCount = %%-input-click-count-%%
-
 ### option: Frame.click.delay = %%-input-down-up-delay-%%
-
-### option: Frame.click.position = %%-input-position-%%
-
-### option: Frame.click.modifiers = %%-input-modifiers-%%
-
 ### option: Frame.click.force = %%-input-force-%%
-
+### option: Frame.click.modifiers = %%-input-modifiers-%%
 ### option: Frame.click.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Frame.click.position = %%-input-position-%%
+### option: Frame.click.strict = %%-input-strict-%%
 ### option: Frame.click.timeout = %%-input-timeout-%%
-
 ### option: Frame.click.trial = %%-input-trial-%%
 
 ## async method: Frame.content
@@ -271,19 +261,13 @@ When all steps combined have not finished during the specified [`option: timeout
 ### param: Frame.dblclick.selector = %%-input-selector-%%
 
 ### option: Frame.dblclick.button = %%-input-button-%%
-
-### option: Frame.dblclick.delay = %%-input-down-up-delay-%%
-
-### option: Frame.dblclick.position = %%-input-position-%%
-
-### option: Frame.dblclick.modifiers = %%-input-modifiers-%%
-
 ### option: Frame.dblclick.force = %%-input-force-%%
-
+### option: Frame.dblclick.delay = %%-input-down-up-delay-%%
+### option: Frame.dblclick.modifiers = %%-input-modifiers-%%
 ### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Frame.dblclick.position = %%-input-position-%%
+### option: Frame.dblclick.strict = %%-input-strict-%%
 ### option: Frame.dblclick.timeout = %%-input-timeout-%%
-
 ### option: Frame.dblclick.trial = %%-input-trial-%%
 
 ## async method: Frame.dispatchEvent
@@ -372,6 +356,7 @@ DOM event type: `"click"`, `"dragstart"`, etc.
 
 Optional event-specific initialization properties.
 
+### option: Frame.dispatchEvent.strict = %%-input-strict-%%
 ### option: Frame.dispatchEvent.timeout = %%-input-timeout-%%
 
 ## async method: Frame.dragAndDrop
@@ -381,11 +366,9 @@ Optional event-specific initialization properties.
 ### param: Frame.dragAndDrop.target = %%-input-target-%%
 
 ### option: Frame.dragAndDrop.force = %%-input-force-%%
-
 ### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Frame.dragAndDrop.strict = %%-input-strict-%%
 ### option: Frame.dragAndDrop.timeout = %%-input-timeout-%%
-
 ### option: Frame.dragAndDrop.trial = %%-input-trial-%%
 
 ## async method: Frame.evalOnSelector
@@ -436,13 +419,13 @@ var html = await frame.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.
 ```
 
 ### param: Frame.evalOnSelector.selector = %%-query-selector-%%
-
 ### param: Frame.evalOnSelector.expression = %%-evaluate-expression-%%
-
 ### param: Frame.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
+
+### option: Frame.evalOnSelector.strict = %%-input-strict-%%
 
 ## async method: Frame.evalOnSelectorAll
 * langs:
@@ -482,7 +465,6 @@ var divsCount = await frame.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => 
 ```
 
 ### param: Frame.evalOnSelectorAll.selector = %%-query-selector-%%
-
 ### param: Frame.evalOnSelectorAll.expression = %%-evaluate-expression-%%
 
 ### param: Frame.evalOnSelectorAll.arg
@@ -715,6 +697,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: Frame.fill.force = %%-input-force-%%
 ### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.fill.strict = %%-input-strict-%%
 ### option: Frame.fill.timeout = %%-input-timeout-%%
 
 ## async method: Frame.focus
@@ -724,6 +707,7 @@ This method fetches an element with [`param: selector`] and focuses it. If there
 
 ### param: Frame.focus.selector = %%-input-selector-%%
 
+### option: Frame.focus.strict = %%-input-strict-%%
 ### option: Frame.focus.timeout = %%-input-timeout-%%
 
 ## async method: Frame.frameElement
@@ -778,6 +762,7 @@ Returns element attribute value.
 
 Attribute name to get the value for.
 
+### option: Frame.getAttribute.strict = %%-input-strict-%%
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
 
 ## async method: Frame.goto
@@ -841,13 +826,10 @@ When all steps combined have not finished during the specified [`option: timeout
 ### param: Frame.hover.selector = %%-input-selector-%%
 
 ### option: Frame.hover.position = %%-input-position-%%
-
 ### option: Frame.hover.modifiers = %%-input-modifiers-%%
-
 ### option: Frame.hover.force = %%-input-force-%%
-
+### option: Frame.hover.strict = %%-input-strict-%%
 ### option: Frame.hover.timeout = %%-input-timeout-%%
-
 ### option: Frame.hover.trial = %%-input-trial-%%
 
 ## async method: Frame.innerHTML
@@ -857,6 +839,7 @@ Returns `element.innerHTML`.
 
 ### param: Frame.innerHTML.selector = %%-input-selector-%%
 
+### option: Frame.innerHTML.strict = %%-input-strict-%%
 ### option: Frame.innerHTML.timeout = %%-input-timeout-%%
 
 ## async method: Frame.innerText
@@ -866,6 +849,7 @@ Returns `element.innerText`.
 
 ### param: Frame.innerText.selector = %%-input-selector-%%
 
+### option: Frame.innerText.strict = %%-input-strict-%%
 ### option: Frame.innerText.timeout = %%-input-timeout-%%
 
 ## async method: Frame.inputValue
@@ -874,6 +858,8 @@ Returns `element.innerText`.
 Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
 
 ### param: Frame.inputValue.selector = %%-input-selector-%%
+
+### option: Frame.inputValue.strict = %%-input-strict-%%
 ### option: Frame.inputValue.timeout = %%-input-timeout-%%
 
 ## async method: Frame.isChecked
@@ -883,6 +869,7 @@ Returns whether the element is checked. Throws if the element is not a checkbox 
 
 ### param: Frame.isChecked.selector = %%-input-selector-%%
 
+### option: Frame.isChecked.strict = %%-input-strict-%%
 ### option: Frame.isChecked.timeout = %%-input-timeout-%%
 
 ## method: Frame.isDetached
@@ -897,6 +884,7 @@ Returns whether the element is disabled, the opposite of [enabled](./actionabili
 
 ### param: Frame.isDisabled.selector = %%-input-selector-%%
 
+### option: Frame.isDisabled.strict = %%-input-strict-%%
 ### option: Frame.isDisabled.timeout = %%-input-timeout-%%
 
 ## async method: Frame.isEditable
@@ -906,6 +894,7 @@ Returns whether the element is [editable](./actionability.md#editable).
 
 ### param: Frame.isEditable.selector = %%-input-selector-%%
 
+### option: Frame.isEditable.strict = %%-input-strict-%%
 ### option: Frame.isEditable.timeout = %%-input-timeout-%%
 
 ## async method: Frame.isEnabled
@@ -915,6 +904,7 @@ Returns whether the element is [enabled](./actionability.md#enabled).
 
 ### param: Frame.isEnabled.selector = %%-input-selector-%%
 
+### option: Frame.isEnabled.strict = %%-input-strict-%%
 ### option: Frame.isEnabled.timeout = %%-input-timeout-%%
 
 ## async method: Frame.isHidden
@@ -924,6 +914,7 @@ Returns whether the element is hidden, the opposite of [visible](./actionability
 
 ### param: Frame.isHidden.selector = %%-input-selector-%%
 
+### option: Frame.isHidden.strict = %%-input-strict-%%
 ### option: Frame.isHidden.timeout = %%-input-timeout-%%
 
 ## async method: Frame.isVisible
@@ -933,6 +924,7 @@ Returns whether the element is [visible](./actionability.md#visible). [`option: 
 
 ### param: Frame.isVisible.selector = %%-input-selector-%%
 
+### option: Frame.isVisible.strict = %%-input-strict-%%
 ### option: Frame.isVisible.timeout = %%-input-timeout-%%
 
 ## method: Frame.locator
@@ -999,7 +991,7 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ### option: Frame.press.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Frame.press.strict = %%-input-strict-%%
 ### option: Frame.press.timeout = %%-input-timeout-%%
 
 ## async method: Frame.querySelector
@@ -1015,6 +1007,8 @@ The method finds an element matching the specified selector within the frame. Se
 returns `null`.
 
 ### param: Frame.querySelector.selector = %%-query-selector-%%
+
+### option: Frame.querySelector.strict = %%-input-strict-%%
 
 ## async method: Frame.querySelectorAll
 * langs:
@@ -1092,6 +1086,7 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 ### param: Frame.selectOption.values = %%-select-options-values-%%
 ### option: Frame.selectOption.force = %%-input-force-%%
 ### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.selectOption.strict = %%-input-strict-%%
 ### option: Frame.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: Frame.setContent
@@ -1114,11 +1109,9 @@ Sets the value of the file input to these file paths or files. If some of the `f
 are resolved relative to the the current working directory. For empty array, clears the selected files.
 
 ### param: Frame.setInputFiles.selector = %%-input-selector-%%
-
 ### param: Frame.setInputFiles.files = %%-input-files-%%
-
 ### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Frame.setInputFiles.strict = %%-input-strict-%%
 ### option: Frame.setInputFiles.timeout = %%-input-timeout-%%
 
 ## async method: Frame.tap
@@ -1141,16 +1134,12 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: Frame.tap.selector = %%-input-selector-%%
 
-### option: Frame.tap.position = %%-input-position-%%
-
-### option: Frame.tap.modifiers = %%-input-modifiers-%%
-
-### option: Frame.tap.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: Frame.tap.force = %%-input-force-%%
-
+### option: Frame.tap.modifiers = %%-input-modifiers-%%
+### option: Frame.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.tap.position = %%-input-position-%%
+### option: Frame.tap.strict = %%-input-strict-%%
 ### option: Frame.tap.timeout = %%-input-timeout-%%
-
 ### option: Frame.tap.trial = %%-input-trial-%%
 
 ## async method: Frame.textContent
@@ -1160,6 +1149,7 @@ Returns `element.textContent`.
 
 ### param: Frame.textContent.selector = %%-input-selector-%%
 
+### option: Frame.textContent.strict = %%-input-strict-%%
 ### option: Frame.textContent.timeout = %%-input-timeout-%%
 
 ## async method: Frame.title
@@ -1214,7 +1204,7 @@ A text to type into a focused element.
 Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: Frame.type.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Frame.type.strict = %%-input-strict-%%
 ### option: Frame.type.timeout = %%-input-timeout-%%
 
 ## async method: Frame.uncheck
@@ -1236,14 +1226,11 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: Frame.uncheck.selector = %%-input-selector-%%
 
-### option: Frame.uncheck.position = %%-input-position-%%
-
 ### option: Frame.uncheck.force = %%-input-force-%%
-
 ### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
-
+### option: Frame.uncheck.position = %%-input-position-%%
+### option: Frame.uncheck.strict = %%-input-strict-%%
 ### option: Frame.uncheck.timeout = %%-input-timeout-%%
-
 ### option: Frame.uncheck.trial = %%-input-trial-%%
 
 ## method: Frame.url
@@ -1584,9 +1571,8 @@ class FrameExamples
 ```
 
 ### param: Frame.waitForSelector.selector = %%-query-selector-%%
-
 ### option: Frame.waitForSelector.state = %%-wait-for-selector-state-%%
-
+### option: Frame.waitForSelector.strict = %%-input-strict-%%
 ### option: Frame.waitForSelector.timeout = %%-input-timeout-%%
 
 ## async method: Frame.waitForTimeout

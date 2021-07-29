@@ -21,9 +21,6 @@ title: "Release notes"
 - [Intro](./intro.md)
 - [Authentication](./auth.md)
 - [Chome Extensions](./chrome-extensions.md)
-- [Playwright Test Annotations](./test-annotations.md)
-- [Playwright Test Configuration](./test-configuration.md)
-- [Playwright Test Fixtures](./test-fixtures.md)
 
 
 #### Browser Versions

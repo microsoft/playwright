@@ -14,48 +14,52 @@
  * limitations under the License.
  */
 
-import type { Expect } from './types';
 import expectLibrary from 'expect';
-import { currentTestInfo } from './globals';
-import { compare } from './golden';
+import {
+  toBeChecked,
+  toBeDisabled,
+  toBeEditable,
+  toBeEmpty,
+  toBeEnabled,
+  toBeFocused,
+  toBeHidden,
+  toBeSelected,
+  toBeVisible,
+  toContainText,
+  toHaveAttr,
+  toHaveClass,
+  toHaveCSS,
+  toHaveData,
+  toHaveId,
+  toHaveLength,
+  toHaveProp,
+  toHaveText,
+  toHaveValue
+} from './matchers/matchers';
+import { toMatchSnapshot } from './matchers/toMatchSnapshot';
+import type { Expect } from './types';
 
-export const expect: Expect = expectLibrary;
-
-function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: string | { name: string, threshold?: number }, optOptions: { threshold?: number } = {}) {
-  let options: { name: string, threshold?: number };
-  const testInfo = currentTestInfo();
-  if (!testInfo)
-    throw new Error(`toMatchSnapshot() must be called during the test`);
-  if (typeof nameOrOptions === 'string')
-    options = { name: nameOrOptions, ...optOptions };
-  else
-    options = { ...nameOrOptions };
-  if (!options.name)
-    throw new Error(`toMatchSnapshot() requires a "name" parameter`);
-
-  const projectThreshold = testInfo.project.expect?.toMatchSnapshot?.threshold;
-  if (options.threshold === undefined && projectThreshold !== undefined)
-    options.threshold = projectThreshold;
-
-  const withNegateComparison = this.isNot;
-  const { pass, message, expectedPath, actualPath, diffPath, mimeType } = compare(
-      received,
-      options.name,
-      testInfo.snapshotPath,
-      testInfo.outputPath,
-      testInfo.config.updateSnapshots,
-      withNegateComparison,
-      options
-  );
-  const contentType = mimeType || 'application/octet-stream';
-  if (expectedPath)
-    testInfo.attachments.push({ name: 'expected', contentType, path: expectedPath });
-  if (actualPath)
-    testInfo.attachments.push({ name: 'actual', contentType, path: actualPath });
-  if (diffPath)
-    testInfo.attachments.push({ name: 'diff', contentType, path: diffPath });
-  return { pass, message: () => message };
-}
-
-expectLibrary.extend({ toMatchSnapshot });
+export const expect: Expect = expectLibrary as any;
 expectLibrary.setState({ expand: false });
+expectLibrary.extend({
+  toBeChecked,
+  toBeDisabled,
+  toBeEditable,
+  toBeEmpty,
+  toBeEnabled,
+  toBeFocused,
+  toBeHidden,
+  toBeSelected,
+  toBeVisible,
+  toContainText,
+  toHaveAttr,
+  toHaveClass,
+  toHaveCSS,
+  toHaveData,
+  toHaveId,
+  toHaveLength,
+  toHaveProp,
+  toHaveText,
+  toHaveValue,
+  toMatchSnapshot,
+});

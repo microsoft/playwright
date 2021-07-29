@@ -17,6 +17,5 @@
 export type SelectorRoot = Element | ShadowRoot | Document;
 
 export interface SelectorEngine {
-  query(root: SelectorRoot, selector: string): Element | undefined;
   queryAll(root: SelectorRoot, selector: string): Element[];
 }

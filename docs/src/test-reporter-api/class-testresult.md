@@ -35,7 +35,7 @@ Learn more about [test retries](./test-retries.md).
 Start time of this particular test run.
 
 ## property: TestResult.status
-- type: <[void]|[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
+- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
 
 The status of this test result. See also [`property: TestCase.expectedStatus`].
 

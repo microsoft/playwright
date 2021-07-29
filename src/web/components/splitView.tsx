@@ -33,7 +33,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
   orientation = 'vertical',
   children
 }) => {
-  let [size, setSize] = React.useState<number>(Math.max(kMinSidebarSize, sidebarSize));
+  const [size, setSize] = React.useState<number>(Math.max(kMinSidebarSize, sidebarSize));
   const [resizing, setResizing] = React.useState<{ offset: number, size: number } | null>(null);
 
   const childrenArray = React.Children.toArray(children);
@@ -44,7 +44,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
       resizerStyle = { top: resizing ? 0 : size - 4, bottom: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
     else
       resizerStyle = { bottom: resizing ? 0 : size - 4, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
-} else {
+  } else {
     if (sidebarIsFirst)
       resizerStyle = { left: resizing ? 0 : size - 4, right: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
     else

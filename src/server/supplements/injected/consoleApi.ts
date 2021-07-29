@@ -41,7 +41,7 @@ export class ConsoleAPI {
     if (window.playwright)
       return;
     window.playwright = {
-      $: (selector: string) => this._querySelector(selector),
+      $: (selector: string, strict?: boolean) => this._querySelector(selector, !!strict),
       $$: (selector: string) => this._querySelectorAll(selector),
       inspect: (selector: string) => this._inspect(selector),
       selector: (element: Element) => this._selector(element),
@@ -49,11 +49,11 @@ export class ConsoleAPI {
     };
   }
 
-  private _querySelector(selector: string): (Element | undefined) {
+  private _querySelector(selector: string, strict: boolean): (Element | undefined) {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);
     const parsed = this._injectedScript.parseSelector(selector);
-    return this._injectedScript.querySelector(parsed, document);
+    return this._injectedScript.querySelector(parsed, document, strict);
   }
 
   private _querySelectorAll(selector: string): Element[] {
@@ -66,7 +66,7 @@ export class ConsoleAPI {
   private _inspect(selector: string) {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.inspect('Playwright >> selector').`);
-    window.inspect(this._querySelector(selector));
+    window.inspect(this._querySelector(selector, false));
   }
 
   private _selector(element: Element) {

@@ -18,6 +18,7 @@ import util from 'util';
 import path from 'path';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
+import { errors } from '../..';
 
 export class DeadlineRunner<T> {
   private _timer: NodeJS.Timer | undefined;
@@ -68,6 +69,25 @@ export class DeadlineRunner<T> {
 export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: number | undefined): Promise<{ result?: T, timedOut?: boolean }> {
   return (new DeadlineRunner(promise, deadline)).result;
 }
+
+export async function pollUntilDeadline(func: () => Promise<boolean>, deadline: number, delay: number): Promise<void> {
+  while (true) {
+    const timeUntilDeadline = deadline ? deadline - monotonicTime() : Number.MAX_VALUE;
+    if (timeUntilDeadline <= 0)
+      break;
+
+    try {
+      if (await func())
+        return;
+    } catch (e) {
+      if (e instanceof errors.TimeoutError)
+        return;
+      throw e;
+    }
+    await new Promise(f => setTimeout(f, delay));
+  }
+}
+
 
 export function serializeError(error: Error | any): TestError {
   if (error instanceof Error) {
@@ -165,4 +185,9 @@ export function errorWithFile(file: string, message: string) {
 
 export function errorWithLocation(location: Location, message: string) {
   return new Error(`${formatLocation(location)}: ${message}`);
+}
+
+export function expectLocator(receiver: any, matcherName: string) {
+  if (typeof receiver !== 'object' || receiver.constructor.name !== 'Locator')
+    throw new Error(`${matcherName} can be only used with Locator object`);
 }

@@ -18,21 +18,28 @@ import { test, expect } from './playwright-test-fixtures';
 
 const tests = {
   'a.spec.ts': `
-      const { test } = pwt;
+    const { test } = pwt;
+    test.use({ headless: false });
     test('test1', async () => {
       console.log('test1-done');
     });
-    test('test2', async () => {
-      console.log('test2-done');
+    test.describe('suite', () => {
+      test.use({ headless: true });
+      test('test2', async () => {
+        console.log('test2-done');
+      });
     });
     test('test3', async () => {
       console.log('test3-done');
     });
   `,
   'b.spec.ts': `
-      const { test } = pwt;
+    const { test } = pwt;
     test('test4', async () => {
       console.log('test4-done');
+    });
+    test('test5', async () => {
+      console.log('test5-done');
     });
   `,
 };
@@ -41,16 +48,32 @@ test('should respect shard=1/2', async ({ runInlineTest }) => {
   const result = await runInlineTest(tests, { shard: '1/2' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
-  expect(result.skipped).toBe(1);
-  expect(result.output).toContain('test1-done');
+  expect(result.skipped).toBe(0);
   expect(result.output).toContain('test2-done');
-  expect(result.output).toContain('test3-done');
+  expect(result.output).toContain('test4-done');
+  expect(result.output).toContain('test5-done');
 });
 
 test('should respect shard=2/2', async ({ runInlineTest }) => {
   const result = await runInlineTest(tests, { shard: '2/2' });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(result.skipped).toBe(3);
+  expect(result.passed).toBe(2);
+  expect(result.skipped).toBe(0);
+  expect(result.output).toContain('test1-done');
+  expect(result.output).toContain('test3-done');
+});
+
+test('should respect shard=1/2 in config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...tests,
+    'playwright.config.js': `
+      module.exports = { shard: { current: 1, total: 2 } };
+    `,
+  }, { shard: '1/2' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.skipped).toBe(0);
+  expect(result.output).toContain('test2-done');
   expect(result.output).toContain('test4-done');
+  expect(result.output).toContain('test5-done');
 });

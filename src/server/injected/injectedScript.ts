@@ -41,31 +41,45 @@ export type InjectedScriptPoll<T> = {
 export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked';
 export type ElementState = ElementStateWithoutStable | 'stable';
 
+export interface SelectorEngineV2 {
+  queryAll(root: SelectorRoot, body: any): Element[];
+}
+
+export type ElementMatch = {
+  element: Element;
+  capture: Element | undefined;
+};
+
 export class InjectedScript {
-  private _enginesV1: Map<string, SelectorEngine>;
+  private _engines: Map<string, SelectorEngineV2>;
   _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
   private _replaceRafWithTimeout: boolean;
 
   constructor(stableRafCount: number, replaceRafWithTimeout: boolean, customEngines: { name: string, engine: SelectorEngine}[]) {
-    this._enginesV1 = new Map();
-    this._enginesV1.set('xpath', XPathEngine);
-    this._enginesV1.set('xpath:light', XPathEngine);
-    this._enginesV1.set('text', this._createTextEngine(true));
-    this._enginesV1.set('text:light', this._createTextEngine(false));
-    this._enginesV1.set('id', this._createAttributeEngine('id', true));
-    this._enginesV1.set('id:light', this._createAttributeEngine('id', false));
-    this._enginesV1.set('data-testid', this._createAttributeEngine('data-testid', true));
-    this._enginesV1.set('data-testid:light', this._createAttributeEngine('data-testid', false));
-    this._enginesV1.set('data-test-id', this._createAttributeEngine('data-test-id', true));
-    this._enginesV1.set('data-test-id:light', this._createAttributeEngine('data-test-id', false));
-    this._enginesV1.set('data-test', this._createAttributeEngine('data-test', true));
-    this._enginesV1.set('data-test:light', this._createAttributeEngine('data-test', false));
-    for (const { name, engine } of customEngines)
-      this._enginesV1.set(name, engine);
-
-    // No custom engines in V2 for now.
     this._evaluator = new SelectorEvaluatorImpl(new Map());
+
+    this._engines = new Map();
+    this._engines.set('xpath', XPathEngine);
+    this._engines.set('xpath:light', XPathEngine);
+    this._engines.set('text', this._createTextEngine(true));
+    this._engines.set('text:light', this._createTextEngine(false));
+    this._engines.set('id', this._createAttributeEngine('id', true));
+    this._engines.set('id:light', this._createAttributeEngine('id', false));
+    this._engines.set('data-testid', this._createAttributeEngine('data-testid', true));
+    this._engines.set('data-testid:light', this._createAttributeEngine('data-testid', false));
+    this._engines.set('data-test-id', this._createAttributeEngine('data-test-id', true));
+    this._engines.set('data-test-id:light', this._createAttributeEngine('data-test-id', false));
+    this._engines.set('data-test', this._createAttributeEngine('data-test', true));
+    this._engines.set('data-test:light', this._createAttributeEngine('data-test', false));
+    this._engines.set('css', this._createCSSEngine());
+    this._engines.set('_first', { queryAll: () => [] });
+    this._engines.set('_visible', { queryAll: () => [] });
+    this._engines.set('_nth', { queryAll: () => [] });
+
+    for (const { name, engine } of customEngines)
+      this._engines.set(name, engine);
+
     this._stableRafCount = stableRafCount;
     this._replaceRafWithTimeout = replaceRafWithTimeout;
   }
@@ -73,33 +87,77 @@ export class InjectedScript {
   parseSelector(selector: string): ParsedSelector {
     const result = parseSelector(selector);
     for (const part of result.parts) {
-      if (!Array.isArray(part) && !this._enginesV1.has(part.name))
+      if (!this._engines.has(part.name))
         throw new Error(`Unknown engine "${part.name}" while parsing selector ${selector}`);
     }
     return result;
   }
 
-  querySelector(selector: ParsedSelector, root: Node): Element | undefined {
+  querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
     this._evaluator.begin();
     try {
-      return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
+      const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
+      if (strict && result.length > 1)
+        throw new Error(`strict mode violation: selector resolved to ${result.length} elements.`);
+      return result[0]?.capture || result[0]?.element;
     } finally {
       this._evaluator.end();
     }
   }
 
-  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
-    const current = selector.parts[index];
-    if (index === selector.parts.length - 1)
-      return this._queryEngine(current, root);
-    const all = this._queryEngineAll(current, root);
-    for (const next of all) {
-      const result = this._querySelectorRecursively(next, selector, index + 1);
-      if (result)
-        return selector.capture === index ? next : result;
+  private _querySelectorRecursively(roots: ElementMatch[], selector: ParsedSelector, index: number, queryCache: Map<Element, Element[][]>): ElementMatch[] {
+    if (index === selector.parts.length)
+      return roots;
+
+    const part = selector.parts[index];
+    if (part.name === '_nth') {
+      let filtered: ElementMatch[] = [];
+      if (part.body === 'first') {
+        filtered = roots.slice(0, 1);
+      } else if (part.body === 'last') {
+        if (roots.length)
+          filtered = roots.slice(roots.length - 1);
+      } else {
+        if (typeof selector.capture === 'number')
+          throw new Error(`Can't query n-th element in a request with the capture.`);
+        const nth = +part.body;
+        const set = new Set<Element>();
+        for (const root of roots) {
+          set.add(root.element);
+          if (nth + 1 === set.size)
+            filtered = [root];
+        }
+      }
+      return this._querySelectorRecursively(filtered, selector, index + 1, queryCache);
     }
+
+    if (part.name === '_visible') {
+      const visible = Boolean(part.body);
+      return roots.filter(match => visible === isVisible(match.element));
+    }
+
+    const result: ElementMatch[] = [];
+    for (const root of roots) {
+      const capture = index - 1 === selector.capture ? root.element : root.capture;
+
+      // Do not query engine twice for the same element.
+      let queryResults = queryCache.get(root.element);
+      if (!queryResults) {
+        queryResults = [];
+        queryCache.set(root.element, queryResults);
+      }
+      let all = queryResults[index];
+      if (!all) {
+        all = this._queryEngineAll(selector.parts[index], root.element);
+        queryResults[index] = all;
+      }
+
+      for (const element of all)
+        result.push({ element, capture });
+    }
+    return this._querySelectorRecursively(result, selector, index + 1, queryCache);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
@@ -107,44 +165,18 @@ export class InjectedScript {
       throw new Error('Node is not queryable.');
     this._evaluator.begin();
     try {
-      const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
-      // Query all elements up to the capture.
-      const partsToQueryAll = selector.parts.slice(0, capture + 1);
-      // Check they have a descendant matching everything after the capture.
-      const partsToCheckOne = selector.parts.slice(capture + 1);
-      let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
-      for (const part of partsToQueryAll) {
-        const newSet = new Set<Element>();
-        for (const prev of set) {
-          for (const next of this._queryEngineAll(part, prev)) {
-            if (newSet.has(next))
-              continue;
-            newSet.add(next);
-          }
-        }
-        set = newSet;
-      }
-      let result = [...set] as Element[];
-      if (partsToCheckOne.length) {
-        const partial = { parts: partsToCheckOne };
-        result = result.filter(e => !!this._querySelectorRecursively(e, partial, 0));
-      }
-      return result;
+      const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
+      const set = new Set<Element>();
+      for (const r of result)
+        set.add(r.capture || r.element);
+      return [...set];
     } finally {
       this._evaluator.end();
     }
   }
 
-  private _queryEngine(part: ParsedSelectorPart, root: SelectorRoot): Element | undefined {
-    if (Array.isArray(part))
-      return this._evaluator.query({ scope: root as Document | Element, pierceShadow: true }, part)[0];
-    return this._enginesV1.get(part.name)!.query(root, part.body);
-  }
-
   private _queryEngineAll(part: ParsedSelectorPart, root: SelectorRoot): Element[] {
-    if (Array.isArray(part))
-      return this._evaluator.query({ scope: root as Document | Element, pierceShadow: true }, part);
-    return this._enginesV1.get(part.name)!.queryAll(root, part.body);
+    return this._engines.get(part.name)!.queryAll(root, part.body);
   }
 
   private _createAttributeEngine(attribute: string, shadow: boolean): SelectorEngine {
@@ -153,22 +185,28 @@ export class InjectedScript {
       return [{ simples: [{ selector: { css, functions: [] }, combinator: '' }] }];
     };
     return {
-      query: (root: SelectorRoot, selector: string): Element | undefined => {
-        return this._evaluator.query({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector))[0];
-      },
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
         return this._evaluator.query({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector));
       }
     };
   }
 
+  private _createCSSEngine(): SelectorEngineV2 {
+    const evaluator = this._evaluator;
+    return {
+      queryAll(root: SelectorRoot, body: any) {
+        return evaluator.query({ scope: root as Document | Element, pierceShadow: true }, body);
+      }
+    };
+  }
+
   private _createTextEngine(shadow: boolean): SelectorEngine {
-    const queryList = (root: SelectorRoot, selector: string, single: boolean): Element[] => {
+    const queryList = (root: SelectorRoot, selector: string): Element[] => {
       const { matcher, kind } = createTextMatcher(selector);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
 
-      const checkElement = (element: Element) => {
+      const appendElement = (element: Element) => {
         // TODO: replace contains() with something shadow-dom-aware?
         if (kind === 'lax' && lastDidNotMatchSelf && lastDidNotMatchSelf.contains(element))
           return false;
@@ -177,25 +215,19 @@ export class InjectedScript {
           lastDidNotMatchSelf = element;
         if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict'))
           result.push(element);
-        return single && result.length > 0;
       };
 
-      if (root.nodeType === Node.ELEMENT_NODE && checkElement(root as Element))
-        return result;
+      if (root.nodeType === Node.ELEMENT_NODE)
+        appendElement(root as Element);
       const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: shadow }, '*');
-      for (const element of elements) {
-        if (checkElement(element))
-          return result;
-      }
+      for (const element of elements)
+        appendElement(element);
       return result;
     };
 
     return {
-      query: (root: SelectorRoot, selector: string): Element | undefined => {
-        return queryList(root, selector, true)[0];
-      },
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        return queryList(root, selector, false);
+        return queryList(root, selector);
       }
     };
   }
@@ -230,6 +262,7 @@ export class InjectedScript {
           else
             requestAnimationFrame(onRaf);
         } catch (e) {
+          progress.log('  ' + e.message);
           reject(e);
         }
       };

@@ -141,20 +141,11 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    if (!this.results.length)
+    if (!this.results.length || this.results[0].status === 'skipped')
       return 'skipped';
     if (this.results.length === 1 && this.expectedStatus === this.results[0].status)
-      return this.expectedStatus === 'skipped' ? 'skipped' : 'expected';
-    let hasPassedResults = false;
-    for (const result of this.results) {
-      // TODO: we should not report tests that do not belong to the shard.
-      // Missing status is Ok when running in shards mode.
-      if (!result.status)
-        return 'skipped';
-      if (result.status === this.expectedStatus)
-        hasPassedResults = true;
-    }
-    if (hasPassedResults)
+      return 'expected';
+    if (this.results.some(result => result.status === this.expectedStatus))
       return 'flaky';
     return 'unexpected';
   }
@@ -180,6 +171,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       stdout: [],
       stderr: [],
       attachments: [],
+      status: 'skipped',
     };
     this.results.push(result);
     return result;

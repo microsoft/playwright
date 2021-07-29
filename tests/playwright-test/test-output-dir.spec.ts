@@ -22,6 +22,7 @@ test('should work and remove non-failures', async ({ runInlineTest }, testInfo) 
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
+        name: 'chromium',
         preserveOutput: 'failures-only',
         testDir: 'dir',
       };

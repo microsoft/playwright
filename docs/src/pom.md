@@ -94,6 +94,35 @@ class SearchPage:
         self.page.press('[aria-label="Enter your search term"]', "Enter")
 ```
 
+```csharp
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+
+namespace BigEcommerceApp.Tests.Models
+{
+  public class SearchPage
+  {
+    private readonly IPage _page;
+
+    public SearchPage(IPage page)
+    {
+      _page = page;
+    }
+
+    public async Task Goto()
+    {
+      await _page.GotoAsync("https://bing.com");
+    }
+
+    public async Task Search(string text)
+    {
+      await _page.FillAsync("[aria-label='Enter your search term']", text);
+      await _page.PressAsync("[aria-label='Enter your search term']", "Enter");
+    }
+  }
+}
+```
+
 Page objects can then be used inside a test.
 
 ```js
@@ -139,6 +168,15 @@ page = browser.new_page()
 search_page = SearchPage(page)
 search_page.navigate()
 search_page.search("search query")
+```
+
+```csharp
+using BigEcommerceApp.Tests.Models;
+
+// in the test
+var page = new SearchPage(await browser.NewPageAsync());
+await page.Goto();
+await page.Search("search query");
 ```
 
 ### API reference

@@ -1096,6 +1096,7 @@ Frame:
     evalOnSelector:
       parameters:
         selector: string
+        strict: boolean?
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
@@ -1137,6 +1138,7 @@ Frame:
     check:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         position: Point?
@@ -1148,6 +1150,7 @@ Frame:
     click:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         modifiers:
@@ -1189,6 +1192,7 @@ Frame:
     dblclick:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         modifiers:
@@ -1216,6 +1220,7 @@ Frame:
     dispatchEvent:
       parameters:
         selector: string
+        strict: boolean?
         type: string
         eventInit: SerializedArgument
         timeout: number?
@@ -1245,6 +1250,7 @@ Frame:
     fill:
       parameters:
         selector: string
+        strict: boolean?
         value: string
         force: boolean?
         timeout: number?
@@ -1255,6 +1261,7 @@ Frame:
     focus:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       tracing:
         snapshot: true
@@ -1266,6 +1273,7 @@ Frame:
     getAttribute:
       parameters:
         selector: string
+        strict: boolean?
         name: string
         timeout: number?
       returns:
@@ -1292,6 +1300,7 @@ Frame:
     hover:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         modifiers:
           type: array?
@@ -1311,6 +1320,7 @@ Frame:
     innerHTML:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: string
@@ -1320,6 +1330,7 @@ Frame:
     innerText:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: string
@@ -1329,6 +1340,7 @@ Frame:
     inputValue:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: string
@@ -1338,6 +1350,7 @@ Frame:
     isChecked:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
@@ -1347,6 +1360,7 @@ Frame:
     isDisabled:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
@@ -1356,6 +1370,7 @@ Frame:
     isEnabled:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
@@ -1365,6 +1380,7 @@ Frame:
     isHidden:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
@@ -1374,6 +1390,7 @@ Frame:
     isVisible:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
@@ -1381,6 +1398,7 @@ Frame:
     isEditable:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
@@ -1390,6 +1408,7 @@ Frame:
     press:
       parameters:
         selector: string
+        strict: boolean?
         key: string
         delay: number?
         noWaitAfter: boolean?
@@ -1400,12 +1419,14 @@ Frame:
     querySelector:
       parameters:
         selector: string
+        strict: boolean?
       returns:
         element: ElementHandle?
 
     querySelectorAll:
       parameters:
         selector: string
+        strict: boolean?
       returns:
         elements:
           type: array
@@ -1414,6 +1435,7 @@ Frame:
     selectOption:
       parameters:
         selector: string
+        strict: boolean?
         elements:
           type: array?
           items: ElementHandle
@@ -1451,6 +1473,7 @@ Frame:
     setInputFiles:
       parameters:
         selector: string
+        strict: boolean?
         files:
           type: array
           items:
@@ -1467,6 +1490,7 @@ Frame:
     tap:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         modifiers:
@@ -1487,6 +1511,7 @@ Frame:
     textContent:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: string?
@@ -1500,6 +1525,7 @@ Frame:
     type:
       parameters:
         selector: string
+        strict: boolean?
         text: string
         delay: number?
         noWaitAfter: boolean?
@@ -1510,6 +1536,7 @@ Frame:
     uncheck:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         position: Point?
@@ -1534,6 +1561,7 @@ Frame:
     waitForSelector:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
         state:
           type: enum?
@@ -1673,6 +1701,7 @@ ElementHandle:
     evalOnSelector:
       parameters:
         selector: string
+        strict: boolean?
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
@@ -1857,6 +1886,7 @@ ElementHandle:
     querySelector:
       parameters:
         selector: string
+        strict: boolean?
       returns:
         element: ElementHandle?
 
@@ -1992,6 +2022,7 @@ ElementHandle:
     waitForSelector:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
         state:
           type: enum?

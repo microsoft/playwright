@@ -682,9 +682,9 @@ export class Frame extends SdkObject {
     return value;
   }
 
-  async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
+  async querySelector(selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
     debugLogger.log('api', `    finding element using the selector "${selector}"`);
-    return this._page.selectors._query(this, selector);
+    return this._page.selectors._query(this, selector, !!options.strict);
   }
 
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions = {}): Promise<dom.ElementHandle<Element> | null> {
@@ -696,7 +696,7 @@ export class Frame extends SdkObject {
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, !!options.strict);
     const task = dom.waitForSelectorTask(info, state);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
@@ -723,9 +723,9 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async dispatchEvent(metadata: CallMetadata, selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
+  async dispatchEvent(metadata: CallMetadata, selector: string, type: string, eventInit?: Object, options: types.QueryOnSelectorOptions = {}): Promise<void> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, !!options.strict);
     const task = dom.dispatchEventTask(info, type, eventInit || {});
     await controller.run(async progress => {
       progress.log(`Dispatching "${type}" event on selector "${selector}"...`);
@@ -735,8 +735,8 @@ export class Frame extends SdkObject {
     await this._page._doSlowMo();
   }
 
-  async evalOnSelectorAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const handle = await this.$(selector);
+  async evalOnSelectorAndWaitForSignals(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+    const handle = await this.querySelector(selector, { strict });
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
@@ -751,7 +751,7 @@ export class Frame extends SdkObject {
     return result;
   }
 
-  async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
+  async querySelectorAll(selector: string): Promise<dom.ElementHandle<Element>[]> {
     return this._page.selectors._queryAll(this, selector, undefined, true /* adoptToMain */);
   }
 
@@ -936,8 +936,9 @@ export class Frame extends SdkObject {
   private async _retryWithProgressIfNotConnected<R>(
     progress: Progress,
     selector: string,
+    strict: boolean,
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, strict);
     while (progress.isRunning()) {
       progress.log(`waiting for selector "${selector}"`);
       const task = dom.waitForSelectorTask(info, 'attached');
@@ -961,31 +962,31 @@ export class Frame extends SdkObject {
 
   private async _retryWithSelectorIfNotConnected<R>(
     controller: ProgressController,
-    selector: string, options: types.TimeoutOptions,
+    selector: string, options: types.TimeoutOptions & types.StrictOptions,
     action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
     return controller.run(async progress => {
-      return this._retryWithProgressIfNotConnected(progress, selector, handle => action(progress, handle));
+      return this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => action(progress, handle));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async click(metadata: CallMetadata, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._click(progress, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._click(progress, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async dblclick(metadata: CallMetadata, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._dblclick(progress, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._dblclick(progress, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async dragAndDrop(metadata: CallMetadata, source: string, target: string,  options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
-      await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, async handle => {
+      await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, !!options.strict, async handle => {
         return handle._retryPointerAction(progress, 'move and down', false, async point => {
           await this._page.mouse.move(point.x, point.y);
           await this._page.mouse.down();
@@ -994,7 +995,7 @@ export class Frame extends SdkObject {
           timeout: progress.timeUntilDeadline(),
         });
       }));
-      await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, async handle => {
+      await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, !!options.strict, async handle => {
         return handle._retryPointerAction(progress, 'move and up', false, async point => {
           await this._page.mouse.move(point.x, point.y);
           await this._page.mouse.up();
@@ -1009,14 +1010,14 @@ export class Frame extends SdkObject {
   async tap(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._tap(progress, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._tap(progress, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async fill(metadata: CallMetadata, selector: string, value: string, options: types.NavigatingActionWaitOptions & { force?: boolean }) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._fill(progress, value, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._fill(progress, value, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -1026,9 +1027,9 @@ export class Frame extends SdkObject {
     await this._page._doSlowMo();
   }
 
-  async textContent(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+  async textContent(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string | null> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, !!options.strict);
     const task = dom.textContentTask(info);
     return controller.run(async progress => {
       progress.log(`  retrieving textContent from "${selector}"`);
@@ -1036,9 +1037,9 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async innerText(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
+  async innerText(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, !!options.strict);
     const task = dom.innerTextTask(info);
     return controller.run(async progress => {
       progress.log(`  retrieving innerText from "${selector}"`);
@@ -1047,9 +1048,9 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async innerHTML(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
+  async innerHTML(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, !!options.strict);
     const task = dom.innerHTMLTask(info);
     return controller.run(async progress => {
       progress.log(`  retrieving innerHTML from "${selector}"`);
@@ -1057,9 +1058,9 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async getAttribute(metadata: CallMetadata, selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
+  async getAttribute(metadata: CallMetadata, selector: string, name: string, options: types.QueryOnSelectorOptions = {}): Promise<string | null> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, !!options.strict);
     const task = dom.getAttributeTask(info, name);
     return controller.run(async progress => {
       progress.log(`  retrieving attribute "${name}" from "${selector}"`);
@@ -1067,9 +1068,9 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
+  async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, !!options.strict);
     const task = dom.inputValueTask(info);
     return controller.run(async progress => {
       progress.log(`  retrieving value from "${selector}"`);
@@ -1077,9 +1078,9 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  private async _checkElementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.TimeoutOptions = {}): Promise<boolean> {
+  private async _checkElementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector, !!options.strict);
     const task = dom.elementStateTask(info, state);
     const result = await controller.run(async progress => {
       progress.log(`  checking "${state}" state of "${selector}"`);
@@ -1088,81 +1089,81 @@ export class Frame extends SdkObject {
     return dom.throwFatalDOMError(dom.throwRetargetableDOMError(result));
   }
 
-  async isVisible(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+  async isVisible(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`  checking visibility of "${selector}"`);
-      const element = await this.$(selector);
+      const element = await this.querySelector(selector, options);
       return element ? await element.isVisible() : false;
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async isHidden(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+  async isHidden(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     return !(await this.isVisible(metadata, selector, options));
   }
 
-  async isDisabled(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+  async isDisabled(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     return this._checkElementState(metadata, selector, 'disabled', options);
   }
 
-  async isEnabled(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+  async isEnabled(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     return this._checkElementState(metadata, selector, 'enabled', options);
   }
 
-  async isEditable(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+  async isEditable(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     return this._checkElementState(metadata, selector, 'editable', options);
   }
 
-  async isChecked(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+  async isChecked(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     return this._checkElementState(metadata, selector, 'checked', options);
   }
 
   async hover(metadata: CallMetadata, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._hover(progress, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._hover(progress, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async selectOption(metadata: CallMetadata, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions & types.ForceOptions = {}): Promise<string[]> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._selectOption(progress, elements, values, options));
+      return await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._selectOption(progress, elements, values, options));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async setInputFiles(metadata: CallMetadata, selector: string, files: channels.ElementHandleSetInputFilesParams['files'], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setInputFiles(progress, files, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._setInputFiles(progress, files, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async type(metadata: CallMetadata, selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._type(progress, text, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._type(progress, text, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async press(metadata: CallMetadata, selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._press(progress, key, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._press(progress, key, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async check(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setChecked(progress, true, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._setChecked(progress, true, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
   async uncheck(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setChecked(progress, false, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, !!options.strict, handle => handle._setChecked(progress, false, options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 

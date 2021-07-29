@@ -2,9 +2,34 @@
 
 Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment. Locator can be created with the [`method: Page.locator`] method.
 
-The difference between the Locator and [ElementHandle] is that the latter points to a particular element, while Locator only captures the logic of how to retrieve an element at any given moment.
+```js
+const locator = page.locator('text=Submit');
+await locator.click();
+```
 
-In the example below, handle points to a particular DOM element on page. If that element changes text or is used by React to render an entirely different component, handle is still pointing to that very DOM element.
+```java
+Locator locator = page.locator("text=Submit");
+locator.click();
+```
+
+```python async
+locator = page.locator("text=Submit")
+await locator.click()
+```
+
+```python sync
+locator = page.locator("text=Submit")
+locator.click()
+```
+
+```csharp
+var locator = page.Locator("text=Submit");
+await locator.ClickAsync();
+```
+
+The difference between the Locator and [ElementHandle] is that the latter points to a particular element, while Locator captures the logic of how to retrieve that element.
+
+In the example below, handle points to a particular DOM element on page. If that element changes text or is used by React to render an entirely different component, handle is still pointing to that very DOM element. This can lead to unexpected behaviors.
 
 ```js
 const handle = await page.$('text=Submit');
@@ -37,43 +62,38 @@ await handle.HoverAsync();
 await handle.ClickAsync();
 ```
 
-With the locator, every time the `element` is used, corresponding DOM element is located in the page using given selector. So in the snippet below, underlying DOM element is going to be located twice, using the given selector.
+With the locator, every time the `element` is used, up-to-date DOM element is located in the page using the selector. So in the snippet below, underlying DOM element is going to be located twice.
 
 ```js
-const element = page.locator('text=Submit');
+const locator = page.locator('text=Submit');
 // ...
-await element.hover();
-await element.click();
+await locator.hover();
+await locator.click();
 ```
 
 ```java
-Locator element = page.locator("text=Submit");
-element.hover();
-element.click();
+Locator locator = page.locator("text=Submit");
+locator.hover();
+locator.click();
 ```
 
 ```python async
-element = page.locator("text=Submit")
-await element.hover()
-await element.click()
+locator = page.locator("text=Submit")
+await locator.hover()
+await locator.click()
 ```
 
 ```python sync
-element = page.locator("text=Submit")
-element.hover()
-element.click()
+locator = page.locator("text=Submit")
+locator.hover()
+locator.click()
 ```
 
 ```csharp
-var element = page.Finder("text=Submit");
-await element.HoverAsync();
-await element.ClickAsync();
+var locator = page.Locator("text=Submit");
+await locator.HoverAsync();
+await locator.ClickAsync();
 ```
-
-## async method: Locator.all
-- returns: <[Array]<[ElementHandle]>>
-
-Resolves given locator to all matching DOM elements.
 
 ## async method: Locator.boundingBox
 - returns: <[null]|[Object]>
@@ -166,6 +186,11 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.click.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.click.timeout = %%-input-timeout-%%
 ### option: Locator.click.trial = %%-input-trial-%%
+
+## async method: Locator.count
+- returns: <[int]>
+
+Returns the number of elements matching given selector.
 
 ## async method: Locator.dblclick
 * langs:
@@ -284,6 +309,18 @@ Optional event-specific initialization properties.
 
 ### option: Locator.dispatchEvent.timeout = %%-input-timeout-%%
 
+## async method: Locator.elementHandle
+- returns: <[ElementHandle]>
+
+Resolves given locator to the first matching DOM element. If no elements matching the query are visible, waits for them up to a given timeout. If multiple elements match the selector, throws.
+
+### option: Locator.elementHandle.timeout = %%-input-timeout-%%
+
+## async method: Locator.elementHandles
+- returns: <[Array]<[ElementHandle]>>
+
+Resolves given locator to all matching DOM elements.
+
 ## async method: Locator.evaluate
 - returns: <[Serializable]>
 
@@ -317,7 +354,7 @@ assert tweets.evaluate("node => node.innerText") == "10 retweets"
 ```
 
 ```csharp
-var tweets = page.Finder(".tweet .retweets");
+var tweets = page.Locator(".tweet .retweets");
 Assert.Equals("10 retweets", await tweets.EvaluateAsync("node => node.innerText"));
 ```
 
@@ -414,13 +451,10 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.fill.timeout = %%-input-timeout-%%
 
-## async method: Locator.first
-- returns: <[ElementHandle]>
+## method: Locator.first
+- returns: <[Locator]>
 
-Resolves given locator to the first VISIBLE matching DOM element. If no elements matching
-the query are visible, waits for them up to a given timeout.
-
-### option: Locator.first.timeout = %%-input-timeout-%%
+Returns locator to the first matching element.
 
 ## async method: Locator.focus
 
@@ -522,6 +556,11 @@ Returns whether the element is [visible](./actionability.md#visible).
 
 ### option: Locator.isVisible.timeout = %%-input-timeout-%%
 
+## method: Locator.last
+- returns: <[Locator]>
+
+Returns locator to the last matching element.
+
 ## method: Locator.locator
 - returns: <[Locator]>
 
@@ -529,6 +568,14 @@ The method finds an element matching the specified selector in the `Locator`'s s
 [Working with selectors](./selectors.md) for more details.
 
 ### param: Locator.locator.selector = %%-find-selector-%%
+
+## method: Locator.nth
+- returns: <[Locator]>
+
+Returns locator to the n-th matching element.
+
+### param: Locator.nth.index
+- `index` <[int]>
 
 ## async method: Locator.press
 
@@ -792,7 +839,7 @@ element.press("Enter")
 ```
 
 ```csharp
-var element = page.Finder("input");
+var element = page.Locator("input");
 await element.TypeAsync("some text");
 await element.PressAsync("Enter");
 ```
@@ -831,19 +878,3 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.uncheck.timeout = %%-input-timeout-%%
 ### option: Locator.uncheck.trial = %%-input-trial-%%
-
-## async method: Locator.waitFor
-- returns: <[null]|[ElementHandle]<[HTMLElement]|[SVGElement]>>
-
-Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or `detached`.
-
-Wait for the element to satisfy [`option: state`] option (either appear/disappear from dom, or become
-visible/hidden). If at the moment of calling the method it already satisfies the condition, the method
-will return immediately. If the selector doesn't satisfy the condition for the [`option: timeout`] milliseconds, the
-function will throw.
-
-This method works across navigations.
-
-### option: Locator.waitFor.state = %%-wait-for-selector-state-%%
-### option: Locator.waitFor.timeout = %%-input-timeout-%%
-
