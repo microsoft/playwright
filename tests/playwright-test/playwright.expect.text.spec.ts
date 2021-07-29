@@ -78,6 +78,33 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
+test('should support toHaveText w/ array', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>Text 1</div><div>Text 2</div>');
+        const locator = page.locator('div');
+        await expect(locator).toHaveText(['Text 1', 'Text 2']);
+      });
+
+      test('fail', async ({ page }) => {
+        await page.setContent('<div>Text 1</div><div>Text 3</div>');
+        const locator = page.locator('div');
+        await expect(locator).toHaveText(['Text 1', 'Text 2'], { timeout: 1000 });
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAscii(result.output);
+  expect(output).toContain('Error: expect(received).toHaveText(expected) // deep equality');
+  expect(output).toContain('await expect(locator).toHaveText');
+  expect(output).toContain('-   \"Text 2\"');
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});
+
 test('should support toHaveText eventually', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `

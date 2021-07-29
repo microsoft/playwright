@@ -25,10 +25,9 @@ import {
   printReceived,
   stringify
 } from 'jest-matcher-utils';
-import { Locator } from '../../..';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
-import { expectLocator, monotonicTime, pollUntilDeadline } from '../util';
+import { expectType, monotonicTime, pollUntilDeadline } from '../util';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';
@@ -40,7 +39,8 @@ const isExpand = (expand?: boolean): boolean => expand !== false;
 export async function toEqual<T>(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
-  locator: Locator,
+  receiver: any,
+  receiverType: string,
   query: (timeout: number) => Promise<T>,
   expected: T,
   options: { timeout?: number } = {},
@@ -48,7 +48,7 @@ export async function toEqual<T>(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`${matcherName} must be called during the test`);
-  expectLocator(locator, matcherName);
+  expectType(receiver, receiverType, matcherName);
 
   const matcherOptions: MatcherHintOptions = {
     comment: 'deep equality',

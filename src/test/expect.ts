@@ -28,12 +28,14 @@ import {
   toContainText,
   toHaveAttr,
   toHaveClass,
+  toHaveCount,
   toHaveCSS,
   toHaveData,
   toHaveId,
-  toHaveLength,
   toHaveProp,
   toHaveText,
+  toHaveTitle,
+  toHaveURL,
   toHaveValue
 } from './matchers/matchers';
 import { toMatchSnapshot } from './matchers/toMatchSnapshot';
@@ -54,12 +56,14 @@ expectLibrary.extend({
   toContainText,
   toHaveAttr,
   toHaveClass,
+  toHaveCount,
   toHaveCSS,
   toHaveData,
   toHaveId,
-  toHaveLength,
   toHaveProp,
   toHaveText,
+  toHaveTitle,
+  toHaveURL,
   toHaveValue,
   toMatchSnapshot,
 });

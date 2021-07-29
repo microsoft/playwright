@@ -14,49 +14,48 @@
  * limitations under the License.
  */
 
-import matchers from 'expect/build/matchers';
-import { Locator } from '../../..';
+import { Locator, Page } from '../../..';
 import type { Expect } from '../types';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toMatchText } from './toMatchText';
 
-export async function toBeChecked(
+export function toBeChecked(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeChecked', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', async timeout => {
     return await locator.isChecked({ timeout });
   }, options);
 }
 
-export async function toBeDisabled(
+export function toBeDisabled(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeDisabled', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeDisabled', locator, 'Locator', async timeout => {
     return await locator.isDisabled({ timeout });
   }, options);
 }
 
-export async function toBeEditable(
+export function toBeEditable(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeEditable', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', async timeout => {
     return await locator.isEditable({ timeout });
   }, options);
 }
 
-export async function toBeEmpty(
+export function toBeEmpty(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeEmpty', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeEmpty', locator, 'Locator', async timeout => {
     return await locator.evaluate(element => {
       if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
         return !(element as HTMLInputElement).value;
@@ -65,178 +64,212 @@ export async function toBeEmpty(
   }, options);
 }
 
-export async function toBeEnabled(
+export function toBeEnabled(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeEnabled', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeEnabled', locator, 'Locator', async timeout => {
     return await locator.isEnabled({ timeout });
   }, options);
 }
 
-export async function toBeFocused(
+export function toBeFocused(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeFocused', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeFocused', locator, 'Locator', async timeout => {
     return await locator.evaluate(element => {
       return document.activeElement === element;
     }, { timeout });
   }, options);
 }
 
-export async function toBeHidden(
+export function toBeHidden(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeHidden', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeHidden', locator, 'Locator', async timeout => {
     return await locator.isHidden({ timeout });
   }, options);
 }
 
-export async function toBeSelected(
+export function toBeSelected(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeSelected', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeSelected', locator, 'Locator', async timeout => {
     return await locator.evaluate(element => {
       return (element as HTMLOptionElement).selected;
     }, { timeout });
   }, options);
 }
 
-export async function toBeVisible(
+export function toBeVisible(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeVisible', locator, async timeout => {
+  return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', async timeout => {
     return await locator.isVisible({ timeout });
   }, options);
 }
 
-export async function toContainText(
+export function toContainText(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   expected: string,
   options?: { timeout?: number, useInnerText?: boolean },
 ) {
-  return toMatchText.call(this, 'toContainText', locator, async timeout => {
+  return toMatchText.call(this, 'toContainText', locator, 'Locator', async timeout => {
     if (options?.useInnerText)
       return await locator.innerText({ timeout });
     return await locator.textContent() || '';
   }, expected, { ...options, matchSubstring: true });
 }
 
-export async function toHaveAttr(
+export function toHaveAttr(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   name: string,
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveAttr', locator, async timeout => {
+  return toMatchText.call(this, 'toHaveAttr', locator, 'Locator', async timeout => {
     return await locator.getAttribute(name, { timeout }) || '';
   }, expected, options);
 }
 
-export async function toHaveClass(
+export function toHaveClass(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
-  expected: string,
+  expected: string | RegExp | string[],
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveClass', locator, async timeout => {
-    return await locator.evaluate(element => element.className, { timeout });
-  }, expected, { ...options, matchSubstring: true });
+  if (Array.isArray(expected)) {
+    return toEqual.call(this, 'toHaveClass', locator, 'Locator', async () => {
+      return await locator.evaluateAll(ee => ee.map(e => e.className));
+    }, expected, options);
+  } else {
+    return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async timeout => {
+      return await locator.evaluate(element => element.className, { timeout });
+    }, expected, options);
+  }
 }
 
-export async function toHaveCSS(
+export function toHaveCount(
+  this: ReturnType<Expect['getState']>,
+  locator: Locator,
+  expected: number,
+  options?: { timeout?: number },
+) {
+  return toEqual.call(this, 'toHaveCount', locator, 'Locator', async timeout => {
+    return await locator.count();
+  }, expected, options);
+}
+
+export function toHaveCSS(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   name: string,
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveCSS', locator, async timeout => {
+  return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async timeout => {
     return await locator.evaluate(async (element, name) => {
       return (window.getComputedStyle(element) as any)[name];
     }, name, { timeout });
   }, expected, options);
 }
 
-export async function toHaveData(
+export function toHaveData(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   name: string,
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveData', locator, async timeout => {
+  return toMatchText.call(this, 'toHaveData', locator, 'Locator', async timeout => {
     return await locator.getAttribute('data-' + name, { timeout }) || '';
   }, expected, options);
 }
 
-export async function toHaveId(
+export function toHaveId(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveId', locator, async timeout => {
+  return toMatchText.call(this, 'toHaveId', locator, 'Locator', async timeout => {
     return await locator.getAttribute('id', { timeout }) || '';
   }, expected, options);
 }
 
-export async function toHaveLength(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  expected: number,
-  options?: { timeout?: number },
-) {
-  if (typeof locator !== 'object' || locator.constructor.name !== 'Locator')
-    return matchers.toHaveLength.call(this, locator, expected);
-  return toEqual.call(this, 'toHaveLength', locator, async timeout => {
-    return await locator.count();
-  }, expected, { expectedType: 'number', ...options });
-}
-
-export async function toHaveProp(
+export function toHaveProp(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   name: string,
   expected: number,
   options?: { timeout?: number },
 ) {
-  return toEqual.call(this, 'toHaveProp', locator, async timeout => {
+  return toEqual.call(this, 'toHaveProp', locator, 'Locator', async timeout => {
     return await locator.evaluate((element, name) => (element as any)[name], name, { timeout });
-  }, expected, { expectedType: 'number', ...options });
-}
-
-export async function toHaveText(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  expected: string | RegExp,
-  options?: { timeout?: number, useInnerText?: boolean },
-) {
-  return toMatchText.call(this, 'toHaveText', locator, async timeout => {
-    if (options?.useInnerText)
-      return await locator.innerText({ timeout });
-    return await locator.textContent() || '';
   }, expected, options);
 }
 
-export async function toHaveValue(
+export function toHaveText(
+  this: ReturnType<Expect['getState']>,
+  locator: Locator,
+  expected: string | RegExp | string[],
+  options?: { timeout?: number, useInnerText?: boolean },
+) {
+  if (Array.isArray(expected)) {
+    return toEqual.call(this, 'toHaveText', locator, 'Locator', async () => {
+      return locator.evaluateAll((ee, useInnerText) => {
+        return ee.map(e => useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
+      }, options?.useInnerText);
+    }, expected, options);
+  } else {
+    return toMatchText.call(this, 'toHaveText', locator, 'Locator', async timeout => {
+      if (options?.useInnerText)
+        return await locator.innerText({ timeout });
+      return await locator.textContent() || '';
+    }, expected, options);
+  }
+}
+
+export function toHaveTitle(
+  this: ReturnType<Expect['getState']>,
+  page: Page,
+  expected: string | RegExp,
+  options?: { timeout?: number },
+) {
+  return toMatchText.call(this, 'toHaveTitle', page, 'Page', async () => {
+    return await page.title();
+  }, expected, options);
+}
+
+export function toHaveURL(
+  this: ReturnType<Expect['getState']>,
+  page: Page,
+  expected: string | RegExp,
+  options?: { timeout?: number },
+) {
+  return toMatchText.call(this, 'toHaveURL', page, 'Page', async () => {
+    return page.url();
+  }, expected, options);
+}
+
+export function toHaveValue(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveValue', locator, async timeout => {
+  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async timeout => {
     return await locator.inputValue({ timeout });
   }, expected, options);
 }
