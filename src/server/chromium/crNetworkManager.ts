@@ -178,16 +178,16 @@ export class CRNetworkManager {
     if (event.request.url.startsWith('data:'))
       return;
 
-
-    if (event.responseStatusCode || event.responseHeaders || event.responseErrorReason) {
-      const request = this._requestIdToRequest.get(event.networkId);
-      if (!request || !request._onInterceptedResponse) {
+    if (event.responseStatusCode || event.responseErrorReason) {
+      const isRedirect = event.responseStatusCode && event.responseStatusCode >= 300 && event.responseStatusCode < 400;
+      const request = this._requestIdToRequest.get(event.networkId!);
+      if (isRedirect || !request || !request._onInterceptedResponse) {
         this._client._sendMayFail('Fetch.continueRequest', {
           requestId: event.requestId
         });
         return;
       }
-      request._onInterceptedResponse!(event);
+      request._onInterceptedResponse({ event, redirectedRequest: request });
       return;
     }
 
@@ -204,13 +204,13 @@ export class CRNetworkManager {
   _onRequest(workerFrame: frames.Frame | undefined, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedEvent: Protocol.Fetch.requestPausedPayload | null) {
     if (requestWillBeSentEvent.request.url.startsWith('data:'))
       return;
-    let redirectedFrom: network.Request | null = null;
+    let redirectedFrom: InterceptableRequest | null = null;
     if (requestWillBeSentEvent.redirectResponse) {
       const request = this._requestIdToRequest.get(requestWillBeSentEvent.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
         this._handleRequestRedirect(request, requestWillBeSentEvent.redirectResponse, requestWillBeSentEvent.timestamp);
-        redirectedFrom = request.request;
+        redirectedFrom = request;
       }
     }
     let frame = requestWillBeSentEvent.frameId ? this._page._frameManager.frame(requestWillBeSentEvent.frameId) : workerFrame;
@@ -274,8 +274,12 @@ export class CRNetworkManager {
       allowInterception,
       requestWillBeSentEvent,
       requestPausedEvent,
-      redirectedFrom
+      redirectedFrom: redirectedFrom ? redirectedFrom.request : null
     });
+    if (redirectedFrom) {
+      request._onInterceptedResponse = redirectedFrom._onInterceptedResponse;
+      redirectedFrom._onInterceptedResponse = null;
+    }
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
@@ -412,7 +416,8 @@ class InterceptableRequest implements network.RouteDelegate {
   private readonly _client: CRSession;
   _timestamp: number;
   _wallTime: number;
-  _onInterceptedResponse: ((event: Protocol.Fetch.requestPausedPayload) => void) | null = null;
+  _onInterceptedResponse: ((data: { event: Protocol.Fetch.requestPausedPayload, redirectedRequest: InterceptableRequest }) => void) | null = null;
+  private _redirectedRequest: InterceptableRequest | null = null;
 
   constructor(options: {
     client: CRSession;
@@ -446,12 +451,16 @@ class InterceptableRequest implements network.RouteDelegate {
   }
 
   async responseBody(): Promise<Buffer> {
+    if (this._redirectedRequest)
+      return await this._redirectedRequest.responseBody();
     const response = await this._client.send('Fetch.getResponseBody', { requestId: this._interceptionId! });
     return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
   }
 
   async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
-    const interceptPromise = overrides.interceptResponse ? new Promise<Protocol.Fetch.requestPausedPayload>(resolve => this._onInterceptedResponse = resolve) : null;
+    if (this._redirectedRequest)
+      return await this._redirectedRequest.continue(overrides);
+    const interceptPromise = overrides.interceptResponse ? new Promise<{ event: Protocol.Fetch.requestPausedPayload, redirectedRequest: InterceptableRequest }>(resolve => this._onInterceptedResponse = resolve) : null;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._client._sendMayFail('Fetch.continueRequest', {
@@ -463,11 +472,17 @@ class InterceptableRequest implements network.RouteDelegate {
     });
     if (!interceptPromise)
       return null;
-    const event = await interceptPromise;
-    return new network.InterceptedResponse(this.request, event.responseStatusCode!, event.responseErrorReason!, event.responseHeaders!);
+    const { event, redirectedRequest } = await interceptPromise;
+    if (this !== redirectedRequest)
+      this._redirectedRequest = redirectedRequest;
+    return new network.InterceptedResponse(redirectedRequest.request, event.responseStatusCode!, event.responseErrorReason!, event.responseHeaders!);
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
+    if (this._redirectedRequest) {
+      await this._redirectedRequest.fulfill(response);
+      return;
+    }
     const body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
 
     // In certain cases, protocol will return error if the request was already canceled
@@ -482,6 +497,10 @@ class InterceptableRequest implements network.RouteDelegate {
   }
 
   async abort(errorCode: string = 'failed') {
+    if (this._redirectedRequest) {
+      await this._redirectedRequest.abort(errorCode);
+      return;
+    }
     const errorReason = errorReasons[errorCode];
     assert(errorReason, 'Unknown error code: ' + errorCode);
     // In certain cases, protocol will return error if the request was already canceled

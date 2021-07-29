@@ -150,8 +150,8 @@ it('should be abortable after interception', async ({page, server, browserName})
   expect(failed).toBe(true);
 });
 
-it('should fulfill after redirects', async ({page, server}) => {
-  it.fixme();
+it('should fulfill after redirects', async ({page, server, browserName}) => {
+  it.fixme(browserName !== 'chromium');
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/empty.html');
   const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/empty.html'].map(s => server.PREFIX + s);
@@ -188,4 +188,65 @@ it('should fulfill after redirects', async ({page, server}) => {
   expect(response.headers().foo).toBe('bar');
   expect(response.headers()['content-type']).toBe('text/plain');
   expect(await response.text()).toBe('Yo, page!');
+});
+
+it('should fulfill original response after redirects', async ({page, browserName, server}) => {
+  it.fixme(browserName !== 'chromium');
+  server.setRedirect('/redirect/1.html', '/redirect/2.html');
+  server.setRedirect('/redirect/2.html', '/title.html');
+  const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/title.html'].map(s => server.PREFIX + s);
+  const requestUrls = [];
+  const responseUrls = [];
+  const requestFinishedUrls = [];
+  page.on('request', request => requestUrls.push(request.url()));
+  page.on('response', response => responseUrls.push(response.url()));
+  page.on('requestfinished', request => requestFinishedUrls.push(request.url()));
+  await page.route('**/*', async route => {
+    // @ts-expect-error
+    await route._intercept({});
+    await route.fulfill();
+  });
+  const response = await page.goto(server.PREFIX + '/redirect/1.html');
+  expect(requestUrls).toEqual(expectedUrls);
+  expect(responseUrls).toEqual(expectedUrls);
+  await response.finished();
+  expect(requestFinishedUrls).toEqual(expectedUrls);
+
+  const redirectChain = [];
+  for (let req = response.request(); req; req = req.redirectedFrom())
+    redirectChain.unshift(req.url());
+  expect(redirectChain).toEqual(expectedUrls);
+
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('<title>Woof-Woof</title>\n');
+});
+
+it('should abort after redirects', async ({page, browserName, server}) => {
+  it.fixme(browserName !== 'chromium');
+  server.setRedirect('/redirect/1.html', '/redirect/2.html');
+  server.setRedirect('/redirect/2.html', '/title.html');
+  const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/title.html'].map(s => server.PREFIX + s);
+  const requestUrls = [];
+  const responseUrls = [];
+  const requestFinishedUrls = [];
+  const requestFailedUrls = [];
+  page.on('request', request => requestUrls.push(request.url()));
+  page.on('response', response => responseUrls.push(response.url()));
+  page.on('requestfinished', request => requestFinishedUrls.push(request.url()));
+  page.on('requestfailed', request => requestFailedUrls.push(request.url()));
+  await page.route('**/*', async route => {
+    // @ts-expect-error
+    await route._intercept({});
+    await route.abort('connectionreset');
+  });
+
+  try {
+    await page.goto(server.PREFIX + '/redirect/1.html');
+  } catch (e) {
+    expect(e.message).toContain('ERR_CONNECTION_RESET');
+  }
+  expect(requestUrls).toEqual(expectedUrls);
+  expect(responseUrls).toEqual(expectedUrls.slice(0, -1));
+  expect(requestFinishedUrls).toEqual(expectedUrls.slice(0, -1));
+  expect(requestFailedUrls).toEqual(expectedUrls.slice(-1));
 });
