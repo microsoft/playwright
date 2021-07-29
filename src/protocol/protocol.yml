@@ -839,20 +839,8 @@ Page:
         text: string
         selectionStart: number
         selectionEnd: number
-        triggerKey: string?
         replacementStart: number?
         replacementEnd: number?
-        delay: number?
-
-    keyboardImeCancelComposition:
-      parameters:
-        triggerKey: string
-
-    keyboardImeCommitComposition:
-      parameters:
-        text: string
-        triggerKey: string?
-        delay: number?
 
     keyboardType:
       parameters:

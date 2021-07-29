@@ -903,8 +903,6 @@ export interface PageChannel extends Channel {
   keyboardUp(params: PageKeyboardUpParams, metadata?: Metadata): Promise<PageKeyboardUpResult>;
   keyboardInsertText(params: PageKeyboardInsertTextParams, metadata?: Metadata): Promise<PageKeyboardInsertTextResult>;
   keyboardImeSetComposition(params: PageKeyboardImeSetCompositionParams, metadata?: Metadata): Promise<PageKeyboardImeSetCompositionResult>;
-  keyboardImeCancelComposition(params: PageKeyboardImeCancelCompositionParams, metadata?: Metadata): Promise<PageKeyboardImeCancelCompositionResult>;
-  keyboardImeCommitComposition(params: PageKeyboardImeCommitCompositionParams, metadata?: Metadata): Promise<PageKeyboardImeCommitCompositionResult>;
   keyboardType(params: PageKeyboardTypeParams, metadata?: Metadata): Promise<PageKeyboardTypeResult>;
   keyboardPress(params: PageKeyboardPressParams, metadata?: Metadata): Promise<PageKeyboardPressResult>;
   mouseMove(params: PageMouseMoveParams, metadata?: Metadata): Promise<PageMouseMoveResult>;
@@ -1119,35 +1117,14 @@ export type PageKeyboardImeSetCompositionParams = {
   text: string,
   selectionStart: number,
   selectionEnd: number,
-  triggerKey?: string,
   replacementStart?: number,
   replacementEnd?: number,
-  delay?: number,
 };
 export type PageKeyboardImeSetCompositionOptions = {
-  triggerKey?: string,
   replacementStart?: number,
   replacementEnd?: number,
-  delay?: number,
 };
 export type PageKeyboardImeSetCompositionResult = void;
-export type PageKeyboardImeCancelCompositionParams = {
-  triggerKey: string,
-};
-export type PageKeyboardImeCancelCompositionOptions = {
-
-};
-export type PageKeyboardImeCancelCompositionResult = void;
-export type PageKeyboardImeCommitCompositionParams = {
-  text: string,
-  triggerKey?: string,
-  delay?: number,
-};
-export type PageKeyboardImeCommitCompositionOptions = {
-  triggerKey?: string,
-  delay?: number,
-};
-export type PageKeyboardImeCommitCompositionResult = void;
 export type PageKeyboardTypeParams = {
   text: string,
   delay?: number,

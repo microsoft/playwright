@@ -43,14 +43,6 @@ export class Keyboard implements api.Keyboard {
       ...options });
   }
 
-  async imeCancelComposition(triggerKey: string) {
-    await this._channel.keyboardImeCancelComposition({ triggerKey });
-  }
-
-  async imeCommitComposition(text: string, options: channels.PageKeyboardImeCommitCompositionOptions) {
-    await this._channel.keyboardImeCommitComposition({ text, ...options });
-  }
-
   async type(text: string, options: channels.PageKeyboardTypeOptions = {}) {
     await this._channel.keyboardType({ text, ...options });
   }

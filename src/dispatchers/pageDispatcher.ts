@@ -156,7 +156,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
   }
 
   async keyboardDown(params: channels.PageKeyboardDownParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.down(params.key);
+    await this._page.keyboard.down(params.key, params);
   }
 
   async keyboardUp(params: channels.PageKeyboardUpParams, metadata: CallMetadata): Promise<void> {
@@ -169,14 +169,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
 
   async keyboardImeSetComposition(params: channels.PageKeyboardImeSetCompositionParams, metadata: CallMetadata): Promise<void> {
     await this._page.keyboard.imeSetComposition(params.text, params.selectionStart, params.selectionEnd, params);
-  }
-
-  async keyboardImeCancelComposition(params: channels.PageKeyboardImeCancelCompositionParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.imeCancelComposition(params.triggerKey);
-  }
-
-  async keyboardImeCommitComposition(params: channels.PageKeyboardImeCommitCompositionParams, metadata: CallMetadata): Promise<void> {
-    await this._page.keyboard.imeCommitComposition(params.text, params);
   }
 
   async keyboardType(params: channels.PageKeyboardTypeParams, metadata: CallMetadata): Promise<void> {
