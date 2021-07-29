@@ -127,10 +127,13 @@ onChanges.push({
   committed: false,
   inputs: [
     'docs/src/api/',
+    'docs/src/test-api/',
+    'docs/src/test-reporter-api/',
     'utils/generate_types/overrides.d.ts',
+    'utils/generate_types/overrides-test.d.ts',
+    'utils/generate_types/overrides-testReporter.d.ts',
     'utils/generate_types/exported.json',
     'src/server/chromium/protocol.d.ts',
-    'src/trace/traceTypes.ts',
   ],
   script: 'utils/generate_types/index.js',
 });
