@@ -85,7 +85,7 @@ test('max-failures should stop workers', async ({ runInlineTest }) => {
     'a.spec.js': `
       const { test } = pwt;
       test('passed', async () => {
-        await new Promise(f => setTimeout(f, 500));
+        await new Promise(f => setTimeout(f, 2000));
       });
       test('failed', async () => {
         test.expect(1).toBe(2);
@@ -98,7 +98,7 @@ test('max-failures should stop workers', async ({ runInlineTest }) => {
       });
       test('interrupted counts as skipped', async () => {
         console.log('\\n%%interrupted');
-        await new Promise(f => setTimeout(f, 2000));
+        await new Promise(f => setTimeout(f, 5000));
       });
       test('skipped', async () => {
         console.log('\\n%%skipped');
