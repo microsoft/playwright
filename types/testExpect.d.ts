@@ -127,7 +127,12 @@ declare global {
       /**
        * Asserts that DOM node has a given CSS class.
        */
-      toHaveClass(className: string, options?: { timeout?: number }): Promise<R>;
+      toHaveClass(className: string | RegExp | string[], options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts number of DOM nodes matching given locator.
+       */
+      toHaveCount(expected: number, options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts element's computed CSS property `name` matches expected value.
@@ -150,11 +155,21 @@ declare global {
       toHaveProp(name: string, value: any, options?: { timeout?: number }): Promise<R>;
 
       /**
-       * Asserts element's exact text content.
+       * Asserts element's text content.
        */
-      toHaveText(expected: string | RegExp, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
-      
+      toHaveText(expected: string | RegExp | string[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+
       /**
+       * Asserts page's title.
+       */
+      toHaveTitle(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts page's title.
+       */
+      toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
+
+       /**
        * Asserts input element's value.
        */
       toHaveValue(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;

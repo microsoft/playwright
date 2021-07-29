@@ -187,7 +187,7 @@ export function errorWithLocation(location: Location, message: string) {
   return new Error(`${formatLocation(location)}: ${message}`);
 }
 
-export function expectLocator(receiver: any, matcherName: string) {
-  if (typeof receiver !== 'object' || receiver.constructor.name !== 'Locator')
-    throw new Error(`${matcherName} can be only used with Locator object`);
+export function expectType(receiver: any, type: string, matcherName: string) {
+  if (typeof receiver !== 'object' || receiver.constructor.name !== type)
+    throw new Error(`${matcherName} can be only used with ${type} object`);
 }
