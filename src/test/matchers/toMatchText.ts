@@ -33,7 +33,7 @@ import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectLocator, monotonicTime, pollUntilDeadline } from '../util';
 
-async function toMatchTextImpl(
+export async function toMatchText(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   locator: Locator,
@@ -121,100 +121,4 @@ async function toMatchTextImpl(
     };
 
   return { message, pass };
-}
-
-export async function toHaveText(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  expected: string | RegExp,
-  options?: { timeout?: number, useInnerText?: boolean },
-) {
-  return toMatchTextImpl.call(this, 'toHaveText', locator, async timeout => {
-    if (options?.useInnerText)
-      return await locator.innerText({ timeout });
-    return await locator.textContent() || '';
-  }, expected, options);
-}
-
-export async function toContainText(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  expected: string,
-  options?: { timeout?: number, useInnerText?: boolean },
-) {
-  return toMatchTextImpl.call(this, 'toContainText', locator, async timeout => {
-    if (options?.useInnerText)
-      return await locator.innerText({ timeout });
-    return await locator.textContent() || '';
-  }, expected, { ...options, matchSubstring: true });
-}
-
-export async function toHaveAttr(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  name: string,
-  expected: string | RegExp,
-  options?: { timeout?: number },
-) {
-  return toMatchTextImpl.call(this, 'toHaveAttr', locator, async timeout => {
-    return await locator.getAttribute(name, { timeout }) || '';
-  }, expected, options);
-}
-
-export async function toHaveData(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  name: string,
-  expected: string | RegExp,
-  options?: { timeout?: number },
-) {
-  return toMatchTextImpl.call(this, 'toHaveData', locator, async timeout => {
-    return await locator.getAttribute('data-' + name, { timeout }) || '';
-  }, expected, options);
-}
-
-export async function toHaveCSS(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  name: string,
-  expected: string | RegExp,
-  options?: { timeout?: number },
-) {
-  return toMatchTextImpl.call(this, 'toHaveCSS', locator, async timeout => {
-    return await locator.evaluate(async (element, name) => {
-      return (window.getComputedStyle(element) as any)[name];
-    }, name, { timeout });
-  }, expected, options);
-}
-
-export async function toHaveId(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  expected: string | RegExp,
-  options?: { timeout?: number },
-) {
-  return toMatchTextImpl.call(this, 'toHaveId', locator, async timeout => {
-    return await locator.getAttribute('id', { timeout }) || '';
-  }, expected, options);
-}
-
-export async function toHaveValue(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  expected: string | RegExp,
-  options?: { timeout?: number },
-) {
-  return toMatchTextImpl.call(this, 'toHaveValue', locator, async timeout => {
-    return await locator.inputValue({ timeout });
-  }, expected, options);
-}
-export async function toHaveClass(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  expected: string,
-  options?: { timeout?: number },
-) {
-  return toMatchTextImpl.call(this, 'toHaveClass', locator, async timeout => {
-    return await locator.evaluate(element => element.className, { timeout });
-  }, expected, { ...options, matchSubstring: true });
 }

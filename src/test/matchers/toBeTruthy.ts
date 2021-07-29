@@ -23,7 +23,7 @@ import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectLocator, monotonicTime, pollUntilDeadline } from '../util';
 
-async function toBeTruthyImpl<T>(
+export async function toBeTruthy<T>(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   locator: Locator,
@@ -58,102 +58,4 @@ async function toBeTruthyImpl<T>(
   };
 
   return { message, pass };
-}
-
-export async function toBeChecked(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeChecked', locator, async timeout => {
-    return await locator.isChecked({ timeout });
-  }, options);
-}
-
-export async function toBeEditable(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeEditable', locator, async timeout => {
-    return await locator.isEditable({ timeout });
-  }, options);
-}
-
-export async function toBeEnabled(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeEnabled', locator, async timeout => {
-    return await locator.isEnabled({ timeout });
-  }, options);
-}
-
-export async function toBeDisabled(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeDisabled', locator, async timeout => {
-    return await locator.isDisabled({ timeout });
-  }, options);
-}
-
-export async function toBeEmpty(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeEmpty', locator, async timeout => {
-    return await locator.evaluate(element => {
-      if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
-        return !(element as HTMLInputElement).value;
-      return !element.textContent?.trim();
-    }, { timeout });
-  }, options);
-}
-
-export async function toBeHidden(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeHidden', locator, async timeout => {
-    return await locator.isHidden({ timeout });
-  }, options);
-}
-
-export async function toBeVisible(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeVisible', locator, async timeout => {
-    return await locator.isVisible({ timeout });
-  }, options);
-}
-
-export async function toBeFocused(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeFocused', locator, async timeout => {
-    return await locator.evaluate(element => {
-      return document.activeElement === element;
-    }, { timeout });
-  }, options);
-}
-
-export async function toBeSelected(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthyImpl.call(this, 'toBeSelected', locator, async timeout => {
-    return await locator.evaluate(element => {
-      return (element as HTMLOptionElement).selected;
-    }, { timeout });
-  }, options);
 }

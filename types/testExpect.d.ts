@@ -70,54 +70,9 @@ declare global {
       }): R;
 
       /**
-       * Asserts element's exact text content.
-       */
-      toHaveText(expected: string | RegExp, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
-
-      /**
-       * Asserts element's text content matches given pattern or contains given substring.
-       */
-      toContainText(expected: string, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
-
-      /**
-       * Asserts element's attributes `name` matches expected value.
-       */
-      toHaveAttr(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
-
-      /**
-       * Asserts element's data attribute data-`name` matches expected value.
-       */
-      toHaveData(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
-
-      /**
-       * Asserts element's computed CSS property `name` matches expected value.
-       */
-      toHaveCSS(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
-
-      /**
-       * Asserts element's `id` attribute matches expected value.
-       */
-      toHaveId(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
-
-      /**
-       * Asserts input element's value.
-       */
-      toHaveValue(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
-
-      /**
        * Asserts input is checked.
        */
       toBeChecked(options?: { timeout?: number }): Promise<R>;
-
-      /**
-       * Asserts input is editable.
-       */
-      toBeEditable(options?: { timeout?: number }): Promise<R>;
-
-      /**
-       * Asserts input is enabled.
-       */
-      toBeEnabled(options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts input is disabled.
@@ -125,9 +80,24 @@ declare global {
       toBeDisabled(options?: { timeout?: number }): Promise<R>;
 
       /**
+       * Asserts input is editable.
+       */
+      toBeEditable(options?: { timeout?: number }): Promise<R>;
+
+      /**
        * Asserts given DOM node or input has no text content or no input value.
        */
       toBeEmpty(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input is enabled.
+       */
+      toBeEnabled(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM is a focused (active) in document.
+       */
+      toBeFocused(options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts given DOM node is hidden or detached from DOM.
@@ -140,14 +110,39 @@ declare global {
       toBeVisible(options?: { timeout?: number }): Promise<R>;
 
       /**
-       * Asserts given DOM is a focused (active) in document.
-       */
-      toBeFocused(options?: { timeout?: number }): Promise<R>;
-
-      /**
        * Asserts given select option is selected
        */
       toBeSelected(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's text content matches given pattern or contains given substring.
+       */
+      toContainText(expected: string, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+
+      /**
+       * Asserts element's attributes `name` matches expected value.
+       */
+      toHaveAttr(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts that DOM node has a given CSS class.
+       */
+      toHaveClass(className: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's computed CSS property `name` matches expected value.
+       */
+      toHaveCSS(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's data attribute data-`name` matches expected value.
+       */
+      toHaveData(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's `id` attribute matches expected value.
+       */
+      toHaveId(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts JavaScript object that corresponds to the Node has a property with given value.
@@ -155,9 +150,14 @@ declare global {
       toHaveProp(name: string, value: any, options?: { timeout?: number }): Promise<R>;
 
       /**
-       * Asserts that DOM node has a given CSS class.
+       * Asserts element's exact text content.
        */
-      toHaveClass(className: string, options?: { timeout?: number }): Promise<R>;
+      toHaveText(expected: string | RegExp, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+      
+      /**
+       * Asserts input element's value.
+       */
+      toHaveValue(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
     }
   }
 }

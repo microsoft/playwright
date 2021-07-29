@@ -15,7 +15,6 @@
  */
 
 import { equals } from 'expect/build/jasmineUtils';
-import matchers from 'expect/build/matchers';
 import {
   iterableEquality
 } from 'expect/build/utils';
@@ -38,7 +37,7 @@ const RECEIVED_LABEL = 'Received';
 // The optional property of matcher context is true if undefined.
 const isExpand = (expand?: boolean): boolean => expand !== false;
 
-async function toEqualImpl<T>(
+export async function toEqual<T>(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   locator: Locator,
@@ -93,29 +92,4 @@ async function toEqualImpl<T>(
   // could access them, for example in order to display a custom visual diff,
   // or create a different error message
   return { actual: received, expected, message, name: matcherName, pass };
-}
-
-export async function toHaveLength(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  expected: number,
-  options?: { timeout?: number },
-) {
-  if (typeof locator !== 'object' || locator.constructor.name !== 'Locator')
-    return matchers.toHaveLength.call(this, locator, expected);
-  return toEqualImpl.call(this, 'toHaveLength', locator, async timeout => {
-    return await locator.count();
-  }, expected, { expectedType: 'number', ...options });
-}
-
-export async function toHaveProp(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  name: string,
-  expected: number,
-  options?: { timeout?: number },
-) {
-  return toEqualImpl.call(this, 'toHaveProp', locator, async timeout => {
-    return await locator.evaluate((element, name) => (element as any)[name], name, { timeout });
-  }, expected, { expectedType: 'number', ...options });
 }

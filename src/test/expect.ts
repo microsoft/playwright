@@ -24,20 +24,19 @@ import {
   toBeFocused,
   toBeHidden,
   toBeSelected,
-  toBeVisible
-} from './matchers/toBeTruthy';
-import { toHaveLength, toHaveProp } from './matchers/toEqual';
-import { toMatchSnapshot } from './matchers/toMatchSnapshot';
-import {
+  toBeVisible,
   toContainText,
   toHaveAttr,
-  toHaveCSS,
   toHaveClass,
+  toHaveCSS,
   toHaveData,
   toHaveId,
+  toHaveLength,
+  toHaveProp,
   toHaveText,
   toHaveValue
-} from './matchers/toMatchText';
+} from './matchers/matchers';
+import { toMatchSnapshot } from './matchers/toMatchSnapshot';
 import type { Expect } from './types';
 
 export const expect: Expect = expectLibrary as any;
@@ -54,8 +53,8 @@ expectLibrary.extend({
   toBeVisible,
   toContainText,
   toHaveAttr,
-  toHaveCSS,
   toHaveClass,
+  toHaveCSS,
   toHaveData,
   toHaveId,
   toHaveLength,
