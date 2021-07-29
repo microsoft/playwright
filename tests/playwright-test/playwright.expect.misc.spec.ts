@@ -158,3 +158,24 @@ test('should support toHaveURL', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
+
+test('should support respect actionTimeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `module.exports = { use: { actionTimeout: 1000 } }`,
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('timeout', async ({ page }) => {
+        await page.goto('data:text/html,<div>A</div>');
+        await Promise.all([
+          expect(page).toHaveURL('data:text/html,<div>B</div>'),
+          new Promise(f => setTimeout(f, 2000)).then(() => expect(true).toBe(false))
+        ]);
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAscii(result.output);
+  expect(output).toContain('expect(received).toHaveURL(expected)');
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});

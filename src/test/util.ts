@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { Expect } from './types';
 import util from 'util';
 import path from 'path';
 import type { TestError, Location } from './types';
@@ -70,21 +71,25 @@ export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: numb
   return (new DeadlineRunner(promise, deadline)).result;
 }
 
-export async function pollUntilDeadline(func: () => Promise<boolean>, deadline: number, delay: number): Promise<void> {
+export async function pollUntilDeadline(state: ReturnType<Expect['getState']>, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, pollInterval: number): Promise<void> {
+  const playwrightActionTimeout = (state as any).playwrightActionTimeout;
+  pollTime = pollTime === 0 ? 0 : pollTime || playwrightActionTimeout;
+  const deadline = pollTime ? monotonicTime() + pollTime : 0;
+
   while (true) {
-    const timeUntilDeadline = deadline ? deadline - monotonicTime() : Number.MAX_VALUE;
-    if (timeUntilDeadline <= 0)
+    const remainingTime = deadline ? deadline - monotonicTime() : 1000 * 3600 * 24;
+    if (remainingTime <= 0)
       break;
 
     try {
-      if (await func())
+      if (await func(remainingTime))
         return;
     } catch (e) {
       if (e instanceof errors.TimeoutError)
         return;
       throw e;
     }
-    await new Promise(f => setTimeout(f, delay));
+    await new Promise(f => setTimeout(f, pollInterval));
   }
 }
 
