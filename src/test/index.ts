@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import expectLibrary from 'expect';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -74,12 +75,42 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
   timezoneId: undefined,
   userAgent: undefined,
   viewport: undefined,
+  actionTimeout: undefined,
+  navigationTimeout: undefined,
   baseURL: async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   },
   contextOptions: {},
 
-  createContext: async ({ browser, screenshot, trace, video, acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, geolocation, httpCredentials, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, proxy, storageState, viewport, timezoneId, userAgent, baseURL, contextOptions }, use, testInfo) => {
+  createContext: async ({
+    browser,
+    screenshot,
+    trace,
+    video,
+    acceptDownloads,
+    bypassCSP,
+    colorScheme,
+    deviceScaleFactor,
+    extraHTTPHeaders,
+    hasTouch,
+    geolocation,
+    httpCredentials,
+    ignoreHTTPSErrors,
+    isMobile,
+    javaScriptEnabled,
+    locale,
+    offline,
+    permissions,
+    proxy,
+    storageState,
+    viewport,
+    timezoneId,
+    userAgent,
+    baseURL,
+    contextOptions,
+    actionTimeout,
+    navigationTimeout
+  }, use, testInfo) => {
     testInfo.snapshotSuffix = process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -153,7 +184,9 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
         ...additionalOptions,
       };
       const context = await browser.newContext(combinedOptions);
-      context.setDefaultTimeout(0);
+      context.setDefaultTimeout(actionTimeout || 0);
+      context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
+      expectLibrary.setState({ playwrightActionTimeout: actionTimeout } as any);
       context.on('page', page => allPages.push(page));
 
       if (captureTrace) {

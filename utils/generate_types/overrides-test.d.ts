@@ -308,6 +308,8 @@ export interface PlaywrightTestOptions {
   viewport: ViewportSize | null | undefined;
   baseURL: string | undefined;
   contextOptions: BrowserContextOptions;
+  actionTimeout: number | undefined;
+  navigationTimeout: number | undefined;
 }
 
 

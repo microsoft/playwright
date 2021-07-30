@@ -2490,6 +2490,20 @@ export interface PlaywrightTestOptions {
    * like [fixtures.viewport](https://playwright.dev/docs/api/class-fixtures#fixtures-viewport) take priority over this.
    */
   contextOptions: BrowserContextOptions;
+  /**
+   * Timeout for each action and expect in milliseconds. Defaults to 0 (no timeout).
+   *
+   * This is a default timeout for all Playwright actions, same as configured via
+   * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout).
+   */
+  actionTimeout: number | undefined;
+  /**
+   * Timeout for each navigation action in milliseconds. Defaults to 0 (no timeout).
+   *
+   * This is a default navigation timeout, same as configured via
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout).
+   */
+  navigationTimeout: number | undefined;
 }
 
 

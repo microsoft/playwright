@@ -30,7 +30,7 @@ import {
 } from 'jest-matcher-utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
-import { expectType, monotonicTime, pollUntilDeadline } from '../util';
+import { expectType, pollUntilDeadline } from '../util';
 
 export async function toMatchText(
   this: ReturnType<Expect['getState']>,
@@ -68,12 +68,9 @@ export async function toMatchText(
 
   let received: string;
   let pass = false;
-  const timeout = options.timeout === 0 ? 0 : options.timeout || testInfo.timeout;
-  const deadline = timeout ? monotonicTime() + timeout : 0;
 
   // TODO: interrupt on timeout for nice message.
-  await pollUntilDeadline(async () => {
-    const remainingTime = deadline ? deadline - monotonicTime() : 0;
+  await pollUntilDeadline(this, async remainingTime => {
     received = await query(remainingTime);
     if (options.matchSubstring)
       pass = received.includes(expected as string);
@@ -83,7 +80,7 @@ export async function toMatchText(
       pass = expected.test(received);
 
     return pass === !matcherOptions.isNot;
-  }, deadline, 100);
+  }, options.timeout, 100);
 
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const message = pass

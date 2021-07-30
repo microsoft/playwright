@@ -115,6 +115,13 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## property: Fixtures.actionTimeout
+- type: <[int]>
+
+Timeout for each action and expect in milliseconds. Defaults to 0 (no timeout).
+
+This is a default timeout for all Playwright actions, same as configured via [`method: Page.setDefaultTimeout`].
+
 ## property: Fixtures.bypassCSP = %%-context-option-bypasscsp-%%
 
 ## property: Fixtures.channel = %%-browser-option-channel-%%
@@ -219,6 +226,13 @@ Options used to create the context, as passed to [`method: Browser.newContext`].
 Options used to launch the browser, as passed to [`method: BrowserType.launch`]. Specific options [`property: Fixtures.headless`] and [`property: Fixtures.channel`] take priority over this.
 
 ## property: Fixtures.locale = %%-context-option-locale-%%
+
+## property: Fixtures.navigationTimeout
+- type: <[int]>
+
+Timeout for each navigation action in milliseconds. Defaults to 0 (no timeout).
+
+This is a default navigation timeout, same as configured via [`method: Page.setDefaultNavigationTimeout`].
 
 ## property: Fixtures.offline = %%-context-option-offline-%%
 
