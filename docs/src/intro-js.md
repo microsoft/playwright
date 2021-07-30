@@ -464,7 +464,7 @@ Configure NPM script to run tests. Playwright Test will automatically pick up `p
 ```json
 {
   "scripts": {
-    "test": "npx playwright test"
+    "test": "playwright test"
   }
 }
 ```
@@ -474,7 +474,7 @@ If you put your configuration file in a different place, pass it with `--config`
 ```json
 {
   "scripts": {
-    "test": "npx playwright test --config=tests/example.config.js"
+    "test": "playwright test --config=tests/example.config.js"
   }
 }
 ```
