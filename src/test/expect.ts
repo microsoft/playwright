@@ -40,10 +40,12 @@ import {
 } from './matchers/matchers';
 import { toMatchSnapshot } from './matchers/toMatchSnapshot';
 import type { Expect } from './types';
+import matchers from 'expect/build/matchers';
+import { currentTestInfo } from './globals';
 
 export const expect: Expect = expectLibrary as any;
 expectLibrary.setState({ expand: false });
-expectLibrary.extend({
+const customMatchers = {
   toBeChecked,
   toBeDisabled,
   toBeEditable,
@@ -66,4 +68,51 @@ expectLibrary.extend({
   toHaveURL,
   toHaveValue,
   toMatchSnapshot,
-});
+};
+
+let lastExpectSeq = 0;
+
+function wrap(matcherName: string, matcher: any) {
+  return function(this: any, ...args: any[]) {
+    const testInfo = currentTestInfo();
+    if (!testInfo)
+      return matcher.call(this, ...args);
+
+    const seq = ++lastExpectSeq;
+    testInfo._progress('expect', { phase: 'begin', seq, matcherName });
+    const endPayload: any = { phase: 'end', seq };
+    let isAsync = false;
+    try {
+      const result = matcher.call(this, ...args);
+      endPayload.pass = result.pass;
+      if (this.isNot)
+        endPayload.isNot = this.isNot;
+      if (result.pass === this.isNot && result.message)
+        endPayload.message = result.message();
+      if (result instanceof Promise) {
+        isAsync = true;
+        return result.catch(e => {
+          endPayload.error = e.stack;
+          throw e;
+        }).finally(() => {
+          testInfo._progress('expect', endPayload);
+        });
+      }
+      return result;
+    } catch (e) {
+      endPayload.error = e.stack;
+      throw e;
+    } finally {
+      if (!isAsync)
+        testInfo._progress('expect', endPayload);
+    }
+  };
+}
+
+const wrappedMatchers: any = {};
+for (const matcherName in matchers)
+  wrappedMatchers[matcherName] = wrap(matcherName, matchers[matcherName]);
+for (const matcherName in customMatchers)
+  wrappedMatchers[matcherName] = wrap(matcherName, (customMatchers as any)[matcherName]);
+
+expectLibrary.extend(wrappedMatchers);

@@ -267,6 +267,7 @@ export class WorkerRunner extends EventEmitter {
           deadlineRunner.setDeadline(deadline());
       },
       _testFinished: new Promise(f => testFinishedCallback = f),
+      _progress: (name, data) => this.emit('progress', { testId, name, data }),
     };
 
     // Inherit test.setTimeout() from parent suites.

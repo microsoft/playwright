@@ -17,7 +17,7 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams } from './ipc';
+import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, ProgressPayload } from './ipc';
 import type { TestResult, Reporter } from '../../types/testReporter';
 import { TestCase } from './test';
 import { Loader } from './loader';
@@ -234,6 +234,10 @@ export class Dispatcher {
       test.annotations = params.annotations;
       test.timeout = params.timeout;
       this._reportTestEnd(test, result);
+    });
+    worker.on('progress', (params: ProgressPayload) => {
+      const { test } = this._testById.get(params.testId)!;
+      (this._reporter as any)._onTestProgress?.(test, params.name, params.data);
     });
     worker.on('stdOut', (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);

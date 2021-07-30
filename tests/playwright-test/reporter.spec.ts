@@ -158,3 +158,99 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
     '%%end',
   ]);
 });
+
+test('should report expect progress', async ({ runInlineTest }) => {
+  const expectReporterJS = `
+    class Reporter {
+      _onTestProgress(test, name, data) {
+        if (data.frames)
+          data.frames = [];
+        console.log('%%%%', name, JSON.stringify(data));
+      }
+    }
+    module.exports = Reporter;
+  `;
+
+  const result = await runInlineTest({
+    'reporter.ts': expectReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('fail', async ({}) => {
+        expect(true).toBeTruthy();
+        expect(false).toBeTruthy();
+      });
+      test('pass', async ({}) => {
+        expect(false).not.toBeTruthy();
+      });
+      test('async', async ({ page }) => {
+        await expect(page).not.toHaveTitle('False');
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    `%% expect {\"phase\":\"begin\",\"seq\":1,\"matcherName\":\"toBeTruthy\"}`,
+    `%% expect {\"phase\":\"end\",\"seq\":1,\"pass\":true}`,
+    `%% expect {\"phase\":\"begin\",\"seq\":2,\"matcherName\":\"toBeTruthy\"}`,
+    `%% expect {\"phase\":\"end\",\"seq\":2,\"pass\":false,\"message\":\"\\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\"}`,
+
+    `%% expect {\"phase\":\"begin\",\"seq\":1,\"matcherName\":\"toBeTruthy\"}`,
+    `%% expect {\"phase\":\"end\",\"seq\":1,\"pass\":false,\"isNot\":true}`,
+
+    `%% pw:api {\"phase\":\"begin\",\"seq\":3,\"apiName\":\"browserContext.newPage\",\"frames\":[]}`,
+    `%% pw:api {\"phase\":\"end\",\"seq\":3}`,
+    `%% expect {\"phase\":\"begin\",\"seq\":2,\"matcherName\":\"toHaveTitle\"}`,
+    `%% pw:api {\"phase\":\"begin\",\"seq\":4,\"apiName\":\"page.title\",\"frames\":[]}`,
+    `%% pw:api {\"phase\":\"end\",\"seq\":4}`,
+    `%% expect {\"phase\":\"end\",\"seq\":2,\"isNot\":true}`,
+    `%% pw:api {\"phase\":\"begin\",\"seq\":5,\"apiName\":\"browserContext.close\",\"frames\":[]}`,
+    `%% pw:api {\"phase\":\"end\",\"seq\":5}`,
+  ]);
+});
+
+test('should report log progress', async ({ runInlineTest }) => {
+  const expectReporterJS = `
+    class Reporter {
+      _onTestProgress(test, name, data) {
+        if (data.frames)
+          data.frames = [];
+        console.log('%%%%', name, JSON.stringify(data));
+      }
+    }
+    module.exports = Reporter;
+  `;
+
+  const result = await runInlineTest({
+    'reporter.ts': expectReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+        await page.setContent('<button></button>');
+        await page.click('button');
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    `%% pw:api {\"phase\":\"begin\",\"seq\":3,\"apiName\":\"browserContext.newPage\",\"frames\":[]}`,
+    `%% pw:api {\"phase\":\"end\",\"seq\":3}`,
+    `%% pw:api {\"phase\":\"begin\",\"seq\":4,\"apiName\":\"page.setContent\",\"frames\":[]}`,
+    `%% pw:api {\"phase\":\"end\",\"seq\":4}`,
+    `%% pw:api {\"phase\":\"begin\",\"seq\":5,\"apiName\":\"page.click\",\"frames\":[]}`,
+    `%% pw:api {\"phase\":\"end\",\"seq\":5}`,
+    `%% pw:api {\"phase\":\"begin\",\"seq\":6,\"apiName\":\"browserContext.close\",\"frames\":[]}`,
+    `%% pw:api {\"phase\":\"end\",\"seq\":6}`,
+  ]);
+});

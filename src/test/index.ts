@@ -177,13 +177,16 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
         recordVideoDir = artifactsFolder;
       }
 
-      const combinedOptions = {
+      const combinedOptions: BrowserContextOptions = {
         recordVideo: recordVideoDir ? { dir: recordVideoDir, size: recordVideoSize } : undefined,
         ...contextOptions,
         ...options,
         ...additionalOptions,
       };
       const context = await browser.newContext(combinedOptions);
+      (context as any)._csi = {
+        onApiCall: (data: any) => (testInfo as any)._progress('pw:api', data),
+      };
       context.setDefaultTimeout(actionTimeout || 0);
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
       expectLibrary.setState({ playwrightActionTimeout: actionTimeout } as any);

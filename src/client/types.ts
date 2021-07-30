@@ -23,6 +23,10 @@ export interface Logger {
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
 
+export interface ClientSideInstrumentation {
+  onApiCall(data: { phase: 'begin' | 'end', seq: number, apiName?: string, frames?: channels.StackFrame[], error?: string }): void;
+}
+
 import { Size } from '../common/types';
 export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
 export type StrictOptions = { strict?: boolean };
