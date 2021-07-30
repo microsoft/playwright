@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures } from '../../types/test';
+import type { Fixtures, TestInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 export * from '../../types/test';
 export { Location } from '../../types/testReporter';
@@ -24,3 +24,7 @@ export type FixturesWithLocation = {
   location: Location;
 };
 export type Annotations = { type: string, description?: string }[];
+
+export interface TestInfoImpl extends TestInfo {
+  _testFinished: Promise<void>;
+}
