@@ -27,4 +27,5 @@ export type Annotations = { type: string, description?: string }[];
 
 export interface TestInfoImpl extends TestInfo {
   _testFinished: Promise<void>;
+  _progress: (name: string, params: any) => void;
 }

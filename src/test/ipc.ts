@@ -46,6 +46,12 @@ export type TestEndPayload = {
   attachments: { name: string, path?: string, body?: string, contentType: string }[];
 };
 
+export type ProgressPayload = {
+  testId: string;
+  name: string;
+  data: any;
+};
+
 export type TestEntry = {
   testId: string;
   retry: number;

@@ -57,4 +57,9 @@ export class Multiplexer implements Reporter {
     for (const reporter of this._reporters)
       reporter.onError?.(error);
   }
+
+  _onTestProgress(test: TestCase, name: string, data: any) {
+    for (const reporter of this._reporters)
+      (reporter as any)._onTestProgress?.(test, name, data);
+  }
 }

@@ -74,7 +74,7 @@ process.on('message', async message => {
     workerIndex = initParams.workerIndex;
     startProfiling();
     workerRunner = new WorkerRunner(initParams);
-    for (const event of ['testBegin', 'testEnd', 'done'])
+    for (const event of ['testBegin', 'testEnd', 'done', 'progress'])
       workerRunner.on(event, sendMessageToParent.bind(null, event));
     return;
   }
