@@ -221,3 +221,22 @@ test('should support toHaveValue', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should print expected/received before timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('times out waiting for text', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        await expect(page.locator('#node')).toHaveText('Text 2');
+      });
+      `,
+  }, { workers: 1, timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Timeout of 2000ms exceeded.');
+  expect(stripAscii(result.output)).toContain('Expected string: "Text 2"');
+  expect(stripAscii(result.output)).toContain('Received string: "Text content"');
+});

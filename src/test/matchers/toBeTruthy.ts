@@ -48,7 +48,7 @@ export async function toBeTruthy<T>(
     received = await query(remainingTime);
     pass = !!received;
     return pass === !matcherOptions.isNot;
-  }, options.timeout, 100);
+  }, options.timeout, 100, testInfo._testFinished);
 
   const message = () => {
     return matcherHint(matcherName, undefined, '', matcherOptions);

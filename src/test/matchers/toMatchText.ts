@@ -80,7 +80,7 @@ export async function toMatchText(
       pass = expected.test(received);
 
     return pass === !matcherOptions.isNot;
-  }, options.timeout, 100);
+  }, options.timeout, 100, testInfo._testFinished);
 
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const message = pass

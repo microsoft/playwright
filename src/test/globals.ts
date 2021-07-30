@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import type { TestInfo } from './types';
+import type { TestInfoImpl } from './types';
 import { Suite } from './test';
 
-let currentTestInfoValue: TestInfo | null = null;
-export function setCurrentTestInfo(testInfo: TestInfo | null) {
+let currentTestInfoValue: TestInfoImpl | null = null;
+export function setCurrentTestInfo(testInfo: TestInfoImpl | null) {
   currentTestInfoValue = testInfo;
 }
-export function currentTestInfo(): TestInfo | null {
+export function currentTestInfo(): TestInfoImpl | null {
   return currentTestInfoValue;
 }
 

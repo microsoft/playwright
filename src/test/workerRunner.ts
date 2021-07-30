@@ -24,7 +24,7 @@ import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, W
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import { Modifier, Suite, TestCase } from './test';
-import { Annotations, TestError, TestInfo, WorkerInfo } from './types';
+import { Annotations, TestError, TestInfo, TestInfoImpl, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixturePool, FixtureRunner } from './fixtures';
 
@@ -43,7 +43,7 @@ export class WorkerRunner extends EventEmitter {
   private _fatalError: TestError | undefined;
   private _entries = new Map<string, TestEntry>();
   private _isStopped = false;
-  _currentTest: { testId: string, testInfo: TestInfo } | null = null;
+  _currentTest: { testId: string, testInfo: TestInfoImpl, testFinishedCallback: () => void } | null = null;
 
   constructor(params: WorkerInitParams) {
     super();
@@ -53,8 +53,10 @@ export class WorkerRunner extends EventEmitter {
 
   stop() {
     // TODO: mark test as 'interrupted' instead.
-    if (this._currentTest && this._currentTest.testInfo.status === 'passed')
+    if (this._currentTest && this._currentTest.testInfo.status === 'passed') {
       this._currentTest.testInfo.status = 'skipped';
+      this._currentTest.testFinishedCallback();
+    }
     this._isStopped = true;
   }
 
@@ -218,7 +220,8 @@ export class WorkerRunner extends EventEmitter {
       return path.join(this._project.config.outputDir, testOutputDir);
     })();
 
-    const testInfo: TestInfo = {
+    let testFinishedCallback = () => {};
+    const testInfo: TestInfoImpl = {
       ...this._workerInfo,
       title: test.title,
       file: test.location.file,
@@ -263,6 +266,7 @@ export class WorkerRunner extends EventEmitter {
         if (deadlineRunner)
           deadlineRunner.setDeadline(deadline());
       },
+      _testFinished: new Promise(f => testFinishedCallback = f),
     };
 
     // Inherit test.setTimeout() from parent suites.
@@ -291,7 +295,7 @@ export class WorkerRunner extends EventEmitter {
       }
     }
 
-    this._setCurrentTest({ testInfo, testId });
+    this._setCurrentTest({ testInfo, testId, testFinishedCallback });
     const deadline = () => {
       return testInfo.timeout ? startTime + testInfo.timeout : undefined;
     };
@@ -316,6 +320,7 @@ export class WorkerRunner extends EventEmitter {
     if (!this._isStopped) {
       // When stopped during the test run (usually either a user interruption or an unhandled error),
       // we do not run cleanup because the worker will cleanup() anyway.
+      testFinishedCallback();
       if (!result.timedOut) {
         deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), deadline());
         deadlineRunner.setDeadline(deadline());
@@ -350,7 +355,7 @@ export class WorkerRunner extends EventEmitter {
     }
   }
 
-  private _setCurrentTest(currentTest: { testId: string, testInfo: TestInfo} | null) {
+  private _setCurrentTest(currentTest: { testId: string, testInfo: TestInfoImpl, testFinishedCallback: () => void } | null) {
     this._currentTest = currentTest;
     setCurrentTestInfo(currentTest ? currentTest.testInfo : null);
   }
