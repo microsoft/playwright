@@ -18,7 +18,7 @@ import { test, expect } from './playwright-test-fixtures';
 
 const tests = {
   'a.spec.ts': `
-    const { test } = pwt;
+    const test = pwt.test.extend({ foo: 'bar' });
     test.use({ headless: false });
     test('test1', async () => {
       console.log('test1-done');
@@ -34,7 +34,7 @@ const tests = {
     });
   `,
   'b.spec.ts': `
-    const { test } = pwt;
+    const test = pwt.test.extend({ bar: 'foo' });
     test('test4', async () => {
       console.log('test4-done');
     });
@@ -49,9 +49,9 @@ test('should respect shard=1/2', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('test2-done');
   expect(result.output).toContain('test1-done');
   expect(result.output).toContain('test3-done');
+  expect(result.output).toContain('test2-done');
 });
 
 test('should respect shard=2/2', async ({ runInlineTest }) => {
@@ -69,11 +69,11 @@ test('should respect shard=1/2 in config', async ({ runInlineTest }) => {
     'playwright.config.js': `
       module.exports = { shard: { current: 1, total: 2 } };
     `,
-  }, { shard: '1/2' });
+  });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('test2-done');
   expect(result.output).toContain('test1-done');
   expect(result.output).toContain('test3-done');
+  expect(result.output).toContain('test2-done');
 });
