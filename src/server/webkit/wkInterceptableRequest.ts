@@ -108,10 +108,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     this._requestInterceptedPromise = new Promise<void>(f => this._requestInterceptedCallback = f);
   }
 
-  async responseBody(forFulfill: boolean): Promise<Buffer> {
-    // Empty buffer will result in the response being used.
-    if (forFulfill)
-      return Buffer.from('');
+  async responseBody(): Promise<Buffer> {
     const response = await this._session.send('Network.getInterceptedResponseBody', { requestId: this._requestId });
     return Buffer.from(response.body, 'base64');
   }
@@ -120,9 +117,10 @@ export class WKRouteImpl implements network.RouteDelegate {
     const errorType = errorReasons[errorCode];
     assert(errorType, 'Unknown error code: ' + errorCode);
     await this._requestInterceptedPromise;
+    const isResponseIntercepted = await this._responseInterceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
-    await this._session.sendMayFail('Network.interceptRequestWithError', { requestId: this._requestId, errorType });
+    await this._session.sendMayFail(isResponseIntercepted ? 'Network.interceptResponseWithError' : 'Network.interceptRequestWithError', { requestId: this._requestId, errorType });
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
