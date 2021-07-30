@@ -23,10 +23,11 @@ class DotReporter extends BaseReporter {
 
   onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    if (++this._counter === 81) {
+    if (this._counter === 80) {
       process.stdout.write('\n');
-      return;
+      this._counter = 0;
     }
+    ++this._counter;
     if (result.status === 'skipped') {
       process.stdout.write(colors.yellow('°'));
       return;
@@ -37,7 +38,7 @@ class DotReporter extends BaseReporter {
     }
     switch (test.outcome()) {
       case 'expected': process.stdout.write(colors.green('·')); break;
-      case 'unexpected': process.stdout.write(colors.red(test.results[test.results.length - 1].status === 'timedOut' ? 'T' : 'F')); break;
+      case 'unexpected': process.stdout.write(colors.red(result.status === 'timedOut' ? 'T' : 'F')); break;
       case 'flaky': process.stdout.write(colors.yellow('±')); break;
     }
   }
