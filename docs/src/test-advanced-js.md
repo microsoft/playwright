@@ -303,7 +303,7 @@ exports.test = base.test.extend({
   version: '1.0',
 
   // Use version when starting the backend.
-  backendUrl: async ({ version }, use) => {
+  backendURL: async ({ version }, use) => {
     const app = await startBackend(version);
     await use(app.baseUrl());
     await app.close();
@@ -318,7 +318,7 @@ import { startBackend } from './my-backend';
 
 export type TestOptions = {
   version: string;
-  backendUrl: string;
+  backendURL: string;
 };
 
 export const test = base.extend<TestOptions>({
@@ -326,7 +326,7 @@ export const test = base.extend<TestOptions>({
   version: '1.0',
 
   // Use version when starting the backend.
-  backendUrl: async ({ version }, use) => {
+  backendURL: async ({ version }, use) => {
     const app = await startBackend(version);
     await use(app.baseUrl());
     await app.close();
@@ -339,15 +339,15 @@ We can use our fixtures in the test.
 // example.spec.js
 const { test } = require('./my-test');
 
-test('test 1', async ({ page, backendUrl }) => {
-  await page.goto(`${backendUrl}/index.html`);
+test('test 1', async ({ page, backendURL }) => {
+  await page.goto(`${backendURL}/index.html`);
   // ...
 });
 
-test('test 2', async ({ version, page, backendUrl }) => {
+test('test 2', async ({ version, page, backendURL }) => {
   test.fixme(version === '2.0', 'This feature is not implemented in 2.0 yet');
 
-  await page.goto(`${backendUrl}/index.html`);
+  await page.goto(`${backendURL}/index.html`);
   // ...
 });
 ```
@@ -356,15 +356,15 @@ test('test 2', async ({ version, page, backendUrl }) => {
 // example.spec.ts
 import { test } from './my-test';
 
-test('test 1', async ({ page, backendUrl }) => {
-  await page.goto(`${backendUrl}/index.html`);
+test('test 1', async ({ page, backendURL }) => {
+  await page.goto(`${backendURL}/index.html`);
   // ...
 });
 
-test('test 2', async ({ version, page, backendUrl }) => {
+test('test 2', async ({ version, page, backendURL }) => {
   test.fixme(version === '2.0', 'This feature is not implemented in 2.0 yet');
 
-  await page.goto(`${backendUrl}/index.html`);
+  await page.goto(`${backendURL}/index.html`);
   // ...
 });
 ```
