@@ -20303,10 +20303,39 @@ index ca2349958666a801b0e0a6bd767dbbcccfb716ae..b5529ff5a2e2fa97bccc21f88689624b
  
  } // namespace WebKit
 diff --git a/Source/WebKit/WebProcess/Network/WebResourceLoader.cpp b/Source/WebKit/WebProcess/Network/WebResourceLoader.cpp
-index ecd4052eac038028255a786236e1969853afa1d8..2adc87a59c12d15c651909e67670ac354b59092b 100644
+index ecd4052eac038028255a786236e1969853afa1d8..67953f6ed903afe668ce67538834f2fee6a2f449 100644
 --- a/Source/WebKit/WebProcess/Network/WebResourceLoader.cpp
 +++ b/Source/WebKit/WebProcess/Network/WebResourceLoader.cpp
-@@ -196,6 +196,7 @@ void WebResourceLoader::didReceiveData(const IPC::DataReference& data, int64_t e
+@@ -155,17 +155,14 @@ void WebResourceLoader::didReceiveResponse(const ResourceResponse& response, boo
+     if (InspectorInstrumentationWebKit::shouldInterceptResponse(m_coreLoader->frame(), response)) {
+         unsigned long interceptedRequestIdentifier = m_coreLoader->identifier();
+         m_interceptController.beginInterceptingResponse(interceptedRequestIdentifier);
+-        InspectorInstrumentationWebKit::interceptResponse(m_coreLoader->frame(), response, interceptedRequestIdentifier, [this, protectedThis = makeRef(*this), interceptedRequestIdentifier, policyDecisionCompletionHandler = WTFMove(policyDecisionCompletionHandler)](const ResourceResponse& inspectorResponse, RefPtr<SharedBuffer> overrideData) mutable {
++        InspectorInstrumentationWebKit::interceptResponse(m_coreLoader->frame(), response, interceptedRequestIdentifier, [this, protectedThis = makeRef(*this), interceptedRequestIdentifier](const ResourceResponse& inspectorResponse, RefPtr<SharedBuffer> overrideData) mutable {
+             if (!m_coreLoader || !m_coreLoader->identifier()) {
+                 WEBRESOURCELOADER_RELEASE_LOG("didReceiveResponse: not continuing intercept load because no coreLoader or no ID");
+                 m_interceptController.continueResponse(interceptedRequestIdentifier);
+                 return;
+             }
+ 
+-            m_coreLoader->didReceiveResponse(inspectorResponse, [this, protectedThis = WTFMove(protectedThis), interceptedRequestIdentifier, policyDecisionCompletionHandler = WTFMove(policyDecisionCompletionHandler), overrideData = WTFMove(overrideData)]() mutable {
+-                if (policyDecisionCompletionHandler)
+-                    policyDecisionCompletionHandler();
+-
++            m_coreLoader->didReceiveResponse(inspectorResponse, [this, protectedThis = WTFMove(protectedThis), interceptedRequestIdentifier, overrideData = WTFMove(overrideData)]() mutable {
+                 if (!m_coreLoader || !m_coreLoader->identifier()) {
+                     m_interceptController.continueResponse(interceptedRequestIdentifier);
+                     return;
+@@ -183,6 +180,8 @@ void WebResourceLoader::didReceiveResponse(const ResourceResponse& response, boo
+                 }
+             });
+         });
++        if (policyDecisionCompletionHandler)
++          policyDecisionCompletionHandler();
+         return;
+     }
+ 
+@@ -196,6 +195,7 @@ void WebResourceLoader::didReceiveData(const IPC::DataReference& data, int64_t e
  
      if (UNLIKELY(m_interceptController.isIntercepting(m_coreLoader->identifier()))) {
          auto buffer = SharedBuffer::create(data.data(), data.size());
@@ -20314,7 +20343,7 @@ index ecd4052eac038028255a786236e1969853afa1d8..2adc87a59c12d15c651909e67670ac35
          m_interceptController.defer(m_coreLoader->identifier(), [this, protectedThis = makeRef(*this), buffer = WTFMove(buffer), encodedDataLength]() mutable {
              if (m_coreLoader)
                  didReceiveData({ buffer->data(), buffer->size() }, encodedDataLength);
-@@ -216,6 +217,7 @@ void WebResourceLoader::didFinishResourceLoad(const NetworkLoadMetrics& networkL
+@@ -216,6 +216,7 @@ void WebResourceLoader::didFinishResourceLoad(const NetworkLoadMetrics& networkL
      WEBRESOURCELOADER_RELEASE_LOG("didFinishResourceLoad: (length=%zd)", m_numBytesReceived);
  
      if (UNLIKELY(m_interceptController.isIntercepting(m_coreLoader->identifier()))) {
@@ -20322,7 +20351,7 @@ index ecd4052eac038028255a786236e1969853afa1d8..2adc87a59c12d15c651909e67670ac35
          m_interceptController.defer(m_coreLoader->identifier(), [this, protectedThis = makeRef(*this), networkLoadMetrics]() mutable {
              if (m_coreLoader)
                  didFinishResourceLoad(networkLoadMetrics);
-@@ -259,6 +261,7 @@ void WebResourceLoader::didFailResourceLoad(const ResourceError& error)
+@@ -259,6 +260,7 @@ void WebResourceLoader::didFailResourceLoad(const ResourceError& error)
      WEBRESOURCELOADER_RELEASE_LOG("didFailResourceLoad:");
  
      if (UNLIKELY(m_interceptController.isIntercepting(m_coreLoader->identifier()))) {
