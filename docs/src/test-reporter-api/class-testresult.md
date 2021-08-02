@@ -49,6 +49,11 @@ Anything written to the standard error during the test run.
 
 Anything written to the standard output during the test run.
 
+## property: TestResult.steps
+- type: <[Array]<[TestStep]>>
+
+List of steps inside this test run.
+
 ## property: TestResult.workerIndex
 - type: <[int]>
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult } from '../../../types/testReporter';
+import { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult, TestStep } from '../../../types/testReporter';
 
 export class Multiplexer implements Reporter {
   private _reporters: Reporter[];
@@ -28,19 +28,19 @@ export class Multiplexer implements Reporter {
       reporter.onBegin?.(config, suite);
   }
 
-  onTestBegin(test: TestCase) {
+  onTestBegin(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onTestBegin?.(test);
+      reporter.onTestBegin?.(test, result);
   }
 
-  onStdOut(chunk: string | Buffer, test?: TestCase) {
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onStdOut?.(chunk, test);
+      reporter.onStdOut?.(chunk, test, result);
   }
 
-  onStdErr(chunk: string | Buffer, test?: TestCase) {
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onStdErr?.(chunk, test);
+      reporter.onStdErr?.(chunk, test, result);
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
@@ -58,8 +58,13 @@ export class Multiplexer implements Reporter {
       reporter.onError?.(error);
   }
 
-  _onTestProgress(test: TestCase, name: string, data: any) {
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
-      (reporter as any)._onTestProgress?.(test, name, data);
+      (reporter as any).onStepBegin?.(test, result, step);
+  }
+
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+    for (const reporter of this._reporters)
+      (reporter as any).onStepEnd?.(test, result, step);
   }
 }

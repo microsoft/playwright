@@ -55,6 +55,15 @@ export interface TestResult {
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
+  steps: TestStep[];
+}
+
+export interface TestStep {
+  title: string;
+  category: string,
+  startTime: Date;
+  duration: number;
+  error?: TestError;
 }
 
 /**
@@ -73,10 +82,12 @@ export interface FullResult {
 
 export interface Reporter {
   onBegin?(config: FullConfig, suite: Suite): void;
-  onTestBegin?(test: TestCase): void;
-  onStdOut?(chunk: string | Buffer, test?: TestCase): void;
-  onStdErr?(chunk: string | Buffer, test?: TestCase): void;
+  onTestBegin?(test: TestCase, result: TestResult): void;
+  onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
+  onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   onTestEnd?(test: TestCase, result: TestResult): void;
+  onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
+  onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
   onError?(error: TestError): void;
   onEnd?(result: FullResult): void | Promise<void>;
 }

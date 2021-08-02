@@ -17,8 +17,8 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, ProgressPayload } from './ipc';
-import type { TestResult, Reporter } from '../../types/testReporter';
+import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
+import type { TestResult, Reporter, TestStep } from '../../types/testReporter';
 import { TestCase } from './test';
 import { Loader } from './loader';
 
@@ -35,7 +35,7 @@ export class Dispatcher {
   private _freeWorkers: Worker[] = [];
   private _workerClaimers: (() => void)[] = [];
 
-  private _testById = new Map<string, { test: TestCase, result: TestResult }>();
+  private _testById = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
   private _queue: TestGroup[] = [];
   private _stopCallback = () => {};
   readonly _loader: Loader;
@@ -51,7 +51,8 @@ export class Dispatcher {
     for (const group of testGroups) {
       for (const test of group.tests) {
         const result = test._appendTestResult();
-        this._testById.set(test._id, { test, result });
+        // When changing this line, change the one in retry too.
+        this._testById.set(test._id, { test, result, steps: new Map() });
       }
     }
   }
@@ -136,7 +137,7 @@ export class Dispatcher {
             break;
           // There might be a single test that has started but has not finished yet.
           if (test._id !== lastStartedTestId)
-            this._reporter.onTestBegin?.(test);
+            this._reporter.onTestBegin?.(test, result);
           result.error = params.fatalError;
           result.status = first ? 'failed' : 'skipped';
           this._reportTestEnd(test, result);
@@ -155,6 +156,7 @@ export class Dispatcher {
         const pair = this._testById.get(testId)!;
         if (!this._isStopped && pair.test.expectedStatus === 'passed' && pair.test.results.length < pair.test.retries + 1) {
           pair.result = pair.test._appendTestResult();
+          pair.steps = new Map();
           remaining.unshift(pair.test);
         }
       }
@@ -215,7 +217,7 @@ export class Dispatcher {
       const { test, result: testRun  } = this._testById.get(params.testId)!;
       testRun.workerIndex = params.workerIndex;
       testRun.startTime = new Date(params.startWallTime);
-      this._reporter.onTestBegin?.(test);
+      this._reporter.onTestBegin?.(test, testRun);
     });
     worker.on('testEnd', (params: TestEndPayload) => {
       if (this._hasReachedMaxFailures())
@@ -235,23 +237,40 @@ export class Dispatcher {
       test.timeout = params.timeout;
       this._reportTestEnd(test, result);
     });
-    worker.on('progress', (params: ProgressPayload) => {
-      const { test } = this._testById.get(params.testId)!;
-      (this._reporter as any)._onTestProgress?.(test, params.name, params.data);
+    worker.on('stepBegin', (params: StepBeginPayload) => {
+      const { test, result, steps } = this._testById.get(params.testId)!;
+      const step: TestStep = {
+        title: params.title,
+        category: params.category,
+        startTime: new Date(params.wallTime),
+        duration: 0,
+      };
+      steps.set(params.stepId, step);
+      result.steps.push(step);
+      this._reporter.onStepBegin?.(test, result, step);
+    });
+    worker.on('stepEnd', (params: StepEndPayload) => {
+      const { test, result, steps } = this._testById.get(params.testId)!;
+      const step = steps.get(params.stepId)!;
+      step.duration = params.wallTime - step.startTime.getTime();
+      if (params.error)
+        step.error = params.error;
+      steps.delete(params.stepId);
+      this._reporter.onStepEnd?.(test, result, step);
     });
     worker.on('stdOut', (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       const pair = params.testId ? this._testById.get(params.testId) : undefined;
       if (pair)
         pair.result.stdout.push(chunk);
-      this._reporter.onStdOut?.(chunk, pair ? pair.test : undefined);
+      this._reporter.onStdOut?.(chunk, pair?.test, pair?.result);
     });
     worker.on('stdErr', (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       const pair = params.testId ? this._testById.get(params.testId) : undefined;
       if (pair)
         pair.result.stderr.push(chunk);
-      this._reporter.onStdErr?.(chunk, pair ? pair.test : undefined);
+      this._reporter.onStdErr?.(chunk, pair?.test, pair?.result);
     });
     worker.on('teardownError', ({error}) => {
       this._hasWorkerErrors = true;

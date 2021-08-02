@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, TestInfo } from '../../types/test';
+import type { Fixtures, TestError, TestInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 export * from '../../types/test';
 export { Location } from '../../types/testReporter';
@@ -25,7 +25,9 @@ export type FixturesWithLocation = {
 };
 export type Annotations = { type: string, description?: string }[];
 
+export type CompleteStepCallback = (error?: TestError) => void;
+
 export interface TestInfoImpl extends TestInfo {
   _testFinished: Promise<void>;
-  _progress: (name: string, params: any) => void;
+  _addStep: (category: string, title: string) => CompleteStepCallback;
 }

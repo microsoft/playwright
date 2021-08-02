@@ -39,7 +39,7 @@ import {
   toHaveValue
 } from './matchers/matchers';
 import { toMatchSnapshot } from './matchers/toMatchSnapshot';
-import type { Expect } from './types';
+import type { Expect, TestStatus } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
 
@@ -70,41 +70,37 @@ const customMatchers = {
   toMatchSnapshot,
 };
 
-let lastExpectSeq = 0;
-
 function wrap(matcherName: string, matcher: any) {
   return function(this: any, ...args: any[]) {
     const testInfo = currentTestInfo();
     if (!testInfo)
       return matcher.call(this, ...args);
 
-    const seq = ++lastExpectSeq;
-    testInfo._progress('expect', { phase: 'begin', seq, matcherName });
-    const endPayload: any = { phase: 'end', seq };
-    let isAsync = false;
+    const infix = this.isNot ? '.not' : '';
+    const completeStep = testInfo._addStep('expect', `expect${infix}.${matcherName}`);
+
+    const reportStepEnd = (result: any) => {
+      status = result.pass !== this.isNot ? 'passed' : 'failed';
+      let error: Error | undefined;
+      if (status === 'failed')
+        error = new Error(result.message());
+      completeStep?.(error);
+      return result;
+    };
+
+    const reportStepError = (error: Error) => {
+      completeStep?.(error);
+      throw error;
+    };
+
+    let status: TestStatus = 'passed';
     try {
       const result = matcher.call(this, ...args);
-      endPayload.pass = result.pass;
-      if (this.isNot)
-        endPayload.isNot = this.isNot;
-      if (result.pass === this.isNot && result.message)
-        endPayload.message = result.message();
-      if (result instanceof Promise) {
-        isAsync = true;
-        return result.catch(e => {
-          endPayload.error = e.stack;
-          throw e;
-        }).finally(() => {
-          testInfo._progress('expect', endPayload);
-        });
-      }
-      return result;
+      if (result instanceof Promise)
+        return result.then(reportStepEnd).catch(reportStepError);
+      return reportStepEnd(result);
     } catch (e) {
-      endPayload.error = e.stack;
-      throw e;
-    } finally {
-      if (!isAsync)
-        testInfo._progress('expect', endPayload);
+      reportStepError(e);
     }
   };
 }
