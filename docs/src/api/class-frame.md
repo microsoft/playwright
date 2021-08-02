@@ -855,7 +855,7 @@ Returns `element.innerText`.
 ## async method: Frame.inputValue
 - returns: <[string]>
 
-Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
 
 ### param: Frame.inputValue.selector = %%-input-selector-%%
 

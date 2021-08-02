@@ -1961,7 +1961,7 @@ Returns `element.innerText`.
 ## async method: Page.inputValue
 - returns: <[string]>
 
-Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
 
 ### param: Page.inputValue.selector = %%-input-selector-%%
 

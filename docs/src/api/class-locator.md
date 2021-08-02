@@ -520,7 +520,7 @@ Returns the `element.innerText`.
 ## async method: Locator.inputValue
 - returns: <[string]>
 
-Returns `input.value` for `<input>` or `<textarea>` element. Throws for non-input elements.
+Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
 
 ### option: Locator.inputValue.timeout = %%-input-timeout-%%
 
