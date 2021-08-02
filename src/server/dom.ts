@@ -182,7 +182,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async inputValue(): Promise<string> {
     return throwFatalDOMError(await this.evaluateInUtility(([injeced, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node.nodeName !== 'INPUT' && node.nodeName !== 'TEXTAREA' && node.nodeName !== 'SELECT'))
-        return 'error:notinputvalue';
+        return 'error:hasnovalue';
       const element = node as unknown as (HTMLInputElement | HTMLTextAreaElement);
       return { value: element.value };
     }, undefined)).value;
@@ -883,7 +883,7 @@ export function throwFatalDOMError<T>(result: T | FatalDOMError): T {
     throw new Error(`Malformed value`);
   if (result === 'error:notinput')
     throw new Error('Node is not an HTMLInputElement');
-  if (result === 'error:notinputvalue')
+  if (result === 'error:hasnovalue')
     throw new Error('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
   if (result === 'error:notselect')
     throw new Error('Element is not a <select> element.');
@@ -1040,7 +1040,7 @@ export function inputValueTask(selector: SelectorInfo): SchedulableTask<string> 
         return continuePolling;
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);
       if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
-        return 'error:notinputvalue';
+        return 'error:hasnovalue';
       return (element as any).value;
     });
   }, { parsed: selector.parsed, strict: selector.strict,  });
