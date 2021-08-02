@@ -92,7 +92,8 @@ export class ProjectImpl {
         const test = entry._clone();
         test.projectName = this.config.name;
         test.retries = this.config.retries;
-        test._workerHash = `run${this.index}-${pool.digest}-repeat${repeatEachIndex}`;
+        test._workerHash = `run${this.index}-${pool.digest.worker}-repeat${repeatEachIndex}`;
+        test._fileFixturesHash = pool.digest.file;
         test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
         test._pool = pool;
         test._repeatEachIndex = repeatEachIndex;

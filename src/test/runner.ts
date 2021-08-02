@@ -449,12 +449,22 @@ function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
 }
 
 function createTestGroups(rootSuite: Suite): TestGroup[] {
+  // This function groups tests that can be run together.
+  // Tests cannot be run together when:
+  // - They belong to different projects - requires different workers.
+  // - They have a different repeatEachIndex - requires different workers.
+  // - They have a different set of worker fixtures in the pool - requires different workers.
+  // - They have a different set of file fixtures in the pool - reuses the worker,
+  //   but resets the 'file' scope for each group.
+  // - They have a different requireFile - reuses the worker, but runs each requireFile separately.
+
   // We try to preserve the order of tests when they require different workers
   // by ordering different worker hashes sequentially.
   const workerHashToOrdinal = new Map<string, number>();
   const requireFileToOrdinal = new Map<string, number>();
+  const fileFixturesToOrdinal = new Map<string, number>();
 
-  const groupById = new Map<number, TestGroup>();
+  const groupById = new Map<string, TestGroup>();
   for (const projectSuite of rootSuite.suites) {
     for (const test of projectSuite.allTests()) {
       let workerHashOrdinal = workerHashToOrdinal.get(test._workerHash);
@@ -469,7 +479,15 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
         requireFileToOrdinal.set(test._requireFile, requireFileOrdinal);
       }
 
-      const id = workerHashOrdinal * 10000 + requireFileOrdinal;
+      let fileFixturesOrdinal = fileFixturesToOrdinal.get(test._fileFixturesHash);
+      if (!fileFixturesOrdinal) {
+        fileFixturesOrdinal = fileFixturesToOrdinal.size + 1;
+        fileFixturesToOrdinal.set(test._fileFixturesHash, fileFixturesOrdinal);
+      }
+
+      const id = String(workerHashOrdinal).padStart(10, '0')
+          + '::' + String(requireFileOrdinal).padStart(10, '0')
+          + '::' + String(fileFixturesOrdinal).padStart(10, '0');
       let group = groupById.get(id);
       if (!group) {
         group = {

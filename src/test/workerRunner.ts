@@ -139,6 +139,10 @@ export class WorkerRunner extends EventEmitter {
     if (this._isStopped)
       return;
 
+    const result = await raceAgainstDeadline(this._fixtureRunner.teardownScope('file'), this._deadline());
+    if (result.timedOut)
+      this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while shutting down environment`));
+
     this._reportDone();
   }
 
@@ -169,7 +173,7 @@ export class WorkerRunner extends EventEmitter {
       if (this._isStopped)
         return;
       // TODO: separate timeout for beforeAll?
-      const result = await raceAgainstDeadline(this._fixtureRunner.resolveParametersAndRunHookOrTest(hook.fn, 'worker', this._workerInfo), this._deadline());
+      const result = await raceAgainstDeadline(this._fixtureRunner.resolveParametersAndRunHookOrTest(hook.fn, 'file', this._workerInfo), this._deadline());
       if (result.timedOut) {
         this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running beforeAll hook`));
         this._reportDoneAndStop();
@@ -187,7 +191,7 @@ export class WorkerRunner extends EventEmitter {
       if (this._isStopped)
         return;
       // TODO: separate timeout for afterAll?
-      const result = await raceAgainstDeadline(this._fixtureRunner.resolveParametersAndRunHookOrTest(hook.fn, 'worker', this._workerInfo), this._deadline());
+      const result = await raceAgainstDeadline(this._fixtureRunner.resolveParametersAndRunHookOrTest(hook.fn, 'file', this._workerInfo), this._deadline());
       if (result.timedOut) {
         this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running afterAll hook`));
         this._reportDoneAndStop();
