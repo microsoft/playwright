@@ -161,7 +161,9 @@ it('should fulfill after redirects', async ({page, server, browserName}) => {
   page.on('request', request => requestUrls.push(request.url()));
   page.on('response', response => responseUrls.push(response.url()));
   page.on('requestfinished', request => requestFinishedUrls.push(request.url()));
+  let routeCalls = 0;
   await page.route('**/*', async route => {
+    ++routeCalls;
     // @ts-expect-error
     await route._intercept({});
     await route.fulfill({
@@ -178,6 +180,7 @@ it('should fulfill after redirects', async ({page, server, browserName}) => {
   expect(responseUrls).toEqual(expectedUrls);
   await response.finished();
   expect(requestFinishedUrls).toEqual(expectedUrls);
+  expect(routeCalls).toBe(1);
 
   const redirectChain = [];
   for (let req = response.request(); req; req = req.redirectedFrom())
@@ -201,7 +204,9 @@ it('should fulfill original response after redirects', async ({page, browserName
   page.on('request', request => requestUrls.push(request.url()));
   page.on('response', response => responseUrls.push(response.url()));
   page.on('requestfinished', request => requestFinishedUrls.push(request.url()));
+  let routeCalls = 0;
   await page.route('**/*', async route => {
+    ++routeCalls;
     // @ts-expect-error
     await route._intercept({});
     await route.fulfill();
@@ -211,6 +216,7 @@ it('should fulfill original response after redirects', async ({page, browserName
   expect(responseUrls).toEqual(expectedUrls);
   await response.finished();
   expect(requestFinishedUrls).toEqual(expectedUrls);
+  expect(routeCalls).toBe(1);
 
   const redirectChain = [];
   for (let req = response.request(); req; req = req.redirectedFrom())
@@ -234,7 +240,9 @@ it('should abort after redirects', async ({page, browserName, server}) => {
   page.on('response', response => responseUrls.push(response.url()));
   page.on('requestfinished', request => requestFinishedUrls.push(request.url()));
   page.on('requestfailed', request => requestFailedUrls.push(request.url()));
+  let routeCalls = 0;
   await page.route('**/*', async route => {
+    ++routeCalls;
     // @ts-expect-error
     await route._intercept({});
     await route.abort('connectionreset');
@@ -249,4 +257,5 @@ it('should abort after redirects', async ({page, browserName, server}) => {
   expect(responseUrls).toEqual(expectedUrls.slice(0, -1));
   expect(requestFinishedUrls).toEqual(expectedUrls.slice(0, -1));
   expect(requestFailedUrls).toEqual(expectedUrls.slice(-1));
+  expect(routeCalls).toBe(1);
 });
