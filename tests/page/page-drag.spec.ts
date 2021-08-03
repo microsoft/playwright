@@ -234,6 +234,41 @@ it.describe('Drag and drop', () => {
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
   });
 
+  it('should allow specifying the position', async ({page, server}) => {
+    await page.setContent(`
+      <div style="width:100px;height:100px;background:red;" id="red">
+      </div>
+      <div style="width:100px;height:100px;background:blue;" id="blue">
+      </div>
+    `);
+    const eventsHandle = await page.evaluateHandle(() => {
+      const events = [];
+      document.getElementById('red').addEventListener('mousedown', event => {
+        events.push({
+          type: 'mousedown',
+          x: event.offsetX,
+          y: event.offsetY,
+        });
+      });
+      document.getElementById('blue').addEventListener('mouseup', event => {
+        events.push({
+          type: 'mouseup',
+          x: event.offsetX,
+          y: event.offsetY,
+        });
+      });
+      return events;
+    });
+    await page.dragAndDrop('#red', '#blue', {
+      sourcePosition: {x: 34, y: 7},
+      targetPosition: {x: 10, y: 20},
+    });
+    expect(await eventsHandle.jsonValue()).toEqual([
+      {type: 'mousedown', x: 34, y: 7},
+      {type: 'mouseup', x: 10, y: 20},
+    ]);
+  });
+
   async function trackEvents(target: ElementHandle) {
     const eventsHandle = await target.evaluateHandle(target => {
       const events: string[] = [];

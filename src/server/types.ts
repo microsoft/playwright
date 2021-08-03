@@ -171,6 +171,12 @@ export type PointerActionOptions = {
   position?: Point;
 };
 
+export type DragActionOptions = {
+  sourcePosition?: Point;
+  targetPosition?: Point;
+};
+
+
 export type MouseClickOptions = PointerActionOptions & {
   delay?: number;
   button?: MouseButton;

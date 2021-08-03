@@ -371,6 +371,10 @@ Optional event-specific initialization properties.
 ### option: Frame.dragAndDrop.timeout = %%-input-timeout-%%
 ### option: Frame.dragAndDrop.trial = %%-input-trial-%%
 
+### option: Frame.dragAndDrop.sourcePosition = %%-input-source-position-%%
+
+### option: Frame.dragAndDrop.targetPosition = %%-input-target-position-%%
+
 ## async method: Frame.evalOnSelector
 * langs:
   - alias-python: eval_on_selector
