@@ -103,6 +103,20 @@ defaults to 1. See [UIEvent.detail].
 
 When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
 
+## input-source-position
+- `sourcePosition` <[Object]>
+  - `x` <[float]>
+  - `y` <[float]>
+
+Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not specified, some visible point of the element is used.
+
+## input-target-position
+- `targetPosition` <[Object]>
+  - `x` <[float]>
+  - `y` <[float]>
+
+Drops on the target element at this point relative to the top-left corner of the element's padding box. If not specified, some visible point of the element is used.
+
 ## query-selector
 - `selector` <[string]>
 

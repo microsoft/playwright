@@ -807,6 +807,10 @@ Optional event-specific initialization properties.
 ### option: Page.dragAndDrop.timeout = %%-input-timeout-%%
 ### option: Page.dragAndDrop.trial = %%-input-trial-%%
 
+### option: Page.dragAndDrop.sourcePosition = %%-input-source-position-%%
+
+### option: Page.dragAndDrop.targetPosition = %%-input-target-position-%%
+
 ## async method: Page.emulateMedia
 
 This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media feature, using the `colorScheme` argument.

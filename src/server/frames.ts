@@ -983,7 +983,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async dragAndDrop(metadata: CallMetadata, source: string, target: string,  options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+  async dragAndDrop(metadata: CallMetadata, source: string, target: string,  options: types.DragActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       await dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, !!options.strict, async handle => {
@@ -992,6 +992,7 @@ export class Frame extends SdkObject {
           await this._page.mouse.down();
         }, {
           ...options,
+          position: options.sourcePosition,
           timeout: progress.timeUntilDeadline(),
         });
       }));
@@ -1001,6 +1002,7 @@ export class Frame extends SdkObject {
           await this._page.mouse.up();
         }, {
           ...options,
+          position: options.targetPosition,
           timeout: progress.timeUntilDeadline(),
         });
       }));

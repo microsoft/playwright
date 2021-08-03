@@ -1442,10 +1442,30 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
+     * specified, some visible point of the element is used.
+     */
+    sourcePosition?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
      * element, the call throws an exception.
      */
     strict?: boolean;
+
+    /**
+     * Drops on the target element at this point relative to the top-left corner of the element's padding box. If not
+     * specified, some visible point of the element is used.
+     */
+    targetPosition?: {
+      x: number;
+
+      y: number;
+    };
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -3866,10 +3886,30 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
+     * Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
+     * specified, some visible point of the element is used.
+     */
+    sourcePosition?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
      * element, the call throws an exception.
      */
     strict?: boolean;
+
+    /**
+     * Drops on the target element at this point relative to the top-left corner of the element's padding box. If not
+     * specified, some visible point of the element is used.
+     */
+    targetPosition?: {
+      x: number;
+
+      y: number;
+    };
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by

@@ -1462,12 +1462,16 @@ export type FrameDragAndDropParams = {
   noWaitAfter?: boolean,
   timeout?: number,
   trial?: boolean,
+  sourcePosition?: Point,
+  targetPosition?: Point,
 };
 export type FrameDragAndDropOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   timeout?: number,
   trial?: boolean,
+  sourcePosition?: Point,
+  targetPosition?: Point,
 };
 export type FrameDragAndDropResult = void;
 export type FrameDblclickParams = {

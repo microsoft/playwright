@@ -597,6 +597,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     trial: tOptional(tBoolean),
+    sourcePosition: tOptional(tType('Point')),
+    targetPosition: tOptional(tType('Point')),
   });
   scheme.FrameDblclickParams = tObject({
     selector: tString,
