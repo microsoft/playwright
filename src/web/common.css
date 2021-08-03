@@ -101,20 +101,6 @@ svg {
   position: relative;
 }
 
-::-webkit-scrollbar {
-  width: 14px;
-  height: 14px;
-}
-
-::-webkit-scrollbar-thumb {
-  border: 1px solid #ccc;
-  background-color: var(--light-background);
-}
-
-::-webkit-scrollbar-corner {
-  background-color: var(--background);
-}
-
 .code {
   font-family: var(--monospace-font);
   color: yellow;

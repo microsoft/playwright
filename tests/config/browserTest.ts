@@ -139,6 +139,11 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     const contexts: BrowserContext[] = [];
     await run(async options => {
       const context = await browser.newContext({ ...contextOptions, ...options });
+      (context as any)._csi = {
+        onApiCall: (name: string) => {
+          return (testInfo as any)._addStep('pw:api', name);
+        },
+      };
       contexts.push(context);
       return context;
     });

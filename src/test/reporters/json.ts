@@ -71,7 +71,7 @@ export interface JSONReportTestResult {
 }
 export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
 
-function toPosixPath(aPath: string): string {
+export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
@@ -248,7 +248,7 @@ function stdioEntry(s: string | Buffer): any {
   return { buffer: s.toString('base64') };
 }
 
-function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {
+export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {
   if (!Array.isArray(patterns))
     patterns = [patterns];
   return patterns.map(s => s.toString());

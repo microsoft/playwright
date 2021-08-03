@@ -63,9 +63,12 @@ export const SplitView: React.FC<SplitViewProps> = ({
         if (!event.buttons) {
           setResizing(null);
         } else if (resizing) {
-          const clientOffset = orientation === 'vertical' ? event.clientY : event.clientX;
+          const splitView = (event.target as HTMLElement).parentElement!;
+          const rect = splitView.getBoundingClientRect();
+          const clientOffset = orientation === 'vertical' ? event.clientY - rect.y : event.clientX - rect.x;
           const resizingPosition = sidebarIsFirst ? clientOffset : resizing.size - clientOffset + resizing.offset;
-          setSize(Math.max(kMinSidebarSize, resizingPosition));
+          const size = Math.min(Math.max(kMinSidebarSize, resizingPosition), (orientation === 'vertical' ? rect.height : rect.width) - kMinSidebarSize);
+          setSize(size);
         }
       }}
     ></div> }
