@@ -42,8 +42,19 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
     `,
     'globalSetup.ts': `
       module.exports = async () => {
-        console.log('globalSetup')
-        return () => console.log('globalSetup teardown');
+        const http = require("http");
+        const response = await new Promise(resolve => {
+          const request = http.request("http://localhost:${port}/hello", resolve);
+          request.end();
+        })
+        console.log('globalSetup-status-'+response.statusCode)
+        return async () => {
+          const response = await new Promise(resolve => {
+            const request = http.request("http://localhost:${port}/hello", resolve);
+            request.end();
+          })
+          console.log('globalSetup-teardown-status-'+response.statusCode)
+        };
       };
     `,
     'globalTeardown.ts': `
@@ -61,7 +72,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   expect(result.passed).toBe(1);
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 
-  const expectedLogMessages = ['Launching ', 'globalSetup', 'globalSetup teardown', 'globalTeardown-status-200'];
+  const expectedLogMessages = ['globalSetup-status-200', 'globalSetup-teardown-status', 'globalTeardown-status-200'];
   const actualLogMessages = expectedLogMessages.map(log => ({
     log,
     index: result.output.indexOf(log),

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* eslint-disable no-console */
 
 import net from 'net';
 import os from 'os';
@@ -61,7 +60,6 @@ export class WebServer {
       throw new Error(`Port ${this.config.port} is used, make sure that nothing is running on the port or set strict:false in config.launch.`);
     }
 
-    console.log(`Launching '${this.config.command}'...`);
     const { launchedProcess, kill } = await launchProcess({
       command: this.config.command,
       env: {
@@ -87,7 +85,6 @@ export class WebServer {
     await this._waitForAvailability();
     const baseURL = `http://localhost:${this.config.port}`;
     process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
-    console.log(`Using baseURL '${baseURL}' from config.launch.`);
   }
 
   private async _waitForAvailability() {
