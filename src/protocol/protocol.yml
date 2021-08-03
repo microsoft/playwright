@@ -639,6 +639,8 @@ BrowserContext:
         snapshots: boolean?
         screenshots: boolean?
 
+    tracingReset:
+
     tracingStop:
 
     tracingExport:

@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import yazl from 'yazl';
+import readline from 'readline';
 import { EventEmitter } from 'events';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
@@ -45,9 +46,10 @@ export class Tracing implements InstrumentationListener {
   private _context: BrowserContext;
   private _traceFile: string | undefined;
   private _resourcesDir: string;
-  private _sha1s: string[] = [];
+  private _sha1s = new Set<string>();
   private _recordingTraceEvents = false;
   private _tracesDir: string;
+  private _lastReset = 0;
 
   constructor(context: BrowserContext) {
     this._context = context;
@@ -64,6 +66,7 @@ export class Tracing implements InstrumentationListener {
     // TODO: passing the same name for two contexts makes them write into a single file
     // and conflict.
     this._traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
+    this._lastReset = 0;
 
     this._appendEventChain = mkdirIfNeeded(this._traceFile);
     const event: trace.ContextCreatedTraceEvent = {
@@ -85,6 +88,16 @@ export class Tracing implements InstrumentationListener {
     this._context.instrumentation.addListener(this);
     if (options.snapshots)
       await this._snapshotter.start();
+  }
+
+  async reset(): Promise<void> {
+    await this._appendTraceOperation(async () => {
+      // Reset snapshots to avoid back-references.
+      await this._snapshotter.reset();
+      this._lastReset++;
+      const markerEvent: trace.MarkerTraceEvent = { type: 'marker', resetIndex: this._lastReset };
+      await fs.promises.appendFile(this._traceFile!, JSON.stringify(markerEvent) + '\n');
+    });
   }
 
   async stop(): Promise<void> {
@@ -112,25 +125,77 @@ export class Tracing implements InstrumentationListener {
   }
 
   async export(): Promise<Artifact> {
-    if (!this._traceFile || this._recordingTraceEvents)
-      throw new Error('Must start and stop tracing before exporting');
-    const zipFile = new yazl.ZipFile();
-    const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
+    if (!this._traceFile)
+      throw new Error('Must start tracing before exporting');
+    // Chain the export operation against write operations,
+    // so that neither trace file nor sha1s change during the export.
+    return await this._appendTraceOperation(async () => {
+      await this._snapshotter.checkpoint();
 
-    const succeededPromise = new Promise<Artifact>(async fulfill => {
-      zipFile.addFile(this._traceFile!, 'trace.trace');
-      const zipFileName = this._traceFile! + '.zip';
-      for (const sha1 of this._sha1s)
-        zipFile.addFile(path.join(this._resourcesDir!, sha1), path.join('resources', sha1));
-      zipFile.end();
-      await new Promise(f => {
-        zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', f);
+      const resetIndex = this._lastReset;
+      let trace = { file: this._traceFile!, sha1s: this._sha1s };
+      // Make a filtered trace if needed.
+      if (resetIndex)
+        trace = await this._filterTrace(this._traceFile!, resetIndex);
+
+      const zipFile = new yazl.ZipFile();
+      const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
+      const succeededPromise = new Promise<Artifact>(async fulfill => {
+        zipFile.addFile(trace.file, 'trace.trace');
+        const zipFileName = trace.file + '.zip';
+        for (const sha1 of trace.sha1s)
+          zipFile.addFile(path.join(this._resourcesDir!, sha1), path.join('resources', sha1));
+        zipFile.end();
+        await new Promise(f => {
+          zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', f);
+        });
+        const artifact = new Artifact(this._context, zipFileName);
+        artifact.reportFinished();
+        fulfill(artifact);
       });
-      const artifact = new Artifact(this._context, zipFileName);
-      artifact.reportFinished();
-      fulfill(artifact);
+      return Promise.race([failedPromise, succeededPromise]).finally(async () => {
+        // Remove the filtered trace.
+        if (resetIndex)
+          await fs.promises.unlink(trace.file).catch(() => {});
+      });
     });
-    return Promise.race([failedPromise, succeededPromise]);
+  }
+
+  private async _filterTrace(traceFile: string, resetIndex: number): Promise<{ file: string, sha1s: Set<string> }> {
+    const ext = path.extname(traceFile);
+    const traceFileCopy = traceFile.substring(0, traceFile.length - ext.length) + '-copy' + resetIndex + ext;
+    const sha1s = new Set<string>();
+    await new Promise<void>((resolve, reject) => {
+      const fileStream = fs.createReadStream(traceFile, 'utf8');
+      const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+      });
+      let copyChain = Promise.resolve();
+      let foundMarker = false;
+      rl.on('line', line => {
+        try {
+          const event = JSON.parse(line) as trace.TraceEvent;
+          if (event.type === 'marker' && event.resetIndex === resetIndex) {
+            foundMarker = true;
+          } else if (event.type === 'resource-snapshot' || event.type === 'context-options' || foundMarker) {
+            // We keep all resources for snapshots, context options and all events after the marker.
+            visitSha1s(event, sha1s);
+            copyChain = copyChain.then(() => fs.promises.appendFile(traceFileCopy, line + '\n'));
+          }
+        } catch (e) {
+          reject(e);
+          fileStream.close();
+          rl.close();
+        }
+      });
+      rl.on('error', reject);
+      rl.on('close', async () => {
+        await copyChain;
+        resolve();
+      });
+    });
+    return { file: traceFileCopy, sha1s };
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
@@ -194,10 +259,11 @@ export class Tracing implements InstrumentationListener {
             height: params.height,
             timestamp: monotonicTime()
           };
-          this._appendTraceEvent(event);
-          this._appendEventChain = this._appendEventChain.then(async () => {
+          // Make sure to write the screencast frame before adding a reference to it.
+          this._appendTraceOperation(async () => {
             await fs.promises.writeFile(path.join(this._resourcesDir!, sha1), params.buffer).catch(() => {});
           });
+          this._appendTraceEvent(event);
         }),
     );
   }
@@ -205,30 +271,45 @@ export class Tracing implements InstrumentationListener {
   private _appendTraceEvent(event: any) {
     if (!this._recordingTraceEvents)
       return;
-
-    const visit = (object: any) => {
-      if (Array.isArray(object)) {
-        object.forEach(visit);
-        return;
-      }
-      if (typeof object === 'object') {
-        for (const key in object) {
-          if (key === 'sha1' || key.endsWith('Sha1')) {
-            const sha1 = object[key];
-            if (sha1)
-              this._sha1s.push(sha1);
-          }
-          visit(object[key]);
-        }
-        return;
-      }
-    };
-    visit(event);
-
     // Serialize all writes to the trace file.
-    this._appendEventChain = this._appendEventChain.then(async () => {
+    this._appendTraceOperation(async () => {
+      visitSha1s(event, this._sha1s);
       await fs.promises.appendFile(this._traceFile!, JSON.stringify(event) + '\n');
     });
+  }
+
+  private async _appendTraceOperation<T>(cb: () => Promise<T>): Promise<T> {
+    let error: Error | undefined;
+    let result: T | undefined;
+    this._appendEventChain = this._appendEventChain.then(async () => {
+      try {
+        result = await cb();
+      } catch (e) {
+        error = e;
+      }
+    });
+    await this._appendEventChain;
+    if (error)
+      throw error;
+    return result!;
+  }
+}
+
+function visitSha1s(object: any, sha1s: Set<string>) {
+  if (Array.isArray(object)) {
+    object.forEach(o => visitSha1s(o, sha1s));
+    return;
+  }
+  if (typeof object === 'object') {
+    for (const key in object) {
+      if (key === 'sha1' || key.endsWith('Sha1')) {
+        const sha1 = object[key];
+        if (sha1)
+          sha1s.add(sha1);
+      }
+      visitSha1s(object[key], sha1s);
+    }
+    return;
   }
 }
 
