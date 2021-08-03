@@ -18,9 +18,9 @@ import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
 
-test('should collect trace', async ({ context, page, server }, testInfo) => {
+test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
-  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.PREFIX + '/frames/frame.html');
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.waitForTimeout(2000);  // Give it some time to produce screenshots.
@@ -35,7 +35,8 @@ test('should collect trace', async ({ context, page, server }, testInfo) => {
   expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot')).toBeTruthy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('script.js'))).toBeFalsy();
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
 });
 
