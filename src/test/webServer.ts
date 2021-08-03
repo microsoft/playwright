@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* eslint-disable no-console */
 
 import net from 'net';
 import os from 'os';
 import stream from 'stream';
 import { monotonicTime, raceAgainstDeadline } from './util';
-import { LaunchConfig } from '../../types/test';
+import { WebServerConfig } from '../../types/test';
 import { launchProcess } from '../utils/processLauncher';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
@@ -33,19 +32,19 @@ const newProcessLogPrefixer = () => new stream.Transform({
   },
 });
 
-class LaunchServer {
+export class WebServer {
   private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
-  constructor(private readonly config: LaunchConfig) { }
+  constructor(private readonly config: WebServerConfig) { }
 
-  public static async create(config: LaunchConfig): Promise<LaunchServer> {
-    const launchServer = new LaunchServer(config);
+  public static async create(config: WebServerConfig): Promise<WebServer> {
+    const webServer = new WebServer(config);
     try {
-      await launchServer._startProcess();
-      await launchServer._waitForProcess();
-      return launchServer;
+      await webServer._startProcess();
+      await webServer._waitForProcess();
+      return webServer;
     } catch (error) {
-      await launchServer.kill();
+      await webServer.kill();
       throw error;
     }
   }
@@ -54,15 +53,13 @@ class LaunchServer {
     let processExitedReject = (error: Error) => { };
     this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
 
-    if (this.config.waitForPort) {
-      const portIsUsed = !await canBindPort(this.config.waitForPort);
-      if (portIsUsed && this.config.strict)
-        throw new Error(`Port ${this.config.waitForPort} is used, make sure that nothing is running on the port or set strict:false in config.launch.`);
-      if (portIsUsed)
+    const portIsUsed = !await canBindPort(this.config.port);
+    if (portIsUsed) {
+      if (this.config.reuseExistingServer)
         return;
+      throw new Error(`Port ${this.config.port} is used, make sure that nothing is running on the port or set strict:false in config.launch.`);
     }
 
-    console.log(`Launching '${this.config.command}'...`);
     const { launchedProcess, kill } = await launchProcess({
       command: this.config.command,
       env: {
@@ -85,19 +82,16 @@ class LaunchServer {
   }
 
   private async _waitForProcess() {
-    if (this.config.waitForPort) {
-      await this._waitForAvailability(this.config.waitForPort);
-      const baseURL = `http://localhost:${this.config.waitForPort}`;
-      process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
-      console.log(`Using baseURL '${baseURL}' from config.launch.`);
-    }
+    await this._waitForAvailability();
+    const baseURL = `http://localhost:${this.config.port}`;
+    process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
   }
 
-  private async _waitForAvailability(port: number) {
-    const launchTimeout = this.config.waitForPortTimeout || 60 * 1000;
+  private async _waitForAvailability() {
+    const launchTimeout = this.config.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
-      raceAgainstDeadline(waitForSocket(port, 100, cancellationToken), launchTimeout + monotonicTime()),
+      raceAgainstDeadline(waitForSocket(this.config.port, 100, cancellationToken), launchTimeout + monotonicTime()),
       this._processExitedPromise,
     ]));
     cancellationToken.canceled = true;
@@ -137,27 +131,5 @@ async function waitForSocket(port: number, delay: number, cancellationToken: { c
     if (connected)
       return;
     await new Promise(x => setTimeout(x, delay));
-  }
-}
-
-export class LaunchServers {
-  private readonly _servers: LaunchServer[] = [];
-
-  public static async create(configs: LaunchConfig[]): Promise<LaunchServers> {
-    const launchServers = new LaunchServers();
-    try {
-      for (const config of configs)
-        launchServers._servers.push(await LaunchServer.create(config));
-    } catch (error) {
-      for (const server of launchServers._servers)
-        await server.kill();
-      throw error;
-    }
-    return launchServers;
-  }
-
-  public async killAll() {
-    for (const server of this._servers)
-      await server.kill();
   }
 }

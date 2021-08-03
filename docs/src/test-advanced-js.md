@@ -43,6 +43,7 @@ These options would be typically different between local development and CI oper
 - `shard: { total: number, current: number } | null` - [Shard](./test-parallel.md#shards) information.
 - `updateSnapshots: boolean` - Whether to update expected snapshots with the actual results produced by the test run.
 - `workers: number` - The maximum number of concurrent worker processes to use for parallelizing tests.
+- `webServer: { command: string, port: number, timeout?: number, reuseExistingServer?: boolean, cwd?: string, env?: object }` - Launch a process and wait that it's ready before the tests will start. See [launch web server](#launching-a-development-web-server-during-the-tests) configuration for examples.
 
 Note that each [test project](#projects) can provide its own test suite options, for example two projects can run different tests by providing different `testDir`s. However, test run options are shared between all projects.
 
@@ -197,6 +198,73 @@ export const test = base.extend<{ saveLogs: void }>({
     if (testInfo.status !== testInfo.expectedStatus)
       fs.writeFileSync(testInfo.outputPath('logs.txt'), logs.join('\n'), 'utf8');
   }, { auto: true } ]
+});
+```
+
+## Launching a development web server during the tests
+
+To launch a server during the tests, use the `webServer` option in the [configuration file](#configuration-object).
+
+You can specify a port via `port` or additional environment variables, see [here](#configuration-object). The server will wait for it to be available before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI.
+
+The port gets then passed over to Playwright as a [`param: baseURL`] when creating the context [`method: Browser.newContext`].
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  webServer: {
+    command: 'npm run start',
+    port: 3000,
+    timeout: 120 * 1000,
+    reuseExistingServer: !process.env.CI,
+  },
+};
+export default config;
+```
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  webServer: {
+    command: 'npm run start',
+    port: 3000,
+    timeout: 120 * 1000,
+    reuseExistingServer: !process.env.CI,
+  },
+};
+mode.exports = config;
+```
+
+Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+
+```js js-flavor=ts
+// test.spec.ts
+import { test } = from '@playwright/test';
+test('test', async ({ page, baseURL }) => {
+  // baseURL is taken directly from your web server,
+  // e.g. http://localhost:3000
+  await page.goto(baseURL + '/bar');
+  // Alternatively, just use relative path, because baseURL is already
+  // set for the default context and page.
+  // For example, this will result in http://localhost:3000/foo
+  await page.goto('/foo');
+});
+```
+
+```js js-flavor=js
+// test.spec.js
+const { test } = require('@playwright/test');
+test('test', async ({ page, baseURL }) => {
+  // baseURL is taken directly from your web server,
+  // e.g. http://localhost:3000
+  await page.goto(baseURL + '/bar');
+  // Alternatively, just use relative path, because baseURL is already
+  // set for the default context and page.
+  // For example, this will result in http://localhost:3000/foo
+  await page.goto('/foo');
 });
 ```
 

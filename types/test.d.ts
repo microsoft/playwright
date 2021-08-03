@@ -479,24 +479,26 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
 
 export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
 
-export type LaunchConfig = {
+export type WebServerConfig = {
   /**
    * Shell command to start. For example `npm run start`.
    */
   command: string,
   /**
-   * The port that your http server is expected to appear on. If specified it does wait until it accepts connections.
+   * The port that your http server is expected to appear on. It does wait until it accepts connections.
    */
-  waitForPort?: number,
+  port: number,
   /**
    * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
-  waitForPortTimeout?: number,
+  timeout?: number,
   /**
-   * If true it will verify that the given port via `waitForPort` is available and throw otherwise.
-   * This should commonly set to !!process.env.CI to allow the local dev server when running tests locally.
+   * If true, it will re-use an existing server on the port when available. If no server is running
+   * on that port, it will run the command to start a new server.
+   * If false, it will throw if an existing process is listening on the port.
+   * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
    */
-  strict?: boolean
+  reuseExistingServer?: boolean
   /**
    * Environment variables, process.env by default
    */
@@ -690,7 +692,7 @@ interface TestConfig {
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    */
   updateSnapshots?: UpdateSnapshots;
-  _launch?: LaunchConfig | LaunchConfig[];
+  webServer?: WebServerConfig;
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
    *
@@ -1051,7 +1053,7 @@ export interface FullConfig {
    * Playwright Test.
    */
   workers: number;
-  _launch: LaunchConfig[];
+  webServer: WebServerConfig | null;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
