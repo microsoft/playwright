@@ -185,7 +185,9 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       };
       const context = await browser.newContext(combinedOptions);
       (context as any)._csi = {
-        onApiCall: (data: any) => (testInfo as any)._progress('pw:api', data),
+        onApiCall: (name: string) => {
+          return (testInfo as any)._addStep('pw:api', name);
+        },
       };
       context.setDefaultTimeout(actionTimeout || 0);
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);

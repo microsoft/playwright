@@ -46,10 +46,19 @@ export type TestEndPayload = {
   attachments: { name: string, path?: string, body?: string, contentType: string }[];
 };
 
-export type ProgressPayload = {
+export type StepBeginPayload = {
   testId: string;
-  name: string;
-  data: any;
+  stepId: string;
+  title: string;
+  category: string;
+  wallTime: number;  // milliseconds since unix epoch
+};
+
+export type StepEndPayload = {
+  testId: string;
+  stepId: string;
+  wallTime: number;  // milliseconds since unix epoch
+  error?: TestError;
 };
 
 export type TestEntry = {

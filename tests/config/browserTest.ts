@@ -135,7 +135,7 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     await run(contextOptions);
   },
 
-  contextFactory: async ({ browser, contextOptions }, run) => {
+  contextFactory: async ({ browser, contextOptions }, run, testInfo) => {
     const contexts: BrowserContext[] = [];
     await run(async options => {
       const context = await browser.newContext({ ...contextOptions, ...options });

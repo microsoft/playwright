@@ -23,8 +23,6 @@ import { isUnderTest } from '../utils/utils';
 import type { Connection } from './connection';
 import type { ClientSideInstrumentation, Logger } from './types';
 
-let lastCallSeq = 0;
-
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
   protected _connection: Connection;
   private _parent: ChannelOwner | undefined;
@@ -97,19 +95,19 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const stackTrace = captureStackTrace();
     const { apiName, frameTexts } = stackTrace;
     const channel = this._createChannel({}, stackTrace);
-    const seq = ++lastCallSeq;
+    let csiCallback: ((e?: Error) => void) | undefined;
     try {
       logApiCall(logger, `=> ${apiName} started`);
-      this._csi?.onApiCall({ phase: 'begin', seq, apiName, frames: stackTrace.frames });
+      csiCallback = this._csi?.onApiCall(apiName);
       const result = await func(channel as any, stackTrace);
-      this._csi?.onApiCall({ phase: 'end', seq });
+      csiCallback?.();
       logApiCall(logger, `<= ${apiName} succeeded`);
       return result;
     } catch (e) {
       const innerError = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
       e.message = apiName + ': ' + e.message;
       e.stack = e.message + '\n' + frameTexts.join('\n') + innerError;
-      this._csi?.onApiCall({ phase: 'end', seq, error: e.stack });
+      csiCallback?.(e);
       logApiCall(logger, `<= ${apiName} failed`);
       throw e;
     }

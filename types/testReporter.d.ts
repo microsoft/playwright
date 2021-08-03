@@ -213,6 +213,39 @@ export interface TestResult {
    * Anything written to the standard error during the test run.
    */
   stderr: (string | Buffer)[];
+  /**
+   * List of steps inside this test run.
+   */
+  steps: TestStep[];
+}
+
+/**
+ * Represents a step in the [TestRun].
+ */
+export interface TestStep {
+  /**
+   * User-friendly test step title.
+   */
+  title: string;
+  /**
+   * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
+   * - `hook` for fixtures and hooks initialization and teardown
+   * - `expect` for expect calls
+   * - `pw:api` for Playwright API calls.
+   */
+  category: string,
+  /**
+   * Start time of this particular test step.
+   */
+  startTime: Date;
+  /**
+   * Running time in milliseconds.
+   */
+  duration: number;
+  /**
+   * An error thrown during the step execution, if any.
+   */
+  error?: TestError;
 }
 
 /**
@@ -321,26 +354,43 @@ export interface Reporter {
   /**
    * Called after a test has been started in the worker process.
    * @param test Test that has been started.
+   * @param result Result of the test run, this object gets populated while the test runs.
    */
-  onTestBegin?(test: TestCase): void;
+  onTestBegin?(test: TestCase, result: TestResult): void;
   /**
    * Called when something has been written to the standard output in the worker process.
    * @param chunk Output chunk.
    * @param test Test that was running. Note that output may happen when to test is running, in which case this will be [void].
+   * @param result Result of the test run, this object gets populated while the test runs.
    */
-  onStdOut?(chunk: string | Buffer, test?: TestCase): void;
+  onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   /**
    * Called when something has been written to the standard error in the worker process.
    * @param chunk Output chunk.
    * @param test Test that was running. Note that output may happen when to test is running, in which case this will be [void].
+   * @param result Result of the test run, this object gets populated while the test runs.
    */
-  onStdErr?(chunk: string | Buffer, test?: TestCase): void;
+  onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   /**
    * Called after a test has been finished in the worker process.
    * @param test Test that has been finished.
    * @param result Result of the test run.
    */
   onTestEnd?(test: TestCase, result: TestResult): void;
+  /**
+   * Called when a test step started in the worker process.
+   * @param test Test that has been started.
+   * @param result Result of the test run, this object gets populated while the test runs.
+   * @param result Test step instance.
+   */
+  onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
+  /**
+   * Called when a test step finished in the worker process.
+   * @param test Test that has been finished.
+   * @param result Result of the test run.
+   * @param result Test step instance.
+   */
+  onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
   /**
    * Called on some global error, for example unhandled exception in the worker process.
    * @param error The error.

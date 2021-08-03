@@ -159,13 +159,16 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
   ]);
 });
 
-test('should report expect progress', async ({ runInlineTest }) => {
+test('should report expect steps', async ({ runInlineTest }) => {
   const expectReporterJS = `
     class Reporter {
-      _onTestProgress(test, name, data) {
-        if (data.frames)
-          data.frames = [];
-        console.log('%%%%', name, JSON.stringify(data));
+      onStepBegin(test, result, step) {
+        const copy = { ...step, startTime: undefined, duration: undefined };
+        console.log('%%%% begin', JSON.stringify(copy));
+      }
+      onStepEnd(test, result, step) {
+        const copy = { ...step, startTime: undefined, duration: undefined };
+        console.log('%%%% end', JSON.stringify(copy));
       }
     }
     module.exports = Reporter;
@@ -195,32 +198,45 @@ test('should report expect progress', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(1);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    `%% expect {\"phase\":\"begin\",\"seq\":1,\"matcherName\":\"toBeTruthy\"}`,
-    `%% expect {\"phase\":\"end\",\"seq\":1,\"pass\":true}`,
-    `%% expect {\"phase\":\"begin\",\"seq\":2,\"matcherName\":\"toBeTruthy\"}`,
-    `%% expect {\"phase\":\"end\",\"seq\":2,\"pass\":false,\"message\":\"\\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\"}`,
-
-    `%% expect {\"phase\":\"begin\",\"seq\":1,\"matcherName\":\"toBeTruthy\"}`,
-    `%% expect {\"phase\":\"end\",\"seq\":1,\"pass\":false,\"isNot\":true}`,
-
-    `%% pw:api {\"phase\":\"begin\",\"seq\":3,\"apiName\":\"browserContext.newPage\",\"frames\":[]}`,
-    `%% pw:api {\"phase\":\"end\",\"seq\":3}`,
-    `%% expect {\"phase\":\"begin\",\"seq\":2,\"matcherName\":\"toHaveTitle\"}`,
-    `%% pw:api {\"phase\":\"begin\",\"seq\":4,\"apiName\":\"page.title\",\"frames\":[]}`,
-    `%% pw:api {\"phase\":\"end\",\"seq\":4}`,
-    `%% expect {\"phase\":\"end\",\"seq\":2,\"isNot\":true}`,
-    `%% pw:api {\"phase\":\"begin\",\"seq\":5,\"apiName\":\"browserContext.close\",\"frames\":[]}`,
-    `%% pw:api {\"phase\":\"end\",\"seq\":5}`,
+    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
+    `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
+    `%% begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
+    `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{}}`,
+    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"expect.not.toBeTruthy\",\"category\":\"expect\"}`,
+    `%% end {\"title\":\"expect.not.toBeTruthy\",\"category\":\"expect\"}`,
+    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
+    `%% begin {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
+    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
   ]);
 });
 
-test('should report log progress', async ({ runInlineTest }) => {
+test('should report api steps', async ({ runInlineTest }) => {
   const expectReporterJS = `
     class Reporter {
-      _onTestProgress(test, name, data) {
-        if (data.frames)
-          data.frames = [];
-        console.log('%%%%', name, JSON.stringify(data));
+      onStepBegin(test, result, step) {
+        const copy = { ...step, startTime: undefined, duration: undefined };
+        console.log('%%%% begin', JSON.stringify(copy));
+      }
+      onStepEnd(test, result, step) {
+        const copy = { ...step, startTime: undefined, duration: undefined };
+        console.log('%%%% end', JSON.stringify(copy));
       }
     }
     module.exports = Reporter;
@@ -244,13 +260,17 @@ test('should report log progress', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(0);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    `%% pw:api {\"phase\":\"begin\",\"seq\":3,\"apiName\":\"browserContext.newPage\",\"frames\":[]}`,
-    `%% pw:api {\"phase\":\"end\",\"seq\":3}`,
-    `%% pw:api {\"phase\":\"begin\",\"seq\":4,\"apiName\":\"page.setContent\",\"frames\":[]}`,
-    `%% pw:api {\"phase\":\"end\",\"seq\":4}`,
-    `%% pw:api {\"phase\":\"begin\",\"seq\":5,\"apiName\":\"page.click\",\"frames\":[]}`,
-    `%% pw:api {\"phase\":\"end\",\"seq\":5}`,
-    `%% pw:api {\"phase\":\"begin\",\"seq\":6,\"apiName\":\"browserContext.close\",\"frames\":[]}`,
-    `%% pw:api {\"phase\":\"end\",\"seq\":6}`,
+    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
   ]);
 });

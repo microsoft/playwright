@@ -24,7 +24,7 @@ export interface Logger {
 }
 
 export interface ClientSideInstrumentation {
-  onApiCall(data: { phase: 'begin' | 'end', seq: number, apiName?: string, frames?: channels.StackFrame[], error?: string }): void;
+  onApiCall(name: string): (error?: Error) => void;
 }
 
 import { Size } from '../common/types';
