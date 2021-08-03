@@ -485,7 +485,7 @@ export type WebServerConfig = {
    */
   command: string,
   /**
-   * The port that your http server is using. Gets used for `setBaseURL`.
+   * The port that your http server is expected to appear on. It does wait until it accepts connections.
    */
   port: number,
   /**
@@ -493,8 +493,10 @@ export type WebServerConfig = {
    */
   timeout?: number,
   /**
-   * If true it will use an existing server if available. If false it will verify that the port is available before starting the command.
-   * This should commonly set to !!process.env.CI to allow the local dev server when running tests locally.
+   * If true, it will re-use an existing server on the port when available. If no server is running
+   * on that port, it will run the command to start a new server.
+   * If false, it will throw when a port is running on the port.
+   * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
    */
   reuseExistingServer?: boolean
   /**
@@ -1051,7 +1053,7 @@ export interface FullConfig {
    * Playwright Test.
    */
   workers: number;
-  webServer: WebServerConfig;
+  webServer: WebServerConfig | null;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';

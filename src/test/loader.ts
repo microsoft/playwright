@@ -25,7 +25,6 @@ import * as url from 'url';
 import * as fs from 'fs';
 import { ProjectImpl } from './project';
 import { Reporter } from '../../types/testReporter';
-import { LaunchConfig } from '../../types/test';
 import { BuiltInReporter, builtInReporters } from './runner';
 
 export class Loader {
@@ -101,7 +100,7 @@ export class Loader {
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
     this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, this._config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, this._config.workers, baseFullConfig.workers);
-    this._fullConfig._launch = takeFirst(toLaunchServers(this._configOverrides._launch), toLaunchServers(this._config._launch), baseFullConfig._launch);
+    this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, this._config.webServer, baseFullConfig.webServer);
 
     for (const project of projects)
       this._addProject(project, this._fullConfig.rootDir);
@@ -228,14 +227,6 @@ function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefi
   if (typeof reporters === 'string')
     return [ [reporters] ];
   return reporters;
-}
-
-function toLaunchServers(launchConfigs?: LaunchConfig | LaunchConfig[]): LaunchConfig[]|undefined {
-  if (!launchConfigs)
-    return;
-  if (!Array.isArray(launchConfigs))
-    return [launchConfigs];
-  return launchConfigs;
 }
 
 function validateConfig(file: string, config: Config) {
@@ -435,7 +426,7 @@ const baseFullConfig: FullConfig = {
   shard: null,
   updateSnapshots: 'missing',
   workers: 1,
-  _launch: [],
+  webServer: null,
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
