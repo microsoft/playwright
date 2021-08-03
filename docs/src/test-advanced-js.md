@@ -43,7 +43,7 @@ These options would be typically different between local development and CI oper
 - `shard: { total: number, current: number } | null` - [Shard](./test-parallel.md#shards) information.
 - `updateSnapshots: boolean` - Whether to update expected snapshots with the actual results produced by the test run.
 - `workers: number` - The maximum number of concurrent worker processes to use for parallelizing tests.
-- `webServer: { command: string, port: number, timeout?: number, reuseExistingServer?: boolean, cwd?: string, env?: object }` - Launch a process and wait that its ready before the tests will start. See [launch web server](#launching-a-development-web-server-during-the-tests) configuration for examples.
+- `webServer: { command: string, port: number, timeout?: number, reuseExistingServer?: boolean, cwd?: string, env?: object }` - Launch a process and wait that it's ready before the tests will start. See [launch web server](#launching-a-development-web-server-during-the-tests) configuration for examples.
 
 Note that each [test project](#projects) can provide its own test suite options, for example two projects can run different tests by providing different `testDir`s. However, test run options are shared between all projects.
 
@@ -213,7 +213,7 @@ The port gets then passed over to Playwright as a [`param: baseURL`] when creati
 // playwright.config.ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  launch: {
+  webServer: {
     command: 'npm run start',
     port: 3000,
     timeout: 120 * 1000,
@@ -228,7 +228,7 @@ export default config;
 // @ts-check
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  launch: {
+  webServer: {
     command: 'npm run start',
     port: 3000,
     timeout: 120 * 1000,

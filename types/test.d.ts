@@ -495,7 +495,7 @@ export type WebServerConfig = {
   /**
    * If true, it will re-use an existing server on the port when available. If no server is running
    * on that port, it will run the command to start a new server.
-   * If false, it will throw when a port is running on the port.
+   * If false, it will throw if an existing process is listening on the port.
    * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
    */
   reuseExistingServer?: boolean
