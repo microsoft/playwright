@@ -301,8 +301,16 @@ test('should work with video: on-first-retry', async ({ runInlineTest }, testInf
   const dirFail = testInfo.outputPath('test-results', 'a-fail-chromium');
   expect(fs.existsSync(dirFail)).toBeFalsy();
 
-  const videoFailRetry = fs.readdirSync(testInfo.outputPath('test-results', 'a-fail-chromium-retry1')).find(file => file.endsWith('webm'));
+  const dirRetry = testInfo.outputPath('test-results', 'a-fail-chromium-retry1');
+  const videoFailRetry = fs.readdirSync(dirRetry).find(file => file.endsWith('webm'));
   expect(videoFailRetry).toBeTruthy();
+
+  expect(result.report.suites[0].specs[1].tests[0].results[0].attachments).toEqual([]);
+  expect(result.report.suites[0].specs[1].tests[0].results[1].attachments).toEqual([{
+    name: 'video',
+    contentType: 'video/webm',
+    path: path.join(dirRetry, videoFailRetry),
+  }]);
 });
 
 test('should work with video size', async ({ runInlineTest }, testInfo) => {
