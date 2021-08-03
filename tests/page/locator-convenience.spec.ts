@@ -200,12 +200,12 @@ it('isChecked should work', async ({page}) => {
   expect(error.message).toContain('Not a checkbox or radio button');
 });
 
-it('addTextContents should work', async ({page}) => {
+it('allTextContents should work', async ({page}) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allTextContents()).toEqual(['A', 'B', 'C']);
 });
 
-it('addInnerTexts should work', async ({page}) => {
+it('allInnerTexts should work', async ({page}) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allInnerTexts()).toEqual(['A', 'B', 'C']);
 });

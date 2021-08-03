@@ -34,10 +34,10 @@ export class Locator implements api.Locator {
 
   private async _withElement<R, O extends TimeoutOptions>(task: (handle: ElementHandle<SVGElement | HTMLElement>, options?: O) => Promise<R>, options?: O): Promise<R> {
     if (!options)
-      options = {} as any;
+      options = {} as O;
     const timeout = this._frame.page()._timeoutSettings.timeout(options!);
     const deadline = timeout ? monotonicTime() + timeout : 0;
-    const handle = await this.elementHandle(options);
+    const handle = await this.elementHandle({ timeout });
     if (!handle)
       throw new Error(`Could not resolve ${this._selector} to DOM Element`);
     try {
@@ -68,15 +68,15 @@ export class Locator implements api.Locator {
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {
-    return this._withElement(h => h.evaluate(pageFunction as any, arg), { strict: true, ...options });
+    return this._withElement(h => h.evaluate(pageFunction, arg), { strict: true, ...options });
   }
 
-  async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<(SVGElement | HTMLElement)[], Arg, R>, arg?: Arg): Promise<R> {
-    return this._frame.$$eval(this._selector, pageFunction as any, arg);
+  async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
+    return this._frame.$$eval(this._selector, pageFunction, arg);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<structs.SmartHandle<R>> {
-    return this._withElement(h => h.evaluateHandle(pageFunction as any, arg), { strict: true, ...options });
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<structs.SmartHandle<R>> {
+    return this._withElement(h => h.evaluateHandle(pageFunction, arg), { strict: true, ...options });
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions = {}): Promise<void> {
@@ -88,8 +88,7 @@ export class Locator implements api.Locator {
   }
 
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
-    const result = await this._frame.waitForSelector(this._selector, { strict: true, state: 'attached', ...options });
-    return result!;
+    return await this._frame.waitForSelector(this._selector, { strict: true, state: 'attached', ...options })!;
   }
 
   async elementHandles(): Promise<api.ElementHandle<SVGElement | HTMLElement>[]> {
