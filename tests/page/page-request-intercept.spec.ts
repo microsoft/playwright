@@ -57,18 +57,18 @@ it('should throw on continue after intercept', async ({page, server, browserName
 });
 
 it('should support fulfill after intercept', async ({page, server, browserName, browserMajorVersion}) => {
-  it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
-  const requestPromise = server.waitForRequest('/empty.html');
+  it.fail(browserName === 'webkit', 'Response body is empty');
+  const requestPromise = server.waitForRequest('/title.html');
   await page.route('**', async route => {
     // @ts-expect-error
     await route._intercept();
     await route.fulfill();
   });
-  await page.goto(server.EMPTY_PAGE);
+  const response = await page.goto(server.PREFIX + '/title.html');
   const request = await requestPromise;
-  expect(request.url).toBe('/empty.html');
+  expect(request.url).toBe('/title.html');
+  expect(await response.text()).toBe('<title>Woof-Woof</title>\n');
 });
-
 
 it('should support request overrides', async ({page, server, browserName, browserMajorVersion}) => {
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
