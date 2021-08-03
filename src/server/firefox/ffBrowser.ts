@@ -147,11 +147,10 @@ export class FFBrowser extends Browser {
 }
 
 export class FFBrowserContext extends BrowserContext {
-  readonly _browser: FFBrowser;
+  declare readonly _browser: FFBrowser;
 
   constructor(browser: FFBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._browser = browser;
   }
 
   async _initialize() {

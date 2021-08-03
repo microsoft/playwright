@@ -298,12 +298,11 @@ export class CRBrowserContext extends BrowserContext {
     ServiceWorker: 'serviceworker',
   };
 
-  readonly _browser: CRBrowser;
+  declare readonly _browser: CRBrowser;
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._browser = browser;
     this._evaluateOnNewDocumentSources = [];
     this._authenticateProxyViaCredentials();
   }

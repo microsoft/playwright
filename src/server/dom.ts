@@ -112,14 +112,12 @@ export class FrameExecutionContext extends js.ExecutionContext {
 }
 
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
-  readonly _context: FrameExecutionContext;
+  declare readonly _context: FrameExecutionContext;
   readonly _page: Page;
-  readonly _objectId: string;
+  declare readonly _objectId: string;
 
   constructor(context: FrameExecutionContext, objectId: string) {
     super(context, 'node', objectId);
-    this._objectId = objectId;
-    this._context = context;
     this._page = context.frame._page;
     this._initializePreview().catch(e => {});
   }
