@@ -1890,7 +1890,7 @@ export interface Page {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -4141,7 +4141,7 @@ export interface Frame {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for the selected `<input>` or `<textarea>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -6461,7 +6461,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   innerText(): Promise<string>;
 
   /**
-   * Returns `input.value` for `<input>` or `<textarea>` element. Throws for non-input elements.
+   * Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
    * @param options
    */
   inputValue(options?: {
@@ -7543,7 +7543,7 @@ export interface Locator {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for `<input>` or `<textarea>` element. Throws for non-input elements.
+   * Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
    * @param options
    */
   inputValue(options?: {

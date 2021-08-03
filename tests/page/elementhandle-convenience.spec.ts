@@ -42,6 +42,9 @@ it('getAttribute should work', async ({ page, server }) => {
 it('inputValue should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
 
+  await page.selectOption('#select', 'foo');
+  expect(await page.inputValue('#select')).toBe('foo');
+
   await page.fill('#textarea', 'text value');
   expect(await page.inputValue('#textarea')).toBe('text value');
 
@@ -50,9 +53,9 @@ it('inputValue should work', async ({ page, server }) => {
   const handle = await page.$('#input');
   expect(await handle.inputValue()).toBe('input value');
 
-  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
+  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
   const handle2 = await page.$('#inner');
-  expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
+  expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
 });
 
 it('innerHTML should work', async ({ page, server }) => {
