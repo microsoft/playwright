@@ -160,6 +160,9 @@ export class Snapshotter {
     const isRedirect = response.status() >= 300 && response.status() <= 399;
     if (isRedirect)
       return;
+    // We do not need scripts for snapshots.
+    if (response.request().resourceType() === 'script')
+      return;
 
     // Shortcut all redirects - we cannot intercept them properly.
     let original = response.request();
