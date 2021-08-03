@@ -656,6 +656,7 @@ export interface BrowserContextChannel extends EventTargetChannel {
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
   tracingStart(params: BrowserContextTracingStartParams, metadata?: Metadata): Promise<BrowserContextTracingStartResult>;
+  tracingReset(params?: BrowserContextTracingResetParams, metadata?: Metadata): Promise<BrowserContextTracingResetResult>;
   tracingStop(params?: BrowserContextTracingStopParams, metadata?: Metadata): Promise<BrowserContextTracingStopResult>;
   tracingExport(params?: BrowserContextTracingExportParams, metadata?: Metadata): Promise<BrowserContextTracingExportResult>;
 }
@@ -864,6 +865,9 @@ export type BrowserContextTracingStartOptions = {
   screenshots?: boolean,
 };
 export type BrowserContextTracingStartResult = void;
+export type BrowserContextTracingResetParams = {};
+export type BrowserContextTracingResetOptions = {};
+export type BrowserContextTracingResetResult = void;
 export type BrowserContextTracingStopParams = {};
 export type BrowserContextTracingStopOptions = {};
 export type BrowserContextTracingStopResult = void;

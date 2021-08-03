@@ -50,9 +50,15 @@ export type FrameSnapshotTraceEvent = {
   snapshot: FrameSnapshot,
 };
 
+export type MarkerTraceEvent = {
+  type: 'marker',
+  resetIndex?: number,
+};
+
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ScreencastFrameTraceEvent |
     ActionTraceEvent |
     ResourceSnapshotTraceEvent |
-    FrameSnapshotTraceEvent;
+    FrameSnapshotTraceEvent |
+    MarkerTraceEvent;

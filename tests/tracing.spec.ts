@@ -195,6 +195,27 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   expect(clickEvent.metadata.error.error.message).toBe('Action was interrupted');
 });
 
+test('should reset and export', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.goto(server.PREFIX + '/frames/frame.html');
+  // @ts-expect-error
+  await context.tracing._reset();
+  await page.setContent('<button>Click</button>');
+  await page.click('"Click"');
+  // @ts-expect-error
+  await context.tracing._export({ path: testInfo.outputPath('trace.zip') });
+  await context.tracing.stop();
+
+  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  expect(events[0].type).toBe('context-options');
+  expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
+  expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
+  expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
+
+  expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
+});
+
 
 async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
   const entries = await new Promise<any[]>(f => {

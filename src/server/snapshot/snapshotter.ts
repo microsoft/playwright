@@ -62,13 +62,18 @@ export class Snapshotter {
       this._initialized = true;
       await this._initialize();
     }
-    await this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
+    await this.reset();
 
     // Replay resources loaded in all pages.
     for (const page of this._context.pages()) {
       for (const response of page._frameManager._responses)
         this._saveResource(response).catch(e => debugLogger.log('error', e));
     }
+  }
+
+  async reset() {
+    if (this._started)
+      await this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
   }
 
   async stop() {

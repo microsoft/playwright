@@ -184,6 +184,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.tracing.start(params);
   }
 
+  async tracingReset(params: channels.BrowserContextTracingResetParams): Promise<channels.BrowserContextTracingResetResult> {
+    await this._context.tracing.reset();
+  }
+
   async tracingStop(params: channels.BrowserContextTracingStopParams): Promise<channels.BrowserContextTracingStopResult> {
     await this._context.tracing.stop();
   }
