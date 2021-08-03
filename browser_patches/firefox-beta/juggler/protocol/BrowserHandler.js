@@ -226,7 +226,7 @@ class BrowserHandler {
   }
 
   async ['Browser.setJavaScriptDisabled']({browserContextId, javaScriptDisabled}) {
-    await this._targetRegistry.browserContextForId(browserContextId).applySetting('javaScriptDisabled', nullToUndefined(javaScriptDisabled));
+    await this._targetRegistry.browserContextForId(browserContextId).setJavaScriptDisabled(javaScriptDisabled);
   }
 
   async ['Browser.setLocaleOverride']({browserContextId, locale}) {
