@@ -19,7 +19,7 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
-import { errorWithLocation } from './util';
+import { errorWithLocation, serializeError } from './util';
 
 const countByFile = new Map<string, number>();
 
@@ -49,6 +49,7 @@ export class TestTypeImpl {
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
+    test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test.declare = wrapFunctionWithLocation(this._declare.bind(this));
@@ -146,7 +147,7 @@ export class TestTypeImpl {
 
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw errorWithLocation(location, `test.setTimeout() can only be called from a test file`);
+      throw errorWithLocation(location, `test.setTimeout() can only be called from a test`);
     testInfo.setTimeout(timeout);
   }
 
@@ -155,6 +156,20 @@ export class TestTypeImpl {
     if (!suite)
       throw errorWithLocation(location, `test.use() can only be called in a test file`);
     suite._fixtureOverrides = { ...suite._fixtureOverrides, ...fixtures };
+  }
+
+  private async _step(location: Location, title: string, body: () => Promise<void>): Promise<void> {
+    const testInfo = currentTestInfo();
+    if (!testInfo)
+      throw errorWithLocation(location, `test.step() can only be called from a test`);
+    const complete = testInfo._addStep('test.step', title);
+    try {
+      await body();
+      complete();
+    } catch (e) {
+      complete(serializeError(e));
+      throw e;
+    }
   }
 
   private _extend(location: Location, fixtures: Fixtures) {

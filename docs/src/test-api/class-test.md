@@ -709,6 +709,41 @@ Optional condition - either a boolean value, or a function that takes a fixtures
 Optional description that will be reflected in a test report.
 
 
+## method: Test.step
+
+Declares a test step.
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test('test', async ({ page }) => {
+  await test.step('Log in', async () => {
+    // ...
+  });
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await test.step('Log in', async () => {
+    // ...
+  });
+});
+```
+
+### param: Test.step.title
+- `title` <[string]>
+
+Step name.
+
+
+### param: Test.step.body
+- `body` <[function]\(\):[Promise]<[any]>>
+
+Step body.
+
 
 
 ## method: Test.use

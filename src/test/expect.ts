@@ -39,9 +39,10 @@ import {
   toHaveValue
 } from './matchers/matchers';
 import { toMatchSnapshot } from './matchers/toMatchSnapshot';
-import type { Expect, TestStatus } from './types';
+import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
+import { serializeError } from './util';
 
 export const expect: Expect = expectLibrary as any;
 expectLibrary.setState({ expand: false });
@@ -78,22 +79,22 @@ function wrap(matcherName: string, matcher: any) {
 
     const infix = this.isNot ? '.not' : '';
     const completeStep = testInfo._addStep('expect', `expect${infix}.${matcherName}`);
+    const stack = new Error().stack;
 
     const reportStepEnd = (result: any) => {
-      status = result.pass !== this.isNot ? 'passed' : 'failed';
-      let error: Error | undefined;
-      if (status === 'failed')
-        error = new Error(result.message());
+      const success = result.pass !== this.isNot;
+      let error: TestError | undefined;
+      if (!success)
+        error = { message: result.message(), stack };
       completeStep?.(error);
       return result;
     };
 
     const reportStepError = (error: Error) => {
-      completeStep?.(error);
+      completeStep?.(serializeError(error));
       throw error;
     };
 
-    let status: TestStatus = 'passed';
     try {
       const result = matcher.call(this, ...args);
       if (result instanceof Promise)

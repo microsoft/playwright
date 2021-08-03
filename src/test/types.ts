@@ -25,7 +25,7 @@ export type FixturesWithLocation = {
 };
 export type Annotations = { type: string, description?: string }[];
 
-export type CompleteStepCallback = (error?: TestError) => void;
+export type CompleteStepCallback = (error?: Error | TestError) => void;
 
 export interface TestInfoImpl extends TestInfo {
   _testFinished: Promise<void>;
