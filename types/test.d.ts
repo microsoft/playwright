@@ -2094,6 +2094,33 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
   /**
+   * Declares a test step.
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('test', async ({ page }) => {
+   *   await test.step('Log in', async () => {
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('test', async ({ page }) => {
+   *   await test.step('Log in', async () => {
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
+   * @param title Step name.
+   * @param body Step body.
+   */
+  step(title: string, body: () => Promise<any>): Promise<any>;
+  /**
    * `expect` function can be used to create test assertions. Read
    * [expect library documentation](https://jestjs.io/docs/expect) for more details.
    */

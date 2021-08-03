@@ -168,6 +168,8 @@ test('should report expect steps', async ({ runInlineTest }) => {
       }
       onStepEnd(test, result, step) {
         const copy = { ...step, startTime: undefined, duration: undefined };
+        if (copy.error?.stack)
+          copy.error.stack = '<stack>';
         console.log('%%%% end', JSON.stringify(copy));
       }
     }
@@ -197,13 +199,13 @@ test('should report expect steps', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `%% begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
-    `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{}}`,
+    `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"expect(received).toBeTruthy()\\n\\nReceived: false\",\"stack\":\"<stack>\"}}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
@@ -236,6 +238,8 @@ test('should report api steps', async ({ runInlineTest }) => {
       }
       onStepEnd(test, result, step) {
         const copy = { ...step, startTime: undefined, duration: undefined };
+        if (copy.error?.stack)
+          copy.error.stack = '<stack>';
         console.log('%%%% end', JSON.stringify(copy));
       }
     }
@@ -259,7 +263,7 @@ test('should report api steps', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
@@ -274,3 +278,109 @@ test('should report api steps', async ({ runInlineTest }) => {
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
   ]);
 });
+
+
+test('should report api step failure', async ({ runInlineTest }) => {
+  const expectReporterJS = `
+    class Reporter {
+      onStepBegin(test, result, step) {
+        const copy = { ...step, startTime: undefined, duration: undefined };
+        console.log('%%%% begin', JSON.stringify(copy));
+      }
+      onStepEnd(test, result, step) {
+        const copy = { ...step, startTime: undefined, duration: undefined };
+        if (copy.error?.stack)
+          copy.error.stack = '<stack>';
+        console.log('%%%% end', JSON.stringify(copy));
+      }
+    }
+    module.exports = Reporter;
+  `;
+
+  const result = await runInlineTest({
+    'reporter.ts': expectReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('fail', async ({ page }) => {
+        await page.setContent('<button></button>');
+        await page.click('input', { timeout: 1 });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
+    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"page.click\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for selector \\\"input\\\"\\n============================================================\",\"stack\":\"<stack>\"}}`,
+    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+  ]);
+});
+
+test('should report test.step', async ({ runInlineTest }) => {
+  const expectReporterJS = `
+    class Reporter {
+      onStepBegin(test, result, step) {
+        const copy = { ...step, startTime: undefined, duration: undefined };
+        console.log('%%%% begin', JSON.stringify(copy));
+      }
+      onStepEnd(test, result, step) {
+        const copy = { ...step, startTime: undefined, duration: undefined };
+        if (copy.error?.stack)
+          copy.error.stack = '<stack>';
+        console.log('%%%% end', JSON.stringify(copy));
+      }
+    }
+    module.exports = Reporter;
+  `;
+
+  const result = await runInlineTest({
+    'reporter.ts': expectReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+        await test.step('First step', async () => {
+          expect(1).toBe(2);
+        });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
+    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"First step\",\"category\":\"test.step\"}`,
+    `%% begin {\"title\":\"expect.toBe\",\"category\":\"expect\"}`,
+    `%% end {\"title\":\"expect.toBe\",\"category\":\"expect\",\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}`,
+    `%% end {\"title\":\"First step\",\"category\":\"test.step\",\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}`,
+    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+  ]);
+});
+
+function stripEscapedAscii(str: string) {
+  return str.replace(/\\u00[a-z0-9][a-z0-9]\[[^m]+m/g, '');
+}

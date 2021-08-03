@@ -278,7 +278,9 @@ export class WorkerRunner extends EventEmitter {
           wallTime: Date.now()
         };
         this.emit('stepBegin', payload);
-        return (error?: TestError) => {
+        return (error?: Error | TestError) => {
+          if (error instanceof Error)
+            error = serializeError(error);
           const payload: StepEndPayload = {
             testId,
             stepId,
