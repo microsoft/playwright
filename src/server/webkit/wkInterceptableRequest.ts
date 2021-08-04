@@ -61,7 +61,7 @@ export class WKInterceptableRequest {
     this._wallTime = event.walltime * 1000;
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
-    this.request = new network.Request(null, frame, redirectedFrom?.request || null, documentId, event.request.url,
+    this.request = new network.Request(frame, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
   }
 
@@ -97,8 +97,8 @@ export class WKRouteImpl implements network.RouteDelegate {
   private readonly _requestId: string;
   _requestInterceptedCallback: () => void = () => {};
   private readonly _requestInterceptedPromise: Promise<unknown>;
-  _responseInterceptedCallback: ((data: { request: WKInterceptableRequest; responsePayload: Protocol.Network.Response; }) => void) | undefined;
-  private _responseInterceptedPromise: Promise<{ request: WKInterceptableRequest; responsePayload: Protocol.Network.Response; }> | undefined;
+  _responseInterceptedCallback: ((responsePayload: Protocol.Network.Response) => void) | undefined;
+  private _responseInterceptedPromise: Promise<Protocol.Network.Response> | undefined;
   private readonly _page: WKPage;
 
   constructor(session: WKSession, page: WKPage, requestId: string) {
@@ -150,7 +150,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     });
   }
 
-  async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
+  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
     if (overrides.interceptResponse) {
       await this._page._ensureResponseInterceptionEnabled();
       this._responseInterceptedPromise = new Promise(f => this._responseInterceptedCallback = f);
@@ -167,8 +167,8 @@ export class WKRouteImpl implements network.RouteDelegate {
     });
     if (!this._responseInterceptedPromise)
       return null;
-    const {request, responsePayload} = await this._responseInterceptedPromise;
-    return new InterceptedResponse(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers));
+    const responsePayload = await this._responseInterceptedPromise;
+    return new InterceptedResponse(request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers));
   }
 }
 

@@ -185,7 +185,7 @@ class InterceptableRequest {
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
-    this.request = new network.Request(null, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
+    this.request = new network.Request(frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
   }
 }
@@ -209,7 +209,7 @@ class FFRouteImpl implements network.RouteDelegate {
     return Buffer.from(response.base64body, 'base64');
   }
 
-  async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
+  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
     const result = await this._session.sendMayFail('Network.resumeInterceptedRequest', {
       requestId: this._request._id,
       url: overrides.url,
@@ -220,7 +220,7 @@ class FFRouteImpl implements network.RouteDelegate {
     }) as any;
     if (!overrides.interceptResponse)
       return null;
-    return new InterceptedResponse(this._request.request._finalRequest(), result.response.status, result.response.statusText, result.response.headers);
+    return new InterceptedResponse(request, result.response.status, result.response.statusText, result.response.headers);
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {

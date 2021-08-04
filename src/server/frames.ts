@@ -261,7 +261,7 @@ export class FrameManager {
       frame.setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
       if (route)
-        route.continue({});
+        route.continue(request, {});
       return;
     }
     this._page._browserContext.emit(BrowserContext.Events.Request, request);

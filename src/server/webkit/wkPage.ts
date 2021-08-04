@@ -1008,7 +1008,7 @@ export class WKPage implements PageDelegate {
       session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
       return;
     }
-    route._responseInterceptedCallback({ request: request!, responsePayload: event.response });
+    route._responseInterceptedCallback(event.response);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
