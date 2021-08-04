@@ -393,6 +393,7 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04: { [s: string]: string} = {
   'libdrm.so.2': 'libdrm2',
   'libEGL.so.1': 'libegl1',
   'libenchant.so.1': 'libenchant1c2a',
+  'libevdev.so.2': 'libevdev2',
   'libepoxy.so.0': 'libepoxy0',
   'libfontconfig.so.1': 'libfontconfig1',
   'libfreetype.so.6': 'libfreetype6',

@@ -103,9 +103,9 @@ it('textContent should be atomic', async ({ playwright, page }) => {
       return result;
     }
   });
-  await playwright.selectors.register('textContent', createDummySelector);
+  await playwright.selectors.register('textContentFromLocators', createDummySelector);
   await page.setContent(`<div>Hello</div>`);
-  const tc = await page.textContent('textContent=div');
+  const tc = await page.textContent('textContentFromLocators=div');
   expect(tc).toBe('Hello');
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
 });
