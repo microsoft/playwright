@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { contextTest as it, expect } from '../config/browserTest';
+import { test as it, expect } from './pageTest';
 import path from 'path';
 
 it('should hover', async ({ page, server }) => {
@@ -91,16 +91,4 @@ it('should upload the file', async ({page, server, asset}) => {
   const input = page.locator('input[type=file]');
   await input.setInputFiles(filePath);
   expect(await page.evaluate(e => (e as HTMLInputElement).files[0].name, await input.elementHandle())).toBe('file-to-upload.txt');
-});
-
-it.describe('tap group', () => {
-  it.use({ hasTouch: true });
-  it('should send all of the correct events', async ({ page }) => {
-    await page.setContent(`
-      <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
-      <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
-    `);
-    await page.locator('#a').tap();
-    await page.locator('#b').tap();
-  });
 });
