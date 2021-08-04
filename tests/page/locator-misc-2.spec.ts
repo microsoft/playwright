@@ -72,8 +72,9 @@ it('should take screenshot', async ({ page, server, browserName, headless, isAnd
   expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
 });
 
-it('should return bounding box', async ({ page, server, browserName, headless }) => {
+it('should return bounding box', async ({ page, server, browserName, headless, isAndroid }) => {
   it.fail(browserName === 'firefox' && !headless);
+  it.skip(isAndroid);
 
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');
