@@ -95,8 +95,8 @@ export class WKInterceptableRequest {
 export class WKRouteImpl implements network.RouteDelegate {
   private readonly _session: WKSession;
   private readonly _requestId: string;
-  _interceptedCallback: () => void = () => {};
-  private readonly _interceptedPromise: Promise<unknown>;
+  _requestInterceptedCallback: () => void = () => {};
+  private readonly _requestInterceptedPromise: Promise<unknown>;
   _responseInterceptedCallback: ((data: { request: WKInterceptableRequest; responsePayload: Protocol.Network.Response; }) => void) | undefined;
   private _responseInterceptedPromise: Promise<{ request: WKInterceptableRequest; responsePayload: Protocol.Network.Response; }> | undefined;
   private readonly _page: WKPage;
@@ -105,7 +105,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     this._session = session;
     this._page = page;
     this._requestId = requestId;
-    this._interceptedPromise = new Promise<void>(f => this._interceptedCallback = f);
+    this._requestInterceptedPromise = new Promise<void>(f => this._requestInterceptedCallback = f);
   }
 
   async responseBody(forFulfill: boolean): Promise<Buffer> {
@@ -119,7 +119,7 @@ export class WKRouteImpl implements network.RouteDelegate {
   async abort(errorCode: string) {
     const errorType = errorReasons[errorCode];
     assert(errorType, 'Unknown error code: ' + errorCode);
-    await this._interceptedPromise;
+    await this._requestInterceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._session.sendMayFail('Network.interceptRequestWithError', { requestId: this._requestId, errorType });
@@ -129,8 +129,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     if (300 <= response.status && response.status < 400)
       throw new Error('Cannot fulfill with redirect status: ' + response.status);
 
-    await this._interceptedPromise;
-
+    await this._requestInterceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     let mimeType = response.isBase64 ? 'application/octet-stream' : 'text/plain';
@@ -156,7 +155,7 @@ export class WKRouteImpl implements network.RouteDelegate {
       await this._page._ensureResponseInterceptionEnabled();
       this._responseInterceptedPromise = new Promise(f => this._responseInterceptedCallback = f);
     }
-    await this._interceptedPromise;
+    await this._requestInterceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._session.sendMayFail('Network.interceptWithRequest', {

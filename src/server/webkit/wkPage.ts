@@ -997,7 +997,7 @@ export class WKPage implements PageDelegate {
       // Just continue.
       session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
     } else {
-      request._route._interceptedCallback();
+      request._route._requestInterceptedCallback();
     }
   }
 
