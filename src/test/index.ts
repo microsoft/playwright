@@ -251,8 +251,9 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
           return;
         try {
           const videoPath = await v.path();
-          const fileName = path.basename(videoPath);
-          await v.saveAs(testInfo.outputPath(fileName));
+          const savedPath = testInfo.outputPath(path.basename(videoPath));
+          await v.saveAs(savedPath);
+          testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
         } catch (e) {
           // Silent catch empty videos.
         }
