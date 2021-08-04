@@ -16,8 +16,9 @@
  */
 
 import { fail } from 'assert';
+import os from 'os';
 import type { Route } from '../../index';
-import { test as it, expect } from './pageTest';
+import { expect, test as it } from './pageTest';
 
 it('should fulfill intercepted response', async ({page, server, browserName}) => {
   await page.route('**/*', async route => {
@@ -67,7 +68,7 @@ it('should support fulfill after intercept', async ({page, server, browserName, 
   const response = await page.goto(server.PREFIX + '/title.html');
   const request = await requestPromise;
   expect(request.url).toBe('/title.html');
-  expect(await response.text()).toBe('<title>Woof-Woof</title>\n');
+  expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
 });
 
 it('should support request overrides', async ({page, server, browserName, browserMajorVersion}) => {
