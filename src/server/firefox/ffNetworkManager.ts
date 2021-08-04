@@ -60,9 +60,12 @@ export class FFNetworkManager {
       return;
     if (redirectedFrom)
       this._requests.delete(redirectedFrom._id);
-    const request = new InterceptableRequest(this._session, frame, redirectedFrom, event);
+    const request = new InterceptableRequest(frame, redirectedFrom, event);
+    let route;
+    if (event.isIntercepted)
+      route = new FFRouteImpl(this._session, request);
     this._requests.set(request._id, request);
-    this._page._frameManager.requestStarted(request.request);
+    this._page._frameManager.requestStarted(request.request, route);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -173,19 +176,27 @@ const internalCauseToResourceType: {[key: string]: string} = {
   TYPE_INTERNAL_EVENTSOURCE: 'eventsource',
 };
 
-class InterceptableRequest implements network.RouteDelegate {
+class InterceptableRequest {
   readonly request: network.Request;
-  _id: string;
-  private _session: FFSession;
+  readonly _id: string;
 
-  constructor(session: FFSession, frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
+  constructor(frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
     this._id = payload.requestId;
-    this._session = session;
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
-    this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
+    this.request = new network.Request(null, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
+  }
+}
+
+class FFRouteImpl implements network.RouteDelegate {
+  private _request: InterceptableRequest;
+  private _session: FFSession;
+
+  constructor(session: FFSession, request: InterceptableRequest) {
+    this._session = session;
+    this._request = request;
   }
 
   async responseBody(forFulfill: boolean): Promise<Buffer> {
@@ -193,14 +204,14 @@ class InterceptableRequest implements network.RouteDelegate {
     if (forFulfill)
       return Buffer.from('');
     const response = await this._session.send('Network.getResponseBody', {
-      requestId: this._id
+      requestId: this._request._id
     });
     return Buffer.from(response.base64body, 'base64');
   }
 
   async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
     const result = await this._session.sendMayFail('Network.resumeInterceptedRequest', {
-      requestId: this._id,
+      requestId: this._request._id,
       url: overrides.url,
       method: overrides.method,
       headers: overrides.headers,
@@ -209,14 +220,14 @@ class InterceptableRequest implements network.RouteDelegate {
     }) as any;
     if (!overrides.interceptResponse)
       return null;
-    return new InterceptedResponse(this.request, result.response.status, result.response.statusText, result.response.headers);
+    return new InterceptedResponse(this._request.request._finalRequest(), result.response.status, result.response.statusText, result.response.headers);
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
     const base64body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
 
     await this._session.sendMayFail('Network.fulfillInterceptedRequest', {
-      requestId: this._id,
+      requestId: this._request._id,
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)] || '',
       headers: response.headers,
@@ -226,7 +237,7 @@ class InterceptableRequest implements network.RouteDelegate {
 
   async abort(errorCode: string) {
     await this._session.sendMayFail('Network.abortInterceptedRequest', {
-      requestId: this._id,
+      requestId: this._request._id,
       errorCode,
     });
   }

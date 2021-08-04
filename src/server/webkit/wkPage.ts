@@ -37,7 +37,7 @@ import { WKBrowserContext } from './wkBrowser';
 import { WKSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
-import { WKInterceptableRequest } from './wkInterceptableRequest';
+import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../../utils/debugLogger';
@@ -949,16 +949,16 @@ export class WKPage implements PageDelegate {
   _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
     if (event.request.url.startsWith('data:'))
       return;
-    let redirectedFrom: network.Request | null = null;
+    let redirectedFrom: WKInterceptableRequest | null = null;
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
         this._handleRequestRedirect(request, event.redirectResponse, event.timestamp);
-        redirectedFrom = request.request;
+        redirectedFrom = request;
       }
     }
-    const frame = redirectedFrom ? redirectedFrom.frame() : this._page._frameManager.frame(event.frameId);
+    const frame = redirectedFrom ? redirectedFrom.request.frame() : this._page._frameManager.frame(event.frameId);
     // sometimes we get stray network events for detached frames
     // TODO(einbinder) why?
     if (!frame)
@@ -967,11 +967,13 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
+    let route = null;
     // We do not support intercepting redirects.
-    const allowInterception = this._page._needsRequestInterception() && !redirectedFrom;
-    const request = new WKInterceptableRequest(session, allowInterception, frame, event, redirectedFrom, documentId);
+    if (this._page._needsRequestInterception() && !redirectedFrom)
+      route = new WKRouteImpl(session, this, event.requestId);
+    const request = new WKInterceptableRequest(session, route, frame, event, redirectedFrom, documentId);
     this._requestIdToRequest.set(event.requestId, request);
-    this._page._frameManager.requestStarted(request.request);
+    this._page._frameManager.requestStarted(request.request, route || undefined);
   }
 
   private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
@@ -990,22 +992,23 @@ export class WKPage implements PageDelegate {
       session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
       return;
     }
-    if (!request._allowInterception) {
+    if (!request._route) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
       session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
     } else {
-      request._interceptedCallback();
+      request._route._interceptedCallback();
     }
   }
 
   _onResponseIntercepted(session: WKSession, event: Protocol.Network.responseInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
-    if (!request || !request._responseInterceptedCallback) {
+    const route = request?._routeForRedirectChain();
+    if (!route?._responseInterceptedCallback) {
       session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
       return;
     }
-    request._responseInterceptedCallback(event.response);
+    route._responseInterceptedCallback({ request: request!, responsePayload: event.response });
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {

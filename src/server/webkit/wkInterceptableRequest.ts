@@ -41,30 +41,70 @@ const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'failed': 'General',
 };
 
-export class WKInterceptableRequest implements network.RouteDelegate {
+export class WKInterceptableRequest {
   private readonly _session: WKSession;
   readonly request: network.Request;
   readonly _requestId: string;
-  _interceptedCallback: () => void = () => {};
-  private _interceptedPromise: Promise<unknown>;
-  _responseInterceptedCallback: ((r: Protocol.Network.Response) => void) | undefined;
-  private _responseInterceptedPromise: Promise<Protocol.Network.Response> | undefined;
-  readonly _allowInterception: boolean;
   _timestamp: number;
   _wallTime: number;
+  readonly _route: WKRouteImpl | null;
+  private _redirectedFrom: WKInterceptableRequest | null;
 
-  constructor(session: WKSession, allowInterception: boolean, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: network.Request | null, documentId: string | undefined) {
+  constructor(session: WKSession, route: WKRouteImpl | null, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: WKInterceptableRequest | null, documentId: string | undefined) {
     this._session = session;
     this._requestId = event.requestId;
-    this._allowInterception = allowInterception;
-    const resourceType = event.type ? event.type.toLowerCase() : (redirectedFrom ? redirectedFrom.resourceType() : 'other');
+    this._route = route;
+    this._redirectedFrom = redirectedFrom;
+    const resourceType = event.type ? event.type.toLowerCase() : (redirectedFrom ? redirectedFrom.request.resourceType() : 'other');
     let postDataBuffer = null;
     this._timestamp = event.timestamp;
     this._wallTime = event.walltime * 1000;
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
-    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, event.request.url,
+    this.request = new network.Request(null, frame, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
+  }
+
+  _routeForRedirectChain(): WKRouteImpl | null {
+    let request: WKInterceptableRequest = this;
+    while (request._redirectedFrom)
+      request = request._redirectedFrom;
+    return request._route;
+  }
+
+  createResponse(responsePayload: Protocol.Network.Response): network.Response {
+    const getResponseBody = async () => {
+      const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
+      return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+    };
+    const timingPayload = responsePayload.timing;
+    const timing: network.ResourceTiming = {
+      startTime: this._wallTime,
+      domainLookupStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupStart) : -1,
+      domainLookupEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupEnd) : -1,
+      connectStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.connectStart) : -1,
+      secureConnectionStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.secureConnectionStart) : -1,
+      connectEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.connectEnd) : -1,
+      requestStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.requestStart) : -1,
+      responseStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.responseStart) : -1,
+    };
+    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
+  }
+}
+
+export class WKRouteImpl implements network.RouteDelegate {
+  private readonly _session: WKSession;
+  private readonly _requestId: string;
+  _interceptedCallback: () => void = () => {};
+  private readonly _interceptedPromise: Promise<unknown>;
+  _responseInterceptedCallback: ((data: { request: WKInterceptableRequest; responsePayload: Protocol.Network.Response; }) => void) | undefined;
+  private _responseInterceptedPromise: Promise<{ request: WKInterceptableRequest; responsePayload: Protocol.Network.Response; }> | undefined;
+  private readonly _page: WKPage;
+
+  constructor(session: WKSession, page: WKPage, requestId: string) {
+    this._session = session;
+    this._page = page;
+    this._requestId = requestId;
     this._interceptedPromise = new Promise<void>(f => this._interceptedCallback = f);
   }
 
@@ -113,7 +153,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
 
   async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
     if (overrides.interceptResponse) {
-      await (this.request.frame()._page._delegate as WKPage)._ensureResponseInterceptionEnabled();
+      await this._page._ensureResponseInterceptionEnabled();
       this._responseInterceptedPromise = new Promise(f => this._responseInterceptedCallback = f);
     }
     await this._interceptedPromise;
@@ -128,27 +168,8 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     });
     if (!this._responseInterceptedPromise)
       return null;
-    const responsePayload = await this._responseInterceptedPromise;
-    return new InterceptedResponse(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers));
-  }
-
-  createResponse(responsePayload: Protocol.Network.Response): network.Response {
-    const getResponseBody = async () => {
-      const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
-      return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
-    };
-    const timingPayload = responsePayload.timing;
-    const timing: network.ResourceTiming = {
-      startTime: this._wallTime,
-      domainLookupStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupStart) : -1,
-      domainLookupEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupEnd) : -1,
-      connectStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.connectStart) : -1,
-      secureConnectionStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.secureConnectionStart) : -1,
-      connectEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.connectEnd) : -1,
-      requestStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.requestStart) : -1,
-      responseStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.responseStart) : -1,
-    };
-    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
+    const {request, responsePayload} = await this._responseInterceptedPromise;
+    return new InterceptedResponse(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers));
   }
 }
 

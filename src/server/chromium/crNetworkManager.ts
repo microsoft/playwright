@@ -278,7 +278,7 @@ export class CRNetworkManager {
       redirectedFrom
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
-    this._page._frameManager.requestStarted(request.request, route ? new network.Route(request.request, route) : undefined);
+    this._page._frameManager.requestStarted(request.request, route || undefined);
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
