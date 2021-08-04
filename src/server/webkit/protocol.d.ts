@@ -1199,7 +1199,7 @@ export module Protocol {
     /**
      * The type of rendering context backing the canvas element.
      */
-    export type ContextType = "canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2"|"webgpu";
+    export type ContextType = "canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2";
     export type ProgramType = "compute"|"render";
     export type ShaderType = "compute"|"fragment"|"vertex";
     /**
@@ -1235,7 +1235,7 @@ export module Protocol {
        */
       failIfMajorPerformanceCaveat?: boolean;
       /**
-       * WebGL, WebGL2, WebGPU
+       * WebGL, WebGL2
        */
       powerPreference?: string;
     }
@@ -1273,16 +1273,12 @@ export module Protocol {
       backtrace?: Console.CallFrame[];
     }
     /**
-     * Information about a WebGL/WebGL2 shader program or WebGPU shader pipeline.
+     * Information about a WebGL/WebGL2 shader program.
      */
     export interface ShaderProgram {
       programId: ProgramId;
       programType: ProgramType;
       canvasId: CanvasId;
-      /**
-       * Indicates whether the vertex and fragment shader modules are the same object for a render shader pipleine for a WebGPU device.
-       */
-      sharesVertexFragmentShader?: boolean;
     }
     
     export type canvasAddedPayload = {
