@@ -270,7 +270,6 @@ export class CRNetworkManager {
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
     const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
     const request = new InterceptableRequest({
-      client: this._client,
       frame,
       documentId,
       route,
@@ -411,14 +410,12 @@ class InterceptableRequest {
   _requestId: string;
   _interceptionId: string | null;
   _documentId: string | undefined;
-  private readonly _client: CRSession;
   _timestamp: number;
   _wallTime: number;
   private _route: RouteImpl | null;
   private _redirectedFrom: InterceptableRequest | null;
 
   constructor(options: {
-    client: CRSession;
     frame: frames.Frame;
     documentId?: string;
     route: RouteImpl | null;
@@ -426,8 +423,7 @@ class InterceptableRequest {
     requestPausedEvent: Protocol.Fetch.requestPausedPayload | null;
     redirectedFrom: InterceptableRequest | null;
   }) {
-    const { client, frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom } = options;
-    this._client = client;
+    const { frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom } = options;
     this._timestamp = requestWillBeSentEvent.timestamp;
     this._wallTime = requestWillBeSentEvent.wallTime;
     this._requestId = requestWillBeSentEvent.requestId;
