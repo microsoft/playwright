@@ -42,6 +42,11 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     return await this._server.start();
   }
 
+  async reset() {
+    await this._snapshotter.reset();
+    this.clear();
+  }
+
   async dispose() {
     this._snapshotter.dispose();
     await this._server.stop();

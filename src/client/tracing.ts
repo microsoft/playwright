@@ -32,12 +32,6 @@ export class Tracing implements api.Tracing {
     });
   }
 
-  async _reset() {
-    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      return await channel.tracingReset();
-    });
-  }
-
   async _export(options: { path: string }) {
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await this._doExport(channel, options.path);
@@ -46,9 +40,9 @@ export class Tracing implements api.Tracing {
 
   async stop(options: { path?: string } = {}) {
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await channel.tracingStop();
       if (options.path)
         await this._doExport(channel, options.path);
+      await channel.tracingStop();
     });
   }
 
