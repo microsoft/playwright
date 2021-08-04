@@ -49,7 +49,7 @@ export class PlaywrightClient {
         playwrightClientPromise,
         errorPromise,
         closePromise,
-        new Promise((_, reject) => timer = setTimeout(reject, timeout))
+        new Promise((_, reject) => timer = setTimeout(() => reject(`Timeout of ${timeout}ms exceeded while connecting.`), timeout))
       ]);
       return await playwrightClientPromise;
     } finally {

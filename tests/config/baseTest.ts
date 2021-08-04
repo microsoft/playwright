@@ -57,7 +57,6 @@ class DriverMode {
 }
 
 class ServiceMode {
-  private _playwrightObejct: any;
   private _client: any;
   private _serviceProcess: childProcess.ChildProcess;
 
@@ -75,8 +74,7 @@ class ServiceMode {
     });
     this._serviceProcess.on('exit', this._onExit);
     this._client = await PlaywrightClient.connect({wsEndpoint: `ws://localhost:${port}/ws`});
-    this._playwrightObejct = this._client.playwright();
-    return this._playwrightObejct;
+    return this._client.playwright();
   }
 
   async teardown() {
@@ -87,7 +85,7 @@ class ServiceMode {
     await processExited;
   }
 
-  private _onExit(exitCode, signal) {
+  private _onExit(exitCode: number, signal: string) {
     throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
   }
 }
