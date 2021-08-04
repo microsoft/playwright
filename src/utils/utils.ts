@@ -186,7 +186,7 @@ export function makeWaitForNextTask() {
 
 export function assert(value: any, message?: string): asserts value {
   if (!value)
-    throw new Error(message);
+    throw new Error(message || 'Assertion error');
 }
 
 export function debugAssert(value: any, message?: string): asserts value {
