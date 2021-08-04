@@ -79,7 +79,6 @@ export function stripFragmentFromUrl(url: string): string {
 }
 
 export class Request extends SdkObject {
-  readonly _routeDelegate: RouteDelegate | null;
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
   private _redirectedTo: Request | null = null;
@@ -101,8 +100,6 @@ export class Request extends SdkObject {
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
     super(frame, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
-    assert(!(routeDelegate && redirectedFrom), 'Should not be able to intercept redirects');
-    this._routeDelegate = routeDelegate;
     this._frame = frame;
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
@@ -183,12 +180,6 @@ export class Request extends SdkObject {
     return {
       errorText: this._failureText
     };
-  }
-
-  _route(): Route | null {
-    if (!this._routeDelegate)
-      return null;
-    return new Route(this, this._routeDelegate);
   }
 
   updateWithRawHeaders(headers: types.HeadersArray) {
