@@ -697,7 +697,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async isVisible(): Promise<boolean> {
     const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'visible'), {});
-    return throwRetargetableDOMError(throwFatalDOMError(result));
+    if (result === 'error:notconnected')
+      return false;
+    return throwFatalDOMError(result);
   }
 
   async isHidden(): Promise<boolean> {
