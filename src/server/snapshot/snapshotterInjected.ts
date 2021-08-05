@@ -443,8 +443,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         doctype: document.doctype ? document.doctype.name : undefined,
         resourceOverrides: [],
         viewport: {
-          width: Math.max(document.body ? document.body.offsetWidth : 0, document.documentElement ? document.documentElement.offsetWidth : 0),
-          height: Math.max(document.body ? document.body.offsetHeight : 0, document.documentElement ? document.documentElement.offsetHeight : 0),
+          width: window.innerWidth,
+          height: window.innerHeight,
         },
         url: location.href,
         timestamp,

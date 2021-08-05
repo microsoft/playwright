@@ -54,7 +54,7 @@ export const Workbench: React.FunctionComponent<{
     return actions;
   }, [context]);
 
-  const snapshotSize = context.options.viewport || { width: 1280, height: 720 };
+  const defaultSnapshotSize = context.options.viewport || { width: 1280, height: 720 };
   const boundaries = { minimum: context.startTime, maximum: context.endTime };
 
   // Leave some nice free space on the right hand side.
@@ -89,7 +89,7 @@ export const Workbench: React.FunctionComponent<{
     </div>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation='horizontal'>
-        <SnapshotTab action={selectedAction} snapshotSize={snapshotSize} />
+        <SnapshotTab action={selectedAction} snapshotSizes={context.snapshotSizes} defaultSnapshotSize={defaultSnapshotSize} />
         <TabbedPane tabs={[
           { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={selectedAction} /> },
           { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={selectedAction} /> },
@@ -124,5 +124,6 @@ const emptyContext: ContextEntry = {
     _debugName: '<empty>',
   },
   pages: [],
-  resources: []
+  resources: [],
+  snapshotSizes: {},
 };

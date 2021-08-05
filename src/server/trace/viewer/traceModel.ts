@@ -38,7 +38,8 @@ export class TraceModel {
       browserName: '',
       options: { sdkLanguage: '' },
       pages: [],
-      resources: []
+      resources: [],
+      snapshotSizes: {},
     };
   }
 
@@ -98,6 +99,8 @@ export class TraceModel {
         break;
       case 'frame-snapshot':
         this._snapshotStorage.addFrameSnapshot(event.snapshot);
+        if (event.snapshot.snapshotName && event.snapshot.isMainFrame)
+          this.contextEntry.snapshotSizes[event.snapshot.snapshotName] = event.snapshot.viewport;
         break;
     }
     if (event.type === 'action' || event.type === 'event') {
@@ -123,6 +126,14 @@ export class TraceModel {
     }
     return event;
   }
+
+  _modernize_1_to_2(event: any): any {
+    if (event.type === 'frame-snapshot' && event.snapshot.isMainFrame) {
+      // Old versions had completely wrong viewport.
+      event.snapshot.viewport = this.contextEntry.options.viewport || { width: 1280, height: 720 };
+    }
+    return event;
+  }
 }
 
 export type ContextEntry = {
@@ -132,18 +143,19 @@ export type ContextEntry = {
   options: BrowserContextOptions;
   pages: PageEntry[];
   resources: ResourceSnapshot[];
+  snapshotSizes: { [snapshotName: string]: { width: number, height: number } };
 };
 
 export type PageEntry = {
   actions: trace.ActionTraceEvent[];
   events: trace.ActionTraceEvent[];
-  objects: { [ket: string]: any };
+  objects: { [key: string]: any };
   screencastFrames: {
     sha1: string,
     timestamp: number,
     width: number,
     height: number,
-  }[]
+  }[];
 };
 
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {

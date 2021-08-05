@@ -39,12 +39,12 @@ export const CallTab: React.FunctionComponent<{
     <div className='call-line'>{action.metadata.apiName}</div>
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
     {
-      !!paramKeys.length && paramKeys.map(name => renderLine(action.metadata, name, params[name]))
+      !!paramKeys.length && paramKeys.map((name, index) => renderLine(action.metadata, name, params[name], 'param-' + index))
     }
     { !!action.metadata.result && <div className='call-section'>Return value</div> }
     {
-      !!action.metadata.result && Object.keys(action.metadata.result).map(name =>
-        renderLine(action.metadata, name, action.metadata.result[name])
+      !!action.metadata.result && Object.keys(action.metadata.result).map((name, index) =>
+        renderLine(action.metadata, name, action.metadata.result[name], 'result-' + index)
       )
     }
     <div className='call-section'>Log</div>
@@ -58,12 +58,12 @@ export const CallTab: React.FunctionComponent<{
   </div>;
 };
 
-function renderLine(metadata: CallMetadata, name: string, value: any) {
+function renderLine(metadata: CallMetadata, name: string, value: any, key: string) {
   const { title, type } = toString(metadata, name, value);
   let text = trimRight(title.replace(/\n/g, '↵'), 80);
   if (type === 'string')
     text = `"${text}"`;
-  return <div className='call-line'>{name}: <span className={type} title={title}>{text}</span></div>;
+  return <div key={key} className='call-line'>{name}: <span className={type} title={title}>{text}</span></div>;
 }
 
 function toString(metadata: CallMetadata, name: string, value: any): { title: string, type: string } {

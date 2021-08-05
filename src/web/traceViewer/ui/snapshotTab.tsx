@@ -24,8 +24,9 @@ import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-  snapshotSize: Size,
-}> = ({ action, snapshotSize }) => {
+  snapshotSizes: { [snapshotName: string]: Size },
+  defaultSnapshotSize: Size,
+}> = ({ action, snapshotSizes, defaultSnapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
@@ -60,6 +61,10 @@ export const SnapshotTab: React.FunctionComponent<{
     } catch (e) {
     }
   }, [action, snapshotIndex, iframeRef, snapshots]);
+
+  let snapshotSize = defaultSnapshotSize;
+  if (snapshots[snapshotIndex] && snapshots[snapshotIndex].snapshotName)
+    snapshotSize = snapshotSizes[snapshots[snapshotIndex].snapshotName] || defaultSnapshotSize;
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   const scaledSize = {
