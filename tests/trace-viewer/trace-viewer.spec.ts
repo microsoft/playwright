@@ -42,6 +42,9 @@ class TraceViewerPage {
     await this.page.click(`.action-title:has-text("${title}")`);
   }
 
+  async selectSnapshot(name: string) {
+    await this.page.click(`.snapshot-tab .tab-label:has-text("${name}")`);
+  }
 
   async callLines() {
     await this.page.waitForSelector('.call-line:visible');
@@ -73,6 +76,13 @@ class TraceViewerPage {
   async consoleStacks() {
     await this.page.waitForSelector('.console-stack:visible');
     return await this.page.$$eval('.console-stack:visible', ee => ee.map(e => e.textContent));
+  }
+
+  async snapshotSize() {
+    return this.page.$eval('.snapshot-container', e => {
+      const style = window.getComputedStyle(e);
+      return { width: style.width, height: style.height };
+    });
   }
 }
 
@@ -110,6 +120,7 @@ test.beforeAll(async ({ browser, browserName }, workerInfo) => {
     page.waitForNavigation(),
     page.waitForTimeout(200).then(() => page.goto('data:text/html,<html>Hello world 2</html>'))
   ]);
+  await page.setViewportSize({ width: 500, height: 600 });
   await page.close();
   traceFile = path.join(workerInfo.project.outputDir, browserName, 'trace.zip');
   await context.tracing.stop({ path: traceFile });
@@ -129,6 +140,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     'page.click\"Click\"',
     'page.waitForNavigation',
     'page.gotodata:text/html,<html>Hello world 2</html>',
+    'page.setViewportSize',
   ]);
 });
 
@@ -166,14 +178,14 @@ test('should open console errors on click', async ({ showTraceViewer, browserNam
   test.fixme(browserName === 'firefox', 'Firefox generates stray console message for page error');
   const traceViewer = await showTraceViewer(traceFile);
   expect(await traceViewer.actionIconsText('page.evaluate')).toEqual(['2', '1']);
-  expect(await traceViewer.page.isHidden('.console-tab'));
+  expect(await traceViewer.page.isHidden('.console-tab')).toBeTruthy();
   await (await traceViewer.actionIcons('page.evaluate')).click();
-  expect(await traceViewer.page.waitForSelector('.console-tab'));
+  expect(await traceViewer.page.waitForSelector('.console-tab')).toBeTruthy();
 });
 
 test('should show params and return value', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer(traceFile);
-  expect(await traceViewer.selectAction('page.evaluate'));
+  await traceViewer.selectAction('page.evaluate');
   expect(await traceViewer.callLines()).toEqual([
     'page.evaluate',
     'expression: "({↵    a↵  }) => {↵    console.log(\'Info\');↵    console.warn(\'Warning\');↵    con…"',
@@ -181,4 +193,13 @@ test('should show params and return value', async ({ showTraceViewer, browserNam
     'arg: {"a":"paramA","b":4}',
     'value: "return paramA"'
   ]);
+});
+
+test('should have correct snapshot size', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.selectAction('page.setViewport');
+  await traceViewer.selectSnapshot('Before');
+  expect(await traceViewer.snapshotSize()).toEqual({ width: '1280px', height: '720px' });
+  await traceViewer.selectSnapshot('After');
+  expect(await traceViewer.snapshotSize()).toEqual({ width: '500px', height: '600px' });
 });
