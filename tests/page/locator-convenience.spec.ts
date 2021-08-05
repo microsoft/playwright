@@ -125,9 +125,9 @@ it('innerText should be atomic', async ({ playwright, page }) => {
       return result;
     }
   });
-  await playwright.selectors.register('innerText', createDummySelector);
+  await playwright.selectors.register('innerTextFromLocators', createDummySelector);
   await page.setContent(`<div>Hello</div>`);
-  const tc = await page.innerText('innerText=div');
+  const tc = await page.innerText('innerTextFromLocators=div');
   expect(tc).toBe('Hello');
   expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
 });
