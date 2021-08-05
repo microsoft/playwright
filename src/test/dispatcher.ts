@@ -71,11 +71,11 @@ export class Dispatcher {
       const testGroup = this._queue.shift()!;
       const requiredHash = testGroup.workerHash;
       let worker = await this._obtainWorker(testGroup);
-      while (!this._isStopped && worker.hash && worker.hash !== requiredHash) {
+      while (worker && worker.hash && worker.hash !== requiredHash) {
         worker.stop();
         worker = await this._obtainWorker(testGroup);
       }
-      if (this._isStopped)
+      if (this._isStopped || !worker)
         break;
       jobs.push(this._runJob(worker, testGroup));
     }
@@ -182,6 +182,8 @@ export class Dispatcher {
 
   async _obtainWorker(testGroup: TestGroup) {
     const claimWorker = (): Promise<Worker> | null => {
+      if (this._isStopped)
+        return null;
       // Use available worker.
       if (this._freeWorkers.length)
         return Promise.resolve(this._freeWorkers.pop()!);
@@ -199,7 +201,7 @@ export class Dispatcher {
       await new Promise<void>(f => this._workerClaimers.push(f));
       worker = claimWorker();
     }
-    return worker!;
+    return worker;
   }
 
   async _notifyWorkerClaimer() {
@@ -294,6 +296,8 @@ export class Dispatcher {
         worker.stop();
       await result;
     }
+    while (this._workerClaimers.length)
+      this._workerClaimers.shift()!();
   }
 
   private _hasReachedMaxFailures() {
