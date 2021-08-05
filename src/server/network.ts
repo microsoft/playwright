@@ -79,7 +79,6 @@ export function stripFragmentFromUrl(url: string): string {
 }
 
 export class Request extends SdkObject {
-  readonly _routeDelegate: RouteDelegate | null;
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
   private _redirectedTo: Request | null = null;
@@ -97,12 +96,10 @@ export class Request extends SdkObject {
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
   _responseEndTiming = -1;
 
-  constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
+  constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
     super(frame, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
-    assert(!(routeDelegate && redirectedFrom), 'Should not be able to intercept redirects');
-    this._routeDelegate = routeDelegate;
     this._frame = frame;
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
@@ -185,12 +182,6 @@ export class Request extends SdkObject {
     };
   }
 
-  _route(): Route | null {
-    if (!this._routeDelegate)
-      return null;
-    return new Route(this, this._routeDelegate);
-  }
-
   updateWithRawHeaders(headers: types.HeadersArray) {
     this._headers = headers;
     this._headersMap.clear();
@@ -257,7 +248,7 @@ export class Route extends SdkObject {
       if (oldUrl.protocol !== newUrl.protocol)
         throw new Error('New URL must have same protocol as overridden URL');
     }
-    this._response = await this._delegate.continue(overrides);
+    this._response = await this._delegate.continue(this._request, overrides);
     return this._response;
   }
 
@@ -420,7 +411,7 @@ export class InterceptedResponse extends SdkObject {
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray) {
     super(request.frame(), 'interceptedResponse');
-    this._request = request;
+    this._request = request._finalRequest();
     this._status = status;
     this._statusText = statusText;
     this._headers = headers;
@@ -482,7 +473,7 @@ export class WebSocket extends SdkObject {
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
-  continue(overrides: types.NormalizedContinueOverrides): Promise<InterceptedResponse|null>;
+  continue(request: Request, overrides: types.NormalizedContinueOverrides): Promise<InterceptedResponse|null>;
   responseBody(forFulfill: boolean): Promise<Buffer>;
 }
 

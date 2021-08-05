@@ -254,19 +254,19 @@ export class FrameManager {
       frame._onLifecycleEvent(event);
   }
 
-  requestStarted(request: network.Request) {
+  requestStarted(request: network.Request, route?: network.RouteDelegate) {
     const frame = request.frame();
     this._inflightRequestStarted(request);
     if (request._documentId)
       frame.setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
-      const route = request._route();
       if (route)
-        route.continue();
+        route.continue(request, {});
       return;
     }
     this._page._browserContext.emit(BrowserContext.Events.Request, request);
-    this._page._requestStarted(request);
+    if (route)
+      this._page._requestStarted(request, route);
   }
 
   requestReceivedResponse(response: network.Response) {

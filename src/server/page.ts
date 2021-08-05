@@ -405,10 +405,8 @@ export class Page extends SdkObject {
     await this._delegate.updateRequestInterception();
   }
 
-  _requestStarted(request: network.Request) {
-    const route = request._route();
-    if (!route)
-      return;
+  _requestStarted(request: network.Request, routeDelegate: network.RouteDelegate) {
+    const route = new network.Route(request, routeDelegate);
     if (this._serverRequestInterceptor) {
       this._serverRequestInterceptor(route, request);
       return;
