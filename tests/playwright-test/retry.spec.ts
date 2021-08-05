@@ -68,7 +68,7 @@ test('should retry timeout', async ({ runInlineTest }) => {
         await new Promise(f => setTimeout(f, 10000));
       });
     `
-  }, { timeout: 100, retries: 2 });
+  }, { timeout: 1000, retries: 2 });
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);

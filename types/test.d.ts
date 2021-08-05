@@ -2297,6 +2297,35 @@ export interface PlaywrightWorkerOptions {
    * [fixtures.channel](https://playwright.dev/docs/api/class-fixtures#fixtures-channel) take priority over this.
    */
   launchOptions: LaunchOptions;
+  /**
+   * Whether to automatically capture a screenshot after each test. Defaults to `'off'`.
+   * - `'off'`: Do not capture screenshots.
+   * - `'on'`: Capture screenshot after each test.
+   * - `'only-on-failure'`: Capture screenshot after each test failure.
+   *
+   * Learn more about [automatic screenshots](https://playwright.dev/docs/test-configuration#automatic-screenshots).
+   */
+  screenshot: 'off' | 'on' | 'only-on-failure';
+  /**
+   * Whether to record a trace for each test. Defaults to `'off'`.
+   * - `'off'`: Do not record a trace.
+   * - `'on'`: Record a trace for each test.
+   * - `'retain-on-failure'`: Record a trace for each test, but remove it from successful test runs.
+   * - `'on-first-retry'`: Record a trace only when retrying a test for the first time.
+   *
+   * Learn more about [recording trace](https://playwright.dev/docs/test-configuration#record-test-trace).
+   */
+  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-trace';
+  /**
+   * Whether to record video for each test. Defaults to `'off'`.
+   * - `'off'`: Do not record video.
+   * - `'on'`: Record video for each test.
+   * - `'retain-on-failure'`: Record video for each test, but remove all videos from successful test runs.
+   * - `'on-first-retry'`: Record video only when retrying a test for the first time.
+   *
+   * Learn more about [recording video](https://playwright.dev/docs/test-configuration#record-video).
+   */
+  video: VideoMode | { mode: VideoMode, size: ViewportSize };
 }
 
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-video';
@@ -2390,35 +2419,6 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 
  *
  */
 export interface PlaywrightTestOptions {
-  /**
-   * Whether to automatically capture a screenshot after each test. Defaults to `'off'`.
-   * - `'off'`: Do not capture screenshots.
-   * - `'on'`: Capture screenshot after each test.
-   * - `'only-on-failure'`: Capture screenshot after each test failure.
-   *
-   * Learn more about [automatic screenshots](https://playwright.dev/docs/test-configuration#automatic-screenshots).
-   */
-  screenshot: 'off' | 'on' | 'only-on-failure';
-  /**
-   * Whether to record a trace for each test. Defaults to `'off'`.
-   * - `'off'`: Do not record a trace.
-   * - `'on'`: Record a trace for each test.
-   * - `'retain-on-failure'`: Record a trace for each test, but remove it from successful test runs.
-   * - `'on-first-retry'`: Record a trace only when retrying a test for the first time.
-   *
-   * Learn more about [recording trace](https://playwright.dev/docs/test-configuration#record-test-trace).
-   */
-  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-trace';
-  /**
-   * Whether to record video for each test. Defaults to `'off'`.
-   * - `'off'`: Do not record video.
-   * - `'on'`: Record video for each test.
-   * - `'retain-on-failure'`: Record video for each test, but remove all videos from successful test runs.
-   * - `'on-first-retry'`: Record video only when retrying a test for the first time.
-   *
-   * Learn more about [recording video](https://playwright.dev/docs/test-configuration#record-video).
-   */
-  video: VideoMode | { mode: VideoMode, size: ViewportSize };
   /**
    * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
    */

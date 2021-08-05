@@ -161,6 +161,65 @@ test('should override use:browserName with --browser', async ({ runInlineTest })
   ]);
 });
 
+test('should respect context options in various contexts', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { viewport: { width: 500, height: 500 } } };
+    `,
+    'a.test.ts': `
+      import fs from 'fs';
+      import os from 'os';
+      import path from 'path';
+      import rimraf from 'rimraf';
+
+      const { test } = pwt;
+      test.use({ locale: 'fr-CH' });
+
+      let context;
+      test.beforeAll(async ({ browser }) => {
+        context = await browser.newContext();
+      });
+
+      test.afterAll(async () => {
+        await context.close();
+      });
+
+      test('shared context', async ({}) => {
+        const page = await context.newPage();
+        expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+      });
+
+      test('own context', async ({ browser }) => {
+        const page = await browser.newPage();
+        expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+        await page.close();
+      });
+
+      test('default context', async ({ page }) => {
+        expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+      });
+
+      test('persistent context', async ({ playwright, browserName }) => {
+        const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'user-data-dir-'));
+        const context = await playwright[browserName].launchPersistentContext(dir);
+        const page = context.pages()[0];
+
+        expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+
+        await context.close();
+        rimraf.sync(dir);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+});
+
 test('should report error and pending operations on timeout', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
@@ -185,6 +244,22 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(stripAscii(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
 });
 
+test('should throw when using page in beforeAll', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.beforeAll(async ({ page }) => {
+      });
+      test('ok', async ({ page }) => {
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain(`Error: "context" and "page" fixtures are not suppoted in beforeAll. Use browser.newContext() instead.`);
+});
+
 test('should report click error on sigint', async ({ runInlineTest }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
@@ -206,37 +281,6 @@ test('should report click error on sigint', async ({ runInlineTest }) => {
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(1);
   expect(stripAscii(result.output)).toContain(`8 |         const promise = page.click('text=Missing');`);
-});
-
-test('should work with screenshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'only-on-failure' }, name: 'chromium' };
-    `,
-    'a.test.ts': `
-      const { test } = pwt;
-      test('pass', async ({ page }) => {
-        await page.setContent('<div>PASS</div>');
-        test.expect(1 + 1).toBe(2);
-      });
-      test('fail', async ({ page }) => {
-        await page.setContent('<div>FAIL</div>');
-        const page2 = await page.context().newPage();
-        await page2.setContent('<div>FAIL</div>');
-        test.expect(1 + 1).toBe(1);
-      });
-    `,
-  }, { workers: 1 });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
-  expect(result.failed).toBe(1);
-  const screenshotPass = testInfo.outputPath('test-results', 'a-pass-chromium', 'test-failed-1.png');
-  const screenshotFail1 = testInfo.outputPath('test-results', 'a-fail-chromium', 'test-failed-1.png');
-  const screenshotFail2 = testInfo.outputPath('test-results', 'a-fail-chromium', 'test-failed-2.png');
-  expect(fs.existsSync(screenshotPass)).toBe(false);
-  expect(fs.existsSync(screenshotFail1)).toBe(true);
-  expect(fs.existsSync(screenshotFail2)).toBe(true);
 });
 
 test('should work with video: retain-on-failure', async ({ runInlineTest }, testInfo) => {
@@ -338,37 +382,4 @@ test('should work with video size', async ({ runInlineTest }, testInfo) => {
   const videoPlayer = new VideoPlayer(path.join(folder, file));
   expect(videoPlayer.videoWidth).toBe(220);
   expect(videoPlayer.videoHeight).toBe(110);
-});
-
-test('should work with multiple contexts and trace: on', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { trace: 'on' } };
-    `,
-    'a.test.ts': `
-      const { test } = pwt;
-      test('pass', async ({ page, createContext }) => {
-        await page.setContent('<div>PASS</div>');
-
-        const context1 = await createContext();
-        const page1 = await context1.newPage();
-        await page1.setContent('<div>PASS</div>');
-
-        const context2 = await createContext({ locale: 'en-US' });
-        const page2 = await context2.newPage();
-        await page2.setContent('<div>PASS</div>');
-
-        test.expect(1 + 1).toBe(2);
-      });
-    `,
-  }, { workers: 1 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  const traceDefault = testInfo.outputPath('test-results', 'a-pass', 'trace.zip');
-  const trace1 = testInfo.outputPath('test-results', 'a-pass', 'trace-1.zip');
-  const trace2 = testInfo.outputPath('test-results', 'a-pass', 'trace-2.zip');
-  expect(fs.existsSync(traceDefault)).toBe(true);
-  expect(fs.existsSync(trace1)).toBe(true);
-  expect(fs.existsSync(trace2)).toBe(true);
 });

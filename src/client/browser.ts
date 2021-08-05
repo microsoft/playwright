@@ -23,12 +23,14 @@ import { BrowserContextOptions } from './types';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
+import type { BrowserType } from './browserType';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;
   _remoteType: 'owns-connection' | 'uses-connection' | null = null;
+  private _browserType!: BrowserType;
   readonly _name: string;
 
   static from(browser: channels.BrowserChannel): Browser {
@@ -46,13 +48,22 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 
+  _setBrowserType(browserType: BrowserType) {
+    this._browserType = browserType;
+    for (const context of this._contexts)
+      context._setBrowserType(browserType);
+  }
+
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     return this._wrapApiCall(async (channel: channels.BrowserChannel) => {
+      options = { ...this._browserType._defaultContextOptions, ...options };
       const contextOptions = await prepareBrowserContextParams(options);
       const context = BrowserContext.from((await channel.newContext(contextOptions)).context);
       context._options = contextOptions;
       this._contexts.add(context);
       context._logger = options.logger || this._logger;
+      context._setBrowserType(this._browserType);
+      await this._browserType._onDidCreateContext?.(context);
       return context;
     });
   }
