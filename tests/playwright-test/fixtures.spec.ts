@@ -628,3 +628,91 @@ test('should run tests in order', async ({ runInlineTest }) => {
     '%%test3',
   ]);
 });
+
+test('should reset file scope but not create a new worker', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        foo: [async ({}, use) => {
+          await use({ value: 'default' });
+        }, { scope: 'file' }]
+      });
+    `,
+    'a.test.ts': `
+      import { test } from './helper';
+
+      test('default1', async ({foo}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(0);
+        expect(foo.value).toBe('default');
+        expect(foo.marker).toBe(undefined);
+        console.log('\\n%%default1');
+        foo.marker = 42;
+      });
+
+      test.describe('suite1', () => {
+        test.use({ foo: { value: 'bar' } });
+        test('bar', async ({foo}, testInfo) => {
+          expect(testInfo.workerIndex).toBe(0);
+          expect(foo.value).toBe('bar');
+          expect(foo.marker).toBe(undefined);
+          console.log('\\n%%bar');
+        });
+      });
+
+      test('default2', async ({foo}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(0);
+        expect(foo.value).toBe('default');
+        expect(foo.marker).toBe(42);
+        console.log('\\n%%default2');
+      });
+    `,
+    'b.test.ts': `
+      import { test } from './helper';
+
+      test.use({ foo: { value: 'baz' } });
+      test.beforeAll(async ({foo}) => {
+        expect(foo.value).toBe('baz');
+        expect(foo.marker).toBe(undefined);
+        console.log('\\n%%beforeBaz');
+      });
+      test('baz', async ({foo}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(0);
+        expect(foo.value).toBe('baz');
+        expect(foo.marker).toBe(undefined);
+        console.log('\\n%%baz');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%default1',
+    '%%default2',
+    '%%bar',
+    '%%beforeBaz',
+    '%%baz',
+  ]);
+});
+
+test('should auto-start file scope', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const test = pwt.test.extend({
+        foo: [async ({}, use) => {
+          global.fooRun = true;
+          await use('foo');
+        }, { scope: 'file', auto: true }]
+      });
+
+      test.beforeAll(async () => {
+        expect(global.fooRun).toBe(true);
+      });
+
+      test('test', async () => {
+        expect(global.fooRun).toBe(true);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

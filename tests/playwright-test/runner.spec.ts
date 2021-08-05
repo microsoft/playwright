@@ -85,7 +85,7 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('interrupted1', async () => {
         console.log('\\n%%SEND-SIGINT%%1');
-        await new Promise(f => setTimeout(f, 1000));
+        await new Promise(f => setTimeout(f, 3000));
       });
       test('skipped1', async () => {
         console.log('\\n%%skipped1');
@@ -95,7 +95,7 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('interrupted2', async () => {
         console.log('\\n%%SEND-SIGINT%%2');
-        await new Promise(f => setTimeout(f, 1000));
+        await new Promise(f => setTimeout(f, 3000));
       });
       test('skipped2', async () => {
         console.log('\\n%%skipped2');

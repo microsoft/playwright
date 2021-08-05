@@ -264,7 +264,7 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 } & {
   [K in keyof PT]?: TestFixtureValue<PT[K], T & W & PT & PW>;
 } & {
-  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean }];
+  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker' | 'file', auto?: boolean }];
 } & {
   [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean }];
 };

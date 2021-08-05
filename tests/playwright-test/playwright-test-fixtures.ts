@@ -241,7 +241,7 @@ export const test = base.extend<Fixtures>({
       return runResult;
     });
     if (testInfo.status !== testInfo.expectedStatus && runResult && !process.env.PW_RUNNER_DEBUG)
-      console.log(runResult.output);
+      console.log('\n' + runResult.output + '\n');
   },
 
   runTSC: async ({}, use, testInfo) => {
@@ -252,7 +252,7 @@ export const test = base.extend<Fixtures>({
       return tscResult;
     });
     if (testInfo.status !== testInfo.expectedStatus && tscResult && !process.env.PW_RUNNER_DEBUG)
-      console.log(tscResult.output);
+      console.log('\n' + tscResult.output + '\n');
   },
 });
 

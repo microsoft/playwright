@@ -28,13 +28,14 @@ test('should get top level stdio', async ({runInlineTest}) => {
       });
     `
   });
-  expect(result.output.split('\n').filter(x => x.startsWith('%%'))).toEqual([
-    '%% top level stdout',
-    '%% top level stderr',
-    '%% top level stdout', // top level logs appear twice, because the file is required twice
-    '%% top level stderr',
+  // top level logs appear twice, because the file is required twice
+  expect(result.output.split('\n').filter(x => x.startsWith('%%')).sort()).toEqual([
+    '%% stderr in a test',
     '%% stdout in a test',
-    '%% stderr in a test'
+    '%% top level stderr',
+    '%% top level stderr',
+    '%% top level stdout',
+    '%% top level stdout',
   ]);
 });
 
