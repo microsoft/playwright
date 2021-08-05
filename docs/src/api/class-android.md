@@ -3,6 +3,21 @@
 
 Playwright has **experimental** support for Android automation. See [here](./mobile.md) for more information. You can access android namespace via:
 
+*Requirements*
+
+* Android device or AVD Emulator.
+* [ADB daemon](https://developer.android.com/studio/command-line/adb) running and authenticated with your device. Typically running `adb devices` is all you need to do.
+* [`Chrome 87`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the device
+* "Enable command line on non-rooted devices" enabled in `chrome://flags`.
+
+*Known limitations*
+
+* Raw USB operation is not yet supported, so you need ADB.
+* Device needs to be awake to produce screenshots. Enabling "Stay awake" developer mode will help.
+* We didn't run all the tests against the device, so not everything works.
+
+*How to run*
+
 ```js
 const { _android: android } = require('playwright');
 ```
