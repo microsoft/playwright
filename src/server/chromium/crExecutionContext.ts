@@ -95,7 +95,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
   }
 
   createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
-    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type, remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -120,4 +120,27 @@ function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObj
   const value = remoteObject.value;
   const unserializableValue = remoteObject.unserializableValue;
   return unserializableValue ? js.parseUnserializableValue(unserializableValue) : value;
+}
+
+function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefined {
+  if (object.type === 'undefined')
+    return 'undefined';
+  if ('value' in object)
+    return String(object.value);
+  if (object.unserializableValue)
+    return String(object.unserializableValue);
+
+  if (object.description === 'Object' && object.preview) {
+    const tokens = [];
+    for (const { name, value } of object.preview.properties)
+      tokens.push(`${name}: ${value}`);
+    return `{${tokens.join(', ')}}`;
+  }
+  if (object.subtype === 'array' && object.preview) {
+    const result = [];
+    for (const { name, value } of object.preview.properties)
+      result[+name] = value;
+    return '[' + String(result) + ']';
+  }
+  return object.description;
 }

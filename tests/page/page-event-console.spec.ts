@@ -18,14 +18,17 @@
 import { test as it, expect } from './pageTest';
 import util from 'util';
 
-it('should work', async ({page}) => {
+it('should work', async ({page, browserName}) => {
   let message = null;
   page.once('console', m => message = m);
   await Promise.all([
     page.evaluate(() => console.log('hello', 5, {foo: 'bar'})),
     page.waitForEvent('console')
   ]);
-  expect(message.text()).toEqual('hello 5 JSHandle@object');
+  if (browserName !== 'firefox')
+    expect(message.text()).toEqual('hello 5 {foo: bar}');
+  else
+    expect(message.text()).toEqual('hello 5 JSHandle@object');
   expect(message.type()).toEqual('log');
   expect(await message.args()[0].jsonValue()).toEqual('hello');
   expect(await message.args()[1].jsonValue()).toEqual(5);
@@ -72,18 +75,21 @@ it('should work for different console API calls', async ({page}) => {
     'calling console.dir',
     'calling console.warn',
     'calling console.error',
-    'JSHandle@promise',
+    'Promise',
   ]);
 });
 
-it('should not fail for window object', async ({page}) => {
+it('should not fail for window object', async ({ page, browserName }) => {
   let message = null;
   page.once('console', msg => message = msg);
   await Promise.all([
     page.evaluate(() => console.error(window)),
     page.waitForEvent('console')
   ]);
-  expect(message.text()).toBe('JSHandle@object');
+  if (browserName !== 'firefox')
+    expect(message.text()).toEqual('Window');
+  else
+    expect(message.text()).toEqual('JSHandle@object');
 });
 
 it('should trigger correct Log', async ({page, server}) => {
@@ -134,4 +140,31 @@ it('should not throw when there are console messages in detached iframes', async
   ]);
   // 4. Connect to the popup and make sure it doesn't throw.
   expect(await popup.evaluate('1 + 1')).toBe(2);
+});
+
+it('should use object previews for arrays and objects', async ({page, browserName}) => {
+  let text: string;
+  page.on('console', message => {
+    text = message.text();
+  });
+  await page.evaluate(() => console.log([1, 2, 3], {a: 1}, window));
+
+  if (browserName !== 'firefox')
+    expect(text).toEqual('[1,2,3] {a: 1} Window');
+  else
+    expect(text).toEqual('Array JSHandle@object JSHandle@object');
+});
+
+it('should use object previews for errors', async ({page, browserName}) => {
+  let text: string;
+  page.on('console', message => {
+    text = message.text();
+  });
+  await page.evaluate(() => console.log(new Error('Exception')));
+  if (browserName === 'chromium')
+    expect(text).toContain('.evaluate');
+  if (browserName === 'webkit')
+    expect(text).toEqual('Error: Exception');
+  if (browserName === 'firefox')
+    expect(text).toEqual('Error');
 });
