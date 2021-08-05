@@ -211,6 +211,25 @@ it('element state checks should work for label with zero-sized input', async ({p
   expect(await page.isDisabled('text=Click me')).toBe(true);
 });
 
+it('isVisible should not throw when the DOM element is not connected', async ({page}) => {
+  await page.setContent(`<div id="root"></div>`);
+  await page.evaluate(() => {
+    function insert() {
+      document.getElementById('root').innerHTML = '<div id="problem">Problem</div>';
+      window.requestAnimationFrame(remove);
+    }
+    function remove() {
+      const node = document.getElementById('problem');
+      node?.parentNode?.removeChild(node);
+      window.requestAnimationFrame(insert);
+    }
+    window.requestAnimationFrame(insert);
+  });
+
+  for (let i = 0; i < 10; i++)
+    await page.isVisible('#problem');
+});
+
 it('isEnabled and isDisabled should work', async ({ page }) => {
   await page.setContent(`
     <button disabled>button1</button>
