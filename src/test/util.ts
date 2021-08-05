@@ -71,7 +71,7 @@ export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: numb
   return (new DeadlineRunner(promise, deadline)).result;
 }
 
-export async function pollUntilDeadline(state: ReturnType<Expect['getState']>, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, pollInterval: number, deadlinePromise: Promise<void>): Promise<void> {
+export async function pollUntilDeadline(state: ReturnType<Expect['getState']>, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, deadlinePromise: Promise<void>): Promise<void> {
   const playwrightActionTimeout = (state as any).playwrightActionTimeout;
   pollTime = pollTime === 0 ? 0 : pollTime || playwrightActionTimeout;
   const deadline = pollTime ? monotonicTime() + pollTime : 0;
@@ -82,6 +82,8 @@ export async function pollUntilDeadline(state: ReturnType<Expect['getState']>, f
     return true;
   });
 
+  const pollIntervals = [100, 250, 500];
+  let attempts = 0;
   while (!aborted) {
     const remainingTime = deadline ? deadline - monotonicTime() : 1000 * 3600 * 24;
     if (remainingTime <= 0)
@@ -102,7 +104,7 @@ export async function pollUntilDeadline(state: ReturnType<Expect['getState']>, f
     }
 
     let timer: NodeJS.Timer;
-    const timeoutPromise = new Promise(f => timer = setTimeout(f, pollInterval));
+    const timeoutPromise = new Promise(f => timer = setTimeout(f, pollIntervals[attempts++] || 1000));
     await Promise.race([abortedPromise, timeoutPromise]);
     clearTimeout(timer!);
   }

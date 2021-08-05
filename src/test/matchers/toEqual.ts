@@ -64,7 +64,7 @@ export async function toEqual<T>(
     received = await query(remainingTime);
     pass = equals(received, expected, [iterableEquality]);
     return pass === !matcherOptions.isNot;
-  }, options.timeout, 100, testInfo._testFinished);
+  }, options.timeout, testInfo._testFinished);
 
   const message = pass
     ? () =>
