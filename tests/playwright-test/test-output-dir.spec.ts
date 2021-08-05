@@ -88,6 +88,7 @@ test('should include the project name', async ({ runInlineTest }) => {
     'helper.ts': `
       export const test = pwt.test.extend({
         auto: [ async ({}, run, testInfo) => {
+          testInfo.snapshotSuffix = '';
           await run();
         }, { auto: true } ]
       });

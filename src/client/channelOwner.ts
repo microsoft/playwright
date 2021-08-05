@@ -47,7 +47,6 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     if (this._parent) {
       this._parent._objects.set(guid, this);
       this._logger = this._parent._logger;
-      this._csi = this._parent._csi;
     }
 
     this._channel = this._createChannel(new EventEmitter(), null);
@@ -95,10 +94,15 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const stackTrace = captureStackTrace();
     const { apiName, frameTexts } = stackTrace;
     const channel = this._createChannel({}, stackTrace);
+
+    let ancestorWithCSI: ChannelOwner<any> = this;
+    while (!ancestorWithCSI._csi && ancestorWithCSI._parent)
+      ancestorWithCSI = ancestorWithCSI._parent;
     let csiCallback: ((e?: Error) => void) | undefined;
+
     try {
       logApiCall(logger, `=> ${apiName} started`);
-      csiCallback = this._csi?.onApiCall(apiName);
+      csiCallback = ancestorWithCSI._csi?.onApiCall(apiName);
       const result = await func(channel as any, stackTrace);
       csiCallback?.();
       logApiCall(logger, `<= ${apiName} succeeded`);

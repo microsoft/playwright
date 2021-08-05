@@ -317,6 +317,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   async close(): Promise<void> {
     try {
       await this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+        await this._browser?._browserType?._onWillCloseContext?.(this);
         await channel.close();
         await this._closedPromise;
       });

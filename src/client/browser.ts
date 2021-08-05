@@ -23,12 +23,14 @@ import { BrowserContextOptions } from './types';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
+import { BrowserType } from './browserType';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;
   _remoteType: 'owns-connection' | 'uses-connection' | null = null;
+  _browserType: BrowserType;
   readonly _name: string;
 
   static from(browser: channels.BrowserChannel): Browser {
@@ -44,15 +46,22 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     this._name = initializer.name;
     this._channel.on('close', () => this._didClose());
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
+    if (parent instanceof BrowserType)
+      this._browserType = parent;
+    else
+      this._browserType = (parent as any)[this._name]; // parent must be Playwright
+    this._browserType._browsers.add(this);
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     return this._wrapApiCall(async (channel: channels.BrowserChannel) => {
-      const contextOptions = await prepareBrowserContextParams(options);
+      const defaultOptions = this._browserType._defaultContextOptions;
+      const contextOptions = await prepareBrowserContextParams({ ...defaultOptions, ...options });
       const context = BrowserContext.from((await channel.newContext(contextOptions)).context);
       context._options = contextOptions;
       this._contexts.add(context);
       context._logger = options.logger || this._logger;
+      await this._browserType._onDidCreateContext?.(context);
       return context;
     });
   }
@@ -112,6 +121,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   }
 
   _didClose() {
+    this._browserType._browsers.delete(this);
     this._isConnected = false;
     this.emit(Events.Browser.Disconnected, this);
   }

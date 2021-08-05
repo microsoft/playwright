@@ -334,7 +334,7 @@ export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<Playwr
  * These tests are executed in Playwright environment that launches the browser
  * and provides a fresh page to each test.
  */
-export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+export const test: TestType<PlaywrightTestArgs, PlaywrightWorkerArgs & PlaywrightWorkerOptions & PlaywrightTestOptions>;
 export default test;
 
 export const _baseTest: TestType<{}, {}>;

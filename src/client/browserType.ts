@@ -18,7 +18,7 @@ import * as channels from '../protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
+import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, BrowserContextOptions } from './types';
 import WebSocket from 'ws';
 import { Connection } from './connection';
 import { Events } from './events';
@@ -45,6 +45,12 @@ export interface BrowserServer extends api.BrowserServer {
 export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> implements api.BrowserType {
   private _timeoutSettings = new TimeoutSettings();
   _serverLauncher?: BrowserServerLauncher;
+  _browsers = new Set<Browser>();
+
+  // Instrumentation.
+  _defaultContextOptions: BrowserContextOptions = {};
+  _onDidCreateContext?: (context: BrowserContext) => Promise<void>;
+  _onWillCloseContext?: (context: BrowserContext) => Promise<void>;
 
   static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -62,6 +68,13 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
 
   name(): string {
     return this._initializer.name;
+  }
+
+  _contexts(): BrowserContext[] {
+    const contexts: BrowserContext[] = [];
+    for (const browser of this._browsers)
+      contexts.push(...browser._contexts);
+    return contexts;
   }
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {

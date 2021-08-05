@@ -114,7 +114,6 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
   ]);
 });
 
-
 test('should work without a file extension', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': smallReporterJS,
@@ -162,6 +161,9 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
 test('should report expect steps', async ({ runInlineTest }) => {
   const expectReporterJS = `
     class Reporter {
+      onStdOut(chunk) {
+        process.stdout.write(chunk);
+      }
       onStepBegin(test, result, step) {
         const copy = { ...step, startTime: undefined, duration: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
@@ -223,8 +225,6 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `%% end {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
   ]);
 });
@@ -273,8 +273,6 @@ test('should report api steps', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
   ]);
 });
@@ -324,8 +322,6 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.click\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for selector \\\"input\\\"\\n============================================================\",\"stack\":\"<stack>\"}}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
   ]);
 });
@@ -375,8 +371,6 @@ test('should report test.step', async ({ runInlineTest }) => {
     `%% end {\"title\":\"expect.toBe\",\"category\":\"expect\",\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}`,
     `%% end {\"title\":\"First step\",\"category\":\"test.step\",\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
   ]);
 });
