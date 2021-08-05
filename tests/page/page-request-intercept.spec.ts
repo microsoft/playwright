@@ -224,7 +224,7 @@ it('should fulfill original response after redirects', async ({page, browserName
   expect(redirectChain).toEqual(expectedUrls);
 
   expect(response.status()).toBe(200);
-  expect(await response.text()).toBe('<title>Woof-Woof</title>\n');
+  expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
 });
 
 it('should abort after redirects', async ({page, browserName, server}) => {
