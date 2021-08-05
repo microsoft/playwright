@@ -214,3 +214,37 @@ test('beforeAll hooks are skipped when no tests in the suite are run', async ({ 
   expect(result.output).toContain('%%beforeAll2');
   expect(result.output).not.toContain('%%beforeAll1');
 });
+
+test('afterAll and afterEach still run for failing tests', async ({ runInlineTest }) => {
+  test.fail();
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.beforeAll(() => {
+        console.log('\\n%%beforeAll');
+      });
+      test.afterAll(() => {
+        console.log('\\n%%afterAll');
+      });
+      test.beforeEach(() => {
+        console.log('\\n%%beforeEach');
+      });
+      test.afterAll(() => {
+        console.log('\\n%%afterEach');
+      });
+      test('failed', () => {
+        console.log('\\n%%test');
+        throw new Error('%%failed');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeAll',
+    '%%beforeEach',
+    '%%test',
+    '%%afterEach',
+    '%%afterAll',
+  ]);
+});
