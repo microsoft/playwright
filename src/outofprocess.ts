@@ -52,7 +52,7 @@ class PlaywrightClient {
     transport.onmessage = message => connection.dispatch(JSON.parse(message));
     this._closePromise = new Promise(f => transport.onclose = f);
 
-    this._playwright = connection.waitForObjectWithKnownName('Playwright');
+    this._playwright = connection.initializePlaywright();
   }
 
   async stop() {

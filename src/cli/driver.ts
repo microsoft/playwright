@@ -21,10 +21,8 @@ import * as playwright from '../..';
 import { BrowserType } from '../client/browserType';
 import { LaunchServerOptions } from '../client/types';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
-import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { Transport } from '../protocol/transport';
 import { PlaywrightServer, PlaywrightServerOptions } from '../remote/playwrightServer';
-import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
 export function printApiJson() {
@@ -46,9 +44,6 @@ export function runDriver() {
     await gracefullyCloseAll();
     process.exit(0);
   };
-
-  const playwright = createPlaywright();
-  new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
 
 export async function runServer(port: number | undefined,  configFile?: string) {

@@ -149,6 +149,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       value: tString,
     })),
   });
+  scheme.RootInitializeParams = tObject({
+    language: tString,
+  });
   scheme.PlaywrightSetForwardedPortsParams = tObject({
     ports: tArray(tNumber),
   });

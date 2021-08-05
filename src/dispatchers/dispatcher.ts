@@ -23,6 +23,7 @@ import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { createPlaywright } from '../server/playwright';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -125,6 +126,12 @@ class Root extends Dispatcher<{ guid: '' }, {}> {
   constructor(connection: DispatcherConnection) {
     super(connection, { guid: '' }, '', {}, true);
   }
+
+  initialize(params: { language?: string }): import('./playwrightDispatcher').PlaywrightDispatcher {
+    const { PlaywrightDispatcher } = require('./playwrightDispatcher');
+    const playwright = createPlaywright();
+    return new PlaywrightDispatcher(this, playwright);
+  }
 }
 
 export class DispatcherConnection {
@@ -175,6 +182,8 @@ export class DispatcherConnection {
     };
     const scheme = createScheme(tChannel);
     this._validateParams = (type: string, method: string, params: any): any => {
+      if (type === '')
+        type = 'Root';
       const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
       if (!scheme[name])
         throw new ValidationError(`Unknown scheme for ${type}.${method}`);
