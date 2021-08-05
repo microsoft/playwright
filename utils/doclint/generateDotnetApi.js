@@ -568,7 +568,7 @@ function renderMethod(member, parent, name, options, out) {
 
     if (arg.name === 'options') {
       if (options.mode === 'options' || options.mode === 'base') {
-        const optionsType = member.clazz.name + name + 'Options';
+        const optionsType = member.clazz.name + name.replace('<T>', '') + 'Options';
         optionTypes.set(optionsType, arg.type);
         args.push(`${optionsType}? options = default`);
         argTypeMap.set(`${optionsType}? options = default`, 'options');
