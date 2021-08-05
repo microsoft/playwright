@@ -177,6 +177,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           visitNode(child);
       };
       visitNode(document.documentElement);
+      visitNode(this._fakeBase);
     }
 
     private _sanitizeUrl(url: string): string {

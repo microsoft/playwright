@@ -38,18 +38,24 @@ export type TracerOptions = {
 
 export const VERSION = 1;
 
+type RecordingState = {
+  options: TracerOptions,
+  traceFile: string,
+  lastReset: number,
+  sha1s: Set<string>,
+};
+
+const kScreencastOptions = { width: 800, height: 600, quality: 90 };
+
 export class Tracing implements InstrumentationListener {
   private _appendEventChain = Promise.resolve();
   private _snapshotter: TraceSnapshotter;
-  private _eventListeners: RegisteredListener[] = [];
+  private _screencastListeners: RegisteredListener[] = [];
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
   private _context: BrowserContext;
-  private _traceFile: string | undefined;
   private _resourcesDir: string;
-  private _sha1s = new Set<string>();
-  private _recordingTraceEvents = false;
+  private _recording: RecordingState | undefined;
   private _tracesDir: string;
-  private _lastReset = 0;
 
   constructor(context: BrowserContext) {
     this._context = context;
@@ -60,63 +66,77 @@ export class Tracing implements InstrumentationListener {
 
   async start(options: TracerOptions): Promise<void> {
     // context + page must be the first events added, this method can't have awaits before them.
-    if (this._recordingTraceEvents)
-      throw new Error('Tracing has already been started');
-    this._recordingTraceEvents = true;
-    // TODO: passing the same name for two contexts makes them write into a single file
-    // and conflict.
-    this._traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
-    this._lastReset = 0;
 
-    this._appendEventChain = mkdirIfNeeded(this._traceFile);
-    const event: trace.ContextCreatedTraceEvent = {
-      version: VERSION,
-      type: 'context-options',
-      browserName: this._context._browser.options.name,
-      options: this._context._options
-    };
-    this._appendTraceEvent(event);
-    for (const page of this._context.pages())
-      this._onPage(options.screenshots, page);
-    this._eventListeners.push(
-        eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this, options.screenshots)),
-    );
+    const state = this._recording;
+    if (!state) {
+      // TODO: passing the same name for two contexts makes them write into a single file
+      // and conflict.
+      const traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
+      this._recording = { options, traceFile, lastReset: 0, sha1s: new Set() };
+      this._appendEventChain = mkdirIfNeeded(traceFile);
+      const event: trace.ContextCreatedTraceEvent = {
+        version: VERSION,
+        type: 'context-options',
+        browserName: this._context._browser.options.name,
+        options: this._context._options
+      };
+      this._appendTraceEvent(event);
+    }
+
+    if (!state?.options?.screenshots && options.screenshots)
+      this._startScreencast();
+    else if (state?.options?.screenshots && !options.screenshots)
+      this._stopScreencast();
 
     // context + page must be the first events added, no awaits above this line.
     await fs.promises.mkdir(this._resourcesDir, { recursive: true });
 
-    this._context.instrumentation.addListener(this);
-    if (options.snapshots)
-      await this._snapshotter.start();
+    if (!state)
+      this._context.instrumentation.addListener(this);
+
+    await this._appendTraceOperation(async () => {
+      if (options.snapshots && state?.options?.snapshots) {
+        // Reset snapshots to avoid back-references.
+        await this._snapshotter.reset();
+      } else if (options.snapshots) {
+        await this._snapshotter.start();
+      } else if (state?.options?.snapshots) {
+        await this._snapshotter.stop();
+      }
+
+      if (state) {
+        state.lastReset++;
+        const markerEvent: trace.MarkerTraceEvent = { type: 'marker', resetIndex: state.lastReset };
+        await fs.promises.appendFile(state.traceFile, JSON.stringify(markerEvent) + '\n');
+      }
+    });
+
+    if (this._recording)
+      this._recording.options = options;
   }
 
-  async reset(): Promise<void> {
-    await this._appendTraceOperation(async () => {
-      // Reset snapshots to avoid back-references.
-      await this._snapshotter.reset();
-      this._lastReset++;
-      const markerEvent: trace.MarkerTraceEvent = { type: 'marker', resetIndex: this._lastReset };
-      await fs.promises.appendFile(this._traceFile!, JSON.stringify(markerEvent) + '\n');
-    });
+  private _startScreencast() {
+    for (const page of this._context.pages())
+      this._startScreencastInPage(page);
+    this._screencastListeners.push(
+        eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._startScreencastInPage.bind(this)),
+    );
+  }
+
+  private _stopScreencast() {
+    eventsHelper.removeEventListeners(this._screencastListeners);
+    for (const page of this._context.pages())
+      page.setScreencastOptions(null);
   }
 
   async stop(): Promise<void> {
-    if (!this._eventListeners.length)
+    if (!this._recording)
       return;
+    this._recording = undefined;
     this._context.instrumentation.removeListener(this);
-    eventsHelper.removeEventListeners(this._eventListeners);
-    for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
-      await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
-      if (!afterSnapshot)
-        metadata.error = { error: { name: 'Error', message: 'Action was interrupted' } };
-      await this.onAfterCall(sdkObject, metadata);
-    }
-    for (const page of this._context.pages())
-      page.setScreencastOptions(null);
+    this._stopScreencast();
     await this._snapshotter.stop();
-
     // Ensure all writes are finished.
-    this._recordingTraceEvents = false;
     await this._appendEventChain;
   }
 
@@ -125,25 +145,42 @@ export class Tracing implements InstrumentationListener {
   }
 
   async export(): Promise<Artifact> {
-    if (!this._traceFile)
+    if (!this._recording)
       throw new Error('Must start tracing before exporting');
+
+    for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
+      await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
+      let callMetadata = metadata;
+      if (!afterSnapshot) {
+        // Note: we should not modify metadata here to avoid side-effects in any other place.
+        callMetadata = {
+          ...metadata,
+          error: { error: { name: 'Error', message: 'Action was interrupted' } },
+        };
+      }
+      await this.onAfterCall(sdkObject, callMetadata);
+    }
+
     // Chain the export operation against write operations,
     // so that neither trace file nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
+      if (!this._recording)
+        throw new Error('Must start tracing before exporting');
+
       await this._snapshotter.checkpoint();
 
-      const resetIndex = this._lastReset;
-      let trace = { file: this._traceFile!, sha1s: this._sha1s };
+      const resetIndex = this._recording.lastReset;
+      let state = this._recording;
       // Make a filtered trace if needed.
       if (resetIndex)
-        trace = await this._filterTrace(this._traceFile!, resetIndex);
+        state = await this._filterTrace(this._recording, resetIndex);
 
       const zipFile = new yazl.ZipFile();
       const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
       const succeededPromise = new Promise<Artifact>(async fulfill => {
-        zipFile.addFile(trace.file, 'trace.trace');
-        const zipFileName = trace.file + '.zip';
-        for (const sha1 of trace.sha1s)
+        zipFile.addFile(state.traceFile, 'trace.trace');
+        const zipFileName = state.traceFile + '.zip';
+        for (const sha1 of state.sha1s)
           zipFile.addFile(path.join(this._resourcesDir!, sha1), path.join('resources', sha1));
         zipFile.end();
         await new Promise(f => {
@@ -156,17 +193,17 @@ export class Tracing implements InstrumentationListener {
       return Promise.race([failedPromise, succeededPromise]).finally(async () => {
         // Remove the filtered trace.
         if (resetIndex)
-          await fs.promises.unlink(trace.file).catch(() => {});
+          await fs.promises.unlink(state.traceFile).catch(() => {});
       });
     });
   }
 
-  private async _filterTrace(traceFile: string, resetIndex: number): Promise<{ file: string, sha1s: Set<string> }> {
-    const ext = path.extname(traceFile);
-    const traceFileCopy = traceFile.substring(0, traceFile.length - ext.length) + '-copy' + resetIndex + ext;
+  private async _filterTrace(state: RecordingState, sinceResetIndex: number): Promise<RecordingState> {
+    const ext = path.extname(state.traceFile);
+    const traceFileCopy = state.traceFile.substring(0, state.traceFile.length - ext.length) + '-copy' + sinceResetIndex + ext;
     const sha1s = new Set<string>();
     await new Promise<void>((resolve, reject) => {
-      const fileStream = fs.createReadStream(traceFile, 'utf8');
+      const fileStream = fs.createReadStream(state.traceFile, 'utf8');
       const rl = readline.createInterface({
         input: fileStream,
         crlfDelay: Infinity
@@ -176,10 +213,14 @@ export class Tracing implements InstrumentationListener {
       rl.on('line', line => {
         try {
           const event = JSON.parse(line) as trace.TraceEvent;
-          if (event.type === 'marker' && event.resetIndex === resetIndex) {
-            foundMarker = true;
-          } else if (event.type === 'resource-snapshot' || event.type === 'context-options' || foundMarker) {
-            // We keep all resources for snapshots, context options and all events after the marker.
+          if (event.type === 'marker') {
+            if (event.resetIndex === sinceResetIndex)
+              foundMarker = true;
+          } else if ((event.type === 'resource-snapshot' && state.options.snapshots) || event.type === 'context-options' || foundMarker) {
+            // We keep:
+            // - old resource events for snapshots;
+            // - initial context options event;
+            // - all events after the marker that are not markers.
             visitSha1s(event, sha1s);
             copyChain = copyChain.then(() => fs.promises.appendFile(traceFileCopy, line + '\n'));
           }
@@ -195,7 +236,7 @@ export class Tracing implements InstrumentationListener {
         resolve();
       });
     });
-    return { file: traceFileCopy, sha1s };
+    return { options: state.options, lastReset: state.lastReset, sha1s, traceFile: traceFileCopy };
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
@@ -244,11 +285,9 @@ export class Tracing implements InstrumentationListener {
     this._appendTraceEvent(event);
   }
 
-  private _onPage(screenshots: boolean | undefined, page: Page) {
-    if (screenshots)
-      page.setScreencastOptions({ width: 800, height: 600, quality: 90 });
-
-    this._eventListeners.push(
+  private _startScreencastInPage(page: Page) {
+    page.setScreencastOptions(kScreencastOptions);
+    this._screencastListeners.push(
         eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, params => {
           const sha1 = calculateSha1(createGuid()); // no need to compute sha1 for screenshots
           const event: trace.ScreencastFrameTraceEvent = {
@@ -269,12 +308,12 @@ export class Tracing implements InstrumentationListener {
   }
 
   private _appendTraceEvent(event: any) {
-    if (!this._recordingTraceEvents)
-      return;
     // Serialize all writes to the trace file.
     this._appendTraceOperation(async () => {
-      visitSha1s(event, this._sha1s);
-      await fs.promises.appendFile(this._traceFile!, JSON.stringify(event) + '\n');
+      if (!this._recording)
+        return;
+      visitSha1s(event, this._recording.sha1s);
+      await fs.promises.appendFile(this._recording.traceFile, JSON.stringify(event) + '\n');
     });
   }
 
