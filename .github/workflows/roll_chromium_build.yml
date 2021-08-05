@@ -1,0 +1,51 @@
+name: Build Chromium
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * 1,5"
+  push:
+    branches:
+      - devops/auto-build-chromium
+
+jobs:
+  roll-docs:
+    name: Trigger new Chromium Build
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/github-script@v4
+        id: bump-chromium
+        with:
+          script: |
+            const fs = require('fs');
+            const response = await github.request('https://omahaproxy.appspot.com/all.json');
+            console.log(response);
+            const linux = response.data.find(({os}) => os === 'linux');
+            const linuxDev = linux.versions.find(version => version.channel === 'dev');
+            fs.writeFileSync('browser_patches/chromium/BUILD_NUMBER', `${linuxDev.branch_base_position}\n`)
+            core.setOutput('GIT_COMMIT', linuxDev.chromium_commit);
+            core.setOutput('BASE_POSITION', linuxDev.branch_base_position);
+      - name: Prepare branch
+        id: prepare-branch
+        run: |
+          BASE_POSITION="${{ steps.bump-chromium.outputs.BASE_POSITION }}"
+          BRANCH_NAME="roll-chromium/${BASE_POSITION}"
+          echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
+          git config --global user.name github-actions
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git checkout -b "$BRANCH_NAME"
+          git add .
+          git commit -m "browser(chromium): roll to r${BASE_POSITION}"
+          git push origin $BRANCH_NAME
+      - name: Create Pull Request
+        uses: actions/github-script@v4
+        with:
+          script: |
+            await github.pulls.create({
+              owner: 'microsoft',
+              repo: 'playwright',
+              head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
+              base: 'master',
+              title: 'browser(chromium): roll to r${{ steps.bump-chromium.outputs.BASE_POSITION }}',
+              body: 'Upstream commit: https://github.com/chromium/chromium/commit/${{ steps.bump-chromium.outputs.GIT_COMMIT }}',
+            });
