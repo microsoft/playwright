@@ -106,6 +106,7 @@
     "@types/yazl": "^2.4.2",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
+    "ansi-to-html": "^0.7.1",
     "babel-loader": "^8.2.2",
     "chokidar": "^3.5.0",
     "commonmark": "^0.29.1",

@@ -10,6 +10,7 @@
 
 .codicon {
 	font: normal normal normal 16px/1 codicon;
+	flex: none;
 	display: inline-block;
 	text-decoration: none;
 	text-rendering: auto;

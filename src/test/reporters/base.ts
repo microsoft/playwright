@@ -146,13 +146,7 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
   const tokens: string[] = [];
   tokens.push(formatTestHeader(config, test, '  ', index));
   for (const result of test.results) {
-    const resultTokens: string[] = [];
-    if (result.status === 'timedOut') {
-      resultTokens.push('');
-      resultTokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
-    }
-    if (result.error !== undefined)
-      resultTokens.push(indent(formatError(result.error, test.location.file), '    '));
+    const resultTokens = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
       continue;
     const statusSuffix = result.status === 'passed' ? ' -- passed unexpectedly' : '';
@@ -164,6 +158,17 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
   }
   tokens.push('');
   return tokens.join('\n');
+}
+
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string): string[] {
+  const resultTokens: string[] = [];
+  if (result.status === 'timedOut') {
+    resultTokens.push('');
+    resultTokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), initialIndent));
+  }
+  if (result.error !== undefined)
+    resultTokens.push(indent(formatError(result.error, test.location.file), initialIndent));
+  return resultTokens;
 }
 
 function relativeTestPath(config: FullConfig, test: TestCase): string {

@@ -16,8 +16,8 @@
 
 import './networkResourceDetails.css';
 import * as React from 'react';
-import { Expandable } from './helpers';
 import type { ResourceSnapshot } from '../../../server/snapshot/snapshotTypes';
+import { Expandable } from '../../components/expandable';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot,

@@ -163,6 +163,10 @@ DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/s
 DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', 'src/server/trace/recorder/', 'src/server/chromium/', ...DEPS['src/server/trace/common/']];
 DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**'];
 
+// HTML report
+DEPS['src/web/htmlReport/'] = ['src/test/**', 'src/web/'];
+
+
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);
   process.exit(1);
