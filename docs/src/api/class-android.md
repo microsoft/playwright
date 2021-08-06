@@ -1,7 +1,7 @@
 # class: Android
 * langs: js
 
-Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android WebView. You can access android namespace via:
+Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android WebView.
 
 *Requirements*
 

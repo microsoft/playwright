@@ -9156,7 +9156,6 @@ export {};
 
 /**
  * Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android WebView.
- * You can access android namespace via:
  *
  * *Requirements*
  * - Android device or AVD Emulator.

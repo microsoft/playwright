@@ -311,3 +311,97 @@ const config: PlaywrightTestConfig = {
 };
 export default config;
 ```
+
+## Custom reporters
+
+You can create a custom reporter by implementing a class with some of the reporter methods. Learn more about the [Reporter] API.
+
+```js js-flavor=js
+// my-awesome-reporter.js
+// @ts-check
+
+/** @implements {import('@playwright/test/reporter').Reporter} */
+class MyReporter {
+  onBegin(config, suite) {
+    console.log(`Starting the run with ${suite.allTests().length} tests`);
+  }
+
+  onTestBegin(test) {
+    console.log(`Starting test ${test.title}`);
+  }
+
+  onTestEnd(test, result) {
+    console.log(`Finished test ${test.title}: ${result.status}`);
+  }
+
+  onEnd(result) {
+    console.log(`Finished the run: ${result.status}`);
+  }
+}
+
+module.exports = MyReporter;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { Reporter } from '@playwright/test/reporter';
+
+class MyReporter implements Reporter {
+  onBegin(config, suite) {
+    console.log(`Starting the run with ${suite.allTests().length} tests`);
+  }
+
+  onTestBegin(test) {
+    console.log(`Starting test ${test.title}`);
+  }
+
+  onTestEnd(test, result) {
+    console.log(`Finished test ${test.title}: ${result.status}`);
+  }
+
+  onEnd(result) {
+    console.log(`Finished the run: ${result.status}`);
+  }
+}
+export default MyReporter;
+```
+
+Now use this reporter with [`property: TestConfig.reporter`].
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  reporter: './my-awesome-reporter.js',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  reporter: './my-awesome-reporter.ts',
+};
+export default config;
+```
+
+
+## Third party showcase
+
+- Allure reporter
+
+  ```bash
+  # Install
+  npm i -D experimental-allure-playwright
+
+  # Run tests
+  npx playwright test --reporter=line,experimental-allure-playwright
+
+  # Generate report
+  allure generate ./allure-result --clean && allure open ./allure-report
+  ```

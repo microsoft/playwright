@@ -3,7 +3,7 @@
 
 Test runner notifies the reporter about various events during test execution. All methods of the reporter are optional.
 
-You can create a custom reporter my implementing a class with some of the reporter methods. Make sure to export this class as default.
+You can create a custom reporter by implementing a class with some of the reporter methods. Make sure to export this class as default.
 
 ```js js-flavor=js
 // my-awesome-reporter.js
