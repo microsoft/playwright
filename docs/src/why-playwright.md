@@ -22,8 +22,6 @@ Playwright enables fast, reliable and capable testing and automation across all 
 
 * **Timeout-free automation**. Playwright receives browser signals, like network requests, page navigations and page load events to eliminate the need for sleep timeouts that cause flakiness.
 
-* **Lean parallelization with Playwright Test Runner**. Zero configuration [parallel tests](./test-parallel.md).
-
 * **Fast isolation with browser contexts**. Reuse a single browser instance for multiple isolated execution environments with [browser contexts](./core-concepts.md).
 
 * **Resilient element selectors**. Playwright can rely on user-facing strings, like text content and accessibility labels to [select elements](./selectors.md). These strings are more resilient than selectors tightly-coupled to the DOM structure.
