@@ -1,7 +1,7 @@
 # class: Android
 * langs: js
 
-Playwright has **experimental** support for Android automation. See [here](./mobile.md) for more information. You can access android namespace via:
+Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android WebView. You can access android namespace via:
 
 *Requirements*
 
@@ -17,10 +17,6 @@ Playwright has **experimental** support for Android automation. See [here](./mob
 * We didn't run all the tests against the device, so not everything works.
 
 *How to run*
-
-```js
-const { _android: android } = require('playwright');
-```
 
 An example of the Android automation script would be:
 
