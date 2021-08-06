@@ -87,7 +87,7 @@ With the Example.java and pom.xml above, compile and execute your new program as
 mvn compile exec:java -Dexec.mainClass="org.example.Example"
 ```
 
-Running it downloads the Playwright package and installs browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./installation.md).
+Running it downloads the Playwright package and installs browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./browsers.md#installing-browsers).
 
 ## First script
 

@@ -212,7 +212,7 @@ export function toHaveProp(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   name: string,
-  expected: number,
+  expected: any,
   options?: { timeout?: number },
 ) {
   return toEqual.call(this, 'toHaveProp', locator, 'Locator', async timeout => {

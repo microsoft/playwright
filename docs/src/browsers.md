@@ -3,7 +3,7 @@ id: browsers
 title: "Browsers"
 ---
 
-Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you or will require you to use [Playwright CLI](./cli.md) to install the browsers. Please refer to the [getting started](./intro.md) to see what your platform port does.
+Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you will use [Playwright CLI](./cli.md) to install these browsers.
 
 With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
 
@@ -12,9 +12,8 @@ With every release, Playwright updates the versions of the browsers it supports,
 ## Chromium
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.
- Since Chromium project is ahead of the branded browsers,
-when the world is on Google Chrome 89, Playwright already supports Chromium 91 that will hit Google Chrome and Microsoft Edge
-in a few weeks.
+Since Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports
+Chromium N+1 that will be released in Google Chrome and Microsoft Edge in a few weeks.
 
 There is also a way to opt into using Google Chrome's or Microsoft Edge's branded builds for testing. For details
 on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edge](#google-chrome--microsoft-edge) section below.
@@ -31,11 +30,34 @@ other WebKit-based browsers. This gives a lot of lead time to react on the poten
 
 ## Google Chrome & Microsoft Edge
 
-While Playwright will download and use the recent Chromium build by default, it can operate against the stock Google
-Chrome and Microsoft Edge browsers available on the machine. In particular, current Playwright version will support Stable and Beta channels
-of these browsers. Here is how you can opt into using the stock browser:
+While Playwright can download and use the recent Chromium build, it can operate against the stock Google
+Chrome and Microsoft Edge browsers available on the machine. In particular, current Playwright version will
+support Stable and Beta channels of these browsers. Here is how you can opt into using the stock browser:
 
-```js
+```js js-flavor=js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    channel: 'chrome',
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    channel: 'chrome',
+  },
+};
+export default config;
+```
+
+```js js-flavor=library
 const { chromium } = require('playwright');
 const browser = await chromium.launch({
   channel: 'chrome' // or 'msedge', 'chrome-beta', 'msedge-beta', 'msedge-dev', etc.
@@ -82,10 +104,6 @@ class Program
 }
 ```
 
-:::note
-Playwright bundles a recent Chromium build, but not Google Chrome or Microsoft Edge browsers - these should be installed manually before use. You can use Playwright [Command Line Interface](./cli.md#install-browsers) to install the browsers.
-:::
-
 ### When to use Google Chrome & Microsoft Edge and when not to?
 
 **Defaults**
@@ -114,3 +132,415 @@ Google Chrome and Microsoft Edge respect enterprise policies, which include limi
 network proxy, mandatory extensions that stand in the way of testing. So if you are a part of the
 organization that uses such policies, it is the easiest to use bundled Chromium for your local testing,
 you can still opt into stable channels on the bots that are typically free of such restrictions.
+
+## Installing browsers
+
+### Prerequisites for .NET
+This conversation was marked as resolved by pavelfeldman
+* langs: csharp
+
+All examples require the `Microsoft.Playwright.CLI` to be installed. You only have to do this once:
+
+```bash
+dotnet tool install -g Microsoft.Playwright.CLI
+```
+
+Playwright can install supported browsers by means of the CLI tool.
+
+```bash js
+# Running without arguments will install all browsers
+npx playwright install
+```
+
+```bash java
+# Running without arguments will install all browsers
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
+```
+
+```bash python
+# Running without arguments will install all browsers
+playwright install
+```
+
+```bash csharp
+# Running without arguments will install all browsers
+playwright install
+```
+
+You can also install specific browsers by providing an argument:
+
+```bash js
+# Install WebKit
+npx playwright install webkit
+```
+
+```bash java
+# Install WebKit
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install webkit"
+```
+
+```bash python
+# Install WebKit
+playwright install webkit
+```
+
+```bash csharp
+# Install WebKit
+playwright install webkit
+```
+
+See all supported browsers:
+
+```bash js
+npx playwright install --help
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --help"
+```
+
+```bash python
+playwright install --help
+```
+
+```bash csharp
+playwright install --help
+```
+
+## Managing browser binaries
+
+Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
+
+- `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
+- `~/Library/Caches/ms-playwright` on MacOS
+- `~/.cache/ms-playwright` on Linux
+
+These browsers will take a few hundred megabytes of disk space when installed:
+
+```bash
+du -hs ~/Library/Caches/ms-playwright/*
+281M  chromium-XXXXXX
+187M  firefox-XXXX
+180M  webkit-XXXX
+```
+
+You can override default behavior using environment variables. When installing Playwright, ask it to download browsers into a specific location:
+
+```bash js
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npx playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+npx playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+npx playwright install
+```
+
+```bash python
+# Linux/macOS
+pip install playwright
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python -m playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+pip install playwright
+playwright install
+```
+
+```bash java
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn test
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+mvn test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+mvn test
+```
+
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers 
+playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+playwright install
+```
+
+When running Playwright scripts, ask it to search for browsers in a shared location.
+
+```bash js
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npx playwright test
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+npx playwright test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+npx playwright test
+```
+
+```bash python
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python playwright_script.py
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+python playwright_script.py
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+python playwright_script.py
+```
+
+```bash java
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+mvn test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+mvn test
+```
+
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers dotnet test
+
+# Windows with cmd.exe
+set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
+dotnet test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
+dotnet test
+```
+
+Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
+
+:::note
+Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
+:::
+
+### Managing browser binaries
+* lang: js
+
+You can opt into the hermetic install and place binaries in the local folder:
+
+```bash
+# Linux/macOS
+# Places binaries to node_modules/@playwright/test
+PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install
+
+# Windows with cmd.exe
+# Places binaries to node_modules\@playwright\test
+set PLAYWRIGHT_BROWSERS_PATH=0
+npx playwright install
+
+# Windows with PowerShell
+# Places binaries to node_modules\@playwright\test
+$env:PLAYWRIGHT_BROWSERS_PATH=0
+npx playwright install
+```
+
+## Install behind a firewall or a proxy
+
+By default, Playwright downloads browsers from Microsoft CDN.
+
+Sometimes companies maintain an internal proxy that blocks direct access to the public
+resources. In this case, Playwright can be configured to download browsers via a proxy server.
+
+```bash python
+# Linux/macOS
+pip install playwright
+HTTPS_PROXY=https://192.0.2.1 playwright install
+
+# Windows with cmd.exe
+set HTTPS_PROXY=https://192.0.2.1
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:HTTPS_PROXY="https://192.0.2.1"
+pip install playwright
+playwright install
+```
+
+```bash java
+# Linux/macOS
+HTTPS_PROXY=https://192.0.2.1 mvn test
+
+# Windows with cmd.exe
+set HTTPS_PROXY=https://192.0.2.1
+mvn test
+
+# Windows with PowerShell
+$env:HTTPS_PROXY="https://192.0.2.1"
+mvn test
+```
+
+```bash csharp
+# Linux/macOS
+HTTPS_PROXY=https://192.0.2.1 playwright install
+
+# Windows with cmd.exe
+set HTTPS_PROXY=https://192.0.2.1
+playwright install
+
+# Windows with PowerShell
+$env:HTTPS_PROXY="https://192.0.2.1"
+playwright install
+```
+
+## Download from artifact repository
+
+By default, Playwright downloads browsers from Microsoft CDN.
+
+Sometimes companies maintain an internal artifact repository to host browser
+binaries. In this case, Playwright can be configured to download from a custom
+location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
+
+```bash python
+# Linux/macOS
+pip install playwright
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+pip install playwright
+playwright install
+```
+
+```bash java
+# Linux/macOS
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
+
+# Windows with cmd.exe
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+mvn test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+mvn test
+```
+
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+playwright install
+```
+
+It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
+take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
+
+```bash python
+# Linux/macOS
+pip install playwright
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 python -m playwright install
+```
+
+```bash java
+# Linux/macOS
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
+```
+
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+```
+
+## Skip browser downloads
+
+In certain cases, it is desired to avoid browser downloads altogether because
+browser binaries are managed separately.
+
+This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before installation.
+
+```bash python
+# Linux/macOS
+pip install playwright
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+pip install playwright
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+pip install playwright
+playwright install
+```
+
+```bash java
+# Linux/macOS
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 mvn test
+
+# Windows with cmd.exe
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+mvn test
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+mvn test
+```
+
+```bash csharp
+# Linux/macOS
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 playwright install
+
+# Windows with cmd.exe
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+playwright install
+
+# Windows with PowerShell
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+playwright install
+```
+
+## Download single browser binary
+* langs: python
+
+Playwright downloads Chromium, Firefox and WebKit browsers by default. To install a specific browser, pass it as an argument during installation.
+
+```bash
+pip install playwright
+playwright install firefox
+```
+
+## Stale browser removal
+
+Playwright keeps track of the clients that use its browsers. When there are no more clients that require particular
+version of the browser, that version is deleted from the system. That way you can safely use Playwright instances of
+different versions and at the same time, you don't waste disk space for the browsers that are no longer in use.
+
+To opt-out from the unused browser removal, you can set the `PLAYWRIGHT_SKIP_BROWSER_GC=1` environment variable.
