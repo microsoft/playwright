@@ -107,17 +107,6 @@ const locator = await page.locator('.my-element');
 await expect(locator).toBeHidden();
 ```
 
-## expect(locator).toBeSelected
-- `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to [`property: Fixtures.actionTimeout`].
-
-Ensures [Locator] points to a selected option.
-
-```js
-const locator = await page.locator('option[value=Three]');
-await expect(locator).toBeSelected();
-```
-
 ## expect(locator).toBeVisible
 - `options`
   - `timeout`: <[number]> Time to retry assertion for, defaults to [`property: Fixtures.actionTimeout`].
@@ -142,7 +131,7 @@ const locator = await page.locator('.title');
 await expect(locator).toContainText('substring');
 ```
 
-## expect(locator).toHaveAttr(name, value)
+## expect(locator).toHaveAttribute(name, value)
 - `name`: <[string]> Attribute name
 - `value`: <[string]|[RegExp]> Attribute value
 - `options`
@@ -152,7 +141,7 @@ Ensures [Locator] points to an element with given attribute.
 
 ```js
 const locator = await page.locator('input');
-await expect(locator).toHaveAttr('type', 'text');
+await expect(locator).toHaveAttribute('type', 'text');
 ```
 
 ## expect(locator).toHaveClass(expected)
@@ -199,19 +188,6 @@ const locator = await page.locator('button');
 await expect(locator).toHaveCSS('display', 'flex');
 ```
 
-## expect(locator).toHaveData(name, value)
-- `name`: <[string]> Data attribute name
-- `value`: <[string]|[RegExp]> Data value
-- `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to [`property: Fixtures.actionTimeout`].
-
-Ensures [Locator] points to an element with given data binding.
-
-```js
-const locator = await page.locator('input');
-await expect(locator).toHaveData('mydata', 'myvalue');
-```
-
 ## expect(locator).toHaveId(id)
 - `id`: <[string]> Element id
 - `options`
@@ -224,7 +200,7 @@ const locator = await page.locator('input');
 await expect(locator).toHaveId('lastname');
 ```
 
-## expect(locator).toHaveProp(name, value)
+## expect(locator).toHaveJSProperty(name, value)
 - `name`: <[string]> Property name
 - `value`: <[any]> Property value
 - `options`
@@ -235,7 +211,7 @@ of a primitive type as well as a plain serializable JavaScript object.
 
 ```js
 const locator = await page.locator('.component');
-await expect(locator).toHaveProp('loaded', true);
+await expect(locator).toHaveJSProperty('loaded', true);
 ```
 
 ## expect(locator).toHaveText(expected, options)

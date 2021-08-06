@@ -141,7 +141,7 @@ test('should support toHaveText with innerText', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should support toHaveAttr', async ({ runInlineTest }) => {
+test('should support toHaveAttribute', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
@@ -149,23 +149,7 @@ test('should support toHaveAttr', async ({ runInlineTest }) => {
       test('pass', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
-        await expect(locator).toHaveAttr('id', 'node');
-      });
-      `,
-  }, { workers: 1 });
-  expect(result.passed).toBe(1);
-  expect(result.exitCode).toBe(0);
-});
-
-test('should support toHaveData', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      const { test } = pwt;
-
-      test('pass', async ({ page }) => {
-        await page.setContent('<div id=node>Text content</div>');
-        const locator = page.locator('#node');
-        await expect(locator).toHaveAttr('id', 'node');
+        await expect(locator).toHaveAttribute('id', 'node');
       });
       `,
   }, { workers: 1 });

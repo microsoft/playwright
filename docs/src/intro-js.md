@@ -85,32 +85,12 @@ Refer to [configuration](./test-configuration.md) section for configuring test r
 
 ## Writing assertions
 
-Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. It provides a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more. Playwright also extends this set with the following matchers:
+Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. It extends it with the Playwright-specific matchers to achieve greater testing ergonomics.
 
-- `toBeChecked`
-- `toBeDisabled`
-- `toBeEditable`
-- `toBeEmpty`
-- `toBeEnabled`
-- `toBeFocused`
-- `toBeHidden`
-- `toBeSelected`
-- `toBeVisible`
-- `toContainText`
-- `toHaveAttr`
-- `toHaveClass`
-- `toHaveCount`
-- `toHaveCSS`
-- `toHaveData`
-- `toHaveId`
-- `toHaveProp`
-- `toHaveText`
-- `toHaveTitle`
-- `toHaveURL`
-- `toHaveValue`
-- `toMatchSnapshot`
+Learn more about [test assertions here](./test-assertions.md).
 
-- Find out more in the [assertions](./assertions.md) guide
+Here is a quick example of using them:
+
 
 ```js js-flavor=js
 // example.spec.js
@@ -123,7 +103,7 @@ test('my test', async ({ page }) => {
   await expect(page).toHaveTitle('Playwright');
 
   // Expect an attribute "to be strictly equal" to the value.
-  await expect(page.locator('text=Get Started').toHaveAttr('href', '/docs/intro');
+  await expect(page.locator('text=Get Started').toHaveAttribute('href', '/docs/intro');
 
   // Expect an element "to be visible".
   await expect(page.locator('text=Learn more')).toBeVisible();
@@ -148,7 +128,7 @@ test('my test', async ({ page }) => {
   await expect(page).toHaveTitle('Playwright');
 
   // Expect an attribute "to be strictly equal" to the value.
-  await expect(page.locator('text=Get Started').toHaveAttr('href', '/docs/intro');
+  await expect(page.locator('text=Get Started').toHaveAttribute('href', '/docs/intro');
 
   // Expect an element "to be visible".
   await expect(page.locator('text=Learn more')).toBeVisible();
