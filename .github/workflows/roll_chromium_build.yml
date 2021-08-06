@@ -2,6 +2,7 @@ name: Trigger Chromium build
 on:
   workflow_dispatch:
   schedule:
+    # At 10:00am UTC  (3AM PST) on Monday and Friday
     - cron: "0 10 * * 1,5"
 jobs:
   trigger-chromium-build:
@@ -16,10 +17,10 @@ jobs:
             const fs = require('fs');
             const response = await github.request('https://omahaproxy.appspot.com/all.json');
             const linux = response.data.find(({os}) => os === 'linux');
-            const linuxDev = linux.versions.find(version => version.channel === 'dev');
-            fs.writeFileSync('browser_patches/chromium/BUILD_NUMBER', `${linuxDev.branch_base_position}\n`)
-            core.setOutput('GIT_COMMIT', linuxDev.chromium_commit);
-            core.setOutput('BASE_POSITION', linuxDev.branch_base_position);
+            const linuxCanary = linux.versions.find(version => version.channel === 'canary');
+            fs.writeFileSync('browser_patches/chromium/BUILD_NUMBER', `${linuxCanary.branch_base_position}\n`)
+            core.setOutput('GIT_COMMIT', linuxCanary.chromium_commit);
+            core.setOutput('BASE_POSITION', linuxCanary.branch_base_position);
       - name: Prepare branch
         id: prepare-branch
         run: |
