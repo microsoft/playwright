@@ -96,18 +96,6 @@ export function toBeHidden(
   }, options);
 }
 
-export function toBeSelected(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  options?: { timeout?: number },
-) {
-  return toBeTruthy.call(this, 'toBeSelected', locator, 'Locator', async timeout => {
-    return await locator.evaluate(element => {
-      return (element as HTMLOptionElement).selected;
-    }, { timeout });
-  }, options);
-}
-
 export function toBeVisible(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
@@ -131,14 +119,14 @@ export function toContainText(
   }, expected, { ...options, matchSubstring: true });
 }
 
-export function toHaveAttr(
+export function toHaveAttribute(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   name: string,
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveAttr', locator, 'Locator', async timeout => {
+  return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async timeout => {
     return await locator.getAttribute(name, { timeout }) || '';
   }, expected, options);
 }
@@ -185,18 +173,6 @@ export function toHaveCSS(
   }, expected, options);
 }
 
-export function toHaveData(
-  this: ReturnType<Expect['getState']>,
-  locator: Locator,
-  name: string,
-  expected: string | RegExp,
-  options?: { timeout?: number },
-) {
-  return toMatchText.call(this, 'toHaveData', locator, 'Locator', async timeout => {
-    return await locator.getAttribute('data-' + name, { timeout }) || '';
-  }, expected, options);
-}
-
 export function toHaveId(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
@@ -208,14 +184,14 @@ export function toHaveId(
   }, expected, options);
 }
 
-export function toHaveProp(
+export function toHaveJSProperty(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   name: string,
   expected: any,
   options?: { timeout?: number },
 ) {
-  return toEqual.call(this, 'toHaveProp', locator, 'Locator', async timeout => {
+  return toEqual.call(this, 'toHaveJSProperty', locator, 'Locator', async timeout => {
     return await locator.evaluate((element, name) => (element as any)[name], name, { timeout });
   }, expected, options);
 }
