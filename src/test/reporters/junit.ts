@@ -153,6 +153,15 @@ class JUnitReporter implements Reporter {
         });
       }
 
+      for (const attachment of result.attachments) {
+        if (attachment.path) {
+          entries.push({
+            name: 'system-out',
+            text: `[[ATTACHMENT|${path.relative(this.config.rootDir, attachment.path)}]]`
+          });
+        }
+      }
+
       for (const stderr of result.stderr) {
         entries.push({
           name: 'system-err',
