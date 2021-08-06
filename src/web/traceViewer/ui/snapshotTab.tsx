@@ -37,7 +37,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
 
   React.useEffect(() => {
-    if (snapshotIndex >= snapshots.length)
+    if (snapshots.length >= 1 && snapshotIndex >= snapshots.length)
       setSnapshotIndex(snapshots.length - 1);
   }, [snapshotIndex, snapshots]);
 
