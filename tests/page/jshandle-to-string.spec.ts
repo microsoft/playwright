@@ -19,41 +19,47 @@ import { test as it, expect } from './pageTest';
 
 it('should work for primitives', async ({page}) => {
   const numberHandle = await page.evaluateHandle(() => 2);
-  expect(numberHandle.toString()).toBe('JSHandle@2');
+  expect(numberHandle.toString()).toBe('2');
   const stringHandle = await page.evaluateHandle(() => 'a');
-  expect(stringHandle.toString()).toBe('JSHandle@a');
+  expect(stringHandle.toString()).toBe('a');
 });
 
-it('should work for complicated objects', async ({page}) => {
+it('should work for complicated objects', async ({ page, browserName }) => {
   const aHandle = await page.evaluateHandle(() => window);
-  expect(aHandle.toString()).toBe('JSHandle@object');
+  if (browserName !== 'firefox')
+    expect(aHandle.toString()).toBe('Window');
+  else
+    expect(aHandle.toString()).toBe('JSHandle@object');
 });
 
-it('should work for promises', async ({page}) => {
+it('should work for promises', async ({ page }) => {
   // wrap the promise in an object, otherwise we will await.
   const wrapperHandle = await page.evaluateHandle(() => ({b: Promise.resolve(123)}));
   const bHandle = await wrapperHandle.getProperty('b');
-  expect(bHandle.toString()).toBe('JSHandle@promise');
+  expect(bHandle.toString()).toBe('Promise');
 });
 
-it('should work with different subtypes', async ({page, browserName}) => {
-  expect((await page.evaluateHandle('(function(){})')).toString()).toBe('JSHandle@function');
-  expect((await page.evaluateHandle('12')).toString()).toBe('JSHandle@12');
-  expect((await page.evaluateHandle('true')).toString()).toBe('JSHandle@true');
-  expect((await page.evaluateHandle('undefined')).toString()).toBe('JSHandle@undefined');
-  expect((await page.evaluateHandle('"foo"')).toString()).toBe('JSHandle@foo');
-  expect((await page.evaluateHandle('Symbol()')).toString()).toBe('JSHandle@symbol');
-  expect((await page.evaluateHandle('new Map()')).toString()).toBe('JSHandle@map');
-  expect((await page.evaluateHandle('new Set()')).toString()).toBe('JSHandle@set');
-  expect((await page.evaluateHandle('[]')).toString()).toBe('JSHandle@array');
-  expect((await page.evaluateHandle('null')).toString()).toBe('JSHandle@null');
-  expect((await page.evaluateHandle('/foo/')).toString()).toBe('JSHandle@regexp');
+it('should work with different subtypes', async ({ page, browserName }) => {
+  expect((await page.evaluateHandle('(function(){})')).toString()).toContain('function');
+  expect((await page.evaluateHandle('12')).toString()).toBe('12');
+  expect((await page.evaluateHandle('true')).toString()).toBe('true');
+  expect((await page.evaluateHandle('undefined')).toString()).toBe('undefined');
+  expect((await page.evaluateHandle('"foo"')).toString()).toBe('foo');
+  expect((await page.evaluateHandle('Symbol()')).toString()).toBe('Symbol()');
+  expect((await page.evaluateHandle('new Map()')).toString()).toContain('Map');
+  expect((await page.evaluateHandle('new Set()')).toString()).toContain('Set');
+  expect((await page.evaluateHandle('[]')).toString()).toContain('Array');
+  expect((await page.evaluateHandle('null')).toString()).toBe('null');
   expect((await page.evaluateHandle('document.body')).toString()).toBe('JSHandle@node');
-  expect((await page.evaluateHandle('new Date()')).toString()).toBe('JSHandle@date');
-  expect((await page.evaluateHandle('new WeakMap()')).toString()).toBe('JSHandle@weakmap');
-  expect((await page.evaluateHandle('new WeakSet()')).toString()).toBe('JSHandle@weakset');
-  expect((await page.evaluateHandle('new Error()')).toString()).toBe('JSHandle@error');
-  // TODO(yurys): change subtype from array to typedarray in WebKit.
-  expect((await page.evaluateHandle('new Int32Array()')).toString()).toBe(browserName === 'webkit' ? 'JSHandle@array' : 'JSHandle@typedarray');
-  expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe('JSHandle@proxy');
+  expect((await page.evaluateHandle('new WeakMap()')).toString()).toBe('WeakMap');
+  expect((await page.evaluateHandle('new WeakSet()')).toString()).toBe('WeakSet');
+  expect((await page.evaluateHandle('new Error()')).toString()).toContain('Error');
+  expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe('Proxy');
+});
+
+it('should work with previewable subtypes', async ({ page, browserName }) => {
+  it.skip(browserName === 'firefox');
+  expect((await page.evaluateHandle('/foo/')).toString()).toBe('/foo/');
+  expect((await page.evaluateHandle('new Date(0)')).toString()).toContain('GMT');
+  expect((await page.evaluateHandle('new Int32Array()')).toString()).toContain('Int32Array');
 });

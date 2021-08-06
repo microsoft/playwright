@@ -121,7 +121,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
 
   createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
     const isPromise = remoteObject.className === 'Promise';
-    return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+    return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -146,4 +146,25 @@ function rewriteError(error: Error): Error {
   if (js.isContextDestroyedError(error))
     return new Error('Execution context was destroyed, most likely because of a navigation.');
   return error;
+}
+
+function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefined {
+  if (object.type === 'undefined')
+    return 'undefined';
+  if ('value' in object)
+    return String(object.value);
+
+  if (object.description === 'Object' && object.preview) {
+    const tokens = [];
+    for (const { name, value } of object.preview.properties!)
+      tokens.push(`${name}: ${value}`);
+    return `{${tokens.join(', ')}}`;
+  }
+  if (object.subtype === 'array' && object.preview) {
+    const result = [];
+    for (const { name, value } of object.preview.properties!)
+      result[+name] = value;
+    return '[' + String(result) + ']';
+  }
+  return object.description;
 }

@@ -101,7 +101,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         );
         })();
       `;
-      this._injectedScriptPromise = this._delegate.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this, 'object', objectId));
+      this._injectedScriptPromise = this._delegate.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this, 'object', undefined, objectId));
     }
     return this._injectedScriptPromise;
   }
@@ -117,7 +117,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   declare readonly _objectId: string;
 
   constructor(context: FrameExecutionContext, objectId: string) {
-    super(context, 'node', objectId);
+    super(context, 'node', undefined, objectId);
     this._page = context.frame._page;
     this._initializePreview().catch(e => {});
   }

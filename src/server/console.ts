@@ -38,7 +38,7 @@ export class ConsoleMessage extends SdkObject {
 
   text(): string {
     if (this._text === undefined)
-      this._text = this._args.map(arg => arg._value).join(' ');
+      this._text = this._args.map(arg => arg.preview()).join(' ');
     return this._text;
   }
 

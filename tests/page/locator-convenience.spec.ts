@@ -88,50 +88,6 @@ it('textContent should work', async ({ page, server }) => {
   expect(await page.textContent('#inner')).toBe('Text,\nmore text');
 });
 
-it('textContent should be atomic', async ({ playwright, page }) => {
-  const createDummySelector = () => ({
-    query(root, selector) {
-      const result = root.querySelector(selector);
-      if (result)
-        Promise.resolve().then(() => result.textContent = 'modified');
-      return result;
-    },
-    queryAll(root: HTMLElement, selector: string) {
-      const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
-        Promise.resolve().then(() => e.textContent = 'modified');
-      return result;
-    }
-  });
-  await playwright.selectors.register('textContentFromLocators', createDummySelector);
-  await page.setContent(`<div>Hello</div>`);
-  const tc = await page.textContent('textContentFromLocators=div');
-  expect(tc).toBe('Hello');
-  expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
-});
-
-it('innerText should be atomic', async ({ playwright, page }) => {
-  const createDummySelector = () => ({
-    query(root: HTMLElement, selector: string) {
-      const result = root.querySelector(selector);
-      if (result)
-        Promise.resolve().then(() => result.textContent = 'modified');
-      return result;
-    },
-    queryAll(root: HTMLElement, selector: string) {
-      const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
-        Promise.resolve().then(() => e.textContent = 'modified');
-      return result;
-    }
-  });
-  await playwright.selectors.register('innerTextFromLocators', createDummySelector);
-  await page.setContent(`<div>Hello</div>`);
-  const tc = await page.innerText('innerTextFromLocators=div');
-  expect(tc).toBe('Hello');
-  expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
-});
-
 it('isVisible and isHidden should work', async ({ page }) => {
   await page.setContent(`<div>Hi</div><span></span>`);
 

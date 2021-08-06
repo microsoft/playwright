@@ -88,7 +88,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   }
 
   createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
-    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -122,4 +122,23 @@ function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObj
   const value = remoteObject.value;
   const unserializableValue = remoteObject.unserializableValue;
   return unserializableValue ? js.parseUnserializableValue(unserializableValue) : value;
+}
+
+function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefined {
+  if (object.type === 'undefined')
+    return 'undefined';
+  if (object.unserializableValue)
+    return String(object.unserializableValue);
+  if (object.type === 'symbol')
+    return 'Symbol()';
+  if (object.subtype === 'regexp')
+    return 'RegExp';
+  if (object.subtype === 'weakmap')
+    return 'WeakMap';
+  if (object.subtype === 'weakset')
+    return 'WeakSet';
+  if (object.subtype)
+    return object.subtype[0].toUpperCase() + object.subtype.slice(1);
+  if ('value' in object)
+    return String(object.value);
 }
