@@ -172,8 +172,7 @@ if git remote get-url $REMOTE_BROWSER_UPSTREAM >/dev/null; then
   git remote set-url $REMOTE_BROWSER_UPSTREAM $REMOTE_URL
 else
   echo "-- adding |$REMOTE_BROWSER_UPSTREAM| remote to $REMOTE_URL"
-  git remote add $REMOTE_BROWSER_UPSTREAM $REMOTE_URL
-  git fetch --depth 1 $REMOTE_BROWSER_UPSTREAM $BASE_BRANCH
+  git remote rename origin $REMOTE_BROWSER_UPSTREAM
 fi
 
 # Check if our checkout contains BASE_REVISION.
