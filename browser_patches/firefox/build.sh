@@ -82,6 +82,23 @@ OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
 
+if [[ $1 != "--juggler" ]]; then
+  # TODO: rustup is not in the PATH on Windows
+  if command -v rustup >/dev/null; then
+    # We manage Rust version ourselves.
+    echo "-- Using rust v${RUST_VERSION}"
+    rustup install "${RUST_VERSION}"
+    rustup default "${RUST_VERSION}"
+  fi
+
+  # TODO: cargo is not in the PATH on Windows
+  if command -v cargo >/dev/null; then
+    echo "-- Using cbindgen v${CBINDGEN_VERSION}"
+    cargo install cbindgen --version "${CBINDGEN_VERSION}"
+  fi
+  ./mach build
+fi
+
 if [[ $1 == "--full" || $2 == "--full" ]]; then
   if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
     SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
@@ -98,21 +115,6 @@ fi
 
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
-else
-  # TODO: rustup is not in the PATH on Windows
-  if command -v rustup >/dev/null; then
-    # We manage Rust version ourselves.
-    echo "-- Using rust v${RUST_VERSION}"
-    rustup install "${RUST_VERSION}"
-    rustup default "${RUST_VERSION}"
-  fi
-
-  # TODO: cargo is not in the PATH on Windows
-  if command -v cargo >/dev/null; then
-    echo "-- Using cbindgen v${CBINDGEN_VERSION}"
-    cargo install cbindgen --version "${CBINDGEN_VERSION}"
-  fi
-  ./mach build
 fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
