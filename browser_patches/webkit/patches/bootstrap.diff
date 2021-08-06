@@ -5842,7 +5842,7 @@ index 3931498518012bbc719d2e14eecd6ae44cba87ba..606ba8c8ec8639a3fe21a018dead8534
  
  #if ENABLE(INPUT_TYPE_COLOR)
 diff --git a/Source/WebCore/page/EventHandler.cpp b/Source/WebCore/page/EventHandler.cpp
-index 95d4f839b49a8390f86dc6de3ce4d585fad8df7a..111daec076f3808e307ccfb591b098c5433cde90 100644
+index 95d4f839b49a8390f86dc6de3ce4d585fad8df7a..f7922dd2b58c76d2b78194a0d3a8c601e6e41763 100644
 --- a/Source/WebCore/page/EventHandler.cpp
 +++ b/Source/WebCore/page/EventHandler.cpp
 @@ -126,6 +126,7 @@
@@ -5940,7 +5940,21 @@ index 95d4f839b49a8390f86dc6de3ce4d585fad8df7a..111daec076f3808e307ccfb591b098c5
  
      return swallowEvent;
  }
-@@ -4052,7 +4052,14 @@ bool EventHandler::handleDrag(const MouseEventWithHitTestResults& event, CheckDr
+@@ -3809,12 +3809,8 @@ void EventHandler::defaultKeyboardEventHandler(KeyboardEvent& event)
+         if (event.charCode() == ' ')
+             defaultSpaceEventHandler(event);
+     }
+-    if (event.type() == eventNames().keyupEvent) {
+-        m_frame.editor().handleKeyboardEvent(event);
+-        if (event.defaultHandled())
+-            return;
++    if (event.type() == eventNames().keyupEvent)
+         stopKeyboardScrolling();
+-    }
+ }
+ 
+ #if ENABLE(DRAG_SUPPORT)
+@@ -4052,7 +4048,14 @@ bool EventHandler::handleDrag(const MouseEventWithHitTestResults& event, CheckDr
      if (!m_frame.document())
          return false;
  
@@ -5956,7 +5970,7 @@ index 95d4f839b49a8390f86dc6de3ce4d585fad8df7a..111daec076f3808e307ccfb591b098c5
      auto hasNonDefaultPasteboardData = HasNonDefaultPasteboardData::No;
      
      if (dragState().shouldDispatchEvents) {
-@@ -4457,7 +4464,8 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
+@@ -4457,7 +4460,8 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
              allTouchReleased = false;
      }
  
@@ -5966,7 +5980,7 @@ index 95d4f839b49a8390f86dc6de3ce4d585fad8df7a..111daec076f3808e307ccfb591b098c5
          PlatformTouchPoint::State pointState = point.state();
          LayoutPoint pagePoint = documentPointForWindowPoint(m_frame, point.pos());
  
-@@ -4584,6 +4592,9 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
+@@ -4584,6 +4588,9 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
              changedTouches[pointState].m_touches->append(WTFMove(touch));
              changedTouches[pointState].m_targets.add(touchTarget);
          }
