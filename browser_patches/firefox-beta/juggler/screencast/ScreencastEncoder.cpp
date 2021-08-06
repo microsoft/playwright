@@ -135,6 +135,9 @@ public:
 
         double src_width = src->width() - m_margin.LeftRight();
         double src_height = src->height() - m_margin.top;
+        // YUV offsets must be even.
+        int yuvTopOffset = m_margin.top & 1 ? m_margin.top + 1 : m_margin.top;
+        int yuvLeftOffset = m_margin.left & 1 ? m_margin.left + 1 : m_margin.left;
 
         if (src_width > image->w || src_height > image->h) {
           double scale = std::min(image->w / src_width, image->h / src_height);
@@ -148,9 +151,9 @@ public:
             src_height *= image->h / dst_height;
             dst_height = image->h;
           }
-          libyuv::I420Scale(src->DataY() + m_margin.top * src->StrideY() + m_margin.left, src->StrideY(),
-                            src->DataU() + (m_margin.top * src->StrideU() + m_margin.left) / 2, src->StrideU(),
-                            src->DataV() + (m_margin.top * src->StrideV() + m_margin.left) / 2, src->StrideV(),
+          libyuv::I420Scale(src->DataY() + yuvTopOffset * src->StrideY() + yuvLeftOffset, src->StrideY(),
+                            src->DataU() + (yuvTopOffset * src->StrideU() + yuvLeftOffset) / 2, src->StrideU(),
+                            src->DataV() + (yuvTopOffset * src->StrideV() + yuvLeftOffset) / 2, src->StrideV(),
                             src_width, src_height,
                             y_data, y_stride,
                             u_data, uv_stride,
@@ -161,9 +164,9 @@ public:
           int width = std::min<int>(image->w, src_width);
           int height = std::min<int>(image->h, src_height);
 
-          libyuv::I420Copy(src->DataY() + m_margin.top * src->StrideY() + m_margin.left, src->StrideY(),
-                           src->DataU() + (m_margin.top * src->StrideU() + m_margin.left) / 2, src->StrideU(),
-                           src->DataV() + (m_margin.top * src->StrideV() + m_margin.left) / 2, src->StrideV(),
+          libyuv::I420Copy(src->DataY() + yuvTopOffset * src->StrideY() + yuvLeftOffset, src->StrideY(),
+                           src->DataU() + (yuvTopOffset * src->StrideU() + yuvLeftOffset) / 2, src->StrideU(),
+                           src->DataV() + (yuvTopOffset * src->StrideV() + yuvLeftOffset) / 2, src->StrideV(),
                            y_data, y_stride,
                            u_data, uv_stride,
                            v_data, uv_stride,
