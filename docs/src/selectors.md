@@ -196,6 +196,23 @@ methods accept [`param: selector`] as their first argument.
   await page.ClickAsync("react=DatePickerComponent");
   ```
   Learn more about [React selector][react].
+- Vue selector
+  ```js
+  await page.click('vue=DatePickerComponent');
+  ```
+  ```java
+  page.click("vue=DatePickerComponent");
+  ```
+  ```python async
+  await page.click("vue=DatePickerComponent")
+  ```
+  ```python sync
+  page.click("vue=DatePickerComponent")
+  ```
+  ```csharp
+  await page.ClickAsync("vue=DatePickerComponent");
+  ```
+  Learn more about [Vue selector][vue].
 
 
 
@@ -660,6 +677,22 @@ React selectors support React 15 and above.
 React selectors, as well as [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
 :::
 
+## Vue selectors
+
+Vue selectors allow selecting elements by its component name.
+
+To find Vue element names in a tree use [Vue DevTools](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd?hl=en).
+
+Example: `vue=MyComponent`
+
+:::note
+Vue selectors support Vue2 and above.
+:::
+
+:::note
+Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
+:::
+
 
 ## id, data-testid, data-test-id, data-test selectors
 
@@ -1003,4 +1036,5 @@ await page.ClickAsync("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input");
 [css]: #css-selector
 [xpath]: #xpath-selectors
 [react]: #react-selectors
+[vue]: #vue-selectors
 [id]: #id-data-testid-data-test-id-data-test-selectors

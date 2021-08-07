@@ -1,0 +1,87 @@
+<link rel=stylesheet href='./style.css'>
+<script src="./vue_2.6.14.js"></script>
+
+<div id=root></div>
+
+<script>
+
+Vue.component('app-header', {
+  template: `
+    <div>
+      <h1>vuejs@${Vue.version}</h1>
+      <h3>Reading List: {{ bookCount }}</h3>
+    </div>
+  `,
+  props: [ 'bookCount' ],
+});
+
+Vue.component('new-book', {
+  data() {
+    return {
+      name: '',
+    }
+  },
+  template: `
+    <div>
+      <input v-model='name' @keypress.enter='onNewBook'>
+      <button @click='onNewBook'>new book</button>
+    </div>
+  `,
+  emits: ['newbook'],
+  methods: {
+    onNewBook() {
+      this.$emit('newbook', this.name);
+    }
+  },
+});
+Vue.component('book-item', {
+  template: `
+    <div>
+      {{ name }}
+    </div>
+  `,
+  props: ['name'],
+});
+
+Vue.component('book-list', {
+  props: ['books'],
+  template: `
+    <ol>
+      <li v-for='book in books' :key='book.name'>
+        <book-item :name='book.name'></book-item>
+      </li>
+    </ol>
+  `,
+});
+
+
+new Vue({
+  el: '#root',
+
+  template: `
+    <div>
+      <app-header :bookCount='books.length'></app-header>
+      <new-book @newbook='addNewBook'></new-book>
+      <book-list :books='books'></book-list>
+    </div>
+  `,
+
+  data() {
+    return {
+      books: [
+        {name: 'Pride and Prejudice' },
+        {name: 'To Kill a Mockingbird' },
+        {name: 'The Great Gatsby' },
+      ],
+    };
+  },
+
+  methods: {
+    addNewBook(name) {
+      console.log('here');
+      this.books.push({name});
+    }
+  },
+});
+
+</script>
