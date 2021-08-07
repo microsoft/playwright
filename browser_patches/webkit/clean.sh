@@ -3,7 +3,7 @@ set -e
 set +x
 
 trap "cd $(pwd -P)" EXIT
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 
 if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
   cd "${WK_CHECKOUT_PATH}"

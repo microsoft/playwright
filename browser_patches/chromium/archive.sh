@@ -3,12 +3,12 @@ set -e
 set +x
 
 trap "cd $(pwd -P)" EXIT
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 SCRIPT_PATH=$(pwd -P)
 
 main() {
   if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-    echo "usage: $(basename $0) [output-absolute-path]"
+    echo "usage: $(basename "$0") [output-absolute-path]"
     echo
     echo "Generate distributable .zip archive from ./output folder that was previously downloaded."
     echo
@@ -29,7 +29,7 @@ main() {
     echo "ERROR: path $ZIP_PATH exists; can't do anything."
     exit 1
   fi
-  if ! [[ -d $(dirname $ZIP_PATH) ]]; then
+  if ! [[ -d $(dirname "$ZIP_PATH") ]]; then
     echo "ERROR: folder for path $($ZIP_PATH) does not exist."
     exit 1
   fi
@@ -45,7 +45,7 @@ main() {
   fi
 
   cd "${SCRIPT_PATH}"
-  cp output/build.zip $ZIP_PATH
+  cp output/build.zip "$ZIP_PATH"
 }
 
 function archive_compiled_chromium() {

@@ -3,7 +3,7 @@ set -e
 set -x
 
 trap "cd $(pwd -P)" EXIT
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 
 if [[ ! -d ./electron-build-tools ]]; then
   git clone --single-branch --branch master https://github.com/electron/build-tools/ electron-build-tools
@@ -19,7 +19,7 @@ cd electron-build-tools/third_party/goma
 export GOMA_START_COMPILER_PROXY=true
 
 if [[ $1 == "--help" ]]; then
-  echo "$(basename $0) [login|start|stop|--help]"
+  echo "$(basename "$0") [login|start|stop|--help]"
   exit 0
 elif [[ $1 == "login" ]]; then
   if [[ $(uname) == "MINGW"* ]]; then
@@ -35,7 +35,7 @@ elif [[ $1 == "start" ]]; then
   fi
   if [[ ! -f "$HOME/.goma_oauth2_config" ]]; then
     echo "ERROR: goma is not logged in!"
-    echo "run '$(basename $0) login'"
+    echo "run '$(basename "$0") login'"
     exit 1
   fi
   if [[ $(uname) == "MINGW"* ]]; then

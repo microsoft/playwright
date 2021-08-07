@@ -3,10 +3,10 @@ set -e
 set +x
 
 trap "cd $(pwd -P)" EXIT
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 
 USAGE=$(cat<<EOF
-  usage: $(basename $0) [--mirror|--mirror-linux|--mirror-win32|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-win32|--compile-win64|--compile-mac]
+  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win32|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-win32|--compile-win64|--compile-mac]
 
   Either compiles chromium or mirrors it from Chromium Continuous Builds CDN.
 EOF
@@ -20,9 +20,9 @@ main() {
     echo "$USAGE"
     exit 0
   elif [[ $1 == "--mirror"* ]]; then
-    mirror_chromium $1
+    mirror_chromium "$1"
   elif [[ $1 == "--compile"* ]]; then
-    compile_chromium $1
+    compile_chromium "$1"
   else
     echo "ERROR: unknown first argument. Use --help for details."
     exit 1
@@ -82,9 +82,9 @@ compile_chromium() {
 
   if [[ $1 == "--compile-win"* ]]; then
     if [[ -z "$USE_GOMA" ]]; then
-      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_FOLDER}/buildwin.bat)"
+      /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwin.bat)"
     else
-      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_FOLDER}/buildwingoma.bat)"
+      /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwingoma.bat)"
     fi
   else
     gn gen out/Default
@@ -144,4 +144,4 @@ mirror_chromium() {
   unzip chromium-upstream.zip
 }
 
-main $1
+main "$1"
