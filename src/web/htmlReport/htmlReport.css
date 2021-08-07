@@ -117,3 +117,36 @@
   max-width: 450px;
   line-height: 24px;
 }
+
+.awesome {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.image-preview img {
+  max-width: 500px;
+  max-height: 500px;
+}
+
+.test-result .tabbed-pane {
+  margin-top: 50px;
+  width: 550px;
+}
+
+.image-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 550px;
+  height: 550px;
+}
+
+.test-result .tabbed-pane .tab-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
