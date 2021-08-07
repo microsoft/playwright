@@ -2024,17 +2024,17 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * You can use [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) to teardown any
    * resources set up in `beforeAll`.
-   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [WorkerInfo].
+   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
    */
-  beforeAll(inner: (args: WorkerArgs, workerInfo: WorkerInfo) => Promise<any> | any): void;
+  beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
    * Declares an `afterAll` hook that is executed once after all tests. When called in the scope of a test file, runs after
    * all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after all tests
    * in the group.
-   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [WorkerInfo].
+   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
    */
-  afterAll(inner: (args: WorkerArgs, workerInfo: WorkerInfo) => Promise<any> | any): void;
+  afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
    * Specifies parameters or fixtures to use in a single test file or a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group. Most useful to

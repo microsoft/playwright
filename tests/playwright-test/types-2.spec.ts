@@ -27,6 +27,8 @@ test('basics should work', async ({runTSC}) => {
           testInfo.annotations[0].type;
         });
       });
+      // @ts-expect-error
+      test.foo();
     `
   });
   expect(result.exitCode).toBe(0);

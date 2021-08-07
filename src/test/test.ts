@@ -50,11 +50,8 @@ export class Suite extends Base implements reporterTypes.Suite {
   location?: Location;
   _fixtureOverrides: any = {};
   _entries: (Suite | TestCase)[] = [];
-  _hooks: {
-    type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll',
-    fn: Function,
-    location: Location,
-  }[] = [];
+  _allHooks: TestCase[] = [];
+  _eachHooks: { type: 'beforeEach' | 'afterEach', fn: Function, location: Location }[] = [];
   _timeout: number | undefined;
   _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
@@ -69,6 +66,11 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite.parent = this;
     this.suites.push(suite);
     this._entries.push(suite);
+  }
+
+  _addAllHook(hook: TestCase) {
+    hook.parent = this;
+    this._allHooks.push(hook);
   }
 
   allTests(): TestCase[] {
@@ -105,7 +107,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite.location = this.location;
     suite._requireFile = this._requireFile;
     suite._fixtureOverrides = this._fixtureOverrides;
-    suite._hooks = this._hooks.slice();
+    suite._eachHooks = this._eachHooks.slice();
     suite._timeout = this._timeout;
     suite._annotations = this._annotations.slice();
     suite._modifiers = this._modifiers.slice();
@@ -124,6 +126,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   projectName = '';
   retries = 0;
 
+  _type: 'beforeAll' | 'afterAll' | 'test';
   _ordinalInFile: number;
   _testType: TestTypeImpl;
   _id = '';
@@ -132,8 +135,9 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _repeatEachIndex = 0;
   _projectIndex = 0;
 
-  constructor(title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
+  constructor(type: 'beforeAll' | 'afterAll' | 'test', title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
     super(title);
+    this._type = type;
     this.fn = fn;
     this._ordinalInFile = ordinalInFile;
     this._testType = testType;
@@ -156,7 +160,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   _clone(): TestCase {
-    const test = new TestCase(this.title, this.fn, this._ordinalInFile, this._testType, this.location);
+    const test = new TestCase(this._type, this.title, this.fn, this._ordinalInFile, this._testType, this.location);
     test._only = this._only;
     test._requireFile = this._requireFile;
     test.expectedStatus = this.expectedStatus;

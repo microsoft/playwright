@@ -47,7 +47,7 @@ class Fixture {
     this.value = null;
   }
 
-  async setup(info: any) {
+  async setup(workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {
     if (typeof this.registration.fn !== 'function') {
       this._setup = true;
       this.value = this.registration.fn;
@@ -57,7 +57,7 @@ class Fixture {
     const params: { [key: string]: any } = {};
     for (const name of this.registration.deps) {
       const registration = this.runner.pool!.resolveDependency(this.registration, name)!;
-      const dep = await this.runner.setupFixtureForRegistration(registration, info);
+      const dep = await this.runner.setupFixtureForRegistration(registration, workerInfo, testInfo);
       dep.usages.add(this);
       params[name] = dep.value;
     }
@@ -74,7 +74,7 @@ class Fixture {
       this.value = value;
       setupFenceFulfill();
       return await teardownFence;
-    }, info)).catch((e: any) => {
+    }, this.registration.scope === 'worker' ? workerInfo : testInfo)).catch((e: any) => {
       if (!this._setup)
         setupFenceReject(e);
       else
@@ -187,7 +187,7 @@ export class FixturePool {
     return hash.digest('hex');
   }
 
-  validateFunction(fn: Function, prefix: string, allowTestFixtures: boolean, location: Location) {
+  validateFunction(fn: Function, prefix: string, location: Location) {
     const visit = (registration: FixtureRegistration) => {
       for (const name of registration.deps)
         visit(this.resolveDependency(registration, name)!);
@@ -196,8 +196,6 @@ export class FixturePool {
       const registration = this.registrations.get(name);
       if (!registration)
         throw errorWithLocations(`${prefix} has unknown parameter "${name}".`, { location, name: prefix, quoted: false });
-      if (!allowTestFixtures && registration.scope === 'test')
-        throw errorWithLocations(`${prefix} cannot depend on a test fixture "${name}".`, { location, name: prefix, quoted: false }, registration);
       visit(registration);
     }
   }
@@ -222,8 +220,10 @@ export class FixtureRunner {
     this.pool = pool;
   }
 
-  async teardownScope(scope: string) {
-    for (const [, fixture] of this.instanceForId) {
+  async teardownScope(scope: FixtureScope) {
+    // Teardown fixtures in the reverse order.
+    const fixtures = Array.from(this.instanceForId.values()).reverse();
+    for (const fixture of fixtures) {
       if (fixture.registration.scope === scope)
         await fixture.teardown();
     }
@@ -231,12 +231,12 @@ export class FixtureRunner {
       this.testScopeClean = true;
   }
 
-  async resolveParametersAndRunHookOrTest(fn: Function, scope: FixtureScope, info: WorkerInfo|TestInfo) {
+  async resolveParametersAndRunHookOrTest(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {
     // Install all automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
-      const shouldSkip = scope === 'worker' && registration.scope === 'test';
+      const shouldSkip = !testInfo && registration.scope === 'test';
       if (registration.auto && !shouldSkip)
-        await this.setupFixtureForRegistration(registration, info);
+        await this.setupFixtureForRegistration(registration, workerInfo, testInfo);
     }
 
     // Install used fixtures.
@@ -244,14 +244,14 @@ export class FixtureRunner {
     const params: { [key: string]: any } = {};
     for (const name of names) {
       const registration = this.pool!.registrations.get(name)!;
-      const fixture = await this.setupFixtureForRegistration(registration, info);
+      const fixture = await this.setupFixtureForRegistration(registration, workerInfo, testInfo);
       params[name] = fixture.value;
     }
 
-    return fn(params, info);
+    return fn(params, testInfo || workerInfo);
   }
 
-  async setupFixtureForRegistration(registration: FixtureRegistration, info: any): Promise<Fixture> {
+  async setupFixtureForRegistration(registration: FixtureRegistration, workerInfo: WorkerInfo, testInfo: TestInfo | undefined): Promise<Fixture> {
     if (registration.scope === 'test')
       this.testScopeClean = false;
 
@@ -261,7 +261,7 @@ export class FixtureRunner {
 
     fixture = new Fixture(this, registration);
     this.instanceForId.set(registration.id, fixture);
-    await fixture.setup(info);
+    await fixture.setup(workerInfo, testInfo);
     return fixture;
   }
 
