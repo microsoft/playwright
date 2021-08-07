@@ -86,7 +86,7 @@ function suggestedBrowsersToInstall() {
   return registry.executables().filter(e => e.installType !== 'none' && e.type !== 'tool').map(e => e.name).join(', ');
 }
 
-function checkBrowsersToInstall(args: string[]) {
+function checkBrowsersToInstall(args: string[]): Executable[] {
   const faultyArguments: string[] = [];
   const executables: Executable[] = [];
   for (const arg of args) {
@@ -106,12 +106,19 @@ function checkBrowsersToInstall(args: string[]) {
 program
     .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
-    .action(async function(args: string[]) {
+    .option('--with-deps', 'install system dependencies for browsers')
+    .action(async function(args: string[], command: program.Command) {
       try {
-        if (!args.length)
+        if (!args.length) {
+          if (command.opts().withDeps)
+            await registry.installDeps();
           await registry.install();
-        else
-          await registry.install(checkBrowsersToInstall(args));
+        } else {
+          const executables = checkBrowsersToInstall(args);
+          if (command.opts().withDeps)
+            await registry.installDeps(executables);
+          await registry.install(executables);
+        }
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);

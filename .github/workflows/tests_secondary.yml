@@ -36,8 +36,9 @@ jobs:
     - run: npm ci
       env:
         DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
+    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -64,8 +65,9 @@ jobs:
     - run: npm ci
       env:
         DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
+    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -90,8 +92,9 @@ jobs:
     - run: npm ci
       env:
         DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps
+    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
       shell: bash
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -140,8 +143,9 @@ jobs:
     - run: npm ci
       env:
         DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
+    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       if: ${{ always() }}
       env:
@@ -169,8 +173,9 @@ jobs:
     - run: npm ci
       env:
         DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps chromium
+    - run: node lib/cli/cli install --with-deps chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_MODE: ${{ matrix.mode }}
@@ -194,8 +199,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps chromium
-    - run: node lib/cli/cli install chrome
+    - run: node lib/cli/cli install --with-deps chrome
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome
@@ -219,7 +223,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install chrome
+    - run: node lib/cli/cli install --with-deps chrome
     - run: npm run ctest
       shell: bash
       env:
@@ -245,7 +249,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install chrome
+    - run: node lib/cli/cli install --with-deps chrome
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome
@@ -269,8 +273,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps firefox
-    - run: node lib/cli/cli install firefox-beta chromium
+    - run: node lib/cli/cli install --with-deps firefox-beta chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
@@ -294,8 +297,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps chromium
-    - run: node lib/cli/cli install firefox-beta chromium
+    - run: node lib/cli/cli install --with-deps firefox-beta chromium
     - run: npm run ftest
       shell: bash
       env:
@@ -321,7 +323,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install firefox-beta chromium
+    - run: node lib/cli/cli install --with-deps firefox-beta chromium
     - run: npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
@@ -345,7 +347,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install msedge
+    - run: node lib/cli/cli install --with-deps msedge
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge
@@ -370,7 +372,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install msedge
+    - run: node lib/cli/cli install --with-deps msedge
     - run: npm run ctest
       shell: bash
       env:
@@ -393,7 +395,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install msedge-beta
+    - run: node lib/cli/cli install --with-deps msedge-beta
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
@@ -417,7 +419,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install msedge-beta
+    - run: node lib/cli/cli install --with-deps msedge-beta
     - run: npm run ctest
       shell: bash
       env:
@@ -440,7 +442,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install msedge-beta
+    - run: node lib/cli/cli install --with-deps msedge-beta
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
@@ -464,7 +466,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install msedge-dev
+    - run: node lib/cli/cli install --with-deps msedge-dev
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
@@ -488,7 +490,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install msedge-dev
+    - run: node lib/cli/cli install --with-deps msedge-dev
     - run: npm run ctest
       shell: bash
       env:
@@ -511,7 +513,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install msedge-dev
+    - run: node lib/cli/cli install --with-deps msedge-dev
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
@@ -535,8 +537,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps chromium
-    - run: node lib/cli/cli install chrome-beta
+    - run: node lib/cli/cli install --with-deps chrome-beta
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
@@ -560,7 +561,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install chrome-beta
+    - run: node lib/cli/cli install --with-deps chrome-beta
     - run: npm run ctest
       shell: bash
       env:
@@ -586,7 +587,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install chrome-beta
+    - run: node lib/cli/cli install --with-deps chrome-beta
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
@@ -607,8 +608,10 @@ jobs:
       with:
         node-version: 12
     - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps chromium
+    - run: node lib/cli/cli install --with-deps chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run etest
     - run: node tests/config/checkCoverage.js electron
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json

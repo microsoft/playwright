@@ -27,8 +27,9 @@ jobs:
     - run: npm ci
       env:
         DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install-deps ${{ matrix.browser }} chromium
+    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
         PWTEST_VIDEO: 1
