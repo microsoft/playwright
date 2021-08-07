@@ -7,13 +7,11 @@
 <script>
 const e = React.createElement;
 
-class AppHeader extends React.Component {
-  render() {
-    return e(React.Fragment, null,
-      e('h1', null, `reactjs@${React.version}`),
-      e('h3', null, `Reading List: ${this.props.bookCount}`),
-    );
-  }
+function AppHeader(props) {
+  return e(React.Fragment, null,
+    e('h1', null, `reactjs@${React.version}`),
+    e('h3', null, `Reading List: ${props.bookCount}`),
+  );
 }
 
 class NewBook extends React.Component {
