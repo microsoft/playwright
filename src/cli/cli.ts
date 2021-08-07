@@ -107,15 +107,15 @@ program
     .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
     .option('--with-deps', 'install system dependencies for browsers')
-    .action(async function(args: string[], command: any) {
+    .action(async function(args: string[], command: program.Command) {
       try {
         if (!args.length) {
-          if (command['--with-deps'])
+          if (command.opts().withDeps)
             await registry.installDeps();
           await registry.install();
         } else {
           const executables = checkBrowsersToInstall(args);
-          if (command['--with-deps'])
+          if (command.opts().withDeps)
             await registry.installDeps(executables);
           await registry.install(executables);
         }
