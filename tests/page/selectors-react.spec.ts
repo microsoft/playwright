@@ -49,7 +49,7 @@ for (const [name, url] of Object.entries(reacts)) {
       expect(await page.$$eval(`react=BookLi`, els => els.length)).toBe(0);
     });
 
-    it('should compose', async({page}) => {
+    it('should compose', async ({page}) => {
       expect(await page.$eval(`react=NewBook >> react=button`, el => el.textContent)).toBe('new book');
       expect(await page.$eval(`react=NewBook >> react=input`, el => el.tagName)).toBe('INPUT');
       expect(await page.$eval(`react=BookItem >> text=Gatsby`, el => el.textContent)).toBe('The Great Gatsby');
