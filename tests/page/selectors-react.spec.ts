@@ -34,15 +34,13 @@ for (const [name, url] of Object.entries(reacts)) {
       expect(await page.$$eval(`react=BookItem`, els => els.length)).toBe(3);
       expect(await page.$$eval(`react=BookList >> react=BookItem`, els => els.length)).toBe(3);
       expect(await page.$$eval(`react=BookItem >> react=BookList`, els => els.length)).toBe(0);
+
     });
 
     it('should work with multi-root elements (fragments)', async ({page}) => {
       it.skip(name === 'react15', 'React 15 does not support fragments');
-      // App is a fragment.
       expect(await page.$$eval(`react=App`, els => els.length)).toBe(5);
-      // App is a fragment.
       expect(await page.$$eval(`react=AppHeader`, els => els.length)).toBe(2);
-      // App is a fragment.
       expect(await page.$$eval(`react=NewBook`, els => els.length)).toBe(2);
     });
 
@@ -50,6 +48,13 @@ for (const [name, url] of Object.entries(reacts)) {
       expect(await page.$$eval(`react=Apps`, els => els.length)).toBe(0);
       expect(await page.$$eval(`react=BookLi`, els => els.length)).toBe(0);
     });
+
+    it('should compose', async({page}) => {
+      expect(await page.$eval(`react=NewBook >> react=button`, el => el.textContent)).toBe('new book');
+      expect(await page.$eval(`react=NewBook >> react=input`, el => el.tagName)).toBe('INPUT');
+      expect(await page.$eval(`react=BookItem >> text=Gatsby`, el => el.textContent)).toBe('The Great Gatsby');
+    });
+
   });
 }
 

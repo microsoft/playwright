@@ -646,9 +646,7 @@ converts `'//html/body'` to `'xpath=//html/body'`.
 
 ## React selectors
 
-React selectors allow selecting elements by its component name. If component
- has multiple root elements (see [React Fragments](https://reactjs.org/docs/fragments.html)),
- `react` selector will return all of them.
+React selectors allow selecting elements by its component name.
 
 To find React element names in a tree use [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi).
 

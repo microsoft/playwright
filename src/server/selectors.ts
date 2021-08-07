@@ -30,6 +30,7 @@ export type SelectorInfo = {
 
 export class Selectors {
   readonly _builtinEngines: Set<string>;
+  readonly _builtinEnginesInMainWorld: Set<string>;
   readonly _engines: Map<string, { source: string, contentScript: boolean }>;
   readonly guid = `selectors@${createGuid()}`;
 
@@ -45,6 +46,9 @@ export class Selectors {
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
       '_visible', '_nth'
+    ]);
+    this._builtinEnginesInMainWorld = new Set([
+      'react',
     ]);
     this._engines = new Map();
   }
@@ -131,6 +135,8 @@ export class Selectors {
       if (!custom && !this._builtinEngines.has(part.name))
         throw new Error(`Unknown engine "${part.name}" while parsing selector ${selector}`);
       if (custom && !custom.contentScript)
+        needsMainWorld = true;
+      if (this._builtinEnginesInMainWorld.has(part.name))
         needsMainWorld = true;
     }
     return {
