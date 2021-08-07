@@ -59,6 +59,7 @@ compile_chromium() {
   # Prepare build folder.
   mkdir -p "./out/Default"
   echo "is_debug = false" > ./out/Default/args.gn
+  echo "dcheck_always_on = false" >> ./out/Default/args.gn
   if [[ $2 == "--symbols" ]]; then
     echo "symbol_level = 1" >> ./out/Default/args.gn
   else
