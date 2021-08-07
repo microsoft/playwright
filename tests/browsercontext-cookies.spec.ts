@@ -137,7 +137,7 @@ it('should get cookies from multiple urls', async ({context}) => {
     url: 'https://foo.com',
     name: 'doggo',
     value: 'woofs',
-    sameSite: 'Lax',
+    sameSite: 'None',
   }, {
     url: 'https://bar.com',
     name: 'catto',
@@ -167,7 +167,7 @@ it('should get cookies from multiple urls', async ({context}) => {
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'Lax',
+    sameSite: 'None',
   }]));
 });
 

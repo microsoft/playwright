@@ -202,12 +202,11 @@ it('should have |expires| set to |-1| for session cookies', async ({context, ser
   expect(cookies[0].expires).toBe(-1);
 });
 
-it('should set cookie with reasonable defaults', async ({context, server}) => {
+it('should set cookie with reasonable defaults', async ({context, server, browserName}) => {
   await context.addCookies([{
     url: server.EMPTY_PAGE,
     name: 'defaults',
     value: '123456',
-    sameSite: 'Lax',
   }]);
   const cookies = await context.cookies();
   expect(cookies.sort((a, b) => a.name.localeCompare(b.name))).toEqual([{
@@ -218,7 +217,7 @@ it('should set cookie with reasonable defaults', async ({context, server}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'Lax',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
   }]);
 });
 
