@@ -1,0 +1,83 @@
+<link rel=stylesheet href='./style.css'>
+<script src="./react_16.14.0.js"></script>
+<script src="./react-dom_16.14.0.js"></script>
+
+<div id=root></div>
+
+<script>
+const e = React.createElement;
+
+class AppHeader extends React.Component {
+  render() {
+    return e(React.Fragment, null,
+      e('h1', null, `reactjs@${React.version}`),
+      e('h3', null, `Reading List: ${this.props.bookCount}`),
+    );
+  }
+}
+
+class NewBook extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = '';
+  }
+
+  onInput(event) {
+    this.state = event.target.value;
+  }
+
+  render() {
+    return e(React.Fragment, null, 
+      e('input', {onInput: this.onInput.bind(this)}, null),
+      e('button', {
+        onClick: () => this.props.onNewBook(this.state),
+      }, `new book`),
+    );
+  }
+}
+
+class BookItem extends React.Component {
+  render() {
+    return e('div', null, this.props.name);
+  }
+}
+
+class BookList extends React.Component {
+  render() {
+    return e('ol', null, this.props.books.map(book => e('li', {key: book.name}, e(BookItem, { name: book.name }))));
+  }
+}
+
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      books: [
+        {name: 'Pride and Prejudice' },
+        {name: 'To Kill a Mockingbird' },
+        {name: 'The Great Gatsby' },
+      ],
+    };
+  }
+
+  render() {
+    return e(React.Fragment, null, 
+      e(AppHeader, {bookCount: this.state.books.length}, null),
+      e(NewBook, {onNewBook: bookName => this.onNewBook(bookName)}, null),
+      e(BookList, {books: this.state.books}, null),
+    );
+  }
+
+  onNewBook(bookName) {
+    this.setState({
+      books: [...this.state.books, {name: bookName}],
+    });
+  }
+}
+
+ReactDOM.render(
+  e(App, null, null),
+  document.getElementById('root'),
+);
+
+</script>

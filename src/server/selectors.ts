@@ -38,6 +38,7 @@ export class Selectors {
     this._builtinEngines = new Set([
       'css', 'css:light',
       'xpath', 'xpath:light',
+      'react',
       'text', 'text:light',
       'id', 'id:light',
       'data-testid', 'data-testid:light',

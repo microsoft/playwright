@@ -179,6 +179,25 @@ methods accept [`param: selector`] as their first argument.
   await page.ClickAsync("xpath=//button");
   ```
   Learn more about [XPath selector][xpath].
+- React selector
+  ```js
+  await page.click('react=DatePickerComponent');
+  ```
+  ```java
+  page.click("react=DatePickerComponent");
+  ```
+  ```python async
+  await page.click("react=DatePickerComponent")
+  ```
+  ```python sync
+  page.click("react=DatePickerComponent")
+  ```
+  ```csharp
+  await page.ClickAsync("react=DatePickerComponent");
+  ```
+  Learn more about [React selector][react].
+
+
 
 ## Text selector
 
@@ -625,6 +644,25 @@ converts `'//html/body'` to `'xpath=//html/body'`.
 `xpath` does not pierce shadow roots
 :::
 
+## React selectors
+
+React selectors allow selecting elements by its component name. If component
+ has multiple root elements (see [React Fragments](https://reactjs.org/docs/fragments.html)),
+ `react` selector will return all of them.
+
+To find React element names in a tree use [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi).
+
+Example: `react=MyComponent`
+
+:::note
+React selectors support React 15 and above.
+:::
+
+:::note
+React selectors, as well as [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
+:::
+
+
 ## id, data-testid, data-test-id, data-test selectors
 
 Playwright supports a shorthand for selecting elements using certain attributes. Currently, only
@@ -966,4 +1004,5 @@ await page.ClickAsync("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input");
 [text]: #text-selector
 [css]: #css-selector
 [xpath]: #xpath-selectors
+[react]: #react-selectors
 [id]: #id-data-testid-data-test-id-data-test-selectors
