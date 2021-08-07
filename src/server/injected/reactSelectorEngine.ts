@@ -38,12 +38,14 @@ type ReactVNode = {
 
 function getComponentName(reactElement: ReactVNode): string {
   // React 16+
+  // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L16
   if (typeof reactElement.type === 'function')
     return reactElement.type.displayName || reactElement.type.name || 'Anonymous';
   if (typeof reactElement.type === 'string')
     return reactElement.type;
 
   // React 15
+  // @see https://github.com/facebook/react/blob/2edf449803378b5c58168727d4f123de3ba5d37f/packages/react-devtools-shared/src/backend/legacy/renderer.js#L59
   if (reactElement._currentElement) {
     const elementType = reactElement._currentElement.type;
     if (typeof elementType === 'string')
@@ -56,6 +58,7 @@ function getComponentName(reactElement: ReactVNode): string {
 
 function getChildren(reactElement: ReactVNode): ReactVNode[] {
   // React 16+
+  // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L192
   if (reactElement.child) {
     const children: ReactVNode[] = [];
     for (let child: ReactVNode|undefined = reactElement.child; child; child = child.sibling)
@@ -64,6 +67,7 @@ function getChildren(reactElement: ReactVNode): ReactVNode[] {
   }
 
   // React 15
+  // @see https://github.com/facebook/react/blob/2edf449803378b5c58168727d4f123de3ba5d37f/packages/react-devtools-shared/src/backend/legacy/renderer.js#L101
   if (!reactElement._currentElement)
     return [];
   const isKnownElement = (reactElement: ReactVNode) => {
@@ -89,6 +93,7 @@ function buildComponentsTree(reactElement: ReactVNode): ComponentNode {
 
   const rootElement =
       // React 16+
+      // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L29
       reactElement.stateNode ||
       // React 15
       reactElement._hostNode || reactElement._renderedComponent?._hostNode;
@@ -112,9 +117,11 @@ function filterComponentsTree(treeNode: ComponentNode, searchFn: (node: Componen
 function findReactRoot(): ReactVNode | undefined {
   const walker = document.createTreeWalker(document);
   while (walker.nextNode()) {
+    // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L329
     if (walker.currentNode.hasOwnProperty('_reactRootContainer'))
       return (walker.currentNode as any)._reactRootContainer._internalRoot.current;
     for (const key of Object.keys(walker.currentNode)) {
+      // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L334
       if (key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))
         return (walker.currentNode as any)[key];
     }
