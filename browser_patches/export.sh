@@ -110,16 +110,16 @@ else
 fi
 
 # Switch to git repository.
-cd $CHECKOUT_PATH
+cd "$CHECKOUT_PATH"
 
 # Setting up |$REMOTE_BROWSER_UPSTREAM| remote and fetch the $BASE_BRANCH
 if git remote get-url $REMOTE_BROWSER_UPSTREAM >/dev/null; then
   if ! [[ $(git config --get remote.$REMOTE_BROWSER_UPSTREAM.url || echo "") == "$REMOTE_URL" ]]; then
-    echo "ERROR: remote $REMOTE_BROWSER_UPSTREAM is not pointing to '$REMOTE_URL'! run `prepare_checkout.sh` first"
+    echo "ERROR: remote $REMOTE_BROWSER_UPSTREAM is not pointing to '$REMOTE_URL'! run 'prepare_checkout.sh' first"
     exit 1
   fi
 else
-  echo "ERROR: checkout does not have $REMOTE_BROWSER_UPSTREAM; run `prepare_checkout.sh` first"
+  echo "ERROR: checkout does not have $REMOTE_BROWSER_UPSTREAM; run 'prepare_checkout.sh' first"
   exit 1
 fi
 
@@ -131,17 +131,17 @@ else
   echo "-- checking $FRIENDLY_CHECKOUT_PATH is clean - OK"
 fi
 
-PATCH_NAME=$(ls -1 $EXPORT_PATH/patches)
+PATCH_NAME=$(ls -1 "$EXPORT_PATH"/patches)
 if [[ -z "$PATCH_NAME" ]]; then
   PATCH_NAME="bootstrap.diff"
   OLD_DIFF=""
 else
-  OLD_DIFF=$(cat $EXPORT_PATH/patches/$PATCH_NAME)
+  OLD_DIFF=$(cat "$EXPORT_PATH"/patches/$PATCH_NAME)
 fi
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-NEW_BASE_REVISION=$(git merge-base $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH $CURRENT_BRANCH)
-NEW_DIFF=$(git diff --diff-algorithm=myers --full-index $NEW_BASE_REVISION $CURRENT_BRANCH -- . ":!${EXTRA_FOLDER_CHECKOUT_RELPATH}")
+NEW_BASE_REVISION=$(git merge-base $REMOTE_BROWSER_UPSTREAM/"$BASE_BRANCH" "$CURRENT_BRANCH")
+NEW_DIFF=$(git diff --diff-algorithm=myers --full-index "$NEW_BASE_REVISION" "$CURRENT_BRANCH" -- . ":!${EXTRA_FOLDER_CHECKOUT_RELPATH}")
 
 # Increment BUILD_NUMBER
 BUILD_NUMBER=$(curl ${BUILD_NUMBER_UPSTREAM_URL} | head -1)
@@ -149,10 +149,10 @@ BUILD_NUMBER=$((BUILD_NUMBER+1))
 
 echo "REMOTE_URL=\"$REMOTE_URL\"
 BASE_BRANCH=\"$BASE_BRANCH\"
-BASE_REVISION=\"$NEW_BASE_REVISION\"" > $EXPORT_PATH/UPSTREAM_CONFIG.sh
-echo "$NEW_DIFF" > $EXPORT_PATH/patches/$PATCH_NAME
-echo $BUILD_NUMBER > $EXPORT_PATH/BUILD_NUMBER
-echo "Changed: $(git config user.email) $(date)" >> $EXPORT_PATH/BUILD_NUMBER
+BASE_REVISION=\"$NEW_BASE_REVISION\"" > "$EXPORT_PATH"/UPSTREAM_CONFIG.sh
+echo "$NEW_DIFF" > "$EXPORT_PATH"/patches/$PATCH_NAME
+echo $BUILD_NUMBER > "$EXPORT_PATH"/BUILD_NUMBER
+echo "Changed: $(git config user.email) $(date)" >> "$EXPORT_PATH"/BUILD_NUMBER
 
 echo "-- exporting standalone folder"
 rm -rf "${EXTRA_FOLDER_PW_PATH}"

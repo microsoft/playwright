@@ -3,7 +3,7 @@ set -e
 set +x
 
 trap "cd $(pwd -P)" EXIT
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 
 rm -rf output
 if [[ ! -z "${CR_CHECKOUT_PATH}" ]]; then
