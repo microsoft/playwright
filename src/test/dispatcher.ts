@@ -253,7 +253,11 @@ export class Dispatcher {
     });
     worker.on('stepEnd', (params: StepEndPayload) => {
       const { test, result, steps } = this._testById.get(params.testId)!;
-      const step = steps.get(params.stepId)!;
+      const step = steps.get(params.stepId);
+      if (!step) {
+        this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, test, result);
+        return;
+      }
       step.duration = params.wallTime - step.startTime.getTime();
       if (params.error)
         step.error = params.error;

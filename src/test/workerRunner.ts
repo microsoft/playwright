@@ -273,7 +273,7 @@ export class WorkerRunner extends EventEmitter {
       },
       _testFinished: new Promise(f => testFinishedCallback = f),
       _addStep: (category: string, title: string) => {
-        const stepId = `${category}@${++lastStepId}`;
+        const stepId = `${category}@${title}@${++lastStepId}`;
         const payload: StepBeginPayload = {
           testId,
           stepId,
