@@ -90,6 +90,10 @@ export function compare(
   options?: { threshold?: number }
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
   const snapshotFile = snapshotPath(name);
+  const outputFile = outputPath(name);
+  const expectedPath = addSuffix(outputFile, '-expected');
+  const actualPath = addSuffix(outputFile, '-actual');
+  const diffPath = addSuffix(outputFile, '-diff');
 
   if (!fs.existsSync(snapshotFile)) {
     const isWriteMissingMode = updateSnapshots === 'all' || updateSnapshots === 'missing';
@@ -101,6 +105,7 @@ export function compare(
     if (isWriteMissingMode) {
       fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
       fs.writeFileSync(snapshotFile, actual);
+      fs.writeFileSync(actualPath, actual);
     }
     const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (updateSnapshots === 'all') {
@@ -154,10 +159,6 @@ export function compare(
     };
   }
 
-  const outputFile = outputPath(name);
-  const expectedPath = addSuffix(outputFile, '-expected');
-  const actualPath = addSuffix(outputFile, '-actual');
-  const diffPath = addSuffix(outputFile, '-diff');
   fs.writeFileSync(expectedPath, expected);
   fs.writeFileSync(actualPath, actual);
   if (result.diff)
