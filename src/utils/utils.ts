@@ -16,6 +16,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import stream from 'stream';
 import removeFolder from 'rimraf';
 import * as crypto from 'crypto';
 import os from 'os';
@@ -264,6 +265,30 @@ export function headersArrayToObject(headers: HeadersArray, lowerCase: boolean):
 export function monotonicTime(): number {
   const [seconds, nanoseconds] = process.hrtime();
   return seconds * 1000 + (nanoseconds / 1000 | 0) / 1000;
+}
+
+class HashStream extends stream.Writable {
+  private _hash = crypto.createHash('sha1');
+
+  _write(chunk: Buffer, encoding: string, done: () => void) {
+    this._hash.update(chunk);
+    done();
+  }
+
+  digest(): string {
+    return this._hash.digest('hex');
+  }
+}
+
+export async function calculateFileSha1(filename: string): Promise<string> {
+  const hashStream = new HashStream();
+  const stream = fs.createReadStream(filename);
+  stream.on('open', () => stream.pipe(hashStream));
+  await new Promise((f, r) => {
+    hashStream.on('finish', f);
+    hashStream.on('error', r);
+  });
+  return hashStream.digest();
 }
 
 export function calculateSha1(buffer: Buffer | string): string {

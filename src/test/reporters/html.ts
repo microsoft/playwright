@@ -16,8 +16,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { Suite, TestError, TestStatus, Location, TestCase, TestResult, TestStep, FullConfig } from '../../../types/testReporter';
-import { BaseReporter, formatResultFailure } from './base';
+import { FullConfig, Location, Suite, TestCase, TestError, TestResult, TestStatus, TestStep } from '../../../types/testReporter';
+import { calculateFileSha1 } from '../../utils/utils';
+import { formatResultFailure } from './base';
 import { serializePatterns, toPosixPath } from './json';
 
 export type JsonStats = { expected: number, unexpected: number, flaky: number, skipped: number };
@@ -62,6 +63,22 @@ export type JsonTestCase = {
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
 };
 
+export type TestAttachment = {
+  name: string;
+  path?: string;
+  body?: Buffer;
+  contentType: string;
+  sha1?: string;
+};
+
+export type JsonAttachment = {
+  name: string;
+  path?: string;
+  body?: string;
+  contentType: string;
+  sha1?: string;
+};
+
 export type JsonTestResult = {
   retry: number;
   workerIndex: number;
@@ -70,7 +87,7 @@ export type JsonTestResult = {
   status: TestStatus;
   error?: TestError;
   failureSnippet?: string;
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  attachments: JsonAttachment[];
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
   steps: JsonTestStep[];
@@ -85,15 +102,30 @@ export type JsonTestStep = {
   steps: JsonTestStep[];
 };
 
-class HtmlReporter extends BaseReporter {
-  async onEnd() {
-    const targetFolder = process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report';
-    fs.mkdirSync(targetFolder, { recursive: true });
+class HtmlReporter {
+  private _targetFolder: string;
+  private config!: FullConfig;
+  private suite!: Suite;
+
+  onBegin(config: FullConfig, suite: Suite) {
+    this.config = config;
+    this.suite = suite;
+  }
+
+  constructor() {
+    this._targetFolder = process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report';
+    fs.mkdirSync(this._targetFolder, { recursive: true });
     const appFolder = path.join(__dirname, '..', '..', 'web', 'htmlReport');
     for (const file of fs.readdirSync(appFolder))
-      fs.copyFileSync(path.join(appFolder, file), path.join(targetFolder, file));
+      fs.copyFileSync(path.join(appFolder, file), path.join(this._targetFolder, file));
+  }
+
+  async onEnd() {
     const stats: JsonStats = { expected: 0, unexpected: 0, skipped: 0, flaky: 0 };
-    const reportFile = path.join(targetFolder, 'report.json');
+    this.suite.allTests().forEach(t => {
+      ++stats[t.outcome()];
+    });
+    const reportFile = path.join(this._targetFolder, 'report.json');
     const output: JsonReport = {
       config: {
         ...this.config,
@@ -113,7 +145,7 @@ class HtmlReporter extends BaseReporter {
         })
       },
       stats,
-      suites: this.suite.suites.map(s => this._serializeSuite(s))
+      suites: await Promise.all(this.suite.suites.map(s => this._serializeSuite(s)))
     };
     fs.writeFileSync(reportFile, JSON.stringify(output));
   }
@@ -128,16 +160,16 @@ class HtmlReporter extends BaseReporter {
     };
   }
 
-  private _serializeSuite(suite: Suite): JsonSuite {
+  private async _serializeSuite(suite: Suite): Promise<JsonSuite> {
     return {
       title: suite.title,
       location: this._relativeLocation(suite.location),
-      suites: suite.suites.map(s => this._serializeSuite(s)),
-      tests: suite.tests.map(t => this._serializeTest(t)),
+      suites: await Promise.all(suite.suites.map(s => this._serializeSuite(s))),
+      tests: await Promise.all(suite.tests.map(t => this._serializeTest(t))),
     };
   }
 
-  private _serializeTest(test: TestCase): JsonTestCase {
+  private async _serializeTest(test: TestCase): Promise<JsonTestCase> {
     return {
       title: test.title,
       location: this._relativeLocation(test.location),
@@ -147,11 +179,11 @@ class HtmlReporter extends BaseReporter {
       retries: test.retries,
       ok: test.ok(),
       outcome: test.outcome(),
-      results: test.results.map(r => this._serializeResult(test, r)),
+      results: await Promise.all(test.results.map(r => this._serializeResult(test, r))),
     };
   }
 
-  private _serializeResult(test: TestCase, result: TestResult): JsonTestResult {
+  private async _serializeResult(test: TestCase, result: TestResult): Promise<JsonTestResult> {
     return {
       retry: result.retry,
       workerIndex: result.workerIndex,
@@ -160,11 +192,29 @@ class HtmlReporter extends BaseReporter {
       status: result.status,
       error: result.error,
       failureSnippet: formatResultFailure(test, result, '').join('') || undefined,
-      attachments: result.attachments,
+      attachments: await this._copyAttachments(result.attachments),
       stdout: result.stdout,
       stderr: result.stderr,
       steps: this._serializeSteps(result.steps)
     };
+  }
+
+  private async _copyAttachments(attachments: TestAttachment[]): Promise<JsonAttachment[]> {
+    const result: JsonAttachment[] = [];
+    for (const attachment of attachments) {
+      if (attachment.path) {
+        const sha1 = await calculateFileSha1(attachment.path) + extension(attachment.contentType);
+        fs.copyFileSync(attachment.path, path.join(this._targetFolder, sha1));
+        result.push({
+          ...attachment,
+          body: undefined,
+          sha1
+        });
+      } else if (attachment.body) {
+        result.push({ ...attachment, body: attachment.body.toString('base64') });
+      }
+    }
+    return result;
   }
 
   private _serializeSteps(steps: TestStep[]): JsonTestStep[] {
@@ -203,6 +253,16 @@ function containsStep(outer: TestStep, inner: TestStep): boolean {
   if (outer.startTime.getTime() + outer.duration <= inner.startTime.getTime())
     return false;
   return true;
+}
+
+function extension(contentType: string) {
+  if (contentType === 'image/png')
+    return '.png';
+  if (contentType === 'image/jpeg' || contentType === 'image/jpg')
+    return '.jpeg';
+  if (contentType === 'video/webm')
+    return '.webm';
+  return '.data';
 }
 
 export default HtmlReporter;

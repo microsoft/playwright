@@ -20,7 +20,7 @@ import { SplitView } from '../components/splitView';
 import { TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import ansi2html from 'ansi-to-html';
-import { JsonLocation, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from '../../test/reporters/html';
+import type { JsonAttachment, JsonLocation, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from '../../test/reporters/html';
 import { msToString } from '../uiUtils';
 
 type Filter = 'Failing' | 'All';
@@ -38,11 +38,15 @@ export const Report: React.FC = () => {
   }, []);
   const [filter, setFilter] = React.useState<Filter>('Failing');
 
-  const failingTests = React.useMemo(() => {
-    const map = new Map<JsonSuite, JsonTestCase[]>();
-    for (const project of report?.suites || [])
-      map.set(project, computeFailingTests(project));
-    return map;
+  const { unexpectedTests, unexpectedTestCount } = React.useMemo(() => {
+    const unexpectedTests = new Map<JsonSuite, JsonTestCase[]>();
+    let unexpectedTestCount = 0;
+    for (const project of report?.suites || []) {
+      const unexpected = computeUnexpectedTests(project);
+      unexpectedTestCount += unexpected.length;
+      unexpectedTests.set(project, unexpected);
+    }
+    return { unexpectedTests, unexpectedTestCount };
   }, [report]);
 
   return <div className='hbox'>
@@ -51,10 +55,11 @@ export const Report: React.FC = () => {
       <TestCaseView test={selectedTest}></TestCaseView>
       <div className='suite-tree'>
         {filter === 'All' && report?.suites.map((s, i) => <ProjectTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest}></ProjectTreeItem>)}
-        {filter === 'Failing' && report?.suites.map((s, i) => {
-          const hasFailingTests = !!failingTests.get(s)?.length;
-          return hasFailingTests && <ProjectFlatTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} failingTests={failingTests.get(s)!}></ProjectFlatTreeItem>;
+        {filter === 'Failing' && !!unexpectedTestCount && report?.suites.map((s, i) => {
+          const hasUnexpectedOutcomes = !!unexpectedTests.get(s)?.length;
+          return hasUnexpectedOutcomes && <ProjectFlatTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} unexpectedTests={unexpectedTests.get(s)!}></ProjectFlatTreeItem>;
         })}
+        {filter === 'Failing' && !unexpectedTestCount && <div className='awesome'>You are awesome!</div>}
       </div>
     </SplitView>
   </div>;
@@ -81,31 +86,31 @@ const ProjectTreeItem: React.FC<{
   selectedTest?: JsonTestCase,
   setSelectedTest: (test: JsonTestCase) => void;
 }> = ({ suite, setSelectedTest, selectedTest }) => {
-  const location = renderLocation(suite?.location);
+  const location = renderLocation(suite?.location, true);
 
   return <TreeItem title={<div className='hbox'>
     <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title}</div></div>
     {!!suite?.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
-    return suite?.suites.map((s, i) => <SuiteTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} depth={1}></SuiteTreeItem>) || [];
+    return suite?.suites.map((s, i) => <SuiteTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} depth={1} showFileName={true}></SuiteTreeItem>) || [];
   }} depth={0} expandByDefault={true}></TreeItem>;
 };
 
 const ProjectFlatTreeItem: React.FC<{
   suite?: JsonSuite;
-  failingTests: JsonTestCase[],
+  unexpectedTests: JsonTestCase[],
   selectedTest?: JsonTestCase,
   setSelectedTest: (test: JsonTestCase) => void;
-}> = ({ suite, setSelectedTest, selectedTest, failingTests }) => {
-  const location = renderLocation(suite?.location);
+}> = ({ suite, setSelectedTest, selectedTest, unexpectedTests }) => {
+  const location = renderLocation(suite?.location, true);
 
   return <TreeItem title={<div className='hbox'>
     <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title}</div></div>
     {!!suite?.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
-    return failingTests.map((t, i) => <TestTreeItem key={i} test={t} setSelectedTest={setSelectedTest} selectedTest={selectedTest} showFileName={false} depth={1}></TestTreeItem>) || [];
+    return unexpectedTests.map((t, i) => <TestTreeItem key={i} test={t} setSelectedTest={setSelectedTest} selectedTest={selectedTest} showFileName={false} depth={1}></TestTreeItem>) || [];
   }} depth={0} expandByDefault={true}></TreeItem>;
 };
 
@@ -114,14 +119,15 @@ const SuiteTreeItem: React.FC<{
   selectedTest?: JsonTestCase,
   setSelectedTest: (test: JsonTestCase) => void;
   depth: number,
-}> = ({ suite, setSelectedTest, selectedTest, depth }) => {
-  const location = renderLocation(suite?.location);
+  showFileName: boolean,
+}> = ({ suite, setSelectedTest, selectedTest, showFileName, depth }) => {
+  const location = renderLocation(suite?.location, showFileName);
   return <TreeItem title={<div className='hbox'>
     <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title}</div></div>
     {!!suite?.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
-    const suiteChildren = suite?.suites.map((s, i) => <SuiteTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} depth={depth + 1}></SuiteTreeItem>) || [];
+    const suiteChildren = suite?.suites.map((s, i) => <SuiteTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} depth={depth + 1} showFileName={false}></SuiteTreeItem>) || [];
     const testChildren = suite?.tests.map((t, i) => <TestTreeItem key={i} test={t} setSelectedTest={setSelectedTest} selectedTest={selectedTest} showFileName={false} depth={depth + 1}></TestTreeItem>) || [];
     return [...suiteChildren, ...testChildren];
   }} depth={depth}></TreeItem>;
@@ -163,14 +169,21 @@ const TestOverview: React.FC<{
   test: JsonTestCase,
   result: JsonTestResult,
 }> = ({ test, result }) => {
+  const { attachments, screenshots } = React.useMemo(() => {
+    const attachments = new Map<string, JsonAttachment>();
+    const screenshots = result.attachments.filter(a => a.name === 'actual');
+    for (const a of result.attachments)
+      attachments.set(a.name, a);
+    return { attachments, screenshots };
+  }, [ result ]);
   return <div className="test-result">
     <div className='test-overview-title'>{test?.title}</div>
-    <div className='test-overview-property'>{renderLocation(test.location)}<div style={{ flex: 'auto' }}></div><div>{msToString(result.duration)}</div></div>
-    { result.failureSnippet && <div className='error-message' dangerouslySetInnerHTML={{__html: new ansi2html({
-      colors: ansiColors
-    }).toHtml(result.failureSnippet.trim()) }}></div> }
-    { result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0}></StepTreeItem>) }
-    {/* <div style={{whiteSpace: 'pre'}}>{ JSON.stringify(result.steps, undefined, 2) }</div> */}
+    <div className='test-overview-property'>{renderLocation(test.location, true)}<div style={{ flex: 'auto' }}></div><div>{msToString(result.duration)}</div></div>
+    {result.failureSnippet && <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(result.failureSnippet.trim()) }}></div>}
+    {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0}></StepTreeItem>)}
+    {attachments.has('expected') && attachments.has('actual') && <ImageDiff actual={attachments.get('actual')!} expected={attachments.get('expected')!} diff={attachments.get('diff')}></ImageDiff>}
+    {!!screenshots.length && <div className='test-overview-title'>Screenshots</div>}
+    {screenshots.map(a => <div className='image-preview'><img src={a.sha1} /></div>)}
   </div>;
 };
 
@@ -186,6 +199,36 @@ const StepTreeItem: React.FC<{
   </div>} loadChildren={step.steps.length ? () => {
     return step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
   } : undefined} depth={depth}></TreeItem>;
+};
+
+export const ImageDiff: React.FunctionComponent<{
+  actual: JsonAttachment,
+  expected: JsonAttachment,
+  diff?: JsonAttachment,
+}> = ({ actual, expected, diff }) => {
+  const [selectedTab, setSelectedTab] = React.useState<string>('actual');
+  const tabs = [];
+  tabs.push({
+    id: 'actual',
+    title: 'Actual',
+    render: () => <div className='image-preview'><img src={actual.sha1}/></div>
+  });
+  tabs.push({
+    id: 'expected',
+    title: 'Expected',
+    render: () => <div className='image-preview'><img src={expected.sha1}/></div>
+  });
+  if (diff) {
+    tabs.push({
+      id: 'diff',
+      title: 'Diff',
+      render: () => <div className='image-preview'><img src={diff.sha1}/></div>,
+    });
+  }
+  return <div className='vbox test-image-mismatch'>
+    <div className='test-overview-title'>Image mismatch</div>
+    <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+  </div>;
 };
 
 function testSuiteErrorStatusIcon(suite?: JsonSuite): JSX.Element | undefined {
@@ -231,13 +274,13 @@ function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expe
   }
 }
 
-function computeFailingTests(suite: JsonSuite): JsonTestCase[] {
+function computeUnexpectedTests(suite: JsonSuite): JsonTestCase[] {
   const failedTests: JsonTestCase[] = [];
   const visit = (suite: JsonSuite) => {
     for (const child of suite.suites)
       visit(child);
     for (const test of suite.tests) {
-      if (test.results.find(r => r.status === 'failed' || r.status === 'timedOut'))
+      if (test.outcome !== 'expected' && test.outcome !== 'skipped')
         failedTests.push(test);
     }
   };
@@ -245,10 +288,10 @@ function computeFailingTests(suite: JsonSuite): JsonTestCase[] {
   return failedTests;
 }
 
-function renderLocation(location?: JsonLocation) {
+function renderLocation(location: JsonLocation | undefined, showFileName: boolean) {
   if (!location)
     return '';
-  return location.file + ':' + location.column;
+  return (showFileName ? location.file : '') + ':' + location.column;
 }
 
 function retryLabel(index: number) {
