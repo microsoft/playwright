@@ -161,7 +161,7 @@ test('should support toHaveURL', async ({ runInlineTest }) => {
 
 test('should support respect actionTimeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright.config.js': `module.exports = { use: { actionTimeout: 1000 } }`,
+    'playwright.config.js': `module.exports = { expect: { timeout: 1000 } }`,
     'a.test.ts': `
       const { test } = pwt;
 

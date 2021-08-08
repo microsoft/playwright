@@ -106,6 +106,7 @@ export default config;
 
 ## property: TestProject.expect
 - type: <[Object]>
+  - `timeout` <[float]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toMatchSnapshot` <[Object]>
     - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax).
 

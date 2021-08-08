@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import expectLibrary from 'expect';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -191,7 +190,6 @@ export const test = _baseTest.extend<PlaywrightTestArgs & PlaywrightTestOptions,
       };
       context.setDefaultTimeout(actionTimeout || 0);
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
-      expectLibrary.setState({ playwrightActionTimeout: actionTimeout } as any);
       context.on('page', page => allPages.push(page));
 
       if (captureTrace) {
