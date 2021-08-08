@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Expect } from './types';
+import type { TestInfoImpl } from './types';
 import util from 'util';
 import path from 'path';
 import type { TestError, Location } from './types';
@@ -71,9 +71,11 @@ export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: numb
   return (new DeadlineRunner(promise, deadline)).result;
 }
 
-export async function pollUntilDeadline(state: ReturnType<Expect['getState']>, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, deadlinePromise: Promise<void>): Promise<void> {
-  const playwrightActionTimeout = (state as any).playwrightActionTimeout;
-  pollTime = pollTime === 0 ? 0 : pollTime || playwrightActionTimeout;
+export async function pollUntilDeadline(testInfo: TestInfoImpl, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, deadlinePromise: Promise<void>): Promise<void> {
+  let defaultExpectTimeout = testInfo.project.expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined')
+    defaultExpectTimeout = 5000;
+  pollTime = pollTime === 0 ? 0 : pollTime || defaultExpectTimeout;
   const deadline = pollTime ? monotonicTime() + pollTime : 0;
 
   let aborted = false;

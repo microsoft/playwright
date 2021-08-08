@@ -118,7 +118,7 @@ export default config;
 ## property: Fixtures.actionTimeout
 - type: <[int]>
 
-Timeout for each action and expect in milliseconds. Defaults to 0 (no timeout).
+Default timeout for each Playwright action in milliseconds, defaults to 0 (no timeout).
 
 This is a default timeout for all Playwright actions, same as configured via [`method: Page.setDefaultTimeout`].
 

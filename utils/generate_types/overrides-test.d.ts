@@ -36,6 +36,8 @@ export type UpdateSnapshots = 'all' | 'none' | 'missing';
 type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
 
 type ExpectSettings = {
+  // Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+  timeout?: number;
   toMatchSnapshot?: {
     // Pixel match threshold.
     threshold?: number

@@ -37,6 +37,8 @@ export type UpdateSnapshots = 'all' | 'none' | 'missing';
 type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
 
 type ExpectSettings = {
+  // Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+  timeout?: number;
   toMatchSnapshot?: {
     // Pixel match threshold.
     threshold?: number
@@ -2520,7 +2522,7 @@ export interface PlaywrightTestOptions {
    */
   contextOptions: BrowserContextOptions;
   /**
-   * Timeout for each action and expect in milliseconds. Defaults to 0 (no timeout).
+   * Default timeout for each Playwright action in milliseconds, defaults to 0 (no timeout).
    *
    * This is a default timeout for all Playwright actions, same as configured via
    * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout).

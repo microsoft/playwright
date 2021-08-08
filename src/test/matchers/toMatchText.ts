@@ -70,7 +70,7 @@ export async function toMatchText(
   let pass = false;
 
   // TODO: interrupt on timeout for nice message.
-  await pollUntilDeadline(this, async remainingTime => {
+  await pollUntilDeadline(testInfo, async remainingTime => {
     received = await query(remainingTime);
     if (options.matchSubstring)
       pass = received.includes(expected as string);
