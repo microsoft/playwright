@@ -21,7 +21,7 @@ it('should return no cookies in pristine browser context', async ({context, page
   expect(await context.cookies()).toEqual([]);
 });
 
-it('should get a cookie', async ({context, page, server}) => {
+it('should get a cookie', async ({context, page, server, browserName}) => {
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
     document.cookie = 'username=John Doe';
@@ -36,11 +36,11 @@ it('should get a cookie', async ({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
   }]);
 });
 
-it('should get a non-session cookie', async ({context, page, server}) => {
+it('should get a non-session cookie', async ({context, page, server, browserName}) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
   const date = +(new Date('1/1/2038'));
@@ -58,7 +58,7 @@ it('should get a non-session cookie', async ({context, page, server}) => {
     expires: date / 1000,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
   }]);
 });
 
@@ -99,7 +99,7 @@ it('should properly report "Lax" sameSite cookie', async ({context, page, server
   expect(cookies[0].sameSite).toBe('Lax');
 });
 
-it('should get multiple cookies', async ({context, page, server}) => {
+it('should get multiple cookies', async ({context, page, server, browserName}) => {
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
     document.cookie = 'username=John Doe';
@@ -117,7 +117,7 @@ it('should get multiple cookies', async ({context, page, server}) => {
       expires: -1,
       httpOnly: false,
       secure: false,
-      sameSite: 'None',
+      sameSite: browserName === 'chromium' ? 'Lax' : 'None',
     },
     {
       name: 'username',
@@ -127,7 +127,7 @@ it('should get multiple cookies', async ({context, page, server}) => {
       expires: -1,
       httpOnly: false,
       secure: false,
-      sameSite: 'None',
+      sameSite: browserName === 'chromium' ? 'Lax' : 'None',
     },
   ]));
 });
@@ -137,14 +137,17 @@ it('should get cookies from multiple urls', async ({context}) => {
     url: 'https://foo.com',
     name: 'doggo',
     value: 'woofs',
+    sameSite: 'None',
   }, {
     url: 'https://bar.com',
     name: 'catto',
     value: 'purrs',
+    sameSite: 'Lax',
   }, {
     url: 'https://baz.com',
     name: 'birdo',
     value: 'tweets',
+    sameSite: 'Lax',
   }]);
   const cookies = new Set(await context.cookies(['https://foo.com', 'https://baz.com']));
   expect(cookies).toEqual(new Set([{
@@ -155,7 +158,7 @@ it('should get cookies from multiple urls', async ({context}) => {
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'None',
+    sameSite: 'Lax',
   }, {
     name: 'doggo',
     value: 'woofs',
@@ -174,6 +177,7 @@ it('should work with subdomain cookie', async ({context, page, server}) => {
     path: '/',
     name: 'doggo',
     value: 'woofs',
+    sameSite: 'Lax',
     secure: true
   }]);
   expect(await context.cookies('https://foo.com')).toEqual([{
@@ -184,7 +188,7 @@ it('should work with subdomain cookie', async ({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'None',
+    sameSite: 'Lax',
   }]);
   expect(await context.cookies('https://sub.foo.com')).toEqual([{
     name: 'doggo',
@@ -194,7 +198,7 @@ it('should work with subdomain cookie', async ({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'None',
+    sameSite: 'Lax',
   }]);
 });
 
@@ -213,11 +217,13 @@ it('should return secure cookies based on HTTP(S) protocol', async ({context}) =
     url: 'https://foo.com',
     name: 'doggo',
     value: 'woofs',
+    sameSite: 'Lax',
     secure: true
   }, {
     url: 'http://foo.com',
     name: 'catto',
     value: 'purrs',
+    sameSite: 'Lax',
     secure: false
   }]);
   const cookies = new Set(await context.cookies('https://foo.com'));
@@ -229,7 +235,7 @@ it('should return secure cookies based on HTTP(S) protocol', async ({context}) =
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: 'Lax',
   }, {
     name: 'doggo',
     value: 'woofs',
@@ -238,7 +244,7 @@ it('should return secure cookies based on HTTP(S) protocol', async ({context}) =
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'None',
+    sameSite: 'Lax',
   }]));
   expect(await context.cookies('http://foo.com/')).toEqual([{
     name: 'catto',
@@ -248,6 +254,6 @@ it('should return secure cookies based on HTTP(S) protocol', async ({context}) =
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: 'Lax',
   }]);
 });

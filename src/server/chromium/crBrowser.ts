@@ -361,7 +361,7 @@ export class CRBrowserContext extends BrowserContext {
   async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
     const { cookies } = await this._browser._session.send('Storage.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
-      const copy: any = { sameSite: 'None', ...c };
+      const copy: any = { sameSite: 'Lax', ...c };
       delete copy.size;
       delete copy.priority;
       delete copy.session;

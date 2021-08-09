@@ -124,7 +124,7 @@ it('should support Set-Cookie header', async ({contextFactory, server, browserNa
   });
   await page.goto('https://example.com');
   expect(await context.cookies()).toEqual([{
-    sameSite: 'None',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
     name: 'name',
     value: 'value',
     domain: '.example.com',
@@ -170,7 +170,7 @@ it('should use Set-Cookie header in future requests', async ({contextFactory, se
   });
   await page.goto(server.EMPTY_PAGE);
   expect(await context.cookies()).toEqual([{
-    sameSite: 'None',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
     name: 'name',
     value: 'value',
     domain: 'localhost',

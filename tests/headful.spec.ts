@@ -85,7 +85,7 @@ it('should(not) block third party cookies', async ({browserType, browserOptions,
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'chromium' || browserName === 'firefox';
+  const allowsThirdParty = browserName === 'firefox';
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
