@@ -16,6 +16,29 @@ class AppHeader extends React.Component {
   }
 }
 
+class ColorButton extends React.Component {
+  render() {
+    return e('button', {className: this.props.color, disabled: !this.props.enabled}, 'button ' + this.props.nested.index);
+  }
+}
+
+class ButtonGrid extends React.Component {
+  render() {
+    const buttons = [];
+    for (let i = 0; i < 9; ++i) {
+      buttons.push(e(ColorButton, {
+        color: ['red', 'green', 'blue'][i % 3],
+        enabled: i % 2 === 0,
+        nested: {
+          index: i,
+          value: i + 0.1,
+        }
+      }, null));
+    };
+    return e('div', null, ...buttons);
+  }
+}
+
 class NewBook extends React.Component {
   constructor(props) {
     super(props);
@@ -67,6 +90,7 @@ class App extends React.Component {
       e(AppHeader, {bookCount: this.state.books.length}, null),
       e(NewBook, {onNewBook: bookName => this.onNewBook(bookName)}, null),
       e(BookList, {books: this.state.books}, null),
+      e(ButtonGrid, null, null),
     );
   }
 

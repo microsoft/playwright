@@ -15,11 +15,13 @@
  */
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { checkComponentAttribute, parseComponentSelector } from '../common/componentUtils';
 
 type ComponentNode = {
   name: string,
   children: ComponentNode[],
   rootElements: Element[],
+  props: any,
 };
 
 type VueVNode = {
@@ -31,6 +33,7 @@ type VueVNode = {
   _isBeingDestroyed?: any,
   isUnmounted?: any,
   subTree: any,
+  props: any,
 
   // Vue2
   $children?: VueVNode[],
@@ -38,6 +41,7 @@ type VueVNode = {
   $options?: any,
   $root?: VueVNode,
   $el?: Element,
+  _props: any,
 };
 
 // @see https://github.com/vuejs/devtools/blob/14085e25313bcf8ffcb55f9092a40bc0fe3ac11c/packages/shared-utils/src/util.ts#L295
@@ -145,6 +149,7 @@ function buildComponentsTreeVue3(instance: VueVNode): ComponentNode {
       name: getInstanceName(instance),
       children: getInternalInstanceChildren(instance.subTree).map(buildComponentsTree),
       rootElements: getRootElementsFromComponentInstance(instance),
+      props: instance.props,
     };
   }
 
@@ -184,6 +189,7 @@ function buildComponentsTreeVue2(instance: VueVNode): ComponentNode {
       name: getInstanceName(instance),
       children: getInternalInstanceChildren(instance).map(buildComponentsTree),
       rootElements: [instance.$el!],
+      props: instance._props,
     };
   }
 
@@ -212,16 +218,22 @@ function findVueRoot(): undefined|{version: number, root: VueVNode} {
 }
 
 export const VueEngine: SelectorEngine = {
-  queryAll(scope: SelectorRoot, name: string): Element[] {
+  queryAll(scope: SelectorRoot, selector: string): Element[] {
+    const {name, attributes} = parseComponentSelector(selector);
     const vueRoot = findVueRoot();
     if (!vueRoot)
       return [];
     const tree = vueRoot.version === 3 ? buildComponentsTreeVue3(vueRoot.root) : buildComponentsTreeVue2(vueRoot.root);
     const treeNodes = filterComponentsTree(tree, treeNode => {
-      if (treeNode.name !== name)
+      if (name && treeNode.name !== name)
         return false;
       if (treeNode.rootElements.some(rootElement => !scope.contains(rootElement)))
         return false;
+      for (const attr of attributes) {
+        if (!checkComponentAttribute(treeNode.props, attr))
+          return false;
+      }
+
       return true;
     });
     const allRootElements: Set<Element> = new Set();

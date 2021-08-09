@@ -34,6 +34,25 @@ class NewBook extends React.Component {
   }
 }
 
+function ColorButton (props) {
+  return e('button', {className: props.color, disabled: !props.enabled}, 'button ' + props.nested.index);
+}
+
+function ButtonGrid() {
+  const buttons = [];
+  for (let i = 0; i < 9; ++i) {
+    buttons.push(e(ColorButton, {
+      color: ['red', 'green', 'blue'][i % 3],
+      enabled: i % 2 === 0,
+      nested: {
+        index: i,
+        value: i + 0.1,
+      }
+    }, null));
+  };
+  return e(React.Fragment, null, ...buttons);
+}
+
 class BookItem extends React.Component {
   render() {
     return e('div', null, this.props.name);
@@ -63,6 +82,7 @@ class App extends React.Component {
       e(AppHeader, {bookCount: this.state.books.length}, null),
       e(NewBook, {onNewBook: bookName => this.onNewBook(bookName)}, null),
       e(BookList, {books: this.state.books}, null),
+      e(ButtonGrid, null, null),
     );
   }
 

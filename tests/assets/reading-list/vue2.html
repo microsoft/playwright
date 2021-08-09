@@ -36,9 +36,7 @@ Vue.component('new-book', {
 });
 Vue.component('book-item', {
   template: `
-    <div>
-      {{ name }}
-    </div>
+    <div>{{ name }}</div>
   `,
   props: ['name'],
 });
@@ -54,6 +52,36 @@ Vue.component('book-list', {
   `,
 });
 
+Vue.component('color-button', {
+  props: {
+    color: String,
+    enabled: Boolean,
+    nested: Object,
+  },
+  template: `
+    <button :disabled='enabled' :class='color'>button {{nested.index}}</button>
+  `,
+});
+
+Vue.component('button-grid', {
+  render(createElement) {
+    const buttons = [];
+    for (let i = 0; i < 9; ++i) {
+      buttons.push(createElement('color-button', {
+        props: {
+          color: ['red', 'green', 'blue'][i % 3],
+          enabled: i % 2 === 0,
+          nested: {
+            index: i,
+            value: i + 0.1,
+          }
+        }
+      }, null));
+    };
+    return createElement('div', null, buttons);
+  }
+});
+
 
 new Vue({
   el: '#root',
@@ -63,6 +91,7 @@ new Vue({
       <app-header :bookCount='books.length'></app-header>
       <new-book @newbook='addNewBook'></new-book>
       <book-list :books='books'></book-list>
+      <button-grid></button-grid>
     </div>
   `,
 
