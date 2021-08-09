@@ -144,6 +144,12 @@ export class Dispatcher {
           failedTestIds.add(test._id);
           first = false;
         }
+        if (first) {
+          // We had a fatal error after all tests have passed - most likely in the afterAll hook.
+          // Let's just fail the test run.
+          this._hasWorkerErrors = true;
+          this._reporter.onError?.(params.fatalError);
+        }
         // Since we pretend that all remaining tests failed, there is nothing else to run,
         // except for possible retries.
         remaining = [];
