@@ -179,44 +179,6 @@ test('should throw when worker fixture depends on a test fixture', async ({ runI
   expect(result.exitCode).toBe(1);
 });
 
-test('should throw when beforeAll hook depends on a test fixture', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'f.spec.ts': `
-      const test = pwt.test.extend({
-        foo: [async ({}, runTest) => {
-          await runTest();
-        }, { scope: 'test' }],
-      });
-
-      test.beforeAll(async ({ foo }) => {});
-      test('works', async ({ foo }) => {});
-    `,
-  });
-  expect(result.output).toContain('beforeAll hook cannot depend on a test fixture "foo".');
-  expect(result.output).toContain(`f.spec.ts:11:12`);
-  expect(result.output).toContain(`f.spec.ts:5:29`);
-  expect(result.exitCode).toBe(1);
-});
-
-test('should throw when afterAll hook depends on a test fixture', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'f.spec.ts': `
-      const test = pwt.test.extend({
-        foo: [async ({}, runTest) => {
-          await runTest();
-        }, { scope: 'test' }],
-      });
-
-      test.afterAll(async ({ foo }) => {});
-      test('works', async ({ foo }) => {});
-    `,
-  });
-  expect(result.output).toContain('afterAll hook cannot depend on a test fixture "foo".');
-  expect(result.output).toContain(`f.spec.ts:11:12`);
-  expect(result.output).toContain(`f.spec.ts:5:29`);
-  expect(result.exitCode).toBe(1);
-});
-
 test('should define the same fixture in two files', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `

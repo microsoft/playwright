@@ -64,9 +64,9 @@ Test function that takes one or two arguments: an object with fixtures and optio
 Declares an `afterAll` hook that is executed once after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group.
 
 ### param: Test.afterAll.hookFunction
-- `hookFunction` <[function]\([Fixtures], [WorkerInfo]\)>
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
-Hook function that takes one or two arguments: an object with fixtures and optional [WorkerInfo].
+Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
 
 
@@ -121,9 +121,9 @@ test('my test', async ({ page }) => {
 You can use [`method: Test.afterAll`] to teardown any resources set up in `beforeAll`.
 
 ### param: Test.beforeAll.hookFunction
-- `hookFunction` <[function]\([Fixtures], [WorkerInfo]\)>
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
-Hook function that takes one or two arguments: an object with fixtures and optional [WorkerInfo].
+Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
 
 

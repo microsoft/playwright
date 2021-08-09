@@ -20,6 +20,7 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
     'helper.ts': `
       global.logs = [];
+      let counter = 0;
       export const test = pwt.test.extend({
         w: [ async ({}, run) => {
           global.logs.push('+w');
@@ -29,7 +30,8 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
 
         t: async ({}, run) => {
           global.logs.push('+t');
-          await run(42);
+          await run(42 + counter);
+          ++counter;
           global.logs.push('-t');
         },
       });
@@ -37,36 +39,39 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
     'a.test.js': `
       const { test } = require('./helper');
       test.describe('suite', () => {
-        test.beforeAll(async ({ w }) => {
-          global.logs.push('beforeAll-' + w);
+        test.beforeAll(async ({ w, t }) => {
+          global.logs.push('beforeAll-' + w + '-' + t);
         });
-        test.afterAll(async ({ w }) => {
-          global.logs.push('afterAll-' + w);
-        });
-
-        test.beforeEach(async ({t}) => {
-          global.logs.push('beforeEach-' + t);
-        });
-        test.afterEach(async ({t}) => {
-          global.logs.push('afterEach-' + t);
+        test.afterAll(async ({ w, t }) => {
+          global.logs.push('afterAll-' + w + '-' + t);
         });
 
-        test('one', async ({t}) => {
-          global.logs.push('test');
-          expect(t).toBe(42);
+        test.beforeEach(async ({ w, t }) => {
+          global.logs.push('beforeEach-' + w + '-' + t);
+        });
+        test.afterEach(async ({ w, t }) => {
+          global.logs.push('afterEach-' + w + '-' + t);
+        });
+
+        test('one', async ({ w, t }) => {
+          global.logs.push('test-' + w + '-' + t);
         });
       });
 
-      test('two', async ({t}) => {
+      test('two', async ({ t }) => {
         expect(global.logs).toEqual([
           '+w',
-          'beforeAll-17',
           '+t',
-          'beforeEach-42',
-          'test',
-          'afterEach-42',
+          'beforeAll-17-42',
           '-t',
-          'afterAll-17',
+          '+t',
+          'beforeEach-17-43',
+          'test-17-43',
+          'afterEach-17-43',
+          '-t',
+          '+t',
+          'afterAll-17-44',
+          '-t',
           '+t',
         ]);
       });
@@ -213,4 +218,27 @@ test('beforeAll hooks are skipped when no tests in the suite are run', async ({ 
   expect(result.passed).toBe(1);
   expect(result.output).toContain('%%beforeAll2');
   expect(result.output).not.toContain('%%beforeAll1');
+});
+
+test('beforeAll hook should get retry index of the first test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.beforeAll(({}, testInfo) => {
+        console.log('\\n%%beforeall-retry-' + testInfo.retry);
+      });
+      test('passed', ({}, testInfo) => {
+        console.log('\\n%%test-retry-' + testInfo.retry);
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { retries: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeall-retry-0',
+    '%%test-retry-0',
+    '%%beforeall-retry-1',
+    '%%test-retry-1',
+  ]);
 });

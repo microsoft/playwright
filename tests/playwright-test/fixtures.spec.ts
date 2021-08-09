@@ -312,32 +312,61 @@ test('automatic fixtures should work', async ({ runInlineTest }) => {
       });
       test.beforeAll(async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest).toBe(0);
+        expect(counterTest).toBe(1);
       });
       test.beforeEach(async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest === 1 || counterTest === 2).toBe(true);
+        expect(counterTest === 2 || counterTest === 3).toBe(true);
       });
       test('test 1', async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest).toBe(1);
+        expect(counterTest).toBe(2);
       });
       test('test 2', async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest).toBe(2);
+        expect(counterTest).toBe(3);
       });
       test.afterEach(async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest === 1 || counterTest === 2).toBe(true);
+        expect(counterTest === 2 || counterTest === 3).toBe(true);
       });
       test.afterAll(async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest).toBe(2);
+        expect(counterTest).toBe(4);
       });
     `
   });
   expect(result.exitCode).toBe(0);
   expect(result.results.map(r => r.status)).toEqual(['passed', 'passed']);
+});
+
+test('automatic fixture should start before regular fixture and teardown after', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test;
+      test.use({
+        auto: [ async ({}, runTest) => {
+          console.log('\\n%%auto-setup');
+          await runTest();
+          console.log('\\n%%auto-teardown');
+        }, { auto: true } ],
+        foo: async ({}, runTest) => {
+          console.log('\\n%%foo-setup');
+          await runTest();
+          console.log('\\n%%foo-teardown');
+        },
+      });
+      test('test 1', async ({ foo }) => {
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%auto-setup',
+    '%%foo-setup',
+    '%%foo-teardown',
+    '%%auto-teardown',
+  ]);
 });
 
 test('automatic fixtures should keep workerInfo after conditional skip', async ({ runInlineTest }) => {
@@ -627,4 +656,25 @@ test('should run tests in order', async ({ runInlineTest }) => {
     '%%afterEach',
     '%%test3',
   ]);
+});
+
+test('worker fixture should not receive TestInfo', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test;
+      test.use({
+        worker: [async ({}, use, info) => {
+          expect(info.title).toBe(undefined);
+          await use();
+        }, { scope: 'worker' }],
+        test: async ({ worker }, use, info) => {
+          expect(info.title).not.toBe(undefined);
+          await use();
+        },
+      });
+      test('test 1', async ({ test }) => {
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
 });

@@ -65,7 +65,7 @@ export class TestTypeImpl {
     const ordinalInFile = countByFile.get(suite._requireFile) || 0;
     countByFile.set(suite._requireFile, ordinalInFile + 1);
 
-    const test = new TestCase(title, fn, ordinalInFile, this, location);
+    const test = new TestCase('test', title, fn, ordinalInFile, this, location);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 
@@ -107,7 +107,13 @@ export class TestTypeImpl {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
       throw errorWithLocation(location, `${name} hook can only be called in a test file`);
-    suite._hooks.push({ type: name, fn, location });
+    if (name === 'beforeAll' || name === 'afterAll') {
+      const hook = new TestCase(name, name, fn, 0, this, location);
+      hook._requireFile = suite._requireFile;
+      suite._addAllHook(hook);
+    } else {
+      suite._eachHooks.push({ type: name, fn, location });
+    }
   }
 
   private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {

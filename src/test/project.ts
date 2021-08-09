@@ -67,18 +67,27 @@ export class ProjectImpl {
       }
       this.testPools.set(test, pool);
 
-      pool.validateFunction(test.fn, 'Test', true, test.location);
+      pool.validateFunction(test.fn, 'Test', test.location);
       for (let parent = test.parent; parent; parent = parent.parent) {
-        for (const hook of parent._hooks)
-          pool.validateFunction(hook.fn, hook.type + ' hook', hook.type === 'beforeEach' || hook.type === 'afterEach', hook.location);
+        for (const hook of parent._eachHooks)
+          pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
+        for (const hook of parent._allHooks)
+          pool.validateFunction(hook.fn, hook._type + ' hook', hook.location);
         for (const modifier of parent._modifiers)
-          pool.validateFunction(modifier.fn, modifier.type + ' modifier', true, modifier.location);
+          pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
       }
     }
     return this.testPools.get(test)!;
   }
 
   private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
+    for (const hook of from._allHooks) {
+      const clone = hook._clone();
+      clone.projectName = this.config.name;
+      clone._pool = this.buildPool(hook);
+      clone._projectIndex = this.index;
+      to._addAllHook(clone);
+    }
     for (const entry of from._entries) {
       if (entry instanceof Suite) {
         const suite = entry._clone();
