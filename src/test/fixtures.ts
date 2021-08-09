@@ -18,9 +18,7 @@ import { formatLocation, wrapInPromise } from './util';
 import * as crypto from 'crypto';
 import { FixturesWithLocation, Location, WorkerInfo, TestInfo } from './types';
 
-type FixtureScope = 'test' | 'worker' | 'file';
-const scopeOrder: FixtureScope[] = ['worker', 'file', 'test'];
-
+type FixtureScope = 'test' | 'worker';
 type FixtureRegistration = {
   location: Location;
   name: string;
@@ -104,7 +102,7 @@ class Fixture {
 }
 
 export class FixturePool {
-  readonly digest: { worker: string, file: string };
+  readonly digest: string;
   readonly registrations: Map<string, FixtureRegistration>;
 
   constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool) {
@@ -136,7 +134,7 @@ export class FixturePool {
           options = { auto: false, scope: 'test' };
         }
 
-        if (options.scope !== 'test' && options.scope !== 'worker' && options.scope !== 'file')
+        if (options.scope !== 'test' && options.scope !== 'worker')
           throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, { location, name });
 
         const deps = fixtureParameterNames(fn, location);
@@ -163,8 +161,8 @@ export class FixturePool {
           else
             throw errorWithLocations(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration);
         }
-        if (scopeOrder.indexOf(registration.scope) < scopeOrder.indexOf(dep.scope))
-          throw errorWithLocations(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}".`, registration, dep);
+        if (registration.scope === 'worker' && dep.scope === 'test')
+          throw errorWithLocations(`Worker fixture "${registration.name}" cannot depend on a test fixture "${name}".`, registration, dep);
         if (!markers.has(dep)) {
           visit(dep);
         } else if (markers.get(dep) === 'visiting') {
@@ -178,18 +176,15 @@ export class FixturePool {
       stack.pop();
     };
 
-    const hashWorker = crypto.createHash('sha1');
-    const hashFile = crypto.createHash('sha1');
+    const hash = crypto.createHash('sha1');
     const names = Array.from(this.registrations.keys()).sort();
     for (const name of names) {
       const registration = this.registrations.get(name)!;
       visit(registration);
       if (registration.scope === 'worker')
-        hashWorker.update(registration.id + ';');
-      else if (registration.scope === 'file')
-        hashFile.update(registration.id + ';');
+        hash.update(registration.id + ';');
     }
-    return { worker: hashWorker.digest('hex'), file: hashFile.digest('hex') };
+    return hash.digest('hex');
   }
 
   validateFunction(fn: Function, prefix: string, allowTestFixtures: boolean, location: Location) {
@@ -222,7 +217,7 @@ export class FixtureRunner {
   setPool(pool: FixturePool) {
     if (!this.testScopeClean)
       throw new Error('Did not teardown test scope');
-    if (this.pool && pool.digest.worker !== this.pool.digest.worker)
+    if (this.pool && pool.digest !== this.pool.digest)
       throw new Error('Digests do not match');
     this.pool = pool;
   }
@@ -239,8 +234,8 @@ export class FixtureRunner {
   async resolveParametersAndRunHookOrTest(fn: Function, scope: FixtureScope, info: WorkerInfo|TestInfo) {
     // Install all automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
-      const shouldRun = scopeOrder.indexOf(registration.scope) <= scopeOrder.indexOf(scope);
-      if (registration.auto && shouldRun)
+      const shouldSkip = scope === 'worker' && registration.scope === 'test';
+      if (registration.auto && !shouldSkip)
         await this.setupFixtureForRegistration(registration, info);
     }
 
