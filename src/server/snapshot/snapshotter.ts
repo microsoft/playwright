@@ -137,10 +137,10 @@ export class Snapshotter {
         resourceOverrides: [],
         isMainFrame: page.mainFrame() === frame
       };
-      for (const { url, content } of data.resourceOverrides) {
+      for (const { url, content, contentType } of data.resourceOverrides) {
         if (typeof content === 'string') {
           const buffer = Buffer.from(content);
-          const sha1 = calculateSha1(buffer);
+          const sha1 = calculateSha1(buffer) + mimeToExtension(contentType);
           this._delegate.onBlob({ sha1, buffer });
           snapshot.resourceOverrides.push({ url, sha1 });
         } else {
@@ -184,7 +184,7 @@ export class Snapshotter {
     const method = original.method();
     const status = response.status();
     const requestBody = original.postDataBuffer();
-    const requestSha1 = requestBody ? calculateSha1(requestBody) : '';
+    const requestSha1 = requestBody ? calculateSha1(requestBody) + mimeToExtension(contentType) : '';
     if (requestBody)
       this._delegate.onBlob({ sha1: requestSha1, buffer: requestBody });
     const requestHeaders = original.headers();
@@ -197,7 +197,7 @@ export class Snapshotter {
         // Bail out after each async hop.
         if (!this._started)
           return;
-        responseSha1 = body ? calculateSha1(body) : '';
+        responseSha1 = body ? calculateSha1(body) + mimeToExtension(contentType) : '';
         if (body)
           this._delegate.onBlob({ sha1: responseSha1, buffer: body });
         this._fetchedResponses.set(response, responseSha1);
@@ -236,4 +236,31 @@ export class Snapshotter {
     } catch (e) {
     }
   }
+}
+
+const kMimeToExtension: { [key: string]: string } = {
+  'application/javascript': 'js',
+  'application/json': 'json',
+  'application/json5': 'json5',
+  'application/pdf': 'pdf',
+  'application/xhtml+xml': 'xhtml',
+  'application/zip': 'zip',
+  'font/otf': 'otf',
+  'font/woff': 'woff',
+  'font/woff2': 'woff2',
+  'image/bmp': 'bmp',
+  'image/gif': 'gif',
+  'image/jpeg': 'jpeg',
+  'image/png': 'png',
+  'image/tiff': 'tiff',
+  'text/css': 'css',
+  'text/csv': 'csv',
+  'text/html': 'html',
+  'text/plain': 'text',
+  'video/mp4': 'mp4',
+  'video/mpeg': 'mpeg',
+};
+
+function mimeToExtension(contentType: string): string {
+  return '.' + (kMimeToExtension[contentType] || 'dat');
 }

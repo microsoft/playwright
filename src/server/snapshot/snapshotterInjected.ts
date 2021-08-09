@@ -23,6 +23,7 @@ export type SnapshotData = {
     url: string,
     // String is the content. Number is "x snapshots ago", same url.
     content: string | number,
+    contentType: 'text/css'
   }[],
   viewport: { width: number, height: number },
   url: string,
@@ -461,7 +462,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         }
         const base = this._getSheetBase(sheet);
         const url = removeHash(this._resolveUrl(base, sheet.href!));
-        result.resourceOverrides.push({ url, content });
+        result.resourceOverrides.push({ url, content, contentType: 'text/css' },);
       }
 
       result.collectionTime = performance.now() - result.timestamp;

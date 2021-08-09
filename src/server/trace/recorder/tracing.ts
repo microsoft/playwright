@@ -19,7 +19,7 @@ import path from 'path';
 import yazl from 'yazl';
 import readline from 'readline';
 import { EventEmitter } from 'events';
-import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
+import { createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';
@@ -287,9 +287,12 @@ export class Tracing implements InstrumentationListener {
 
   private _startScreencastInPage(page: Page) {
     page.setScreencastOptions(kScreencastOptions);
+    const prefix = page.guid;
+    let frameSeq = 0;
     this._screencastListeners.push(
         eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, params => {
-          const sha1 = calculateSha1(createGuid()); // no need to compute sha1 for screenshots
+          const suffix = String(++frameSeq).padStart(10, '0');
+          const sha1 = `${prefix}-${suffix}.jpeg`;
           const event: trace.ScreencastFrameTraceEvent = {
             type: 'screencast-frame',
             pageId: page.guid,
