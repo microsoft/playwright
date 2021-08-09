@@ -242,3 +242,19 @@ test('beforeAll hook should get retry index of the first test', async ({ runInli
     '%%test-retry-1',
   ]);
 });
+
+test('afterAll exception should fail the run', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.afterAll(() => {
+        throw new Error('From the afterAll');
+      });
+      test('passed', () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('From the afterAll');
+});
