@@ -87,3 +87,15 @@ test('should grep invert test name', async ({ runInlineTest }) => {
   expect(result.skipped).toBe(0);
   expect(result.exitCode).toBe(0);
 });
+
+test('should be case insensitive by default', async ({ runInlineTest }) => {
+  const result = await runInlineTest(files, { 'grep': 'TesT Cc' });
+  expect(result.passed).toBe(3);
+  expect(result.skipped).toBe(0);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should be case sensitive by default with a regex', async ({ runInlineTest }) => {
+  const result = await runInlineTest(files, { 'grep': '/TesT Cc/' });
+  expect(result.passed).toBe(0);
+});
