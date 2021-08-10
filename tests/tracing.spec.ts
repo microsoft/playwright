@@ -17,6 +17,7 @@
 import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
+import { ResourceSnapshot } from '../src/server/snapshot/snapshotTypes';
 
 test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
@@ -27,17 +28,22 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   await page.close();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
-  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  const { events, resources } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
   expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
-
-  expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('script.js'))).toBeFalsy();
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
+
+  const frame = events.find(e => e.type === 'frame-snapshot');
+  const frameSnapshots = resources.get(frame.sha1).toString().split('\n');
+  expect(frameSnapshots.length).toBeGreaterThan(0);
+
+  const resourcesEvent = events.find(e => e.type === 'resource-snapshot');
+  const resourceSnapshots: ResourceSnapshot[] = resources.get(resourcesEvent.sha1).toString().split('\n').filter(Boolean).map(s => JSON.parse(s));
+  expect(resourceSnapshots.some(snapshot => snapshot.url.endsWith('style.css'))).toBeTruthy();
+  expect(resourceSnapshots.some(snapshot => snapshot.url.endsWith('script.js'))).toBeFalsy();
 });
 
 test('should not collect snapshots by default', async ({ context, page, server }, testInfo) => {
@@ -49,7 +55,7 @@ test('should not collect snapshots by default', async ({ context, page, server }
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
-  expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
+  expect(events.some(e => e.type === 'frame')).toBeFalsy();
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
@@ -164,14 +170,14 @@ for (const params of [
     for (const frame of frames) {
       expect(frame.width).toBe(params.width);
       expect(frame.height).toBe(params.height);
-      const buffer = resources.get('resources/' + frame.sha1);
+      const buffer = resources.get(frame.sha1);
       const image = jpeg.decode(buffer);
       expect(image.width).toBe(previewWidth);
       expect(image.height).toBe(previewHeight);
     }
 
     const frame = frames[frames.length - 1]; // pick last frame.
-    const buffer = resources.get('resources/' + frame.sha1);
+    const buffer = resources.get(frame.sha1);
     const image = jpeg.decode(buffer);
     expect(image.data.byteLength).toBe(previewWidth * previewHeight * 4);
     expectRed(image.data, previewWidth * previewHeight * 4 / 2 + previewWidth * 4 / 2); // center is red
@@ -210,7 +216,7 @@ test('should reset to different options', async ({ context, page, server }, test
   expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
 
-  expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
+  expect(events.some(e => e.type === 'frame')).toBeFalsy();
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
@@ -236,8 +242,15 @@ test('should reset and export', async ({ context, page, server }, testInfo) => {
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && !!e.metadata.error)).toBeTruthy();
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.hover')).toBeFalsy();
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && e.metadata?.error?.error?.message === 'Action was interrupted')).toBeTruthy();
+
+  const resourcesEvent = trace1.events.find(e => e.type === 'resource-snapshot');
+  const resourceSnapshots: ResourceSnapshot[] = trace1.resources.get(resourcesEvent.sha1).toString().split('\n').filter(Boolean).map(s => JSON.parse(s));
+  expect(resourceSnapshots.some(snapshot => snapshot.url.endsWith('style.css'))).toBeTruthy();
+
   expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
+  const frame1 = trace1.events.find(e => e.type === 'frame-snapshot');
+  const frameSnapshots1 = trace1.resources.get(frame1.sha1).toString().split('\n');
+  expect(frameSnapshots1.length).toBeGreaterThan(0);
 
   const trace2 = await parseTrace(testInfo.outputPath('trace2.zip'));
   expect(trace2.events[0].type).toBe('context-options');
@@ -245,11 +258,15 @@ test('should reset and export', async ({ context, page, server }, testInfo) => {
   expect(trace2.events.find(e => e.metadata?.apiName === 'page.setContent')).toBeFalsy();
   expect(trace2.events.find(e => e.metadata?.apiName === 'page.click')).toBeFalsy();
   expect(trace2.events.find(e => e.metadata?.apiName === 'page.hover')).toBeTruthy();
+
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
+  const frame2 = trace2.events.find(e => e.type === 'frame-snapshot');
+  const frameSnapshots2 = trace2.resources.get(frame2.sha1).toString().split('\n');
+  expect(frameSnapshots2.length).toBeGreaterThan(0);
 });
 
 async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
-  const entries = await new Promise<any[]>(f => {
+  const entryPromises = await new Promise<any[]>(f => {
     const entries: Promise<any>[] = [];
     yauzl.open(file, (err, zipFile) => {
       zipFile.on('entry', entry => {
@@ -270,9 +287,13 @@ async function parseTrace(file: string): Promise<{ events: any[], resources: Map
     });
   });
   const resources = new Map<string, Buffer>();
-  for (const { name, buffer } of await Promise.all(entries))
-    resources.set(name, buffer);
-  const events = resources.get('trace.trace').toString().split('\n').map(line => line ? JSON.parse(line) : false).filter(Boolean);
+  let events: any[];
+  for (const { name, buffer } of await Promise.all(entryPromises)) {
+    if (name.startsWith('resources/'))
+      resources.set(name.substring('resources/'.length), buffer);
+    if (name === 'trace.trace')
+      events = buffer.toString().split('\n').map(line => line ? JSON.parse(line) : false).filter(Boolean);
+  }
   return {
     events,
     resources,

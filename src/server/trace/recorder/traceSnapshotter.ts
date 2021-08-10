@@ -28,13 +28,15 @@ export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegat
   private _snapshotter: Snapshotter;
   private _resourcesDir: string;
   private _writeArtifactChain = Promise.resolve();
-  private _appendTraceEvent: (traceEvent: TraceEvent) => void;
+  private _appendResourceSnapshot: (snapshot: ResourceSnapshot) => void;
+  private _appendFrameSnapshot: (snapshot: FrameSnapshot) => void;
 
-  constructor(context: BrowserContext, resourcesDir: string, appendTraceEvent: (traceEvent: TraceEvent, sha1?: string) => void) {
+  constructor(context: BrowserContext, resourcesDir: string, appendResourceSnapshot: (snapshot: ResourceSnapshot) => void, appendFrameSnapshot: (snapshot: FrameSnapshot) => void) {
     super();
     this._resourcesDir = resourcesDir;
     this._snapshotter = new Snapshotter(context, this);
-    this._appendTraceEvent = appendTraceEvent;
+    this._appendResourceSnapshot = appendResourceSnapshot;
+    this._appendFrameSnapshot = appendFrameSnapshot;
     this._writeArtifactChain = Promise.resolve();
   }
 
@@ -75,10 +77,10 @@ export class TraceSnapshotter extends EventEmitter implements SnapshotterDelegat
   }
 
   onResourceSnapshot(snapshot: ResourceSnapshot): void {
-    this._appendTraceEvent({ type: 'resource-snapshot', snapshot });
+    this._appendResourceSnapshot(snapshot);
   }
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
-    this._appendTraceEvent({ type: 'frame-snapshot', snapshot });
+    this._appendFrameSnapshot(snapshot);
   }
 }

@@ -86,7 +86,7 @@ export class TraceViewer {
         });
         const model = new TraceModel(snapshotStorage);
         for await (const line of rl as any)
-          model.appendEvent(line);
+          await model.appendEvent(line);
         model.build();
         response.end(JSON.stringify(model.contextEntry));
       })().catch(e => console.error(e));

@@ -29,6 +29,7 @@ import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
 import { TraceSnapshotter } from './traceSnapshotter';
 import { commandsWithTracingSnapshots } from '../../../protocol/channels';
+import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
 
 export type TracerOptions = {
   name?: string;
@@ -61,7 +62,7 @@ export class Tracing implements InstrumentationListener {
     this._context = context;
     this._tracesDir = context._browser.options.tracesDir;
     this._resourcesDir = path.join(this._tracesDir, 'resources');
-    this._snapshotter = new TraceSnapshotter(this._context, this._resourcesDir, traceEvent => this._appendTraceEvent(traceEvent));
+    this._snapshotter = new TraceSnapshotter(this._context, this._resourcesDir, snapshot => this._appendResourceSnapshot(snapshot), snapshot => this._appendFrameSnapshot(snapshot));
   }
 
   async start(options: TracerOptions): Promise<void> {
@@ -216,8 +217,9 @@ export class Tracing implements InstrumentationListener {
           if (event.type === 'marker') {
             if (event.resetIndex === sinceResetIndex)
               foundMarker = true;
-          } else if ((event.type === 'resource-snapshot' && state.options.snapshots) || event.type === 'context-options' || foundMarker) {
+          } else if (((event.type === 'resource-snapshot' || event.type === 'frame-snapshot') && state.options.snapshots) || event.type === 'context-options' || foundMarker) {
             // We keep:
+            // - old frame events for snapshots;
             // - old resource events for snapshots;
             // - initial context options event;
             // - all events after the marker that are not markers.
@@ -310,13 +312,45 @@ export class Tracing implements InstrumentationListener {
     );
   }
 
-  private _appendTraceEvent(event: any) {
+  private _appendTraceEvent(event: trace.TraceEvent) {
     // Serialize all writes to the trace file.
     this._appendTraceOperation(async () => {
       if (!this._recording)
         return;
       visitSha1s(event, this._recording.sha1s);
       await fs.promises.appendFile(this._recording.traceFile, JSON.stringify(event) + '\n');
+    });
+  }
+
+  private _appendFrameSnapshot(snapshot: FrameSnapshot) {
+    // Serialize all writes to the trace file.
+    this._appendTraceOperation(async () => {
+      if (!this._recording)
+        return;
+      visitSha1s(snapshot, this._recording.sha1s);
+      const sha1 = snapshot.frameId + '.dom';
+      fs.appendFileSync(path.join(this._resourcesDir, sha1), JSON.stringify(snapshot) + '\n');
+      if (!this._recording.sha1s.has(sha1)) {
+        const event: trace.TraceEvent = { type: 'frame-snapshot', sha1 };
+        fs.appendFileSync(this._recording.traceFile, JSON.stringify(event) + '\n');
+        this._recording.sha1s.add(sha1);
+      }
+    });
+  }
+
+  private _appendResourceSnapshot(snapshot: ResourceSnapshot) {
+    // Serialize all writes to the trace file.
+    this._appendTraceOperation(async () => {
+      if (!this._recording)
+        return;
+      visitSha1s(snapshot, this._recording.sha1s);
+      const sha1 = snapshot.frameId + '.net';
+      fs.appendFileSync(path.join(this._resourcesDir, sha1), JSON.stringify(snapshot) + '\n');
+      if (!this._recording.sha1s.has(sha1)) {
+        const event: trace.TraceEvent = { type: 'resource-snapshot', sha1 };
+        fs.appendFileSync(this._recording.traceFile, JSON.stringify(event) + '\n');
+        this._recording.sha1s.add(sha1);
+      }
     });
   }
 

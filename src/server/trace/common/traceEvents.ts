@@ -42,12 +42,14 @@ export type ActionTraceEvent = {
 
 export type ResourceSnapshotTraceEvent = {
   type: 'resource-snapshot',
-  snapshot: ResourceSnapshot,
+  snapshot?: ResourceSnapshot,
+  sha1?: string,
 };
 
 export type FrameSnapshotTraceEvent = {
   type: 'frame-snapshot',
-  snapshot: FrameSnapshot,
+  snapshot?: FrameSnapshot,
+  sha1?: string,
 };
 
 export type MarkerTraceEvent = {

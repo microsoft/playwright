@@ -282,7 +282,7 @@ function escapeForRegex(text: string): string {
 }
 
 function quoteString(text: string): string {
-  return `"${text.replaceAll(/"/g, '\\"').replaceAll(/\n/g, '\\n')}"`;
+  return `"${text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
 }
 
 function joinTokens(tokens: SelectorToken[]): string {

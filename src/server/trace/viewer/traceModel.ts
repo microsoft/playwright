@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import readline from 'readline';
 import * as trace from '../common/traceEvents';
 import { ResourceSnapshot } from '../../snapshot/snapshotTypes';
 import { BaseSnapshotStorage } from '../../snapshot/snapshotStorage';
@@ -63,7 +64,7 @@ export class TraceModel {
     return pageEntry;
   }
 
-  appendEvent(line: string) {
+  async appendEvent(line: string): Promise<void> {
     const event = this._modernize(JSON.parse(line));
     switch (event.type) {
       case 'context-options': {
@@ -94,13 +95,42 @@ export class TraceModel {
         break;
       }
       case 'resource-snapshot':
-        this._snapshotStorage.addResource(event.snapshot);
+        if (event.snapshot) {
+          this._snapshotStorage.addResource(event.snapshot);
+        } else {
+          const fileStream = fs.createReadStream(path.join(this._snapshotStorage.resourcesDir, event.sha1!), 'utf8');
+          const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity
+          });
+          for await (const line of rl as any) {
+            // Go through TraceEvent to ensure modernization.
+            const { snapshot } = this._modernize({ type: 'resource-snapshot', snapshot: JSON.parse(line) }) as trace.ResourceSnapshotTraceEvent;
+            this._snapshotStorage.addResource(snapshot!);
+          }
+        }
         break;
-      case 'frame-snapshot':
-        this._snapshotStorage.addFrameSnapshot(event.snapshot);
-        if (event.snapshot.snapshotName && event.snapshot.isMainFrame)
-          this.contextEntry.snapshotSizes[event.snapshot.snapshotName] = event.snapshot.viewport;
+      case 'frame-snapshot': {
+        if (event.snapshot) {
+          this._snapshotStorage.addFrameSnapshot(event.snapshot);
+          if (event.snapshot.snapshotName && event.snapshot.isMainFrame)
+            this.contextEntry.snapshotSizes[event.snapshot.snapshotName] = event.snapshot.viewport;
+        } else {
+          const fileStream = fs.createReadStream(path.join(this._snapshotStorage.resourcesDir, event.sha1!), 'utf8');
+          const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity
+          });
+          for await (const line of rl as any) {
+            // Go through TraceEvent to ensure modernization.
+            const { snapshot } = this._modernize({ type: 'frame-snapshot', snapshot: JSON.parse(line) }) as trace.FrameSnapshotTraceEvent;
+            this._snapshotStorage.addFrameSnapshot(snapshot!);
+            if (snapshot!.snapshotName && snapshot!.isMainFrame)
+              this.contextEntry.snapshotSizes[snapshot!.snapshotName] = snapshot!.viewport;
+          }
+        }
         break;
+      }
     }
     if (event.type === 'action' || event.type === 'event') {
       this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.metadata.startTime);
@@ -158,14 +188,14 @@ export type PageEntry = {
 };
 
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
-  private _resourcesDir: string;
+  readonly resourcesDir: string;
 
   constructor(resourcesDir: string) {
     super();
-    this._resourcesDir = resourcesDir;
+    this.resourcesDir = resourcesDir;
   }
 
   resourceContent(sha1: string): Buffer | undefined {
-    return fs.readFileSync(path.join(this._resourcesDir, sha1));
+    return fs.readFileSync(path.join(this.resourcesDir, sha1));
   }
 }
