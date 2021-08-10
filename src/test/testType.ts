@@ -92,6 +92,7 @@ export class TestTypeImpl {
 
     const child = new Suite(title);
     child._requireFile = suite._requireFile;
+    child._isDescribe = true;
     child.location = location;
     suite._addSuite(child);
 
@@ -161,7 +162,7 @@ export class TestTypeImpl {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
       throw errorWithLocation(location, `test.use() can only be called in a test file`);
-    suite._fixtureOverrides = { ...suite._fixtureOverrides, ...fixtures };
+    suite._use.push({ fixtures, location });
   }
 
   private async _step(location: Location, title: string, body: () => Promise<void>): Promise<void> {

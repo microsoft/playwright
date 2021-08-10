@@ -105,7 +105,7 @@ export class FixturePool {
   readonly digest: string;
   readonly registrations: Map<string, FixtureRegistration>;
 
-  constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool) {
+  constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
 
     for (const { fixtures, location } of fixturesList) {
@@ -136,6 +136,8 @@ export class FixturePool {
 
         if (options.scope !== 'test' && options.scope !== 'worker')
           throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, { location, name });
+        if (options.scope === 'worker' && disallowWorkerFixtures)
+          throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
 
         const deps = fixtureParameterNames(fn, location);
         const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, deps, super: previous };

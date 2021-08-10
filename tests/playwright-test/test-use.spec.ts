@@ -71,6 +71,28 @@ test('should run tests with different test options in the same worker', async ({
   expect(result.passed).toBe(3);
 });
 
+test('should throw when setting worker options in describe', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const test = pwt.test.extend({
+        foo: [undefined, { scope: 'worker' }],
+      });
+      test.describe('suite', () => {
+        test.use({ foo: 'bar' });
+        test('test', ({ foo }, testInfo) => {
+        });
+      });
+    `
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain([
+    `Cannot use({ foo }) in a describe group, because it forces a new worker.`,
+    `Make it top-level in the test file or put in the configuration file.`,
+    `  "foo" defined at a.test.ts:9:14`,
+  ].join('\n'));
+});
+
 test('should run tests with different worker options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
@@ -82,58 +104,35 @@ test('should run tests with different worker options', async ({ runInlineTest })
       import { test } from './helper';
       test('test', ({ foo }, testInfo) => {
         expect(foo).toBe(undefined);
-        console.log('\\n%%test=' + testInfo.workerIndex);
-      });
-
-      test.describe('suite1', () => {
-        test.use({ foo: 'bar' });
-        test('test1', ({ foo }, testInfo) => {
-          expect(foo).toBe('bar');
-          console.log('\\n%%test1=' + testInfo.workerIndex);
-        });
-
-        test.describe('suite2', () => {
-          test.use({ foo: 'baz' });
-          test('test2', ({ foo }, testInfo) => {
-            expect(foo).toBe('baz');
-            console.log('\\n%%test2=' + testInfo.workerIndex);
-          });
-        });
-
-        test('test3', ({ foo }, testInfo) => {
-          expect(foo).toBe('bar');
-          console.log('\\n%%test3=' + testInfo.workerIndex);
-        });
+        expect(testInfo.workerIndex).toBe(0);
       });
     `,
     'b.test.ts': `
       import { test } from './helper';
-      test.use({ foo: 'qux' });
-      test('test4', ({ foo }, testInfo) => {
-        expect(foo).toBe('qux');
-        console.log('\\n%%test4=' + testInfo.workerIndex);
+      test.use({ foo: 'bar' });
+
+      test('test1', ({ foo }, testInfo) => {
+        expect(foo).toBe('bar');
+        expect(testInfo.workerIndex).toBe(1);
+      });
+
+      test('test2', ({ foo }, testInfo) => {
+        expect(foo).toBe('bar');
+        expect(testInfo.workerIndex).toBe(1);
+      });
+    `,
+    'c.test.ts': `
+      import { test } from './helper';
+      test.use({ foo: 'baz' });
+      test('test2', ({ foo }, testInfo) => {
+        expect(foo).toBe('baz');
+        expect(testInfo.workerIndex).toBe(2);
       });
     `
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(5);
-
-  const workerIndexMap = new Map();
-  const allWorkers = new Set();
-  for (const line of result.output.split('\n')) {
-    if (line.startsWith('%%')) {
-      const [ name, workerIndex ] = line.substring(2).split('=');
-      allWorkers.add(workerIndex);
-      workerIndexMap.set(name, workerIndex);
-    }
-  }
-
-  expect(workerIndexMap.size).toBe(5);
-  expect(workerIndexMap.get('test1')).toBe(workerIndexMap.get('test3'));
-  expect(allWorkers.size).toBe(4);
-  for (let i = 0; i < 4; i++)
-    expect(allWorkers.has(String(i)));
+  expect(result.passed).toBe(4);
 });
 
 test('should use options from the config', async ({ runInlineTest }) => {
