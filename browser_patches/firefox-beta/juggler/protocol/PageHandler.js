@@ -72,7 +72,7 @@ class PageHandler {
     this._workers = new Map();
 
     this._pageTarget = target;
-    this._pageNetwork = NetworkObserver.instance().pageNetworkForTarget(target);
+    this._pageNetwork = PageNetwork.forPageTarget(target);
 
     const emitProtocolEvent = eventName => {
       return (...args) => this._session.emitEvent(eventName, ...args);
