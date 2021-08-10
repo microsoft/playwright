@@ -56,19 +56,15 @@ export class ProjectImpl {
   private buildPool(test: TestCase): FixturePool {
     if (!this.testPools.has(test)) {
       let pool = this.buildTestTypePool(test._testType);
-      const overrides: Fixtures = test.parent!._buildFixtureOverrides();
-      if (Object.entries(overrides).length) {
-        const overridesWithLocation = {
-          fixtures: overrides,
-          // TODO: pass location from test.use() callsite.
-          location: test.location,
-        };
-        pool = new FixturePool([overridesWithLocation], pool);
-      }
-      this.testPools.set(test, pool);
 
-      pool.validateFunction(test.fn, 'Test', test.location);
-      for (let parent = test.parent; parent; parent = parent.parent) {
+      const parents: Suite[] = [];
+      for (let parent = test.parent; parent; parent = parent.parent)
+        parents.push(parent);
+      parents.reverse();
+
+      for (const parent of parents) {
+        if (parent._use.length)
+          pool = new FixturePool(parent._use, pool, parent._isDescribe);
         for (const hook of parent._eachHooks)
           pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
         for (const hook of parent._allHooks)
@@ -76,6 +72,9 @@ export class ProjectImpl {
         for (const modifier of parent._modifiers)
           pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
       }
+
+      pool.validateFunction(test.fn, 'Test', test.location);
+      this.testPools.set(test, pool);
     }
     return this.testPools.get(test)!;
   }

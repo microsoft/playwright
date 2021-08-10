@@ -17,7 +17,7 @@
 import type { FixturePool } from './fixtures';
 import * as reporterTypes from '../../types/testReporter';
 import type { TestTypeImpl } from './testType';
-import { Annotations, Location } from './types';
+import { Annotations, FixturesWithLocation, Location } from './types';
 
 class Base {
   title: string;
@@ -48,7 +48,8 @@ export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
   tests: TestCase[] = [];
   location?: Location;
-  _fixtureOverrides: any = {};
+  _use: FixturesWithLocation[] = [];
+  _isDescribe = false;
   _entries: (Suite | TestCase)[] = [];
   _allHooks: TestCase[] = [];
   _eachHooks: { type: 'beforeEach' | 'afterEach', fn: Function, location: Location }[] = [];
@@ -97,20 +98,17 @@ export class Suite extends Base implements reporterTypes.Suite {
     return items;
   }
 
-  _buildFixtureOverrides(): any {
-    return this.parent ? { ...this.parent._buildFixtureOverrides(), ...this._fixtureOverrides } : this._fixtureOverrides;
-  }
-
   _clone(): Suite {
     const suite = new Suite(this.title);
     suite._only = this._only;
     suite.location = this.location;
     suite._requireFile = this._requireFile;
-    suite._fixtureOverrides = this._fixtureOverrides;
+    suite._use = this._use.slice();
     suite._eachHooks = this._eachHooks.slice();
     suite._timeout = this._timeout;
     suite._annotations = this._annotations.slice();
     suite._modifiers = this._modifiers.slice();
+    suite._isDescribe = this._isDescribe;
     return suite;
   }
 }

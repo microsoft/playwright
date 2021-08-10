@@ -17,28 +17,28 @@
 import { test, expect } from './playwright-test-fixtures';
 
 const tests = {
+  'helper.ts': `
+    export const headlessTest = pwt.test.extend({ headless: false });
+    export const headedTest = pwt.test.extend({ headless: true });
+  `,
   'a.spec.ts': `
-    const test = pwt.test.extend({ foo: 'bar' });
-    test.use({ headless: false });
-    test('test1', async () => {
+    import { headlessTest, headedTest } from './helper';
+    headlessTest('test1', async () => {
       console.log('test1-done');
     });
-    test.describe('suite', () => {
-      test.use({ headless: true });
-      test('test2', async () => {
-        console.log('test2-done');
-      });
+    headedTest('test2', async () => {
+      console.log('test2-done');
     });
-    test('test3', async () => {
+    headlessTest('test3', async () => {
       console.log('test3-done');
     });
   `,
   'b.spec.ts': `
-    const test = pwt.test.extend({ bar: 'foo' });
-    test('test4', async () => {
+    import { headlessTest, headedTest } from './helper';
+    headlessTest('test4', async () => {
       console.log('test4-done');
     });
-    test('test5', async () => {
+    headedTest('test5', async () => {
       console.log('test5-done');
     });
   `,
@@ -51,7 +51,7 @@ test('should respect shard=1/2', async ({ runInlineTest }) => {
   expect(result.skipped).toBe(0);
   expect(result.output).toContain('test1-done');
   expect(result.output).toContain('test3-done');
-  expect(result.output).toContain('test2-done');
+  expect(result.output).toContain('test4-done');
 });
 
 test('should respect shard=2/2', async ({ runInlineTest }) => {
@@ -59,7 +59,7 @@ test('should respect shard=2/2', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('test4-done');
+  expect(result.output).toContain('test2-done');
   expect(result.output).toContain('test5-done');
 });
 
@@ -75,5 +75,5 @@ test('should respect shard=1/2 in config', async ({ runInlineTest }) => {
   expect(result.skipped).toBe(0);
   expect(result.output).toContain('test1-done');
   expect(result.output).toContain('test3-done');
-  expect(result.output).toContain('test2-done');
+  expect(result.output).toContain('test4-done');
 });
