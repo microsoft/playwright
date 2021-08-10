@@ -284,14 +284,14 @@ export interface PlaywrightWorkerOptions {
   headless: boolean | undefined;
   channel: BrowserChannel | undefined;
   launchOptions: LaunchOptions;
+  screenshot: 'off' | 'on' | 'only-on-failure';
+  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-trace';
+  video: VideoMode | { mode: VideoMode, size: ViewportSize };
 }
 
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-video';
 
 export interface PlaywrightTestOptions {
-  screenshot: 'off' | 'on' | 'only-on-failure';
-  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-trace';
-  video: VideoMode | { mode: VideoMode, size: ViewportSize };
   acceptDownloads: boolean | undefined;
   bypassCSP: boolean | undefined;
   colorScheme: ColorScheme | undefined;

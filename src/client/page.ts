@@ -487,9 +487,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   async close(options: { runBeforeUnload?: boolean } = {runBeforeUnload: undefined}) {
     try {
       await this._wrapApiCall(async (channel: channels.PageChannel) => {
-        await channel.close(options);
         if (this._ownedContext)
           await this._ownedContext.close();
+        else
+          await channel.close(options);
       });
     } catch (e) {
       if (isSafeCloseError(e))

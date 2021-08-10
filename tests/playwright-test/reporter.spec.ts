@@ -114,7 +114,6 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
   ]);
 });
 
-
 test('should work without a file extension', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': smallReporterJS,
@@ -162,6 +161,9 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
 test('should report expect steps', async ({ runInlineTest }) => {
   const expectReporterJS = `
     class Reporter {
+      onStdOut(chunk) {
+        process.stdout.write(chunk);
+      }
       onStepBegin(test, result, step) {
         const copy = { ...step, startTime: undefined, duration: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
@@ -232,6 +234,15 @@ test('should report expect steps', async ({ runInlineTest }) => {
 test('should report api steps', async ({ runInlineTest }) => {
   const expectReporterJS = `
     class Reporter {
+      onStdOut(chunk) {
+        process.stdout.write(chunk);
+      }
+      onTestBegin(test) {
+        console.log('%%%% test begin ' + test.title);
+      }
+      onTestEnd(test) {
+        console.log('%%%% test end ' + test.title);
+      }
       onStepBegin(test, result, step) {
         const copy = { ...step, startTime: undefined, duration: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
@@ -259,11 +270,31 @@ test('should report api steps', async ({ runInlineTest }) => {
         await page.setContent('<button></button>');
         await page.click('button');
       });
+
+      test.describe('suite', () => {
+        let myPage;
+        test.beforeAll(async ({ browser }) => {
+          myPage = await browser.newPage();
+          await myPage.setContent('<button></button>');
+        });
+
+        test('pass1', async () => {
+          await myPage.click('button');
+        });
+        test('pass2', async () => {
+          await myPage.click('button');
+        });
+
+        test.afterAll(async () => {
+          await myPage.close();
+        });
+      });
     `
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
+    `%%%% test begin pass`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
@@ -276,6 +307,23 @@ test('should report api steps', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%%%% test end pass`,
+    `%%%% test begin pass1`,
+    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%%%% test end pass1`,
+    `%%%% test begin pass2`,
+    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
+    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%%%% test end pass2`,
   ]);
 });
 
@@ -283,6 +331,9 @@ test('should report api steps', async ({ runInlineTest }) => {
 test('should report api step failure', async ({ runInlineTest }) => {
   const expectReporterJS = `
     class Reporter {
+      onStdOut(chunk) {
+        process.stdout.write(chunk);
+      }
       onStepBegin(test, result, step) {
         const copy = { ...step, startTime: undefined, duration: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
@@ -333,6 +384,9 @@ test('should report api step failure', async ({ runInlineTest }) => {
 test('should report test.step', async ({ runInlineTest }) => {
   const expectReporterJS = `
     class Reporter {
+      onStdOut(chunk) {
+        process.stdout.write(chunk);
+      }
       onStepBegin(test, result, step) {
         const copy = { ...step, startTime: undefined, duration: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
