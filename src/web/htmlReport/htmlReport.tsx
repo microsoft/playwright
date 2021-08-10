@@ -89,7 +89,7 @@ const ProjectTreeItem: React.FC<{
   const location = renderLocation(suite?.location, true);
 
   return <TreeItem title={<div className='hbox'>
-    <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title}</div></div>
+    <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title || 'Project'}</div></div>
     {!!suite?.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
@@ -106,7 +106,7 @@ const ProjectFlatTreeItem: React.FC<{
   const location = renderLocation(suite?.location, true);
 
   return <TreeItem title={<div className='hbox'>
-    <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title}</div></div>
+    <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title || 'Project'}</div></div>
     {!!suite?.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
@@ -169,21 +169,24 @@ const TestOverview: React.FC<{
   test: JsonTestCase,
   result: JsonTestResult,
 }> = ({ test, result }) => {
-  const { attachments, screenshots } = React.useMemo(() => {
-    const attachments = new Map<string, JsonAttachment>();
-    const screenshots = result.attachments.filter(a => a.name === 'actual');
+  const { screenshots, attachmentsMap } = React.useMemo(() => {
+    const attachmentsMap = new Map<string, JsonAttachment>();
+    const screenshots = result.attachments.filter(a => a.name === 'screenshot');
     for (const a of result.attachments)
-      attachments.set(a.name, a);
-    return { attachments, screenshots };
+      attachmentsMap.set(a.name, a);
+    return { attachmentsMap, screenshots };
   }, [ result ]);
   return <div className="test-result">
     <div className='test-overview-title'>{test?.title}</div>
     <div className='test-overview-property'>{renderLocation(test.location, true)}<div style={{ flex: 'auto' }}></div><div>{msToString(result.duration)}</div></div>
     {result.failureSnippet && <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(result.failureSnippet.trim()) }}></div>}
     {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0}></StepTreeItem>)}
-    {attachments.has('expected') && attachments.has('actual') && <ImageDiff actual={attachments.get('actual')!} expected={attachments.get('expected')!} diff={attachments.get('diff')}></ImageDiff>}
+    {attachmentsMap.has('expected') && attachmentsMap.has('actual') && <ImageDiff actual={attachmentsMap.get('actual')!} expected={attachmentsMap.get('expected')!} diff={attachmentsMap.get('diff')}></ImageDiff>}
     {!!screenshots.length && <div className='test-overview-title'>Screenshots</div>}
-    {screenshots.map(a => <div className='image-preview'><img src={a.sha1} /></div>)}
+    {screenshots.map(a => <div className='image-preview'><img src={'resources/' + a.sha1} /></div>)}
+    {!!result.attachments && <div className='test-overview-title'>Attachments</div>}
+    {result.attachments.map(a => <AttachmentLink attachment={a}></AttachmentLink>)}
+    <div className='test-overview-title'></div>
   </div>;
 };
 
@@ -211,24 +214,36 @@ export const ImageDiff: React.FunctionComponent<{
   tabs.push({
     id: 'actual',
     title: 'Actual',
-    render: () => <div className='image-preview'><img src={actual.sha1}/></div>
+    render: () => <div className='image-preview'><img src={'resources/' + actual.sha1}/></div>
   });
   tabs.push({
     id: 'expected',
     title: 'Expected',
-    render: () => <div className='image-preview'><img src={expected.sha1}/></div>
+    render: () => <div className='image-preview'><img src={'resources/' + expected.sha1}/></div>
   });
   if (diff) {
     tabs.push({
       id: 'diff',
       title: 'Diff',
-      render: () => <div className='image-preview'><img src={diff.sha1}/></div>,
+      render: () => <div className='image-preview'><img src={'resources/' + diff.sha1}/></div>,
     });
   }
   return <div className='vbox test-image-mismatch'>
     <div className='test-overview-title'>Image mismatch</div>
     <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
   </div>;
+};
+
+export const AttachmentLink: React.FunctionComponent<{
+  attachment: JsonAttachment,
+}> = ({ attachment }) => {
+  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto', maxWidth: 430 }}>
+    <span className={'codicon codicon-cloud-download'}></span>
+    {attachment.sha1 && <a href={'resources/' + attachment.sha1} target='_blank'>{attachment.name}</a>}
+    {attachment.body && <span>{attachment.name}</span>}
+  </div>} loadChildren={attachment.body ? () => {
+    return [<div className='attachment-body'>${attachment.body}</div>];
+  } : undefined} depth={0}></TreeItem>;
 };
 
 function testSuiteErrorStatusIcon(suite?: JsonSuite): JSX.Element | undefined {
@@ -291,7 +306,7 @@ function computeUnexpectedTests(suite: JsonSuite): JsonTestCase[] {
 function renderLocation(location: JsonLocation | undefined, showFileName: boolean) {
   if (!location)
     return '';
-  return (showFileName ? location.file : '') + ':' + location.column;
+  return (showFileName ? location.file : '') + ':' + location.line;
 }
 
 function retryLabel(index: number) {

@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { FullConfig, Location, Suite, TestCase, TestError, TestResult, TestStatus, TestStep } from '../../../types/testReporter';
-import { calculateFileSha1 } from '../../utils/utils';
+import { calculateSha1 } from '../../utils/utils';
 import { formatResultFailure } from './base';
 import { serializePatterns, toPosixPath } from './json';
 
@@ -52,6 +52,7 @@ export type JsonSuite = {
 };
 
 export type JsonTestCase = {
+  testId: string;
   title: string;
   location: JsonLocation;
   expectedStatus: TestStatus;
@@ -103,21 +104,23 @@ export type JsonTestStep = {
 };
 
 class HtmlReporter {
-  private _targetFolder: string;
+  private _reportFolder: string;
+  private _resourcesFolder: string;
   private config!: FullConfig;
   private suite!: Suite;
+
+  constructor() {
+    this._reportFolder = path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report');
+    this._resourcesFolder = path.join(this._reportFolder, 'resources');
+    fs.mkdirSync(this._resourcesFolder, { recursive: true });
+    const appFolder = path.join(__dirname, '..', '..', 'web', 'htmlReport');
+    for (const file of fs.readdirSync(appFolder))
+      fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
+  }
 
   onBegin(config: FullConfig, suite: Suite) {
     this.config = config;
     this.suite = suite;
-  }
-
-  constructor() {
-    this._targetFolder = process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report';
-    fs.mkdirSync(this._targetFolder, { recursive: true });
-    const appFolder = path.join(__dirname, '..', '..', 'web', 'htmlReport');
-    for (const file of fs.readdirSync(appFolder))
-      fs.copyFileSync(path.join(appFolder, file), path.join(this._targetFolder, file));
   }
 
   async onEnd() {
@@ -125,7 +128,6 @@ class HtmlReporter {
     this.suite.allTests().forEach(t => {
       ++stats[t.outcome()];
     });
-    const reportFile = path.join(this._targetFolder, 'report.json');
     const output: JsonReport = {
       config: {
         ...this.config,
@@ -147,7 +149,7 @@ class HtmlReporter {
       stats,
       suites: await Promise.all(this.suite.suites.map(s => this._serializeSuite(s)))
     };
-    fs.writeFileSync(reportFile, JSON.stringify(output));
+    fs.writeFileSync(path.join(this._reportFolder, 'report.json'), JSON.stringify(output));
   }
 
   private _relativeLocation(location: Location | undefined): Location {
@@ -170,7 +172,9 @@ class HtmlReporter {
   }
 
   private async _serializeTest(test: TestCase): Promise<JsonTestCase> {
+    const testId = calculateSha1(test.titlePath().join('|'));
     return {
+      testId,
       title: test.title,
       location: this._relativeLocation(test.location),
       expectedStatus: test.expectedStatus,
@@ -179,11 +183,11 @@ class HtmlReporter {
       retries: test.retries,
       ok: test.ok(),
       outcome: test.outcome(),
-      results: await Promise.all(test.results.map(r => this._serializeResult(test, r))),
+      results: await Promise.all(test.results.map(r => this._serializeResult(testId, test, r))),
     };
   }
 
-  private async _serializeResult(test: TestCase, result: TestResult): Promise<JsonTestResult> {
+  private async _serializeResult(testId: string, test: TestCase, result: TestResult): Promise<JsonTestResult> {
     return {
       retry: result.retry,
       workerIndex: result.workerIndex,
@@ -192,29 +196,58 @@ class HtmlReporter {
       status: result.status,
       error: result.error,
       failureSnippet: formatResultFailure(test, result, '').join('') || undefined,
-      attachments: await this._copyAttachments(result.attachments),
+      attachments: await this._createAttachments(testId, result),
       stdout: result.stdout,
       stderr: result.stderr,
       steps: this._serializeSteps(result.steps)
     };
   }
 
-  private async _copyAttachments(attachments: TestAttachment[]): Promise<JsonAttachment[]> {
-    const result: JsonAttachment[] = [];
-    for (const attachment of attachments) {
+  private async _createAttachments(testId: string, result: TestResult): Promise<JsonAttachment[]> {
+    const attachments: JsonAttachment[] = [];
+    for (const attachment of result.attachments) {
       if (attachment.path) {
-        const sha1 = await calculateFileSha1(attachment.path) + extension(attachment.contentType);
-        fs.copyFileSync(attachment.path, path.join(this._targetFolder, sha1));
-        result.push({
+        const sha1 = calculateSha1(attachment.path) + path.extname(attachment.path);
+        fs.copyFileSync(attachment.path, path.join(this._resourcesFolder, sha1));
+        attachments.push({
           ...attachment,
           body: undefined,
           sha1
         });
-      } else if (attachment.body) {
-        result.push({ ...attachment, body: attachment.body.toString('base64') });
+      } else if (attachment.body && isTextAttachment(attachment.contentType)) {
+        attachments.push({ ...attachment, body: attachment.body.toString() });
+      } else {
+        const sha1 = calculateSha1(attachment.body!) + '.dat';
+        fs.writeFileSync(path.join(this._resourcesFolder, sha1), attachment.body);
+        attachments.push({
+          ...attachment,
+          body: undefined,
+          sha1
+        });
       }
     }
-    return result;
+
+    if (result.stdout.length)
+      attachments.push(this._stdioAttachment(testId, result, 'stdout'));
+    if (result.stderr.length)
+      attachments.push(this._stdioAttachment(testId, result, 'stderr'));
+    return attachments;
+  }
+
+  private _stdioAttachment(testId: string, result: TestResult, type: 'stdout' | 'stderr'): JsonAttachment {
+    const sha1 = `${testId}.${result.retry}.${type}`;
+    const fileName = path.join(this._resourcesFolder, sha1);
+    for (const chunk of type === 'stdout' ? result.stdout : result.stderr) {
+      if (typeof chunk === 'string')
+        fs.appendFileSync(fileName, chunk + '\n');
+      else
+        fs.appendFileSync(fileName, chunk);
+    }
+    return {
+      name: type,
+      contentType: 'application/octet-stream',
+      sha1
+    };
   }
 
   private _serializeSteps(steps: TestStep[]): JsonTestStep[] {
@@ -255,14 +288,12 @@ function containsStep(outer: TestStep, inner: TestStep): boolean {
   return true;
 }
 
-function extension(contentType: string) {
-  if (contentType === 'image/png')
-    return '.png';
-  if (contentType === 'image/jpeg' || contentType === 'image/jpg')
-    return '.jpeg';
-  if (contentType === 'video/webm')
-    return '.webm';
-  return '.data';
+function isTextAttachment(contentType: string) {
+  if (contentType.startsWith('text/'))
+    return true;
+  if (contentType.includes('json'))
+    return true;
+  return false;
 }
 
 export default HtmlReporter;
