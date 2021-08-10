@@ -37,6 +37,15 @@ function expectError(selector: string) {
   expect(error.message).toContain(`while parsing selector \`${selector}\``);
 }
 
+it('should parse', async () => {
+  expect(serialize(parse('[foo="]"]'))).toBe('[foo = "]"]');
+  expect(serialize(parse('[foo="10"s]'))).toBe('[foo = "10"]');
+  expect(serialize(parse('[foo="10" s]'))).toBe('[foo = "10"]');
+  expect(serialize(parse('[foo="true"]'))).toBe('[foo = "true"]');
+  expect(serialize(parse('[foo=""]'))).toBe('[foo = ""]');
+  expect(serialize(parse('[foo="=="]'))).toBe('[foo = "=="]');
+});
+
 it('should parse short attributes', async () => {
   expect(serialize(parse(`BookItem [  name ]`))).toBe('BookItem[name]');
   expect(serialize(parse(`BookItem ['name' ] [ foo."bar".baz ]`))).toBe('BookItem[name][foo.bar.baz]');
@@ -106,4 +115,18 @@ it('should throw on malformed selector', async () => {
   expectError('foo[bar *= #%s]');
   expectError('foo[bar *= 10]');
   expectError('');
+
+  expectError('[foo=10 s]');
+  expectError('[foo=10 p]');
+  expectError('foo.bar');
+  expectError('foo[]');
+  expectError('["a\"b"=foo]');
+  expectError('[foo=10"bar"]');
+  expectError('[foo= ==]');
+  expectError('[foo===]');
+  expectError('[foo="\"]"[]');
+  expectError('[foo=abc S]');
+  expectError('[foo=abc \s]');
+  expectError('[foo=abc"\s"]');
+  expectError('[foo="\\"]');
 });

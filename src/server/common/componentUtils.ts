@@ -179,8 +179,8 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
       syntaxError('parsing attribute value');
 
     eat1();
-    if (operator === '*=' && typeof value !== 'string')
-      throw new Error(`Error while parsing selector \`${selector}\` - cannot use *= operator in attribute with non-string matching value - ${value}`);
+    if (operator !== '=' && typeof value !== 'string')
+      throw new Error(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`);
     return {jsonPath, op: operator, value, caseSensetive};
   }
 
