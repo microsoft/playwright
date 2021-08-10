@@ -284,36 +284,31 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     }));
   }, { auto: true }],
 
-  createContext: async ({ browser, video, _artifactsDir }, use, testInfo) => {
+  context: async ({ browser, video, _artifactsDir }, use, testInfo) => {
+    if (testInfo.title === 'beforeAll' || testInfo.title === 'afterAll')
+      throw new Error(`"context" and "page" fixtures are not suppoted in ${testInfo.title}. Use browser.newContext() instead.`);
+
     let videoMode = typeof video === 'string' ? video : video.mode;
     if (videoMode === 'retry-with-video')
       videoMode = 'on-first-retry';
 
     const captureVideo = (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
+    const videoOptions: BrowserContextOptions = captureVideo ? {
+      recordVideo: {
+        dir: _artifactsDir(),
+        size: typeof video === 'string' ? undefined : video.size,
+      }
+    } : {};
+    const context = await browser.newContext(videoOptions);
 
-    const allContexts: BrowserContext[] = [];
     const allPages: Page[] = [];
+    context.on('page', page => allPages.push(page));
 
-    await use(async (additionalOptions = {}) => {
-      let recordVideoDir: string | null = null;
-      const recordVideoSize = typeof video === 'string' ? undefined : video.size;
-      if (captureVideo)
-        recordVideoDir = _artifactsDir();
+    await use(context);
 
-      const combinedOptions: BrowserContextOptions = {
-        recordVideo: recordVideoDir ? { dir: recordVideoDir, size: recordVideoSize } : undefined,
-        ...additionalOptions,
-      };
-      const context = await browser.newContext(combinedOptions);
-      context.on('page', page => allPages.push(page));
-
-      allContexts.push(context);
-      return context;
-    });
-
-    const prependToError = (testInfo.status === 'timedOut' && allContexts.length) ?
-      formatPendingCalls((allContexts[0] as any)._connection.pendingProtocolCalls()) : '';
-    await Promise.all(allContexts.map(context => context.close()));
+    const prependToError = testInfo.status === 'timedOut' ?
+      formatPendingCalls((context as any)._connection.pendingProtocolCalls()) : '';
+    await context.close();
     if (prependToError) {
       if (!testInfo.error) {
         testInfo.error = { value: prependToError };
@@ -341,12 +336,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
         }
       }));
     }
-  },
-
-  context: async ({ createContext }, use, testInfo) => {
-    if (testInfo.title === 'beforeAll' || testInfo.title === 'afterAll')
-      throw new Error(`"context" and "page" fixtures are not suppoted in ${testInfo.title}. Use browser.newContext() instead.`);
-    await use(await createContext());
   },
 
   page: async ({ context }, use) => {
