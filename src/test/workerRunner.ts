@@ -43,7 +43,9 @@ export class WorkerRunner extends EventEmitter {
   private _fatalError: TestError | undefined;
   private _entries = new Map<string, TestEntry>();
   private _isStopped = false;
-  _currentTest: { testId: string, testInfo: TestInfoImpl, testFinishedCallback: () => void } | null = null;
+  private _runFinished = Promise.resolve();
+  private _currentDeadlineRunner: DeadlineRunner<any> | undefined;
+  _currentTest: { testId: string, testInfo: TestInfoImpl, type: 'test' | 'beforeAll' | 'afterAll' } | null = null;
 
   constructor(params: WorkerInitParams) {
     super();
@@ -51,13 +53,18 @@ export class WorkerRunner extends EventEmitter {
     this._fixtureRunner = new FixtureRunner();
   }
 
-  stop() {
-    // TODO: mark test as 'interrupted' instead.
-    if (this._currentTest && this._currentTest.testInfo.status === 'passed') {
-      this._currentTest.testInfo.status = 'skipped';
-      this._currentTest.testFinishedCallback();
+  stop(): Promise<void> {
+    if (!this._isStopped) {
+      this._isStopped = true;
+
+      // Interrupt current action.
+      this._currentDeadlineRunner?.setDeadline(0);
+
+      // TODO: mark test as 'interrupted' instead.
+      if (this._currentTest && this._currentTest.testInfo.status === 'passed')
+        this._currentTest.testInfo.status = 'skipped';
     }
-    this._isStopped = true;
+    return this._runFinished;
   }
 
   async cleanup() {
@@ -73,20 +80,17 @@ export class WorkerRunner extends EventEmitter {
   }
 
   unhandledError(error: Error | any) {
-    if (this._isStopped)
-      return;
-    if (this._currentTest && this._currentTest.testInfo._type === 'test') {
-      if (this._currentTest.testInfo.error)
-        return;
-      this._currentTest.testInfo.status = 'failed';
-      this._currentTest.testInfo.error = serializeError(error);
-      this._failedTestId = this._currentTest.testId;
-      this.emit('testEnd', buildTestEndPayload(this._currentTest.testId, this._currentTest.testInfo));
+    if (this._currentTest && this._currentTest.type === 'test') {
+      if (!this._currentTest.testInfo.error) {
+        this._currentTest.testInfo.status = 'failed';
+        this._currentTest.testInfo.error = serializeError(error);
+      }
     } else {
       // No current test - fatal error.
-      this._fatalError = serializeError(error);
+      if (!this._fatalError)
+        this._fatalError = serializeError(error);
     }
-    this._reportDoneAndStop();
+    this.stop();
   }
 
   private _deadline() {
@@ -117,46 +121,49 @@ export class WorkerRunner extends EventEmitter {
   }
 
   async run(runPayload: RunPayload) {
-    this._entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
-
-    await this._loadIfNeeded();
-
-    const fileSuite = await this._loader.loadTestFile(runPayload.file);
-    let anyPool: FixturePool | undefined;
-    const suite = this._project.cloneFileSuite(fileSuite, this._params.repeatEachIndex, test => {
-      if (!this._entries.has(test._id))
-        return false;
-      anyPool = test._pool;
-      return true;
-    });
-
-    if (!suite || !anyPool) {
+    let runFinishedCalback = () => {};
+    this._runFinished = new Promise(f => runFinishedCalback = f);
+    try {
+      this._entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
+      await this._loadIfNeeded();
+      const fileSuite = await this._loader.loadTestFile(runPayload.file);
+      let anyPool: FixturePool | undefined;
+      const suite = this._project.cloneFileSuite(fileSuite, this._params.repeatEachIndex, test => {
+        if (!this._entries.has(test._id))
+          return false;
+        anyPool = test._pool;
+        return true;
+      });
+      if (suite && anyPool) {
+        this._fixtureRunner.setPool(anyPool);
+        await this._runSuite(suite, []);
+      }
+    } catch (e) {
+      // In theory, we should run above code without any errors.
+      // However, in the case we screwed up, or loadTestFile failed in the worker
+      // but not in the runner, let's do a fatal error.
+      this.unhandledError(e);
+    } finally {
       this._reportDone();
-      return;
+      runFinishedCalback();
     }
-    this._fixtureRunner.setPool(anyPool);
-    await this._runSuite(suite, []);
-    if (this._isStopped)
-      return;
-
-    this._reportDone();
   }
 
   private async _runSuite(suite: Suite, annotations: Annotations) {
+    // When stopped, do not run a suite. But if we have started running the suite with hooks,
+    // always finish the hooks.
     if (this._isStopped)
       return;
     annotations = annotations.concat(suite._annotations);
 
     for (const beforeAllModifier of suite._modifiers) {
-      if (this._isStopped)
-        return;
       if (!this._fixtureRunner.dependsOnWorkerFixturesOnly(beforeAllModifier.fn, beforeAllModifier.location))
         continue;
       // TODO: separate timeout for beforeAll modifiers?
       const result = await raceAgainstDeadline(this._fixtureRunner.resolveParametersAndRunHookOrTest(beforeAllModifier.fn, this._workerInfo, undefined), this._deadline());
       if (result.timedOut) {
         this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running ${beforeAllModifier.type} modifier`));
-        this._reportDoneAndStop();
+        this.stop();
       }
       if (!!result.result)
         annotations.push({ type: beforeAllModifier.type, description: beforeAllModifier.description });
@@ -165,8 +172,6 @@ export class WorkerRunner extends EventEmitter {
     for (const hook of suite._allHooks) {
       if (hook._type !== 'beforeAll')
         continue;
-      if (this._isStopped)
-        return;
       const firstTest = suite.allTests()[0];
       await this._runTestOrAllHook(hook, annotations, this._entries.get(firstTest._id)?.retry || 0);
     }
@@ -175,23 +180,18 @@ export class WorkerRunner extends EventEmitter {
         await this._runSuite(entry, annotations);
       } else {
         const runEntry = this._entries.get(entry._id);
-        if (runEntry)
+        if (runEntry && !this._isStopped)
           await this._runTestOrAllHook(entry, annotations, runEntry.retry);
       }
     }
     for (const hook of suite._allHooks) {
       if (hook._type !== 'afterAll')
         continue;
-      if (this._isStopped)
-        return;
       await this._runTestOrAllHook(hook, annotations, 0);
     }
   }
 
   private async _runTestOrAllHook(test: TestCase, annotations: Annotations, retry: number) {
-    if (this._isStopped)
-      return;
-
     const reportEvents = test._type === 'test';
     const startTime = monotonicTime();
     const startWallTime = Date.now();
@@ -285,7 +285,6 @@ export class WorkerRunner extends EventEmitter {
             this.emit('stepEnd', payload);
         };
       },
-      _type: test._type,
     };
 
     // Inherit test.setTimeout() from parent suites.
@@ -314,7 +313,9 @@ export class WorkerRunner extends EventEmitter {
       }
     }
 
-    this._setCurrentTest({ testInfo, testId, testFinishedCallback });
+    this._currentTest = { testInfo, testId, type: test._type };
+    setCurrentTestInfo(testInfo);
+
     const deadline = () => {
       return testInfo.timeout ? startTime + testInfo.timeout : undefined;
     };
@@ -332,31 +333,28 @@ export class WorkerRunner extends EventEmitter {
     // Update the fixture pool - it may differ between tests, but only in test-scoped fixtures.
     this._fixtureRunner.setPool(test._pool!);
 
-    deadlineRunner = new DeadlineRunner(this._runTestWithBeforeHooks(test, testInfo), deadline());
+    this._currentDeadlineRunner = deadlineRunner = new DeadlineRunner(this._runTestWithBeforeHooks(test, testInfo), deadline());
     const result = await deadlineRunner.result;
     // Do not overwrite test failure upon hook timeout.
     if (result.timedOut && testInfo.status === 'passed')
       testInfo.status = 'timedOut';
+    testFinishedCallback();
 
-    if (!this._isStopped) {
-      // When stopped during the test run (usually either a user interruption or an unhandled error),
-      // we do not run cleanup because the worker will cleanup() anyway.
-      testFinishedCallback();
-      if (!result.timedOut) {
-        deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), deadline());
-        deadlineRunner.setDeadline(deadline());
-        const hooksResult = await deadlineRunner.result;
-        // Do not overwrite test failure upon hook timeout.
-        if (hooksResult.timedOut && testInfo.status === 'passed')
-          testInfo.status = 'timedOut';
-      } else {
-        // A timed-out test gets a full additional timeout to run after hooks.
-        const newDeadline = this._deadline();
-        deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), newDeadline);
-        await deadlineRunner.result;
-      }
+    if (!result.timedOut) {
+      this._currentDeadlineRunner = deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), deadline());
+      deadlineRunner.setDeadline(deadline());
+      const hooksResult = await deadlineRunner.result;
+      // Do not overwrite test failure upon hook timeout.
+      if (hooksResult.timedOut && testInfo.status === 'passed')
+        testInfo.status = 'timedOut';
+    } else {
+      // A timed-out test gets a full additional timeout to run after hooks.
+      const newDeadline = this._deadline();
+      this._currentDeadlineRunner = deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), newDeadline);
+      await deadlineRunner.result;
     }
 
+    this._currentDeadlineRunner = undefined;
     testInfo.duration = monotonicTime() - startTime;
     if (reportEvents)
       this.emit('testEnd', buildTestEndPayload(testId, testInfo));
@@ -367,22 +365,16 @@ export class WorkerRunner extends EventEmitter {
     if (!preserveOutput)
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
 
-    this._setCurrentTest(null);
+    this._currentTest = null;
+    setCurrentTestInfo(null);
 
-    if (this._isStopped)
-      return;
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped') {
       if (test._type === 'test')
         this._failedTestId = testId;
       else
         this._fatalError = testInfo.error;
-      this._reportDoneAndStop();
+      this.stop();
     }
-  }
-
-  private _setCurrentTest(currentTest: { testId: string, testInfo: TestInfoImpl, testFinishedCallback: () => void } | null) {
-    this._currentTest = currentTest;
-    setCurrentTestInfo(currentTest ? currentTest.testInfo : null);
   }
 
   private async _runBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
@@ -395,8 +387,6 @@ export class WorkerRunner extends EventEmitter {
       }
       beforeEachModifiers.reverse();
       for (const modifier of beforeEachModifiers) {
-        if (this._isStopped)
-          return;
         const result = await this._fixtureRunner.resolveParametersAndRunHookOrTest(modifier.fn, this._workerInfo, testInfo);
         testInfo[modifier.type](!!result, modifier.description!);
       }
@@ -420,7 +410,7 @@ export class WorkerRunner extends EventEmitter {
       await this._runBeforeHooks(test, testInfo);
 
     // Do not run the test when beforeEach hook fails.
-    if (this._isStopped || testInfo.status === 'failed' || testInfo.status === 'skipped')
+    if (testInfo.status === 'failed' || testInfo.status === 'skipped')
       return;
 
     try {
@@ -473,8 +463,6 @@ export class WorkerRunner extends EventEmitter {
   }
 
   private async _runHooks(suite: Suite, type: 'beforeEach' | 'afterEach', testInfo: TestInfo) {
-    if (this._isStopped)
-      return;
     const all = [];
     for (let s: Suite | undefined = suite; s; s = s.parent) {
       const funcs = s._eachHooks.filter(e => e.type === type).map(e => e.fn);
@@ -501,13 +489,6 @@ export class WorkerRunner extends EventEmitter {
       fatalError: this._fatalError,
     };
     this.emit('done', donePayload);
-  }
-
-  private _reportDoneAndStop() {
-    if (this._isStopped)
-      return;
-    this._reportDone();
-    this.stop();
   }
 }
 

@@ -97,7 +97,7 @@ async function gracefullyCloseAndExit() {
   // Meanwhile, try to gracefully shutdown.
   try {
     if (workerRunner) {
-      workerRunner.stop();
+      await workerRunner.stop();
       await workerRunner.cleanup();
     }
     if (workerIndex !== undefined)

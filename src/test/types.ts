@@ -29,6 +29,5 @@ export type CompleteStepCallback = (error?: Error | TestError) => void;
 
 export interface TestInfoImpl extends TestInfo {
   _testFinished: Promise<void>;
-  _type: 'test' | 'beforeAll' | 'afterAll';
   _addStep: (category: string, title: string) => CompleteStepCallback;
 }
