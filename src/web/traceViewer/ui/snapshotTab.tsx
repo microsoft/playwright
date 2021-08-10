@@ -23,9 +23,8 @@ import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-  snapshotSizes: { [snapshotName: string]: Size },
   defaultSnapshotSize: Size,
-}> = ({ action, snapshotSizes, defaultSnapshotSize }) => {
+}> = ({ action, defaultSnapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
@@ -36,12 +35,14 @@ export const SnapshotTab: React.FunctionComponent<{
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
 
   let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
+  let snapshotSizeUrl: string | undefined;
   let pointX: number | undefined;
   let pointY: number | undefined;
   if (action) {
     const snapshot = snapshots[snapshotIndex];
     if (snapshot && snapshot.snapshotName) {
       snapshotUrl = `${window.location.origin}/snapshot/${action.metadata.pageId}?name=${snapshot.snapshotName}`;
+      snapshotSizeUrl = `${window.location.origin}/snapshotSize/${action.metadata.pageId}?name=${snapshot.snapshotName}`;
       if (snapshot.snapshotName.includes('action')) {
         pointX = action.metadata.point?.x;
         pointY = action.metadata.point?.y;
@@ -55,19 +56,22 @@ export const SnapshotTab: React.FunctionComponent<{
   }, [snapshotIndex, snapshots]);
 
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const [snapshotSize, setSnapshotSize] = React.useState(defaultSnapshotSize);
   React.useEffect(() => {
-    if (!iframeRef.current)
-      return;
-    try {
-      const point = pointX === undefined ? undefined : { x: pointX, y: pointY };
-      (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
-    } catch (e) {
-    }
-  }, [iframeRef, snapshotUrl, pointX, pointY]);
-
-  let snapshotSize = defaultSnapshotSize;
-  if (snapshots[snapshotIndex] && snapshots[snapshotIndex].snapshotName)
-    snapshotSize = snapshotSizes[snapshots[snapshotIndex].snapshotName] || defaultSnapshotSize;
+    (async () => {
+      if (snapshotSizeUrl) {
+        const response = await fetch(snapshotSizeUrl);
+        setSnapshotSize(await response.json());
+      }
+      if (!iframeRef.current)
+        return;
+      try {
+        const point = pointX === undefined ? undefined : { x: pointX, y: pointY };
+        (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
+      } catch (e) {
+      }
+    })();
+  }, [iframeRef, snapshotUrl, snapshotSizeUrl, pointX, pointY]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   const scaledSize = {
