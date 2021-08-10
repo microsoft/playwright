@@ -151,7 +151,9 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       const videos = context.pages().map(p => p.video()).filter(Boolean);
       await context.close();
       for (const v of videos) {
-        const videoPath = await v.path();
+        const videoPath = await v.path().catch(() => null);
+        if (!videoPath)
+          continue;
         const savedPath = testInfo.outputPath(path.basename(videoPath));
         await v.saveAs(savedPath);
         testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
