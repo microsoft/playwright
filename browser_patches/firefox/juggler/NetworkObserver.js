@@ -78,7 +78,7 @@ class PageNetwork {
       const intercepted = this._interceptedRequests.get(requestId);
       if (!intercepted)
         throw new Error(`Cannot find request "${requestId}"`);
-      return { response: await intercepted.interceptResponse(url, method, headers, postData) };
+      return { response: await new ResponseInterceptor(intercepted).interceptResponse(url, method, headers, postData) };
     }
     this._takeIntercepted(requestId).resume(url, method, headers, postData);
     return {};
@@ -108,64 +108,132 @@ class PageNetwork {
 }
 
 class ResponseInterceptor {
-  constructor(request, responseChannel) {
+  constructor(request) {
     this._originalRequest = request;
     this._finalRequest = request;
-    this._responseChannel = responseChannel;
+    this._responseChannel = null;
     this._interceptedResponse = null;
+    if (request._responseInterceptor)
+      throw new Error('Already intercepting response for this request');
+    request._responseInterceptor = this;
+  }
+
+  async interceptResponse(url, method, headers, postData) {
+    const httpChannel = this._originalRequest.httpChannel;
+    const uri = url ? Services.io.newURI(url) : httpChannel.URI;
+    const newChannel = NetUtil.newChannel({
+      uri,
+      loadingNode: httpChannel.loadInfo.loadingContext,
+      loadingPrincipal: httpChannel.loadInfo.loadingPrincipal || httpChannel.loadInfo.principalToInherit,
+      triggeringPrincipal: httpChannel.loadInfo.triggeringPrincipal,
+      securityFlags: httpChannel.loadInfo.securityFlags,
+      contentPolicyType: httpChannel.loadInfo.internalContentPolicyType,
+    }).QueryInterface(Ci.nsIRequest).QueryInterface(Ci.nsIHttpChannel);
+    newChannel.loadInfo = httpChannel.loadInfo;
+    newChannel.loadGroup = httpChannel.loadGroup;
+
+    for (const header of (headers || requestHeaders(httpChannel)))
+      newChannel.setRequestHeader(header.name, header.value, false /* merge */);
+
+    if (postData) {
+      setPostData(newChannel, postData, headers);
+    } else if (httpChannel instanceof Ci.nsIUploadChannel) {
+      newChannel.QueryInterface(Ci.nsIUploadChannel);
+      newChannel.setUploadStream(httpChannel.uploadStream, '', -1);
+    }
+    // We must set this after setting the upload stream, otherwise it
+    // will always be 'PUT'. (from another place in the source base)
+    newChannel.requestMethod = method || httpChannel.requestMethod;
+
+    this._responseChannel = newChannel;
+    const networkObserver = this._originalRequest._networkObserver;
+    networkObserver._responseInterceptionChannels.add(newChannel);
+    // We add {newChannerl -> original request} mapping so that if the alternative
+    // channel gets redirected we report the redirect on the original(paused)
+    // request.
+    networkObserver._channelToRequest.set(newChannel, this._originalRequest);
+    const body = await new Promise((resolve, reject) => {
+      NetUtil.asyncFetch(newChannel, (stream, status) => {
+        networkObserver._responseInterceptionChannels.delete(newChannel);
+        networkObserver._channelToRequest.delete(newChannel);
+        if (!Components.isSuccessCode(status)) {
+          reject(status);
+          return;
+        }
+        try {
+          resolve(NetUtil.readInputStreamToString(stream, stream.available()));
+        } catch (e) {
+          if (e.result == Cr.NS_BASE_STREAM_CLOSED) {
+            // The stream was empty.
+            resolve('');
+          } else {
+            reject(e);
+          }
+        } finally {
+          stream.close();
+        }
+      });
+    });
+
+    const finalRequest = this._finalRequest;
+    const responseChannel = finalRequest === this._originalRequest ? this._responseChannel : finalRequest.httpChannel;
+    const pageNetwork = this._originalRequest._pageNetwork;
+    if (pageNetwork)
+      pageNetwork._responseStorage.addResponseBody(finalRequest, responseChannel, body);
+    const response = responseHead(responseChannel);
+    this._interceptedResponse = Object.assign({ body }, response);
+    return response;
+  }
+
+  isInterceptedRequest(request) {
+    return this._originalRequest === request;
   }
 
   interceptOnResponse(request, fromCache, opt_statusCode, opt_statusText) {
     const isFullfillingResponse = this._interceptedResponse;
     if (isFullfillingResponse) {
-      // No redirect case - just continue as usual.
-      if (this._finalRequest === request)
-        return false;
       if (request !== this._originalRequest)
         dump(`ERROR: unexpected request ${request.requestId}, expected ${this._originalRequest.requestId}\n`);
       this._finalRequest._sendOnResponseImpl(this._originalRequest.httpChannel, fromCache, opt_statusCode, opt_statusText);
-      return true;
+      return;
     }
+    // When fetching original response first redirect is reported using original request id
+    // but with data received via the alternative response channel.
     const httpChannel = (this._originalRequest === request) ? this._responseChannel : request.httpChannel;
     if (this._isRedirectResponse(httpChannel))
       request._sendOnResponseImpl(httpChannel, fromCache, opt_statusCode, opt_statusText);
-    return true;
+    // Drop non-redirect response on the floor, it will be fulfilled later.
   }
 
   interceptOnRequestFinished(request) {
     const isFullfillingResponse = this._interceptedResponse;
     if (isFullfillingResponse) {
-      // No redirect case - just continue as usual.
-      if (this._finalRequest === request)
-        return false;
       if (request !== this._originalRequest)
         dump(`ERROR: unexpected request ${request.requestId}, expected ${this._originalRequest.requestId}\n`);
       this._finalRequest._sendOnRequestFinishedImpl(this._originalRequest.httpChannel);
-      return true;
+      return;
     }
+    // When fetching original response first redirect is reported using original request id
+    // but with data received via the alternative response channel.
     const httpChannel = (this._originalRequest === request) ? this._responseChannel : request.httpChannel;
     if (this._isRedirectResponse(httpChannel))
       request._sendOnRequestFinishedImpl(httpChannel);
-    return true;
+    // Drop non-redirect response on the floor, it will be fulfilled later.
   }
 
-  interceptOnRequestFailed(request, error) {
-    const isFullfillingResponse = this._interceptedResponse;
-    if (isFullfillingResponse && this._finalRequest !== request) {
-      this._finalRequest._sendOnRequestFailedImpl(error);
-      return true;
-    }
-    return false;
+  interceptOnRequestFailed(error) {
+    this._finalRequest._sendOnRequestFailedImpl(error);
   }
 
   interceptAddResponseBody(request, body) {
     const isFullfillingResponse = this._interceptedResponse;
-    if (!isFullfillingResponse)
-      return false;
-    if (request !== this._originalRequest)
-      dump(`ERROR: unexpected request ${request.requestId}, expected ${this._originalRequest.requestId}\n`);
-    request._pageNetwork._responseStorage.addResponseBody(this._finalRequest, request.httpChannel, body);
-    return true;
+    let key = request;
+    if (isFullfillingResponse) {
+      if (request !== this._originalRequest)
+        dump(`ERROR: unexpected request ${request.requestId}, expected ${this._originalRequest.requestId}\n`);
+      key = this._finalRequest;
+    }
+    request._pageNetwork._responseStorage.addResponseBody(key, request.httpChannel, body);
   }
 
   _isRedirectResponse(httpChannel) {
@@ -227,7 +295,10 @@ class NetworkRequest {
 
     httpChannel.QueryInterface(Ci.nsITraceableChannel);
     this._originalListener = httpChannel.setNewListener(this);
-    if (redirectedFrom && !redirectedFrom._responseInterceptor) {
+    // When fetching original response ResponseInterceptor creates a new HttpChannel
+    // with custom listener which is different from the original request's listener.
+    // In that case we should not inherit the listener from the original request here.
+    if (redirectedFrom && !redirectedFrom._responseInterceptor?.isInterceptedRequest(redirectedFrom)) {
       // Listener is inherited for regular redirects, so we'd like to avoid
       // calling into previous NetworkRequest.
       this._originalListener = redirectedFrom._originalListener;
@@ -256,68 +327,6 @@ class NetworkRequest {
     const newUri = url ? Services.io.newURI(url) : null;
     this._interceptedChannel.resetInterceptionWithURI(newUri);
     this._interceptedChannel = undefined;
-  }
-
-  async interceptResponse(url, method, headers, postData) {
-    const uri = url ? Services.io.newURI(url) : this.httpChannel.URI;
-    const newChannel = NetUtil.newChannel({
-      uri,
-      loadingNode: this.httpChannel.loadInfo.loadingContext,
-      loadingPrincipal: this.httpChannel.loadInfo.loadingPrincipal || this._interceptedChannel.loadInfo.principalToInherit,
-      triggeringPrincipal: this.httpChannel.loadInfo.triggeringPrincipal,
-      securityFlags: this.httpChannel.loadInfo.securityFlags,
-      contentPolicyType: this.httpChannel.loadInfo.internalContentPolicyType,
-    }).QueryInterface(Ci.nsIRequest).QueryInterface(Ci.nsIHttpChannel);
-    newChannel.loadInfo = this.httpChannel.loadInfo;
-    newChannel.loadGroup = this.httpChannel.loadGroup;
-
-    for (const header of (headers || requestHeaders(this.httpChannel)))
-      newChannel.setRequestHeader(header.name, header.value, false /* merge */);
-
-    if (postData) {
-      setPostData(newChannel, postData, headers);
-    } else if (this.httpChannel instanceof Ci.nsIUploadChannel) {
-      newChannel.QueryInterface(Ci.nsIUploadChannel);
-      newChannel.setUploadStream(this.httpChannel.uploadStream, '', -1);
-    }
-    // We must set this after setting the upload stream, otherwise it
-    // will always be 'PUT'. (from another place in the source base)
-    newChannel.requestMethod = method || this.httpChannel.requestMethod;
-
-    this._responseInterceptor = new ResponseInterceptor(this, newChannel);
-    this._networkObserver._responseInterceptionChannels.add(newChannel);
-    this._networkObserver._channelToRequest.set(newChannel, this);
-    const body = await new Promise((resolve, reject) => {
-      NetUtil.asyncFetch(newChannel, (stream, status) => {
-        this._networkObserver._responseInterceptionChannels.delete(newChannel);
-        this._networkObserver._channelToRequest.delete(newChannel);
-        if (!Components.isSuccessCode(status)) {
-          reject(status);
-          return;
-        }
-        try {
-          resolve(NetUtil.readInputStreamToString(stream, stream.available()));
-        } catch (e) {
-          if (e.result == Cr.NS_BASE_STREAM_CLOSED) {
-            // The stream was empty.
-            resolve('');
-          } else {
-            reject(e);
-          }
-        } finally {
-          stream.close();
-        }
-      });
-    });
-
-    const finalRequest = this._responseInterceptor._finalRequest;
-    const responseChannel = finalRequest === this ? newChannel : finalRequest.httpChannel;
-    const pageNetwork = this._pageNetwork;
-    if (pageNetwork)
-      pageNetwork._responseStorage.addResponseBody(finalRequest, responseChannel, body);
-    const response = responseHead(responseChannel);
-    this._responseInterceptor._interceptedResponse = Object.assign({ body }, response);
-    return response;
   }
 
   // Public interception API.
@@ -562,7 +571,9 @@ class NetworkRequest {
       const body = this._responseBodyChunks.join('');
       const pageNetwork = this._pageNetwork;
       if (pageNetwork) {
-        if (!this._responseInterceptor?.interceptAddResponseBody(this, body))
+        if (this._responseInterceptor)
+          this._responseInterceptor.interceptAddResponseBody(this, body);
+        else
           pageNetwork._responseStorage.addResponseBody(this, this.httpChannel, body);
       }
       this._sendOnRequestFinished();
@@ -618,8 +629,10 @@ class NetworkRequest {
   }
 
   _sendOnResponse(fromCache, opt_statusCode, opt_statusText) {
-    if (this._responseInterceptor?.interceptOnResponse(this, fromCache, opt_statusCode, opt_statusText))
+    if (this._responseInterceptor) {
+      this._responseInterceptor.interceptOnResponse(this, fromCache, opt_statusCode, opt_statusText)
       return;
+    }
     this._sendOnResponseImpl(this.httpChannel, fromCache, opt_statusCode, opt_statusText);
   }
 
@@ -670,8 +683,10 @@ class NetworkRequest {
   }
 
   _sendOnRequestFailed(error) {
-    if (this._responseInterceptor?.interceptOnRequestFailed(this, error))
+    if (this._responseInterceptor) {
+      this._responseInterceptor.interceptOnRequestFailed(error);
       return;
+    }
     this._sendOnRequestFailedImpl(error);
   }
 
@@ -687,8 +702,10 @@ class NetworkRequest {
   }
 
   _sendOnRequestFinished() {
-    if (this._responseInterceptor?.interceptOnRequestFinished(this))
+    if (this._responseInterceptor) {
+      this._responseInterceptor.interceptOnRequestFinished(this);
       return;
+    }
     this._sendOnRequestFinishedImpl(this.httpChannel);
   }
 
