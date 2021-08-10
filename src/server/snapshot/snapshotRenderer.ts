@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { ContextResources, FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot } from './snapshotTypes';
+import { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
-  private _contextResources: ContextResources;
   readonly snapshotName: string | undefined;
+  private _resources: ResourceSnapshot[];
 
-  constructor(contextResources: ContextResources, snapshots: FrameSnapshot[], index: number) {
-    this._contextResources = contextResources;
+  constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], index: number) {
+    this._resources = resources;
     this._snapshots = snapshots;
     this._index = index;
     this.snapshotName = snapshots[index].snapshotName;
@@ -82,10 +82,19 @@ export class SnapshotRenderer {
     `;
 
     const resources: { [key: string]: { resourceId: string, sha1?: string } } = {};
-    for (const [url, contextResources] of this._contextResources) {
-      const contextResource = contextResources.find(r => r.frameId === snapshot.frameId) || contextResources[0];
-      if (contextResource)
-        resources[url] = { resourceId: contextResource.resourceId };
+    // First capture all resources for all frames, to account for memory cache.
+    for (const resource of this._resources) {
+      if (resource.timestamp >= snapshot.timestamp)
+        break;
+      resources[resource.url] = { resourceId: resource.resourceId };
+    }
+    // Then overwrite with the ones from our frame.
+    for (const resource of this._resources) {
+      if (resource.timestamp >= snapshot.timestamp)
+        break;
+      if (resource.frameId !== snapshot.frameId)
+        continue;
+      resources[resource.url] = { resourceId: resource.resourceId };
     }
     for (const o of snapshot.resourceOverrides) {
       const resource = resources[o.url];

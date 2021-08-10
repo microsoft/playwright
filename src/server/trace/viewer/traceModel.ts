@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as trace from '../common/traceEvents';
-import { ContextResources, ResourceSnapshot } from '../../snapshot/snapshotTypes';
+import { ResourceSnapshot } from '../../snapshot/snapshotTypes';
 import { BaseSnapshotStorage } from '../../snapshot/snapshotStorage';
 import { BrowserContextOptions } from '../../types';
 import { shouldCaptureSnapshot, VERSION } from '../recorder/tracing';
@@ -26,7 +26,6 @@ export * as trace from '../common/traceEvents';
 export class TraceModel {
   contextEntry: ContextEntry;
   pageEntries = new Map<string, PageEntry>();
-  contextResources = new Map<string, ContextResources>();
   private _snapshotStorage: PersistentSnapshotStorage;
   private _version: number | undefined;
 

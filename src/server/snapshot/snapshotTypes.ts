@@ -63,8 +63,6 @@ export type FrameSnapshot = {
   isMainFrame: boolean,
 };
 
-export type ContextResources = Map<string, { resourceId: string, frameId: string }[]>;
-
 export type RenderedFrameSnapshot = {
   html: string;
   resources: { [key: string]: { resourceId: string, sha1?: string } };
