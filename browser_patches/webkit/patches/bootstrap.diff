@@ -2208,7 +2208,7 @@ index 5c14d14c1482cee4c54054efe183678d5687fe19..e39e20e9a1abda8ec0fb7fd37d6fe988
  
  #if !defined(ENABLE_TOUCH_ACTION_REGIONS)
 diff --git a/Source/WTF/wtf/PlatformEnableCocoa.h b/Source/WTF/wtf/PlatformEnableCocoa.h
-index 50178dbbf450c56aa133df0aaa553a46ddd1ac7b..955224be3eef1d59ebf0e0fb6bcb98ebea944341 100644
+index 50178dbbf450c56aa133df0aaa553a46ddd1ac7b..327d5bce8730072cebe75331b986ab7e00805645 100644
 --- a/Source/WTF/wtf/PlatformEnableCocoa.h
 +++ b/Source/WTF/wtf/PlatformEnableCocoa.h
 @@ -204,7 +204,7 @@
@@ -2220,6 +2220,23 @@ index 50178dbbf450c56aa133df0aaa553a46ddd1ac7b..955224be3eef1d59ebf0e0fb6bcb98eb
  #define ENABLE_DEVICE_ORIENTATION 1
  #endif
  
+@@ -256,6 +256,8 @@
+ #define ENABLE_GPU_PROCESS 1
+ #endif
+ 
++#if 0
++// playwright: disable (crashes tests at least for now)
+ #if !defined(ENABLE_GPU_PROCESS_BY_DEFAULT)
+ #if PLATFORM(MAC) \
+     || ((PLATFORM(IOS) || PLATFORM(MACCATALYST)) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 150000) \
+@@ -264,6 +266,7 @@
+ #define ENABLE_GPU_PROCESS_BY_DEFAULT 1
+ #endif
+ #endif
++#endif
+ 
+ #if !defined(ENABLE_GPU_DRIVER_PREWARMING) && PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101600
+ #define ENABLE_GPU_DRIVER_PREWARMING 1
 diff --git a/Source/WTF/wtf/PlatformGTK.cmake b/Source/WTF/wtf/PlatformGTK.cmake
 index 9bd5fde5bc38355e25bc09d05a045df31efaa259..3f3be653fef9930a7ac8a348c8b9f9a281eea363 100644
 --- a/Source/WTF/wtf/PlatformGTK.cmake
