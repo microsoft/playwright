@@ -66,14 +66,6 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     return result;
   };
 
-  const maybeEatRegex = (regex: RegExp) => {
-    const match = selector.substring(wp).match(regex);
-    if (!match)
-      return null;
-    wp += match[0].length;
-    EOL = wp >= selector.length;
-    return match;
-  };
   const syntaxError = (stage: string|undefined) => {
     if (EOL)
       throw new Error(`Unexpected end of selector while parsing selector \`${selector}\``);
@@ -81,7 +73,8 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
   };
 
   function skipSpaces() {
-    maybeEatRegex(/^\s+/);
+    while (!EOL && /\s/.test(next()))
+      eat1();
   }
 
   function readIdentifier() {
@@ -155,7 +148,6 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     const operator = readOperator();
 
     let value = undefined;
-    let result;
     let caseSensetive = true;
     skipSpaces();
     if (next() === `'` || next() === `"`) {
@@ -168,18 +160,19 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
         caseSensetive = true;
         eat1();
       }
-    } else if ((result = maybeEatRegex(/^true\b/))) {
-      value = true;
-    } else if ((result = maybeEatRegex(/^false\b/))) {
-      value = false;
-    } else if ((result = maybeEatRegex(/^[+-]?\d+\.\d+/))) {
-      // simple float numbers
-      value = parseFloat(result[0]);
-    } else if ((result = maybeEatRegex(/^[+-]?\d+/))) {
-      // integer numbers
-      value = parseInt(result[0], 10);
     } else {
-      syntaxError('parsing attribute value');
+      value = '';
+      while (!EOL && !/\s/.test(next()) && next() !== ']')
+        value += eat1();
+      if (value === 'true') {
+        value = true;
+      } else if (value === 'false') {
+        value = false;
+      } else {
+        value = +value;
+        if (isNaN(value))
+          syntaxError('parsing attribute value');
+      }
     }
     skipSpaces();
     if (next() !== ']')
