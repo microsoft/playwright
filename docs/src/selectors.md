@@ -181,19 +181,19 @@ methods accept [`param: selector`] as their first argument.
   Learn more about [XPath selector][xpath].
 - React selector
   ```js
-  await page.click('react=listItem[text *= "milk" i]');
+  await page.click('react=ListItem[text *= "milk" i]');
   ```
   ```java
-  page.click("react=listItem[text *= 'milk' i]");
+  page.click("react=ListItem[text *= 'milk' i]");
   ```
   ```python async
-  await page.click("react=listItem[text *= 'milk' i]")
+  await page.click("react=ListItem[text *= 'milk' i]")
   ```
   ```python sync
-  page.click("react=listItem[text *= 'milk' i]")
+  page.click("react=ListItem[text *= 'milk' i]")
   ```
   ```csharp
-  await page.ClickAsync("react=listItem[text *= 'milk' i]");
+  await page.ClickAsync("react=ListItem[text *= 'milk' i]");
   ```
   Learn more about [React selector][react].
 - Vue selector
