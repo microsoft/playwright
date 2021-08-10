@@ -181,36 +181,36 @@ methods accept [`param: selector`] as their first argument.
   Learn more about [XPath selector][xpath].
 - React selector
   ```js
-  await page.click('react=DatePickerComponent[enabled=true]');
+  await page.click('react=listItem[text *= "milk" i]');
   ```
   ```java
-  page.click("react=DatePickerComponent[enabled=true]");
+  page.click("react=listItem[text *= 'milk' i]");
   ```
   ```python async
-  await page.click("react=DatePickerComponent[enabled=true]")
+  await page.click("react=listItem[text *= 'milk' i]")
   ```
   ```python sync
-  page.click("react=DatePickerComponent[enabled=true]")
+  page.click("react=listItem[text *= 'milk' i]")
   ```
   ```csharp
-  await page.ClickAsync("react=DatePickerComponent[enabled=true]");
+  await page.ClickAsync("react=listItem[text *= 'milk' i]");
   ```
   Learn more about [React selector][react].
 - Vue selector
   ```js
-  await page.click('vue=date-picker-component[enabled=true]');
+  await page.click('vue=list-item[text *= "milk" i]');
   ```
   ```java
-  page.click("vue=date-picker-component[enabled=true]");
+  page.click("vue=list-item[text *= 'milk' i]");
   ```
   ```python async
-  await page.click("vue=date-picker-component[enabled=true]")
+  await page.click("vue=list-item[text *= "milk" i]")
   ```
   ```python sync
-  page.click("vue=date-picker-component"[enabled=true])
+  page.click("vue=list-item[text *= 'milk' i]")
   ```
   ```csharp
-  await page.ClickAsync("vue=date-picker-component[enabled=true]");
+  await page.ClickAsync("vue=list-item[text *= 'milk' i]");
   ```
   Learn more about [Vue selector][vue].
 
