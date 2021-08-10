@@ -55,6 +55,7 @@ export class Tracing implements InstrumentationListener {
   private _context: BrowserContext;
   private _resourcesDir: string;
   private _recording: RecordingState | undefined;
+  private _isStopping = false;
   private _tracesDir: string;
 
   constructor(context: BrowserContext) {
@@ -65,6 +66,8 @@ export class Tracing implements InstrumentationListener {
   }
 
   async start(options: TracerOptions): Promise<void> {
+    if (this._isStopping)
+      throw new Error('Cannot start tracing while stopping');
     // context + page must be the first events added, this method can't have awaits before them.
 
     const state = this._recording;
@@ -130,14 +133,16 @@ export class Tracing implements InstrumentationListener {
   }
 
   async stop(): Promise<void> {
-    if (!this._recording)
+    if (!this._recording || this._isStopping)
       return;
-    this._recording = undefined;
+    this._isStopping = true;
     this._context.instrumentation.removeListener(this);
     this._stopScreencast();
     await this._snapshotter.stop();
     // Ensure all writes are finished.
     await this._appendEventChain;
+    this._recording = undefined;
+    this._isStopping = false;
   }
 
   async dispose() {
@@ -145,9 +150,6 @@ export class Tracing implements InstrumentationListener {
   }
 
   async export(): Promise<Artifact> {
-    if (!this._recording)
-      throw new Error('Must start tracing before exporting');
-
     for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
       await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
       let callMetadata = metadata;
@@ -161,19 +163,19 @@ export class Tracing implements InstrumentationListener {
       await this.onAfterCall(sdkObject, callMetadata);
     }
 
+    if (!this._recording)
+      throw new Error('Must start tracing before exporting');
+
     // Chain the export operation against write operations,
     // so that neither trace file nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
-      if (!this._recording)
-        throw new Error('Must start tracing before exporting');
-
       await this._snapshotter.checkpoint();
 
-      const resetIndex = this._recording.lastReset;
-      let state = this._recording;
+      const recording = this._recording!;
+      let state = recording;
       // Make a filtered trace if needed.
-      if (resetIndex)
-        state = await this._filterTrace(this._recording, resetIndex);
+      if (recording.lastReset)
+        state = await this._filterTrace(recording, recording.lastReset);
 
       const zipFile = new yazl.ZipFile();
       const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
@@ -192,7 +194,7 @@ export class Tracing implements InstrumentationListener {
       });
       return Promise.race([failedPromise, succeededPromise]).finally(async () => {
         // Remove the filtered trace.
-        if (resetIndex)
+        if (recording.lastReset)
           await fs.promises.unlink(state.traceFile).catch(() => {});
       });
     });
@@ -313,10 +315,8 @@ export class Tracing implements InstrumentationListener {
   private _appendTraceEvent(event: any) {
     // Serialize all writes to the trace file.
     this._appendTraceOperation(async () => {
-      if (!this._recording)
-        return;
-      visitSha1s(event, this._recording.sha1s);
-      await fs.promises.appendFile(this._recording.traceFile, JSON.stringify(event) + '\n');
+      visitSha1s(event, this._recording!.sha1s);
+      await fs.promises.appendFile(this._recording!.traceFile, JSON.stringify(event) + '\n');
     });
   }
 
