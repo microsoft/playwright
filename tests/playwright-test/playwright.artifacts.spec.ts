@@ -63,12 +63,12 @@ const testFiles = {
       await page.setContent('I am the page');
     });
 
-    test('two contexts', async ({ page, createContext }) => {
+    test('two contexts', async ({ page, browser }) => {
       await page.setContent('I am the page');
 
-      const context2 = await createContext();
-      const page2 = await context2.newPage();
+      const page2 = await browser.newPage();
       await page2.setContent('I am the page');
+      await page2.close();
     });
 
     test('failing', async ({ page }) => {
@@ -76,14 +76,13 @@ const testFiles = {
       expect(1).toBe(2);
     });
 
-    test('two contexts failing', async ({ page, createContext }) => {
+    test('two contexts failing', async ({ page, browser }) => {
       await page.setContent('I am the page');
 
-      const context2 = await createContext();
-      const page2 = await context2.newPage();
+      const page2 = await browser.newPage();
       await page2.setContent('I am the page');
-
       expect(1).toBe(2);
+      await page2.close();
     });
 
     test('own context passing', async ({ browser }) => {
