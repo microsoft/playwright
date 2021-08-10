@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { ContextResources, FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 import { SnapshotRenderer } from './snapshotRenderer';
 
 export interface SnapshotStorage {
@@ -32,26 +32,16 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
     raw: FrameSnapshot[],
     renderer: SnapshotRenderer[]
   }>();
-  protected _contextResources: ContextResources = new Map();
-  private _contextResourcesCopyOnWrite: ContextResources | null = null;
 
   clear() {
     this._resources = [];
     this._resourceMap.clear();
     this._frameSnapshots.clear();
-    this._contextResources.clear();
   }
 
   addResource(resource: ResourceSnapshot): void {
-    this._contextResourcesCopyOnWrite = null;
     this._resourceMap.set(resource.resourceId, resource);
     this._resources.push(resource);
-    let resources = this._contextResources.get(resource.url);
-    if (!resources) {
-      resources = [];
-      this._contextResources.set(resource.url, resources);
-    }
-    resources.push({ frameId: resource.frameId, resourceId: resource.resourceId });
   }
 
   addFrameSnapshot(snapshot: FrameSnapshot): void {
@@ -66,9 +56,7 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
         this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
     }
     frameSnapshots.raw.push(snapshot);
-    if (!this._contextResourcesCopyOnWrite)
-      this._contextResourcesCopyOnWrite = new Map(this._contextResources);
-    const renderer = new SnapshotRenderer(this._contextResourcesCopyOnWrite, frameSnapshots.raw, frameSnapshots.raw.length - 1);
+    const renderer = new SnapshotRenderer(this._resources, frameSnapshots.raw, frameSnapshots.raw.length - 1);
     frameSnapshots.renderer.push(renderer);
     this.emit('snapshot', renderer);
   }
