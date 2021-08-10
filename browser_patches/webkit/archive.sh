@@ -116,6 +116,7 @@ createZipForMac() {
   local tmpdir=$(mktemp -d)
 
   # copy all relevant files
+  ditto {./WebKitBuild/Release,"$tmpdir"}/com.apple.WebKit.GPU.xpc
   ditto {./WebKitBuild/Release,"$tmpdir"}/com.apple.WebKit.Networking.xpc
   ditto {./WebKitBuild/Release,"$tmpdir"}/com.apple.WebKit.Plugin.64.xpc
   ditto {./WebKitBuild/Release,"$tmpdir"}/com.apple.WebKit.WebContent.xpc
