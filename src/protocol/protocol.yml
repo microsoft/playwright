@@ -1463,7 +1463,6 @@ Frame:
     querySelectorAll:
       parameters:
         selector: string
-        strict: boolean?
       returns:
         elements:
           type: array
