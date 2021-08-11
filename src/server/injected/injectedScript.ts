@@ -64,8 +64,8 @@ export class InjectedScript {
     this._engines = new Map();
     this._engines.set('xpath', XPathEngine);
     this._engines.set('xpath:light', XPathEngine);
-    this._engines.set('react', ReactEngine);
-    this._engines.set('vue', VueEngine);
+    this._engines.set('_react', ReactEngine);
+    this._engines.set('_vue', VueEngine);
     this._engines.set('text', this._createTextEngine(true));
     this._engines.set('text:light', this._createTextEngine(false));
     this._engines.set('id', this._createAttributeEngine('id', true));

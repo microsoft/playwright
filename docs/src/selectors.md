@@ -179,40 +179,40 @@ methods accept [`param: selector`] as their first argument.
   await page.ClickAsync("xpath=//button");
   ```
   Learn more about [XPath selector][xpath].
-- React selector
+- React selector (experimental)
   ```js
-  await page.click('react=ListItem[text *= "milk" i]');
+  await page.click('_react=ListItem[text *= "milk" i]');
   ```
   ```java
-  page.click("react=ListItem[text *= 'milk' i]");
+  page.click("_react=ListItem[text *= 'milk' i]");
   ```
   ```python async
-  await page.click("react=ListItem[text *= 'milk' i]")
+  await page.click("_react=ListItem[text *= 'milk' i]")
   ```
   ```python sync
-  page.click("react=ListItem[text *= 'milk' i]")
+  page.click("_react=ListItem[text *= 'milk' i]")
   ```
   ```csharp
-  await page.ClickAsync("react=ListItem[text *= 'milk' i]");
+  await page.ClickAsync("_react=ListItem[text *= 'milk' i]");
   ```
-  Learn more about [React selector][react].
-- Vue selector
+  Learn more about [React selectors][react].
+- Vue selector (experimental)
   ```js
-  await page.click('vue=list-item[text *= "milk" i]');
+  await page.click('_vue=list-item[text *= "milk" i]');
   ```
   ```java
-  page.click("vue=list-item[text *= 'milk' i]");
+  page.click("_vue=list-item[text *= 'milk' i]");
   ```
   ```python async
-  await page.click("vue=list-item[text *= "milk" i]")
+  await page.click("_vue=list-item[text *= "milk" i]")
   ```
   ```python sync
-  page.click("vue=list-item[text *= 'milk' i]")
+  page.click("_vue=list-item[text *= 'milk' i]")
   ```
   ```csharp
-  await page.ClickAsync("vue=list-item[text *= 'milk' i]");
+  await page.ClickAsync("_vue=list-item[text *= 'milk' i]");
   ```
-  Learn more about [Vue selector][vue].
+  Learn more about [Vue selectors][vue].
 
 
 
@@ -663,22 +663,26 @@ converts `'//html/body'` to `'xpath=//html/body'`.
 
 ## React selectors
 
+:::note
+React selectors are experimental and prefixed with `_`. The functionality might change in future.
+:::
+
 React selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 In react selectors, component names are transcribed with **CamelCase**.
 
 Selector examples:
 
-- match by **component**: `react=BookItem`
-- match by component and **exact property value**, case-sensetive: `react=BookItem[author = "Steven King"]`
-- match by property value only, **case-insensetive**: `react=[author = "steven king" i]`
-- match by component and **truthy property value**: `react=MyButton[enabled]`
-- match by component and **boolean value**: `react=MyButton[enabled = false]`
-- match by property **value substring**: `react=[author *= "King"]`
-- match by component and **multiple properties**: `react=BookItem[author *= "king" i][year = 1990]`
-- match by **nested** property value: `react=[some.nested.value = 12]`
-- match by component and property value **prefix**: `react=BookItem[author ^= "Steven"]`
-- match by component and property value **suffix**: `react=BookItem[author $= "Steven"]`
+- match by **component**: `_react=BookItem`
+- match by component and **exact property value**, case-sensetive: `_react=BookItem[author = "Steven King"]`
+- match by property value only, **case-insensetive**: `_react=[author = "steven king" i]`
+- match by component and **truthy property value**: `_react=MyButton[enabled]`
+- match by component and **boolean value**: `_react=MyButton[enabled = false]`
+- match by property **value substring**: `_react=[author *= "King"]`
+- match by component and **multiple properties**: `_react=BookItem[author *= "king" i][year = 1990]`
+- match by **nested** property value: `_react=[some.nested.value = 12]`
+- match by component and property value **prefix**: `_react=BookItem[author ^= "Steven"]`
+- match by component and property value **suffix**: `_react=BookItem[author $= "Steven"]`
 
 
 
@@ -695,22 +699,26 @@ React selectors, as well as [React DevTools](https://chrome.google.com/webstore/
 
 ## Vue selectors
 
+:::note
+Vue selectors are experimental and prefixed with `_`. The functionality might change in future.
+:::
+
 Vue selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 In vue selectors, component names are transcribed with **kebab-case**.
 
 Selector examples:
 
-- match by **component**: `vue=book-item`
-- match by component and **exact property value**, case-sensetive: `vue=book-item[author = "Steven King"]`
-- match by property value only, **case-insensetive**: `vue=[author = "steven king" i]`
-- match by component and **truthy property value**: `vue=my-button[enabled]`
-- match by component and **boolean value**: `vue=my-button[enabled = false]`
-- match by property **value substring**: `vue=[author *= "King"]`
-- match by component and **multiple properties**: `vue=book-item[author *= "king" i][year = 1990]`
-- match by **nested** property value: `vue=[some.nested.value = 12]`
-- match by component and property value **prefix**: `vue=book-item[author ^= "Steven"]`
-- match by component and property value **suffix**: `vue=book-item[author $= "Steven"]`
+- match by **component**: `_vue=book-item`
+- match by component and **exact property value**, case-sensetive: `_vue=book-item[author = "Steven King"]`
+- match by property value only, **case-insensetive**: `_vue=[author = "steven king" i]`
+- match by component and **truthy property value**: `_vue=my-button[enabled]`
+- match by component and **boolean value**: `_vue=my-button[enabled = false]`
+- match by property **value substring**: `_vue=[author *= "King"]`
+- match by component and **multiple properties**: `_vue=book-item[author *= "king" i][year = 1990]`
+- match by **nested** property value: `_vue=[some.nested.value = 12]`
+- match by component and property value **prefix**: `_vue=book-item[author ^= "Steven"]`
+- match by component and property value **suffix**: `_vue=book-item[author $= "Steven"]`
 
 To find Vue element names in a tree use [Vue DevTools](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd?hl=en).
 
