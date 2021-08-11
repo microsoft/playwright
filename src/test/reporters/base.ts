@@ -149,7 +149,7 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
     const resultTokens = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
       continue;
-    const statusSuffix = result.status === 'passed' ? ' -- passed unexpectedly' : '';
+    const statusSuffix = (result.status === 'passed' && test.expectedStatus === 'failed') ? ' -- passed unexpectedly' : '';
     if (result.retry) {
       tokens.push('');
       tokens.push(colors.gray(pad(`    Retry #${result.retry}${statusSuffix}`, '-')));
@@ -185,7 +185,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase): string {
 
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
-  const passedUnexpectedlySuffix = test.results[0].status === 'passed' ? ' -- passed unexpectedly' : '';
+  const passedUnexpectedlySuffix = (test.results[0].status === 'passed' && test.expectedStatus === 'failed') ? ' -- passed unexpectedly' : '';
   const header = `${indent}${index ? index + ') ' : ''}${title}${passedUnexpectedlySuffix}`;
   return colors.red(pad(header, '='));
 }

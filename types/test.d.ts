@@ -1527,6 +1527,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   describe: SuiteFunction & {
     only: SuiteFunction;
+    serial: SuiteFunction & {
+      only: SuiteFunction;
+    };
   };
   /**
    * Skips a test or a group of tests.

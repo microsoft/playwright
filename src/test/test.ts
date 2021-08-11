@@ -56,6 +56,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _timeout: number | undefined;
   _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
+  _serial = false;
 
   _addTest(test: TestCase) {
     test.parent = this;
@@ -109,6 +110,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite._annotations = this._annotations.slice();
     suite._modifiers = this._modifiers.slice();
     suite._isDescribe = this._isDescribe;
+    suite._serial = this._serial;
     return suite;
   }
 }
@@ -143,11 +145,12 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    if (!this.results.length || this.results[0].status === 'skipped')
+    const nonSkipped = this.results.filter(result => result.status !== 'skipped');
+    if (!nonSkipped.length)
       return 'skipped';
-    if (this.results.length === 1 && this.expectedStatus === this.results[0].status)
+    if (nonSkipped.every(result => result.status === this.expectedStatus))
       return 'expected';
-    if (this.results.some(result => result.status === this.expectedStatus))
+    if (nonSkipped.some(result => result.status === this.expectedStatus))
       return 'flaky';
     return 'unexpected';
   }
