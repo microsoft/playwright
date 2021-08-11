@@ -145,10 +145,11 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env, options
   const testProcess = spawn('node', args, {
     env: {
       ...process.env,
-      ...env,
       PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
       PWTEST_CACHE_DIR: cacheDir,
       PWTEST_CLI_ALLOW_TEST_COMMAND: '1',
+      PWTEST_SKIP_TEST_OUTPUT: '1',
+      ...env,
     },
     cwd: baseDir
   });

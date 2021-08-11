@@ -30,11 +30,13 @@ class LineReporter extends BaseReporter {
     console.log();
   }
 
-  onStdOut(chunk: string | Buffer, test?: TestCase) {
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    super.onStdOut(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  onStdErr(chunk: string | Buffer, test?: TestCase) {
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    super.onStdErr(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stderr);
   }
 
