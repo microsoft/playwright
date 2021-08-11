@@ -25,6 +25,9 @@ import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResul
 
 const stackUtils = new StackUtils();
 
+type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
+const kOutputSymbol = Symbol('output');
+
 export class BaseReporter implements Reporter  {
   duration = 0;
   config!: FullConfig;
@@ -32,6 +35,7 @@ export class BaseReporter implements Reporter  {
   result!: FullResult;
   fileDurations = new Map<string, number>();
   monotonicStartTime: number = 0;
+  private printTestOutput = !process.env.PWTEST_SKIP_TEST_OUTPUT;
 
   onBegin(config: FullConfig, suite: Suite) {
     this.monotonicStartTime = monotonicTime();
@@ -39,14 +43,19 @@ export class BaseReporter implements Reporter  {
     this.suite = suite;
   }
 
-  onStdOut(chunk: string | Buffer) {
-    if (!this.config.quiet)
-      process.stdout.write(chunk);
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    this._appendOutput({ chunk, type: 'stdout' }, result);
   }
 
-  onStdErr(chunk: string | Buffer) {
-    if (!this.config.quiet)
-      process.stderr.write(chunk);
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    this._appendOutput({ chunk, type: 'stderr' }, result);
+  }
+
+  private _appendOutput(output: TestResultOutput, result: TestResult | undefined) {
+    if (!result)
+      return;
+    (result as any)[kOutputSymbol] = (result as any)[kOutputSymbol] || [];
+    (result as any)[kOutputSymbol].push(output);
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
@@ -133,7 +142,7 @@ export class BaseReporter implements Reporter  {
 
   private _printFailures(failures: TestCase[]) {
     failures.forEach((test, index) => {
-      console.log(formatFailure(this.config, test, index + 1));
+      console.log(formatFailure(this.config, test, index + 1, this.printTestOutput));
     });
   }
 
@@ -142,7 +151,7 @@ export class BaseReporter implements Reporter  {
   }
 }
 
-export function formatFailure(config: FullConfig, test: TestCase, index?: number): string {
+export function formatFailure(config: FullConfig, test: TestCase, index?: number, stdio?: boolean): string {
   const tokens: string[] = [];
   tokens.push(formatTestHeader(config, test, '  ', index));
   for (const result of test.results) {
@@ -155,6 +164,17 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
       tokens.push(colors.gray(pad(`    Retry #${result.retry}${statusSuffix}`, '-')));
     }
     tokens.push(...resultTokens);
+    const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
+    if (stdio && output.length) {
+      const outputText = output.map(({ chunk, type }) => {
+        const text = chunk.toString('utf8');
+        if (type === 'stderr')
+          return colors.red(stripAnsiEscapes(text));
+        return text;
+      }).join('');
+      tokens.push('');
+      tokens.push(colors.gray(pad('--- Test output', '-')) + '\n\n' + outputText + '\n' + pad('', '-'));
+    }
   }
   tokens.push('');
   return tokens.join('\n');
@@ -219,7 +239,9 @@ function formatError(error: TestError, file?: string) {
 }
 
 function pad(line: string, char: string): string {
-  return line + ' ' + colors.gray(char.repeat(Math.max(0, 100 - line.length - 1)));
+  if (line)
+    line += ' ';
+  return line + colors.gray(char.repeat(Math.max(0, 100 - line.length)));
 }
 
 function indent(lines: string, tab: string) {
@@ -244,6 +266,6 @@ function monotonicTime(): number {
 }
 
 const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
-export function stripAscii(str: string): string {
+export function stripAnsiEscapes(str: string): string {
   return str.replace(asciiRegex, '');
 }
