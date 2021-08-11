@@ -207,7 +207,6 @@ export class Snapshotter {
     const resource: ResourceSnapshot = {
       pageId: response.frame()._page.guid,
       frameId: response.frame().guid,
-      resourceId: response.guid,
       url,
       type: response.request().resourceType(),
       contentType,

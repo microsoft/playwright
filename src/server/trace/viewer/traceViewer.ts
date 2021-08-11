@@ -49,11 +49,11 @@ export class TraceViewer {
     // - "/sha1/<sha1>" - trace resource bodies, used by network previews.
     //
     // Served by SnapshotServer
-    // - "/resources/<resourceId>" - network resources from the trace.
+    // - "/resources/" - network resources from the trace.
     // - "/snapshot/" - root for snapshot frame.
     // - "/snapshot/pageId/..." - actual snapshot html.
     // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
-    //   and translates them into "/resources/<resourceId>".
+    //   and translates them into network requests.
     const actionTraces = fs.readdirSync(tracesDir).filter(name => name.endsWith('.trace'));
     const debugNames = actionTraces.map(name => {
       const tracePrefix = path.join(tracesDir, name.substring(0, name.indexOf('.trace')));
