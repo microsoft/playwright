@@ -5920,6 +5920,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type interceptWithResponseReturnValue = {
     }
     /**
+     * Fail response with given error type.
+     */
+    export type interceptResponseWithErrorParameters = {
+      /**
+       * Identifier for the intercepted Network response to fail.
+       */
+      requestId: RequestId;
+      /**
+       * Deliver error reason for the request failure.
+       */
+      errorType: ResourceErrorType;
+    }
+    export type interceptResponseWithErrorReturnValue = {
+    }
+    /**
      * Provide response for an intercepted request. Request completely bypasses the network in this case and is immediately fulfilled with the provided data.
      */
     export type interceptRequestWithResponseParameters = {
@@ -8963,6 +8978,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.interceptContinue": Network.interceptContinueParameters;
     "Network.interceptWithRequest": Network.interceptWithRequestParameters;
     "Network.interceptWithResponse": Network.interceptWithResponseParameters;
+    "Network.interceptResponseWithError": Network.interceptResponseWithErrorParameters;
     "Network.interceptRequestWithResponse": Network.interceptRequestWithResponseParameters;
     "Network.interceptRequestWithError": Network.interceptRequestWithErrorParameters;
     "Network.setEmulateOfflineState": Network.setEmulateOfflineStateParameters;
@@ -9260,6 +9276,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.interceptContinue": Network.interceptContinueReturnValue;
     "Network.interceptWithRequest": Network.interceptWithRequestReturnValue;
     "Network.interceptWithResponse": Network.interceptWithResponseReturnValue;
+    "Network.interceptResponseWithError": Network.interceptResponseWithErrorReturnValue;
     "Network.interceptRequestWithResponse": Network.interceptRequestWithResponseReturnValue;
     "Network.interceptRequestWithError": Network.interceptRequestWithErrorReturnValue;
     "Network.setEmulateOfflineState": Network.setEmulateOfflineStateReturnValue;
