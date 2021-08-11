@@ -30,6 +30,16 @@ const [ download ] = await Promise.all([
 const path = await download.path();
 ```
 
+```java
+// Wait for the download to start
+Download download = page.waitForDownload(() -> {
+    // Perform the action that initiates download
+    page.click("button#delayed-download");
+});
+// Wait for the download process to complete
+Path path = download.path();
+```
+
 ```python async
 # Start waiting for the download
 async with page.expect_download() as download_info:
