@@ -161,7 +161,7 @@ export module Protocol {
     export type setIgnoreHTTPSErrorsReturnValue = void;
     export type setJavaScriptDisabledParameters = {
       browserContextId?: string;
-      javaScriptDisabled: boolean|null;
+      javaScriptDisabled: boolean;
     };
     export type setJavaScriptDisabledReturnValue = void;
     export type setLocaleOverrideParameters = {
