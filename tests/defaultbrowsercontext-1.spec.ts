@@ -39,7 +39,7 @@ it('context.cookies() should work', async ({server, launchPersistent, browserNam
   }]);
 });
 
-it('context.addCookies() should work', async ({server, launchPersistent}) => {
+it('context.addCookies() should work', async ({server, launchPersistent, browserName, isWindows}) => {
   const {page} = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.context().addCookies([{
@@ -57,7 +57,7 @@ it('context.addCookies() should work', async ({server, launchPersistent}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
 });
 
