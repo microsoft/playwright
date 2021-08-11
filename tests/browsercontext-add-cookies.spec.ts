@@ -221,7 +221,7 @@ it('should set cookie with reasonable defaults', async ({context, server, browse
   }]);
 });
 
-it('should set a cookie with a path', async ({context, page, server}) => {
+it('should set a cookie with a path', async ({context, page, server, browserName, isWindows}) => {
   await page.goto(server.PREFIX + '/grid.html');
   await context.addCookies([{
     domain: 'localhost',
@@ -238,7 +238,7 @@ it('should set a cookie with a path', async ({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
   expect(await page.evaluate('document.cookie')).toBe('gridcookie=GRID');
   await page.goto(server.EMPTY_PAGE);
@@ -296,7 +296,7 @@ it('should be able to set unsecure cookie for HTTP website', async ({context, pa
   expect(cookie.secure).toBe(false);
 });
 
-it('should set a cookie on a different domain', async ({context, page, server}) => {
+it('should set a cookie on a different domain', async ({context, page, server, browserName, isWindows}) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([{
     url: 'https://www.example.com',
@@ -313,7 +313,7 @@ it('should set a cookie on a different domain', async ({context, page, server}) 
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
 });
 

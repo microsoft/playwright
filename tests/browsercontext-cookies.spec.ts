@@ -132,7 +132,7 @@ it('should get multiple cookies', async ({context, page, server, browserName}) =
   ]));
 });
 
-it('should get cookies from multiple urls', async ({context}) => {
+it('should get cookies from multiple urls', async ({context, browserName, isWindows}) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -158,7 +158,7 @@ it('should get cookies from multiple urls', async ({context}) => {
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }, {
     name: 'doggo',
     value: 'woofs',
@@ -171,7 +171,7 @@ it('should get cookies from multiple urls', async ({context}) => {
   }]));
 });
 
-it('should work with subdomain cookie', async ({context, page, server}) => {
+it('should work with subdomain cookie', async ({context, browserName, isWindows}) => {
   await context.addCookies([{
     domain: '.foo.com',
     path: '/',
@@ -188,7 +188,7 @@ it('should work with subdomain cookie', async ({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
   expect(await context.cookies('https://sub.foo.com')).toEqual([{
     name: 'doggo',
@@ -198,7 +198,7 @@ it('should work with subdomain cookie', async ({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
 });
 
@@ -212,7 +212,7 @@ it('should not return cookies with empty value', async ({context, page, server})
   expect(cookies.length).toBe(0);
 });
 
-it('should return secure cookies based on HTTP(S) protocol', async ({context}) => {
+it('should return secure cookies based on HTTP(S) protocol', async ({context, browserName, isWindows}) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -235,7 +235,7 @@ it('should return secure cookies based on HTTP(S) protocol', async ({context}) =
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }, {
     name: 'doggo',
     value: 'woofs',
@@ -244,7 +244,7 @@ it('should return secure cookies based on HTTP(S) protocol', async ({context}) =
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]));
   expect(await context.cookies('http://foo.com/')).toEqual([{
     name: 'catto',
@@ -254,6 +254,6 @@ it('should return secure cookies based on HTTP(S) protocol', async ({context}) =
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'Lax',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
 });
