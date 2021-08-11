@@ -222,9 +222,9 @@ export class Route extends SdkObject {
     this._handled = true;
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
-    if (!body) {
+    if (body === undefined) {
       if (this._response) {
-        body = (await this._delegate.responseBody(true)).toString('utf8');
+        body = (await this._delegate.responseBody()).toString('utf8');
         isBase64 = false;
       } else {
         body = '';
@@ -254,7 +254,7 @@ export class Route extends SdkObject {
 
   async responseBody(): Promise<Buffer> {
     assert(!this._handled, 'Route is already handled!');
-    return this._delegate.responseBody(false);
+    return this._delegate.responseBody();
   }
 }
 
@@ -474,7 +474,7 @@ export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
   continue(request: Request, overrides: types.NormalizedContinueOverrides): Promise<InterceptedResponse|null>;
-  responseBody(forFulfill: boolean): Promise<Buffer>;
+  responseBody(): Promise<Buffer>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

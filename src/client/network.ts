@@ -265,7 +265,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
 
   async fulfill(options: { status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
-      let body = '';
+      let body = undefined;
       let isBase64 = false;
       let length = 0;
       if (options.path) {
