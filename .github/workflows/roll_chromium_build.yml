@@ -16,11 +16,11 @@ jobs:
           script: |
             const fs = require('fs');
             const response = await github.request('https://omahaproxy.appspot.com/all.json');
-            const linux = response.data.find(({os}) => os === 'linux');
-            const linuxCanary = linux.versions.find(version => version.channel === 'canary');
-            fs.writeFileSync('browser_patches/chromium/BUILD_NUMBER', `${linuxCanary.branch_base_position}\n`)
-            core.setOutput('GIT_COMMIT', linuxCanary.chromium_commit);
-            core.setOutput('BASE_POSITION', linuxCanary.branch_base_position);
+            const win = response.data.find(({os}) => os === 'win');
+            const winCanary = win.versions.find(version => version.channel === 'canary');
+            fs.writeFileSync('browser_patches/chromium/BUILD_NUMBER', `${winCanary.branch_base_position}\n`)
+            core.setOutput('GIT_COMMIT', winCanary.chromium_commit);
+            core.setOutput('BASE_POSITION', winCanary.branch_base_position);
       - name: Prepare branch
         id: prepare-branch
         run: |
