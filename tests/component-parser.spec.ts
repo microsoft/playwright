@@ -101,10 +101,10 @@ it('shoulud parse bool', async () => {
 
 it('should throw on malformed selector', async () => {
   expectError('foo[');
-  expectError('react=foo[');
-  expectError('react=foo["asd');
-  expectError('react=foo["asd"');
-  expectError('react=foo["asd"');
+  expectError('foo[');
+  expectError('foo["asd');
+  expectError('foo["asd"');
+  expectError('foo["asd"');
 
   expectError('foo[.bar=10]');
   expectError('foo[bar **= 10]');
