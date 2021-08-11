@@ -29,7 +29,7 @@ export type ParsedComponentSelector = {
 
 export function checkComponentAttribute(obj: any, attr: ParsedComponentAttribute) {
   for (const token of attr.jsonPath) {
-    if (obj)
+    if (obj !== undefined && obj !== null)
       obj = obj[token];
   }
   const objValue = typeof obj === 'string' && !attr.caseSensetive ? obj.toUpperCase() : obj;

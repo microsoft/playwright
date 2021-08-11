@@ -57,6 +57,8 @@ for (const [name, url] of Object.entries(vues)) {
       expect(await page.$$eval(`vue=book-item[name="the great gatsby" i]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`vue=color-button[nested.index = 0]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`vue=color-button[nested.nonexisting.index = 0]`, els => els.length)).toBe(0);
+      expect(await page.$$eval(`vue=color-button[nested.index.nonexisting = 0]`, els => els.length)).toBe(0);
+      expect(await page.$$eval(`vue=color-button[nested.index.nonexisting = 1]`, els => els.length)).toBe(0);
       expect(await page.$$eval(`vue=color-button[nested.value = 4.1]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`vue=color-button[enabled = false]`, els => els.length)).toBe(4);
       expect(await page.$$eval(`vue=color-button[enabled = true] `, els => els.length)).toBe(5);

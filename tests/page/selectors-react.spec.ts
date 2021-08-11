@@ -60,6 +60,8 @@ for (const [name, url] of Object.entries(reacts)) {
       expect(await page.$$eval(`react=BookItem[name="the great gatsby" i]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`react=ColorButton[nested.index = 0]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`react=ColorButton[nested.nonexisting.index = 0]`, els => els.length)).toBe(0);
+      expect(await page.$$eval(`react=ColorButton[nested.index.nonexisting = 0]`, els => els.length)).toBe(0);
+      expect(await page.$$eval(`react=ColorButton[nested.index.nonexisting = 1]`, els => els.length)).toBe(0);
       expect(await page.$$eval(`react=ColorButton[nested.value = 4.1]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`react=ColorButton[enabled = false]`, els => els.length)).toBe(4);
       expect(await page.$$eval(`react=ColorButton[enabled = true] `, els => els.length)).toBe(5);
