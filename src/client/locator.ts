@@ -94,15 +94,15 @@ export class Locator implements api.Locator {
   }
 
   first(): Locator {
-    return new Locator(this._frame, this._selector + ' >> _nth=first');
+    return new Locator(this._frame, this._selector + ' >> nth=0');
   }
 
   last(): Locator {
-    return new Locator(this._frame, this._selector + ` >> _nth=last`);
+    return new Locator(this._frame, this._selector + ` >> nth=-1`);
   }
 
   nth(index: number): Locator {
-    return new Locator(this._frame, this._selector + ` >> _nth=${index}`);
+    return new Locator(this._frame, this._selector + ` >> nth=${index}`);
   }
 
   async focus(options?: TimeoutOptions): Promise<void> {

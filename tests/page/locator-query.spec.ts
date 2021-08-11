@@ -44,7 +44,7 @@ it('should respect nth()', async ({page}) => {
 
 it('should throw on capture w/ nth()', async ({page}) => {
   await page.setContent(`<section><div><p>A</p></div></section>`);
-  const e = await page.locator('*css=div >> p').nth(0).click().catch(e => e);
+  const e = await page.locator('*css=div >> p').nth(1).click().catch(e => e);
   expect(e.message).toContain(`Can't query n-th element`);
 });
 

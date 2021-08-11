@@ -407,10 +407,15 @@ await page.ClickAsync("button");
 
 ## Selecting visible elements
 
-The `:visible` pseudo-class in CSS selectors matches the elements that are
-[visible](./actionability.md#visible). For example, `input` matches all the inputs on the page, while
-`input:visible` matches only visible inputs. This is useful to distinguish elements that are very
-similar but differ in visibility.
+There are two ways of selecting only [visible](./actionability.md#visible) elements with Playwright:
+- `:visible` pseudo-class in CSS selectors
+- `visible=` selector engine
+
+If you prefer your selectors to be CSS and don't want to rely on [chaining selectors](#chaining-selectors), use `:visible` pseudo class like so: `input:visible`. If you prefer combining selector engines, use `input >> visible=true`. The latter allows you combining `text=`, `xpath=` and other selector engines with the visibility filter.
+
+For example, `input` matches all the inputs on the page, while
+`input:visible` and `input >> visible=true` only match visible inputs. This is useful to distinguish elements
+that are very similar but differ in visibility.
 
 :::note
 It's usually better to follow the [best practices](#best-practices) and find a more reliable way to
@@ -446,27 +451,28 @@ Consider a page with two buttons, first invisible and second visible.
   await page.ClickAsync("button");
   ```
 
-* This will find a second button, because it is visible, and then click it.
+* These will find a second button, because it is visible, and then click it.
 
   ```js
   await page.click('button:visible');
+  await page.click('button >> visible=true');
   ```
   ```java
   page.click("button:visible");
+  page.click("button >> visible=true");
   ```
   ```python async
   await page.click("button:visible")
+  await page.click("button >> visible=true")
   ```
   ```python sync
   page.click("button:visible")
+  page.click("button >> visible=true")
   ```
   ```csharp
   await page.ClickAsync("button:visible");
+  await page.ClickAsync("button >> visible=true");
   ```
-
-Use `:visible` with caution, because it has two major drawbacks:
-* When elements change their visibility dynamically, `:visible` will give unpredictable results based on the timing.
-* `:visible` forces a layout and may lead to querying being slow, especially when used with `page.waitForSelector(selector[, options])` method.
 
 ## Selecting elements that contain other elements
 
@@ -660,6 +666,50 @@ converts `'//html/body'` to `'xpath=//html/body'`.
 :::note
 `xpath` does not pierce shadow roots
 :::
+
+## N-th element selector
+
+You can narrow down query to the n-th match using the `nth=` selector. Unlike CSS's nth-match, provided index is 0-based.
+
+```js
+// Click first button
+await page.click('button >> nth=0');
+
+// Click last button
+await page.click('button >> nth=-1');
+```
+
+```java
+// Click first button
+page.click("button >> nth=0");
+
+// Click last button
+page.click("button >> nth=-1");
+```
+
+```python async
+# Click first button
+await page.click("button >> nth=0")
+
+# Click last button
+await page.click("button >> nth=-1")
+```
+
+```python sync
+# Click first button
+page.click("button >> nth=0")
+
+# Click last button
+page.click("button >> nth=-1")
+```
+
+```csharp
+// Click first button
+await page.ClickAsync("button >> nth=0");
+
+// Click last button
+await page.ClickAsync("button >> nth=-1");
+```
 
 ## React selectors
 
