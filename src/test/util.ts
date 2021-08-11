@@ -215,3 +215,7 @@ export function expectType(receiver: any, type: string, matcherName: string) {
   if (typeof receiver !== 'object' || receiver.constructor.name !== type)
     throw new Error(`${matcherName} can be only used with ${type} object`);
 }
+
+export function sanitizeForFilePath(s: string) {
+  return s.replace(/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
+}

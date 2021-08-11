@@ -19,7 +19,7 @@ import path from 'path';
 import rimraf from 'rimraf';
 import util from 'util';
 import { EventEmitter } from 'events';
-import { monotonicTime, DeadlineRunner, raceAgainstDeadline, serializeError } from './util';
+import { monotonicTime, DeadlineRunner, raceAgainstDeadline, serializeError, sanitizeForFilePath } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -546,8 +546,4 @@ function modifier(testInfo: TestInfo, type: 'skip' | 'fail' | 'fixme' | 'slow', 
 }
 
 class SkipError extends Error {
-}
-
-function sanitizeForFilePath(s: string) {
-  return s.replace(/[^\w\d]+/g, '-');
 }

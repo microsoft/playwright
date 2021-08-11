@@ -256,3 +256,17 @@ test('should accept a relative path for outputDir', async ({ runInlineTest }, te
   }, {usesCustomOutputDir: true});
   expect(result.exitCode).toBe(0);
 });
+
+
+test('should allow nonAscii characters in the output dir', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'my-test.spec.js': `
+      const { test } = pwt;
+      test('こんにちは世界', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.outputDir);
+      });
+    `,
+  });
+  const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
+  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-こんにちは世界'));
+});
