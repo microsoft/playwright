@@ -29,7 +29,7 @@ export const TreeItem: React.FunctionComponent<{
   return <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
     <div className={className} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', whiteSpace: 'nowrap', paddingLeft: depth * 20 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
       <div className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
-        style={{ cursor: 'pointer', color: 'var(--color)', marginRight: '4px', visibility: loadChildren ? 'visible' : 'hidden' }} />
+        style={{ cursor: 'pointer', color: 'var(--color)', visibility: loadChildren ? 'visible' : 'hidden' }} />
       {title}
     </div>
     {expanded && loadChildren?.()}

@@ -86,6 +86,10 @@
   padding-right: 3px;
 }
 
+.codicon {
+  padding-right: 3px;
+}
+
 .codicon-clock.status-icon,
 .codicon-error.status-icon {
   color: red;
@@ -105,7 +109,7 @@
 }
 
 .test-overview-title {
-  padding: 4px 0 12px;
+  padding: 10px 0;
   font-size: 18px;
   flex: none;
 }
@@ -149,4 +153,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.attachment-body {
+  white-space: pre-wrap;
+  font-family: monospace;
+  background-color: #dadada;
+  border: 1px solid #ccc;
+  margin-left: 24px;
 }
