@@ -245,6 +245,82 @@ A callback that is run immediately when calling [`method: Test.describe.only`]. 
 
 
 
+## method: Test.describe.serial
+
+Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
+
+:::note
+Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
+:::
+
+```js js-flavor=js
+test.describe.serial('group', () => {
+  test('runs first', async ({ page }) => {
+  });
+  test('runs second', async ({ page }) => {
+  });
+});
+```
+
+```js js-flavor=ts
+test.describe.serial('group', () => {
+  test('runs first', async ({ page }) => {
+  });
+  test('runs second', async ({ page }) => {
+  });
+});
+```
+
+### param: Test.describe.serial.title
+- `title` <[string]>
+
+Group title.
+
+### param: Test.describe.serial.callback
+- `callback` <[function]>
+
+A callback that is run immediately when calling [`method: Test.describe.serial`]. Any tests added in this callback will belong to the group.
+
+
+
+## method: Test.describe.serial.only
+
+Declares a focused group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together. If there are some focused tests or suites, all of them will be run but nothing else.
+
+:::note
+Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
+:::
+
+```js js-flavor=js
+test.describe.serial.only('group', () => {
+  test('runs first', async ({ page }) => {
+  });
+  test('runs second', async ({ page }) => {
+  });
+});
+```
+
+```js js-flavor=ts
+test.describe.serial.only('group', () => {
+  test('runs first', async ({ page }) => {
+  });
+  test('runs second', async ({ page }) => {
+  });
+});
+```
+
+### param: Test.describe.serial.only.title
+- `title` <[string]>
+
+Group title.
+
+### param: Test.describe.serial.only.callback
+- `callback` <[function]>
+
+A callback that is run immediately when calling [`method: Test.describe.serial.only`]. Any tests added in this callback will belong to the group.
+
+
+
 
 ## property: Test.expect
 - type: <[Object]>

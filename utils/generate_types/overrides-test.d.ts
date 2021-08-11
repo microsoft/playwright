@@ -223,6 +223,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   only: TestFunction<TestArgs & WorkerArgs>;
   describe: SuiteFunction & {
     only: SuiteFunction;
+    serial: SuiteFunction & {
+      only: SuiteFunction;
+    };
   };
   skip(): void;
   skip(condition: boolean): void;

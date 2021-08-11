@@ -19,7 +19,7 @@ import path from 'path';
 import { EventEmitter } from 'events';
 import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
 import type { TestResult, Reporter, TestStep } from '../../types/testReporter';
-import { TestCase } from './test';
+import { Suite, TestCase } from './test';
 import { Loader } from './loader';
 
 export type TestGroup = {
@@ -125,7 +125,7 @@ export class Dispatcher {
       // When worker encounters error, we will stop it and create a new one.
       worker.stop();
 
-      const failedTestIds = new Set<string>();
+      const retryCandidates = new Set<string>();
 
       // In case of fatal error, report first remaining test as failing with this error,
       // and all others as skipped.
@@ -141,7 +141,7 @@ export class Dispatcher {
           result.error = params.fatalError;
           result.status = first ? 'failed' : 'skipped';
           this._reportTestEnd(test, result);
-          failedTestIds.add(test._id);
+          retryCandidates.add(test._id);
           first = false;
         }
         if (first) {
@@ -154,16 +154,50 @@ export class Dispatcher {
         // except for possible retries.
         remaining = [];
       }
-      if (params.failedTestId)
-        failedTestIds.add(params.failedTestId);
+
+      if (params.failedTestId) {
+        retryCandidates.add(params.failedTestId);
+
+        let outermostSerialSuite: Suite | undefined;
+        for (let parent = this._testById.get(params.failedTestId)!.test.parent; parent; parent = parent.parent) {
+          if (parent._serial)
+            outermostSerialSuite = parent;
+        }
+
+        if (outermostSerialSuite) {
+          // Failed test belongs to a serial suite. We should skip all future tests
+          // from the same serial suite.
+          remaining = remaining.filter(test => {
+            let parent = test.parent;
+            while (parent && parent !== outermostSerialSuite)
+              parent = parent.parent;
+
+            // Does not belong to the same serial suite, keep it.
+            if (!parent)
+              return true;
+
+            // Emulate a "skipped" run, and drop this test from remaining.
+            const { result } = this._testById.get(test._id)!;
+            this._reporter.onTestBegin?.(test, result);
+            result.status = 'skipped';
+            this._reportTestEnd(test, result);
+            return false;
+          });
+
+          // Add all tests from the same serial suite for possible retry.
+          // These will only be retried together, because they have the same
+          // "retries" setting and the same number of previous runs.
+          outermostSerialSuite.allTests().forEach(test => retryCandidates.add(test._id));
+        }
+      }
 
       // Only retry expected failures, not passes and only if the test failed.
-      for (const testId of failedTestIds) {
+      for (const testId of retryCandidates) {
         const pair = this._testById.get(testId)!;
         if (!this._isStopped && pair.test.expectedStatus === 'passed' && pair.test.results.length < pair.test.retries + 1) {
           pair.result = pair.test._appendTestResult();
           pair.steps = new Map();
-          remaining.unshift(pair.test);
+          remaining.push(pair.test);
         }
       }
 
